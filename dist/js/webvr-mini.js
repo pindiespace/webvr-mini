@@ -1374,8 +1374,58 @@
 	    }
 
 	    _createClass(WebGL, [{
+	        key: 'init',
+	        value: function init(_ref2) {
+	            _objectDestructuringEmpty(_ref2);
+	        }
+	    }, {
+	        key: 'hasWebGL',
+	        value: function hasWebGL() {}
+	    }, {
 	        key: 'createContext',
-	        value: function createContext() {}
+	        value: function createContext(canvas) {}
+	    }, {
+	        key: 'createShader',
+	        value: function createShader() {}
+	    }, {
+	        key: 'createProgram',
+	        value: function createProgram() {}
+	    }, {
+	        key: 'createTexture',
+	        value: function createTexture(image) {}
+	    }, {
+	        key: 'createVertexBuffer',
+	        value: function createVertexBuffer(type, data) {}
+	    }, {
+	        key: 'createIndexBuffer',
+	        value: function createIndexBuffer(type, data) {}
+	    }, {
+	        key: 'createMatIdentity',
+	        value: function createMatIdentity() {}
+	    }, {
+	        key: 'createMatTranslate',
+	        value: function createMatTranslate() {}
+	    }, {
+	        key: 'createMatPerspective',
+	        value: function createMatPerspective() {}
+	    }, {
+	        key: 'createMatRotate',
+	        value: function createMatRotate() {}
+	    }, {
+	        key: 'setToMat3',
+	        value: function setToMat3() {}
+	    }, {
+	        key: 'setModelView',
+	        value: function setModelView() {}
+	    }, {
+	        key: 'setProjection',
+	        value: function setProjection() {}
+	    }, {
+	        key: 'setNormals',
+	        value: function setNormals() {}
+	    }, {
+	        key: 'loadModel',
+	        value: function loadModel() {}
 	    }]);
 
 	    return WebGL;

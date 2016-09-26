@@ -6,7 +6,71 @@ export default class WebGL {
 
     }
 
-    createContext () {
+    init ( {} ) {
+
+    }
+
+    hasWebGL () {
+
+    }
+
+    createContext ( canvas ) {
+
+    }
+
+    createShader () {
+
+    }
+
+    createProgram () {
+
+    }
+
+    createTexture ( image ) {
+
+    }
+
+    createVertexBuffer ( type, data ) {
+
+    }
+
+    createIndexBuffer ( type, data ) {
+
+    }
+
+    createMatIdentity () {
+
+    }
+
+    createMatTranslate () {
+
+    }
+
+    createMatPerspective () {
+
+    }
+
+    createMatRotate () {
+
+    }
+
+    setToMat3 () {
+
+    }
+
+    setModelView () {
+
+    }
+
+    setProjection () {
+
+    }
+
+    setNormals () {
+
+    }
+
+    loadModel () {
 
     }
 
