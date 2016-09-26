@@ -5,7 +5,8 @@ var webpack = require( 'webpack' );
 
 var path = require( 'path' );
 
-// definePlugin takes raw strings and inserts them, so you can put strings of JS if you want.
+// ExtendedDefinePlugin takes raw strings and inserts them, so you can put strings of JS if you want.
+// added from npm
 
 var ExtendedDefinePlugin = require('extended-define-webpack-plugin');
 
@@ -76,8 +77,14 @@ module.exports = {
 
             __RELEASE__: JSON.stringify( JSON.parse( process.env.BUILD_RELEASE || 'false' ) )
 
-        })
+        }),
 
+        // conditionally load polyfills from npm
+
+        new webpack.ProvidePlugin({
+            Promise: 'imports?this=>global!exports?global.Promise!es6-promise',
+            fetch: 'imports?this=>global!exports?global.fetch!whatwg-fetch'
+        })
     ],
 
     watch: true

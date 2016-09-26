@@ -19,6 +19,8 @@
 
         <section>
 
+            <canvas width="640" height="480" style="border:1px solid black;"></canvas>
+
         </section>
 
         <footer>
@@ -28,6 +30,44 @@
         <!--load our app bundle-->
 
         <script src="js/webvr-mini.js"></script>
+
+        <script>
+
+            var vertCode =
+            'attribute vec3 coordinates;' +
+                
+               'void main(void) {' +
+                  ' gl_Position = vec4(coordinates, 1.0);' +
+               '}';
+
+            // Fragment Shader one solid color
+            var fragCode =
+               'void main(void) {' +
+                  ' gl_FragColor = vec4(0, 0.8, 0, 1);' +
+               '}';
+
+            // for a square
+
+            var vboCode = 
+                [
+                    -0.5, -0.5, 0.0,
+                    0.5, -0.5, 0.0,
+                    0.5, 0.5, 0.0,
+                    -0.5, 0.5, 0.0
+                ];
+
+
+            var iboCode = 
+                [
+                    0, 1, 2,
+                    0, 2, 3
+                ];
+
+            console.log("window.vrmini" + vrmini );
+
+            console.log(vrmini.util.isIFrame());
+
+        </script>
 
     </body>
 

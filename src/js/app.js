@@ -1,11 +1,22 @@
 /*
  * app.js
- * main entry point for this application.
+ * main entry point for this application. Uses 
+ * ES5 syntax (es6 will be transpiled). Central 
+ * point for including both ES5 and ES6 libraries.
  */
 
 // DEV ENVIRONMENT
 
 var env = process.env.WEBPACK_ENV;
+
+var vrmini = require( '../es6/app.es6' );
+
+console.log("VR:" + vrmini);
+
+for (var i in vrmini ) {
+
+    console.log( i + ":" + vrmini[i] );
+}
 
 /* 
  * these variables are defined by webpack inputs in package.json, 
@@ -14,17 +25,6 @@ var env = process.env.WEBPACK_ENV;
  * "dev": "cross-env BUILD_RELEASE=false BUILD_DEV=true webpack",
  */
 
-if ( __DEV__ === 'true' ) {
-
-    console.warn('in development mode...');
-
-}
-
-if ( __RELEASE__ === 'true' ) {
-
-    console.warn('in release mode');
-
-}
 
 console.log( 'in app.js' );
 
@@ -34,63 +34,29 @@ console.log( 'in app.js' );
 
 if ( __DEV__ === 'true' ) {
 
-    // Webpack parses the inside of require.ensure at build time to know that intl
-    // should be bundled separately. You could get the same effect by passing
-    // ['intl'] as the first argument.
+    console.warn('in development mode...');
 
-    //require.ensure( [], function () {
+    // our own output ui
 
-        /* 
-         * Ensure only makes sure the module has been downloaded and parsed.
-         * Now we actually need to run it to install the polyfill.
-         */
+    require( './webgl-report.js' );
 
-        // require kronos webgl debug from node_modules
+} else if ( __RELEASE__ === 'true' ) {
 
-        require( 'webgl-debug' );
-
-        // our own output ui
-
-        require( './webgl-report.js' );
-
-        // Carry on
-        //run();
-
-    //} );
-
-} else {
+    console.warn('in release mode');
 
     // Polyfill wasn't needed, carry on
     // run();
 
 }
 
-// POLYFILLS
-// Check if polyfill required
+// POLYFILLS LOADED IN WEBPACK.CONFIG
 
-if (!window.Intl) {
+// ADD REFERENCE TO WINDOW OBJECT
 
-    // Webpack parses the inside of require.ensure at build time to know that intl
-    // should be bundled separately. You could get the same effect by passing
-    // ['intl'] as the first argument.
+window.vrmini = vrmini;
 
-    require.ensure( [], function () {
+console.log("Window.vrmini:" + vrmini );
 
-        /* 
-         * Ensure only makes sure the module has been downloaded and parsed.
-         * Now we actually need to run it to install the polyfill.
-         */
+// CODE
 
-        //require('intl');
 
-        // Carry on
-        //run();
-
-    } );
-
-} else {
-
-    // Polyfill wasn't needed, carry on
-    // run();
-
-}

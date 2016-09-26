@@ -20,10 +20,15 @@ npm run build
 Start webpack watching in first console window
 "start": "webpack-dev-server --inline --devtool eval --progress --colors --content-base dist"
 
-To see auto-updates, access using the dev server URL
+#Checking things in the console
+
+To see auto-updates, access using the dev server URL. NOTE: this will only show 
+internal console.logs. You can't see objects attached to the window from here, since we 
+are in an <iframe>.
+
 http://localhost:8080/webpack-dev-server/
 
-To see the site without auto-updates, 
+To see the site without auto-updates, and with GLOBAL windows object visible in the Console, use
 http://localhost:8080
 
 ## note on environment variables
