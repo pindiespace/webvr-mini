@@ -92,7 +92,7 @@
 
 	    // our own output ui
 
-	    __webpack_require__( 21 );
+	    __webpack_require__( 22 );
 
 	} else if ( __RELEASE__ === 'true' ) {
 
@@ -312,17 +312,21 @@
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
-	exports.webvr = exports.webgl = exports.util = undefined;
+	exports.webvr = exports.textureLoader = exports.webgl = exports.util = undefined;
 
 	var _util = __webpack_require__(4);
 
 	var _util2 = _interopRequireDefault(_util);
 
-	var _webgl = __webpack_require__(5);
+	var _webglTexture = __webpack_require__(23);
+
+	var _webglTexture2 = _interopRequireDefault(_webglTexture);
+
+	var _webgl = __webpack_require__(6);
 
 	var _webgl2 = _interopRequireDefault(_webgl);
 
-	var _webvr = __webpack_require__(9);
+	var _webvr = __webpack_require__(10);
 
 	var _webvr2 = _interopRequireDefault(_webvr);
 
@@ -341,7 +345,7 @@
 
 	// WebGL math library.
 
-	var glMatrix = __webpack_require__(10);
+	var glMatrix = __webpack_require__(11);
 
 	if (!glMatrix) {
 
@@ -355,6 +359,8 @@
 
 	var configGL = { init: true, glMatrix: glMatrix };
 
+	var configTexture = { init: true };
+
 	// Init immediately.
 
 	var configVR = { init: true };
@@ -364,7 +370,7 @@
 	    // require kronos webgl debug from node_modules
 	    // https://github.com/vorg/webgl-debug
 
-	    configGL.debugUtils = __webpack_require__(20);
+	    configGL.debugUtils = __webpack_require__(21);
 
 	    if (configGL.debugUtils) {
 
@@ -383,12 +389,15 @@
 
 	var webgl = new _webgl2.default(configGL);
 
+	var textureLoader = new _webglTexture2.default(configTexture);
+
 	var webvr = new _webvr2.default(configVR);
 
 	// Export our classes
 
 	exports.util = util;
 	exports.webgl = webgl;
+	exports.textureLoader = textureLoader;
 	exports.webvr = webvr;
 
 	// sample vertex and fragment shaders
@@ -446,7 +455,8 @@
 	exports.default = Util;
 
 /***/ },
-/* 5 */
+/* 5 */,
+/* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(fetch) {'use strict';
@@ -810,10 +820,10 @@
 	}();
 
 	exports.default = WebGL;
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)))
 
 /***/ },
-/* 6 */
+/* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(Promise, global) {/*** IMPORTS FROM imports-loader ***/
@@ -1257,10 +1267,10 @@
 	/*** EXPORTS FROM exports-loader ***/
 	module.exports = global.fetch;
 	}.call(global));
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7), (function() { return this; }())))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(8), (function() { return this; }())))
 
 /***/ },
-/* 7 */
+/* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var require;/* WEBPACK VAR INJECTION */(function(process, Promise, global) {/*** IMPORTS FROM imports-loader ***/
@@ -1398,7 +1408,7 @@
 	function attemptVertx() {
 	  try {
 	    var r = require;
-	    var vertx = __webpack_require__(8);
+	    var vertx = __webpack_require__(9);
 	    vertxNext = vertx.runOnLoop || vertx.runOnContext;
 	    return useVertxTimer();
 	  } catch (e) {
@@ -2424,16 +2434,16 @@
 	/*** EXPORTS FROM exports-loader ***/
 	module.exports = global.Promise;
 	}.call(global));
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2), __webpack_require__(7), (function() { return this; }())))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2), __webpack_require__(8), (function() { return this; }())))
 
 /***/ },
-/* 8 */
+/* 9 */
 /***/ function(module, exports) {
 
 	/* (ignored) */
 
 /***/ },
-/* 9 */
+/* 10 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -2442,33 +2452,18 @@
 	    value: true
 	});
 
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-	function _objectDestructuringEmpty(obj) { if (obj == null) throw new TypeError("Cannot destructure undefined"); }
-
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	var WebVR = function () {
-	    function WebVR(_ref) {
-	        _objectDestructuringEmpty(_ref);
+	var WebVR = function WebVR(config) {
+	    _classCallCheck(this, WebVR);
 
-	        _classCallCheck(this, WebVR);
-
-	        console.log('in webVR class');
-	    }
-
-	    _createClass(WebVR, [{
-	        key: 'createContext',
-	        value: function createContext() {}
-	    }]);
-
-	    return WebVR;
-	}();
+	    console.log('in webVR class');
+	};
 
 	exports.default = WebVR;
 
 /***/ },
-/* 10 */
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -2499,18 +2494,18 @@
 	THE SOFTWARE. */
 	// END HEADER
 
-	exports.glMatrix = __webpack_require__(11);
-	exports.mat2 = __webpack_require__(12);
-	exports.mat2d = __webpack_require__(13);
-	exports.mat3 = __webpack_require__(14);
-	exports.mat4 = __webpack_require__(15);
-	exports.quat = __webpack_require__(16);
-	exports.vec2 = __webpack_require__(19);
-	exports.vec3 = __webpack_require__(17);
-	exports.vec4 = __webpack_require__(18);
+	exports.glMatrix = __webpack_require__(12);
+	exports.mat2 = __webpack_require__(13);
+	exports.mat2d = __webpack_require__(14);
+	exports.mat3 = __webpack_require__(15);
+	exports.mat4 = __webpack_require__(16);
+	exports.quat = __webpack_require__(17);
+	exports.vec2 = __webpack_require__(20);
+	exports.vec3 = __webpack_require__(18);
+	exports.vec4 = __webpack_require__(19);
 
 /***/ },
-/* 11 */
+/* 12 */
 /***/ function(module, exports) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -2586,7 +2581,7 @@
 
 
 /***/ },
-/* 12 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -2609,7 +2604,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(11);
+	var glMatrix = __webpack_require__(12);
 
 	/**
 	 * @class 2x2 Matrix
@@ -3028,7 +3023,7 @@
 
 
 /***/ },
-/* 13 */
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -3051,7 +3046,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(11);
+	var glMatrix = __webpack_require__(12);
 
 	/**
 	 * @class 2x3 Matrix
@@ -3503,7 +3498,7 @@
 
 
 /***/ },
-/* 14 */
+/* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -3526,7 +3521,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(11);
+	var glMatrix = __webpack_require__(12);
 
 	/**
 	 * @class 3x3 Matrix
@@ -4255,7 +4250,7 @@
 
 
 /***/ },
-/* 15 */
+/* 16 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -4278,7 +4273,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(11);
+	var glMatrix = __webpack_require__(12);
 
 	/**
 	 * @class 4x4 Matrix
@@ -6397,7 +6392,7 @@
 
 
 /***/ },
-/* 16 */
+/* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -6420,10 +6415,10 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(11);
-	var mat3 = __webpack_require__(14);
-	var vec3 = __webpack_require__(17);
-	var vec4 = __webpack_require__(18);
+	var glMatrix = __webpack_require__(12);
+	var mat3 = __webpack_require__(15);
+	var vec3 = __webpack_require__(18);
+	var vec4 = __webpack_require__(19);
 
 	/**
 	 * @class Quaternion
@@ -7003,7 +6998,7 @@
 
 
 /***/ },
-/* 17 */
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -7026,7 +7021,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(11);
+	var glMatrix = __webpack_require__(12);
 
 	/**
 	 * @class 3 Dimensional Vector
@@ -7786,7 +7781,7 @@
 
 
 /***/ },
-/* 18 */
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -7809,7 +7804,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(11);
+	var glMatrix = __webpack_require__(12);
 
 	/**
 	 * @class 4 Dimensional Vector
@@ -8401,7 +8396,7 @@
 
 
 /***/ },
-/* 19 */
+/* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -8424,7 +8419,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(11);
+	var glMatrix = __webpack_require__(12);
 
 	/**
 	 * @class 2 Dimensional Vector
@@ -8994,7 +8989,7 @@
 
 
 /***/ },
-/* 20 */
+/* 21 */
 /***/ function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {/*
@@ -9955,7 +9950,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 21 */
+/* 22 */
 /***/ function(module, exports) {
 
 	/* 
@@ -9963,6 +9958,26 @@
 	 */
 
 	console.log( 'in webgl-report.js' );
+
+/***/ },
+/* 23 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var WebGLTexture = function WebGLTexture(config) {
+	    _classCallCheck(this, WebGLTexture);
+
+	    console.log('in WebGLTextureLoader class');
+	};
+
+	exports.default = WebGLTexture;
 
 /***/ }
 /******/ ]);

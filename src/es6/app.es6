@@ -24,6 +24,7 @@ if ( ! glMatrix ) {
 }
 
 import Util from  './util';
+import WebGLTexture from './webgl-texture';
 import WebGL from './webgl';
 import WebVR from './webvr';
 
@@ -31,6 +32,8 @@ import WebVR from './webvr';
 // Init immediately.
 
 let configGL = { init: true, glMatrix: glMatrix };
+
+let configTexture = { init: true };
 
 // Init immediately.
 
@@ -65,11 +68,13 @@ let util = new Util();
 
 let webgl = new WebGL( configGL );
 
+let textureLoader = new WebGLTexture( configTexture );
+
 let webvr = new WebVR( configVR );
 
 // Export our classes
 
-export { util, webgl, webvr };
+export { util, webgl, textureLoader, webvr };
 
 
 // sample vertex and fragment shaders

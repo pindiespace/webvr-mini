@@ -1,12 +1,8 @@
 export default class WebVR {
 
-    constructor ( {} ) {
+    constructor ( config ) {
 
         console.log( 'in webVR class' );
-
-    }
-
-    createContext () {
 
     }
 
