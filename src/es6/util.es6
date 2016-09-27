@@ -6,6 +6,15 @@ export default class Util {
 
     }
 
+    // Confirm we have a string (after lodash)
+
+
+    isString( str ) {
+
+        return typeof str == 'string' || ( isObjectLike( str ) && objToString.call( str ) == stringTag) || false;
+
+    }
+
     // See if we're running in an iframe.
     isIFrame () {
 

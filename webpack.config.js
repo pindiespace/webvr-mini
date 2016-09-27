@@ -8,11 +8,12 @@ var path = require( 'path' );
 // ExtendedDefinePlugin takes raw strings and inserts them, so you can put strings of JS if you want.
 // added from npm
 
-var ExtendedDefinePlugin = require('extended-define-webpack-plugin');
+var ExtendedDefinePlugin = require( 'extended-define-webpack-plugin' );
+
 
 module.exports = {
 
-    entry: [ './src/js/app.js', './src/es6/app.es6' ],
+    entry: [ './src/js/app.js', './src/es6/app.es6', './src/html/index.html' ],
 
     output: {
 
@@ -63,11 +64,13 @@ module.exports = {
 
     resolve: {
 
-        extensions: ['', '.js', '.es6', '.scss']
+        extensions: ['', '.js', '.es6', '.scss', '.html']
 
     },
 
     plugins: [
+
+        // Define DEV and RELEASE variables from command-line (in package.json)
 
         new ExtendedDefinePlugin({
 
@@ -79,12 +82,17 @@ module.exports = {
 
         }),
 
-        // conditionally load polyfills from npm
+        // Conditionally load polyfills from npm
+        // http://madole.xyz/using-webpack-to-set-up-polyfills-in-your-site/
 
         new webpack.ProvidePlugin({
+
             Promise: 'imports?this=>global!exports?global.Promise!es6-promise',
+
             fetch: 'imports?this=>global!exports?global.fetch!whatwg-fetch'
+
         })
+
     ],
 
     watch: true

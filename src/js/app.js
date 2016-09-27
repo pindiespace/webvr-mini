@@ -9,6 +9,8 @@
 
 var env = process.env.WEBPACK_ENV;
 
+// REQUIRE ALL .es6 files
+
 var vrmini = require( '../es6/app.es6' );
 
 console.log("VR:" + vrmini);
@@ -29,23 +31,16 @@ for (var i in vrmini ) {
 console.log( 'in app.js' );
 
 /* 
- * DEBUGGING OPTIONS
+ * DEBUGGING OPTIONS FOR MAIN PROGRAM.
  */
 
 if ( __DEV__ === 'true' ) {
 
-    console.warn('in development mode...');
-
-    // our own output ui
-
-    require( './webgl-report.js' );
+    console.warn('app.js: in development mode...');
 
 } else if ( __RELEASE__ === 'true' ) {
 
     console.warn('in release mode');
-
-    // Polyfill wasn't needed, carry on
-    // run();
 
 }
 

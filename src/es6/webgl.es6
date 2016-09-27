@@ -4,17 +4,30 @@ export default class WebGL {
 
         console.log( 'in webGL class' );
 
-        this.ready = this.gl = this.canvas = null;
+        this.gl = this.canvas = null;
 
         if ( config ) {
 
             if ( config.glMatrix ) {
 
+/////////////////////////////////
+                for ( var i in config ) {
+                    console.log( i + ":" + config[i] + "(" + typeof config[i] + ")" );
+                }
+
+/////////////////////////////////
                 for ( var i in config.glMatrix ) {
                     console.log( i + ":" + config.glMatrix[i]);
                 }
+/////////////////////////////////
 
                 this.glMatrix = config.glMatrix;
+
+            }
+
+            if ( config.util ) {
+
+                this.util = config.util;
 
             }
 
@@ -34,13 +47,27 @@ export default class WebGL {
      */
     init ( canvas ) {
 
-        if( ! canvas ) {
+        if ( ! canvas ) {
 
             this.canvas = document.createElement( 'canvas' );
 
+            this.canvas.width = 480;
+
+            this.canvas.height = 320;
+
+        } else {
+
+            this.canvas = canvas;
+
         }
 
-        if( this.canvas ) {
+        if ( this.canvas ) {
+
+            let r = this.canvas.getBoundingClientRect();
+
+            this.canvas.width = r.width;
+
+            this.canvas.height = r.height;
 
             this.gl = this.createContext();
 
@@ -72,7 +99,7 @@ export default class WebGL {
 
         }
 
-        this.canvas.getContext( 'webgl' );
+        this.gl = this.canvas.getContext( 'webgl' );
 
         if ( this.gl && typeof this.gl.getParameter == 'function' ) {
 
@@ -92,28 +119,73 @@ export default class WebGL {
 
     }
 
+    /** 
+     * create a WeGL shader object.
+     */
     createShader ( type, source ) {
 
-        if ( this.ready() ) {
+        let shader = null;
+
+        if ( ! type || ! source ) {
+
+            console.error( 'createShader: invalid params, type:' + type + ' source:' + source );
+
+        } else if ( this.ready() ) {
 
             let gl = this.gl;
 
-            let shader = gl.createShader( this.gl.VERTEX_SHADER );
+            if ( type === gl.VERTEX_SHADER ) {
+
+                shader = this.vs = gl.createShader( type ); // assigned VS
+
+            } else if ( type === gl.FRAGMENT_SHADER ) {
+
+                shader = this.fs = gl.createShader( type ); // assigned FS
+
+            } else {
+
+                console.error( 'createShader: type not recognized:' + type );
+            }
 
             gl.shaderSource( shader, source );
 
             gl.compileShader( shader );
 
-            if( ! gl.getShaderParameter( shader, gl.COMPILE_STATUS ) ) {
+            // Detect shader compile errors.
 
-                throw gl.getShaderInfoLog( shader );
+            if ( ! gl.getShaderParameter( shader, gl.COMPILE_STATUS ) ) {
+
+                console.error( 'createShader:' + gl.getShaderInfoLog( shader ) );
+
+                if ( type === gl.VERTEX_SHADER ) {
+
+                    this.vs = null;
+
+                } else if ( type == gl.FRAGMENT_SHADER ) {
+
+                    this.fs = null;
+
+                }
+
+                shader = null;
+
             }
-
-            return shader;
 
         }
 
-        return null;
+        return shader;
+
+    }
+
+    createVertexShader ( source ) {
+
+        return this.createShader( this.gl.VERTEX_SHADER, source );
+
+    }
+
+    createFragmentShader ( source ) {
+
+        return this.createShader( this.gl.FRAGMENT_SHADER, source );
 
     }
 
@@ -154,14 +226,15 @@ export default class WebGL {
 
             if ( source ) {
 
-                self.createShader( type, source );
+                return self.createShader( type, source );
 
             }
 
         } );
 
-    }
+        return null;
 
+    }
 
     fetchVertexShader ( sourceURL ) {
 
@@ -181,7 +254,7 @@ export default class WebGL {
      */
     createShaderFromTag ( tag ) {
 
-        if ( tag && (tag.prototype.toString.call(obj) === '[object String]') ) {
+        if ( this.util.isString( tag ) ) {
 
             tag = document.getElementById( tag );
 
@@ -189,33 +262,39 @@ export default class WebGL {
 
         if ( ! tag ) {
 
+            console.error( 'createShaderFromTag: not found (' + tag + ')' );
+
             return false;
 
-        }
+        } 
+
+        let type = null;
 
         if ( tag.type ==  'x-shader/x-vertex' ) {
 
-            let type = this.gl.VERTEX_SHADER;
+            type = this.gl.VERTEX_SHADER;
 
-        } else if ( tag.type == '"x-shader/x-fragment' ) {
+        } else if ( tag.type == 'x-shader/x-fragment' ) {
 
-            let type = this.gl.FRAGMENT_SHADER;
+            type = this.gl.FRAGMENT_SHADER;
 
         } else {
 
-            return false;
+            console.error( 'createShaderFromTag: type not found:(' + tag.type + ')');
+
+            return null;
 
         }
 
-        var source = "";
+        let source = "";
 
-        var c = shaderTag.firstChild;
+        let c = tag.firstChild;
 
         while ( c ) {
 
             if ( c.nodeType == 3 ) {
 
-                src += c.textContent;
+                source += c.textContent;
 
             }
 
@@ -223,19 +302,7 @@ export default class WebGL {
 
         }
 
-        this.createShader( source, type );
-
-    }
-
-    createVertexShader ( source ) {
-
-        return this.createShader( this.gl.VERTEX_SHADER, source );
-
-    }
-
-    createFragmentShader ( source ) {
-
-        return this.createShader( this.gl.FRAGMENT_SHADER, source );
+        return this.createShader( type, source );
 
     }
 
@@ -245,87 +312,147 @@ export default class WebGL {
      * @param {gl.VERTEX_SHADER} vShader the vertex shader.
      * @param {gl.FRAGMENT_SHADER} fShader the fragment shader.
      */
-    createProgram ( vShader, fShader ) {
+    createProgram ( vs, fs ) {
 
-        if( this.ready() ) {
+        if ( ! vs || ! fs ) {
 
-            let gl = this.gl;
+            console.error( 'createProgram: parameter error, vs:' + vs + ' fs:' + fs );
 
-            let program = gl.createProgram();
-
-            gl.attachShader( program, vShader );
-
-            gl.attachShader( program, fshader );
-
-            gl.linkProgram( program );
-
-            if ( ! gl.getProgramparameter( program, gl.LINK_STATUS ) ) {
-
-                throw gl.getProgramInfoLog( program );
-
-            }
-
-            return program;
+            return null;
 
         }
 
-        return null;
-
-    }
-
-    useProgram ( program ) {
-
-        this.gl.useProgram( program );
-
-    }
-
-    /** 
-     * create a Vertex Buffer Object (VBO)
-     */
-    createVBO ( data ) {
+        let program = null;
 
         if ( this.ready() ) {
 
             let gl = this.gl;
 
-            let buffer = gl.createBuffer();
+            program = gl.createProgram();
 
-            gl.bindBuffer( gl.ARRAY_BUFFER, buffer );
+            gl.attachShader( program, vs );
 
-            gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( data ), gl.STATIC_DRAW );
+            gl.attachShader( program, fs );
 
-            return buffer;
+            gl.linkProgram( program );
+
+            if ( ! gl.getProgramParameter( program, gl.LINK_STATUS ) ) {
+
+                console.error( 'createProgram:' + gl.getProgramInfoLog( program ) );
+
+                this.program = program = null;
+
+            }
 
         }
 
-        return buffer;
+        return program;
 
     }
 
     /** 
-     * Create an Index Buffer Object
+     * create a Vertex Buffer Object (VBO).
+     * TODO: only one at a time
+     * https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/bufferData
      */
-    createIBO ( data ) {
+    createVBO ( data, usage ) {
 
-        if( this.ready() ) {
+        if ( ! data ) {
 
-            let gl = this.gl;
+            console.error( 'createVBO: empty data' );
 
-            let buffer = gl.createBuffer();
+            return null;
+        }
 
-            gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, buffer );
+        if ( ! usage ) {
 
-            gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( data ), gl.STATIC_DRAW );
-
-            return buffer;
+            usage = gl.STATIC_DRAW;
 
         }
 
-        return null;
+        let vbo = null;
+
+        if ( this.ready() ) {
+
+            let gl = this.gl;
+
+            vbo = gl.createBuffer(); // can only be bound once
+
+            gl.bindBuffer( gl.ARRAY_BUFFER, vbo );
+
+            gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( data ), usage );
+
+            this.vbo = vbo;
+
+        }
+
+        return vbo;
 
     }
 
-    createTexture ( image ) {
+    /** 
+     * Create an Index Buffer Object. 
+     * TODO: only one at a time in this instance.
+     */
+    createIBO ( data, usage ) {
+
+        if ( ! data ) {
+
+            console.error( 'createVBO: empty data' );
+
+            return null;
+        }
+
+        if ( ! usage ) {
+
+            usage = gl.STATIC_DRAW;
+
+        }
+
+        let ibo = null;
+
+        if ( this.ready() ) {
+
+            let gl = this.gl;
+
+            ibo = gl.createBuffer();
+
+            gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, ibo ); // can only be bound once
+
+            gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( data ), usage );
+
+            this.ibo = ibo;
+
+        }
+
+        return ibo;
+
+    }
+
+    /** 
+     * Create a texture from an image object.
+     * @link https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Tutorial/Using_textures_in_WebGL
+     * @param {Image} image an image object.
+     */
+    createTexture ( img ) {
+
+        let gl = this.gl;
+
+        var tex = gl.createTexture();
+  
+        gl.bindTexture(gl.TEXTURE_2D, tex);
+
+        gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img );
+
+        gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR );
+
+        gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST );
+
+        gl.generateMipmap( gl.TEXTURE_2D);
+
+        gl.bindTexture( gl.TEXTURE_2D, null );
+
+        return texture;
 
     }
 
@@ -356,6 +483,84 @@ export default class WebGL {
     }
 
     loadModel () {
+
+    }
+
+    /** 
+     * check to see if we're ready to run, after supplying 
+     * shaders.
+     */
+    checkShaders () {
+
+        let gl = this.gl;
+
+        if ( ! gl.getProgramParameter( this.program, gl.LINK_STATUS ) ) {
+
+            // Test the vertex shader
+
+             if ( this.vs && ! gl.getShaderParameter( this.vs, gl.COMPILE_STATUS ) ) {
+
+                console.error( 'error creating the vertex shader, ' + gl.getShaderInfoLog( this.vs ) );
+
+            } else if (this._fragmentShader && !gl.getShaderParameter(this._fragmentShader, gl.COMPILE_STATUS ) ) {
+
+                console.error(  'error creating the fragment shader, ' + gl.getShaderInfoLog( this.fs ) );
+
+            } else {
+
+                console.error( 'error in gl program linking' );
+
+            }
+
+            gl.deleteProgram( this.program );
+
+            gl.deleteShader( this.vs );
+
+            gl.deleteShader( this.fs );
+
+            this.program = this.vs = this.fs = null;
+
+            return false;
+
+        }
+
+        return true;
+
+    }
+
+    /** 
+     * Check if our VBO and IBO are ok.
+     */
+    checkObjects () {
+
+
+    }
+
+    /** 
+     * Setup the scene.
+     */
+    run () {
+
+        if ( this.check() ) {
+
+
+
+
+        }
+
+    }
+
+    render () {
+
+        let gl = this.gl;
+
+        gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+
+        gl.viewport( 0, 0, this.canvas.width, this.canvas.height );
+
+        // gl.bindBuffer( gl.ARRAY_BUFFER, this.vbo );
+
+
 
     }
 

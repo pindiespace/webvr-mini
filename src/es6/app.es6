@@ -11,7 +11,7 @@ var env = process.env.WEBPACK_ENV;
 
 // WebGL math library.
 
-var glMatrix = require('gl-matrix');
+var glMatrix = require( 'gl-matrix' );
 
 if ( ! glMatrix ) {
 
@@ -24,22 +24,30 @@ if ( ! glMatrix ) {
 }
 
 import Util from  './util';
+
 import WebGLTexture from './webgl-texture';
+
 import WebGL from './webgl';
+
 import WebVR from './webvr';
 
+// Init Util first to create shortcuts.
+
+let util = new Util();
 
 // Init immediately.
 
-let configGL = { init: true, glMatrix: glMatrix };
+let configGL = { init: true, glMatrix: glMatrix, util: util };
 
 let configTexture = { init: true };
 
-// Init immediately.
-
 let configVR = { init: true };
 
+// If we are in dev mode, load any special libraries.
+
 if ( __DEV__ === 'true' ) {
+
+    console.log( 'app.es6: in development mode' );
 
     // require kronos webgl debug from node_modules
     // https://github.com/vorg/webgl-debug
@@ -58,13 +66,11 @@ if ( __DEV__ === 'true' ) {
 
 } else if ( __RELEASE__ === 'true' ) {
 
-    // release code
+    // Code only added to release.
 
 }
 
-// Import our es6 classes.
-
-let util = new Util();
+// Create our remaining objects.
 
 let webgl = new WebGL( configGL );
 
@@ -72,7 +78,7 @@ let textureLoader = new WebGLTexture( configTexture );
 
 let webvr = new WebVR( configVR );
 
-// Export our classes
+// Export our classes to app.js
 
 export { util, webgl, textureLoader, webvr };
 
