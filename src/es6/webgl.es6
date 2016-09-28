@@ -1,10 +1,18 @@
 export default class WebGL {
 
+    /**
+     * References:
+     * GL Tutorial: http://webglfundamentals.org
+     * HTML5 Games code: http://www.wiley.com/WileyCDA/WileyTitle/productCd-1119975085.html
+     * Toji: https://github.com/toji/webvr-samples
+     * TWGL: @link http://twgljs.org/
+     */
+
     constructor ( config ) {
 
         console.log( 'in webGL class' );
 
-        this.gl = this.canvas = null;
+        this.gl = this.vs = this.vs = null;
 
         if ( config ) {
 
@@ -47,35 +55,44 @@ export default class WebGL {
      */
     init ( canvas ) {
 
-        if ( ! canvas ) {
+        if ( ! canvas ) { 
 
-            this.canvas = document.createElement( 'canvas' );
+            canvas = document.createElement( 'canvas' );
 
-            this.canvas.width = 480;
+            canvas.width = 480;
 
-            this.canvas.height = 320;
+            canvas.height = 320;
 
         } else {
 
-            this.canvas = canvas;
+            canvas = canvas;
 
         }
 
-        if ( this.canvas ) {
+        if ( canvas ) {
 
-            let r = this.canvas.getBoundingClientRect();
+            let r = canvas.getBoundingClientRect(); //TODO: bind to dom for IE10
 
-            this.canvas.width = r.width;
+            canvas.width = r.width;
 
-            this.canvas.height = r.height;
+            canvas.height = r.height;
 
-            this.gl = this.createContext();
+            this.gl = this.createContext( canvas );
 
-            return true;
+            return this;
 
         }
 
-        return false
+        return null;
+
+    }
+
+    /** 
+     * Get WebGL canvas only if we've created a gl context.
+     */
+    getCanvas () {
+
+        return this.gl ? this.gl.canvas : null;
 
     }
 
@@ -84,20 +101,46 @@ export default class WebGL {
      */
     ready () {
 
-        return ( !! ( this.canvas && this.glMatrix && this.gl ) );
+        return ( !! ( this.gl && this.glMatrix ) );
 
     }
 
-    getCanvas () {
+    /** 
+     * Resize the canvas to the current display size.
+     * (TWGL)
+     */
+    resizeCanvas () {
 
-        return this.canvas;
+        if ( this.ready() ) {
+
+            let f = Math.max( window.devicePixelRatio, 1 );
+
+            let c = this.getCanvas();
+
+            let width  = c.clientWidth  * f | 0;
+
+            let height = c.clientHeight * f | 0;
+
+            if (c.width !== width || c.height !== height) {
+
+                c.width = width;
+
+                c.height = height;
+
+                return true;
+
+            }
+
+        }
+
+        return false;
 
     }
 
     /** 
      * get HTML5 canvas, and a WebGL context.
      */
-    createContext () {
+    createContext ( canvas ) {
 
         if ( this.gl ) {
 
@@ -105,7 +148,7 @@ export default class WebGL {
 
         }
 
-        this.gl = this.canvas.getContext( 'webgl' );
+        this.gl = canvas.getContext( 'webgl' );
 
         if ( this.gl && typeof this.gl.getParameter == 'function' ) {
 
@@ -139,6 +182,12 @@ export default class WebGL {
         } else if ( this.ready() ) {
 
             let gl = this.gl;
+
+            /*
+             * remove first EOL, which might come from using <script>...</script> tags,
+             * to handle GLSL ES 3.00 (TWGL)
+             */
+            source.replace( /^[ \t]*\n/, '' );
 
             if ( type === gl.VERTEX_SHADER ) {
 
@@ -200,7 +249,7 @@ export default class WebGL {
      */
     fetchShader ( type, sourceURL ) {
 
-        var self = this;
+        let self = this;
 
         fetch( sourceURL, {
 
@@ -436,6 +485,20 @@ export default class WebGL {
     }
 
     /** 
+     * create a normals buffer object.
+     */
+    createNBO () {
+
+    }
+
+    /** 
+     * Create a color buffer object.
+     */
+    createCBO () {
+
+    }
+
+    /** 
      * Create a texture from an image object.
      * @link https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Tutorial/Using_textures_in_WebGL
      * @param {Image} image an image object.
@@ -444,7 +507,7 @@ export default class WebGL {
 
         let gl = this.gl;
 
-        var tex = gl.createTexture();
+        let tex = gl.createTexture();
   
         gl.bindTexture(gl.TEXTURE_2D, tex);
 
@@ -459,6 +522,20 @@ export default class WebGL {
         gl.bindTexture( gl.TEXTURE_2D, null );
 
         return texture;
+
+    }
+
+    fetchTexture ( imgURL ) {
+
+    }
+
+    createModel () {
+
+
+    }
+
+    loadColada () {
+
 
     }
 
@@ -535,9 +612,11 @@ export default class WebGL {
     }
 
     /** 
-     * Check if our VBO and IBO are ok.
+     * Check if our VBO, IBO are ok.
      */
-    checkObjects () {
+    checkBufferObjects ( bo ) {
+
+        return (bo && bo instanceof ArrayBuffer );
 
     }
 

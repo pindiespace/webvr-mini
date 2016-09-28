@@ -54,9 +54,9 @@
 
             void main(void) {
 
-                gl_Position = vec4(aPosition);
-
                 vColor = vec4(aPosition.xyz / 2.0 + 0.5, 1.0);
+
+                gl_Position = vec4(aPosition);
 
             }
 
@@ -71,13 +71,15 @@
 
             #endif
 
-            uniform vec4 uColor;
+            //uniform vec4 uColor;
 
             varying vec4 vColor;
 
             void main(void) {
 
-                //gl_FragColor = uColor; //NOTE: WHY DIDN'T THIS WORK?
+                //gl_FragColor = uColor;
+
+                // convert from clipsapce (-1 <-> +1) to color space (0 -> 1).
 
                 gl_FragColor = vColor;
 
@@ -99,6 +101,7 @@
                     -0.5,  0.5, 0.0
                 ];
 
+            // indices for the
             var iboCode = 
                 [
                     0, 1, 2,
@@ -111,11 +114,9 @@
 
             // Set up a display.
 
-            var webgl = vrmini.webgl;
+            var webgl = window.webgl = vrmini.webgl;
 
             webgl.init( document.getElementById( 'webvr-canvas' ) );
-
-            window.webgl = webgl;
 
             if ( webgl.ready() ) {
 
@@ -195,27 +196,31 @@
 
                 gl.uniform4fv( uColor, [ 0.5, 1.0, 0.3, 1.0 ] );
 
-                console.log('program ready.')
+                console.log('program ready.');
 
-            }
+                window.bob = document.getElementById('webvr-canvas');
 
-            // animation loop
+                // animation loop
 
-            function render () {
+                function render () {
 
-                gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+                    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
 
-                gl.viewport( 0, 0, canvas.width, canvas.height );
+                    gl.viewport( 0, 0, canvas.width, canvas.height );
 
-               gl.drawElements( gl.TRIANGLES, iboLen, gl.UNSIGNED_SHORT, 0 );
+                    gl.drawElements( gl.TRIANGLES, iboLen, gl.UNSIGNED_SHORT, 0 );
 
-                requestAnimationFrame( render );
+                    requestAnimationFrame( render );
 
-            }
+                }
 
-            // start the rendering
+                // start the rendering
 
-            render();
+                render();
+
+        }
+
+
 
         </script>
 
