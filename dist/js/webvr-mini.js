@@ -490,7 +490,7 @@
 	/* WEBPACK VAR INJECTION */(function(fetch) {"use strict";
 
 	Object.defineProperty(exports, "__esModule", {
-	        value: true
+	            value: true
 	});
 
 	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
@@ -500,547 +500,529 @@
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 	var WebGL = function () {
-	        function WebGL(config) {
-	                _classCallCheck(this, WebGL);
+	            function WebGL(config) {
+	                        _classCallCheck(this, WebGL);
 
-	                console.log('in webGL class');
+	                        console.log('in webGL class');
 
-	                this.gl = this.canvas = null;
+	                        this.gl = this.canvas = null;
 
-	                if (config) {
+	                        if (config) {
 
-	                        if (config.glMatrix) {
+	                                    if (config.glMatrix) {
 
-	                                /////////////////////////////////
-	                                for (var i in config) {
-	                                        console.log(i + ":" + config[i] + "(" + _typeof(config[i]) + ")");
-	                                }
+	                                                /////////////////////////////////
+	                                                for (var i in config) {
+	                                                            console.log(i + ":" + config[i] + "(" + _typeof(config[i]) + ")");
+	                                                }
 
-	                                /////////////////////////////////
-	                                for (var i in config.glMatrix) {
-	                                        console.log(i + ":" + config.glMatrix[i]);
-	                                }
-	                                /////////////////////////////////
+	                                                /////////////////////////////////
+	                                                for (var i in config.glMatrix) {
+	                                                            console.log(i + ":" + config.glMatrix[i]);
+	                                                }
+	                                                /////////////////////////////////
 
-	                                this.glMatrix = config.glMatrix;
+	                                                this.glMatrix = config.glMatrix;
+	                                    }
+
+	                                    if (config.util) {
+
+	                                                this.util = config.util;
+	                                    }
+
+	                                    if (config.init === true) {
+
+	                                                this.init(config.canvas);
+	                                    }
+	                        }
+	            }
+
+	            /**
+	             * initialize with a canvas context
+	             * @param {Canvas} canvas
+	             */
+
+
+	            _createClass(WebGL, [{
+	                        key: "init",
+	                        value: function init(canvas) {
+
+	                                    if (!canvas) {
+
+	                                                this.canvas = document.createElement('canvas');
+
+	                                                this.canvas.width = 480;
+
+	                                                this.canvas.height = 320;
+	                                    } else {
+
+	                                                this.canvas = canvas;
+	                                    }
+
+	                                    if (this.canvas) {
+
+	                                                var r = this.canvas.getBoundingClientRect();
+
+	                                                this.canvas.width = r.width;
+
+	                                                this.canvas.height = r.height;
+
+	                                                this.gl = this.createContext();
+
+	                                                return true;
+	                                    }
+
+	                                    return false;
 	                        }
 
-	                        if (config.util) {
+	                        /** 
+	                         * check if we are ready to render
+	                         */
 
-	                                this.util = config.util;
+	            }, {
+	                        key: "ready",
+	                        value: function ready() {
+
+	                                    return !!(this.canvas && this.glMatrix && this.gl);
+	                        }
+	            }, {
+	                        key: "getCanvas",
+	                        value: function getCanvas() {
+
+	                                    return this.canvas;
 	                        }
 
-	                        if (config.init === true) {
+	                        /** 
+	                         * get HTML5 canvas, and a WebGL context.
+	                         */
 
-	                                this.init(config.canvas);
+	            }, {
+	                        key: "createContext",
+	                        value: function createContext() {
+
+	                                    if (this.gl) {
+
+	                                                this.gl = null;
+	                                    }
+
+	                                    this.gl = this.canvas.getContext('webgl');
+
+	                                    if (this.gl && typeof this.gl.getParameter == 'function') {
+
+	                                                this.glVers = this.gl.getParameter(this.gl.VERSION).toLowerCase();
+
+	                                                return this.gl;
+	                                    }
+
+	                                    return null;
 	                        }
-	                }
-	        }
+	            }, {
+	                        key: "getContext",
+	                        value: function getContext() {
 
-	        /**
-	         * initialize with a canvas context
-	         * @param {Canvas} canvas
-	         */
-
-
-	        _createClass(WebGL, [{
-	                key: "init",
-	                value: function init(canvas) {
-
-	                        if (!canvas) {
-
-	                                this.canvas = document.createElement('canvas');
-
-	                                this.canvas.width = 480;
-
-	                                this.canvas.height = 320;
-	                        } else {
-
-	                                this.canvas = canvas;
-	                        }
-
-	                        if (this.canvas) {
-
-	                                var r = this.canvas.getBoundingClientRect();
-
-	                                this.canvas.width = r.width;
-
-	                                this.canvas.height = r.height;
-
-	                                this.gl = this.createContext();
-
-	                                return true;
+	                                    return this.gl;
 	                        }
 
-	                        return false;
-	                }
+	                        /** 
+	                         * create a WeGL shader object.
+	                         */
 
-	                /** 
-	                 * check if we are ready to render
-	                 */
+	            }, {
+	                        key: "createShader",
+	                        value: function createShader(type, source) {
 
-	        }, {
-	                key: "ready",
-	                value: function ready() {
+	                                    var shader = null;
 
-	                        return !!(this.canvas && this.glMatrix && this.gl);
-	                }
+	                                    if (!type || !source) {
 
-	                /** 
-	                 * get HTML5 canvas, and a WebGL context.
-	                 */
+	                                                console.error('createShader: invalid params, type:' + type + ' source:' + source);
+	                                    } else if (this.ready()) {
 
-	        }, {
-	                key: "createContext",
-	                value: function createContext() {
+	                                                var _gl = this.gl;
 
-	                        if (this.gl) {
+	                                                if (type === _gl.VERTEX_SHADER) {
 
-	                                this.gl = null;
+	                                                            shader = this.vs = _gl.createShader(type); // assigned VS
+	                                                } else if (type === _gl.FRAGMENT_SHADER) {
+
+	                                                            shader = this.fs = _gl.createShader(type); // assigned FS
+	                                                } else {
+
+	                                                            console.error('createShader: type not recognized:' + type);
+	                                                }
+
+	                                                _gl.shaderSource(shader, source);
+
+	                                                _gl.compileShader(shader);
+
+	                                                // Detect shader compile errors.
+
+	                                                if (!_gl.getShaderParameter(shader, _gl.COMPILE_STATUS)) {
+
+	                                                            console.error('createShader:' + _gl.getShaderInfoLog(shader));
+
+	                                                            if (type === _gl.VERTEX_SHADER) {
+
+	                                                                        this.vs = null;
+	                                                            } else if (type == _gl.FRAGMENT_SHADER) {
+
+	                                                                        this.fs = null;
+	                                                            }
+
+	                                                            shader = null;
+	                                                }
+	                                    }
+
+	                                    return shader;
+	                        }
+	            }, {
+	                        key: "createVertexShader",
+	                        value: function createVertexShader(source) {
+
+	                                    return this.createShader(this.gl.VERTEX_SHADER, source);
+	                        }
+	            }, {
+	                        key: "createFragmentShader",
+	                        value: function createFragmentShader(source) {
+
+	                                    return this.createShader(this.gl.FRAGMENT_SHADER, source);
 	                        }
 
-	                        this.gl = this.canvas.getContext('webgl');
+	                        /** 
+	                         * Use the Fetch API to get a shader file
+	                         */
 
-	                        if (this.gl && typeof this.gl.getParameter == 'function') {
+	            }, {
+	                        key: "fetchShader",
+	                        value: function fetchShader(type, sourceURL) {
 
-	                                this.glVers = this.gl.getParameter(this.gl.VERSION).toLowerCase();
+	                                    var self = this;
 
-	                                return this.gl;
+	                                    fetch(sourceURL, {
+
+	                                                method: 'POST',
+
+	                                                mode: 'cors',
+
+	                                                redirect: 'follow',
+
+	                                                headers: new Headers({
+
+	                                                            'Content-Type': 'text/plain'
+
+	                                                })
+
+	                                    }).then(function (response) {
+
+	                                                console.log(text);
+
+	                                                if (response.ok) {
+
+	                                                            return response.text();
+	                                                }
+
+	                                                return false;
+	                                    }).then(function (source) {
+
+	                                                if (source) {
+
+	                                                            return self.createShader(type, source);
+	                                                }
+	                                    });
+
+	                                    return null;
+	                        }
+	            }, {
+	                        key: "fetchVertexShader",
+	                        value: function fetchVertexShader(sourceURL) {
+
+	                                    return this.fetchShader(this.gl.VERTEX_SHADER, sourceURL);
+	                        }
+	            }, {
+	                        key: "fetchFragmentShader",
+	                        value: function fetchFragmentShader(sourceURL) {
+
+	                                    return this.fetchShader(this.gl.FRAGMENT_SHADER, sourceURL);
 	                        }
 
-	                        return null;
-	                }
-	        }, {
-	                key: "getContext",
-	                value: function getContext() {
+	                        /** 
+	                         * create shader form script element
+	                         * @param {String|DOMElement} tag the script element, or its id
+	                         */
 
-	                        return this.gl;
-	                }
+	            }, {
+	                        key: "createShaderFromTag",
+	                        value: function createShaderFromTag(tag) {
 
-	                /** 
-	                 * create a WeGL shader object.
-	                 */
+	                                    if (this.util.isString(tag)) {
 
-	        }, {
-	                key: "createShader",
-	                value: function createShader(type, source) {
+	                                                tag = document.getElementById(tag);
+	                                    }
 
-	                        var shader = null;
+	                                    if (!tag) {
 
-	                        if (!type || !source) {
+	                                                console.error('createShaderFromTag: not found (' + tag + ')');
 
-	                                console.error('createShader: invalid params, type:' + type + ' source:' + source);
-	                        } else if (this.ready()) {
+	                                                return false;
+	                                    }
 
-	                                var _gl = this.gl;
+	                                    var type = null;
 
-	                                if (type === _gl.VERTEX_SHADER) {
+	                                    if (tag.type == 'x-shader/x-vertex') {
 
-	                                        shader = this.vs = _gl.createShader(type); // assigned VS
-	                                } else if (type === _gl.FRAGMENT_SHADER) {
+	                                                type = this.gl.VERTEX_SHADER;
+	                                    } else if (tag.type == 'x-shader/x-fragment') {
 
-	                                        shader = this.fs = _gl.createShader(type); // assigned FS
-	                                } else {
+	                                                type = this.gl.FRAGMENT_SHADER;
+	                                    } else {
 
-	                                        console.error('createShader: type not recognized:' + type);
-	                                }
+	                                                console.error('createShaderFromTag: type not found:(' + tag.type + ')');
 
-	                                _gl.shaderSource(shader, source);
+	                                                return null;
+	                                    }
 
-	                                _gl.compileShader(shader);
+	                                    var source = "";
 
-	                                // Detect shader compile errors.
+	                                    var c = tag.firstChild;
 
-	                                if (!_gl.getShaderParameter(shader, _gl.COMPILE_STATUS)) {
+	                                    while (c) {
 
-	                                        console.error('createShader:' + _gl.getShaderInfoLog(shader));
+	                                                if (c.nodeType == 3) {
 
-	                                        if (type === _gl.VERTEX_SHADER) {
+	                                                            source += c.textContent;
+	                                                }
 
-	                                                this.vs = null;
-	                                        } else if (type == _gl.FRAGMENT_SHADER) {
+	                                                c = c.nextSibling;
+	                                    }
 
-	                                                this.fs = null;
-	                                        }
-
-	                                        shader = null;
-	                                }
+	                                    return this.createShader(type, source);
 	                        }
 
-	                        return shader;
-	                }
-	        }, {
-	                key: "createVertexShader",
-	                value: function createVertexShader(source) {
+	                        /** 
+	                         * Create WebGL program with shaders. Program not used until 
+	                         * we apply gl.useProgram(program).
+	                         * @param {gl.VERTEX_SHADER} vShader the vertex shader.
+	                         * @param {gl.FRAGMENT_SHADER} fShader the fragment shader.
+	                         */
 
-	                        return this.createShader(this.gl.VERTEX_SHADER, source);
-	                }
-	        }, {
-	                key: "createFragmentShader",
-	                value: function createFragmentShader(source) {
+	            }, {
+	                        key: "createProgram",
+	                        value: function createProgram(vs, fs) {
 
-	                        return this.createShader(this.gl.FRAGMENT_SHADER, source);
-	                }
+	                                    if (!vs || !fs) {
 
-	                /** 
-	                 * Use the Fetch API to get a shader file
-	                 */
+	                                                console.error('createProgram: parameter error, vs:' + vs + ' fs:' + fs);
 
-	        }, {
-	                key: "fetchShader",
-	                value: function fetchShader(type, sourceURL) {
+	                                                return null;
+	                                    }
 
-	                        var self = this;
+	                                    var program = null;
 
-	                        fetch(sourceURL, {
+	                                    if (this.ready()) {
 
-	                                method: 'POST',
+	                                                var _gl2 = this.gl;
 
-	                                mode: 'cors',
+	                                                program = _gl2.createProgram();
 
-	                                redirect: 'follow',
+	                                                _gl2.attachShader(program, vs);
 
-	                                headers: new Headers({
+	                                                _gl2.attachShader(program, fs);
 
-	                                        'Content-Type': 'text/plain'
+	                                                _gl2.linkProgram(program);
 
-	                                })
+	                                                if (!_gl2.getProgramParameter(program, _gl2.LINK_STATUS)) {
 
-	                        }).then(function (response) {
+	                                                            console.error('createProgram:' + _gl2.getProgramInfoLog(program));
 
-	                                console.log(text);
+	                                                            this.program = program = null;
+	                                                }
+	                                    }
 
-	                                if (response.ok) {
-
-	                                        return response.text();
-	                                }
-
-	                                return false;
-	                        }).then(function (source) {
-
-	                                if (source) {
-
-	                                        return self.createShader(type, source);
-	                                }
-	                        });
-
-	                        return null;
-	                }
-	        }, {
-	                key: "fetchVertexShader",
-	                value: function fetchVertexShader(sourceURL) {
-
-	                        return this.fetchShader(this.gl.VERTEX_SHADER, sourceURL);
-	                }
-	        }, {
-	                key: "fetchFragmentShader",
-	                value: function fetchFragmentShader(sourceURL) {
-
-	                        return this.fetchShader(this.gl.FRAGMENT_SHADER, sourceURL);
-	                }
-
-	                /** 
-	                 * create shader form script element
-	                 * @param {String|DOMElement} tag the script element, or its id
-	                 */
-
-	        }, {
-	                key: "createShaderFromTag",
-	                value: function createShaderFromTag(tag) {
-
-	                        if (this.util.isString(tag)) {
-
-	                                tag = document.getElementById(tag);
+	                                    return program;
 	                        }
 
-	                        if (!tag) {
+	                        /** 
+	                         * create a Vertex Buffer Object (VBO).
+	                         * TODO: only one at a time
+	                         * https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/bufferData
+	                         */
 
-	                                console.error('createShaderFromTag: not found (' + tag + ')');
+	            }, {
+	                        key: "createVBO",
+	                        value: function createVBO(data, usage) {
 
-	                                return false;
+	                                    if (!data) {
+
+	                                                console.error('createVBO: empty data');
+
+	                                                return null;
+	                                    }
+
+	                                    if (!usage) {
+
+	                                                usage = gl.STATIC_DRAW;
+	                                    }
+
+	                                    var vbo = null;
+
+	                                    if (this.ready()) {
+
+	                                                var _gl3 = this.gl;
+
+	                                                vbo = _gl3.createBuffer(); // can only be bound once
+
+	                                                _gl3.bindBuffer(_gl3.ARRAY_BUFFER, vbo);
+
+	                                                _gl3.bufferData(_gl3.ARRAY_BUFFER, new Float32Array(data), usage);
+
+	                                                this.vbo = vbo;
+	                                    }
+
+	                                    return vbo;
 	                        }
 
-	                        var type = null;
+	                        /** 
+	                         * Create an Index Buffer Object. 
+	                         * TODO: only one at a time in this instance.
+	                         */
 
-	                        if (tag.type == 'x-shader/x-vertex') {
+	            }, {
+	                        key: "createIBO",
+	                        value: function createIBO(data, usage) {
 
-	                                type = this.gl.VERTEX_SHADER;
-	                        } else if (tag.type == 'x-shader/x-fragment') {
+	                                    if (!data) {
 
-	                                type = this.gl.FRAGMENT_SHADER;
-	                        } else {
+	                                                console.error('createVBO: empty data');
 
-	                                console.error('createShaderFromTag: type not found:(' + tag.type + ')');
+	                                                return null;
+	                                    }
 
-	                                return null;
+	                                    if (!usage) {
+
+	                                                usage = gl.STATIC_DRAW;
+	                                    }
+
+	                                    var ibo = null;
+
+	                                    if (this.ready()) {
+
+	                                                var _gl4 = this.gl;
+
+	                                                ibo = _gl4.createBuffer();
+
+	                                                _gl4.bindBuffer(_gl4.ELEMENT_ARRAY_BUFFER, ibo); // can only be bound once
+
+	                                                _gl4.bufferData(_gl4.ELEMENT_ARRAY_BUFFER, new Uint16Array(data), usage);
+
+	                                                this.ibo = ibo;
+	                                    }
+
+	                                    return ibo;
 	                        }
 
-	                        var source = "";
+	                        /** 
+	                         * Create a texture from an image object.
+	                         * @link https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Tutorial/Using_textures_in_WebGL
+	                         * @param {Image} image an image object.
+	                         */
 
-	                        var c = tag.firstChild;
+	            }, {
+	                        key: "createTexture",
+	                        value: function createTexture(img) {
 
-	                        while (c) {
+	                                    var gl = this.gl;
 
-	                                if (c.nodeType == 3) {
+	                                    var tex = gl.createTexture();
 
-	                                        source += c.textContent;
-	                                }
+	                                    gl.bindTexture(gl.TEXTURE_2D, tex);
 
-	                                c = c.nextSibling;
+	                                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+
+	                                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+	                                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+
+	                                    gl.generateMipmap(gl.TEXTURE_2D);
+
+	                                    gl.bindTexture(gl.TEXTURE_2D, null);
+
+	                                    return texture;
 	                        }
 
-	                        return this.createShader(type, source);
-	                }
+	                        /* 
+	                         * MATRIX OPERATIONS
+	                         * Mostly with glMatrix
+	                         */
 
-	                /** 
-	                 * Create WebGL program with shaders. Program not used until 
-	                 * we apply gl.useProgram(program).
-	                 * @param {gl.VERTEX_SHADER} vShader the vertex shader.
-	                 * @param {gl.FRAGMENT_SHADER} fShader the fragment shader.
-	                 */
+	            }, {
+	                        key: "createMat4Perspective",
+	                        value: function createMat4Perspective() {}
+	            }, {
+	                        key: "setToMat3",
+	                        value: function setToMat3() {}
+	            }, {
+	                        key: "setModelView",
+	                        value: function setModelView() {}
+	            }, {
+	                        key: "setProjection",
+	                        value: function setProjection() {}
+	            }, {
+	                        key: "setNormals",
+	                        value: function setNormals() {}
+	            }, {
+	                        key: "loadModel",
+	                        value: function loadModel() {}
 
-	        }, {
-	                key: "createProgram",
-	                value: function createProgram(vs, fs) {
+	                        /** 
+	                         * check to see if we're ready to run, after supplying 
+	                         * shaders.
+	                         */
 
-	                        if (!vs || !fs) {
+	            }, {
+	                        key: "checkShaders",
+	                        value: function checkShaders() {
 
-	                                console.error('createProgram: parameter error, vs:' + vs + ' fs:' + fs);
+	                                    var gl = this.gl;
 
-	                                return null;
+	                                    if (!gl.getProgramParameter(this.program, gl.LINK_STATUS)) {
+
+	                                                // Test the vertex shader
+
+	                                                if (this.vs && !gl.getShaderParameter(this.vs, gl.COMPILE_STATUS)) {
+
+	                                                            console.error('error creating the vertex shader, ' + gl.getShaderInfoLog(this.vs));
+	                                                } else if (this._fragmentShader && !gl.getShaderParameter(this._fragmentShader, gl.COMPILE_STATUS)) {
+
+	                                                            console.error('error creating the fragment shader, ' + gl.getShaderInfoLog(this.fs));
+	                                                } else {
+
+	                                                            console.error('error in gl program linking');
+	                                                }
+
+	                                                gl.deleteProgram(this.program);
+
+	                                                gl.deleteShader(this.vs);
+
+	                                                gl.deleteShader(this.fs);
+
+	                                                this.program = this.vs = this.fs = null;
+
+	                                                return false;
+	                                    }
+
+	                                    return true;
 	                        }
 
-	                        var program = null;
-
-	                        if (this.ready()) {
-
-	                                var _gl2 = this.gl;
-
-	                                program = _gl2.createProgram();
-
-	                                _gl2.attachShader(program, vs);
-
-	                                _gl2.attachShader(program, fs);
-
-	                                _gl2.linkProgram(program);
-
-	                                if (!_gl2.getProgramParameter(program, _gl2.LINK_STATUS)) {
-
-	                                        console.error('createProgram:' + _gl2.getProgramInfoLog(program));
-
-	                                        this.program = program = null;
-	                                }
-	                        }
-
-	                        return program;
-	                }
-
-	                /** 
-	                 * create a Vertex Buffer Object (VBO).
-	                 * TODO: only one at a time
-	                 * https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/bufferData
-	                 */
-
-	        }, {
-	                key: "createVBO",
-	                value: function createVBO(data, usage) {
-
-	                        if (!data) {
-
-	                                console.error('createVBO: empty data');
-
-	                                return null;
-	                        }
-
-	                        if (!usage) {
-
-	                                usage = gl.STATIC_DRAW;
-	                        }
-
-	                        var vbo = null;
-
-	                        if (this.ready()) {
-
-	                                var _gl3 = this.gl;
-
-	                                vbo = _gl3.createBuffer(); // can only be bound once
-
-	                                _gl3.bindBuffer(_gl3.ARRAY_BUFFER, vbo);
-
-	                                _gl3.bufferData(_gl3.ARRAY_BUFFER, new Float32Array(data), usage);
-
-	                                this.vbo = vbo;
-	                        }
-
-	                        return vbo;
-	                }
-
-	                /** 
-	                 * Create an Index Buffer Object. 
-	                 * TODO: only one at a time in this instance.
-	                 */
-
-	        }, {
-	                key: "createIBO",
-	                value: function createIBO(data, usage) {
-
-	                        if (!data) {
-
-	                                console.error('createVBO: empty data');
-
-	                                return null;
-	                        }
-
-	                        if (!usage) {
-
-	                                usage = gl.STATIC_DRAW;
-	                        }
-
-	                        var ibo = null;
-
-	                        if (this.ready()) {
-
-	                                var _gl4 = this.gl;
-
-	                                ibo = _gl4.createBuffer();
-
-	                                _gl4.bindBuffer(_gl4.ELEMENT_ARRAY_BUFFER, ibo); // can only be bound once
-
-	                                _gl4.bufferData(_gl4.ELEMENT_ARRAY_BUFFER, new Uint16Array(data), usage);
-
-	                                this.ibo = ibo;
-	                        }
-
-	                        return ibo;
-	                }
-
-	                /** 
-	                 * Create a texture from an image object.
-	                 * @link https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Tutorial/Using_textures_in_WebGL
-	                 * @param {Image} image an image object.
-	                 */
-
-	        }, {
-	                key: "createTexture",
-	                value: function createTexture(img) {
-
-	                        var gl = this.gl;
-
-	                        var tex = gl.createTexture();
-
-	                        gl.bindTexture(gl.TEXTURE_2D, tex);
-
-	                        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-
-	                        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-
-	                        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
-
-	                        gl.generateMipmap(gl.TEXTURE_2D);
-
-	                        gl.bindTexture(gl.TEXTURE_2D, null);
-
-	                        return texture;
-	                }
-
-	                /* 
-	                 * MATRIX OPERATIONS
-	                 * Mostly with glMatrix
-	                 */
-
-	        }, {
-	                key: "createMat4Perspective",
-	                value: function createMat4Perspective() {}
-	        }, {
-	                key: "setToMat3",
-	                value: function setToMat3() {}
-	        }, {
-	                key: "setModelView",
-	                value: function setModelView() {}
-	        }, {
-	                key: "setProjection",
-	                value: function setProjection() {}
-	        }, {
-	                key: "setNormals",
-	                value: function setNormals() {}
-	        }, {
-	                key: "loadModel",
-	                value: function loadModel() {}
-
-	                /** 
-	                 * check to see if we're ready to run, after supplying 
-	                 * shaders.
-	                 */
-
-	        }, {
-	                key: "checkShaders",
-	                value: function checkShaders() {
-
-	                        var gl = this.gl;
-
-	                        if (!gl.getProgramParameter(this.program, gl.LINK_STATUS)) {
-
-	                                // Test the vertex shader
-
-	                                if (this.vs && !gl.getShaderParameter(this.vs, gl.COMPILE_STATUS)) {
-
-	                                        console.error('error creating the vertex shader, ' + gl.getShaderInfoLog(this.vs));
-	                                } else if (this._fragmentShader && !gl.getShaderParameter(this._fragmentShader, gl.COMPILE_STATUS)) {
-
-	                                        console.error('error creating the fragment shader, ' + gl.getShaderInfoLog(this.fs));
-	                                } else {
-
-	                                        console.error('error in gl program linking');
-	                                }
-
-	                                gl.deleteProgram(this.program);
-
-	                                gl.deleteShader(this.vs);
-
-	                                gl.deleteShader(this.fs);
-
-	                                this.program = this.vs = this.fs = null;
-
-	                                return false;
-	                        }
-
-	                        return true;
-	                }
-
-	                /** 
-	                 * Check if our VBO and IBO are ok.
-	                 */
-
-	        }, {
-	                key: "checkObjects",
-	                value: function checkObjects() {}
-
-	                /** 
-	                 * Setup the scene.
-	                 */
-
-	        }, {
-	                key: "run",
-	                value: function run() {
-
-	                        if (this.check()) {}
-	                }
-	        }, {
-	                key: "render",
-	                value: function render() {
-
-	                        var gl = this.gl;
-
-	                        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-	                        gl.viewport(0, 0, this.canvas.width, this.canvas.height);
-
-	                        // gl.bindBuffer( gl.ARRAY_BUFFER, this.vbo );
-
-	                }
-	        }]);
-
-	        return WebGL;
+	                        /** 
+	                         * Check if our VBO and IBO are ok.
+	                         */
+
+	            }, {
+	                        key: "checkObjects",
+	                        value: function checkObjects() {}
+	            }]);
+
+	            return WebGL;
 	}();
 
 	exports.default = WebGL;

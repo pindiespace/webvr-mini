@@ -56,6 +56,8 @@
 
                 gl_Position = vec4(aPosition);
 
+                vColor = vec4(aPosition.xyz / 2.0 + 0.5, 1.0);
+
             }
 
         </script>
@@ -71,9 +73,13 @@
 
             uniform vec4 uColor;
 
+            varying vec4 vColor;
+
             void main(void) {
 
-                gl_FragColor = uColor;
+                //gl_FragColor = uColor; //NOTE: WHY DIDN'T THIS WORK?
+
+                gl_FragColor = vColor;
 
             }
 
@@ -113,6 +119,8 @@
 
             if ( webgl.ready() ) {
 
+                var canvas = webgl.getCanvas();
+
                 var gl = webgl.getContext();
 
                 gl.enable( gl.DEPTH_TEST );
@@ -140,15 +148,44 @@
                 console.log("PROGRAM:" + program)
 
                 // use the program
-                // TODO STORE MULTIPLE PROGRAMS FOR SWITCHING
+                // TODO: STORE MULTIPLE PROGRAMS FOR SWITCHING
 
                 gl.useProgram( program );
+
+                // SET VALUES FOR VERTEX BUFFER OBJECT
 
                 // Get location of the position attribute in vertex shader. NOTE: getAttrib...
 
                 var aPosition = gl.getAttribLocation( program, 'aPosition' );
 
+                // Bind vertex buffer.
+
+                var vbo = webgl.createVBO( vboCode, gl.STATIC_DRAW );
+
+                // Tell the attribute how to get info out of the VBO.
+
                 gl.enableVertexAttribArray( aPosition );
+
+                // Give the attribute rules for pulling info out of the VBO.
+
+                gl.vertexAttribPointer(
+                    aPosition, 
+                    3,             // size (2d or 3d)
+                    gl.FLOAT,      // type
+                    false,         // don't normalize
+                    0,             // 0 = move forward size * sizeof(type) each iteration to get the next position
+                    0              // start at the beginning of the buffer
+                );
+
+                var vboLen = vboCode.length;
+
+                // Bind index buffer.
+
+                var ibo = webgl.createIBO( iboCode, gl.STATIC_DRAW );
+
+                var iboLen = iboCode.length;
+
+                // FRAGMENT SHADER UNIFORM
 
                 // Get location of color of fragment shader. NOTE: getUniform...
 
@@ -158,12 +195,6 @@
 
                 gl.uniform4fv( uColor, [ 0.5, 1.0, 0.3, 1.0 ] );
 
-                // Bind vertex and index buffers.
-
-                var vbo = webgl.createVBO( vboCode, gl.STATIC_DRAW );
-
-                var ibo = webgl.createIBO( iboCode, gl.STATIC_DRAW );
-
                 console.log('program ready.')
 
             }
@@ -172,7 +203,11 @@
 
             function render () {
 
-                webgl.render();
+                gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+
+                gl.viewport( 0, 0, canvas.width, canvas.height );
+
+               gl.drawElements( gl.TRIANGLES, iboLen, gl.UNSIGNED_SHORT, 0 );
 
                 requestAnimationFrame( render );
 

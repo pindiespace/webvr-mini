@@ -88,6 +88,12 @@ export default class WebGL {
 
     }
 
+    getCanvas () {
+
+        return this.canvas;
+
+    }
+
     /** 
      * get HTML5 canvas, and a WebGL context.
      */
@@ -532,35 +538,6 @@ export default class WebGL {
      * Check if our VBO and IBO are ok.
      */
     checkObjects () {
-
-
-    }
-
-    /** 
-     * Setup the scene.
-     */
-    run () {
-
-        if ( this.check() ) {
-
-
-
-
-        }
-
-    }
-
-    render () {
-
-        let gl = this.gl;
-
-        gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
-
-        gl.viewport( 0, 0, this.canvas.width, this.canvas.height );
-
-        // gl.bindBuffer( gl.ARRAY_BUFFER, this.vbo );
-
-
 
     }
 
