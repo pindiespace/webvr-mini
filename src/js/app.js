@@ -5,7 +5,9 @@
  * point for including both ES5 and ES6 libraries.
  */
 
-// DEV ENVIRONMENT
+console.log( 'in app.js' );
+
+// DEV ENVIRONMENT.
 
 var env = process.env.WEBPACK_ENV;
 
@@ -13,25 +15,17 @@ var env = process.env.WEBPACK_ENV;
 
 var vrmini = require( '../es6/app.es6' );
 
-console.log("VR:" + vrmini);
-
 for (var i in vrmini ) {
 
     console.log( i + ":" + vrmini[i] );
 }
 
+
 /* 
  * these variables are defined by webpack inputs in package.json, 
- * and processed to __DEV__ and __RELEASE__
+ * and processed to __DEV__ and __RELEASE__ here.
  * "build": "cross-env BUILD_RELEASE=true BUILD_DEV=false webpack --config webpack-production.config.js -p -p",
  * "dev": "cross-env BUILD_RELEASE=false BUILD_DEV=true webpack",
- */
-
-
-console.log( 'in app.js' );
-
-/* 
- * DEBUGGING OPTIONS FOR MAIN PROGRAM.
  */
 
 if ( __DEV__ === 'true' ) {

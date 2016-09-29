@@ -10,10 +10,9 @@ var path = require( 'path' );
 
 var ExtendedDefinePlugin = require( 'extended-define-webpack-plugin' );
 
-
 module.exports = {
 
-    entry: [ './src/js/app.js', './src/es6/app.es6', './src/html/index.html' ],
+    entry: [ './src/js/app.js', './src/es6/app.es6' ],
 
     output: {
 
@@ -64,7 +63,7 @@ module.exports = {
 
     resolve: {
 
-        extensions: ['', '.js', '.es6', '.scss', '.html']
+        extensions: ['', '.js', '.jsx', '.es6', '.scss', '.html']
 
     },
 
@@ -82,16 +81,7 @@ module.exports = {
 
         }),
 
-        // Conditionally load polyfills from npm
-        // http://madole.xyz/using-webpack-to-set-up-polyfills-in-your-site/
 
-        new webpack.ProvidePlugin({
-
-            Promise: 'imports?this=>global!exports?global.Promise!es6-promise',
-
-            fetch: 'imports?this=>global!exports?global.fetch!whatwg-fetch'
-
-        })
 
     ],
 

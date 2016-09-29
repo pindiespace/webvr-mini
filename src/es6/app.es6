@@ -11,10 +11,6 @@ var env = process.env.WEBPACK_ENV;
 
 // REQUIRE ALL POLYFILLS
 
-require('es6-promise').polyfill();
-
-require("whatwg-fetch");
-
 // WebGL math library.
 
 var glMatrix = require( 'gl-matrix' );

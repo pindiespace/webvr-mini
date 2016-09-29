@@ -5,7 +5,11 @@
 
         <meta charset="utf-8">
 
+        <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+
         <title>WebVR Mini</title>
+
+        <script src="https://cdn.polyfill.io/v2/polyfill.js?features=Promise|gated,fetch|gated"></script>
 
         <style>
 /*
@@ -116,110 +120,120 @@
 
             var webgl = window.webgl = vrmini.webgl;
 
-            webgl.init( document.getElementById( 'webvr-canvas' ) );
+            webgl.init( 'webvr-canvas' );
 
-            if ( webgl.ready() ) {
+                // Load when the DOM is available.
 
-                var canvas = webgl.getCanvas();
+            window.addEventListener( 'DOMContentLoaded', function () {
 
-                var gl = webgl.getContext();
+                if ( webgl.ready() ) {
 
-                gl.enable( gl.DEPTH_TEST );
+                    var canvas = webgl.getCanvas();
 
-                gl.enable( gl.CULL_FACE );
+                    var gl = webgl.getContext();
 
-                gl.enable( gl.BLEND );
+                        gl.enable( gl.DEPTH_TEST );
 
-                gl.blendFunc( gl.SRC_ALPHA, gl.ONE );
+                    gl.enable( gl.CULL_FACE );
 
-                // Set the clear color.
+                    gl.enable( gl.BLEND );
 
-                gl.clearColor( 0.1, 0.1, 0.1, 1.0 );
+                    gl.blendFunc( gl.SRC_ALPHA, gl.ONE );
 
-                // Attach the shaders.
+                    // Set the clear color.
 
-                var vs = webgl.createShaderFromTag( 'vertex' );
+                    gl.clearColor( 0.1, 0.1, 0.1, 1.0 );
 
-                var fs = webgl.createShaderFromTag( 'fragment' );
+                    // Attach the shaders.
 
-                // Create the program.
+                    var vs = webgl.createShaderFromTag( 'vertex' );
 
-                var program = webgl.createProgram( vs, fs );
+                    var fs = webgl.createShaderFromTag( 'fragment' );
 
-                console.log("PROGRAM:" + program)
+                    // Create the program.
 
-                // use the program
-                // TODO: STORE MULTIPLE PROGRAMS FOR SWITCHING
+                    var program = webgl.createProgram( vs, fs );
 
-                gl.useProgram( program );
+                    console.log("PROGRAM:" + program)
 
-                // SET VALUES FOR VERTEX BUFFER OBJECT
+                    // use the program
+                    // TODO: STORE MULTIPLE PROGRAMS FOR SWITCHING
 
-                // Get location of the position attribute in vertex shader. NOTE: getAttrib...
+                    gl.useProgram( program );
 
-                var aPosition = gl.getAttribLocation( program, 'aPosition' );
+                    // SET VALUES FOR VERTEX BUFFER OBJECT
 
-                // Bind vertex buffer.
+                    // Get location of the position attribute in vertex shader. NOTE: getAttrib...
 
-                var vbo = webgl.createVBO( vboCode, gl.STATIC_DRAW );
+                    var aPosition = gl.getAttribLocation( program, 'aPosition' );
 
-                // Tell the attribute how to get info out of the VBO.
+                    // Bind vertex buffer.
 
-                gl.enableVertexAttribArray( aPosition );
+                    var vbo = webgl.createVBO( vboCode, gl.STATIC_DRAW );
 
-                // Give the attribute rules for pulling info out of the VBO.
+                    // Tell the attribute how to get info out of the VBO.
 
-                gl.vertexAttribPointer(
-                    aPosition, 
-                    3,             // size (2d or 3d)
-                    gl.FLOAT,      // type
-                    false,         // don't normalize
-                    0,             // 0 = move forward size * sizeof(type) each iteration to get the next position
-                    0              // start at the beginning of the buffer
-                );
+                    gl.enableVertexAttribArray( aPosition );
 
-                var vboLen = vboCode.length;
+                    // Give the attribute rules for pulling info out of the VBO.
 
-                // Bind index buffer.
+                    gl.vertexAttribPointer(
+                        aPosition, 
+                        3,             // size (2d or 3d)
+                        gl.FLOAT,      // type
+                        false,         // don't normalize
+                        0,             // 0 = move forward size * sizeof(type) each iteration to get the next position
+                        0              // start at the beginning of the buffer
+                    );
 
-                var ibo = webgl.createIBO( iboCode, gl.STATIC_DRAW );
+                    var vboLen = vboCode.length;
 
-                var iboLen = iboCode.length;
+                    // Bind index buffer.
 
-                // FRAGMENT SHADER UNIFORM
+                    var ibo = webgl.createIBO( iboCode, gl.STATIC_DRAW );
 
-                // Get location of color of fragment shader. NOTE: getUniform...
+                    var iboLen = iboCode.length;
 
-                var uColor = gl.getUniformLocation( program, 'uColor' );
+                    // FRAGMENT SHADER UNIFORM
 
-                // Set shader to RGBA vector4 value.
+                    // Get location of color of fragment shader. NOTE: getUniform...
 
-                gl.uniform4fv( uColor, [ 0.5, 1.0, 0.3, 1.0 ] );
+                    var uColor = gl.getUniformLocation( program, 'uColor' );
 
-                console.log('program ready.');
+                    // Set shader to RGBA vector4 color value.
 
-                window.bob = document.getElementById('webvr-canvas');
+                    gl.uniform4fv( uColor, [ 0.5, 1.0, 0.3, 1.0 ] );
 
-                // animation loop
+                    console.log('program ready.');
 
-                function render () {
+                    window.bob = document.getElementById('webvr-canvas');
 
-                    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+                    // animation loop
 
-                    gl.viewport( 0, 0, canvas.width, canvas.height );
+                    function render () {
 
-                    gl.drawElements( gl.TRIANGLES, iboLen, gl.UNSIGNED_SHORT, 0 );
+                        gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
 
-                    requestAnimationFrame( render );
+                        gl.viewport( 0, 0, canvas.width, canvas.height );
 
+                        gl.drawElements( gl.TRIANGLES, iboLen, gl.UNSIGNED_SHORT, 0 );
+
+                        requestAnimationFrame( render );
+
+                    }
+
+                    // start the rendering
+
+                    render();
+
+                } else {
+
+                    console.error( 'webgl rendering not supported by this browser.' );
                 }
 
-                // start the rendering
+            }, 
 
-                render();
-
-        }
-
+            false ); // end of domready event 
 
 
         </script>

@@ -51,7 +51,8 @@ export default class WebGL {
 
     /**
      * initialize with a canvas context
-     * @param {Canvas} canvas
+     * @param {Canvas|String|undefined} canvas accepts null, in which case a <canvas> object is 
+     * created and added to document.body, an ID value for a tag, or a CanvasDOMobject
      */
     init ( canvas ) {
 
@@ -62,6 +63,14 @@ export default class WebGL {
             canvas.width = 480;
 
             canvas.height = 320;
+
+            // This seems to fix a bug in IE 11. TODO: remove extra canvas.
+
+            document.body.appendChild( canvas );
+
+        } else if ( this.util.isString( canvas) ) {
+
+            canvas = document.getElementById( canvas );
 
         } else {
 
@@ -100,6 +109,8 @@ export default class WebGL {
      * check if we are ready to render
      */
     ready () {
+
+        console.log('this.gl:' + this.gl + ' this.glMatrix:' + this.glMatrix )
 
         return ( !! ( this.gl && this.glMatrix ) );
 
@@ -149,6 +160,12 @@ export default class WebGL {
         }
 
         this.gl = canvas.getContext( 'webgl' );
+
+        if ( ! this.gl ) {
+
+            this.gl = canvas.getContext( 'experimental-webgl' ); // some FF, Edge versions.
+
+        }
 
         if ( this.gl && typeof this.gl.getParameter == 'function' ) {
 
