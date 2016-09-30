@@ -4,7 +4,6 @@
  * ES5 syntax (es6 will be transpiled). Central 
  * point for including both ES5 and ES6 libraries.
  */
-
 console.log( 'in app.js' );
 
 // DEV ENVIRONMENT.
@@ -19,7 +18,6 @@ for (var i in vrmini ) {
 
     console.log( i + ":" + vrmini[i] );
 }
-
 
 /* 
  * these variables are defined by webpack inputs in package.json, 

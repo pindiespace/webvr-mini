@@ -3,6 +3,14 @@
 
 var webpack = require( 'webpack' );
 
+/* 
+ * if there are problems in windows, try
+ * http://stackoverflow.com/questions/37552861/webpack-dev-server-not-updating-file-which-is-out-of-context
+ * webpack-dev-server --watch-poll
+ */
+
+var CopyWebpackPlugin = require( 'copy-webpack-plugin' );
+
 var path = require( 'path' );
 
 // ExtendedDefinePlugin takes raw strings and inserts them, so you can put strings of JS if you want.
@@ -20,6 +28,12 @@ module.exports = {
 
         filename: 'webvr-mini.js'
 
+    },
+
+    devServer: {
+        // This is required for webpack-dev-server. The path should  
+        // be an absolute path to your build destination. 
+        outputPath: path.join(__dirname, 'build')
     },
 
     module: {
@@ -57,7 +71,9 @@ module.exports = {
 
             }
 
-        ]
+        ],
+
+
 
     },
 
@@ -81,6 +97,13 @@ module.exports = {
 
         }),
 
+        new CopyWebpackPlugin([
+
+            { 
+                from: './src/html/index.html', to: '../index.html'
+            }
+
+        ])
 
 
     ],
