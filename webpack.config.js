@@ -4,7 +4,7 @@
 var webpack = require( 'webpack' );
 
 /* 
- * if there are problems in windows, try
+ * if there are problems with updates in windows, try
  * http://stackoverflow.com/questions/37552861/webpack-dev-server-not-updating-file-which-is-out-of-context
  * webpack-dev-server --watch-poll
  */
@@ -97,10 +97,18 @@ module.exports = {
 
         }),
 
+        /** 
+         * WebPack just builds the main app JavaScript library.
+         * In more complex workflows, you would have gulp or grunt fire webpack. Here, a 
+         * WebPack plugin copies a few minimal assets to the /dist folder
+         */
+
         new CopyWebpackPlugin([
 
-            { 
+            {
+
                 from: './src/html/index.html', to: '../index.html'
+
             }
 
         ])

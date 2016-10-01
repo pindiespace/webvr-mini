@@ -8,7 +8,7 @@ var stripLoader = {
 
         test: [ /\.js$/, /\.es6$/ ],
 
-        ex clude: /node_modules/,
+        exclude: /node_modules/,
 
         loader: WebpackStripLoader.loader( 'console.log ')
 

@@ -14,6 +14,8 @@ var env = process.env.WEBPACK_ENV;
 
 var vrmini = require( '../es6/app.es6' );
 
+// Check ES6 module structure.
+
 for (var i in vrmini ) {
 
     console.log( i + ":" + vrmini[i] );
@@ -36,14 +38,11 @@ if ( __DEV__ === 'true' ) {
 
 }
 
-// POLYFILLS LOADED IN WEBPACK.CONFIG
-
-// ADD REFERENCE TO WINDOW OBJECT
+// EXPOSE IN BROWSER WINDOW OBJECT
 
 window.vrmini = vrmini;
 
 console.log("Window.vrmini:" + vrmini );
 
-// CODE
 
 

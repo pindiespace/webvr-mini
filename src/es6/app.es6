@@ -25,27 +25,29 @@ if ( ! glMatrix ) {
 
 }
 
-import Util from  './util';
+// Import WebVR-Mini libraries.
 
-import WebGLTexture from './webgl-texture';
+import Util from  './util';
 
 import WebGL from './webgl';
 
+import Loader from './loader';
+
 import WebVR from './webvr';
+
+import Prim from './prim';
+
+// Import the world (variable).
+
+import World from './world';
 
 // Init Util first to create shortcuts.
 
 let util = new Util();
 
-// Init immediately.
+// If we are in dev mode, load any special libraries.
 
 let configGL = { init: true, glMatrix: glMatrix, util: util };
-
-let configTexture = { init: true };
-
-let configVR = { init: true };
-
-// If we are in dev mode, load any special libraries.
 
 if ( __DEV__ === 'true' ) {
 
@@ -72,23 +74,20 @@ if ( __DEV__ === 'true' ) {
 
 }
 
-// Create our remaining objects.
+// Create our library.
 
 let webgl = new WebGL( configGL );
 
-let textureLoader = new WebGLTexture( configTexture );
+let loader = new Loader( { init: true, util: util, webgl: webgl } );
 
-let webvr = new WebVR( configVR );
+let prim = new Prim ( { init: true, util: util, webgl: webgl } );
 
-// Export our classes to app.js
+let webvr = new WebVR( { init: true, util: util, webgl: webgl } );
 
-export { util, webgl, textureLoader, webvr };
+// Create the world.
 
+let world = new World( webgl, prim );
 
-// sample vertex and fragment shaders
+// Export our classes to app.js.
 
-// sample code 
-// http://sethlakowske.com/articles/webgl-using-gl-mat4-browserify-shader-and-browserify/
-
-
-//gl.useProgram(shaderProgram); 
+export { util, webgl, loader, prim, webvr, world };

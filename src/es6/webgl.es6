@@ -6,6 +6,8 @@ export default class WebGL {
      * HTML5 Games code: http://www.wiley.com/WileyCDA/WileyTitle/productCd-1119975085.html
      * Toji: https://github.com/toji/webvr-samples
      * TWGL: @link http://twgljs.org/
+     * @constructor
+     * @param {Object} config a configuration object, set in app.js.
      */
 
     constructor ( config ) {
@@ -52,7 +54,8 @@ export default class WebGL {
     /**
      * initialize with a canvas context
      * @param {Canvas|String|undefined} canvas accepts null, in which case a <canvas> object is 
-     * created and added to document.body, an ID value for a tag, or a CanvasDOMobject
+     * created and added to document.body, an ID value for a tag, or a CanvasDOMobject.
+     * @returns {WebGLContext} the WebGL context of the <canvas> object.
      */
     init ( canvas ) {
 
@@ -64,7 +67,7 @@ export default class WebGL {
 
             canvas.height = 320;
 
-            // This seems to fix a bug in IE 11. TODO: remove extra canvas.
+            // This seems to fix a bug in IE 11. TODO: remove extra empty <canvas>.
 
             document.body.appendChild( canvas );
 
@@ -80,7 +83,9 @@ export default class WebGL {
 
         if ( canvas ) {
 
-            let r = canvas.getBoundingClientRect(); //TODO: bind to dom for IE10
+            // NOTE: IE10 needs this bound to DOM for the following command to work.
+
+            let r = canvas.getBoundingClientRect();
 
             canvas.width = r.width;
 
@@ -88,7 +93,25 @@ export default class WebGL {
 
             this.gl = this.createContext( canvas );
 
-            return this;
+            if ( this.gl ) {
+
+                let gl = this.gl;
+
+                // default initializtion, can be over-ridden in your world file.
+
+                gl.enable( gl.DEPTH_TEST );
+
+                gl.enable( gl.CULL_FACE );
+
+                gl.enable( gl.BLEND );
+
+                gl.blendFunc( gl.SRC_ALPHA, gl.ONE );
+
+                gl.clearColor( 0.1, 0.1, 0.1, 1.0 );
+
+            }
+
+            return this.gl;
 
         }
 
@@ -516,7 +539,7 @@ export default class WebGL {
     }
 
     /** 
-     * Create a texture from an image object.
+     * Create a texture from a JS Image object.
      * @link https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Tutorial/Using_textures_in_WebGL
      * @param {Image} image an image object.
      */
