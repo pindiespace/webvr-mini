@@ -86,7 +86,15 @@ let webvr = new WebVR( { init: true, util: util, webgl: webgl } );
 
 // Create the world.
 
-let world = new World( webgl, prim );
+let world = null;
+
+window.addEventListener( 'DOMContentLoaded', function () {
+
+    world = new World( webgl, prim );
+
+    world.init();
+
+}, false );
 
 // Export our classes to app.js.
 

@@ -445,6 +445,64 @@ export default class WebGL {
 
     }
 
+
+    /** 
+     * Create associative array with shader attributes.
+     */
+    getAttributes ( program ) {
+
+        let gl = this.gl;
+
+        let attrib = {};
+
+        let attribCount = gl.getProgramParameter( program, gl.ACTIVE_ATTRIBUTES );
+
+        for ( let i = 0; i < attribCount; i++ ) {
+
+            let attribInfo = gl.getActiveAttrib( program, i );
+
+            attrib[ attribInfo.name ] = gl.getAttribLocation( program, attribInfo.name );
+
+        }
+
+        return attrib;
+
+    }
+
+    /** 
+     * Create associative array with shader uniforms.
+     */
+    getUniforms ( program ) {
+
+        let gl = this.gl;
+
+        let uniform = {};
+
+        let uniformCount = gl.getProgramParameter( program, gl.ACTIVE_UNIFORMS );
+
+        let uniformName = '';
+
+        for ( let i = 0; i < uniformCount; i++ ) {
+
+            let uniformInfo = gl.getActiveUniform( program, i );
+
+            uniformName = uniformInfo.name.replace( '[0]', '' );
+
+            uniform[ uniformName ] = gl.getUniformLocation( program, uniformName );
+
+        }
+
+        return uniform;
+
+    }
+
+    /** 
+     * Create associative array with shader varying variables.
+     */
+    getVarying ( program ) {
+
+    }
+
     /** 
      * create a Vertex Buffer Object (VBO).
      * TODO: only one at a time

@@ -22,19 +22,19 @@ export default class world {
 
         this.prim = prim;
 
+        this.canvas = webgl.getCanvas();
+
         this.gl = webgl.getContext();
 
         this.glMatrix = webgl.glMatrix;
-
-        // Buffers
 
         this.objVertices = [];
 
         this.objIndices = [];
 
-        prim.setBuffers( this.objVertices, this.objIndices );
+        this.projectionMat = this.glMatrix.mat4.create();
 
-        // this.init();
+        this.modelViewMat = this.glMatrix.mat4.create();
 
     }
 
@@ -91,12 +91,93 @@ export default class world {
 
     }
 
+    /** 
+     * Create associative array with shader varyings.
+     */
+    setVarying ( program ) {
+
+
+    }
+
     /**
      * Handle resize event for the World.
      * @param {Number} width world width (x-axis).
      * @param {Number} depth world depth (z-axis).
      */
     resize ( width, depth ) {
+
+
+    }
+
+    /** 
+     * Start building the world for the first time.
+     */
+    init () {
+
+        let gl = this.gl;
+
+        this.create();
+
+        let vs = webgl.createShaderFromTag( 'vertex' );
+
+        let fs = webgl.createShaderFromTag( 'fragment' );
+
+        this.objVertices = this.prim.setVertexData( this.objVertices );
+
+        this.objIndices = this.prim.setIndexData( this.objIndices );
+
+        let program = webgl.createProgram( vs, fs );
+
+        var attributes = this.webgl.getAttributes( program );
+
+        var uniforms = this.webgl.getUniforms( program );
+
+        // Use the program.
+
+        gl.useProgram( program );
+
+        // set attributes, uniform, varying.
+
+        gl.uniformMatrix4fv( uniforms.projectionMat, false, this.projectionMat );
+
+        gl.uniformMatrix4fv( uniforms.modelViewMat, false, this.modelViewMat );
+
+        // Set by reference, vertex and index data.
+
+        let vbo = webgl.createVBO( this.objVertices, gl.STATIC_DRAW );
+
+        let ibo = webgl.createIBO( this.objIndices, gl.STATIC_DRAW );
+
+        gl.enableVertexAttribArray( attributes.position );
+
+        // gl.enableVertexAttribArray( attributes.texCoord );
+
+        gl.vertexAttribPointer( attributes.position, 3, gl.FLOAT, false, 20, 0 ); // TODO: MAY NEED ADJUSTING HERE
+
+        // gl.vertexAttribPointer( attributes.texCoord, 2, gl.FLOAT, false, 20, 12 );
+
+
+    }
+
+    /** 
+     * WORLD-SPECIFIC FUNCTIONS GO HERE.
+     */
+
+    /**
+     * Create objects specific to this world.
+     * TODO: "EXTENDS"
+     */
+    create () {
+
+        window.cube = this.prim.createCube( 0, 0, 0, 1, 'First' );
+
+    }
+
+    /** 
+     * update the world in time increments, e.g. motion and 
+     * animation.
+     */
+    update () {
 
 
     }
@@ -113,30 +194,6 @@ export default class world {
         // do any drawing
 
         requestAnimationFrame( this.render );
-
-    }
-
-    /** 
-     * WORLD-SPECIFIC FUNCTIONS GO HERE.
-     */
-
-    /** 
-     * Start building the world for the first time.
-     */
-    init () {
-
-
-
-        let c = this.prim.createCube( 0, 0, 0, 1, 'First' );
-
-    }
-
-    /** 
-     * update the world in time increments, e.g. motion and 
-     * animation.
-     */
-    update () {
-
 
     }
 

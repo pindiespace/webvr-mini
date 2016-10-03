@@ -1,37 +1,100 @@
 export default class prim {
 
     /** 
-     * Create object primitives.
+     * Create object primitives, and return vertex and index data 
+     * suitable for creating a VBO and IBO.
      */
 
-    constructor ( webgl ) {
+    constructor ( config ) {
 
-        this.webgl = webgl;
+        this.util = config.util;
 
-        this.glMatrix = webgl.glMatrix;
+        this.webgl = config.webgl;
+
+        this.glMatrix = this.webgl.glMatrix;
+
+        this.objs = [];
+
+        this.type = [];
+
+        this.type[ 'PLANE' ] = 'PLANE',
+
+        this.type[ 'CUBE' ] = 'CUBE',
+
+        this.type[ 'SPHERE' ] = 'SPHERE',
+
+        this.type[ 'CONE' ] = 'CONE',
+
+        this.type[ 'CYLINDER' ] = 'CYLINDER';
 
     }
 
     /** 
-     * set vertex buffer, index buffer.
+     * Unique object id
+     * @link https://jsfiddle.net/briguy37/2MVFd/
      */
-    setBuffers ( vb, ib ) {
+    setId () {
 
-        this.vertices = vb;
+        let d = new Date().getTime();
 
-        this.indices = ib;
+        let uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace( /[xy]/g, function( c ) {
+
+            var r = (d + Math.random()*16)%16 | 0;
+
+            d = Math.floor(d/16);
+
+            return ( c=='x' ? r : ( r&0x3|0x8 ) ).toString( 16 );
+
+        } );
+
+        return uuid;
 
     }
+
+    /** 
+     * Get the big array with all vertex data
+     */
+    setVertexData ( vertices ) {
+
+        vertices = [];
+
+        let len = this.objs.length;
+
+        for ( let i in this.objs ) {
+
+            vertices = vertices.concat( this.objs[i].vertices );
+
+        }
+
+        return vertices;
+
+    }
+
+    /** 
+     * get the big array with all index data
+     */
+    setIndexData ( indices ) {
+
+        indices = [];
+
+        let len = this.objs.length;
+
+        for ( let i in this.objs ) {
+
+            indices = indices.concat( this.objs[i].indices );
+
+        }
+
+        return indices;
+
+    }
+
 
     /** 
      * Create a cube geometry of a given size (units) centered 
      * on a point.
      */
     createCubeGeometry ( center, size ) {
-
-        let cV = this.vertices;
-
-        let cI = this.indices;
 
         let r = size * 0.5;
 
@@ -40,6 +103,10 @@ export default class prim {
         let y = center.y;
 
         let z = center.z;
+
+        let cubeVerts = [];
+
+        let cubeIndices = [];
 
         // Bottom
 
@@ -137,20 +204,49 @@ export default class prim {
 
         cubeVerts.push( x - r, y + r, z + r, 0.0, 0.0 );
 
+        return {
+
+            size: size,
+
+            position: center,
+
+            vertices: cubeVerts,
+
+            indices: cubeIndices
+
+        }
+
     }
 
     /** 
      * create a Cube object.
      */
-    createCube ( center, size, name ) {
+    createCube ( name = 'unknown', size = 1.0, position, translation, rotation ) {
 
-        let cube = {};
+        this.gl = this.webgl.getContext();
 
-        cube.geometry = createCubeGeometry( center, size );
+        let cube = this.createCubeGeometry( position, size );
+
+        cube.id = this.setId();
+
+        cube.name = name;
+
+        cube.translation = translation || this.glMatrix.vec3( 0, 0, 0 );
+
+        cube.rotation = rotation || this.glMatrix.vec3( 0, 0, 0 );
+
+        cube.offset = 20;
+
+        cube.type = this.type[ 'CUBE' ];
+
+        this.texture = null;
+
+        this.color = null;
+
+        this.objs.push( cube );
 
         return cube;
 
     }
-
 
 }
