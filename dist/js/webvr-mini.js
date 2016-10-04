@@ -1563,6 +1563,8 @@
 	    this.projectionMat = this.glMatrix.mat4.create();
 
 	    this.modelViewMat = this.glMatrix.mat4.create();
+
+	    this.ready = false;
 	  }
 
 	  /** 
@@ -1644,7 +1646,7 @@
 
 	      gl.uniformMatrix4fv(uniforms.modelViewMat, false, this.modelViewMat);
 
-	      // Set by reference, vertex and index data.
+	      // bind the vertex and index buffer.
 
 	      var vbo = webgl.createVBO(this.objVertices, gl.STATIC_DRAW);
 
@@ -1658,6 +1660,16 @@
 
 	      // gl.vertexAttribPointer( attributes.texCoord, 2, gl.FLOAT, false, 20, 12 );
 
+
+	      this.ready = true;
+
+	      this.render();
+	    }
+	  }, {
+	    key: 'ready',
+	    value: function ready() {
+
+	      return this.ready;
 	    }
 
 	    /** 
@@ -1695,9 +1707,17 @@
 
 	      // Update on time increment.
 
-	      update();
+	      this.update();
+
+	      var gl = this.gl;
 
 	      // do any drawing
+
+	      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+	      gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+
+	      gl.drawElements(gl.TRIANGLES, this.objIndices.length, gl.UNSIGNED_SHORT, 0);
 
 	      requestAnimationFrame(this.render);
 	    }
