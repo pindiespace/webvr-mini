@@ -90,6 +90,8 @@ let world = null;
 
 window.addEventListener( 'DOMContentLoaded', function () {
 
+    console.log( 'loading the world...' );
+
     world = new World( webgl, prim );
 
     world.init();

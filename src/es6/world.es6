@@ -59,11 +59,16 @@ export default class world {
 
             'varying vec2 vTexCoord;',
 
+            'varying vec4 vColor;',
+
+
             'void main() {',
 
             '  vTexCoord = texCoord;',
 
-            '  gl_Position = projectionMat * modelViewMat * vec4( position, 1.0 );',
+            /////////////////'  gl_Position = projectionMat * modelViewMat * vec4( position, 1.0 );',
+
+            '  gl_Position = vec4( 0., 0., 0., 1.);',
 
             '}'
 
@@ -85,7 +90,9 @@ export default class world {
 
             'void main() {',
 
-            '  gl_FragColor = texture2D( diffuse, vTexCoord );',
+            ////////////////'  gl_FragColor = texture2D( diffuse, vTexCoord );',
+
+            '  gl_FragColor = vec4(1.0, 0.1, 0.2, 1.);',
 
             '}',
 
@@ -113,6 +120,17 @@ export default class world {
 
     /** 
      * Start building the world for the first time.
+
+http://learningwebgl.com/blog/?p=28
+
+https://www.tutorialspoint.com/webgl/webgl_colors.htm
+
+some fixes for glmatrix
+https://github.com/kpreid/cubes/blob/master/util.js
+
+http://webglfundamentals.org/webgl/lessons/webgl-shaders-and-glsl.html
+
+
      */
     init () {
 
@@ -120,9 +138,9 @@ export default class world {
 
         this.create();
 
-        let vs = webgl.createShaderFromTag( 'vertex' );
+        let vs = this.webgl.createVertexShader( this.getVS() );
 
-        let fs = webgl.createShaderFromTag( 'fragment' );
+        let fs = this.webgl.createFragmentShader( this.getFS() );
 
         this.objVertices = this.prim.setVertexData( this.objVertices );
 
@@ -130,31 +148,66 @@ export default class world {
 
         let program = webgl.createProgram( vs, fs );
 
-        var attributes = this.webgl.getAttributes( program );
-
-        var uniforms = this.webgl.getUniforms( program );
-
-        // Use the program.
-
-        gl.useProgram( program );
-
-        // set attributes, uniform, varying.
-
-        gl.uniformMatrix4fv( uniforms.projectionMat, false, this.projectionMat );
-
-        gl.uniformMatrix4fv( uniforms.modelViewMat, false, this.modelViewMat );
-
-        // bind the vertex and index buffer.
+        // Create and bind the vertex and index buffer.
 
         let vbo = webgl.createVBO( this.objVertices, gl.STATIC_DRAW );
 
         let ibo = webgl.createIBO( this.objIndices, gl.STATIC_DRAW );
 
+
+        // TODO: also use - function fixedmultiplyVec3(matrix, vector) {...
+        
+        // Get attributes and uniforms from the WebGL program.
+
+        // TODO: only returning the textcoord!!
+
+        /* 
+        let name = '';
+        for (let i = gl.getProgramParameter(program, gl.ACTIVE_ATTRIBUTES) - 1; i >= 0; i--) {
+            name = gl.getActiveAttrib(program, i).name;
+            attribs[name] = gl.getAttribLocation(program, name);
+        }
+     */ 
+
+        var attributes = this.webgl.getAttributes( program );
+
+        var uniforms = this.webgl.getUniforms( program );
+
+
+        console.log("ATTRIBUTES LENGTH:", attributes.length)
+        for ( let i = 0; i < attributes.length; i++ ) {
+        //    gl.enableVertexAttribArray( attributes[i] );
+            console.log("AAAAAAttribute:" + i + attributes[i]);
+        }
+
+        console.log("UNIFORMS LENGTH:" + uniforms.length)
+        for (let i = 0; i < uniforms.length; i++ ) {
+            console.log("UUUUUinform:" + i + uniforms[i]);
+        }
+
+
+        // Assign the attributes, uniform, varying.
+
+        gl.uniformMatrix4fv( uniforms.projectionMat, false, this.projectionMat );
+
+        gl.uniformMatrix4fv( uniforms.modelViewMat, false, this.modelViewMat );
+
+
+
+
+
         gl.enableVertexAttribArray( attributes.position );
 
         // gl.enableVertexAttribArray( attributes.texCoord );
 
-        gl.vertexAttribPointer( attributes.position, 3, gl.FLOAT, false, 20, 0 ); // TODO: MAY NEED ADJUSTING HERE
+        gl.vertexAttribPointer( 
+            attributes.position, 
+            3,                    // size = 3d
+            gl.FLOAT,             // type
+            false,                // don't normalize
+            20,                   // 0 = move forward size * sizeof(type) each iteration to get the next position
+            0                     // start at beginning of buffer
+        );
 
         // gl.vertexAttribPointer( attributes.texCoord, 2, gl.FLOAT, false, 20, 12 );
 
@@ -213,7 +266,7 @@ export default class world {
 
         gl.drawElements( gl.TRIANGLES, this.objIndices.length, gl.UNSIGNED_SHORT, 0 );
 
-        requestAnimationFrame( this.render );
+        requestAnimationFrame( () => { this.render() } );
 
     }
 
