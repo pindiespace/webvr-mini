@@ -147,22 +147,31 @@ export default class prim {
 
                             console.log("FIRST: " + s)
 
-                            let vType = s.shift();
+                            let vType = s.shift(); // attribute, uniform, or varying
 
-                            console.log("SECOND AFTER SHIFT:" + vType + " remainder:" + s)
+                            if ( ! list[ vType ] ) {
 
-                            let nType = s.shift();
-
-                            console.log("THIRD AFTER SHIFT:" + nType + " remainder:" + s)
-
-                            if( ! list[ type ].vtype ) {
-
-                                console.log("MADE EMPTY ARRAY type:" + type + " VTYPE:" + nType);
-                                list[ type ][ nType ] = [];
+                                list[ vType ] = {};
 
                             }
 
-                            list[ type ][nType] = s.shift();
+                            console.log("SECOND AFTER SHIFT:" + vType + " remainder:" + s)
+
+                            let nType = s.shift(); // variable type
+
+                            if ( ! list[ vType ][ nType ] ) {
+
+                                list[ vType ][ nType ] = {};
+                            }
+
+                            let nName = s.shift(); // variable name
+
+                            if ( ! list[ vType ][ nType ][ nName ] ) {
+
+                                list[ vType ][ nType ][ nName ] = 'empty';
+                            }
+
+                            console.log("THIRD AFTER SHIFT:" + nType + " remainder:" + s)
 
                         }
 
@@ -173,8 +182,6 @@ export default class prim {
             } 
 
         }
-
-        console.log("RETURNING LIST")
 
         return list;
 
@@ -207,7 +214,9 @@ export default class prim {
 
             code: s.join( '\n' ),
 
-            varList: this.createVarList( s )
+            varList: this.createVarList( s ),
+
+            render: function () {}
 
         };
 
@@ -224,7 +233,6 @@ export default class prim {
             'precision mediump float;',
 
             'varying vec2 vTextureCoord;',
-
             'uniform sampler2D uSampler;',
 
             'void main(void) {',
@@ -240,7 +248,9 @@ export default class prim {
         
             code: s.join('\n'),
 
-            varList: this.createVarList( s )
+            varList: this.createVarList( s ),
+
+            render: function () {}
 
         };
 

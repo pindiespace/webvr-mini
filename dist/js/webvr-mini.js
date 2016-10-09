@@ -611,7 +611,7 @@
 
 	                                                if (this.gl) {
 
-	                                                            var gl = this.gl;
+	                                                            var _gl = this.gl;
 
 	                                                            /* 
 	                                                             * Set up listeners for context lost and regained.
@@ -646,15 +646,15 @@
 
 	                                                            // default WebGL initializtion, can be over-ridden in your world file.
 
-	                                                            gl.enable(gl.DEPTH_TEST);
+	                                                            _gl.enable(_gl.DEPTH_TEST);
 
-	                                                            gl.enable(gl.CULL_FACE);
+	                                                            _gl.enable(_gl.CULL_FACE);
 
-	                                                            gl.enable(gl.BLEND);
+	                                                            _gl.enable(_gl.BLEND);
 
-	                                                            gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+	                                                            _gl.blendFunc(_gl.SRC_ALPHA, _gl.ONE);
 
-	                                                            gl.clearColor(0.1, 0.1, 0.1, 1.0);
+	                                                            _gl.clearColor(0.1, 0.1, 0.1, 1.0);
 	                                                }
 
 	                                                return this.gl;
@@ -794,7 +794,7 @@
 	                                                console.error('createShader: invalid params, type:' + type + ' source:' + source);
 	                                    } else if (this.ready()) {
 
-	                                                var gl = this.gl;
+	                                                var _gl2 = this.gl;
 
 	                                                /*
 	                                                 * remove first EOL, which might come from using <script>...</script> tags,
@@ -802,31 +802,31 @@
 	                                                 */
 	                                                source.replace(/^[ \t]*\n/, '');
 
-	                                                if (type === gl.VERTEX_SHADER) {
+	                                                if (type === _gl2.VERTEX_SHADER) {
 
-	                                                            shader = this.vs = gl.createShader(type); // assigned VS
-	                                                } else if (type === gl.FRAGMENT_SHADER) {
+	                                                            shader = this.vs = _gl2.createShader(type); // assigned VS
+	                                                } else if (type === _gl2.FRAGMENT_SHADER) {
 
-	                                                            shader = this.fs = gl.createShader(type); // assigned FS
+	                                                            shader = this.fs = _gl2.createShader(type); // assigned FS
 	                                                } else {
 
 	                                                            console.error('createShader: type not recognized:' + type);
 	                                                }
 
-	                                                gl.shaderSource(shader, source);
+	                                                _gl2.shaderSource(shader, source);
 
-	                                                gl.compileShader(shader);
+	                                                _gl2.compileShader(shader);
 
 	                                                // Detect shader compile errors.
 
-	                                                if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+	                                                if (!_gl2.getShaderParameter(shader, _gl2.COMPILE_STATUS)) {
 
-	                                                            console.error('createShader:' + gl.getShaderInfoLog(shader));
+	                                                            console.error('createShader:' + _gl2.getShaderInfoLog(shader));
 
-	                                                            if (type === gl.VERTEX_SHADER) {
+	                                                            if (type === _gl2.VERTEX_SHADER) {
 
 	                                                                        this.vs = null;
-	                                                            } else if (type == gl.FRAGMENT_SHADER) {
+	                                                            } else if (type == _gl2.FRAGMENT_SHADER) {
 
 	                                                                        this.fs = null;
 	                                                            }
@@ -980,42 +980,78 @@
 
 	                                    // Wrap the program object to make V8 happy.
 
-	                                    var prg = {
-
-	                                                program: null
-
-	                                    };
+	                                    var prg = {};
 
 	                                    if (this.ready()) {
 
-	                                                var gl = this.gl;
+	                                                var _gl3 = this.gl;
 
 	                                                var vso = this.createVertexShader(vs.code);
 
 	                                                var fso = this.createFragmentShader(fs.code);
 
-	                                                var program = prg.program;
+	                                                var program = _gl3.createProgram();
 
-	                                                program = gl.createProgram();
+	                                                _gl3.attachShader(program, vso);
 
-	                                                gl.attachShader(program, vso);
+	                                                _gl3.attachShader(program, fso);
 
-	                                                gl.attachShader(program, fso);
+	                                                _gl3.linkProgram(program);
 
-	                                                gl.linkProgram(program);
+	                                                if (!_gl3.getProgramParameter(program, _gl3.LINK_STATUS)) {
 
-	                                                if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-
-	                                                            console.error('createProgram:' + gl.getProgramInfoLog(program));
-
-	                                                            this.program = program = null;
+	                                                            console.error('createProgram:' + _gl3.getProgramInfoLog(program));
 	                                                } else {
+
+	                                                            prg.shaderProgram = program;
 
 	                                                            prg.vsVars = vs.varList, prg.fsVars = fs.varList;
 	                                                }
 	                                    }
 
 	                                    return prg;
+	                        }
+	            }, {
+	                        key: "setAttributeLocations",
+	                        value: function setAttributeLocations(shaderProgram, attributes) {
+
+	                                    for (var i in attributes) {
+
+	                                                var attb = attributes[i];
+
+	                                                console.log('PGGGG:' + attb);
+
+	                                                for (var j in attb) {
+
+	                                                            attb[j] = gl.getAttribLocation(shaderProgram, j);
+
+	                                                            gl.enableVertexAttribArray(attb[j]);
+
+	                                                            console.log("gl.getAttribLocation( shaderProgram," + j + ") is" + attb[j]);
+	                                                }
+	                                    }
+
+	                                    return attributes;
+	                        }
+	            }, {
+	                        key: "setUniformLocations",
+	                        value: function setUniformLocations(shaderProgram, uniforms) {
+
+	                                    for (var i in uniforms) {
+
+	                                                var unif = uniforms[i];
+
+	                                                console.log('UGGGG:' + unif);
+
+	                                                for (var j in unif) {
+
+	                                                            unif[j] = gl.getUniformLocation(shaderProgram, j);
+
+	                                                            console.log("gl.getUniformLocation( shaderProgram," + j + ") is" + unif[j]);
+	                                                }
+	                                    }
+
+	                                    return uniforms;
 	                        }
 
 	                        /** 
@@ -1025,8 +1061,8 @@
 	                         */
 
 	            }, {
-	                        key: "bindAttributes",
-	                        value: function bindAttributes(program, attribLocationMap) {
+	                        key: "bindAttributeLocations",
+	                        value: function bindAttributeLocations(program, attribLocationMap) {
 
 	                                    var gl = this.gl;
 
@@ -1172,15 +1208,15 @@
 
 	                                    if (this.ready()) {
 
-	                                                var gl = this.gl;
+	                                                var _gl4 = this.gl;
 
-	                                                vbo = gl.createBuffer(); // can only be bound once
+	                                                vbo = _gl4.createBuffer(); // can only be bound once
 
 	                                                // Vertices use ARRAY_BUFFER.
 
-	                                                gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+	                                                _gl4.bindBuffer(_gl4.ARRAY_BUFFER, vbo);
 
-	                                                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), usage);
+	                                                _gl4.bufferData(_gl4.ARRAY_BUFFER, new Float32Array(data), usage);
 
 	                                                vbo.itemSize = data.itemSize;
 
@@ -1234,15 +1270,15 @@
 
 	                                    if (this.ready()) {
 
-	                                                var gl = this.gl;
+	                                                var _gl5 = this.gl;
 
-	                                                ibo = gl.createBuffer();
+	                                                ibo = _gl5.createBuffer();
 
 	                                                // Indices use ELEMENT_ARRAY_BUFFER.
 
-	                                                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo); // can only be bound once
+	                                                _gl5.bindBuffer(_gl5.ELEMENT_ARRAY_BUFFER, ibo); // can only be bound once
 
-	                                                gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(data), usage);
+	                                                _gl5.bufferData(_gl5.ELEMENT_ARRAY_BUFFER, new Uint16Array(data), usage);
 
 	                                                ibo.itemSize = data.itemSize;
 
@@ -1300,15 +1336,15 @@
 
 	                                    if (this.ready()) {
 
-	                                                var gl = this.gl;
+	                                                var _gl6 = this.gl;
 
-	                                                cbo = gl.createBuffer();
+	                                                cbo = _gl6.createBuffer();
 
 	                                                // Colors use ARRAY_BUFFER.
 
-	                                                gl.bindBuffer(gl.ARRAY_BUFFER, cbo); // can only be bound once
+	                                                _gl6.bindBuffer(_gl6.ARRAY_BUFFER, cbo); // can only be bound once
 
-	                                                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), usage);
+	                                                _gl6.bufferData(_gl6.ARRAY_BUFFER, new Float32Array(data), usage);
 
 	                                                cbo.itemSize = data.itemSize;
 
@@ -1596,28 +1632,35 @@
 
 	                                                                console.log("FIRST: " + s);
 
-	                                                                var vType = s.shift();
+	                                                                var vType = s.shift(); // attribute, uniform, or varying
+
+	                                                                if (!list[vType]) {
+
+	                                                                        list[vType] = {};
+	                                                                }
 
 	                                                                console.log("SECOND AFTER SHIFT:" + vType + " remainder:" + s);
 
-	                                                                var nType = s.shift();
+	                                                                var nType = s.shift(); // variable type
 
-	                                                                console.log("THIRD AFTER SHIFT:" + nType + " remainder:" + s);
+	                                                                if (!list[vType][nType]) {
 
-	                                                                if (!list[type].vtype) {
-
-	                                                                        console.log("MADE EMPTY ARRAY type:" + type + " VTYPE:" + nType);
-	                                                                        list[type][nType] = [];
+	                                                                        list[vType][nType] = {};
 	                                                                }
 
-	                                                                list[type][nType] = s.shift();
+	                                                                var nName = s.shift(); // variable name
+
+	                                                                if (!list[vType][nType][nName]) {
+
+	                                                                        list[vType][nType][nName] = 'empty';
+	                                                                }
+
+	                                                                console.log("THIRD AFTER SHIFT:" + nType + " remainder:" + s);
 	                                                        }
 	                                                }
 	                                        }
 	                                }
 	                        }
-
-	                        console.log("RETURNING LIST");
 
 	                        return list;
 	                }
@@ -1636,7 +1679,9 @@
 
 	                                code: s.join('\n'),
 
-	                                varList: this.createVarList(s)
+	                                varList: this.createVarList(s),
+
+	                                render: function render() {}
 
 	                        };
 	                }
@@ -1655,7 +1700,9 @@
 
 	                                code: s.join('\n'),
 
-	                                varList: this.createVarList(s)
+	                                varList: this.createVarList(s),
+
+	                                render: function render() {}
 
 	                        };
 	                }
@@ -1834,15 +1881,99 @@
 
 	                        var prim = this.prim;
 
-	                        this.shaderProgram = this.webgl.createProgram(prim.objVS1(), prim.objFS1());
-
-	                        var program = this.shaderProgram.program;
+	                        this.program = this.webgl.createProgram(prim.objVS1(), prim.objFS1());
 
 	                        // use the program
 
-	                        gl.useProgram(program);
+	                        var shaderProgram = this.program.shaderProgram;
 
-	                        // Get location of attributes
+	                        gl.useProgram(shaderProgram);
+
+	                        // USE THIS AS A BASE:
+	                        // https://github.com/gpjt/webgl-lessons/blob/master/lesson06/index.html
+
+	                        /* 
+	                         * Get location of attribute names. Stored separately for vertex and fragment shaders.
+	                         * vsvars = {
+	                                attribute {
+	                                    vec2: {
+	                                        uvMatrix: null (until filled)
+	                                        mvMatris: null (until filled)
+	                                    }
+	                                }
+	                         }
+	                         */
+	                        /*
+	                                let attributes = this.program.vsVars.attribute;
+	                        
+	                                for ( let i in attributes ) {
+	                        
+	                                    let attb = attributes[ i ];
+	                        
+	                                    console.log('PGGGG:' + attb );
+	                        
+	                                    for ( let j in attb ) {
+	                        
+	                                        attb[ j ] = gl.getAttribLocation( shaderProgram, j );
+	                        
+	                                        gl.enableVertexAttribArray( attb[ j ] );
+	                        
+	                                        console.log("ATTRIB J:" + j + ":" + attb[ j ] );
+	                        
+	                                    }
+	                        
+	                                }
+	                            */
+
+	                        this.program.vsVars.attribute = this.webgl.setAttributeLocations(this.program.vsVars.attribute);
+
+	                        this.program.vsVars.uniform = this.webgl.setUniformLocations(this.program.vsVars.uniform);
+
+	                        window.vsVars = this.program.vsVars;
+
+	                        /*
+	                                let uniforms = this.program.vsVars.uniform;
+	                        
+	                                for ( let i in uniforms ) {
+	                        
+	                                    let unif = uniforms[ i ];
+	                        
+	                                    console.log('UGGGG:' + unif );
+	                        
+	                                    for ( let j in unif ) {
+	                        
+	                                        unif[ j ] = gl.getUniformLocation( shaderProgram, j );
+	                        
+	                                        console.log("UNIF J:" + j + ":" + unif[ j ] );
+	                        
+	                                    }
+	                        
+	                                }
+	                        */
+
+	                        /*
+	                                let varying = this.program.vsVars.varying;
+	                        
+	                                for ( let i in varying ) {
+	                        
+	                                    let varg = varying[ i ];
+	                        
+	                                    console.log('VGGGG:' + varg );
+	                        
+	                                    for ( let j in varg ) {
+	                        
+	                                        varg[ j ] = gl.getUniformLocation( shaderProgram, j ); // TODO: IS THIS ALWAYS TRUE????
+	                        
+	                                        console.log("UNIF J:" + j + ":" + varg[ j ] );
+	                        
+	                                    }
+	                        
+	                                }
+	                        */
+
+	                        //shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
+	                        //shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+	                        //shaderProgram.samplerUniform = gl.getUniformLocation(shaderProgram, "uSampler");
 
 	                        // Start rendering loop.
 

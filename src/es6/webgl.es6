@@ -476,12 +476,7 @@ export default class WebGL {
 
         // Wrap the program object to make V8 happy.
 
-        let prg = {
-
-            program: null
-
-        };
-
+        let prg = {};
 
         if ( this.ready() ) {
 
@@ -491,9 +486,7 @@ export default class WebGL {
 
             let fso = this.createFragmentShader( fs.code );
 
-            let program = prg.program;
-
-            program = gl.createProgram();
+            let program = gl.createProgram();
 
             gl.attachShader( program, vso );
 
@@ -505,9 +498,9 @@ export default class WebGL {
 
                 console.error( 'createProgram:' + gl.getProgramInfoLog( program ) );
 
-                this.program = program = null;
-
             } else {
+
+                prg.shaderProgram = program;
 
                 prg.vsVars = vs.varList,
 
@@ -521,12 +514,58 @@ export default class WebGL {
 
     }
 
+    setAttributeLocations ( shaderProgram, attributes ) {
+
+        for ( let i in attributes ) {
+
+            let attb = attributes[ i ];
+
+            console.log('PGGGG:' + attb );
+
+            for ( let j in attb ) {
+
+                attb[ j ] = gl.getAttribLocation( shaderProgram, j );
+
+                gl.enableVertexAttribArray( attb[ j ] );
+
+                console.log("gl.getAttribLocation( shaderProgram," + j + ") is" + attb[ j ] );
+
+            }
+
+        }
+
+        return attributes;
+
+    }
+
+    setUniformLocations ( shaderProgram, uniforms ) {
+
+        for ( let i in uniforms ) {
+
+            let unif = uniforms[ i ];
+
+            console.log('UGGGG:' + unif );
+
+            for ( let j in unif ) {
+
+                unif[ j ] = gl.getUniformLocation( shaderProgram, j );
+
+                console.log("gl.getUniformLocation( shaderProgram," + j + ") is" + unif[ j ] );
+
+            }
+
+        }
+
+        return uniforms;
+
+    }
+
     /** 
      * Bind attribute locations.
      * @param {WebGLProgram} program a compiled WebGL program.
      * @param {Object} attribLocationmap the attributes.
      */
-    bindAttributes ( program, attribLocationMap ) {
+    bindAttributeLocations ( program, attribLocationMap ) {
 
         var gl = this.gl;
 
@@ -551,8 +590,6 @@ export default class WebGL {
         }
 
     }
-
-
 
     /** 
      * Create associative array with shader attributes.
