@@ -89,120 +89,196 @@ export default class prim {
 
     }
 
+    /** 
+     * SHADER CLASSES
+     * Textured object w/o lighting
+     * Texture object with lighting
+     * Translucent
+     * Water
+     */
+
+     /** 
+      * Read shader code, and organize the variables in the shader 
+      * into an object. Abstracts some of the tedious work in setting 
+      * up shader variables.
+      * @param {Array} sourceArr array of lines in the shader.
+      * @returns {Object} an object organizing attribute, uniform, and 
+      * varying variable names and datatypes.
+      */
+    createVarList ( source ) {
+
+        let len = source.length;
+
+        let sp = ' ';
+
+        let sr = ';';
+
+        let list = {};
+
+        let varTypes = ['attribute', 'uniform', 'varying' ];
+
+        if( len ) {
+
+            for ( let i = 0; i < source.length; i++ ) {
+
+                let s = source[ i ];
+
+                if ( s.indexOf( 'void main' ) !== -1 ) {
+ 
+                    break;
+
+                } else {
+
+                    for ( let j = 0; j < varTypes.length; j++ ) {
+
+                        let type = varTypes[j];
+
+                        if( ! list[ type ] ) list[ type ] = {};
+
+                        if ( s.indexOf( type ) > -1 ) {
+
+                            console.log("SSS1:" + s)
+
+                            s = s.slice(0, -1); // remove trailing ';'
+
+                            console.log("SSS:" + s)
+
+                            s = s.split( sp );
+
+                            console.log("FIRST: " + s)
+
+                            let vType = s.shift();
+
+                            console.log("SECOND AFTER SHIFT:" + vType + " remainder:" + s)
+
+                            let nType = s.shift();
+
+                            console.log("THIRD AFTER SHIFT:" + nType + " remainder:" + s)
+
+                            if( ! list[ type ].vtype ) {
+
+                                console.log("MADE EMPTY ARRAY type:" + type + " VTYPE:" + nType);
+                                list[ type ][ nType ] = [];
+
+                            }
+
+                            list[ type ][nType] = s.shift();
+
+                        }
+
+                    }
+
+                }
+
+            } 
+
+        }
+
+        console.log("RETURNING LIST")
+
+        return list;
+
+    }
+
+    /** 
+     * a default-lighting textured object vertex shader.
+     */
+    objVS1 () {
+
+        let s = [
+
+            'attribute vec3 aVertexPosition;',
+            'attribute vec2 aTextureCoord;',
+            'uniform mat4 uMVMatrix;',
+            'uniform mat4 uPMatrix;',
+            'varying vec2 vTextureCoord;',
+
+            'void main(void) {',
+
+            '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);',
+
+            '    vTextureCoord = aTextureCoord;',
+
+            '}'
+
+            ];
+
+        return {
+
+            code: s.join( '\n' ),
+
+            varList: this.createVarList( s )
+
+        };
+
+
+    }
+
+    /** 
+     * a default-lighting textured object fragment shader.
+     */
+    objFS1 () {
+
+        let s =  [
+
+            'precision mediump float;',
+
+            'varying vec2 vTextureCoord;',
+
+            'uniform sampler2D uSampler;',
+
+            'void main(void) {',
+
+            '    gl_FragColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));',
+
+            '}'
+
+            ];
+
+
+        return {
+        
+            code: s.join('\n'),
+
+            varList: this.createVarList( s )
+
+        };
+
+    }
+
+
+    /** 
+     * GEOMETRIES
+     */
 
     /** 
      * Create a cube geometry of a given size (units) centered 
      * on a point.
      */
-    createCubeGeometry ( center, size ) {
+    GeometryCube ( center, size ) {
+
+        let  halfSize = size * 0.5;
 
         let r = size * 0.5;
 
-        let x = center.x;
+        let x = center[0];
 
-        let y = center.y;
+        let y = center[1];
 
-        let z = center.z;
+        let z = center[2];
 
-        let cubeVerts = [];
+        let vertices = [];
 
-        let cubeIndices = [];
+        let indices = [];
 
-        // Bottom
 
-        let idx = cubeVerts.length / 5.0;
+        // Set item size and numItems.
 
-        cubeIndices.push( idx, idx + 1, idx + 2 );
+        cubeVerts.itemSize = 3;
+        cubeVerts.numItems = cubeVerts.length / 4;
 
-        cubeIndices.push( idx, idx + 2, idx + 3 );
-
-        cubeVerts.push( x - r, y - r, z - r, 0.0, 1.0 );
-
-        cubeVerts.push( x + r, y - r, z - r, 1.0, 1.0 );
-
-        cubeVerts.push( x + r, y - r, z + r, 1.0, 0.0 );
-
-        cubeVerts.push( x - r, y - r, z + r, 0.0, 0.0 );
-
-        // Top
-
-        idx = cubeVerts.length / 5.0;
-
-        cubeIndices.push( idx, idx + 2, idx + 1 );
-
-        cubeIndices.push( idx, idx + 3, idx + 2 );
-
-        cubeVerts.push( x - r, y + r, z - r, 0.0, 0.0 );
-
-        cubeVerts.push( x + r, y + r, z - r, 1.0, 0.0 );
-
-        cubeVerts.push( x + r, y + r, z + r, 1.0, 1.0 );
-
-        cubeVerts.push( x - r, y + r, z + r, 0.0, 1.0 );
-
-        // Left
-
-        idx = cubeVerts.length / 5.0;
-
-        cubeIndices.push( idx, idx + 2, idx + 1 );
-
-        cubeIndices.push( idx, idx + 3, idx + 2 );
-
-        cubeVerts.push( x - r, y - r, z - r, 0.0, 1.0 );
-
-        cubeVerts.push( x - r, y + r, z - r, 0.0, 0.0 );
-
-        cubeVerts.push( x - r, y + r, z + r, 1.0, 0.0 );
-
-        cubeVerts.push( x - r, y - r, z + r, 1.0, 1.0 );
-
-        // Right
-
-        idx = cubeVerts.length / 5.0;
-
-        cubeIndices.push( idx, idx + 1, idx + 2 );
-
-        cubeIndices.push( idx, idx + 2, idx + 3 );
-
-        cubeVerts.push( x + r, y - r, z - r, 1.0, 1.0 );
-
-        cubeVerts.push( x + r, y + r, z - r, 1.0, 0.0 );
-
-        cubeVerts.push( x + r, y + r, z + r, 0.0, 0.0 );
-
-        cubeVerts.push( x + r, y - r, z + r, 0.0, 1.0 );
-
-        // Back
-
-        idx = cubeVerts.length / 5.0;
-
-        cubeIndices.push( idx, idx + 2, idx + 1 );
-
-        cubeIndices.push( idx, idx + 3, idx + 2 );
-
-        cubeVerts.push( x - r, y - r, z - r, 1.0, 1.0 );
-
-        cubeVerts.push( x + r, y - r, z - r, 0.0, 1.0 );
-
-        cubeVerts.push( x + r, y + r, z - r, 0.0, 0.0 );
-
-        cubeVerts.push( x - r, y + r, z - r, 1.0, 0.0 );
-
-        // Front
-
-        idx = cubeVerts.length / 5.0;
-
-        cubeIndices.push( idx, idx + 1, idx + 2 );
-
-        cubeIndices.push( idx, idx + 2, idx + 3 );
-
-        cubeVerts.push( x - r, y - r, z + r, 0.0, 1.0 );
-
-        cubeVerts.push( x + r, y - r, z + r, 1.0, 1.0 );
-
-        cubeVerts.push( x + r, y + r, z + r, 1.0, 0.0 );
-
-        cubeVerts.push( x - r, y + r, z + r, 0.0, 0.0 );
+        cubeIndices.itemSize = 1;
+        cubeIndices.numItems = cubeIndices.length;
 
         return {
 
@@ -225,7 +301,7 @@ export default class prim {
 
         this.gl = this.webgl.getContext();
 
-        let cube = this.createCubeGeometry( position, size );
+        let cube = this.GeometryCube( position, size );
 
         cube.id = this.setId();
 

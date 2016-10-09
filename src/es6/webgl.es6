@@ -55,9 +55,11 @@ export default class WebGL {
      * initialize with a canvas context
      * @param {Canvas|String|undefined} canvas accepts null, in which case a <canvas> object is 
      * created and added to document.body, an ID value for a tag, or a CanvasDOMobject.
+     * @param {Function} lostContext callback when WebGL context is lost.
+     * @param {Function} restoredContext callback when WebGL context is restored.
      * @returns {WebGLContext} the WebGL context of the <canvas> object.
      */
-    init ( canvas ) {
+    init ( canvas, lostContext, restoredContext ) {
 
         if ( ! canvas ) { 
 
@@ -97,7 +99,42 @@ export default class WebGL {
 
                 let gl = this.gl;
 
-                // default initializtion, can be over-ridden in your world file.
+                /* 
+                 * Set up listeners for context lost and regained.
+                 * @link https://www.khronos.org/webgl/wiki/HandlingContextLost
+                 * Simulate lost and restored context events with:
+                 * @link https://developer.mozilla.org/en-US/docs/Web/API/WEBGL_lose_context/restoreContext
+                 */
+
+            canvas.addEventListener('webglcontextlost', ( e ) => {
+
+                console.error( 'error: webglcontextlost event' );
+
+                if ( lostContext ) {
+
+                    lostContext( e );
+
+                }
+
+                e.preventDefault();
+
+            }, false );
+
+            canvas.addEventListener( 'webglcontextrestored', ( e ) => {
+
+                console.error( 'error: webglcontextrestored event' );
+
+                if ( restoredContext ) {
+
+                    restoredContext( e );
+
+                }
+
+                e.preventDefault();
+
+            }, false );
+
+                // default WebGL initializtion, can be over-ridden in your world file.
 
                 gl.enable( gl.DEPTH_TEST );
 
@@ -120,15 +157,6 @@ export default class WebGL {
     }
 
     /** 
-     * Get WebGL canvas only if we've created a gl context.
-     */
-    getCanvas () {
-
-        return this.gl ? this.gl.canvas : null;
-
-    }
-
-    /** 
      * check if we are ready to render
      */
     ready () {
@@ -136,6 +164,15 @@ export default class WebGL {
         console.log('this.gl:' + this.gl + ' this.glMatrix:' + this.glMatrix )
 
         return ( !! ( this.gl && this.glMatrix ) );
+
+    }
+
+    /** 
+     * Get WebGL canvas only if we've created a gl context.
+     */
+    getCanvas () {
+
+        return this.gl ? this.gl.canvas : null;
 
     }
 
@@ -178,6 +215,10 @@ export default class WebGL {
 
         if ( this.gl ) {
 
+            // Contexts are normally in garbage, can't be deleted without this!
+
+            this.killContext();
+
             this.gl = null;
 
         }
@@ -202,6 +243,9 @@ export default class WebGL {
 
     }
 
+    /** 
+     * Return the current context.
+     */
     getContext () {
 
         return this.gl;
@@ -209,7 +253,20 @@ export default class WebGL {
     }
 
     /** 
+     * Kill the current context (complete reset will be needed).
+     * @link https://developer.mozilla.org/en-US/docs/Web/API/WEBGL_lose_context/loseContext
+     */
+    killContext () {
+
+        this.gl.getExtension( 'WEBGL_lose_context' ).loseContext();
+
+    }
+
+    /** 
      * create a WeGL shader object.
+     * @param {VERTEX_SHADER | FRAGMENT_SHADER} type type WebGL shader type.
+     * @param {String} source the shader source.
+     * @returns {WebGLShader} a compiled WebGL shader object.
      */
     createShader ( type, source ) {
 
@@ -417,17 +474,30 @@ export default class WebGL {
 
         }
 
-        let program = null;
+        // Wrap the program object to make V8 happy.
+
+        let prg = {
+
+            program: null
+
+        };
+
 
         if ( this.ready() ) {
 
             let gl = this.gl;
 
+            let vso = this.createVertexShader( vs.code );
+
+            let fso = this.createFragmentShader( fs.code );
+
+            let program = prg.program;
+
             program = gl.createProgram();
 
-            gl.attachShader( program, vs );
+            gl.attachShader( program, vso );
 
-            gl.attachShader( program, fs );
+            gl.attachShader( program, fso );
 
             gl.linkProgram( program );
 
@@ -437,37 +507,80 @@ export default class WebGL {
 
                 this.program = program = null;
 
+            } else {
+
+                prg.vsVars = vs.varList,
+
+                prg.fsVars = fs.varList
+
             }
 
         }
 
-        return program;
+        return prg;
+
+    }
+
+    /** 
+     * Bind attribute locations.
+     * @param {WebGLProgram} program a compiled WebGL program.
+     * @param {Object} attribLocationmap the attributes.
+     */
+    bindAttributes ( program, attribLocationMap ) {
+
+        var gl = this.gl;
+
+        if ( attribLocationMap ) {
+
+            this.attrib = {};
+
+            for ( var attribName in attribLocationMap ) {
+
+                console.log('binding attribute:' + attribName + ' to:' + attribLocationMap[attribName]);
+
+                gl.bindAttribLocation( program, attribLocationMap[ attribName ], attribName );
+
+                this.attrib[ attribName ] = attribLocationMap[ attribName ];
+
+            }
+
+        } else {
+
+            console.warn( 'webgl.bindAttributes: no attributes supplied' );
+
+        }
 
     }
 
 
+
     /** 
      * Create associative array with shader attributes.
+     * NOTE: Only attributes actually used in the shader show.
+     * @param {WebGLProgram} program a compiled WebGL program.
+     * @returns {Object} a collection of attributes, with .count = number.
      */
     getAttributes ( program ) {
 
         let gl = this.gl;
 
-        let attrib = [];
+        let attrib = {};
 
         let attribCount = gl.getProgramParameter( program, gl.ACTIVE_ATTRIBUTES );
-
-        console.log("WEBGL:getAttributes count:" + attribCount);
 
         for ( let i = 0; i < attribCount; i++ ) {
 
             let attribInfo = gl.getActiveAttrib( program, i );
 
-            console.log("ADDING ATTRIB:" + attribInfo.name);
+            console.log("ADDING ATTRIB:" + attribInfo.name );
 
             attrib[ attribInfo.name ] = gl.getAttribLocation( program, attribInfo.name );
 
         }
+
+        // Store the number of attributes.
+
+        attrib.count = attribCount;
 
         return attrib;
 
@@ -475,16 +588,17 @@ export default class WebGL {
 
     /** 
      * Create associative array with shader uniforms.
+     * NOTE: Only attributes actually used in the shader show.
+     * @param {WebGLProgram} program a compiled WebGL program.
+     * @returns {Object} a collection of attributes, with .count = number.
      */
     getUniforms ( program ) {
 
         let gl = this.gl;
 
-        let uniform = [];
+        let uniform = {};
 
         let uniformCount = gl.getProgramParameter( program, gl.ACTIVE_UNIFORMS );
-
-        console.log("WEBGL:getUniforms count:" + uniformCount);
 
         let uniformName = '';
 
@@ -494,9 +608,15 @@ export default class WebGL {
 
             uniformName = uniformInfo.name.replace( '[0]', '' );
 
+            console.log("ADDING UNIVORM:" + uniformName );
+
             uniform[ uniformName ] = gl.getUniformLocation( program, uniformName );
 
         }
+
+        // Store the number of uniforms.
+
+        uniform.count = uniformCount;
 
         return uniform;
 
@@ -511,6 +631,10 @@ export default class WebGL {
 
     /** 
      * create a Vertex Buffer Object (VBO).
+     * Example: data = Float32Array [
+             0, -100, 6,
+           150,  125, 16,
+          -175,  100, 20]
      * TODO: only one at a time
      * https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/bufferData
      */
@@ -521,11 +645,30 @@ export default class WebGL {
             console.error( 'createVBO: empty data' );
 
             return null;
+
+        }
+
+        if (! data.itemSize ) {
+
+            console.error( 'createVBO: itemSize must be specified' );
+
+            return null;
+
+        }
+
+        if (! data.numItems ) {
+
+            console.error( 'createVBO: numitems must be specified' );
+
+            return null;
+
         }
 
         if ( ! usage ) {
 
-            usage = gl.STATIC_DRAW;
+            console.error( 'createVBO: draw usage must be specified' );
+
+            return null;
 
         }
 
@@ -537,9 +680,15 @@ export default class WebGL {
 
             vbo = gl.createBuffer(); // can only be bound once
 
+            // Vertices use ARRAY_BUFFER.
+
             gl.bindBuffer( gl.ARRAY_BUFFER, vbo );
 
             gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( data ), usage );
+
+            vbo.itemSize = data.itemSize;
+
+            vbo.numItems = data.numItems;
 
             this.vbo = vbo;
 
@@ -551,20 +700,40 @@ export default class WebGL {
 
     /** 
      * Create an Index Buffer Object. 
+     * Example: data = Uint16Array [ 1, 2, 5, 6, 3, 4]
      * TODO: only one at a time in this instance.
      */
     createIBO ( data, usage ) {
 
         if ( ! data ) {
 
-            console.error( 'createVBO: empty data' );
+            console.error( 'createIBO: empty data' );
 
             return null;
+
+        }
+
+        if (! data.itemSize ) {
+
+            console.error( 'createIBO: itemSize must be specified' );
+
+            return null;
+
+        }
+
+        if (! data.numItems ) {
+
+            console.error( 'createIBO: numitems must be specified' );
+
+            return null;
+
         }
 
         if ( ! usage ) {
 
-            usage = gl.STATIC_DRAW;
+            console.error( 'createIBO: draw usage must be specified' );
+
+            return null;
 
         }
 
@@ -576,9 +745,15 @@ export default class WebGL {
 
             ibo = gl.createBuffer();
 
+            // Indices use ELEMENT_ARRAY_BUFFER.
+
             gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, ibo ); // can only be bound once
 
             gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( data ), usage );
+
+            ibo.itemSize = data.itemSize;
+
+            ibo.numItems = data.numItems;
 
             this.ibo = ibo;
 
@@ -589,16 +764,82 @@ export default class WebGL {
     }
 
     /** 
-     * create a normals buffer object.
+     * Create a color buffer object.
+     * Example: data = [ r1, b1, g1, 1,
+          r1, b1, g1, 1,
+          r1, b1, g1, 1,
+          r2, b2, g2, 1,
+          r2, b2, g2, 1,
+          r2, b2, g2, 1]), 
      */
-    createNBO () {
+    createCBO ( data, usage ) {
+
+        if ( ! data ) {
+
+            console.error( 'createCBO: empty data' );
+
+            return null;
+
+        }
+
+        if (! data.itemSize ) {
+
+            console.error( 'createCBO: itemSize must be specified' );
+
+            return null;
+
+        }
+
+        if (! data.numItems ) {
+
+            console.error( 'createCBO: numitems must be specified' );
+
+            return null;
+
+        }
+
+        if ( ! usage ) {
+
+            console.error( 'createCBO: drawing usage must be specified' );
+
+            return null;
+
+        }
+
+        let cbo = null;
+
+        if ( this.ready() ) {
+
+            let gl = this.gl;
+
+            cbo = gl.createBuffer();
+
+            // Colors use ARRAY_BUFFER.
+
+            gl.bindBuffer( gl.ARRAY_BUFFER, cbo ); // can only be bound once
+
+            gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( data ), usage );
+
+            cbo.itemSize = data.itemSize;
+
+            cbo.numitems = data.numItems;
+
+            this.cbo = cbo;
+
+        }
+
+        return cbo;
 
     }
 
     /** 
-     * Create a color buffer object.
+     * create a normals buffer object.
      */
-    createCBO () {
+    createNBO () {
+
+        console.error( 'webgl.createNBO NOT IMPLEMENTED' );
+
+        return null;
 
     }
 

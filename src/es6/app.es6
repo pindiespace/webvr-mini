@@ -31,7 +31,15 @@ import Util from  './util';
 
 import WebGL from './webgl';
 
-import Loader from './loader';
+import Loader from './load-pool';
+
+import LoadTexture from './load-texture';
+
+import LoadModel from './load-model';
+
+import LoadAudio from './load-audio';
+
+import LoadVideo from './load-video';
 
 import WebVR from './webvr';
 
@@ -78,11 +86,21 @@ if ( __DEV__ === 'true' ) {
 
 let webgl = new WebGL( configGL );
 
-let loader = new Loader( { init: true, util: util, webgl: webgl } );
+// Common initialization.
 
-let prim = new Prim ( { init: true, util: util, webgl: webgl } );
+let config = { init: true, util: util, webgl: webgl };
 
-let webvr = new WebVR( { init: true, util: util, webgl: webgl } );
+let loadModel = new LoadModel( config );
+
+let loadTexture = new LoadTexture( config );
+
+let loadAudio = new LoadAudio( config );
+
+let loadVideo = new LoadVideo( config );
+
+let prim = new Prim ( config );
+
+let webvr = new WebVR( config );
 
 // Create the world.
 
@@ -100,4 +118,4 @@ window.addEventListener( 'DOMContentLoaded', function () {
 
 // Export our classes to app.js.
 
-export { util, webgl, loader, prim, webvr, world };
+export { util, webgl, loadModel, loadTexture, loadAudio, loadVideo, prim, webvr, world };
