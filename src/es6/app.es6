@@ -64,9 +64,11 @@ if ( __DEV__ === 'true' ) {
     // require kronos webgl debug from node_modules
     // https://github.com/vorg/webgl-debug
 
-    configGL.debugUtils = require( 'webgl-debug' );
+    configGL.debug = require( 'webgl-debug' );
 
-    if( configGL.debugUtils ) {
+    window.debug = configGL.debug;
+
+    if( configGL.debug ) {
 
         console.log( 'Loading webgl-debug' );
 

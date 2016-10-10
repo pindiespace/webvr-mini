@@ -57,6 +57,7 @@ export default class world {
      */
     init () {
 
+
         let gl = this.gl;
 
         let prim = this.prim;
@@ -74,7 +75,7 @@ export default class world {
 
         /* 
          * Get location of attribute names. Stored separately for vertex and fragment shaders.
-         * vsvars = {
+         * vsvars = { 
                 attribute {
                     vec2: {
                         uvMatrix: null (until filled)
@@ -83,77 +84,21 @@ export default class world {
                 }
          }
          */
-/*
-        let attributes = this.program.vsVars.attribute;
 
-        for ( let i in attributes ) {
-
-            let attb = attributes[ i ];
-
-            console.log('PGGGG:' + attb );
-
-            for ( let j in attb ) {
-
-                attb[ j ] = gl.getAttribLocation( shaderProgram, j );
-
-                gl.enableVertexAttribArray( attb[ j ] );
-
-                console.log("ATTRIB J:" + j + ":" + attb[ j ] );
-
-            }
-
-        }
-    */
-
-        this.program.vsVars.attribute = this.webgl.setAttributeLocations( this.program.vsVars.attribute );
-
-        this.program.vsVars.uniform = this.webgl.setUniformLocations( this.program.vsVars.uniform );
-
+///////////
+// DEBUG
+        window.pgm = this.program;
         window.vsVars = this.program.vsVars;
+        window.fsVars = this.program.fsVars;
+///////////
 
-/*
-        let uniforms = this.program.vsVars.uniform;
+        // Populate the attribute and uniform variables. Needs to be done again in the render loop.
 
-        for ( let i in uniforms ) {
+        this.program.vsVars.attribute = this.webgl.setAttributeLocations( this.program.shaderProgram, this.program.vsVars.attribute );
 
-            let unif = uniforms[ i ];
+        this.program.vsVars.uniform = this.webgl.setUniformLocations( this.program.shaderProgram, this.program.vsVars.uniform );
 
-            console.log('UGGGG:' + unif );
-
-            for ( let j in unif ) {
-
-                unif[ j ] = gl.getUniformLocation( shaderProgram, j );
-
-                console.log("UNIF J:" + j + ":" + unif[ j ] );
-
-            }
-
-        }
-*/
-
-/*
-        let varying = this.program.vsVars.varying;
-
-        for ( let i in varying ) {
-
-            let varg = varying[ i ];
-
-            console.log('VGGGG:' + varg );
-
-            for ( let j in varg ) {
-
-                varg[ j ] = gl.getUniformLocation( shaderProgram, j ); // TODO: IS THIS ALWAYS TRUE????
-
-                console.log("UNIF J:" + j + ":" + varg[ j ] );
-
-            }
-
-        }
-*/
-
-        //shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
-        //shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
-        //shaderProgram.samplerUniform = gl.getUniformLocation(shaderProgram, "uSampler");
+        this.program.fsVars.uniform = this.webgl.setUniformLocations( this.program.shaderProgram, this.program.fsVars.uniform );
 
         // Start rendering loop.
 
@@ -179,6 +124,10 @@ export default class world {
      * animation.
      */
     update () {
+
+        // fps calculation.
+
+
 
     }
 

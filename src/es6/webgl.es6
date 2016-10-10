@@ -16,6 +16,8 @@ export default class WebGL {
 
         this.gl = this.vs = this.vs = null;
 
+         this.contextCount = 0;
+
         if ( config ) {
 
             if ( config.glMatrix ) {
@@ -44,6 +46,14 @@ export default class WebGL {
             if ( config.init === true ) {
 
                 this.init( config.canvas );
+
+            }
+
+            // If we are running in debug mode, save the debug utils into this object.
+
+            if ( config.debug ) {
+
+                this.debug = config.debug;
 
             }
 
@@ -104,13 +114,17 @@ export default class WebGL {
                  * @link https://www.khronos.org/webgl/wiki/HandlingContextLost
                  * Simulate lost and restored context events with:
                  * @link https://developer.mozilla.org/en-US/docs/Web/API/WEBGL_lose_context/restoreContext
+                 * @link http://codeflow.org/entries/2013/feb/22/how-to-write-portable-webgl/
+                 * gl.isContextLost() also works to check
                  */
 
             canvas.addEventListener('webglcontextlost', ( e ) => {
 
-                console.error( 'error: webglcontextlost event' );
+                console.error( 'error: webglcontextlost event, context count:' + this.contextCount );
 
                 if ( lostContext ) {
+
+                    this.gl = null;
 
                     lostContext( e );
 
@@ -122,7 +136,7 @@ export default class WebGL {
 
             canvas.addEventListener( 'webglcontextrestored', ( e ) => {
 
-                console.error( 'error: webglcontextrestored event' );
+                console.error( 'error: webglcontextrestored event, context count:' + this.contextCount );
 
                 if ( restoredContext ) {
 
@@ -134,7 +148,45 @@ export default class WebGL {
 
             }, false );
 
-                // default WebGL initializtion, can be over-ridden in your world file.
+                // Default WebGL initializtion and stats, can be over-ridden in your world file.
+
+                // Flag for the availability of high-precision formats, texture sizes.
+
+                this.stats = {};
+
+                let stats = this.stats;
+
+                stats.highp = gl.getShaderPrecisionFormat( gl.FRAGMENT_SHADER, gl.HIGH_FLOAT );
+
+                // Max texture size, for gl.texImage2D.                
+
+                stats.maxTexSize = gl.getParameter( gl.MAX_TEXTURE_SIZE );
+
+                // Max cubemap size, for gl.texImage2D.
+
+                stats.maxCubeSize = gl.getParameter( gl.MAX_CUBE_MAP_TEXTURE_SIZE );
+
+                // Max texture size, for gl.renderbufferStorage and canvas width/height.
+
+                stats.maxRenderbufferSize = gl.getParameter( gl.MAX_RENDERBUFFER_SIZE );
+
+                // Max texture units.
+
+                stats.combinedUnits = gl.getParameter( gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS );
+
+                // Max vertex buffers.
+
+                stats.maxVSattribs = gl.getParameter( gl.MAX_VERTEX_ATTRIBS );
+
+                // Max 4-byte uniforms.
+
+                stats.maxVertexShader = gl.getParameter( gl.MAX_VERTEX_UNIFORM_VECTORS );
+
+                // Max 4-byte uniforms.
+
+                stats.maxFragmentShader = gl.getParameter( gl.MAX_FRAGMENT_UNIFORM_VECTORS );
+
+                // Default 3D enables.
 
                 gl.enable( gl.DEPTH_TEST );
 
@@ -161,9 +213,11 @@ export default class WebGL {
      */
     ready () {
 
-        console.log('this.gl:' + this.gl + ' this.glMatrix:' + this.glMatrix )
+        let gl = this.gl;
 
-        return ( !! ( this.gl && this.glMatrix ) );
+        console.log('this.gl:' + gl + ' this.glMatrix:' + this.glMatrix )
+
+        return ( !! ( gl && this.glMatrix ) );
 
     }
 
@@ -209,11 +263,14 @@ export default class WebGL {
     }
 
     /** 
-     * get HTML5 canvas, and a WebGL context.
+     * get HTML5 canvas, and a WebGL context. We also scan for multiple 
+     * contexts being created ( > 1 ) and delete if one is already present.
+     * @param {Canvas} canvas the HTML5 <canvas> DOM element.
+     * TODO: PROBLEM IF THERE ARE MULTIPLE CONTEXES ON THE PAGE???????
      */
     createContext ( canvas ) {
 
-        if ( this.gl ) {
+        if ( this.gl && this.contextCount > 1 ) {
 
             // Contexts are normally in garbage, can't be deleted without this!
 
@@ -223,17 +280,40 @@ export default class WebGL {
 
         }
 
-        this.gl = canvas.getContext( 'webgl' );
+        // If we're running in dev mode, using the debugging context.
 
-        if ( ! this.gl ) {
+        if ( this.debug ) {
 
-            this.gl = canvas.getContext( 'experimental-webgl' ); // some FF, Edge versions.
+            console.warn( 'using WebGL debugging context' );
+            
+            this.gl = debug.makeDebugContext( canvas.getContext( 'webgl' ) );
+
+            if ( ! this.gl ) {
+
+                this.gl = debug.makeDebugContext( canvas.getContext( 'experimental-webgl' ) ); // some FF, Edge versions.
+
+            }
+
+        } else {
+
+            console.log( 'creating new WebGL context' );
+
+            this.gl = canvas.getContext( 'webgl' );
+
+            if ( ! this.gl ) {
+
+                this.gl = canvas.getContext( 'experimental-webgl' ); // some FF, Edge versions.
+
+            }
 
         }
+
 
         if ( this.gl && typeof this.gl.getParameter == 'function' ) {
 
             this.glVers = this.gl.getParameter( this.gl.VERSION ).toLowerCase();
+
+            this.contextCount++;
 
             return this.gl;
 
@@ -253,12 +333,24 @@ export default class WebGL {
     }
 
     /** 
-     * Kill the current context (complete reset will be needed).
+     * Kill the current context (complete reset will be needed). Also use to debug 
+     * when context is lost, and has to be rebuilt.
+     * @link http://codeflow.org/entries/2013/feb/22/how-to-write-portable-webgl/
      * @link https://developer.mozilla.org/en-US/docs/Web/API/WEBGL_lose_context/loseContext
      */
     killContext () {
 
-        this.gl.getExtension( 'WEBGL_lose_context' ).loseContext();
+        console.log('in killcontext, count:' + this.contextCount);
+
+        if ( this.contextCount ) {
+
+            console.log( 'killing WebGL context, count before:' + this.contextCount );
+
+            this.gl.getExtension( 'WEBGL_lose_context' ).loseContext();
+
+            this.contextCount--;
+
+        }
 
     }
 
@@ -516,6 +608,8 @@ export default class WebGL {
 
     setAttributeLocations ( shaderProgram, attributes ) {
 
+        let gl = this.gl;
+
         for ( let i in attributes ) {
 
             let attb = attributes[ i ];
@@ -539,6 +633,8 @@ export default class WebGL {
     }
 
     setUniformLocations ( shaderProgram, uniforms ) {
+
+        let gl = this.gl;
 
         for ( let i in uniforms ) {
 

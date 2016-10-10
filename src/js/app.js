@@ -10,7 +10,7 @@ console.log( 'in app.js' );
 
 var env = process.env.WEBPACK_ENV;
 
-// REQUIRE ALL .es6 files
+// REQUIRE ALL .es6 files.
 
 var vrmini = require( '../es6/app.es6' );
 

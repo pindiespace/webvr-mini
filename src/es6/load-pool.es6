@@ -4,7 +4,13 @@ export default class LoadPool {
      * Base loader class.
      */
 
-    constructor () {
+    constructor ( config ) {
+
+    	if ( config.webgl ) {
+
+    		this.gl = config.webgl.getContext();
+
+    	}
 
     }
 

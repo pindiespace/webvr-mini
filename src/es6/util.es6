@@ -32,4 +32,10 @@ export default class Util {
 
     }
 
+    isPowerOfTwo( n ) {
+
+        return (n & (n - 1)) === 0;
+
+    }
+
 }
