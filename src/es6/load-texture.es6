@@ -23,7 +23,9 @@ export default class LoadTexture extends LoadPool {
 
         this.textureImageCache = new Array( this.MAX_CACHE_IMAGES );
 
-        this.cachePtr = 0;
+        this.cacheCt = 0; // cached loading
+
+        this.loadCt = 0; // total loaded images
 
         this.waitCache = []; // Could be hundreds
 
@@ -58,7 +60,6 @@ export default class LoadTexture extends LoadPool {
 
     }
 
-
     createTexture ( loadObj, callback ) {
 
         let gl = this.gl;
@@ -67,21 +68,17 @@ export default class LoadTexture extends LoadPool {
 
         gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, loadObj.image );
 
-        this.release( loadObj );
+        // Delete the image.
 
-        if ( loadObj.callback ) { 
+        if ( ! loadObj.persist ) {
 
-            self.callback( self.texture ); 
+            loadObj.image.source = null;
+
+            loadObj.busy = false;  
 
         }
 
-    }
-
-    release ( loadObj ) {
-
-        loadObj.image.source = null;
-
-        loadObj.busy = false;
+        // Fire an update event to the queue.
 
         this.update();
 
@@ -96,25 +93,33 @@ export default class LoadTexture extends LoadPool {
             callback: callback,
 
             persist: (persist || false)
+
         };
 
     }
 
-    createLoadObj ( waitObj ) {
+    /** 
+     * Create a load object wrapper.
+     */
+    createLoadObj ( persist ) {
 
         let loadObj = {};
 
-            loadObj.image = new Image();
+        loadObj.image = new Image();
 
-            loadObj.image.crossOrigin = 'anonymous';
+        loadObj.image.crossOrigin = 'anonymous';
 
-            loadObj.callback = waitObj.callback;
+        loadObj.callback = waitObj.callback;
 
-            loadObj.busy = true;
+        loadObj.busy = true;
 
-            loadObj.addEventListener( 'load', () => this.createTexture( loadObj, waitObj.callback ) );
+        loadObj.image.addEventListener( 'load', () => this.createTexture( loadObj, waitObj.callback ) );
 
-            loadObj.src = waitObj.source; //start the loading
+        loadObj.src = waitObj.source; // start the loading
+
+        loadObj.presist = persist; // keep Image after texture created.
+
+        this.cacheCt++;
 
         return loadObj;
 
@@ -127,29 +132,81 @@ export default class LoadTexture extends LoadPool {
 
         // start with the oldest object in the waitCache.
 
+        let len = this.textureImageCache.length;
+
         if ( this.waitCache.length > 0 ) {
 
-        // scan the cache for open spots.
+            // scan the cache for open spots.
 
-        let waitObj = this.waitCache[ 0 ];
+            let waitObj = this.waitCache[ 0 ];
 
-        for ( let i = 0; i < this.textureImageCache.length; i++ ) {
+            while ( i < len ) {
 
-            let cPos = this.textureImageCache[ i ];
+                let loadObj = this.textureImageCache[ i ];
 
-            if ( ! cPos ) {
+                if ( ! loadObj ) {
 
-                cPos = createLoadObj( waitObj );
+                    // Nothing at this position yet, create complete object.
 
-            } else if ( cPos.busy === false ) {
+                    loadObj = createLoadObj( waitObj.persist );
 
-                
+                    this.waitCache.shift();
 
-            }
+                    this.loadCt--;
 
-        }
+                    break;
 
-        // if there's an open spot, pop the next waiting object of its queue.
+                } else if ( loadObj.busy === false ) {
+
+                    // An object exists, but it is not in use. So just update the .src to trigger a new load.
+
+                    loadObj.busy = true;
+
+                    loadObj.src = waitCache.src;
+
+                    this.waitCache.shift();
+
+                    this.loadCt--;
+
+                    break;
+
+                }
+
+                i++;
+
+            } // end of while.
+
+        } else {
+
+            // Empty waitCache, for 'everything done' state.
+
+            let delCache = [];
+
+            while ( i < len ) {
+
+                let loadObj = this.textureImageCache[ i ];
+
+                if ( loadObj && loadObj.busy === false ) {
+
+                    // removeEventListener
+
+                    loadObj.image.removeEventListener( 'load', () => this.createTexture );
+
+                    // erase the loadObj
+
+                    if( loadObj.persist === false ) {
+
+                        loadObj = null;
+
+                        this.cacheCt++;
+
+                    }
+
+                }
+
+                i++;
+
+            } // end of while.
 
         }
 
@@ -157,13 +214,26 @@ export default class LoadTexture extends LoadPool {
 
     }
 
-    load ( gl, source, callback ) {
+    /** 
+     * load images into the waiting cache. This can happen very quickly.
+     */
+    load ( gl, source, callback, finalCallback ) {
 
-        this.waitCache[ this.loadNum++ ] = this.createWaitObj( source, callback, persist );
+        if ( callback ) {
+
+            this.callback = callback; 
+
+        } 
+
+        this.waitCache[ this.loadCt++ ] = this.createWaitObj( source, callback, persist );
 
         // TODO: start the loading in the regular queue
 
-       this.update();
+        if ( this.cacheCt < this.MAX_CACHE_IMAGES ) {
+
+            this.update();
+
+        }
 
     }
 

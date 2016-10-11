@@ -1637,7 +1637,9 @@
 
 	        _this.textureImageCache = new Array(_this.MAX_CACHE_IMAGES);
 
-	        _this.cachePtr = 0;
+	        _this.cacheCt = 0; // cached loading
+
+	        _this.loadCt = 0; // total loaded images
 
 	        _this.waitCache = []; // Could be hundreds
 
@@ -1655,13 +1657,13 @@
 	        key: 'getQueue',
 	        value: function getQueue() {
 
-	            for (var i = 0; i < this.textureImageCache.length; i++) {
+	            for (var _i = 0; _i < this.textureImageCache.length; _i++) {
 
-	                var c = this.textureImageCache[i];
+	                var c = this.textureImageCache[_i];
 
 	                if (!c) {
 
-	                    return i; // no object exists yet
+	                    return _i; // no object exists yet
 	                } else if (c && c.busy === false) {
 
 	                    return c; // empty object we can reuse
@@ -1680,20 +1682,16 @@
 
 	            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, loadObj.image);
 
-	            this.release(loadObj);
+	            // Delete the image.
 
-	            if (loadObj.callback) {
+	            if (!loadObj.persist) {
 
-	                self.callback(self.texture);
+	                loadObj.image.source = null;
+
+	                loadObj.busy = false;
 	            }
-	        }
-	    }, {
-	        key: 'release',
-	        value: function release(loadObj) {
 
-	            loadObj.image.source = null;
-
-	            loadObj.busy = false;
+	            // Fire an update event to the queue.
 
 	            this.update();
 	        }
@@ -1708,11 +1706,17 @@
 	                callback: callback,
 
 	                persist: persist || false
+
 	            };
 	        }
+
+	        /** 
+	         * Create a load object wrapper.
+	         */
+
 	    }, {
 	        key: 'createLoadObj',
-	        value: function createLoadObj(waitObj) {
+	        value: function createLoadObj(persist) {
 	            var _this2 = this;
 
 	            var loadObj = {};
@@ -1725,11 +1729,15 @@
 
 	            loadObj.busy = true;
 
-	            loadObj.addEventListener('load', function () {
+	            loadObj.image.addEventListener('load', function () {
 	                return _this2.createTexture(loadObj, waitObj.callback);
 	            });
 
-	            loadObj.src = waitObj.source; //start the loading
+	            loadObj.src = waitObj.source; // start the loading
+
+	            loadObj.presist = persist; // keep Image after texture created.
+
+	            this.cacheCt++;
 
 	            return loadObj;
 	        }
@@ -1741,39 +1749,106 @@
 	    }, {
 	        key: 'update',
 	        value: function update() {
+	            var _this3 = this;
 
 	            // start with the oldest object in the waitCache.
+
+	            var len = this.textureImageCache.length;
 
 	            if (this.waitCache.length > 0) {
 
 	                // scan the cache for open spots.
 
-	                var waitObj = this.waitCache[0];
+	                var _waitObj = this.waitCache[0];
 
-	                for (var i = 0; i < this.textureImageCache.length; i++) {
+	                while (i < len) {
 
-	                    var cPos = this.textureImageCache[i];
+	                    var loadObj = this.textureImageCache[i];
 
-	                    if (!cPos) {
+	                    if (!loadObj) {
 
-	                        cPos = createLoadObj(waitObj);
-	                    } else if (cPos.busy === false) {}
-	                }
+	                        // Nothing at this position yet, create complete object.
 
-	                // if there's an open spot, pop the next waiting object of its queue.
+	                        loadObj = createLoadObj(_waitObj.persist);
+
+	                        this.waitCache.shift();
+
+	                        this.loadCt--;
+
+	                        break;
+	                    } else if (loadObj.busy === false) {
+
+	                        // An object exists, but it is not in use. So just update the .src to trigger a new load.
+
+	                        loadObj.busy = true;
+
+	                        loadObj.src = waitCache.src;
+
+	                        this.waitCache.shift();
+
+	                        this.loadCt--;
+
+	                        break;
+	                    }
+
+	                    i++;
+	                } // end of while.
+	            } else {
+
+	                // Empty waitCache, for 'everything done' state.
+
+	                var delCache = [];
+
+	                while (i < len) {
+
+	                    var _loadObj = this.textureImageCache[i];
+
+	                    if (_loadObj && _loadObj.busy === false) {
+
+	                        // removeEventListener
+
+	                        _loadObj.image.removeEventListener('load', function () {
+	                            return _this3.createTexture;
+	                        });
+
+	                        // erase the loadObj
+
+	                        if (_loadObj.persist === false) {
+
+	                            _loadObj = null;
+
+	                            this.cacheCt++;
+	                        }
+	                    }
+
+	                    i++;
+	                } // end of while.
 	            }
 
 	            // otherwise, wait until another loading object calls update() again.
 	        }
+
+	        /** 
+	         * load images into the waiting cache. This can happen very quickly.
+	         */
+
 	    }, {
 	        key: 'load',
-	        value: function load(gl, source, callback) {
+	        value: function load(gl, source, callback, finalCallback) {
 
-	            this.waitCache[this.loadNum++] = this.createWaitObj(source, callback, persist);
+	            if (callback) {
+
+	                this.callback = callback;
+	            }
+
+	            this.waitCache[this.loadCt++] = this.createWaitObj(source, callback, persist);
 
 	            // TODO: start the loading in the regular queue
 
-	            this.update();
+	            if (this.cacheCt < this.MAX_CACHE_IMAGES) {
+
+	                this.update();
+	            }
 	        }
 	    }]);
 
