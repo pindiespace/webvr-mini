@@ -110,106 +110,11 @@ export default class prim {
     }
 
     /** 
-     * SHADER CLASSES
-     * Textured object w/o lighting
-     * Texture object with lighting
-     * Translucent
-     * Water
-     */
-
-     /** 
-      * Read shader code, and organize the variables in the shader 
-      * into an object. Abstracts some of the tedious work in setting 
-      * up shader variables.
-      * @param {Array} sourceArr array of lines in the shader.
-      * @returns {Object} an object organizing attribute, uniform, and 
-      * varying variable names and datatypes.
-      */
-    createVarList ( source ) {
-
-        let len = source.length;
-
-        let sp = ' ';
-
-        let sr = ';';
-
-        let list = {};
-
-        let varTypes = ['attribute', 'uniform', 'varying' ];
-
-        if( len ) {
-
-            for ( let i = 0; i < source.length; i++ ) {
-
-                let s = source[ i ];
-
-                if ( s.indexOf( 'void main' ) !== -1 ) {
- 
-                    break;
-
-                } else {
-
-                    for ( let j = 0; j < varTypes.length; j++ ) {
-
-                        let type = varTypes[j];
-
-                        if( ! list[ type ] ) list[ type ] = {};
-
-                        if ( s.indexOf( type ) > -1 ) {
-
-                            console.log("SSS1:" + s)
-
-                            //s = s.slice(0, -1); // remove trailing ';'
-                            s = s.replace(/;\s*$/, "");
-
-                            console.log("SSS:" + s)
-
-                            s = s.split( sp );
-
-                            console.log("FIRST: " + s)
-
-                            let vType = s.shift(); // attribute, uniform, or varying
-
-                            if ( ! list[ vType ] ) {
-
-                                list[ vType ] = {};
-
-                            }
-
-                            console.log("SECOND AFTER SHIFT:" + vType + " remainder:" + s)
-
-                            let nType = s.shift(); // variable type
-
-                            if ( ! list[ vType ][ nType ] ) {
-
-                                list[ vType ][ nType ] = {};
-                            }
-
-                            let nName = s.shift(); // variable name
-
-                            if ( ! list[ vType ][ nType ][ nName ] ) {
-
-                                list[ vType ][ nType ][ nName ] = 'empty';
-                            }
-
-                            console.log("THIRD AFTER SHIFT:" + nType + " remainder:" + s)
-
-                        }
-
-                    }
-
-                }
-
-            } 
-
-        }
-
-        return list;
-
-    }
-
-    /** 
      * a default-lighting textured object vertex shader.
+     * - vertex position
+     * - texture coordinate
+     * - model-view matrix
+     * - projection matrix
      */
     objVS1 () {
 
@@ -235,7 +140,7 @@ export default class prim {
 
             code: s.join( '\n' ),
 
-            varList: this.createVarList( s ),
+            varList: this.webgl.createVarList( s ),
 
             render: function () {}
 
@@ -246,6 +151,8 @@ export default class prim {
 
     /** 
      * a default-lighting textured object fragment shader.
+     * - varying texture coordinate
+     * - texture 2D sampler
      */
     objFS1 () {
 
@@ -269,7 +176,7 @@ export default class prim {
         
             code: s.join('\n'),
 
-            varList: this.createVarList( s ),
+            varList: this.webgl.createVarList( s ),
 
             render: function () {}
 
@@ -392,7 +299,7 @@ export default class prim {
 
         prim.rotation = rotation || this.glMatrix.vec3.create( 0, 0, 0 );
 
-        prim.texture = null;
+        prim.texture = this.loadTexture.load( textureImage, function () { console.log('CALLING BACK............') } );
 
         prim.color = null;
 

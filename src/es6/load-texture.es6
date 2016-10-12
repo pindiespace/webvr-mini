@@ -72,13 +72,9 @@ export default class LoadTexture extends LoadPool {
 
         // Delete the image.
 
-        if ( ! loadObj.persist ) {
+        loadObj.image.source = null;
 
-            loadObj.image.source = null;
-
-            loadObj.busy = false;  
-
-        }
+        loadObj.busy = false;  
 
         // Fire an update event to the queue.
 
@@ -103,7 +99,7 @@ export default class LoadTexture extends LoadPool {
     /** 
      * Create a load object wrapper.
      */
-    createLoadObj ( persist ) {
+    createLoadObj ( waitObj ) {
 
         let loadObj = {};
 
@@ -115,11 +111,15 @@ export default class LoadTexture extends LoadPool {
 
         loadObj.busy = true;
 
-        loadObj.image.addEventListener( 'load', () => this.createTexture( loadObj, waitObj.callback ) );
+        // https://www.nczonline.net/blog/2013/09/10/understanding-ecmascript-6-arrow-functions/
+
+        //loadObj.image.addEventListener( 'load', ( e ) => this.createTexture( loadObj, waitObj.callback ) );
+
+        loadObj.image.addEventListener( 'load', ( e ) => console.log("SDSLFSHSFSDFSDFFSDSFDFSFSD"), false );
+
+        loadObj.image.addEventListener( 'error', ( e) => console.log("EERRRRRORORRORORORO"), false );
 
         loadObj.src = waitObj.source; // start the loading
-
-        loadObj.presist = persist; // keep Image after texture created.
 
         this.cacheCt++;
 
@@ -153,9 +153,8 @@ export default class LoadTexture extends LoadPool {
 
                     // Nothing at this position yet, create complete object.
 
-                    loadObj = createLoadObj( waitObj.persist );
 
-                    this.waitCache.shift();
+                    loadObj = this.createLoadObj( this.waitCache.shift() );
 
                     this.loadCt--;
 
@@ -197,13 +196,9 @@ export default class LoadTexture extends LoadPool {
 
                     // erase the loadObj
 
-                    if( loadObj.persist === false ) {
-
                         loadObj = null;
 
                         this.cacheCt++;
-
-                    }
 
                 }
 
@@ -218,9 +213,15 @@ export default class LoadTexture extends LoadPool {
     }
 
     /** 
-     * load images into the waiting cache. This can happen very quickly.
+     * load images into the waiting cache. This can happen very quickly. 
+     * images are queue for loading, with callback for each load, and 
+     * final callback. We use custom code hear instead of a Promise for 
+     * brevity and flexibility.
+     * @param {String} source the path to the image file
+     * @param {Function} callback each time an image is loaded.
+     * @param {Function} finalCallback the callback executed when all objects are loaded.
      */
-    load ( gl, source, callback, finalCallback ) {
+    load ( source, callback, finalCallback ) {
 
         if ( callback ) {
 
@@ -228,7 +229,7 @@ export default class LoadTexture extends LoadPool {
 
         } 
 
-        this.waitCache[ this.loadCt++ ] = this.createWaitObj( source, callback, persist );
+        this.waitCache[ this.loadCt++ ] = this.createWaitObj( source, callback );
 
         // TODO: start the loading in the regular queue
 

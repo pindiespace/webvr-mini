@@ -105,7 +105,16 @@ export default class world {
         this.program.fsVars.uniform = this.webgl.setUniformLocations( this.program.shaderProgram, this.program.fsVars.uniform );
 
 
-        let cube = this.prim.createCube();
+        let cube = this.prim.createCube(
+            'first cube',
+            1.0,
+            this.glMatrix.vec3.create( 0, 0, 0 ),
+            this.glMatrix.vec3.create( 0, 0, 0 ),
+            this.glMatrix.vec3.create( 0, 0, 0 ),
+            'img/crate.png',
+            this.glMatrix.vec4.create( 0.5, 1.0, 0.2, 1.0 ) 
+
+        );
 
         window.cube = cube;
 
