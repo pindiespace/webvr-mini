@@ -7,11 +7,13 @@ export default class LoadTexture extends LoadPool {
   	 * @link http://blog.tojicode.com/2012/03/javascript-memory-optimization-and.html
      */
 
-    constructor ( config ) {
+    constructor ( init, util, glMatrix, webgl ) {
+
+        console.log( 'in LoadTexture class' );
 
         // Add our configs.
 
-        super( config );
+        super( init, util, glMatrix, webgl );
 
         // Specific to texture cache.
 
@@ -62,7 +64,7 @@ export default class LoadTexture extends LoadPool {
 
     createTexture ( loadObj, callback ) {
 
-        let gl = this.gl;
+        let gl = this.webgl.getContext();
 
         gl.bindTexture( gl.TEXTURE_2D, loadObj.texture );
 
@@ -125,10 +127,13 @@ export default class LoadTexture extends LoadPool {
 
     }
 
+
     /** 
      * update the cache status.
      */
     update () {
+
+        let i = 0;
 
         // start with the oldest object in the waitCache.
 
@@ -179,8 +184,6 @@ export default class LoadTexture extends LoadPool {
         } else {
 
             // Empty waitCache, for 'everything done' state.
-
-            let delCache = [];
 
             while ( i < len ) {
 

@@ -6,9 +6,11 @@ export default class LoadModel extends LoadPool {
      * Base loader class.
      */
 
-    constructor ( config ) {
+    constructor ( init, util, glMatrix, webgl ) {
 
-        super( config );
+        console.log( 'in LoadModel class' );
+
+        super( init, util, glMatrix, webgl );
 
     }
 

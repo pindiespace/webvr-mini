@@ -4,17 +4,27 @@ export default class LoadPool {
      * Base loader class.
      */
 
-    constructor ( config ) {
+    constructor ( init, util, glMatrix, webgl ) {
 
-    	if ( config.webgl ) {
+        console.log( 'in LoadPool class' );
 
-    		this.gl = config.webgl.getContext();
+        this.util = util;
 
-    	}
+        this.webgl = webgl;
+
+        this.glMatrix = glMatrix;
+
+        if ( this.init === true ) {
+
+            // do something 
+
+        }
 
     }
 
     init () {
+
+        this.gl = webgl.getContext();
 
     }
 

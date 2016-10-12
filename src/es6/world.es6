@@ -24,8 +24,6 @@ export default class world {
 
         this.canvas = webgl.getCanvas();
 
-        this.gl = webgl.getContext();
-
         this.glMatrix = webgl.glMatrix;
 
         this.objVertices = [];
@@ -58,7 +56,7 @@ export default class world {
     init () {
 
 
-        let gl = this.gl;
+        let gl = this.webgl.getContext();
 
         let prim = this.prim;
 
@@ -81,6 +79,12 @@ export default class world {
                         uvMatrix: null (until filled)
                         mvMatris: null (until filled)
                     }
+                },
+                uniform {
+                    ...
+                },
+                varying {
+                    ...
                 }
          }
          */
@@ -99,6 +103,12 @@ export default class world {
         this.program.vsVars.uniform = this.webgl.setUniformLocations( this.program.shaderProgram, this.program.vsVars.uniform );
 
         this.program.fsVars.uniform = this.webgl.setUniformLocations( this.program.shaderProgram, this.program.fsVars.uniform );
+
+
+        let cube = this.prim.createCube();
+
+        window.cube = cube;
+
 
         // Start rendering loop.
 

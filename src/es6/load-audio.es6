@@ -6,9 +6,11 @@ export default class LoadAudio extends LoadPool {
      * Base loader class.
      */
 
-    constructor ( config ) {
+    constructor ( init, util, glMatrix, webgl ) {
 
-        super( config );
+        console.log( 'in LoadAudio class' );
+
+        super( init, util, glMatrix, webgl );
 
     }
 

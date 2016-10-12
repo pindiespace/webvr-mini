@@ -56,6 +56,7 @@
         <script src="js/webvr-mini.js"></script>
 
         <!--MAIN PROGRAM-->
+
         <script>
 
             console.log("vrmini" + vrmini );
@@ -68,7 +69,13 @@
 
             webgl.init( 'webvr-canvas' );
 
-            var world = vrmini.world;
+            window.addEventListener( 'DOMContentLoaded', function () {
+
+                console.log( 'loading the world...' );
+
+                vrmini.world.init();
+
+            }, false );
 
 
         </script>

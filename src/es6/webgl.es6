@@ -10,54 +10,31 @@ export default class WebGL {
      * @param {Object} config a configuration object, set in app.js.
      */
 
-    constructor ( config ) {
+    constructor ( init, glMatrix, util, debug ) {
 
         console.log( 'in webGL class' );
 
         this.gl = this.vs = this.vs = null;
 
-         this.contextCount = 0;
+        this.contextCount = 0;
 
-        if ( config ) {
+        this.glMatrix = glMatrix;
 
-            if ( config.glMatrix ) {
+        this.util = util;
 
-/////////////////////////////////
-                for ( var i in config ) {
-                    console.log( i + ":" + config[i] + "(" + typeof config[i] + ")" );
-                }
+        if ( init === true ) {
 
-/////////////////////////////////
-                for ( var i in config.glMatrix ) {
-                    console.log( i + ":" + config.glMatrix[i]);
-                }
-/////////////////////////////////
+            this.init( canvas );
 
-                this.glMatrix = config.glMatrix;
+        }
 
-            }
+        // If we are running in debug mode, save the debug utils into this object.
 
-            if ( config.util ) {
+        if ( debug ) {
 
-                this.util = config.util;
+            this.debug = debug;
 
-            }
-
-            if ( config.init === true ) {
-
-                this.init( config.canvas );
-
-            }
-
-            // If we are running in debug mode, save the debug utils into this object.
-
-            if ( config.debug ) {
-
-                this.debug = config.debug;
-
-            }
-
-        } 
+        }
 
     }
 
@@ -276,6 +253,8 @@ export default class WebGL {
 
             this.killContext();
 
+            this.contextCount--;
+
             this.gl = null;
 
         }
@@ -284,13 +263,15 @@ export default class WebGL {
 
         if ( this.debug ) {
 
-            console.warn( 'using WebGL debugging context' );
+            console.warn( 'In development mode, using WebGL debugging context' );
             
-            this.gl = debug.makeDebugContext( canvas.getContext( 'webgl' ) );
+            this.gl = this.debug.makeDebugContext( canvas.getContext( 'webgl' ) );
 
             if ( ! this.gl ) {
 
-                this.gl = debug.makeDebugContext( canvas.getContext( 'experimental-webgl' ) ); // some FF, Edge versions.
+                console.warn( 'using experimental-webgl context' );
+
+                this.gl = this.debug.makeDebugContext( canvas.getContext( 'experimental-webgl' ) ); // some FF, Edge versions.
 
             }
 
@@ -327,6 +308,12 @@ export default class WebGL {
      * Return the current context.
      */
     getContext () {
+
+        if ( ! this.gl ) {
+
+            console.warn( 'warning webgl context not initialized' );
+
+        }
 
         return this.gl;
 

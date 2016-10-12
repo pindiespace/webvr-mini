@@ -55,7 +55,7 @@ let util = new Util();
 
 // If we are in dev mode, load any special libraries.
 
-let configGL = { init: true, glMatrix: glMatrix, util: util };
+let webgl = null;
 
 if ( __DEV__ === 'true' ) {
 
@@ -64,11 +64,12 @@ if ( __DEV__ === 'true' ) {
     // require kronos webgl debug from node_modules
     // https://github.com/vorg/webgl-debug
 
-    configGL.debug = require( 'webgl-debug' );
+    let debug = require( 'webgl-debug' );
 
-    window.debug = configGL.debug;
+    webgl = new WebGL( false, glMatrix, util, debug );
 
-    if( configGL.debug ) {
+
+    if( debug ) {
 
         console.log( 'Loading webgl-debug' );
 
@@ -82,41 +83,29 @@ if ( __DEV__ === 'true' ) {
 
     // Code only added to release.
 
+    webgl = new WebGL( false, glMatrix, util );
+
 }
 
-// Create our library.
+// WebVR needs WebGL.
 
-let webgl = new WebGL( configGL );
+let webvr = new WebVR( false, util, glMatrix, webgl );
 
-// Common initialization.
+// The Prim object needs Loaders.
 
-let config = { init: true, util: util, webgl: webgl };
+let loadModel = new LoadModel( true, util, glMatrix, webgl );
 
-let loadModel = new LoadModel( config );
+let loadTexture = new LoadTexture( true, util, glMatrix, webgl );
 
-let loadTexture = new LoadTexture( config );
+let loadAudio = new LoadAudio( true, util, glMatrix, webgl );
 
-let loadAudio = new LoadAudio( config );
+let loadVideo = new LoadVideo( true, util, glMatrix, webgl );
 
-let loadVideo = new LoadVideo( config );
+let prim = new Prim ( true, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo );
 
-let prim = new Prim ( config );
+// Create the world, which needs WebGL, WebVR, and Prim.
 
-let webvr = new WebVR( config );
-
-// Create the world.
-
-let world = null;
-
-window.addEventListener( 'DOMContentLoaded', function () {
-
-    console.log( 'loading the world...' );
-
-    world = new World( webgl, prim );
-
-    world.init();
-
-}, false );
+let world = new World( webgl, prim );
 
 // Export our classes to app.js.
 

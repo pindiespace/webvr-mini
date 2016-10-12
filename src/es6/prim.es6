@@ -5,27 +5,47 @@ export default class prim {
      * suitable for creating a VBO and IBO.
      */
 
-    constructor ( config ) {
+    constructor ( init, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo) {
 
-        this.util = config.util;
+        console.log( 'in Prim class' );
 
-        this.webgl = config.webgl;
+        this.util = util;
 
-        this.glMatrix = this.webgl.glMatrix;
+        this.webgl = webgl;
+
+        this.glMatrix = glMatrix;
+
+        this.loadModel = loadModel;
+
+        this.loadTexture = loadTexture;
+
+        this.loadAudio = loadAudio;
+
+        this.loadVideo = loadVideo;
 
         this.objs = [];
 
-        this.type = [];
+        this.type = {
 
-        this.type[ 'PLANE' ] = 'PLANE',
+            POINT: 'POINT',
 
-        this.type[ 'CUBE' ] = 'CUBE',
+            LINE: 'LINE',
 
-        this.type[ 'SPHERE' ] = 'SPHERE',
+            PLANE: 'PLANE',
 
-        this.type[ 'CONE' ] = 'CONE',
+            CUBE: 'CUBE',
 
-        this.type[ 'CYLINDER' ] = 'CYLINDER';
+            SPHERE: 'SPHERE',
+
+            DOME: 'DOME',
+
+            CONE: 'CONE',
+
+            CYLINDER: 'CYLINDER',
+
+            POLY: 'POLY'
+
+        };
 
     }
 
@@ -139,7 +159,8 @@ export default class prim {
 
                             console.log("SSS1:" + s)
 
-                            s = s.slice(0, -1); // remove trailing ';'
+                            //s = s.slice(0, -1); // remove trailing ';'
+                            s = s.replace(/;\s*$/, "");
 
                             console.log("SSS:" + s)
 
@@ -261,11 +282,25 @@ export default class prim {
      * GEOMETRIES
      */
 
+    geometryPoint () {
+
+    }
+
+    geometryLine () {
+
+    }
+
+    geometryPlane () {
+
+    }
+
     /** 
      * Create a cube geometry of a given size (units) centered 
      * on a point.
+     * @param {GLMatrix.Vec3} center a 3d vector defining the center.
+     * @param {Number} scale relative to unit size (1, 1, 1).
      */
-    GeometryCube ( center, size ) {
+    geometryCube ( center, size ) {
 
         let  halfSize = size * 0.5;
 
@@ -281,53 +316,102 @@ export default class prim {
 
         let indices = [];
 
+        // Create cube geometry.
 
-        // Set item size and numItems.
 
-        cubeVerts.itemSize = 3;
-        cubeVerts.numItems = cubeVerts.length / 4;
-
-        cubeIndices.itemSize = 1;
-        cubeIndices.numItems = cubeIndices.length;
+        // Return standard geo object.
 
         return {
 
-            size: size,
+            vertices: {
 
-            position: center,
+                data: vertices,
 
-            vertices: cubeVerts,
+                itemSize: 3,
 
-            indices: cubeIndices
+                numItems: vertices.length / 4
+            },
+
+            indices: {
+
+                data: indices,
+
+                itemSize: 1,
+
+                numItems: indices.length
+
+            }
 
         }
 
     }
 
+    geometrySphere () {
+
+    }
+
+    geometryDome () {
+
+    }
+
+    geometryCone () {
+
+    }
+
+    geometryCylinder () {
+
+    }
+
+    geometryPoly () {
+
+    }
+
+    /** 
+     * Create an standard 3d object.
+     * @param {String} name assigned name of object (not necessarily unique).
+     * @param {Number} scale size relative to unit vector (1,1,1).
+     * @param {GLMatrix.vec3} position location of center of object.
+     * @param {GLMatrix.vec3} translation movement vector (acceleration) of object.
+     * @param {GLMatrix.vec3} rotation rotation vector (spin) around center of object.
+     * @param {String} textureImage the path to an image used to create a texture.
+     * @param {GLMatrix.vec4} color the default color of the object.
+     */
+    createPrim ( name = 'unknown', scale = 1.0, position, translation, rotation, textureImage, color ) {
+
+        let gl = this.webgl.getContext();
+
+        let prim = {};
+
+        prim.id = this.setId();
+
+        prim.name = name;
+
+        prim.position = position || this.glMatrix.vec3.create( 0, 0, 0 );
+
+        prim.translation = translation || this.glMatrix.vec3.create( 0, 0, 0 );
+
+        prim.rotation = rotation || this.glMatrix.vec3.create( 0, 0, 0 );
+
+        prim.texture = null;
+
+        prim.color = null;
+
+        return prim;
+
+    }
+
     /** 
      * create a Cube object.
+     * @param {String} name of object
+     * @param {Number} scale
      */
-    createCube ( name = 'unknown', size = 1.0, position, translation, rotation ) {
+    createCube ( name, scale, position, translation, rotation, textureImage, color ) {
 
-        this.gl = this.webgl.getContext();
+        let cube = this.createPrim( name, scale, position, translation, rotation, textureImage, color );
 
-        let cube = this.GeometryCube( position, size );
+        cube.geometry = this.geometryCube( cube );
 
-        cube.id = this.setId();
-
-        cube.name = name;
-
-        cube.translation = translation || this.glMatrix.vec3( 0, 0, 0 );
-
-        cube.rotation = rotation || this.glMatrix.vec3( 0, 0, 0 );
-
-        cube.offset = 20;
-
-        cube.type = this.type[ 'CUBE' ];
-
-        this.texture = null;
-
-        this.color = null;
+        cube.type = this.type.CUBE;
 
         this.objs.push( cube );
 
