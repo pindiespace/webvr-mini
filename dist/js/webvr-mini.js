@@ -1728,67 +1728,63 @@
 	    _createClass(LoadTexture, [{
 	        key: 'init',
 	        value: function init() {}
-	    }, {
-	        key: 'getQueue',
-	        value: function getQueue() {
 
-	            for (var i = 0; i < this.textureImageCache.length; i++) {
+	        /** 
+	         * Add to the queue of unresolved wait objects.
+	         */
 
-	                var c = this.textureImageCache[i];
-
-	                if (!c) {
-
-	                    return i; // no object exists yet
-	                } else if (c && c.busy === false) {
-
-	                    return c; // empty object we can reuse
-	                }
-	            }
-
-	            return -1; // have to wait
-	        }
-	    }, {
-	        key: 'createTexture',
-	        value: function createTexture(loadObj, callback) {
-
-	            var gl = this.webgl.getContext();
-
-	            gl.bindTexture(gl.TEXTURE_2D, loadObj.texture);
-
-	            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, loadObj.image);
-
-	            // Delete the image.
-
-	            loadObj.image.source = null;
-
-	            loadObj.busy = false;
-
-	            // Fire an update event to the queue.
-
-	            this.update();
-	        }
 	    }, {
 	        key: 'createWaitObj',
-	        value: function createWaitObj(source, callback, persist) {
+	        value: function createWaitObj(source, callback) {
 
-	            return {
+	            this.waitCache.push({
 
 	                source: source,
 
-	                callback: callback,
+	                callback: callback
 
-	                persist: persist || false
-
-	            };
+	            });
 	        }
 
 	        /** 
-	         * Create a load object wrapper.
+	         * when a wait object shifts to loading, remove it.
+	         */
+
+	    }, {
+	        key: 'removeWaitObj',
+	        value: function removeWaitObj(waitObj) {
+
+	            var len = this.waitCache.length;
+
+	            var i = 0;
+
+	            while (i < len) {
+
+	                var waitPos = this.waitCache[i];
+
+	                if (waitObj === waitPos) {
+
+	                    // Delete from array
+
+	                    this.waitCache.splice(i, 1);
+
+	                    break;
+	                }
+
+	                i++;
+	            }
+	        }
+
+	        /** 
+	         * Create a load object wrapper, and start a load.
 	         */
 
 	    }, {
 	        key: 'createLoadObj',
 	        value: function createLoadObj(waitObj) {
+	            var _this2 = this;
+
+	            var gl = this.webgl.getContext();
 
 	            var loadObj = {};
 
@@ -1798,107 +1794,108 @@
 
 	            loadObj.callback = waitObj.callback;
 
+	            loadObj.texture = gl.createTexture();
+
 	            loadObj.busy = true;
 
 	            // https://www.nczonline.net/blog/2013/09/10/understanding-ecmascript-6-arrow-functions/
 
-	            //loadObj.image.addEventListener( 'load', ( e ) => this.createTexture( loadObj, waitObj.callback ) );
-
 	            loadObj.image.addEventListener('load', function (e) {
-	                return console.log("SDSLFSHSFSDFSDFFSDSFDFSFSD");
-	            }, false);
+	                return _this2.createTexture(loadObj, waitObj.callback);
+	            });
 
 	            loadObj.image.addEventListener('error', function (e) {
-	                return console.log("EERRRRRORORRORORORO");
+	                return console.log('error loading image:' + waitObj.source);
 	            }, false);
 
-	            loadObj.src = waitObj.source; // start the loading
+	            // Start the loading.
+
+	            loadObj.image.src = waitObj.source;
 
 	            this.cacheCt++;
 
 	            return loadObj;
 	        }
+	    }, {
+	        key: 'createTexture',
+	        value: function createTexture(loadObj, callback) {
+
+	            console.log('in createTexture() for src:' + loadObj.image.src);
+
+	            var gl = this.webgl.getContext();
+
+	            gl.bindTexture(gl.TEXTURE_2D, loadObj.texture);
+
+	            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, loadObj.image);
+
+	            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+	            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+
+	            gl.generateMipmap(gl.TEXTURE_2D);
+
+	            gl.bindTexture(gl.TEXTURE_2D, null);
+
+	            loadObj.busy = false;
+
+	            // Find another object in the queue to load.
+
+	            this.update();
+	        }
 
 	        /** 
-	         * update the cache status.
+	         * Update the queue.
 	         */
 
 	    }, {
 	        key: 'update',
 	        value: function update() {
-	            var _this2 = this;
+
+	            console.log('in loadTexture.update()');
 
 	            var i = 0;
 
-	            // start with the oldest object in the waitCache.
+	            var cLen = this.textureImageCache.length;
 
-	            var len = this.textureImageCache.length;
+	            var wLen = this.waitCache.length;
 
-	            if (this.waitCache.length > 0) {
-
-	                // scan the cache for open spots.
+	            if (wLen > 0) {
 
 	                var waitObj = this.waitCache[0];
 
-	                while (i < len) {
+	                // Loop through the loader slots.
 
-	                    var loadObj = this.textureImageCache[i];
+	                while (i < cLen) {
 
-	                    if (!loadObj) {
+	                    var loadPos = this.textureImageCache[i];
 
-	                        // Nothing at this position yet, create complete object.
+	                    if (!loadPos) {
 
+	                        console.log('creating new loader object');
 
-	                        loadObj = this.createLoadObj(this.waitCache.shift());
+	                        loadPos = this.createLoadObj(waitObj);
 
-	                        this.loadCt--;
+	                        this.removeWaitObj(waitObj);
 
 	                        break;
-	                    } else if (loadObj.busy === false) {
+	                    } else if (!loadPos.busy) {
 
-	                        // An object exists, but it is not in use. So just update the .src to trigger a new load.
+	                        console.log('reusing existing loader object');
 
 	                        loadObj.busy = true;
 
-	                        loadObj.src = waitCache.src;
+	                        this.removeWaitObj(waitObj);
 
-	                        this.waitCache.shift();
-
-	                        this.loadCt--;
+	                        loadObj.image.src = waitCache.src;
 
 	                        break;
 	                    }
-
-	                    i++;
-	                } // end of while.
+	                }
 	            } else {
 
-	                // Empty waitCache, for 'everything done' state.
+	                // Nothing in the cache, remove the event listeners.
 
-	                while (i < len) {
-
-	                    var _loadObj = this.textureImageCache[i];
-
-	                    if (_loadObj && _loadObj.busy === false) {
-
-	                        // removeEventListener
-
-	                        _loadObj.image.removeEventListener('load', function () {
-	                            return _this2.createTexture;
-	                        });
-
-	                        // erase the loadObj
-
-	                        _loadObj = null;
-
-	                        this.cacheCt++;
-	                    }
-
-	                    i++;
-	                } // end of while.
 	            }
-
-	            // otherwise, wait until another loading object calls update() again.
 	        }
 
 	        /** 
@@ -1920,14 +1917,13 @@
 	                this.callback = callback;
 	            }
 
-	            this.waitCache[this.loadCt++] = this.createWaitObj(source, callback);
+	            // Push a load request onto the queue.
 
-	            // TODO: start the loading in the regular queue
+	            this.createWaitObj(source, callback);
 
-	            if (this.cacheCt < this.MAX_CACHE_IMAGES) {
+	            // Start loading, if space available.
 
-	                this.update();
-	            }
+	            this.update();
 	        }
 	    }]);
 
@@ -2582,9 +2578,13 @@
 
 	            this.program.fsVars.uniform = this.webgl.setUniformLocations(this.program.shaderProgram, this.program.fsVars.uniform);
 
-	            var cube = this.prim.createCube('first cube', 1.0, this.glMatrix.vec3.create(0, 0, 0), this.glMatrix.vec3.create(0, 0, 0), this.glMatrix.vec3.create(0, 0, 0), 'img/crate.png', this.glMatrix.vec4.create(0.5, 1.0, 0.2, 1.0));
+	            var cube1 = this.prim.createCube('first cube', 1.0, this.glMatrix.vec3.create(0, 0, 0), this.glMatrix.vec3.create(0, 0, 0), this.glMatrix.vec3.create(0, 0, 0), 'img/crate.png', this.glMatrix.vec4.create(0.5, 1.0, 0.2, 1.0));
 
-	            window.cube = cube;
+	            var cube2 = this.prim.createCube('second cube', 1.0, this.glMatrix.vec3.create(0, 0, 0), this.glMatrix.vec3.create(0, 0, 0), this.glMatrix.vec3.create(0, 0, 0), 'img/webvr-logo1.png', this.glMatrix.vec4.create(0.5, 1.0, 0.2, 1.0));
+
+	            var cube3 = this.prim.createCube('third cube', 1.0, this.glMatrix.vec3.create(0, 0, 0), this.glMatrix.vec3.create(0, 0, 0), this.glMatrix.vec3.create(0, 0, 0), 'img/webvr-logo2.png', this.glMatrix.vec4.create(0.5, 1.0, 0.2, 1.0));
+
+	            window.cube = cube1;
 
 	            // Start rendering loop.
 

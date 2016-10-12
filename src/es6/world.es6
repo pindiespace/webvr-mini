@@ -105,7 +105,7 @@ export default class world {
         this.program.fsVars.uniform = this.webgl.setUniformLocations( this.program.shaderProgram, this.program.fsVars.uniform );
 
 
-        let cube = this.prim.createCube(
+        let cube1 = this.prim.createCube(
             'first cube',
             1.0,
             this.glMatrix.vec3.create( 0, 0, 0 ),
@@ -116,7 +116,29 @@ export default class world {
 
         );
 
-        window.cube = cube;
+        let cube2 = this.prim.createCube(
+            'second cube',
+            1.0,
+            this.glMatrix.vec3.create( 0, 0, 0 ),
+            this.glMatrix.vec3.create( 0, 0, 0 ),
+            this.glMatrix.vec3.create( 0, 0, 0 ),
+            'img/webvr-logo1.png',
+            this.glMatrix.vec4.create( 0.5, 1.0, 0.2, 1.0 ) 
+
+        );
+
+        let cube3 = this.prim.createCube(
+            'third cube',
+            1.0,
+            this.glMatrix.vec3.create( 0, 0, 0 ),
+            this.glMatrix.vec3.create( 0, 0, 0 ),
+            this.glMatrix.vec3.create( 0, 0, 0 ),
+            'img/webvr-logo2.png',
+            this.glMatrix.vec4.create( 0.5, 1.0, 0.2, 1.0 ) 
+
+        );
+
+        window.cube = cube1;
 
 
         // Start rendering loop.
