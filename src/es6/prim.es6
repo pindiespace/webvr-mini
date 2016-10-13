@@ -209,6 +209,8 @@ export default class prim {
      */
     geometryCube ( center, size ) {
 
+        let gl = this.webgl.getContext();
+
         let  halfSize = size * 0.5;
 
         let r = size * 0.5;
@@ -219,12 +221,104 @@ export default class prim {
 
         let z = center[2];
 
-        let vertices = [];
+        //let vertices = [];
 
-        let indices = [];
+        let indices = [
+            0, 1, 2,      0, 2, 3,    // Front face
+            4, 5, 6,      4, 6, 7,    // Back face
+            8, 9, 10,     8, 10, 11,  // Top face
+            12, 13, 14,   12, 14, 15, // Bottom face
+            16, 17, 18,   16, 18, 19, // Right face
+            20, 21, 22,   20, 22, 23  // Left face
+        ];
+
+        let iBuffer = gl.createBuffer();
+
+        gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, iBuffer);
+
+        gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( indices ), gl.STATIC_DRAW);
 
         // Create cube geometry.
 
+        let vertices = [
+            // Front face
+            -1.0, -1.0,  1.0,
+             1.0, -1.0,  1.0,
+             1.0,  1.0,  1.0,
+            -1.0,  1.0,  1.0,
+            // Back face
+            -1.0, -1.0, -1.0,
+            -1.0,  1.0, -1.0,
+             1.0,  1.0, -1.0,
+             1.0, -1.0, -1.0,
+            // Top face
+            -1.0,  1.0, -1.0,
+            -1.0,  1.0,  1.0,
+             1.0,  1.0,  1.0,
+             1.0,  1.0, -1.0,
+            // Bottom face
+            -1.0, -1.0, -1.0,
+             1.0, -1.0, -1.0,
+             1.0, -1.0,  1.0,
+            -1.0, -1.0,  1.0,
+            // Right face
+             1.0, -1.0, -1.0,
+             1.0,  1.0, -1.0,
+             1.0,  1.0,  1.0,
+             1.0, -1.0,  1.0,
+            // Left face
+            -1.0, -1.0, -1.0,
+            -1.0, -1.0,  1.0,
+            -1.0,  1.0,  1.0,
+            -1.0,  1.0, -1.0,
+        ];
+
+        let vBuffer = gl.createBuffer();
+
+        gl.bindBuffer( gl.ARRAY_BUFFER, vBuffer );
+
+        gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( vertices ), gl.STATIC_DRAW );
+
+        /////////////////////////
+
+        let texCoords = [
+            // Front face
+            0.0, 0.0,
+            1.0, 0.0,
+            1.0, 1.0,
+            0.0, 1.0,
+            // Back face
+            1.0, 0.0,
+            1.0, 1.0,
+            0.0, 1.0,
+            0.0, 0.0,
+            // Top face
+            0.0, 1.0,
+            0.0, 0.0,
+            1.0, 0.0,
+            1.0, 1.0,
+            // Bottom face
+            1.0, 1.0,
+            0.0, 1.0,
+            0.0, 0.0,
+            1.0, 0.0,
+            // Right face
+            1.0, 0.0,
+            1.0, 1.0,
+            0.0, 1.0,
+            0.0, 0.0,
+            // Left face
+            0.0, 0.0,
+            1.0, 0.0,
+            1.0, 1.0,
+            0.0, 1.0,
+        ];
+
+        let tBuffer = gl.createBuffer();
+
+        gl.bindBuffer( gl.ARRAY_BUFFER, tBuffer );
+
+        gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( texCoords ), gl.STATIC_DRAW );
 
         // Return standard geo object.
 
@@ -234,18 +328,34 @@ export default class prim {
 
                 data: vertices,
 
+                buffer: tBuffer,
+
                 itemSize: 3,
 
-                numItems: vertices.length / 4
+                numItems: vertices.length / 3
             },
 
             indices: {
 
                 data: indices,
 
+                buffer: iBuffer,
+
                 itemSize: 1,
 
                 numItems: indices.length
+
+            },
+
+            texCoords: {
+
+                data: texCoords,
+
+                buffer: tBuffer,
+
+                itemSize: 2,
+
+                numItems: texCoords.length / 2
 
             }
 

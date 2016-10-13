@@ -34,7 +34,13 @@ export default class Util {
 
     isPowerOfTwo( n ) {
 
-        return (n & (n - 1)) === 0;
+        return ( n & (n - 1) ) === 0;
+
+    }
+
+    degToRad( degrees ) {
+
+        return degrees * Math.PI / 180;
 
     }
 

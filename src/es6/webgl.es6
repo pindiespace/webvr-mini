@@ -173,6 +173,12 @@ export default class WebGL {
 
                 gl.blendFunc( gl.SRC_ALPHA, gl.ONE );
 
+                /* 
+                 * IMPORTANT: tells WebGL to premultiply alphas for <canvas>
+                 * @link http://stackoverflow.com/questions/39251254/avoid-cpu-side-conversion-with-teximage2d-in-firefox
+                 */
+                gl.pixelStorei( gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true );
+
                 gl.clearColor( 0.1, 0.1, 0.1, 1.0 );
 
             }
@@ -1050,36 +1056,6 @@ export default class WebGL {
         console.error( 'webgl.createNBO NOT IMPLEMENTED' );
 
         return null;
-
-    }
-
-    /* 
-     * MATRIX OPERATIONS
-     * Mostly with glMatrix
-     */
-
-
-    createMat4Perspective () {
-
-    }
-
-    setToMat3 () {
-
-    }
-
-    setModelView () {
-
-    }
-
-    setProjection () {
-
-    }
-
-    setNormals () {
-
-    }
-
-    loadModel () {
 
     }
 
