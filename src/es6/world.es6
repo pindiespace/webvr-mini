@@ -272,6 +272,8 @@ export default class world {
 
         let gl = this.webgl.getContext();
 
+        let canvas = this.webgl.getCanvas();
+
         let mat4 = this.glMatrix.mat4;
 
         let dX = 1;
@@ -279,11 +281,10 @@ export default class world {
         let dZ = 1;
 
         //this.xRot += dX;
-        //this.yRot += dY;
-        //this.zRot += dZ;
+        this.yRot += dY;
+        this.zRot += dZ;
 
-        let ySpeed = 0;
-        let z = 0;
+        let z = -5; //TODO: NOT RENDERING AT 0 or 2, INVISIBLE BEYOND A CERTAIN DISTANCE INTO SCREEN!!!!!
 
         // Update world information.
 
@@ -293,12 +294,14 @@ export default class world {
 
         gl.viewport( 0, 0, gl.viewportWidth, gl.viewportHeight );
 
-        mat4.perspective( 45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, this.pMatrix );
+        mat4.perspective( this.pMatrix, Math.PI*0.4, canvas.width / canvas.height, 0.1, 100.0 ); // right
 
         mat4.identity( this.mvMatrix );
 
-        //TRANSLATE
+        //TRANSLATE, move model view into the screen (-z)
         mat4.translate(this.mvMatrix, this.mvMatrix, [0.0, 0.0, z]);
+
+        /////////////////////////////////////////////////////////////////this.mvPushMatrix();
 
         //ROTATE
         mat4.rotate( this.mvMatrix, this.mvMatrix, this.util.degToRad(this.xRot), [1, 0, 0] );
@@ -340,7 +343,9 @@ export default class world {
 
         gl.drawElements(gl.TRIANGLES, this.objs[0].geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
 
-            console.log('.')
+        //////////////////////////////////////////////////////////////////this.mvPopMatrix();
+
+            //console.log('.')
 
         } //////////////////////////
 
@@ -358,6 +363,8 @@ export default class world {
 
         let gl = this.webgl.getContext();
 
+        let canvas = this.webgl.getCanvas();
+
         let mat4 = this.glMatrix.mat4;
 
         let xRot = 0.0001;
@@ -370,7 +377,10 @@ export default class world {
 
         gl.viewport( 0, 0, gl.viewportWidth, gl.viewportHeight );
 
-        mat4.perspective( 45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, this.pMatrix );
+        //mat4.perspective( 45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, this.pMatrix );
+
+        mat4.perspective( this.pMatrix, Math.PI*0.4, canvas.width / canvas.height, 0.1, 1024.0);
+
         mat4.identity( this.mvMatrix );
         mat4.translate(this.mvMatrix, this.mvMatrix, [0.0, 0.0, z]);
         mat4.rotate( this.mvMatrix, this.mvMatrix, this.util.degToRad(xRot), [1, 0, 0] );
@@ -390,6 +400,9 @@ export default class world {
         /////////console.log('bound texturesddfsdsfsdfsfsf')
 
         gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, this.objs[0].geometry.indices.buffer );
+
+        // Set matrix uniforms
+        // TODO: FLATTEN??????????????
         gl.uniformMatrix4fv( this.program.vsVars.uniform.mat4.uPMatrix, false, this.pMatrix );
         gl.uniformMatrix4fv( this.program.vsVars.uniform.mat4.uMVMatrix, false, this.mvMatrix );
 
