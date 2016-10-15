@@ -41,3 +41,27 @@ __DEV__ means we are in a development environment
 
 __RELEASE__ means we are in a production environment
 
+## References
+
+WebGL Fundamentals (from twgl)
+@link http://webglfundamentals.org/
+
+Learning WebGL
+@link http://learningwebgl.com/blog/?page_id=1217
+
+TWGL Docs
+@link http://twgljs.org/
+
+Cinematic Camera Movement (three.js)
+@link https://nathanselikoff.com/2552/code-sketches/basic-camera-movement-three-js-webgl
+
+First-Person Camera
+@link https://github.com/shama/first-person-camera
+
+OpenGL Game from Scratch
+@link http://crongdor.com/2016/04/01/making-the-game-from-scratch/
+
+Some WebGL Samples (incd. dynamic clouds)
+@link https://www.ibiblio.org/e-notes/webgl/webgl.htm
+
+

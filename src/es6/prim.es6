@@ -268,6 +268,7 @@ export default class prim {
      * Create a cube geometry of a given size (units) centered 
      * on a point.
      * @param {GLMatrix.Vec3} center a 3d vector defining the center.
+     * @param {Size} width, height, depth, with 1.0 (unit) max size
      * @param {Number} scale relative to unit size (1, 1, 1).
      */
     geometryCube ( center, size ) {
@@ -319,6 +320,11 @@ export default class prim {
             -1.0,  1.0, -1.0
         ];
 
+        // Apply default transforms, centering on a Point and scaling.
+
+
+
+
         let vBuffer = gl.createBuffer();
 
         gl.bindBuffer( gl.ARRAY_BUFFER, vBuffer );
@@ -364,6 +370,9 @@ export default class prim {
         gl.bindBuffer( gl.ARRAY_BUFFER, tBuffer );
 
         gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( texCoords ), gl.STATIC_DRAW );
+
+        ///  /////////////////////////////////////////////
+        let normals = [];
 
         ////////////////////////////////////////////////
         let colors = [
@@ -495,6 +504,7 @@ export default class prim {
 
     }
 
+
     /** 
      * Create an standard 3d object.
      * @param {String} name assigned name of object (not necessarily unique).
@@ -505,9 +515,11 @@ export default class prim {
      * @param {String} textureImage the path to an image used to create a texture.
      * @param {GLMatrix.vec4} color the default color of the object.
      */
-    createPrim ( name = 'unknown', scale = 1.0, position, translation, rotation, textureImage, color ) {
+    createPrim ( name = 'unknown', scale = 1.0, dimensions, position, translation, rotation, textureImage, color ) {
 
         let gl = this.webgl.getContext();
+
+        let glMatrix = this.glMatrix;
 
         let prim = {};
 
@@ -515,17 +527,25 @@ export default class prim {
 
         prim.name = name;
 
-        prim.position = position || this.glMatrix.vec3.create( 0, 0, 0 );
+        prim.scale = scale;
 
-        prim.translation = translation || this.glMatrix.vec3.create( 0, 0, 0 );
+        prim.dimensions = dimensions || glMatrix.vec3.create( 1, 1, 1 );
 
-        prim.rotation = rotation || this.glMatrix.vec3.create( 0, 0, 0 );
+        prim.position = position || glMatrix.vec3.create( 0, 0, 0 );
+
+        prim.translation = translation || glMatrix.vec3.create( 0, 0, 0 );
+
+        prim.rotation = rotation || glMatrix.vec3.create( 0, 0, 0 );
 
         if ( textureImage ) {
 
             this.loadTexture.load( textureImage, prim );
 
         }
+
+        // Prim transforms.
+
+
 
         return prim;
 
@@ -536,9 +556,9 @@ export default class prim {
      * @param {String} name of object
      * @param {Number} scale
      */
-    createCube ( name, scale, position, translation, rotation, textureImage, color ) {
+    createCube ( name, scale, dimensions, position, translation, rotation, textureImage, color ) {
 
-        let cube = this.createPrim( name, scale, position, translation, rotation, textureImage, color );
+        let cube = this.createPrim( name, scale, dimensions, position, translation, rotation, textureImage, color );
 
         cube.geometry = this.geometryCube( cube );
 
@@ -556,5 +576,6 @@ export default class prim {
         return cube;
 
     }
+
 
 }

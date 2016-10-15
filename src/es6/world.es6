@@ -150,6 +150,7 @@ export default class world {
         this.objs.push( this.prim.createCube(
             'first cube',
             1.0,
+            this.glMatrix.vec3.create( 1, 1, 1 ),
             this.glMatrix.vec3.create( 0, 0, 0 ),
             this.glMatrix.vec3.create( 0, 0, 0 ),
             this.glMatrix.vec3.create( 0, 0, 0 ),
@@ -161,6 +162,7 @@ export default class world {
         this.objs.push( this.prim.createCube(
             'toji cube',
             1.0,
+            this.glMatrix.vec3.create( 1, 1, 1 ),
             this.glMatrix.vec3.create( 0, 1, 0 ),
             this.glMatrix.vec3.create( 0, 0, 0 ),
             this.glMatrix.vec3.create( 0, 0, 0 ),
@@ -172,6 +174,7 @@ export default class world {
         this.objs.push( this.prim.createCube(
             'red cube',
             1.0,
+            this.glMatrix.vec3.create( 1, 1, 1 ),
             this.glMatrix.vec3.create( 1, 0, 0 ),
             this.glMatrix.vec3.create( 0, 0, 0 ),
             this.glMatrix.vec3.create( 0, 0, 0 ),
@@ -183,6 +186,7 @@ export default class world {
         this.objs.push( this.prim.createCube(
             'orange cube',
             1.0,
+            this.glMatrix.vec3.create( 1, 1, 1 ),
             this.glMatrix.vec3.create( -1, 0, 0 ),
             this.glMatrix.vec3.create( 0, 1, 0 ),
             this.glMatrix.vec3.create( 0, 0, 0 ),
@@ -194,6 +198,7 @@ export default class world {
         this.objs.push( this.prim.createCube(
             'red triangle cube',
             1.0,
+            this.glMatrix.vec3.create( 1, 1, 1 ),
             this.glMatrix.vec3.create( -1, 0, 0 ),
             this.glMatrix.vec3.create( -1, 1, 0 ),
             this.glMatrix.vec3.create( 0, 0, 0 ),
@@ -205,6 +210,7 @@ export default class world {
         this.objs.push( this.prim.createCube(
             'red cube',
             1.0,
+            this.glMatrix.vec3.create( 1, 1, 1 ),
             this.glMatrix.vec3.create( -1, 0, 0 ),
             this.glMatrix.vec3.create( 0, -1, 0 ),
             this.glMatrix.vec3.create( 0, 0, 0 ),
@@ -216,6 +222,7 @@ export default class world {
         this.objs.push( this.prim.createCube(
             'w3c cube',
             1.0,
+            this.glMatrix.vec3.create( 1, 1, 1 ),
             this.glMatrix.vec3.create( -1, -1, 0 ),
             this.glMatrix.vec3.create( -1, -1, 0 ),
             this.glMatrix.vec3.create( 0, 0, 0 ),
@@ -263,6 +270,11 @@ export default class world {
         // fps calculation.
 
     }
+
+    /* 
+     * GREAT description of model, view, projection matrix
+     * @link https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_model_view_projection
+     */
 
     renderVS1 () {
 

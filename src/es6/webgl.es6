@@ -18,6 +18,8 @@ export default class WebGL {
 
         this.contextCount = 0;
 
+        this.glVers = 0; 
+
         this.glMatrix = glMatrix;
 
         this.util = util;
@@ -40,7 +42,8 @@ export default class WebGL {
 
     /**
      * initialize with a canvas context
-     * @param {Canvas|String|undefined} canvas accepts null, in which case a <canvas> object is 
+     * @param {HTMLCanvasElement|String|undefined} canvas a HTML5 <canvas>, id for canvas, or undefined, 
+     * in which case a <canvas> object is 
      * created and added to document.body, an ID value for a tag, or a CanvasDOMobject.
      * @param {Function} lostContext callback when WebGL context is lost.
      * @param {Function} restoredContext callback when WebGL context is restored.
@@ -228,6 +231,7 @@ export default class WebGL {
 
     /** 
      * Get WebGL canvas only if we've created a gl context.
+     * @returns {HTMLCanvasElement} canvas the rendering <canvas>.
      */
     getCanvas () {
 
@@ -280,68 +284,100 @@ export default class WebGL {
      * contexts being created ( > 1 ) and delete if one is already present.
      * @param {Canvas} canvas the HTML5 <canvas> DOM element.
      * TODO: PROBLEM IF THERE ARE MULTIPLE CONTEXES ON THE PAGE???????
+     * @param {HTMLCanvasElement} canvas the rendering <canvas>.
+     * @returns {WebGLRenderingContext} gl a WebGLRenderingContext.
      */
     createContext ( canvas ) {
 
-        if ( this.gl && this.contextCount > 1 ) {
+        let gl = null;
+
+        if ( gl && this.contextCount > 1 ) {
 
             // Contexts are normally in garbage, can't be deleted without this!
+
+            console.warn( 'killing context' );
 
             this.killContext();
 
             this.contextCount--;
 
-            this.gl = null;
+            gl = null;
 
         }
 
-        // If we're running in dev mode, using the debugging context.
+        let n = [ 'webgl2', 'experimental-webgl2', 'webgl', 'experimental-webgl' ];
 
-        if ( this.debug ) {
+        let i = 0;
 
-            console.warn( 'In development mode, using WebGL debugging context' );
-            
-            this.gl = this.debug.makeDebugContext( canvas.getContext( 'webgl' ) );
+        while ( i < n.length ) {
 
-            if ( ! this.gl ) {
+            try {
 
-                console.warn( 'using experimental-webgl context' );
+                if ( this.debug ) {
 
-                this.gl = this.debug.makeDebugContext( canvas.getContext( 'experimental-webgl' ) ); // some FF, Edge versions.
+                    gl = this.debug.makeDebugContext( canvas.getContext( n[ i ] ) );
+
+                    console.warn( 'using experimental webgl debug context' );
+
+                } else {
+
+                    gl = canvas.getContext( n[ i ] );
+
+                }
+
+            } catch( e ) {}
+
+            // If we got a context, assign WebGL version.
+
+            if ( gl ) {
+
+                this.glVersStr = gl.getParameter( gl.VERSION ).toLowerCase();
+
+                // Take action, dependin on version.
+
+                switch ( i ) {
+
+                    case 0:
+                    case 1:
+                        this.glVers = 2.0;
+                        break;
+
+                    case 2:
+                    case 3:
+                        this.glVers = Math.ceil( parseFloat( vers.substr( 6 ) ) );
+                        this.addVertexBufferSupport( gl );
+                        break;
+
+                    default:
+                        break;
+
+                }
+
+                break;
 
             }
 
-        } else {
+            i++;
 
-            console.log( 'creating new WebGL context' );
+        } // end of while loop
 
-            this.gl = canvas.getContext( 'webgl' );
+        // Assign.
 
-            if ( ! this.gl ) {
-
-                this.gl = canvas.getContext( 'experimental-webgl' ); // some FF, Edge versions.
-
-            }
-
-        }
-
+        this.gl = gl;
 
         if ( this.gl && typeof this.gl.getParameter == 'function' ) {
 
-            this.glVers = this.gl.getParameter( this.gl.VERSION ).toLowerCase();
-
             this.contextCount++;
-
-            return this.gl;
 
         }
 
-        return null;
+        return this.gl;
 
     }
 
     /** 
      * Return the current context.
+     * @returns {WebGLRenderingContext} gl a WebGLRenderingContext.
      */
     getContext () {
 
@@ -374,6 +410,46 @@ export default class WebGL {
             this.contextCount--;
 
         }
+
+    }
+
+    /** 
+     * Add vertex buffer support to WebGL 1.0
+     * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only)l
+     */
+    addVertexBufferSupport ( gl ) {
+
+         let ext = gl.getExtension( 'OES_vertex_array_object' );
+
+        if ( ext ) {
+
+            gl.createVertexArray = function() {
+
+                return ext.createVertexArrayOES();
+
+            };
+
+            gl.deleteVertexArray = function(v) {
+
+                ext.deleteVertexArrayOES(v);
+
+            };
+
+            gl.isVertexArray = function(v) {
+
+                return ext.isVertexArrayOES(v);
+
+            };
+
+            gl.bindVertexArray = function(v) {
+
+                ext.bindVertexArrayOES(v);
+
+            };
+
+            gl.VERTEX_ARRAY_BINDING = ext.VERTEX_ARRAY_BINDING_OES;
+
+         }
 
     }
 
