@@ -640,6 +640,21 @@
 	                                                                        e.preventDefault();
 	                                                            }, false);
 
+	                                                            // Do an initial set of our viewport width and height.
+
+	                                                            gl.viewportWidth = canvas.width;
+
+	                                                            gl.viewportHeight = canvas.height;
+
+	                                                            // listen for <canvas> resize event.
+
+	                                                            window.addEventListener('resize', function (e) {
+
+	                                                                        _this.resizeCanvas();
+
+	                                                                        e.preventDefault();
+	                                                            }, false);
+
 	                                                            // Default WebGL initializtion and stats, can be over-ridden in your world file.
 
 	                                                            // Flag for the availability of high-precision formats, texture sizes.
@@ -695,10 +710,12 @@
 	                                                            gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
 
 	                                                            gl.clearColor(0.1, 0.1, 0.1, 1.0);
-	                                                }
 
-	                                                return this.gl;
-	                                    }
+	                                                            return this.gl;
+	                                                } // end of have a gl context
+
+	                                                //return this.gl;
+	                                    } // end of if have a <canvas>
 
 	                                    return null;
 	                        }
@@ -730,7 +747,9 @@
 	                        }
 
 	                        /** 
-	                         * Resize the canvas to the current display size.
+	                         * Resize the canvas if the window changes size. 
+	                         * NOTE: affected by CSS styles.
+	                         * TODO: check current CSS style.
 	                         * (TWGL)
 	                         */
 
@@ -741,6 +760,8 @@
 	                                    if (this.ready()) {
 
 	                                                var f = Math.max(window.devicePixelRatio, 1);
+
+	                                                var gl = this.getContext();
 
 	                                                var c = this.getCanvas();
 
@@ -753,6 +774,10 @@
 	                                                            c.width = width;
 
 	                                                            c.height = height;
+
+	                                                            gl.viewportWidth = c.width;
+
+	                                                            gl.viewportHeight = c.height;
 
 	                                                            return true;
 	                                                }
@@ -1197,7 +1222,7 @@
 
 	                                                            gl.enableVertexAttribArray(attb[j]);
 
-	                                                            console.log("gl.getAttribLocation( shaderProgram," + j + ") is" + attb[j]);
+	                                                            console.log("gl.getAttribLocation( shaderProgram, '" + j + "' ) is:" + attb[j]);
 	                                                }
 	                                    }
 
@@ -1219,7 +1244,7 @@
 
 	                                                            unif[j] = gl.getUniformLocation(shaderProgram, j);
 
-	                                                            console.log("gl.getUniformLocation( shaderProgram," + j + ") is" + unif[j]);
+	                                                            console.log("gl.getUniformLocation( shaderProgram," + j + ") is:" + unif[j]);
 	                                                }
 	                                    }
 
@@ -1641,6 +1666,8 @@
 	                this.waitCt = 0; // wait cache pointer
 
 	                this.loadCt = 0; // load cache pointer
+
+	                this.ready = false;
 	        }
 
 	        /** 
@@ -1653,7 +1680,7 @@
 
 	        _createClass(LoadPool, [{
 	                key: 'createWaitObj',
-	                value: function createWaitObj(source, callback) {
+	                value: function createWaitObj(source, attach, callback) {
 
 	                        console.log('creating wait object...' + source);
 
@@ -1662,6 +1689,8 @@
 	                        this.waitCache.push({
 
 	                                source: source,
+
+	                                attach: attach,
 
 	                                callback: callback
 
@@ -1682,6 +1711,21 @@
 
 	                        console.log('in loadTexture.update()');
 
+	                        var waitCache = this.waitCache;
+
+	                        var wLen = waitCache.length;
+
+	                        if (wLen < 1) {
+
+	                                console.log('all objects loaded, nothing to do...');
+
+	                                this.ready = true;
+
+	                                return;
+	                        }
+
+	                        this.ready = false;
+
 	                        // Check if there is an available loadCache
 
 	                        var i = 0;
@@ -1690,43 +1734,31 @@
 
 	                        var lLen = loadCache.length;
 
-	                        var waitCache = this.waitCache;
-
-	                        var wLen = waitCache.length;
-
 	                        console.log('lLen:' + lLen);
 	                        console.log('wLen:' + wLen);
 
-	                        if (wLen) {
+	                        // we just finished a texture, and it is available for new loads.
 
-	                                // we just finished a texture, and it is available for new loads.
+	                        var waitObj = waitCache.shift();
 
-	                                if (loadObj && loadObj.busy === false) {
+	                        console.log('have a waitObj waiting...' + waitObj.source);
 
-	                                        console.log('re-using a loader object');
+	                        if (loadObj && loadObj.busy === false) {
 
-	                                        var waitObj = waitCache.shift();
+	                                console.log('re-using a loader object');
 
-	                                        loadObj.image.src = waitObj.source;
+	                                loadObj.image.src = waitObj.source;
+	                        } else {
 
-	                                        //loadCache[ i ] = this.createLoadObj( waitObj );
+	                                for (i; i < lLen; i++) {
 
-	                                } else {
+	                                        if (!loadCache[i]) {
 
-	                                        for (i; i < lLen; i++) {
+	                                                console.log('creating a new loader object');
 
-	                                                if (!loadCache[i]) {
+	                                                loadCache[i] = this.createLoadObj(waitObj);
 
-	                                                        // grab the first waitCache
-
-	                                                        console.log('waitCache:' + waitCache);
-
-	                                                        var _waitObj = waitCache.shift();
-
-	                                                        loadCache[i] = this.createLoadObj(_waitObj);
-
-	                                                        break;
-	                                                }
+	                                                break;
 	                                        }
 	                                }
 	                        }
@@ -1745,16 +1777,11 @@
 
 	        }, {
 	                key: 'load',
-	                value: function load(source, callback, finalCallback) {
-
-	                        if (callback) {
-
-	                                this.callback = callback;
-	                        }
+	                value: function load(source, attach, callback, finalCallback) {
 
 	                        // Push a load request onto the queue.
 
-	                        this.createWaitObj(source, callback);
+	                        this.createWaitObj(source, attach, callback);
 
 	                        // Start loading, if space available.
 
@@ -1814,7 +1841,7 @@
 
 	                _this.MAX_TIMEOUT = 10;
 
-	                _this.blackPixel = new Uint8Array([0, 0, 0]);
+	                _this.blackPixel = new Uint8Array([0.5, 0.5, 0.5, 1.0]);
 
 	                if (init) {
 
@@ -1850,14 +1877,14 @@
 
 	                        loadObj.callback = waitObj.callback;
 
-	                        loadObj.texture = gl.createTexture();
+	                        loadObj.prim = waitObj.attach; ///////////////////////////
 
 	                        loadObj.busy = true;
 
 	                        // https://www.nczonline.net/blog/2013/09/10/understanding-ecmascript-6-arrow-functions/
 
 	                        loadObj.image.addEventListener('load', function (e) {
-	                                return _this2.uploadTexture(loadObj, waitObj.callback);
+	                                return _this2.uploadTexture(loadObj, loadObj.callback);
 	                        });
 
 	                        loadObj.image.addEventListener('error', function (e) {
@@ -1889,14 +1916,20 @@
 
 	                        var gl = this.webgl.getContext();
 
-	                        gl.bindTexture(gl.TEXTURE_2D, loadObj.texture);
+	                        loadObj.prim.texture = gl.createTexture();
+
+	                        console.log("SDFKSJFLSKFJSDLOADOBJ.PRIM.TEXTURE isSSSS:" + loadObj.prim.texture);
+
+	                        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+
+	                        gl.bindTexture(gl.TEXTURE_2D, loadObj.prim.texture);
 
 	                        if (loadObj.image) {
 
 	                                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, loadObj.image);
 	                        } else {
 
-	                                console.error('no loadObj.image for:' + loadObj.image.src);
+	                                console.error('no loadObj.image for:' + loadObj.image.src + ', default pixel texture');
 
 	                                gl.textImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.blackPixel);
 	                        }
@@ -1925,14 +1958,14 @@
 
 	                        loadObj.busy = false;
 
-	                        loadObj.texture = gl.createTexture(); // NEEDS TO BE DONE
+	                        console.log("NNNNNOOOOOWWWWWW.PRIM.TEXTURE isSSSS:" + loadObj.prim.texture);
 
 	                        // Send this to update for re-use .
 
 	                        this.update(loadObj);
 	                }
 
-	                // load() is defined in superclass.
+	                // load() and update() are defined in superclass.
 
 	        }]);
 
@@ -2307,6 +2340,42 @@
 
 	                        };
 	                }
+	        }, {
+	                key: 'objVS2',
+	                value: function objVS2() {
+
+	                        var s = ['attribute vec3 aVertexPosition;', 'attribute vec4 aVertexColor;', 'uniform mat4 uMVMatrix;', 'uniform mat4 uPMatrix;', 'varying lowp vec4 vColor;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vColor = aVertexColor;', '}'];
+
+	                        return {
+
+	                                code: s.join('\n'),
+
+	                                varList: this.webgl.createVarList(s),
+
+	                                render: function render() {}
+
+	                        };
+	                }
+	        }, {
+	                key: 'objFS2',
+	                value: function objFS2() {
+
+	                        var s = ['varying lowp vec4 vColor;', 'void main(void) {',
+
+	                        //'gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);',
+
+	                        'gl_FragColor = vColor;', '}'];
+
+	                        return {
+
+	                                code: s.join('\n'),
+
+	                                varList: this.webgl.createVarList(s),
+
+	                                render: function render() {}
+
+	                        };
+	                }
 
 	                /** 
 	                 * GEOMETRIES
@@ -2345,22 +2414,6 @@
 
 	                        var z = center[2];
 
-	                        //let vertices = [];
-
-	                        var indices = [0, 1, 2, 0, 2, 3, // Front face
-	                        4, 5, 6, 4, 6, 7, // Back face
-	                        8, 9, 10, 8, 10, 11, // Top face
-	                        12, 13, 14, 12, 14, 15, // Bottom face
-	                        16, 17, 18, 16, 18, 19, // Right face
-	                        20, 21, 22, 20, 22, 23 // Left face
-	                        ];
-
-	                        var iBuffer = gl.createBuffer();
-
-	                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, iBuffer);
-
-	                        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
-
 	                        // Create cube geometry.
 
 	                        var vertices = [
@@ -2383,8 +2436,7 @@
 
 	                        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
 
-	                        /////////////////////////
-
+	                        //////////////////////////////////////
 	                        var texCoords = [
 	                        // Front face
 	                        0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
@@ -2405,6 +2457,59 @@
 
 	                        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(texCoords), gl.STATIC_DRAW);
 
+	                        ////////////////////////////////////////////////
+	                        var colors = [1.0, 1.0, 1.0, 1.0, // white
+	                        1.0, 0.0, 0.0, 1.0, // red
+	                        0.0, 1.0, 0.0, 1.0, // green
+	                        0.0, 0.0, 1.0, 1.0, // blue
+
+	                        1.0, 1.0, 1.0, 1.0, // white
+	                        1.0, 0.0, 0.0, 1.0, // red
+	                        0.0, 1.0, 0.0, 1.0, // green
+	                        0.0, 0.0, 1.0, 1.0, // blue
+
+	                        1.0, 1.0, 1.0, 1.0, // white
+	                        1.0, 0.0, 0.0, 1.0, // red
+	                        0.0, 1.0, 0.0, 1.0, // green
+	                        0.0, 0.0, 1.0, 1.0, // blue
+
+	                        1.0, 1.0, 1.0, 1.0, // white
+	                        1.0, 0.0, 0.0, 1.0, // red
+	                        0.0, 1.0, 0.0, 1.0, // green
+	                        0.0, 0.0, 1.0, 1.0, // blue
+
+	                        1.0, 1.0, 1.0, 1.0, // white
+	                        1.0, 0.0, 0.0, 1.0, // red
+	                        0.0, 1.0, 0.0, 1.0, // green
+	                        0.0, 0.0, 1.0, 1.0, // blue
+
+	                        1.0, 1.0, 1.0, 1.0, // white
+	                        1.0, 0.0, 0.0, 1.0, // red
+	                        0.0, 1.0, 0.0, 1.0, // green
+	                        0.0, 0.0, 1.0, 1.0 // blue
+	                        ];
+
+	                        var cBuffer = gl.createBuffer();
+
+	                        gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
+
+	                        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+
+	                        /////////////////////////////////////////////////
+	                        var indices = [0, 1, 2, 0, 2, 3, // Front face
+	                        4, 5, 6, 4, 6, 7, // Back face
+	                        8, 9, 10, 8, 10, 11, // Top face
+	                        12, 13, 14, 12, 14, 15, // Bottom face
+	                        16, 17, 18, 16, 18, 19, // Right face //can't go to 30
+	                        20, 21, 22, 20, 22, 23 // Left face
+	                        ];
+
+	                        var iBuffer = gl.createBuffer();
+
+	                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, iBuffer);
+
+	                        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
+
 	                        // Return standard geo object.
 
 	                        return {
@@ -2413,23 +2518,11 @@
 
 	                                        data: vertices,
 
-	                                        buffer: tBuffer,
+	                                        buffer: vBuffer,
 
 	                                        itemSize: 3,
 
 	                                        numItems: vertices.length / 3
-	                                },
-
-	                                indices: {
-
-	                                        data: indices,
-
-	                                        buffer: iBuffer,
-
-	                                        itemSize: 1,
-
-	                                        numItems: indices.length
-
 	                                },
 
 	                                texCoords: {
@@ -2441,6 +2534,30 @@
 	                                        itemSize: 2,
 
 	                                        numItems: texCoords.length / 2
+
+	                                },
+
+	                                colors: {
+
+	                                        data: colors,
+
+	                                        buffer: cBuffer,
+
+	                                        itemSize: 4,
+
+	                                        numItems: colors.length / 4
+
+	                                },
+
+	                                indices: {
+
+	                                        data: indices,
+
+	                                        buffer: iBuffer,
+
+	                                        itemSize: 1,
+
+	                                        numItems: indices.length
 
 	                                }
 
@@ -2499,11 +2616,10 @@
 
 	                        prim.rotation = rotation || this.glMatrix.vec3.create(0, 0, 0);
 
-	                        prim.texture = this.loadTexture.load(textureImage, function () {
-	                                console.log('CALLING BACK............');
-	                        });
+	                        if (textureImage) {
 
-	                        prim.color = null;
+	                                this.loadTexture.load(textureImage, prim);
+	                        }
 
 	                        return prim;
 	                }
@@ -2523,6 +2639,13 @@
 	                        cube.geometry = this.geometryCube(cube);
 
 	                        cube.type = this.type.CUBE;
+
+	                        console.log('vertex itemSize:' + cube.geometry.vertices.itemSize);
+	                        console.log('vertex numItems:' + cube.geometry.vertices.numItems);
+	                        console.log('texture itemSize:' + cube.geometry.texCoords.itemSize);
+	                        console.log('texture numItems:' + cube.geometry.texCoords.numItems);
+	                        console.log('index itemSize' + cube.geometry.indices.itemSize);
+	                        console.log('index numItems:' + cube.geometry.indices.numItems);
 
 	                        this.objs.push(cube);
 
@@ -2640,6 +2763,7 @@
 
 	                        var prim = this.prim;
 
+	                        //////////!!!!!!!!!///////// this.program = this.webgl.createProgram( prim.objVS1(), prim.objFS1() );
 	                        this.program = this.webgl.createProgram(prim.objVS1(), prim.objFS1());
 
 	                        // use the program
@@ -2684,6 +2808,20 @@
 
 	                        this.program.fsVars.uniform = this.webgl.setUniformLocations(this.program.shaderProgram, this.program.fsVars.uniform);
 
+	                        // enable the vertex position and texture coordinates.
+
+	                        gl.enableVertexAttribArray(this.program.vsVars.attribute.vec3.aVertexPosition);
+
+	                        gl.enableVertexAttribArray(this.program.vsVars.attribute.vec2.aTextureCoord);
+
+	                        // FOR VS2
+	                        ///////gl.enableVertexAttribArray( this.program.vsVars.attribute.vec4.aVertexColor );
+
+	                        //shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
+	                        //shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+	                        //shaderProgram.samplerUniform = gl.getUniformLocation(shaderProgram, "uSampler");
+
+
 	                        this.objs.push(this.prim.createCube('first cube', 1.0, this.glMatrix.vec3.create(0, 0, 0), this.glMatrix.vec3.create(0, 0, 0), this.glMatrix.vec3.create(0, 0, 0), 'img/crate.png', this.glMatrix.vec4.create(0.5, 1.0, 0.2, 1.0)));
 
 	                        this.objs.push(this.prim.createCube('toji cube', 1.0, this.glMatrix.vec3.create(0, 1, 0), this.glMatrix.vec3.create(0, 0, 0), this.glMatrix.vec3.create(0, 0, 0), 'img/webvr-logo1.png', this.glMatrix.vec4.create(0.5, 1.0, 0.2, 1.0)));
@@ -2700,9 +2838,18 @@
 
 	                        window.cube = this.objs[0]; ////////////////////////
 
+	                        console.log("glViewport:::++++++++++++++++width:" + gl.viewportWidth + ', height:' + gl.viewportHeight);
+
 	                        // Start rendering loop.
 
-	                        //////////////////this.render();
+	                        // temporary rotation
+	                        this.xRot = 0.0001;
+	                        this.yRot = 0.0001;
+	                        this.zRot = 0.0001;
+
+	                        this.renderVS1(); // textured
+
+	                        //this.renderVS2(); // colors
 	                }
 
 	                /** 
@@ -2724,58 +2871,157 @@
 
 	        }, {
 	                key: 'update',
-	                value: function update() {}
+	                value: function update() {
 
-	                // fps calculation.
+	                        // fps calculation.
 
+	                }
+	        }, {
+	                key: 'renderVS1',
+	                value: function renderVS1() {
+	                        var _this = this;
+
+	                        if (this.objs[0].texture) {
+	                                //////////////////////////////////////////////////////////
+
+	                                /////////console.log('>>>>>>>>>>>>>>>>>START RENDER')
+
+	                                var gl = this.webgl.getContext();
+
+	                                var mat4 = this.glMatrix.mat4;
+
+	                                var dX = 1;
+	                                var dY = 1;
+	                                var dZ = 1;
+
+	                                //this.xRot += dX;
+	                                //this.yRot += dY;
+	                                //this.zRot += dZ;
+
+	                                var ySpeed = 0;
+	                                var z = 0;
+
+	                                // Update world information.
+
+	                                this.update();
+
+	                                gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+	                                gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+
+	                                mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, this.pMatrix);
+
+	                                mat4.identity(this.mvMatrix);
+
+	                                //TRANSLATE
+	                                mat4.translate(this.mvMatrix, this.mvMatrix, [0.0, 0.0, z]);
+
+	                                //ROTATE
+	                                mat4.rotate(this.mvMatrix, this.mvMatrix, this.util.degToRad(this.xRot), [1, 0, 0]);
+	                                mat4.rotate(this.mvMatrix, this.mvMatrix, this.util.degToRad(this.yRot), [0, 1, 0]);
+	                                mat4.rotate(this.mvMatrix, this.mvMatrix, this.util.degToRad(this.zRot), [0, 0, 1]);
+
+	                                ////////console.log( 'BINDING VERTEX:'+ this.program.vsVars.attribute.vec3.aVertexPosition )
+
+	                                gl.bindBuffer(gl.ARRAY_BUFFER, this.objs[0].geometry.vertices.buffer);
+	                                gl.enableVertexAttribArray(this.program.vsVars.attribute.vec3.aVertexPosition);
+	                                gl.vertexAttribPointer(this.program.vsVars.attribute.vec3.aVertexPosition, this.objs[0].geometry.vertices.itemSize, gl.FLOAT, false, 0, 0);
+
+	                                ///////console.log( 'BINDING TEXCOORDS:' + this.program.vsVars.attribute.vec2.aTextureCoord)
+
+	                                gl.bindBuffer(gl.ARRAY_BUFFER, this.objs[0].geometry.texCoords.buffer);
+	                                gl.enableVertexAttribArray(this.program.vsVars.attribute.vec2.aTextureCoord);
+	                                gl.vertexAttribPointer(this.program.vsVars.attribute.vec2.aTextureCoord, this.objs[0].geometry.texCoords.itemSize, gl.FLOAT, false, 0, 0);
+
+	                                ////////console.log( 'BINDING TEXTURE:' + this.objs[0].texture )
+
+	                                gl.activeTexture(gl.TEXTURE0);
+	                                gl.bindTexture(gl.TEXTURE_2D, null);
+	                                gl.bindTexture(gl.TEXTURE_2D, this.objs[0].texture);
+	                                ////////////////////////////////////////////////////////gl.uniform1i(gl.getUniformLocation(this.program.shaderProgram, "uSampler"), 0);
+	                                gl.uniform1i(this.program.fsVars.uniform.sampler2D.uSampler, 0); //STRANGE
+
+	                                /////////console.log('bound texturesddfsdsfsdfsfsf')
+
+
+	                                // set matrix uniforms
+	                                gl.uniformMatrix4fv(this.program.vsVars.uniform.mat4.uPMatrix, false, this.pMatrix);
+	                                gl.uniformMatrix4fv(this.program.vsVars.uniform.mat4.uMVMatrix, false, this.mvMatrix);
+
+	                                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.objs[0].geometry.indices.buffer);
+
+	                                /////////console.log(">>>>>>>>>>>>>>>>>>>>>DRAWELEMENTS")
+
+	                                gl.drawElements(gl.TRIANGLES, this.objs[0].geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
+
+	                                console.log('.');
+	                        } //////////////////////////
+
+	                        requestAnimationFrame(function () {
+	                                _this.renderVS1();
+	                        });
+	                }
 
 	                /**
 	                 * Render the World.
 	                 */
 
 	        }, {
-	                key: 'render',
-	                value: function render() {
-	                        var _this = this;
+	                key: 'renderVS2',
+	                value: function renderVS2() {
+	                        var _this2 = this;
 
-	                        var gl = this.webgl.getContext();
+	                        if (this.objs[0].texture) {
+	                                //////////////////////////////////////////////////////////
 
-	                        var mat4 = this.glMatrix.mat4;
+	                                /////////console.log('>>>>>>>>>>>>>>>>>START RENDER')
 
-	                        var xRot = 0.0001;
-	                        var yRot = 0.0001;
-	                        var ySpeed = 0;
-	                        var z = -5.0;
+	                                var gl = this.webgl.getContext();
 
-	                        gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+	                                var mat4 = this.glMatrix.mat4;
 
-	                        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+	                                var xRot = 0.0001;
+	                                var yRot = 0.0001;
+	                                var ySpeed = 0;
+	                                //////////let z = -5.0;
+	                                var z = 0;
 
-	                        mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, this.pMatrix);
-	                        mat4.identity(this.mvMatrix);
-	                        mat4.translate(this.mvMatrix, this.mvMatrix, [0.0, 0.0, z]);
-	                        mat4.rotate(this.mvMatrix, this.mvMatrix, this.util.degToRad(xRot), [1, 0, 0]);
-	                        mat4.rotate(this.mvMatrix, this.mvMatrix, this.util.degToRad(yRot), [0, 1, 0]);
+	                                gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-	                        gl.bindBuffer(gl.ARRAY_BUFFER, this.objs[0].geometry.vertices.buffer);
-	                        gl.vertexAttribPointer(this.program.vsVars.attribute.aVertexPosition, this.objs[0].geometry.vertices.itemSize, gl.FLOAT, false, 0, 0);
+	                                gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
 
-	                        gl.bindBuffer(gl.ARRAY_BUFFER, this.objs[0].geometry.texCoords.buffer);
-	                        gl.vertexAttribPointer(this.program.vsVars.attribute.aTextureCoord, this.objs[0].geometry.texCoords.itemSize, gl.FLOAT, false, 0, 0);
+	                                mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, this.pMatrix);
+	                                mat4.identity(this.mvMatrix);
+	                                mat4.translate(this.mvMatrix, this.mvMatrix, [0.0, 0.0, z]);
+	                                mat4.rotate(this.mvMatrix, this.mvMatrix, this.util.degToRad(xRot), [1, 0, 0]);
+	                                mat4.rotate(this.mvMatrix, this.mvMatrix, this.util.degToRad(yRot), [0, 1, 0]);
 
-	                        gl.activeTexture(gl.TEXTURE0);
-	                        gl.bindTexture(gl.TEXTURE_2D, this.objs[0].texture); ///////////////
-	                        gl.uniform1i(this.program.vsVars.uniform.samplerUniform, 0);
+	                                ////////console.log( 'BINDING VERTEX:'+ this.program.vsVars.attribute.vec3.aVertexPosition )
 
-	                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.objs[0].geometry.indices.buffer);
+	                                gl.bindBuffer(gl.ARRAY_BUFFER, this.objs[0].geometry.vertices.buffer);
+	                                gl.enableVertexAttribArray(this.program.vsVars.attribute.vec3.aVertexPosition);
+	                                gl.vertexAttribPointer(this.program.vsVars.attribute.vec3.aVertexPosition, this.objs[0].geometry.vertices.itemSize, gl.FLOAT, false, 0, 0);
 
-	                        gl.uniformMatrix4fv(this.program.vsVars.uniform.uPMatrix, false, this.pMatrix);
-	                        gl.uniformMatrix4fv(this.program.vsVars.uniform.uMVMatrix, false, this.mvMatrix);
+	                                ////////// console.log( 'BINDING COLORS:' + this.program.vsVars.attribute.vec4.aVertexColor );
 
-	                        gl.drawElements(gl.TRIANGLES, this.objs[0].geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
+	                                gl.bindBuffer(gl.ARRAY_BUFFER, this.objs[0].geometry.colors.buffer);
+	                                gl.vertexAttribPointer(this.program.vsVars.attribute.vec4.aVertexColor, this.objs[0].geometry.colors.itemSize, gl.FLOAT, false, 0, 0);
+
+	                                /////////console.log('bound texturesddfsdsfsdfsfsf')
+
+	                                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.objs[0].geometry.indices.buffer);
+	                                gl.uniformMatrix4fv(this.program.vsVars.uniform.mat4.uPMatrix, false, this.pMatrix);
+	                                gl.uniformMatrix4fv(this.program.vsVars.uniform.mat4.uMVMatrix, false, this.mvMatrix);
+
+	                                /////////console.log(">>>>>>>>>>>>>>>>>>>>>DRAWELEMENTS")
+
+	                                gl.drawElements(gl.TRIANGLES, this.objs[0].geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
+
+	                                console.log('.');
+	                        } //////////////////////////
 
 	                        requestAnimationFrame(function () {
-	                                _this.render();
+	                                _this2.renderVS2();
 	                        });
 	                }
 	        }]);

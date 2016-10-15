@@ -122,6 +122,7 @@ export default class prim {
 
             'attribute vec3 aVertexPosition;',
             'attribute vec2 aTextureCoord;',
+
             'uniform mat4 uMVMatrix;',
             'uniform mat4 uPMatrix;',
             'varying vec2 vTextureCoord;',
@@ -161,6 +162,7 @@ export default class prim {
             'precision mediump float;',
 
             'varying vec2 vTextureCoord;',
+
             'uniform sampler2D uSampler;',
 
             'void main(void) {',
@@ -184,6 +186,67 @@ export default class prim {
 
     }
 
+    objVS2 () {
+
+        let s = [
+
+            'attribute vec3 aVertexPosition;',
+            'attribute vec4 aVertexColor;',
+
+            'uniform mat4 uMVMatrix;',
+            'uniform mat4 uPMatrix;',
+      
+            'varying lowp vec4 vColor;',
+    
+            'void main(void) {',
+
+            '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);',
+
+            '    vColor = aVertexColor;',
+
+            '}'
+
+        ];
+
+        return {
+
+            code: s.join('\n'),
+
+            varList: this.webgl.createVarList( s ),
+
+            render: function () {}
+
+        };
+
+    }
+
+    objFS2 () {
+
+        let s = [
+
+            'varying lowp vec4 vColor;',
+
+            'void main(void) {',
+
+                //'gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);',
+
+                'gl_FragColor = vColor;',
+
+            '}'
+
+        ];
+
+        return {
+
+            code: s.join('\n'),
+
+            varList: this.webgl.createVarList( s ),
+
+            render: function () {}
+
+        };
+
+    }
 
     /** 
      * GEOMETRIES
@@ -221,23 +284,6 @@ export default class prim {
 
         let z = center[2];
 
-        //let vertices = [];
-
-        let indices = [
-            0, 1, 2,      0, 2, 3,    // Front face
-            4, 5, 6,      4, 6, 7,    // Back face
-            8, 9, 10,     8, 10, 11,  // Top face
-            12, 13, 14,   12, 14, 15, // Bottom face
-            16, 17, 18,   16, 18, 19, // Right face
-            20, 21, 22,   20, 22, 23  // Left face
-        ];
-
-        let iBuffer = gl.createBuffer();
-
-        gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, iBuffer);
-
-        gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( indices ), gl.STATIC_DRAW);
-
         // Create cube geometry.
 
         let vertices = [
@@ -270,7 +316,7 @@ export default class prim {
             -1.0, -1.0, -1.0,
             -1.0, -1.0,  1.0,
             -1.0,  1.0,  1.0,
-            -1.0,  1.0, -1.0,
+            -1.0,  1.0, -1.0
         ];
 
         let vBuffer = gl.createBuffer();
@@ -279,8 +325,7 @@ export default class prim {
 
         gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( vertices ), gl.STATIC_DRAW );
 
-        /////////////////////////
-
+        //////////////////////////////////////
         let texCoords = [
             // Front face
             0.0, 0.0,
@@ -311,7 +356,7 @@ export default class prim {
             0.0, 0.0,
             1.0, 0.0,
             1.0, 1.0,
-            0.0, 1.0,
+            0.0, 1.0
         ];
 
         let tBuffer = gl.createBuffer();
@@ -319,6 +364,61 @@ export default class prim {
         gl.bindBuffer( gl.ARRAY_BUFFER, tBuffer );
 
         gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( texCoords ), gl.STATIC_DRAW );
+
+        ////////////////////////////////////////////////
+        let colors = [
+            1.0,  1.0,  1.0,  1.0,    // white
+            1.0,  0.0,  0.0,  1.0,    // red
+            0.0,  1.0,  0.0,  1.0,    // green
+            0.0,  0.0,  1.0,  1.0,     // blue
+
+            1.0,  1.0,  1.0,  1.0,    // white
+            1.0,  0.0,  0.0,  1.0,    // red
+            0.0,  1.0,  0.0,  1.0,    // green
+            0.0,  0.0,  1.0,  1.0,    // blue
+
+            1.0,  1.0,  1.0,  1.0,    // white
+            1.0,  0.0,  0.0,  1.0,    // red
+            0.0,  1.0,  0.0,  1.0,    // green
+            0.0,  0.0,  1.0,  1.0,     // blue
+
+            1.0,  1.0,  1.0,  1.0,    // white
+            1.0,  0.0,  0.0,  1.0,    // red
+            0.0,  1.0,  0.0,  1.0,    // green
+            0.0,  0.0,  1.0,  1.0,     // blue
+
+            1.0,  1.0,  1.0,  1.0,    // white
+            1.0,  0.0,  0.0,  1.0,    // red
+            0.0,  1.0,  0.0,  1.0,    // green
+            0.0,  0.0,  1.0,  1.0,     // blue
+
+            1.0,  1.0,  1.0,  1.0,    // white
+            1.0,  0.0,  0.0,  1.0,    // red
+            0.0,  1.0,  0.0,  1.0,    // green
+            0.0,  0.0,  1.0,  1.0     // blue
+        ];
+
+        let cBuffer = gl.createBuffer();
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
+
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+
+        /////////////////////////////////////////////////
+        let indices = [
+            0, 1, 2,      0, 2, 3,    // Front face
+            4, 5, 6,      4, 6, 7,    // Back face
+            8, 9, 10,     8, 10, 11,  // Top face
+            12, 13, 14,   12, 14, 15, // Bottom face
+            16, 17, 18,   16, 18, 19, // Right face //can't go to 30
+            20, 21, 22,   20, 22, 23  // Left face
+        ];
+
+        let iBuffer = gl.createBuffer();
+
+        gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, iBuffer);
+
+        gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( indices ), gl.STATIC_DRAW);
 
         // Return standard geo object.
 
@@ -328,23 +428,11 @@ export default class prim {
 
                 data: vertices,
 
-                buffer: tBuffer,
+                buffer: vBuffer,
 
                 itemSize: 3,
 
                 numItems: vertices.length / 3
-            },
-
-            indices: {
-
-                data: indices,
-
-                buffer: iBuffer,
-
-                itemSize: 1,
-
-                numItems: indices.length
-
             },
 
             texCoords: {
@@ -356,6 +444,30 @@ export default class prim {
                 itemSize: 2,
 
                 numItems: texCoords.length / 2
+
+            },
+
+            colors: {
+
+                data: colors,
+
+                buffer: cBuffer,
+
+                itemSize: 4,
+
+                numItems: colors.length / 4
+
+            },
+
+            indices: {
+
+                data: indices,
+
+                buffer: iBuffer,
+
+                itemSize: 1,
+
+                numItems: indices.length
 
             }
 
@@ -409,9 +521,11 @@ export default class prim {
 
         prim.rotation = rotation || this.glMatrix.vec3.create( 0, 0, 0 );
 
-        prim.texture = this.loadTexture.load( textureImage, function () { console.log('CALLING BACK............') } );
+        if ( textureImage ) {
 
-        prim.color = null;
+            this.loadTexture.load( textureImage, prim );
+
+        }
 
         return prim;
 
@@ -429,6 +543,13 @@ export default class prim {
         cube.geometry = this.geometryCube( cube );
 
         cube.type = this.type.CUBE;
+
+        console.log('vertex itemSize:' + cube.geometry.vertices.itemSize)
+        console.log('vertex numItems:' + cube.geometry.vertices.numItems )
+        console.log('texture itemSize:' + cube.geometry.texCoords.itemSize)
+        console.log('texture numItems:' + cube.geometry.texCoords.numItems)
+        console.log('index itemSize' + cube.geometry.indices.itemSize)
+        console.log('index numItems:' + cube.geometry.indices.numItems)
 
         this.objs.push( cube );
 

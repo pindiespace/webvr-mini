@@ -87,6 +87,7 @@ export default class world {
 
         let prim = this.prim;
 
+        //////////!!!!!!!!!///////// this.program = this.webgl.createProgram( prim.objVS1(), prim.objFS1() );
         this.program = this.webgl.createProgram( prim.objVS1(), prim.objFS1() );
 
         // use the program
@@ -130,6 +131,21 @@ export default class world {
         this.program.vsVars.uniform = this.webgl.setUniformLocations( this.program.shaderProgram, this.program.vsVars.uniform );
 
         this.program.fsVars.uniform = this.webgl.setUniformLocations( this.program.shaderProgram, this.program.fsVars.uniform );
+
+        // enable the vertex position and texture coordinates.
+
+        gl.enableVertexAttribArray( this.program.vsVars.attribute.vec3.aVertexPosition );
+
+        gl.enableVertexAttribArray( this.program.vsVars.attribute.vec2.aTextureCoord );
+
+
+        // FOR VS2
+        ///////gl.enableVertexAttribArray( this.program.vsVars.attribute.vec4.aVertexColor );
+
+        //shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
+        //shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+        //shaderProgram.samplerUniform = gl.getUniformLocation(shaderProgram, "uSampler");
+
 
         this.objs.push( this.prim.createCube(
             'first cube',
@@ -204,15 +220,24 @@ export default class world {
             this.glMatrix.vec3.create( -1, -1, 0 ),
             this.glMatrix.vec3.create( 0, 0, 0 ),
             'img/webvr-w3c.png',
-            this.glMatrix.vec4.create( 0.5, 1.0, 0.2, 1.0 ) 
+            this.glMatrix.vec4.create( 0.5, 1.0, 0.2, 1.0 ),
 
         ) );
 
         window.cube = this.objs[0]; ////////////////////////
 
+        console.log("glViewport:::++++++++++++++++width:" + gl.viewportWidth + ', height:' + gl.viewportHeight );
+
         // Start rendering loop.
 
-        //////////////////this.render();
+        // temporary rotation
+        this.xRot = 0.0001;
+        this.yRot = 0.0001;
+        this.zRot = 0.0001;
+
+        this.renderVS1(); // textured
+
+        //this.renderVS2(); // colors
 
     }
 
@@ -237,14 +262,99 @@ export default class world {
 
         // fps calculation.
 
+    }
+
+    renderVS1 () {
+
+        if( this.objs[0].texture ) { //////////////////////////////////////////////////////////
+
+        /////////console.log('>>>>>>>>>>>>>>>>>START RENDER')
+
+        let gl = this.webgl.getContext();
+
+        let mat4 = this.glMatrix.mat4;
+
+        let dX = 1;
+        let dY = 1;
+        let dZ = 1;
+
+        //this.xRot += dX;
+        //this.yRot += dY;
+        //this.zRot += dZ;
+
+        let ySpeed = 0;
+        let z = 0;
+
+        // Update world information.
+
+        this.update();
+
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+        gl.viewport( 0, 0, gl.viewportWidth, gl.viewportHeight );
+
+        mat4.perspective( 45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, this.pMatrix );
+
+        mat4.identity( this.mvMatrix );
+
+        //TRANSLATE
+        mat4.translate(this.mvMatrix, this.mvMatrix, [0.0, 0.0, z]);
+
+        //ROTATE
+        mat4.rotate( this.mvMatrix, this.mvMatrix, this.util.degToRad(this.xRot), [1, 0, 0] );
+        mat4.rotate( this.mvMatrix, this.mvMatrix, this.util.degToRad(this.yRot), [0, 1, 0] );
+        mat4.rotate( this.mvMatrix, this.mvMatrix, this.util.degToRad(this.zRot), [0, 0, 1] );
+
+        ////////console.log( 'BINDING VERTEX:'+ this.program.vsVars.attribute.vec3.aVertexPosition )
+
+        gl.bindBuffer( gl.ARRAY_BUFFER, this.objs[0].geometry.vertices.buffer );
+        gl.enableVertexAttribArray( this.program.vsVars.attribute.vec3.aVertexPosition );
+        gl.vertexAttribPointer( this.program.vsVars.attribute.vec3.aVertexPosition, this.objs[0].geometry.vertices.itemSize, gl.FLOAT, false, 0, 0 );
+
+        ///////console.log( 'BINDING TEXCOORDS:' + this.program.vsVars.attribute.vec2.aTextureCoord)
+
+        gl.bindBuffer( gl.ARRAY_BUFFER, this.objs[0].geometry.texCoords.buffer );
+        gl.enableVertexAttribArray( this.program.vsVars.attribute.vec2.aTextureCoord );
+        gl.vertexAttribPointer( this.program.vsVars.attribute.vec2.aTextureCoord, this.objs[0].geometry.texCoords.itemSize, gl.FLOAT, false, 0, 0 );
+
+        ////////console.log( 'BINDING TEXTURE:' + this.objs[0].texture )
+
+        gl.activeTexture( gl.TEXTURE0 );
+        gl.bindTexture( gl.TEXTURE_2D, null );
+        gl.bindTexture( gl.TEXTURE_2D, this.objs[0].texture );
+        ////////////////////////////////////////////////////////gl.uniform1i(gl.getUniformLocation(this.program.shaderProgram, "uSampler"), 0);
+        gl.uniform1i( this.program.fsVars.uniform.sampler2D.uSampler, 0 ); //STRANGE
+
+        /////////console.log('bound texturesddfsdsfsdfsfsf')
 
 
+
+        // set matrix uniforms
+        gl.uniformMatrix4fv( this.program.vsVars.uniform.mat4.uPMatrix, false, this.pMatrix );
+        gl.uniformMatrix4fv( this.program.vsVars.uniform.mat4.uMVMatrix, false, this.mvMatrix );
+
+
+        gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, this.objs[0].geometry.indices.buffer );
+
+        /////////console.log(">>>>>>>>>>>>>>>>>>>>>DRAWELEMENTS")
+
+        gl.drawElements(gl.TRIANGLES, this.objs[0].geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
+
+            console.log('.')
+
+        } //////////////////////////
+
+        requestAnimationFrame( () => { this.renderVS1() } );
     }
 
     /**
      * Render the World.
      */
-   render () {
+   renderVS2 () {
+
+        if( this.objs[0].texture ) { //////////////////////////////////////////////////////////
+
+        /////////console.log('>>>>>>>>>>>>>>>>>START RENDER')
 
         let gl = this.webgl.getContext();
 
@@ -253,38 +363,45 @@ export default class world {
         let xRot = 0.0001;
         let yRot = 0.0001;
         let ySpeed = 0;
-        let z = -5.0;
-
-        gl.viewport( 0, 0, gl.viewportWidth, gl.viewportHeight );
+        //////////let z = -5.0;
+        let z = 0;
 
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+        gl.viewport( 0, 0, gl.viewportWidth, gl.viewportHeight );
 
-        mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, this.pMatrix);
-        mat4.identity(this.mvMatrix);
+        mat4.perspective( 45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, this.pMatrix );
+        mat4.identity( this.mvMatrix );
         mat4.translate(this.mvMatrix, this.mvMatrix, [0.0, 0.0, z]);
-        mat4.rotate(this.mvMatrix, this.mvMatrix, this.util.degToRad(xRot), [1, 0, 0]);
-        mat4.rotate(this.mvMatrix, this.mvMatrix, this.util.degToRad(yRot), [0, 1, 0]);
+        mat4.rotate( this.mvMatrix, this.mvMatrix, this.util.degToRad(xRot), [1, 0, 0] );
+        mat4.rotate( this.mvMatrix, this.mvMatrix, this.util.degToRad(yRot), [0, 1, 0] );
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.objs[0].geometry.vertices.buffer);
-        gl.vertexAttribPointer(this.program.vsVars.attribute.aVertexPosition, this.objs[0].geometry.vertices.itemSize, gl.FLOAT, false, 0, 0);
+        ////////console.log( 'BINDING VERTEX:'+ this.program.vsVars.attribute.vec3.aVertexPosition )
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.objs[0].geometry.texCoords.buffer);
-        gl.vertexAttribPointer(this.program.vsVars.attribute.aTextureCoord, this.objs[0].geometry.texCoords.itemSize, gl.FLOAT, false, 0, 0);
+        gl.bindBuffer( gl.ARRAY_BUFFER, this.objs[0].geometry.vertices.buffer );
+        gl.enableVertexAttribArray( this.program.vsVars.attribute.vec3.aVertexPosition );
+        gl.vertexAttribPointer( this.program.vsVars.attribute.vec3.aVertexPosition, this.objs[0].geometry.vertices.itemSize, gl.FLOAT, false, 0, 0 );
 
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, this.objs[0].texture); ///////////////
-        gl.uniform1i(this.program.vsVars.uniform.samplerUniform, 0);
+        ////////// console.log( 'BINDING COLORS:' + this.program.vsVars.attribute.vec4.aVertexColor );
 
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.objs[0].geometry.indices.buffer);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.objs[0].geometry.colors.buffer );
+        gl.vertexAttribPointer(this.program.vsVars.attribute.vec4.aVertexColor, this.objs[0].geometry.colors.itemSize, gl.FLOAT, false, 0, 0);
 
-        gl.uniformMatrix4fv(this.program.vsVars.uniform.uPMatrix, false, this.pMatrix);
-        gl.uniformMatrix4fv(this.program.vsVars.uniform.uMVMatrix, false, this.mvMatrix);
+        /////////console.log('bound texturesddfsdsfsdfsfsf')
+
+        gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, this.objs[0].geometry.indices.buffer );
+        gl.uniformMatrix4fv( this.program.vsVars.uniform.mat4.uPMatrix, false, this.pMatrix );
+        gl.uniformMatrix4fv( this.program.vsVars.uniform.mat4.uMVMatrix, false, this.mvMatrix );
+
+        /////////console.log(">>>>>>>>>>>>>>>>>>>>>DRAWELEMENTS")
 
         gl.drawElements(gl.TRIANGLES, this.objs[0].geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
 
+            console.log('.')
 
-        requestAnimationFrame( () => { this.render() } );
+        } //////////////////////////
+
+        requestAnimationFrame( () => { this.renderVS2() } );
 
     }
 

@@ -27,6 +27,8 @@ export default class LoadPool {
 
         this.loadCt = 0; // load cache pointer
 
+        this.ready = false;
+
     }
 
     /** 
@@ -35,7 +37,7 @@ export default class LoadPool {
      * @param {String} source the image path.
      * @param {Function} callback callback function ofr individual waiter.
      */
-    createWaitObj ( source, callback ) {
+    createWaitObj ( source, attach, callback ) {
 
         console.log( 'creating wait object...' + source );
 
@@ -44,6 +46,8 @@ export default class LoadPool {
         this.waitCache.push( {
 
             source: source,
+
+            attach: attach,
 
             callback: callback
 
@@ -62,6 +66,22 @@ export default class LoadPool {
 
         console.log( 'in loadTexture.update()' );
 
+        let waitCache = this.waitCache;
+
+        let wLen = waitCache.length;
+
+        if ( wLen < 1 ) {
+
+            console.log( 'all objects loaded, nothing to do...' );
+
+            this.ready = true;
+
+            return;
+
+        }
+
+        this.ready = false;
+
         // Check if there is an available loadCache
 
         let i = 0;
@@ -70,46 +90,32 @@ export default class LoadPool {
 
         let lLen = loadCache.length;
 
-        let waitCache = this.waitCache;
-
-        let wLen = waitCache.length;
-
         console.log('lLen:' + lLen);
         console.log('wLen:' + wLen);
 
-        if( wLen ) {
+        // we just finished a texture, and it is available for new loads.
 
-            // we just finished a texture, and it is available for new loads.
+        let waitObj = waitCache.shift();
 
-            if ( loadObj && loadObj.busy === false ) {
+        console.log( 'have a waitObj waiting...' + waitObj.source );
 
-                console.log( 're-using a loader object' );
+        if ( loadObj && loadObj.busy === false ) {
 
-                let waitObj = waitCache.shift();
+            console.log( 're-using a loader object' );
 
-                loadObj.image.src = waitObj.source;
+            loadObj.image.src = waitObj.source;
 
-                //loadCache[ i ] = this.createLoadObj( waitObj );
+        } else {
 
+            for ( i; i < lLen; i++ ) {
 
+                if ( ! loadCache[ i ] ) {
 
-            } else {
+                    console.log( 'creating a new loader object' );
 
-                for ( i; i < lLen; i++ ) {
+                    loadCache[ i ] = this.createLoadObj( waitObj );
 
-                    if ( ! loadCache[ i ] ) {
-
-                        // grab the first waitCache
-
-                        console.log( 'waitCache:' + waitCache )
-
-                        let waitObj = waitCache.shift();
-
-                        loadCache[ i ] = this.createLoadObj( waitObj );
-
-                        break;
-
-                    }
+                    break;
 
                 }
 
@@ -129,17 +135,11 @@ export default class LoadPool {
      * @param {Function} callback each time an image is loaded.
      * @param {Function} finalCallback the callback executed when all objects are loaded.
      */
-    load ( source, callback, finalCallback ) {
-
-        if ( callback ) {
-
-            this.callback = callback; 
-
-        } 
+    load ( source, attach, callback, finalCallback ) {
 
         // Push a load request onto the queue.
 
-        this.createWaitObj( source, callback );
+        this.createWaitObj( source, attach, callback );
 
         // Start loading, if space available.
 

@@ -95,35 +95,51 @@ export default class WebGL {
                  * gl.isContextLost() also works to check
                  */
 
-            canvas.addEventListener('webglcontextlost', ( e ) => {
+                canvas.addEventListener('webglcontextlost', ( e ) => {
 
-                console.error( 'error: webglcontextlost event, context count:' + this.contextCount );
+                    console.error( 'error: webglcontextlost event, context count:' + this.contextCount );
 
-                if ( lostContext ) {
+                    if ( lostContext ) {
 
-                    this.gl = null;
+                        this.gl = null;
 
-                    lostContext( e );
+                        lostContext( e );
 
-                }
+                    }
 
-                e.preventDefault();
+                    e.preventDefault();
 
-            }, false );
+                }, false );
 
-            canvas.addEventListener( 'webglcontextrestored', ( e ) => {
+                canvas.addEventListener( 'webglcontextrestored', ( e ) => {
 
-                console.error( 'error: webglcontextrestored event, context count:' + this.contextCount );
+                    console.error( 'error: webglcontextrestored event, context count:' + this.contextCount );
 
-                if ( restoredContext ) {
+                    if ( restoredContext ) {
 
-                    restoredContext( e );
+                        restoredContext( e );
 
-                }
+                    }
 
-                e.preventDefault();
+                    e.preventDefault();
 
-            }, false );
+                }, false );
+
+                // Do an initial set of our viewport width and height.
+
+                gl.viewportWidth = canvas.width;
+
+                gl.viewportHeight = canvas.height;
+
+                // listen for <canvas> resize event.
+
+                window.addEventListener( 'resize', ( e ) => {
+
+                    this.resizeCanvas();
+
+                    e.preventDefault();
+
+                }, false );
 
                 // Default WebGL initializtion and stats, can be over-ridden in your world file.
 
@@ -181,11 +197,13 @@ export default class WebGL {
 
                 gl.clearColor( 0.1, 0.1, 0.1, 1.0 );
 
-            }
+                return this.gl;
 
-            return this.gl;
+            } // end of have a gl context
 
-        }
+            //return this.gl;
+
+        } // end of if have a <canvas>
 
         return null;
 
@@ -214,7 +232,9 @@ export default class WebGL {
     }
 
     /** 
-     * Resize the canvas to the current display size.
+     * Resize the canvas if the window changes size. 
+     * NOTE: affected by CSS styles.
+     * TODO: check current CSS style.
      * (TWGL)
      */
     resizeCanvas () {
@@ -222,6 +242,8 @@ export default class WebGL {
         if ( this.ready() ) {
 
             let f = Math.max( window.devicePixelRatio, 1 );
+
+            let gl = this.getContext();
 
             let c = this.getCanvas();
 
@@ -234,6 +256,10 @@ export default class WebGL {
                 c.width = width;
 
                 c.height = height;
+
+                gl.viewportWidth = c.width;
+
+                gl.viewportHeight = c.height;
 
                 return true;
 
@@ -705,7 +731,7 @@ export default class WebGL {
 
                 gl.enableVertexAttribArray( attb[ j ] );
 
-                console.log("gl.getAttribLocation( shaderProgram," + j + ") is" + attb[ j ] );
+                console.log("gl.getAttribLocation( shaderProgram, '" + j + "' ) is:" + attb[ j ] );
 
             }
 
@@ -729,7 +755,7 @@ export default class WebGL {
 
                 unif[ j ] = gl.getUniformLocation( shaderProgram, j );
 
-                console.log("gl.getUniformLocation( shaderProgram," + j + ") is" + unif[ j ] );
+                console.log("gl.getUniformLocation( shaderProgram," + j + ") is:" + unif[ j ] );
 
             }
 

@@ -21,7 +21,7 @@ export default class LoadTexture extends LoadPool {
 
         this.MAX_TIMEOUT = 10;
 
-        this.blackPixel = new Uint8Array( [ 0, 0, 0 ] );
+        this.blackPixel = new Uint8Array( [ 0.5, 0.5, 0.5, 1.0 ] );
 
         if( init ) {
 
@@ -52,13 +52,13 @@ export default class LoadTexture extends LoadPool {
 
         loadObj.callback = waitObj.callback;
 
-        loadObj.texture = gl.createTexture();
+        loadObj.prim = waitObj.attach; ///////////////////////////
 
         loadObj.busy = true;
 
         // https://www.nczonline.net/blog/2013/09/10/understanding-ecmascript-6-arrow-functions/
 
-        loadObj.image.addEventListener( 'load', ( e ) => this.uploadTexture( loadObj, waitObj.callback ) );
+        loadObj.image.addEventListener( 'load', ( e ) => this.uploadTexture( loadObj, loadObj.callback ) );
 
         loadObj.image.addEventListener( 'error', ( e) => console.log( 'error loading image:' + waitObj.source ), false );
 
@@ -85,7 +85,13 @@ export default class LoadTexture extends LoadPool {
 
         let gl = this.webgl.getContext();
 
-        gl.bindTexture( gl.TEXTURE_2D, loadObj.texture );
+        loadObj.prim.texture = gl.createTexture();
+
+        console.log("SDFKSJFLSKFJSDLOADOBJ.PRIM.TEXTURE isSSSS:" + loadObj.prim.texture)
+
+        gl.pixelStorei( gl.UNPACK_FLIP_Y_WEBGL, true );
+
+        gl.bindTexture( gl.TEXTURE_2D, loadObj.prim.texture );
 
         if ( loadObj.image ) {
 
@@ -93,7 +99,7 @@ export default class LoadTexture extends LoadPool {
 
         } else {
 
-            console.error( 'no loadObj.image for:' + loadObj.image.src );
+            console.error( 'no loadObj.image for:' + loadObj.image.src + ', default pixel texture' );
 
             gl.textImage2D( gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.blackPixel );
 
@@ -125,7 +131,7 @@ export default class LoadTexture extends LoadPool {
 
         loadObj.busy = false;
 
-        loadObj.texture = gl.createTexture(); // NEEDS TO BE DONE
+        console.log("NNNNNOOOOOWWWWWW.PRIM.TEXTURE isSSSS:" + loadObj.prim.texture)
 
         // Send this to update for re-use .
 
@@ -133,6 +139,6 @@ export default class LoadTexture extends LoadPool {
 
     }
 
-    // load() is defined in superclass.
+    // load() and update() are defined in superclass.
 
 }
