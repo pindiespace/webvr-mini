@@ -1,5 +1,3 @@
-import Renderer from  './Renderer';
-
 export default class prim {
 
     /** 
@@ -7,7 +5,7 @@ export default class prim {
      * suitable for creating a VBO and IBO.
      */
 
-    constructor ( init, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo, renderer ) {
+    constructor ( init, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo ) {
 
         console.log( 'in Prim class' );
 
@@ -24,8 +22,6 @@ export default class prim {
         this.loadAudio = loadAudio;
 
         this.loadVideo = loadVideo;
-
-        this.renderer = renderer;
 
         this.objs = [];
 

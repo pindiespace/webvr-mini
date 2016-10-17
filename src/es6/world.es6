@@ -16,7 +16,7 @@ export default class world {
      * constructor.
      * @param {WeVRMini} webvr the webvr module.
      */
-    constructor ( webgl, prim ) {
+    constructor ( webgl, prim, renderer ) {
 
         console.log( 'in World class' );
 
@@ -25,6 +25,8 @@ export default class world {
         this.util = webgl.util;
 
         this.prim = prim;
+
+        this.renderer = renderer;
 
         this.canvas = webgl.getCanvas();
 
@@ -89,67 +91,6 @@ export default class world {
 
         let prim = this.prim;
 
-        window.prim = prim;
-
-        this.program = this.webgl.createProgram( prim.objVS1(), prim.objFS1() );
-
-        // use the program
-
-        let shaderProgram = this.program.shaderProgram;
-
-        gl.useProgram( shaderProgram );
-
-        // USE THIS AS A BASE:
-        // https://github.com/gpjt/webgl-lessons/blob/master/lesson06/index.html
-
-        /* 
-         * Get location of attribute names. Stored separately for vertex and fragment shaders.
-         * vsvars = { 
-                attribute {
-                    vec2: {
-                        uvMatrix: null (until filled)
-                        mvMatris: null (until filled)
-                    }
-                },
-                uniform {
-                    ...
-                },
-                varying {
-                    ...
-                }
-         }
-         */
-
-///////////
-// DEBUG
-        window.pgm = this.program;
-        window.vsVars = this.program.vsVars;
-        window.fsVars = this.program.fsVars;
-///////////
-
-        // Populate the attribute and uniform variables. Needs to be done again in the render loop.
-
-        this.program.vsVars.attribute = this.webgl.setAttributeLocations( this.program.shaderProgram, this.program.vsVars.attribute );
-
-        this.program.vsVars.uniform = this.webgl.setUniformLocations( this.program.shaderProgram, this.program.vsVars.uniform );
-
-        this.program.fsVars.uniform = this.webgl.setUniformLocations( this.program.shaderProgram, this.program.fsVars.uniform );
-
-        // enable the vertex position and texture coordinates.
-
-        gl.enableVertexAttribArray( this.program.vsVars.attribute.vec3.aVertexPosition );
-
-        gl.enableVertexAttribArray( this.program.vsVars.attribute.vec2.aTextureCoord );
-
-
-        // FOR VS2
-        ///////gl.enableVertexAttribArray( this.program.vsVars.attribute.vec4.aVertexColor );
-
-        //shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
-        //shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
-        //shaderProgram.samplerUniform = gl.getUniformLocation(shaderProgram, "uSampler");
-
-
         this.objs.push( this.prim.createCube(
             'first cube',                                        // name
             1.0,                                                 // scale
@@ -161,7 +102,8 @@ export default class world {
             this.glMatrix.vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ), // RGBA color
         ) );
 
-        /*
+/*
+
         this.objs.push( this.prim.createCube(
             'toji cube',
             1.0,
@@ -234,18 +176,22 @@ export default class world {
 
         */
 
-        window.cube = this.objs[0]; ////////////////////////
+        /////////////////////////
+        // VS2 render test
 
-        console.log("glViewport:::++++++++++++++++width:" + gl.viewportWidth + ', height:' + gl.viewportHeight );
+        //this.renderer.initVS2( this.objs );
+        //this.render();
+        //return;
+        //////////////////////////
 
-        // Start rendering loop.
+        //////////////////////////
+        // VS1 render test
+        // TODO:
+        this.renderer.initVS1( this.objs );
+        this.render();
+        return;
+        //////////////////////////
 
-        // temporary rotation
-        this.xRot = 0.0001;
-        this.yRot = 0.0001;
-        this.zRot = 0.0001;
-
-       this.renderVS1(); // textured
 
     }
 
@@ -272,100 +218,14 @@ export default class world {
 
     }
 
-    /* 
-     * GREAT description of model, view, projection matrix
-     * @link https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_model_view_projection
-     */
+    render () {
 
-    renderVS1 () {
+        //this.renderer.renderVS2();
 
-        //////////////////////console.log("TTTTTTTTTTTTTTEEEEEXXXXTTTURUREE IMAGES:" + this.objs[0].textures[0])
+        this.renderer.renderVS1();
 
-        if( this.objs[0].textures[0] ) { //////////////////////////////////////////////////////////
+        requestAnimationFrame( () => { this.render() } );
 
-        /////////console.log('>>>>>>>>>>>>>>>>>START RENDER')
-
-        let gl = this.webgl.getContext();
-
-        let canvas = this.webgl.getCanvas();
-
-        let mat4 = this.glMatrix.mat4;
-
-        let dX = 1;
-        let dY = 1;
-        let dZ = 1;
-
-        //this.xRot += dX;
-        this.yRot += dY;
-        this.zRot += dZ;
-
-        let z = -5; //TODO: NOT RENDERING AT 0 or 2, INVISIBLE BEYOND A CERTAIN DISTANCE INTO SCREEN!!!!!
-
-        // Update world information.
-
-        this.update();
-
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-        gl.viewport( 0, 0, gl.viewportWidth, gl.viewportHeight );
-
-        mat4.perspective( this.pMatrix, Math.PI*0.4, canvas.width / canvas.height, 0.1, 100.0 ); // right
-
-        mat4.identity( this.mvMatrix );
-
-        //TRANSLATE, move model view into the screen (-z)
-        mat4.translate(this.mvMatrix, this.mvMatrix, [0.0, 0.0, z]);
-
-        /////////////////////////////////////////////////////////////////this.mvPushMatrix();
-
-        //ROTATE
-        mat4.rotate( this.mvMatrix, this.mvMatrix, this.util.degToRad(this.xRot), [1, 0, 0] );
-        mat4.rotate( this.mvMatrix, this.mvMatrix, this.util.degToRad(this.yRot), [0, 1, 0] );
-        mat4.rotate( this.mvMatrix, this.mvMatrix, this.util.degToRad(this.zRot), [0, 0, 1] );
-
-        ////////console.log( 'BINDING VERTEX:'+ this.program.vsVars.attribute.vec3.aVertexPosition )
-
-        gl.bindBuffer( gl.ARRAY_BUFFER, this.objs[0].geometry.vertices.buffer );
-        gl.enableVertexAttribArray( this.program.vsVars.attribute.vec3.aVertexPosition );
-        gl.vertexAttribPointer( this.program.vsVars.attribute.vec3.aVertexPosition, this.objs[0].geometry.vertices.itemSize, gl.FLOAT, false, 0, 0 );
-
-        ///////console.log( 'BINDING TEXCOORDS:' + this.program.vsVars.attribute.vec2.aTextureCoord)
-
-        gl.bindBuffer( gl.ARRAY_BUFFER, this.objs[0].geometry.texCoords.buffer );
-        gl.enableVertexAttribArray( this.program.vsVars.attribute.vec2.aTextureCoord );
-        gl.vertexAttribPointer( this.program.vsVars.attribute.vec2.aTextureCoord, this.objs[0].geometry.texCoords.itemSize, gl.FLOAT, false, 0, 0 );
-
-        ////////console.log( 'BINDING TEXTURE:' + this.objs[0].texture )
-
-        // could have multiple binding events here.
-
-        gl.activeTexture( gl.TEXTURE0 );
-        gl.bindTexture( gl.TEXTURE_2D, null );
-        gl.bindTexture( gl.TEXTURE_2D, this.objs[0].textures[0].texture );
-
-        ////////////////////////////////////////////////////////gl.uniform1i(gl.getUniformLocation(this.program.shaderProgram, "uSampler"), 0);
-        gl.uniform1i( this.program.fsVars.uniform.sampler2D.uSampler, 0 ); //STRANGE
-
-        /////////console.log('bound texturesddfsdsfsdfsfsf')
-
-        // set matrix uniforms
-        gl.uniformMatrix4fv( this.program.vsVars.uniform.mat4.uPMatrix, false, this.pMatrix );
-        gl.uniformMatrix4fv( this.program.vsVars.uniform.mat4.uMVMatrix, false, this.mvMatrix );
-
-
-        gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, this.objs[0].geometry.indices.buffer );
-
-        /////////console.log(">>>>>>>>>>>>>>>>>>>>>DRAWELEMENTS")
-
-        gl.drawElements(gl.TRIANGLES, this.objs[0].geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
-
-        //////////////////////////////////////////////////////////////////this.mvPopMatrix();
-
-            //console.log('.')
-
-        } //////////////////////////
-
-        requestAnimationFrame( () => { this.renderVS1() } );
     }
 
 }

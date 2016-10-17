@@ -105,11 +105,11 @@ let loadVideo = new LoadVideo( true, util, glMatrix, webgl );
 
 let renderer = new Renderer ( true, util, glMatrix, webgl );
 
-let prim = new Prim ( true, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo, renderer );
+let prim = new Prim ( true, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo );
 
 // Create the world, which needs WebGL, WebVR, and Prim.
 
-let world = new World( webgl, prim );
+let world = new World( webgl, prim, renderer );
 
 // Export our classes to app.js.
 
