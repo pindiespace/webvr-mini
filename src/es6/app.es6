@@ -43,6 +43,8 @@ import LoadVideo from './load-video';
 
 import WebVR from './webvr';
 
+import Renderer from './renderer';
+
 import Prim from './prim';
 
 // Import the world (variable).
@@ -101,7 +103,9 @@ let loadAudio = new LoadAudio( true, util, glMatrix, webgl );
 
 let loadVideo = new LoadVideo( true, util, glMatrix, webgl );
 
-let prim = new Prim ( true, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo );
+let renderer = new Renderer ( true, util, glMatrix, webgl );
+
+let prim = new Prim ( true, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo, renderer );
 
 // Create the world, which needs WebGL, WebVR, and Prim.
 

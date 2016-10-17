@@ -44,4 +44,24 @@ export default class Util {
 
     }
 
+    getRand ( min, max ) {
+
+        if ( max === undefined ) {
+
+            max = min;
+
+            min = 0;
+
+        }
+
+        return min + Math.random() * ( max - min );
+
+    }
+
+    getRandInt ( range ) {
+
+        return Math.floor( Math.random() * range );
+
+    }
+
 }

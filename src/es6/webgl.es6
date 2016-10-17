@@ -146,41 +146,47 @@ export default class WebGL {
 
                 // Default WebGL initializtion and stats, can be over-ridden in your world file.
 
-                // Flag for the availability of high-precision formats, texture sizes.
+                if( gl.getParameter && gl.getShaderPrecisionFormat ) {
 
-                this.stats = {};
+                    this.stats = {};
 
-                let stats = this.stats;
+                    let stats = this.stats;
 
-                stats.highp = gl.getShaderPrecisionFormat( gl.FRAGMENT_SHADER, gl.HIGH_FLOAT );
+                    stats.highp = gl.getShaderPrecisionFormat( gl.FRAGMENT_SHADER, gl.HIGH_FLOAT );
 
-                // Max texture size, for gl.texImage2D.                
+                    // Max texture size, for gl.texImage2D.                
 
-                stats.maxTexSize = gl.getParameter( gl.MAX_TEXTURE_SIZE );
+                    stats.maxTexSize = gl.getParameter( gl.MAX_TEXTURE_SIZE );
 
-                // Max cubemap size, for gl.texImage2D.
+                    // Max cubemap size, for gl.texImage2D.
 
-                stats.maxCubeSize = gl.getParameter( gl.MAX_CUBE_MAP_TEXTURE_SIZE );
+                    stats.maxCubeSize = gl.getParameter( gl.MAX_CUBE_MAP_TEXTURE_SIZE );
 
-                // Max texture size, for gl.renderbufferStorage and canvas width/height.
+                    // Max texture size, for gl.renderbufferStorage and canvas width/height.
 
-                stats.maxRenderbufferSize = gl.getParameter( gl.MAX_RENDERBUFFER_SIZE );
+                    stats.maxRenderbufferSize = gl.getParameter( gl.MAX_RENDERBUFFER_SIZE );
 
-                // Max texture units.
+                    // Max texture units.
 
-                stats.combinedUnits = gl.getParameter( gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS );
+                    stats.combinedUnits = gl.getParameter( gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS );
 
-                // Max vertex buffers.
+                    // Max vertex buffers.
 
-                stats.maxVSattribs = gl.getParameter( gl.MAX_VERTEX_ATTRIBS );
+                    stats.maxVSattribs = gl.getParameter( gl.MAX_VERTEX_ATTRIBS );
 
-                // Max 4-byte uniforms.
+                    // Max 4-byte uniforms.
 
-                stats.maxVertexShader = gl.getParameter( gl.MAX_VERTEX_UNIFORM_VECTORS );
+                    stats.maxVertexShader = gl.getParameter( gl.MAX_VERTEX_UNIFORM_VECTORS );
 
-                // Max 4-byte uniforms.
+                    // Max 4-byte uniforms.
 
-                stats.maxFragmentShader = gl.getParameter( gl.MAX_FRAGMENT_UNIFORM_VECTORS );
+                    stats.maxFragmentShader = gl.getParameter( gl.MAX_FRAGMENT_UNIFORM_VECTORS );
+
+                } else {
+
+                    this.stats = false;
+
+                }
 
                 // Default 3D enables.
 
@@ -213,6 +219,11 @@ export default class WebGL {
         } // end of if have a <canvas>
 
         return null;
+
+    }
+
+    stats () {
+
 
     }
 
@@ -317,7 +328,11 @@ export default class WebGL {
 
                     gl = this.debug.makeDebugContext( canvas.getContext( n[ i ] ) );
 
+                    window.gl = gl
+
                     console.warn( 'using experimental webgl debug context' );
+
+                    break;
 
                 } else {
 
@@ -327,9 +342,12 @@ export default class WebGL {
 
             } catch( e ) {}
 
-            // If we got a context, assign WebGL version.
+            /*
+             * If we got a context, assign WebGL version. Note that some 
+             * experimental versions don't have .getParameter
+             */
 
-            if ( gl ) {
+            if ( gl && gl.getParameter ) {
 
                 this.glVersStr = gl.getParameter( gl.VERSION ).toLowerCase();
 
@@ -344,7 +362,7 @@ export default class WebGL {
 
                     case 2:
                     case 3:
-                        this.glVers = Math.ceil( parseFloat( vers.substr( 6 ) ) );
+                        this.glVers = Math.ceil( parseFloat( this.glVersStr.substr( 6 ) ) );
                         this.addVertexBufferSupport( gl );
                         break;
 

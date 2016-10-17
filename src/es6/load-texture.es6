@@ -107,58 +107,65 @@ export default class LoadTexture extends LoadPool {
      */
     uploadTexture ( loadObj, callback ) {
 
-        console.log( 'in uploadTexture() for src:' + loadObj.image.src );
+        console.log( 'In uploadTexture() for src:' + loadObj.image.src );
 
         let gl = this.webgl.getContext();
 
-        loadObj.prim.texture = gl.createTexture();
-
-        console.log("SDFKSJFLSKFJSDLOADOBJ.PRIM.TEXTURE isSSSS:" + loadObj.prim.texture)
+        let textures = loadObj.prim.textures;
 
         gl.pixelStorei( gl.UNPACK_FLIP_Y_WEBGL, true );
 
-        gl.bindTexture( gl.TEXTURE_2D, loadObj.prim.texture );
+        let textureObj = {
+            image: loadObj.image,
+            src: loadObj.image.src,
+            texture: gl.createTexture()
+        }
 
-        if ( loadObj.image ) {
+        gl.bindTexture( gl.TEXTURE_2D, textureObj.texture );
 
-            gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, loadObj.image );
+        // Use image, or default to single-color texture if image is not present.
+
+        if ( textureObj.image ) {
+
+                gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureObj.image );
 
         } else {
 
-            console.error( 'no loadObj.image for:' + loadObj.image.src + ', default pixel texture' );
+            console.error( 'no loadObj.image for:' + textureObj.image.src + ', default pixel texture' );
 
-            //gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.greyPixel );
             gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, this.greyPixel );
 
         }
 
-        if (this.util.isPowerOfTwo(loadObj.image.width) && this.util.isPowerOfTwo(loadObj.image.height)) {
+        if ( this.util.isPowerOfTwo( textureObj.image.width ) && this.util.isPowerOfTwo( textureObj.image.height ) ) {
 
-          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+            gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR );
 
-          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+            gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST );
 
-          gl.generateMipmap(gl.TEXTURE_2D);
+            gl.generateMipmap( gl.TEXTURE_2D );
 
         } else {
 
-          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+            gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR );
 
-          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR );
 
         }
 
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE );
 
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE );
 
         gl.bindTexture( gl.TEXTURE_2D, null );
+
+        textures.push( textureObj );
 
         // Clear the object for re-use.
 
         loadObj.busy = false;
 
-        console.log("NNNNNOOOOOWWWWWW.PRIM.TEXTURE isSSSS:" + loadObj.prim.texture)
+        //console.log("NNNNNOOOOOWWWWWW.PRIM.TEXTURE isSSSS:" + loadObj.prim.texture)
 
         // Send this to update for re-use .
 

@@ -1,3 +1,5 @@
+import Renderer from  './Renderer';
+
 export default class prim {
 
     /** 
@@ -5,7 +7,7 @@ export default class prim {
      * suitable for creating a VBO and IBO.
      */
 
-    constructor ( init, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo) {
+    constructor ( init, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo, renderer ) {
 
         console.log( 'in Prim class' );
 
@@ -22,6 +24,8 @@ export default class prim {
         this.loadAudio = loadAudio;
 
         this.loadVideo = loadVideo;
+
+        this.renderer = renderer;
 
         this.objs = [];
 
@@ -186,68 +190,6 @@ export default class prim {
 
     }
 
-    objVS2 () {
-
-        let s = [
-
-            'attribute vec3 aVertexPosition;',
-            'attribute vec4 aVertexColor;',
-
-            'uniform mat4 uMVMatrix;',
-            'uniform mat4 uPMatrix;',
-      
-            'varying lowp vec4 vColor;',
-    
-            'void main(void) {',
-
-            '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);',
-
-            '    vColor = aVertexColor;',
-
-            '}'
-
-        ];
-
-        return {
-
-            code: s.join('\n'),
-
-            varList: this.webgl.createVarList( s ),
-
-            render: function () {}
-
-        };
-
-    }
-
-    objFS2 () {
-
-        let s = [
-
-            'varying lowp vec4 vColor;',
-
-            'void main(void) {',
-
-                //'gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);',
-
-                'gl_FragColor = vColor;',
-
-            '}'
-
-        ];
-
-        return {
-
-            code: s.join('\n'),
-
-            varList: this.webgl.createVarList( s ),
-
-            render: function () {}
-
-        };
-
-    }
-
     /** 
      * GEOMETRIES
      */
@@ -270,7 +212,7 @@ export default class prim {
      * @param {GLMatrix.Vec3} center a 3d vector defining the center.
      * @param {Size} width, height, depth, with 1.0 (unit) max size
      * @param {Number} scale relative to unit size (1, 1, 1).
-      name = 'unknown', scale = 1.0, dimensions, position, translation, rotation, textureImage, color
+      name = 'unknown', scale = 1.0, dimensions, position, acceleration, rotation, textureImage, color
      */
     geometryCube ( prim ) {
 
@@ -500,16 +442,41 @@ export default class prim {
 
 
     /** 
+     * Set a material for a prim.
+     * @link http://webglfundamentals.org/webgl/lessons/webgl-less-code-more-fun.html
+     * didn't use chroma (but could)
+     * @link https://github.com/gka/chroma.js/blob/gh-pages/src/index.md
+     */
+    setMaterial ( prim ) {
+
+        prim.material =  {
+
+            u_colorMult:             0,
+
+            u_diffuse:               prim.textures[0],
+
+            u_specular:              [ 1, 1, 1, 1 ],
+
+            u_shininess:             this.util.rand( 500 ),
+
+            u_specularFactor:        this.util.randrand( 1 )
+
+        }
+
+    }
+
+
+    /** 
      * Create an standard 3d object.
      * @param {String} name assigned name of object (not necessarily unique).
      * @param {Number} scale size relative to unit vector (1,1,1).
      * @param {GLMatrix.vec3} position location of center of object.
-     * @param {GLMatrix.vec3} translation movement vector (acceleration) of object.
+     * @param {GLMatrix.vec3} acceleration movement vector (acceleration) of object.
      * @param {GLMatrix.vec3} rotation rotation vector (spin) around center of object.
      * @param {String} textureImage the path to an image used to create a texture.
      * @param {GLMatrix.vec4} color the default color of the object.
      */
-    createPrim ( name = 'unknown', scale = 1.0, dimensions, position, translation, rotation, textureImage, color ) {
+    createPrim ( name = 'unknown', scale = 1.0, dimensions, position, acceleration, rotation, textureImage, color, shaderId ) {
 
         let gl = this.webgl.getContext();
 
@@ -527,15 +494,25 @@ export default class prim {
 
         prim.position = position || glMatrix.vec3.create( 0, 0, 0 );
 
-        prim.translation = translation || glMatrix.vec3.create( 0, 0, 0 );
+        prim.acceleration = acceleration || glMatrix.vec3.create( 0, 0, 0 );
 
         prim.rotation = rotation || glMatrix.vec3.create( 0, 0, 0 );
 
-        if ( textureImage ) {
+        prim.textures = [];
 
-            this.loadTexture.load( textureImage, prim );
+        // Multiple textures per Prim. Rendering defines how textures for each Prim type are used.
+
+        for ( let i = 0; i < textureImage.length; i++ ) {
+
+            this.loadTexture.load( textureImage[ i ], prim );
 
         }
+
+        // Define Prim material (only one material type at a time per Prim ).
+
+        prim.material = {};
+
+        prim.renderId = shaderId; // used in Renderer class
 
         // Prim transforms.
 
@@ -548,9 +525,9 @@ export default class prim {
      * @param {String} name of object
      * @param {Number} scale
      */
-    createCube ( name, scale, dimensions, position, translation, rotation, textureImage, color ) {
+    createCube ( name, scale, dimensions, position, acceleration, rotation, textureImage, color, shaderId ) {
 
-        let cube = this.createPrim( name, scale, dimensions, position, translation, rotation, textureImage, color );
+        let cube = this.createPrim( name, scale, dimensions, position, acceleration, rotation, textureImage, color );
 
         cube.geometry = this.geometryCube( cube );
 
@@ -568,6 +545,5 @@ export default class prim {
         return cube;
 
     }
-
 
 }
