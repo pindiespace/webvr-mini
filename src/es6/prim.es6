@@ -270,29 +270,26 @@ export default class prim {
      * @param {GLMatrix.Vec3} center a 3d vector defining the center.
      * @param {Size} width, height, depth, with 1.0 (unit) max size
      * @param {Number} scale relative to unit size (1, 1, 1).
+      name = 'unknown', scale = 1.0, dimensions, position, translation, rotation, textureImage, color
      */
-    geometryCube ( center, size ) {
+    geometryCube ( prim ) {
 
         let gl = this.webgl.getContext();
 
-        let  halfSize = size * 0.5;
+        let x = prim.dimensions[0] / 2;
 
-        let r = size * 0.5;
+        let y = prim.dimensions[1] / 2;
 
-        let x = center[0];
-
-        let y = center[1];
-
-        let z = center[2];
+        let z = prim.dimensions[2] / 2 ;
 
         // Create cube geometry.
 
         let vertices = [
             // Front face
-            -1.0, -1.0,  1.0,
-             1.0, -1.0,  1.0,
-             1.0,  1.0,  1.0,
-            -1.0,  1.0,  1.0,
+            -1.0, -1.0,  1.0, // bottomleft
+             1.0, -1.0,  1.0, // bottomright
+             1.0,  1.0,  1.0, // topright
+            -1.0,  1.0,  1.0, // topleft
             // Back face
             -1.0, -1.0, -1.0,
             -1.0,  1.0, -1.0,
@@ -321,9 +318,6 @@ export default class prim {
         ];
 
         // Apply default transforms, centering on a Point and scaling.
-
-
-
 
         let vBuffer = gl.createBuffer();
 
@@ -544,8 +538,6 @@ export default class prim {
         }
 
         // Prim transforms.
-
-
 
         return prim;
 

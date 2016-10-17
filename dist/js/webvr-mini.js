@@ -1918,7 +1918,7 @@
 
 	                _this.MAX_TIMEOUT = 10;
 
-	                _this.blackPixel = new Uint8Array([0.5, 0.5, 0.5, 1.0]);
+	                _this.greyPixel = new Uint8Array([0.5, 0.5, 0.5, 1.0]);
 
 	                if (init) {
 
@@ -1932,6 +1932,35 @@
 	        _createClass(LoadTexture, [{
 	                key: 'init',
 	                value: function init() {}
+
+	                /**
+	                 * Sets a texture to a 1x1 pixel color. If `options.color === false` is nothing happens. If it's not set
+	                 * the default texture color is used which can be set by calling `setDefaultTextureColor`.
+	                 * @param {WebGLRenderingContext} gl the WebGLRenderingContext
+	                 * @param {WebGLTexture} tex the WebGLTexture to set parameters for
+	                 * @param {module:twgl.TextureOptions} [options] A TextureOptions object with whatever parameters you want set.
+	                 *   This is often the same options you passed in when you created the texture.
+	                 * @memberOf module:twgl/textures
+	                 */
+
+	        }, {
+	                key: 'setDefaultTexturePixel',
+	                value: function setDefaultTexturePixel(gl, texture) {
+
+	                        // Assume it's a URL
+	                        // Put 1x1 pixels in texture. That makes it renderable immediately regardless of filtering.
+	                        var color = make1Pixel(options.color);
+
+	                        if (target === gl.TEXTURE_CUBE_MAP) {
+	                                for (var ii = 0; ii < 6; ++ii) {
+	                                        gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X + ii, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, color);
+	                                }
+	                        } else if (target === gl.TEXTURE_3D) {
+	                                gl.texImage3D(target, 0, gl.RGBA, 1, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, color);
+	                        } else {
+	                                gl.texImage2D(target, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, color);
+	                        }
+	                }
 
 	                /** 
 	                 * Create a load object wrapper, and start a load.
@@ -2008,7 +2037,8 @@
 
 	                                console.error('no loadObj.image for:' + loadObj.image.src + ', default pixel texture');
 
-	                                gl.textImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.blackPixel);
+	                                //gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.greyPixel );
+	                                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, this.greyPixel);
 	                        }
 
 	                        if (this.util.isPowerOfTwo(loadObj.image.width) && this.util.isPowerOfTwo(loadObj.image.height)) {
@@ -2041,6 +2071,12 @@
 
 	                        this.update(loadObj);
 	                }
+	        }, {
+	                key: 'uploadCubeTexture',
+	                value: function uploadCubeTexture() {}
+	        }, {
+	                key: 'upload3DTexture',
+	                value: function upload3DTexture() {}
 
 	                // load() and update() are defined in superclass.
 
@@ -2474,29 +2510,29 @@
 	                 * @param {GLMatrix.Vec3} center a 3d vector defining the center.
 	                 * @param {Size} width, height, depth, with 1.0 (unit) max size
 	                 * @param {Number} scale relative to unit size (1, 1, 1).
+	                  name = 'unknown', scale = 1.0, dimensions, position, translation, rotation, textureImage, color
 	                 */
 
 	        }, {
 	                key: 'geometryCube',
-	                value: function geometryCube(center, size) {
+	                value: function geometryCube(prim) {
 
 	                        var gl = this.webgl.getContext();
 
-	                        var halfSize = size * 0.5;
+	                        var x = prim.dimensions[0] / 2;
 
-	                        var r = size * 0.5;
+	                        var y = prim.dimensions[1] / 2;
 
-	                        var x = center[0];
-
-	                        var y = center[1];
-
-	                        var z = center[2];
+	                        var z = prim.dimensions[2] / 2;
 
 	                        // Create cube geometry.
 
 	                        var vertices = [
 	                        // Front face
-	                        -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0,
+	                        -1.0, -1.0, 1.0, // bottomleft
+	                        1.0, -1.0, 1.0, // bottomright
+	                        1.0, 1.0, 1.0, // topright
+	                        -1.0, 1.0, 1.0, // topleft
 	                        // Back face
 	                        -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0,
 	                        // Top face
@@ -2509,7 +2545,6 @@
 	                        -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0];
 
 	                        // Apply default transforms, centering on a Point and scaling.
-
 
 	                        var vBuffer = gl.createBuffer();
 
@@ -2714,7 +2749,6 @@
 
 	                        // Prim transforms.
 
-
 	                        return prim;
 	                }
 
@@ -2916,19 +2950,28 @@
 	                        //shaderProgram.samplerUniform = gl.getUniformLocation(shaderProgram, "uSampler");
 
 
-	                        this.objs.push(this.prim.createCube('first cube', 1.0, this.glMatrix.vec3.create(1, 1, 1), this.glMatrix.vec3.create(0, 0, 0), this.glMatrix.vec3.create(0, 0, 0), this.glMatrix.vec3.create(0, 0, 0), 'img/crate.png', this.glMatrix.vec4.create(0.5, 1.0, 0.2, 1.0)));
+	                        this.objs.push(this.prim.createCube('first cube', // name
+	                        1.0, // scale
+	                        this.glMatrix.vec3.fromValues(1, 1, 1), // dimensions
+	                        this.glMatrix.vec3.fromValues(0, 0, 0), // position
+	                        this.glMatrix.vec3.fromValues(0, 0, 0), // translation
+	                        this.glMatrix.vec3.fromValues(0, 0, 0), // rotation
+	                        'img/crate.png', // texture image
+	                        this.glMatrix.vec4.fromValues(0.5, 1.0, 0.2, 1.0) // RGBA color
 
-	                        this.objs.push(this.prim.createCube('toji cube', 1.0, this.glMatrix.vec3.create(1, 1, 1), this.glMatrix.vec3.create(0, 1, 0), this.glMatrix.vec3.create(0, 0, 0), this.glMatrix.vec3.create(0, 0, 0), 'img/webvr-logo1.png', this.glMatrix.vec4.create(0.5, 1.0, 0.2, 1.0)));
+	                        ));
 
-	                        this.objs.push(this.prim.createCube('red cube', 1.0, this.glMatrix.vec3.create(1, 1, 1), this.glMatrix.vec3.create(1, 0, 0), this.glMatrix.vec3.create(0, 0, 0), this.glMatrix.vec3.create(0, 0, 0), 'img/webvr-logo2.png', this.glMatrix.vec4.create(0.5, 1.0, 0.2, 1.0)));
+	                        this.objs.push(this.prim.createCube('toji cube', 1.0, this.glMatrix.vec3.fromValues(1, 1, 1), this.glMatrix.vec3.fromValues(0, 1, 0), this.glMatrix.vec3.fromValues(0, 0, 0), this.glMatrix.vec3.fromValues(0, 0, 0), 'img/webvr-logo1.png', this.glMatrix.vec4.fromValues(0.5, 1.0, 0.2, 1.0)));
 
-	                        this.objs.push(this.prim.createCube('orange cube', 1.0, this.glMatrix.vec3.create(1, 1, 1), this.glMatrix.vec3.create(-1, 0, 0), this.glMatrix.vec3.create(0, 1, 0), this.glMatrix.vec3.create(0, 0, 0), 'img/webvr-logo3.png', this.glMatrix.vec4.create(0.5, 1.0, 0.2, 1.0)));
+	                        this.objs.push(this.prim.createCube('red cube', 1.0, this.glMatrix.vec3.fromValues(1, 1, 1), this.glMatrix.vec3.fromValues(1, 0, 0), this.glMatrix.vec3.fromValues(0, 0, 0), this.glMatrix.vec3.fromValues(0, 0, 0), 'img/webvr-logo2.png', this.glMatrix.vec4.fromValues(0.5, 1.0, 0.2, 1.0)));
 
-	                        this.objs.push(this.prim.createCube('red triangle cube', 1.0, this.glMatrix.vec3.create(1, 1, 1), this.glMatrix.vec3.create(-1, 0, 0), this.glMatrix.vec3.create(-1, 1, 0), this.glMatrix.vec3.create(0, 0, 0), 'img/webvr-logo4.png', this.glMatrix.vec4.create(0.5, 1.0, 0.2, 1.0)));
+	                        this.objs.push(this.prim.createCube('orange cube', 1.0, this.glMatrix.vec3.fromValues(1, 1, 1), this.glMatrix.vec3.fromValues(-1, 0, 0), this.glMatrix.vec3.fromValues(0, 1, 0), this.glMatrix.vec3.fromValues(0, 0, 0), 'img/webvr-logo3.png', this.glMatrix.vec4.fromValues(0.5, 1.0, 0.2, 1.0)));
 
-	                        this.objs.push(this.prim.createCube('red cube', 1.0, this.glMatrix.vec3.create(1, 1, 1), this.glMatrix.vec3.create(-1, 0, 0), this.glMatrix.vec3.create(0, -1, 0), this.glMatrix.vec3.create(0, 0, 0), 'img/webvr-logo-chrome1.png', this.glMatrix.vec4.create(0.5, 1.0, 0.2, 1.0)));
+	                        this.objs.push(this.prim.createCube('red triangle cube', 1.0, this.glMatrix.vec3.fromValues(1, 1, 1), this.glMatrix.vec3.fromValues(-1, 0, 0), this.glMatrix.vec3.fromValues(-1, 1, 0), this.glMatrix.vec3.fromValues(0, 0, 0), 'img/webvr-logo4.png', this.glMatrix.vec4.fromValues(0.5, 1.0, 0.2, 1.0)));
 
-	                        this.objs.push(this.prim.createCube('w3c cube', 1.0, this.glMatrix.vec3.create(1, 1, 1), this.glMatrix.vec3.create(-1, -1, 0), this.glMatrix.vec3.create(-1, -1, 0), this.glMatrix.vec3.create(0, 0, 0), 'img/webvr-w3c.png', this.glMatrix.vec4.create(0.5, 1.0, 0.2, 1.0)));
+	                        this.objs.push(this.prim.createCube('red cube', 1.0, this.glMatrix.vec3.fromValues(1, 1, 1), this.glMatrix.vec3.fromValues(-1, 0, 0), this.glMatrix.vec3.fromValues(0, -1, 0), this.glMatrix.vec3.fromValues(0, 0, 0), 'img/webvr-logo-chrome1.png', this.glMatrix.vec4.fromValues(0.5, 1.0, 0.2, 1.0)));
+
+	                        this.objs.push(this.prim.createCube('w3c cube', 1.0, this.glMatrix.vec3.fromValues(1, 1, 1), this.glMatrix.vec3.fromValues(-1, -1, 0), this.glMatrix.vec3.fromValues(-1, -1, 0), this.glMatrix.vec3.fromValues(0, 0, 0), 'img/webvr-w3c.png', this.glMatrix.vec4.fromValues(0.5, 1.0, 0.2, 1.0)));
 
 	                        window.cube = this.objs[0]; ////////////////////////
 

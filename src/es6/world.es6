@@ -148,86 +148,86 @@ export default class world {
 
 
         this.objs.push( this.prim.createCube(
-            'first cube',
-            1.0,
-            this.glMatrix.vec3.create( 1, 1, 1 ),
-            this.glMatrix.vec3.create( 0, 0, 0 ),
-            this.glMatrix.vec3.create( 0, 0, 0 ),
-            this.glMatrix.vec3.create( 0, 0, 0 ),
-            'img/crate.png',
-            this.glMatrix.vec4.create( 0.5, 1.0, 0.2, 1.0 ) 
+            'first cube',                                   // name
+            1.0,                                            // scale
+            this.glMatrix.vec3.fromValues( 1, 1, 1 ),           // dimensions
+            this.glMatrix.vec3.fromValues( 0, 0, 0 ),           // position
+            this.glMatrix.vec3.fromValues( 0, 0, 0 ),           // translation
+            this.glMatrix.vec3.fromValues( 0, 0, 0 ),           // rotation
+            'img/crate.png',                                // texture image
+            this.glMatrix.vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ) // RGBA color
 
         ) );
 
         this.objs.push( this.prim.createCube(
             'toji cube',
             1.0,
-            this.glMatrix.vec3.create( 1, 1, 1 ),
-            this.glMatrix.vec3.create( 0, 1, 0 ),
-            this.glMatrix.vec3.create( 0, 0, 0 ),
-            this.glMatrix.vec3.create( 0, 0, 0 ),
+            this.glMatrix.vec3.fromValues( 1, 1, 1 ),
+            this.glMatrix.vec3.fromValues( 0, 1, 0 ),
+            this.glMatrix.vec3.fromValues( 0, 0, 0 ),
+            this.glMatrix.vec3.fromValues( 0, 0, 0 ),
             'img/webvr-logo1.png',
-            this.glMatrix.vec4.create( 0.5, 1.0, 0.2, 1.0 ) 
+            this.glMatrix.vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ) 
 
         ) );
 
         this.objs.push( this.prim.createCube(
             'red cube',
             1.0,
-            this.glMatrix.vec3.create( 1, 1, 1 ),
-            this.glMatrix.vec3.create( 1, 0, 0 ),
-            this.glMatrix.vec3.create( 0, 0, 0 ),
-            this.glMatrix.vec3.create( 0, 0, 0 ),
+            this.glMatrix.vec3.fromValues( 1, 1, 1 ),
+            this.glMatrix.vec3.fromValues( 1, 0, 0 ),
+            this.glMatrix.vec3.fromValues( 0, 0, 0 ),
+            this.glMatrix.vec3.fromValues( 0, 0, 0 ),
             'img/webvr-logo2.png',
-            this.glMatrix.vec4.create( 0.5, 1.0, 0.2, 1.0 ) 
+            this.glMatrix.vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ) 
 
         ) );
 
         this.objs.push( this.prim.createCube(
             'orange cube',
             1.0,
-            this.glMatrix.vec3.create( 1, 1, 1 ),
-            this.glMatrix.vec3.create( -1, 0, 0 ),
-            this.glMatrix.vec3.create( 0, 1, 0 ),
-            this.glMatrix.vec3.create( 0, 0, 0 ),
+            this.glMatrix.vec3.fromValues( 1, 1, 1 ),
+            this.glMatrix.vec3.fromValues( -1, 0, 0 ),
+            this.glMatrix.vec3.fromValues( 0, 1, 0 ),
+            this.glMatrix.vec3.fromValues( 0, 0, 0 ),
             'img/webvr-logo3.png',
-            this.glMatrix.vec4.create( 0.5, 1.0, 0.2, 1.0 ) 
+            this.glMatrix.vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ) 
 
         ) );
 
         this.objs.push( this.prim.createCube(
             'red triangle cube',
             1.0,
-            this.glMatrix.vec3.create( 1, 1, 1 ),
-            this.glMatrix.vec3.create( -1, 0, 0 ),
-            this.glMatrix.vec3.create( -1, 1, 0 ),
-            this.glMatrix.vec3.create( 0, 0, 0 ),
+            this.glMatrix.vec3.fromValues( 1, 1, 1 ),
+            this.glMatrix.vec3.fromValues( -1, 0, 0 ),
+            this.glMatrix.vec3.fromValues( -1, 1, 0 ),
+            this.glMatrix.vec3.fromValues( 0, 0, 0 ),
             'img/webvr-logo4.png',
-            this.glMatrix.vec4.create( 0.5, 1.0, 0.2, 1.0 ) 
+            this.glMatrix.vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ) 
 
         ) );
 
         this.objs.push( this.prim.createCube(
             'red cube',
             1.0,
-            this.glMatrix.vec3.create( 1, 1, 1 ),
-            this.glMatrix.vec3.create( -1, 0, 0 ),
-            this.glMatrix.vec3.create( 0, -1, 0 ),
-            this.glMatrix.vec3.create( 0, 0, 0 ),
+            this.glMatrix.vec3.fromValues( 1, 1, 1 ),
+            this.glMatrix.vec3.fromValues( -1, 0, 0 ),
+            this.glMatrix.vec3.fromValues( 0, -1, 0 ),
+            this.glMatrix.vec3.fromValues( 0, 0, 0 ),
             'img/webvr-logo-chrome1.png',
-            this.glMatrix.vec4.create( 0.5, 1.0, 0.2, 1.0 ) 
+            this.glMatrix.vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ) 
 
         ) );
 
         this.objs.push( this.prim.createCube(
             'w3c cube',
             1.0,
-            this.glMatrix.vec3.create( 1, 1, 1 ),
-            this.glMatrix.vec3.create( -1, -1, 0 ),
-            this.glMatrix.vec3.create( -1, -1, 0 ),
-            this.glMatrix.vec3.create( 0, 0, 0 ),
+            this.glMatrix.vec3.fromValues( 1, 1, 1 ),
+            this.glMatrix.vec3.fromValues( -1, -1, 0 ),
+            this.glMatrix.vec3.fromValues( -1, -1, 0 ),
+            this.glMatrix.vec3.fromValues( 0, 0, 0 ),
             'img/webvr-w3c.png',
-            this.glMatrix.vec4.create( 0.5, 1.0, 0.2, 1.0 ),
+            this.glMatrix.vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),
 
         ) );
 

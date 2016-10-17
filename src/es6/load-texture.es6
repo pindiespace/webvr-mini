@@ -21,7 +21,7 @@ export default class LoadTexture extends LoadPool {
 
         this.MAX_TIMEOUT = 10;
 
-        this.blackPixel = new Uint8Array( [ 0.5, 0.5, 0.5, 1.0 ] );
+        this.greyPixel = new Uint8Array( [ 0.5, 0.5, 0.5, 1.0 ] );
 
         if( init ) {
 
@@ -34,6 +34,32 @@ export default class LoadTexture extends LoadPool {
     init () {
 
     }
+
+  /**
+   * Sets a texture to a 1x1 pixel color. If `options.color === false` is nothing happens. If it's not set
+   * the default texture color is used which can be set by calling `setDefaultTextureColor`.
+   * @param {WebGLRenderingContext} gl the WebGLRenderingContext
+   * @param {WebGLTexture} tex the WebGLTexture to set parameters for
+   * @param {module:twgl.TextureOptions} [options] A TextureOptions object with whatever parameters you want set.
+   *   This is often the same options you passed in when you created the texture.
+   * @memberOf module:twgl/textures
+   */
+    setDefaultTexturePixel ( gl, texture ) {
+
+    // Assume it's a URL
+    // Put 1x1 pixels in texture. That makes it renderable immediately regardless of filtering.
+    var color = make1Pixel(options.color);
+
+    if (target === gl.TEXTURE_CUBE_MAP) {
+      for (var ii = 0; ii < 6; ++ii) {
+        gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X + ii, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, color);
+      }
+    } else if (target === gl.TEXTURE_3D) {
+      gl.texImage3D(target, 0, gl.RGBA, 1, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, color);
+    } else {
+      gl.texImage2D(target, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, color);
+    }
+  }
 
     /** 
      * Create a load object wrapper, and start a load.
@@ -101,7 +127,8 @@ export default class LoadTexture extends LoadPool {
 
             console.error( 'no loadObj.image for:' + loadObj.image.src + ', default pixel texture' );
 
-            gl.textImage2D( gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.blackPixel );
+            //gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.greyPixel );
+            gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, this.greyPixel );
 
         }
 
@@ -136,6 +163,14 @@ export default class LoadTexture extends LoadPool {
         // Send this to update for re-use .
 
         this.update( loadObj );
+
+    }
+
+    uploadCubeTexture () {
+
+    }
+
+    upload3DTexture () {
 
     }
 
