@@ -110,83 +110,6 @@ export default class prim {
     }
 
     /** 
-     * a default-lighting textured object vertex shader.
-     * - vertex position
-     * - texture coordinate
-     * - model-view matrix
-     * - projection matrix
-     */
-    objVS1 () {
-
-        let s = [
-
-            'attribute vec3 aVertexPosition;',
-            'attribute vec2 aTextureCoord;',
-
-            'uniform mat4 uMVMatrix;',
-            'uniform mat4 uPMatrix;',
-            'varying vec2 vTextureCoord;',
-
-            'void main(void) {',
-
-            '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);',
-
-            '    vTextureCoord = aTextureCoord;',
-
-            '}'
-
-            ];
-
-        return {
-
-            code: s.join( '\n' ),
-
-            varList: this.webgl.createVarList( s ),
-
-            render: function () {}
-
-        };
-
-
-    }
-
-    /** 
-     * a default-lighting textured object fragment shader.
-     * - varying texture coordinate
-     * - texture 2D sampler
-     */
-    objFS1 () {
-
-        let s =  [
-
-            'precision mediump float;',
-
-            'varying vec2 vTextureCoord;',
-
-            'uniform sampler2D uSampler;',
-
-            'void main(void) {',
-
-            '    gl_FragColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));',
-
-            '}'
-
-            ];
-
-
-        return {
-        
-            code: s.join('\n'),
-
-            varList: this.webgl.createVarList( s ),
-
-            render: function () {}
-
-        };
-
-    }
-
-    /** 
      * GEOMETRIES
      */
 
@@ -472,7 +395,7 @@ export default class prim {
      * @param {String} textureImage the path to an image used to create a texture.
      * @param {GLMatrix.vec4} color the default color of the object.
      */
-    createPrim ( name = 'unknown', scale = 1.0, dimensions, position, acceleration, rotation, textureImage, color, shaderId ) {
+    createPrim ( name = 'unknown', scale = 1.0, dimensions, position, acceleration, rotation, angular, textureImage, color, shaderId ) {
 
         let gl = this.webgl.getContext();
 
@@ -492,7 +415,14 @@ export default class prim {
 
         prim.acceleration = acceleration || glMatrix.vec3.create( 0, 0, 0 );
 
+        // The absolute .rotation object includes rotation on x, y, z axis
+
         prim.rotation = rotation || glMatrix.vec3.create( 0, 0, 0 );
+
+
+        // The acceleration object indicates velocity on angular motion in x, y, z
+
+        prim.angular = angular || glMatrix.vec3.create( 0, 0, 0 );
 
         prim.textures = [];
 
@@ -521,9 +451,9 @@ export default class prim {
      * @param {String} name of object
      * @param {Number} scale
      */
-    createCube ( name, scale, dimensions, position, acceleration, rotation, textureImage, color, shaderId ) {
+    createCube ( name, scale, dimensions, position, acceleration, rotation, angular, textureImage, color, shaderId ) {
 
-        let cube = this.createPrim( name, scale, dimensions, position, acceleration, rotation, textureImage, color );
+        let cube = this.createPrim( name, scale, dimensions, position, acceleration, rotation, angular, textureImage, color );
 
         cube.geometry = this.geometryCube( cube );
 

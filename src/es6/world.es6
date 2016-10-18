@@ -95,26 +95,28 @@ export default class world {
             'first cube',                                        // name
             1.0,                                                 // scale
             this.glMatrix.vec3.fromValues( 1, 1, 1 ),            // dimensions
-            this.glMatrix.vec3.fromValues( 0, 0, 0 ),            // position
-            this.glMatrix.vec3.fromValues( 0, 0, 0 ),            // translation
-            this.glMatrix.vec3.fromValues( 0, 0, 0 ),            // rotation
+            this.glMatrix.vec3.fromValues( 0, 0, 0 ),            // position (absolute)
+            this.glMatrix.vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+            this.glMatrix.vec3.fromValues( 1, 1, 1 ),            // rotation (absolute)
+            this.glMatrix.vec3.fromValues( 15, 15, 15 ),         // angular velocity in x, y, x
             [ 'img/crate.png', 'img/webvr-logo1.png' ],          // texture image
             this.glMatrix.vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ), // RGBA color
         ) );
 
-/*
+
 
         this.objs.push( this.prim.createCube(
             'toji cube',
             1.0,
             this.glMatrix.vec3.fromValues( 1, 1, 1 ),
-            this.glMatrix.vec3.fromValues( 0, 1, 0 ),
-            this.glMatrix.vec3.fromValues( 0, 0, 0 ),
-            this.glMatrix.vec3.fromValues( 0, 0, 0 ),
-            'img/webvr-logo1.png',
-            this.glMatrix.vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ) 
+            this.glMatrix.vec3.fromValues( 5, 1, -3 ),           // position (absolute)
+            this.glMatrix.vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+            this.glMatrix.vec3.fromValues( 1, 0, 0 ),            // rotation (absolute)            //TODO: THIS DOESN'T SEEM TO WORK RIGHT!!!!!
+            this.glMatrix.vec3.fromValues( 0, 20, 0 ),           // angular velocity in x, y, x
+            ['img/webvr-logo1.png'],
+            this.glMatrix.vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
-
+/*
         this.objs.push( this.prim.createCube(
             'red cube',
             1.0,

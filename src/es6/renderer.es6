@@ -198,8 +198,15 @@ export default class Renderer {
     }
 
     /* 
+     * Renderers.
      * GREAT description of model, view, projection matrix
      * @link https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_model_view_projection
+     * 
+     * Using vertex arrays:
+     * @link http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
+     * 
+     * WebGL Stack
+     * @link https://github.com/stackgl
      */
 
     /** 
@@ -241,6 +248,8 @@ export default class Renderer {
 
         let mat4 = this.glMatrix.mat4;
 
+        let vec3 = this.glMatrix.vec3;
+
         let program = this.vs1.program;
 
         gl.useProgram( program.shaderProgram );
@@ -251,12 +260,11 @@ export default class Renderer {
 
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+        // TODO: these can be set once unless window resize
+
         gl.viewport( 0, 0, gl.viewportWidth, gl.viewportHeight );
 
         mat4.perspective( this.pMatrix, Math.PI*0.4, canvas.width / canvas.height, 0.1, 100.0 ); // right
-
-        mat4.identity( this.mvMatrix );
-
 
         let dX = 1;
         let dY = 1;
@@ -287,14 +295,28 @@ export default class Renderer {
             if ( ! obj.textures[0] || ! obj.textures[0].texture ) continue;
  
             //////////////////////////////////////////////////////////////////////////////////////
+
+            mat4.identity( this.mvMatrix );
             // TODO: this belongs in update
             //TRANSLATE, move model view into the screen (-z)
-            mat4.translate( this.mvMatrix, this.mvMatrix, [0.0, 0.0, z] );
+            //mat4.translate( this.mvMatrix, this.mvMatrix, [0.0, 0.0, z] );
+
+            mat4.translate( this.mvMatrix, this.mvMatrix, [ obj.position[ 0 ], obj.position[ 1 ], z + obj.position[ 2 ] ] );
+
+           
             //this.mvPushMatrix();
             //ROTATE
-            mat4.rotate( this.mvMatrix, this.mvMatrix, this.util.degToRad(this.xRot), [1, 0, 0] );
-            mat4.rotate( this.mvMatrix, this.mvMatrix, this.util.degToRad(this.yRot), [0, 1, 0] );
-            mat4.rotate( this.mvMatrix, this.mvMatrix, this.util.degToRad(this.zRot), [0, 0, 1] );
+            // TODO: store in radians, use getters and setters
+            //mat4.rotate( this.mvMatrix, this.mvMatrix, this.util.degToRad(this.xRot), [1, 0, 0] );
+            //mat4.rotate( this.mvMatrix, this.mvMatrix, this.util.degToRad(this.yRot), [0, 1, 0] );
+            //mat4.rotate( this.mvMatrix, this.mvMatrix, this.util.degToRad(this.zRot), [0, 0, 1] );
+
+            vec3.add( obj.rotation, obj.rotation, obj.angular );
+
+            mat4.rotate( this.mvMatrix, this.mvMatrix, this.util.degToRad( this.util.degToRad( obj.rotation[ 0 ] ) ), [ 1, 0, 0 ] );
+            mat4.rotate( this.mvMatrix, this.mvMatrix, this.util.degToRad( this.util.degToRad( obj.rotation[ 1 ] ) ), [ 0, 1, 0 ] );
+            mat4.rotate( this.mvMatrix, this.mvMatrix, this.util.degToRad( this.util.degToRad( obj.rotation[ 2 ] ) ), [ 0, 0, 1 ] );
+
             //////////////////////////////////////////////////////////////////////////////////////
 
             // Bind vertex buffer.
