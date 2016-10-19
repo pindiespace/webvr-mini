@@ -16,11 +16,15 @@ export default class Renderer {
 
         // Constants
 
-        this.shaders = {
+        this.renderers = {
 
-            vs1: 'VS1',
+            vs1: 'textured',
 
-            vs2: 'VS2'
+            vs2: 'colored',
+
+            vs3: 'texturedLight',
+
+            vs4: 'water'
 
         }
 
@@ -31,23 +35,6 @@ export default class Renderer {
         }
 
 	}
-
-    /** 
-     * Set up a rendering array of objects, based on available shaders. Objects 
-     * are added to the render list by the Prim object, with World specifying 
-     * the Prims to use.
-     */
-    setRenderArray () {
-
-        let i, shaders = this.shaders, renderList = this.renderList;
-
-        for ( i in shaders ) {
-
-            renderList[ i ] = [];
-
-        }
-
-    }
 
     /** 
      * --------------------------------------------------------------------
@@ -84,12 +71,9 @@ export default class Renderer {
 
             code: s.join( '\n' ),
 
-            varList: this.webgl.createVarList( s ),
-
-            render: function () {}
+            varList: this.webgl.createVarList( s )
 
         };
-
 
     }
 
@@ -121,9 +105,7 @@ export default class Renderer {
         
             code: s.join('\n'),
 
-            varList: this.webgl.createVarList( s ),
-
-            render: function () {}
+            varList: this.webgl.createVarList( s )
 
         };
 
@@ -197,6 +179,42 @@ export default class Renderer {
 
     }
 
+    /** 
+     * Rather than creating lots of Renderers, we use one Renderer object 
+     * and return an object containing the relevant initialization, update 
+     * and draw functions. This is more efficient since we have only a few 
+     * shaders.
+     */
+    getRenderer( name, objs ) {
+
+        // TODO: put everything for a shader into 1 rendering buffer.
+
+        switch ( name ) {
+
+            case this.renderers.vs1:
+                return {
+                    init: this.initVS1,
+                    render: this.renderVS1,
+                    objs: objs
+                }
+                break;
+
+            case this.renderers.vs2:
+                return {
+                    init: this.initVS2,
+                    render: this.renderVS2,
+                    objs: objs
+                }
+                break;
+ 
+            default:
+                console.error( 'no renderer available by that name' );
+                break;
+
+        }
+
+    }
+
     /* 
      * Renderers.
      * GREAT description of model, view, projection matrix
@@ -208,6 +226,40 @@ export default class Renderer {
      * WebGL Stack
      * @link https://github.com/stackgl
      */
+
+    /** 
+     * this function handles all the rotation and translations
+     */
+    update ( obj, mvMatrix ) {
+
+        let mat4 = this.glMatrix.mat4;
+
+        let vec3 = this.glMatrix.vec3;
+
+        let z = -5; // TODO: CONSTANT SO IT IS DRAWN CORRECTLY
+
+        // Reset.
+
+        mat4.identity( this.mvMatrix );
+
+        // Translate.
+
+        vec3.add( obj.position, obj.position, obj.acceleration );
+
+        mat4.translate( mvMatrix, mvMatrix, [ obj.position[ 0 ], obj.position[ 1 ], z + obj.position[ 2 ] ] );
+
+        // If orbiting, set orbit.
+
+        // Rotate.
+
+        vec3.add( obj.rotation, obj.rotation, obj.angular );
+
+        mat4.rotate( mvMatrix, mvMatrix, obj.rotation[ 0 ], [ 1, 0, 0 ] );
+        mat4.rotate( mvMatrix, mvMatrix, obj.rotation[ 1 ], [ 0, 1, 0 ] );
+        mat4.rotate( mvMatrix, mvMatrix, obj.rotation[ 2 ], [ 0, 0, 1 ] );
+
+
+    }
 
     /** 
      * --------------------------------------------------------------------
@@ -225,6 +277,8 @@ export default class Renderer {
 
         let program = this.vs1.program;
 
+        // Attach objects.
+
         program.renderList = objs;
 
         program.vsVars.attribute = this.webgl.setAttributeLocations( program.shaderProgram, program.vsVars.attribute );
@@ -233,14 +287,11 @@ export default class Renderer {
 
         program.fsVars.uniform = this.webgl.setUniformLocations( program.shaderProgram, program.fsVars.uniform );
 
-       // temporary rotation
-        this.xRot = 0.0001;
-        this.yRot = 0.0001;
-        this.zRot = 0.0001;
-
     }
 
-    renderVS1 () {
+    renderVS1 ( objList ) {
+
+        // Common to all renderers.
 
         let gl = this.webgl.getContext();
 
@@ -252,11 +303,11 @@ export default class Renderer {
 
         let program = this.vs1.program;
 
-        gl.useProgram( program.shaderProgram );
-
         let vsVars = program.vsVars;
 
         let fsVars = program.fsVars;
+
+        gl.useProgram( program.shaderProgram );
 
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
@@ -266,21 +317,7 @@ export default class Renderer {
 
         mat4.perspective( this.pMatrix, Math.PI*0.4, canvas.width / canvas.height, 0.1, 100.0 ); // right
 
-        let dX = 1;
-        let dY = 1;
-        let dZ = 1;
-
-        //this.xRot += dX;
-        this.yRot += dY;
-        this.zRot += dZ;
-
-        let z = -5; //TODO: NOT RENDERING AT 0 or 2, INVISIBLE BEYOND A CERTAIN DISTANCE INTO SCREEN!!!!!
-
-        // Update world information.
-
-        /////////////this.update();
-
-        //console.log('.')
+        // Begin program loop
 
         let len = program.renderList.length;
 
@@ -293,31 +330,8 @@ export default class Renderer {
             // Only render if we have at least one texture loaded.
 
             if ( ! obj.textures[0] || ! obj.textures[0].texture ) continue;
- 
-            //////////////////////////////////////////////////////////////////////////////////////
 
-            mat4.identity( this.mvMatrix );
-            // TODO: this belongs in update
-            //TRANSLATE, move model view into the screen (-z)
-            //mat4.translate( this.mvMatrix, this.mvMatrix, [0.0, 0.0, z] );
-
-            mat4.translate( this.mvMatrix, this.mvMatrix, [ obj.position[ 0 ], obj.position[ 1 ], z + obj.position[ 2 ] ] );
-
-           
-            //this.mvPushMatrix();
-            //ROTATE
-            // TODO: store in radians, use getters and setters
-            //mat4.rotate( this.mvMatrix, this.mvMatrix, this.util.degToRad(this.xRot), [1, 0, 0] );
-            //mat4.rotate( this.mvMatrix, this.mvMatrix, this.util.degToRad(this.yRot), [0, 1, 0] );
-            //mat4.rotate( this.mvMatrix, this.mvMatrix, this.util.degToRad(this.zRot), [0, 0, 1] );
-
-            vec3.add( obj.rotation, obj.rotation, obj.angular );
-
-            mat4.rotate( this.mvMatrix, this.mvMatrix, this.util.degToRad( this.util.degToRad( obj.rotation[ 0 ] ) ), [ 1, 0, 0 ] );
-            mat4.rotate( this.mvMatrix, this.mvMatrix, this.util.degToRad( this.util.degToRad( obj.rotation[ 1 ] ) ), [ 0, 1, 0 ] );
-            mat4.rotate( this.mvMatrix, this.mvMatrix, this.util.degToRad( this.util.degToRad( obj.rotation[ 2 ] ) ), [ 0, 0, 1 ] );
-
-            //////////////////////////////////////////////////////////////////////////////////////
+            this.update( obj, this.mvMatrix );
 
             // Bind vertex buffer.
 
@@ -344,7 +358,6 @@ export default class Renderer {
             gl.uniformMatrix4fv( vsVars.uniform.mat4.uPMatrix, false, this.pMatrix );
             gl.uniformMatrix4fv( vsVars.uniform.mat4.uMVMatrix, false, this.mvMatrix );
 
-
             // Bind index buffer.
 
             gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer );
@@ -362,7 +375,7 @@ export default class Renderer {
      * Vertex Shader 2, using color buffer but not texture.
      * --------------------------------------------------------------------
      */
-    initVS2 ( objs ) {
+    initVS2 ( objList ) {
 
         let gl = this.webgl.getContext();
 

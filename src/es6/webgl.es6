@@ -40,6 +40,35 @@ export default class WebGL {
 
     }
 
+    /** 
+     * Clear textures from the videocard before starting.
+     */
+    clearTextures () {
+
+        let gl = this.gl;
+
+        let len = gl.getParameter( gl.MAX_TEXTURE_IMAGE_UNITS );
+
+        for ( let i = 0; i < len; i++ ) {
+
+            gl.activeTexture( gl.TEXTURE0 + i);
+
+            gl.bindTexture( gl.TEXTURE_2D, null );
+
+            gl.bindTexture( gl.TEXTURE_CUBE_MAP, null );
+
+        }
+
+        gl.bindBuffer( gl.ARRAY_BUFFER, null );
+
+        gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, null );
+
+        gl.bindRenderbuffer( gl.RENDERBUFFER, null );
+
+        gl.bindFramebuffer( gl.FRAMEBUFFER, null );
+
+    }
+
     /**
      * initialize with a canvas context
      * @param {HTMLCanvasElement|String|undefined} canvas a HTML5 <canvas>, id for canvas, or undefined, 
@@ -187,6 +216,10 @@ export default class WebGL {
                     this.stats = false;
 
                 }
+
+                // If we're reloading, clear all current textures in the texture buffers.
+
+                this.clearTextures();
 
                 // Default 3D enables.
 

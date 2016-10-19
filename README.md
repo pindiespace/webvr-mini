@@ -52,6 +52,9 @@ Learning WebGL
 TWGL Docs
 @link http://twgljs.org/
 
+Barebones WebGL Routines (font-loader in ui.js)
+https://github.com/williame/barebones.js/tree/gh-pages/barebones.js
+
 Cinematic Camera Movement (three.js)
 @link https://nathanselikoff.com/2552/code-sketches/basic-camera-movement-three-js-webgl
 
