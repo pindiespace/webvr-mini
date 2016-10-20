@@ -520,7 +520,7 @@ export default class prim {
 
             return vec
         }
-        
+
     }
 
 
@@ -543,6 +543,9 @@ export default class prim {
 
     }
 
+    geometryTerrain () {
+
+    }
 
     /** 
      * Set a material for a prim.

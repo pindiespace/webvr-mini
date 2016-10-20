@@ -28,19 +28,21 @@ export default class world {
 
         this.renderer = renderer;
 
+        this.renderList = {};
+
+        // Get the available renderers.
+
+        for ( let i in this.renderer.renderNames ) {
+
+            this.renderList[  i ] = [];
+
+        }
+
         this.canvas = webgl.getCanvas();
 
         this.glMatrix = webgl.glMatrix;
 
-        this.objs = []; // scene objects
-
-        this.objsVS1 = []; // texture, no lighting.
-
-        this.objsVS2 = []; // colored, no lighting.
-
-        this.objsVS3 = []; // textured with directional lighting.
-
-        this.objsVS4 = []; // water.
+        ////////this.groups = {}; // renderers + objects rendered using that renderer.
 
         this.pMatrix = this.glMatrix.mat4.create();
 
@@ -101,7 +103,9 @@ export default class world {
 
         let util = this.util;
 
-        this.objs.push( this.prim.createCube(
+        let objs = this.renderList[ this.renderer.renderNames.vs1 ]
+
+        objs.push( this.prim.createCube(
             'first cube',                                        // name
             1.0,                                                 // scale
             this.glMatrix.vec3.fromValues( 1, 1, 1 ),            // dimensions
@@ -115,34 +119,37 @@ export default class world {
 
 
 
-        this.objs.push( this.prim.createCube(
+        objs.push( this.prim.createCube(
             'toji cube',
             1.0,
             this.glMatrix.vec3.fromValues( 1, 1, 1 ),            // dimensions
             this.glMatrix.vec3.fromValues( 5, 1, -3 ),           // position (absolute)
             this.glMatrix.vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-            this.glMatrix.vec3.fromValues( util.degToRad( 40 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+            this.glMatrix.vec3.fromValues( util.degToRad( 40 ), util.degToRad( 0  ), util.degToRad( 0 ) ), // rotation (absolute)
             this.glMatrix.vec3.fromValues( util.degToRad( 0 ), util.degToRad( 1 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
             ['img/webvr-logo1.png'],
             this.glMatrix.vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
-/*
-        this.objs.push( this.prim.createIcoSphere(
+
+////////////////////////////////////////////////////
+
+        let objs2 = this.renderList[ this.renderer.renderNames.vs2 ];
+
+        objs2.push( this.prim.createCube(
             'icosphere',
             1.0,
             this.glMatrix.vec3.fromValues( 1, 1, 1 ),            // dimensions
-            this.glMatrix.vec3.fromValues( 5, 1, -3 ),           // position (absolute)
+            this.glMatrix.vec3.fromValues( -5, 1, -3 ),           // position (absolute)
             this.glMatrix.vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-            this.glMatrix.vec3.fromValues( util.degToRad( 40 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+            this.glMatrix.vec3.fromValues( util.degToRad( 20 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             this.glMatrix.vec3.fromValues( util.degToRad( 0 ), util.degToRad( 1 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
             ['img/webvr-logo2.png'],
             this.glMatrix.vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
-*/
 /*
-        this.objs.push( this.prim.createCube(
+        objs.push( this.prim.createCube(
             'red cube',
             1.0,
             this.glMatrix.vec3.fromValues( 1, 1, 1 ),
@@ -153,7 +160,7 @@ export default class world {
             this.glMatrix.vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ) 
         ) );
 
-        this.objs.push( this.prim.createCube(
+        objs.push( this.prim.createCube(
             'orange cube',
             1.0,
             this.glMatrix.vec3.fromValues( 1, 1, 1 ),
@@ -165,7 +172,7 @@ export default class world {
 
         ) );
 
-        this.objs.push( this.prim.createCube(
+        objs.push( this.prim.createCube(
             'red triangle cube',
             1.0,
             this.glMatrix.vec3.fromValues( 1, 1, 1 ),
@@ -177,8 +184,8 @@ export default class world {
 
         ) );
 
-        this.objs.push( this.prim.createCube(
-            'red cube',
+        objs.push( this.prim.createIcoSphere(
+            'icosphere',
             1.0,
             this.glMatrix.vec3.fromValues( 1, 1, 1 ),
             this.glMatrix.vec3.fromValues( -1, 0, 0 ),
@@ -189,7 +196,7 @@ export default class world {
 
         ) );
 
-        this.objs.push( this.prim.createCube(
+        objs.push( this.prim.createCube(
             'w3c cube',
             1.0,
             this.glMatrix.vec3.fromValues( 1, 1, 1 ),
@@ -206,7 +213,7 @@ export default class world {
         /////////////////////////
         // VS2 render test
 
-        //this.renderer.initVS2( this.objs );
+        //this.renderer.initVS2( objs );
         //this.render();
         //return;
         //////////////////////////
@@ -214,14 +221,22 @@ export default class world {
         //////////////////////////
         // VS1 render test
         // TODO:
-        this.renderer.initVS1( this.objs );
+        //let programVS1 = this.renderer.initVS1( objs );
+        let programVS1 = this.renderer.initVS1();
+
+        programVS1.renderList = objs;
+
+        let programVS2 = this.renderer.initVS2();
+
+        programVS2.renderList = objs2;
+
+        window.objs2 = objs2;
+
+
         this.render();
         return;
 
         // TODO: use this method for storing multiple arrays.
-        this.oobjs = [];
-        this.oobjs.push( this.renderer.getRenderer( 'textured', [] ) );
-        this.oobjs.push( this.renderer.getRenderer( 'colored', [] ) );
 
         //////////////////////////
 
@@ -258,9 +273,11 @@ export default class world {
 
         this.update();
 
+        this.renderer.clear();
+
         this.renderer.renderVS1();
 
-        //this.renderer.renderVS2();
+        this.renderer.renderVS2();
 
         requestAnimationFrame( () => { this.render() } );
 

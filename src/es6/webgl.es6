@@ -4,6 +4,8 @@ export default class WebGL {
      * References:
      * GL Tutorial: http://webglfundamentals.org
      * HTML5 Games code: http://www.wiley.com/WileyCDA/WileyTitle/productCd-1119975085.html
+     * Great WebGL Examples:
+     * http://alteredqualia.com/
      * Toji: https://github.com/toji/webvr-samples
      * TWGL: @link http://twgljs.org/
      * @constructor
