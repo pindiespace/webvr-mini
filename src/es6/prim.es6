@@ -588,6 +588,10 @@ export default class prim {
 
         let glMatrix = this.glMatrix;
 
+        let vec3 = this.glMatrix.vec3;
+
+        let mat4 = this.glMatrix.mat4;
+
         let prim = {};
 
         prim.id = this.setId();
@@ -596,19 +600,19 @@ export default class prim {
 
         prim.scale = scale;
 
-        prim.dimensions = dimensions || glMatrix.vec3.create( 1, 1, 1 );
+        prim.dimensions = dimensions || vec3.create( 1, 1, 1 );
 
-        prim.position = position || glMatrix.vec3.create( 0, 0, 0 );
+        prim.position = position || vec3.create( 0, 0, 0 );
 
-        prim.acceleration = acceleration || glMatrix.vec3.create( 0, 0, 0 );
+        prim.acceleration = acceleration || vec3.create( 0, 0, 0 );
 
         // The absolute .rotation object includes rotation on x, y, z axis
 
-        prim.rotation = rotation || glMatrix.vec3.create( 0, 0, 0 );
+        prim.rotation = rotation || vec3.create( 0, 0, 0 );
 
         // The acceleration object indicates velocity on angular motion in x, y, z
 
-        prim.angular = angular || glMatrix.vec3.create( 0, 0, 0 );
+        prim.angular = angular || vec3.create( 0, 0, 0 );
 
         // The orbit defines a center that the object orbits around, and orbital velocity.
 
@@ -633,6 +637,37 @@ export default class prim {
         // Child Prim array.
 
         prim.children = [];
+
+        // Standard Prim properties for position, translation, rotation, orbits.
+////////////////////////////////////////////////////////////////////////////////////////
+        prim.setMV = ( mvMatrix ) => {
+
+            let p = prim;
+
+            mat4.identity( mvMatrix );
+
+            let z = -5;
+
+            // Translate.
+
+            vec3.add( p.position, p.position, p.acceleration );
+
+            mat4.translate( mvMatrix, mvMatrix, [ p.position[ 0 ], p.position[ 1 ], z + p.position[ 2 ] ] );
+
+            // If orbiting, set orbit.
+
+            // Rotate.
+
+            vec3.add( p.rotation, p.rotation, p.angular );
+
+            mat4.rotate( mvMatrix, mvMatrix, p.rotation[ 0 ], [ 1, 0, 0 ] );
+            mat4.rotate( mvMatrix, mvMatrix, p.rotation[ 1 ], [ 0, 1, 0 ] );
+            mat4.rotate( mvMatrix, mvMatrix, p.rotation[ 2 ], [ 0, 0, 1 ] );
+
+            return mvMatrix;
+
+        }
+/////////////////////////////////////////////////////////////////////////////////////
 
         // Assign object to correct buffer, based on rendering.
 

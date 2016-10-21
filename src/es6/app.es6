@@ -107,13 +107,13 @@ let loadAudio = new LoadAudio( true, util, glMatrix, webgl );
 
 let loadVideo = new LoadVideo( true, util, glMatrix, webgl );
 
-let shaderTexture = new ShaderTexture ( true, util, glMatrix, webgl );
+let prim = new Prim ( true, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo );
 
-let shaderColor = new ShaderColor ( true, util, glMatrix, webgl );
+let shaderTexture = new ShaderTexture ( true, util, glMatrix, webgl, prim );
+
+let shaderColor = new ShaderColor ( true, util, glMatrix, webgl, prim );
 
 let renderer = new Renderer ( true, util, glMatrix, webgl, shaderTexture, shaderColor );
-
-let prim = new Prim ( true, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo );
 
 // Create the world, which needs WebGL, WebVR, and Prim.
 

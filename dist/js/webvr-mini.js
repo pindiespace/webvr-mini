@@ -428,13 +428,13 @@
 
 	var loadVideo = new _loadVideo2.default(true, util, glMatrix, webgl);
 
-	var shaderTexture = new _shaderTexture2.default(true, util, glMatrix, webgl);
+	var prim = new _prim2.default(true, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo);
 
-	var shaderColor = new _shaderColor2.default(true, util, glMatrix, webgl);
+	var shaderTexture = new _shaderTexture2.default(true, util, glMatrix, webgl, prim);
+
+	var shaderColor = new _shaderColor2.default(true, util, glMatrix, webgl, prim);
 
 	var renderer = new _renderer2.default(true, util, glMatrix, webgl, shaderTexture, shaderColor);
-
-	var prim = new _prim2.default(true, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo);
 
 	// Create the world, which needs WebGL, WebVR, and Prim.
 
@@ -2413,10 +2413,10 @@
 	var ShaderTexture = function (_Shader) {
 	            _inherits(ShaderTexture, _Shader);
 
-	            function ShaderTexture(init, util, glMatrix, webgl) {
+	            function ShaderTexture(init, util, glMatrix, webgl, prim) {
 	                        _classCallCheck(this, ShaderTexture);
 
-	                        var _this = _possibleConstructorReturn(this, (ShaderTexture.__proto__ || Object.getPrototypeOf(ShaderTexture)).call(this, init, util, glMatrix, webgl));
+	                        var _this = _possibleConstructorReturn(this, (ShaderTexture.__proto__ || Object.getPrototypeOf(ShaderTexture)).call(this, init, util, glMatrix, webgl, prim));
 
 	                        console.log('In ShaderTexture class');
 
@@ -2499,36 +2499,15 @@
 
 	                                    program.renderList = objList || [];
 
+	                                    // Update object position, motion.
+
 	                                    program.update = function (obj) {
 
-	                                                if (!obj) {
+	                                                // Standard mvMatrix updates.
 
-	                                                            console.error('ShaderTexture: no object supplied for update');
+	                                                obj.setMV(mvMatrix);
 
-	                                                            return;
-	                                                }
-
-	                                                // Reset.
-
-	                                                mat4.identity(mvMatrix);
-
-	                                                var z = -5;
-
-	                                                // Translate.
-
-	                                                vec3.add(obj.position, obj.position, obj.acceleration);
-
-	                                                mat4.translate(mvMatrix, mvMatrix, [obj.position[0], obj.position[1], z + obj.position[2]]);
-
-	                                                // If orbiting, set orbit.
-
-	                                                // Rotate.
-
-	                                                vec3.add(obj.rotation, obj.rotation, obj.angular);
-
-	                                                mat4.rotate(mvMatrix, mvMatrix, obj.rotation[0], [1, 0, 0]);
-	                                                mat4.rotate(mvMatrix, mvMatrix, obj.rotation[1], [0, 1, 0]);
-	                                                mat4.rotate(mvMatrix, mvMatrix, obj.rotation[2], [0, 0, 1]);
+	                                                // Custom updates go here.
 	                                    };
 
 	                                    program.render = function () {
@@ -2536,6 +2515,8 @@
 	                                                //console.log( 'gl:' + gl + ' canvas:' + canvas + ' mat4:' + mat4 + ' vec3:' + vec3 + ' pMatrix:' + pMatrix + ' mvMatrix:' + mvMatrix + ' program:' + program );
 
 	                                                gl.useProgram(program.shaderProgram);
+
+	                                                // TODO: set in webgl object only on resize.
 
 	                                                mat4.perspective(pMatrix, Math.PI * 0.4, canvas.width / canvas.height, 0.1, 100.0); // right
 
@@ -2602,7 +2583,7 @@
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
-	            value: true
+	        value: true
 	});
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2620,170 +2601,21 @@
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 	var ShaderColor = function (_Shader) {
-	            _inherits(ShaderColor, _Shader);
+	        _inherits(ShaderColor, _Shader);
 
-	            function ShaderColor(init, util, glMatrix, webgl) {
-	                        _classCallCheck(this, ShaderColor);
+	        function ShaderColor(init, util, glMatrix, webgl, prim) {
+	                _classCallCheck(this, ShaderColor);
 
-	                        var _this = _possibleConstructorReturn(this, (ShaderColor.__proto__ || Object.getPrototypeOf(ShaderColor)).call(this, init, util, glMatrix, webgl));
+	                var _this = _possibleConstructorReturn(this, (ShaderColor.__proto__ || Object.getPrototypeOf(ShaderColor)).call(this, init, util, glMatrix, webgl, prim));
 
-	                        console.log('In ShaderColor class');
+	                console.log('In ShaderColor class');
 
-	                        return _this;
-	            }
-
-	            _createClass(ShaderColor, [{
-	                        key: 'vsSrc',
-	                        value: function vsSrc() {
-
-	                                    var s = ['attribute vec3 aVertexPosition;', 'attribute vec4 aVertexColor;', 'uniform mat4 uMVMatrix;', 'uniform mat4 uPMatrix;', 'varying lowp vec4 vColor;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vColor = aVertexColor;', '}'];
-
-	                                    return {
-
-	                                                code: s.join('\n'),
-
-	                                                varList: this.webgl.createVarList(s)
-
-	                                    };
-	                        }
-	            }, {
-	                        key: 'fsSrc',
-	                        value: function fsSrc() {
-
-	                                    var s = ['varying lowp vec4 vColor;', 'void main(void) {',
-
-	                                    //'gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);',
-
-	                                    'gl_FragColor = vColor;', '}'];
-
-	                                    return {
-
-	                                                code: s.join('\n'),
-
-	                                                varList: this.webgl.createVarList(s)
-
-	                                    };
-	                        }
-	            }]);
-
-	            return ShaderColor;
-	}(_shader2.default);
-
-	exports.default = ShaderColor;
-
-/***/ },
-/* 14 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	        value: true
-	});
-
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	var Renderer = function () {
-	        function Renderer(init, util, glMatrix, webgl, shaderTexture, shaderColor) {
-	                _classCallCheck(this, Renderer);
-
-	                console.log('In Renderer class');
-
-	                this.webgl = webgl;
-
-	                this.util = webgl.util;
-
-	                this.glMatrix = webgl.glMatrix;
-
-	                this.pMatrix = this.glMatrix.mat4.create();
-
-	                this.mvMatrix = this.glMatrix.mat4.create();
-
-	                this.shaderTexture = shaderTexture;
-
-	                window.shaderTexture = shaderTexture;
-
-	                this.shaderColor = shaderColor;
-
-	                // Constants.
-
-	                this.renderNames = {
-
-	                        vs1: 'vs1', // textured',
-
-	                        vs2: 'vs2', // colored',
-
-	                        vs3: 'vs3', // directional texturedLight',
-
-	                        vs4: 'vs4' };
-
-	                if (this.init) {}
+	                return _this;
 	        }
 
-	        /** 
-	         * --------------------------------------------------------------------
-	         * VERTEX SHADER 1
-	         * a default-lighting textured object vertex shader.
-	         * - vertex position
-	         * - texture coordinate
-	         * - model-view matrix
-	         * - projection matrix
-	         * --------------------------------------------------------------------
-	         */
-
-
-	        _createClass(Renderer, [{
-	                key: 'objVS1',
-	                value: function objVS1() {
-
-	                        var s = ['attribute vec3 aVertexPosition;', 'attribute vec2 aTextureCoord;', 'uniform mat4 uMVMatrix;', 'uniform mat4 uPMatrix;', 'varying vec2 vTextureCoord;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vTextureCoord = aTextureCoord;', '}'];
-
-	                        return {
-
-	                                code: s.join('\n'),
-
-	                                varList: this.webgl.createVarList(s)
-
-	                        };
-	                }
-
-	                /** 
-	                 * a default-lighting textured object fragment shader.
-	                 * - varying texture coordinate
-	                 * - texture 2D sampler
-	                 */
-
-	        }, {
-	                key: 'objFS1',
-	                value: function objFS1() {
-
-	                        var s = ['precision mediump float;', 'varying vec2 vTextureCoord;', 'uniform sampler2D uSampler;', 'void main(void) {', '    gl_FragColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));', '}'];
-
-	                        return {
-
-	                                code: s.join('\n'),
-
-	                                varList: this.webgl.createVarList(s)
-
-	                        };
-	                }
-
-	                /** 
-	                 * --------------------------------------------------------------------
-	                 * VS2 - COLOR BUT NO TEXTURE
-	                 * a default-lighting colored object vertex shader.
-	                 * - vertex position
-	                 * - texture coordinate
-	                 * - model-view matrix
-	                 * - projection matrix
-	                 * --------------------------------------------------------------------
-	                 */
-
-	        }, {
-	                key: 'objVS2',
-	                value: function objVS2() {
+	        _createClass(ShaderColor, [{
+	                key: 'vsSrc',
+	                value: function vsSrc() {
 
 	                        var s = ['attribute vec3 aVertexPosition;', 'attribute vec4 aVertexColor;', 'uniform mat4 uMVMatrix;', 'uniform mat4 uPMatrix;', 'varying lowp vec4 vColor;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vColor = aVertexColor;', '}'];
 
@@ -2796,8 +2628,8 @@
 	                        };
 	                }
 	        }, {
-	                key: 'objFS2',
-	                value: function objFS2() {
+	                key: 'fsSrc',
+	                value: function fsSrc() {
 
 	                        var s = ['varying lowp vec4 vColor;', 'void main(void) {',
 
@@ -2814,186 +2646,6 @@
 	                        };
 	                }
 
-	                /* 
-	                 * Renderers.
-	                 * GREAT description of model, view, projection matrix
-	                 * @link https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_model_view_projection
-	                 * 
-	                 * Using vertex arrays:
-	                 * @link http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
-	                 * 
-	                 * WebGL Stack
-	                 * @link https://github.com/stackgl
-	                 * 
-	                 * Superfast Advanced Batch Processing
-	                 * http://max-limper.de/tech/batchedrendering.html
-	                 * 
-	                 * GLSL Sandbox
-	                 * http://mrdoob.com/projects/glsl_sandbox/
-	                 * 
-	                 * Basic MVC
-	                 * https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_model_view_projection
-	                 */
-
-	        }, {
-	                key: 'clear',
-	                value: function clear() {
-
-	                        var gl = this.webgl.getContext();
-
-	                        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-	                        // TODO: these can be set once unless window resize
-
-	                        gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
-	                }
-
-	                /** 
-	                 * this function handles all the rotation and translations
-	                 */
-
-	        }, {
-	                key: 'update',
-	                value: function update(obj, mvMatrix) {
-
-	                        var mat4 = this.glMatrix.mat4;
-
-	                        var vec3 = this.glMatrix.vec3;
-
-	                        var z = -5; // TODO: CONSTANT SO IT IS DRAWN CORRECTLY
-
-	                        // Reset.
-
-	                        mat4.identity(this.mvMatrix);
-
-	                        // Translate.
-
-	                        vec3.add(obj.position, obj.position, obj.acceleration);
-
-	                        mat4.translate(mvMatrix, mvMatrix, [obj.position[0], obj.position[1], z + obj.position[2]]);
-
-	                        // If orbiting, set orbit.
-
-	                        // Rotate.
-
-	                        vec3.add(obj.rotation, obj.rotation, obj.angular);
-
-	                        mat4.rotate(mvMatrix, mvMatrix, obj.rotation[0], [1, 0, 0]);
-	                        mat4.rotate(mvMatrix, mvMatrix, obj.rotation[1], [0, 1, 0]);
-	                        mat4.rotate(mvMatrix, mvMatrix, obj.rotation[2], [0, 0, 1]);
-	                }
-
-	                /** 
-	                 * --------------------------------------------------------------------
-	                 * Vertex Shader 1, using texture buffer.
-	                 * --------------------------------------------------------------------
-	                 */
-
-	        }, {
-	                key: 'initVS1',
-	                value: function initVS1(objList) {
-
-	                        var gl = this.webgl.getContext();
-
-	                        this.vs1 = {};
-
-	                        this.vs1.program = this.webgl.createProgram(this.objVS1(), this.objFS1());
-
-	                        var program = this.vs1.program;
-
-	                        // Attach objects.
-
-	                        program.renderList = objList || [];
-
-	                        program.vsVars.attribute = this.webgl.setAttributeLocations(program.shaderProgram, program.vsVars.attribute);
-
-	                        program.vsVars.uniform = this.webgl.setUniformLocations(program.shaderProgram, program.vsVars.uniform);
-
-	                        program.fsVars.uniform = this.webgl.setUniformLocations(program.shaderProgram, program.fsVars.uniform);
-
-	                        return program;
-	                }
-	        }, {
-	                key: 'renderVS1',
-	                value: function renderVS1(objList) {
-
-	                        // Common to all renderers.
-
-	                        var gl = this.webgl.getContext();
-
-	                        var canvas = this.webgl.getCanvas();
-
-	                        var mat4 = this.glMatrix.mat4;
-
-	                        var vec3 = this.glMatrix.vec3;
-
-	                        var program = this.vs1.program;
-
-	                        var vsVars = program.vsVars;
-
-	                        var fsVars = program.fsVars;
-
-	                        gl.useProgram(program.shaderProgram);
-
-	                        ///////////////gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-	                        // TODO: these can be set once unless window resize
-
-	                        /////////////////////gl.viewport( 0, 0, gl.viewportWidth, gl.viewportHeight );
-
-	                        mat4.perspective(this.pMatrix, Math.PI * 0.4, canvas.width / canvas.height, 0.1, 100.0); // right
-
-	                        // Begin program loop
-
-	                        var len = program.renderList.length;
-
-	                        for (var i = 0; i < len; i++) {
-
-	                                var obj = program.renderList[i];
-
-	                                // If the texture isn't loaded yet, continue.
-
-	                                // Only render if we have at least one texture loaded.
-
-	                                if (!obj.textures[0] || !obj.textures[0].texture) continue;
-
-	                                this.update(obj, this.mvMatrix);
-
-	                                // Bind vertex buffer.
-
-	                                gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.vertices.buffer);
-	                                gl.enableVertexAttribArray(vsVars.attribute.vec3.aVertexPosition);
-	                                gl.vertexAttribPointer(vsVars.attribute.vec3.aVertexPosition, obj.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0);
-
-	                                // Bind Textures (could have multiple bindings here).
-
-	                                gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.texCoords.buffer);
-	                                gl.enableVertexAttribArray(vsVars.attribute.vec2.aTextureCoord);
-	                                gl.vertexAttribPointer(vsVars.attribute.vec2.aTextureCoord, obj.geometry.texCoords.itemSize, gl.FLOAT, false, 0, 0);
-
-	                                gl.activeTexture(gl.TEXTURE0);
-	                                gl.bindTexture(gl.TEXTURE_2D, null);
-	                                gl.bindTexture(gl.TEXTURE_2D, obj.textures[0].texture);
-
-	                                // Set fragment shader sampler uniform.
-
-	                                gl.uniform1i(fsVars.uniform.sampler2D.uSampler, 0); //STRANGE
-
-	                                // Set matrix uniforms.
-
-	                                gl.uniformMatrix4fv(vsVars.uniform.mat4.uPMatrix, false, this.pMatrix);
-	                                gl.uniformMatrix4fv(vsVars.uniform.mat4.uMVMatrix, false, this.mvMatrix);
-
-	                                // Bind index buffer.
-
-	                                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer);
-
-	                                // Draw elements.
-
-	                                gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
-	                        }
-	                }
-
 	                /** 
 	                 * --------------------------------------------------------------------
 	                 * Vertex Shader 2, using color buffer but not texture.
@@ -3001,16 +2653,23 @@
 	                 */
 
 	        }, {
-	                key: 'initVS2',
-	                value: function initVS2(objList) {
+	                key: 'init',
+	                value: function init(objList) {
+	                        var _this2 = this;
 
-	                        var gl = this.webgl.getContext();
+	                        // DESTRUCTING DID NOT WORK!
+	                        //[gl, canvas, mat4, vec3, pMatrix, mvMatrix, program ] = this.setup();
 
-	                        this.vs2 = {};
-
-	                        this.vs2.program = this.webgl.createProgram(this.objVS2(), this.objFS2());
-
-	                        var program = this.vs2.program;
+	                        var arr = this.setup();
+	                        var gl = arr[0];
+	                        var canvas = arr[1];
+	                        var mat4 = arr[2];
+	                        var vec3 = arr[3];
+	                        var pMatrix = arr[4];
+	                        var mvMatrix = arr[5];
+	                        var program = arr[6];
+	                        var vsVars = arr[7];
+	                        var fsVars = arr[8];
 
 	                        // Attach objects.
 
@@ -3024,82 +2683,99 @@
 
 	                        program.fsVars.uniform = this.webgl.setUniformLocations(program.shaderProgram, program.fsVars.uniform);
 
+	                        // Update object position, motion.
+
+	                        program.update = function (obj) {
+
+	                                // Standard mvMatrix updates.
+
+	                                obj.setMV(mvMatrix);
+
+	                                // Custom updates go here.
+	                        };
+
+	                        program.render = function () {
+
+	                                //console.log( 'gl:' + gl + ' canvas:' + canvas + ' mat4:' + mat4 + ' vec3:' + vec3 + ' pMatrix:' + pMatrix + ' mvMatrix:' + mvMatrix + ' program:' + program );
+
+	                                gl.useProgram(program.shaderProgram);
+
+	                                for (var i = 0, len = program.renderList.length; i < len; i++) {
+
+	                                        var obj = program.renderList[i];
+
+	                                        program.update(obj, mvMatrix);
+
+	                                        gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.vertices.buffer);
+	                                        gl.enableVertexAttribArray(vsVars.attribute.vec3.aVertexPosition);
+	                                        gl.vertexAttribPointer(vsVars.attribute.vec3.aVertexPosition, obj.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0);
+
+	                                        // Bind color buffer.
+
+	                                        gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.colors.buffer);
+	                                        gl.enableVertexAttribArray(vsVars.attribute.vec4.aVertexColor);
+	                                        gl.vertexAttribPointer(vsVars.attribute.vec4.aVertexColor, obj.geometry.colors.itemSize, gl.FLOAT, false, 0, 0);
+
+	                                        // Bind indices buffer.
+
+	                                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer);
+
+	                                        // Set matrix uniforms.
+
+	                                        gl.uniformMatrix4fv(vsVars.uniform.mat4.uPMatrix, false, _this2.pMatrix);
+	                                        gl.uniformMatrix4fv(vsVars.uniform.mat4.uMVMatrix, false, _this2.mvMatrix);
+
+	                                        // Draw elements.
+
+	                                        gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
+	                                }
+	                        };
+
 	                        return program;
-	                }
-	        }, {
-	                key: 'renderVS2',
-	                value: function renderVS2() {
-
-	                        // Common to all renderers.
-
-	                        var gl = this.webgl.getContext();
-
-	                        var canvas = this.webgl.getCanvas();
-
-	                        var mat4 = this.glMatrix.mat4;
-
-	                        var vec3 = this.glMatrix.vec3;
-
-	                        var program = this.vs2.program;
-
-	                        var vsVars = program.vsVars;
-
-	                        var fsVars = program.fsVars;
-
-	                        gl.useProgram(program.shaderProgram);
-
-	                        //gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-	                        // TODO: these can be set once unless window resize
-
-	                        // gl.viewport( 0, 0, gl.viewportWidth, gl.viewportHeight );
-
-	                        mat4.perspective(this.pMatrix, Math.PI * 0.4, canvas.width / canvas.height, 0.1, 100.0); // right
-
-	                        // Begin program loop
-
-	                        var len = program.renderList.length;
-
-	                        for (var i = 0; i < len; i++) {
-
-	                                var obj = program.renderList[i];
-
-	                                // If the texture isn't loaded yet, continue.
-
-	                                this.update(obj, this.mvMatrix);
-
-	                                // Bind vertex buffer.
-
-	                                gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.vertices.buffer);
-	                                gl.enableVertexAttribArray(vsVars.attribute.vec3.aVertexPosition);
-	                                gl.vertexAttribPointer(vsVars.attribute.vec3.aVertexPosition, obj.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0);
-
-	                                // Bind color buffer.
-
-	                                gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.colors.buffer);
-	                                gl.enableVertexAttribArray(vsVars.attribute.vec4.aVertexColor);
-	                                gl.vertexAttribPointer(vsVars.attribute.vec4.aVertexColor, obj.geometry.colors.itemSize, gl.FLOAT, false, 0, 0);
-
-	                                // Bind indices buffer.
-
-	                                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer);
-
-	                                // Set matrix uniforms.
-
-	                                gl.uniformMatrix4fv(vsVars.uniform.mat4.uPMatrix, false, this.pMatrix);
-	                                gl.uniformMatrix4fv(vsVars.uniform.mat4.uMVMatrix, false, this.mvMatrix);
-
-	                                // Draw elements.
-
-	                                gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
-	                        } // end of loop.
-
-	                        //requestAnimationFrame( () => { this.renderVS2() } );
 	                }
 	        }]);
 
-	        return Renderer;
-	}();
+	        return ShaderColor;
+	}(_shader2.default);
+
+	exports.default = ShaderColor;
+
+/***/ },
+/* 14 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	        value: true
+	});
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var Renderer = function Renderer(init, util, glMatrix, webgl, shaderTexture, shaderColor) {
+	        _classCallCheck(this, Renderer);
+
+	        console.log('In Renderer class');
+
+	        this.webgl = webgl;
+
+	        this.util = webgl.util;
+
+	        this.glmatrix = glMatrix;
+
+	        this.shaderTexture = shaderTexture;
+
+	        window.shaderTexture = shaderTexture;
+
+	        this.shaderColor = shaderColor;
+
+	        if (this.init) {}
+	}
+
+	// Specialized render manipulations go below.
+
+
+	;
 
 	exports.default = Renderer;
 
@@ -3641,6 +3317,10 @@
 
 	                        var glMatrix = this.glMatrix;
 
+	                        var vec3 = this.glMatrix.vec3;
+
+	                        var mat4 = this.glMatrix.mat4;
+
 	                        var prim = {};
 
 	                        prim.id = this.setId();
@@ -3649,19 +3329,19 @@
 
 	                        prim.scale = scale;
 
-	                        prim.dimensions = dimensions || glMatrix.vec3.create(1, 1, 1);
+	                        prim.dimensions = dimensions || vec3.create(1, 1, 1);
 
-	                        prim.position = position || glMatrix.vec3.create(0, 0, 0);
+	                        prim.position = position || vec3.create(0, 0, 0);
 
-	                        prim.acceleration = acceleration || glMatrix.vec3.create(0, 0, 0);
+	                        prim.acceleration = acceleration || vec3.create(0, 0, 0);
 
 	                        // The absolute .rotation object includes rotation on x, y, z axis
 
-	                        prim.rotation = rotation || glMatrix.vec3.create(0, 0, 0);
+	                        prim.rotation = rotation || vec3.create(0, 0, 0);
 
 	                        // The acceleration object indicates velocity on angular motion in x, y, z
 
-	                        prim.angular = angular || glMatrix.vec3.create(0, 0, 0);
+	                        prim.angular = angular || vec3.create(0, 0, 0);
 
 	                        // The orbit defines a center that the object orbits around, and orbital velocity.
 
@@ -3685,6 +3365,36 @@
 	                        // Child Prim array.
 
 	                        prim.children = [];
+
+	                        // Standard Prim properties for position, translation, rotation, orbits.
+	                        ////////////////////////////////////////////////////////////////////////////////////////
+	                        prim.setMV = function (mvMatrix) {
+
+	                                var p = prim;
+
+	                                mat4.identity(mvMatrix);
+
+	                                var z = -5;
+
+	                                // Translate.
+
+	                                vec3.add(p.position, p.position, p.acceleration);
+
+	                                mat4.translate(mvMatrix, mvMatrix, [p.position[0], p.position[1], z + p.position[2]]);
+
+	                                // If orbiting, set orbit.
+
+	                                // Rotate.
+
+	                                vec3.add(p.rotation, p.rotation, p.angular);
+
+	                                mat4.rotate(mvMatrix, mvMatrix, p.rotation[0], [1, 0, 0]);
+	                                mat4.rotate(mvMatrix, mvMatrix, p.rotation[1], [0, 1, 0]);
+	                                mat4.rotate(mvMatrix, mvMatrix, p.rotation[2], [0, 0, 1]);
+
+	                                return mvMatrix;
+	                        };
+	                        /////////////////////////////////////////////////////////////////////////////////////
 
 	                        // Assign object to correct buffer, based on rendering.
 
@@ -3784,15 +3494,6 @@
 
 	                this.renderer = renderer;
 
-	                this.renderList = {};
-
-	                // Get the available renderers.
-
-	                for (var i in this.renderer.renderNames) {
-
-	                        this.renderList[i] = [];
-	                }
-
 	                this.canvas = webgl.getCanvas();
 
 	                this.glMatrix = webgl.glMatrix;
@@ -3808,44 +3509,23 @@
 	                this.render = this.render.bind(this);
 	        }
 
-	        /* 
-	          * MATRIX OPERATIONS
-	          * Mostly with glMatrix
-	          */
+	        /**
+	         * Handle resize event for the World dimensions.
+	         * @param {Number} width world width (x-axis) in units.
+	         * @param {Number} height world height (y-axis) in units.
+	         * @param {Number} depth world depth (z-axis) in units.
+	         */
+
 
 	        _createClass(world, [{
-	                key: 'mvPushMatrix',
-	                value: function mvPushMatrix() {
+	                key: 'resize',
+	                value: function resize(width, height, depth) {}
 
-	                        var mat4 = this.glMatrix.mat4;
-
-	                        var copy = mat4.create();
-
-	                        mat4.set(this.mvMatrix, copy);
-
-	                        mvMatrixStack.push(copy);
-	                }
-	        }, {
-	                key: 'mvPopMatrix',
-	                value: function mvPopMatrix() {
-
-	                        if (this.mvMatrixStack.length == 0) {
-
-	                                throw 'Invalid popMatrix!';
-	                        }
-
-	                        mvMatrix = this.mvMatrixStack.pop();
-	                }
-
-	                /**
-	                 * Handle resize event for the World.
-	                 * @param {Number} width world width (x-axis).
-	                 * @param {Number} depth world depth (z-axis).
+	                /** 
+	                 * Create the world. Load shader/renderer objects, and 
+	                 * create objects to render in the world.
 	                 */
 
-	        }, {
-	                key: 'resize',
-	                value: function resize(width, depth) {}
 	        }, {
 	                key: 'init',
 	                value: function init() {
@@ -3882,9 +3562,44 @@
 
 	                        // Add objects to the 'colored' shader.
 
+	                        this.colorObjList = [];
+
+	                        this.colorObjList.push(this.prim.createCube('colored cube', 1.0, vec3.fromValues(1, 1, 1), // dimensions
+	                        vec3.fromValues(-5, 1, -3), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(20), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(1), util.degToRad(0)), // angular velocity in x, y, x
+	                        ['img/webvr-logo2.png'], // texture present, NOT USED
+	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+	                        ));
 
 	                        this.render();
 	                }
+
+	                /**
+	                 * Create objects specific to this world.
+	                 */
+
+	        }, {
+	                key: 'create',
+	                value: function create() {}
+
+	                /** 
+	                 * Update world.related properties, e.g. a HUD or framrate readout.
+	                 */
+
+	        }, {
+	                key: 'update',
+	                value: function update() {}
+
+	                // fps calculation.
+
+	                /** 
+	                 * render the world. Update Prims locally, then call shader/renderer 
+	                 * objects to do rendering. this.render was bound (ES5 method) in 
+	                 * the constructor.
+	                 */
+
 	        }, {
 	                key: 'render',
 	                value: function render() {
@@ -3896,170 +3611,6 @@
 	                        this.vs1.render();
 
 	                        requestAnimationFrame(this.render);
-	                }
-
-	                /** 
-	                 * Start building the world for the first time.
-	                 */
-
-	        }, {
-	                key: 'init22222222',
-	                value: function init22222222() {
-
-	                        var gl = this.webgl.getContext();
-
-	                        var prim = this.prim;
-
-	                        var util = this.util;
-
-	                        var objs = this.renderList[this.renderer.renderNames.vs1];
-
-	                        objs.push(this.prim.createCube('first cube', // name
-	                        1.0, // scale
-	                        this.glMatrix.vec3.fromValues(1, 1, 1), // dimensions
-	                        this.glMatrix.vec3.fromValues(0, 0, 0), // position (absolute)
-	                        this.glMatrix.vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                        this.glMatrix.vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                        this.glMatrix.vec3.fromValues(util.degToRad(1), util.degToRad(1), util.degToRad(1)), // angular velocity in x, y, x
-	                        ['img/crate.png', 'img/webvr-logo1.png'], // texture image
-	                        this.glMatrix.vec4.fromValues(0.5, 1.0, 0.2, 1.0)));
-
-	                        objs.push(this.prim.createCube('toji cube', 1.0, this.glMatrix.vec3.fromValues(1, 1, 1), // dimensions
-	                        this.glMatrix.vec3.fromValues(5, 1, -3), // position (absolute)
-	                        this.glMatrix.vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                        this.glMatrix.vec3.fromValues(util.degToRad(40), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                        this.glMatrix.vec3.fromValues(util.degToRad(0), util.degToRad(1), util.degToRad(0)), // angular velocity in x, y, x
-	                        ['img/webvr-logo1.png'], this.glMatrix.vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-	                        ));
-
-	                        ////////////////////////////////////////////////////
-
-	                        var objs2 = this.renderList[this.renderer.renderNames.vs2];
-
-	                        objs2.push(this.prim.createCube('icosphere', 1.0, this.glMatrix.vec3.fromValues(1, 1, 1), // dimensions
-	                        this.glMatrix.vec3.fromValues(-5, 1, -3), // position (absolute)
-	                        this.glMatrix.vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                        this.glMatrix.vec3.fromValues(util.degToRad(20), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                        this.glMatrix.vec3.fromValues(util.degToRad(0), util.degToRad(1), util.degToRad(0)), // angular velocity in x, y, x
-	                        ['img/webvr-logo2.png'], this.glMatrix.vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-	                        ));
-
-	                        /*
-	                                objs.push( this.prim.createCube(
-	                                    'red cube',
-	                                    1.0,
-	                                    this.glMatrix.vec3.fromValues( 1, 1, 1 ),
-	                                    this.glMatrix.vec3.fromValues( 1, 0, 0 ),
-	                                    this.glMatrix.vec3.fromValues( 0, 0, 0 ),
-	                                    this.glMatrix.vec3.fromValues( 0, 0, 0 ),
-	                                    'img/webvr-logo2.png',
-	                                    this.glMatrix.vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ) 
-	                                ) );
-	                        
-	                                objs.push( this.prim.createCube(
-	                                    'orange cube',
-	                                    1.0,
-	                                    this.glMatrix.vec3.fromValues( 1, 1, 1 ),
-	                                    this.glMatrix.vec3.fromValues( -1, 0, 0 ),
-	                                    this.glMatrix.vec3.fromValues( 0, 1, 0 ),
-	                                    this.glMatrix.vec3.fromValues( 0, 0, 0 ),
-	                                    'img/webvr-logo3.png',
-	                                    this.glMatrix.vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )
-	                        
-	                                ) );
-	                        
-	                                objs.push( this.prim.createCube(
-	                                    'red triangle cube',
-	                                    1.0,
-	                                    this.glMatrix.vec3.fromValues( 1, 1, 1 ),
-	                                    this.glMatrix.vec3.fromValues( -1, 0, 0 ),
-	                                    this.glMatrix.vec3.fromValues( -1, 1, 0 ),
-	                                    this.glMatrix.vec3.fromValues( 0, 0, 0 ),
-	                                    'img/webvr-logo4.png',
-	                                    this.glMatrix.vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ) 
-	                        
-	                                ) );
-	                        
-	                                objs.push( this.prim.createIcoSphere(
-	                                    'icosphere',
-	                                    1.0,
-	                                    this.glMatrix.vec3.fromValues( 1, 1, 1 ),
-	                                    this.glMatrix.vec3.fromValues( -1, 0, 0 ),
-	                                    this.glMatrix.vec3.fromValues( 0, -1, 0 ),
-	                                    this.glMatrix.vec3.fromValues( 0, 0, 0 ),
-	                                    'img/webvr-logo-chrome1.png',
-	                                    this.glMatrix.vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ) 
-	                        
-	                                ) );
-	                        
-	                                objs.push( this.prim.createCube(
-	                                    'w3c cube',
-	                                    1.0,
-	                                    this.glMatrix.vec3.fromValues( 1, 1, 1 ),
-	                                    this.glMatrix.vec3.fromValues( -1, -1, 0 ),
-	                                    this.glMatrix.vec3.fromValues( -1, -1, 0 ),
-	                                    this.glMatrix.vec3.fromValues( 0, 0, 0 ),
-	                                    'img/webvr-w3c.png',
-	                                    this.glMatrix.vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),
-	                        
-	                                ) );
-	                        
-	                                */
-
-	                        /////////////////////////
-	                        // VS2 render test
-
-	                        //this.renderer.initVS2( objs );
-	                        //this.render();
-	                        //return;
-	                        //////////////////////////
-
-	                        //////////////////////////
-	                        // VS1 render test
-	                        // TODO:
-	                        //let programVS1 = this.renderer.initVS1( objs );
-	                        var programVS1 = this.renderer.initVS1();
-
-	                        programVS1.renderList = objs;
-
-	                        var programVS2 = this.renderer.initVS2();
-
-	                        programVS2.renderList = objs2;
-
-	                        window.objs2 = objs2;
-
-	                        this.render();
-	                        return;
-
-	                        // TODO: use this method for storing multiple arrays.
-
-	                        //////////////////////////
-
-	                }
-
-	                /** 
-	                 * WORLD-SPECIFIC FUNCTIONS GO HERE.
-	                 */
-
-	                /**
-	                 * Create objects specific to this world.
-	                 */
-
-	        }, {
-	                key: 'create',
-	                value: function create() {}
-
-	                /** 
-	                 * Update the world's objects in time increments, e.g. motion and 
-	                 * animation.
-	                 */
-
-	        }, {
-	                key: 'update',
-	                value: function update() {
-
-	                        // fps calculation.
-
 	                }
 	        }]);
 
@@ -11570,20 +11121,46 @@
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 	var Shader = function () {
-	        function Shader(init, util, glMatrix, webgl) {
+
+	        /* 
+	         * Renderers.
+	         * GREAT description of model, view, projection matrix
+	         * @link https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_model_view_projection
+	         * 
+	         * Using vertex arrays:
+	         * @link http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
+	         * 
+	         * WebGL Stack
+	         * @link https://github.com/stackgl
+	         * 
+	         * Superfast Advanced Batch Processing
+	         * http://max-limper.de/tech/batchedrendering.html
+	         * 
+	         * GLSL Sandbox
+	         * http://mrdoob.com/projects/glsl_sandbox/
+	         * 
+	         * Basic MVC
+	         * https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_model_view_projection
+	         */
+
+	        function Shader(init, util, glMatrix, webgl, prim) {
 	                _classCallCheck(this, Shader);
 
 	                console.log('In Shader class');
 
 	                this.webgl = webgl;
 
-	                this.util = webgl.util;
+	                this.util = util;
 
-	                this.glMatrix = webgl.glMatrix;
+	                this.prim = prim;
+
+	                this.glMatrix = glMatrix;
 
 	                this.pMatrix = this.glMatrix.mat4.create();
 
 	                this.mvMatrix = this.glMatrix.mat4.create();
+
+	                this.mvMatrixStack = this.glMatrix.mat4.create();
 
 	                // If we need to load a vertext and fragment shader files (in text format), put their paths in derived classes.
 
@@ -11592,17 +11169,45 @@
 	                this.fragmentShaderFile = null;
 	        }
 
-	        /** 
-	         * set up our program object, using WebGL. We wrap the 'naked' WebGL 
-	         * program object, and add additional properties to the wrapper. 
-	         * 
-	         * Individual shaders use these variables to construct a program wrapper 
-	         * object containing the GLProgram, plus properties, plus update() and 
-	         * render() functions.
-	         */
-
+	        /* 
+	          * MATRIX OPERATIONS
+	          * Mostly with glMatrix
+	          */
 
 	        _createClass(Shader, [{
+	                key: 'mvPushMatrix',
+	                value: function mvPushMatrix() {
+
+	                        var mat4 = this.glMatrix.mat4;
+
+	                        var copy = mat4.create();
+
+	                        mat4.set(this.mvMatrix, copy);
+
+	                        mvMatrixStack.push(copy);
+	                }
+	        }, {
+	                key: 'mvPopMatrix',
+	                value: function mvPopMatrix() {
+
+	                        if (this.mvMatrixStack.length == 0) {
+
+	                                throw 'Invalid popMatrix!';
+	                        }
+
+	                        mvMatrix = this.mvMatrixStack.pop();
+	                }
+
+	                /** 
+	                 * set up our program object, using WebGL. We wrap the 'naked' WebGL 
+	                 * program object, and add additional properties to the wrapper. 
+	                 * 
+	                 * Individual shaders use these variables to construct a program wrapper 
+	                 * object containing the GLProgram, plus properties, plus update() and 
+	                 * render() functions.
+	                 */
+
+	        }, {
 	                key: 'setup',
 	                value: function setup() {
 

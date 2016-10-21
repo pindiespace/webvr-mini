@@ -2,9 +2,9 @@ import Shader from './shader'
 
 export default class ShaderTexture extends Shader {
 
-    constructor ( init, util, glMatrix, webgl ) {
+    constructor ( init, util, glMatrix, webgl, prim ) {
 
-        super( init, util, glMatrix, webgl );
+        super( init, util, glMatrix, webgl, prim );
 
         console.log( 'In ShaderTexture class' );
 
@@ -110,37 +110,15 @@ export default class ShaderTexture extends Shader {
 
         program.renderList = objList || [];
 
+        // Update object position, motion.
+
         program.update = ( obj ) => {
 
-            if ( ! obj ) {
+            // Standard mvMatrix updates.
 
-                console.error( 'ShaderTexture: no object supplied for update' );
+            obj.setMV( mvMatrix );
 
-                return;
-
-            }
-
-            // Reset.
-
-            mat4.identity( mvMatrix );
-
-            let z = -5;
-
-            // Translate.
-
-            vec3.add( obj.position, obj.position, obj.acceleration );
-
-            mat4.translate( mvMatrix, mvMatrix, [ obj.position[ 0 ], obj.position[ 1 ], z + obj.position[ 2 ] ] );
-
-            // If orbiting, set orbit.
-
-            // Rotate.
-
-            vec3.add( obj.rotation, obj.rotation, obj.angular );
-
-            mat4.rotate( mvMatrix, mvMatrix, obj.rotation[ 0 ], [ 1, 0, 0 ] );
-            mat4.rotate( mvMatrix, mvMatrix, obj.rotation[ 1 ], [ 0, 1, 0 ] );
-            mat4.rotate( mvMatrix, mvMatrix, obj.rotation[ 2 ], [ 0, 0, 1 ] );
+            // Custom updates go here.
 
         }
 
@@ -149,6 +127,8 @@ export default class ShaderTexture extends Shader {
             //console.log( 'gl:' + gl + ' canvas:' + canvas + ' mat4:' + mat4 + ' vec3:' + vec3 + ' pMatrix:' + pMatrix + ' mvMatrix:' + mvMatrix + ' program:' + program );
 
             gl.useProgram( program.shaderProgram );
+
+            // TODO: set in webgl object only on resize.
 
             mat4.perspective( pMatrix, Math.PI*0.4, canvas.width / canvas.height, 0.1, 100.0 ); // right
 
