@@ -31,7 +31,7 @@ import Util from  './util';
 
 import WebGL from './webgl';
 
-import Loader from './load-pool';
+//import Loader from './load-pool';
 
 import LoadTexture from './load-texture';
 
@@ -42,6 +42,10 @@ import LoadAudio from './load-audio';
 import LoadVideo from './load-video';
 
 import WebVR from './webvr';
+
+import ShaderTexture from './shader-texture';
+
+import ShaderColor from './shader-color';
 
 import Renderer from './renderer';
 
@@ -103,13 +107,17 @@ let loadAudio = new LoadAudio( true, util, glMatrix, webgl );
 
 let loadVideo = new LoadVideo( true, util, glMatrix, webgl );
 
-let renderer = new Renderer ( true, util, glMatrix, webgl );
+let shaderTexture = new ShaderTexture ( true, util, glMatrix, webgl );
+
+let shaderColor = new ShaderColor ( true, util, glMatrix, webgl );
+
+let renderer = new Renderer ( true, util, glMatrix, webgl, shaderTexture, shaderColor );
 
 let prim = new Prim ( true, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo );
 
 // Create the world, which needs WebGL, WebVR, and Prim.
 
-let world = new World( webgl, prim, renderer );
+let world = new World( webgl, prim, renderer, shaderTexture, shaderColor );
 
 // Export our classes to app.js.
 

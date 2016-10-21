@@ -42,8 +42,6 @@ export default class world {
 
         this.glMatrix = webgl.glMatrix;
 
-        ////////this.groups = {}; // renderers + objects rendered using that renderer.
-
         this.pMatrix = this.glMatrix.mat4.create();
 
         this.mvMatrix = this.glMatrix.mat4.create();
@@ -88,6 +86,34 @@ export default class world {
      */
     resize ( width, depth ) {
 
+
+    }
+
+    init2222222 () {
+
+        this.textureObjList = [];
+
+        let vec3 = this.glMatrix.vec3;
+
+        let vec4 = this.glMatrix.vec4;
+
+        let util = this.util;
+
+        this.textureObjList.push( this.prim.createCube(
+            'first cube',                                        // name
+            1.0,                                                 // scale
+            vec3.fromValues( 1, 1, 1 ),            // dimensions
+            vec3.fromValues( 0, 0, 0 ),            // position (absolute)
+            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+            vec3.fromValues( util.degToRad( 1 ), util.degToRad( 1 ), util.degToRad( 1 ) ), // angular velocity in x, y, x
+            [ 'img/crate.png', 'img/webvr-logo1.png' ],          // texture image
+            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ), // RGBA color
+        ) );
+
+        let program = this.renderer.shaderTexture.init( this.textureObjList );
+
+        window.program = program; /////////////////////////////////////////////////
 
     }
 

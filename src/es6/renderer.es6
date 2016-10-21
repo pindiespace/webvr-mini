@@ -1,10 +1,10 @@
 export default class Renderer {
 
-	constructor ( init, util, glMatrix, webgl ) {
+    constructor ( init, util, glMatrix, webgl, shaderTexture, shaderColor ) {
 
-		console.log( 'In Renderer class' );
+        console.log( 'In Renderer class' );
 
-		this.webgl = webgl;
+        this.webgl = webgl;
 
         this.util = webgl.util;
 
@@ -14,9 +14,13 @@ export default class Renderer {
 
         this.mvMatrix = this.glMatrix.mat4.create();
 
+        this.shaderTexture = shaderTexture;
 
+        window.shaderTexture = shaderTexture;
 
-        // Constants
+        this.shaderColor = shaderColor;
+
+        // Constants.
 
         this.renderNames = {
 
