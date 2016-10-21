@@ -114,6 +114,8 @@ export default class world {
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
+        this.vs2 = this.renderer.shaderColor.init( this.colorObjList );
+
         this.render();
 
     }
@@ -146,6 +148,8 @@ export default class world {
         this.webgl.clear();
 
         this.vs1.render();
+
+        this.vs2.render();
 
         requestAnimationFrame( this.render );
 

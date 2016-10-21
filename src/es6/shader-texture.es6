@@ -128,7 +128,7 @@ export default class ShaderTexture extends Shader {
 
             gl.useProgram( program.shaderProgram );
 
-            // TODO: set in webgl object only on resize.
+            // Reset perspective matrix.
 
             mat4.perspective( pMatrix, Math.PI*0.4, canvas.width / canvas.height, 0.1, 100.0 ); // right
 
@@ -141,6 +141,8 @@ export default class ShaderTexture extends Shader {
                 // Only render if we have at least one texture loaded.
 
                 if ( ! obj.textures[0] || ! obj.textures[0].texture ) continue;
+
+                // Update Model-View matrix with standard Prim values.
 
                 program.update( obj, mvMatrix );
 

@@ -616,6 +616,12 @@ export default class prim {
 
         // The orbit defines a center that the object orbits around, and orbital velocity.
 
+        prim.orbitRadius = 0.0;
+
+        prim.orbitAngular = 0.0;
+
+        // Store multiple textures for one Prim.
+
         prim.textures = [];
 
         // Multiple textures per Prim. Rendering defines how textures for each Prim type are used.
@@ -638,8 +644,8 @@ export default class prim {
 
         prim.children = [];
 
-        // Standard Prim properties for position, translation, rotation, orbits.
-////////////////////////////////////////////////////////////////////////////////////////
+        // Standard Prim properties for position, translation, rotation, orbits. Used by shader/renderer objects (e.g. shaderTexture).
+
         prim.setMV = ( mvMatrix ) => {
 
             let p = prim;
@@ -656,6 +662,7 @@ export default class prim {
 
             // If orbiting, set orbit.
 
+
             // Rotate.
 
             vec3.add( p.rotation, p.rotation, p.angular );
@@ -667,7 +674,6 @@ export default class prim {
             return mvMatrix;
 
         }
-/////////////////////////////////////////////////////////////////////////////////////
 
         // Assign object to correct buffer, based on rendering.
 

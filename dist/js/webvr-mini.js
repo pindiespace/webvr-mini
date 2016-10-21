@@ -300,7 +300,7 @@
 	});
 	exports.world = exports.webvr = exports.prim = exports.loadVideo = exports.loadAudio = exports.loadTexture = exports.loadModel = exports.webgl = exports.util = undefined;
 
-	var _util = __webpack_require__(4);
+	var _util = __webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module \"./util\""); e.code = 'MODULE_NOT_FOUND'; throw e; }()));
 
 	var _util2 = _interopRequireDefault(_util);
 
@@ -454,91 +454,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
 
 /***/ },
-/* 4 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	var Util = function () {
-	    function Util() {
-	        _classCallCheck(this, Util);
-
-	        console.log('in Util');
-	    }
-
-	    // Confirm we have a string (after lodash)
-
-
-	    _createClass(Util, [{
-	        key: 'isString',
-	        value: function isString(str) {
-
-	            return typeof str == 'string' || isObjectLike(str) && objToString.call(str) == stringTag || false;
-	        }
-
-	        // See if we're running in an iframe.
-
-	    }, {
-	        key: 'isIFrame',
-	        value: function isIFrame() {
-
-	            try {
-
-	                return window.self !== window.top;
-	            } catch (e) {
-
-	                return true;
-	            }
-
-	            return false;
-	        }
-	    }, {
-	        key: 'isPowerOfTwo',
-	        value: function isPowerOfTwo(n) {
-
-	            return (n & n - 1) === 0;
-	        }
-	    }, {
-	        key: 'degToRad',
-	        value: function degToRad(degrees) {
-
-	            return degrees * Math.PI / 180;
-	        }
-	    }, {
-	        key: 'getRand',
-	        value: function getRand(min, max) {
-
-	            if (max === undefined) {
-
-	                max = min;
-
-	                min = 0;
-	            }
-
-	            return min + Math.random() * (max - min);
-	        }
-	    }, {
-	        key: 'getRandInt',
-	        value: function getRandInt(range) {
-
-	            return Math.floor(Math.random() * range);
-	        }
-	    }]);
-
-	    return Util;
-	}();
-
-	exports.default = Util;
-
-/***/ },
+/* 4 */,
 /* 5 */
 /***/ function(module, exports) {
 
@@ -2516,7 +2432,7 @@
 
 	                                                gl.useProgram(program.shaderProgram);
 
-	                                                // TODO: set in webgl object only on resize.
+	                                                // Reset perspective matrix.
 
 	                                                mat4.perspective(pMatrix, Math.PI * 0.4, canvas.width / canvas.height, 0.1, 100.0); // right
 
@@ -2529,6 +2445,8 @@
 	                                                            // Only render if we have at least one texture loaded.
 
 	                                                            if (!obj.textures[0] || !obj.textures[0].texture) continue;
+
+	                                                            // Update Model-View matrix with standard Prim values.
 
 	                                                            program.update(obj, mvMatrix);
 
@@ -2583,7 +2501,7 @@
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
-	        value: true
+	            value: true
 	});
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2601,141 +2519,142 @@
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 	var ShaderColor = function (_Shader) {
-	        _inherits(ShaderColor, _Shader);
+	            _inherits(ShaderColor, _Shader);
 
-	        function ShaderColor(init, util, glMatrix, webgl, prim) {
-	                _classCallCheck(this, ShaderColor);
+	            function ShaderColor(init, util, glMatrix, webgl, prim) {
+	                        _classCallCheck(this, ShaderColor);
 
-	                var _this = _possibleConstructorReturn(this, (ShaderColor.__proto__ || Object.getPrototypeOf(ShaderColor)).call(this, init, util, glMatrix, webgl, prim));
+	                        var _this = _possibleConstructorReturn(this, (ShaderColor.__proto__ || Object.getPrototypeOf(ShaderColor)).call(this, init, util, glMatrix, webgl, prim));
 
-	                console.log('In ShaderColor class');
+	                        console.log('In ShaderColor class');
 
-	                return _this;
-	        }
+	                        return _this;
+	            }
 
-	        _createClass(ShaderColor, [{
-	                key: 'vsSrc',
-	                value: function vsSrc() {
+	            _createClass(ShaderColor, [{
+	                        key: 'vsSrc',
+	                        value: function vsSrc() {
 
-	                        var s = ['attribute vec3 aVertexPosition;', 'attribute vec4 aVertexColor;', 'uniform mat4 uMVMatrix;', 'uniform mat4 uPMatrix;', 'varying lowp vec4 vColor;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vColor = aVertexColor;', '}'];
+	                                    var s = ['attribute vec3 aVertexPosition;', 'attribute vec4 aVertexColor;', 'uniform mat4 uMVMatrix;', 'uniform mat4 uPMatrix;', 'varying lowp vec4 vColor;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vColor = aVertexColor;', '}'];
 
-	                        return {
+	                                    return {
 
-	                                code: s.join('\n'),
+	                                                code: s.join('\n'),
 
-	                                varList: this.webgl.createVarList(s)
+	                                                varList: this.webgl.createVarList(s)
 
-	                        };
-	                }
-	        }, {
-	                key: 'fsSrc',
-	                value: function fsSrc() {
+	                                    };
+	                        }
+	            }, {
+	                        key: 'fsSrc',
+	                        value: function fsSrc() {
 
-	                        var s = ['varying lowp vec4 vColor;', 'void main(void) {',
+	                                    var s = ['varying lowp vec4 vColor;', 'void main(void) {',
 
-	                        //'gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);',
+	                                    //'gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);',
 
-	                        'gl_FragColor = vColor;', '}'];
+	                                    'gl_FragColor = vColor;', '}'];
 
-	                        return {
+	                                    return {
 
-	                                code: s.join('\n'),
+	                                                code: s.join('\n'),
 
-	                                varList: this.webgl.createVarList(s)
+	                                                varList: this.webgl.createVarList(s)
 
-	                        };
-	                }
+	                                    };
+	                        }
 
-	                /** 
-	                 * --------------------------------------------------------------------
-	                 * Vertex Shader 2, using color buffer but not texture.
-	                 * --------------------------------------------------------------------
-	                 */
+	                        /** 
+	                         * --------------------------------------------------------------------
+	                         * Vertex Shader 2, using color buffer but not texture.
+	                         * --------------------------------------------------------------------
+	                         */
 
-	        }, {
-	                key: 'init',
-	                value: function init(objList) {
-	                        var _this2 = this;
+	            }, {
+	                        key: 'init',
+	                        value: function init(objList) {
 
-	                        // DESTRUCTING DID NOT WORK!
-	                        //[gl, canvas, mat4, vec3, pMatrix, mvMatrix, program ] = this.setup();
+	                                    // DESTRUCTING DID NOT WORK!
+	                                    //[gl, canvas, mat4, vec3, pMatrix, mvMatrix, program ] = this.setup();
 
-	                        var arr = this.setup();
-	                        var gl = arr[0];
-	                        var canvas = arr[1];
-	                        var mat4 = arr[2];
-	                        var vec3 = arr[3];
-	                        var pMatrix = arr[4];
-	                        var mvMatrix = arr[5];
-	                        var program = arr[6];
-	                        var vsVars = arr[7];
-	                        var fsVars = arr[8];
+	                                    var arr = this.setup();
+	                                    var gl = arr[0];
+	                                    var canvas = arr[1];
+	                                    var mat4 = arr[2];
+	                                    var vec3 = arr[3];
+	                                    var pMatrix = arr[4];
+	                                    var mvMatrix = arr[5];
+	                                    var program = arr[6];
+	                                    var vsVars = arr[7];
+	                                    var fsVars = arr[8];
 
-	                        // Attach objects.
+	                                    // Attach objects.
 
-	                        program.renderList = objList || [];
+	                                    program.renderList = objList || [];
 
-	                        // Get locations of shader variables.
+	                                    // Update object position, motion.
 
-	                        program.vsVars.attribute = this.webgl.setAttributeLocations(program.shaderProgram, program.vsVars.attribute);
+	                                    program.update = function (obj) {
 
-	                        program.vsVars.uniform = this.webgl.setUniformLocations(program.shaderProgram, program.vsVars.uniform);
+	                                                // Standard mvMatrix updates.
 
-	                        program.fsVars.uniform = this.webgl.setUniformLocations(program.shaderProgram, program.fsVars.uniform);
+	                                                obj.setMV(mvMatrix);
 
-	                        // Update object position, motion.
+	                                                // Custom updates go here.
+	                                    };
 
-	                        program.update = function (obj) {
+	                                    program.render = function () {
 
-	                                // Standard mvMatrix updates.
+	                                                //console.log( 'gl:' + gl + ' canvas:' + canvas + ' mat4:' + mat4 + ' vec3:' + vec3 + ' pMatrix:' + pMatrix + ' mvMatrix:' + mvMatrix + ' program:' + program );
 
-	                                obj.setMV(mvMatrix);
+	                                                gl.useProgram(program.shaderProgram);
 
-	                                // Custom updates go here.
-	                        };
+	                                                // Reset perspective matrix.
 
-	                        program.render = function () {
+	                                                mat4.perspective(pMatrix, Math.PI * 0.4, canvas.width / canvas.height, 0.1, 100.0); // right
 
-	                                //console.log( 'gl:' + gl + ' canvas:' + canvas + ' mat4:' + mat4 + ' vec3:' + vec3 + ' pMatrix:' + pMatrix + ' mvMatrix:' + mvMatrix + ' program:' + program );
+	                                                // Loop through assigned objects.
 
-	                                gl.useProgram(program.shaderProgram);
+	                                                for (var i = 0, len = program.renderList.length; i < len; i++) {
 
-	                                for (var i = 0, len = program.renderList.length; i < len; i++) {
+	                                                            var obj = program.renderList[i];
 
-	                                        var obj = program.renderList[i];
+	                                                            // Update Model-View matrix with standard Prim values.
 
-	                                        program.update(obj, mvMatrix);
+	                                                            program.update(obj, mvMatrix);
 
-	                                        gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.vertices.buffer);
-	                                        gl.enableVertexAttribArray(vsVars.attribute.vec3.aVertexPosition);
-	                                        gl.vertexAttribPointer(vsVars.attribute.vec3.aVertexPosition, obj.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0);
+	                                                            // Bind vertex buffer.
 
-	                                        // Bind color buffer.
+	                                                            gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.vertices.buffer);
+	                                                            gl.enableVertexAttribArray(vsVars.attribute.vec3.aVertexPosition);
+	                                                            gl.vertexAttribPointer(vsVars.attribute.vec3.aVertexPosition, obj.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0);
 
-	                                        gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.colors.buffer);
-	                                        gl.enableVertexAttribArray(vsVars.attribute.vec4.aVertexColor);
-	                                        gl.vertexAttribPointer(vsVars.attribute.vec4.aVertexColor, obj.geometry.colors.itemSize, gl.FLOAT, false, 0, 0);
+	                                                            // Bind color buffer.
 
-	                                        // Bind indices buffer.
+	                                                            gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.colors.buffer);
+	                                                            gl.enableVertexAttribArray(vsVars.attribute.vec4.aVertexColor);
+	                                                            gl.vertexAttribPointer(vsVars.attribute.vec4.aVertexColor, obj.geometry.colors.itemSize, gl.FLOAT, false, 0, 0);
 
-	                                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer);
+	                                                            // Bind indices buffer.
 
-	                                        // Set matrix uniforms.
+	                                                            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer);
 
-	                                        gl.uniformMatrix4fv(vsVars.uniform.mat4.uPMatrix, false, _this2.pMatrix);
-	                                        gl.uniformMatrix4fv(vsVars.uniform.mat4.uMVMatrix, false, _this2.mvMatrix);
+	                                                            // Set matrix uniforms.
 
-	                                        // Draw elements.
+	                                                            gl.uniformMatrix4fv(vsVars.uniform.mat4.uPMatrix, false, pMatrix);
+	                                                            gl.uniformMatrix4fv(vsVars.uniform.mat4.uMVMatrix, false, mvMatrix);
 
-	                                        gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
-	                                }
-	                        };
+	                                                            // Draw elements.
 
-	                        return program;
-	                }
-	        }]);
+	                                                            gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
+	                                                }
+	                                    };
 
-	        return ShaderColor;
+	                                    return program;
+	                        }
+	            }]);
+
+	            return ShaderColor;
 	}(_shader2.default);
 
 	exports.default = ShaderColor;
@@ -3345,6 +3264,12 @@
 
 	                        // The orbit defines a center that the object orbits around, and orbital velocity.
 
+	                        prim.orbitRadius = 0.0;
+
+	                        prim.orbitAngular = 0.0;
+
+	                        // Store multiple textures for one Prim.
+
 	                        prim.textures = [];
 
 	                        // Multiple textures per Prim. Rendering defines how textures for each Prim type are used.
@@ -3366,8 +3291,8 @@
 
 	                        prim.children = [];
 
-	                        // Standard Prim properties for position, translation, rotation, orbits.
-	                        ////////////////////////////////////////////////////////////////////////////////////////
+	                        // Standard Prim properties for position, translation, rotation, orbits. Used by shader/renderer objects (e.g. shaderTexture).
+
 	                        prim.setMV = function (mvMatrix) {
 
 	                                var p = prim;
@@ -3384,6 +3309,7 @@
 
 	                                // If orbiting, set orbit.
 
+
 	                                // Rotate.
 
 	                                vec3.add(p.rotation, p.rotation, p.angular);
@@ -3394,7 +3320,6 @@
 
 	                                return mvMatrix;
 	                        };
-	                        /////////////////////////////////////////////////////////////////////////////////////
 
 	                        // Assign object to correct buffer, based on rendering.
 
@@ -3573,6 +3498,8 @@
 	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	                        ));
 
+	                        this.vs2 = this.renderer.shaderColor.init(this.colorObjList);
+
 	                        this.render();
 	                }
 
@@ -3609,6 +3536,8 @@
 	                        this.webgl.clear();
 
 	                        this.vs1.render();
+
+	                        this.vs2.render();
 
 	                        requestAnimationFrame(this.render);
 	                }

@@ -93,14 +93,6 @@ export default class ShaderColor extends Shader {
 
         program.renderList = objList || [];
 
-        // Get locations of shader variables.
-
-        program.vsVars.attribute = this.webgl.setAttributeLocations( program.shaderProgram, program.vsVars.attribute );
-
-        program.vsVars.uniform = this.webgl.setUniformLocations( program.shaderProgram, program.vsVars.uniform );
-
-        program.fsVars.uniform = this.webgl.setUniformLocations( program.shaderProgram, program.fsVars.uniform );
-
         // Update object position, motion.
 
         program.update = ( obj ) => {
@@ -119,11 +111,21 @@ export default class ShaderColor extends Shader {
 
             gl.useProgram( program.shaderProgram );
 
+            // Reset perspective matrix.
+
+            mat4.perspective( pMatrix, Math.PI*0.4, canvas.width / canvas.height, 0.1, 100.0 ); // right
+
+            // Loop through assigned objects.
+
             for ( let i = 0, len = program.renderList.length; i < len; i++ ) {
 
                 let obj = program.renderList[ i ];
 
+                // Update Model-View matrix with standard Prim values.
+
                 program.update( obj, mvMatrix );
+
+                // Bind vertex buffer.
 
                 gl.bindBuffer( gl.ARRAY_BUFFER, obj.geometry.vertices.buffer );
                 gl.enableVertexAttribArray( vsVars.attribute.vec3.aVertexPosition );
@@ -141,8 +143,8 @@ export default class ShaderColor extends Shader {
 
                 // Set matrix uniforms.
 
-                gl.uniformMatrix4fv( vsVars.uniform.mat4.uPMatrix, false, this.pMatrix );
-                gl.uniformMatrix4fv( vsVars.uniform.mat4.uMVMatrix, false, this.mvMatrix );
+                gl.uniformMatrix4fv( vsVars.uniform.mat4.uPMatrix, false, pMatrix );
+                gl.uniformMatrix4fv( vsVars.uniform.mat4.uMVMatrix, false, mvMatrix );
 
                 // Draw elements.
 
