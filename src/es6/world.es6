@@ -48,6 +48,10 @@ export default class world {
 
         this.timeOld = this.time = 0;
 
+        // Bind the render loop (best current method)
+
+        this.render = this.render.bind( this );
+
     }
 
    /* 
@@ -89,15 +93,19 @@ export default class world {
 
     }
 
-    init2222222 () {
+    init () {
 
-        this.textureObjList = [];
+
 
         let vec3 = this.glMatrix.vec3;
 
         let vec4 = this.glMatrix.vec4;
 
         let util = this.util;
+
+        // Add objects to the basic 'textured' shader.
+
+        this.textureObjList = [];
 
         this.textureObjList.push( this.prim.createCube(
             'first cube',                                        // name
@@ -111,16 +119,45 @@ export default class world {
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ), // RGBA color
         ) );
 
-        let program = this.renderer.shaderTexture.init( this.textureObjList );
+        this.textureObjList.push( this.prim.createCube(
+            'toji cube',
+            1.0,
+            vec3.fromValues( 1, 1, 1 ),            // dimensions
+            vec3.fromValues( 5, 1, -3 ),           // position (absolute)
+            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+            vec3.fromValues( util.degToRad( 40 ), util.degToRad( 0  ), util.degToRad( 0 ) ), // rotation (absolute)
+            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 1 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+            ['img/webvr-logo1.png'],
+            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
+        ) );
 
-        window.program = program; /////////////////////////////////////////////////
 
+        this.vs1 = this.renderer.shaderTexture.init( this.textureObjList );
+
+        // Add objects to the 'colored' shader.
+
+        
+
+
+        this.render();
+
+    }
+
+    render () {
+
+        this.update();
+
+        this.webgl.clear();
+
+        this.vs1.render();
+
+        requestAnimationFrame( this.render );
     }
 
     /** 
      * Start building the world for the first time.
      */
-    init () {
+    init22222222 () {
 
 
         let gl = this.webgl.getContext();
@@ -290,22 +327,6 @@ export default class world {
     update () {
 
         // fps calculation.
-
-    }
-
-    render () {
-
-        // update the world.
-
-        this.update();
-
-        this.renderer.clear();
-
-        this.renderer.renderVS1();
-
-        this.renderer.renderVS2();
-
-        requestAnimationFrame( () => { this.render() } );
 
     }
 

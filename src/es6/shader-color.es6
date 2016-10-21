@@ -10,7 +10,7 @@ export default class ShaderColor extends Shader {
 
     }
 
-    vs () {
+    vsSrc () {
 
         let s = [
 
@@ -19,9 +19,9 @@ export default class ShaderColor extends Shader {
 
             'uniform mat4 uMVMatrix;',
             'uniform mat4 uPMatrix;',
-      
+
             'varying lowp vec4 vColor;',
-    
+
             'void main(void) {',
 
             '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);',
@@ -42,7 +42,7 @@ export default class ShaderColor extends Shader {
 
     }
 
-    fs () {
+    fsSrc () {
 
         let s = [
 
@@ -67,5 +67,7 @@ export default class ShaderColor extends Shader {
         };
 
     }
+
+
 
 }

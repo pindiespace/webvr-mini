@@ -276,6 +276,19 @@ export default class WebGL {
     }
 
     /** 
+     * Clear the screen prior to redraw.
+     */
+    clear () {
+
+        let gl = this.gl;
+
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+        /////////////////////gl.viewport( 0, 0, gl.viewportWidth, gl.viewportHeight );
+
+    }
+
+    /** 
      * Get WebGL canvas only if we've created a gl context.
      * @returns {HTMLCanvasElement} canvas the rendering <canvas>.
      */
@@ -314,6 +327,8 @@ export default class WebGL {
                 gl.viewportWidth = c.width;
 
                 gl.viewportHeight = c.height;
+
+                gl.viewport( 0, 0, gl.viewportWidth, gl.viewportHeight );
 
                 return true;
 
@@ -509,7 +524,7 @@ export default class WebGL {
     /** 
      * create a WeGL shader object.
      * @param {VERTEX_SHADER | FRAGMENT_SHADER} type type WebGL shader type.
-     * @param {String} source the shader source.
+     * @param {String} source the shader source, as plain text.
      * @returns {WebGLShader} a compiled WebGL shader object.
      */
     createShader ( type, source ) {

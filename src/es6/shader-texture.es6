@@ -124,6 +124,8 @@ export default class ShaderTexture extends Shader {
 
             mat4.identity( mvMatrix );
 
+            let z = -5;
+
             // Translate.
 
             vec3.add( obj.position, obj.position, obj.acceleration );
@@ -160,7 +162,7 @@ export default class ShaderTexture extends Shader {
 
                 if ( ! obj.textures[0] || ! obj.textures[0].texture ) continue;
 
-                this.update( obj, this.mvMatrix );
+                program.update( obj, mvMatrix );
 
                 // Bind vertex buffer.
 
@@ -184,8 +186,8 @@ export default class ShaderTexture extends Shader {
 
                 // Set matrix uniforms.
 
-                gl.uniformMatrix4fv( vsVars.uniform.mat4.uPMatrix, false, this.pMatrix );
-                gl.uniformMatrix4fv( vsVars.uniform.mat4.uMVMatrix, false, this.mvMatrix );
+                gl.uniformMatrix4fv( vsVars.uniform.mat4.uPMatrix, false, pMatrix );
+                gl.uniformMatrix4fv( vsVars.uniform.mat4.uMVMatrix, false, mvMatrix );
 
                 // Bind index buffer.
 
