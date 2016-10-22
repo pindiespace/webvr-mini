@@ -51,6 +51,12 @@ import ShaderTexture from './shader-texture';
 
 import ShaderColor from './shader-color';
 
+import ShaderDirlightTexture from './shader-dirlight-texture';
+
+import ShaderWater from './shader-water';
+
+import ShaderMetal from './shader-metal';
+
 // Collects the shaders in one place.
 
 import Renderer from './renderer';
@@ -123,7 +129,9 @@ let shaderTexture = new ShaderTexture ( true, util, glMatrix, webgl, prim );
 
 let shaderColor = new ShaderColor ( true, util, glMatrix, webgl, prim );
 
-let renderer = new Renderer ( true, util, glMatrix, webgl, shaderTexture, shaderColor );
+let shaderDirlightTexture = new ShaderDirlightTexture( true, util, glMatrix, webgl, prim );
+
+let renderer = new Renderer ( true, util, glMatrix, webgl, shaderTexture, shaderColor, shaderDirlightTexture );
 
 // Create the world, which needs WebGL, WebVR, and Prim.
 

@@ -43,6 +43,8 @@ export default class LoadPool {
 
         this.loadCt++;
 
+        console.log( 'waitCache length BEFORE push in createWaitObj():' + this.waitCache.length )
+
         this.waitCache.push( {
 
             source: source,
@@ -52,6 +54,8 @@ export default class LoadPool {
             callback: callback
 
         } );
+
+        console.log( 'waitCache length AFTER push in createWaitObj():' + this.waitCache.length );
 
     }
 
@@ -69,6 +73,8 @@ export default class LoadPool {
         let waitCache = this.waitCache;
 
         let wLen = waitCache.length;
+
+        console.log( 'waitCache length in update():' + wLen );
 
         if ( wLen < 1 ) {
 
@@ -97,11 +103,11 @@ export default class LoadPool {
 
         let waitObj = waitCache.shift();
 
-        console.log( 'have a waitObj waiting...' + waitObj.source );
+        console.log( 'in update(), have a waitObj waiting...' + waitObj.source );
 
         if ( loadObj && loadObj.busy === false ) {
 
-            console.log( 're-using a loader object' );
+            console.log( 'in update(), re-using a loader object' );
 
             loadObj.image.src = waitObj.source;
 
@@ -111,7 +117,7 @@ export default class LoadPool {
 
                 if ( ! loadCache[ i ] ) {
 
-                    console.log( 'creating a new loader object' );
+                    console.log( 'in update(), creating a new Loader object' );
 
                     loadCache[ i ] = this.createLoadObj( waitObj );
 

@@ -269,7 +269,7 @@ export default class WebGL {
 
         let gl = this.gl;
 
-        console.log('this.gl:' + gl + ' this.glMatrix:' + this.glMatrix )
+        //////////////////////////////////console.log('webgl.ready(): this.gl:' + gl + ' this.glMatrix:' + this.glMatrix )
 
         return ( !! ( gl && this.glMatrix ) );
 
@@ -812,16 +812,16 @@ export default class WebGL {
 
                         if ( s.indexOf( type ) > -1 ) {
 
-                            console.log("SSS1:" + s)
+                            //////////////////////////////console.log("SSS1:" + s)
 
                             //s = s.slice(0, -1); // remove trailing ';'
                             s = s.replace(/;\s*$/, "");
 
-                            console.log("SSS:" + s)
+                            ///////////////////////////////console.log("SSS:" + s)
 
                             s = s.split( sp );
 
-                            console.log("FIRST: " + s)
+                            //////////////////////////////console.log("FIRST: " + s)
 
                             let vType = s.shift(); // attribute, uniform, or varying
 
@@ -831,7 +831,7 @@ export default class WebGL {
 
                             }
 
-                            console.log("SECOND AFTER SHIFT:" + vType + " remainder:" + s)
+                            /////////////////////////console.log("SECOND AFTER SHIFT:" + vType + " remainder:" + s)
 
                             let nType = s.shift(); // variable type
 
@@ -845,9 +845,10 @@ export default class WebGL {
                             if ( ! list[ vType ][ nType ][ nName ] ) {
 
                                 list[ vType ][ nType ][ nName ] = 'empty';
+
                             }
 
-                            console.log("THIRD AFTER SHIFT:" + nType + " remainder:" + s)
+                            /////////////////////////console.log("THIRD AFTER SHIFT:" + nType + " remainder:" + s)
 
                         }
 
@@ -871,7 +872,7 @@ export default class WebGL {
 
             let attb = attributes[ i ];
 
-            console.log('PGGGG:' + attb );
+            /////////////////////console.log('PGGGG:' + attb );
 
             for ( let j in attb ) {
 
@@ -897,7 +898,7 @@ export default class WebGL {
 
             let unif = uniforms[ i ];
 
-            console.log('UGGGG:' + unif );
+            //////////////////////////////console.log('UGGGG:' + unif );
 
             for ( let j in unif ) {
 

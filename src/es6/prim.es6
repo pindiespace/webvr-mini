@@ -267,7 +267,6 @@ export default class prim {
 
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array( normals ), gl.STATIC_DRAW);
 
-        ////////////////////////////////////////////////
         let colors = [
             // Front face
             1.0,  1.0,  1.0,  1.0,    // white
@@ -307,7 +306,6 @@ export default class prim {
 
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array( colors ), gl.STATIC_DRAW);
 
-        /////////////////////////////////////////////////
         let indices = [
             0, 1, 2,      0, 2, 3,    // Front face
             4, 5, 6,      4, 6, 7,    // Back face
@@ -606,17 +604,17 @@ export default class prim {
      */
     setMaterial ( prim ) {
 
-        prim.material =  {
+       return {
 
             u_colorMult:             0,
 
-            u_diffuse:               prim.textures[0],
+            u_diffuse:               [ 1, 1, 1 ], //TODO: should be textures[0]
 
             u_specular:              [ 1, 1, 1, 1 ],
 
-            u_shininess:             this.util.rand( 500 ),
+            u_shininess:             this.util.getRand( 500 ),
 
-            u_specularFactor:        this.util.randrand( 1 )
+            u_specularFactor:        this.util.getRand( 1 ) // TODO: MAY NOT BE RIGHT
 
         }
 
@@ -689,7 +687,14 @@ export default class prim {
 
         // Define Prim material (only one material type at a time per Prim ).
 
-        prim.material = {};
+        prim.material = this.setMaterial();
+
+        // Define Prim light (it glows) not how it is lit.
+
+        this.light = {
+            direction: [ 1, 1, 1 ],
+            color: [ 255, 255, 255 ]
+        };
 
         // Parent Node.
 
@@ -753,12 +758,16 @@ export default class prim {
 
         cube.type = this.type.CUBE;
 
-        console.log('vertex itemSize:' + cube.geometry.vertices.itemSize)
-        console.log('vertex numItems:' + cube.geometry.vertices.numItems )
-        console.log('texture itemSize:' + cube.geometry.texCoords.itemSize)
-        console.log('texture numItems:' + cube.geometry.texCoords.numItems)
-        console.log('index itemSize' + cube.geometry.indices.itemSize)
-        console.log('index numItems:' + cube.geometry.indices.numItems)
+        console.log('CUBE: vertex:' + cube.geometry.vertices.itemSize + 
+            ', ' + cube.geometry.vertices.numItems + 
+            ', texture:' + cube.geometry.texCoords.itemSize + 
+            ', ' + cube.geometry.texCoords.numItems + 
+            ', index:' + cube.geometry.indices.itemSize, 
+            ', ' + cube.geometry.indices.numItems + 
+            ', normals:' + cube.geometry.normals.itemSize + 
+            ', ' + cube.geometry.normals.numItems );
+
+
 
         this.objs.push( cube );
 

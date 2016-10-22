@@ -116,6 +116,22 @@ export default class world {
 
         this.vs2 = this.renderer.shaderColor.init( this.colorObjList );
 
+        this.dirlightTextureObjList = [];
+
+         this.dirlightTextureObjList.push( this.prim.createCube(
+            'lit cube',
+            1.0,
+            vec3.fromValues( 1, 1, 1 ),            // dimensions
+            vec3.fromValues( -3, -2, -3 ),          // position (absolute)
+            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+            vec3.fromValues( util.degToRad( 20 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 1 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+            ['img/webvr-logo3.png'],               // texture present, NOT USED
+            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
+        ) );
+
+        this.vs3 = this.renderer.shaderDirlightTexture.init( this.dirlightTextureObjList );
+
         this.render();
 
     }
@@ -147,9 +163,11 @@ export default class world {
 
         this.webgl.clear();
 
-        this.vs1.render();
+        //////////////////this.vs1.render();
 
-        this.vs2.render();
+        ////////////////////this.vs2.render();
+
+        this.vs3.render();
 
         requestAnimationFrame( this.render );
 

@@ -113,11 +113,13 @@ export default class Shader {
 
             this.glMatrix.mat4,
 
+            this.glMatrix.mat3,
+
             this.glMatrix.vec3,
 
-            this.glMatrix.mat4.create(),
+            this.glMatrix.mat4.create(),  // perspective
 
-            this.glMatrix.mat4.create(),
+            this.glMatrix.mat4.create(),  // model-view
 
             program,
 

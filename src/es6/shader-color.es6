@@ -82,13 +82,13 @@ export default class ShaderColor extends Shader {
         let gl = arr[0];
         let canvas = arr[1];
         let mat4 = arr[2];
-        let vec3 = arr[3];
-        let pMatrix = arr[4];
-        let mvMatrix = arr[5];
-        let program = arr[6];
-        let vsVars = arr[7];
-        let fsVars = arr[8];
-
+        let mat3 = arr[3];
+        let vec3 = arr[4];
+        let pMatrix = arr[5];
+        let mvMatrix = arr[6];
+        let program = arr[7];
+        let vsVars = arr[8];
+        let fsVars = arr[9];
         // Attach objects.
 
         program.renderList = objList || [];
@@ -143,7 +143,7 @@ export default class ShaderColor extends Shader {
 
                 gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer );
 
-                // Set matrix uniforms.
+                // Set perspective and model-view matrix uniforms.
 
                 gl.uniformMatrix4fv( vsVars.uniform.mat4.uPMatrix, false, pMatrix );
                 gl.uniformMatrix4fv( vsVars.uniform.mat4.uMVMatrix, false, mvMatrix );

@@ -340,6 +340,18 @@
 
 	var _shaderColor2 = _interopRequireDefault(_shaderColor);
 
+	var _shaderDirlightTexture = __webpack_require__(30);
+
+	var _shaderDirlightTexture2 = _interopRequireDefault(_shaderDirlightTexture);
+
+	var _shaderWater = __webpack_require__(31);
+
+	var _shaderWater2 = _interopRequireDefault(_shaderWater);
+
+	var _shaderMetal = __webpack_require__(32);
+
+	var _shaderMetal2 = _interopRequireDefault(_shaderMetal);
+
 	var _renderer = __webpack_require__(14);
 
 	var _renderer2 = _interopRequireDefault(_renderer);
@@ -446,7 +458,9 @@
 
 	var shaderColor = new _shaderColor2.default(true, util, glMatrix, webgl, prim);
 
-	var renderer = new _renderer2.default(true, util, glMatrix, webgl, shaderTexture, shaderColor);
+	var shaderDirlightTexture = new _shaderDirlightTexture2.default(true, util, glMatrix, webgl, prim);
+
+	var renderer = new _renderer2.default(true, util, glMatrix, webgl, shaderTexture, shaderColor, shaderDirlightTexture);
 
 	// Create the world, which needs WebGL, WebVR, and Prim.
 
@@ -833,7 +847,7 @@
 
 	                                    var gl = this.gl;
 
-	                                    console.log('this.gl:' + gl + ' this.glMatrix:' + this.glMatrix);
+	                                    //////////////////////////////////console.log('webgl.ready(): this.gl:' + gl + ' this.glMatrix:' + this.glMatrix )
 
 	                                    return !!(gl && this.glMatrix);
 	                        }
@@ -1358,16 +1372,16 @@
 
 	                                                                                    if (s.indexOf(type) > -1) {
 
-	                                                                                                console.log("SSS1:" + s);
+	                                                                                                //////////////////////////////console.log("SSS1:" + s)
 
 	                                                                                                //s = s.slice(0, -1); // remove trailing ';'
 	                                                                                                s = s.replace(/;\s*$/, "");
 
-	                                                                                                console.log("SSS:" + s);
+	                                                                                                ///////////////////////////////console.log("SSS:" + s)
 
 	                                                                                                s = s.split(sp);
 
-	                                                                                                console.log("FIRST: " + s);
+	                                                                                                //////////////////////////////console.log("FIRST: " + s)
 
 	                                                                                                var vType = s.shift(); // attribute, uniform, or varying
 
@@ -1376,7 +1390,7 @@
 	                                                                                                            list[vType] = {};
 	                                                                                                }
 
-	                                                                                                console.log("SECOND AFTER SHIFT:" + vType + " remainder:" + s);
+	                                                                                                /////////////////////////console.log("SECOND AFTER SHIFT:" + vType + " remainder:" + s)
 
 	                                                                                                var nType = s.shift(); // variable type
 
@@ -1392,7 +1406,7 @@
 	                                                                                                            list[vType][nType][nName] = 'empty';
 	                                                                                                }
 
-	                                                                                                console.log("THIRD AFTER SHIFT:" + nType + " remainder:" + s);
+	                                                                                                /////////////////////////console.log("THIRD AFTER SHIFT:" + nType + " remainder:" + s)
 	                                                                                    }
 	                                                                        }
 	                                                            }
@@ -1411,7 +1425,7 @@
 
 	                                                var attb = attributes[i];
 
-	                                                console.log('PGGGG:' + attb);
+	                                                /////////////////////console.log('PGGGG:' + attb );
 
 	                                                for (var j in attb) {
 
@@ -1435,7 +1449,7 @@
 
 	                                                var unif = uniforms[i];
 
-	                                                console.log('UGGGG:' + unif);
+	                                                //////////////////////////////console.log('UGGGG:' + unif );
 
 	                                                for (var j in unif) {
 
@@ -2120,6 +2134,8 @@
 
 	                        this.loadCt++;
 
+	                        console.log('waitCache length BEFORE push in createWaitObj():' + this.waitCache.length);
+
 	                        this.waitCache.push({
 
 	                                source: source,
@@ -2129,6 +2145,8 @@
 	                                callback: callback
 
 	                        });
+
+	                        console.log('waitCache length AFTER push in createWaitObj():' + this.waitCache.length);
 	                }
 
 	                // Create LoadObject is specific to subclass.
@@ -2148,6 +2166,8 @@
 	                        var waitCache = this.waitCache;
 
 	                        var wLen = waitCache.length;
+
+	                        console.log('waitCache length in update():' + wLen);
 
 	                        if (wLen < 1) {
 
@@ -2175,11 +2195,11 @@
 
 	                        var waitObj = waitCache.shift();
 
-	                        console.log('have a waitObj waiting...' + waitObj.source);
+	                        console.log('in update(), have a waitObj waiting...' + waitObj.source);
 
 	                        if (loadObj && loadObj.busy === false) {
 
-	                                console.log('re-using a loader object');
+	                                console.log('in update(), re-using a loader object');
 
 	                                loadObj.image.src = waitObj.source;
 	                        } else {
@@ -2188,7 +2208,7 @@
 
 	                                        if (!loadCache[i]) {
 
-	                                                console.log('creating a new loader object');
+	                                                console.log('in update(), creating a new Loader object');
 
 	                                                loadCache[i] = this.createLoadObj(waitObj);
 
@@ -2593,12 +2613,13 @@
 	                                    var gl = arr[0];
 	                                    var canvas = arr[1];
 	                                    var mat4 = arr[2];
-	                                    var vec3 = arr[3];
-	                                    var pMatrix = arr[4];
-	                                    var mvMatrix = arr[5];
-	                                    var program = arr[6];
-	                                    var vsVars = arr[7];
-	                                    var fsVars = arr[8];
+	                                    var mat3 = arr[3];
+	                                    var vec3 = arr[4];
+	                                    var pMatrix = arr[5];
+	                                    var mvMatrix = arr[6];
+	                                    var program = arr[7];
+	                                    var vsVars = arr[8];
+	                                    var fsVars = arr[9];
 
 	                                    // Attach objects.
 
@@ -2663,7 +2684,7 @@
 
 	                                                            gl.uniform1i(fsVars.uniform.sampler2D.uSampler, 0); //STRANGE
 
-	                                                            // Set matrix uniforms.
+	                                                            // Set perspective and model-view matrix uniforms.
 
 	                                                            gl.uniformMatrix4fv(vsVars.uniform.mat4.uPMatrix, false, pMatrix);
 	                                                            gl.uniformMatrix4fv(vsVars.uniform.mat4.uMVMatrix, false, mvMatrix);
@@ -2774,13 +2795,13 @@
 	                                    var gl = arr[0];
 	                                    var canvas = arr[1];
 	                                    var mat4 = arr[2];
-	                                    var vec3 = arr[3];
-	                                    var pMatrix = arr[4];
-	                                    var mvMatrix = arr[5];
-	                                    var program = arr[6];
-	                                    var vsVars = arr[7];
-	                                    var fsVars = arr[8];
-
+	                                    var mat3 = arr[3];
+	                                    var vec3 = arr[4];
+	                                    var pMatrix = arr[5];
+	                                    var mvMatrix = arr[6];
+	                                    var program = arr[7];
+	                                    var vsVars = arr[8];
+	                                    var fsVars = arr[9];
 	                                    // Attach objects.
 
 	                                    program.renderList = objList || [];
@@ -2834,7 +2855,7 @@
 
 	                                                            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer);
 
-	                                                            // Set matrix uniforms.
+	                                                            // Set perspective and model-view matrix uniforms.
 
 	                                                            gl.uniformMatrix4fv(vsVars.uniform.mat4.uPMatrix, false, pMatrix);
 	                                                            gl.uniformMatrix4fv(vsVars.uniform.mat4.uMVMatrix, false, mvMatrix);
@@ -2866,7 +2887,7 @@
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	var Renderer = function Renderer(init, util, glMatrix, webgl, shaderTexture, shaderColor) {
+	var Renderer = function Renderer(init, util, glMatrix, webgl, shaderTexture, shaderColor, shaderDirlightTexture) {
 	        _classCallCheck(this, Renderer);
 
 	        console.log('In Renderer class');
@@ -2879,9 +2900,9 @@
 
 	        this.shaderTexture = shaderTexture;
 
-	        window.shaderTexture = shaderTexture;
-
 	        this.shaderColor = shaderColor;
+
+	        this.shaderDirlightTexture = shaderDirlightTexture;
 
 	        if (this.init) {}
 	}
@@ -3127,7 +3148,6 @@
 
 	                        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
 
-	                        ////////////////////////////////////////////////
 	                        var colors = [
 	                        // Front face
 	                        1.0, 1.0, 1.0, 1.0, // white
@@ -3167,7 +3187,6 @@
 
 	                        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
 
-	                        /////////////////////////////////////////////////
 	                        var indices = [0, 1, 2, 0, 2, 3, // Front face
 	                        4, 5, 6, 4, 6, 7, // Back face
 	                        8, 9, 10, 8, 10, 11, // Top face
@@ -3419,17 +3438,17 @@
 	                key: 'setMaterial',
 	                value: function setMaterial(prim) {
 
-	                        prim.material = {
+	                        return {
 
 	                                u_colorMult: 0,
 
-	                                u_diffuse: prim.textures[0],
+	                                u_diffuse: [1, 1, 1], //TODO: should be textures[0]
 
 	                                u_specular: [1, 1, 1, 1],
 
-	                                u_shininess: this.util.rand(500),
+	                                u_shininess: this.util.getRand(500),
 
-	                                u_specularFactor: this.util.randrand(1)
+	                                u_specularFactor: this.util.getRand(1) // TODO: MAY NOT BE RIGHT
 
 	                        };
 	                }
@@ -3513,7 +3532,14 @@
 
 	                        // Define Prim material (only one material type at a time per Prim ).
 
-	                        prim.material = {};
+	                        prim.material = this.setMaterial();
+
+	                        // Define Prim light (it glows) not how it is lit.
+
+	                        this.light = {
+	                                direction: [1, 1, 1],
+	                                color: [255, 255, 255]
+	                        };
 
 	                        // Parent Node.
 
@@ -3578,12 +3604,7 @@
 
 	                        cube.type = this.type.CUBE;
 
-	                        console.log('vertex itemSize:' + cube.geometry.vertices.itemSize);
-	                        console.log('vertex numItems:' + cube.geometry.vertices.numItems);
-	                        console.log('texture itemSize:' + cube.geometry.texCoords.itemSize);
-	                        console.log('texture numItems:' + cube.geometry.texCoords.numItems);
-	                        console.log('index itemSize' + cube.geometry.indices.itemSize);
-	                        console.log('index numItems:' + cube.geometry.indices.numItems);
+	                        console.log('CUBE: vertex:' + cube.geometry.vertices.itemSize + ', ' + cube.geometry.vertices.numItems + ', texture:' + cube.geometry.texCoords.itemSize + ', ' + cube.geometry.texCoords.numItems + ', index:' + cube.geometry.indices.itemSize, ', ' + cube.geometry.indices.numItems + ', normals:' + cube.geometry.normals.itemSize + ', ' + cube.geometry.normals.numItems);
 
 	                        this.objs.push(cube);
 
@@ -3732,6 +3753,19 @@
 
 	                        this.vs2 = this.renderer.shaderColor.init(this.colorObjList);
 
+	                        this.dirlightTextureObjList = [];
+
+	                        this.dirlightTextureObjList.push(this.prim.createCube('lit cube', 1.0, vec3.fromValues(1, 1, 1), // dimensions
+	                        vec3.fromValues(-3, -2, -3), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(20), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(1), util.degToRad(0)), // angular velocity in x, y, x
+	                        ['img/webvr-logo3.png'], // texture present, NOT USED
+	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+	                        ));
+
+	                        this.vs3 = this.renderer.shaderDirlightTexture.init(this.dirlightTextureObjList);
+
 	                        this.render();
 	                }
 
@@ -3767,9 +3801,11 @@
 
 	                        this.webgl.clear();
 
-	                        this.vs1.render();
+	                        //////////////////this.vs1.render();
 
-	                        this.vs2.render();
+	                        ////////////////////this.vs2.render();
+
+	                        this.vs3.render();
 
 	                        requestAnimationFrame(this.render);
 	                }
@@ -11386,7 +11422,11 @@
 
 	                        // Return references to our properties, and assign uniform and attribute locations using webgl object.
 
-	                        return [this.webgl.getContext(), this.webgl.getCanvas(), this.glMatrix.mat4, this.glMatrix.vec3, this.glMatrix.mat4.create(), this.glMatrix.mat4.create(), program, {
+	                        return [this.webgl.getContext(), this.webgl.getCanvas(), this.glMatrix.mat4, this.glMatrix.mat3, this.glMatrix.vec3, this.glMatrix.mat4.create(), // perspective
+
+	                        this.glMatrix.mat4.create(), // model-view
+
+	                        program, {
 	                                attribute: this.webgl.setAttributeLocations(program.shaderProgram, program.vsVars.attribute),
 
 	                                uniform: this.webgl.setUniformLocations(program.shaderProgram, program.vsVars.uniform)
@@ -11451,6 +11491,362 @@
 	}(_loadPool2.default);
 
 	exports.default = LoadFont;
+
+/***/ },
+/* 30 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	            value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _shader = __webpack_require__(28);
+
+	var _shader2 = _interopRequireDefault(_shader);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	var ShaderDirlightTexture = function (_Shader) {
+	            _inherits(ShaderDirlightTexture, _Shader);
+
+	            function ShaderDirlightTexture(init, util, glMatrix, webgl, prim) {
+	                        _classCallCheck(this, ShaderDirlightTexture);
+
+	                        var _this = _possibleConstructorReturn(this, (ShaderDirlightTexture.__proto__ || Object.getPrototypeOf(ShaderDirlightTexture)).call(this, init, util, glMatrix, webgl, prim));
+
+	                        console.log('In ShaderTexture class');
+
+	                        return _this;
+	            }
+
+	            /** 
+	             * --------------------------------------------------------------------
+	             * VERTEX SHADER 3
+	             * a directionally-lit textured object vertex shader.
+	             * @link http://learningwebgl.com/blog/?p=684
+	             * - vertex position
+	             * - texture coordinate
+	             * - model-view matrix
+	             * - projection matrix
+	             * --------------------------------------------------------------------
+	             */
+
+
+	            _createClass(ShaderDirlightTexture, [{
+	                        key: 'vsSrc',
+	                        value: function vsSrc() {
+
+	                                    var s = ['attribute vec3 aVertexPosition;', 'attribute vec3 aVertexNormal;', 'attribute vec2 aTextureCoord;', 'uniform mat4 uMVMatrix;', 'uniform mat4 uPMatrix;', 'uniform mat3 uNMatrix;', 'uniform vec3 uAmbientColor;', 'uniform vec3 uLightingDirection;', 'uniform vec3 uDirectionalColor;', 'uniform bool uUseLighting;', // TODO: remove?
+
+	                                    'varying vec2 vTextureCoord;', 'varying vec3 vLightWeighting;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vTextureCoord = aTextureCoord;', '   if(uUseLighting) {', '       vLightWeighting = vec3(1.0, 1.0, 1.0);', '   } else {', '       vec3 transformedNormal = uNMatrix * aVertexNormal;', '       float directionalLightWeighting = max(dot(transformedNormal, uLightingDirection), 0.0);', '       vLightWeighting = uAmbientColor + uDirectionalColor * directionalLightWeighting;', '   }', '}'];
+
+	                                    return {
+
+	                                                code: s.join('\n'),
+
+	                                                varList: this.webgl.createVarList(s)
+
+	                                    };
+	                        }
+
+	                        /** 
+	                         * a default-lighting textured object fragment shader.
+	                         * - varying texture coordinate
+	                         * - texture 2D sampler
+	                         */
+
+	            }, {
+	                        key: 'fsSrc',
+	                        value: function fsSrc() {
+
+	                                    var s = ['precision mediump float;', 'varying vec2 vTextureCoord;', 'varying vec3 vLightWeighting;', 'uniform sampler2D uSampler;', 'void main(void) {', '    vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));', '    gl_FragColor = vec4(textureColor.rgb * vLightWeighting, textureColor.a);', '}'];
+
+	                                    return {
+
+	                                                code: s.join('\n'),
+
+	                                                varList: this.webgl.createVarList(s)
+
+	                                    };
+	                        }
+
+	                        /** 
+	                         * --------------------------------------------------------------------
+	                         * Vertex Shader 3, using texture buffer and lighting.
+	                         * --------------------------------------------------------------------
+	                         */
+
+	            }, {
+	                        key: 'init',
+	                        value: function init(objList) {
+
+	                                    // DESTRUCTING DID NOT WORK!
+	                                    //[gl, canvas, mat4, vec3, pMatrix, mvMatrix, program ] = this.setup();
+
+	                                    var arr = this.setup();
+	                                    var gl = arr[0];
+	                                    var canvas = arr[1];
+	                                    var mat4 = arr[2];
+	                                    var mat3 = arr[3];
+	                                    var vec3 = arr[4];
+	                                    var pMatrix = arr[5];
+	                                    var mvMatrix = arr[6];
+	                                    var program = arr[7];
+	                                    var vsVars = arr[8];
+	                                    var fsVars = arr[9];
+
+	                                    window.vsVars = vsVars; ////////////////////////////
+	                                    window.fsVars = fsVars;
+
+	                                    // TODO: TEMPORARY ADD LIGHTING CONTROL
+
+	                                    var lighting = true;
+
+	                                    var ambient = [100, 10, 20]; // ambient colors
+
+	                                    var direction = [1, 1, 1]; // light direction
+
+	                                    var nMatrix = mat3.create(); // TODO: ADD MAT3 TO PASSED VARIABLES
+
+	                                    var lightingDirection = [//TODO: REDO
+	                                    1, 1, 1];
+
+	                                    var adjustedLD = vec3.create(); // TODO: redo
+
+	                                    vec3.normalize(lightingDirection, adjustedLD);
+
+	                                    vec3.scale(adjustedLD, -1);
+
+	                                    // Attach objects.
+
+	                                    program.renderList = objList || [];
+
+	                                    // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
+	                                    // TODO: https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/TechniquesforWorkingwithVertexData/TechniquesforWorkingwithVertexData.html
+	                                    // TODO: http://max-limper.de/tech/batchedrendering.html
+
+	                                    // Update object position, motion.
+
+	                                    program.update = function (obj) {
+
+	                                                // Standard mvMatrix updates.
+
+	                                                obj.setMV(mvMatrix);
+
+	                                                mat4.toInverseMat3(mvMatrix, nMatrix);
+
+	                                                mat3.transpose(nMatrix);
+
+	                                                // Custom updates go here.
+	                                    };
+
+	                                    program.render = function () {
+
+	                                                //console.log( 'gl:' + gl + ' canvas:' + canvas + ' mat4:' + mat4 + ' vec3:' + vec3 + ' pMatrix:' + pMatrix + ' mvMatrix:' + mvMatrix + ' program:' + program );
+
+	                                                gl.useProgram(program.shaderProgram);
+
+	                                                // Reset perspective matrix.
+
+	                                                mat4.perspective(pMatrix, Math.PI * 0.4, canvas.width / canvas.height, 0.1, 100.0); // right
+
+	                                                // Begin program loop
+
+	                                                for (var i = 0, len = program.renderList.length; i < len; i++) {
+
+	                                                            var obj = program.renderList[i];
+
+	                                                            // Only render if we have at least one texture loaded.
+
+	                                                            if (!obj.textures[0] || !obj.textures[0].texture) continue;
+
+	                                                            // Update Model-View matrix with standard Prim values.
+
+	                                                            program.update(obj, mvMatrix);
+
+	                                                            // Bind vertex buffer.
+
+	                                                            gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.vertices.buffer);
+	                                                            gl.enableVertexAttribArray(vsVars.attribute.vec3.aVertexPosition);
+	                                                            gl.vertexAttribPointer(vsVars.attribute.vec3.aVertexPosition, obj.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0);
+
+	                                                            // Bind normals buffer.
+
+	                                                            gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.normals.buffer);
+	                                                            gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, obj.geometry.normals.itemSize, gl.FLOAT, false, 0, 0);
+
+	                                                            // Bind Textures buffer (could have multiple bindings here).
+
+	                                                            gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.texCoords.buffer);
+	                                                            gl.enableVertexAttribArray(vsVars.attribute.vec2.aTextureCoord);
+	                                                            gl.vertexAttribPointer(vsVars.attribute.vec2.aTextureCoord, obj.geometry.texCoords.itemSize, gl.FLOAT, false, 0, 0);
+
+	                                                            gl.activeTexture(gl.TEXTURE0);
+	                                                            gl.bindTexture(gl.TEXTURE_2D, null);
+	                                                            gl.bindTexture(gl.TEXTURE_2D, obj.textures[0].texture);
+
+	                                                            // Set fragment shader sampler uniform.
+
+	                                                            gl.uniform1i(fsVars.uniform.sampler2D.uSampler, 0);
+
+	                                                            // Lighting flag.
+
+	                                                            gl.uniform1i(vsVars.attribute.bool.useLightingUniform, lighting);
+
+	                                                            if (lighting) {
+
+	                                                                        // Lighting color uniform.
+
+	                                                                        gl.uniform3f(vsVars, attribute.vec3.ambientColorUniform, ambient[0], ambient[1], ambient[2]);
+
+	                                                                        gl.uniform3f(vsVars.attribute.vec3.directionalColorUniform, direction[0], direction[1], direction[2]);
+
+	                                                                        vec3.normalize(lightingDirection, adjustedLD);
+	                                                                        vec3.scale(adjustedLD, -1);
+	                                                                        gl.uniform3fv(vsVars.attribute.vec3.lightingDirectionUniform, adjustedLD);
+	                                                            }
+
+	                                                            // Normals matrix uniform
+
+	                                                            gl.uniformMatrix3fv(vsVars.attribute.vec3.nMatrixUniform, false, nMatrix);
+
+	                                                            // Set perspective and model-view matrix uniforms.
+
+	                                                            gl.uniformMatrix4fv(vsVars.uniform.mat4.uPMatrix, false, pMatrix);
+	                                                            gl.uniformMatrix4fv(vsVars.uniform.mat4.uMVMatrix, false, mvMatrix);
+
+	                                                            // Bind index buffer.
+
+	                                                            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer);
+
+	                                                            // Draw elements.
+
+	                                                            gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
+	                                                }
+	                                    };
+
+	                                    return program;
+	                        }
+	            }]);
+
+	            return ShaderDirlightTexture;
+	}(_shader2.default);
+
+	exports.default = ShaderDirlightTexture;
+
+/***/ },
+/* 31 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	var _shader = __webpack_require__(28);
+
+	var _shader2 = _interopRequireDefault(_shader);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	var ShaderWater = function (_Shader) {
+	    _inherits(ShaderWater, _Shader);
+
+	    function ShaderWater(init, util, glMatrix, webgl, prim) {
+	        _classCallCheck(this, ShaderWater);
+
+	        var _this = _possibleConstructorReturn(this, (ShaderWater.__proto__ || Object.getPrototypeOf(ShaderWater)).call(this, init, util, glMatrix, webgl, prim));
+
+	        console.log('In ShaderWater class');
+
+	        return _this;
+	    }
+
+	    /** 
+	     * --------------------------------------------------------------------
+	     * VERTEX SHADER 3
+	     * a directionally-lit textured object vertex shader.
+	     * @link http://learningwebgl.com/blog/?p=684
+	     * - vertex position
+	     * - texture coordinate
+	     * - model-view matrix
+	     * - projection matrix
+	     * --------------------------------------------------------------------
+	     */
+
+	    return ShaderWater;
+	}(_shader2.default);
+
+	exports.default = ShaderWater;
+
+/***/ },
+/* 32 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	var _shader = __webpack_require__(28);
+
+	var _shader2 = _interopRequireDefault(_shader);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	var ShaderMetal = function (_Shader) {
+	    _inherits(ShaderMetal, _Shader);
+
+	    function ShaderMetal(init, util, glMatrix, webgl, prim) {
+	        _classCallCheck(this, ShaderMetal);
+
+	        var _this = _possibleConstructorReturn(this, (ShaderMetal.__proto__ || Object.getPrototypeOf(ShaderMetal)).call(this, init, util, glMatrix, webgl, prim));
+
+	        console.log('In ShaderMetal class');
+
+	        return _this;
+	    }
+
+	    /** 
+	     * --------------------------------------------------------------------
+	     * VERTEX SHADER 3
+	     * a directionally-lit textured object vertex shader.
+	     * @link http://learningwebgl.com/blog/?p=684
+	     * - vertex position
+	     * - texture coordinate
+	     * - model-view matrix
+	     * - projection matrix
+	     * --------------------------------------------------------------------
+	     */
+
+	    return ShaderMetal;
+	}(_shader2.default);
+
+	exports.default = ShaderMetal;
 
 /***/ }
 /******/ ]);

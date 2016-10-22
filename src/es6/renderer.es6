@@ -1,6 +1,6 @@
 export default class Renderer {
 
-    constructor ( init, util, glMatrix, webgl, shaderTexture, shaderColor ) {
+    constructor ( init, util, glMatrix, webgl, shaderTexture, shaderColor, shaderDirlightTexture ) {
 
         console.log( 'In Renderer class' );
 
@@ -12,9 +12,9 @@ export default class Renderer {
 
         this.shaderTexture = shaderTexture;
 
-        window.shaderTexture = shaderTexture;
-
         this.shaderColor = shaderColor;
+
+        this.shaderDirlightTexture = shaderDirlightTexture;
 
         if( this.init ) {
 

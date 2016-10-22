@@ -1,6 +1,6 @@
 import Shader from './shader'
 
-export default class ShaderTexture extends Shader {
+export default class ShaderDirlightTexture extends Shader {
 
     constructor ( init, util, glMatrix, webgl, prim ) {
 
@@ -12,8 +12,9 @@ export default class ShaderTexture extends Shader {
 
     /** 
      * --------------------------------------------------------------------
-     * VERTEX SHADER 1
-     * a default-lighting textured object vertex shader.
+     * VERTEX SHADER 3
+     * a directionally-lit textured object vertex shader.
+     * @link http://learningwebgl.com/blog/?p=684
      * - vertex position
      * - texture coordinate
      * - model-view matrix
@@ -25,17 +26,41 @@ export default class ShaderTexture extends Shader {
         let s = [
 
             'attribute vec3 aVertexPosition;',
+            'attribute vec3 aVertexNormal;',
             'attribute vec2 aTextureCoord;',
 
             'uniform mat4 uMVMatrix;',
             'uniform mat4 uPMatrix;',
+            'uniform mat3 uNMatrix;',
+
+            'uniform vec3 uAmbientColor;',
+            'uniform vec3 uLightingDirection;',
+            'uniform vec3 uDirectionalColor;',
+
+            'uniform bool uUseLighting;', // TODO: remove?
+
             'varying vec2 vTextureCoord;',
+            'varying vec3 vLightWeighting;',
 
             'void main(void) {',
 
             '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);',
 
             '    vTextureCoord = aTextureCoord;',
+
+            '   if(uUseLighting) {',
+
+            '       vLightWeighting = vec3(1.0, 1.0, 1.0);',
+
+            '   } else {',
+
+            '       vec3 transformedNormal = uNMatrix * aVertexNormal;',
+
+            '       float directionalLightWeighting = max(dot(transformedNormal, uLightingDirection), 0.0);',
+
+            '       vLightWeighting = uAmbientColor + uDirectionalColor * directionalLightWeighting;',
+
+            '   }',
 
             '}'
 
@@ -51,6 +76,7 @@ export default class ShaderTexture extends Shader {
 
     }
 
+
     /** 
      * a default-lighting textured object fragment shader.
      * - varying texture coordinate
@@ -64,11 +90,15 @@ export default class ShaderTexture extends Shader {
 
             'varying vec2 vTextureCoord;',
 
+            'varying vec3 vLightWeighting;',
+
             'uniform sampler2D uSampler;',
 
             'void main(void) {',
 
-            '    gl_FragColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));',
+            '    vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));',
+
+            '    gl_FragColor = vec4(textureColor.rgb * vLightWeighting, textureColor.a);',
 
             '}'
 
@@ -87,7 +117,7 @@ export default class ShaderTexture extends Shader {
 
     /** 
      * --------------------------------------------------------------------
-     * Vertex Shader 1, using texture buffer.
+     * Vertex Shader 3, using texture buffer and lighting.
      * --------------------------------------------------------------------
      */
     init ( objList ) {
@@ -107,6 +137,31 @@ export default class ShaderTexture extends Shader {
         let vsVars = arr[8];
         let fsVars = arr[9];
 
+        window.vsVars = vsVars; ////////////////////////////
+        window.fsVars = fsVars;
+
+        // TODO: TEMPORARY ADD LIGHTING CONTROL
+
+        let lighting = true;
+
+        let ambient = [ 100, 10, 20 ]; // ambient colors
+
+        let direction = [ 1, 1, 1 ]; // light direction
+
+        let nMatrix = mat3.create(); // TODO: ADD MAT3 TO PASSED VARIABLES
+
+        let lightingDirection = [  //TODO: REDO
+            1,
+            1,
+            1
+        ];
+
+        let adjustedLD = vec3.create(); // TODO: redo
+
+        vec3.normalize( lightingDirection, adjustedLD );
+
+        vec3.scale( adjustedLD, -1 );
+
         // Attach objects.
 
         program.renderList = objList || [];
@@ -122,6 +177,10 @@ export default class ShaderTexture extends Shader {
             // Standard mvMatrix updates.
 
             obj.setMV( mvMatrix );
+
+            mat4.toInverseMat3( mvMatrix, nMatrix );
+
+            mat3.transpose( nMatrix );
 
             // Custom updates go here.
 
@@ -157,7 +216,12 @@ export default class ShaderTexture extends Shader {
                 gl.enableVertexAttribArray( vsVars.attribute.vec3.aVertexPosition );
                 gl.vertexAttribPointer( vsVars.attribute.vec3.aVertexPosition, obj.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0 );
 
-                // Bind Textures (could have multiple bindings here).
+                // Bind normals buffer.
+
+                gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.normals.buffer );
+                gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, obj.geometry.normals.itemSize, gl.FLOAT, false, 0, 0);
+
+                // Bind Textures buffer (could have multiple bindings here).
 
                 gl.bindBuffer( gl.ARRAY_BUFFER, obj.geometry.texCoords.buffer );
                 gl.enableVertexAttribArray( vsVars.attribute.vec2.aTextureCoord );
@@ -169,7 +233,39 @@ export default class ShaderTexture extends Shader {
 
                 // Set fragment shader sampler uniform.
 
-                gl.uniform1i( fsVars.uniform.sampler2D.uSampler, 0 ); //STRANGE
+                gl.uniform1i( fsVars.uniform.sampler2D.uSampler, 0 );
+
+                // Lighting flag.
+
+                gl.uniform1i( vsVars.attribute.bool.useLightingUniform, lighting );
+
+                if ( lighting ) {
+
+                    // Lighting color uniform.
+
+                    gl.uniform3f(
+                        vsVars,attribute.vec3.ambientColorUniform,
+                        ambient[0],
+                        ambient[1],
+                        ambient[2]
+                    );
+
+                    gl.uniform3f(
+                        vsVars.attribute.vec3.directionalColorUniform,
+                        direction[0],
+                        direction[1],
+                        direction[2]
+                        );
+
+                    vec3.normalize( lightingDirection, adjustedLD );
+                    vec3.scale( adjustedLD, -1 );
+                    gl.uniform3fv( vsVars.attribute.vec3.lightingDirectionUniform, adjustedLD );
+
+                }
+
+                // Normals matrix uniform
+
+                gl.uniformMatrix3fv( vsVars.attribute.vec3.nMatrixUniform, false, nMatrix );
 
                 // Set perspective and model-view matrix uniforms.
 
