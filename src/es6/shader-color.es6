@@ -93,6 +93,8 @@ export default class ShaderColor extends Shader {
 
         program.renderList = objList || [];
 
+        // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
+
         // Update object position, motion.
 
         program.update = ( obj ) => {

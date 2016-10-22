@@ -226,36 +226,75 @@ export default class prim {
 
         gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( texCoords ), gl.STATIC_DRAW );
 
-        ///  /////////////////////////////////////////////
-        let normals = [];
+        // Do explicitly rather than computationally.
+        //https://dannywoodz.wordpress.com/2014/12/14/webgl-from-scratch-directional-lighting-part-1/ 
+        let normals = [
+            // Front face
+            0.0,  0.0,  1.0,
+            0.0,  0.0,  1.0,
+            0.0,  0.0,  1.0,
+            0.0,  0.0,  1.0,
+            // Back face
+            0.0,  0.0, -1.0,
+            0.0,  0.0, -1.0,
+            0.0,  0.0, -1.0,
+            0.0,  0.0, -1.0,
+            // Top face
+            0.0,  1.0,  0.0,
+            0.0,  1.0,  0.0,
+            0.0,  1.0,  0.0,
+            0.0,  1.0,  0.0,
+            // Bottom face
+            0.0, -1.0,  0.0,
+            0.0, -1.0,  0.0,
+            0.0, -1.0,  0.0,
+            0.0, -1.0,  0.0,
+            // Right face
+            1.0,  0.0,  0.0,
+            1.0,  0.0,  0.0,
+            1.0,  0.0,  0.0,
+            1.0,  0.0,  0.0,
+            // Left face
+            -1.0,  0.0,  0.0,
+            -1.0,  0.0,  0.0,
+            -1.0,  0.0,  0.0,
+            -1.0,  0.0,  0.0,
+        ];
+
+        let nBuffer = gl.createBuffer();
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, nBuffer);
+
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array( normals ), gl.STATIC_DRAW);
 
         ////////////////////////////////////////////////
         let colors = [
+            // Front face
             1.0,  1.0,  1.0,  1.0,    // white
             1.0,  0.0,  0.0,  1.0,    // red
             0.0,  1.0,  0.0,  1.0,    // green
             0.0,  0.0,  1.0,  1.0,     // blue
-
+            // Back face
             1.0,  1.0,  1.0,  1.0,    // white
             1.0,  0.0,  0.0,  1.0,    // red
             0.0,  1.0,  0.0,  1.0,    // green
             0.0,  0.0,  1.0,  1.0,    // blue
-
+            // Top face
             1.0,  1.0,  1.0,  1.0,    // white
             1.0,  0.0,  0.0,  1.0,    // red
             0.0,  1.0,  0.0,  1.0,    // green
             0.0,  0.0,  1.0,  1.0,     // blue
-
+            // Bottom face
             1.0,  1.0,  1.0,  1.0,    // white
             1.0,  0.0,  0.0,  1.0,    // red
             0.0,  1.0,  0.0,  1.0,    // green
             0.0,  0.0,  1.0,  1.0,     // blue
-
+            // Right face
             1.0,  1.0,  1.0,  1.0,    // white
             1.0,  0.0,  0.0,  1.0,    // red
             0.0,  1.0,  0.0,  1.0,    // green
             0.0,  0.0,  1.0,  1.0,     // blue
-
+            // Left face
             1.0,  1.0,  1.0,  1.0,    // white
             1.0,  0.0,  0.0,  1.0,    // red
             0.0,  1.0,  0.0,  1.0,    // green
@@ -266,7 +305,7 @@ export default class prim {
 
         gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
 
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array( colors ), gl.STATIC_DRAW);
 
         /////////////////////////////////////////////////
         let indices = [
@@ -320,6 +359,18 @@ export default class prim {
                 itemSize: 4,
 
                 numItems: colors.length / 4
+
+            },
+
+            normals: {
+
+                data: normals,
+
+                buffer: nBuffer,
+
+                itemSize: 3,
+
+                numItems: normals.length / 3
 
             },
 
@@ -623,6 +674,10 @@ export default class prim {
         // Store multiple textures for one Prim.
 
         prim.textures = [];
+
+        // Store multiple sounds for one Prim.
+
+        prim.audio = [];
 
         // Multiple textures per Prim. Rendering defines how textures for each Prim type are used.
 

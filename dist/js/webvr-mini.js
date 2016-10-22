@@ -300,13 +300,17 @@
 	});
 	exports.world = exports.webvr = exports.prim = exports.loadVideo = exports.loadAudio = exports.loadTexture = exports.loadModel = exports.webgl = exports.util = undefined;
 
-	var _util = __webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module \"./util\""); e.code = 'MODULE_NOT_FOUND'; throw e; }()));
+	var _util = __webpack_require__(4);
 
 	var _util2 = _interopRequireDefault(_util);
 
 	var _webgl = __webpack_require__(5);
 
 	var _webgl2 = _interopRequireDefault(_webgl);
+
+	var _webvr = __webpack_require__(11);
+
+	var _webvr2 = _interopRequireDefault(_webvr);
 
 	var _loadTexture = __webpack_require__(6);
 
@@ -324,9 +328,9 @@
 
 	var _loadVideo2 = _interopRequireDefault(_loadVideo);
 
-	var _webvr = __webpack_require__(11);
+	var _loadFont = __webpack_require__(29);
 
-	var _webvr2 = _interopRequireDefault(_webvr);
+	var _loadFont2 = _interopRequireDefault(_loadFont);
 
 	var _shaderTexture = __webpack_require__(12);
 
@@ -375,11 +379,17 @@
 	    console.log('loaded gl-matrix');
 	}
 
-	// Import WebVR-Mini libraries.
+	// Import WebVR-Mini libraries. Note: if you don't use super() imports will fail!
 
 	//import Loader from './load-pool';
 
-	// Import the world (variable).
+	// import Shader from './Shader';
+
+	// Collects the shaders in one place.
+
+	// All objects.
+
+	// Import the world (variable object, changes with each VR world).
 
 	// Init Util first to create shortcuts.
 
@@ -428,6 +438,8 @@
 
 	var loadVideo = new _loadVideo2.default(true, util, glMatrix, webgl);
 
+	var loadFont = new _loadFont2.default(true, util, glMatrix, webgl);
+
 	var prim = new _prim2.default(true, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo);
 
 	var shaderTexture = new _shaderTexture2.default(true, util, glMatrix, webgl, prim);
@@ -454,7 +466,97 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
 
 /***/ },
-/* 4 */,
+/* 4 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var Util = function () {
+	    function Util() {
+	        _classCallCheck(this, Util);
+
+	        console.log('in Util');
+	    }
+
+	    // Confirm we have a string (after lodash)
+
+
+	    _createClass(Util, [{
+	        key: 'isString',
+	        value: function isString(str) {
+
+	            return typeof str == 'string' || isObjectLike(str) && objToString.call(str) == stringTag || false;
+	        }
+
+	        // See if we're running in an iframe.
+
+	    }, {
+	        key: 'isIFrame',
+	        value: function isIFrame() {
+
+	            try {
+
+	                return window.self !== window.top;
+	            } catch (e) {
+
+	                return true;
+	            }
+
+	            return false;
+	        }
+	    }, {
+	        key: 'isPowerOfTwo',
+	        value: function isPowerOfTwo(n) {
+
+	            return (n & n - 1) === 0;
+	        }
+	    }, {
+	        key: 'degToRad',
+	        value: function degToRad(degrees) {
+
+	            return degrees * Math.PI / 180;
+	        }
+	    }, {
+	        key: 'getRand',
+	        value: function getRand(min, max) {
+
+	            if (max === undefined) {
+
+	                max = min;
+
+	                min = 0;
+	            }
+
+	            return min + Math.random() * (max - min);
+	        }
+	    }, {
+	        key: 'getRandInt',
+	        value: function getRandInt(range) {
+
+	            return Math.floor(Math.random() * range);
+	        }
+	    }, {
+	        key: 'getFileExtension',
+	        value: function getFileExtension(fname) {
+
+	            return fname.slice((fname.lastIndexOf('.') - 1 >>> 0) + 2).toLowerCase();
+	        }
+	    }]);
+
+	    return Util;
+	}();
+
+	exports.default = Util;
+
+/***/ },
 /* 5 */
 /***/ function(module, exports) {
 
@@ -1781,30 +1883,32 @@
 	                value: function init() {}
 
 	                /**
-	                 * Sets a texture to a 1x1 pixel color. If `options.color === false` is nothing happens. If it's not set
-	                 * the default texture color is used which can be set by calling `setDefaultTextureColor`.
-	                 * @param {WebGLRenderingContext} gl the WebGLRenderingContext
-	                 * @param {WebGLTexture} tex the WebGLTexture to set parameters for
-	                 * @param {module:twgl.TextureOptions} [options] A TextureOptions object with whatever parameters you want set.
-	                 *   This is often the same options you passed in when you created the texture.
-	                 * @memberOf module:twgl/textures
+	                 * Sets a texture to a 1x1 pixel color. 
+	                 * @param {WebGLRenderingContext} gl the WebGLRenderingContext.
+	                 * @param {WebGLTexture} texture the WebGLTexture to set parameters for.
+	                 * @param {WebGLParameter} target.
+	                 * @memberOf module: webvr-mini/LoadTexture
 	                 */
 
 	        }, {
 	                key: 'setDefaultTexturePixel',
-	                value: function setDefaultTexturePixel(gl, texture) {
+	                value: function setDefaultTexturePixel(gl, texture, target) {
 
-	                        // Assume it's a URL
 	                        // Put 1x1 pixels in texture. That makes it renderable immediately regardless of filtering.
-	                        var color = make1Pixel(options.color);
+
+	                        var color = this.greyPixel;
 
 	                        if (target === gl.TEXTURE_CUBE_MAP) {
-	                                for (var ii = 0; ii < 6; ++ii) {
-	                                        gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X + ii, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, color);
+
+	                                for (var i = 0; i < 6; ++i) {
+
+	                                        gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, color);
 	                                }
 	                        } else if (target === gl.TEXTURE_3D) {
+
 	                                gl.texImage3D(target, 0, gl.RGBA, 1, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, color);
 	                        } else {
+
 	                                gl.texImage2D(target, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, color);
 	                        }
 	                }
@@ -1813,6 +1917,7 @@
 	                 * Create a load object wrapper, and start a load.
 	                 * POLYMORPHIC FOR LOAD MEDIA TYPE.
 	                 * @param {Object} waitObj the unresolved wait object holding load directions for the asset.
+	                 * @memberOf module: webvr-mini/LoadTexture
 	                 */
 
 	        }, {
@@ -1859,6 +1964,7 @@
 	                 * http://stackoverflow.com/questions/39251254/avoid-cpu-side-conversion-with-teximage2d-in-firefox
 	                 * @param {Object} loadObj the loader object containing Image data.
 	                 * @param {Function} callback callback function for individual texture load.
+	                 * @memberOf module: webvr-mini/LoadTexture
 	                 */
 
 	        }, {
@@ -1919,20 +2025,30 @@
 
 	                        loadObj.busy = false;
 
-	                        //console.log("NNNNNOOOOOWWWWWW.PRIM.TEXTURE isSSSS:" + loadObj.prim.texture)
-
 	                        // Send this to update for re-use .
 
 	                        this.update(loadObj);
 	                }
+
+	                /** 
+	                 * Upload a cubemap texture.
+	                 * @memberOf module: webvr-mini/LoadTexture
+	                 */
+
 	        }, {
 	                key: 'uploadCubeTexture',
 	                value: function uploadCubeTexture() {}
+
+	                /** 
+	                 * Upload a 3d texture.
+	                 * @memberOf module: webvr-mini/LoadTexture
+	                 */
+
 	        }, {
 	                key: 'upload3DTexture',
 	                value: function upload3DTexture() {}
 
-	                // load() and update() are defined in superclass.
+	                // load() and update() are defined in the superclass.
 
 	        }]);
 
@@ -1958,7 +2074,10 @@
 	var LoadPool = function () {
 
 	        /**
-	         * Base loader class.
+	         * Base loader class. We don't use promise.all since we want to keep a 
+	         * limited pool of loaders, which accept a larger number of waitObjs. As 
+	         * each loadObj completes a load, it checks the queue to see if there is 
+	         * another loadObj neededing a load.
 	         */
 
 	        function LoadPool(init, util, glMatrix, webgl, MAX_CACHE) {
@@ -1977,9 +2096,6 @@
 	                this.loadCache = new Array(MAX_CACHE);
 
 	                this.waitCache = []; // Could be hundreds
-
-	                window.loadCache = this.loadCache; //////////////////////////
-	                window.waitCache = this.waitCache;
 
 	                this.waitCt = 0; // wait cache pointer
 
@@ -2052,8 +2168,8 @@
 
 	                        var lLen = loadCache.length;
 
-	                        console.log('lLen:' + lLen);
-	                        console.log('wLen:' + wLen);
+	                        //////////////////////////console.log('lLen:' + lLen);
+	                        //////////////////////////console.log('wLen:' + wLen);
 
 	                        // we just finished a texture, and it is available for new loads.
 
@@ -2082,7 +2198,6 @@
 	                        }
 	                } // end of update
 
-
 	                /** 
 	                 * load objects into the waiting queue. This can happen very quickly. 
 	                 * images are queue for loading, with callback for each load, and 
@@ -2090,7 +2205,7 @@
 	                 * brevity and flexibility.
 	                 * @param {String} source the path to the image file
 	                 * @param {Function} callback each time an image is loaded.
-	                 * @param {Function} finalCallback the callback executed when all objects are loaded.
+	                 * @param {Function} finalCallback (optional) the callback executed when all objects are loaded.
 	                 */
 
 	        }, {
@@ -2168,7 +2283,7 @@
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
-	    value: true
+	        value: true
 	});
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2186,26 +2301,100 @@
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 	var LoadAudio = function (_LoadPool) {
-	    _inherits(LoadAudio, _LoadPool);
+	        _inherits(LoadAudio, _LoadPool);
 
-	    /**
-	     * Base loader class.
-	     */
+	        /**
+	         * Base loader class.
+	         * @link https://www.html5rocks.com/en/tutorials/webaudio/intro/
+	         * @link http://mdn.github.io/fetch-examples/fetch-array-buffer/
+	         */
 
-	    function LoadAudio(init, util, glMatrix, webgl) {
-	        _classCallCheck(this, LoadAudio);
+	        function LoadAudio(init, util, glMatrix, webgl) {
+	                _classCallCheck(this, LoadAudio);
 
-	        console.log('in LoadAudio class');
+	                console.log('in LoadAudio class');
 
-	        return _possibleConstructorReturn(this, (LoadAudio.__proto__ || Object.getPrototypeOf(LoadAudio)).call(this, init, util, glMatrix, webgl));
-	    }
+	                var MAX_CACHE_AUDIO = 3;
 
-	    _createClass(LoadAudio, [{
-	        key: 'init',
-	        value: function init() {}
-	    }]);
+	                var _this = _possibleConstructorReturn(this, (LoadAudio.__proto__ || Object.getPrototypeOf(LoadAudio)).call(this, init, util, glMatrix, webgl, MAX_CACHE_AUDIO));
 
-	    return LoadAudio;
+	                _this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+	                _this.sources = {};
+
+	                if (init === true) {}
+
+	                return _this;
+	        }
+
+	        _createClass(LoadAudio, [{
+	                key: 'uploadAudio',
+	                value: function uploadAudio(loadObj, callback) {
+
+	                        var audio = loadObj.prim.audio;
+
+	                        var audioObj = {
+	                                audio: loadObj.audio,
+	                                src: loadObj.src
+	                        };
+
+	                        // TODO: set audio volume, etc.
+
+	                        audio.push(audioObj);
+
+	                        // Clear the object for re-use.
+
+	                        loadObj.busy = false;
+
+	                        this.update(loadObj);
+	                }
+	        }, {
+	                key: 'createLoadObj',
+	                value: function createLoadObj(waitObj) {
+
+	                        loadObj = {};
+
+	                        loadObj.src = waitObj.source;
+
+	                        loadObj.audio = this.audioCtx.createBufferSource();
+
+	                        var req = new Request(waitObj.source);
+
+	                        // TODO: SET CORS and mime type
+
+	                        fetch(req).then(function (response) {
+
+	                                if (!response.ok) {
+
+	                                        throw Error(response.statusText);
+	                                }
+
+	                                return response.arrayBuffer();
+	                        }).then(function (buffer) {
+
+	                                if (!buffer) {
+
+	                                        throw Error('no audio arrayBuffer');
+	                                }
+
+	                                this.audioCtx.decodeAudioData(buffer, function (decodedData) {
+
+	                                        loadObj.audio.buffer = decodedData;
+
+	                                        loadObj.audio.connect(this.audioCtx.destination);
+
+	                                        // Attach to prim.
+
+	                                        this.update(loadObj);
+	                                });
+	                        }).catch(function (err) {
+
+	                                console.error(err);
+	                        });
+	                }
+	        }]);
+
+	        return LoadAudio;
 	}(_loadPool2.default);
 
 	exports.default = LoadAudio;
@@ -2415,6 +2604,10 @@
 
 	                                    program.renderList = objList || [];
 
+	                                    // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
+	                                    // TODO: https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/TechniquesforWorkingwithVertexData/TechniquesforWorkingwithVertexData.html
+	                                    // TODO: http://max-limper.de/tech/batchedrendering.html
+
 	                                    // Update object position, motion.
 
 	                                    program.update = function (obj) {
@@ -2591,6 +2784,8 @@
 	                                    // Attach objects.
 
 	                                    program.renderList = objList || [];
+
+	                                    // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
 
 	                                    // Update object position, motion.
 
@@ -2910,35 +3105,56 @@
 
 	                        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(texCoords), gl.STATIC_DRAW);
 
-	                        ///  /////////////////////////////////////////////
-	                        var normals = [];
+	                        // Do explicitly rather than computationally.
+	                        //https://dannywoodz.wordpress.com/2014/12/14/webgl-from-scratch-directional-lighting-part-1/ 
+	                        var normals = [
+	                        // Front face
+	                        0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0,
+	                        // Back face
+	                        0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0,
+	                        // Top face
+	                        0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0,
+	                        // Bottom face
+	                        0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0,
+	                        // Right face
+	                        1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0,
+	                        // Left face
+	                        -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0];
+
+	                        var nBuffer = gl.createBuffer();
+
+	                        gl.bindBuffer(gl.ARRAY_BUFFER, nBuffer);
+
+	                        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
 
 	                        ////////////////////////////////////////////////
-	                        var colors = [1.0, 1.0, 1.0, 1.0, // white
-	                        1.0, 0.0, 0.0, 1.0, // red
-	                        0.0, 1.0, 0.0, 1.0, // green
-	                        0.0, 0.0, 1.0, 1.0, // blue
-
+	                        var colors = [
+	                        // Front face
 	                        1.0, 1.0, 1.0, 1.0, // white
 	                        1.0, 0.0, 0.0, 1.0, // red
 	                        0.0, 1.0, 0.0, 1.0, // green
 	                        0.0, 0.0, 1.0, 1.0, // blue
-
+	                        // Back face
 	                        1.0, 1.0, 1.0, 1.0, // white
 	                        1.0, 0.0, 0.0, 1.0, // red
 	                        0.0, 1.0, 0.0, 1.0, // green
 	                        0.0, 0.0, 1.0, 1.0, // blue
-
+	                        // Top face
 	                        1.0, 1.0, 1.0, 1.0, // white
 	                        1.0, 0.0, 0.0, 1.0, // red
 	                        0.0, 1.0, 0.0, 1.0, // green
 	                        0.0, 0.0, 1.0, 1.0, // blue
-
+	                        // Bottom face
 	                        1.0, 1.0, 1.0, 1.0, // white
 	                        1.0, 0.0, 0.0, 1.0, // red
 	                        0.0, 1.0, 0.0, 1.0, // green
 	                        0.0, 0.0, 1.0, 1.0, // blue
-
+	                        // Right face
+	                        1.0, 1.0, 1.0, 1.0, // white
+	                        1.0, 0.0, 0.0, 1.0, // red
+	                        0.0, 1.0, 0.0, 1.0, // green
+	                        0.0, 0.0, 1.0, 1.0, // blue
+	                        // Left face
 	                        1.0, 1.0, 1.0, 1.0, // white
 	                        1.0, 0.0, 0.0, 1.0, // red
 	                        0.0, 1.0, 0.0, 1.0, // green
@@ -3002,6 +3218,18 @@
 	                                        itemSize: 4,
 
 	                                        numItems: colors.length / 4
+
+	                                },
+
+	                                normals: {
+
+	                                        data: normals,
+
+	                                        buffer: nBuffer,
+
+	                                        itemSize: 3,
+
+	                                        numItems: normals.length / 3
 
 	                                },
 
@@ -3271,6 +3499,10 @@
 	                        // Store multiple textures for one Prim.
 
 	                        prim.textures = [];
+
+	                        // Store multiple sounds for one Prim.
+
+	                        prim.audio = [];
 
 	                        // Multiple textures per Prim. Rendering defines how textures for each Prim type are used.
 
@@ -11171,6 +11403,54 @@
 	}();
 
 	exports.default = Shader;
+
+/***/ },
+/* 29 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	        value: true
+	});
+
+	var _loadPool = __webpack_require__(7);
+
+	var _loadPool2 = _interopRequireDefault(_loadPool);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	var LoadFont = function (_LoadPool) {
+	        _inherits(LoadFont, _LoadPool);
+
+	        /** 
+	         * Load and configure fonts for use.
+	         * Working with fonts:
+	         * @link https://www.html5rocks.com/en/tutorials/webgl/million_letters/
+	         */
+
+	        function LoadFont(init, util, glMatrix, webgl) {
+	                _classCallCheck(this, LoadFont);
+
+	                console.log('in LoadFont class');
+
+	                // Init superclass.
+
+	                var MAX_CACHE_FONTS = 3;
+
+	                return _possibleConstructorReturn(this, (LoadFont.__proto__ || Object.getPrototypeOf(LoadFont)).call(this, init, util, glMatrix, webgl, MAX_CACHE_FONTS));
+	        }
+
+	        return LoadFont;
+	}(_loadPool2.default);
+
+	exports.default = LoadFont;
 
 /***/ }
 /******/ ]);

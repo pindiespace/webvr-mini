@@ -25,11 +25,13 @@ if ( ! glMatrix ) {
 
 }
 
-// Import WebVR-Mini libraries.
+// Import WebVR-Mini libraries. Note: if you don't use super() imports will fail!
 
 import Util from  './util';
 
 import WebGL from './webgl';
+
+import WebVR from './webvr';
 
 //import Loader from './load-pool';
 
@@ -41,17 +43,23 @@ import LoadAudio from './load-audio';
 
 import LoadVideo from './load-video';
 
-import WebVR from './webvr';
+import LoadFont from './load-font';
+
+// import Shader from './Shader';
 
 import ShaderTexture from './shader-texture';
 
 import ShaderColor from './shader-color';
 
+// Collects the shaders in one place.
+
 import Renderer from './renderer';
+
+// All objects.
 
 import Prim from './prim';
 
-// Import the world (variable).
+// Import the world (variable object, changes with each VR world).
 
 import World from './world';
 
@@ -106,6 +114,8 @@ let loadTexture = new LoadTexture( true, util, glMatrix, webgl );
 let loadAudio = new LoadAudio( true, util, glMatrix, webgl );
 
 let loadVideo = new LoadVideo( true, util, glMatrix, webgl );
+
+let loadFont = new LoadFont( true, util, glMatrix, webgl );
 
 let prim = new Prim ( true, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo );
 

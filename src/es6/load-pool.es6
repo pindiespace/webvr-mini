@@ -1,7 +1,10 @@
 export default class LoadPool {
 
     /**
-     * Base loader class.
+     * Base loader class. We don't use promise.all since we want to keep a 
+     * limited pool of loaders, which accept a larger number of waitObjs. As 
+     * each loadObj completes a load, it checks the queue to see if there is 
+     * another loadObj neededing a load.
      */
 
     constructor ( init, util, glMatrix, webgl, MAX_CACHE ) {
@@ -19,9 +22,6 @@ export default class LoadPool {
         this.loadCache = new Array( MAX_CACHE );
 
         this.waitCache = []; // Could be hundreds
-
-        window.loadCache = this.loadCache; //////////////////////////
-        window.waitCache = this.waitCache
 
         this.waitCt = 0; // wait cache pointer
 
@@ -90,8 +90,8 @@ export default class LoadPool {
 
         let lLen = loadCache.length;
 
-        console.log('lLen:' + lLen);
-        console.log('wLen:' + wLen);
+        //////////////////////////console.log('lLen:' + lLen);
+        //////////////////////////console.log('wLen:' + wLen);
 
         // we just finished a texture, and it is available for new loads.
 
@@ -125,7 +125,6 @@ export default class LoadPool {
 
     } // end of update
 
-
     /** 
      * load objects into the waiting queue. This can happen very quickly. 
      * images are queue for loading, with callback for each load, and 
@@ -133,7 +132,7 @@ export default class LoadPool {
      * brevity and flexibility.
      * @param {String} source the path to the image file
      * @param {Function} callback each time an image is loaded.
-     * @param {Function} finalCallback the callback executed when all objects are loaded.
+     * @param {Function} finalCallback (optional) the callback executed when all objects are loaded.
      */
     load ( source, attach, callback, finalCallback ) {
 
