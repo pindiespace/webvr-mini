@@ -89,7 +89,10 @@ export default class ShaderColor extends Shader {
         let program = arr[7];
         let vsVars = arr[8];
         let fsVars = arr[9];
+
         // Attach objects.
+
+        let shaderProgram = program.shaderProgram;
 
         program.renderList = objList || [];
 
@@ -111,7 +114,7 @@ export default class ShaderColor extends Shader {
 
             //console.log( 'gl:' + gl + ' canvas:' + canvas + ' mat4:' + mat4 + ' vec3:' + vec3 + ' pMatrix:' + pMatrix + ' mvMatrix:' + mvMatrix + ' program:' + program );
 
-            gl.useProgram( program.shaderProgram );
+            gl.useProgram( shaderProgram );
 
             // Reset perspective matrix.
 

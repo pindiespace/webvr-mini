@@ -52,7 +52,7 @@ export default class ShaderDirlightTexture extends Shader {
 
             '    vTextureCoord = aTextureCoord;',
 
-            '   if(uUseLighting) {',
+            '   if(!uUseLighting) {',
 
             '       vLightWeighting = vec3(1.0, 1.0, 1.0);',
 
@@ -141,6 +141,10 @@ export default class ShaderDirlightTexture extends Shader {
         let vsVars = arr[8];
         let fsVars = arr[9];
 
+        // Shorter reference.
+
+        let shaderProgram = program.shaderProgram;
+
         window.vsVars = vsVars; ////////////////////////////
         window.fsVars = fsVars;
 
@@ -148,25 +152,19 @@ export default class ShaderDirlightTexture extends Shader {
 
         let lighting = true;
 
-        let ambient = [ 100, 10, 20 ]; // ambient colors
+        let ambient = [ 0.1, 0.1, 0.1 ]; // ambient colors WORKING
 
-        let direction = [ 1, 1, 1 ]; // light direction
+        let lightingDirection = [  //TODO: REDO
+            -0.25,
+            -0.5,
+            -0.1
+        ];
+
+        let directionalColor = [ 0.7, 0.7, 0.7];
 
         let nMatrix = mat3.create(); // TODO: ADD MAT3 TO PASSED VARIABLES
 
-        let mv3Matrix = mat3.create(); // upper 3x3 of Model-View matrix
-
-        let lightingDirection = [  //TODO: REDO
-            1,
-            1,
-            1
-        ];
-
         let adjustedLD = vec3.create(); // TODO: redo
-
-        vec3.normalize( lightingDirection, adjustedLD );
-
-        vec3.scale( adjustedLD, -1 );
 
         // Attach objects.
 
@@ -184,26 +182,20 @@ export default class ShaderDirlightTexture extends Shader {
 
             obj.setMV( mvMatrix );
 
-            //mat4.toInverseMat3( mvMatrix, nMatrix );
+            // Compute lighting normals.
 
-            // TODO: PUT THIS IN CORRECTLY
-            mv3Matrix = mat4.toMat3( mvMatrix );
+            vec3.normalize( adjustedLD, lightingDirection );
 
-            mat3.toInverse( nMatrix, mv3Matrix );
+            vec3.scale( adjustedLD, adjustedLD, -1 );
 
-            nMatrix = mat3.toMat4( nMatrix );
+            // Calculates a 3x3 normal matrix (transpose inverse) from the 4x4 matrix.
 
+            mat3.normalFromMat4( nMatrix, mvMatrix );
 
             // glmat3 library
             //mat4.normalFromMat4( nMatrix, mvMatrix );
 
-            // TODO: no conversion to mat3 available in glmatrix!!!!!!
-
-            // TODO: needs to be updated. mat3.invert()
-
-            mat4.transpose( nMatrix );
-
-            // Custom updates go here.
+            // Custom updates go here, make local references to vsVars and fsVars.
 
         }
 
@@ -211,7 +203,7 @@ export default class ShaderDirlightTexture extends Shader {
 
             //console.log( 'gl:' + gl + ' canvas:' + canvas + ' mat4:' + mat4 + ' vec3:' + vec3 + ' pMatrix:' + pMatrix + ' mvMatrix:' + mvMatrix + ' program:' + program );
 
-            gl.useProgram( program.shaderProgram );
+            gl.useProgram( shaderProgram );
 
             // Reset perspective matrix.
 
@@ -227,8 +219,6 @@ export default class ShaderDirlightTexture extends Shader {
 
                 if ( ! obj.textures[0] || ! obj.textures[0].texture ) continue;
 
-                console.log('x')
-
                 // Update Model-View matrix with standard Prim values.
 
                 program.update( obj, mvMatrix );
@@ -240,9 +230,9 @@ export default class ShaderDirlightTexture extends Shader {
                 gl.vertexAttribPointer( vsVars.attribute.vec3.aVertexPosition, obj.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0 );
 
                 // Bind normals buffer.
-
-                gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.normals.buffer );
-                gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, obj.geometry.normals.itemSize, gl.FLOAT, false, 0, 0);
+                gl.bindBuffer( gl.ARRAY_BUFFER, obj.geometry.normals.buffer );
+                gl.enableVertexAttribArray( vsVars.attribute.vec3.aVertexNormal );
+                gl.vertexAttribPointer( vsVars.attribute.vec3.aVertexNormal, obj.geometry.normals.itemSize, gl.FLOAT, false, 0, 0);
 
                 // Bind Textures buffer (could have multiple bindings here).
 
@@ -260,35 +250,34 @@ export default class ShaderDirlightTexture extends Shader {
 
                 // Lighting flag.
 
-                gl.uniform1i( vsVars.attribute.bool.useLightingUniform, lighting );
+                gl.uniform1i( vsVars.uniform.bool.uUseLighting, lighting );
 
                 if ( lighting ) {
 
-                    // Lighting color uniform.
-
                     gl.uniform3f(
-                        vsVars,attribute.vec3.ambientColorUniform,
+                        vsVars.uniform.vec3.uAmbientColor,
                         ambient[0],
                         ambient[1],
                         ambient[2]
                     );
 
-                    gl.uniform3f(
-                        vsVars.attribute.vec3.directionalColorUniform,
-                        direction[0],
-                        direction[1],
-                        direction[2]
-                        );
+                    gl.uniform3fv( 
+                        vsVars.uniform.vec3.uLightingDirection, 
+                        adjustedLD 
+                    );
 
-                    vec3.normalize( lightingDirection, adjustedLD );
-                    vec3.scale( adjustedLD, -1 );
-                    gl.uniform3fv( vsVars.attribute.vec3.lightingDirectionUniform, adjustedLD );
+                    gl.uniform3f(
+                        vsVars.uniform.vec3.uDirectionalColor,
+                        directionalColor[0],
+                        directionalColor[1],
+                        directionalColor[2]
+                    );
 
                 }
 
                 // Normals matrix uniform
 
-                gl.uniformMatrix3fv( vsVars.attribute.vec3.nMatrixUniform, false, nMatrix );
+                gl.uniformMatrix3fv( vsVars.uniform.mat3.uNMatrix, false, nMatrix );
 
                 // Set perspective and model-view matrix uniforms.
 

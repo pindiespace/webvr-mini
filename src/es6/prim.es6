@@ -137,11 +137,11 @@ export default class prim {
 
         let gl = this.webgl.getContext();
 
-        let x = prim.dimensions[0] / 2;
+        let x = prim.dimensions[ 0 ] / 2;
 
-        let y = prim.dimensions[1] / 2;
+        let y = prim.dimensions[ 1 ] / 2;
 
-        let z = prim.dimensions[2] / 2 ;
+        let z = prim.dimensions[ 2 ] / 2 ;
 
         // Create cube geometry.
 
@@ -263,9 +263,9 @@ export default class prim {
 
         let nBuffer = gl.createBuffer();
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, nBuffer);
+        gl.bindBuffer( gl.ARRAY_BUFFER, nBuffer );
 
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array( normals ), gl.STATIC_DRAW);
+        gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( normals ), gl.STATIC_DRAW );
 
         let colors = [
             // Front face
@@ -302,9 +302,9 @@ export default class prim {
 
         let cBuffer = gl.createBuffer();
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
+        gl.bindBuffer( gl.ARRAY_BUFFER, cBuffer );
 
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array( colors ), gl.STATIC_DRAW);
+        gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( colors ), gl.STATIC_DRAW );
 
         let indices = [
             0, 1, 2,      0, 2, 3,    // Front face
@@ -317,9 +317,9 @@ export default class prim {
 
         let iBuffer = gl.createBuffer();
 
-        gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, iBuffer);
+        gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, iBuffer );
 
-        gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( indices ), gl.STATIC_DRAW);
+        gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( indices ), gl.STATIC_DRAW );
 
         // Return standard geo object.
 
@@ -669,6 +669,10 @@ export default class prim {
 
         prim.orbitAngular = 0.0;
 
+        // Waypoints for scripted motion.
+
+        prim.waypoints = [];
+
         // Store multiple textures for one Prim.
 
         prim.textures = [];
@@ -766,8 +770,6 @@ export default class prim {
             ', ' + cube.geometry.indices.numItems + 
             ', normals:' + cube.geometry.normals.itemSize + 
             ', ' + cube.geometry.normals.numItems );
-
-
 
         this.objs.push( cube );
 

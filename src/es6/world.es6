@@ -165,9 +165,11 @@ export default class world {
 
         this.webgl.clear();
 
-        //////////////////this.vs1.render();
+        // TODO: Don't render until we update in the correct order.
 
-        ////////////////////this.vs2.render();
+        this.vs1.render();
+
+        this.vs2.render();
 
         this.vs3.render();
 

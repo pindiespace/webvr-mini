@@ -109,6 +109,8 @@ export default class ShaderTexture extends Shader {
 
         // Attach objects.
 
+        let shaderProgram = program.shaderProgram;
+
         program.renderList = objList || [];
 
         // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
@@ -131,7 +133,7 @@ export default class ShaderTexture extends Shader {
 
             //console.log( 'gl:' + gl + ' canvas:' + canvas + ' mat4:' + mat4 + ' vec3:' + vec3 + ' pMatrix:' + pMatrix + ' mvMatrix:' + mvMatrix + ' program:' + program );
 
-            gl.useProgram( program.shaderProgram );
+            gl.useProgram( shaderProgram );
 
             // Reset perspective matrix.
 

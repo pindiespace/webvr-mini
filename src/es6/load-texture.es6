@@ -116,7 +116,7 @@ export default class LoadTexture extends LoadPool {
      */
     uploadTexture ( loadObj, callback ) {
 
-        console.log( 'In uploadTexture() for src:' + loadObj.image.src + ' prim:' + loadObj.prim.name );
+        console.log( 'In uploadTexture() for:' + loadObj.prim.name + ' src:' + loadObj.image.src );
 
         let gl = this.webgl.getContext();
 

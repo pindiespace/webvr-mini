@@ -16,7 +16,7 @@ export default class WebGL {
 
         console.log( 'in webGL class' );
 
-        this.gl = this.vs = this.vs = null;
+        this.gl = null;
 
         this.contextCount = 0;
 
@@ -350,6 +350,14 @@ export default class WebGL {
      */
     createContext ( canvas ) {
 
+        if ( ! window.WebGLRenderingContext ) {
+
+            console.error( 'this browser does not support webgl' );
+
+            return null;
+
+        }
+
         let gl = null;
 
         if ( gl && this.contextCount > 1 ) {
@@ -378,9 +386,7 @@ export default class WebGL {
 
                     gl = this.debug.makeDebugContext( canvas.getContext( n[ i ] ) );
 
-                    window.gl = gl
-
-                    console.warn( 'using experimental webgl debug context' );
+                    console.warn( 'using debug context mode' );
 
                     break;
 
@@ -401,7 +407,15 @@ export default class WebGL {
 
                 this.glVersStr = gl.getParameter( gl.VERSION ).toLowerCase();
 
-                // Take action, dependin on version.
+                if ( i == 1 || i == 3 ) {
+
+                    console.warn( 'experimental context, .getParameter() may not work' );
+
+                }
+
+                console.log( 'using ' + this.glVersStr );
+
+                // Take action, depending on version.
 
                 switch ( i ) {
 
@@ -438,6 +452,8 @@ export default class WebGL {
             this.contextCount++;
 
         }
+
+        console.log( 'WebGL context:' + n[i] + ' ' + this.glVers );
 
         return this.gl;
 
@@ -547,11 +563,11 @@ export default class WebGL {
 
             if ( type === gl.VERTEX_SHADER ) {
 
-                shader = this.vs = gl.createShader( type ); // assigned VS
+                shader = gl.createShader( type ); // assigned VS
 
             } else if ( type === gl.FRAGMENT_SHADER ) {
 
-                shader = this.fs = gl.createShader( type ); // assigned FS
+                shader = gl.createShader( type ); // assigned FS
 
             } else {
 
@@ -567,16 +583,6 @@ export default class WebGL {
             if ( ! gl.getShaderParameter( shader, gl.COMPILE_STATUS ) ) {
 
                 console.error( 'createShader:' + gl.getShaderInfoLog( shader ) );
-
-                if ( type === gl.VERTEX_SHADER ) {
-
-                    this.vs = null;
-
-                } else if ( type == gl.FRAGMENT_SHADER ) {
-
-                    this.fs = null;
-
-                }
 
                 shader = null;
 
@@ -757,6 +763,8 @@ export default class WebGL {
 
                 console.error( 'createProgram:' + gl.getProgramInfoLog( program ) );
 
+                this.checkShaders( vs, fs, program );
+
             } else {
 
                 prg.shaderProgram = program;
@@ -864,7 +872,7 @@ export default class WebGL {
 
     }
 
-    setAttributeLocations ( shaderProgram, attributes ) {
+    setAttributeArrays ( shaderProgram, attributes ) {
 
         let gl = this.gl;
 
@@ -880,7 +888,7 @@ export default class WebGL {
 
                 gl.enableVertexAttribArray( attb[ j ] );
 
-                console.log("gl.getAttribLocation( shaderProgram, '" + j + "' ) is:" + attb[ j ] );
+                console.log('gl.enableVertexAttribArray( shaderProgram, "' + j + '" ) is:' + attb[ j ] );
 
             }
 
@@ -1238,21 +1246,21 @@ export default class WebGL {
      * check to see if we're ready to run, after supplying 
      * shaders.
      */
-    checkShaders () {
+    checkShaders ( vs, fs, program ) {
 
         let gl = this.gl;
 
-        if ( ! gl.getProgramParameter( this.program, gl.LINK_STATUS ) ) {
+        if ( ! gl.getProgramParameter( program, gl.LINK_STATUS ) ) {
 
             // Test the vertex shader
 
-             if ( this.vs && ! gl.getShaderParameter( this.vs, gl.COMPILE_STATUS ) ) {
+             if ( vs && ! gl.getShaderParameter( vs, gl.COMPILE_STATUS ) ) {
 
-                console.error( 'error creating the vertex shader, ' + gl.getShaderInfoLog( this.vs ) );
+                console.error( 'error creating the vertex shader, ' + gl.getShaderInfoLog( vs ) );
 
-            } else if (this._fragmentShader && !gl.getShaderParameter(this._fragmentShader, gl.COMPILE_STATUS ) ) {
+            } else if ( fs && !gl.getShaderParameter( fs, gl.COMPILE_STATUS ) ) {
 
-                console.error(  'error creating the fragment shader, ' + gl.getShaderInfoLog( this.fs ) );
+                console.error(  'error creating the fragment shader, ' + gl.getShaderInfoLog( fs ) );
 
             } else {
 
@@ -1260,13 +1268,7 @@ export default class WebGL {
 
             }
 
-            gl.deleteProgram( this.program );
-
-            gl.deleteShader( this.vs );
-
-            gl.deleteShader( this.fs );
-
-            this.program = this.vs = this.fs = null;
+            gl.deleteProgram( program );
 
             return false;
 
@@ -1281,7 +1283,7 @@ export default class WebGL {
      */
     checkBufferObjects ( bo ) {
 
-        return (bo && bo instanceof ArrayBuffer );
+        return ( bo && bo instanceof ArrayBuffer );
 
     }
 

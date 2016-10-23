@@ -124,7 +124,7 @@ export default class Shader {
             program,
 
             {
-                attribute: this.webgl.setAttributeLocations( program.shaderProgram, program.vsVars.attribute ),
+                attribute: this.webgl.setAttributeArrays( program.shaderProgram, program.vsVars.attribute ),
 
                 uniform: this.webgl.setUniformLocations( program.shaderProgram, program.vsVars.uniform )
 
