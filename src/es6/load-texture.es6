@@ -116,7 +116,7 @@ export default class LoadTexture extends LoadPool {
      */
     uploadTexture ( loadObj, callback ) {
 
-        console.log( 'In uploadTexture() for src:' + loadObj.image.src );
+        console.log( 'In uploadTexture() for src:' + loadObj.image.src + ' prim:' + loadObj.prim.name );
 
         let gl = this.webgl.getContext();
 
@@ -136,11 +136,13 @@ export default class LoadTexture extends LoadPool {
 
         if ( textureObj.image ) {
 
-                gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureObj.image );
+            console.log( 'binding image:' + textureObj.image.src );
+
+            gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureObj.image );
 
         } else {
 
-            console.error( 'no loadObj.image for:' + textureObj.image.src + ', default pixel texture' );
+            console.error( 'no loadObj.image for:' + textureObj.image.src + ', using default pixel texture' );
 
             gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, this.greyPixel );
 
@@ -169,6 +171,8 @@ export default class LoadTexture extends LoadPool {
         gl.bindTexture( gl.TEXTURE_2D, null );
 
         textures.push( textureObj );
+
+        window.prim = loadObj.prim;
 
         // Clear the object for re-use.
 

@@ -96,22 +96,24 @@ export default class LoadPool {
 
         let lLen = loadCache.length;
 
-        //////////////////////////console.log('lLen:' + lLen);
-        //////////////////////////console.log('wLen:' + wLen);
-
-        // we just finished a texture, and it is available for new loads.
-
-        let waitObj = waitCache.shift();
+        let waitObj = waitCache[0];
 
         console.log( 'in update(), have a waitObj waiting...' + waitObj.source );
 
         if ( loadObj && loadObj.busy === false ) {
 
-            console.log( 'in update(), re-using a loader object' );
+            console.log( 'in update(), re-using a loader object:' + ' loadObj:' + loadObj + ' busy:' + loadObj.busy );
+            console.log( 'in update(), waitObj prim for re-use:' + waitObj.attach.name );
+
+            loadObj.prim = waitObj.attach;
 
             loadObj.image.src = waitObj.source;
 
+            waitCache.shift();
+
         } else {
+
+            console.log( 'in update(), no loadObj, loadCache.length:' + lLen + ', create a new one...' );
 
             for ( i; i < lLen; i++ ) {
 
@@ -120,6 +122,8 @@ export default class LoadPool {
                     console.log( 'in update(), creating a new Loader object' );
 
                     loadCache[ i ] = this.createLoadObj( waitObj );
+
+                    waitCache.shift();
 
                     break;
 

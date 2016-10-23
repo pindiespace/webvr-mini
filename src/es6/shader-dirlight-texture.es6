@@ -15,6 +15,10 @@ export default class ShaderDirlightTexture extends Shader {
      * VERTEX SHADER 3
      * a directionally-lit textured object vertex shader.
      * @link http://learningwebgl.com/blog/?p=684
+     * StackGL
+     * @link https://github.com/stackgl
+     * phong lighting
+     * @link https://github.com/stackgl/glsl-lighting-walkthrough
      * - vertex position
      * - texture coordinate
      * - model-view matrix
@@ -150,6 +154,8 @@ export default class ShaderDirlightTexture extends Shader {
 
         let nMatrix = mat3.create(); // TODO: ADD MAT3 TO PASSED VARIABLES
 
+        let mv3Matrix = mat3.create(); // upper 3x3 of Model-View matrix
+
         let lightingDirection = [  //TODO: REDO
             1,
             1,
@@ -178,9 +184,24 @@ export default class ShaderDirlightTexture extends Shader {
 
             obj.setMV( mvMatrix );
 
-            mat4.toInverseMat3( mvMatrix, nMatrix );
+            //mat4.toInverseMat3( mvMatrix, nMatrix );
 
-            mat3.transpose( nMatrix );
+            // TODO: PUT THIS IN CORRECTLY
+            mv3Matrix = mat4.toMat3( mvMatrix );
+
+            mat3.toInverse( nMatrix, mv3Matrix );
+
+            nMatrix = mat3.toMat4( nMatrix );
+
+
+            // glmat3 library
+            //mat4.normalFromMat4( nMatrix, mvMatrix );
+
+            // TODO: no conversion to mat3 available in glmatrix!!!!!!
+
+            // TODO: needs to be updated. mat3.invert()
+
+            mat4.transpose( nMatrix );
 
             // Custom updates go here.
 
@@ -205,6 +226,8 @@ export default class ShaderDirlightTexture extends Shader {
                 // Only render if we have at least one texture loaded.
 
                 if ( ! obj.textures[0] || ! obj.textures[0].texture ) continue;
+
+                console.log('x')
 
                 // Update Model-View matrix with standard Prim values.
 
