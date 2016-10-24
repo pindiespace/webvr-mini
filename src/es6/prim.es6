@@ -109,6 +109,152 @@ export default class prim {
 
     }
 
+    createBuffers ( gl, vertices, indices, texCoords, normals, colors ) {
+
+        // Vertex Buffer Object.
+
+        if ( ! vertices ) {
+
+            console.log( 'no vertices present, creating default' );
+
+            vertices = new Float32Array( [ 0, 0, 0 ] );
+        }
+
+        let vBuffer = gl.createBuffer();
+
+        gl.bindBuffer( gl.ARRAY_BUFFER, vBuffer );
+
+        gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( vertices ), gl.STATIC_DRAW );
+
+        if ( ! indices ) {
+
+            console.log( 'no indices present, creating default' );
+
+            indices = new Uint16Array( [ 1 ] );
+        }
+
+        // Index buffer.
+
+        let iBuffer = gl.createBuffer();
+
+        gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, iBuffer );
+
+        gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( indices ), gl.STATIC_DRAW );
+
+        if ( ! normals ) {
+
+            console.log( 'no normals, present, creating default' );
+
+            normals = new Float32Array( [ 0, 1, 0 ] );
+
+        }
+
+        // Normals buffer.
+
+        let nBuffer = gl.createBuffer();
+
+        gl.bindBuffer( gl.ARRAY_BUFFER, nBuffer );
+
+        gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( normals ), gl.STATIC_DRAW );
+
+        if ( ! texCoords ) {
+
+            console.warn( 'no texture present, creating default' );
+
+            texCoords = new Float32Array( [ 0, 0 ] );
+
+        }
+
+        // Texture Buffer.
+
+        let tBuffer = gl.createBuffer();
+
+        gl.bindBuffer( gl.ARRAY_BUFFER, tBuffer );
+
+        gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( texCoords ), gl.STATIC_DRAW );
+
+
+        if ( ! colors ) {
+
+            console.warn( 'no colors present, creating default' );
+
+            colors = new Float32Array( [ 0.2, 0.5, 0.2, 1.0 ] );
+
+        }
+
+        let cBuffer = gl.createBuffer();
+
+        gl.bindBuffer( gl.ARRAY_BUFFER, cBuffer );
+
+        gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( colors ), gl.STATIC_DRAW );
+
+        // Return a complete object. TODO: don't really need vertices except for debugging.
+
+        return {
+
+            vertices: {
+
+                data: vertices,
+
+                buffer: vBuffer,
+
+                itemSize: 3,
+
+                numItems: vertices.length / 3
+            },
+
+            texCoords: {
+
+                data: texCoords,
+
+                buffer: tBuffer,
+
+                itemSize: 2,
+
+                numItems: texCoords.length / 2
+
+            },
+
+            colors: {
+
+                data: colors,
+
+                buffer: cBuffer,
+
+                itemSize: 4,
+
+                numItems: colors.length / 4
+
+            },
+
+            normals: {
+
+                data: normals,
+
+                buffer: nBuffer,
+
+                itemSize: 3,
+
+                numItems: normals.length / 3
+
+            },
+
+            indices: {
+
+                data: indices,
+
+                buffer: iBuffer,
+
+                itemSize: 1,
+
+                numItems: indices.length
+
+            }
+
+        };
+
+    }
+
     /** 
      * GEOMETRIES
      */
@@ -178,15 +324,15 @@ export default class prim {
             -1.0,  1.0, -1.0
         ];
 
-        // Apply default transforms, centering on a Point and scaling.
+        let indices = [
+            0, 1, 2,      0, 2, 3,    // Front face
+            4, 5, 6,      4, 6, 7,    // Back face
+            8, 9, 10,     8, 10, 11,  // Top face
+            12, 13, 14,   12, 14, 15, // Bottom face
+            16, 17, 18,   16, 18, 19, // Right face //can't go to 30
+            20, 21, 22,   20, 22, 23  // Left face
+        ];
 
-        let vBuffer = gl.createBuffer();
-
-        gl.bindBuffer( gl.ARRAY_BUFFER, vBuffer );
-
-        gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( vertices ), gl.STATIC_DRAW );
-
-        //////////////////////////////////////
         let texCoords = [
             // Front face
             0.0, 0.0,
@@ -220,14 +366,6 @@ export default class prim {
             0.0, 1.0
         ];
 
-        let tBuffer = gl.createBuffer();
-
-        gl.bindBuffer( gl.ARRAY_BUFFER, tBuffer );
-
-        gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( texCoords ), gl.STATIC_DRAW );
-
-        // Do explicitly rather than computationally.
-        //https://dannywoodz.wordpress.com/2014/12/14/webgl-from-scratch-directional-lighting-part-1/ 
         let normals = [
             // Front face
             0.0,  0.0,  1.0,
@@ -260,12 +398,6 @@ export default class prim {
             -1.0,  0.0,  0.0,
             -1.0,  0.0,  0.0,
         ];
-
-        let nBuffer = gl.createBuffer();
-
-        gl.bindBuffer( gl.ARRAY_BUFFER, nBuffer );
-
-        gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( normals ), gl.STATIC_DRAW );
 
         let colors = [
             // Front face
@@ -300,91 +432,7 @@ export default class prim {
             0.0,  0.0,  1.0,  1.0     // blue
         ];
 
-        let cBuffer = gl.createBuffer();
-
-        gl.bindBuffer( gl.ARRAY_BUFFER, cBuffer );
-
-        gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( colors ), gl.STATIC_DRAW );
-
-        let indices = [
-            0, 1, 2,      0, 2, 3,    // Front face
-            4, 5, 6,      4, 6, 7,    // Back face
-            8, 9, 10,     8, 10, 11,  // Top face
-            12, 13, 14,   12, 14, 15, // Bottom face
-            16, 17, 18,   16, 18, 19, // Right face //can't go to 30
-            20, 21, 22,   20, 22, 23  // Left face
-        ];
-
-        let iBuffer = gl.createBuffer();
-
-        gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, iBuffer );
-
-        gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( indices ), gl.STATIC_DRAW );
-
-        // Return standard geo object.
-
-        return {
-
-            vertices: {
-
-                data: vertices,
-
-                buffer: vBuffer,
-
-                itemSize: 3,
-
-                numItems: vertices.length / 3
-            },
-
-            texCoords: {
-
-                data: texCoords,
-
-                buffer: tBuffer,
-
-                itemSize: 2,
-
-                numItems: texCoords.length / 2
-
-            },
-
-            colors: {
-
-                data: colors,
-
-                buffer: cBuffer,
-
-                itemSize: 4,
-
-                numItems: colors.length / 4
-
-            },
-
-            normals: {
-
-                data: normals,
-
-                buffer: nBuffer,
-
-                itemSize: 3,
-
-                numItems: normals.length / 3
-
-            },
-
-            indices: {
-
-                data: indices,
-
-                buffer: iBuffer,
-
-                itemSize: 1,
-
-                numItems: indices.length
-
-            }
-
-        }
+        return this.createBuffers ( gl, vertices, indices, texCoords, normals, colors )
 
     }
 

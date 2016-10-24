@@ -167,11 +167,11 @@ export default class world {
 
         // TODO: Don't render until we update in the correct order.
 
-        this.vs1.render();
+        this.vs3.render();
 
         this.vs2.render();
 
-        this.vs3.render();
+        this.vs1.render();
 
         requestAnimationFrame( this.render );
 
