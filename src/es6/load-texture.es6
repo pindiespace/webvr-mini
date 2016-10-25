@@ -140,6 +140,8 @@ export default class LoadTexture extends LoadPool {
 
             gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureObj.image );
 
+            // TODO: WHEN TO USE gl.renderBufferStorage()???
+
         } else {
 
             console.error( 'no loadObj.image for:' + textureObj.image.src + ', using default pixel texture' );

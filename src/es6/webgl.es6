@@ -4,6 +4,12 @@ export default class WebGL {
      * References:
      * GL Tutorial: http://webglfundamentals.org
      * HTML5 Games code: http://www.wiley.com/WileyCDA/WileyTitle/productCd-1119975085.html
+     * Best Practices
+     * @link https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_best_practices
+     * WebGL tests:
+     * @link https://www.browserleaks.com/webgl
+     * WebGL cross-browser:
+     * @link http://codeflow.org/entries/2013/feb/22/how-to-write-portable-webgl/
      * Great WebGL Examples:
      * http://alteredqualia.com/
      * Toji: https://github.com/toji/webvr-samples
@@ -183,7 +189,9 @@ export default class WebGL {
 
                     let stats = this.stats;
 
-                    stats.highp = gl.getShaderPrecisionFormat( gl.FRAGMENT_SHADER, gl.HIGH_FLOAT );
+                    // Check if high precision supported in fragment shader.
+
+                    stats.highp = (gl.getShaderPrecisionFormat( gl.FRAGMENT_SHADER, gl.HIGH_FLOAT ).precision );
 
                     // Max texture size, for gl.texImage2D.                
 

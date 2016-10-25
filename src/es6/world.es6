@@ -36,7 +36,7 @@ export default class world {
 
         this.mvMatrix = this.glMatrix.mat4.create();
 
-        this.timeOld = this.time = 0;
+        this.last = performance.now();
 
         // Bind the render loop (best current method)
 
@@ -98,8 +98,6 @@ export default class world {
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
-        window.cube1 = this.textureObjList[0]; //////////////////////////////////////////////
-
         this.vs1 = this.renderer.shaderTexture.init( this.textureObjList );
 
         ///////////////////////////////////////
@@ -154,8 +152,8 @@ export default class world {
         ];
 
 
-        this.prim.createTerrain(
-            'lit cube',
+        let t = this.prim.createTerrain(
+            'terrain',
             1.0,
             vec3.fromValues( 1, 1, 1 ),            // dimensions
             vec3.fromValues( 8, 255, 8 ),          // divisions
@@ -166,6 +164,8 @@ export default class world {
             ['img/mozvr-logo1.png'],               // texture present, NOT USED
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         )
+
+        window.terrain =  t;
 
         // Finished object creation, start rendering...
 
@@ -186,6 +186,12 @@ export default class world {
     update () {
 
         // fps calculation.
+
+        let now = performance.now();
+
+        let delta = now - this.last;
+
+        this.last = now;
 
     }
 

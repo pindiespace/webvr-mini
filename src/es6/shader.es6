@@ -39,6 +39,18 @@ export default class Shader {
 
         this.mvMatrixStack = this.glMatrix.mat4.create();
 
+        this.floatp = ''
+
+        if ( this.webgl.stats.highp ) {
+
+            this.floatp = 'precision highp float;';
+
+        } else {
+
+            this.floatp = 'precision mediump float;';
+
+        }
+
         // If we need to load a vertext and fragment shader files (in text format), put their paths in derived classes.
 
         this.vertexShaderFile = null;

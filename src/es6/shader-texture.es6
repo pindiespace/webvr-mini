@@ -60,7 +60,9 @@ export default class ShaderTexture extends Shader {
 
         let s =  [
 
-            'precision mediump float;',
+            // 'precision mediump float;',
+
+            this.floatp,
 
             'varying vec2 vTextureCoord;',
 
