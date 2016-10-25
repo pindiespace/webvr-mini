@@ -111,6 +111,8 @@ export default class ShaderTexture extends Shader {
 
         let shaderProgram = program.shaderProgram;
 
+        window.vs1Vars = vsVars; /////////////////////////////////////////////////////////
+
         program.renderList = objList || [];
 
         // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
@@ -128,6 +130,8 @@ export default class ShaderTexture extends Shader {
             // Custom updates go here.
 
         }
+
+        // Rendering.
 
         program.render = () => {
 
@@ -159,7 +163,7 @@ export default class ShaderTexture extends Shader {
                 gl.enableVertexAttribArray( vsVars.attribute.vec3.aVertexPosition );
                 gl.vertexAttribPointer( vsVars.attribute.vec3.aVertexPosition, obj.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0 );
 
-                // Bind Textures (could have multiple bindings here).
+                // Bind Textures buffer (could have multiple bindings here).
 
                 gl.bindBuffer( gl.ARRAY_BUFFER, obj.geometry.texCoords.buffer );
                 gl.enableVertexAttribArray( vsVars.attribute.vec2.aTextureCoord );

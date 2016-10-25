@@ -372,7 +372,7 @@ export default class WebGL {
 
             this.contextCount--;
 
-            gl = null;
+            this.gl = null; // just in case
 
         }
 
@@ -388,26 +388,53 @@ export default class WebGL {
 
                     gl = this.debug.makeDebugContext( canvas.getContext( n[ i ] ) );
 
-                    console.warn( 'using debug context mode' );
+                    if ( gl ) {
 
-                    break;
+                        console.warn( 'using debug context mode' );
+
+                        break;
+                    }
 
                 } else {
 
                     gl = canvas.getContext( n[ i ] );
 
+                    if ( gl ) {
+
+                        console.warn ( ' using release context mode' );
+
+                        break;
+                    }
+
                 }
 
-            } catch( e ) {}
+            } catch( e ) {
+
+                console.warn( 'failed to load context:' + n[ i ] );
+
+            }
+
+            i++;
+
+        } // end of while loop
+
 
             /*
              * If we got a context, assign WebGL version. Note that some 
              * experimental versions don't have .getParameter
              */
 
-            if ( gl && gl.getParameter ) {
+            if ( gl && typeof gl.getParameter == 'function' ) {
 
-                this.glVersStr = gl.getParameter( gl.VERSION ).toLowerCase();
+                this.contextCount++;
+
+
+                this.gl = gl;
+
+
+                // Check if this is a full WebGL2 stack
+
+                this.glVers = gl.getParameter( gl.VERSION ).toLowerCase();
 
                 if ( i == 1 || i == 3 ) {
 
@@ -415,7 +442,7 @@ export default class WebGL {
 
                 }
 
-                console.log( 'using ' + this.glVersStr );
+                console.log( 'using ' + gl.getParameter( gl.VERSION));
 
                 // Take action, depending on version.
 
@@ -423,12 +450,16 @@ export default class WebGL {
 
                     case 0:
                     case 1:
+                        //if ( ! gl.TRANSFORM_FEEDBACK ) {
+                            // revert to 1.0
+                        //    console.log("TRANSFORM FEEDBACK NOT SUPPORTED")
+                        //}
                         this.glVers = 2.0;
                         break;
 
                     case 2:
                     case 3:
-                        this.glVers = Math.ceil( parseFloat( this.glVersStr.substr( 6 ) ) );
+                        this.glVers = 1.0;
                         this.addVertexBufferSupport( gl );
                         break;
 
@@ -437,25 +468,8 @@ export default class WebGL {
 
                 }
 
-                break;
-
             }
 
-            i++;
-
-        } // end of while loop
-
-        // Assign.
-
-        this.gl = gl;
-
-        if ( this.gl && typeof this.gl.getParameter == 'function' ) {
-
-            this.contextCount++;
-
-        }
-
-        console.log( 'WebGL context:' + n[i] + ' ' + this.glVers );
 
         return this.gl;
 
@@ -874,6 +888,9 @@ export default class WebGL {
 
     }
 
+    /** 
+     * assign the attribute arrays.
+     */
     setAttributeArrays ( shaderProgram, attributes ) {
 
         let gl = this.gl;
@@ -882,15 +899,13 @@ export default class WebGL {
 
             let attb = attributes[ i ];
 
-            /////////////////////console.log('PGGGG:' + attb );
+            // Note: we call glEnableAttribArray only when rendering
 
             for ( let j in attb ) {
 
                 attb[ j ] = gl.getAttribLocation( shaderProgram, j );
 
-                gl.enableVertexAttribArray( attb[ j ] );
-
-                console.log('gl.enableVertexAttribArray( shaderProgram, "' + j + '" ) is:' + attb[ j ] );
+                console.log('gl.getAttribLocation( shaderProgram, "' + j + '" ) is:' + attb[ j ] );
 
             }
 
@@ -907,8 +922,6 @@ export default class WebGL {
         for ( let i in uniforms ) {
 
             let unif = uniforms[ i ];
-
-            //////////////////////////////console.log('UGGGG:' + unif );
 
             for ( let j in unif ) {
 
@@ -935,15 +948,11 @@ export default class WebGL {
 
         if ( attribLocationMap ) {
 
-            this.attrib = {};
-
             for ( var attribName in attribLocationMap ) {
 
                 console.log('binding attribute:' + attribName + ' to:' + attribLocationMap[attribName]);
 
                 gl.bindAttribLocation( program, attribLocationMap[ attribName ], attribName );
-
-                this.attrib[ attribName ] = attribLocationMap[ attribName ];
 
             }
 
@@ -973,7 +982,7 @@ export default class WebGL {
 
             let attribInfo = gl.getActiveAttrib( program, i );
 
-            console.log("ADDING ATTRIB:" + attribInfo.name );
+            console.log("adding attribute:" + attribInfo.name );
 
             attrib[ attribInfo.name ] = gl.getAttribLocation( program, attribInfo.name );
 
@@ -1009,7 +1018,7 @@ export default class WebGL {
 
             uniformName = uniformInfo.name.replace( '[0]', '' );
 
-            console.log("ADDING UNIVORM:" + uniformName );
+            console.log("adding uniform:" + uniformName );
 
             uniform[ uniformName ] = gl.getUniformLocation( program, uniformName );
 

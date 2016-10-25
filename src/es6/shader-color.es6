@@ -94,6 +94,10 @@ export default class ShaderColor extends Shader {
 
         let shaderProgram = program.shaderProgram;
 
+        window.vs2Vars = vsVars; /////////////////////////////////////////////////////////
+
+        let counter = 0;
+
         program.renderList = objList || [];
 
         // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
@@ -109,6 +113,8 @@ export default class ShaderColor extends Shader {
             // Custom updates go here.
 
         }
+
+        // Rendering.
 
         program.render = () => {
 
@@ -141,6 +147,7 @@ export default class ShaderColor extends Shader {
                 gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.colors.buffer );
                 gl.enableVertexAttribArray( vsVars.attribute.vec4.aVertexColor );
                 gl.vertexAttribPointer(vsVars.attribute.vec4.aVertexColor, obj.geometry.colors.itemSize, gl.FLOAT, false, 0, 0);
+                //gl.disableVertexAttribArray( vsVars.attribute.vec4.aVertexColor );
 
                 // Bind indices buffer.
 

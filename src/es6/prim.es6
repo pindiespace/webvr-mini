@@ -955,6 +955,7 @@ export default class prim {
             for (col = 0; col <= subdivisionsX; col++) {
 
                 // TODO COMPUTE Y RELATIVE TO SAMPLE FROM HEIGHTMAP
+
                 let y = 0;
 
                 var position = [

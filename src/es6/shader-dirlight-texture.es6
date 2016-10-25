@@ -145,8 +145,9 @@ export default class ShaderDirlightTexture extends Shader {
 
         let shaderProgram = program.shaderProgram;
 
-        window.vsVars = vsVars; ////////////////////////////
-        window.fsVars = fsVars;
+
+        window.vs3Vars = vsVars; /////////////////////////////////////////////////////////
+
 
         // TODO: TEMPORARY ADD LIGHTING CONTROL
 
@@ -198,6 +199,8 @@ export default class ShaderDirlightTexture extends Shader {
             // Custom updates go here, make local references to vsVars and fsVars.
 
         }
+
+        // Rendering.
 
         program.render = () => {
 

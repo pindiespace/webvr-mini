@@ -98,6 +98,7 @@ export default class world {
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
+        window.cube1 = this.textureObjList[0]; //////////////////////////////////////////////
 
         this.vs1 = this.renderer.shaderTexture.init( this.textureObjList );
 
