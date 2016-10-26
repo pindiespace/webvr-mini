@@ -39,7 +39,7 @@ export default class LoadPool {
      */
     createWaitObj ( source, attach, callback ) {
 
-        console.log( 'creating wait object...' + source );
+        /////////////console.log( 'creating wait object...' + source );
 
         this.loadCt++;
 
@@ -64,7 +64,7 @@ export default class LoadPool {
      */
     update ( loadObj ) {
 
-        console.log( 'in loadTexture.update()' );
+        /////////////console.log( 'in loadTexture.update()' );
 
         let waitCache = this.waitCache;
 
@@ -72,7 +72,7 @@ export default class LoadPool {
 
         if ( wLen < 1 ) {
 
-            console.log( 'all objects loaded, nothing to do...' );
+            console.log( 'all assets loaded for:' + loadObj.prim.name );
 
             this.ready = true;
 
@@ -92,11 +92,11 @@ export default class LoadPool {
 
         let waitObj = waitCache[0];
 
-        console.log( 'in update(), have a waitObj waiting...' + waitObj.attach.name + ' src:' + waitObj.source );
+        /////////console.log( 'in update(), have a waitObj waiting...' + waitObj.attach.name + ' src:' + waitObj.source );
 
         if ( loadObj && loadObj.busy === false ) {
 
-            console.log( 're-using a loader object:' + ' loadObj:' + loadObj  );
+            //////////console.log( 're-using a loader object:' + ' loadObj:' + loadObj  );
 
             loadObj.prim = waitObj.attach;
 
@@ -110,7 +110,7 @@ export default class LoadPool {
 
                 if ( ! loadCache[ i ] ) {
 
-                    console.log( 'creating a new Loader object at cache pos:' + i );
+                    //////////console.log( 'creating a new Loader object at cache pos:' + i );
 
                     loadCache[ i ] = this.createLoadObj( waitObj );
 

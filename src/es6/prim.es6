@@ -417,6 +417,8 @@ export default class prim {
                 faceNormalx /= length; // normalize this normal
                 faceNormaly /= length;
                 faceNormalz /= length;
+
+                //////////////console.log( 'faceNormalx:' + faceNormalx + ' faceNormalx:' + faceNormaly + ' faceNormalz:' + faceNormalz);
                 normals[i1 * 3] += faceNormalx; // accumulate all the normals per face
                 normals[i1 * 3 + 1] += faceNormaly;
                 normals[i1 * 3 + 2] += faceNormalz;
@@ -918,15 +920,36 @@ export default class prim {
 
     }
 
+    initHeightMap ( dimensions, divisions ) {
+
+        let vec3 = this.glMatrix.vec3;
+ 
+        let hm = [];
+
+        for ( let i = 0; i < divisions[0]; i++ ) {
+
+            for ( let j = 0; j < divisions[2]; j++ ) {
+
+                hm.push( 0.0 );
+
+            }
+        }
+
+        return hm;
+
+    }
+
     /** 
      * Terrain generated via a heightmap. HeightMap MUST match 
      * divisions in X and Z coordinates.
      * https://github.com/BabylonJS/Babylon.js/blob/3fe3372053ac58505dbf7a2a6f3f52e3b92670c8/src/Mesh/babylon.mesh.vertexData.js
      * TODO: assumes a square Prim!!!!!!!!!!!!!
      */
-    geometryTerrain ( prim, heightMap ) {
+    geometryTerrain ( prim ) {
 
         let gl = this.webgl.getContext();
+
+        let vec4 = this.glMatrix.vec4;
 
         let vec3 = this.glMatrix.vec3;
 
@@ -938,45 +961,76 @@ export default class prim {
         let normals = [];
         let colors = [];
 
-        var row, col;
+        let row, col;
 
-        var width = prim.dimensions.width;
+        let width = prim.dimensions[0];
 
-        var height = prim.dimensions.height;
+        let height = prim.dimensions[1];
 
         let divisions = prim.divisions;
 
-        var subdivisionsX = divisions[0] || 1;
+        let subdivisionsX = prim.divisions[0] || 1;
 
-        var subdivisionsZ = divisions[2] || divisions[0] || 1;
-        
+        let subdivisionsZ = prim.divisions[2] || prim.divisions[0] || 1;
+
+        if ( ! prim.heightMap ) {
+
+            console.warn( 'terrain:' + prim.name + ' no heightmap, creating default' );
+
+            prim.heightMap = this.initHeightMap( prim.dimensions, prim.divisions );
+
+        }
+
+        // Create vector heightmap and default colors.
+
+        let ct = 0;
+
         for (row = 0; row <= subdivisionsZ; row++) {
 
             for (col = 0; col <= subdivisionsX; col++) {
 
-                // TODO COMPUTE Y RELATIVE TO SAMPLE FROM HEIGHTMAP
+                // TODO: COMPUTE Y RELATIVE TO SAMPLE FROM HEIGHTMAP
 
-                let y = 0;
+                let y = prim.heightMap[ct++] / 256; /////// MAX HEIGHT = HEIGHT OF SIM
 
-                var position = [
+                let normal = [0, 1.0, 0];
+
+                //console.log('row:' + row  + ' col:' + col + ' width:' + width + ' height:' + height + ' subdivisionsX:' + subdivisionsZ + ' subdivisionsZ:' + subdivisionsZ)
+
+                vertices.push( 
+
                     (col * width) / subdivisionsX - (width / 2.0), 
                     y, 
                     ((subdivisionsZ - row) * height) / subdivisionsZ - (height / 2.0)
-                ];
 
-                var normal = [0, 1.0, 0];
+                );
 
-                positions.push( position[0], position[1], position[2]);
+                //console.warn("row:" + row + " col:" + col + " VERTICES.length:" + vertices.length)
+
+                // Default normals.
 
                 normals.push(normal[0], normal[1], normal[2]);
 
-                textCoords.push(col / subdivisionsX, 1.0 - row / subdivisionsX);
+                // Texture coordinates.
 
-                colors.push( 0.5, 0.5, 0.5, 1.0 ); //TODO: COLORIZE
+                texCoords.push(col / subdivisionsX, 1.0 - row / subdivisionsX);
+
+                // Default colors.
+
+                let r = y;
+
+                let b = ( 1 - y );
+
+                let g = ( 1.0 - Math.abs(r - b) );
+
+                colors.push ( r, g, b, 1.0 );
+
 
             }
 
         }
+
+        // Indices.
 
         for (row = 0; row < subdivisionsZ; row++) {
 
@@ -993,13 +1047,9 @@ export default class prim {
 
         }
 
-        // Normals
+        // Normals.
 
-        this.computeNormals(vertices, indices, normals);
-
-        // Colors
-
-        // TODO: COLORS
+        this.computeNormals( vertices, indices, normals );
 
         return this.createBuffers ( gl, vertices, indices, texCoords, normals, colors );
 
@@ -1040,7 +1090,7 @@ export default class prim {
      * @param {String} textureImage the path to an image used to create a texture.
      * @param {GLMatrix.vec4} color the default color of the object.
      */
-    createPrim ( name = 'unknown', scale = 1.0, dimensions, divisions, position, acceleration, rotation, angular, textureImage, color, shaderId ) {
+    createPrim ( name = 'unknown', scale = 1.0, dimensions, divisions, position, acceleration, rotation, angular, textureImage, color ) {
 
         let gl = this.webgl.getContext();
 
@@ -1058,19 +1108,21 @@ export default class prim {
 
         prim.scale = scale;
 
-        prim.dimensions = dimensions || vec3.create( 1, 1, 1 );
+        prim.dimensions = dimensions || vec3.fromValues( 1, 1, 1 );
 
-        prim.position = position || vec3.create( 0, 0, 0 );
+        prim.divisions = divisions || vec3.fromValues( 1, 1, 1 );
 
-        prim.acceleration = acceleration || vec3.create( 0, 0, 0 );
+        prim.position = position || vec3.create();
+
+        prim.acceleration = acceleration || vec3.create();
 
         // The absolute .rotation object includes rotation on x, y, z axis
 
-        prim.rotation = rotation || vec3.create( 0, 0, 0 );
+        prim.rotation = rotation || vec3.create();
 
         // The acceleration object indicates velocity on angular motion in x, y, z
 
-        prim.angular = angular || vec3.create( 0, 0, 0 );
+        prim.angular = angular || vec3.create();
 
         // The orbit defines a center that the object orbits around, and orbital velocity.
 
@@ -1089,6 +1141,10 @@ export default class prim {
         // Store multiple sounds for one Prim.
 
         prim.audio = [];
+
+        // Store multiple videos for one Prim.
+
+        prim.video = [];
 
         // Multiple textures per Prim. Rendering defines how textures for each Prim type are used.
 
@@ -1135,7 +1191,6 @@ export default class prim {
 
             // If orbiting, set orbit.
 
-
             // Rotate.
 
             vec3.add( p.rotation, p.rotation, p.angular );
@@ -1148,9 +1203,7 @@ export default class prim {
 
         }
 
-        // Assign object to correct buffer, based on rendering.
-
-        prim.renderId = shaderId; // used in Renderer class
+        prim.renderId = -1; // NOT ASSIGNED. TODO: Assign a renderer to each Prim.
 
         // Prim transforms.
 
@@ -1163,7 +1216,7 @@ export default class prim {
      * @param {String} name of object
      * @param {Number} scale
      */
-    createCube ( name, scale, dimensions, divisions, position, acceleration, rotation, angular, textureImage, color, shaderId ) {
+    createCube ( name, scale, dimensions, divisions, position, acceleration, rotation, angular, textureImage, color ) {
 
         let cube = this.createPrim( name, scale, dimensions, divisions, position, acceleration, rotation, angular, textureImage, color );
 
@@ -1179,7 +1232,7 @@ export default class prim {
 
     }
 
-    createIcoSphere ( name, scale, dimensions, divisions, position, acceleration, rotation, angular, textureImage, color, shaderId ) {
+    createIcoSphere ( name, scale, dimensions, divisions, position, acceleration, rotation, angular, textureImage, color ) {
 
 
         let icoSphere = this.createPrim( name, scale, dimensions, divisions, position, acceleration, rotation, angular, textureImage, color );
@@ -1196,7 +1249,7 @@ export default class prim {
 
     }
 
-    createDome ( name, scale, dimensions, divisions, position, acceleration, rotation, angular, textureImage, color, shaderId ) {
+    createDome ( name, scale, dimensions, divisions, position, acceleration, rotation, angular, textureImage, color ) {
 
         let dome = this.createPrim( name, scale, dimensions, divisions, position, acceleration, rotation, angular, textureImage, color );
 
@@ -1212,12 +1265,18 @@ export default class prim {
 
     }
 
-    createTerrain ( name, scale, dimensions, divisions, position, acceleration, rotation, angular, textureImage, color, shaderId ) {
-
+    createTerrain ( name, scale, dimensions, divisions, position, acceleration, rotation, angular, textureImage, color, heightMap ) {
 
         let terrain = this.createPrim( name, scale, dimensions, divisions, position, acceleration, rotation, angular, textureImage, color );
 
-        return; ///////////TODO!!!!!!!!! AFTER IT WORKS!!!!!!!!!
+        if ( heightMap ) {
+
+            terrain.heightMap = heightMap;
+
+        } else {
+
+            terrain.heightMap = null;
+        }
 
         terrain.geometry = this.geometryTerrain( terrain );
 

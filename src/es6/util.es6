@@ -75,7 +75,7 @@ export default class Util {
      */
     primReadout ( prim ) {
 
-        console.log( 'PRIM name:' + prim.name + 'type:' + prim.type + 
+        console.log( 'prim:' + prim.name + 'type:' + prim.type + 
             ' vertex:' + prim.geometry.vertices.itemSize + 
             ', ' + prim.geometry.vertices.numItems + 
             ', texture:' + prim.geometry.texCoords.itemSize + 

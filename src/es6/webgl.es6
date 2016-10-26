@@ -913,7 +913,7 @@ export default class WebGL {
 
                 attb[ j ] = gl.getAttribLocation( shaderProgram, j );
 
-                console.log('gl.getAttribLocation( shaderProgram, "' + j + '" ) is:' + attb[ j ] );
+                //////////console.log('gl.getAttribLocation( shaderProgram, "' + j + '" ) is:' + attb[ j ] );
 
             }
 
@@ -935,7 +935,7 @@ export default class WebGL {
 
                 unif[ j ] = gl.getUniformLocation( shaderProgram, j );
 
-                console.log("gl.getUniformLocation( shaderProgram," + j + ") is:" + unif[ j ] );
+                ////////console.log("gl.getUniformLocation( shaderProgram," + j + ") is:" + unif[ j ] );
 
             }
 
@@ -990,7 +990,7 @@ export default class WebGL {
 
             let attribInfo = gl.getActiveAttrib( program, i );
 
-            console.log("adding attribute:" + attribInfo.name );
+            /////////console.log("adding attribute:" + attribInfo.name );
 
             attrib[ attribInfo.name ] = gl.getAttribLocation( program, attribInfo.name );
 

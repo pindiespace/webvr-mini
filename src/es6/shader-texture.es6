@@ -125,7 +125,7 @@ export default class ShaderTexture extends Shader {
 
         program.update = ( obj ) => {
 
-            // Standard mvMatrix updates.
+            // Standard Model-View (mvMatrix) updates, per Prim.
 
             obj.setMV( mvMatrix );
 
