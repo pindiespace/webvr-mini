@@ -2,6 +2,8 @@ export default class WebGL {
 
     /**
      * References:
+     * LiteGL
+     * @link https://github.com/jagenjo/litegl.js/tree/master/src
      * GL Tutorial: http://webglfundamentals.org
      * HTML5 Games code: http://www.wiley.com/WileyCDA/WileyTitle/productCd-1119975085.html
      * Best Practices

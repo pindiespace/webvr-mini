@@ -11,6 +11,9 @@ export default class Shader {
      * WebGL Stack
      * @link https://github.com/stackgl
      * 
+     * Some shaders
+     * https://github.com/jwagner/terrain
+     * 
      * Superfast Advanced Batch Processing
      * http://max-limper.de/tech/batchedrendering.html
      * 

@@ -915,20 +915,25 @@ export default class prim {
 
     /** 
      * Generic 3d shape (e.g. collada model).
+     * @link https://dannywoodz.wordpress.com/2014/12/16/webgl-from-scratch-loading-a-mesh/
+     * https://github.com/jagenjo/litegl.js/blob/master/src/mesh.js
      */
-    geometryShape ( prim ) {
+    geometryMesh ( prim ) {
 
     }
 
+    /** 
+     * Create a heightMap
+     */
     initHeightMap ( dimensions, divisions ) {
 
         let vec3 = this.glMatrix.vec3;
  
         let hm = [];
 
-        for ( let i = 0; i < divisions[0]; i++ ) {
+        for ( let i = 0; i < divisions[0]; i++ ) { // x
 
-            for ( let j = 0; j < divisions[2]; j++ ) {
+            for ( let j = 0; j < divisions[2]; j++ ) { // z
 
                 hm.push( 0.0 );
 
@@ -940,12 +945,170 @@ export default class prim {
     }
 
     /** 
+     * Generate an elevation map of a given width and height.
+     */
+    elevationMap ( width, height ) {
+
+       let m = [];
+
+        for ( let i = 0; i < width; i++ ) { // x
+
+            for ( let j = 0; j < height; j++ ) { // z
+
+                hm.push( 0.0 );
+
+            }
+        }
+
+        return m;
+
+    }
+
+
+    /** 
+     * Indices calculations:
+     * http://www.3dgep.com/multi-textured-terrain-in-opengl/
+     */
+    geometryTerr ( prim ) {
+
+
+        let gl = this.webgl.getContext();
+
+        let vec4 = this.glMatrix.vec4;
+
+        let vec3 = this.glMatrix.vec3;
+
+        let vec2 = this.glMatrix.vec2;
+
+        let vertices = [];
+        let indices = [];
+        let texCoords = [];
+        let normals = [];
+        let colors = [];
+
+        let row, col, index;
+
+        let dimensions = prim.dimensions;
+
+        let divisions = prim.divisions;
+
+        let width = dimensions[0];
+
+        let height = dimensions[2];
+
+        let terrainWidth = ( width - 1 );
+        let terrainHeight = ( height - 1 );
+ 
+        let halfTerrainWidth = terrainWidth * 0.5;
+        let halfTerrainHeight = terrainHeight * 0.5;
+
+        let S, T, X, Y, Z;
+
+        if ( ! prim.heightMap ) {
+
+            let hm = elevationMap( prim.dimensions[0], prim.dimensions[2] );
+
+        }
+
+        let ct = 0;
+/*
+        for ( row = 0; j < height; ++j ) { // row
+
+            for ( col = 0; i < width; ++i ) {  // col
+
+                index = ( j * width ) + i;
+
+                S = ( i / (width - 1) );
+                T = ( j / (height - 1) );
+
+                X = ( S * terrainWidth ) - halfTerrainWidth;
+
+                Y = prim.HeightMap [ ct++ ] / 255;
+
+                Z = ( T * terrainHeight ) - halfTerrainHeight;
+
+                vertices.push( X, Y, Z );
+
+                normals.push( 0, 0, 0 );
+
+                texCoords.push( S, T );
+
+            }
+
+        }
+
+        // Indices.
+        index = 0;
+
+        for (row = 0; row < (terrainHeight - 1); ++row ) {
+
+        for (col = 0; row < (terrainWidth - 1); ++col ) {
+
+            let vertexIndex = ( row * terrainWidth ) + i;
+
+            indices.push (
+                // Top triangle (T0)
+                vertexIndex,                          // V0
+                vertexIndex + terrainWidth + 1,       // V3
+                vertexIndex + 1,                      // V1
+                // Bottom triangle (T1)
+                vertexIndex,                          // V0
+                vertexIndex + terrainWidth,           // V2
+                vertexIndex + terrainWidth + 1        // V3
+            );
+
+            }
+        }
+
+        // Normals.
+
+        for ( ui = 0, len = indices.length; i < len; i += 3 ) {
+            let v0 = vertices[ indices[i + 0] ];
+            let v1 = vertices[ indices[i + 1] ];
+            let v2 = vertices[ indices[i + 2] ];
+            let v3 = [0,0,0];
+            let normal = vec3.normalize( vec3.cross(vec3.subtract(v3, v1, v0), vec3.subtract(v3, v2, v0 ) );
+ 
+            normals[ indices[i + 0] ] += normal;
+            normals[ indices[i + 1] ] += normal;
+            normals[ indices[i + 2] ] += normal;
+        }
+ 
+        for ( i = 0, len = normals.length; i < len; ++i ) {
+
+            normals[i] = vec3.normalize( normals[i] );
+ 
+        }
+*/
+
+    }
+
+    /** 
      * Terrain generated via a heightmap. HeightMap MUST match 
      * divisions in X and Z coordinates.
      * https://github.com/BabylonJS/Babylon.js/blob/3fe3372053ac58505dbf7a2a6f3f52e3b92670c8/src/Mesh/babylon.mesh.vertexData.js
      * TODO: assumes a square Prim!!!!!!!!!!!!!
      */
     geometryTerrain ( prim ) {
+
+        /*
+        // # P.xy store the position for which we want to calculate the normals
+  // # height() here is a function that return the height at a point in the terrain
+
+  // read neightbor heights using an arbitrary small offset
+  vec3 off = vec3(1.0, 1.0, 0.0);
+  float hL = height(P.xy - off.xz);
+  float hR = height(P.xy + off.xz);
+  float hD = height(P.xy - off.zy);
+  float hU = height(P.xy + off.zy);
+
+  // deduce terrain normal
+  N.x = hL - hR;
+  N.y = hD - hU;
+  N.z = 2.0;
+  N = normalize(N);
+  http://stackoverflow.com/questions/13983189/opengl-how-to-calculate-normals-in-a-terrain-height-grid
+  */
 
         let gl = this.webgl.getContext();
 
@@ -965,7 +1128,7 @@ export default class prim {
 
         let width = prim.dimensions[0];
 
-        let height = prim.dimensions[1];
+        let height = prim.dimensions[2];
 
         let divisions = prim.divisions;
 
@@ -993,7 +1156,7 @@ export default class prim {
 
                 let y = prim.heightMap[ct++] / 256; /////// MAX HEIGHT = HEIGHT OF SIM
 
-                let normal = [0, 1.0, 0];
+                if ( isNaN( y ) ) { y = 0; }
 
                 //console.log('row:' + row  + ' col:' + col + ' width:' + width + ' height:' + height + ' subdivisionsX:' + subdivisionsZ + ' subdivisionsZ:' + subdivisionsZ)
 
@@ -1009,7 +1172,7 @@ export default class prim {
 
                 // Default normals.
 
-                normals.push(normal[0], normal[1], normal[2]);
+                normals.push( 0, 1.0, 0 );
 
                 // Texture coordinates.
 
@@ -1174,6 +1337,9 @@ export default class prim {
         prim.children = [];
 
         // Standard Prim properties for position, translation, rotation, orbits. Used by shader/renderer objects (e.g. shaderTexture).
+
+        // Note: should use scale matrix
+        // TODO: @link https://nickdesaulniers.github.io/RawWebGL/#/16
 
         prim.setMV = ( mvMatrix ) => {
 

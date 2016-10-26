@@ -129,23 +129,6 @@ export default class world {
             46,  220, 114, 52,  193, 78,  170, 163
         ];
 
-
-        this.colorObjList.push( this.prim.createTerrain(
-            'terrain',
-            1.0,
-            vec3.fromValues( 1, 1, 1 ),            // dimensions
-            vec3.fromValues( 8, 255, 8 ),          // divisions
-            vec3.fromValues( 0, 0, -5 ),           // position (absolute)
-            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-            ['img/mozvr-logo1.png'],               // texture present, NOT USED
-            vec4.fromValues( 0.5, 1.0, 0.2, 1.0),  // color
-            heightMap                              // heightmap
-        ) );
-
-        window.terrain =  this.colorObjList[1];
-
         this.vs2 = this.renderer.shaderColor.init( this.colorObjList );
 
 // LIT TEXTURE SHADER.
@@ -165,6 +148,21 @@ export default class world {
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
+        this.dirlightTextureObjList.push( this.prim.createTerrain(
+            'terrain',
+            1.0,
+            vec3.fromValues( 1, 1, 1 ),            // dimensions
+            vec3.fromValues( 1, 255, 1 ),          // divisions
+            vec3.fromValues( 0, 0, -5 ),           // position (absolute)
+            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+            ['img/mozvr-logo1.png'],               // texture present, NOT USED
+            vec4.fromValues( 0.5, 1.0, 0.2, 1.0),  // color
+            null //heightMap                              // heightmap
+        ) );
+
+        window.terrain =  this.dirlightTextureObjList[1];
 
         this.vs3 = this.renderer.shaderDirlightTexture.init( this.dirlightTextureObjList );
 
