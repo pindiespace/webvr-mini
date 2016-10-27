@@ -233,6 +233,7 @@ export default class WebGL {
 
                 this.clearTextures();
 
+
                 // Default 3D enables.
 
                 gl.enable( gl.DEPTH_TEST );
@@ -256,6 +257,8 @@ export default class WebGL {
                 gl.pixelStorei( gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true );
 
                 gl.clearColor( 0.1, 0.1, 0.1, 1.0 );
+
+           
 
                 return this.gl;
 
@@ -479,7 +482,6 @@ export default class WebGL {
                 }
 
             }
-
 
         return this.gl;
 
