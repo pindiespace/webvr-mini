@@ -246,8 +246,12 @@ export default class WebGL {
 
                 gl.enable( gl.BLEND );              // Allow blending
 
-                gl.enable( gl.FOG );
+                // Fog NOT in Webgl use shader
+                //http://www.geeks3d.com/20100228/fog-in-glsl-webgl/
+                // http://in2gpu.com/2014/07/22/create-fog-shader/
+                //gl.enable( gl.FOG );
 
+                // set this for individual objects 
                 //gl.blendFunc( gl.SRC_ALPHA, gl.ONE );
 
                 /* 
@@ -403,7 +407,7 @@ export default class WebGL {
 
                     if ( gl ) {
 
-                        console.warn( 'using debug context mode' );
+                        console.warn( 'using debug context' );
 
                         break;
                     }
@@ -414,7 +418,7 @@ export default class WebGL {
 
                     if ( gl ) {
 
-                        console.warn ( ' using release context mode' );
+                        console.warn ( 'using release context mode' );
 
                         break;
                     }
@@ -455,7 +459,7 @@ export default class WebGL {
 
                 }
 
-                console.log( 'using ' + gl.getParameter( gl.VERSION));
+                console.log( 'version:' + gl.getParameter( gl.VERSION));
 
                 // Take action, depending on version.
 

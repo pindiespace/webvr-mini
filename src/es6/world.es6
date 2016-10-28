@@ -110,24 +110,13 @@ export default class world {
             1.0,
             vec3.fromValues( 1, 1, 1 ),            // dimensions
             vec3.fromValues( 1, 1, 1 ),            // divisions
-            vec3.fromValues( -5, 1, -3 ),          // position (absolute)
+            vec3.fromValues( -1, 2, -3 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 20 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 1 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
             ['img/webvr-logo3.png'],               // texture present, NOT USED
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
-
-        let heightMap = [
-            39,  159, 227, 15,  211, 206, 250, 110,
-            26,  6,   144, 71,  7,   117, 97,  46,
-            239, 14,  249, 13,  225, 26,  28,  197,
-            174, 58,  79,  25,  88,  236, 45,  243,
-            203, 240, 195, 100, 187, 12,  202, 167,
-            207, 209, 138, 33,  219, 152, 154, 55,
-            137, 238, 196, 209, 37,  27,  240, 97,
-            46,  220, 114, 52,  193, 78,  170, 163
-        ];
 
         this.vs2 = this.renderer.shaderColor.init( this.colorObjList );
 
@@ -148,12 +137,23 @@ export default class world {
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
+        let heightMap = [
+            39,  159, 227, 15,  211, 206, 250, 110,
+            26,  6,   144, 71,  7,   117, 97,  46,
+            239, 14,  249, 13,  225, 26,  28,  197,
+            174, 58,  79,  25,  88,  236, 45,  243,
+            203, 240, 195, 100, 187, 12,  202, 167,
+            207, 209, 138, 33,  219, 152, 154, 55,
+            137, 238, 196, 209, 37,  27,  240, 97,
+            46,  220, 114, 52,  193, 78,  170, 163
+        ];
+
         this.dirlightTextureObjList.push( this.prim.createTerrain(
             'terrain',
             1.0,
-            vec3.fromValues( 1, 1, 1 ),            // dimensions
-            vec3.fromValues( 1, 255, 1 ),          // divisions
-            vec3.fromValues( 0, 0, -5 ),           // position (absolute)
+            vec3.fromValues( 2, 2, 2 ),            // dimensions
+            vec3.fromValues( 100, 255, 100 ),          // divisions
+            vec3.fromValues(1.5, -3.5, -2 ),           // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x

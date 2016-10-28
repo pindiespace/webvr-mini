@@ -643,9 +643,56 @@ export default class prim {
 
     /** 
      * Sphere with polar points.
+     * http://learningwebgl.com/blog/?p=1253
      */
     geometrySphere ( prim ) {
+/*
+var vertexPositionData = [];
+    var normalData = [];
+    var textureCoordData = [];
+    for (var latNumber = 0; latNumber <= latitudeBands; latNumber++) {
+      var theta = latNumber * Math.PI / latitudeBands;
+      var sinTheta = Math.sin(theta);
+      var cosTheta = Math.cos(theta);
 
+      for (var longNumber = 0; longNumber <= longitudeBands; longNumber++) {
+        var phi = longNumber * 2 * Math.PI / longitudeBands;
+        var sinPhi = Math.sin(phi);
+        var cosPhi = Math.cos(phi);
+
+        var x = cosPhi * sinTheta;
+        var y = cosTheta;
+        var z = sinPhi * sinTheta;
+        var u = 1 - (longNumber / longitudeBands);
+        var v = 1 - (latNumber / latitudeBands);
+
+        normalData.push(x);
+        normalData.push(y);
+        normalData.push(z);
+        textureCoordData.push(u);
+        textureCoordData.push(v);
+        vertexPositionData.push(radius * x);
+        vertexPositionData.push(radius * y);
+        vertexPositionData.push(radius * z);
+      }
+    }
+Now that we have the vertices, we need to stitch them together by generating a list of vertex indices that contains sequences of six values, each representing a square expressed as a pair of triangles. Here's the code:
+
+    var indexData = [];
+    for (var latNumber = 0; latNumber < latitudeBands; latNumber++) {
+      for (var longNumber = 0; longNumber < longitudeBands; longNumber++) {
+        var first = (latNumber * (longitudeBands + 1)) + longNumber;
+        var second = first + longitudeBands + 1;
+        indexData.push(first);
+        indexData.push(second);
+        indexData.push(first + 1);
+
+        indexData.push(second);
+        indexData.push(second + 1);
+        indexData.push(first + 1);
+      }
+    }
+*/
     }
 
     /** 
@@ -955,7 +1002,7 @@ export default class prim {
 
             for ( let j = 0; j < height; j++ ) { // z
 
-                hm.push( 0.0 );
+                m.push( 0.0 );
 
             }
         }
@@ -969,7 +1016,7 @@ export default class prim {
      * Indices calculations:
      * http://www.3dgep.com/multi-textured-terrain-in-opengl/
      */
-    geometryTerr ( prim ) {
+    geometryTerrain ( prim ) {
 
 
         let gl = this.webgl.getContext();
@@ -986,7 +1033,7 @@ export default class prim {
         let normals = [];
         let colors = [];
 
-        let row, col, index;
+        let i, j, len, index;
 
         let dimensions = prim.dimensions;
 
@@ -1004,17 +1051,19 @@ export default class prim {
 
         let S, T, X, Y, Z;
 
+        let r, g, b;
+
         if ( ! prim.heightMap ) {
 
-            let hm = elevationMap( prim.dimensions[0], prim.dimensions[2] );
+            prim.heightMap = this.elevationMap( dimensions[0], dimensions[2] ); // x, z
 
         }
 
         let ct = 0;
-/*
-        for ( row = 0; j < height; ++j ) { // row
 
-            for ( col = 0; i < width; ++i ) {  // col
+        for ( j = 0; j < height; ++j ) { // row, j
+
+            for ( i = 0; i < width; ++i ) {  // col, i
 
                 index = ( j * width ) + i;
 
@@ -1023,7 +1072,7 @@ export default class prim {
 
                 X = ( S * terrainWidth ) - halfTerrainWidth;
 
-                Y = prim.HeightMap [ ct++ ] / 255;
+                Y = prim.heightMap [ ct++ ] / 255;
 
                 Z = ( T * terrainHeight ) - halfTerrainHeight;
 
@@ -1033,6 +1082,14 @@ export default class prim {
 
                 texCoords.push( S, T );
 
+                r = Y;
+
+                b = ( 1 - Y );
+
+                g = ( 1.0 - Math.abs( r - b ) );
+
+                colors.push ( r, g, b, 1.0 );
+
             }
 
         }
@@ -1040,9 +1097,9 @@ export default class prim {
         // Indices.
         index = 0;
 
-        for (row = 0; row < (terrainHeight - 1); ++row ) {
+        for (j = 0; j < (terrainHeight - 1); j++ ) {
 
-        for (col = 0; row < (terrainWidth - 1); ++col ) {
+        for (i = 0; i < (terrainWidth - 1); i++ ) {
 
             let vertexIndex = ( row * terrainWidth ) + i;
 
@@ -1062,24 +1119,32 @@ export default class prim {
 
         // Normals.
 
-        for ( ui = 0, len = indices.length; i < len; i += 3 ) {
-            let v0 = vertices[ indices[i + 0] ];
-            let v1 = vertices[ indices[i + 1] ];
-            let v2 = vertices[ indices[i + 2] ];
-            let v3 = [0,0,0];
-            let normal = vec3.normalize( vec3.cross(vec3.subtract(v3, v1, v0), vec3.subtract(v3, v2, v0 ) );
- 
+        for ( i = 0, len = indices.length; i < len; i += 3 ) {
+
+            let v1, v2, v3, v4, cross;
+
+            v0 = vertices[ indices[i + 0] ];
+            v1 = vertices[ indices[i + 1] ];
+            v2 = vertices[ indices[i + 2] ];
+            v3 = vec3.subtract( v3.create(), v2, v0 );
+            v4 = vec3.subtract( v3.create(), v3, v1, v0 );
+
+            let normal = vec3.normalize( vec3.cross( v4, v3 ) );
+
             normals[ indices[i + 0] ] += normal;
             normals[ indices[i + 1] ] += normal;
             normals[ indices[i + 2] ] += normal;
         }
- 
+
         for ( i = 0, len = normals.length; i < len; ++i ) {
 
-            normals[i] = vec3.normalize( normals[i] );
- 
+            normals[i] = vec3.normalize( normals[i], normals[i] );
+
+            normals[i] = 1.0; ///////////////////////////////////////////NOTE CHANGE
+
         }
-*/
+
+        return this.createBuffers ( gl, vertices, indices, texCoords, normals, colors );
 
     }
 
@@ -1089,7 +1154,7 @@ export default class prim {
      * https://github.com/BabylonJS/Babylon.js/blob/3fe3372053ac58505dbf7a2a6f3f52e3b92670c8/src/Mesh/babylon.mesh.vertexData.js
      * TODO: assumes a square Prim!!!!!!!!!!!!!
      */
-    geometryTerrain ( prim ) {
+    geometryTerr ( prim ) {
 
         /*
         // # P.xy store the position for which we want to calculate the normals
