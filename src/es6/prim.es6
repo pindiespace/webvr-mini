@@ -115,7 +115,9 @@ export default class prim {
 
     }
 
-    createBuffers ( gl, vertices, indices, texCoords, normals, colors ) {
+    createBuffers ( vertices, indices, texCoords, normals, colors ) {
+
+        let gl = this.webgl.getContext();
 
         // Vertex Buffer Object.
 
@@ -486,8 +488,6 @@ export default class prim {
      */
     geometryCube ( prim ) {
 
-        let gl = this.webgl.getContext();
-
         let x = prim.dimensions[ 0 ] / 2;
 
         let y = prim.dimensions[ 1 ] / 2;
@@ -637,7 +637,7 @@ export default class prim {
             0.0,  0.0,  1.0,  1.0     // blue
         ];
 
-        return this.createBuffers ( gl, vertices, indices, texCoords, normals, colors );
+        return this.createBuffers ( vertices, indices, texCoords, normals, colors );
 
     }
 
@@ -646,53 +646,89 @@ export default class prim {
      * http://learningwebgl.com/blog/?p=1253
      */
     geometrySphere ( prim ) {
-/*
-var vertexPositionData = [];
-    var normalData = [];
-    var textureCoordData = [];
-    for (var latNumber = 0; latNumber <= latitudeBands; latNumber++) {
-      var theta = latNumber * Math.PI / latitudeBands;
-      var sinTheta = Math.sin(theta);
-      var cosTheta = Math.cos(theta);
 
-      for (var longNumber = 0; longNumber <= longitudeBands; longNumber++) {
-        var phi = longNumber * 2 * Math.PI / longitudeBands;
-        var sinPhi = Math.sin(phi);
-        var cosPhi = Math.cos(phi);
+       // TODO: ACTIVATE RADIUS X, Y, Z for distorted spheres.
 
-        var x = cosPhi * sinTheta;
-        var y = cosTheta;
-        var z = sinPhi * sinTheta;
-        var u = 1 - (longNumber / longitudeBands);
-        var v = 1 - (latNumber / latitudeBands);
+        let vertices = [];
 
-        normalData.push(x);
-        normalData.push(y);
-        normalData.push(z);
-        textureCoordData.push(u);
-        textureCoordData.push(v);
-        vertexPositionData.push(radius * x);
-        vertexPositionData.push(radius * y);
-        vertexPositionData.push(radius * z);
-      }
-    }
-Now that we have the vertices, we need to stitch them together by generating a list of vertex indices that contains sequences of six values, each representing a square expressed as a pair of triangles. Here's the code:
+        let indices = [];
 
-    var indexData = [];
-    for (var latNumber = 0; latNumber < latitudeBands; latNumber++) {
-      for (var longNumber = 0; longNumber < longitudeBands; longNumber++) {
-        var first = (latNumber * (longitudeBands + 1)) + longNumber;
-        var second = first + longitudeBands + 1;
-        indexData.push(first);
-        indexData.push(second);
-        indexData.push(first + 1);
+        let texCoords = [];
 
-        indexData.push(second);
-        indexData.push(second + 1);
-        indexData.push(first + 1);
-      }
-    }
-*/
+        let normals = [];
+
+        let colors = [];
+
+        let latitudeBands = prim.divisions[1]; // y axis
+
+        let longitudeBands = prim.divisions[0] // x axis (really xz)
+
+        let radius = prim.dimensions[0] * 0.5;
+
+        for (let latNumber = 0; latNumber <= latitudeBands; latNumber++) {
+
+            let theta = latNumber * Math.PI / latitudeBands;
+
+            let sinTheta = Math.sin(theta);
+
+            let cosTheta = Math.cos(theta);
+
+            for (let longNumber = 0; longNumber <= longitudeBands; longNumber++) {
+        
+                let phi = longNumber * 2 * Math.PI / longitudeBands;
+
+                let sinPhi = Math.sin(phi);
+
+                let cosPhi = Math.cos(phi);
+
+                let x = cosPhi * sinTheta;
+                let y = cosTheta;
+                let z = sinPhi * sinTheta;
+
+                let u = 1 - (longNumber / longitudeBands);
+                let v = 1 - (latNumber / latitudeBands);
+
+                normals.push(x);
+                normals.push(y);
+                normals.push(z);
+
+                texCoords.push(u);
+                texCoords.push(v);
+                vertices.push(radius * x);
+                vertices.push(radius * y);
+                vertices.push(radius * z);
+
+            }
+
+        }
+
+        // Sphere indices.
+
+        for (let latNumber = 0; latNumber < latitudeBands; latNumber++) {
+
+            for (let longNumber = 0; longNumber < longitudeBands; longNumber++) {
+
+                let first = (latNumber * (longitudeBands + 1)) + longNumber;
+
+                let second = first + longitudeBands + 1;
+
+                indices.push(first);
+
+                indices.push(second);
+
+                indices.push(first + 1);
+
+                indices.push(second);
+
+                indices.push(second + 1);
+
+                indices.push(first + 1);
+
+            }
+        }
+
+        return this.createBuffers ( vertices, indices, texCoords, normals, colors );
+
     }
 
     /** 
@@ -1018,9 +1054,6 @@ Now that we have the vertices, we need to stitch them together by generating a l
      */
     geometryTerrain ( prim ) {
 
-
-        let gl = this.webgl.getContext();
-
         let vec4 = this.glMatrix.vec4;
 
         let vec3 = this.glMatrix.vec3;
@@ -1144,7 +1177,7 @@ Now that we have the vertices, we need to stitch them together by generating a l
 
         }
 
-        return this.createBuffers ( gl, vertices, indices, texCoords, normals, colors );
+        return this.createBuffers ( vertices, indices, texCoords, normals, colors );
 
     }
 
@@ -1174,8 +1207,6 @@ Now that we have the vertices, we need to stitch them together by generating a l
   N = normalize(N);
   http://stackoverflow.com/questions/13983189/opengl-how-to-calculate-normals-in-a-terrain-height-grid
   */
-
-        let gl = this.webgl.getContext();
 
         let vec4 = this.glMatrix.vec4;
 
@@ -1279,7 +1310,7 @@ Now that we have the vertices, we need to stitch them together by generating a l
 
         this.computeNormals( vertices, indices, normals );
 
-        return this.createBuffers ( gl, vertices, indices, texCoords, normals, colors );
+        return this.createBuffers ( vertices, indices, texCoords, normals, colors );
 
     }
 
@@ -1319,8 +1350,6 @@ Now that we have the vertices, we need to stitch them together by generating a l
      * @param {GLMatrix.vec4} color the default color of the object.
      */
     createPrim ( name = 'unknown', scale = 1.0, dimensions, divisions, position, acceleration, rotation, angular, textureImage, color ) {
-
-        let gl = this.webgl.getContext();
 
         let glMatrix = this.glMatrix;
 
@@ -1465,7 +1494,6 @@ Now that we have the vertices, we need to stitch them together by generating a l
 
     createIcoSphere ( name, scale, dimensions, divisions, position, acceleration, rotation, angular, textureImage, color ) {
 
-
         let icoSphere = this.createPrim( name, scale, dimensions, divisions, position, acceleration, rotation, angular, textureImage, color );
 
         icoSphere.geometry = this.geometryIcoSphere( icoSphere );
@@ -1477,6 +1505,22 @@ Now that we have the vertices, we need to stitch them together by generating a l
         this.objs.push( icoSphere );
 
         return icoSphere;
+
+    }
+
+    createSphere ( name, scale, dimensions, divisions, position, acceleration, rotation, angular, textureImage, color ) {
+
+        let sphere = this.createPrim( name, scale, dimensions, divisions, position, acceleration, rotation, angular, textureImage, color );
+
+        sphere.geometry = this.geometrySphere( sphere );
+
+        sphere.type = this.type.SPHERE;
+
+        this.util.primReadout( sphere );
+
+        this.objs.push( sphere );
+
+        return sphere;
 
     }
 

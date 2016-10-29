@@ -162,6 +162,19 @@ export default class world {
             null //heightMap                              // heightmap
         ) );
 
+        this.dirlightTextureObjList.push( this.prim.createSphere(
+            'texsphere',
+            1.0,
+            vec3.fromValues( 3, 3, 3 ),            // dimensions
+            vec3.fromValues( 10, 10, 10 ),          // divisions
+            vec3.fromValues(2.5, -1.5, -2 ),           // position (absolute)
+            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+            ['img/mozvr-logo1.png'],               // texture present, NOT USED
+            vec4.fromValues( 0.5, 1.0, 0.2, 1.0)  // color
+        ) );
+
         window.terrain =  this.dirlightTextureObjList[1];
 
         this.vs3 = this.renderer.shaderDirlightTexture.init( this.dirlightTextureObjList );
