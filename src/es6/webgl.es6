@@ -240,6 +240,8 @@ export default class WebGL {
 
                 gl.enable( gl.CULL_FACE );
 
+                //gl.disable(gl.CULL_FACE);
+
                 gl.clearDepth(1.0);                 // Clear everything
 
                 gl.depthFunc(gl.LEQUAL);            // Near things obscure far things

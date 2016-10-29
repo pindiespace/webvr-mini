@@ -712,19 +712,22 @@ export default class prim {
 
                 let second = first + longitudeBands + 1;
 
-                indices.push(first);
-
-                indices.push(second);
+                // Note: we're running culling in reverse from some tutorials here.
 
                 indices.push(first + 1);
-
-                indices.push(second);
 
                 indices.push(second + 1);
 
+                indices.push(second);
+
                 indices.push(first + 1);
 
+                indices.push(second);
+
+                indices.push(first);
+
             }
+
         }
 
         return this.createBuffers ( vertices, indices, texCoords, normals, colors );
@@ -735,7 +738,6 @@ export default class prim {
      * Icosphere, iterated from icosohedron.
      */
     geometryIcoSphere ( prim ) {
-        /*
 
             var sideOrientation = options.sideOrientation || BABYLON.Mesh.DEFAULTSIDE;
             var radius = options.radius || 1;
@@ -758,6 +760,8 @@ export default class prim {
                 14, 21, 4, 14, 4, 2, 16, 13, 6, 15, 6, 19, 3, 8, 9,
                 4, 21, 5, 13, 17, 23, 6, 13, 22, 19, 6, 18, 9, 8, 1
             ];
+
+        /*
             // vertex for uv have aliased position, not for UV
             var vertices_unalias_id = [
                 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
@@ -1051,6 +1055,8 @@ export default class prim {
     /** 
      * Indices calculations:
      * http://www.3dgep.com/multi-textured-terrain-in-opengl/
+     * DIAMOND ALGORITHM
+     * http://www.playfuljs.com/realistic-terrain-in-130-lines/
      */
     geometryTerrain ( prim ) {
 
@@ -1146,6 +1152,21 @@ export default class prim {
                 vertexIndex + terrainWidth,           // V2
                 vertexIndex + terrainWidth + 1        // V3
             );
+
+/*
+reversed (no effect)
+            indices.push (
+
+                vertexIndex + terrainWidth + 1,        // V3
+                vertexIndex + terrainWidth,           // V2
+                vertexIndex,                          // V0
+
+                vertexIndex + 1,                      // V1
+                vertexIndex + terrainWidth + 1,       // V3
+                vertexIndex,                          // V0
+            );
+*/
+
 
             }
         }
