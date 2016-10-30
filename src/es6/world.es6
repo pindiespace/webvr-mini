@@ -73,7 +73,8 @@ export default class world {
 
         this.textureObjList = [];
 
-        this.textureObjList.push( this.prim.createCube(
+        this.textureObjList.push( this.prim.createPrim(
+            this.prim.type.CUBE,
             'first cube',                                        // name
             1.0,                                                 // scale
             vec3.fromValues( 1, 1, 1 ),            // dimensions
@@ -86,7 +87,8 @@ export default class world {
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ), // RGBA color
         ) );
 
-        this.textureObjList.push( this.prim.createCube(
+        this.textureObjList.push( this.prim.createPrim(
+            this.prim.type.CUBE,
             'toji cube',
             1.0,
             vec3.fromValues( 1, 1, 1 ),            // dimensions
@@ -105,7 +107,8 @@ export default class world {
 
         this.colorObjList = [];
 
-         this.colorObjList.push( this.prim.createCube(
+         this.colorObjList.push( this.prim.createPrim(
+            this.prim.type.CUBE,
             'colored cube',
             1.0,
             vec3.fromValues( 1, 1, 1 ),            // dimensions
@@ -124,7 +127,8 @@ export default class world {
 
         this.dirlightTextureObjList = [];
 
-         this.dirlightTextureObjList.push( this.prim.createCube(
+         this.dirlightTextureObjList.push( this.prim.createPrim(
+            this.prim.type.CUBE,
             'lit cube',
             1.0,
             vec3.fromValues( 1, 1, 1 ),            // dimensions
@@ -148,29 +152,31 @@ export default class world {
             46,  220, 114, 52,  193, 78,  170, 163
         ];
 
-        this.dirlightTextureObjList.push( this.prim.createTerrain(
+        this.dirlightTextureObjList.push( this.prim.createPrim(
+            this.prim.type.TERRAIN,
             'terrain',
             1.0,
             vec3.fromValues( 2, 2, 2 ),            // dimensions
-            vec3.fromValues( 100, 255, 100 ),          // divisions
-            vec3.fromValues(1.5, -3.5, -2 ),           // position (absolute)
+            vec3.fromValues( 100, 255, 100 ),      // divisions
+            vec3.fromValues(1.5, -3.5, -2 ),       // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
             ['img/mozvr-logo1.png'],               // texture present, NOT USED
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0),  // color
-            null //heightMap                              // heightmap
+            null //heightMap                       // heightmap
         ) );
 
-        this.dirlightTextureObjList.push( this.prim.createSphere(
+        this.dirlightTextureObjList.push( this.prim.createPrim(
+            this.prim.type.SPHERE,
             'texsphere',
             1.0,
             vec3.fromValues( 3, 3, 3 ),            // dimensions
-            vec3.fromValues( 10, 10, 10 ),          // divisions
-            vec3.fromValues(2.5, -1.5, -2 ),           // position (absolute)
+            vec3.fromValues( 10, 10, 10 ),         // divisions
+            vec3.fromValues(2.5, -1.5, -2 ),       // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
             ['img/mozvr-logo1.png'],               // texture present, NOT USED
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0)  // color
         ) );

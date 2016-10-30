@@ -27,29 +27,33 @@ export default class prim {
 
         this.type = {
 
-            POINT: 'POINT',
+            POINT: 'geometryPoint',
 
-            LINE: 'LINE',
+            POINTCLOUD: 'geometryPointCloud',
 
-            PLANE: 'PLANE',
+            LINE: 'geometryLine',
 
-            POLY: 'POLY',
+            PLANE: 'geometryPlane',
 
-            CUBE: 'CUBE',
+            POLY: 'geometryPoly',
 
-            SPHERE: 'SPHERE',
+            CUBE: 'geometryCube',
 
-            ICOSPHERE: 'ICOSPHERE',
+            SPHERE: 'geometrySphere',
 
-            DOME: 'DOME',
+            ICOSPHERE: 'geometryIcoSphere',
 
-            CONE: 'CONE',
+            DOME: 'geometryDome',
 
-            CYLINDER: 'CYLINDER',
+            ICODOME: 'geometryIcoDome',
 
-            SHAPE: 'SHAPE',
+            CONE: 'geometryCone',
 
-            TERRAIN: 'TERRAIN'
+            CYLINDER: 'geometryCylinder',
+
+            MESH: 'geometryMesh',
+
+            TERRAIN: 'geometryTerrain'
 
         };
 
@@ -458,6 +462,13 @@ export default class prim {
     }
 
     /** 
+     * WebGL point cloud (particle system).
+     */
+    geometryPointCloud ( prim ) {
+
+    }
+
+    /** 
      * WebGL line.
      */
     geometryLine ( prim ) {
@@ -465,9 +476,100 @@ export default class prim {
     }
 
     /** 
-     * Plane (non-infinite)
+     * Plane (non-infinite, multiple vertices, can be turned into TERRAIN)
      */
     geometryPlane ( prim ) {
+
+       // TODO: ACTIVATE RADIUS X, Y, Z for distorted spheres.
+
+        let vertices = [];
+
+        let indices = [];
+
+        let texCoords = [];
+
+        let normals = [];
+
+        let colors = [];
+
+        let rows = prim.divisions[1]; // y axis
+
+        let cols = prim.divisions[0] // x axis (really xz)
+
+        let halfX = prim.dimensions[0] / 2;
+        let halfZ = prim.dimensions[2] / 2;
+
+        let incX = prim.dimensions[0] / prim.dimensions[0];
+        let incY = 0.0;
+        let incZ = prim.dimensions[2] / prim.dimensions[2];
+
+        for (let rowNumber = 0; rowNumber <= rows; rowNumber++) {
+
+            let theta = rowNumber * Math.PI / rows;
+
+            let sinTheta = Math.sin(theta);
+
+            let cosTheta = Math.cos(theta);
+
+            for (let colNumber = 0; colNumber <= cols; colNumber++) {
+        
+                let phi = colNumber * 2 * Math.PI / cols;
+
+                let sinPhi = Math.sin(phi);
+
+                let cosPhi = Math.cos(phi);
+
+                let x = colNumber;
+                let y = cosTheta;
+                let z = rowNumber;
+
+                let u = 1 - (colNumber / cols);
+                let v = 1 - (rowNumber / rows);
+
+                normals.push(x);
+                normals.push(y);
+                normals.push(z);
+
+                texCoords.push(u);
+                texCoords.push(v);
+
+                vertices.push( ( incX * x ) - halfX );
+                vertices.push( ( incY * y) );
+                vertices.push( ( incZ * z ) - halfZ );
+
+            }
+
+        }
+
+        // Indices.
+
+        for (let rowNumber = 0; rowNumber < rows; rowNumber++) {
+
+            for (let colNumber = 0; colNumber < cols; colNumber++) {
+
+                let first = (rowNumber * (cols + 1)) + colNumber;
+
+                let second = first + cols + 1;
+
+                // Note: we're running culling in reverse from some tutorials here.
+
+                indices.push(first + 1);
+
+                indices.push(second + 1);
+
+                indices.push(second);
+
+                indices.push(first + 1);
+
+                indices.push(second);
+
+                indices.push(first);
+
+            }
+
+        }
+
+        return this.createBuffers ( vertices, indices, texCoords, normals, colors );
 
     }
 
@@ -980,9 +1082,16 @@ export default class prim {
 
 
     /** 
-     * Half-sphere, refined icosohedron
+     * Half-sphere, polar coordinates.
      */
     geometryDome ( prim ) {
+
+    }
+
+    /** 
+     * Half-sphere, icosohedron based.
+     */
+    geometryIcoDome( prim ) {
 
     }
 
@@ -1370,7 +1479,7 @@ reversed (no effect)
      * @param {String} textureImage the path to an image used to create a texture.
      * @param {GLMatrix.vec4} color the default color of the object.
      */
-    createPrim ( name = 'unknown', scale = 1.0, dimensions, divisions, position, acceleration, rotation, angular, textureImage, color ) {
+    createPrim ( type, name = 'unknown', scale = 1.0, dimensions, divisions, position, acceleration, rotation, angular, textureImage, color ) {
 
         let glMatrix = this.glMatrix;
 
@@ -1451,6 +1560,12 @@ reversed (no effect)
 
         prim.children = [];
 
+        // Set the geometry.
+
+        prim.type = type;
+
+        prim.geometry = this[ type ]( prim );
+
         // Standard Prim properties for position, translation, rotation, orbits. Used by shader/renderer objects (e.g. shaderTexture).
 
         // Note: should use scale matrix
@@ -1486,103 +1601,15 @@ reversed (no effect)
 
         prim.renderId = -1; // NOT ASSIGNED. TODO: Assign a renderer to each Prim.
 
-        // Prim transforms.
+        // Push into our list;
+
+        this.objs.push( prim );
+
+        // Prim readout to console.
+
+        this.util.primReadout( prim );
 
         return prim;
-
-    }
-
-    /** 
-     * create a Cube object.
-     * @param {String} name of object
-     * @param {Number} scale
-     */
-    createCube ( name, scale, dimensions, divisions, position, acceleration, rotation, angular, textureImage, color ) {
-
-        let cube = this.createPrim( name, scale, dimensions, divisions, position, acceleration, rotation, angular, textureImage, color );
-
-        cube.geometry = this.geometryCube( cube );
-
-        cube.type = this.type.CUBE;
-
-        this.util.primReadout( cube );
-
-        this.objs.push( cube );
-
-        return cube;
-
-    }
-
-    createIcoSphere ( name, scale, dimensions, divisions, position, acceleration, rotation, angular, textureImage, color ) {
-
-        let icoSphere = this.createPrim( name, scale, dimensions, divisions, position, acceleration, rotation, angular, textureImage, color );
-
-        icoSphere.geometry = this.geometryIcoSphere( icoSphere );
-
-        icoSphere.type = this.type.ICOSPHERE;
-
-        this.util.primReadout( icoSphere );
-
-        this.objs.push( icoSphere );
-
-        return icoSphere;
-
-    }
-
-    createSphere ( name, scale, dimensions, divisions, position, acceleration, rotation, angular, textureImage, color ) {
-
-        let sphere = this.createPrim( name, scale, dimensions, divisions, position, acceleration, rotation, angular, textureImage, color );
-
-        sphere.geometry = this.geometrySphere( sphere );
-
-        sphere.type = this.type.SPHERE;
-
-        this.util.primReadout( sphere );
-
-        this.objs.push( sphere );
-
-        return sphere;
-
-    }
-
-    createDome ( name, scale, dimensions, divisions, position, acceleration, rotation, angular, textureImage, color ) {
-
-        let dome = this.createPrim( name, scale, dimensions, divisions, position, acceleration, rotation, angular, textureImage, color );
-
-        dome.geometry = this.geometryDome( dome );
-
-        dome.type = this.type.DOME;
-
-        this.util.primReadout( dome );
-
-        this.objs.push( dome );
-
-        return dome;
-
-    }
-
-    createTerrain ( name, scale, dimensions, divisions, position, acceleration, rotation, angular, textureImage, color, heightMap ) {
-
-        let terrain = this.createPrim( name, scale, dimensions, divisions, position, acceleration, rotation, angular, textureImage, color );
-
-        if ( heightMap ) {
-
-            terrain.heightMap = heightMap;
-
-        } else {
-
-            terrain.heightMap = null;
-        }
-
-        terrain.geometry = this.geometryTerrain( terrain );
-
-        terrain.type = this.type.TERRAIN;
-
-        this.util.primReadout( terrain );
-
-        this.objs.push( terrain );
-
-        return terrain;
 
     }
 
