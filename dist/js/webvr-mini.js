@@ -3864,9 +3864,9 @@
 	                        var halfX = prim.dimensions[0] / 2;
 	                        var halfZ = prim.dimensions[2] / 2;
 
-	                        var incX = prim.dimensions[0] / prim.dimensions[0];
+	                        var incX = prim.dimensions[0] / prim.divisions[0];
 	                        var incY = 0.0;
-	                        var incZ = prim.dimensions[2] / prim.dimensions[2];
+	                        var incZ = prim.dimensions[2] / prim.divisions[2];
 
 	                        for (var rowNumber = 0; rowNumber <= rows; rowNumber++) {
 
@@ -5052,6 +5052,15 @@
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	                        vec3.fromValues(util.degToRad(40), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
 	                        vec3.fromValues(util.degToRad(0), util.degToRad(1), util.degToRad(0)), // angular velocity in x, y, x
+	                        ['img/webvr-logo2.png'], vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+	                        ));
+
+	                        this.textureObjList.push(this.prim.createPrim(this.prim.type.PLANE, 'a plane', 1.0, vec3.fromValues(1, 1, 1), // dimensions
+	                        vec3.fromValues(10, 10, 10), // divisions
+	                        vec3.fromValues(0, -2, 0), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(0.5), util.degToRad(0.0), util.degToRad(0.0)), // angular velocity in x, y, x
 	                        ['img/webvr-logo2.png'], vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	                        ));
 

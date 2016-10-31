@@ -499,9 +499,9 @@ export default class prim {
         let halfX = prim.dimensions[0] / 2;
         let halfZ = prim.dimensions[2] / 2;
 
-        let incX = prim.dimensions[0] / prim.dimensions[0];
+        let incX = prim.dimensions[0] / prim.divisions[0];
         let incY = 0.0;
-        let incZ = prim.dimensions[2] / prim.dimensions[2];
+        let incZ = prim.dimensions[2] / prim.divisions[2];
 
         for (let rowNumber = 0; rowNumber <= rows; rowNumber++) {
 
