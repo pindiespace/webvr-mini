@@ -3447,7 +3447,9 @@
 	        }
 
 	        /** 
-	         * Get the big array with all vertex data
+	         * Get the big array with all vertex data. Use to 
+	         * send multiple prims sharing the same shader to one 
+	         * Renderer.
 	         */
 
 	    }, {
@@ -3458,16 +3460,18 @@
 
 	            var len = this.objs.length;
 
-	            for (var _i in this.objs) {
+	            for (var i in this.objs) {
 
-	                vertices = vertices.concat(this.objs[_i].vertices);
+	                vertices = vertices.concat(this.objs[i].vertices);
 	            }
 
 	            return vertices;
 	        }
 
 	        /** 
-	         * get the big array with all index data
+	         * get the big array with all index data. Use to 
+	         * send multiple prims sharing the same shader to one 
+	         * Renderer.
 	         */
 
 	    }, {
@@ -3478,13 +3482,23 @@
 
 	            var len = this.objs.length;
 
-	            for (var _i2 in this.objs) {
+	            for (var i in this.objs) {
 
-	                indices = indices.concat(this.objs[_i2].indices);
+	                indices = indices.concat(this.objs[i].indices);
 	            }
 
 	            return indices;
 	        }
+
+	        /** 
+	         * Create WebGL buffers using geometry data
+	         * @param {Array} vertices an array of vertices, in glMatrix.vec3 objects.
+	         * @param {Array} indices an array of indices for the vertices.
+	         * @param {Array} textCoords an array of texture coordinates, in glMatrix.vec2 format.
+	         * @param {Array} normals an array of normals, in glMatrix.vec3 format.
+	         * @param {Array} colors an array of colors, in glMatrix.vec4 format.
+	         */
+
 	    }, {
 	        key: 'createBuffers',
 	        value: function createBuffers(vertices, indices, texCoords, normals, colors) {
@@ -3630,72 +3644,23 @@
 	            };
 	        }
 
-	        /** 
-	         * UTILITIES
+	        /* 
+	         * ---------------------------------------
+	         * SCALING ALGORITHMS
+	         * ---------------------------------------
 	         */
 
-	        /**
-	         * Compute whether point is in a triangle, wrapped 
-	         * clockwise (begin with a, end with c)
-	         * @link http://blackpawn.com/texts/pointinpoly/
-	         * @param {vec3} p the point to test.
-	         * @param {vec3} a first clockwise vertex of triangle.
-	         * @param {vec3} b second clockwise vertex of triangle.
-	         * @param {vec3} c third clockwise vertex of triangle.
-	         * @returns {Boolean} if point in triangle, return true, else false.
-	         */
-
-	    }, {
-	        key: 'pointInTriangle',
-	        value: function pointInTriangle(p, a, b, c) {
-
-	            var vec3 = this.glMatrix.vec3;
-	            var v0 = void 0,
-	                v1 = void 0,
-	                v2 = void 0,
-	                dot00 = void 0,
-	                dot01 = void 0,
-	                dot02 = void 0,
-	                dot11 = void 0,
-	                dot12 = void 0;
-
-	            // Compute vectors.
-
-	            v0 = vec3.sub(v0, c, a);
-	            v1 = vec3.sub(v1, b, a);
-	            v2 = vec3.sub(v2, p, a);
-
-	            // Compute dot products.
-
-	            dot00 = vec3.dot(v0, v0);
-	            dot01 = vec3.dot(v0, v1);
-	            dot02 = vec3.dot(v0, v2);
-	            dot11 = vec3.dot(v1, v1);
-	            dot12 = vec3.dot(v1, v2);
-
-	            // Compute barycentric coordinates.
-
-	            var invDenom = 1 / (dot00 * dot11 - dot01 * dot01);
-	            var u = (dot11 * dot02 - dot01 * dot12) * invDenom;
-	            var v = (dot00 * dot12 - dot01 * dot02) * invDenom;
-
-	            // Check if point is in triangle.
-
-	            return u >= 0 && v >= 0 && u + v < 1;
-	        }
-
 	        /** 
-	         * given a discrete heightmap, using bilinear interpolation
+	         * given a discrete heightmap, get a value 
+	         * using bilinear interpolation.
 	         * @param {Array} heightmap 
-	         * @param {Number} w = width of heightmap (cols, x)
-	         * @param {Number} h = depth of heightmap (rows, z)
 	         * @param {Number} x = desired x position (between 0.0 and 1.0)
 	         * @param {Number} z = desired z position (between 0.0 and 1.0)
 	         */
 
 	    }, {
 	        key: 'biLinear',
-	        value: function biLinear(heightMap, w, h, x, z) {
+	        value: function biLinear(x, z) {
 
 	            if (x < 0 || x > 1.0 || z < 0 || z > 1.0) {
 
@@ -3706,8 +3671,8 @@
 
 	            // Our x and z, scaled to heightmap divisions.
 
-	            x *= w;
-	            z *= h;
+	            x *= this.width;
+	            z *= this.height;
 
 	            // Points above and below our position.
 
@@ -3718,9 +3683,9 @@
 
 	            // Interpolate along x axis, get interpolations above and below point.
 
-	            var a = this.getHeightMap(heightMap, x1, z1) * (x - x1) + this.getHeightMap(heightMap, x1, z2) * (1 - x - x1);
+	            var a = this.getRaw(x1, z1) * (x - x1) + this.getRaw(x1, z2) * (1 - x - x1);
 
-	            var b = this.getHeightMap(heightMap, z1, z2) * (x - x1) + this.getHeightMap(heightMap, x2, z2) * (1 - x - x1);
+	            var b = this.getRaw(z1, z2) * (x - x1) + this.getRaw(x2, z2) * (1 - x - x1);
 
 	            // Interpolate these results along z axis.
 
@@ -3730,51 +3695,18 @@
 	        }
 
 	        /** 
-	         * given a discrete heightmap, using bilinear interpolation
-	         * @param {Array} heightmap 
-	         * @param {Number} w = width of heightmap (cols, x)
-	         * @param {Number} h = depth of heightmap (rows, z)
-	         * @param {Number} x = desired x position (between 0.0 and 1.0)
-	         * @param {Number} z = desired z position (between 0.0 and 1.0)
+	         * given a set of adjacent points, return a smooth 
+	         * central point using the biCubic interpolation algorithm.
+	         * Adapted from:
+	         * https://github.com/hughsk/bicubic-sample/blob/master/index.js
+	         * https://github.com/hughsk/bicubic/blob/master/index.js
+	         * @param {Number} xf 
+	         * @param {Number} yf
 	         */
 
 	    }, {
-	        key: 'biCubic',
-	        value: function biCubic(xf, yf, p00, p01, p02, p03, p10, p11, p12, p13, p20, p21, p22, p23, p30, p31, p32, p33) {
-
-	            // https://github.com/hughsk/bicubic-sample/blob/master/index.js
-	            // https://github.com/hughsk/bicubic/blob/master/index.js
-
-	            /* 
-	            var x1 = floor(x)
-	            var y1 = floor(y)
-	            var x2 = x1 + 1
-	            var y2 = y1 + 1
-	            var p00 = getter(x1 - 1, y1 - 1)
-	            var p01 = getter(x1 - 1, y1)
-	            var p02 = getter(x1 - 1, y2)
-	            var p03 = getter(x1 - 1, y2 + 1)
-	            var p10 = getter(x1, y1 - 1)
-	            var p11 = getter(x1, y1)
-	            var p12 = getter(x1, y2)
-	            var p13 = getter(x1, y2 + 1)
-	            var p20 = getter(x2, y1 - 1)
-	            var p21 = getter(x2, y1)
-	            var p22 = getter(x2, y2)
-	            var p23 = getter(x2, y2 + 1)
-	            var p30 = getter(x2 + 1, y1 - 1)
-	            var p31 = getter(x2 + 1, y1)
-	            var p32 = getter(x2 + 1, y2)
-	            var p33 = getter(x2 + 1, y2 + 1)
-	            return bicubic(
-	            x - x1
-	            , y - y1
-	            , p00, p10, p20, p30
-	            , p01, p11, p21, p31
-	            , p02, p12, p22, p32
-	            , p03, p13, p23, p33
-	            )
-	            */
+	        key: 'biCubicPoint',
+	        value: function biCubicPoint(xf, yf, p00, p01, p02, p03, p10, p11, p12, p13, p20, p21, p22, p23, p30, p31, p32, p33) {
 
 	            var yf2 = yf * yf;
 	            var xf2 = xf * xf;
@@ -3807,214 +3739,69 @@
 	            return y0 * yf * yf2 + y1 * yf2 + y2 * yf + x1;
 	        }
 
-	        /** 
-	         * GEOMETRIES
+	        /* 
+	         * ---------------------------------------
+	         * NORMAL, INDEX, VERTEX CALCULATIONS
+	         * ---------------------------------------
 	         */
 
-	        /** 
-	         * Scale vertices directly, without changing position.
-	         */
-
-	    }, {
-	        key: 'scale',
-	        value: function scale(vertices, _scale) {
-
-	            var oldPos = this.getCenter(vertices);
-
-	            for (var _i3 = 0, len = vertices.length; _i3 < len; _i3++) {
-
-	                vertices[_i3] *= _scale;
-	            }
-
-	            this.move(vertices, oldPos);
-	        }
-
-	        /** 
-	         * Move vertices directly in geometry.
-	         * NOTE: normally, you will want to use a matrix transform.
+	        /**
+	         * Compute whether point is in a triangle, wrapped 
+	         * clockwise (begin with a, end with c)
+	         * @link http://blackpawn.com/texts/pointinpoly/
+	         * @param {vec3} p the point to test.
+	         * @param {vec3} p0 first clockwise vertex of triangle.
+	         * @param {vec3} p1 second clockwise vertex of triangle.
+	         * @param {vec3} p2 third clockwise vertex of triangle.
+	         * @returns {Boolean} if point in triangle, return true, else false.
 	         */
 
 	    }, {
-	        key: 'move',
-	        value: function move(vertices, pos) {
-
-	            var center = this.getCenter(vertices);
-
-	            var delta = [center[0] - pos[0], center[1] - pos[1], center[2] = pos[2]];
-
-	            for (var _i4 = 0, len = vertices.length; _i4 < len; _i4 += 3) {
-
-	                vertices[_i4] = delta[0];
-
-	                vertices[_i4 + 1] = delta[1];
-
-	                vertices[_i4 + 2] = delta[2];
-	            }
-	        }
-
-	        /** 
-	         * Get the bounding box of a shape by getting the largest and 
-	         * smallest vertices in coordinate space.
-	         */
-
-	    }, {
-	        key: 'boundingBox',
-	        value: function boundingBox(vertices) {
-
-	            var biggest = [0, 0, 0];
-
-	            var smallest = [0, 0, 0];
-
-	            var minX = void 0,
-	                minY = void 0,
-	                minZ = void 0,
-	                maxX = void 0,
-	                maxY = void 0,
-	                maxZ = void 0;
-
-	            for (var _i5 = 0, len = vertices.length; _i5 < len; _i5 += 3) {
-
-	                minX = Math.min(vertices[_i5], minX);
-	                minY = Math.min(vertices[_i5 + 1], minY);
-	                minZ = Math.min(vertices[_i5 + 2], minZ);
-
-	                maxX = Math.max(vertices[_i5], maxX);
-	                maxY = Math.max(vertices[_i5 + 1], maxY);
-	                maxZ = Math.max(vertices[_i5 + 2], maxZ);
-	            }
-
-	            // Create cube points.
-
-	            // TODO: not complete.
-
-	            var box = [];
-
-	            return box;
-	        }
-
-	        /** 
-	         * Create a random heightMap (just a lot of bumps).
-	         * @param {Array} divisions 3d divisions width (x), height(y), depth(z) within the dimensions.
-	         * @returns {Array} an array for a heightmap of defined dimensions and divisions.
-	         */
-
-	    }, {
-	        key: 'createHeightMap',
-	        value: function createHeightMap(divisions) {
+	        key: 'pointInTriangle',
+	        value: function pointInTriangle(p, p0, p1, p2) {
 
 	            var vec3 = this.glMatrix.vec3;
 
-	            var hm = [];
-
-	            var randMax = 0.5;
-
-	            for (var _i6 = 0; _i6 < divisions[0]; _i6++) {
-	                // x
-
-	                for (var j = 0; j < divisions[2]; j++) {
-	                    // z
-
-	                    hm.push(this.util.getRand(0, randMax));
-	                }
-	            }
-
-	            return hm;
-	        }
-
-	        /** 
-	         * get heightmap value for a 1D JavaScript Array, using 
-	         * assigned width (x) and height (z)
-	         * @param {Array} heightmap 
-	         * @param {Number} w = width of heightmap (cols, x)
-	         * @param {Number} h = depth of heightmap (rows, z)
-	         * @param {Number} x = desired x position (between 0.0 and 1.0)
-	         * @param {Number} z = desired z position (between 0.0 and 1.0)
-	         */
-
-	    }, {
-	        key: 'getHeightMapVal',
-	        value: function getHeightMapVal(heightMap, w, h, x, z) {
-
-	            if (x < 0 || z < 0 || x > w - 1 || y > h - 1) {
-
-	                console.error('heightmap positions out of range: x:' + x + ' z:' + z);
-
-	                return null;
-	            }
-
-	            return heightMap[w * z + x];
-	        }
-
-	        /** 
-	         * Get the center of a shape.
-	         */
-
-	    }, {
-	        key: 'getCenter',
-	        value: function getCenter(vertices) {
-
-	            var box = this.boundingBox(vertices);
-
-	            // find the centroid point (not necessarily part of the shape).
-	        }
-
-	        /** 
-	         * compute surface normals
-	         * @link http://gamedev.stackexchange.com/questions/8191/any-reliable-polygon-normal-calculation-code
-	         * @link https://www.opengl.org/wiki/Calculating_a_Surface_Normal
-	         */
-
-	    }, {
-	        key: 'surfaceNormals',
-	        value: function surfaceNormals(vertices, indices, normals) {
-
-	            var vec3 = this.glMatrix.vec3;
-
-	            // Initialize.
-
-	            for (i = 0; i < normals.length; i++) {
-	                normals[i] = 0;
-	            }
-
-	            // Compute normals.
-
-	            var i = void 0,
+	            var v0 = void 0,
 	                v1 = void 0,
 	                v2 = void 0,
-	                s1 = [0, 0, 0],
-	                s2 = [0, 0, 0],
-	                c = [0, 0, 0],
-	                normal = [0, 0, 0];
+	                dot00 = void 0,
+	                dot01 = void 0,
+	                dot02 = void 0,
+	                dot11 = void 0,
+	                dot12 = void 0;
 
-	            for (i = 0; i < indices.Length; i += 3) {
-	                v0 = [vertices[indicies[i]], vertices[indicies[i] + 1], vertices[indicies[i] + 2]];
-	                v1 = [vertices[indicies[i + 1]], vertices[indicies[i] + 1], vertices[indicies[i] + 2]];
-	                v2 = [vertices[indicies[i + 2]], vertices[indicies[i] + 1], vertices[indicies[i] + 2]];
+	            // Compute vectors.
 
-	                s1 = vec3.sub(s1, v2, v0);
-	                s2 = vec3.sub(s2, v1, v0);
+	            v0 = vec3.sub(v0, p2, p0);
+	            v1 = vec3.sub(v1, p1, p0);
+	            v2 = vec3.sub(v2, p, p0);
 
-	                c = vec3.cross(c, s1, s2);
+	            // Compute dot products.
 
-	                normals[indices[i]] += normal[0];normal[indices[i] + 1] += normal[1];normal[indices[i] + 2] += normal[2];
-	                normals[indices[i + 1]] += normal[0];normal[indices[i + 1] + 1] += normal[1];normal[indices[i + 1] + 2] += normal[2];
-	                normals[indices[i + 2]] += normal[0];normal[indices[i + 2] + 1] += normal[1];normal[indices[i + 2] + 2] += normal[2];
-	            }
+	            dot00 = vec3.dot(v0, v0);
+	            dot01 = vec3.dot(v0, v1);
+	            dot02 = vec3.dot(v0, v2);
+	            dot11 = vec3.dot(v1, v1);
+	            dot12 = vec3.dot(v1, v2);
 
-	            for (i = 0; i < normals.length; i += 3) {
+	            // Compute barycentric coordinates.
 
-	                normal = vec3.normalize(normal, [normals[i], normals[i + 1], normals[i + 2]]);
+	            var invDenom = 1 / (dot00 * dot11 - dot01 * dot01);
+	            var u = (dot11 * dot02 - dot01 * dot12) * invDenom;
+	            var v = (dot00 * dot12 - dot01 * dot02) * invDenom;
 
-	                normals[i] = normal[0];
-	                normals[i + 1] = normal[1];
-	                normals[i + 2] = normal[2];
-	            }
+	            // Check if point is in triangle.
+
+	            return u >= 0 && v >= 0 && u + v < 1;
 	        }
 
 	        /** 
 	         * Compute normals for a 3d object.
 	         * Adapted from BabylonJS
 	         * https://github.com/BabylonJS/Babylon.js/blob/3fe3372053ac58505dbf7a2a6f3f52e3b92670c8/src/Mesh/babylon.mesh.vertexData.js
+	         * @link http://gamedev.stackexchange.com/questions/8191/any-reliable-polygon-normal-calculation-code
+	         * @link https://www.opengl.org/wiki/Calculating_a_Surface_Normal
 	         */
 
 	    }, {
@@ -4099,11 +3886,20 @@
 	                faceNormalx /= length;
 	                faceNormaly /= length;
 	                faceNormalz /= length;
-	                normals[index * 3] = faceNormalx;
+
+	                // NOTE: added negative to x, z to match lighting model.
+
+	                normals[index * 3] = -faceNormalx;
 	                normals[index * 3 + 1] = faceNormaly;
-	                normals[index * 3 + 2] = faceNormalz;
+	                normals[index * 3 + 2] = -faceNormalz;
 	            }
 	        }
+
+	        /* 
+	         * ---------------------------------------
+	         * GEOMETRY
+	         * ---------------------------------------
+	         */
 
 	        /** 
 	         * WebGL point.
@@ -4160,6 +3956,8 @@
 	            var incY = 1.0;
 	            var incZ = prim.dimensions[2] / prim.divisions[2];
 
+	            // if there is a heightMap, assign y values
+
 	            for (var colNumber = 0; colNumber <= cols; colNumber++) {
 
 	                for (var rowNumber = 0; rowNumber <= rows; rowNumber++) {
@@ -4167,7 +3965,7 @@
 	                    var phi = colNumber * 2 * Math.PI / cols;
 
 	                    var x = colNumber;
-	                    var _y = this.util.getRand(0, 2); /////TODO: RANDOM FOR NOW
+	                    var y = this.util.getRand(0, 1); /////TODO: RANDOM FOR NOW
 	                    var z = rowNumber;
 
 	                    var u = colNumber / cols;
@@ -4178,7 +3976,7 @@
 	                    texCoords.push(u, v);
 
 	                    vertices.push(incX * x - halfX);
-	                    vertices.push(incY * _y);
+	                    vertices.push(incY * y);
 	                    vertices.push(incZ * z - halfZ);
 	                }
 	            }
@@ -4210,10 +4008,6 @@
 	            }
 
 	            this.computeNormals(vertices, indices, normals);
-
-	            window.vertices = vertices;
-
-	            window.normals = normals;
 
 	            return this.createBuffers(vertices, indices, texCoords, normals, colors);
 	        }
@@ -4380,20 +4174,20 @@
 	                    var cosPhi = Math.cos(phi);
 
 	                    var x = cosPhi * sinTheta;
-	                    var _y2 = cosTheta;
+	                    var y = cosTheta;
 	                    var z = sinPhi * sinTheta;
 
 	                    var u = 1 - longNumber / longitudeBands;
 	                    var v = 1 - latNumber / latitudeBands;
 
 	                    normals.push(x);
-	                    normals.push(_y2);
+	                    normals.push(y);
 	                    normals.push(z);
 
 	                    texCoords.push(u);
 	                    texCoords.push(v);
 	                    vertices.push(radius * x);
-	                    vertices.push(radius * _y2);
+	                    vertices.push(radius * y);
 	                    vertices.push(radius * z);
 	                }
 	            }
@@ -4429,6 +4223,9 @@
 
 	        /** 
 	         * Icosphere, iterated from icosohedron.
+	         * http://blog.andreaskahler.com/2009/06/creating-icosphere-mesh-in-code.html
+	         * 
+	         * https://github.com/hughsk/icosphere/blob/master/index.js
 	         */
 
 	    }, {
@@ -4496,41 +4293,41 @@
 	            //   ===================
 	            // uv step is u:1 or 0.5, v:cos(30)=sqrt(3)/2, ratio approx is 84/97
 	            /*
-	                        var ustep = 138 / 1024;
-	                        var vstep = 239 / 1024;
-	                        var uoffset = 60 / 1024;
-	                        var voffset = 26 / 1024;
+	                        let ustep = 138 / 1024;
+	                        let vstep = 239 / 1024;
+	                        let uoffset = 60 / 1024;
+	                        let voffset = 26 / 1024;
 	                        // Second island should have margin, not to touch the first island
 	                        // avoid any borderline artefact in pixel rounding
-	                        var island_u_offset = -40 / 1024;
-	                        var island_v_offset = +20 / 1024;
+	                        let island_u_offset = -40 / 1024;
+	                        let island_v_offset = +20 / 1024;
 	                        // face is either island 0 or 1 :
 	                        // second island is for faces : [4, 7, 8, 12, 13, 16, 17, 18]
-	                        var island = [
+	                        let island = [
 	                            0, 0, 0, 0, 1,
 	                            0, 0, 1, 1, 0,
 	                            0, 0, 1, 1, 0,
 	                            0, 1, 1, 1, 0 //  15 - 19
 	                        ];
-	                        var indices = [];
-	                        var positions = [];
-	                        var normals = [];
-	                        var uvs = [];
-	                        var current_indice = 0;
+	                        let indices = [];
+	                        let positions = [];
+	                        let normals = [];
+	                        let uvs = [];
+	                        let current_indice = 0;
 	                        // prepare array of 3 vector (empty) (to be worked in place, shared for each face)
-	                        var face_vertex_pos = new Array(3);
-	                        var face_vertex_uv = new Array(3);
-	                        var v012;
+	                        let face_vertex_pos = new Array(3);
+	                        let face_vertex_uv = new Array(3);
+	                        let v012;
 	                        for (v012 = 0; v012 < 3; v012++) {
 	                            face_vertex_pos[v012] = BABYLON.Vector3.Zero();
 	                            face_vertex_uv[v012] = BABYLON.Vector2.Zero();
 	                        }
 	                        // create all with normals
-	                        for (var face = 0; face < 20; face++) {
+	                        for (let face = 0; face < 20; face++) {
 	                            // 3 vertex per face
 	                            for (v012 = 0; v012 < 3; v012++) {
 	                                // look up vertex 0,1,2 to its index in 0 to 11 (or 23 including alias)
-	                                var v_id = ico_indices[3 * face + v012];
+	                                let v_id = ico_indices[3 * face + v012];
 	                                // vertex have 3D position (x,y,z)
 	                                face_vertex_pos[v012].copyFromFloats(ico_vertices[3 * vertices_unalias_id[v_id]], ico_vertices[3 * vertices_unalias_id[v_id] + 1], ico_vertices[3 * vertices_unalias_id[v_id] + 2]);
 	                                // Normalize to get normal, then scale to radius
@@ -4574,19 +4371,19 @@
 	                            //
 	                            // centroid of triangle is needed to get help normal computation
 	                            //  (c1,c2) are used for centroid location
-	                            var interp_vertex = function (i1, i2, c1, c2) {
+	                            let interp_vertex = function (i1, i2, c1, c2) {
 	                                // vertex is interpolated from
 	                                //   - face_vertex_pos[0..2]
 	                                //   - face_vertex_uv[0..2]
-	                                var pos_x0 = BABYLON.Vector3.Lerp(face_vertex_pos[0], face_vertex_pos[2], i2 / subdivisions);
-	                                var pos_x1 = BABYLON.Vector3.Lerp(face_vertex_pos[1], face_vertex_pos[2], i2 / subdivisions);
-	                                var pos_interp = (subdivisions === i2) ? face_vertex_pos[2] : BABYLON.Vector3.Lerp(pos_x0, pos_x1, i1 / (subdivisions - i2));
+	                                let pos_x0 = BABYLON.Vector3.Lerp(face_vertex_pos[0], face_vertex_pos[2], i2 / subdivisions);
+	                                let pos_x1 = BABYLON.Vector3.Lerp(face_vertex_pos[1], face_vertex_pos[2], i2 / subdivisions);
+	                                let pos_interp = (subdivisions === i2) ? face_vertex_pos[2] : BABYLON.Vector3.Lerp(pos_x0, pos_x1, i1 / (subdivisions - i2));
 	                                pos_interp.normalize();
-	                                var vertex_normal;
+	                                let vertex_normal;
 	                                if (flat) {
 	                                    // in flat mode, recalculate normal as face centroid normal
-	                                    var centroid_x0 = BABYLON.Vector3.Lerp(face_vertex_pos[0], face_vertex_pos[2], c2 / subdivisions);
-	                                    var centroid_x1 = BABYLON.Vector3.Lerp(face_vertex_pos[1], face_vertex_pos[2], c2 / subdivisions);
+	                                    let centroid_x0 = BABYLON.Vector3.Lerp(face_vertex_pos[0], face_vertex_pos[2], c2 / subdivisions);
+	                                    let centroid_x1 = BABYLON.Vector3.Lerp(face_vertex_pos[1], face_vertex_pos[2], c2 / subdivisions);
 	                                    vertex_normal = BABYLON.Vector3.Lerp(centroid_x0, centroid_x1, c1 / (subdivisions - c2));
 	                                }
 	                                else {
@@ -4598,19 +4395,19 @@
 	                                vertex_normal.y /= radiusY;
 	                                vertex_normal.z /= radiusZ;
 	                                vertex_normal.normalize();
-	                                var uv_x0 = BABYLON.Vector2.Lerp(face_vertex_uv[0], face_vertex_uv[2], i2 / subdivisions);
-	                                var uv_x1 = BABYLON.Vector2.Lerp(face_vertex_uv[1], face_vertex_uv[2], i2 / subdivisions);
-	                                var uv_interp = (subdivisions === i2) ? face_vertex_uv[2] : BABYLON.Vector2.Lerp(uv_x0, uv_x1, i1 / (subdivisions - i2));
+	                                let uv_x0 = BABYLON.Vector2.Lerp(face_vertex_uv[0], face_vertex_uv[2], i2 / subdivisions);
+	                                let uv_x1 = BABYLON.Vector2.Lerp(face_vertex_uv[1], face_vertex_uv[2], i2 / subdivisions);
+	                                let uv_interp = (subdivisions === i2) ? face_vertex_uv[2] : BABYLON.Vector2.Lerp(uv_x0, uv_x1, i1 / (subdivisions - i2));
 	                                positions.push(pos_interp.x * radiusX, pos_interp.y * radiusY, pos_interp.z * radiusZ);
 	                                normals.push(vertex_normal.x, vertex_normal.y, vertex_normal.z);
 	                                uvs.push(uv_interp.x, uv_interp.y);
 	                                // push each vertex has member of a face
-	                                // Same vertex can bleong to multiple face, it is pushed multiple time (duplicate vertex are present)
+	                                // Same vertex can belong to multiple face, it is pushed multiple time (duplicate vertex are present)
 	                                indices.push(current_indice);
 	                                current_indice++;
 	                            };
-	                            for (var i2 = 0; i2 < subdivisions; i2++) {
-	                                for (var i1 = 0; i1 + i2 < subdivisions; i1++) {
+	                            for (let i2 = 0; i2 < subdivisions; i2++) {
+	                                for (let i1 = 0; i1 + i2 < subdivisions; i1++) {
 	                                    // face : (i1,i2)  for /\  :
 	                                    // interp for : (i1,i2),(i1+1,i2),(i1,i2+1)
 	                                    interp_vertex(i1, i2, i1 + 1.0 / 3, i2 + 1.0 / 3);
@@ -4629,7 +4426,7 @@
 	                        // Sides
 	                        VertexData._ComputeSides(sideOrientation, positions, indices, normals, uvs);
 	                        // Result
-	                        var vertexData = new VertexData();
+	                        let vertexData = new VertexData();
 	                        vertexData.indices = indices;
 	                        vertexData.positions = positions;
 	                        vertexData.normals = normals;
@@ -4691,39 +4488,136 @@
 
 	            if (!prim.heightMap) {
 
-	                prim.heightMap = this.createHeightMap(prim.divisions);
+	                prim.heightMap = this.createHeightMap(prim);
 	            }
 
 	            var geometry = this.geometryPlane(prim);
 
+	            window.hm = prim.heightMap;
+
 	            return geometry;
 	        }
 	    }, {
-	        key: 'setMaterial',
+	        key: 'createHeightMap',
 
+
+	        /* 
+	         * ---------------------------------------
+	         * HEIGHTMAPS (used by Terrain Prim)
+	         * ---------------------------------------
+	         */
 
 	        /** 
-	         * Set a material for a prim.
-	         * @link http://webglfundamentals.org/webgl/lessons/webgl-less-code-more-fun.html
-	         * didn't use chroma (but could)
-	         * @link https://github.com/gka/chroma.js/blob/gh-pages/src/index.md
+	         * Create a random heightMap (just a lot of bumps).
+	         * @param {Object} prim a World object.
+	         * @param {Image} an Image (greyscale).
+	         * @returns {Object} an object allowing all-resolution lookup into the heightmap.
 	         */
-	        value: function setMaterial(prim) {
+	        value: function createHeightMap(prim, img) {
+	            var _this = this;
 
-	            return {
+	            var divisions = prim.divisions;
 
-	                u_colorMult: 0,
+	            var vec3 = this.glMatrix.vec3;
 
-	                u_diffuse: [1, 1, 1], //TODO: should be textures[0]
+	            var hm = {};
 
-	                u_specular: [1, 1, 1, 1],
+	            if (img) {
 
-	                u_shininess: this.util.getRand(500),
+	                hm.data = []; // TODO: read pixels into array
 
-	                u_specularFactor: this.util.getRand(1) // TODO: MAY NOT BE RIGHT
+	                hm.width = img.width;
 
+	                hm.height = img.height;
+
+	                hm.image = img;
+	            } else {}
+
+	            //hm.random();
+
+	            // Random heightmap.
+
+	            hm.random = function () {
+
+	                // use diamond square algorithm.
+	                // https://danielbeard.wordpress.com/2010/08/07/terrain-generation-and-smoothing/
+
+	                hm.data = [];
+
+	                var randMax = 0.5;
+
+	                for (var i = 0; i < divisions[0]; i++) {
+	                    // x
+
+	                    for (var j = 0; j < divisions[2]; j++) {
+	                        // z
+
+	                        hm.data.push(_this.util.getRand(0, randMax));
+	                    }
+	                }
+
+	                hm.width = divisions[0];
+
+	                hm.height = divisions[2];
+
+	                hm.image = null;
 	            };
+
+	            // Get a raw x, z coordinate.
+
+	            hm.getRaw = function (x, z) {
+	                // actual position in map data
+
+	                if (x < 0 || z < 0 || x > hm.width - 1 || z > hm.height - 1) {
+
+	                    console.error('getRaw () error: coordinates out of range: x:' + x + ' z:' + z);
+
+	                    return null;
+	                }
+
+	                return _this.data[_this.width * z + x];
+	            };
+
+	            // Get a smoothed coordinate, any resolution.
+
+	            hm.getHeight = function (x, y) {
+
+	                var x1 = floor(x);
+	                var y1 = floor(y);
+	                var x2 = x1 + 1;
+	                var y2 = y1 + 1;
+
+	                var p00 = _this.getRaw(x1 - 1, y1 - 1);
+	                var p01 = _this.getRaw(x1 - 1, y1);
+	                var p02 = _this.getRaw(x1 - 1, y2);
+	                var p03 = _this.getRaw(x1 - 1, y2 + 1);
+
+	                var p10 = _this.getRaw(x1, y1 - 1);
+	                var p11 = _this.getRaw(x1, y1);
+	                var p12 = _this.getRaw(x1, y2);
+	                var p13 = _this.getRaw(x1, y2 + 1);
+
+	                var p20 = _this.getRaw(x2, y1 - 1);
+	                var p21 = _this.getRaw(x2, y1);
+	                var p22 = _this.getRaw(x2, y2);
+	                var p23 = _this.getRaw(x2, y2 + 1);
+
+	                var p30 = _this.getRaw(x2 + 1, y1 - 1);
+	                var p31 = _this.getRaw(x2 + 1, y1);
+	                var p32 = _this.getRaw(x2 + 1, y2);
+	                var p33 = _this.getRaw(x2 + 1, y2 + 1);
+
+	                return _this.biCubicPoint(x - x1, y - y1, p00, p10, p20, p30, p01, p11, p21, p31, p02, p12, p22, p32, p03, p13, p23, p33);
+	            };
+
+	            return hm;
 	        }
+
+	        /* 
+	         * ---------------------------------------
+	         * PRIMS
+	         * ---------------------------------------
+	         */
 
 	        /** 
 	         * Create an standard 3d object.
@@ -4805,9 +4699,9 @@
 
 	            // Multiple textures per Prim. Rendering defines how textures for each Prim type are used.
 
-	            for (var _i7 = 0; _i7 < textureImage.length; _i7++) {
+	            for (var i = 0; i < textureImage.length; i++) {
 
-	                this.loadTexture.load(textureImage[_i7], prim);
+	                this.loadTexture.load(textureImage[i], prim);
 	            }
 
 	            // Define Prim material (only one material type at a time per Prim ).
@@ -4858,6 +4752,10 @@
 
 	                // Rotate.
 
+	                // TODO: rotate first for rotation.
+	                // TODO: rotate second for orbiting.
+	                // TODO: rotate (internal), translate, rotate (orbit)
+
 	                vec3.add(p.rotation, p.rotation, p.angular);
 
 	                mat4.rotate(mvMatrix, mvMatrix, p.rotation[0], [1, 0, 0]);
@@ -4878,6 +4776,132 @@
 	            this.util.primReadout(prim);
 
 	            return prim;
+	        }
+
+	        /* 
+	         * ---------------------------------------
+	         * PRIM TRANSFORMS AND PROPERTIES
+	         * ---------------------------------------
+	         */
+
+	        /** 
+	         * Scale vertices directly, without changing position.
+	         */
+
+	    }, {
+	        key: 'scale',
+	        value: function scale(vertices, _scale) {
+
+	            var oldPos = this.getCenter(vertices);
+
+	            for (var i = 0, len = vertices.length; i < len; i++) {
+
+	                vertices[i] *= _scale;
+	            }
+
+	            this.move(vertices, oldPos);
+	        }
+
+	        /** 
+	         * Move vertices directly in geometry.
+	         * NOTE: normally, you will want to use a matrix transform.
+	         */
+
+	    }, {
+	        key: 'move',
+	        value: function move(vertices, pos) {
+
+	            var center = this.getCenter(vertices);
+
+	            var delta = [center[0] - pos[0], center[1] - pos[1], center[2] = pos[2]];
+
+	            for (var i = 0, len = vertices.length; i < len; i += 3) {
+
+	                vertices[i] = delta[0];
+
+	                vertices[i + 1] = delta[1];
+
+	                vertices[i + 2] = delta[2];
+	            }
+	        }
+
+	        /** 
+	         * Get the bounding box of a shape by getting the largest and 
+	         * smallest vertices in coordinate space.
+	         */
+
+	    }, {
+	        key: 'boundingBox',
+	        value: function boundingBox(vertices) {
+
+	            var biggest = [0, 0, 0];
+
+	            var smallest = [0, 0, 0];
+
+	            var minX = void 0,
+	                minY = void 0,
+	                minZ = void 0,
+	                maxX = void 0,
+	                maxY = void 0,
+	                maxZ = void 0;
+
+	            for (var i = 0, len = vertices.length; i < len; i += 3) {
+
+	                minX = Math.min(vertices[i], minX);
+	                minY = Math.min(vertices[i + 1], minY);
+	                minZ = Math.min(vertices[i + 2], minZ);
+
+	                maxX = Math.max(vertices[i], maxX);
+	                maxY = Math.max(vertices[i + 1], maxY);
+	                maxZ = Math.max(vertices[i + 2], maxZ);
+	            }
+
+	            // Create cube points.
+
+	            // TODO: not complete.
+
+	            var box = [];
+
+	            return box;
+	        }
+
+	        /** 
+	         * Get the center of a shape.
+	         */
+
+	    }, {
+	        key: 'getCenter',
+	        value: function getCenter(vertices) {
+
+	            var box = this.boundingBox(vertices);
+
+	            // find the centroid point (not necessarily part of the shape).
+	        }
+
+	        /** 
+	         * Set a material for a prim.
+	         * @link http://webglfundamentals.org/webgl/lessons/webgl-less-code-more-fun.html
+	         * didn't use chroma (but could)
+	         * @link https://github.com/gka/chroma.js/blob/gh-pages/src/index.md
+	         */
+
+	    }, {
+	        key: 'setMaterial',
+	        value: function setMaterial(prim) {
+
+	            return {
+
+	                u_colorMult: 0,
+
+	                u_diffuse: [1, 1, 1], // TODO: should be textures[0]
+
+	                u_specular: [1, 1, 1, 1],
+
+	                u_shininess: this.util.getRand(500),
+
+	                u_specularFactor: this.util.getRand(1) // TODO: MAY NOT BE RIGHT
+
+	            };
 	        }
 	    }]);
 
@@ -5031,15 +5055,13 @@
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	            ));
 
-	            var heightMap = [39, 159, 227, 15, 211, 206, 250, 110, 26, 6, 144, 71, 7, 117, 97, 46, 239, 14, 249, 13, 225, 26, 28, 197, 174, 58, 79, 25, 88, 236, 45, 243, 203, 240, 195, 100, 187, 12, 202, 167, 207, 209, 138, 33, 219, 152, 154, 55, 137, 238, 196, 209, 37, 27, 240, 97, 46, 220, 114, 52, 193, 78, 170, 163];
-
 	            this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.type.TERRAIN, 'terrain', 1.0, vec3.fromValues(2, 2, 2), // dimensions
-	            vec3.fromValues(100, 255, 100), // divisions
+	            vec3.fromValues(5, 5, 5), // divisions
 	            vec3.fromValues(1.5, -1.5, 2), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
 	            vec3.fromValues(util.degToRad(1), util.degToRad(0), util.degToRad(0)), // angular velocity in x, y, x
-	            ['img/mozvr-logo1.png'], // texture present, NOT USED
+	            ['img/mozvr-logo1.png'], // texture present
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0), // color
 	            null //heightMap                       // heightmap
 	            ));
