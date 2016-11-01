@@ -411,6 +411,13 @@ export default class WebGL {
 
                         console.warn( 'using debug context' );
 
+                        if ( gl.getParameter !== 'function' ) {
+
+                            gl = canvas.getContext( n[ i ] );
+
+                            console.warn( 'unable to use debug context, trying release:' + n[ i ], ' getParameter:' + gl.getParameter );
+                        }
+
                         break;
                     }
 
@@ -420,7 +427,7 @@ export default class WebGL {
 
                     if ( gl ) {
 
-                        console.warn ( 'using release context mode' );
+                        console.warn ( 'using release context mode:' + n[ i ] );
 
                         break;
                     }
