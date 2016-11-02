@@ -1,4 +1,4 @@
-export default class world {
+export default class World {
 
     /** 
      * The World class creates the scene, and should be uniquely 
@@ -74,7 +74,7 @@ export default class world {
         this.textureObjList = [];
 
         this.textureObjList.push( this.prim.createPrim(
-            this.prim.type.CUBE,
+            this.prim.typeList.CUBE,
             'first cube',                                        // name
             1.0,                                                 // scale
             vec3.fromValues( 1, 1, 1 ),            // dimensions
@@ -88,7 +88,7 @@ export default class world {
         ) );
 
         this.textureObjList.push( this.prim.createPrim(
-            this.prim.type.CUBE,
+            this.prim.typeList.CUBE,
             'toji cube',
             1.0,
             vec3.fromValues( 1, 1, 1 ),            // dimensions
@@ -108,7 +108,7 @@ export default class world {
         this.colorObjList = [];
 
          this.colorObjList.push( this.prim.createPrim(
-            this.prim.type.CUBE,
+            this.prim.typeList.CUBE,
             'colored cube',
             1.0,
             vec3.fromValues( 1, 1, 1 ),            // dimensions
@@ -128,7 +128,7 @@ export default class world {
         this.dirlightTextureObjList = [];
 
          this.dirlightTextureObjList.push( this.prim.createPrim(
-            this.prim.type.CUBE,
+            this.prim.typeList.CUBE,
             'lit cube',
             1.0,
             vec3.fromValues( 1, 1, 1 ),            // dimensions
@@ -142,7 +142,7 @@ export default class world {
         ) );
 
         this.dirlightTextureObjList.push( this.prim.createPrim(
-            this.prim.type.TERRAIN,
+            this.prim.typeList.TERRAIN,
             'terrain',
             1.0,
             vec3.fromValues( 2, 2, 2 ),            // dimensions
@@ -157,7 +157,7 @@ export default class world {
         ) );
 
         this.dirlightTextureObjList.push( this.prim.createPrim(
-            this.prim.type.PLANE,
+            this.prim.typeList.PLANE,
             'a plane',
             1.0,
             vec3.fromValues( 2, 2, 2 ),            // dimensions
@@ -171,7 +171,7 @@ export default class world {
         ) );
 
         this.dirlightTextureObjList.push( this.prim.createPrim(
-            this.prim.type.SPHERE,
+            this.prim.typeList.SPHERE,
             'texsphere',
             1.0,
             vec3.fromValues( 3, 3, 3 ),            // dimensions

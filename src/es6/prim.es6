@@ -1,4 +1,7 @@
-export default class prim {
+import Map2d from './map2d';
+
+
+export default class Prim {
 
     /** 
      * Create object primitives, and return vertex and index data 
@@ -25,7 +28,7 @@ export default class prim {
 
         this.objs = [];
 
-        this.type = {
+        this.typeList = {
 
             POINT: 'geometryPoint',
 
@@ -276,105 +279,6 @@ export default class prim {
             }
 
         };
-
-    }
-
-    /* 
-     * ---------------------------------------
-     * SCALING ALGORITHMS
-     * ---------------------------------------
-     */
-
-    /** 
-     * given a discrete heightmap, get a value 
-     * using bilinear interpolation.
-     * @param {Array} heightmap 
-     * @param {Number} x = desired x position (between 0.0 and 1.0)
-     * @param {Number} z = desired z position (between 0.0 and 1.0)
-     */
-    biLinear ( x, z ) {
-
-        if ( x < 0 || x > 1.0 || z < 0 || z > 1.0 ) {
-
-            console.error( 'heightmap x index out of range, x:' + x + ' z:' + z );
-
-            return null;
-        }
-
-        // Our x and z, scaled to heightmap divisions.
-
-        x *= this.width;
-        z *= this.height;
-
-        // Points above and below our position.
-
-        let x1 = Math.min( x );
-        let x2 = Math.max( x );
-        let z1 = Math.min( z );
-        let z2 = Math.max( z );
-
-        // Interpolate along x axis, get interpolations above and below point.
-
-        let a = this.getRaw( x1, z1 ) * (x - x1) + 
-            this.getRaw( x1, z2 ) * (1 - x - x1);
-
-        let b = this.getRaw( z1, z2 ) * (x - x1) +
-            this.getRaw( x2, z2 ) * (1 - x - x1);
-
-        // Interpolate these results along z axis.
-
-        let v = a * (z - z1) + b * (1 - z - z1);
-
-        return v;
-
-    }
-
-    /** 
-     * given a set of adjacent points, return a smooth 
-     * central point using the biCubic interpolation algorithm.
-     * Adapted from:
-     * https://github.com/hughsk/bicubic-sample/blob/master/index.js
-     * https://github.com/hughsk/bicubic/blob/master/index.js
-     * @param {Number} xf 
-     * @param {Number} yf
-     */
-
-    biCubicPoint ( xf, yf, 
-        p00, p01, p02, p03, 
-        p10, p11, p12, p13, 
-        p20, p21, p22, p23, 
-        p30, p31, p32, p33
-    ) {
-
-        let yf2 = yf * yf
-        let xf2 = xf * xf
-        let xf3 = xf * xf2
-
-        let x00 = p03 - p02 - p00 + p01
-        let x01 = p00 - p01 - x00
-        let x02 = p02 - p00
-        let x0 = x00*xf3 + x01*xf2 + x02*xf + p01
-
-        let x10 = p13 - p12 - p10 + p11
-        let x11 = p10 - p11 - x10
-        let x12 = p12 - p10
-        let x1 = x10*xf3 + x11*xf2 + x12*xf + p11
-
-        let x20 = p23 - p22 - p20 + p21
-        let x21 = p20 - p21 - x20
-        let x22 = p22 - p20
-        let x2 = x20*xf3 + x21*xf2 + x22*xf + p21
-
-        let x30 = p33 - p32 - p30 + p31
-        let x31 = p30 - p31 - x30
-        let x32 = p32 - p30
-        let x3 = x30*xf3 + x31*xf2 + x32*xf + p31
-
-        let y0 = x3 - x2 - x0 + x1
-        let y1 = x0 - x1 - y0
-        let y2 = x2 - x0
-
-        return y0*yf*yf2 + y1*yf2 + y2*yf + x1
 
     }
 
@@ -1222,109 +1126,11 @@ export default class prim {
 
         let vec3 = this.glMatrix.vec3;
 
-        let hm = {};
+        prim.heightMap = new Map2d();
 
-        if ( img ) {
+        // initialize xz heightMap, randomly generated.
 
-            hm.data = []; // TODO: read pixels into array
-
-            hm.width = img.width;
-
-            hm.height = img.height;
-
-            hm.image = img;
-
-        } else {
-
-            //hm.random();
-
-        }
-
-                   
-        // Random heightmap.
-
-        hm.random = () => {
-
-            // use diamond square algorithm.
-            // https://danielbeard.wordpress.com/2010/08/07/terrain-generation-and-smoothing/
-
-            hm.data = [];
-
-            let randMax = 0.5;
-
-            for ( let i = 0; i < divisions[0]; i++ ) { // x
-
-                for ( let j = 0; j < divisions[2]; j++ ) { // z
-
-                    hm.data.push( this.util.getRand( 0, randMax ) );
-
-                }
-            } 
-
-            hm.width = divisions[0];
-
-            hm.height = divisions[2];
-
-            hm.image = null;   
-
-        }
-
-        // Get a raw x, z coordinate.
-
-        hm.getRaw = ( x, z ) => { // actual position in map data
-
-            if ( x < 0 || z < 0 || ( x > ( hm.width - 1 ) ) || ( z > ( hm.height - 1 ) ) ) {
-
-                console.error( 'getRaw () error: coordinates out of range: x:' + x + ' z:' + z );
-
-                return null;
-            }
-
-            return this.data[ ( this.width * z ) + x ];
-        }
-
-        // Get a smoothed coordinate, any resolution.
-
-        hm.getHeight = ( x, y ) => {
-        
-            let x1 = floor(x)
-            let y1 = floor(y)
-            let x2 = x1 + 1
-            let y2 = y1 + 1
-
-            let p00 = this.getRaw(x1 - 1, y1 - 1)
-            let p01 = this.getRaw(x1 - 1, y1)
-            let p02 = this.getRaw(x1 - 1, y2)
-            let p03 = this.getRaw (x1 - 1, y2 + 1)
-
-            let p10 = this.getRaw (x1, y1 - 1)
-            let p11 = this.getRaw (x1, y1)
-            let p12 = this.getRaw (x1, y2)
-            let p13 = this.getRaw (x1, y2 + 1)
-
-            let p20 = this.getRaw (x2, y1 - 1)
-            let p21 = this.getRaw (x2, y1)
-            let p22 = this.getRaw (x2, y2)
-            let p23 = this.getRaw (x2, y2 + 1)
-
-            let p30 = this.getRaw (x2 + 1, y1 - 1)
-            let p31 = this.getRaw (x2 + 1, y1)
-            let p32 = this.getRaw (x2 + 1, y2)
-            let p33 = this.getRaw (x2 + 1, y2 + 1)
-
-            return this.biCubicPoint(
-                x - x1, 
-                y - y1, 
-                p00, p10, p20, p30, 
-                p01, p11, p21, p31, 
-                p02, p12, p22, p32, 
-                p03, p13, p23, p33
-            );
-
-        }
-
-
-        return hm;
+        prim.heightMap.init( prim.divisions[0], prim.divisions[2], prim.heightMap.typeList.UINT8CLAMP );
 
     }
 

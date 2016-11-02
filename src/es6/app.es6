@@ -63,6 +63,8 @@ import Renderer from './renderer';
 
 // All objects.
 
+// import Map2d from './map2d';
+
 import Prim from './prim';
 
 // Import the world (variable object, changes with each VR world).
