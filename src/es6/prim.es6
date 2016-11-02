@@ -567,9 +567,8 @@ export default class prim {
 
         let colors = [];
 
-        let rows = prim.divisions[1]; // y axis
-
         let cols = prim.divisions[0] // x axis (really xz)
+        let rows = prim.divisions[2]; // y axis
 
         let halfX = prim.dimensions[0] / 2;
         let halfZ = prim.dimensions[2] / 2;
@@ -584,10 +583,8 @@ export default class prim {
 
             for (let rowNumber = 0; rowNumber <= rows; rowNumber++) {
 
-                let phi = colNumber * 2 * Math.PI / cols;
-
                 let x = colNumber;
-                let y = this.util.getRand(0, 1);  /////TODO: RANDOM FOR NOW
+                let y = this.util.getRand(0, 0.2);  /////TODO: RANDOM FOR NOW
                 let z = rowNumber;
 
                 let u = (colNumber / cols);

@@ -161,7 +161,7 @@ export default class world {
             'a plane',
             1.0,
             vec3.fromValues( 2, 2, 2 ),            // dimensions
-            vec3.fromValues( 10, 10, 10 ),            // divisions
+            vec3.fromValues( 50, 0, 50 ),          // divisions
             vec3.fromValues( 0, -2, 0 ),           // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0  ), util.degToRad( 0 ) ), // rotation (absolute)

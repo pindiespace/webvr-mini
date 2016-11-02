@@ -588,7 +588,7 @@
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
-	    value: true
+	        value: true
 	});
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -597,1078 +597,1078 @@
 
 	var WebGL = function () {
 
-	    /**
-	     * References:
-	     * LiteGL
-	     * @link https://github.com/jagenjo/litegl.js/tree/master/src
-	     * GL Tutorial: http://webglfundamentals.org
-	     * HTML5 Games code: http://www.wiley.com/WileyCDA/WileyTitle/productCd-1119975085.html
-	     * Best Practices
-	     * @link https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_best_practices
-	     * WebGL tests:
-	     * @link https://www.browserleaks.com/webgl
-	     * WebGL cross-browser:
-	     * @link http://codeflow.org/entries/2013/feb/22/how-to-write-portable-webgl/
-	     * Great WebGL Examples:
-	     * http://alteredqualia.com/
-	     * Toji: https://github.com/toji/webvr-samples
-	     * TWGL: @link http://twgljs.org/
-	     * @constructor
-	     * @param {Object} config a configuration object, set in app.js.
-	     */
-
-	    function WebGL(init, glMatrix, util, debug) {
-	        _classCallCheck(this, WebGL);
-
-	        console.log('in webGL class');
-
-	        this.gl = null;
-
-	        this.contextCount = 0;
-
-	        this.glVers = 0;
-
-	        this.glMatrix = glMatrix;
-
-	        this.util = util;
-
-	        if (init === true) {
-
-	            this.init(canvas);
-	        }
-
-	        // If we are running in debug mode, save the debug utils into this object.
-
-	        if (debug) {
-
-	            this.debug = debug;
-	        }
-	    }
-
-	    /** 
-	     * Clear textures from the videocard before starting.
-	     */
-
-
-	    _createClass(WebGL, [{
-	        key: 'clearTextures',
-	        value: function clearTextures() {
-
-	            var gl = this.gl;
-
-	            var len = gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
-
-	            for (var i = 0; i < len; i++) {
-
-	                gl.activeTexture(gl.TEXTURE0 + i);
-
-	                gl.bindTexture(gl.TEXTURE_2D, null);
-
-	                gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
-	            }
-
-	            gl.bindBuffer(gl.ARRAY_BUFFER, null);
-
-	            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
-
-	            gl.bindRenderbuffer(gl.RENDERBUFFER, null);
-
-	            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-	        }
-
 	        /**
-	         * initialize with a canvas context
-	         * @param {HTMLCanvasElement|String|undefined} canvas a HTML5 <canvas>, id for canvas, or undefined, 
-	         * in which case a <canvas> object is 
-	         * created and added to document.body, an ID value for a tag, or a CanvasDOMobject.
-	         * @param {Function} lostContext callback when WebGL context is lost.
-	         * @param {Function} restoredContext callback when WebGL context is restored.
-	         * @returns {WebGLContext} the WebGL context of the <canvas> object.
-	         */
-
-	    }, {
-	        key: 'init',
-	        value: function init(canvas, lostContext, restoredContext) {
-	            var _this = this;
-
-	            if (!canvas) {
-
-	                canvas = document.createElement('canvas');
-
-	                canvas.width = 480;
-
-	                canvas.height = 320;
-
-	                // This seems to fix a bug in IE 11. TODO: remove extra empty <canvas>.
-
-	                document.body.appendChild(canvas);
-	            } else if (this.util.isString(canvas)) {
-
-	                canvas = document.getElementById(canvas);
-	            } else {
-
-	                canvas = canvas;
-	            }
-
-	            if (canvas) {
-
-	                // NOTE: IE10 needs this bound to DOM for the following command to work.
-
-	                var r = canvas.getBoundingClientRect();
-
-	                canvas.width = r.width;
-
-	                canvas.height = r.height;
-
-	                this.gl = this.createContext(canvas);
-
-	                if (this.gl) {
-
-	                    var gl = this.gl;
-
-	                    /* 
-	                     * Set up listeners for context lost and regained.
-	                     * @link https://www.khronos.org/webgl/wiki/HandlingContextLost
-	                     * Simulate lost and restored context events with:
-	                     * @link https://developer.mozilla.org/en-US/docs/Web/API/WEBGL_lose_context/restoreContext
-	                     * @link http://codeflow.org/entries/2013/feb/22/how-to-write-portable-webgl/
-	                     * gl.isContextLost() also works to check
-	                     */
-
-	                    canvas.addEventListener('webglcontextlost', function (e) {
-
-	                        console.error('error: webglcontextlost event, context count:' + _this.contextCount);
-
-	                        if (lostContext) {
-
-	                            _this.gl = null;
-
-	                            lostContext(e);
-	                        }
-
-	                        e.preventDefault();
-	                    }, false);
-
-	                    canvas.addEventListener('webglcontextrestored', function (e) {
-
-	                        console.error('error: webglcontextrestored event, context count:' + _this.contextCount);
-
-	                        if (restoredContext) {
-
-	                            restoredContext(e);
-	                        }
-
-	                        e.preventDefault();
-	                    }, false);
-
-	                    // Do an initial set of our viewport width and height.
-
-	                    gl.viewportWidth = canvas.width;
-
-	                    gl.viewportHeight = canvas.height;
-
-	                    // listen for <canvas> resize event.
-
-	                    window.addEventListener('resize', function (e) {
-
-	                        _this.resizeCanvas();
-
-	                        e.preventDefault();
-	                    }, false);
-
-	                    // Default WebGL initializtion and stats, can be over-ridden in your world file.
-
-	                    if (gl.getParameter && gl.getShaderPrecisionFormat) {
-
-	                        this.stats = {};
-
-	                        var stats = this.stats;
-
-	                        // Check if high precision supported in fragment shader.
-
-	                        stats.highp = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT).precision;
-
-	                        // Max texture size, for gl.texImage2D.                
-
-	                        stats.maxTexSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
-
-	                        // Max cubemap size, for gl.texImage2D.
-
-	                        stats.maxCubeSize = gl.getParameter(gl.MAX_CUBE_MAP_TEXTURE_SIZE);
-
-	                        // Max texture size, for gl.renderbufferStorage and canvas width/height.
-
-	                        stats.maxRenderbufferSize = gl.getParameter(gl.MAX_RENDERBUFFER_SIZE);
-
-	                        // Max texture units.
-
-	                        stats.combinedUnits = gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS);
-
-	                        // Max vertex buffers.
-
-	                        stats.maxVSattribs = gl.getParameter(gl.MAX_VERTEX_ATTRIBS);
-
-	                        // Max 4-byte uniforms.
-
-	                        stats.maxVertexShader = gl.getParameter(gl.MAX_VERTEX_UNIFORM_VECTORS);
-
-	                        // Max 4-byte uniforms.
-
-	                        stats.maxFragmentShader = gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS);
-	                    } else {
-
-	                        this.stats = false;
-	                    }
-
-	                    // If we're reloading, clear all current textures in the texture buffers.
-
-	                    this.clearTextures();
-
-	                    // Default 3D enables.
-
-	                    gl.enable(gl.DEPTH_TEST);
-
-	                    gl.enable(gl.CULL_FACE);
-
-	                    //gl.disable(gl.CULL_FACE);
-
-	                    gl.clearDepth(1.0); // Clear everything
-
-	                    gl.depthFunc(gl.LEQUAL); // Near things obscure far things
-
-	                    gl.enable(gl.BLEND); // Allow blending
-
-	                    // Fog NOT in Webgl use shader
-	                    //http://www.geeks3d.com/20100228/fog-in-glsl-webgl/
-	                    // http://in2gpu.com/2014/07/22/create-fog-shader/
-	                    //gl.enable( gl.FOG );
-
-	                    // set this for individual objects 
-	                    //gl.blendFunc( gl.SRC_ALPHA, gl.ONE );
-
-	                    /* 
-	                     * IMPORTANT: tells WebGL to premultiply alphas for <canvas>
-	                     * @link http://stackoverflow.com/questions/39251254/avoid-cpu-side-conversion-with-teximage2d-in-firefox
-	                     */
-	                    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
-
-	                    gl.clearColor(0.1, 0.1, 0.1, 1.0);
-
-	                    return this.gl;
-	                } // end of have a gl context
-
-	                //return this.gl;
-	            } // end of if have a <canvas>
-
-	            return null;
-	        }
-	    }, {
-	        key: 'stats',
-	        value: function stats() {}
-
-	        /** 
-	         * check if we are ready to render
-	         */
-
-	    }, {
-	        key: 'ready',
-	        value: function ready() {
-
-	            var gl = this.gl;
-
-	            //////////////////////////////////console.log('webgl.ready(): this.gl:' + gl + ' this.glMatrix:' + this.glMatrix )
-
-	            return !!(gl && this.glMatrix);
-	        }
-
-	        /** 
-	         * Clear the screen prior to redraw.
-	         */
-
-	    }, {
-	        key: 'clear',
-	        value: function clear() {
-
-	            var gl = this.gl;
-
-	            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-	            /////////////////////gl.viewport( 0, 0, gl.viewportWidth, gl.viewportHeight );
-	        }
-
-	        /** 
-	         * Get WebGL canvas only if we've created a gl context.
-	         * @returns {HTMLCanvasElement} canvas the rendering <canvas>.
-	         */
-
-	    }, {
-	        key: 'getCanvas',
-	        value: function getCanvas() {
-
-	            return this.gl ? this.gl.canvas : null;
-	        }
-
-	        /** 
-	         * Resize the canvas if the window changes size. 
-	         * NOTE: affected by CSS styles.
-	         * TODO: check current CSS style.
-	         * (TWGL)
-	         */
-
-	    }, {
-	        key: 'resizeCanvas',
-	        value: function resizeCanvas() {
-
-	            if (this.ready()) {
-
-	                var f = Math.max(window.devicePixelRatio, 1);
-
-	                var gl = this.getContext();
-
-	                var c = this.getCanvas();
-
-	                var width = c.clientWidth * f | 0;
-
-	                var height = c.clientHeight * f | 0;
-
-	                if (c.width !== width || c.height !== height) {
-
-	                    c.width = width;
-
-	                    c.height = height;
-
-	                    gl.viewportWidth = c.width;
-
-	                    gl.viewportHeight = c.height;
-
-	                    gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
-
-	                    return true;
-	                }
-	            }
-
-	            return false;
-	        }
-
-	        /** 
-	         * get HTML5 canvas, and a WebGL context. We also scan for multiple 
-	         * contexts being created ( > 1 ) and delete if one is already present.
-	         * @param {Canvas} canvas the HTML5 <canvas> DOM element.
-	         * TODO: PROBLEM IF THERE ARE MULTIPLE CONTEXES ON THE PAGE???????
-	         * @param {HTMLCanvasElement} canvas the rendering <canvas>.
-	         * @returns {WebGLRenderingContext} gl a WebGLRenderingContext.
-	         */
-
-	    }, {
-	        key: 'createContext',
-	        value: function createContext(canvas) {
-
-	            if (!window.WebGLRenderingContext) {
-
-	                console.error('this browser does not support webgl');
-
-	                return null;
-	            }
-
-	            var gl = null;
-
-	            if (gl && this.contextCount > 1) {
-
-	                // Contexts are normally in garbage, can't be deleted without this!
-
-	                console.warn('killing context');
-
-	                this.killContext();
-
-	                this.contextCount--;
-
-	                this.gl = null; // just in case
-	            }
-
-	            var n = ['webgl2', 'experimental-webgl2', 'webgl', 'experimental-webgl'];
-
-	            var i = 0;
-
-	            while (i < n.length) {
-
-	                try {
-
-	                    if (this.debug) {
-
-	                        gl = this.debug.makeDebugContext(canvas.getContext(n[i]));
-
-	                        if (gl) {
-
-	                            console.warn('using debug context');
-
-	                            if (gl.getParameter !== 'function') {
-
-	                                gl = canvas.getContext(n[i]);
-
-	                                console.warn('unable to use debug context, trying release:' + n[i], ' getParameter:' + gl.getParameter);
-	                            }
-
-	                            break;
-	                        }
-	                    } else {
-
-	                        gl = canvas.getContext(n[i]);
-
-	                        if (gl) {
-
-	                            console.warn('using release context mode:' + n[i]);
-
-	                            break;
-	                        }
-	                    }
-	                } catch (e) {
-
-	                    console.warn('failed to load context:' + n[i]);
-	                }
-
-	                i++;
-	            } // end of while loop
-
-
-	            /*
-	             * If we got a context, assign WebGL version. Note that some 
-	             * experimental versions don't have .getParameter
-	             */
-
-	            if (gl && typeof gl.getParameter == 'function') {
-
-	                this.contextCount++;
-
-	                this.gl = gl;
-
-	                // Check if this is a full WebGL2 stack
-
-	                this.glVers = gl.getParameter(gl.VERSION).toLowerCase();
-
-	                if (i == 1 || i == 3) {
-
-	                    console.warn('experimental context, .getParameter() may not work');
-	                }
-
-	                console.log('version:' + gl.getParameter(gl.VERSION));
-
-	                // Take action, depending on version.
-
-	                switch (i) {
-
-	                    case 0:
-	                    case 1:
-	                        //if ( ! gl.TRANSFORM_FEEDBACK ) {
-	                        // revert to 1.0
-	                        //    console.log("TRANSFORM FEEDBACK NOT SUPPORTED")
-	                        //}
-	                        this.glVers = 2.0;
-	                        break;
-
-	                    case 2:
-	                    case 3:
-	                        this.glVers = 1.0;
-	                        this.addVertexBufferSupport(gl);
-	                        break;
-
-	                    default:
-	                        break;
-
-	                }
-	            }
-
-	            return this.gl;
-	        }
-
-	        /** 
-	         * Return the current context.
-	         * @returns {WebGLRenderingContext} gl a WebGLRenderingContext.
-	         */
-
-	    }, {
-	        key: 'getContext',
-	        value: function getContext() {
-
-	            if (!this.gl) {
-
-	                console.warn('warning webgl context not initialized');
-	            }
-
-	            return this.gl;
-	        }
-
-	        /** 
-	         * Kill the current context (complete reset will be needed). Also use to debug 
-	         * when context is lost, and has to be rebuilt.
+	         * References:
+	         * LiteGL
+	         * @link https://github.com/jagenjo/litegl.js/tree/master/src
+	         * GL Tutorial: http://webglfundamentals.org
+	         * HTML5 Games code: http://www.wiley.com/WileyCDA/WileyTitle/productCd-1119975085.html
+	         * Best Practices
+	         * @link https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_best_practices
+	         * WebGL tests:
+	         * @link https://www.browserleaks.com/webgl
+	         * WebGL cross-browser:
 	         * @link http://codeflow.org/entries/2013/feb/22/how-to-write-portable-webgl/
-	         * @link https://developer.mozilla.org/en-US/docs/Web/API/WEBGL_lose_context/loseContext
+	         * Great WebGL Examples:
+	         * http://alteredqualia.com/
+	         * Toji: https://github.com/toji/webvr-samples
+	         * TWGL: @link http://twgljs.org/
+	         * @constructor
+	         * @param {Object} config a configuration object, set in app.js.
 	         */
 
-	    }, {
-	        key: 'killContext',
-	        value: function killContext() {
+	        function WebGL(init, glMatrix, util, debug) {
+	                _classCallCheck(this, WebGL);
 
-	            console.log('in killcontext, count:' + this.contextCount);
+	                console.log('in webGL class');
 
-	            if (this.contextCount) {
+	                this.gl = null;
 
-	                console.log('killing WebGL context, count before:' + this.contextCount);
+	                this.contextCount = 0;
 
-	                this.gl.getExtension('WEBGL_lose_context').loseContext();
+	                this.glVers = 0;
 
-	                this.contextCount--;
-	            }
+	                this.glMatrix = glMatrix;
+
+	                this.util = util;
+
+	                if (init === true) {
+
+	                        this.init(canvas);
+	                }
+
+	                // If we are running in debug mode, save the debug utils into this object.
+
+	                if (debug) {
+
+	                        this.debug = debug;
+	                }
 	        }
 
 	        /** 
-	         * Add vertex buffer support to WebGL 1.0
-	         * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only)l
+	         * Clear textures from the videocard before starting.
 	         */
 
-	    }, {
-	        key: 'addVertexBufferSupport',
-	        value: function addVertexBufferSupport(gl) {
 
-	            var ext = gl.getExtension('OES_vertex_array_object');
+	        _createClass(WebGL, [{
+	                key: 'clearTextures',
+	                value: function clearTextures() {
 
-	            if (ext) {
+	                        var gl = this.gl;
 
-	                gl.createVertexArray = function () {
+	                        var len = gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
 
-	                    return ext.createVertexArrayOES();
-	                };
+	                        for (var i = 0; i < len; i++) {
 
-	                gl.deleteVertexArray = function (v) {
+	                                gl.activeTexture(gl.TEXTURE0 + i);
 
-	                    ext.deleteVertexArrayOES(v);
-	                };
+	                                gl.bindTexture(gl.TEXTURE_2D, null);
 
-	                gl.isVertexArray = function (v) {
-
-	                    return ext.isVertexArrayOES(v);
-	                };
-
-	                gl.bindVertexArray = function (v) {
-
-	                    ext.bindVertexArrayOES(v);
-	                };
-
-	                gl.VERTEX_ARRAY_BINDING = ext.VERTEX_ARRAY_BINDING_OES;
-	            }
-	        }
-
-	        /** 
-	         * create a WeGL shader object.
-	         * @param {VERTEX_SHADER | FRAGMENT_SHADER} type type WebGL shader type.
-	         * @param {String} source the shader source, as plain text.
-	         * @returns {WebGLShader} a compiled WebGL shader object.
-	         */
-
-	    }, {
-	        key: 'createShader',
-	        value: function createShader(type, source) {
-
-	            var shader = null;
-
-	            if (!type || !source) {
-
-	                console.error('createShader: invalid params, type:' + type + ' source:' + source);
-	            } else if (this.ready()) {
-
-	                var gl = this.gl;
-
-	                /*
-	                 * remove first EOL, which might come from using <script>...</script> tags,
-	                 * to handle GLSL ES 3.00 (TWGL)
-	                 */
-	                source.replace(/^[ \t]*\n/, '');
-
-	                if (type === gl.VERTEX_SHADER) {
-
-	                    shader = gl.createShader(type); // assigned VS
-	                } else if (type === gl.FRAGMENT_SHADER) {
-
-	                    shader = gl.createShader(type); // assigned FS
-	                } else {
-
-	                    console.error('createShader: type not recognized:' + type);
-	                }
-
-	                gl.shaderSource(shader, source);
-
-	                gl.compileShader(shader);
-
-	                // Detect shader compile errors.
-
-	                if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-
-	                    console.error('createShader:' + gl.getShaderInfoLog(shader));
-
-	                    shader = null;
-	                }
-	            }
-
-	            return shader;
-	        }
-	    }, {
-	        key: 'createVertexShader',
-	        value: function createVertexShader(source) {
-
-	            return this.createShader(this.gl.VERTEX_SHADER, source);
-	        }
-	    }, {
-	        key: 'createFragmentShader',
-	        value: function createFragmentShader(source) {
-
-	            return this.createShader(this.gl.FRAGMENT_SHADER, source);
-	        }
-
-	        /** 
-	         * Use the Fetch API to get a shader file
-	         */
-
-	    }, {
-	        key: 'fetchShader',
-	        value: function fetchShader(type, sourceURL) {
-
-	            var self = this;
-
-	            fetch(sourceURL, {
-
-	                method: 'POST',
-
-	                mode: 'cors',
-
-	                redirect: 'follow',
-
-	                headers: new Headers({
-
-	                    'Content-Type': 'text/plain'
-
-	                })
-
-	            }).then(function (response) {
-
-	                console.log(text);
-
-	                if (response.ok) {
-
-	                    return response.text();
-	                }
-
-	                return false;
-	            }).then(function (source) {
-
-	                if (source) {
-
-	                    return self.createShader(type, source);
-	                }
-	            });
-
-	            return null;
-	        }
-	    }, {
-	        key: 'fetchVertexShader',
-	        value: function fetchVertexShader(sourceURL) {
-
-	            return this.fetchShader(this.gl.VERTEX_SHADER, sourceURL);
-	        }
-	    }, {
-	        key: 'fetchFragmentShader',
-	        value: function fetchFragmentShader(sourceURL) {
-
-	            return this.fetchShader(this.gl.FRAGMENT_SHADER, sourceURL);
-	        }
-
-	        /** 
-	         * create shader form script element
-	         * @param {String|DOMElement} tag the script element, or its id
-	         */
-
-	    }, {
-	        key: 'createShaderFromTag',
-	        value: function createShaderFromTag(tag) {
-
-	            if (this.util.isString(tag)) {
-
-	                tag = document.getElementById(tag);
-	            }
-
-	            if (!tag) {
-
-	                console.error('createShaderFromTag: not found (' + tag + ')');
-
-	                return false;
-	            }
-
-	            var type = null;
-
-	            if (tag.type == 'x-shader/x-vertex') {
-
-	                type = this.gl.VERTEX_SHADER;
-	            } else if (tag.type == 'x-shader/x-fragment') {
-
-	                type = this.gl.FRAGMENT_SHADER;
-	            } else {
-
-	                console.error('createShaderFromTag: type not found:(' + tag.type + ')');
-
-	                return null;
-	            }
-
-	            var source = "";
-
-	            var c = tag.firstChild;
-
-	            while (c) {
-
-	                if (c.nodeType == 3) {
-
-	                    source += c.textContent;
-	                }
-
-	                c = c.nextSibling;
-	            }
-
-	            return this.createShader(type, source);
-	        }
-
-	        /** 
-	         * Create WebGL program with shaders. Program not used until 
-	         * we apply gl.useProgram(program).
-	         * @param {gl.VERTEX_SHADER} vShader the vertex shader.
-	         * @param {gl.FRAGMENT_SHADER} fShader the fragment shader.
-	         */
-
-	    }, {
-	        key: 'createProgram',
-	        value: function createProgram(vs, fs) {
-
-	            if (!vs || !fs) {
-
-	                console.error('createProgram: parameter error, vs:' + vs + ' fs:' + fs);
-
-	                return null;
-	            }
-
-	            // Wrap the program object to make V8 happy.
-
-	            var prg = {};
-
-	            if (this.ready()) {
-
-	                var gl = this.gl;
-
-	                var vso = this.createVertexShader(vs.code);
-
-	                var fso = this.createFragmentShader(fs.code);
-
-	                var program = gl.createProgram();
-
-	                gl.attachShader(program, vso);
-
-	                gl.attachShader(program, fso);
-
-	                gl.linkProgram(program);
-
-	                if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-
-	                    console.error('createProgram:' + gl.getProgramInfoLog(program));
-
-	                    this.checkShaders(vs, fs, program);
-	                } else {
-
-	                    prg.shaderProgram = program;
-
-	                    prg.vsVars = vs.varList, prg.fsVars = fs.varList;
-	                }
-	            }
-
-	            return prg;
-	        }
-
-	        /** 
-	         * Read shader code, and organize the variables in the shader 
-	         * into an object. Abstracts some of the tedious work in setting 
-	         * up shader variables.
-	         * @param {Array} sourceArr array of lines in the shader.
-	         * @returns {Object} an object organizing attribute, uniform, and 
-	         * varying variable names and datatypes.
-	         */
-
-	    }, {
-	        key: 'createVarList',
-	        value: function createVarList(source) {
-
-	            var len = source.length;
-
-	            var sp = ' ';
-
-	            var list = {};
-
-	            var varTypes = ['attribute', 'uniform', 'varying'];
-
-	            if (len) {
-
-	                for (var i = 0; i < source.length; i++) {
-
-	                    var s = source[i];
-
-	                    if (s.indexOf('void main') !== -1) {
-
-	                        break;
-	                    } else {
-
-	                        for (var j = 0; j < varTypes.length; j++) {
-
-	                            var type = varTypes[j];
-
-	                            if (!list[type]) list[type] = {};
-
-	                            if (s.indexOf(type) > -1) {
-
-	                                //////////////////////////////console.log("SSS1:" + s)
-
-	                                //s = s.slice(0, -1); // remove trailing ';'
-	                                s = s.replace(/;\s*$/, "");
-
-	                                ///////////////////////////////console.log("SSS:" + s)
-
-	                                s = s.split(sp);
-
-	                                //////////////////////////////console.log("FIRST: " + s)
-
-	                                var vType = s.shift(); // attribute, uniform, or varying
-
-	                                if (!list[vType]) {
-
-	                                    list[vType] = {};
-	                                }
-
-	                                /////////////////////////console.log("SECOND AFTER SHIFT:" + vType + " remainder:" + s)
-
-	                                var nType = s.shift(); // variable type
-
-	                                if (!list[vType][nType]) {
-
-	                                    list[vType][nType] = {};
-	                                }
-
-	                                var nName = s.shift(); // variable name
-
-	                                if (!list[vType][nType][nName]) {
-
-	                                    list[vType][nType][nName] = 'empty';
-	                                }
-
-	                                /////////////////////////console.log("THIRD AFTER SHIFT:" + nType + " remainder:" + s)
-	                            }
+	                                gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
 	                        }
-	                    }
-	                }
-	            }
 
-	            return list;
-	        }
+	                        gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
-	        /** 
-	         * assign the attribute arrays.
-	         */
+	                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
 
-	    }, {
-	        key: 'setAttributeArrays',
-	        value: function setAttributeArrays(shaderProgram, attributes) {
+	                        gl.bindRenderbuffer(gl.RENDERBUFFER, null);
 
-	            var gl = this.gl;
-
-	            for (var i in attributes) {
-
-	                var attb = attributes[i];
-
-	                // Note: we call glEnableAttribArray only when rendering
-
-	                for (var j in attb) {
-
-	                    attb[j] = gl.getAttribLocation(shaderProgram, j);
-
-	                    //////////console.log('gl.getAttribLocation( shaderProgram, "' + j + '" ) is:' + attb[ j ] );
-	                }
-	            }
-
-	            return attributes;
-	        }
-	    }, {
-	        key: 'setUniformLocations',
-	        value: function setUniformLocations(shaderProgram, uniforms) {
-
-	            var gl = this.gl;
-
-	            for (var i in uniforms) {
-
-	                var unif = uniforms[i];
-
-	                for (var j in unif) {
-
-	                    unif[j] = gl.getUniformLocation(shaderProgram, j);
-
-	                    ////////console.log("gl.getUniformLocation( shaderProgram," + j + ") is:" + unif[ j ] );
-	                }
-	            }
-
-	            return uniforms;
-	        }
-
-	        /** 
-	         * Bind attribute locations.
-	         * @param {WebGLProgram} program a compiled WebGL program.
-	         * @param {Object} attribLocationmap the attributes.
-	         */
-
-	    }, {
-	        key: 'bindAttributeLocations',
-	        value: function bindAttributeLocations(program, attribLocationMap) {
-
-	            var gl = this.gl;
-
-	            if (attribLocationMap) {
-
-	                for (var attribName in attribLocationMap) {
-
-	                    console.log('binding attribute:' + attribName + ' to:' + attribLocationMap[attribName]);
-
-	                    gl.bindAttribLocation(program, attribLocationMap[attribName], attribName);
-	                }
-	            } else {
-
-	                console.warn('webgl.bindAttributes: no attributes supplied');
-	            }
-	        }
-
-	        /** 
-	         * Create associative array with shader attributes.
-	         * NOTE: Only attributes actually used in the shader show.
-	         * @param {WebGLProgram} program a compiled WebGL program.
-	         * @returns {Object} a collection of attributes, with .count = number.
-	         */
-
-	    }, {
-	        key: 'getAttributes',
-	        value: function getAttributes(program) {
-
-	            var gl = this.gl;
-
-	            var attrib = {};
-
-	            var attribCount = gl.getProgramParameter(program, gl.ACTIVE_ATTRIBUTES);
-
-	            for (var i = 0; i < attribCount; i++) {
-
-	                var attribInfo = gl.getActiveAttrib(program, i);
-
-	                /////////console.log("adding attribute:" + attribInfo.name );
-
-	                attrib[attribInfo.name] = gl.getAttribLocation(program, attribInfo.name);
-	            }
-
-	            // Store the number of attributes.
-
-	            attrib.count = attribCount;
-
-	            return attrib;
-	        }
-
-	        /** 
-	         * Create associative array with shader uniforms.
-	         * NOTE: Only attributes actually used in the shader show.
-	         * @param {WebGLProgram} program a compiled WebGL program.
-	         * @returns {Object} a collection of attributes, with .count = number.
-	         */
-
-	    }, {
-	        key: 'getUniforms',
-	        value: function getUniforms(program) {
-
-	            var gl = this.gl;
-
-	            var uniform = {};
-
-	            var uniformCount = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
-
-	            var uniformName = '';
-
-	            for (var i = 0; i < uniformCount; i++) {
-
-	                var uniformInfo = gl.getActiveUniform(program, i);
-
-	                uniformName = uniformInfo.name.replace('[0]', '');
-
-	                console.log("adding uniform:" + uniformName);
-
-	                uniform[uniformName] = gl.getUniformLocation(program, uniformName);
-	            }
-
-	            // Store the number of uniforms.
-
-	            uniform.count = uniformCount;
-
-	            return uniform;
-	        }
-
-	        /** 
-	         * Create associative array with shader varying variables.
-	         */
-
-	    }, {
-	        key: 'getVarying',
-	        value: function getVarying(program) {}
-
-	        /** 
-	         * check to see if we're ready to run, after supplying 
-	         * shaders.
-	         */
-
-	    }, {
-	        key: 'checkShaders',
-	        value: function checkShaders(vs, fs, program) {
-
-	            var gl = this.gl;
-
-	            if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-
-	                // Test the vertex shader
-
-	                if (vs && !gl.getShaderParameter(vs, gl.COMPILE_STATUS)) {
-
-	                    console.error('error creating the vertex shader, ' + gl.getShaderInfoLog(vs));
-	                } else if (fs && !gl.getShaderParameter(fs, gl.COMPILE_STATUS)) {
-
-	                    console.error('error creating the fragment shader, ' + gl.getShaderInfoLog(fs));
-	                } else {
-
-	                    console.error('error in gl program linking');
+	                        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 	                }
 
-	                gl.deleteProgram(program);
+	                /**
+	                 * initialize with a canvas context
+	                 * @param {HTMLCanvasElement|String|undefined} canvas a HTML5 <canvas>, id for canvas, or undefined, 
+	                 * in which case a <canvas> object is 
+	                 * created and added to document.body, an ID value for a tag, or a CanvasDOMobject.
+	                 * @param {Function} lostContext callback when WebGL context is lost.
+	                 * @param {Function} restoredContext callback when WebGL context is restored.
+	                 * @returns {WebGLContext} the WebGL context of the <canvas> object.
+	                 */
 
-	                return false;
-	            }
+	        }, {
+	                key: 'init',
+	                value: function init(canvas, lostContext, restoredContext) {
+	                        var _this = this;
 
-	            return true;
-	        }
+	                        if (!canvas) {
 
-	        /** 
-	         * Check if our VBO, IBO are ok.
-	         */
+	                                canvas = document.createElement('canvas');
 
-	    }, {
-	        key: 'checkBufferObjects',
-	        value: function checkBufferObjects(bo) {
+	                                canvas.width = 480;
 
-	            return bo && bo instanceof ArrayBuffer;
-	        }
-	    }]);
+	                                canvas.height = 320;
 
-	    return WebGL;
+	                                // This seems to fix a bug in IE 11. TODO: remove extra empty <canvas>.
+
+	                                document.body.appendChild(canvas);
+	                        } else if (this.util.isString(canvas)) {
+
+	                                canvas = document.getElementById(canvas);
+	                        } else {
+
+	                                canvas = canvas;
+	                        }
+
+	                        if (canvas) {
+
+	                                // NOTE: IE10 needs this bound to DOM for the following command to work.
+
+	                                var r = canvas.getBoundingClientRect();
+
+	                                canvas.width = r.width;
+
+	                                canvas.height = r.height;
+
+	                                this.gl = this.createContext(canvas);
+
+	                                if (this.gl) {
+
+	                                        var gl = this.gl;
+
+	                                        /* 
+	                                         * Set up listeners for context lost and regained.
+	                                         * @link https://www.khronos.org/webgl/wiki/HandlingContextLost
+	                                         * Simulate lost and restored context events with:
+	                                         * @link https://developer.mozilla.org/en-US/docs/Web/API/WEBGL_lose_context/restoreContext
+	                                         * @link http://codeflow.org/entries/2013/feb/22/how-to-write-portable-webgl/
+	                                         * gl.isContextLost() also works to check
+	                                         */
+
+	                                        canvas.addEventListener('webglcontextlost', function (e) {
+
+	                                                console.error('error: webglcontextlost event, context count:' + _this.contextCount);
+
+	                                                if (lostContext) {
+
+	                                                        _this.gl = null;
+
+	                                                        lostContext(e);
+	                                                }
+
+	                                                e.preventDefault();
+	                                        }, false);
+
+	                                        canvas.addEventListener('webglcontextrestored', function (e) {
+
+	                                                console.error('error: webglcontextrestored event, context count:' + _this.contextCount);
+
+	                                                if (restoredContext) {
+
+	                                                        restoredContext(e);
+	                                                }
+
+	                                                e.preventDefault();
+	                                        }, false);
+
+	                                        // Do an initial set of our viewport width and height.
+
+	                                        gl.viewportWidth = canvas.width;
+
+	                                        gl.viewportHeight = canvas.height;
+
+	                                        // listen for <canvas> resize event.
+
+	                                        window.addEventListener('resize', function (e) {
+
+	                                                _this.resizeCanvas();
+
+	                                                e.preventDefault();
+	                                        }, false);
+
+	                                        // Default WebGL initializtion and stats, can be over-ridden in your world file.
+
+	                                        if (gl.getParameter && gl.getShaderPrecisionFormat) {
+
+	                                                this.stats = {};
+
+	                                                var stats = this.stats;
+
+	                                                // Check if high precision supported in fragment shader.
+
+	                                                stats.highp = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT).precision;
+
+	                                                // Max texture size, for gl.texImage2D.                
+
+	                                                stats.maxTexSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+
+	                                                // Max cubemap size, for gl.texImage2D.
+
+	                                                stats.maxCubeSize = gl.getParameter(gl.MAX_CUBE_MAP_TEXTURE_SIZE);
+
+	                                                // Max texture size, for gl.renderbufferStorage and canvas width/height.
+
+	                                                stats.maxRenderbufferSize = gl.getParameter(gl.MAX_RENDERBUFFER_SIZE);
+
+	                                                // Max texture units.
+
+	                                                stats.combinedUnits = gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS);
+
+	                                                // Max vertex buffers.
+
+	                                                stats.maxVSattribs = gl.getParameter(gl.MAX_VERTEX_ATTRIBS);
+
+	                                                // Max 4-byte uniforms.
+
+	                                                stats.maxVertexShader = gl.getParameter(gl.MAX_VERTEX_UNIFORM_VECTORS);
+
+	                                                // Max 4-byte uniforms.
+
+	                                                stats.maxFragmentShader = gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS);
+	                                        } else {
+
+	                                                this.stats = false;
+	                                        }
+
+	                                        // If we're reloading, clear all current textures in the texture buffers.
+
+	                                        this.clearTextures();
+
+	                                        // Default 3D enables.
+
+	                                        gl.enable(gl.DEPTH_TEST);
+
+	                                        gl.enable(gl.CULL_FACE);
+
+	                                        //gl.disable(gl.CULL_FACE);
+
+	                                        gl.clearDepth(1.0); // Clear everything
+
+	                                        gl.depthFunc(gl.LEQUAL); // Near things obscure far things
+
+	                                        gl.enable(gl.BLEND); // Allow blending
+
+	                                        // Fog NOT in Webgl use shader
+	                                        //http://www.geeks3d.com/20100228/fog-in-glsl-webgl/
+	                                        // http://in2gpu.com/2014/07/22/create-fog-shader/
+	                                        //gl.enable( gl.FOG );
+
+	                                        // set this for individual objects 
+	                                        //gl.blendFunc( gl.SRC_ALPHA, gl.ONE );
+
+	                                        /* 
+	                                         * IMPORTANT: tells WebGL to premultiply alphas for <canvas>
+	                                         * @link http://stackoverflow.com/questions/39251254/avoid-cpu-side-conversion-with-teximage2d-in-firefox
+	                                         */
+	                                        gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+
+	                                        gl.clearColor(0.1, 0.1, 0.1, 1.0);
+
+	                                        return this.gl;
+	                                } // end of have a gl context
+
+	                                //return this.gl;
+	                        } // end of if have a <canvas>
+
+	                        return null;
+	                }
+	        }, {
+	                key: 'stats',
+	                value: function stats() {}
+
+	                /** 
+	                 * check if we are ready to render
+	                 */
+
+	        }, {
+	                key: 'ready',
+	                value: function ready() {
+
+	                        var gl = this.gl;
+
+	                        //////////////////////////////////console.log('webgl.ready(): this.gl:' + gl + ' this.glMatrix:' + this.glMatrix )
+
+	                        return !!(gl && this.glMatrix);
+	                }
+
+	                /** 
+	                 * Clear the screen prior to redraw.
+	                 */
+
+	        }, {
+	                key: 'clear',
+	                value: function clear() {
+
+	                        var gl = this.gl;
+
+	                        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+	                        /////////////////////gl.viewport( 0, 0, gl.viewportWidth, gl.viewportHeight );
+	                }
+
+	                /** 
+	                 * Get WebGL canvas only if we've created a gl context.
+	                 * @returns {HTMLCanvasElement} canvas the rendering <canvas>.
+	                 */
+
+	        }, {
+	                key: 'getCanvas',
+	                value: function getCanvas() {
+
+	                        return this.gl ? this.gl.canvas : null;
+	                }
+
+	                /** 
+	                 * Resize the canvas if the window changes size. 
+	                 * NOTE: affected by CSS styles.
+	                 * TODO: check current CSS style.
+	                 * (TWGL)
+	                 */
+
+	        }, {
+	                key: 'resizeCanvas',
+	                value: function resizeCanvas() {
+
+	                        if (this.ready()) {
+
+	                                var f = Math.max(window.devicePixelRatio, 1);
+
+	                                var gl = this.getContext();
+
+	                                var c = this.getCanvas();
+
+	                                var width = c.clientWidth * f | 0;
+
+	                                var height = c.clientHeight * f | 0;
+
+	                                if (c.width !== width || c.height !== height) {
+
+	                                        c.width = width;
+
+	                                        c.height = height;
+
+	                                        gl.viewportWidth = c.width;
+
+	                                        gl.viewportHeight = c.height;
+
+	                                        gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+
+	                                        return true;
+	                                }
+	                        }
+
+	                        return false;
+	                }
+
+	                /** 
+	                 * get HTML5 canvas, and a WebGL context. We also scan for multiple 
+	                 * contexts being created ( > 1 ) and delete if one is already present.
+	                 * @param {Canvas} canvas the HTML5 <canvas> DOM element.
+	                 * TODO: PROBLEM IF THERE ARE MULTIPLE CONTEXES ON THE PAGE???????
+	                 * @param {HTMLCanvasElement} canvas the rendering <canvas>.
+	                 * @returns {WebGLRenderingContext} gl a WebGLRenderingContext.
+	                 */
+
+	        }, {
+	                key: 'createContext',
+	                value: function createContext(canvas) {
+
+	                        if (!window.WebGLRenderingContext) {
+
+	                                console.error('this browser does not support webgl');
+
+	                                return null;
+	                        }
+
+	                        var gl = null;
+
+	                        if (gl && this.contextCount > 1) {
+
+	                                // Contexts are normally in garbage, can't be deleted without this!
+
+	                                console.warn('killing context');
+
+	                                this.killContext();
+
+	                                this.contextCount--;
+
+	                                this.gl = null; // just in case
+	                        }
+
+	                        var n = ['webgl2', 'experimental-webgl2', 'webgl', 'experimental-webgl'];
+
+	                        var i = 0;
+
+	                        while (i < n.length) {
+
+	                                try {
+
+	                                        if (this.debug) {
+
+	                                                gl = this.debug.makeDebugContext(canvas.getContext(n[i]));
+
+	                                                if (gl) {
+
+	                                                        console.warn('using debug context');
+
+	                                                        if (gl.getParameter !== 'function') {
+
+	                                                                gl = canvas.getContext(n[i]);
+
+	                                                                console.warn('unable to use debug context, trying release:' + n[i], ' getParameter:' + gl.getParameter);
+	                                                        }
+
+	                                                        break;
+	                                                }
+	                                        } else {
+
+	                                                gl = canvas.getContext(n[i]);
+
+	                                                if (gl) {
+
+	                                                        console.warn('using release context mode:' + n[i]);
+
+	                                                        break;
+	                                                }
+	                                        }
+	                                } catch (e) {
+
+	                                        console.warn('failed to load context:' + n[i]);
+	                                }
+
+	                                i++;
+	                        } // end of while loop
+
+
+	                        /*
+	                         * If we got a context, assign WebGL version. Note that some 
+	                         * experimental versions don't have .getParameter
+	                         */
+
+	                        if (gl && typeof gl.getParameter == 'function') {
+
+	                                this.contextCount++;
+
+	                                this.gl = gl;
+
+	                                // Check if this is a full WebGL2 stack
+
+	                                this.glVers = gl.getParameter(gl.VERSION).toLowerCase();
+
+	                                if (i == 1 || i == 3) {
+
+	                                        console.warn('experimental context, .getParameter() may not work');
+	                                }
+
+	                                console.log('version:' + gl.getParameter(gl.VERSION));
+
+	                                // Take action, depending on version.
+
+	                                switch (i) {
+
+	                                        case 0:
+	                                        case 1:
+	                                                //if ( ! gl.TRANSFORM_FEEDBACK ) {
+	                                                // revert to 1.0
+	                                                //    console.log("TRANSFORM FEEDBACK NOT SUPPORTED")
+	                                                //}
+	                                                this.glVers = 2.0;
+	                                                break;
+
+	                                        case 2:
+	                                        case 3:
+	                                                this.glVers = 1.0;
+	                                                this.addVertexBufferSupport(gl);
+	                                                break;
+
+	                                        default:
+	                                                break;
+
+	                                }
+	                        }
+
+	                        return this.gl;
+	                }
+
+	                /** 
+	                 * Return the current context.
+	                 * @returns {WebGLRenderingContext} gl a WebGLRenderingContext.
+	                 */
+
+	        }, {
+	                key: 'getContext',
+	                value: function getContext() {
+
+	                        if (!this.gl) {
+
+	                                console.warn('warning webgl context not initialized');
+	                        }
+
+	                        return this.gl;
+	                }
+
+	                /** 
+	                 * Kill the current context (complete reset will be needed). Also use to debug 
+	                 * when context is lost, and has to be rebuilt.
+	                 * @link http://codeflow.org/entries/2013/feb/22/how-to-write-portable-webgl/
+	                 * @link https://developer.mozilla.org/en-US/docs/Web/API/WEBGL_lose_context/loseContext
+	                 */
+
+	        }, {
+	                key: 'killContext',
+	                value: function killContext() {
+
+	                        console.log('in killcontext, count:' + this.contextCount);
+
+	                        if (this.contextCount) {
+
+	                                console.log('killing WebGL context, count before:' + this.contextCount);
+
+	                                this.gl.getExtension('WEBGL_lose_context').loseContext();
+
+	                                this.contextCount--;
+	                        }
+	                }
+
+	                /** 
+	                 * Add vertex buffer support to WebGL 1.0
+	                 * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only)l
+	                 */
+
+	        }, {
+	                key: 'addVertexBufferSupport',
+	                value: function addVertexBufferSupport(gl) {
+
+	                        var ext = gl.getExtension('OES_vertex_array_object');
+
+	                        if (ext) {
+
+	                                gl.createVertexArray = function () {
+
+	                                        return ext.createVertexArrayOES();
+	                                };
+
+	                                gl.deleteVertexArray = function (v) {
+
+	                                        ext.deleteVertexArrayOES(v);
+	                                };
+
+	                                gl.isVertexArray = function (v) {
+
+	                                        return ext.isVertexArrayOES(v);
+	                                };
+
+	                                gl.bindVertexArray = function (v) {
+
+	                                        ext.bindVertexArrayOES(v);
+	                                };
+
+	                                gl.VERTEX_ARRAY_BINDING = ext.VERTEX_ARRAY_BINDING_OES;
+	                        }
+	                }
+
+	                /** 
+	                 * create a WeGL shader object.
+	                 * @param {VERTEX_SHADER | FRAGMENT_SHADER} type type WebGL shader type.
+	                 * @param {String} source the shader source, as plain text.
+	                 * @returns {WebGLShader} a compiled WebGL shader object.
+	                 */
+
+	        }, {
+	                key: 'createShader',
+	                value: function createShader(type, source) {
+
+	                        var shader = null;
+
+	                        if (!type || !source) {
+
+	                                console.error('createShader: invalid params, type:' + type + ' source:' + source);
+	                        } else if (this.ready()) {
+
+	                                var gl = this.gl;
+
+	                                /*
+	                                 * remove first EOL, which might come from using <script>...</script> tags,
+	                                 * to handle GLSL ES 3.00 (TWGL)
+	                                 */
+	                                source.replace(/^[ \t]*\n/, '');
+
+	                                if (type === gl.VERTEX_SHADER) {
+
+	                                        shader = gl.createShader(type); // assigned VS
+	                                } else if (type === gl.FRAGMENT_SHADER) {
+
+	                                        shader = gl.createShader(type); // assigned FS
+	                                } else {
+
+	                                        console.error('createShader: type not recognized:' + type);
+	                                }
+
+	                                gl.shaderSource(shader, source);
+
+	                                gl.compileShader(shader);
+
+	                                // Detect shader compile errors.
+
+	                                if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+
+	                                        console.error('createShader:' + gl.getShaderInfoLog(shader));
+
+	                                        shader = null;
+	                                }
+	                        }
+
+	                        return shader;
+	                }
+	        }, {
+	                key: 'createVertexShader',
+	                value: function createVertexShader(source) {
+
+	                        return this.createShader(this.gl.VERTEX_SHADER, source);
+	                }
+	        }, {
+	                key: 'createFragmentShader',
+	                value: function createFragmentShader(source) {
+
+	                        return this.createShader(this.gl.FRAGMENT_SHADER, source);
+	                }
+
+	                /** 
+	                 * Use the Fetch API to get a shader file
+	                 */
+
+	        }, {
+	                key: 'fetchShader',
+	                value: function fetchShader(type, sourceURL) {
+
+	                        var self = this;
+
+	                        fetch(sourceURL, {
+
+	                                method: 'POST',
+
+	                                mode: 'cors',
+
+	                                redirect: 'follow',
+
+	                                headers: new Headers({
+
+	                                        'Content-Type': 'text/plain'
+
+	                                })
+
+	                        }).then(function (response) {
+
+	                                console.log(text);
+
+	                                if (response.ok) {
+
+	                                        return response.text();
+	                                }
+
+	                                return false;
+	                        }).then(function (source) {
+
+	                                if (source) {
+
+	                                        return self.createShader(type, source);
+	                                }
+	                        });
+
+	                        return null;
+	                }
+	        }, {
+	                key: 'fetchVertexShader',
+	                value: function fetchVertexShader(sourceURL) {
+
+	                        return this.fetchShader(this.gl.VERTEX_SHADER, sourceURL);
+	                }
+	        }, {
+	                key: 'fetchFragmentShader',
+	                value: function fetchFragmentShader(sourceURL) {
+
+	                        return this.fetchShader(this.gl.FRAGMENT_SHADER, sourceURL);
+	                }
+
+	                /** 
+	                 * create shader form script element
+	                 * @param {String|DOMElement} tag the script element, or its id
+	                 */
+
+	        }, {
+	                key: 'createShaderFromTag',
+	                value: function createShaderFromTag(tag) {
+
+	                        if (this.util.isString(tag)) {
+
+	                                tag = document.getElementById(tag);
+	                        }
+
+	                        if (!tag) {
+
+	                                console.error('createShaderFromTag: not found (' + tag + ')');
+
+	                                return false;
+	                        }
+
+	                        var type = null;
+
+	                        if (tag.type == 'x-shader/x-vertex') {
+
+	                                type = this.gl.VERTEX_SHADER;
+	                        } else if (tag.type == 'x-shader/x-fragment') {
+
+	                                type = this.gl.FRAGMENT_SHADER;
+	                        } else {
+
+	                                console.error('createShaderFromTag: type not found:(' + tag.type + ')');
+
+	                                return null;
+	                        }
+
+	                        var source = "";
+
+	                        var c = tag.firstChild;
+
+	                        while (c) {
+
+	                                if (c.nodeType == 3) {
+
+	                                        source += c.textContent;
+	                                }
+
+	                                c = c.nextSibling;
+	                        }
+
+	                        return this.createShader(type, source);
+	                }
+
+	                /** 
+	                 * Create WebGL program with shaders. Program not used until 
+	                 * we apply gl.useProgram(program).
+	                 * @param {gl.VERTEX_SHADER} vShader the vertex shader.
+	                 * @param {gl.FRAGMENT_SHADER} fShader the fragment shader.
+	                 */
+
+	        }, {
+	                key: 'createProgram',
+	                value: function createProgram(vs, fs) {
+
+	                        if (!vs || !fs) {
+
+	                                console.error('createProgram: parameter error, vs:' + vs + ' fs:' + fs);
+
+	                                return null;
+	                        }
+
+	                        // Wrap the program object to make V8 happy.
+
+	                        var prg = {};
+
+	                        if (this.ready()) {
+
+	                                var gl = this.gl;
+
+	                                var vso = this.createVertexShader(vs.code);
+
+	                                var fso = this.createFragmentShader(fs.code);
+
+	                                var program = gl.createProgram();
+
+	                                gl.attachShader(program, vso);
+
+	                                gl.attachShader(program, fso);
+
+	                                gl.linkProgram(program);
+
+	                                if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+
+	                                        console.error('createProgram:' + gl.getProgramInfoLog(program));
+
+	                                        this.checkShaders(vs, fs, program);
+	                                } else {
+
+	                                        prg.shaderProgram = program;
+
+	                                        prg.vsVars = vs.varList, prg.fsVars = fs.varList;
+	                                }
+	                        }
+
+	                        return prg;
+	                }
+
+	                /** 
+	                 * Read shader code, and organize the variables in the shader 
+	                 * into an object. Abstracts some of the tedious work in setting 
+	                 * up shader variables.
+	                 * @param {Array} sourceArr array of lines in the shader.
+	                 * @returns {Object} an object organizing attribute, uniform, and 
+	                 * varying variable names and datatypes.
+	                 */
+
+	        }, {
+	                key: 'createVarList',
+	                value: function createVarList(source) {
+
+	                        var len = source.length;
+
+	                        var sp = ' ';
+
+	                        var list = {};
+
+	                        var varTypes = ['attribute', 'uniform', 'varying'];
+
+	                        if (len) {
+
+	                                for (var i = 0; i < source.length; i++) {
+
+	                                        var s = source[i];
+
+	                                        if (s.indexOf('void main') !== -1) {
+
+	                                                break;
+	                                        } else {
+
+	                                                for (var j = 0; j < varTypes.length; j++) {
+
+	                                                        var type = varTypes[j];
+
+	                                                        if (!list[type]) list[type] = {};
+
+	                                                        if (s.indexOf(type) > -1) {
+
+	                                                                //////////////////////////////console.log("SSS1:" + s)
+
+	                                                                //s = s.slice(0, -1); // remove trailing ';'
+	                                                                s = s.replace(/;\s*$/, "");
+
+	                                                                ///////////////////////////////console.log("SSS:" + s)
+
+	                                                                s = s.split(sp);
+
+	                                                                //////////////////////////////console.log("FIRST: " + s)
+
+	                                                                var vType = s.shift(); // attribute, uniform, or varying
+
+	                                                                if (!list[vType]) {
+
+	                                                                        list[vType] = {};
+	                                                                }
+
+	                                                                /////////////////////////console.log("SECOND AFTER SHIFT:" + vType + " remainder:" + s)
+
+	                                                                var nType = s.shift(); // variable type
+
+	                                                                if (!list[vType][nType]) {
+
+	                                                                        list[vType][nType] = {};
+	                                                                }
+
+	                                                                var nName = s.shift(); // variable name
+
+	                                                                if (!list[vType][nType][nName]) {
+
+	                                                                        list[vType][nType][nName] = 'empty';
+	                                                                }
+
+	                                                                /////////////////////////console.log("THIRD AFTER SHIFT:" + nType + " remainder:" + s)
+	                                                        }
+	                                                }
+	                                        }
+	                                }
+	                        }
+
+	                        return list;
+	                }
+
+	                /** 
+	                 * assign the attribute arrays.
+	                 */
+
+	        }, {
+	                key: 'setAttributeArrays',
+	                value: function setAttributeArrays(shaderProgram, attributes) {
+
+	                        var gl = this.gl;
+
+	                        for (var i in attributes) {
+
+	                                var attb = attributes[i];
+
+	                                // Note: we call glEnableAttribArray only when rendering
+
+	                                for (var j in attb) {
+
+	                                        attb[j] = gl.getAttribLocation(shaderProgram, j);
+
+	                                        //////////console.log('gl.getAttribLocation( shaderProgram, "' + j + '" ) is:' + attb[ j ] );
+	                                }
+	                        }
+
+	                        return attributes;
+	                }
+	        }, {
+	                key: 'setUniformLocations',
+	                value: function setUniformLocations(shaderProgram, uniforms) {
+
+	                        var gl = this.gl;
+
+	                        for (var i in uniforms) {
+
+	                                var unif = uniforms[i];
+
+	                                for (var j in unif) {
+
+	                                        unif[j] = gl.getUniformLocation(shaderProgram, j);
+
+	                                        ////////console.log("gl.getUniformLocation( shaderProgram," + j + ") is:" + unif[ j ] );
+	                                }
+	                        }
+
+	                        return uniforms;
+	                }
+
+	                /** 
+	                 * Bind attribute locations.
+	                 * @param {WebGLProgram} program a compiled WebGL program.
+	                 * @param {Object} attribLocationmap the attributes.
+	                 */
+
+	        }, {
+	                key: 'bindAttributeLocations',
+	                value: function bindAttributeLocations(program, attribLocationMap) {
+
+	                        var gl = this.gl;
+
+	                        if (attribLocationMap) {
+
+	                                for (var attribName in attribLocationMap) {
+
+	                                        console.log('binding attribute:' + attribName + ' to:' + attribLocationMap[attribName]);
+
+	                                        gl.bindAttribLocation(program, attribLocationMap[attribName], attribName);
+	                                }
+	                        } else {
+
+	                                console.warn('webgl.bindAttributes: no attributes supplied');
+	                        }
+	                }
+
+	                /** 
+	                 * Create associative array with shader attributes.
+	                 * NOTE: Only attributes actually used in the shader show.
+	                 * @param {WebGLProgram} program a compiled WebGL program.
+	                 * @returns {Object} a collection of attributes, with .count = number.
+	                 */
+
+	        }, {
+	                key: 'getAttributes',
+	                value: function getAttributes(program) {
+
+	                        var gl = this.gl;
+
+	                        var attrib = {};
+
+	                        var attribCount = gl.getProgramParameter(program, gl.ACTIVE_ATTRIBUTES);
+
+	                        for (var i = 0; i < attribCount; i++) {
+
+	                                var attribInfo = gl.getActiveAttrib(program, i);
+
+	                                /////////console.log("adding attribute:" + attribInfo.name );
+
+	                                attrib[attribInfo.name] = gl.getAttribLocation(program, attribInfo.name);
+	                        }
+
+	                        // Store the number of attributes.
+
+	                        attrib.count = attribCount;
+
+	                        return attrib;
+	                }
+
+	                /** 
+	                 * Create associative array with shader uniforms.
+	                 * NOTE: Only attributes actually used in the shader show.
+	                 * @param {WebGLProgram} program a compiled WebGL program.
+	                 * @returns {Object} a collection of attributes, with .count = number.
+	                 */
+
+	        }, {
+	                key: 'getUniforms',
+	                value: function getUniforms(program) {
+
+	                        var gl = this.gl;
+
+	                        var uniform = {};
+
+	                        var uniformCount = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
+
+	                        var uniformName = '';
+
+	                        for (var i = 0; i < uniformCount; i++) {
+
+	                                var uniformInfo = gl.getActiveUniform(program, i);
+
+	                                uniformName = uniformInfo.name.replace('[0]', '');
+
+	                                console.log("adding uniform:" + uniformName);
+
+	                                uniform[uniformName] = gl.getUniformLocation(program, uniformName);
+	                        }
+
+	                        // Store the number of uniforms.
+
+	                        uniform.count = uniformCount;
+
+	                        return uniform;
+	                }
+
+	                /** 
+	                 * Create associative array with shader varying variables.
+	                 */
+
+	        }, {
+	                key: 'getVarying',
+	                value: function getVarying(program) {}
+
+	                /** 
+	                 * check to see if we're ready to run, after supplying 
+	                 * shaders.
+	                 */
+
+	        }, {
+	                key: 'checkShaders',
+	                value: function checkShaders(vs, fs, program) {
+
+	                        var gl = this.gl;
+
+	                        if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+
+	                                // Test the vertex shader
+
+	                                if (vs && !gl.getShaderParameter(vs, gl.COMPILE_STATUS)) {
+
+	                                        console.error('error creating the vertex shader, ' + gl.getShaderInfoLog(vs));
+	                                } else if (fs && !gl.getShaderParameter(fs, gl.COMPILE_STATUS)) {
+
+	                                        console.error('error creating the fragment shader, ' + gl.getShaderInfoLog(fs));
+	                                } else {
+
+	                                        console.error('error in gl program linking');
+	                                }
+
+	                                gl.deleteProgram(program);
+
+	                                return false;
+	                        }
+
+	                        return true;
+	                }
+
+	                /** 
+	                 * Check if our VBO, IBO are ok.
+	                 */
+
+	        }, {
+	                key: 'checkBufferObjects',
+	                value: function checkBufferObjects(bo) {
+
+	                        return bo && bo instanceof ArrayBuffer;
+	                }
+	        }]);
+
+	        return WebGL;
 	}();
 
 	exports.default = WebGL;
@@ -1680,7 +1680,7 @@
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
-	    value: true
+	        value: true
 	});
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1688,30 +1688,30 @@
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 	var WebVR = function () {
-	    function WebVR(init, util, glMatrix, webgl) {
-	        _classCallCheck(this, WebVR);
+	        function WebVR(init, util, glMatrix, webgl) {
+	                _classCallCheck(this, WebVR);
 
-	        console.log('in webVR class');
+	                console.log('in webVR class');
 
-	        this.util = util;
+	                this.util = util;
 
-	        this.glMatrix = glMatrix;
+	                this.glMatrix = glMatrix;
 
-	        this.webgl = webgl;
+	                this.webgl = webgl;
 
-	        if (this.init === true) {
+	                if (this.init === true) {
 
-	            // Do something.
+	                        // Do something.
 
+	                }
 	        }
-	    }
 
-	    _createClass(WebVR, [{
-	        key: 'init',
-	        value: function init() {}
-	    }]);
+	        _createClass(WebVR, [{
+	                key: 'init',
+	                value: function init() {}
+	        }]);
 
-	    return WebVR;
+	        return WebVR;
 	}();
 
 	exports.default = WebVR;
@@ -1723,7 +1723,7 @@
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
-	    value: true
+	        value: true
 	});
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1741,220 +1741,220 @@
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 	var LoadTexture = function (_LoadPool) {
-	    _inherits(LoadTexture, _LoadPool);
-
-	    /**
-	     * Texture loader, using a texture pool.
-	    * @link http://blog.tojicode.com/2012/03/javascript-memory-optimization-and.html
-	     */
-
-	    function LoadTexture(init, util, glMatrix, webgl) {
-	        _classCallCheck(this, LoadTexture);
-
-	        console.log('in LoadTexture class');
-
-	        // Init superclass.
-
-	        var MAX_CACHE_IMAGES = 3;
-
-	        // Specific to texture cache.
-
-	        var _this = _possibleConstructorReturn(this, (LoadTexture.__proto__ || Object.getPrototypeOf(LoadTexture)).call(this, init, util, glMatrix, webgl, MAX_CACHE_IMAGES));
-
-	        _this.MAX_TIMEOUT = 10;
-
-	        _this.greyPixel = new Uint8Array([0.5, 0.5, 0.5, 1.0]);
-
-	        if (init) {
-
-	            // Do something specific to the sublclass.
-
-	        }
-
-	        return _this;
-	    }
-
-	    _createClass(LoadTexture, [{
-	        key: 'init',
-	        value: function init() {}
+	        _inherits(LoadTexture, _LoadPool);
 
 	        /**
-	         * Sets a texture to a 1x1 pixel color. 
-	         * @param {WebGLRenderingContext} gl the WebGLRenderingContext.
-	         * @param {WebGLTexture} texture the WebGLTexture to set parameters for.
-	         * @param {WebGLParameter} target.
-	         * @memberOf module: webvr-mini/LoadTexture
+	         * Texture loader, using a texture pool.
+	        * @link http://blog.tojicode.com/2012/03/javascript-memory-optimization-and.html
 	         */
 
-	    }, {
-	        key: 'setDefaultTexturePixel',
-	        value: function setDefaultTexturePixel(gl, texture, target) {
+	        function LoadTexture(init, util, glMatrix, webgl) {
+	                _classCallCheck(this, LoadTexture);
 
-	            // Put 1x1 pixels in texture. That makes it renderable immediately regardless of filtering.
+	                console.log('in LoadTexture class');
 
-	            var color = this.greyPixel;
+	                // Init superclass.
 
-	            if (target === gl.TEXTURE_CUBE_MAP) {
+	                var MAX_CACHE_IMAGES = 3;
 
-	                for (var i = 0; i < 6; ++i) {
+	                // Specific to texture cache.
 
-	                    gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, color);
+	                var _this = _possibleConstructorReturn(this, (LoadTexture.__proto__ || Object.getPrototypeOf(LoadTexture)).call(this, init, util, glMatrix, webgl, MAX_CACHE_IMAGES));
+
+	                _this.MAX_TIMEOUT = 10;
+
+	                _this.greyPixel = new Uint8Array([0.5, 0.5, 0.5, 1.0]);
+
+	                if (init) {
+
+	                        // Do something specific to the sublclass.
+
 	                }
-	            } else if (target === gl.TEXTURE_3D) {
 
-	                gl.texImage3D(target, 0, gl.RGBA, 1, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, color);
-	            } else {
-
-	                gl.texImage2D(target, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, color);
-	            }
+	                return _this;
 	        }
 
-	        /** 
-	         * Create a load object wrapper, and start a load.
-	         * POLYMORPHIC FOR LOAD MEDIA TYPE.
-	         * @param {Object} waitObj the unresolved wait object holding load directions for the asset.
-	         * @memberOf module: webvr-mini/LoadTexture
-	         */
+	        _createClass(LoadTexture, [{
+	                key: 'init',
+	                value: function init() {}
 
-	    }, {
-	        key: 'createLoadObj',
-	        value: function createLoadObj(waitObj) {
-	            var _this2 = this;
+	                /**
+	                 * Sets a texture to a 1x1 pixel color. 
+	                 * @param {WebGLRenderingContext} gl the WebGLRenderingContext.
+	                 * @param {WebGLTexture} texture the WebGLTexture to set parameters for.
+	                 * @param {WebGLParameter} target.
+	                 * @memberOf module: webvr-mini/LoadTexture
+	                 */
 
-	            var gl = this.webgl.getContext();
+	        }, {
+	                key: 'setDefaultTexturePixel',
+	                value: function setDefaultTexturePixel(gl, texture, target) {
 
-	            var loadObj = {};
+	                        // Put 1x1 pixels in texture. That makes it renderable immediately regardless of filtering.
 
-	            loadObj.image = new Image();
+	                        var color = this.greyPixel;
 
-	            loadObj.image.crossOrigin = 'anonymous';
+	                        if (target === gl.TEXTURE_CUBE_MAP) {
 
-	            loadObj.callback = waitObj.callback;
+	                                for (var i = 0; i < 6; ++i) {
 
-	            loadObj.prim = waitObj.attach; ///////////////////////////
+	                                        gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, color);
+	                                }
+	                        } else if (target === gl.TEXTURE_3D) {
 
-	            loadObj.busy = true;
+	                                gl.texImage3D(target, 0, gl.RGBA, 1, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, color);
+	                        } else {
 
-	            // https://www.nczonline.net/blog/2013/09/10/understanding-ecmascript-6-arrow-functions/
+	                                gl.texImage2D(target, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, color);
+	                        }
+	                }
 
-	            loadObj.image.addEventListener('load', function (e) {
-	                return _this2.uploadTexture(loadObj, loadObj.callback);
-	            });
+	                /** 
+	                 * Create a load object wrapper, and start a load.
+	                 * POLYMORPHIC FOR LOAD MEDIA TYPE.
+	                 * @param {Object} waitObj the unresolved wait object holding load directions for the asset.
+	                 * @memberOf module: webvr-mini/LoadTexture
+	                 */
 
-	            loadObj.image.addEventListener('error', function (e) {
-	                return console.log('error loading image:' + waitObj.source);
-	            }, false);
+	        }, {
+	                key: 'createLoadObj',
+	                value: function createLoadObj(waitObj) {
+	                        var _this2 = this;
 
-	            // Start the loading.
+	                        var gl = this.webgl.getContext();
 
-	            loadObj.image.src = waitObj.source;
+	                        var loadObj = {};
 
-	            this.cacheCt++;
+	                        loadObj.image = new Image();
 
-	            return loadObj;
-	        }
+	                        loadObj.image.crossOrigin = 'anonymous';
 
-	        /** 
-	         * Create a WebGL texture and upload to GPU.
-	         * Note: problems with firefox data, see:
-	         * http://stackoverflow.com/questions/39251254/avoid-cpu-side-conversion-with-teximage2d-in-firefox
-	         * @param {Object} loadObj the loader object containing Image data.
-	         * @param {Function} callback callback function for individual texture load.
-	         * @memberOf module: webvr-mini/LoadTexture
-	         */
+	                        loadObj.callback = waitObj.callback;
 
-	    }, {
-	        key: 'uploadTexture',
-	        value: function uploadTexture(loadObj, callback) {
+	                        loadObj.prim = waitObj.attach; ///////////////////////////
 
-	            ////////////console.log( 'In uploadTexture() for:' + loadObj.prim.name + ' src:' + loadObj.image.src );
+	                        loadObj.busy = true;
 
-	            var gl = this.webgl.getContext();
+	                        // https://www.nczonline.net/blog/2013/09/10/understanding-ecmascript-6-arrow-functions/
 
-	            var textures = loadObj.prim.textures;
+	                        loadObj.image.addEventListener('load', function (e) {
+	                                return _this2.uploadTexture(loadObj, loadObj.callback);
+	                        });
 
-	            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+	                        loadObj.image.addEventListener('error', function (e) {
+	                                return console.log('error loading image:' + waitObj.source);
+	                        }, false);
 
-	            var textureObj = {
-	                image: loadObj.image,
-	                src: loadObj.image.src,
-	                texture: gl.createTexture()
-	            };
+	                        // Start the loading.
 
-	            gl.bindTexture(gl.TEXTURE_2D, textureObj.texture);
+	                        loadObj.image.src = waitObj.source;
 
-	            // Use image, or default to single-color texture if image is not present.
+	                        this.cacheCt++;
 
-	            if (textureObj.image) {
+	                        return loadObj;
+	                }
 
-	                //////////console.log( 'binding image:' + textureObj.image.src );
+	                /** 
+	                 * Create a WebGL texture and upload to GPU.
+	                 * Note: problems with firefox data, see:
+	                 * http://stackoverflow.com/questions/39251254/avoid-cpu-side-conversion-with-teximage2d-in-firefox
+	                 * @param {Object} loadObj the loader object containing Image data.
+	                 * @param {Function} callback callback function for individual texture load.
+	                 * @memberOf module: webvr-mini/LoadTexture
+	                 */
 
-	                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureObj.image);
+	        }, {
+	                key: 'uploadTexture',
+	                value: function uploadTexture(loadObj, callback) {
 
-	                // TODO: WHEN TO USE gl.renderBufferStorage()???
-	            } else {
+	                        ////////////console.log( 'In uploadTexture() for:' + loadObj.prim.name + ' src:' + loadObj.image.src );
 
-	                console.error('no loadObj.image for:' + textureObj.image.src + ', using default pixel texture');
+	                        var gl = this.webgl.getContext();
 
-	                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, this.greyPixel);
-	            }
+	                        var textures = loadObj.prim.textures;
 
-	            if (this.util.isPowerOfTwo(textureObj.image.width) && this.util.isPowerOfTwo(textureObj.image.height)) {
+	                        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 
-	                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+	                        var textureObj = {
+	                                image: loadObj.image,
+	                                src: loadObj.image.src,
+	                                texture: gl.createTexture()
+	                        };
 
-	                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+	                        gl.bindTexture(gl.TEXTURE_2D, textureObj.texture);
 
-	                gl.generateMipmap(gl.TEXTURE_2D);
-	            } else {
+	                        // Use image, or default to single-color texture if image is not present.
 
-	                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+	                        if (textureObj.image) {
 
-	                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-	            }
+	                                //////////console.log( 'binding image:' + textureObj.image.src );
 
-	            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+	                                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureObj.image);
 
-	            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+	                                // TODO: WHEN TO USE gl.renderBufferStorage()???
+	                        } else {
 
-	            gl.bindTexture(gl.TEXTURE_2D, null);
+	                                console.error('no loadObj.image for:' + textureObj.image.src + ', using default pixel texture');
 
-	            textures.push(textureObj);
+	                                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, this.greyPixel);
+	                        }
 
-	            window.prim = loadObj.prim;
+	                        if (this.util.isPowerOfTwo(textureObj.image.width) && this.util.isPowerOfTwo(textureObj.image.height)) {
 
-	            // Clear the object for re-use.
+	                                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 
-	            loadObj.busy = false;
+	                                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
 
-	            // Send this to update for re-use .
+	                                gl.generateMipmap(gl.TEXTURE_2D);
+	                        } else {
 
-	            this.update(loadObj);
-	        }
+	                                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 
-	        /** 
-	         * Upload a cubemap texture.
-	         * @memberOf module: webvr-mini/LoadTexture
-	         */
+	                                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+	                        }
 
-	    }, {
-	        key: 'uploadCubeTexture',
-	        value: function uploadCubeTexture() {}
+	                        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 
-	        /** 
-	         * Upload a 3d texture.
-	         * @memberOf module: webvr-mini/LoadTexture
-	         */
+	                        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
-	    }, {
-	        key: 'upload3DTexture',
-	        value: function upload3DTexture() {}
+	                        gl.bindTexture(gl.TEXTURE_2D, null);
 
-	        // load() and update() are defined in the superclass.
+	                        textures.push(textureObj);
 
-	    }]);
+	                        window.prim = loadObj.prim;
 
-	    return LoadTexture;
+	                        // Clear the object for re-use.
+
+	                        loadObj.busy = false;
+
+	                        // Send this to update for re-use .
+
+	                        this.update(loadObj);
+	                }
+
+	                /** 
+	                 * Upload a cubemap texture.
+	                 * @memberOf module: webvr-mini/LoadTexture
+	                 */
+
+	        }, {
+	                key: 'uploadCubeTexture',
+	                value: function uploadCubeTexture() {}
+
+	                /** 
+	                 * Upload a 3d texture.
+	                 * @memberOf module: webvr-mini/LoadTexture
+	                 */
+
+	        }, {
+	                key: 'upload3DTexture',
+	                value: function upload3DTexture() {}
+
+	                // load() and update() are defined in the superclass.
+
+	        }]);
+
+	        return LoadTexture;
 	}(_loadPool2.default);
 
 	exports.default = LoadTexture;
@@ -1966,7 +1966,7 @@
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
-	    value: true
+	        value: true
 	});
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1975,157 +1975,157 @@
 
 	var LoadPool = function () {
 
-	    /**
-	     * Base loader class. We don't use promise.all since we want to keep a 
-	     * limited pool of loaders, which accept a larger number of waitObjs. As 
-	     * each loadObj completes a load, it checks the queue to see if there is 
-	     * another loadObj neededing a load.
-	     */
-
-	    function LoadPool(init, util, glMatrix, webgl, MAX_CACHE) {
-	        _classCallCheck(this, LoadPool);
-
-	        console.log('in LoadPool class');
-
-	        this.util = util;
-
-	        this.webgl = webgl;
-
-	        this.glMatrix = glMatrix;
-
-	        this.MAX_CACHE = MAX_CACHE; // from subclass
-
-	        this.loadCache = new Array(MAX_CACHE);
-
-	        this.waitCache = []; // Could be hundreds
-
-	        this.waitCt = 0; // wait cache pointer
-
-	        this.loadCt = 0; // load cache pointer
-
-	        this.ready = false;
-	    }
-
-	    /** 
-	     * Add to the queue of unresolved wait objects, an object holding
-	     * directions for loading the asset and callback(s).
-	     * @param {String} source the image path.
-	     * @param {Function} callback callback function ofr individual waiter.
-	     */
-
-
-	    _createClass(LoadPool, [{
-	        key: 'createWaitObj',
-	        value: function createWaitObj(source, attach, callback) {
-
-	            /////////////console.log( 'creating wait object...' + source );
-
-	            this.loadCt++;
-
-	            this.waitCache.push({
-
-	                source: source,
-
-	                attach: attach,
-
-	                callback: callback
-
-	            });
-	        }
-
-	        // Create LoadObject is specific to subclass.
-
-	        // UploadXXX is specific to subclass.
-
-	        /** 
-	         * Update the queue.
+	        /**
+	         * Base loader class. We don't use promise.all since we want to keep a 
+	         * limited pool of loaders, which accept a larger number of waitObjs. As 
+	         * each loadObj completes a load, it checks the queue to see if there is 
+	         * another loadObj neededing a load.
 	         */
 
-	    }, {
-	        key: 'update',
-	        value: function update(loadObj) {
+	        function LoadPool(init, util, glMatrix, webgl, MAX_CACHE) {
+	                _classCallCheck(this, LoadPool);
 
-	            /////////////console.log( 'in loadTexture.update()' );
+	                console.log('in LoadPool class');
 
-	            var waitCache = this.waitCache;
+	                this.util = util;
 
-	            var wLen = waitCache.length;
+	                this.webgl = webgl;
 
-	            if (wLen < 1) {
+	                this.glMatrix = glMatrix;
 
-	                console.log('all assets loaded for:' + loadObj.prim.name);
+	                this.MAX_CACHE = MAX_CACHE; // from subclass
 
-	                this.ready = true;
+	                this.loadCache = new Array(MAX_CACHE);
 
-	                return;
-	            }
+	                this.waitCache = []; // Could be hundreds
 
-	            this.ready = false;
+	                this.waitCt = 0; // wait cache pointer
 
-	            // Check if there is an available loadCache
+	                this.loadCt = 0; // load cache pointer
 
-	            var i = 0;
+	                this.ready = false;
+	        }
 
-	            var loadCache = this.loadCache;
+	        /** 
+	         * Add to the queue of unresolved wait objects, an object holding
+	         * directions for loading the asset and callback(s).
+	         * @param {String} source the image path.
+	         * @param {Function} callback callback function ofr individual waiter.
+	         */
 
-	            var lLen = loadCache.length;
 
-	            var waitObj = waitCache[0];
+	        _createClass(LoadPool, [{
+	                key: 'createWaitObj',
+	                value: function createWaitObj(source, attach, callback) {
 
-	            /////////console.log( 'in update(), have a waitObj waiting...' + waitObj.attach.name + ' src:' + waitObj.source );
+	                        /////////////console.log( 'creating wait object...' + source );
 
-	            if (loadObj && loadObj.busy === false) {
+	                        this.loadCt++;
 
-	                //////////console.log( 're-using a loader object:' + ' loadObj:' + loadObj  );
+	                        this.waitCache.push({
 
-	                loadObj.prim = waitObj.attach;
+	                                source: source,
 
-	                loadObj.image.src = waitObj.source;
+	                                attach: attach,
 
-	                waitCache.shift();
-	            } else {
+	                                callback: callback
 
-	                for (i; i < lLen; i++) {
-
-	                    if (!loadCache[i]) {
-
-	                        //////////console.log( 'creating a new Loader object at cache pos:' + i );
-
-	                        loadCache[i] = this.createLoadObj(waitObj);
-
-	                        waitCache.shift();
-
-	                        break;
-	                    }
+	                        });
 	                }
-	            }
-	        } // end of update
 
-	        /** 
-	         * load objects into the waiting queue. This can happen very quickly. 
-	         * images are queue for loading, with callback for each load, and 
-	         * final callback. We use custom code here instead of a Promise for 
-	         * brevity and flexibility.
-	         * @param {String} source the path to the image file
-	         * @param {Function} callback each time an image is loaded.
-	         * @param {Function} finalCallback (optional) the callback executed when all objects are loaded.
-	         */
+	                // Create LoadObject is specific to subclass.
 
-	    }, {
-	        key: 'load',
-	        value: function load(source, attach, callback, finalCallback) {
+	                // UploadXXX is specific to subclass.
 
-	            // Push a load request onto the queue.
+	                /** 
+	                 * Update the queue.
+	                 */
 
-	            this.createWaitObj(source, attach, callback);
+	        }, {
+	                key: 'update',
+	                value: function update(loadObj) {
 
-	            // Start loading, if space available.
+	                        /////////////console.log( 'in loadTexture.update()' );
 
-	            this.update();
-	        }
-	    }]);
+	                        var waitCache = this.waitCache;
 
-	    return LoadPool;
+	                        var wLen = waitCache.length;
+
+	                        if (wLen < 1) {
+
+	                                console.log('all assets loaded for:' + loadObj.prim.name);
+
+	                                this.ready = true;
+
+	                                return;
+	                        }
+
+	                        this.ready = false;
+
+	                        // Check if there is an available loadCache
+
+	                        var i = 0;
+
+	                        var loadCache = this.loadCache;
+
+	                        var lLen = loadCache.length;
+
+	                        var waitObj = waitCache[0];
+
+	                        /////////console.log( 'in update(), have a waitObj waiting...' + waitObj.attach.name + ' src:' + waitObj.source );
+
+	                        if (loadObj && loadObj.busy === false) {
+
+	                                //////////console.log( 're-using a loader object:' + ' loadObj:' + loadObj  );
+
+	                                loadObj.prim = waitObj.attach;
+
+	                                loadObj.image.src = waitObj.source;
+
+	                                waitCache.shift();
+	                        } else {
+
+	                                for (i; i < lLen; i++) {
+
+	                                        if (!loadCache[i]) {
+
+	                                                //////////console.log( 'creating a new Loader object at cache pos:' + i );
+
+	                                                loadCache[i] = this.createLoadObj(waitObj);
+
+	                                                waitCache.shift();
+
+	                                                break;
+	                                        }
+	                                }
+	                        }
+	                } // end of update
+
+	                /** 
+	                 * load objects into the waiting queue. This can happen very quickly. 
+	                 * images are queue for loading, with callback for each load, and 
+	                 * final callback. We use custom code here instead of a Promise for 
+	                 * brevity and flexibility.
+	                 * @param {String} source the path to the image file
+	                 * @param {Function} callback each time an image is loaded.
+	                 * @param {Function} finalCallback (optional) the callback executed when all objects are loaded.
+	                 */
+
+	        }, {
+	                key: 'load',
+	                value: function load(source, attach, callback, finalCallback) {
+
+	                        // Push a load request onto the queue.
+
+	                        this.createWaitObj(source, attach, callback);
+
+	                        // Start loading, if space available.
+
+	                        this.update();
+	                }
+	        }]);
+
+	        return LoadPool;
 	}();
 
 	exports.default = LoadPool;
@@ -2186,7 +2186,7 @@
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
-	    value: true
+	        value: true
 	});
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2204,100 +2204,100 @@
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 	var LoadAudio = function (_LoadPool) {
-	    _inherits(LoadAudio, _LoadPool);
+	        _inherits(LoadAudio, _LoadPool);
 
-	    /**
-	     * Base loader class.
-	     * @link https://www.html5rocks.com/en/tutorials/webaudio/intro/
-	     * @link http://mdn.github.io/fetch-examples/fetch-array-buffer/
-	     */
+	        /**
+	         * Base loader class.
+	         * @link https://www.html5rocks.com/en/tutorials/webaudio/intro/
+	         * @link http://mdn.github.io/fetch-examples/fetch-array-buffer/
+	         */
 
-	    function LoadAudio(init, util, glMatrix, webgl) {
-	        _classCallCheck(this, LoadAudio);
+	        function LoadAudio(init, util, glMatrix, webgl) {
+	                _classCallCheck(this, LoadAudio);
 
-	        console.log('in LoadAudio class');
+	                console.log('in LoadAudio class');
 
-	        var MAX_CACHE_AUDIO = 3;
+	                var MAX_CACHE_AUDIO = 3;
 
-	        var _this = _possibleConstructorReturn(this, (LoadAudio.__proto__ || Object.getPrototypeOf(LoadAudio)).call(this, init, util, glMatrix, webgl, MAX_CACHE_AUDIO));
+	                var _this = _possibleConstructorReturn(this, (LoadAudio.__proto__ || Object.getPrototypeOf(LoadAudio)).call(this, init, util, glMatrix, webgl, MAX_CACHE_AUDIO));
 
-	        _this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+	                _this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-	        _this.sources = {};
+	                _this.sources = {};
 
-	        if (init === true) {}
+	                if (init === true) {}
 
-	        return _this;
-	    }
-
-	    _createClass(LoadAudio, [{
-	        key: 'uploadAudio',
-	        value: function uploadAudio(loadObj, callback) {
-
-	            var audio = loadObj.prim.audio;
-
-	            var audioObj = {
-	                audio: loadObj.audio,
-	                src: loadObj.src
-	            };
-
-	            // TODO: set audio volume, etc.
-
-	            audio.push(audioObj);
-
-	            // Clear the object for re-use.
-
-	            loadObj.busy = false;
-
-	            this.update(loadObj);
+	                return _this;
 	        }
-	    }, {
-	        key: 'createLoadObj',
-	        value: function createLoadObj(waitObj) {
 
-	            loadObj = {};
+	        _createClass(LoadAudio, [{
+	                key: 'uploadAudio',
+	                value: function uploadAudio(loadObj, callback) {
 
-	            loadObj.src = waitObj.source;
+	                        var audio = loadObj.prim.audio;
 
-	            loadObj.audio = this.audioCtx.createBufferSource();
+	                        var audioObj = {
+	                                audio: loadObj.audio,
+	                                src: loadObj.src
+	                        };
 
-	            var req = new Request(waitObj.source);
+	                        // TODO: set audio volume, etc.
 
-	            // TODO: SET CORS and mime type
+	                        audio.push(audioObj);
 
-	            fetch(req).then(function (response) {
+	                        // Clear the object for re-use.
 
-	                if (!response.ok) {
+	                        loadObj.busy = false;
 
-	                    throw Error(response.statusText);
+	                        this.update(loadObj);
 	                }
+	        }, {
+	                key: 'createLoadObj',
+	                value: function createLoadObj(waitObj) {
 
-	                return response.arrayBuffer();
-	            }).then(function (buffer) {
+	                        loadObj = {};
 
-	                if (!buffer) {
+	                        loadObj.src = waitObj.source;
 
-	                    throw Error('no audio arrayBuffer');
+	                        loadObj.audio = this.audioCtx.createBufferSource();
+
+	                        var req = new Request(waitObj.source);
+
+	                        // TODO: SET CORS and mime type
+
+	                        fetch(req).then(function (response) {
+
+	                                if (!response.ok) {
+
+	                                        throw Error(response.statusText);
+	                                }
+
+	                                return response.arrayBuffer();
+	                        }).then(function (buffer) {
+
+	                                if (!buffer) {
+
+	                                        throw Error('no audio arrayBuffer');
+	                                }
+
+	                                this.audioCtx.decodeAudioData(buffer, function (decodedData) {
+
+	                                        loadObj.audio.buffer = decodedData;
+
+	                                        loadObj.audio.connect(this.audioCtx.destination);
+
+	                                        // Attach to prim.
+
+	                                        this.update(loadObj);
+	                                });
+	                        }).catch(function (err) {
+
+	                                console.error(err);
+	                        });
 	                }
+	        }]);
 
-	                this.audioCtx.decodeAudioData(buffer, function (decodedData) {
-
-	                    loadObj.audio.buffer = decodedData;
-
-	                    loadObj.audio.connect(this.audioCtx.destination);
-
-	                    // Attach to prim.
-
-	                    this.update(loadObj);
-	                });
-	            }).catch(function (err) {
-
-	                console.error(err);
-	            });
-	        }
-	    }]);
-
-	    return LoadAudio;
+	        return LoadAudio;
 	}(_loadPool2.default);
 
 	exports.default = LoadAudio;
@@ -2358,7 +2358,7 @@
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
-	    value: true
+	        value: true
 	});
 
 	var _loadPool = __webpack_require__(8);
@@ -2374,27 +2374,27 @@
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 	var LoadFont = function (_LoadPool) {
-	    _inherits(LoadFont, _LoadPool);
+	        _inherits(LoadFont, _LoadPool);
 
-	    /** 
-	     * Load and configure fonts for use.
-	     * Working with fonts:
-	     * @link https://www.html5rocks.com/en/tutorials/webgl/million_letters/
-	     */
+	        /** 
+	         * Load and configure fonts for use.
+	         * Working with fonts:
+	         * @link https://www.html5rocks.com/en/tutorials/webgl/million_letters/
+	         */
 
-	    function LoadFont(init, util, glMatrix, webgl) {
-	        _classCallCheck(this, LoadFont);
+	        function LoadFont(init, util, glMatrix, webgl) {
+	                _classCallCheck(this, LoadFont);
 
-	        console.log('in LoadFont class');
+	                console.log('in LoadFont class');
 
-	        // Init superclass.
+	                // Init superclass.
 
-	        var MAX_CACHE_FONTS = 3;
+	                var MAX_CACHE_FONTS = 3;
 
-	        return _possibleConstructorReturn(this, (LoadFont.__proto__ || Object.getPrototypeOf(LoadFont)).call(this, init, util, glMatrix, webgl, MAX_CACHE_FONTS));
-	    }
+	                return _possibleConstructorReturn(this, (LoadFont.__proto__ || Object.getPrototypeOf(LoadFont)).call(this, init, util, glMatrix, webgl, MAX_CACHE_FONTS));
+	        }
 
-	    return LoadFont;
+	        return LoadFont;
 	}(_loadPool2.default);
 
 	exports.default = LoadFont;
@@ -2406,7 +2406,7 @@
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
-	    value: true
+	            value: true
 	});
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2424,184 +2424,184 @@
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 	var ShaderTexture = function (_Shader) {
-	    _inherits(ShaderTexture, _Shader);
+	            _inherits(ShaderTexture, _Shader);
 
-	    function ShaderTexture(init, util, glMatrix, webgl, prim) {
-	        _classCallCheck(this, ShaderTexture);
+	            function ShaderTexture(init, util, glMatrix, webgl, prim) {
+	                        _classCallCheck(this, ShaderTexture);
 
-	        var _this = _possibleConstructorReturn(this, (ShaderTexture.__proto__ || Object.getPrototypeOf(ShaderTexture)).call(this, init, util, glMatrix, webgl, prim));
+	                        var _this = _possibleConstructorReturn(this, (ShaderTexture.__proto__ || Object.getPrototypeOf(ShaderTexture)).call(this, init, util, glMatrix, webgl, prim));
 
-	        console.log('In ShaderTexture class');
+	                        console.log('In ShaderTexture class');
 
-	        return _this;
-	    }
+	                        return _this;
+	            }
 
-	    /** 
-	     * --------------------------------------------------------------------
-	     * VERTEX SHADER 1
-	     * a default-lighting textured object vertex shader.
-	     * - vertex position
-	     * - texture coordinate
-	     * - model-view matrix
-	     * - projection matrix
-	     * --------------------------------------------------------------------
-	     */
+	            /** 
+	             * --------------------------------------------------------------------
+	             * VERTEX SHADER 1
+	             * a default-lighting textured object vertex shader.
+	             * - vertex position
+	             * - texture coordinate
+	             * - model-view matrix
+	             * - projection matrix
+	             * --------------------------------------------------------------------
+	             */
 
 
-	    _createClass(ShaderTexture, [{
-	        key: 'vsSrc',
-	        value: function vsSrc() {
+	            _createClass(ShaderTexture, [{
+	                        key: 'vsSrc',
+	                        value: function vsSrc() {
 
-	            var s = ['attribute vec3 aVertexPosition;', 'attribute vec2 aTextureCoord;', 'uniform mat4 uMVMatrix;', 'uniform mat4 uPMatrix;', 'varying vec2 vTextureCoord;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vTextureCoord = aTextureCoord;', '}'];
+	                                    var s = ['attribute vec3 aVertexPosition;', 'attribute vec2 aTextureCoord;', 'uniform mat4 uMVMatrix;', 'uniform mat4 uPMatrix;', 'varying vec2 vTextureCoord;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vTextureCoord = aTextureCoord;', '}'];
 
-	            return {
+	                                    return {
 
-	                code: s.join('\n'),
+	                                                code: s.join('\n'),
 
-	                varList: this.webgl.createVarList(s)
+	                                                varList: this.webgl.createVarList(s)
 
-	            };
-	        }
+	                                    };
+	                        }
 
-	        /** 
-	         * a default-lighting textured object fragment shader.
-	         * - varying texture coordinate
-	         * - texture 2D sampler
-	         */
+	                        /** 
+	                         * a default-lighting textured object fragment shader.
+	                         * - varying texture coordinate
+	                         * - texture 2D sampler
+	                         */
 
-	    }, {
-	        key: 'fsSrc',
-	        value: function fsSrc() {
+	            }, {
+	                        key: 'fsSrc',
+	                        value: function fsSrc() {
 
-	            var s = [
+	                                    var s = [
 
-	            // 'precision mediump float;',
+	                                    // 'precision mediump float;',
 
-	            this.floatp, 'varying vec2 vTextureCoord;', 'uniform sampler2D uSampler;', 'void main(void) {', '    gl_FragColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));', '}'];
+	                                    this.floatp, 'varying vec2 vTextureCoord;', 'uniform sampler2D uSampler;', 'void main(void) {', '    gl_FragColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));', '}'];
 
-	            return {
+	                                    return {
 
-	                code: s.join('\n'),
+	                                                code: s.join('\n'),
 
-	                varList: this.webgl.createVarList(s)
+	                                                varList: this.webgl.createVarList(s)
 
-	            };
-	        }
+	                                    };
+	                        }
 
-	        /** 
-	         * --------------------------------------------------------------------
-	         * Vertex Shader 1, using texture buffer.
-	         * --------------------------------------------------------------------
-	         */
+	                        /** 
+	                         * --------------------------------------------------------------------
+	                         * Vertex Shader 1, using texture buffer.
+	                         * --------------------------------------------------------------------
+	                         */
 
-	    }, {
-	        key: 'init',
-	        value: function init(objList) {
+	            }, {
+	                        key: 'init',
+	                        value: function init(objList) {
 
-	            // DESTRUCTING DID NOT WORK!
-	            //[gl, canvas, mat4, vec3, pMatrix, mvMatrix, program ] = this.setup();
+	                                    // DESTRUCTING DID NOT WORK!
+	                                    //[gl, canvas, mat4, vec3, pMatrix, mvMatrix, program ] = this.setup();
 
-	            var arr = this.setup();
-	            var gl = arr[0];
-	            var canvas = arr[1];
-	            var mat4 = arr[2];
-	            var mat3 = arr[3];
-	            var vec3 = arr[4];
-	            var pMatrix = arr[5];
-	            var mvMatrix = arr[6];
-	            var program = arr[7];
-	            var vsVars = arr[8];
-	            var fsVars = arr[9];
+	                                    var arr = this.setup();
+	                                    var gl = arr[0];
+	                                    var canvas = arr[1];
+	                                    var mat4 = arr[2];
+	                                    var mat3 = arr[3];
+	                                    var vec3 = arr[4];
+	                                    var pMatrix = arr[5];
+	                                    var mvMatrix = arr[6];
+	                                    var program = arr[7];
+	                                    var vsVars = arr[8];
+	                                    var fsVars = arr[9];
 
-	            // Attach objects.
+	                                    // Attach objects.
 
-	            var shaderProgram = program.shaderProgram;
+	                                    var shaderProgram = program.shaderProgram;
 
-	            window.vs1Vars = vsVars; /////////////////////////////////////////////////////////
+	                                    window.vs1Vars = vsVars; /////////////////////////////////////////////////////////
 
-	            program.renderList = objList || [];
+	                                    program.renderList = objList || [];
 
-	            // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
-	            // TODO: https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/TechniquesforWorkingwithVertexData/TechniquesforWorkingwithVertexData.html
-	            // TODO: http://max-limper.de/tech/batchedrendering.html
+	                                    // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
+	                                    // TODO: https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/TechniquesforWorkingwithVertexData/TechniquesforWorkingwithVertexData.html
+	                                    // TODO: http://max-limper.de/tech/batchedrendering.html
 
-	            // Update object position, motion.
+	                                    // Update object position, motion.
 
-	            program.update = function (obj) {
+	                                    program.update = function (obj) {
 
-	                // Standard Model-View (mvMatrix) updates, per Prim.
+	                                                // Standard Model-View (mvMatrix) updates, per Prim.
 
-	                obj.setMV(mvMatrix);
+	                                                obj.setMV(mvMatrix);
 
-	                // Custom updates go here.
-	            };
+	                                                // Custom updates go here.
+	                                    };
 
-	            // Rendering.
+	                                    // Rendering.
 
-	            program.render = function () {
+	                                    program.render = function () {
 
-	                //console.log( 'gl:' + gl + ' canvas:' + canvas + ' mat4:' + mat4 + ' vec3:' + vec3 + ' pMatrix:' + pMatrix + ' mvMatrix:' + mvMatrix + ' program:' + program );
+	                                                //console.log( 'gl:' + gl + ' canvas:' + canvas + ' mat4:' + mat4 + ' vec3:' + vec3 + ' pMatrix:' + pMatrix + ' mvMatrix:' + mvMatrix + ' program:' + program );
 
-	                gl.useProgram(shaderProgram);
+	                                                gl.useProgram(shaderProgram);
 
-	                // Reset perspective matrix.
+	                                                // Reset perspective matrix.
 
-	                mat4.perspective(pMatrix, Math.PI * 0.4, canvas.width / canvas.height, 0.1, 100.0); // right
+	                                                mat4.perspective(pMatrix, Math.PI * 0.4, canvas.width / canvas.height, 0.1, 100.0); // right
 
-	                // Begin program loop
+	                                                // Begin program loop
 
-	                for (var i = 0, len = program.renderList.length; i < len; i++) {
+	                                                for (var i = 0, len = program.renderList.length; i < len; i++) {
 
-	                    var obj = program.renderList[i];
+	                                                            var obj = program.renderList[i];
 
-	                    // Only render if we have at least one texture loaded.
+	                                                            // Only render if we have at least one texture loaded.
 
-	                    if (!obj.textures[0] || !obj.textures[0].texture) continue;
+	                                                            if (!obj.textures[0] || !obj.textures[0].texture) continue;
 
-	                    // Update Model-View matrix with standard Prim values.
+	                                                            // Update Model-View matrix with standard Prim values.
 
-	                    program.update(obj, mvMatrix);
+	                                                            program.update(obj, mvMatrix);
 
-	                    // Bind vertex buffer.
+	                                                            // Bind vertex buffer.
 
-	                    gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.vertices.buffer);
-	                    gl.enableVertexAttribArray(vsVars.attribute.vec3.aVertexPosition);
-	                    gl.vertexAttribPointer(vsVars.attribute.vec3.aVertexPosition, obj.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0);
+	                                                            gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.vertices.buffer);
+	                                                            gl.enableVertexAttribArray(vsVars.attribute.vec3.aVertexPosition);
+	                                                            gl.vertexAttribPointer(vsVars.attribute.vec3.aVertexPosition, obj.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0);
 
-	                    // Bind Textures buffer (could have multiple bindings here).
+	                                                            // Bind Textures buffer (could have multiple bindings here).
 
-	                    gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.texCoords.buffer);
-	                    gl.enableVertexAttribArray(vsVars.attribute.vec2.aTextureCoord);
-	                    gl.vertexAttribPointer(vsVars.attribute.vec2.aTextureCoord, obj.geometry.texCoords.itemSize, gl.FLOAT, false, 0, 0);
+	                                                            gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.texCoords.buffer);
+	                                                            gl.enableVertexAttribArray(vsVars.attribute.vec2.aTextureCoord);
+	                                                            gl.vertexAttribPointer(vsVars.attribute.vec2.aTextureCoord, obj.geometry.texCoords.itemSize, gl.FLOAT, false, 0, 0);
 
-	                    gl.activeTexture(gl.TEXTURE0);
-	                    gl.bindTexture(gl.TEXTURE_2D, null);
-	                    gl.bindTexture(gl.TEXTURE_2D, obj.textures[0].texture);
+	                                                            gl.activeTexture(gl.TEXTURE0);
+	                                                            gl.bindTexture(gl.TEXTURE_2D, null);
+	                                                            gl.bindTexture(gl.TEXTURE_2D, obj.textures[0].texture);
 
-	                    // Set fragment shader sampler uniform.
+	                                                            // Set fragment shader sampler uniform.
 
-	                    gl.uniform1i(fsVars.uniform.sampler2D.uSampler, 0); //STRANGE
+	                                                            gl.uniform1i(fsVars.uniform.sampler2D.uSampler, 0); //STRANGE
 
-	                    // Set perspective and model-view matrix uniforms.
+	                                                            // Set perspective and model-view matrix uniforms.
 
-	                    gl.uniformMatrix4fv(vsVars.uniform.mat4.uPMatrix, false, pMatrix);
-	                    gl.uniformMatrix4fv(vsVars.uniform.mat4.uMVMatrix, false, mvMatrix);
+	                                                            gl.uniformMatrix4fv(vsVars.uniform.mat4.uPMatrix, false, pMatrix);
+	                                                            gl.uniformMatrix4fv(vsVars.uniform.mat4.uMVMatrix, false, mvMatrix);
 
-	                    // Bind index buffer.
+	                                                            // Bind index buffer.
 
-	                    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer);
+	                                                            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer);
 
-	                    // Draw elements.
+	                                                            // Draw elements.
 
-	                    gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
-	                }
-	            };
+	                                                            gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
+	                                                }
+	                                    };
 
-	            return program;
-	        }
-	    }]);
+	                                    return program;
+	                        }
+	            }]);
 
-	    return ShaderTexture;
+	            return ShaderTexture;
 	}(_shader2.default);
 
 	exports.default = ShaderTexture;
@@ -2613,7 +2613,7 @@
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
-	    value: true
+	        value: true
 	});
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2622,140 +2622,140 @@
 
 	var Shader = function () {
 
-	    /* 
-	     * Renderers.
-	     * GREAT description of model, view, projection matrix
-	     * @link https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_model_view_projection
-	     * 
-	     * Using vertex arrays:
-	     * @link http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
-	     * 
-	     * WebGL Stack
-	     * @link https://github.com/stackgl
-	     * 
-	     * Some shaders
-	     * https://github.com/jwagner/terrain
-	     * 
-	     * Superfast Advanced Batch Processing
-	     * http://max-limper.de/tech/batchedrendering.html
-	     * 
-	     * GLSL Sandbox
-	     * http://mrdoob.com/projects/glsl_sandbox/
-	     * 
-	     * Basic MVC
-	     * https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_model_view_projection
-	     */
-
-	    function Shader(init, util, glMatrix, webgl, prim) {
-	        _classCallCheck(this, Shader);
-
-	        console.log('In Shader class');
-
-	        this.webgl = webgl;
-
-	        this.util = util;
-
-	        this.prim = prim;
-
-	        this.glMatrix = glMatrix;
-
-	        this.pMatrix = this.glMatrix.mat4.create();
-
-	        this.mvMatrix = this.glMatrix.mat4.create();
-
-	        this.mvMatrixStack = this.glMatrix.mat4.create();
-
-	        this.floatp = '';
-
-	        if (this.webgl.stats.highp) {
-
-	            this.floatp = 'precision highp float;';
-	        } else {
-
-	            this.floatp = 'precision mediump float;';
-	        }
-
-	        // If we need to load a vertext and fragment shader files (in text format), put their paths in derived classes.
-
-	        this.vertexShaderFile = null;
-
-	        this.fragmentShaderFile = null;
-	    }
-
-	    /* 
-	      * MATRIX OPERATIONS
-	      * Mostly with glMatrix
-	      */
-
-	    _createClass(Shader, [{
-	        key: 'mvPushMatrix',
-	        value: function mvPushMatrix() {
-
-	            var mat4 = this.glMatrix.mat4;
-
-	            var copy = mat4.create();
-
-	            mat4.set(this.mvMatrix, copy);
-
-	            mvMatrixStack.push(copy);
-	        }
-	    }, {
-	        key: 'mvPopMatrix',
-	        value: function mvPopMatrix() {
-
-	            if (this.mvMatrixStack.length == 0) {
-
-	                throw 'Invalid popMatrix!';
-	            }
-
-	            mvMatrix = this.mvMatrixStack.pop();
-	        }
-
-	        /** 
-	         * set up our program object, using WebGL. We wrap the 'naked' WebGL 
-	         * program object, and add additional properties to the wrapper. 
+	        /* 
+	         * Renderers.
+	         * GREAT description of model, view, projection matrix
+	         * @link https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_model_view_projection
 	         * 
-	         * Individual shaders use these variables to construct a program wrapper 
-	         * object containing the GLProgram, plus properties, plus update() and 
-	         * render() functions.
+	         * Using vertex arrays:
+	         * @link http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
+	         * 
+	         * WebGL Stack
+	         * @link https://github.com/stackgl
+	         * 
+	         * Some shaders
+	         * https://github.com/jwagner/terrain
+	         * 
+	         * Superfast Advanced Batch Processing
+	         * http://max-limper.de/tech/batchedrendering.html
+	         * 
+	         * GLSL Sandbox
+	         * http://mrdoob.com/projects/glsl_sandbox/
+	         * 
+	         * Basic MVC
+	         * https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_model_view_projection
 	         */
 
-	    }, {
-	        key: 'setup',
-	        value: function setup() {
+	        function Shader(init, util, glMatrix, webgl, prim) {
+	                _classCallCheck(this, Shader);
 
-	            // Compile shaders and create WebGL program using webgl object.
+	                console.log('In Shader class');
 
-	            var program = null;
+	                this.webgl = webgl;
 
-	            if (this.vertexShaderFile && this.this.fragmentShaderFile) {
+	                this.util = util;
 
-	                program = this.webgl.createProgram(this.webgl.fetchVertexShader(this.vertexShaderFile), this.webgl.fetchFragmentShader(this.fragmentShaderFile));
-	            } else {
+	                this.prim = prim;
 
-	                program = this.webgl.createProgram(this.vsSrc(), this.fsSrc());
-	            }
+	                this.glMatrix = glMatrix;
 
-	            // Return references to our properties, and assign uniform and attribute locations using webgl object.
+	                this.pMatrix = this.glMatrix.mat4.create();
 
-	            return [this.webgl.getContext(), this.webgl.getCanvas(), this.glMatrix.mat4, this.glMatrix.mat3, this.glMatrix.vec3, this.glMatrix.mat4.create(), // perspective
+	                this.mvMatrix = this.glMatrix.mat4.create();
 
-	            this.glMatrix.mat4.create(), // model-view
+	                this.mvMatrixStack = this.glMatrix.mat4.create();
 
-	            program, {
-	                attribute: this.webgl.setAttributeArrays(program.shaderProgram, program.vsVars.attribute),
+	                this.floatp = '';
 
-	                uniform: this.webgl.setUniformLocations(program.shaderProgram, program.vsVars.uniform)
+	                if (this.webgl.stats.highp) {
 
-	            }, {
+	                        this.floatp = 'precision highp float;';
+	                } else {
 
-	                uniform: this.webgl.setUniformLocations(program.shaderProgram, program.fsVars.uniform)
+	                        this.floatp = 'precision mediump float;';
+	                }
 
-	            }];
+	                // If we need to load a vertext and fragment shader files (in text format), put their paths in derived classes.
+
+	                this.vertexShaderFile = null;
+
+	                this.fragmentShaderFile = null;
 	        }
-	    }]);
 
-	    return Shader;
+	        /* 
+	          * MATRIX OPERATIONS
+	          * Mostly with glMatrix
+	          */
+
+	        _createClass(Shader, [{
+	                key: 'mvPushMatrix',
+	                value: function mvPushMatrix() {
+
+	                        var mat4 = this.glMatrix.mat4;
+
+	                        var copy = mat4.create();
+
+	                        mat4.set(this.mvMatrix, copy);
+
+	                        mvMatrixStack.push(copy);
+	                }
+	        }, {
+	                key: 'mvPopMatrix',
+	                value: function mvPopMatrix() {
+
+	                        if (this.mvMatrixStack.length == 0) {
+
+	                                throw 'Invalid popMatrix!';
+	                        }
+
+	                        mvMatrix = this.mvMatrixStack.pop();
+	                }
+
+	                /** 
+	                 * set up our program object, using WebGL. We wrap the 'naked' WebGL 
+	                 * program object, and add additional properties to the wrapper. 
+	                 * 
+	                 * Individual shaders use these variables to construct a program wrapper 
+	                 * object containing the GLProgram, plus properties, plus update() and 
+	                 * render() functions.
+	                 */
+
+	        }, {
+	                key: 'setup',
+	                value: function setup() {
+
+	                        // Compile shaders and create WebGL program using webgl object.
+
+	                        var program = null;
+
+	                        if (this.vertexShaderFile && this.this.fragmentShaderFile) {
+
+	                                program = this.webgl.createProgram(this.webgl.fetchVertexShader(this.vertexShaderFile), this.webgl.fetchFragmentShader(this.fragmentShaderFile));
+	                        } else {
+
+	                                program = this.webgl.createProgram(this.vsSrc(), this.fsSrc());
+	                        }
+
+	                        // Return references to our properties, and assign uniform and attribute locations using webgl object.
+
+	                        return [this.webgl.getContext(), this.webgl.getCanvas(), this.glMatrix.mat4, this.glMatrix.mat3, this.glMatrix.vec3, this.glMatrix.mat4.create(), // perspective
+
+	                        this.glMatrix.mat4.create(), // model-view
+
+	                        program, {
+	                                attribute: this.webgl.setAttributeArrays(program.shaderProgram, program.vsVars.attribute),
+
+	                                uniform: this.webgl.setUniformLocations(program.shaderProgram, program.vsVars.uniform)
+
+	                        }, {
+
+	                                uniform: this.webgl.setUniformLocations(program.shaderProgram, program.fsVars.uniform)
+
+	                        }];
+	                }
+	        }]);
+
+	        return Shader;
 	}();
 
 	exports.default = Shader;
@@ -2767,7 +2767,7 @@
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
-	    value: true
+	        value: true
 	});
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2785,154 +2785,154 @@
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 	var ShaderColor = function (_Shader) {
-	    _inherits(ShaderColor, _Shader);
+	        _inherits(ShaderColor, _Shader);
 
-	    function ShaderColor(init, util, glMatrix, webgl, prim) {
-	        _classCallCheck(this, ShaderColor);
+	        function ShaderColor(init, util, glMatrix, webgl, prim) {
+	                _classCallCheck(this, ShaderColor);
 
-	        var _this = _possibleConstructorReturn(this, (ShaderColor.__proto__ || Object.getPrototypeOf(ShaderColor)).call(this, init, util, glMatrix, webgl, prim));
+	                var _this = _possibleConstructorReturn(this, (ShaderColor.__proto__ || Object.getPrototypeOf(ShaderColor)).call(this, init, util, glMatrix, webgl, prim));
 
-	        console.log('In ShaderColor class');
+	                console.log('In ShaderColor class');
 
-	        return _this;
-	    }
-
-	    _createClass(ShaderColor, [{
-	        key: 'vsSrc',
-	        value: function vsSrc() {
-
-	            var s = ['attribute vec3 aVertexPosition;', 'attribute vec4 aVertexColor;', 'uniform mat4 uMVMatrix;', 'uniform mat4 uPMatrix;', 'varying lowp vec4 vColor;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vColor = aVertexColor;', '}'];
-
-	            return {
-
-	                code: s.join('\n'),
-
-	                varList: this.webgl.createVarList(s)
-
-	            };
-	        }
-	    }, {
-	        key: 'fsSrc',
-	        value: function fsSrc() {
-
-	            var s = ['varying lowp vec4 vColor;', 'void main(void) {',
-
-	            //'gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);',
-
-	            'gl_FragColor = vColor;', '}'];
-
-	            return {
-
-	                code: s.join('\n'),
-
-	                varList: this.webgl.createVarList(s)
-
-	            };
+	                return _this;
 	        }
 
-	        /** 
-	         * --------------------------------------------------------------------
-	         * Vertex Shader 2, using color buffer but not texture.
-	         * --------------------------------------------------------------------
-	         */
+	        _createClass(ShaderColor, [{
+	                key: 'vsSrc',
+	                value: function vsSrc() {
 
-	    }, {
-	        key: 'init',
-	        value: function init(objList) {
+	                        var s = ['attribute vec3 aVertexPosition;', 'attribute vec4 aVertexColor;', 'uniform mat4 uMVMatrix;', 'uniform mat4 uPMatrix;', 'varying lowp vec4 vColor;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vColor = aVertexColor;', '}'];
 
-	            // DESTRUCTING DID NOT WORK!
-	            //[gl, canvas, mat4, vec3, pMatrix, mvMatrix, program ] = this.setup();
+	                        return {
 
-	            var arr = this.setup();
-	            var gl = arr[0];
-	            var canvas = arr[1];
-	            var mat4 = arr[2];
-	            var mat3 = arr[3];
-	            var vec3 = arr[4];
-	            var pMatrix = arr[5];
-	            var mvMatrix = arr[6];
-	            var program = arr[7];
-	            var vsVars = arr[8];
-	            var fsVars = arr[9];
+	                                code: s.join('\n'),
 
-	            // Attach objects.
+	                                varList: this.webgl.createVarList(s)
 
-	            var shaderProgram = program.shaderProgram;
-
-	            window.vs2Vars = vsVars; /////////////////////////////////////////////////////////
-
-	            var counter = 0;
-
-	            program.renderList = objList || [];
-
-	            // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
-
-	            // Update object position, motion.
-
-	            program.update = function (obj) {
-
-	                // Standard mvMatrix updates.
-
-	                obj.setMV(mvMatrix);
-
-	                // Custom updates go here.
-	            };
-
-	            // Rendering.
-
-	            program.render = function () {
-
-	                //console.log( 'gl:' + gl + ' canvas:' + canvas + ' mat4:' + mat4 + ' vec3:' + vec3 + ' pMatrix:' + pMatrix + ' mvMatrix:' + mvMatrix + ' program:' + program );
-
-	                gl.useProgram(shaderProgram);
-
-	                // Reset perspective matrix.
-
-	                mat4.perspective(pMatrix, Math.PI * 0.4, canvas.width / canvas.height, 0.1, 100.0); // right
-
-	                // Loop through assigned objects.
-
-	                for (var i = 0, len = program.renderList.length; i < len; i++) {
-
-	                    var obj = program.renderList[i];
-
-	                    // Update Model-View matrix with standard Prim values.
-
-	                    program.update(obj, mvMatrix);
-
-	                    // Bind vertex buffer.
-
-	                    gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.vertices.buffer);
-	                    gl.enableVertexAttribArray(vsVars.attribute.vec3.aVertexPosition);
-	                    gl.vertexAttribPointer(vsVars.attribute.vec3.aVertexPosition, obj.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0);
-
-	                    // Bind color buffer.
-
-	                    gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.colors.buffer);
-	                    gl.enableVertexAttribArray(vsVars.attribute.vec4.aVertexColor);
-	                    gl.vertexAttribPointer(vsVars.attribute.vec4.aVertexColor, obj.geometry.colors.itemSize, gl.FLOAT, false, 0, 0);
-	                    //gl.disableVertexAttribArray( vsVars.attribute.vec4.aVertexColor );
-
-	                    // Bind indices buffer.
-
-	                    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer);
-
-	                    // Set perspective and model-view matrix uniforms.
-
-	                    gl.uniformMatrix4fv(vsVars.uniform.mat4.uPMatrix, false, pMatrix);
-	                    gl.uniformMatrix4fv(vsVars.uniform.mat4.uMVMatrix, false, mvMatrix);
-
-	                    // Draw elements.
-
-	                    gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
+	                        };
 	                }
-	            };
+	        }, {
+	                key: 'fsSrc',
+	                value: function fsSrc() {
 
-	            return program;
-	        }
-	    }]);
+	                        var s = ['varying lowp vec4 vColor;', 'void main(void) {',
 
-	    return ShaderColor;
+	                        //'gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);',
+
+	                        'gl_FragColor = vColor;', '}'];
+
+	                        return {
+
+	                                code: s.join('\n'),
+
+	                                varList: this.webgl.createVarList(s)
+
+	                        };
+	                }
+
+	                /** 
+	                 * --------------------------------------------------------------------
+	                 * Vertex Shader 2, using color buffer but not texture.
+	                 * --------------------------------------------------------------------
+	                 */
+
+	        }, {
+	                key: 'init',
+	                value: function init(objList) {
+
+	                        // DESTRUCTING DID NOT WORK!
+	                        //[gl, canvas, mat4, vec3, pMatrix, mvMatrix, program ] = this.setup();
+
+	                        var arr = this.setup();
+	                        var gl = arr[0];
+	                        var canvas = arr[1];
+	                        var mat4 = arr[2];
+	                        var mat3 = arr[3];
+	                        var vec3 = arr[4];
+	                        var pMatrix = arr[5];
+	                        var mvMatrix = arr[6];
+	                        var program = arr[7];
+	                        var vsVars = arr[8];
+	                        var fsVars = arr[9];
+
+	                        // Attach objects.
+
+	                        var shaderProgram = program.shaderProgram;
+
+	                        window.vs2Vars = vsVars; /////////////////////////////////////////////////////////
+
+	                        var counter = 0;
+
+	                        program.renderList = objList || [];
+
+	                        // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
+
+	                        // Update object position, motion.
+
+	                        program.update = function (obj) {
+
+	                                // Standard mvMatrix updates.
+
+	                                obj.setMV(mvMatrix);
+
+	                                // Custom updates go here.
+	                        };
+
+	                        // Rendering.
+
+	                        program.render = function () {
+
+	                                //console.log( 'gl:' + gl + ' canvas:' + canvas + ' mat4:' + mat4 + ' vec3:' + vec3 + ' pMatrix:' + pMatrix + ' mvMatrix:' + mvMatrix + ' program:' + program );
+
+	                                gl.useProgram(shaderProgram);
+
+	                                // Reset perspective matrix.
+
+	                                mat4.perspective(pMatrix, Math.PI * 0.4, canvas.width / canvas.height, 0.1, 100.0); // right
+
+	                                // Loop through assigned objects.
+
+	                                for (var i = 0, len = program.renderList.length; i < len; i++) {
+
+	                                        var obj = program.renderList[i];
+
+	                                        // Update Model-View matrix with standard Prim values.
+
+	                                        program.update(obj, mvMatrix);
+
+	                                        // Bind vertex buffer.
+
+	                                        gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.vertices.buffer);
+	                                        gl.enableVertexAttribArray(vsVars.attribute.vec3.aVertexPosition);
+	                                        gl.vertexAttribPointer(vsVars.attribute.vec3.aVertexPosition, obj.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0);
+
+	                                        // Bind color buffer.
+
+	                                        gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.colors.buffer);
+	                                        gl.enableVertexAttribArray(vsVars.attribute.vec4.aVertexColor);
+	                                        gl.vertexAttribPointer(vsVars.attribute.vec4.aVertexColor, obj.geometry.colors.itemSize, gl.FLOAT, false, 0, 0);
+	                                        //gl.disableVertexAttribArray( vsVars.attribute.vec4.aVertexColor );
+
+	                                        // Bind indices buffer.
+
+	                                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer);
+
+	                                        // Set perspective and model-view matrix uniforms.
+
+	                                        gl.uniformMatrix4fv(vsVars.uniform.mat4.uPMatrix, false, pMatrix);
+	                                        gl.uniformMatrix4fv(vsVars.uniform.mat4.uMVMatrix, false, mvMatrix);
+
+	                                        // Draw elements.
+
+	                                        gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
+	                                }
+	                        };
+
+	                        return program;
+	                }
+	        }]);
+
+	        return ShaderColor;
 	}(_shader2.default);
 
 	exports.default = ShaderColor;
@@ -2944,7 +2944,7 @@
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
-	    value: true
+	            value: true
 	});
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2962,244 +2962,244 @@
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 	var ShaderDirlightTexture = function (_Shader) {
-	    _inherits(ShaderDirlightTexture, _Shader);
+	            _inherits(ShaderDirlightTexture, _Shader);
 
-	    function ShaderDirlightTexture(init, util, glMatrix, webgl, prim) {
-	        _classCallCheck(this, ShaderDirlightTexture);
+	            function ShaderDirlightTexture(init, util, glMatrix, webgl, prim) {
+	                        _classCallCheck(this, ShaderDirlightTexture);
 
-	        var _this = _possibleConstructorReturn(this, (ShaderDirlightTexture.__proto__ || Object.getPrototypeOf(ShaderDirlightTexture)).call(this, init, util, glMatrix, webgl, prim));
+	                        var _this = _possibleConstructorReturn(this, (ShaderDirlightTexture.__proto__ || Object.getPrototypeOf(ShaderDirlightTexture)).call(this, init, util, glMatrix, webgl, prim));
 
-	        console.log('In ShaderTexture class');
+	                        console.log('In ShaderTexture class');
 
-	        return _this;
-	    }
+	                        return _this;
+	            }
 
-	    /** 
-	     * --------------------------------------------------------------------
-	     * VERTEX SHADER 3
-	     * a directionally-lit textured object vertex shader.
-	     * @link http://learningwebgl.com/blog/?p=684
-	     * StackGL
-	     * @link https://github.com/stackgl
-	     * phong lighting
-	     * @link https://github.com/stackgl/glsl-lighting-walkthrough
-	     * - vertex position
-	     * - texture coordinate
-	     * - model-view matrix
-	     * - projection matrix
-	     * --------------------------------------------------------------------
-	     */
+	            /** 
+	             * --------------------------------------------------------------------
+	             * VERTEX SHADER 3
+	             * a directionally-lit textured object vertex shader.
+	             * @link http://learningwebgl.com/blog/?p=684
+	             * StackGL
+	             * @link https://github.com/stackgl
+	             * phong lighting
+	             * @link https://github.com/stackgl/glsl-lighting-walkthrough
+	             * - vertex position
+	             * - texture coordinate
+	             * - model-view matrix
+	             * - projection matrix
+	             * --------------------------------------------------------------------
+	             */
 
 
-	    _createClass(ShaderDirlightTexture, [{
-	        key: 'vsSrc',
-	        value: function vsSrc() {
+	            _createClass(ShaderDirlightTexture, [{
+	                        key: 'vsSrc',
+	                        value: function vsSrc() {
 
-	            var s = ['attribute vec3 aVertexPosition;', 'attribute vec3 aVertexNormal;', 'attribute vec2 aTextureCoord;', 'uniform mat4 uMVMatrix;', 'uniform mat4 uPMatrix;', 'uniform mat3 uNMatrix;', 'uniform vec3 uAmbientColor;', 'uniform vec3 uLightingDirection;', 'uniform vec3 uDirectionalColor;', 'uniform bool uUseLighting;', // TODO: remove?
+	                                    var s = ['attribute vec3 aVertexPosition;', 'attribute vec3 aVertexNormal;', 'attribute vec2 aTextureCoord;', 'uniform mat4 uMVMatrix;', 'uniform mat4 uPMatrix;', 'uniform mat3 uNMatrix;', 'uniform vec3 uAmbientColor;', 'uniform vec3 uLightingDirection;', 'uniform vec3 uDirectionalColor;', 'uniform bool uUseLighting;', // TODO: remove?
 
-	            'varying vec2 vTextureCoord;', 'varying vec3 vLightWeighting;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vTextureCoord = aTextureCoord;', '   if(!uUseLighting) {', '       vLightWeighting = vec3(1.0, 1.0, 1.0);', '   } else {', '       vec3 transformedNormal = uNMatrix * aVertexNormal;', '       float directionalLightWeighting = max(dot(transformedNormal, uLightingDirection), 0.0);', '       vLightWeighting = uAmbientColor + uDirectionalColor * directionalLightWeighting;', '   }', '}'];
+	                                    'varying vec2 vTextureCoord;', 'varying vec3 vLightWeighting;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vTextureCoord = aTextureCoord;', '   if(!uUseLighting) {', '       vLightWeighting = vec3(1.0, 1.0, 1.0);', '   } else {', '       vec3 transformedNormal = uNMatrix * aVertexNormal;', '       float directionalLightWeighting = max(dot(transformedNormal, uLightingDirection), 0.0);', '       vLightWeighting = uAmbientColor + uDirectionalColor * directionalLightWeighting;', '   }', '}'];
 
-	            return {
+	                                    return {
 
-	                code: s.join('\n'),
+	                                                code: s.join('\n'),
 
-	                varList: this.webgl.createVarList(s)
+	                                                varList: this.webgl.createVarList(s)
 
-	            };
-	        }
+	                                    };
+	                        }
 
-	        /** 
-	         * a default-lighting textured object fragment shader.
-	         * - varying texture coordinate
-	         * - texture 2D sampler
-	         */
+	                        /** 
+	                         * a default-lighting textured object fragment shader.
+	                         * - varying texture coordinate
+	                         * - texture 2D sampler
+	                         */
 
-	    }, {
-	        key: 'fsSrc',
-	        value: function fsSrc() {
+	            }, {
+	                        key: 'fsSrc',
+	                        value: function fsSrc() {
 
-	            var s = [
+	                                    var s = [
 
-	            //'precision mediump float;',
+	                                    //'precision mediump float;',
 
-	            this.floatp, 'varying vec2 vTextureCoord;', 'varying vec3 vLightWeighting;', 'uniform sampler2D uSampler;', 'void main(void) {', '    vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));', '    gl_FragColor = vec4(textureColor.rgb * vLightWeighting, textureColor.a);', '}'];
+	                                    this.floatp, 'varying vec2 vTextureCoord;', 'varying vec3 vLightWeighting;', 'uniform sampler2D uSampler;', 'void main(void) {', '    vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));', '    gl_FragColor = vec4(textureColor.rgb * vLightWeighting, textureColor.a);', '}'];
 
-	            return {
+	                                    return {
 
-	                code: s.join('\n'),
+	                                                code: s.join('\n'),
 
-	                varList: this.webgl.createVarList(s)
+	                                                varList: this.webgl.createVarList(s)
 
-	            };
-	        }
+	                                    };
+	                        }
 
-	        /** 
-	         * --------------------------------------------------------------------
-	         * Vertex Shader 3, using texture buffer and lighting.
-	         * --------------------------------------------------------------------
-	         */
+	                        /** 
+	                         * --------------------------------------------------------------------
+	                         * Vertex Shader 3, using texture buffer and lighting.
+	                         * --------------------------------------------------------------------
+	                         */
 
-	    }, {
-	        key: 'init',
-	        value: function init(objList) {
+	            }, {
+	                        key: 'init',
+	                        value: function init(objList) {
 
-	            // DESTRUCTING DID NOT WORK!
-	            //[gl, canvas, mat4, vec3, pMatrix, mvMatrix, program ] = this.setup();
+	                                    // DESTRUCTING DID NOT WORK!
+	                                    //[gl, canvas, mat4, vec3, pMatrix, mvMatrix, program ] = this.setup();
 
-	            var arr = this.setup();
-	            var gl = arr[0];
-	            var canvas = arr[1];
-	            var mat4 = arr[2];
-	            var mat3 = arr[3];
-	            var vec3 = arr[4];
-	            var pMatrix = arr[5];
-	            var mvMatrix = arr[6];
-	            var program = arr[7];
-	            var vsVars = arr[8];
-	            var fsVars = arr[9];
+	                                    var arr = this.setup();
+	                                    var gl = arr[0];
+	                                    var canvas = arr[1];
+	                                    var mat4 = arr[2];
+	                                    var mat3 = arr[3];
+	                                    var vec3 = arr[4];
+	                                    var pMatrix = arr[5];
+	                                    var mvMatrix = arr[6];
+	                                    var program = arr[7];
+	                                    var vsVars = arr[8];
+	                                    var fsVars = arr[9];
 
-	            // Shorter reference.
+	                                    // Shorter reference.
 
-	            var shaderProgram = program.shaderProgram;
+	                                    var shaderProgram = program.shaderProgram;
 
-	            window.vs3Vars = vsVars; /////////////////////////////////////////////////////////
+	                                    window.vs3Vars = vsVars; /////////////////////////////////////////////////////////
 
 
-	            // TODO: TEMPORARY ADD LIGHTING CONTROL
+	                                    // TODO: TEMPORARY ADD LIGHTING CONTROL
 
-	            var lighting = true;
+	                                    var lighting = true;
 
-	            var ambient = [0.1, 0.1, 0.1]; // ambient colors WORKING
+	                                    var ambient = [0.1, 0.1, 0.1]; // ambient colors WORKING
 
-	            var lightingDirection = [//TODO: REDO
-	            -0.25, -0.5, -0.1];
+	                                    var lightingDirection = [//TODO: REDO
+	                                    -0.25, -0.5, -0.1];
 
-	            var directionalColor = [0.7, 0.7, 0.7];
+	                                    var directionalColor = [0.7, 0.7, 0.7];
 
-	            var nMatrix = mat3.create(); // TODO: ADD MAT3 TO PASSED VARIABLES
+	                                    var nMatrix = mat3.create(); // TODO: ADD MAT3 TO PASSED VARIABLES
 
-	            var adjustedLD = vec3.create(); // TODO: redo
+	                                    var adjustedLD = vec3.create(); // TODO: redo
 
-	            // Attach objects.
+	                                    // Attach objects.
 
-	            program.renderList = objList || [];
+	                                    program.renderList = objList || [];
 
-	            // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
-	            // TODO: https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/TechniquesforWorkingwithVertexData/TechniquesforWorkingwithVertexData.html
-	            // TODO: http://max-limper.de/tech/batchedrendering.html
+	                                    // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
+	                                    // TODO: https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/TechniquesforWorkingwithVertexData/TechniquesforWorkingwithVertexData.html
+	                                    // TODO: http://max-limper.de/tech/batchedrendering.html
 
-	            // Update object position, motion.
+	                                    // Update object position, motion.
 
-	            program.update = function (obj) {
+	                                    program.update = function (obj) {
 
-	                // Standard mvMatrix updates.
+	                                                // Standard mvMatrix updates.
 
-	                obj.setMV(mvMatrix);
+	                                                obj.setMV(mvMatrix);
 
-	                // Compute lighting normals.
+	                                                // Compute lighting normals.
 
-	                vec3.normalize(adjustedLD, lightingDirection);
+	                                                vec3.normalize(adjustedLD, lightingDirection);
 
-	                vec3.scale(adjustedLD, adjustedLD, -1);
+	                                                vec3.scale(adjustedLD, adjustedLD, -1);
 
-	                // Calculates a 3x3 normal matrix (transpose inverse) from the 4x4 matrix.
+	                                                // Calculates a 3x3 normal matrix (transpose inverse) from the 4x4 matrix.
 
-	                mat3.normalFromMat4(nMatrix, mvMatrix);
+	                                                mat3.normalFromMat4(nMatrix, mvMatrix);
 
-	                // glmat3 library
-	                //mat4.normalFromMat4( nMatrix, mvMatrix );
+	                                                // glmat3 library
+	                                                //mat4.normalFromMat4( nMatrix, mvMatrix );
 
-	                // Custom updates go here, make local references to vsVars and fsVars.
-	            };
+	                                                // Custom updates go here, make local references to vsVars and fsVars.
+	                                    };
 
-	            // Rendering.
+	                                    // Rendering.
 
-	            program.render = function () {
+	                                    program.render = function () {
 
-	                //console.log( 'gl:' + gl + ' canvas:' + canvas + ' mat4:' + mat4 + ' vec3:' + vec3 + ' pMatrix:' + pMatrix + ' mvMatrix:' + mvMatrix + ' program:' + program );
+	                                                //console.log( 'gl:' + gl + ' canvas:' + canvas + ' mat4:' + mat4 + ' vec3:' + vec3 + ' pMatrix:' + pMatrix + ' mvMatrix:' + mvMatrix + ' program:' + program );
 
-	                gl.useProgram(shaderProgram);
+	                                                gl.useProgram(shaderProgram);
 
-	                // Reset perspective matrix.
+	                                                // Reset perspective matrix.
 
-	                mat4.perspective(pMatrix, Math.PI * 0.4, canvas.width / canvas.height, 0.1, 100.0); // right
+	                                                mat4.perspective(pMatrix, Math.PI * 0.4, canvas.width / canvas.height, 0.1, 100.0); // right
 
-	                // Begin program loop
+	                                                // Begin program loop
 
-	                for (var i = 0, len = program.renderList.length; i < len; i++) {
+	                                                for (var i = 0, len = program.renderList.length; i < len; i++) {
 
-	                    var obj = program.renderList[i];
+	                                                            var obj = program.renderList[i];
 
-	                    // Only render if we have at least one texture loaded.
+	                                                            // Only render if we have at least one texture loaded.
 
-	                    if (!obj.textures[0] || !obj.textures[0].texture) continue;
+	                                                            if (!obj.textures[0] || !obj.textures[0].texture) continue;
 
-	                    // Update Model-View matrix with standard Prim values.
+	                                                            // Update Model-View matrix with standard Prim values.
 
-	                    program.update(obj, mvMatrix);
+	                                                            program.update(obj, mvMatrix);
 
-	                    // Bind vertex buffer.
+	                                                            // Bind vertex buffer.
 
-	                    gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.vertices.buffer);
-	                    gl.enableVertexAttribArray(vsVars.attribute.vec3.aVertexPosition);
-	                    gl.vertexAttribPointer(vsVars.attribute.vec3.aVertexPosition, obj.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0);
+	                                                            gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.vertices.buffer);
+	                                                            gl.enableVertexAttribArray(vsVars.attribute.vec3.aVertexPosition);
+	                                                            gl.vertexAttribPointer(vsVars.attribute.vec3.aVertexPosition, obj.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0);
 
-	                    // Bind normals buffer.
-	                    gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.normals.buffer);
-	                    gl.enableVertexAttribArray(vsVars.attribute.vec3.aVertexNormal);
-	                    gl.vertexAttribPointer(vsVars.attribute.vec3.aVertexNormal, obj.geometry.normals.itemSize, gl.FLOAT, false, 0, 0);
+	                                                            // Bind normals buffer.
+	                                                            gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.normals.buffer);
+	                                                            gl.enableVertexAttribArray(vsVars.attribute.vec3.aVertexNormal);
+	                                                            gl.vertexAttribPointer(vsVars.attribute.vec3.aVertexNormal, obj.geometry.normals.itemSize, gl.FLOAT, false, 0, 0);
 
-	                    // Bind Textures buffer (could have multiple bindings here).
+	                                                            // Bind Textures buffer (could have multiple bindings here).
 
-	                    gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.texCoords.buffer);
-	                    gl.enableVertexAttribArray(vsVars.attribute.vec2.aTextureCoord);
-	                    gl.vertexAttribPointer(vsVars.attribute.vec2.aTextureCoord, obj.geometry.texCoords.itemSize, gl.FLOAT, false, 0, 0);
+	                                                            gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.texCoords.buffer);
+	                                                            gl.enableVertexAttribArray(vsVars.attribute.vec2.aTextureCoord);
+	                                                            gl.vertexAttribPointer(vsVars.attribute.vec2.aTextureCoord, obj.geometry.texCoords.itemSize, gl.FLOAT, false, 0, 0);
 
-	                    gl.activeTexture(gl.TEXTURE0);
-	                    gl.bindTexture(gl.TEXTURE_2D, null);
-	                    gl.bindTexture(gl.TEXTURE_2D, obj.textures[0].texture);
+	                                                            gl.activeTexture(gl.TEXTURE0);
+	                                                            gl.bindTexture(gl.TEXTURE_2D, null);
+	                                                            gl.bindTexture(gl.TEXTURE_2D, obj.textures[0].texture);
 
-	                    // Set fragment shader sampler uniform.
+	                                                            // Set fragment shader sampler uniform.
 
-	                    gl.uniform1i(fsVars.uniform.sampler2D.uSampler, 0);
+	                                                            gl.uniform1i(fsVars.uniform.sampler2D.uSampler, 0);
 
-	                    // Lighting flag.
+	                                                            // Lighting flag.
 
-	                    gl.uniform1i(vsVars.uniform.bool.uUseLighting, lighting);
+	                                                            gl.uniform1i(vsVars.uniform.bool.uUseLighting, lighting);
 
-	                    if (lighting) {
+	                                                            if (lighting) {
 
-	                        gl.uniform3f(vsVars.uniform.vec3.uAmbientColor, ambient[0], ambient[1], ambient[2]);
+	                                                                        gl.uniform3f(vsVars.uniform.vec3.uAmbientColor, ambient[0], ambient[1], ambient[2]);
 
-	                        gl.uniform3fv(vsVars.uniform.vec3.uLightingDirection, adjustedLD);
+	                                                                        gl.uniform3fv(vsVars.uniform.vec3.uLightingDirection, adjustedLD);
 
-	                        gl.uniform3f(vsVars.uniform.vec3.uDirectionalColor, directionalColor[0], directionalColor[1], directionalColor[2]);
-	                    }
+	                                                                        gl.uniform3f(vsVars.uniform.vec3.uDirectionalColor, directionalColor[0], directionalColor[1], directionalColor[2]);
+	                                                            }
 
-	                    // Normals matrix uniform
+	                                                            // Normals matrix uniform
 
-	                    gl.uniformMatrix3fv(vsVars.uniform.mat3.uNMatrix, false, nMatrix);
+	                                                            gl.uniformMatrix3fv(vsVars.uniform.mat3.uNMatrix, false, nMatrix);
 
-	                    // Set perspective and model-view matrix uniforms.
+	                                                            // Set perspective and model-view matrix uniforms.
 
-	                    gl.uniformMatrix4fv(vsVars.uniform.mat4.uPMatrix, false, pMatrix);
-	                    gl.uniformMatrix4fv(vsVars.uniform.mat4.uMVMatrix, false, mvMatrix);
+	                                                            gl.uniformMatrix4fv(vsVars.uniform.mat4.uPMatrix, false, pMatrix);
+	                                                            gl.uniformMatrix4fv(vsVars.uniform.mat4.uMVMatrix, false, mvMatrix);
 
-	                    // Bind index buffer.
+	                                                            // Bind index buffer.
 
-	                    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer);
+	                                                            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer);
 
-	                    // Draw elements.
+	                                                            // Draw elements.
 
-	                    gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
-	                }
-	            };
+	                                                            gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
+	                                                }
+	                                    };
 
-	            return program;
-	        }
-	    }]);
+	                                    return program;
+	                        }
+	            }]);
 
-	    return ShaderDirlightTexture;
+	            return ShaderDirlightTexture;
 	}(_shader2.default);
 
 	exports.default = ShaderDirlightTexture;
@@ -3315,29 +3315,29 @@
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
-	    value: true
+	        value: true
 	});
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 	var Renderer = function Renderer(init, util, glMatrix, webgl, shaderTexture, shaderColor, shaderDirlightTexture) {
-	    _classCallCheck(this, Renderer);
+	        _classCallCheck(this, Renderer);
 
-	    console.log('In Renderer class');
+	        console.log('In Renderer class');
 
-	    this.webgl = webgl;
+	        this.webgl = webgl;
 
-	    this.util = webgl.util;
+	        this.util = webgl.util;
 
-	    this.glmatrix = glMatrix;
+	        this.glmatrix = glMatrix;
 
-	    this.shaderTexture = shaderTexture;
+	        this.shaderTexture = shaderTexture;
 
-	    this.shaderColor = shaderColor;
+	        this.shaderColor = shaderColor;
 
-	    this.shaderDirlightTexture = shaderDirlightTexture;
+	        this.shaderDirlightTexture = shaderDirlightTexture;
 
-	    if (this.init) {}
+	        if (this.init) {}
 	}
 
 	// Specialized render manipulations go below.
@@ -3354,7 +3354,7 @@
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
-	    value: true
+	        value: true
 	});
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3363,1549 +3363,1546 @@
 
 	var prim = function () {
 
-	    /** 
-	     * Create object primitives, and return vertex and index data 
-	     * suitable for creating a VBO and IBO.
-	     */
+	        /** 
+	         * Create object primitives, and return vertex and index data 
+	         * suitable for creating a VBO and IBO.
+	         */
 
-	    function prim(init, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo) {
-	        _classCallCheck(this, prim);
+	        function prim(init, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo) {
+	                _classCallCheck(this, prim);
 
-	        console.log('in Prim class');
+	                console.log('in Prim class');
 
-	        this.util = util;
+	                this.util = util;
 
-	        this.webgl = webgl;
+	                this.webgl = webgl;
 
-	        this.glMatrix = glMatrix;
+	                this.glMatrix = glMatrix;
 
-	        this.loadModel = loadModel;
+	                this.loadModel = loadModel;
 
-	        this.loadTexture = loadTexture;
+	                this.loadTexture = loadTexture;
 
-	        this.loadAudio = loadAudio;
+	                this.loadAudio = loadAudio;
 
-	        this.loadVideo = loadVideo;
+	                this.loadVideo = loadVideo;
 
-	        this.objs = [];
+	                this.objs = [];
 
-	        this.type = {
+	                this.type = {
 
-	            POINT: 'geometryPoint',
+	                        POINT: 'geometryPoint',
 
-	            POINTCLOUD: 'geometryPointCloud',
+	                        POINTCLOUD: 'geometryPointCloud',
 
-	            LINE: 'geometryLine',
+	                        LINE: 'geometryLine',
 
-	            PLANE: 'geometryPlane',
+	                        PLANE: 'geometryPlane',
 
-	            POLY: 'geometryPoly',
+	                        POLY: 'geometryPoly',
 
-	            CUBE: 'geometryCube',
+	                        CUBE: 'geometryCube',
 
-	            SPHERE: 'geometrySphere',
+	                        SPHERE: 'geometrySphere',
 
-	            ICOSPHERE: 'geometryIcoSphere',
+	                        ICOSPHERE: 'geometryIcoSphere',
 
-	            DOME: 'geometryDome',
+	                        DOME: 'geometryDome',
 
-	            ICODOME: 'geometryIcoDome',
+	                        ICODOME: 'geometryIcoDome',
 
-	            CONE: 'geometryCone',
+	                        CONE: 'geometryCone',
 
-	            CYLINDER: 'geometryCylinder',
+	                        CYLINDER: 'geometryCylinder',
 
-	            MESH: 'geometryMesh',
+	                        MESH: 'geometryMesh',
 
-	            TERRAIN: 'geometryTerrain'
+	                        TERRAIN: 'geometryTerrain'
 
-	        };
-	    }
-
-	    /** 
-	     * Unique object id
-	     * @link https://jsfiddle.net/briguy37/2MVFd/
-	     */
-
-
-	    _createClass(prim, [{
-	        key: 'setId',
-	        value: function setId() {
-
-	            var d = new Date().getTime();
-
-	            var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-
-	                var r = (d + Math.random() * 16) % 16 | 0;
-
-	                d = Math.floor(d / 16);
-
-	                return (c == 'x' ? r : r & 0x3 | 0x8).toString(16);
-	            });
-
-	            return uuid;
+	                };
 	        }
 
 	        /** 
-	         * Get the big array with all vertex data. Use to 
-	         * send multiple prims sharing the same shader to one 
-	         * Renderer.
+	         * Unique object id
+	         * @link https://jsfiddle.net/briguy37/2MVFd/
 	         */
 
-	    }, {
-	        key: 'setVertexData',
-	        value: function setVertexData(vertices) {
 
-	            vertices = [];
+	        _createClass(prim, [{
+	                key: 'setId',
+	                value: function setId() {
 
-	            var len = this.objs.length;
+	                        var d = new Date().getTime();
 
-	            for (var i in this.objs) {
+	                        var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
 
-	                vertices = vertices.concat(this.objs[i].vertices);
-	            }
+	                                var r = (d + Math.random() * 16) % 16 | 0;
 
-	            return vertices;
-	        }
+	                                d = Math.floor(d / 16);
 
-	        /** 
-	         * get the big array with all index data. Use to 
-	         * send multiple prims sharing the same shader to one 
-	         * Renderer.
-	         */
+	                                return (c == 'x' ? r : r & 0x3 | 0x8).toString(16);
+	                        });
 
-	    }, {
-	        key: 'setIndexData',
-	        value: function setIndexData(indices) {
-
-	            indices = [];
-
-	            var len = this.objs.length;
-
-	            for (var i in this.objs) {
-
-	                indices = indices.concat(this.objs[i].indices);
-	            }
-
-	            return indices;
-	        }
-
-	        /** 
-	         * Create WebGL buffers using geometry data
-	         * @param {Array} vertices an array of vertices, in glMatrix.vec3 objects.
-	         * @param {Array} indices an array of indices for the vertices.
-	         * @param {Array} textCoords an array of texture coordinates, in glMatrix.vec2 format.
-	         * @param {Array} normals an array of normals, in glMatrix.vec3 format.
-	         * @param {Array} colors an array of colors, in glMatrix.vec4 format.
-	         */
-
-	    }, {
-	        key: 'createBuffers',
-	        value: function createBuffers(vertices, indices, texCoords, normals, colors) {
-
-	            var gl = this.webgl.getContext();
-
-	            // Vertex Buffer Object.
-
-	            if (!vertices) {
-
-	                console.log('no vertices present, creating default');
-
-	                vertices = new Float32Array([0, 0, 0]);
-	            }
-
-	            var vBuffer = gl.createBuffer();
-
-	            gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
-
-	            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-
-	            if (!indices) {
-
-	                console.log('no indices present, creating default');
-
-	                indices = new Uint16Array([1]);
-	            }
-
-	            // Index buffer.
-
-	            var iBuffer = gl.createBuffer();
-
-	            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, iBuffer);
-
-	            gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
-
-	            if (!normals) {
-
-	                console.log('no normals, present, creating default');
-
-	                normals = new Float32Array([0, 1, 0]);
-	            }
-
-	            // Normals buffer.
-
-	            var nBuffer = gl.createBuffer();
-
-	            gl.bindBuffer(gl.ARRAY_BUFFER, nBuffer);
-
-	            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
-
-	            if (!texCoords) {
-
-	                console.warn('no texture present, creating default');
-
-	                texCoords = new Float32Array([0, 0]);
-	            }
-
-	            // Texture Buffer.
-
-	            var tBuffer = gl.createBuffer();
-
-	            gl.bindBuffer(gl.ARRAY_BUFFER, tBuffer);
-
-	            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(texCoords), gl.STATIC_DRAW);
-
-	            if (!colors) {
-
-	                console.warn('no colors present, creating default');
-
-	                colors = new Float32Array([0.2, 0.5, 0.2, 1.0]);
-	            }
-
-	            var cBuffer = gl.createBuffer();
-
-	            gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
-
-	            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
-
-	            // Return a complete object. TODO: don't really need vertices except for debugging.
-
-	            return {
-
-	                vertices: {
-
-	                    data: vertices,
-
-	                    buffer: vBuffer,
-
-	                    itemSize: 3,
-
-	                    numItems: vertices.length / 3
-	                },
-
-	                texCoords: {
-
-	                    data: texCoords,
-
-	                    buffer: tBuffer,
-
-	                    itemSize: 2,
-
-	                    numItems: texCoords.length / 2
-
-	                },
-
-	                colors: {
-
-	                    data: colors,
-
-	                    buffer: cBuffer,
-
-	                    itemSize: 4,
-
-	                    numItems: colors.length / 4
-
-	                },
-
-	                normals: {
-
-	                    data: normals,
-
-	                    buffer: nBuffer,
-
-	                    itemSize: 3,
-
-	                    numItems: normals.length / 3
-
-	                },
-
-	                indices: {
-
-	                    data: indices,
-
-	                    buffer: iBuffer,
-
-	                    itemSize: 1,
-
-	                    numItems: indices.length
-
+	                        return uuid;
 	                }
 
-	            };
-	        }
+	                /** 
+	                 * Get the big array with all vertex data. Use to 
+	                 * send multiple prims sharing the same shader to one 
+	                 * Renderer.
+	                 */
 
-	        /* 
-	         * ---------------------------------------
-	         * SCALING ALGORITHMS
-	         * ---------------------------------------
-	         */
+	        }, {
+	                key: 'setVertexData',
+	                value: function setVertexData(vertices) {
 
-	        /** 
-	         * given a discrete heightmap, get a value 
-	         * using bilinear interpolation.
-	         * @param {Array} heightmap 
-	         * @param {Number} x = desired x position (between 0.0 and 1.0)
-	         * @param {Number} z = desired z position (between 0.0 and 1.0)
-	         */
+	                        vertices = [];
 
-	    }, {
-	        key: 'biLinear',
-	        value: function biLinear(x, z) {
+	                        var len = this.objs.length;
 
-	            if (x < 0 || x > 1.0 || z < 0 || z > 1.0) {
+	                        for (var i in this.objs) {
 
-	                console.error('heightmap x index out of range, x:' + x + ' z:' + z);
+	                                vertices = vertices.concat(this.objs[i].vertices);
+	                        }
 
-	                return null;
-	            }
-
-	            // Our x and z, scaled to heightmap divisions.
-
-	            x *= this.width;
-	            z *= this.height;
-
-	            // Points above and below our position.
-
-	            var x1 = Math.min(x);
-	            var x2 = Math.max(x);
-	            var z1 = Math.min(z);
-	            var z2 = Math.max(z);
-
-	            // Interpolate along x axis, get interpolations above and below point.
-
-	            var a = this.getRaw(x1, z1) * (x - x1) + this.getRaw(x1, z2) * (1 - x - x1);
-
-	            var b = this.getRaw(z1, z2) * (x - x1) + this.getRaw(x2, z2) * (1 - x - x1);
-
-	            // Interpolate these results along z axis.
-
-	            var v = a * (z - z1) + b * (1 - z - z1);
-
-	            return v;
-	        }
-
-	        /** 
-	         * given a set of adjacent points, return a smooth 
-	         * central point using the biCubic interpolation algorithm.
-	         * Adapted from:
-	         * https://github.com/hughsk/bicubic-sample/blob/master/index.js
-	         * https://github.com/hughsk/bicubic/blob/master/index.js
-	         * @param {Number} xf 
-	         * @param {Number} yf
-	         */
-
-	    }, {
-	        key: 'biCubicPoint',
-	        value: function biCubicPoint(xf, yf, p00, p01, p02, p03, p10, p11, p12, p13, p20, p21, p22, p23, p30, p31, p32, p33) {
-
-	            var yf2 = yf * yf;
-	            var xf2 = xf * xf;
-	            var xf3 = xf * xf2;
-
-	            var x00 = p03 - p02 - p00 + p01;
-	            var x01 = p00 - p01 - x00;
-	            var x02 = p02 - p00;
-	            var x0 = x00 * xf3 + x01 * xf2 + x02 * xf + p01;
-
-	            var x10 = p13 - p12 - p10 + p11;
-	            var x11 = p10 - p11 - x10;
-	            var x12 = p12 - p10;
-	            var x1 = x10 * xf3 + x11 * xf2 + x12 * xf + p11;
-
-	            var x20 = p23 - p22 - p20 + p21;
-	            var x21 = p20 - p21 - x20;
-	            var x22 = p22 - p20;
-	            var x2 = x20 * xf3 + x21 * xf2 + x22 * xf + p21;
-
-	            var x30 = p33 - p32 - p30 + p31;
-	            var x31 = p30 - p31 - x30;
-	            var x32 = p32 - p30;
-	            var x3 = x30 * xf3 + x31 * xf2 + x32 * xf + p31;
-
-	            var y0 = x3 - x2 - x0 + x1;
-	            var y1 = x0 - x1 - y0;
-	            var y2 = x2 - x0;
-
-	            return y0 * yf * yf2 + y1 * yf2 + y2 * yf + x1;
-	        }
-
-	        /* 
-	         * ---------------------------------------
-	         * NORMAL, INDEX, VERTEX CALCULATIONS
-	         * ---------------------------------------
-	         */
-
-	        /**
-	         * Compute whether point is in a triangle, wrapped 
-	         * clockwise (begin with a, end with c)
-	         * @link http://blackpawn.com/texts/pointinpoly/
-	         * @param {vec3} p the point to test.
-	         * @param {vec3} p0 first clockwise vertex of triangle.
-	         * @param {vec3} p1 second clockwise vertex of triangle.
-	         * @param {vec3} p2 third clockwise vertex of triangle.
-	         * @returns {Boolean} if point in triangle, return true, else false.
-	         */
-
-	    }, {
-	        key: 'pointInTriangle',
-	        value: function pointInTriangle(p, p0, p1, p2) {
-
-	            var vec3 = this.glMatrix.vec3;
-
-	            var v0 = void 0,
-	                v1 = void 0,
-	                v2 = void 0,
-	                dot00 = void 0,
-	                dot01 = void 0,
-	                dot02 = void 0,
-	                dot11 = void 0,
-	                dot12 = void 0;
-
-	            // Compute vectors.
-
-	            v0 = vec3.sub(v0, p2, p0);
-	            v1 = vec3.sub(v1, p1, p0);
-	            v2 = vec3.sub(v2, p, p0);
-
-	            // Compute dot products.
-
-	            dot00 = vec3.dot(v0, v0);
-	            dot01 = vec3.dot(v0, v1);
-	            dot02 = vec3.dot(v0, v2);
-	            dot11 = vec3.dot(v1, v1);
-	            dot12 = vec3.dot(v1, v2);
-
-	            // Compute barycentric coordinates.
-
-	            var invDenom = 1 / (dot00 * dot11 - dot01 * dot01);
-	            var u = (dot11 * dot02 - dot01 * dot12) * invDenom;
-	            var v = (dot00 * dot12 - dot01 * dot02) * invDenom;
-
-	            // Check if point is in triangle.
-
-	            return u >= 0 && v >= 0 && u + v < 1;
-	        }
-
-	        /** 
-	         * Compute normals for a 3d object.
-	         * Adapted from BabylonJS
-	         * https://github.com/BabylonJS/Babylon.js/blob/3fe3372053ac58505dbf7a2a6f3f52e3b92670c8/src/Mesh/babylon.mesh.vertexData.js
-	         * @link http://gamedev.stackexchange.com/questions/8191/any-reliable-polygon-normal-calculation-code
-	         * @link https://www.opengl.org/wiki/Calculating_a_Surface_Normal
-	         */
-
-	    }, {
-	        key: 'computeNormals',
-	        value: function computeNormals(vertices, indices, normals) {
-
-	            var index = 0;
-
-	            var p1p2x = 0.0;
-
-	            var p1p2y = 0.0;
-
-	            var p1p2z = 0.0;
-
-	            var p3p2x = 0.0;
-
-	            var p3p2y = 0.0;
-
-	            var p3p2z = 0.0;
-
-	            var faceNormalx = 0.0;
-
-	            var faceNormaly = 0.0;
-
-	            var faceNormalz = 0.0;
-
-	            var length = 0.0;
-
-	            var i1 = 0;
-	            var i2 = 0;
-	            var i3 = 0;
-
-	            for (index = 0; index < vertices.length; index++) {
-	                normals[index] = 0.0;
-	            }
-
-	            // indice triplet = 1 face
-
-	            var nbFaces = indices.length / 3;
-
-	            for (index = 0; index < nbFaces; index++) {
-	                i1 = indices[index * 3]; // get the indexes of each vertex of the face
-	                i2 = indices[index * 3 + 1];
-	                i3 = indices[index * 3 + 2];
-
-	                p1p2x = vertices[i1 * 3] - vertices[i2 * 3]; // compute two vectors per face
-	                p1p2y = vertices[i1 * 3 + 1] - vertices[i2 * 3 + 1];
-	                p1p2z = vertices[i1 * 3 + 2] - vertices[i2 * 3 + 2];
-	                p3p2x = vertices[i3 * 3] - vertices[i2 * 3];
-	                p3p2y = vertices[i3 * 3 + 1] - vertices[i2 * 3 + 1];
-	                p3p2z = vertices[i3 * 3 + 2] - vertices[i2 * 3 + 2];
-
-	                faceNormalx = p1p2y * p3p2z - p1p2z * p3p2y; // compute the face normal with cross product
-	                faceNormaly = p1p2z * p3p2x - p1p2x * p3p2z;
-	                faceNormalz = p1p2x * p3p2y - p1p2y * p3p2x;
-
-	                length = Math.sqrt(faceNormalx * faceNormalx + faceNormaly * faceNormaly + faceNormalz * faceNormalz);
-	                length = length === 0 ? 1.0 : length;
-	                faceNormalx /= length; // normalize this normal
-	                faceNormaly /= length;
-	                faceNormalz /= length;
-
-	                normals[i1 * 3] += faceNormalx; // accumulate all the normals per face
-	                normals[i1 * 3 + 1] += faceNormaly;
-	                normals[i1 * 3 + 2] += faceNormalz;
-	                normals[i2 * 3] += faceNormalx;
-	                normals[i2 * 3 + 1] += faceNormaly;
-	                normals[i2 * 3 + 2] += faceNormalz;
-	                normals[i3 * 3] += faceNormalx;
-	                normals[i3 * 3 + 1] += faceNormaly;
-	                normals[i3 * 3 + 2] += faceNormalz;
-	            }
-
-	            // last normalization of each normal
-
-	            for (index = 0; index < normals.length / 3; index++) {
-	                faceNormalx = normals[index * 3];
-	                faceNormaly = -normals[index * 3 + 1];
-	                faceNormalz = normals[index * 3 + 2];
-	                length = Math.sqrt(faceNormalx * faceNormalx + faceNormaly * faceNormaly + faceNormalz * faceNormalz);
-	                length = length === 0 ? 1.0 : length;
-	                faceNormalx /= length;
-	                faceNormaly /= length;
-	                faceNormalz /= length;
-
-	                // NOTE: added negative to x, z to match lighting model.
-
-	                normals[index * 3] = -faceNormalx;
-	                normals[index * 3 + 1] = faceNormaly;
-	                normals[index * 3 + 2] = -faceNormalz;
-	            }
-	        }
-
-	        /* 
-	         * ---------------------------------------
-	         * GEOMETRY
-	         * ---------------------------------------
-	         */
-
-	        /** 
-	         * WebGL point.
-	         */
-
-	    }, {
-	        key: 'geometryPoint',
-	        value: function geometryPoint(prim) {}
-
-	        /** 
-	         * WebGL point cloud (particle system).
-	         */
-
-	    }, {
-	        key: 'geometryPointCloud',
-	        value: function geometryPointCloud(prim) {}
-
-	        /** 
-	         * WebGL line.
-	         */
-
-	    }, {
-	        key: 'geometryLine',
-	        value: function geometryLine(prim) {}
-
-	        /** 
-	         * Plane (non-infinite, multiple vertices, can be turned into TERRAIN)
-	         */
-
-	    }, {
-	        key: 'geometryPlane',
-	        value: function geometryPlane(prim) {
-
-	            var vec3 = this.glMatrix.vec3;
-
-	            var vertices = [];
-
-	            var indices = [];
-
-	            var texCoords = [];
-
-	            var normals = [];
-
-	            var colors = [];
-
-	            var rows = prim.divisions[1]; // y axis
-
-	            var cols = prim.divisions[0]; // x axis (really xz)
-
-	            var halfX = prim.dimensions[0] / 2;
-	            var halfZ = prim.dimensions[2] / 2;
-
-	            var incX = prim.dimensions[0] / prim.divisions[0];
-	            var incY = 1.0;
-	            var incZ = prim.dimensions[2] / prim.divisions[2];
-
-	            // if there is a heightMap, assign y values
-
-	            for (var colNumber = 0; colNumber <= cols; colNumber++) {
-
-	                for (var rowNumber = 0; rowNumber <= rows; rowNumber++) {
-
-	                    var phi = colNumber * 2 * Math.PI / cols;
-
-	                    var x = colNumber;
-	                    var y = this.util.getRand(0, 1); /////TODO: RANDOM FOR NOW
-	                    var z = rowNumber;
-
-	                    var u = colNumber / cols;
-	                    var v = 1 - rowNumber / rows;
-
-	                    normals.push(0, 1.0, 0);
-
-	                    texCoords.push(u, v);
-
-	                    vertices.push(incX * x - halfX);
-	                    vertices.push(incY * y);
-	                    vertices.push(incZ * z - halfZ);
+	                        return vertices;
 	                }
-	            }
 
-	            // Indices.
+	                /** 
+	                 * get the big array with all index data. Use to 
+	                 * send multiple prims sharing the same shader to one 
+	                 * Renderer.
+	                 */
 
-	            for (var _rowNumber = 0; _rowNumber < rows; _rowNumber++) {
+	        }, {
+	                key: 'setIndexData',
+	                value: function setIndexData(indices) {
 
-	                for (var _colNumber = 0; _colNumber < cols; _colNumber++) {
+	                        indices = [];
 
-	                    var first = _rowNumber * (cols + 1) + _colNumber;
+	                        var len = this.objs.length;
 
-	                    var second = first + cols + 1;
+	                        for (var i in this.objs) {
 
-	                    // Note: we're running culling in reverse from some tutorials here.
+	                                indices = indices.concat(this.objs[i].indices);
+	                        }
 
-	                    indices.push(first + 1);
-
-	                    indices.push(second + 1);
-
-	                    indices.push(second);
-
-	                    indices.push(first + 1);
-
-	                    indices.push(second);
-
-	                    indices.push(first);
+	                        return indices;
 	                }
-	            }
 
-	            this.computeNormals(vertices, indices, normals);
+	                /** 
+	                 * Create WebGL buffers using geometry data
+	                 * @param {Array} vertices an array of vertices, in glMatrix.vec3 objects.
+	                 * @param {Array} indices an array of indices for the vertices.
+	                 * @param {Array} textCoords an array of texture coordinates, in glMatrix.vec2 format.
+	                 * @param {Array} normals an array of normals, in glMatrix.vec3 format.
+	                 * @param {Array} colors an array of colors, in glMatrix.vec4 format.
+	                 */
 
-	            return this.createBuffers(vertices, indices, texCoords, normals, colors);
-	        }
+	        }, {
+	                key: 'createBuffers',
+	                value: function createBuffers(vertices, indices, texCoords, normals, colors) {
 
-	        /** 
-	         * Polygon (flat)
-	         */
+	                        var gl = this.webgl.getContext();
 
-	    }, {
-	        key: 'geometryPoly',
-	        value: function geometryPoly(prim) {}
+	                        // Vertex Buffer Object.
 
-	        /** 
-	         * Create a cube geometry of a given size (units) centered 
-	         * on a point.
-	         * @param {GLMatrix.Vec3} center a 3d vector defining the center.
-	         * @param {Size} width, height, depth, with 1.0 (unit) max size
-	         * @param {Number} scale relative to unit size (1, 1, 1).
-	          name = 'unknown', scale = 1.0, dimensions, position, acceleration, rotation, textureImage, color
-	         */
+	                        if (!vertices) {
 
-	    }, {
-	        key: 'geometryCube',
-	        value: function geometryCube(prim) {
+	                                console.log('no vertices present, creating default');
 
-	            var x = prim.dimensions[0] / 2;
+	                                vertices = new Float32Array([0, 0, 0]);
+	                        }
 
-	            var y = prim.dimensions[1] / 2;
+	                        var vBuffer = gl.createBuffer();
 
-	            var z = prim.dimensions[2] / 2;
+	                        gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
 
-	            // Create cube geometry.
+	                        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
 
-	            var vertices = [
-	            // Front face
-	            -1.0, -1.0, 1.0, // bottomleft
-	            1.0, -1.0, 1.0, // bottomright
-	            1.0, 1.0, 1.0, // topright
-	            -1.0, 1.0, 1.0, // topleft
-	            // Back face
-	            -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0,
-	            // Top face
-	            -1.0, 1.0, -1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0,
-	            // Bottom face
-	            -1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0,
-	            // Right face
-	            1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0,
-	            // Left face
-	            -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0];
+	                        if (!indices) {
 
-	            var indices = [0, 1, 2, 0, 2, 3, // Front face
-	            4, 5, 6, 4, 6, 7, // Back face
-	            8, 9, 10, 8, 10, 11, // Top face
-	            12, 13, 14, 12, 14, 15, // Bottom face
-	            16, 17, 18, 16, 18, 19, // Right face //can't go to 30
-	            20, 21, 22, 20, 22, 23 // Left face
-	            ];
+	                                console.log('no indices present, creating default');
 
-	            var texCoords = [
-	            // Front face
-	            0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
-	            // Back face
-	            1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0,
-	            // Top face
-	            0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0,
-	            // Bottom face
-	            1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0,
-	            // Right face
-	            1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0,
-	            // Left face
-	            0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0];
+	                                indices = new Uint16Array([1]);
+	                        }
 
-	            var normals = [
-	            // Front face
-	            0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0,
-	            // Back face
-	            0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0,
-	            // Top face
-	            0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0,
-	            // Bottom face
-	            0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0,
-	            // Right face
-	            1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0,
-	            // Left face
-	            -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0];
+	                        // Index buffer.
 
-	            var colors = [
-	            // Front face
-	            1.0, 1.0, 1.0, 1.0, // white
-	            1.0, 0.0, 0.0, 1.0, // red
-	            0.0, 1.0, 0.0, 1.0, // green
-	            0.0, 0.0, 1.0, 1.0, // blue
-	            // Back face
-	            1.0, 1.0, 1.0, 1.0, // white
-	            1.0, 0.0, 0.0, 1.0, // red
-	            0.0, 1.0, 0.0, 1.0, // green
-	            0.0, 0.0, 1.0, 1.0, // blue
-	            // Top face
-	            1.0, 1.0, 1.0, 1.0, // white
-	            1.0, 0.0, 0.0, 1.0, // red
-	            0.0, 1.0, 0.0, 1.0, // green
-	            0.0, 0.0, 1.0, 1.0, // blue
-	            // Bottom face
-	            1.0, 1.0, 1.0, 1.0, // white
-	            1.0, 0.0, 0.0, 1.0, // red
-	            0.0, 1.0, 0.0, 1.0, // green
-	            0.0, 0.0, 1.0, 1.0, // blue
-	            // Right face
-	            1.0, 1.0, 1.0, 1.0, // white
-	            1.0, 0.0, 0.0, 1.0, // red
-	            0.0, 1.0, 0.0, 1.0, // green
-	            0.0, 0.0, 1.0, 1.0, // blue
-	            // Left face
-	            1.0, 1.0, 1.0, 1.0, // white
-	            1.0, 0.0, 0.0, 1.0, // red
-	            0.0, 1.0, 0.0, 1.0, // green
-	            0.0, 0.0, 1.0, 1.0 // blue
-	            ];
+	                        var iBuffer = gl.createBuffer();
 
-	            return this.createBuffers(vertices, indices, texCoords, normals, colors);
-	        }
+	                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, iBuffer);
 
-	        /** 
-	         * Sphere with polar points.
-	         * http://learningwebgl.com/blog/?p=1253
-	         */
+	                        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
 
-	    }, {
-	        key: 'geometrySphere',
-	        value: function geometrySphere(prim) {
+	                        if (!normals) {
 
-	            // TODO: ACTIVATE RADIUS X, Y, Z for distorted spheres.
+	                                console.log('no normals, present, creating default');
 
-	            var vertices = [];
+	                                normals = new Float32Array([0, 1, 0]);
+	                        }
 
-	            var indices = [];
+	                        // Normals buffer.
 
-	            var texCoords = [];
+	                        var nBuffer = gl.createBuffer();
 
-	            var normals = [];
+	                        gl.bindBuffer(gl.ARRAY_BUFFER, nBuffer);
 
-	            var colors = [];
+	                        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
 
-	            var latitudeBands = prim.divisions[1]; // y axis
+	                        if (!texCoords) {
 
-	            var longitudeBands = prim.divisions[0]; // x axis (really xz)
+	                                console.warn('no texture present, creating default');
 
-	            var radius = prim.dimensions[0] * 0.5;
+	                                texCoords = new Float32Array([0, 0]);
+	                        }
 
-	            for (var latNumber = 0; latNumber <= latitudeBands; latNumber++) {
+	                        // Texture Buffer.
 
-	                var theta = latNumber * Math.PI / latitudeBands;
+	                        var tBuffer = gl.createBuffer();
 
-	                var sinTheta = Math.sin(theta);
+	                        gl.bindBuffer(gl.ARRAY_BUFFER, tBuffer);
 
-	                var cosTheta = Math.cos(theta);
+	                        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(texCoords), gl.STATIC_DRAW);
 
-	                for (var longNumber = 0; longNumber <= longitudeBands; longNumber++) {
+	                        if (!colors) {
 
-	                    var phi = longNumber * 2 * Math.PI / longitudeBands;
+	                                console.warn('no colors present, creating default');
 
-	                    var sinPhi = Math.sin(phi);
+	                                colors = new Float32Array([0.2, 0.5, 0.2, 1.0]);
+	                        }
 
-	                    var cosPhi = Math.cos(phi);
+	                        var cBuffer = gl.createBuffer();
 
-	                    var x = cosPhi * sinTheta;
-	                    var y = cosTheta;
-	                    var z = sinPhi * sinTheta;
+	                        gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
 
-	                    var u = 1 - longNumber / longitudeBands;
-	                    var v = 1 - latNumber / latitudeBands;
+	                        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
 
-	                    normals.push(x);
-	                    normals.push(y);
-	                    normals.push(z);
+	                        // Return a complete object. TODO: don't really need vertices except for debugging.
 
-	                    texCoords.push(u);
-	                    texCoords.push(v);
-	                    vertices.push(radius * x);
-	                    vertices.push(radius * y);
-	                    vertices.push(radius * z);
+	                        return {
+
+	                                vertices: {
+
+	                                        data: vertices,
+
+	                                        buffer: vBuffer,
+
+	                                        itemSize: 3,
+
+	                                        numItems: vertices.length / 3
+	                                },
+
+	                                texCoords: {
+
+	                                        data: texCoords,
+
+	                                        buffer: tBuffer,
+
+	                                        itemSize: 2,
+
+	                                        numItems: texCoords.length / 2
+
+	                                },
+
+	                                colors: {
+
+	                                        data: colors,
+
+	                                        buffer: cBuffer,
+
+	                                        itemSize: 4,
+
+	                                        numItems: colors.length / 4
+
+	                                },
+
+	                                normals: {
+
+	                                        data: normals,
+
+	                                        buffer: nBuffer,
+
+	                                        itemSize: 3,
+
+	                                        numItems: normals.length / 3
+
+	                                },
+
+	                                indices: {
+
+	                                        data: indices,
+
+	                                        buffer: iBuffer,
+
+	                                        itemSize: 1,
+
+	                                        numItems: indices.length
+
+	                                }
+
+	                        };
 	                }
-	            }
 
-	            // Sphere indices.
+	                /* 
+	                 * ---------------------------------------
+	                 * SCALING ALGORITHMS
+	                 * ---------------------------------------
+	                 */
 
-	            for (var _latNumber = 0; _latNumber < latitudeBands; _latNumber++) {
+	                /** 
+	                 * given a discrete heightmap, get a value 
+	                 * using bilinear interpolation.
+	                 * @param {Array} heightmap 
+	                 * @param {Number} x = desired x position (between 0.0 and 1.0)
+	                 * @param {Number} z = desired z position (between 0.0 and 1.0)
+	                 */
 
-	                for (var _longNumber = 0; _longNumber < longitudeBands; _longNumber++) {
+	        }, {
+	                key: 'biLinear',
+	                value: function biLinear(x, z) {
 
-	                    var first = _latNumber * (longitudeBands + 1) + _longNumber;
+	                        if (x < 0 || x > 1.0 || z < 0 || z > 1.0) {
 
-	                    var second = first + longitudeBands + 1;
+	                                console.error('heightmap x index out of range, x:' + x + ' z:' + z);
 
-	                    // Note: we're running culling in reverse from some tutorials here.
+	                                return null;
+	                        }
 
-	                    indices.push(first + 1);
+	                        // Our x and z, scaled to heightmap divisions.
 
-	                    indices.push(second + 1);
+	                        x *= this.width;
+	                        z *= this.height;
 
-	                    indices.push(second);
+	                        // Points above and below our position.
 
-	                    indices.push(first + 1);
+	                        var x1 = Math.min(x);
+	                        var x2 = Math.max(x);
+	                        var z1 = Math.min(z);
+	                        var z2 = Math.max(z);
 
-	                    indices.push(second);
+	                        // Interpolate along x axis, get interpolations above and below point.
 
-	                    indices.push(first);
+	                        var a = this.getRaw(x1, z1) * (x - x1) + this.getRaw(x1, z2) * (1 - x - x1);
+
+	                        var b = this.getRaw(z1, z2) * (x - x1) + this.getRaw(x2, z2) * (1 - x - x1);
+
+	                        // Interpolate these results along z axis.
+
+	                        var v = a * (z - z1) + b * (1 - z - z1);
+
+	                        return v;
 	                }
-	            }
 
-	            return this.createBuffers(vertices, indices, texCoords, normals, colors);
-	        }
+	                /** 
+	                 * given a set of adjacent points, return a smooth 
+	                 * central point using the biCubic interpolation algorithm.
+	                 * Adapted from:
+	                 * https://github.com/hughsk/bicubic-sample/blob/master/index.js
+	                 * https://github.com/hughsk/bicubic/blob/master/index.js
+	                 * @param {Number} xf 
+	                 * @param {Number} yf
+	                 */
 
-	        /** 
-	         * Icosphere, iterated from icosohedron.
-	         * http://blog.andreaskahler.com/2009/06/creating-icosphere-mesh-in-code.html
-	         * 
-	         * https://github.com/hughsk/icosphere/blob/master/index.js
-	         */
+	        }, {
+	                key: 'biCubicPoint',
+	                value: function biCubicPoint(xf, yf, p00, p01, p02, p03, p10, p11, p12, p13, p20, p21, p22, p23, p30, p31, p32, p33) {
 
-	    }, {
-	        key: 'geometryIcoSphere',
-	        value: function geometryIcoSphere(prim) {
+	                        var yf2 = yf * yf;
+	                        var xf2 = xf * xf;
+	                        var xf3 = xf * xf2;
 
-	            var sideOrientation = options.sideOrientation || BABYLON.Mesh.DEFAULTSIDE;
-	            var radius = options.radius || 1;
-	            var flat = options.flat === undefined ? true : options.flat;
-	            var subdivisions = options.subdivisions || 4;
-	            var radiusX = options.radiusX || radius;
-	            var radiusY = options.radiusY || radius;
-	            var radiusZ = options.radiusZ || radius;
-	            var t = (1 + Math.sqrt(5)) / 2;
-	            // 12 vertex x,y,z
-	            var ico_vertices = [-1, t, -0, 1, t, 0, -1, -t, 0, 1, -t, 0, 0, -1, -t, 0, 1, -t, 0, -1, t, 0, 1, t, t, 0, 1, t, 0, -1, -t, 0, 1, -t, 0, -1 // v8-11
-	            ];
-	            // index of 3 vertex makes a face of icopshere
-	            var ico_indices = [0, 11, 5, 0, 5, 1, 0, 1, 7, 0, 7, 10, 12, 22, 23, 1, 5, 20, 5, 11, 4, 23, 22, 13, 22, 18, 6, 7, 1, 8, 14, 21, 4, 14, 4, 2, 16, 13, 6, 15, 6, 19, 3, 8, 9, 4, 21, 5, 13, 17, 23, 6, 13, 22, 19, 6, 18, 9, 8, 1];
+	                        var x00 = p03 - p02 - p00 + p01;
+	                        var x01 = p00 - p01 - x00;
+	                        var x02 = p02 - p00;
+	                        var x0 = x00 * xf3 + x01 * xf2 + x02 * xf + p01;
 
-	            // vertex for uv have aliased position, not for UV
-	            var vertices_unalias_id = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
-	            // vertex alias
-	            0, 2, 3, 3, 3, 4, 7, 8, 9, 9, 10, 11 // 23: B + 12
-	            ];
-	            // uv as integer step (not pixels !)
-	            var ico_vertexuv = [5, 1, 3, 1, 6, 4, 0, 0, 5, 3, 4, 2, 2, 2, 4, 0, 2, 0, 1, 1, 6, 0, 6, 2,
-	            // vertex alias (for same vertex on different faces)
-	            0, 4, 3, 3, 4, 4, 3, 1, 4, 2, 4, 4, 0, 2, 1, 1, 2, 2, 3, 3, 1, 3, 2, 4 // 23: B + 12
-	            ];
-	            // Vertices[0, 1, ...9, A, B] : position on UV plane
-	            // '+' indicate duplicate position to be fixed (3,9:0,2,3,4,7,8,A,B)
-	            // First island of uv mapping
-	            // v = 4h          3+  2
-	            // v = 3h        9+  4
-	            // v = 2h      9+  5   B
-	            // v = 1h    9   1   0
-	            // v = 0h  3   8   7   A
-	            //     u = 0 1 2 3 4 5 6  *a
-	            // Second island of uv mapping
-	            // v = 4h  0+  B+  4+
-	            // v = 3h    A+  2+
-	            // v = 2h  7+  6   3+
-	            // v = 1h    8+  3+
-	            // v = 0h
-	            //     u = 0 1 2 3 4 5 6  *a
-	            // Face layout on texture UV mapping
-	            // ============
-	            // \ 4  /\ 16 /   ======
-	            //  \  /  \  /   /\ 11 /
-	            //   \/ 7  \/   /  \  /
-	            //    =======  / 10 \/
-	            //   /\ 17 /\  =======
-	            //  /  \  /  \ \ 15 /\
-	            // / 8  \/ 12 \ \  /  \
-	            // ============  \/ 6  \
-	            // \ 18 /\  ============
-	            //  \  /  \ \ 5  /\ 0  /
-	            //   \/ 13 \ \  /  \  /
-	            //   =======  \/ 1  \/
-	            //       =============
-	            //      /\ 19 /\  2 /\
-	            //     /  \  /  \  /  \
-	            //    / 14 \/ 9  \/  3 \
-	            //   ===================
-	            // uv step is u:1 or 0.5, v:cos(30)=sqrt(3)/2, ratio approx is 84/97
-	            /*
-	                        let ustep = 138 / 1024;
-	                        let vstep = 239 / 1024;
-	                        let uoffset = 60 / 1024;
-	                        let voffset = 26 / 1024;
-	                        // Second island should have margin, not to touch the first island
-	                        // avoid any borderline artefact in pixel rounding
-	                        let island_u_offset = -40 / 1024;
-	                        let island_v_offset = +20 / 1024;
-	                        // face is either island 0 or 1 :
-	                        // second island is for faces : [4, 7, 8, 12, 13, 16, 17, 18]
-	                        let island = [
-	                            0, 0, 0, 0, 1,
-	                            0, 0, 1, 1, 0,
-	                            0, 0, 1, 1, 0,
-	                            0, 1, 1, 1, 0 //  15 - 19
+	                        var x10 = p13 - p12 - p10 + p11;
+	                        var x11 = p10 - p11 - x10;
+	                        var x12 = p12 - p10;
+	                        var x1 = x10 * xf3 + x11 * xf2 + x12 * xf + p11;
+
+	                        var x20 = p23 - p22 - p20 + p21;
+	                        var x21 = p20 - p21 - x20;
+	                        var x22 = p22 - p20;
+	                        var x2 = x20 * xf3 + x21 * xf2 + x22 * xf + p21;
+
+	                        var x30 = p33 - p32 - p30 + p31;
+	                        var x31 = p30 - p31 - x30;
+	                        var x32 = p32 - p30;
+	                        var x3 = x30 * xf3 + x31 * xf2 + x32 * xf + p31;
+
+	                        var y0 = x3 - x2 - x0 + x1;
+	                        var y1 = x0 - x1 - y0;
+	                        var y2 = x2 - x0;
+
+	                        return y0 * yf * yf2 + y1 * yf2 + y2 * yf + x1;
+	                }
+
+	                /* 
+	                 * ---------------------------------------
+	                 * NORMAL, INDEX, VERTEX CALCULATIONS
+	                 * ---------------------------------------
+	                 */
+
+	                /**
+	                 * Compute whether point is in a triangle, wrapped 
+	                 * clockwise (begin with a, end with c)
+	                 * @link http://blackpawn.com/texts/pointinpoly/
+	                 * @param {vec3} p the point to test.
+	                 * @param {vec3} p0 first clockwise vertex of triangle.
+	                 * @param {vec3} p1 second clockwise vertex of triangle.
+	                 * @param {vec3} p2 third clockwise vertex of triangle.
+	                 * @returns {Boolean} if point in triangle, return true, else false.
+	                 */
+
+	        }, {
+	                key: 'pointInTriangle',
+	                value: function pointInTriangle(p, p0, p1, p2) {
+
+	                        var vec3 = this.glMatrix.vec3;
+
+	                        var v0 = void 0,
+	                            v1 = void 0,
+	                            v2 = void 0,
+	                            dot00 = void 0,
+	                            dot01 = void 0,
+	                            dot02 = void 0,
+	                            dot11 = void 0,
+	                            dot12 = void 0;
+
+	                        // Compute vectors.
+
+	                        v0 = vec3.sub(v0, p2, p0);
+	                        v1 = vec3.sub(v1, p1, p0);
+	                        v2 = vec3.sub(v2, p, p0);
+
+	                        // Compute dot products.
+
+	                        dot00 = vec3.dot(v0, v0);
+	                        dot01 = vec3.dot(v0, v1);
+	                        dot02 = vec3.dot(v0, v2);
+	                        dot11 = vec3.dot(v1, v1);
+	                        dot12 = vec3.dot(v1, v2);
+
+	                        // Compute barycentric coordinates.
+
+	                        var invDenom = 1 / (dot00 * dot11 - dot01 * dot01);
+	                        var u = (dot11 * dot02 - dot01 * dot12) * invDenom;
+	                        var v = (dot00 * dot12 - dot01 * dot02) * invDenom;
+
+	                        // Check if point is in triangle.
+
+	                        return u >= 0 && v >= 0 && u + v < 1;
+	                }
+
+	                /** 
+	                 * Compute normals for a 3d object.
+	                 * Adapted from BabylonJS
+	                 * https://github.com/BabylonJS/Babylon.js/blob/3fe3372053ac58505dbf7a2a6f3f52e3b92670c8/src/Mesh/babylon.mesh.vertexData.js
+	                 * @link http://gamedev.stackexchange.com/questions/8191/any-reliable-polygon-normal-calculation-code
+	                 * @link https://www.opengl.org/wiki/Calculating_a_Surface_Normal
+	                 */
+
+	        }, {
+	                key: 'computeNormals',
+	                value: function computeNormals(vertices, indices, normals) {
+
+	                        var index = 0;
+
+	                        var p1p2x = 0.0;
+
+	                        var p1p2y = 0.0;
+
+	                        var p1p2z = 0.0;
+
+	                        var p3p2x = 0.0;
+
+	                        var p3p2y = 0.0;
+
+	                        var p3p2z = 0.0;
+
+	                        var faceNormalx = 0.0;
+
+	                        var faceNormaly = 0.0;
+
+	                        var faceNormalz = 0.0;
+
+	                        var length = 0.0;
+
+	                        var i1 = 0;
+	                        var i2 = 0;
+	                        var i3 = 0;
+
+	                        for (index = 0; index < vertices.length; index++) {
+	                                normals[index] = 0.0;
+	                        }
+
+	                        // indice triplet = 1 face
+
+	                        var nbFaces = indices.length / 3;
+
+	                        for (index = 0; index < nbFaces; index++) {
+	                                i1 = indices[index * 3]; // get the indexes of each vertex of the face
+	                                i2 = indices[index * 3 + 1];
+	                                i3 = indices[index * 3 + 2];
+
+	                                p1p2x = vertices[i1 * 3] - vertices[i2 * 3]; // compute two vectors per face
+	                                p1p2y = vertices[i1 * 3 + 1] - vertices[i2 * 3 + 1];
+	                                p1p2z = vertices[i1 * 3 + 2] - vertices[i2 * 3 + 2];
+	                                p3p2x = vertices[i3 * 3] - vertices[i2 * 3];
+	                                p3p2y = vertices[i3 * 3 + 1] - vertices[i2 * 3 + 1];
+	                                p3p2z = vertices[i3 * 3 + 2] - vertices[i2 * 3 + 2];
+
+	                                faceNormalx = p1p2y * p3p2z - p1p2z * p3p2y; // compute the face normal with cross product
+	                                faceNormaly = p1p2z * p3p2x - p1p2x * p3p2z;
+	                                faceNormalz = p1p2x * p3p2y - p1p2y * p3p2x;
+
+	                                length = Math.sqrt(faceNormalx * faceNormalx + faceNormaly * faceNormaly + faceNormalz * faceNormalz);
+	                                length = length === 0 ? 1.0 : length;
+	                                faceNormalx /= length; // normalize this normal
+	                                faceNormaly /= length;
+	                                faceNormalz /= length;
+
+	                                normals[i1 * 3] += faceNormalx; // accumulate all the normals per face
+	                                normals[i1 * 3 + 1] += faceNormaly;
+	                                normals[i1 * 3 + 2] += faceNormalz;
+	                                normals[i2 * 3] += faceNormalx;
+	                                normals[i2 * 3 + 1] += faceNormaly;
+	                                normals[i2 * 3 + 2] += faceNormalz;
+	                                normals[i3 * 3] += faceNormalx;
+	                                normals[i3 * 3 + 1] += faceNormaly;
+	                                normals[i3 * 3 + 2] += faceNormalz;
+	                        }
+
+	                        // last normalization of each normal
+
+	                        for (index = 0; index < normals.length / 3; index++) {
+	                                faceNormalx = normals[index * 3];
+	                                faceNormaly = -normals[index * 3 + 1];
+	                                faceNormalz = normals[index * 3 + 2];
+	                                length = Math.sqrt(faceNormalx * faceNormalx + faceNormaly * faceNormaly + faceNormalz * faceNormalz);
+	                                length = length === 0 ? 1.0 : length;
+	                                faceNormalx /= length;
+	                                faceNormaly /= length;
+	                                faceNormalz /= length;
+
+	                                // NOTE: added negative to x, z to match lighting model.
+
+	                                normals[index * 3] = -faceNormalx;
+	                                normals[index * 3 + 1] = faceNormaly;
+	                                normals[index * 3 + 2] = -faceNormalz;
+	                        }
+	                }
+
+	                /* 
+	                 * ---------------------------------------
+	                 * GEOMETRY
+	                 * ---------------------------------------
+	                 */
+
+	                /** 
+	                 * WebGL point.
+	                 */
+
+	        }, {
+	                key: 'geometryPoint',
+	                value: function geometryPoint(prim) {}
+
+	                /** 
+	                 * WebGL point cloud (particle system).
+	                 */
+
+	        }, {
+	                key: 'geometryPointCloud',
+	                value: function geometryPointCloud(prim) {}
+
+	                /** 
+	                 * WebGL line.
+	                 */
+
+	        }, {
+	                key: 'geometryLine',
+	                value: function geometryLine(prim) {}
+
+	                /** 
+	                 * Plane (non-infinite, multiple vertices, can be turned into TERRAIN)
+	                 */
+
+	        }, {
+	                key: 'geometryPlane',
+	                value: function geometryPlane(prim) {
+
+	                        var vec3 = this.glMatrix.vec3;
+
+	                        var vertices = [];
+
+	                        var indices = [];
+
+	                        var texCoords = [];
+
+	                        var normals = [];
+
+	                        var colors = [];
+
+	                        var cols = prim.divisions[0]; // x axis (really xz)
+	                        var rows = prim.divisions[2]; // y axis
+
+	                        var halfX = prim.dimensions[0] / 2;
+	                        var halfZ = prim.dimensions[2] / 2;
+
+	                        var incX = prim.dimensions[0] / prim.divisions[0];
+	                        var incY = 1.0;
+	                        var incZ = prim.dimensions[2] / prim.divisions[2];
+
+	                        // if there is a heightMap, assign y values
+
+	                        for (var colNumber = 0; colNumber <= cols; colNumber++) {
+
+	                                for (var rowNumber = 0; rowNumber <= rows; rowNumber++) {
+
+	                                        var x = colNumber;
+	                                        var y = this.util.getRand(0, 0.2); /////TODO: RANDOM FOR NOW
+	                                        var z = rowNumber;
+
+	                                        var u = colNumber / cols;
+	                                        var v = 1 - rowNumber / rows;
+
+	                                        normals.push(0, 1.0, 0);
+
+	                                        texCoords.push(u, v);
+
+	                                        vertices.push(incX * x - halfX);
+	                                        vertices.push(incY * y);
+	                                        vertices.push(incZ * z - halfZ);
+	                                }
+	                        }
+
+	                        // Indices.
+
+	                        for (var _rowNumber = 0; _rowNumber < rows; _rowNumber++) {
+
+	                                for (var _colNumber = 0; _colNumber < cols; _colNumber++) {
+
+	                                        var first = _rowNumber * (cols + 1) + _colNumber;
+
+	                                        var second = first + cols + 1;
+
+	                                        // Note: we're running culling in reverse from some tutorials here.
+
+	                                        indices.push(first + 1);
+
+	                                        indices.push(second + 1);
+
+	                                        indices.push(second);
+
+	                                        indices.push(first + 1);
+
+	                                        indices.push(second);
+
+	                                        indices.push(first);
+	                                }
+	                        }
+
+	                        this.computeNormals(vertices, indices, normals);
+
+	                        return this.createBuffers(vertices, indices, texCoords, normals, colors);
+	                }
+
+	                /** 
+	                 * Polygon (flat)
+	                 */
+
+	        }, {
+	                key: 'geometryPoly',
+	                value: function geometryPoly(prim) {}
+
+	                /** 
+	                 * Create a cube geometry of a given size (units) centered 
+	                 * on a point.
+	                 * @param {GLMatrix.Vec3} center a 3d vector defining the center.
+	                 * @param {Size} width, height, depth, with 1.0 (unit) max size
+	                 * @param {Number} scale relative to unit size (1, 1, 1).
+	                  name = 'unknown', scale = 1.0, dimensions, position, acceleration, rotation, textureImage, color
+	                 */
+
+	        }, {
+	                key: 'geometryCube',
+	                value: function geometryCube(prim) {
+
+	                        var x = prim.dimensions[0] / 2;
+
+	                        var y = prim.dimensions[1] / 2;
+
+	                        var z = prim.dimensions[2] / 2;
+
+	                        // Create cube geometry.
+
+	                        var vertices = [
+	                        // Front face
+	                        -1.0, -1.0, 1.0, // bottomleft
+	                        1.0, -1.0, 1.0, // bottomright
+	                        1.0, 1.0, 1.0, // topright
+	                        -1.0, 1.0, 1.0, // topleft
+	                        // Back face
+	                        -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0,
+	                        // Top face
+	                        -1.0, 1.0, -1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0,
+	                        // Bottom face
+	                        -1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0,
+	                        // Right face
+	                        1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0,
+	                        // Left face
+	                        -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0];
+
+	                        var indices = [0, 1, 2, 0, 2, 3, // Front face
+	                        4, 5, 6, 4, 6, 7, // Back face
+	                        8, 9, 10, 8, 10, 11, // Top face
+	                        12, 13, 14, 12, 14, 15, // Bottom face
+	                        16, 17, 18, 16, 18, 19, // Right face //can't go to 30
+	                        20, 21, 22, 20, 22, 23 // Left face
 	                        ];
-	                        let indices = [];
-	                        let positions = [];
-	                        let normals = [];
-	                        let uvs = [];
-	                        let current_indice = 0;
-	                        // prepare array of 3 vector (empty) (to be worked in place, shared for each face)
-	                        let face_vertex_pos = new Array(3);
-	                        let face_vertex_uv = new Array(3);
-	                        let v012;
-	                        for (v012 = 0; v012 < 3; v012++) {
-	                            face_vertex_pos[v012] = BABYLON.Vector3.Zero();
-	                            face_vertex_uv[v012] = BABYLON.Vector2.Zero();
+
+	                        var texCoords = [
+	                        // Front face
+	                        0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
+	                        // Back face
+	                        1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0,
+	                        // Top face
+	                        0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0,
+	                        // Bottom face
+	                        1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0,
+	                        // Right face
+	                        1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0,
+	                        // Left face
+	                        0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0];
+
+	                        var normals = [
+	                        // Front face
+	                        0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0,
+	                        // Back face
+	                        0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0,
+	                        // Top face
+	                        0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0,
+	                        // Bottom face
+	                        0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0,
+	                        // Right face
+	                        1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0,
+	                        // Left face
+	                        -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0];
+
+	                        var colors = [
+	                        // Front face
+	                        1.0, 1.0, 1.0, 1.0, // white
+	                        1.0, 0.0, 0.0, 1.0, // red
+	                        0.0, 1.0, 0.0, 1.0, // green
+	                        0.0, 0.0, 1.0, 1.0, // blue
+	                        // Back face
+	                        1.0, 1.0, 1.0, 1.0, // white
+	                        1.0, 0.0, 0.0, 1.0, // red
+	                        0.0, 1.0, 0.0, 1.0, // green
+	                        0.0, 0.0, 1.0, 1.0, // blue
+	                        // Top face
+	                        1.0, 1.0, 1.0, 1.0, // white
+	                        1.0, 0.0, 0.0, 1.0, // red
+	                        0.0, 1.0, 0.0, 1.0, // green
+	                        0.0, 0.0, 1.0, 1.0, // blue
+	                        // Bottom face
+	                        1.0, 1.0, 1.0, 1.0, // white
+	                        1.0, 0.0, 0.0, 1.0, // red
+	                        0.0, 1.0, 0.0, 1.0, // green
+	                        0.0, 0.0, 1.0, 1.0, // blue
+	                        // Right face
+	                        1.0, 1.0, 1.0, 1.0, // white
+	                        1.0, 0.0, 0.0, 1.0, // red
+	                        0.0, 1.0, 0.0, 1.0, // green
+	                        0.0, 0.0, 1.0, 1.0, // blue
+	                        // Left face
+	                        1.0, 1.0, 1.0, 1.0, // white
+	                        1.0, 0.0, 0.0, 1.0, // red
+	                        0.0, 1.0, 0.0, 1.0, // green
+	                        0.0, 0.0, 1.0, 1.0 // blue
+	                        ];
+
+	                        return this.createBuffers(vertices, indices, texCoords, normals, colors);
+	                }
+
+	                /** 
+	                 * Sphere with polar points.
+	                 * http://learningwebgl.com/blog/?p=1253
+	                 */
+
+	        }, {
+	                key: 'geometrySphere',
+	                value: function geometrySphere(prim) {
+
+	                        // TODO: ACTIVATE RADIUS X, Y, Z for distorted spheres.
+
+	                        var vertices = [];
+
+	                        var indices = [];
+
+	                        var texCoords = [];
+
+	                        var normals = [];
+
+	                        var colors = [];
+
+	                        var latitudeBands = prim.divisions[1]; // y axis
+
+	                        var longitudeBands = prim.divisions[0]; // x axis (really xz)
+
+	                        var radius = prim.dimensions[0] * 0.5;
+
+	                        for (var latNumber = 0; latNumber <= latitudeBands; latNumber++) {
+
+	                                var theta = latNumber * Math.PI / latitudeBands;
+
+	                                var sinTheta = Math.sin(theta);
+
+	                                var cosTheta = Math.cos(theta);
+
+	                                for (var longNumber = 0; longNumber <= longitudeBands; longNumber++) {
+
+	                                        var phi = longNumber * 2 * Math.PI / longitudeBands;
+
+	                                        var sinPhi = Math.sin(phi);
+
+	                                        var cosPhi = Math.cos(phi);
+
+	                                        var x = cosPhi * sinTheta;
+	                                        var y = cosTheta;
+	                                        var z = sinPhi * sinTheta;
+
+	                                        var u = 1 - longNumber / longitudeBands;
+	                                        var v = 1 - latNumber / latitudeBands;
+
+	                                        normals.push(x);
+	                                        normals.push(y);
+	                                        normals.push(z);
+
+	                                        texCoords.push(u);
+	                                        texCoords.push(v);
+	                                        vertices.push(radius * x);
+	                                        vertices.push(radius * y);
+	                                        vertices.push(radius * z);
+	                                }
 	                        }
-	                        // create all with normals
-	                        for (let face = 0; face < 20; face++) {
-	                            // 3 vertex per face
-	                            for (v012 = 0; v012 < 3; v012++) {
-	                                // look up vertex 0,1,2 to its index in 0 to 11 (or 23 including alias)
-	                                let v_id = ico_indices[3 * face + v012];
-	                                // vertex have 3D position (x,y,z)
-	                                face_vertex_pos[v012].copyFromFloats(ico_vertices[3 * vertices_unalias_id[v_id]], ico_vertices[3 * vertices_unalias_id[v_id] + 1], ico_vertices[3 * vertices_unalias_id[v_id] + 2]);
-	                                // Normalize to get normal, then scale to radius
-	                                face_vertex_pos[v012].normalize().scaleInPlace(radius);
-	                                // uv Coordinates from vertex ID
-	                                face_vertex_uv[v012].copyFromFloats(ico_vertexuv[2 * v_id] * ustep + uoffset + island[face] * island_u_offset, ico_vertexuv[2 * v_id + 1] * vstep + voffset + island[face] * island_v_offset);
-	                            }
-	                            // Subdivide the face (interpolate pos, norm, uv)
-	                            // - pos is linear interpolation, then projected to sphere (converge polyhedron to sphere)
-	                            // - norm is linear interpolation of vertex corner normal
-	                            //   (to be checked if better to re-calc from face vertex, or if approximation is OK ??? )
-	                            // - uv is linear interpolation
-	                            //
-	                            // Topology is as below for sub-divide by 2
-	                            // vertex shown as v0,v1,v2
-	                            // interp index is i1 to progress in range [v0,v1[
-	                            // interp index is i2 to progress in range [v0,v2[
-	                            // face index as  (i1,i2)  for /\  : (i1,i2),(i1+1,i2),(i1,i2+1)
-	                            //            and (i1,i2)' for \/  : (i1+1,i2),(i1+1,i2+1),(i1,i2+1)
-	                            //
-	                            //
-	                            //                    i2    v2
-	                            //                    ^    ^
-	                            //                   /    / \
-	                            //                  /    /   \
-	                            //                 /    /     \
-	                            //                /    / (0,1) \
-	                            //               /    #---------\
-	                            //              /    / \ (0,0)'/ \
-	                            //             /    /   \     /   \
-	                            //            /    /     \   /     \
-	                            //           /    / (0,0) \ / (1,0) \
-	                            //          /    #---------#---------\
-	                            //              v0                    v1
-	                            //
-	                            //              --------------------> i1
-	                            //
-	                            // interp of (i1,i2):
-	                            //  along i2 :  x0=lerp(v0,v2, i2/S) <---> x1=lerp(v1,v2, i2/S)
-	                            //  along i1 :  lerp(x0,x1, i1/(S-i2))
-	                            //
-	                            // centroid of triangle is needed to get help normal computation
-	                            //  (c1,c2) are used for centroid location
-	                            let interp_vertex = function (i1, i2, c1, c2) {
-	                                // vertex is interpolated from
-	                                //   - face_vertex_pos[0..2]
-	                                //   - face_vertex_uv[0..2]
-	                                let pos_x0 = BABYLON.Vector3.Lerp(face_vertex_pos[0], face_vertex_pos[2], i2 / subdivisions);
-	                                let pos_x1 = BABYLON.Vector3.Lerp(face_vertex_pos[1], face_vertex_pos[2], i2 / subdivisions);
-	                                let pos_interp = (subdivisions === i2) ? face_vertex_pos[2] : BABYLON.Vector3.Lerp(pos_x0, pos_x1, i1 / (subdivisions - i2));
-	                                pos_interp.normalize();
-	                                let vertex_normal;
-	                                if (flat) {
-	                                    // in flat mode, recalculate normal as face centroid normal
-	                                    let centroid_x0 = BABYLON.Vector3.Lerp(face_vertex_pos[0], face_vertex_pos[2], c2 / subdivisions);
-	                                    let centroid_x1 = BABYLON.Vector3.Lerp(face_vertex_pos[1], face_vertex_pos[2], c2 / subdivisions);
-	                                    vertex_normal = BABYLON.Vector3.Lerp(centroid_x0, centroid_x1, c1 / (subdivisions - c2));
+
+	                        // Sphere indices.
+
+	                        for (var _latNumber = 0; _latNumber < latitudeBands; _latNumber++) {
+
+	                                for (var _longNumber = 0; _longNumber < longitudeBands; _longNumber++) {
+
+	                                        var first = _latNumber * (longitudeBands + 1) + _longNumber;
+
+	                                        var second = first + longitudeBands + 1;
+
+	                                        // Note: we're running culling in reverse from some tutorials here.
+
+	                                        indices.push(first + 1);
+
+	                                        indices.push(second + 1);
+
+	                                        indices.push(second);
+
+	                                        indices.push(first + 1);
+
+	                                        indices.push(second);
+
+	                                        indices.push(first);
 	                                }
-	                                else {
-	                                    // in smooth mode, recalculate normal from each single vertex position
-	                                    vertex_normal = new BABYLON.Vector3(pos_interp.x, pos_interp.y, pos_interp.z);
-	                                }
-	                                // Vertex normal need correction due to X,Y,Z radius scaling
-	                                vertex_normal.x /= radiusX;
-	                                vertex_normal.y /= radiusY;
-	                                vertex_normal.z /= radiusZ;
-	                                vertex_normal.normalize();
-	                                let uv_x0 = BABYLON.Vector2.Lerp(face_vertex_uv[0], face_vertex_uv[2], i2 / subdivisions);
-	                                let uv_x1 = BABYLON.Vector2.Lerp(face_vertex_uv[1], face_vertex_uv[2], i2 / subdivisions);
-	                                let uv_interp = (subdivisions === i2) ? face_vertex_uv[2] : BABYLON.Vector2.Lerp(uv_x0, uv_x1, i1 / (subdivisions - i2));
-	                                positions.push(pos_interp.x * radiusX, pos_interp.y * radiusY, pos_interp.z * radiusZ);
-	                                normals.push(vertex_normal.x, vertex_normal.y, vertex_normal.z);
-	                                uvs.push(uv_interp.x, uv_interp.y);
-	                                // push each vertex has member of a face
-	                                // Same vertex can belong to multiple face, it is pushed multiple time (duplicate vertex are present)
-	                                indices.push(current_indice);
-	                                current_indice++;
-	                            };
-	                            for (let i2 = 0; i2 < subdivisions; i2++) {
-	                                for (let i1 = 0; i1 + i2 < subdivisions; i1++) {
-	                                    // face : (i1,i2)  for /\  :
-	                                    // interp for : (i1,i2),(i1+1,i2),(i1,i2+1)
-	                                    interp_vertex(i1, i2, i1 + 1.0 / 3, i2 + 1.0 / 3);
-	                                    interp_vertex(i1 + 1, i2, i1 + 1.0 / 3, i2 + 1.0 / 3);
-	                                    interp_vertex(i1, i2 + 1, i1 + 1.0 / 3, i2 + 1.0 / 3);
-	                                    if (i1 + i2 + 1 < subdivisions) {
-	                                        // face : (i1,i2)' for \/  :
-	                                        // interp for (i1+1,i2),(i1+1,i2+1),(i1,i2+1)
-	                                        interp_vertex(i1 + 1, i2, i1 + 2.0 / 3, i2 + 2.0 / 3);
-	                                        interp_vertex(i1 + 1, i2 + 1, i1 + 2.0 / 3, i2 + 2.0 / 3);
-	                                        interp_vertex(i1, i2 + 1, i1 + 2.0 / 3, i2 + 2.0 / 3);
+	                        }
+
+	                        return this.createBuffers(vertices, indices, texCoords, normals, colors);
+	                }
+
+	                /** 
+	                 * Icosphere, iterated from icosohedron.
+	                 * http://blog.andreaskahler.com/2009/06/creating-icosphere-mesh-in-code.html
+	                 * 
+	                 * https://github.com/hughsk/icosphere/blob/master/index.js
+	                 */
+
+	        }, {
+	                key: 'geometryIcoSphere',
+	                value: function geometryIcoSphere(prim) {
+
+	                        var sideOrientation = options.sideOrientation || BABYLON.Mesh.DEFAULTSIDE;
+	                        var radius = options.radius || 1;
+	                        var flat = options.flat === undefined ? true : options.flat;
+	                        var subdivisions = options.subdivisions || 4;
+	                        var radiusX = options.radiusX || radius;
+	                        var radiusY = options.radiusY || radius;
+	                        var radiusZ = options.radiusZ || radius;
+	                        var t = (1 + Math.sqrt(5)) / 2;
+	                        // 12 vertex x,y,z
+	                        var ico_vertices = [-1, t, -0, 1, t, 0, -1, -t, 0, 1, -t, 0, 0, -1, -t, 0, 1, -t, 0, -1, t, 0, 1, t, t, 0, 1, t, 0, -1, -t, 0, 1, -t, 0, -1 // v8-11
+	                        ];
+	                        // index of 3 vertex makes a face of icopshere
+	                        var ico_indices = [0, 11, 5, 0, 5, 1, 0, 1, 7, 0, 7, 10, 12, 22, 23, 1, 5, 20, 5, 11, 4, 23, 22, 13, 22, 18, 6, 7, 1, 8, 14, 21, 4, 14, 4, 2, 16, 13, 6, 15, 6, 19, 3, 8, 9, 4, 21, 5, 13, 17, 23, 6, 13, 22, 19, 6, 18, 9, 8, 1];
+
+	                        // vertex for uv have aliased position, not for UV
+	                        var vertices_unalias_id = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+	                        // vertex alias
+	                        0, 2, 3, 3, 3, 4, 7, 8, 9, 9, 10, 11 // 23: B + 12
+	                        ];
+	                        // uv as integer step (not pixels !)
+	                        var ico_vertexuv = [5, 1, 3, 1, 6, 4, 0, 0, 5, 3, 4, 2, 2, 2, 4, 0, 2, 0, 1, 1, 6, 0, 6, 2,
+	                        // vertex alias (for same vertex on different faces)
+	                        0, 4, 3, 3, 4, 4, 3, 1, 4, 2, 4, 4, 0, 2, 1, 1, 2, 2, 3, 3, 1, 3, 2, 4 // 23: B + 12
+	                        ];
+	                        // Vertices[0, 1, ...9, A, B] : position on UV plane
+	                        // '+' indicate duplicate position to be fixed (3,9:0,2,3,4,7,8,A,B)
+	                        // First island of uv mapping
+	                        // v = 4h          3+  2
+	                        // v = 3h        9+  4
+	                        // v = 2h      9+  5   B
+	                        // v = 1h    9   1   0
+	                        // v = 0h  3   8   7   A
+	                        //     u = 0 1 2 3 4 5 6  *a
+	                        // Second island of uv mapping
+	                        // v = 4h  0+  B+  4+
+	                        // v = 3h    A+  2+
+	                        // v = 2h  7+  6   3+
+	                        // v = 1h    8+  3+
+	                        // v = 0h
+	                        //     u = 0 1 2 3 4 5 6  *a
+	                        // Face layout on texture UV mapping
+	                        // ============
+	                        // \ 4  /\ 16 /   ======
+	                        //  \  /  \  /   /\ 11 /
+	                        //   \/ 7  \/   /  \  /
+	                        //    =======  / 10 \/
+	                        //   /\ 17 /\  =======
+	                        //  /  \  /  \ \ 15 /\
+	                        // / 8  \/ 12 \ \  /  \
+	                        // ============  \/ 6  \
+	                        // \ 18 /\  ============
+	                        //  \  /  \ \ 5  /\ 0  /
+	                        //   \/ 13 \ \  /  \  /
+	                        //   =======  \/ 1  \/
+	                        //       =============
+	                        //      /\ 19 /\  2 /\
+	                        //     /  \  /  \  /  \
+	                        //    / 14 \/ 9  \/  3 \
+	                        //   ===================
+	                        // uv step is u:1 or 0.5, v:cos(30)=sqrt(3)/2, ratio approx is 84/97
+	                        /*
+	                                    let ustep = 138 / 1024;
+	                                    let vstep = 239 / 1024;
+	                                    let uoffset = 60 / 1024;
+	                                    let voffset = 26 / 1024;
+	                                    // Second island should have margin, not to touch the first island
+	                                    // avoid any borderline artefact in pixel rounding
+	                                    let island_u_offset = -40 / 1024;
+	                                    let island_v_offset = +20 / 1024;
+	                                    // face is either island 0 or 1 :
+	                                    // second island is for faces : [4, 7, 8, 12, 13, 16, 17, 18]
+	                                    let island = [
+	                                        0, 0, 0, 0, 1,
+	                                        0, 0, 1, 1, 0,
+	                                        0, 0, 1, 1, 0,
+	                                        0, 1, 1, 1, 0 //  15 - 19
+	                                    ];
+	                                    let indices = [];
+	                                    let positions = [];
+	                                    let normals = [];
+	                                    let uvs = [];
+	                                    let current_indice = 0;
+	                                    // prepare array of 3 vector (empty) (to be worked in place, shared for each face)
+	                                    let face_vertex_pos = new Array(3);
+	                                    let face_vertex_uv = new Array(3);
+	                                    let v012;
+	                                    for (v012 = 0; v012 < 3; v012++) {
+	                                        face_vertex_pos[v012] = BABYLON.Vector3.Zero();
+	                                        face_vertex_uv[v012] = BABYLON.Vector2.Zero();
 	                                    }
-	                                }
-	                            }
+	                                    // create all with normals
+	                                    for (let face = 0; face < 20; face++) {
+	                                        // 3 vertex per face
+	                                        for (v012 = 0; v012 < 3; v012++) {
+	                                            // look up vertex 0,1,2 to its index in 0 to 11 (or 23 including alias)
+	                                            let v_id = ico_indices[3 * face + v012];
+	                                            // vertex have 3D position (x,y,z)
+	                                            face_vertex_pos[v012].copyFromFloats(ico_vertices[3 * vertices_unalias_id[v_id]], ico_vertices[3 * vertices_unalias_id[v_id] + 1], ico_vertices[3 * vertices_unalias_id[v_id] + 2]);
+	                                            // Normalize to get normal, then scale to radius
+	                                            face_vertex_pos[v012].normalize().scaleInPlace(radius);
+	                                            // uv Coordinates from vertex ID
+	                                            face_vertex_uv[v012].copyFromFloats(ico_vertexuv[2 * v_id] * ustep + uoffset + island[face] * island_u_offset, ico_vertexuv[2 * v_id + 1] * vstep + voffset + island[face] * island_v_offset);
+	                                        }
+	                                        // Subdivide the face (interpolate pos, norm, uv)
+	                                        // - pos is linear interpolation, then projected to sphere (converge polyhedron to sphere)
+	                                        // - norm is linear interpolation of vertex corner normal
+	                                        //   (to be checked if better to re-calc from face vertex, or if approximation is OK ??? )
+	                                        // - uv is linear interpolation
+	                                        //
+	                                        // Topology is as below for sub-divide by 2
+	                                        // vertex shown as v0,v1,v2
+	                                        // interp index is i1 to progress in range [v0,v1[
+	                                        // interp index is i2 to progress in range [v0,v2[
+	                                        // face index as  (i1,i2)  for /\  : (i1,i2),(i1+1,i2),(i1,i2+1)
+	                                        //            and (i1,i2)' for \/  : (i1+1,i2),(i1+1,i2+1),(i1,i2+1)
+	                                        //
+	                                        //
+	                                        //                    i2    v2
+	                                        //                    ^    ^
+	                                        //                   /    / \
+	                                        //                  /    /   \
+	                                        //                 /    /     \
+	                                        //                /    / (0,1) \
+	                                        //               /    #---------\
+	                                        //              /    / \ (0,0)'/ \
+	                                        //             /    /   \     /   \
+	                                        //            /    /     \   /     \
+	                                        //           /    / (0,0) \ / (1,0) \
+	                                        //          /    #---------#---------\
+	                                        //              v0                    v1
+	                                        //
+	                                        //              --------------------> i1
+	                                        //
+	                                        // interp of (i1,i2):
+	                                        //  along i2 :  x0=lerp(v0,v2, i2/S) <---> x1=lerp(v1,v2, i2/S)
+	                                        //  along i1 :  lerp(x0,x1, i1/(S-i2))
+	                                        //
+	                                        // centroid of triangle is needed to get help normal computation
+	                                        //  (c1,c2) are used for centroid location
+	                                        let interp_vertex = function (i1, i2, c1, c2) {
+	                                            // vertex is interpolated from
+	                                            //   - face_vertex_pos[0..2]
+	                                            //   - face_vertex_uv[0..2]
+	                                            let pos_x0 = BABYLON.Vector3.Lerp(face_vertex_pos[0], face_vertex_pos[2], i2 / subdivisions);
+	                                            let pos_x1 = BABYLON.Vector3.Lerp(face_vertex_pos[1], face_vertex_pos[2], i2 / subdivisions);
+	                                            let pos_interp = (subdivisions === i2) ? face_vertex_pos[2] : BABYLON.Vector3.Lerp(pos_x0, pos_x1, i1 / (subdivisions - i2));
+	                                            pos_interp.normalize();
+	                                            let vertex_normal;
+	                                            if (flat) {
+	                                                // in flat mode, recalculate normal as face centroid normal
+	                                                let centroid_x0 = BABYLON.Vector3.Lerp(face_vertex_pos[0], face_vertex_pos[2], c2 / subdivisions);
+	                                                let centroid_x1 = BABYLON.Vector3.Lerp(face_vertex_pos[1], face_vertex_pos[2], c2 / subdivisions);
+	                                                vertex_normal = BABYLON.Vector3.Lerp(centroid_x0, centroid_x1, c1 / (subdivisions - c2));
+	                                            }
+	                                            else {
+	                                                // in smooth mode, recalculate normal from each single vertex position
+	                                                vertex_normal = new BABYLON.Vector3(pos_interp.x, pos_interp.y, pos_interp.z);
+	                                            }
+	                                            // Vertex normal need correction due to X,Y,Z radius scaling
+	                                            vertex_normal.x /= radiusX;
+	                                            vertex_normal.y /= radiusY;
+	                                            vertex_normal.z /= radiusZ;
+	                                            vertex_normal.normalize();
+	                                            let uv_x0 = BABYLON.Vector2.Lerp(face_vertex_uv[0], face_vertex_uv[2], i2 / subdivisions);
+	                                            let uv_x1 = BABYLON.Vector2.Lerp(face_vertex_uv[1], face_vertex_uv[2], i2 / subdivisions);
+	                                            let uv_interp = (subdivisions === i2) ? face_vertex_uv[2] : BABYLON.Vector2.Lerp(uv_x0, uv_x1, i1 / (subdivisions - i2));
+	                                            positions.push(pos_interp.x * radiusX, pos_interp.y * radiusY, pos_interp.z * radiusZ);
+	                                            normals.push(vertex_normal.x, vertex_normal.y, vertex_normal.z);
+	                                            uvs.push(uv_interp.x, uv_interp.y);
+	                                            // push each vertex has member of a face
+	                                            // Same vertex can belong to multiple face, it is pushed multiple time (duplicate vertex are present)
+	                                            indices.push(current_indice);
+	                                            current_indice++;
+	                                        };
+	                                        for (let i2 = 0; i2 < subdivisions; i2++) {
+	                                            for (let i1 = 0; i1 + i2 < subdivisions; i1++) {
+	                                                // face : (i1,i2)  for /\  :
+	                                                // interp for : (i1,i2),(i1+1,i2),(i1,i2+1)
+	                                                interp_vertex(i1, i2, i1 + 1.0 / 3, i2 + 1.0 / 3);
+	                                                interp_vertex(i1 + 1, i2, i1 + 1.0 / 3, i2 + 1.0 / 3);
+	                                                interp_vertex(i1, i2 + 1, i1 + 1.0 / 3, i2 + 1.0 / 3);
+	                                                if (i1 + i2 + 1 < subdivisions) {
+	                                                    // face : (i1,i2)' for \/  :
+	                                                    // interp for (i1+1,i2),(i1+1,i2+1),(i1,i2+1)
+	                                                    interp_vertex(i1 + 1, i2, i1 + 2.0 / 3, i2 + 2.0 / 3);
+	                                                    interp_vertex(i1 + 1, i2 + 1, i1 + 2.0 / 3, i2 + 2.0 / 3);
+	                                                    interp_vertex(i1, i2 + 1, i1 + 2.0 / 3, i2 + 2.0 / 3);
+	                                                }
+	                                            }
+	                                        }
+	                                    }
+	                                    // Sides
+	                                    VertexData._ComputeSides(sideOrientation, positions, indices, normals, uvs);
+	                                    // Result
+	                                    let vertexData = new VertexData();
+	                                    vertexData.indices = indices;
+	                                    vertexData.positions = positions;
+	                                    vertexData.normals = normals;
+	                                    vertexData.uvs = uvs;
+	                                    return vertexData;
+	                                };
+	                                */
+	                }
+
+	                /** 
+	                 * Half-sphere, polar coordinates.
+	                 */
+
+	        }, {
+	                key: 'geometryDome',
+	                value: function geometryDome(prim) {}
+
+	                /** 
+	                 * Half-sphere, icosohedron based.
+	                 */
+
+	        }, {
+	                key: 'geometryIcoDome',
+	                value: function geometryIcoDome(prim) {}
+
+	                /** 
+	                 * Cone
+	                 */
+
+	        }, {
+	                key: 'geometryCone',
+	                value: function geometryCone(prim) {}
+
+	                /** 
+	                 * Cylinder
+	                 */
+
+	        }, {
+	                key: 'geometryCylinder',
+	                value: function geometryCylinder(prim) {}
+
+	                /** 
+	                 * Generic 3d shape (e.g. collada model).
+	                 * @link https://dannywoodz.wordpress.com/2014/12/16/webgl-from-scratch-loading-a-mesh/
+	                 * https://github.com/jagenjo/litegl.js/blob/master/src/mesh.js
+	                 */
+
+	        }, {
+	                key: 'geometryMesh',
+	                value: function geometryMesh(prim) {}
+
+	                /** 
+	                 * Generate terrain, using a heightMap, from a PLANE object.
+	                 */
+
+	        }, {
+	                key: 'geometryTerrain',
+	                value: function geometryTerrain(prim) {
+
+	                        if (!prim.heightMap) {
+
+	                                prim.heightMap = this.createHeightMap(prim);
 	                        }
-	                        // Sides
-	                        VertexData._ComputeSides(sideOrientation, positions, indices, normals, uvs);
-	                        // Result
-	                        let vertexData = new VertexData();
-	                        vertexData.indices = indices;
-	                        vertexData.positions = positions;
-	                        vertexData.normals = normals;
-	                        vertexData.uvs = uvs;
-	                        return vertexData;
-	                    };
-	                    */
-	        }
 
-	        /** 
-	         * Half-sphere, polar coordinates.
-	         */
+	                        var geometry = this.geometryPlane(prim);
 
-	    }, {
-	        key: 'geometryDome',
-	        value: function geometryDome(prim) {}
+	                        window.hm = prim.heightMap;
 
-	        /** 
-	         * Half-sphere, icosohedron based.
-	         */
-
-	    }, {
-	        key: 'geometryIcoDome',
-	        value: function geometryIcoDome(prim) {}
-
-	        /** 
-	         * Cone
-	         */
-
-	    }, {
-	        key: 'geometryCone',
-	        value: function geometryCone(prim) {}
-
-	        /** 
-	         * Cylinder
-	         */
-
-	    }, {
-	        key: 'geometryCylinder',
-	        value: function geometryCylinder(prim) {}
-
-	        /** 
-	         * Generic 3d shape (e.g. collada model).
-	         * @link https://dannywoodz.wordpress.com/2014/12/16/webgl-from-scratch-loading-a-mesh/
-	         * https://github.com/jagenjo/litegl.js/blob/master/src/mesh.js
-	         */
-
-	    }, {
-	        key: 'geometryMesh',
-	        value: function geometryMesh(prim) {}
-
-	        /** 
-	         * Generate terrain, using a heightMap, from a PLANE object.
-	         */
-
-	    }, {
-	        key: 'geometryTerrain',
-	        value: function geometryTerrain(prim) {
-
-	            if (!prim.heightMap) {
-
-	                prim.heightMap = this.createHeightMap(prim);
-	            }
-
-	            var geometry = this.geometryPlane(prim);
-
-	            window.hm = prim.heightMap;
-
-	            return geometry;
-	        }
-	    }, {
-	        key: 'createHeightMap',
+	                        return geometry;
+	                }
+	        }, {
+	                key: 'createHeightMap',
 
 
-	        /* 
-	         * ---------------------------------------
-	         * HEIGHTMAPS (used by Terrain Prim)
-	         * ---------------------------------------
-	         */
+	                /* 
+	                 * ---------------------------------------
+	                 * HEIGHTMAPS (used by Terrain Prim)
+	                 * ---------------------------------------
+	                 */
 
-	        /** 
-	         * Create a random heightMap (just a lot of bumps).
-	         * @param {Object} prim a World object.
-	         * @param {Image} an Image (greyscale).
-	         * @returns {Object} an object allowing all-resolution lookup into the heightmap.
-	         */
-	        value: function createHeightMap(prim, img) {
-	            var _this = this;
+	                /** 
+	                 * Create a random heightMap (just a lot of bumps).
+	                 * @param {Object} prim a World object.
+	                 * @param {Image} an Image (greyscale).
+	                 * @returns {Object} an object allowing all-resolution lookup into the heightmap.
+	                 */
+	                value: function createHeightMap(prim, img) {
+	                        var _this = this;
 
-	            var divisions = prim.divisions;
+	                        var divisions = prim.divisions;
 
-	            var vec3 = this.glMatrix.vec3;
+	                        var vec3 = this.glMatrix.vec3;
 
-	            var hm = {};
+	                        var hm = {};
 
-	            if (img) {
+	                        if (img) {
 
-	                hm.data = []; // TODO: read pixels into array
+	                                hm.data = []; // TODO: read pixels into array
 
-	                hm.width = img.width;
+	                                hm.width = img.width;
 
-	                hm.height = img.height;
+	                                hm.height = img.height;
 
-	                hm.image = img;
-	            } else {}
+	                                hm.image = img;
+	                        } else {}
 
-	            //hm.random();
+	                        //hm.random();
 
-	            // Random heightmap.
+	                        // Random heightmap.
 
-	            hm.random = function () {
+	                        hm.random = function () {
 
-	                // use diamond square algorithm.
-	                // https://danielbeard.wordpress.com/2010/08/07/terrain-generation-and-smoothing/
+	                                // use diamond square algorithm.
+	                                // https://danielbeard.wordpress.com/2010/08/07/terrain-generation-and-smoothing/
 
-	                hm.data = [];
+	                                hm.data = [];
 
-	                var randMax = 0.5;
+	                                var randMax = 0.5;
 
-	                for (var i = 0; i < divisions[0]; i++) {
-	                    // x
+	                                for (var i = 0; i < divisions[0]; i++) {
+	                                        // x
 
-	                    for (var j = 0; j < divisions[2]; j++) {
-	                        // z
+	                                        for (var j = 0; j < divisions[2]; j++) {
+	                                                // z
 
-	                        hm.data.push(_this.util.getRand(0, randMax));
-	                    }
+	                                                hm.data.push(_this.util.getRand(0, randMax));
+	                                        }
+	                                }
+
+	                                hm.width = divisions[0];
+
+	                                hm.height = divisions[2];
+
+	                                hm.image = null;
+	                        };
+
+	                        // Get a raw x, z coordinate.
+
+	                        hm.getRaw = function (x, z) {
+	                                // actual position in map data
+
+	                                if (x < 0 || z < 0 || x > hm.width - 1 || z > hm.height - 1) {
+
+	                                        console.error('getRaw () error: coordinates out of range: x:' + x + ' z:' + z);
+
+	                                        return null;
+	                                }
+
+	                                return _this.data[_this.width * z + x];
+	                        };
+
+	                        // Get a smoothed coordinate, any resolution.
+
+	                        hm.getHeight = function (x, y) {
+
+	                                var x1 = floor(x);
+	                                var y1 = floor(y);
+	                                var x2 = x1 + 1;
+	                                var y2 = y1 + 1;
+
+	                                var p00 = _this.getRaw(x1 - 1, y1 - 1);
+	                                var p01 = _this.getRaw(x1 - 1, y1);
+	                                var p02 = _this.getRaw(x1 - 1, y2);
+	                                var p03 = _this.getRaw(x1 - 1, y2 + 1);
+
+	                                var p10 = _this.getRaw(x1, y1 - 1);
+	                                var p11 = _this.getRaw(x1, y1);
+	                                var p12 = _this.getRaw(x1, y2);
+	                                var p13 = _this.getRaw(x1, y2 + 1);
+
+	                                var p20 = _this.getRaw(x2, y1 - 1);
+	                                var p21 = _this.getRaw(x2, y1);
+	                                var p22 = _this.getRaw(x2, y2);
+	                                var p23 = _this.getRaw(x2, y2 + 1);
+
+	                                var p30 = _this.getRaw(x2 + 1, y1 - 1);
+	                                var p31 = _this.getRaw(x2 + 1, y1);
+	                                var p32 = _this.getRaw(x2 + 1, y2);
+	                                var p33 = _this.getRaw(x2 + 1, y2 + 1);
+
+	                                return _this.biCubicPoint(x - x1, y - y1, p00, p10, p20, p30, p01, p11, p21, p31, p02, p12, p22, p32, p03, p13, p23, p33);
+	                        };
+
+	                        return hm;
 	                }
 
-	                hm.width = divisions[0];
+	                /* 
+	                 * ---------------------------------------
+	                 * PRIMS
+	                 * ---------------------------------------
+	                 */
 
-	                hm.height = divisions[2];
+	                /** 
+	                 * Create an standard 3d object.
+	                 * @param {String} name assigned name of object (not necessarily unique).
+	                 * @param {Number} scale size relative to unit vector (1,1,1).
+	                 * @param {GLMatrix.vec3} position location of center of object.
+	                 * @param {GLMatrix.vec3} acceleration movement vector (acceleration) of object.
+	                 * @param {GLMatrix.vec3} rotation rotation vector (spin) around center of object.
+	                 * @param {String} textureImage the path to an image used to create a texture.
+	                 * @param {GLMatrix.vec4} color the default color of the object.
+	                 */
 
-	                hm.image = null;
-	            };
+	        }, {
+	                key: 'createPrim',
+	                value: function createPrim(type) {
+	                        var name = arguments.length <= 1 || arguments[1] === undefined ? 'unknown' : arguments[1];
+	                        var scale = arguments.length <= 2 || arguments[2] === undefined ? 1.0 : arguments[2];
+	                        var dimensions = arguments[3];
+	                        var divisions = arguments[4];
+	                        var position = arguments[5];
+	                        var acceleration = arguments[6];
+	                        var rotation = arguments[7];
+	                        var angular = arguments[8];
+	                        var textureImage = arguments[9];
+	                        var color = arguments[10];
 
-	            // Get a raw x, z coordinate.
 
-	            hm.getRaw = function (x, z) {
-	                // actual position in map data
+	                        var glMatrix = this.glMatrix;
 
-	                if (x < 0 || z < 0 || x > hm.width - 1 || z > hm.height - 1) {
+	                        var vec3 = this.glMatrix.vec3;
 
-	                    console.error('getRaw () error: coordinates out of range: x:' + x + ' z:' + z);
+	                        var mat4 = this.glMatrix.mat4;
 
-	                    return null;
+	                        var prim = {};
+
+	                        prim.id = this.setId();
+
+	                        prim.name = name;
+
+	                        prim.scale = scale;
+
+	                        prim.dimensions = dimensions || vec3.fromValues(1, 1, 1);
+
+	                        prim.divisions = divisions || vec3.fromValues(1, 1, 1);
+
+	                        prim.position = position || vec3.create();
+
+	                        prim.acceleration = acceleration || vec3.create();
+
+	                        // The absolute .rotation object includes rotation on x, y, z axis
+
+	                        prim.rotation = rotation || vec3.create();
+
+	                        // The acceleration object indicates velocity on angular motion in x, y, z
+
+	                        prim.angular = angular || vec3.create();
+
+	                        // The orbit defines a center that the object orbits around, and orbital velocity.
+
+	                        prim.orbitRadius = 0.0;
+
+	                        prim.orbitAngular = 0.0;
+
+	                        // Waypoints for scripted motion.
+
+	                        prim.waypoints = [];
+
+	                        // Store multiple textures for one Prim.
+
+	                        prim.textures = [];
+
+	                        // Store multiple sounds for one Prim.
+
+	                        prim.audio = [];
+
+	                        // Store multiple videos for one Prim.
+
+	                        prim.video = [];
+
+	                        // Multiple textures per Prim. Rendering defines how textures for each Prim type are used.
+
+	                        for (var i = 0; i < textureImage.length; i++) {
+
+	                                this.loadTexture.load(textureImage[i], prim);
+	                        }
+
+	                        // Define Prim material (only one material type at a time per Prim ).
+
+	                        prim.material = this.setMaterial();
+
+	                        // Define Prim light (it glows) not how it is lit.
+
+	                        this.light = {
+	                                direction: [1, 1, 1],
+	                                color: [255, 255, 255]
+	                        };
+
+	                        // Parent Node.
+
+	                        prim.parentNode = null;
+
+	                        // Child Prim array.
+
+	                        prim.children = [];
+
+	                        // Set the geometry, based on defined type.
+
+	                        prim.type = type;
+
+	                        prim.geometry = this[type](prim);
+
+	                        // Standard Prim properties for position, translation, rotation, orbits. Used by shader/renderer objects (e.g. shaderTexture).
+
+	                        // Note: should use scale matrix
+	                        // TODO: @link https://nickdesaulniers.github.io/RawWebGL/#/16
+
+	                        prim.setMV = function (mvMatrix) {
+
+	                                var p = prim;
+
+	                                mat4.identity(mvMatrix);
+
+	                                var z = -5;
+
+	                                // Translate.
+
+	                                vec3.add(p.position, p.position, p.acceleration);
+
+	                                mat4.translate(mvMatrix, mvMatrix, [p.position[0], p.position[1], z + p.position[2]]);
+
+	                                // If orbiting, set orbit.
+
+	                                // Rotate.
+
+	                                // TODO: rotate first for rotation.
+	                                // TODO: rotate second for orbiting.
+	                                // TODO: rotate (internal), translate, rotate (orbit)
+
+	                                vec3.add(p.rotation, p.rotation, p.angular);
+
+	                                mat4.rotate(mvMatrix, mvMatrix, p.rotation[0], [1, 0, 0]);
+	                                mat4.rotate(mvMatrix, mvMatrix, p.rotation[1], [0, 1, 0]);
+	                                mat4.rotate(mvMatrix, mvMatrix, p.rotation[2], [0, 0, 1]);
+
+	                                return mvMatrix;
+	                        };
+
+	                        prim.renderId = -1; // NOT ASSIGNED. TODO: Assign a renderer to each Prim.
+
+	                        // Push into our list;
+
+	                        this.objs.push(prim);
+
+	                        // Prim readout to console.
+
+	                        this.util.primReadout(prim);
+
+	                        return prim;
 	                }
 
-	                return _this.data[_this.width * z + x];
-	            };
+	                /* 
+	                 * ---------------------------------------
+	                 * PRIM TRANSFORMS AND PROPERTIES
+	                 * ---------------------------------------
+	                 */
 
-	            // Get a smoothed coordinate, any resolution.
+	                /** 
+	                 * Scale vertices directly, without changing position.
+	                 */
 
-	            hm.getHeight = function (x, y) {
+	        }, {
+	                key: 'scale',
+	                value: function scale(vertices, _scale) {
 
-	                var x1 = floor(x);
-	                var y1 = floor(y);
-	                var x2 = x1 + 1;
-	                var y2 = y1 + 1;
+	                        var oldPos = this.getCenter(vertices);
 
-	                var p00 = _this.getRaw(x1 - 1, y1 - 1);
-	                var p01 = _this.getRaw(x1 - 1, y1);
-	                var p02 = _this.getRaw(x1 - 1, y2);
-	                var p03 = _this.getRaw(x1 - 1, y2 + 1);
+	                        for (var i = 0, len = vertices.length; i < len; i++) {
 
-	                var p10 = _this.getRaw(x1, y1 - 1);
-	                var p11 = _this.getRaw(x1, y1);
-	                var p12 = _this.getRaw(x1, y2);
-	                var p13 = _this.getRaw(x1, y2 + 1);
+	                                vertices[i] *= _scale;
+	                        }
 
-	                var p20 = _this.getRaw(x2, y1 - 1);
-	                var p21 = _this.getRaw(x2, y1);
-	                var p22 = _this.getRaw(x2, y2);
-	                var p23 = _this.getRaw(x2, y2 + 1);
+	                        this.move(vertices, oldPos);
+	                }
 
-	                var p30 = _this.getRaw(x2 + 1, y1 - 1);
-	                var p31 = _this.getRaw(x2 + 1, y1);
-	                var p32 = _this.getRaw(x2 + 1, y2);
-	                var p33 = _this.getRaw(x2 + 1, y2 + 1);
+	                /** 
+	                 * Move vertices directly in geometry.
+	                 * NOTE: normally, you will want to use a matrix transform.
+	                 */
 
-	                return _this.biCubicPoint(x - x1, y - y1, p00, p10, p20, p30, p01, p11, p21, p31, p02, p12, p22, p32, p03, p13, p23, p33);
-	            };
+	        }, {
+	                key: 'move',
+	                value: function move(vertices, pos) {
 
-	            return hm;
-	        }
+	                        var center = this.getCenter(vertices);
 
-	        /* 
-	         * ---------------------------------------
-	         * PRIMS
-	         * ---------------------------------------
-	         */
+	                        var delta = [center[0] - pos[0], center[1] - pos[1], center[2] = pos[2]];
 
-	        /** 
-	         * Create an standard 3d object.
-	         * @param {String} name assigned name of object (not necessarily unique).
-	         * @param {Number} scale size relative to unit vector (1,1,1).
-	         * @param {GLMatrix.vec3} position location of center of object.
-	         * @param {GLMatrix.vec3} acceleration movement vector (acceleration) of object.
-	         * @param {GLMatrix.vec3} rotation rotation vector (spin) around center of object.
-	         * @param {String} textureImage the path to an image used to create a texture.
-	         * @param {GLMatrix.vec4} color the default color of the object.
-	         */
+	                        for (var i = 0, len = vertices.length; i < len; i += 3) {
 
-	    }, {
-	        key: 'createPrim',
-	        value: function createPrim(type) {
-	            var name = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'unknown';
-	            var scale = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 1.0;
-	            var dimensions = arguments[3];
-	            var divisions = arguments[4];
-	            var position = arguments[5];
-	            var acceleration = arguments[6];
-	            var rotation = arguments[7];
-	            var angular = arguments[8];
-	            var textureImage = arguments[9];
-	            var color = arguments[10];
+	                                vertices[i] = delta[0];
 
+	                                vertices[i + 1] = delta[1];
 
-	            var glMatrix = this.glMatrix;
+	                                vertices[i + 2] = delta[2];
+	                        }
+	                }
 
-	            var vec3 = this.glMatrix.vec3;
+	                /** 
+	                 * Get the bounding box of a shape by getting the largest and 
+	                 * smallest vertices in coordinate space.
+	                 */
 
-	            var mat4 = this.glMatrix.mat4;
+	        }, {
+	                key: 'boundingBox',
+	                value: function boundingBox(vertices) {
 
-	            var prim = {};
+	                        var biggest = [0, 0, 0];
 
-	            prim.id = this.setId();
+	                        var smallest = [0, 0, 0];
 
-	            prim.name = name;
+	                        var minX = void 0,
+	                            minY = void 0,
+	                            minZ = void 0,
+	                            maxX = void 0,
+	                            maxY = void 0,
+	                            maxZ = void 0;
 
-	            prim.scale = scale;
+	                        for (var i = 0, len = vertices.length; i < len; i += 3) {
 
-	            prim.dimensions = dimensions || vec3.fromValues(1, 1, 1);
+	                                minX = Math.min(vertices[i], minX);
+	                                minY = Math.min(vertices[i + 1], minY);
+	                                minZ = Math.min(vertices[i + 2], minZ);
 
-	            prim.divisions = divisions || vec3.fromValues(1, 1, 1);
+	                                maxX = Math.max(vertices[i], maxX);
+	                                maxY = Math.max(vertices[i + 1], maxY);
+	                                maxZ = Math.max(vertices[i + 2], maxZ);
+	                        }
 
-	            prim.position = position || vec3.create();
+	                        // Create cube points.
 
-	            prim.acceleration = acceleration || vec3.create();
+	                        // TODO: not complete.
 
-	            // The absolute .rotation object includes rotation on x, y, z axis
+	                        var box = [];
 
-	            prim.rotation = rotation || vec3.create();
+	                        return box;
+	                }
 
-	            // The acceleration object indicates velocity on angular motion in x, y, z
+	                /** 
+	                 * Get the center of a shape.
+	                 */
 
-	            prim.angular = angular || vec3.create();
+	        }, {
+	                key: 'getCenter',
+	                value: function getCenter(vertices) {
 
-	            // The orbit defines a center that the object orbits around, and orbital velocity.
+	                        var box = this.boundingBox(vertices);
 
-	            prim.orbitRadius = 0.0;
+	                        // find the centroid point (not necessarily part of the shape).
+	                }
 
-	            prim.orbitAngular = 0.0;
+	                /** 
+	                 * Set a material for a prim.
+	                 * @link http://webglfundamentals.org/webgl/lessons/webgl-less-code-more-fun.html
+	                 * didn't use chroma (but could)
+	                 * @link https://github.com/gka/chroma.js/blob/gh-pages/src/index.md
+	                 */
 
-	            // Waypoints for scripted motion.
+	        }, {
+	                key: 'setMaterial',
+	                value: function setMaterial(prim) {
 
-	            prim.waypoints = [];
+	                        return {
 
-	            // Store multiple textures for one Prim.
+	                                u_colorMult: 0,
 
-	            prim.textures = [];
+	                                u_diffuse: [1, 1, 1], // TODO: should be textures[0]
 
-	            // Store multiple sounds for one Prim.
+	                                u_specular: [1, 1, 1, 1],
 
-	            prim.audio = [];
+	                                u_shininess: this.util.getRand(500),
 
-	            // Store multiple videos for one Prim.
+	                                u_specularFactor: this.util.getRand(1) // TODO: MAY NOT BE RIGHT
 
-	            prim.video = [];
+	                        };
+	                }
+	        }]);
 
-	            // Multiple textures per Prim. Rendering defines how textures for each Prim type are used.
-
-	            for (var i = 0; i < textureImage.length; i++) {
-
-	                this.loadTexture.load(textureImage[i], prim);
-	            }
-
-	            // Define Prim material (only one material type at a time per Prim ).
-
-	            prim.material = this.setMaterial();
-
-	            // Define Prim light (it glows) not how it is lit.
-
-	            this.light = {
-	                direction: [1, 1, 1],
-	                color: [255, 255, 255]
-	            };
-
-	            // Parent Node.
-
-	            prim.parentNode = null;
-
-	            // Child Prim array.
-
-	            prim.children = [];
-
-	            // Set the geometry, based on defined type.
-
-	            prim.type = type;
-
-	            prim.geometry = this[type](prim);
-
-	            // Standard Prim properties for position, translation, rotation, orbits. Used by shader/renderer objects (e.g. shaderTexture).
-
-	            // Note: should use scale matrix
-	            // TODO: @link https://nickdesaulniers.github.io/RawWebGL/#/16
-
-	            prim.setMV = function (mvMatrix) {
-
-	                var p = prim;
-
-	                mat4.identity(mvMatrix);
-
-	                var z = -5;
-
-	                // Translate.
-
-	                vec3.add(p.position, p.position, p.acceleration);
-
-	                mat4.translate(mvMatrix, mvMatrix, [p.position[0], p.position[1], z + p.position[2]]);
-
-	                // If orbiting, set orbit.
-
-	                // Rotate.
-
-	                // TODO: rotate first for rotation.
-	                // TODO: rotate second for orbiting.
-	                // TODO: rotate (internal), translate, rotate (orbit)
-
-	                vec3.add(p.rotation, p.rotation, p.angular);
-
-	                mat4.rotate(mvMatrix, mvMatrix, p.rotation[0], [1, 0, 0]);
-	                mat4.rotate(mvMatrix, mvMatrix, p.rotation[1], [0, 1, 0]);
-	                mat4.rotate(mvMatrix, mvMatrix, p.rotation[2], [0, 0, 1]);
-
-	                return mvMatrix;
-	            };
-
-	            prim.renderId = -1; // NOT ASSIGNED. TODO: Assign a renderer to each Prim.
-
-	            // Push into our list;
-
-	            this.objs.push(prim);
-
-	            // Prim readout to console.
-
-	            this.util.primReadout(prim);
-
-	            return prim;
-	        }
-
-	        /* 
-	         * ---------------------------------------
-	         * PRIM TRANSFORMS AND PROPERTIES
-	         * ---------------------------------------
-	         */
-
-	        /** 
-	         * Scale vertices directly, without changing position.
-	         */
-
-	    }, {
-	        key: 'scale',
-	        value: function scale(vertices, _scale) {
-
-	            var oldPos = this.getCenter(vertices);
-
-	            for (var i = 0, len = vertices.length; i < len; i++) {
-
-	                vertices[i] *= _scale;
-	            }
-
-	            this.move(vertices, oldPos);
-	        }
-
-	        /** 
-	         * Move vertices directly in geometry.
-	         * NOTE: normally, you will want to use a matrix transform.
-	         */
-
-	    }, {
-	        key: 'move',
-	        value: function move(vertices, pos) {
-
-	            var center = this.getCenter(vertices);
-
-	            var delta = [center[0] - pos[0], center[1] - pos[1], center[2] = pos[2]];
-
-	            for (var i = 0, len = vertices.length; i < len; i += 3) {
-
-	                vertices[i] = delta[0];
-
-	                vertices[i + 1] = delta[1];
-
-	                vertices[i + 2] = delta[2];
-	            }
-	        }
-
-	        /** 
-	         * Get the bounding box of a shape by getting the largest and 
-	         * smallest vertices in coordinate space.
-	         */
-
-	    }, {
-	        key: 'boundingBox',
-	        value: function boundingBox(vertices) {
-
-	            var biggest = [0, 0, 0];
-
-	            var smallest = [0, 0, 0];
-
-	            var minX = void 0,
-	                minY = void 0,
-	                minZ = void 0,
-	                maxX = void 0,
-	                maxY = void 0,
-	                maxZ = void 0;
-
-	            for (var i = 0, len = vertices.length; i < len; i += 3) {
-
-	                minX = Math.min(vertices[i], minX);
-	                minY = Math.min(vertices[i + 1], minY);
-	                minZ = Math.min(vertices[i + 2], minZ);
-
-	                maxX = Math.max(vertices[i], maxX);
-	                maxY = Math.max(vertices[i + 1], maxY);
-	                maxZ = Math.max(vertices[i + 2], maxZ);
-	            }
-
-	            // Create cube points.
-
-	            // TODO: not complete.
-
-	            var box = [];
-
-	            return box;
-	        }
-
-	        /** 
-	         * Get the center of a shape.
-	         */
-
-	    }, {
-	        key: 'getCenter',
-	        value: function getCenter(vertices) {
-
-	            var box = this.boundingBox(vertices);
-
-	            // find the centroid point (not necessarily part of the shape).
-	        }
-
-	        /** 
-	         * Set a material for a prim.
-	         * @link http://webglfundamentals.org/webgl/lessons/webgl-less-code-more-fun.html
-	         * didn't use chroma (but could)
-	         * @link https://github.com/gka/chroma.js/blob/gh-pages/src/index.md
-	         */
-
-	    }, {
-	        key: 'setMaterial',
-	        value: function setMaterial(prim) {
-
-	            return {
-
-	                u_colorMult: 0,
-
-	                u_diffuse: [1, 1, 1], // TODO: should be textures[0]
-
-	                u_specular: [1, 1, 1, 1],
-
-	                u_shininess: this.util.getRand(500),
-
-	                u_specularFactor: this.util.getRand(1) // TODO: MAY NOT BE RIGHT
-
-	            };
-	        }
-	    }]);
-
-	    return prim;
+	        return prim;
 	}();
 
 	exports.default = prim;
@@ -4917,7 +4914,7 @@
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
-	    value: true
+	        value: true
 	});
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -4926,235 +4923,235 @@
 
 	var world = function () {
 
-	    /** 
-	     * The World class creates the scene, and should be uniquely 
-	     * written for each instance using the WebVR-Mini library.
-	     * Required functions:
-	     * getVS() - the vertex shader.
-	     * getFS() - get the fragment shader.
-	     * rer() - update on rer of <canvas>.
-	     * render() - rendering loop.
-	     * init() - create the world for this first time.
-	     * constructor() - initialize, passing in WebVR-Mini object.
-	     */
-
-	    /** 
-	     * constructor.
-	     * @param {WeVRMini} webvr the webvr module.
-	     */
-	    function world(webgl, prim, renderer) {
-	        _classCallCheck(this, world);
-
-	        console.log('in World class');
-
-	        this.webgl = webgl;
-
-	        this.util = webgl.util;
-
-	        this.prim = prim;
-
-	        this.renderer = renderer;
-
-	        this.canvas = webgl.getCanvas();
-
-	        this.glMatrix = webgl.glMatrix;
-
-	        this.pMatrix = this.glMatrix.mat4.create();
-
-	        this.mvMatrix = this.glMatrix.mat4.create();
-
-	        this.last = performance.now();
-
-	        this.counter = 0;
-
-	        // Bind the render loop (best current method)
-
-	        this.render = this.render.bind(this);
-	    }
-
-	    /**
-	     * Handle resize event for the World dimensions.
-	     * @param {Number} width world width (x-axis) in units.
-	     * @param {Number} height world height (y-axis) in units.
-	     * @param {Number} depth world depth (z-axis) in units.
-	     */
-
-
-	    _createClass(world, [{
-	        key: 'resize',
-	        value: function resize(width, height, depth) {}
+	        /** 
+	         * The World class creates the scene, and should be uniquely 
+	         * written for each instance using the WebVR-Mini library.
+	         * Required functions:
+	         * getVS() - the vertex shader.
+	         * getFS() - get the fragment shader.
+	         * rer() - update on rer of <canvas>.
+	         * render() - rendering loop.
+	         * init() - create the world for this first time.
+	         * constructor() - initialize, passing in WebVR-Mini object.
+	         */
 
 	        /** 
-	         * Create the world. Load shader/renderer objects, and 
-	         * create objects to render in the world.
+	         * constructor.
+	         * @param {WeVRMini} webvr the webvr module.
 	         */
+	        function world(webgl, prim, renderer) {
+	                _classCallCheck(this, world);
 
-	    }, {
-	        key: 'init',
-	        value: function init() {
+	                console.log('in World class');
 
-	            var vec3 = this.glMatrix.vec3;
+	                this.webgl = webgl;
 
-	            var vec4 = this.glMatrix.vec4;
+	                this.util = webgl.util;
 
-	            var util = this.util;
+	                this.prim = prim;
 
-	            // TEXTURED SHADER.
+	                this.renderer = renderer;
 
-	            this.textureObjList = [];
+	                this.canvas = webgl.getCanvas();
 
-	            this.textureObjList.push(this.prim.createPrim(this.prim.type.CUBE, 'first cube', // name
-	            1.0, // scale
-	            vec3.fromValues(1, 1, 1), // dimensions
-	            vec3.fromValues(1, 1, 1), // divisions
-	            vec3.fromValues(0, 0, 0), // position (absolute)
-	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	            vec3.fromValues(util.degToRad(1), util.degToRad(1), util.degToRad(1)), // angular velocity in x, y, x
-	            ['img/crate.png', 'img/webvr-logo1.png'], // texture image
-	            vec4.fromValues(0.5, 1.0, 0.2, 1.0)));
+	                this.glMatrix = webgl.glMatrix;
 
-	            this.textureObjList.push(this.prim.createPrim(this.prim.type.CUBE, 'toji cube', 1.0, vec3.fromValues(1, 1, 1), // dimensions
-	            vec3.fromValues(1, 1, 1), // divisions
-	            vec3.fromValues(5, 1, -3), // position (absolute)
-	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	            vec3.fromValues(util.degToRad(40), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	            vec3.fromValues(util.degToRad(0), util.degToRad(1), util.degToRad(0)), // angular velocity in x, y, x
-	            ['img/webvr-logo2.png'], vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-	            ));
+	                this.pMatrix = this.glMatrix.mat4.create();
 
-	            this.vs1 = this.renderer.shaderTexture.init(this.textureObjList);
+	                this.mvMatrix = this.glMatrix.mat4.create();
 
-	            // COLORED SHADER.
-
-	            this.colorObjList = [];
-
-	            this.colorObjList.push(this.prim.createPrim(this.prim.type.CUBE, 'colored cube', 1.0, vec3.fromValues(1, 1, 1), // dimensions
-	            vec3.fromValues(1, 1, 1), // divisions
-	            vec3.fromValues(-1, 2, -3), // position (absolute)
-	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	            vec3.fromValues(util.degToRad(20), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	            vec3.fromValues(util.degToRad(0), util.degToRad(1), util.degToRad(0)), // angular velocity in x, y, x
-	            ['img/webvr-logo3.png'], // texture present, NOT USED
-	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-	            ));
-
-	            this.vs2 = this.renderer.shaderColor.init(this.colorObjList);
-
-	            // LIT TEXTURE SHADER.
-
-	            this.dirlightTextureObjList = [];
-
-	            this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.type.CUBE, 'lit cube', 1.0, vec3.fromValues(1, 1, 1), // dimensions
-	            vec3.fromValues(1, 1, 1), // divisions
-	            vec3.fromValues(-3, -2, -3), // position (absolute)
-	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	            vec3.fromValues(util.degToRad(20), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	            vec3.fromValues(util.degToRad(0), util.degToRad(1), util.degToRad(0)), // angular velocity in x, y, x
-	            ['img/webvr-logo4.png'], // texture present, NOT USED
-	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-	            ));
-
-	            this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.type.TERRAIN, 'terrain', 1.0, vec3.fromValues(2, 2, 2), // dimensions
-	            vec3.fromValues(5, 5, 5), // divisions
-	            vec3.fromValues(1.5, -1.5, 2), // position (absolute)
-	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	            vec3.fromValues(util.degToRad(1), util.degToRad(0), util.degToRad(0)), // angular velocity in x, y, x
-	            ['img/mozvr-logo1.png'], // texture present
-	            vec4.fromValues(0.5, 1.0, 0.2, 1.0), // color
-	            null //heightMap                       // heightmap
-	            ));
-
-	            this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.type.PLANE, 'a plane', 1.0, vec3.fromValues(2, 2, 2), // dimensions
-	            vec3.fromValues(10, 10, 10), // divisions
-	            vec3.fromValues(0, -2, 0), // position (absolute)
-	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	            vec3.fromValues(util.degToRad(0.5), util.degToRad(0.0), util.degToRad(0.0)), // angular velocity in x, y, x
-	            ['img/webvr-logo2.png'], vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-	            ));
-
-	            this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.type.SPHERE, 'texsphere', 1.0, vec3.fromValues(3, 3, 3), // dimensions
-	            vec3.fromValues(10, 10, 10), // divisions
-	            vec3.fromValues(2.5, -1.5, -2), // position (absolute)
-	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	            vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	            ['img/mozvr-logo1.png'], // texture present, NOT USED
-	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-	            ));
-
-	            window.terrain = this.dirlightTextureObjList[1];
-
-	            this.vs3 = this.renderer.shaderDirlightTexture.init(this.dirlightTextureObjList);
-
-	            // Finished object creation, start rendering...
-
-	            this.render();
-	        }
-
-	        /**
-	         * Create objects specific to this world.
-	         */
-
-	    }, {
-	        key: 'create',
-	        value: function create() {}
-
-	        /** 
-	         * Update world.related properties, e.g. a HUD or framrate readout.
-	         */
-
-	    }, {
-	        key: 'update',
-	        value: function update() {
-
-	            // fps calculation.
-
-	            var now = performance.now();
-
-	            var delta = now - this.last;
-
-	            this.last = now;
-
-	            this.counter++;
-
-	            if (this.counter > 300) {
+	                this.last = performance.now();
 
 	                this.counter = 0;
 
-	                /////////console.log( 'delta:' + parseInt( 1000 / delta ) + ' fps' );
-	            }
+	                // Bind the render loop (best current method)
+
+	                this.render = this.render.bind(this);
 	        }
 
-	        /** 
-	         * render the world. Update Prims locally, then call shader/renderer 
-	         * objects to do rendering. this.render was bound (ES5 method) in 
-	         * the constructor.
+	        /**
+	         * Handle resize event for the World dimensions.
+	         * @param {Number} width world width (x-axis) in units.
+	         * @param {Number} height world height (y-axis) in units.
+	         * @param {Number} depth world depth (z-axis) in units.
 	         */
 
-	    }, {
-	        key: 'render',
-	        value: function render() {
 
-	            this.update();
+	        _createClass(world, [{
+	                key: 'resize',
+	                value: function resize(width, height, depth) {}
 
-	            this.webgl.clear();
+	                /** 
+	                 * Create the world. Load shader/renderer objects, and 
+	                 * create objects to render in the world.
+	                 */
 
-	            // TODO: Don't render until we update in the correct order.
+	        }, {
+	                key: 'init',
+	                value: function init() {
 
-	            this.vs3.render();
+	                        var vec3 = this.glMatrix.vec3;
 
-	            this.vs2.render();
+	                        var vec4 = this.glMatrix.vec4;
 
-	            this.vs1.render();
+	                        var util = this.util;
 
-	            requestAnimationFrame(this.render);
-	        }
-	    }]);
+	                        // TEXTURED SHADER.
 
-	    return world;
+	                        this.textureObjList = [];
+
+	                        this.textureObjList.push(this.prim.createPrim(this.prim.type.CUBE, 'first cube', // name
+	                        1.0, // scale
+	                        vec3.fromValues(1, 1, 1), // dimensions
+	                        vec3.fromValues(1, 1, 1), // divisions
+	                        vec3.fromValues(0, 0, 0), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(1), util.degToRad(1), util.degToRad(1)), // angular velocity in x, y, x
+	                        ['img/crate.png', 'img/webvr-logo1.png'], // texture image
+	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0)));
+
+	                        this.textureObjList.push(this.prim.createPrim(this.prim.type.CUBE, 'toji cube', 1.0, vec3.fromValues(1, 1, 1), // dimensions
+	                        vec3.fromValues(1, 1, 1), // divisions
+	                        vec3.fromValues(5, 1, -3), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(40), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(1), util.degToRad(0)), // angular velocity in x, y, x
+	                        ['img/webvr-logo2.png'], vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+	                        ));
+
+	                        this.vs1 = this.renderer.shaderTexture.init(this.textureObjList);
+
+	                        // COLORED SHADER.
+
+	                        this.colorObjList = [];
+
+	                        this.colorObjList.push(this.prim.createPrim(this.prim.type.CUBE, 'colored cube', 1.0, vec3.fromValues(1, 1, 1), // dimensions
+	                        vec3.fromValues(1, 1, 1), // divisions
+	                        vec3.fromValues(-1, 2, -3), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(20), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(1), util.degToRad(0)), // angular velocity in x, y, x
+	                        ['img/webvr-logo3.png'], // texture present, NOT USED
+	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+	                        ));
+
+	                        this.vs2 = this.renderer.shaderColor.init(this.colorObjList);
+
+	                        // LIT TEXTURE SHADER.
+
+	                        this.dirlightTextureObjList = [];
+
+	                        this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.type.CUBE, 'lit cube', 1.0, vec3.fromValues(1, 1, 1), // dimensions
+	                        vec3.fromValues(1, 1, 1), // divisions
+	                        vec3.fromValues(-3, -2, -3), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(20), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(1), util.degToRad(0)), // angular velocity in x, y, x
+	                        ['img/webvr-logo4.png'], // texture present, NOT USED
+	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+	                        ));
+
+	                        this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.type.TERRAIN, 'terrain', 1.0, vec3.fromValues(2, 2, 2), // dimensions
+	                        vec3.fromValues(5, 5, 5), // divisions
+	                        vec3.fromValues(1.5, -1.5, 2), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(1), util.degToRad(0), util.degToRad(0)), // angular velocity in x, y, x
+	                        ['img/mozvr-logo1.png'], // texture present
+	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0), // color
+	                        null //heightMap                       // heightmap
+	                        ));
+
+	                        this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.type.PLANE, 'a plane', 1.0, vec3.fromValues(2, 2, 2), // dimensions
+	                        vec3.fromValues(50, 0, 50), // divisions
+	                        vec3.fromValues(0, -2, 0), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(0.5), util.degToRad(0.0), util.degToRad(0.0)), // angular velocity in x, y, x
+	                        ['img/webvr-logo2.png'], vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+	                        ));
+
+	                        this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.type.SPHERE, 'texsphere', 1.0, vec3.fromValues(3, 3, 3), // dimensions
+	                        vec3.fromValues(10, 10, 10), // divisions
+	                        vec3.fromValues(2.5, -1.5, -2), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                        ['img/mozvr-logo1.png'], // texture present, NOT USED
+	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+	                        ));
+
+	                        window.terrain = this.dirlightTextureObjList[1];
+
+	                        this.vs3 = this.renderer.shaderDirlightTexture.init(this.dirlightTextureObjList);
+
+	                        // Finished object creation, start rendering...
+
+	                        this.render();
+	                }
+
+	                /**
+	                 * Create objects specific to this world.
+	                 */
+
+	        }, {
+	                key: 'create',
+	                value: function create() {}
+
+	                /** 
+	                 * Update world.related properties, e.g. a HUD or framrate readout.
+	                 */
+
+	        }, {
+	                key: 'update',
+	                value: function update() {
+
+	                        // fps calculation.
+
+	                        var now = performance.now();
+
+	                        var delta = now - this.last;
+
+	                        this.last = now;
+
+	                        this.counter++;
+
+	                        if (this.counter > 300) {
+
+	                                this.counter = 0;
+
+	                                /////////console.log( 'delta:' + parseInt( 1000 / delta ) + ' fps' );
+	                        }
+	                }
+
+	                /** 
+	                 * render the world. Update Prims locally, then call shader/renderer 
+	                 * objects to do rendering. this.render was bound (ES5 method) in 
+	                 * the constructor.
+	                 */
+
+	        }, {
+	                key: 'render',
+	                value: function render() {
+
+	                        this.update();
+
+	                        this.webgl.clear();
+
+	                        // TODO: Don't render until we update in the correct order.
+
+	                        this.vs3.render();
+
+	                        this.vs2.render();
+
+	                        this.vs1.render();
+
+	                        requestAnimationFrame(this.render);
+	                }
+	        }]);
+
+	        return world;
 	}();
 
 	exports.default = world;
