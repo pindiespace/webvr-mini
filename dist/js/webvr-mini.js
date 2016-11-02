@@ -3875,7 +3875,19 @@
 	                for (var rowNumber = 0; rowNumber <= rows; rowNumber++) {
 
 	                    var x = colNumber;
-	                    var y = this.util.getRand(0, 0.2); /////TODO: RANDOM FOR NOW
+
+	                    var y = 0;
+
+	                    if (prim.heightMap) {
+
+	                        y = prim.heightMap.getPixel(colNumber, rowNumber);
+
+	                        console.log("y is a:" + y);
+	                    } else {
+	                        console.log('no heightmap for:' + prim.name);
+	                        y = this.util.getRand(0, 0.2); /////TODO: RANDOM FOR NOW NOT WORKING!!!!!!!!!!!!!!!!!
+	                    }
+
 	                    var z = rowNumber;
 
 	                    var u = colNumber / cols;
@@ -4398,7 +4410,9 @@
 
 	            if (!prim.heightMap) {
 
-	                prim.heightMap = this.createHeightMap(prim);
+	                console.log('adding heightmap for:' + prim.name);
+
+	                prim.heightMap = this.createHeightMap(prim, null, 0.2);
 	            }
 
 	            var geometry = this.geometryPlane(prim);
@@ -4421,19 +4435,31 @@
 	         * Create a random heightMap (just a lot of bumps).
 	         * @param {Object} prim a World object.
 	         * @param {Image} an Image (greyscale).
+	         * @param {Number} roughness a number between 0 (flat) and 1 (cube)
 	         * @returns {Object} an object allowing all-resolution lookup into the heightmap.
 	         */
-	        value: function createHeightMap(prim, img) {
+	        value: function createHeightMap(prim, img, roughness, flatten) {
 
 	            var divisions = prim.divisions;
 
 	            var vec3 = this.glMatrix.vec3;
 
-	            prim.heightMap = new _map2d2.default();
+	            if (roughness === undefined) {
+
+	                roughness = 0.1;
+	            }
+
+	            var heightMap = new _map2d2.default();
 
 	            // initialize xz heightMap, randomly generated.
 
-	            prim.heightMap.init(prim.divisions[0], prim.divisions[2], prim.heightMap.typeList.UINT8CLAMP);
+	            heightMap.init(prim.divisions[0], prim.divisions[2], true, roughness);
+
+	            console.log('prim.heightMap:' + prim.heightMap);
+
+	            window.heightMap = heightMap;
+
+	            return heightMap;
 	        }
 
 	        /* 
@@ -4534,8 +4560,11 @@
 	            // Define Prim light (it glows) not how it is lit.
 
 	            this.light = {
+
 	                direction: [1, 1, 1],
+
 	                color: [255, 255, 255]
+
 	            };
 
 	            // Parent Node.
@@ -4766,134 +4795,304 @@
 
 	        console.log('in Map');
 
-	        this.typeList = {
-
-	            FLOAT64: 'float64',
-
-	            FLOAT32: 'float32',
-
-	            INT32: 'int32',
-
-	            INT16: 'int16',
-
-	            INT8: 'int8',
-
-	            UINT32: 'unit32',
-
-	            UINT16: 'unit16',
-
-	            UINT8: 'uint8',
-
-	            UINT8CLAMP: 'uint8Clamp'
-
-	        };
-
-	        this.type = null;
-
 	        this.width = 0;
 
 	        this.height = 0;
 
-	        this.data = null;
+	        this.map = null; // actual heightmap
 
-	        this.pixelsize = 0;
+	        this.max = 0;
 
-	        this.ready = false;
+	        // offscreen canvas for heightmaps from images.
+
+	        this.canvas = this.ctx = this.imgData = null;
 	    }
+
+	    /** 
+	     * Create a blank heightmap in canvas ImageData format. If 
+	     * random === true, make a random heightmap.
+	     * https://github.com/hunterloftis/playfuljs-demos/blob/gh-pages/terrain/index.html
+	     * @param {Number} w the width of the heightmap (x).
+	     * @param {Number} h the height of the heightmap (z).
+	     * @param {Boolean} create if true, make a proceedural heightmap using diamond algorithm.
+	     * @param {Number} roughness if create === true, assign a roughness (0 - 1) to generated terrain.
+	     */
+
 
 	    _createClass(Map2d, [{
 	        key: 'init',
-	        value: function init(w, h, t) {
+	        value: function init(w, h, create, roughness) {
 
-	            var type = this.typeList;
+	            this.img = this.map = null;
 
-	            switch (t) {
+	            if (create) {
 
-	                case type.FLOAT64:
-	                    this.data = new Float64Array(w * h);
-	                    this.pixelSize = 8;
-	                    break;
+	                if (roughness < 0 || roughness > 1.0) {
 
-	                case type.FLOAT32:
-	                    this.data = new Float32Array(w * h);
-	                    this.pixelSize = 4;
-	                    break;
+	                    console.error('init heightMap creation: roughness out of range:' + roughness);
+	                }
 
-	                case type.INT32:
-	                    this.data = new Int32Array(w * h);
-	                    this.pixelSize = 4;
-	                    break;
+	                // Get next highest power of 2 (scale back later).
 
-	                case type.INT16:
-	                    this.data = new Int16Array(w * h);
-	                    this.pixelSize = 2;
-	                    break;
+	                console.log('starting width:' + w + ' height:' + h + ' roughness:' + roughness);
 
-	                case type.INT8:
-	                    this.data = new Int8Array(w * h);
-	                    this.pixelSize = 1;
-	                    break;
+	                var n = Math.pow(2, Math.ceil(Math.log((w + h) / 2) / Math.log(2)));
 
-	                case type.UINT32:
-	                    this.data = new Uint32Array(w * h);
-	                    this.pixelSize = 4;
-	                    break;
+	                console.warn('random map, selecting nearest power of 2 (' + n + ' x ' + n + ')');
 
-	                case type.UINT16:
-	                    this.data = new Uint16Array(w * h);
-	                    this.pixelSize = 2;
-	                    break;
+	                // Set up for diamond algorithm.
 
-	                case type.UINT8:
-	                    this.data = new Uint8Array(w * h);
-	                    this.pixelSize = 1;
-	                    break;
+	                //this.size = n + 1;
 
-	                case type.UINT8CLAMP:
-	                    this.data = new Uint8ClampedArray(w * h);
-	                    this.pixelSize = 1;
-	                    break;
+	                //this.size = Math.pow( 2, n ) + 1;
 
-	                default:
-	                    console.error('map pixel type invalid:' + type);
-	                    return;
-	                    break;
+	                this.size = n + 1;
 
+	                this.width = this.height = n;
+
+	                this.map = new Float32Array(this.size * this.size);
+
+	                this.max = this.size - 1;
+
+	                this.setPixel(0, 0, this.max);
+
+	                this.setPixel(this.max, 0, this.max / 2);
+
+	                this.setPixel(this.max, this.max, 0);
+
+	                this.setPixel(0, this.max, this.max / 2);
+
+	                this.divide(this.max, roughness);
+
+	                this.flatten(0.03); // TODO: define this parameter elsewhere!!!!!!!!!!!!!!!!!!!!!
+	            } else {
+
+	                this.map = new Float32Array(w * h);
+
+	                this.width = w;
+
+	                this.height = h;
+
+	                this.size = w * h;
+	            }
+	        }
+
+	        /** 
+	         * Use an RGBA image to create the heightmap, after drawing into <canvas>.
+	         * @link https://www.html5rocks.com/en/tutorials/webgl/typed_arrays/
+	         * @link http://stackoverflow.com/questions/39678642/trying-to-convert-imagedata-to-an-heightmap
+	         * @param {Number} w desired heightmap width (x).
+	         * @param {Number} h desired height (z) of heightmap.
+	         */
+
+	    }, {
+	        key: 'initWithImage',
+	        value: function initWithImage(w, h, path, callback) {
+	            var _this = this;
+
+	            if (!this.canvas) {
+
+	                this.canvas = document.createElement('canvas');
 	            }
 
-	            this.type = t;
+	            if (!this.ctx) {
 
-	            this.ready = true;
+	                this.ctx = this.canvas.getContext('2d');
+	            }
+
+	            var img = new Image();
+
+	            img.style.display = 'none';
+
+	            img.onload = function () {
+
+	                _this.ctx.drawImage(img, 0, 0);
+
+	                // Uint8ClampedArray, RGBA 32-bit for all images.
+	                //  let rgba = 'rgba(' + data[0] + ',' + data[1] + ',' + data[2] + ',' + (data[3] / 255) + ')';
+
+	                _this.imgData = _this.ctx.getImageData(0, 0, img.width, img.height);
+
+	                _this.width = img.width;
+
+	                _this.height = img.height;
+
+	                // Pixel-level view.
+	                //this.pixels = new Uint32Array( this.data.buffer );
+
+	                _this.map = new Float32Array(w * h);
+
+	                var j = 0;
+
+	                var data = _this.imgData;
+
+	                for (var i = 0, len = _this.data.length; i < len; i++) {
+
+	                    _this.map[j++] = data[i] + data[i + 1] + data[i + 2] / 3;
+	                }
+	            };
+
+	            img.onerror = function () {
+
+	                console.error('image could not be loaded:' + path);
+	            };
+
+	            img.src = path;
+
+	            callback(this.data);
 	        }
-	    }, {
-	        key: 'initFromImage',
-	        value: function initFromImage(w, h, t, img) {
 
-	            this.init(w, h, t);
+	        /** 
+	         * Get a map pixel. If a position goes 'off the edge' then 
+	         * grab a pixel from the other side.
+	         */
 
-	            // TODO: type allocation for pixelData in image.
-	            // allocate image
-	        }
 	    }, {
 	        key: 'getPixel',
 	        value: function getPixel(x, z) {
+	            var edgeFlag = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
 
-	            if (x < 0 || x > this.max || z < 0 || z > this.max) return -1;
 
-	            return this.data[x + this.size * z];
+	            if (x < 0 || x > this.max || z < 0 || z > this.max) {
+
+	                if (edgeFlag) {
+
+	                    if (x < 0) x = this.size - x;
+
+	                    if (x > this.max) x = x - this.max;
+
+	                    if (z < 0) z = this.size - z;
+
+	                    if (z > this.max) z = z - this.max;
+
+	                    console.warn('ADJUSTED x:' + x + ' z:' + z);
+	                } else {
+
+	                    console.error('getPixel out of range x:' + x + ' z:' + z + ' max:' + this.max);
+
+	                    return -1;
+	                }
+	            }
+
+	            return this.map[x + this.size * z];
 	        }
 	    }, {
 	        key: 'setPixel',
-	        value: function setPixel(x, y, val) {
+	        value: function setPixel(x, z, val) {
 
-	            this.data[x + this.size * z] = val;
+	            if (x < 0 || x > this.max || z < 0 || z > this.max) {
+
+	                console.error('setPixel out of range x:' + x + ' z:' + z + ' max:' + this.max);
+
+	                return -1;
+	            }
+	            console.log("SETPIXEL: x:" + x + " z:" + z + " val:" + val + ' size:' + this.size);
+
+	            this.map[x + this.size * z] = val;
 	        }
 
 	        /* 
 	         * ---------------------------------------
-	         * SCALING ALGORITHMS (bitmap and heightmap)
+	         * HEIGHTMAP GENERATION ALGORITHMS
 	         * ---------------------------------------
 	         */
+
+	    }, {
+	        key: 'divide',
+	        value: function divide(size, roughness) {
+
+	            var x = void 0,
+	                z = void 0,
+	                half = size / 2;
+
+	            var scale = roughness * size;
+
+	            if (half < 1) return;
+
+	            for (z = half; z < this.max; z += size) {
+
+	                for (x = half; x < this.max; x += size) {
+
+	                    this.square(x, z, half, Math.random() * scale * 2 - scale);
+	                }
+	            }
+
+	            for (z = 0; z <= this.max; z += half) {
+
+	                for (x = (z + half) % size; x <= this.max; x += size) {
+
+	                    this.diamond(x, z, half, Math.random() * scale * 2 - scale);
+	                }
+	            }
+
+	            this.divide(size / 2, roughness);
+	        }
+	    }, {
+	        key: 'average',
+	        value: function average(values) {
+
+	            var valid = values.filter(function (val) {
+
+	                return val !== -1;
+	            });
+
+	            var total = valid.reduce(function (sum, val) {
+
+	                return sum + val;
+	            }, 0);
+
+	            return total / valid.length;
+	        }
+	    }, {
+	        key: 'square',
+	        value: function square(x, z, size, offset) {
+
+	            var ave = this.average([this.getPixel(x - size, z - size), // upper left
+	            this.getPixel(x + size, z - size), // upper right
+	            this.getPixel(x + size, z + size), // lower right
+	            this.getPixel(x - size, z + size) // lower left
+	            ]);
+
+	            this.setPixel(x, z, ave + offset);
+	        }
+	    }, {
+	        key: 'diamond',
+	        value: function diamond(x, z, size, offset) {
+
+	            var ave = this.average([this.getPixel(x, z - size), // top
+	            this.getPixel(x + size, z), // right
+	            this.getPixel(x, z + size), // bottom
+	            this.getPixel(x - size, z) // left
+	            ]);
+
+	            this.setPixel(x, z, ave + offset);
+	        }
+
+	        /* 
+	         * ---------------------------------------
+	         * SCALING/SMOOTHING ALGORITHMS
+	         * ---------------------------------------
+	         */
+
+	        /** 
+	         * Scale heightMap y values (0.1 = 1/10 the max), 
+	         * passing 0 will completely flatten the map.
+	         */
+
+	    }, {
+	        key: 'flatten',
+	        value: function flatten(percent) {
+
+	            if (this.map && this.map.length) {
+
+	                var map = this.map;
+
+	                for (var i = 0, len = this.map.length; i < len; i++) {
+
+	                    map[i] *= percent;
+	                }
+	            }
+	        }
 
 	        /** 
 	         * Given a point defined in 2d between 
@@ -4928,9 +5127,9 @@
 
 	            // Interpolate along x axis, get interpolations above and below point.
 
-	            var a = this.getRaw(x1, z1) * (x - x1) + this.getRaw(x1, z2) * (1 - x - x1);
+	            var a = this.getPixel(x1, z1) * (x - x1) + this.getPixel(x1, z2) * (1 - x - x1);
 
-	            var b = this.getRaw(z1, z2) * (x - x1) + this.getRaw(x2, z2) * (1 - x - x1);
+	            var b = this.getPixel(z1, z2) * (x - x1) + this.getPixel(x2, z2) * (1 - x - x1);
 
 	            // Interpolate these results along z axis.
 
@@ -4984,6 +5183,11 @@
 
 	            return y0 * zf * zf2 + y1 * zf2 + y2 * zf + x1;
 	        }
+
+	        /** 
+	         * value interpolation
+	         */
+
 	    }, {
 	        key: 'biCubic',
 	        value: function biCubic(x, z) {
@@ -4993,114 +5197,28 @@
 	            var x2 = x1 + 1;
 	            var z2 = z1 + 1;
 
-	            var p00 = this.getRaw(x1 - 1, z1 - 1);
-	            var p01 = this.getRaw(x1 - 1, z1);
-	            var p02 = this.getRaw(x1 - 1, z2);
-	            var p03 = this.getRaw(x1 - 1, z2 + 1);
+	            var p00 = this.getPixel(x1 - 1, z1 - 1);
+	            var p01 = this.getPixel(x1 - 1, z1);
+	            var p02 = this.getPixel(x1 - 1, z2);
+	            var p03 = this.getPixel(x1 - 1, z2 + 1);
 
-	            var p10 = this.getRaw(x1, z1 - 1);
-	            var p11 = this.getRaw(x1, z1);
-	            var p12 = this.getRaw(x1, z2);
-	            var p13 = this.getRaw(x1, z2 + 1);
+	            var p10 = this.getPixel(x1, z1 - 1);
+	            var p11 = this.getPixel(x1, z1);
+	            var p12 = this.getPixel(x1, z2);
+	            var p13 = this.getPixel(x1, z2 + 1);
 
-	            var p20 = this.getRaw(x2, z1 - 1);
-	            var p21 = this.getRaw(x2, z1);
-	            var p22 = this.getRaw(x2, z2);
-	            var p23 = this.getRaw(x2, z2 + 1);
+	            var p20 = this.getPixel(x2, z1 - 1);
+	            var p21 = this.getPixel(x2, z1);
+	            var p22 = this.getPixel(x2, z2);
+	            var p23 = this.getPixel(x2, z2 + 1);
 
-	            var p30 = this.getRaw(x2 + 1, z1 - 1);
-	            var p31 = this.getRaw(x2 + 1, z1);
-	            var p32 = this.getRaw(x2 + 1, z2);
-	            var p33 = this.getRaw(x2 + 1, z2 + 1);
+	            var p30 = this.getPixel(x2 + 1, z1 - 1);
+	            var p31 = this.getPixel(x2 + 1, z1);
+	            var p32 = this.getPixel(x2 + 1, z2);
+	            var p33 = this.getPixel(x2 + 1, z2 + 1);
 
 	            return this.biCubicPoint(x - x1, z - z1, p00, p10, p20, p30, p01, p11, p21, p31, p02, p12, p22, p32, p03, p13, p23, p33);
 	        }
-
-	        /* 
-	         * Diamond Algorithm for generating random maps.
-	         */
-
-	    }, {
-	        key: 'divide',
-	        value: function divide(size, roughness) {
-
-	            var x,
-	                z,
-	                half = size / 2;
-
-	            var scale = roughness * size;
-
-	            if (half < 1) return;
-
-	            for (z = half; z < self.max; z += size) {
-
-	                for (x = half; x < self.max; x += size) {
-
-	                    this.square(x, z, half, Math.random() * scale * 2 - scale);
-	                }
-	            }
-
-	            for (z = 0; z <= self.max; z += half) {
-
-	                for (x = (z + half) % size; x <= self.max; x += size) {
-
-	                    this.diamond(x, z, half, Math.random() * scale * 2 - scale);
-	                }
-	            }
-
-	            this.divide(size / 2, roughness);
-	        }
-	    }, {
-	        key: 'average',
-	        value: function average(values) {
-
-	            var valid = values.filter(function (val) {
-	                return val !== -1;
-	            });
-
-	            var total = valid.reduce(function (sum, val) {
-	                return sum + val;
-	            }, 0);
-
-	            return total / valid.length;
-	        }
-	    }, {
-	        key: 'square',
-	        value: function square(x, z, size, offset) {
-
-	            var ave = average([this.getPixel(x - size, z - size), // upper left
-	            this.getPixel(x + size, z - size), // upper right
-	            this.getPixel(x + size, z + size), // lower right
-	            this.getPixel(x - size, z + size) // lower left
-	            ]);
-
-	            self.setPixel(x, z, ave + offset);
-	        }
-	    }, {
-	        key: 'diamond',
-	        value: function diamond(x, z, size, offset) {
-
-	            var ave = average([getPixel(x, z - size), // top
-	            getPixel(x + size, z), // right
-	            getPixel(x, z + size), // bottom
-	            getPixel(x - size, z) // left
-	            ]);
-
-	            this.setPixel(x, z, ave + offset);
-	        }
-
-	        /** 
-	         * Given a 2d x/z space, generate fractal-like z values 
-	         * for the height or color.
-	         * @link https://github.com/hunterloftis/plazfuljs-demos/blob/gh-pages/terrain/index.html
-	         */
-
-	    }, {
-	        key: 'heightMap',
-	        value: function heightMap(max, roughness) {}
-	    }, {
-	        key: 'colorMap',
-	        value: function colorMap(maxR, maxG, maxB, roughness) {}
 	    }]);
 
 	    return Map2d;
@@ -5254,7 +5372,7 @@
 	            ));
 
 	            this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.TERRAIN, 'terrain', 1.0, vec3.fromValues(2, 2, 2), // dimensions
-	            vec3.fromValues(5, 5, 5), // divisions
+	            vec3.fromValues(25, 5, 25), // divisions
 	            vec3.fromValues(1.5, -1.5, 2), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)

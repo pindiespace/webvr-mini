@@ -488,7 +488,20 @@ export default class Prim {
             for (let rowNumber = 0; rowNumber <= rows; rowNumber++) {
 
                 let x = colNumber;
-                let y = this.util.getRand(0, 0.2);  /////TODO: RANDOM FOR NOW
+                
+                let y = 0;
+
+                if ( prim.heightMap ) {
+
+                    y = prim.heightMap.getPixel( colNumber, rowNumber );
+
+                    console.log("y is a:" + y)
+
+                } else {
+                    console.log('no heightmap for:' + prim.name)
+                    y = this.util.getRand(0, 0.2);  /////TODO: RANDOM FOR NOW NOT WORKING!!!!!!!!!!!!!!!!!
+                }
+
                 let z = rowNumber;
 
                 let u = (colNumber / cols);
@@ -1096,7 +1109,9 @@ export default class Prim {
 
         if ( ! prim.heightMap ) {
 
-            prim.heightMap = this.createHeightMap( prim );
+            console.log( 'adding heightmap for:' + prim.name );
+
+            prim.heightMap = this.createHeightMap( prim, null, 0.2 );
 
         }
 
@@ -1118,19 +1133,32 @@ export default class Prim {
      * Create a random heightMap (just a lot of bumps).
      * @param {Object} prim a World object.
      * @param {Image} an Image (greyscale).
+     * @param {Number} roughness a number between 0 (flat) and 1 (cube)
      * @returns {Object} an object allowing all-resolution lookup into the heightmap.
      */
-    createHeightMap ( prim, img ) {
+    createHeightMap ( prim, img, roughness, flatten ) {
 
         let divisions = prim.divisions;
 
         let vec3 = this.glMatrix.vec3;
 
-        prim.heightMap = new Map2d();
+        if ( roughness === undefined ) {
+
+            roughness = 0.1;
+
+        }
+
+        let heightMap = new Map2d();
 
         // initialize xz heightMap, randomly generated.
 
-        prim.heightMap.init( prim.divisions[0], prim.divisions[2], prim.heightMap.typeList.UINT8CLAMP );
+        heightMap.init( prim.divisions[0], prim.divisions[2], true, roughness );
+
+        console.log('prim.heightMap:' + prim.heightMap);
+
+        window.heightMap = heightMap;
+
+        return heightMap;
 
     }
 
@@ -1219,8 +1247,11 @@ export default class Prim {
         // Define Prim light (it glows) not how it is lit.
 
         this.light = {
+
             direction: [ 1, 1, 1 ],
+
             color: [ 255, 255, 255 ]
+
         };
 
         // Parent Node.
