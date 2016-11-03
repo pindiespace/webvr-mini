@@ -362,21 +362,28 @@ export default class Prim {
         let length = 0.0;
 
         let i1 = 0;
+
         let i2 = 0;
+
         let i3 = 0;
 
         for (index = 0; index < vertices.length; index++) {
+
                 normals[index] = 0.0;
+
         }
 
-        // indice triplet = 1 face
+        // index triplet = 1 face
 
         let nbFaces = indices.length / 3;
 
         for (index = 0; index < nbFaces; index++) {
+
             i1 = indices[index * 3]; // get the indexes of each vertex of the face
             i2 = indices[index * 3 + 1];
             i3 = indices[index * 3 + 2];
+
+            // Get face vertex values.
 
             p1p2x = vertices[i1 * 3] - vertices[i2 * 3]; // compute two vectors per face
             p1p2y = vertices[i1 * 3 + 1] - vertices[i2 * 3 + 1];
@@ -395,7 +402,9 @@ export default class Prim {
             faceNormaly /= length;
             faceNormalz /= length;
 
-            normals[i1 * 3] += faceNormalx; // accumulate all the normals per face
+            // Accumulate all the normals defined for the face.
+
+            normals[i1 * 3] += faceNormalx;
             normals[i1 * 3 + 1] += faceNormaly;
             normals[i1 * 3 + 2] += faceNormalz;
             normals[i2 * 3] += faceNormalx;
@@ -418,11 +427,12 @@ export default class Prim {
             faceNormaly /= length;
             faceNormalz /= length;
 
-            // NOTE: added negative to x, z to match lighting model.
+            // NOTE: added negative (-) to x, z to match lighting model.
 
             normals[index * 3] = -faceNormalx;
             normals[index * 3 + 1] = faceNormaly;
             normals[index * 3 + 2] = -faceNormalz;
+
         }
 
     }
@@ -481,30 +491,28 @@ export default class Prim {
         let incY = 1.0;
         let incZ = prim.dimensions[2] / prim.divisions[2];
 
-        // if there is a heightMap, assign y values
-
         for (let colNumber = 0; colNumber <= cols; colNumber++) {
 
             for (let rowNumber = 0; rowNumber <= rows; rowNumber++) {
 
+                // Vertex values.
+
                 let x = colNumber;
-                
+
                 let y = 0;
 
                 if ( prim.heightMap ) {
 
                     y = prim.heightMap.getPixel( colNumber, rowNumber );
 
-                    console.log("y is a:" + y)
-
-                } else {
-                    console.log('no heightmap for:' + prim.name)
-                    y = this.util.getRand(0, 0.2);  /////TODO: RANDOM FOR NOW NOT WORKING!!!!!!!!!!!!!!!!!
                 }
 
                 let z = rowNumber;
 
+                // Texture coords.
+
                 let u = (colNumber / cols);
+
                 let v = 1 - (rowNumber / rows);
 
                 normals.push( 0, 1.0, 0 );
@@ -763,22 +771,39 @@ export default class Prim {
 
                 let cosPhi = Math.cos(phi);
 
+                // Compute vertex positions.
+
                 let x = cosPhi * sinTheta;
+
                 let y = cosTheta;
+
                 let z = sinPhi * sinTheta;
 
+                // Texture coords.
+
                 let u = 1 - (longNumber / longitudeBands);
+
                 let v = 1 - (latNumber / latitudeBands);
 
-                normals.push(x);
-                normals.push(y);
-                normals.push(z);
+                // Push values.
+
+                vertices.push(radius * x);
+
+                vertices.push(radius * y);
+
+                vertices.push(radius * z);
 
                 texCoords.push(u);
+
                 texCoords.push(v);
-                vertices.push(radius * x);
-                vertices.push(radius * y);
-                vertices.push(radius * z);
+
+                // Normals = normalized vertices for a Sphere.
+
+                normals.push(x);
+
+                normals.push(y);
+
+                normals.push(z);
 
             }
 
@@ -1111,58 +1136,25 @@ export default class Prim {
 
             console.log( 'adding heightmap for:' + prim.name );
 
-            prim.heightMap = this.createHeightMap( prim, null, 0.2 );
+            prim.heightMap = new Map2d( this.util );
+
+            prim.heightMap[ prim.heightMap.type.DIAMOND ]( prim.divisions[0], prim.divisions[2], 0.2, 0.05 );
+
+            prim.heightMap.scale( 55, 55 );
+
+            //prim.heightMap.scale( 25, 25 );
 
         }
 
         let geometry = this.geometryPlane( prim );
 
-        window.hm = prim.heightMap;
+        window.heightMap = prim.heightMap;
 
         return geometry;
 
     };
 
-    /* 
-     * ---------------------------------------
-     * HEIGHTMAPS (used by Terrain Prim)
-     * ---------------------------------------
-     */
-
-    /** 
-     * Create a random heightMap (just a lot of bumps).
-     * @param {Object} prim a World object.
-     * @param {Image} an Image (greyscale).
-     * @param {Number} roughness a number between 0 (flat) and 1 (cube)
-     * @returns {Object} an object allowing all-resolution lookup into the heightmap.
-     */
-    createHeightMap ( prim, img, roughness, flatten ) {
-
-        let divisions = prim.divisions;
-
-        let vec3 = this.glMatrix.vec3;
-
-        if ( roughness === undefined ) {
-
-            roughness = 0.1;
-
-        }
-
-        let heightMap = new Map2d();
-
-        // initialize xz heightMap, randomly generated.
-
-        heightMap.init( prim.divisions[0], prim.divisions[2], true, roughness );
-
-        console.log('prim.heightMap:' + prim.heightMap);
-
-        window.heightMap = heightMap;
-
-        return heightMap;
-
-    }
-
-    /* 
+     /*
      * ---------------------------------------
      * PRIMS
      * ---------------------------------------

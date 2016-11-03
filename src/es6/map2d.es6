@@ -5,18 +5,44 @@ export default class Map2d {
     /* 
      * NOTE: using 'map.es6' causes a transpile error
      *
-     * Generic map object, equivalent to a 
-     * multi-dimensional array approximation, used 
-     * for heightmaps and color maps.
+     * Generic map object, equivalent to a 2-dimensional array, used 
+     * for heightmaps and color maps and other "maplike" data, including 
+     * Image data in arrays.
      * Maps are defined in x (columns)  and z (rows) instead of 
      * x and y to match Prim definitions of heightMaps.
+     * Maps can be scaled using bilinear or bicubic algorithms.
      *
      * @link https://www.html5rocks.com/en/tutorials/webgl/typed_arrays/
+     *
      */
 
-    constructor () {
+    constructor ( util ) {
 
         console.log( 'in Map' );
+
+        this.util = util;
+
+        this.type = {
+
+            PLANE: 'initPlane',
+
+            RANDOM: 'initRandom',
+
+            DIAMOND: 'initDiamond',
+
+            IMAGE: 'initImage'
+
+        };
+
+        this.edgeType = {
+
+            NONE: 0,      // don't do anything
+
+            WRAP: 1,      // wrap a out of range side to the opposite side
+
+            TOZERO: 2     // push down to zero
+
+        };
 
         this.width = 0;
 
@@ -24,11 +50,166 @@ export default class Map2d {
 
         this.map = null; // actual heightmap
 
+        this.squareSize = 0; // max square that starts at 0, 0 and fits in Map2d.
+
         this.max = 0;
 
         // offscreen canvas for heightmaps from images.
 
         this.canvas = this.ctx = this.imgData = null;
+
+    }
+
+    checkParams ( w, h, roughness, flatten ) {
+
+        if( w < 1 || h < 1 ) {
+
+            console.error( 'invalid map width or height, was:' + w + ', ' + h );
+
+            return false;
+
+        } else if ( roughness < 0 || roughness > 1.0 ) {
+
+            console.error( 'invalid Map roughness (0-1), was:' + roughness );
+
+            return false;
+
+        } else if ( flatten < 0 || flatten > 1.0 ) {
+
+            console.error( 'invalid Map flatten (0-1.0), was:' + flatten );
+
+            return false;
+
+        }
+
+        return true;
+
+    }
+
+
+    /** 
+     * Get a Map pixel. For the diamond algorithm, this.max is a width or 
+     * height. For all others, it is the length of the entire array.
+     * @param {Number} x the x coordinate of the pixel (column)
+     * @param {Number} z the z coordinate of the pixel (row)
+     * @param {Enum} edgeFlag how to handle requests off the edge of the map 
+     * - WRAP: grab from other side, divide to zero).
+     * - TOZERO: reduce to zero, depending on unit distance from edge.
+     * @returns {Number} the Map value at the x, z position.
+     */
+    getPixel ( x, z, edgeFlag = 1 ) {
+
+        if ( x < 0 || x > this.width || z < 0 || z > this.height ) {
+
+            switch ( edgeFlag ) {
+
+                case this.edgeType.WRAP:
+                    if ( x < 0 ) x = this.width - x;
+                    if ( x > this.width - 1 ) x = x - this.width;
+                    if ( z < 0 ) z = this.height - z;
+                    if ( z > this.height - 1 ) z = z - this.height;
+                    break;
+
+                case this.edgeType.TOZERO:
+                    let xs = x;
+                    let zs = z;
+                    if ( x < 0 ) x = 0;
+                    if( x > this.width - 1 ) x = this.width - 1;
+                    if( z < 0 ) z = 0;
+                    if( z > this.height - 1 ) z = this.height - 1;
+                    return this.map[ x + this.squareSize * z ] / ( Math.abs( xs - x ) + Math.abs( zs - z ) );
+                    break;
+
+                default:
+                    console.error( 'getPixel out of range x:' + x + ' z:' + z + ' width:' + w + ' height:' + h + ' max:' + this.max );
+                    return -1;
+                    break;
+
+            }
+
+        }
+
+        return this.map[ x + this.width * z ];
+
+    }
+
+    /** 
+     * Set a pixel in the Map.
+     * @param {Number} x the x (column) coordinate in the Map.
+     * @param {Number} z the z (row) coordinate in the Map.
+     * @param {Number} val the value at a map coordinate, typically Float32
+     */
+    setPixel ( x, z, val ) {
+
+        if ( x < 0 || x > this.max || z < 0 || z > this.max ) {
+
+            console.error( 'setPixel out of range x:' + x + ' z:' + z + ' max:' + this.max );
+
+            return -1;
+
+        }
+        console.log("SETPIXEL: x:" + x + " z:" + z + " val:" + val + ' size:' + this.squareSize )
+
+        this.map[ x + this.width * z ] = val; // NOTE: was squareSize!!!!!!!
+
+    }
+
+    /** 
+     * Create a completely flat Map.
+     */
+    initPlane ( w, h ) {
+
+        if ( this.checkParams ( w, h, 0, 0 ) ) {
+
+            this.img = this.map = null;
+
+            this.map = new Float32Array( w * h );
+
+            this.width = w;
+
+            this.height = h;
+
+            this.squareSize = Math.min( w * h ); // shortest face.
+
+        } else {
+
+            console.error( 'error creating Map using ' + this.type.PLANE );
+
+        }
+
+    }
+
+    /** 
+     * Generate a Map using completely random numbers clamped. 
+     * to a range.
+     */
+    initRandom ( w, h, roughness ) {
+
+        if( this.checkParams( w, h, roughness, 0 ) ) {
+
+            this.map = new Float32Array( w * h );
+
+            this.width = w;
+
+            this.height = h;
+
+            this.squareSize = Math.min( w, h );
+
+            this.max = this.squareSize - 1;
+
+            let util = this.util;
+
+            for ( let i = 0, len = this.map.length; i < len; i++ ) {
+
+                this.map[i] = util.getRand() * roughness;
+
+            }
+
+        } else {
+
+            console.error( 'error creating Map using ' + this.type.RANDOM );
+
+        }
 
     }
 
@@ -41,16 +222,11 @@ export default class Map2d {
      * @param {Boolean} create if true, make a proceedural heightmap using diamond algorithm.
      * @param {Number} roughness if create === true, assign a roughness (0 - 1) to generated terrain.
      */
-    init ( w, h, create, roughness ) {
+    initDiamond ( w, h, roughness, flatten ) {
 
-        this.img = this.map = null;
+        if( this.checkParams( w, h, roughness, flatten ) ) {
 
-        if ( create ) {
-
-            if ( roughness < 0 || roughness > 1.0 ) {
-
-                console.error( 'init heightMap creation: roughness out of range:' + roughness );
-            }
+            this.img = this.map = null;
 
             // Get next highest power of 2 (scale back later).
 
@@ -62,17 +238,15 @@ export default class Map2d {
 
             // Set up for diamond algorithm.
 
-            //this.size = n + 1;
+            this.squareSize = n + 1;
 
-            //this.size = Math.pow( 2, n ) + 1;
+            this.width = this.height = n; // SQUARE
 
-            this.size = n + 1;
+            this.map = new Float32Array( this.squareSize * this.squareSize );
 
-            this.width = this.height = n;
+            // For the Diamond algorithm, this.max is the length or width of the terrain.
 
-            this.map = new Float32Array( this.size * this.size );
-
-            this.max = this.size - 1;
+            this.max = this.squareSize - 1;
 
             this.setPixel( 0, 0, this.max );
 
@@ -82,21 +256,21 @@ export default class Map2d {
 
             this.setPixel( 0, this.max, this.max / 2 );
 
+            // Start recursive terrain generation.
+
             this.divide( this.max, roughness );
 
-            this.flatten( 0.03 ); // TODO: define this parameter elsewhere!!!!!!!!!!!!!!!!!!!!!
+            // The first pixel may be too high.
 
-        } else {
+            this.setPixel( 0, 0, (this.getPixel( 0, 1 ) + this.getPixel( 1, 0 ) ) / 2 );
 
-            this.map = new Float32Array( w * h );
+            this.flatten( flatten ); // 0.05 for small, TODO: define this parameter elsewhere!!!!!!!!!!!!!!!!!!!!!
 
-            this.width = w;
+            } else {
 
-            this.height = h;
+                console.error( 'error creating Map using ' + this.type.DIAMOND );
 
-            this.size = w * h;
-
-        }
+            }
 
     }
 
@@ -107,14 +281,17 @@ export default class Map2d {
      * @param {Number} w desired heightmap width (x).
      * @param {Number} h desired height (z) of heightmap.
      */
-    initWithImage ( w, h, path, callback ) {
+    initImage ( w, h, path, callback ) {
+
+        if( this.checkParams( w, h, roughness, flatten ) ) {
+
+        }
 
         if ( ! this.canvas ) {
 
             this.canvas = document.createElement( 'canvas' );
 
         }
-
 
         if ( ! this.ctx ) {
 
@@ -139,10 +316,14 @@ export default class Map2d {
 
             this.height = img.height;
 
+            this.squareSize = Math.min( w, h ); // largest square area starting with 0, 0
+
+            this.max = this.squareSize - 1;
+
             // Pixel-level view.
             //this.pixels = new Uint32Array( this.data.buffer );
 
-            this.map = new Float32Array( w * h );
+            this.map = new Float32Array( this.squareSize );
 
             let j = 0;
 
@@ -167,66 +348,22 @@ export default class Map2d {
 
     }
 
-    /** 
-     * Get a map pixel. If a position goes 'off the edge' then 
-     * grab a pixel from the other side.
-     */
-    getPixel ( x, z, edgeFlag = true ) {
-
-        if ( x < 0 || x > this.max || z < 0 || z > this.max ) {
-
-            if ( edgeFlag ) {
-
-                if ( x < 0 ) x = this.size - x;
-
-                if ( x > this.max ) x = x - this.max;
-
-                if ( z < 0 ) z = this.size - z;
-
-                if ( z > this.max ) z = z - this.max;
-
-                console.warn( 'ADJUSTED x:' + x + ' z:' + z );
-
-            } else {
-                           
-                console.error( 'getPixel out of range x:' + x + ' z:' + z + ' max:' + this.max );
-
-                return -1;
-
-            }
-
-        }
-
-        return this.map[ x + this.size * z ];
-
-    }
-    
-    setPixel ( x, z, val ) {
-
-        if ( x < 0 || x > this.max || z < 0 || z > this.max ) {
-
-            console.error( 'setPixel out of range x:' + x + ' z:' + z + ' max:' + this.max );
-
-            return -1;
-
-        }
-        console.log("SETPIXEL: x:" + x + " z:" + z + " val:" + val + ' size:' + this.size )
-
-        this.map[ x + this.size * z ] = val;
-
-    }
-
     /* 
      * ---------------------------------------
      * HEIGHTMAP GENERATION ALGORITHMS
      * ---------------------------------------
      */
 
+    /** 
+     * Divide Map in Diamond algorithm.
+     */
     divide( size, roughness ) {
 
         let x, z, half = size / 2;
 
         let scale = roughness * size;
+
+        let util = this.util;
 
         if ( half < 1 ) return;
 
@@ -234,7 +371,7 @@ export default class Map2d {
 
             for ( x = half; x < this.max; x += size ) {
 
-              this.square( x, z, half, Math.random() * scale * 2 - scale );
+              this.square( x, z, half, util.getRand() * scale * 2 - scale );
 
             }
 
@@ -244,7 +381,7 @@ export default class Map2d {
 
             for ( x = (z + half) % size; x <= this.max; x += size ) {
 
-              this.diamond( x, z, half, Math.random() * scale * 2 - scale );
+              this.diamond( x, z, half, util.getRand() * scale * 2 - scale );
 
             }
 
@@ -253,7 +390,10 @@ export default class Map2d {
         this.divide( size / 2, roughness );
 
     }
-    
+
+    /** 
+     * Get average in Diamond algorithm.
+     */
     average( values ) {
 
         let valid = values.filter( function( val ) { 
@@ -271,30 +411,36 @@ export default class Map2d {
         return total / valid.length;
 
     }
-    
+
+    /** 
+     * new square, average value. Alternates with diamond.
+     */
     square( x, z, size, offset ) {
 
-        let ave = this.average([
-            this.getPixel(x - size, z - size),   // upper left
-            this.getPixel(x + size, z - size),   // upper right
-            this.getPixel(x + size, z + size),   // lower right
-            this.getPixel(x - size, z + size)    // lower left
-        ]);
+        let ave = this.average ( [
+            this.getPixel( x - size, z - size ),   // upper left
+            this.getPixel( x + size, z - size ),   // upper right
+            this.getPixel( x + size, z + size ),   // lower right
+            this.getPixel( x - size, z + size )    // lower left
+        ] );
 
-        this.setPixel(x, z, ave + offset);
+        this.setPixel( x, z, ave + offset );
 
     }
-    
+
+    /** 
+     * new diamond, average value. Alternates with square.
+     */
     diamond( x, z, size, offset ) {
 
-        let ave = this.average([
-            this.getPixel(x, z - size),      // top
-            this.getPixel(x + size, z),      // right
-            this.getPixel(x, z + size),      // bottom
-            this.getPixel(x - size, z)       // left
-        ]);
+        let ave = this.average( [
+            this.getPixel( x, z - size ),      // top
+            this.getPixel( x + size, z ),      // right
+            this.getPixel( x, z + size ),      // bottom
+            this.getPixel( x - size, z )       // left
+        ] );
 
-        this.setPixel(x, z, ave + offset);
+        this.setPixel( x, z, ave + offset );
 
     }
 
@@ -324,6 +470,62 @@ export default class Map2d {
 
     }
 
+    /** 
+     * roughen an existing Map.
+     */
+    roughen ( percent ) {
+
+        if( this.map && this.map.length ) {
+
+        }
+
+    }
+
+    /** 
+     * given an existing Map, scale to new dimensions, smoothing 
+     * with the biCubic or biLinear algorithm.
+     */
+    scale ( w, h ) {
+
+        if ( this.checkParams( w, h, 0, 0 ) ) {
+
+            let map = new Float32Array( w * h );
+
+            let xScale = this.width / w;
+
+            let zScale = this.height / h;
+
+            console.log('original width:' + this.width + ' new:' + w + 'original height:' + this.height + ' new:' + h )
+
+            console.log('xScale:' + xScale + ' zScale:' + zScale);
+
+            for ( let x = 0; x < w; x++ ) {
+
+                for ( let z = 0; z < h; z++ ) {
+
+                    map[ x * z + x ] = this.biCubic( x * xScale, z * zScale);
+
+                    if( map[ x + x * z ] < 0.000001 ) {
+                        console.log("PROBLEM: position " + (x * xScale) + ', ' + (z * zScale) + ' returned ZERO')
+                    }
+
+                }
+
+            }
+
+        this.map = map;
+
+        this.width = w;
+
+        this.height = h;
+
+        this.squareSize = Math.min( w, h );
+
+        this.max = this.squareSize - 1;
+
+        }
+
+    }
 
     /** 
      * Given a point defined in 2d between 
@@ -387,35 +589,39 @@ export default class Map2d {
         p30, p31, p32, p33
     ) {
 
-        let zf2 = zf * zf
-        let xf2 = xf * xf
-        let xf3 = xf * xf2
+        let zf2 = zf * zf;
+        let xf2 = xf * xf;
+        let xf3 = xf * xf2;
 
-        let x00 = p03 - p02 - p00 + p01
-        let x01 = p00 - p01 - x00
-        let x02 = p02 - p00
-        let x0 = x00*xf3 + x01*xf2 + x02*xf + p01
+        let x00 = p03 - p02 - p00 + p01;
+        let x01 = p00 - p01 - x00;
+        let x02 = p02 - p00;
+        let x0 = x00*xf3 + x01*xf2 + x02*xf + p01;
 
-        let x10 = p13 - p12 - p10 + p11
-        let x11 = p10 - p11 - x10
-        let x12 = p12 - p10
-        let x1 = x10*xf3 + x11*xf2 + x12*xf + p11
+        let x10 = p13 - p12 - p10 + p11;
+        let x11 = p10 - p11 - x10;
+        let x12 = p12 - p10;
+        let x1 = x10*xf3 + x11*xf2 + x12*xf + p11;
 
-        let x20 = p23 - p22 - p20 + p21
-        let x21 = p20 - p21 - x20
-        let x22 = p22 - p20
-        let x2 = x20*xf3 + x21*xf2 + x22*xf + p21
+        let x20 = p23 - p22 - p20 + p21;
+        let x21 = p20 - p21 - x20;
+        let x22 = p22 - p20;
+        let x2 = x20*xf3 + x21*xf2 + x22*xf + p21;
 
-        let x30 = p33 - p32 - p30 + p31
-        let x31 = p30 - p31 - x30
-        let x32 = p32 - p30
-        let x3 = x30*xf3 + x31*xf2 + x32*xf + p31
+        let x30 = p33 - p32 - p30 + p31;
+        let x31 = p30 - p31 - x30;
+        let x32 = p32 - p30;
+        let x3 = x30*xf3 + x31*xf2 + x32*xf + p31;
 
-        let y0 = x3 - x2 - x0 + x1
-        let y1 = x0 - x1 - y0
-        let y2 = x2 - x0
+        let y0 = x3 - x2 - x0 + x1;
+        let y1 = x0 - x1 - y0;
+        let y2 = x2 - x0;
 
-        return y0*zf*zf2 + y1*zf2 + y2*zf + x1
+        let res = y0*zf*zf2 + y1*zf2 + y2*zf + x1;
+
+        ///////////////////////console.log('adjusted:' + res )
+
+        return y0*zf*zf2 + y1*zf2 + y2*zf + x1;
 
     }
 
@@ -424,30 +630,32 @@ export default class Map2d {
      */
     biCubic ( x, z ) {
 
-        let x1 = floor(x)
-        let z1 = floor(z)
-        let x2 = x1 + 1
-        let z2 = z1 + 1
+        let x1 = Math.floor( x );
+        let z1 = Math.floor( z );
+        let x2 = x1 + 1;
+        let z2 = z1 + 1;
 
-        let p00 = this.getPixel(x1 - 1, z1 - 1)
-        let p01 = this.getPixel(x1 - 1, z1)
-        let p02 = this.getPixel(x1 - 1, z2)
-        let p03 = this.getPixel (x1 - 1, z2 + 1)
+        ////////////////console.log('lower pixel: for x:' + x + ' value:' + this.getPixel( x1, z1 ) + ' upper pixel for z:' + z + ' value:' + this.getPixel( x2, z2 ) );
 
-        let p10 = this.getPixel (x1, z1 - 1)
-        let p11 = this.getPixel (x1, z1)
-        let p12 = this.getPixel (x1, z2)
-        let p13 = this.getPixel (x1, z2 + 1)
+        let p00 = this.getPixel( x1 - 1, z1 - 1);
+        let p01 = this.getPixel( x1 - 1, z1 );
+        let p02 = this.getPixel( x1 - 1, z2 );
+        let p03 = this.getPixel( x1 - 1, z2 + 1 );
 
-        let p20 = this.getPixel (x2, z1 - 1)
-        let p21 = this.getPixel (x2, z1)
-        let p22 = this.getPixel (x2, z2)
-        let p23 = this.getPixel (x2, z2 + 1)
+        let p10 = this.getPixel( x1, z1 - 1 );
+        let p11 = this.getPixel( x1, z1 );
+        let p12 = this.getPixel( x1, z2 );
+        let p13 = this.getPixel( x1, z2 + 1 );
 
-        let p30 = this.getPixel (x2 + 1, z1 - 1)
-        let p31 = this.getPixel (x2 + 1, z1)
-        let p32 = this.getPixel (x2 + 1, z2)
-        let p33 = this.getPixel (x2 + 1, z2 + 1)
+        let p20 = this.getPixel( x2, z1 - 1);
+        let p21 = this.getPixel( x2, z1 );
+        let p22 = this.getPixel( x2, z2 );
+        let p23 = this.getPixel( x2, z2 + 1);
+
+        let p30 = this.getPixel( x2 + 1, z1 - 1);
+        let p31 = this.getPixel( x2 + 1, z1 );
+        let p32 = this.getPixel( x2 + 1, z2 );
+        let p33 = this.getPixel( x2 + 1, z2 + 1 );
 
         return this.biCubicPoint(
             x - x1, 

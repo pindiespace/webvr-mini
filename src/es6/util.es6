@@ -1,8 +1,15 @@
 export default class Util {
 
+    /** 
+     * Utility functions.
+     * Mersene Twister from:
+     */
+
     constructor () {
 
         console.log( 'in Util' );
+
+        // Mersene Twister parameters
 
     }
 
@@ -44,17 +51,55 @@ export default class Util {
 
     }
 
+    /** 
+     * Random seed.
+     */
+    getSeed() {
+
+        let number;
+
+        try {
+
+            // If the client supports the more secure crypto lib
+
+            if ( Uint32Array && window.crypto && window.crypto.getRandomValues ) {
+
+                let numbers = new Uint32Array( 1 );
+
+                window.crypto.getRandomValues( numbers );
+
+                number = numbers.length ? ( numbers[0] + '' ) : null;
+
+            }
+
+        } catch( e ) {} finally {
+
+            if ( ! number ) {
+
+                number = Math.floor( Math.random() * 1e9 ).toString() + ( new Date().getTime() );
+
+            }
+
+        }
+
+        // process between min and max. Number could be 0-10^9
+
+        return number;
+
+    }
+
+
     getRand ( min, max ) {
 
-        if ( max === undefined ) {
+        if ( min === undefined || max === undefined ) {
 
-            max = min;
+            max = 1;
 
             min = 0;
 
         }
 
-        return min + Math.random() * ( max - min );
+        return min + ( ( Math.random() + ( 1 / ( 1 + this.getSeed() ) ) ) %1 ) * ( max - min );
 
     }
 
