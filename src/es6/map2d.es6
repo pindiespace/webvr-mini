@@ -499,19 +499,17 @@ export default class Map2d {
 
             console.log('xScale:' + xScale + ' zScale:' + zScale);
 
-            for ( let x = 0; x < w; x++ ) {
+            for ( let z = 0; z < h; z++ ) {
 
-                for ( let z = 0; z < h; z++ ) {
+                for ( let x = 0; x < w; x++ ) {
 
-                    map[ x * z + x ] = this.biCubic( x * xScale, z * zScale);
-
-                    if( map[ x + x * z ] < 0.000001 ) {
-                        console.log("PROBLEM: position " + (x * xScale) + ', ' + (z * zScale) + ' returned ZERO')
-                    }
+                    map[ w * z + x ] = this.biCubic( x * xScale, z * zScale);
 
                 }
 
             }
+
+        console.log('WIDTH:' + w + " HEIGHT:" + h)
 
         this.map = map;
 
@@ -619,7 +617,7 @@ export default class Map2d {
 
         let res = y0*zf*zf2 + y1*zf2 + y2*zf + x1;
 
-        ///////////////////////console.log('adjusted:' + res )
+        //console.log('adjusted:' + res )
 
         return y0*zf*zf2 + y1*zf2 + y2*zf + x1;
 
@@ -635,7 +633,7 @@ export default class Map2d {
         let x2 = x1 + 1;
         let z2 = z1 + 1;
 
-        ////////////////console.log('lower pixel: for x:' + x + ' value:' + this.getPixel( x1, z1 ) + ' upper pixel for z:' + z + ' value:' + this.getPixel( x2, z2 ) );
+        //console.log('lower pixel: for x:' + x + ' value:' + this.getPixel( x1, z1 ) + ' upper pixel for z:' + z + ' value:' + this.getPixel( x2, z2 ) );
 
         let p00 = this.getPixel( x1 - 1, z1 - 1);
         let p01 = this.getPixel( x1 - 1, z1 );

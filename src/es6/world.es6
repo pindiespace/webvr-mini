@@ -146,7 +146,7 @@ export default class World {
             'terrain',
             1.0,
             vec3.fromValues( 2, 2, 2 ),            // dimensions
-            vec3.fromValues( 25, 5, 25 ),           // divisions
+            vec3.fromValues( 30, 5, 30 ),           // divisions
             vec3.fromValues(1.5, -1.5, 2 ),       // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)

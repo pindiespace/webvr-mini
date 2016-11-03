@@ -4482,7 +4482,7 @@
 
 	                                prim.heightMap[prim.heightMap.type.DIAMOND](prim.divisions[0], prim.divisions[2], 0.2, 0.05);
 
-	                                prim.heightMap.scale(55, 55);
+	                                //prim.heightMap.scale( 165, 165 );
 
 	                                //prim.heightMap.scale( 25, 25 );
 	                        }
@@ -4940,7 +4940,7 @@
 	                        ));
 
 	                        this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.TERRAIN, 'terrain', 1.0, vec3.fromValues(2, 2, 2), // dimensions
-	                        vec3.fromValues(25, 5, 25), // divisions
+	                        vec3.fromValues(30, 5, 30), // divisions
 	                        vec3.fromValues(1.5, -1.5, 2), // position (absolute)
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
@@ -13045,17 +13045,15 @@
 
 	                                console.log('xScale:' + xScale + ' zScale:' + zScale);
 
-	                                for (var x = 0; x < w; x++) {
+	                                for (var z = 0; z < h; z++) {
 
-	                                        for (var z = 0; z < h; z++) {
+	                                        for (var x = 0; x < w; x++) {
 
-	                                                map[x * z + x] = this.biCubic(x * xScale, z * zScale);
-
-	                                                if (map[x + x * z] < 0.000001) {
-	                                                        console.log("PROBLEM: position " + x * xScale + ', ' + z * zScale + ' returned ZERO');
-	                                                }
+	                                                map[w * z + x] = this.biCubic(x * xScale, z * zScale);
 	                                        }
 	                                }
+
+	                                console.log('WIDTH:' + w + " HEIGHT:" + h);
 
 	                                this.map = map;
 
@@ -13158,7 +13156,7 @@
 
 	                        var res = y0 * zf * zf2 + y1 * zf2 + y2 * zf + x1;
 
-	                        ///////////////////////console.log('adjusted:' + res )
+	                        //console.log('adjusted:' + res )
 
 	                        return y0 * zf * zf2 + y1 * zf2 + y2 * zf + x1;
 	                }
@@ -13176,7 +13174,7 @@
 	                        var x2 = x1 + 1;
 	                        var z2 = z1 + 1;
 
-	                        ////////////////console.log('lower pixel: for x:' + x + ' value:' + this.getPixel( x1, z1 ) + ' upper pixel for z:' + z + ' value:' + this.getPixel( x2, z2 ) );
+	                        //console.log('lower pixel: for x:' + x + ' value:' + this.getPixel( x1, z1 ) + ' upper pixel for z:' + z + ' value:' + this.getPixel( x2, z2 ) );
 
 	                        var p00 = this.getPixel(x1 - 1, z1 - 1);
 	                        var p01 = this.getPixel(x1 - 1, z1);

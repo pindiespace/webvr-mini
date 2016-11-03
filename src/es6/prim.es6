@@ -1140,7 +1140,7 @@ export default class Prim {
 
             prim.heightMap[ prim.heightMap.type.DIAMOND ]( prim.divisions[0], prim.divisions[2], 0.2, 0.05 );
 
-            prim.heightMap.scale( 55, 55 );
+            //prim.heightMap.scale( 165, 165 );
 
             //prim.heightMap.scale( 25, 25 );
 
