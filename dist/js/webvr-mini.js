@@ -4208,6 +4208,117 @@
 
 	                        return this.createBuffers(vertices, indices, texCoords, normals, colors);
 	                }
+	        }, {
+	                key: 'geometryIcoSphere',
+	                value: function geometryIcoSphere(prim) {
+
+	                        var vec3 = this.glMatrix.vec3;
+
+	                        var vertices = [];
+
+	                        var indices = [];
+
+	                        var texCoords = [];
+
+	                        var normals = [];
+
+	                        var colors = [];
+
+	                        var t = 0.5 + Math.sqrt(5) / 2;
+
+	                        vertices.push(-1, +t, 0);
+	                        vertices.push(+1, +t, 0);
+	                        vertices.push(-1, -t, 0);
+	                        vertices.push(+1, -t, 0);
+
+	                        vertices.push(0, -1, +t);
+	                        vertices.push(0, +1, +t);
+	                        vertices.push(0, -1, -t);
+	                        vertices.push(0, +1, -t);
+
+	                        vertices.push(+t, 0, -1);
+	                        vertices.push(+t, 0, +1);
+	                        vertices.push(-t, 0, -1);
+	                        vertices.push(-t, 0, +1);
+
+	                        indices.push(0, 11, 5);
+	                        indices.push(0, 5, 1);
+	                        indices.push(0, 1, 7);
+	                        indices.push(0, 7, 10);
+	                        indices.push(0, 10, 11);
+
+	                        indices.push(1, 5, 9);
+	                        indices.push(5, 11, 4);
+	                        indices.push(11, 10, 2);
+	                        indices.push(10, 7, 6);
+	                        indices.push(7, 1, 8);
+
+	                        indices.push(3, 9, 4);
+	                        indices.push(3, 4, 2);
+	                        indices.push(3, 2, 6);
+	                        indices.push(3, 6, 8);
+	                        indices.push(3, 8, 9);
+
+	                        indices.push(4, 9, 5);
+	                        indices.push(2, 4, 11);
+	                        indices.push(6, 2, 10);
+	                        indices.push(8, 6, 7);
+	                        indices.push(9, 8, 1);
+
+	                        var i = void 0,
+	                            u = void 0,
+	                            v = void 0,
+	                            x = void 0,
+	                            y = void 0,
+	                            z = void 0,
+	                            normal = void 0;
+
+	                        // Subdivide.
+
+	                        // Normalize.
+
+	                        for (i = 0; i < vertices.length; i += 3) {
+
+	                                x = vertices[i];
+	                                y = vertices[i + 1];
+	                                z = vertices[i + 2];
+
+	                                var len = x * x + y * y + z * z;
+
+	                                if (len > 0) {
+	                                        //TODO: evaluate use of glm_invsqrt here?
+	                                        len = 1 / Math.sqrt(len);
+	                                        vertices[i] *= len;
+	                                        vertices[i + 1] *= len;
+	                                        vertices[i + 2] *= len;
+	                                }
+	                        }
+
+	                        // Normals
+
+	                        for (i = 0; i < vertices.length; i += 3) {
+
+	                                //var n = vec3.normalize( vec3.create(), [ vertices[i], vertices[i+1], vertices[i+2]])
+
+	                                // get UV from unit icosphere
+	                                u = 0.5 * (-(Math.atan2(vertices[i + 2], -vertices[i]) / Math.PI) + 1.0);
+	                                v = 0.5 + Math.asin(vertices[i + 1]) / Math.PI;
+	                                texCoords.push(1 - u, v);
+
+	                                // normals
+	                                normals.push(vertices[i], vertices[i + 1], vertices[i + 2]);
+
+	                                colors.push(1, 1, 1, 1);
+	                        }
+
+	                        window.vertices = vertices;
+	                        window.indices = indices;
+	                        window.texCoords = texCoords;
+	                        window.normals = normals;
+	                        window.colors = colors;
+
+	                        return this.createBuffers(vertices, indices, texCoords, normals, colors);
+	                }
 
 	                /** 
 	                 * Icosphere, iterated from icosohedron.
@@ -4217,8 +4328,8 @@
 	                 */
 
 	        }, {
-	                key: 'geometryIcoSphere',
-	                value: function geometryIcoSphere(prim) {
+	                key: 'geometryIco',
+	                value: function geometryIco(prim) {
 
 	                        var sideOrientation = options.sideOrientation || BABYLON.Mesh.DEFAULTSIDE;
 	                        var radius = options.radius || 1;
@@ -4244,6 +4355,7 @@
 	                        // vertex alias (for same vertex on different faces)
 	                        0, 4, 3, 3, 4, 4, 3, 1, 4, 2, 4, 4, 0, 2, 1, 1, 2, 2, 3, 3, 1, 3, 2, 4 // 23: B + 12
 	                        ];
+
 	                        // Vertices[0, 1, ...9, A, B] : position on UV plane
 	                        // '+' indicate duplicate position to be fixed (3,9:0,2,3,4,7,8,A,B)
 	                        // First island of uv mapping
@@ -4280,148 +4392,127 @@
 	                        //    / 14 \/ 9  \/  3 \
 	                        //   ===================
 	                        // uv step is u:1 or 0.5, v:cos(30)=sqrt(3)/2, ratio approx is 84/97
-	                        /*
-	                                    let ustep = 138 / 1024;
-	                                    let vstep = 239 / 1024;
-	                                    let uoffset = 60 / 1024;
-	                                    let voffset = 26 / 1024;
-	                                    // Second island should have margin, not to touch the first island
-	                                    // avoid any borderline artefact in pixel rounding
-	                                    let island_u_offset = -40 / 1024;
-	                                    let island_v_offset = +20 / 1024;
-	                                    // face is either island 0 or 1 :
-	                                    // second island is for faces : [4, 7, 8, 12, 13, 16, 17, 18]
-	                                    let island = [
-	                                        0, 0, 0, 0, 1,
-	                                        0, 0, 1, 1, 0,
-	                                        0, 0, 1, 1, 0,
-	                                        0, 1, 1, 1, 0 //  15 - 19
-	                                    ];
-	                                    let indices = [];
-	                                    let positions = [];
-	                                    let normals = [];
-	                                    let uvs = [];
-	                                    let current_indice = 0;
-	                                    // prepare array of 3 vector (empty) (to be worked in place, shared for each face)
-	                                    let face_vertex_pos = new Array(3);
-	                                    let face_vertex_uv = new Array(3);
-	                                    let v012;
-	                                    for (v012 = 0; v012 < 3; v012++) {
-	                                        face_vertex_pos[v012] = BABYLON.Vector3.Zero();
-	                                        face_vertex_uv[v012] = BABYLON.Vector2.Zero();
-	                                    }
-	                                    // create all with normals
-	                                    for (let face = 0; face < 20; face++) {
+
+	                        var ustep = 138 / 1024;
+	                        var vstep = 239 / 1024;
+	                        var uoffset = 60 / 1024;
+	                        var voffset = 26 / 1024;
+	                        // Second island should have margin, not to touch the first island
+	                        // avoid any borderline artefact in pixel rounding
+	                        var island_u_offset = -40 / 1024;
+	                        var island_v_offset = +20 / 1024;
+	                        // face is either island 0 or 1 :
+	                        // second island is for faces : [4, 7, 8, 12, 13, 16, 17, 18]
+	                        var island = [0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0 //  15 - 19
+	                        ];
+	                        var indices = [];
+	                        var vertices = [];
+	                        var normals = [];
+	                        var texCoords = [];
+	                        var current_indice = 0;
+	                        // prepare array of 3 vector (empty) (to be worked in place, shared for each face)
+	                        var face_vertex_pos = new Array(3);
+	                        var face_vertex_uv = new Array(3);
+	                        var v012 = void 0;
+	                        for (v012 = 0; v012 < 3; v012++) {
+	                                face_vertex_pos[v012] = BABYLON.Vector3.Zero();
+	                                face_vertex_uv[v012] = BABYLON.Vector2.Zero();
+	                        }
+
+	                        for (var face = 0; face < 20; face++) {
+
+	                                // 3 vertex per face
+	                                for (v012 = 0; v012 < 3; v012++) {
+	                                        // look up vertex 0,1,2 to its index in 0 to 11 (or 23 including alias)
+	                                        var v_id = ico_indices[3 * face + v012];
+	                                        // vertex have 3D position (x,y,z)
+	                                        face_vertex_pos[v012].copyFromFloats(ico_vertices[3 * vertices_unalias_id[v_id]], ico_vertices[3 * vertices_unalias_id[v_id] + 1], ico_vertices[3 * vertices_unalias_id[v_id] + 2]);
+	                                        // Normalize to get normal, then scale to radius
+	                                        face_vertex_pos[v012].normalize().scaleInPlace(radius);
+	                                        // uv Coordinates from vertex ID
+	                                        face_vertex_uv[v012].copyFromFloats(ico_vertexuv[2 * v_id] * ustep + uoffset + island[face] * island_u_offset, ico_vertexuv[2 * v_id + 1] * vstep + voffset + island[face] * island_v_offset);
+	                                }
+
+	                                // create all with normals
+	                                for (var _face = 0; _face < 20; _face++) {
 	                                        // 3 vertex per face
 	                                        for (v012 = 0; v012 < 3; v012++) {
-	                                            // look up vertex 0,1,2 to its index in 0 to 11 (or 23 including alias)
-	                                            let v_id = ico_indices[3 * face + v012];
-	                                            // vertex have 3D position (x,y,z)
-	                                            face_vertex_pos[v012].copyFromFloats(ico_vertices[3 * vertices_unalias_id[v_id]], ico_vertices[3 * vertices_unalias_id[v_id] + 1], ico_vertices[3 * vertices_unalias_id[v_id] + 2]);
-	                                            // Normalize to get normal, then scale to radius
-	                                            face_vertex_pos[v012].normalize().scaleInPlace(radius);
-	                                            // uv Coordinates from vertex ID
-	                                            face_vertex_uv[v012].copyFromFloats(ico_vertexuv[2 * v_id] * ustep + uoffset + island[face] * island_u_offset, ico_vertexuv[2 * v_id + 1] * vstep + voffset + island[face] * island_v_offset);
-	                                        }
-	                                        // Subdivide the face (interpolate pos, norm, uv)
-	                                        // - pos is linear interpolation, then projected to sphere (converge polyhedron to sphere)
-	                                        // - norm is linear interpolation of vertex corner normal
-	                                        //   (to be checked if better to re-calc from face vertex, or if approximation is OK ??? )
-	                                        // - uv is linear interpolation
-	                                        //
-	                                        // Topology is as below for sub-divide by 2
-	                                        // vertex shown as v0,v1,v2
-	                                        // interp index is i1 to progress in range [v0,v1[
-	                                        // interp index is i2 to progress in range [v0,v2[
-	                                        // face index as  (i1,i2)  for /\  : (i1,i2),(i1+1,i2),(i1,i2+1)
-	                                        //            and (i1,i2)' for \/  : (i1+1,i2),(i1+1,i2+1),(i1,i2+1)
-	                                        //
-	                                        //
-	                                        //                    i2    v2
-	                                        //                    ^    ^
-	                                        //                   /    / \
-	                                        //                  /    /   \
-	                                        //                 /    /     \
-	                                        //                /    / (0,1) \
-	                                        //               /    #---------\
-	                                        //              /    / \ (0,0)'/ \
-	                                        //             /    /   \     /   \
-	                                        //            /    /     \   /     \
-	                                        //           /    / (0,0) \ / (1,0) \
-	                                        //          /    #---------#---------\
-	                                        //              v0                    v1
-	                                        //
-	                                        //              --------------------> i1
-	                                        //
-	                                        // interp of (i1,i2):
-	                                        //  along i2 :  x0=lerp(v0,v2, i2/S) <---> x1=lerp(v1,v2, i2/S)
-	                                        //  along i1 :  lerp(x0,x1, i1/(S-i2))
-	                                        //
-	                                        // centroid of triangle is needed to get help normal computation
-	                                        //  (c1,c2) are used for centroid location
-	                                        let interp_vertex = function (i1, i2, c1, c2) {
-	                                            // vertex is interpolated from
-	                                            //   - face_vertex_pos[0..2]
-	                                            //   - face_vertex_uv[0..2]
-	                                            let pos_x0 = BABYLON.Vector3.Lerp(face_vertex_pos[0], face_vertex_pos[2], i2 / subdivisions);
-	                                            let pos_x1 = BABYLON.Vector3.Lerp(face_vertex_pos[1], face_vertex_pos[2], i2 / subdivisions);
-	                                            let pos_interp = (subdivisions === i2) ? face_vertex_pos[2] : BABYLON.Vector3.Lerp(pos_x0, pos_x1, i1 / (subdivisions - i2));
-	                                            pos_interp.normalize();
-	                                            let vertex_normal;
-	                                            if (flat) {
-	                                                // in flat mode, recalculate normal as face centroid normal
-	                                                let centroid_x0 = BABYLON.Vector3.Lerp(face_vertex_pos[0], face_vertex_pos[2], c2 / subdivisions);
-	                                                let centroid_x1 = BABYLON.Vector3.Lerp(face_vertex_pos[1], face_vertex_pos[2], c2 / subdivisions);
-	                                                vertex_normal = BABYLON.Vector3.Lerp(centroid_x0, centroid_x1, c1 / (subdivisions - c2));
-	                                            }
-	                                            else {
-	                                                // in smooth mode, recalculate normal from each single vertex position
-	                                                vertex_normal = new BABYLON.Vector3(pos_interp.x, pos_interp.y, pos_interp.z);
-	                                            }
-	                                            // Vertex normal need correction due to X,Y,Z radius scaling
-	                                            vertex_normal.x /= radiusX;
-	                                            vertex_normal.y /= radiusY;
-	                                            vertex_normal.z /= radiusZ;
-	                                            vertex_normal.normalize();
-	                                            let uv_x0 = BABYLON.Vector2.Lerp(face_vertex_uv[0], face_vertex_uv[2], i2 / subdivisions);
-	                                            let uv_x1 = BABYLON.Vector2.Lerp(face_vertex_uv[1], face_vertex_uv[2], i2 / subdivisions);
-	                                            let uv_interp = (subdivisions === i2) ? face_vertex_uv[2] : BABYLON.Vector2.Lerp(uv_x0, uv_x1, i1 / (subdivisions - i2));
-	                                            positions.push(pos_interp.x * radiusX, pos_interp.y * radiusY, pos_interp.z * radiusZ);
-	                                            normals.push(vertex_normal.x, vertex_normal.y, vertex_normal.z);
-	                                            uvs.push(uv_interp.x, uv_interp.y);
-	                                            // push each vertex has member of a face
-	                                            // Same vertex can belong to multiple face, it is pushed multiple time (duplicate vertex are present)
-	                                            indices.push(current_indice);
-	                                            current_indice++;
-	                                        };
-	                                        for (let i2 = 0; i2 < subdivisions; i2++) {
-	                                            for (let i1 = 0; i1 + i2 < subdivisions; i1++) {
-	                                                // face : (i1,i2)  for /\  :
-	                                                // interp for : (i1,i2),(i1+1,i2),(i1,i2+1)
-	                                                interp_vertex(i1, i2, i1 + 1.0 / 3, i2 + 1.0 / 3);
-	                                                interp_vertex(i1 + 1, i2, i1 + 1.0 / 3, i2 + 1.0 / 3);
-	                                                interp_vertex(i1, i2 + 1, i1 + 1.0 / 3, i2 + 1.0 / 3);
-	                                                if (i1 + i2 + 1 < subdivisions) {
-	                                                    // face : (i1,i2)' for \/  :
-	                                                    // interp for (i1+1,i2),(i1+1,i2+1),(i1,i2+1)
-	                                                    interp_vertex(i1 + 1, i2, i1 + 2.0 / 3, i2 + 2.0 / 3);
-	                                                    interp_vertex(i1 + 1, i2 + 1, i1 + 2.0 / 3, i2 + 2.0 / 3);
-	                                                    interp_vertex(i1, i2 + 1, i1 + 2.0 / 3, i2 + 2.0 / 3);
+	                                                // look up vertex 0,1,2 to its index in 0 to 11 (or 23 including alias)
+	                                                var _v_id = ico_indices[3 * _face + v012];
+	                                                // vertex have 3D position (x,y,z)
+	                                                face_vertex_pos[v012].copyFromFloats(ico_vertices[3 * vertices_unalias_id[_v_id]], ico_vertices[3 * vertices_unalias_id[_v_id] + 1], ico_vertices[3 * vertices_unalias_id[_v_id] + 2]);
+	                                                // Normalize to get normal, then scale to radius
+	                                                face_vertex_pos[v012].normalize().scaleInPlace(radius);
+	                                                // uv Coordinates from vertex ID
+	                                                face_vertex_uv[v012].copyFromFloats(ico_vertexuv[2 * _v_id] * ustep + uoffset + island[_face] * island_u_offset, ico_vertexuv[2 * _v_id + 1] * vstep + voffset + island[_face] * island_v_offset);
+
+	                                                var interp_vertex = function interp_vertex(i1, i2, c1, c2) {
+	                                                        // vertex is interpolated from
+	                                                        //   - face_vertex_pos[0..2]
+	                                                        //   - face_vertex_uv[0..2]
+	                                                        var pos_x0 = BABYLON.Vector3.Lerp(face_vertex_pos[0], face_vertex_pos[2], i2 / subdivisions);
+	                                                        var pos_x1 = BABYLON.Vector3.Lerp(face_vertex_pos[1], face_vertex_pos[2], i2 / subdivisions);
+	                                                        var pos_interp = subdivisions === i2 ? face_vertex_pos[2] : BABYLON.Vector3.Lerp(pos_x0, pos_x1, i1 / (subdivisions - i2));
+	                                                        pos_interp.normalize();
+	                                                        var vertex_normal = void 0;
+	                                                        if (flat) {
+	                                                                // in flat mode, recalculate normal as face centroid normal
+	                                                                var centroid_x0 = BABYLON.Vector3.Lerp(face_vertex_pos[0], face_vertex_pos[2], c2 / subdivisions);
+	                                                                var centroid_x1 = BABYLON.Vector3.Lerp(face_vertex_pos[1], face_vertex_pos[2], c2 / subdivisions);
+	                                                                vertex_normal = BABYLON.Vector3.Lerp(centroid_x0, centroid_x1, c1 / (subdivisions - c2));
+	                                                        } else {
+	                                                                // in smooth mode, recalculate normal from each single vertex position
+	                                                                vertex_normal = new BABYLON.Vector3(pos_interp.x, pos_interp.y, pos_interp.z);
+	                                                        }
+	                                                        // Vertex normal need correction due to X,Y,Z radius scaling
+	                                                        vertex_normal.x /= radiusX;
+	                                                        vertex_normal.y /= radiusY;
+	                                                        vertex_normal.z /= radiusZ;
+	                                                        vertex_normal.normalize();
+	                                                        var uv_x0 = BABYLON.Vector2.Lerp(face_vertex_uv[0], face_vertex_uv[2], i2 / subdivisions);
+	                                                        var uv_x1 = BABYLON.Vector2.Lerp(face_vertex_uv[1], face_vertex_uv[2], i2 / subdivisions);
+	                                                        var uv_interp = subdivisions === i2 ? face_vertex_uv[2] : BABYLON.Vector2.Lerp(uv_x0, uv_x1, i1 / (subdivisions - i2));
+	                                                        vertices.push(pos_interp.x * radiusX, pos_interp.y * radiusY, pos_interp.z * radiusZ);
+	                                                        normals.push(vertex_normal.x, vertex_normal.y, vertex_normal.z);
+	                                                        texCoords.push(uv_interp.x, uv_interp.y);
+	                                                        // push each vertex has member of a face
+	                                                        // Same vertex can belong to multiple face, it is pushed multiple time (duplicate vertex are present)
+	                                                        indices.push(current_indice);
+	                                                        current_indice++;
+	                                                };
+
+	                                                for (var i2 = 0; i2 < subdivisions; i2++) {
+	                                                        for (var i1 = 0; i1 + i2 < subdivisions; i1++) {
+	                                                                // face : (i1,i2)  for /\  :
+	                                                                // interp for : (i1,i2),(i1+1,i2),(i1,i2+1)
+	                                                                interp_vertex(i1, i2, i1 + 1.0 / 3, i2 + 1.0 / 3);
+	                                                                interp_vertex(i1 + 1, i2, i1 + 1.0 / 3, i2 + 1.0 / 3);
+	                                                                interp_vertex(i1, i2 + 1, i1 + 1.0 / 3, i2 + 1.0 / 3);
+	                                                                if (i1 + i2 + 1 < subdivisions) {
+	                                                                        // face : (i1,i2)' for \/  :
+	                                                                        // interp for (i1+1,i2),(i1+1,i2+1),(i1,i2+1)
+	                                                                        interp_vertex(i1 + 1, i2, i1 + 2.0 / 3, i2 + 2.0 / 3);
+	                                                                        interp_vertex(i1 + 1, i2 + 1, i1 + 2.0 / 3, i2 + 2.0 / 3);
+	                                                                        interp_vertex(i1, i2 + 1, i1 + 2.0 / 3, i2 + 2.0 / 3);
+	                                                                }
+	                                                        }
 	                                                }
-	                                            }
 	                                        }
-	                                    }
-	                                    // Sides
-	                                    VertexData._ComputeSides(sideOrientation, positions, indices, normals, uvs);
-	                                    // Result
-	                                    let vertexData = new VertexData();
-	                                    vertexData.indices = indices;
-	                                    vertexData.positions = positions;
-	                                    vertexData.normals = normals;
-	                                    vertexData.uvs = uvs;
-	                                    return vertexData;
-	                                };
-	                                */
+	                                }
+	                        }
+
+	                        /*
+	                        // Sides
+	                        //VertexData._ComputeSides(sideOrientation, vertices, indices, normals, uvs);
+	                        // Result
+	                        let vertexData = new VertexData();
+	                        vertexData.indices = indices;
+	                        vertexData.vertices = vertices;
+	                        vertexData.normals = normals;
+	                        vertexData.uvs = uvs;
+	                        return vertexData;
+	                        };
+	                        */
 	                }
 
 	                /** 
@@ -4480,7 +4571,9 @@
 
 	                                prim.heightMap = new _map2d2.default(this.util);
 
-	                                prim.heightMap[prim.heightMap.type.DIAMOND](prim.divisions[0], prim.divisions[2], 0.2, 0.05);
+	                                // roughness 0.2 of 0-1, flatten = 1 of 0-1;
+
+	                                prim.heightMap[prim.heightMap.type.DIAMOND](prim.divisions[0], prim.divisions[2], 0.6, 1);
 
 	                                //prim.heightMap.scale( 165, 165 );
 
@@ -4940,7 +5033,7 @@
 	                        ));
 
 	                        this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.TERRAIN, 'terrain', 1.0, vec3.fromValues(2, 2, 2), // dimensions
-	                        vec3.fromValues(30, 5, 30), // divisions
+	                        vec3.fromValues(130, 5, 130), // divisions
 	                        vec3.fromValues(1.5, -1.5, 2), // position (absolute)
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
@@ -4966,6 +5059,16 @@
 	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
 	                        vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
 	                        ['img/mozvr-logo1.png'], // texture present, NOT USED
+	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+	                        ));
+
+	                        this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.ICOSPHERE, 'icophere', 1.0, vec3.fromValues(3, 3, 3), // dimensions
+	                        vec3.fromValues(4, 4, 4), // divisions
+	                        vec3.fromValues(-2.5, 1.5, -1), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                        ['img/mozvr-logo2.png'], // texture present, NOT USED
 	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	                        ));
 
@@ -12591,7 +12694,11 @@
 
 	                this.width = 0;
 
-	                this.height = 0;
+	                this.depth = 0;
+
+	                this.low = 0;
+
+	                this.high = 0;
 
 	                this.map = null; // actual heightmap
 
@@ -12606,11 +12713,11 @@
 
 	        _createClass(Map2d, [{
 	                key: 'checkParams',
-	                value: function checkParams(w, h, roughness, flatten) {
+	                value: function checkParams(w, d, roughness, flatten) {
 
-	                        if (w < 1 || h < 1) {
+	                        if (w < 1 || d < 1) {
 
-	                                console.error('invalid map width or height, was:' + w + ', ' + h);
+	                                console.error('invalid map width or height, was:' + w + ', ' + d);
 
 	                                return false;
 	                        } else if (roughness < 0 || roughness > 1.0) {
@@ -12645,15 +12752,15 @@
 	                        var edgeFlag = arguments.length <= 2 || arguments[2] === undefined ? 1 : arguments[2];
 
 
-	                        if (x < 0 || x > this.width || z < 0 || z > this.height) {
+	                        if (x < 0 || x > this.width || z < 0 || z > this.depth) {
 
 	                                switch (edgeFlag) {
 
 	                                        case this.edgeType.WRAP:
 	                                                if (x < 0) x = this.width - x;
 	                                                if (x > this.width - 1) x = x - this.width;
-	                                                if (z < 0) z = this.height - z;
-	                                                if (z > this.height - 1) z = z - this.height;
+	                                                if (z < 0) z = this.depth - z;
+	                                                if (z > this.depth - 1) z = z - this.depth;
 	                                                break;
 
 	                                        case this.edgeType.TOZERO:
@@ -12662,7 +12769,7 @@
 	                                                if (x < 0) x = 0;
 	                                                if (x > this.width - 1) x = this.width - 1;
 	                                                if (z < 0) z = 0;
-	                                                if (z > this.height - 1) z = this.height - 1;
+	                                                if (z > this.depth - 1) z = this.depth - 1;
 	                                                return this.map[x + this.squareSize * z] / (Math.abs(xs - x) + Math.abs(zs - z));
 	                                                break;
 
@@ -12694,7 +12801,12 @@
 
 	                                return -1;
 	                        }
-	                        console.log("SETPIXEL: x:" + x + " z:" + z + " val:" + val + ' size:' + this.squareSize);
+
+	                        if (this.low > val) this.low = val;
+
+	                        if (this.high < val) this.high = val;
+
+	                        ///////////////////////////////////console.log("SETPIXEL: x:" + x + " z:" + z + " val:" + val + ' size:' + this.squareSize )
 
 	                        this.map[x + this.width * z] = val; // NOTE: was squareSize!!!!!!!
 	                }
@@ -12705,19 +12817,19 @@
 
 	        }, {
 	                key: 'initPlane',
-	                value: function initPlane(w, h) {
+	                value: function initPlane(w, d) {
 
-	                        if (this.checkParams(w, h, 0, 0)) {
+	                        if (this.checkParams(w, d, 0, 0)) {
 
 	                                this.img = this.map = null;
 
-	                                this.map = new Float32Array(w * h);
+	                                this.map = new Float32Array(w * d);
 
 	                                this.width = w;
 
-	                                this.height = h;
+	                                this.depth = d;
 
-	                                this.squareSize = Math.min(w * h); // shortest face.
+	                                this.squareSize = Math.min(w * d); // shortest face.
 	                        } else {
 
 	                                console.error('error creating Map using ' + this.type.PLANE);
@@ -12731,17 +12843,17 @@
 
 	        }, {
 	                key: 'initRandom',
-	                value: function initRandom(w, h, roughness) {
+	                value: function initRandom(w, d, roughness) {
 
-	                        if (this.checkParams(w, h, roughness, 0)) {
+	                        if (this.checkParams(w, d, roughness, 0)) {
 
-	                                this.map = new Float32Array(w * h);
+	                                this.map = new Float32Array(w * d);
 
 	                                this.width = w;
 
-	                                this.height = h;
+	                                this.depth = d;
 
-	                                this.squareSize = Math.min(w, h);
+	                                this.squareSize = Math.min(w, d);
 
 	                                this.max = this.squareSize - 1;
 
@@ -12769,17 +12881,17 @@
 
 	        }, {
 	                key: 'initDiamond',
-	                value: function initDiamond(w, h, roughness, flatten) {
+	                value: function initDiamond(w, d, roughness, flatten) {
 
-	                        if (this.checkParams(w, h, roughness, flatten)) {
+	                        if (this.checkParams(w, d, roughness, flatten)) {
 
 	                                this.img = this.map = null;
 
 	                                // Get next highest power of 2 (scale back later).
 
-	                                console.log('starting width:' + w + ' height:' + h + ' roughness:' + roughness);
+	                                console.log('starting width:' + w + ' height:' + d + ' roughness:' + roughness);
 
-	                                var n = Math.pow(2, Math.ceil(Math.log((w + h) / 2) / Math.log(2)));
+	                                var n = Math.pow(2, Math.ceil(Math.log((w + d) / 2) / Math.log(2)));
 
 	                                console.warn('random map, selecting nearest power of 2 (' + n + ' x ' + n + ')');
 
@@ -12787,7 +12899,7 @@
 
 	                                this.squareSize = n + 1;
 
-	                                this.width = this.height = n; // SQUARE
+	                                this.width = this.depth = n; // SQUARE
 
 	                                this.map = new Float32Array(this.squareSize * this.squareSize);
 
@@ -12811,7 +12923,7 @@
 
 	                                this.setPixel(0, 0, (this.getPixel(0, 1) + this.getPixel(1, 0)) / 2);
 
-	                                this.flatten(flatten); // 0.05 for small, TODO: define this parameter elsewhere!!!!!!!!!!!!!!!!!!!!!
+	                                this.flatten(flatten / this.squareSize); // if divisions = 100, shrink height 1/ 100;
 	                        } else {
 
 	                                console.error('error creating Map using ' + this.type.DIAMOND);
@@ -12823,15 +12935,15 @@
 	                 * @link https://www.html5rocks.com/en/tutorials/webgl/typed_arrays/
 	                 * @link http://stackoverflow.com/questions/39678642/trying-to-convert-imagedata-to-an-heightmap
 	                 * @param {Number} w desired heightmap width (x).
-	                 * @param {Number} h desired height (z) of heightmap.
+	                 * @param {Number} d desired height (z) of heightmap.
 	                 */
 
 	        }, {
 	                key: 'initImage',
-	                value: function initImage(w, h, path, callback) {
+	                value: function initImage(w, d, path, callback) {
 	                        var _this = this;
 
-	                        if (this.checkParams(w, h, roughness, flatten)) {}
+	                        if (this.checkParams(w, d, roughness, flatten)) {}
 
 	                        if (!this.canvas) {
 
@@ -12858,7 +12970,7 @@
 
 	                                _this.width = img.width;
 
-	                                _this.height = img.height;
+	                                _this.depth = img.height;
 
 	                                _this.squareSize = Math.min(w, h); // largest square area starting with 0, 0
 
@@ -13000,15 +13112,23 @@
 
 	        }, {
 	                key: 'flatten',
-	                value: function flatten(percent) {
+	                value: function flatten(scale) {
+
+	                        var val = void 0;
 
 	                        if (this.map && this.map.length) {
 
 	                                var map = this.map;
 
-	                                for (var i = 0, len = this.map.length; i < len; i++) {
+	                                for (var i = 0, len = map.length; i < len; i++) {
 
-	                                        map[i] *= percent;
+	                                        map[i] *= scale;
+
+	                                        val = map[i];
+
+	                                        if (this.high < val) this.high = val;
+
+	                                        if (this.low > val) this.low = val;
 	                                }
 	                        }
 	                }
@@ -13039,9 +13159,9 @@
 
 	                                var xScale = this.width / w;
 
-	                                var zScale = this.height / h;
+	                                var zScale = this.depth / h;
 
-	                                console.log('original width:' + this.width + ' new:' + w + 'original height:' + this.height + ' new:' + h);
+	                                console.log('original width:' + this.width + ' new:' + w + 'original height:' + this.depth + ' new:' + h);
 
 	                                console.log('xScale:' + xScale + ' zScale:' + zScale);
 
@@ -13059,7 +13179,7 @@
 
 	                                this.width = w;
 
-	                                this.height = h;
+	                                this.depth = h;
 
 	                                this.squareSize = Math.min(w, h);
 
@@ -13089,7 +13209,7 @@
 	                        // Our x and z, scaled to heightmap divisions.
 
 	                        x *= this.width;
-	                        z *= this.height;
+	                        z *= this.depth;
 
 	                        // Points above and below our position.
 

@@ -841,13 +841,122 @@ export default class Prim {
 
     }
 
+    geometryIcoSphere ( prim ) {
+
+        let vec3 = this.glMatrix.vec3;
+
+        let vertices = [];
+
+        let indices = [];
+
+        let texCoords = [];
+
+        let normals = [];
+
+        let colors = [];
+
+        var t = 0.5 + Math.sqrt(5) / 2;
+
+        vertices.push( -1, +t,  0 );
+        vertices.push( +1, +t,  0 );
+        vertices.push( -1, -t,  0 );
+        vertices.push( +1, -t,  0 );
+
+        vertices.push( 0, -1, +t );
+        vertices.push( 0, +1, +t );
+        vertices.push( 0, -1, -t );
+        vertices.push( 0, +1, -t );
+
+        vertices.push( +t,  0, -1 );
+        vertices.push( +t,  0, +1 );
+        vertices.push( -t,  0, -1 );
+        vertices.push( -t,  0, +1 );
+
+        indices.push( 0, 11, 5 )
+        indices.push( 0, 5, 1 )
+        indices.push( 0, 1, 7 )
+        indices.push( 0, 7, 10 )
+        indices.push( 0, 10, 11 )
+
+        indices.push( 1, 5, 9 )
+        indices.push( 5, 11, 4 )
+        indices.push( 11, 10, 2 )
+        indices.push( 10, 7, 6 )
+        indices.push( 7, 1, 8 )
+
+        indices.push( 3, 9, 4 )
+        indices.push( 3, 4, 2 )
+        indices.push( 3, 2, 6 )
+        indices.push( 3, 6, 8 )
+        indices.push( 3, 8, 9 )
+
+        indices.push( 4, 9, 5 )
+        indices.push( 2, 4, 11 )
+        indices.push( 6, 2, 10 )
+        indices.push( 8, 6, 7 )
+        indices.push( 9, 8, 1 )
+
+        let i, u, v, x, y, z, normal;
+
+        // Subdivide.
+
+        // Normalize.
+
+        for ( i = 0; i < vertices.length; i += 3 ) {
+
+            x = vertices[i];
+            y = vertices[i + 1];
+            z = vertices[i + 2];
+
+            var len = x*x + y*y + z*z;
+
+            if (len > 0) {
+                //TODO: evaluate use of glm_invsqrt here?
+                len = 1 / Math.sqrt(len);
+                vertices[i] *= len;
+                vertices[i + 1] *= len;
+                vertices[i + 2] *= len;
+            }
+
+        }
+
+
+        // Normals
+
+        for ( i = 0; i < vertices.length; i+=3 ) {
+
+            //var n = vec3.normalize( vec3.create(), [ vertices[i], vertices[i+1], vertices[i+2]])
+
+            // get UV from unit icosphere
+            u = 0.5 * ( -( Math.atan2( vertices[ i + 2], -vertices[ i ] ) / Math.PI) + 1.0);
+            v = 0.5 + Math.asin(vertices[ i + 1]) / Math.PI;
+            texCoords.push( 1- u, v );
+
+            // normals
+            normals.push( vertices[i], vertices[i+1], vertices[i+2])
+
+            colors.push( 1, 1, 1, 1 );
+
+        }
+
+        window.vertices = vertices;
+        window.indices = indices;
+        window.texCoords = texCoords;
+        window.normals = normals;
+        window.colors = colors;
+
+
+        return this.createBuffers ( vertices, indices, texCoords, normals, colors );
+
+    }
+
     /** 
      * Icosphere, iterated from icosohedron.
      * http://blog.andreaskahler.com/2009/06/creating-icosphere-mesh-in-code.html
      * 
      * https://github.com/hughsk/icosphere/blob/master/index.js
      */
-    geometryIcoSphere ( prim ) {
+    geometryIco ( prim ) {
 
             let sideOrientation = options.sideOrientation || BABYLON.Mesh.DEFAULTSIDE;
             let radius = options.radius || 1;
@@ -908,6 +1017,8 @@ export default class Prim {
                 1, 3,
                 2, 4 // 23: B + 12
             ];
+
+
             // Vertices[0, 1, ...9, A, B] : position on UV plane
             // '+' indicate duplicate position to be fixed (3,9:0,2,3,4,7,8,A,B)
             // First island of uv mapping
@@ -944,7 +1055,7 @@ export default class Prim {
             //    / 14 \/ 9  \/  3 \
             //   ===================
             // uv step is u:1 or 0.5, v:cos(30)=sqrt(3)/2, ratio approx is 84/97
-/*
+
             let ustep = 138 / 1024;
             let vstep = 239 / 1024;
             let uoffset = 60 / 1024;
@@ -962,11 +1073,11 @@ export default class Prim {
                 0, 1, 1, 1, 0 //  15 - 19
             ];
             let indices = [];
-            let positions = [];
+            let vertices = [];
             let normals = [];
-            let uvs = [];
+            let texCoords = [];
             let current_indice = 0;
-            // prepare array of 3 vector (empty) (to be worked in place, shared for each face)
+           // prepare array of 3 vector (empty) (to be worked in place, shared for each face)
             let face_vertex_pos = new Array(3);
             let face_vertex_uv = new Array(3);
             let v012;
@@ -974,8 +1085,9 @@ export default class Prim {
                 face_vertex_pos[v012] = BABYLON.Vector3.Zero();
                 face_vertex_uv[v012] = BABYLON.Vector2.Zero();
             }
-            // create all with normals
+
             for (let face = 0; face < 20; face++) {
+
                 // 3 vertex per face
                 for (v012 = 0; v012 < 3; v012++) {
                     // look up vertex 0,1,2 to its index in 0 to 11 (or 23 including alias)
@@ -987,43 +1099,21 @@ export default class Prim {
                     // uv Coordinates from vertex ID
                     face_vertex_uv[v012].copyFromFloats(ico_vertexuv[2 * v_id] * ustep + uoffset + island[face] * island_u_offset, ico_vertexuv[2 * v_id + 1] * vstep + voffset + island[face] * island_v_offset);
                 }
-                // Subdivide the face (interpolate pos, norm, uv)
-                // - pos is linear interpolation, then projected to sphere (converge polyhedron to sphere)
-                // - norm is linear interpolation of vertex corner normal
-                //   (to be checked if better to re-calc from face vertex, or if approximation is OK ??? )
-                // - uv is linear interpolation
-                //
-                // Topology is as below for sub-divide by 2
-                // vertex shown as v0,v1,v2
-                // interp index is i1 to progress in range [v0,v1[
-                // interp index is i2 to progress in range [v0,v2[
-                // face index as  (i1,i2)  for /\  : (i1,i2),(i1+1,i2),(i1,i2+1)
-                //            and (i1,i2)' for \/  : (i1+1,i2),(i1+1,i2+1),(i1,i2+1)
-                //
-                //
-                //                    i2    v2
-                //                    ^    ^
-                //                   /    / \
-                //                  /    /   \
-                //                 /    /     \
-                //                /    / (0,1) \
-                //               /    #---------\
-                //              /    / \ (0,0)'/ \
-                //             /    /   \     /   \
-                //            /    /     \   /     \
-                //           /    / (0,0) \ / (1,0) \
-                //          /    #---------#---------\
-                //              v0                    v1
-                //
-                //              --------------------> i1
-                //
-                // interp of (i1,i2):
-                //  along i2 :  x0=lerp(v0,v2, i2/S) <---> x1=lerp(v1,v2, i2/S)
-                //  along i1 :  lerp(x0,x1, i1/(S-i2))
-                //
-                // centroid of triangle is needed to get help normal computation
-                //  (c1,c2) are used for centroid location
-                let interp_vertex = function (i1, i2, c1, c2) {
+
+                // create all with normals
+                for (let face = 0; face < 20; face++) {
+                    // 3 vertex per face
+                    for (v012 = 0; v012 < 3; v012++) {
+                        // look up vertex 0,1,2 to its index in 0 to 11 (or 23 including alias)
+                        let v_id = ico_indices[3 * face + v012];
+                        // vertex have 3D position (x,y,z)
+                        face_vertex_pos[v012].copyFromFloats(ico_vertices[3 * vertices_unalias_id[v_id]], ico_vertices[3 * vertices_unalias_id[v_id] + 1], ico_vertices[3 * vertices_unalias_id[v_id] + 2]);
+                        // Normalize to get normal, then scale to radius
+                        face_vertex_pos[v012].normalize().scaleInPlace(radius);
+                        // uv Coordinates from vertex ID
+                        face_vertex_uv[v012].copyFromFloats(ico_vertexuv[2 * v_id] * ustep + uoffset + island[face] * island_u_offset, ico_vertexuv[2 * v_id + 1] * vstep + voffset + island[face] * island_v_offset);
+
+                    let interp_vertex = function (i1, i2, c1, c2) {
                     // vertex is interpolated from
                     //   - face_vertex_pos[0..2]
                     //   - face_vertex_uv[0..2]
@@ -1050,14 +1140,15 @@ export default class Prim {
                     let uv_x0 = BABYLON.Vector2.Lerp(face_vertex_uv[0], face_vertex_uv[2], i2 / subdivisions);
                     let uv_x1 = BABYLON.Vector2.Lerp(face_vertex_uv[1], face_vertex_uv[2], i2 / subdivisions);
                     let uv_interp = (subdivisions === i2) ? face_vertex_uv[2] : BABYLON.Vector2.Lerp(uv_x0, uv_x1, i1 / (subdivisions - i2));
-                    positions.push(pos_interp.x * radiusX, pos_interp.y * radiusY, pos_interp.z * radiusZ);
+                    vertices.push(pos_interp.x * radiusX, pos_interp.y * radiusY, pos_interp.z * radiusZ);
                     normals.push(vertex_normal.x, vertex_normal.y, vertex_normal.z);
-                    uvs.push(uv_interp.x, uv_interp.y);
+                    texCoords.push(uv_interp.x, uv_interp.y);
                     // push each vertex has member of a face
                     // Same vertex can belong to multiple face, it is pushed multiple time (duplicate vertex are present)
                     indices.push(current_indice);
                     current_indice++;
                 };
+
                 for (let i2 = 0; i2 < subdivisions; i2++) {
                     for (let i1 = 0; i1 + i2 < subdivisions; i1++) {
                         // face : (i1,i2)  for /\  :
@@ -1073,14 +1164,23 @@ export default class Prim {
                             interp_vertex(i1, i2 + 1, i1 + 2.0 / 3, i2 + 2.0 / 3);
                         }
                     }
+
+
                 }
+
+                    }
+
+                }
+
             }
+
+            /*
             // Sides
-            VertexData._ComputeSides(sideOrientation, positions, indices, normals, uvs);
+            //VertexData._ComputeSides(sideOrientation, vertices, indices, normals, uvs);
             // Result
             let vertexData = new VertexData();
             vertexData.indices = indices;
-            vertexData.positions = positions;
+            vertexData.vertices = vertices;
             vertexData.normals = normals;
             vertexData.uvs = uvs;
             return vertexData;
@@ -1138,7 +1238,9 @@ export default class Prim {
 
             prim.heightMap = new Map2d( this.util );
 
-            prim.heightMap[ prim.heightMap.type.DIAMOND ]( prim.divisions[0], prim.divisions[2], 0.2, 0.05 );
+            // roughness 0.2 of 0-1, flatten = 1 of 0-1;
+
+            prim.heightMap[ prim.heightMap.type.DIAMOND ]( prim.divisions[0], prim.divisions[2], 0.6, 1 );
 
             //prim.heightMap.scale( 165, 165 );
 

@@ -46,7 +46,11 @@ export default class Map2d {
 
         this.width = 0;
 
-        this.height = 0;
+        this.depth = 0;
+
+        this.low = 0;
+
+        this.high = 0;
 
         this.map = null; // actual heightmap
 
@@ -60,11 +64,11 @@ export default class Map2d {
 
     }
 
-    checkParams ( w, h, roughness, flatten ) {
+    checkParams ( w, d, roughness, flatten ) {
 
-        if( w < 1 || h < 1 ) {
+        if( w < 1 || d < 1 ) {
 
-            console.error( 'invalid map width or height, was:' + w + ', ' + h );
+            console.error( 'invalid map width or height, was:' + w + ', ' + d );
 
             return false;
 
@@ -99,15 +103,15 @@ export default class Map2d {
      */
     getPixel ( x, z, edgeFlag = 1 ) {
 
-        if ( x < 0 || x > this.width || z < 0 || z > this.height ) {
+        if ( x < 0 || x > this.width || z < 0 || z > this.depth ) {
 
             switch ( edgeFlag ) {
 
                 case this.edgeType.WRAP:
                     if ( x < 0 ) x = this.width - x;
                     if ( x > this.width - 1 ) x = x - this.width;
-                    if ( z < 0 ) z = this.height - z;
-                    if ( z > this.height - 1 ) z = z - this.height;
+                    if ( z < 0 ) z = this.depth - z;
+                    if ( z > this.depth - 1 ) z = z - this.depth;
                     break;
 
                 case this.edgeType.TOZERO:
@@ -116,7 +120,7 @@ export default class Map2d {
                     if ( x < 0 ) x = 0;
                     if( x > this.width - 1 ) x = this.width - 1;
                     if( z < 0 ) z = 0;
-                    if( z > this.height - 1 ) z = this.height - 1;
+                    if( z > this.depth - 1 ) z = this.depth - 1;
                     return this.map[ x + this.squareSize * z ] / ( Math.abs( xs - x ) + Math.abs( zs - z ) );
                     break;
 
@@ -148,7 +152,12 @@ export default class Map2d {
             return -1;
 
         }
-        console.log("SETPIXEL: x:" + x + " z:" + z + " val:" + val + ' size:' + this.squareSize )
+
+        if ( this.low > val ) this.low = val;
+
+        if( this.high < val ) this.high = val;
+
+        ///////////////////////////////////console.log("SETPIXEL: x:" + x + " z:" + z + " val:" + val + ' size:' + this.squareSize )
 
         this.map[ x + this.width * z ] = val; // NOTE: was squareSize!!!!!!!
 
@@ -157,19 +166,19 @@ export default class Map2d {
     /** 
      * Create a completely flat Map.
      */
-    initPlane ( w, h ) {
+    initPlane ( w, d ) {
 
-        if ( this.checkParams ( w, h, 0, 0 ) ) {
+        if ( this.checkParams ( w, d, 0, 0 ) ) {
 
             this.img = this.map = null;
 
-            this.map = new Float32Array( w * h );
+            this.map = new Float32Array( w * d );
 
             this.width = w;
 
-            this.height = h;
+            this.depth = d;
 
-            this.squareSize = Math.min( w * h ); // shortest face.
+            this.squareSize = Math.min( w * d ); // shortest face.
 
         } else {
 
@@ -183,17 +192,17 @@ export default class Map2d {
      * Generate a Map using completely random numbers clamped. 
      * to a range.
      */
-    initRandom ( w, h, roughness ) {
+    initRandom ( w, d, roughness ) {
 
-        if( this.checkParams( w, h, roughness, 0 ) ) {
+        if( this.checkParams( w, d, roughness, 0 ) ) {
 
-            this.map = new Float32Array( w * h );
+            this.map = new Float32Array( w * d );
 
             this.width = w;
 
-            this.height = h;
+            this.depth = d;
 
-            this.squareSize = Math.min( w, h );
+            this.squareSize = Math.min( w, d );
 
             this.max = this.squareSize - 1;
 
@@ -222,17 +231,17 @@ export default class Map2d {
      * @param {Boolean} create if true, make a proceedural heightmap using diamond algorithm.
      * @param {Number} roughness if create === true, assign a roughness (0 - 1) to generated terrain.
      */
-    initDiamond ( w, h, roughness, flatten ) {
+    initDiamond ( w, d, roughness, flatten ) {
 
-        if( this.checkParams( w, h, roughness, flatten ) ) {
+        if( this.checkParams( w, d, roughness, flatten ) ) {
 
             this.img = this.map = null;
 
             // Get next highest power of 2 (scale back later).
 
-            console.log('starting width:' + w + ' height:' + h + ' roughness:' + roughness );
+            console.log('starting width:' + w + ' height:' + d + ' roughness:' + roughness );
 
-            let n = Math.pow( 2, Math.ceil( Math.log( ( w + h ) / 2 ) / Math.log( 2 ) ) );
+            let n = Math.pow( 2, Math.ceil( Math.log( ( w + d ) / 2 ) / Math.log( 2 ) ) );
 
             console.warn( 'random map, selecting nearest power of 2 (' + n + ' x ' + n + ')' );
 
@@ -240,7 +249,7 @@ export default class Map2d {
 
             this.squareSize = n + 1;
 
-            this.width = this.height = n; // SQUARE
+            this.width = this.depth = n; // SQUARE
 
             this.map = new Float32Array( this.squareSize * this.squareSize );
 
@@ -264,7 +273,7 @@ export default class Map2d {
 
             this.setPixel( 0, 0, (this.getPixel( 0, 1 ) + this.getPixel( 1, 0 ) ) / 2 );
 
-            this.flatten( flatten ); // 0.05 for small, TODO: define this parameter elsewhere!!!!!!!!!!!!!!!!!!!!!
+            this.flatten( flatten / this.squareSize ); // if divisions = 100, shrink height 1/ 100;
 
             } else {
 
@@ -279,11 +288,11 @@ export default class Map2d {
      * @link https://www.html5rocks.com/en/tutorials/webgl/typed_arrays/
      * @link http://stackoverflow.com/questions/39678642/trying-to-convert-imagedata-to-an-heightmap
      * @param {Number} w desired heightmap width (x).
-     * @param {Number} h desired height (z) of heightmap.
+     * @param {Number} d desired height (z) of heightmap.
      */
-    initImage ( w, h, path, callback ) {
+    initImage ( w, d, path, callback ) {
 
-        if( this.checkParams( w, h, roughness, flatten ) ) {
+        if( this.checkParams( w, d, roughness, flatten ) ) {
 
         }
 
@@ -314,7 +323,7 @@ export default class Map2d {
 
             this.width = img.width;
 
-            this.height = img.height;
+            this.depth = img.height;
 
             this.squareSize = Math.min( w, h ); // largest square area starting with 0, 0
 
@@ -444,28 +453,37 @@ export default class Map2d {
 
     }
 
-
     /* 
      * ---------------------------------------
      * SCALING/SMOOTHING ALGORITHMS
      * ---------------------------------------
      */
 
+
     /** 
      * Scale heightMap y values (0.1 = 1/10 the max), 
      * passing 0 will completely flatten the map.
      */
-    flatten ( percent ) {
+    flatten ( scale ) {
+
+        let val;
 
         if( this.map && this.map.length ) {
 
             let map = this.map;
 
-            for ( let i = 0, len = this.map.length; i < len; i++ ) {
+            for ( let i = 0, len = map.length; i < len; i++ ) {
 
-                map[i] *= percent;
+                map[ i ] *= scale;
+
+                val = map[ i ];
+
+                if( this.high < val ) this.high = val;
+
+                if( this.low > val ) this.low = val;
 
             }
+
         }
 
     }
@@ -493,9 +511,9 @@ export default class Map2d {
 
             let xScale = this.width / w;
 
-            let zScale = this.height / h;
+            let zScale = this.depth / h;
 
-            console.log('original width:' + this.width + ' new:' + w + 'original height:' + this.height + ' new:' + h )
+            console.log('original width:' + this.width + ' new:' + w + 'original height:' + this.depth + ' new:' + h )
 
             console.log('xScale:' + xScale + ' zScale:' + zScale);
 
@@ -515,7 +533,7 @@ export default class Map2d {
 
         this.width = w;
 
-        this.height = h;
+        this.depth = h;
 
         this.squareSize = Math.min( w, h );
 
@@ -544,7 +562,7 @@ export default class Map2d {
         // Our x and z, scaled to heightmap divisions.
 
         x *= this.width;
-        z *= this.height;
+        z *= this.depth;
 
         // Points above and below our position.
 
