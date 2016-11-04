@@ -841,6 +841,118 @@ export default class Prim {
 
     }
 
+    /** 
+     * Get a midpoint along a face side in icosphere
+     */
+    getMidPoint ( a, b, midPoints ) {
+
+        var point = [
+            ( a[0] + b[0] ) / 2, 
+            ( a[1] + b[1] ) / 2, 
+            ( a[2] + b[2] ) / 2
+        ];
+
+        var pointKey = point[ 0 ].toPrecision( 6 ) + ','
+                     + point[ 1 ].toPrecision( 6 ) + ','
+                     + point[ 2 ].toPrecision( 6 );
+
+        var cachedPoint = midPoints[ pointKey ];
+
+        if ( cachedPoint ) {
+
+            return cachedPoint;
+
+        } else {
+
+            return ( midPoints[ pointKey ] = point );
+
+        }
+
+    }
+
+    /** 
+     * Given an icosphere, subdivide
+     */
+    subDivideIco( vertices, indices ) {
+
+        var newCells = [];
+        var newPositions = [];
+        var midpoints = {};
+        //var f = [0, 1, 2];
+        let i, l = 0;
+
+        for (i = 0; i < indices.length; i+=3 ) {
+
+            var c0 = indices[i];
+            var c1 = indices[i + 1];
+            var c2 = indices[i + 2];
+
+            //console.log('c0:' + c0 + ' c1:' + c1 + ' c2:' + c2)
+
+            var v0 = [ vertices[ c0 ], vertices[ c0 + 1 ], vertices[ c0 + 2 ] ];
+            var v1 = [ vertices[ c1 ], vertices[ c1 + 1 ], vertices[ c1 + 2 ] ];
+            var v2 = [ vertices[ c2 ], vertices[ c2 + 1 ], vertices[ c2 + 2 ] ];
+
+            var a = this.getMidPoint( v0, v1, midpoints );
+            var b = this.getMidPoint( v1, v2, midpoints );
+            var c = this.getMidPoint( v2, v0, midpoints );
+
+            var ai = newPositions.indexOf(a) 
+            if (ai === -1) ai = l++, newPositions.push(a)
+            var bi = newPositions.indexOf(b)
+            if (bi === -1) bi = l++, newPositions.push(b)
+            var ci = newPositions.indexOf(c)
+            if (ci === -1) ci = l++, newPositions.push(c)
+
+            var v0i = newPositions.indexOf(v0)
+            if (v0i === -1) v0i = l++, newPositions.push(v0)
+            var v1i = newPositions.indexOf(v1)
+            if (v1i === -1) v1i = l++, newPositions.push(v1)
+            var v2i = newPositions.indexOf(v2)
+            if (v2i === -1) v2i = l++, newPositions.push(v2)
+
+            newCells.push(v0i, ai, ci)
+            newCells.push(v1i, bi, ai)
+            newCells.push(v2i, ci, bi)
+            newCells.push(ai, bi, ci)
+
+    }
+
+        vertices = [];
+
+        for( i = 0; i < newPositions.length; i++ ) {
+
+            vertices.push(newPositions[i][0], newPositions[i][1], newPositions[i][2]);
+
+        }
+
+        indices = [];
+
+        for ( i = 0; i < newCells.length; i++ ) {
+            indices.push(newCells[i])
+        }
+
+        console.log('new vertices:' + vertices.length + ' indices:' + indices.length)
+
+        // flatten vertices
+
+        return {
+            indices: indices,
+            vertices: vertices
+        }
+
+    }
+
+    /** 
+     * https://gamedevdaily.io/four-ways-to-create-a-mesh-for-a-sphere-d7956b825db4#.lkbq2omq5
+     * https://www.geometrictools.com/Samples/Geometrics.html
+     *
+     * https://github.com/glo-js/primitive-icosphere
+     * https://github.com/hughsk/icosphere
+     * http://mft-dev.dk/uv-mapping-sphere/
+     * http://donhavey.com/blog/tutorials/tutorial-3-the-icosahedron-sphere/
+     * http://blog.andreaskahler.com/2009/06/creating-icosphere-mesh-in-code.html
+     */
     geometryIcoSphere ( prim ) {
 
         let vec3 = this.glMatrix.vec3;
@@ -896,9 +1008,30 @@ export default class Prim {
         indices.push( 8, 6, 7 )
         indices.push( 9, 8, 1 )
 
-        let i, u, v, x, y, z, normal;
+        let i, u, v, x, y, z, ico, normal;
 
         // Subdivide.
+
+        console.log('original vertices:' + vertices.length + ' indices:' + indices.length);
+
+        //while (subdivisions-- > 0) {
+            ico = this.subDivideIco( vertices, indices );
+            vertices = ico.vertices;
+            indices = ico.indices;
+            ico = this.subDivideIco( vertices, indices );
+            vertices = ico.vertices;
+            indices = ico.indices;
+            ico = this.subDivideIco( vertices, indices );
+            vertices = ico.vertices;
+            indices = ico.indices;
+
+        //}
+
+        window.vertices = vertices;
+        window.indices = indices;
+
+        //vertices = ico.vertices;
+        //indices = ico.indices;
 
         // Normalize.
 
@@ -919,7 +1052,6 @@ export default class Prim {
             }
 
         }
-
 
         // Normals
 
@@ -972,7 +1104,7 @@ export default class Prim {
                 0, -1, -t, 0, 1, -t, 0, -1, t, 0, 1, t,
                 t, 0, 1, t, 0, -1, -t, 0, 1, -t, 0, -1 // v8-11
             ];
-            // index of 3 vertex makes a face of icopshere
+            // index of 3 vertex makes a face of icosphere
             let ico_indices = [
                 0, 11, 5, 0, 5, 1, 0, 1, 7, 0, 7, 10, 12, 22, 23,
                 1, 5, 20, 5, 11, 4, 23, 22, 13, 22, 18, 6, 7, 1, 8,
