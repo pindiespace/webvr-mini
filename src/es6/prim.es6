@@ -62,6 +62,11 @@ export default class Prim {
 
         };
 
+        this.DEFAULT_SIDE = 0;
+        this.FRONT_SIDE = 1;
+        this.BACK_SIDE = 1;
+        this.DOUBLE_SIDE = 2;
+
     }
 
     /** 
@@ -443,6 +448,62 @@ export default class Prim {
         }
 
     }
+
+    computeSides ( sideOrientation, positions, indices, normals, uvs ) {
+
+            var li = indices.length;
+            var ln = normals.length;
+            var i;
+            var n;
+            sideOrientation = sideOrientation || this.DEFAULT_SIDE;
+
+            switch (sideOrientation) {
+
+                case this.FRONT_SIDE:
+                    // nothing changed
+                    break;
+
+                case this.BACK_SIDE:
+                    var tmp;
+                    // indices
+                    for (i = 0; i < li; i += 3) {
+                        tmp = indices[i];
+                        indices[i] = indices[i + 2];
+                        indices[i + 2] = tmp;
+                    }
+                    // normals
+                    for (n = 0; n < ln; n++) {
+                        normals[n] = -normals[n];
+                    }
+                    break;
+
+                case this.DOUBLE_SIDE:
+                    // positions
+                    var lp = positions.length;
+                    var l = lp / 3;
+                    for (var p = 0; p < lp; p++) {
+                        positions[lp + p] = positions[p];
+                    }
+                    // indices
+                    for ( i = 0; i < li; i += 3) {
+                        indices[i + li] = indices[i + 2] + l;
+                        indices[i + 1 + li] = indices[i + 1] + l;
+                        indices[i + 2 + li] = indices[i] + l;
+                    }
+                    // normals
+                    for (n = 0; n < ln; n++) {
+                        normals[ln + n] = -normals[n];
+                    }
+                    // uvs
+                    var lu = uvs.length;
+                    for (var u = 0; u < lu; u++) {
+                        uvs[u + lu] = uvs[u];
+                    }
+                    break;
+            }
+
+    }
+
 
     /* 
      * ---------------------------------------
@@ -1035,6 +1096,294 @@ export default class Prim {
     // Geometry prebuilt
     // http://paulbourke.net/geometry/roundcube/
 
+generateIcosahedron()
+{
+    var phi = (1.0 + Math.sqrt(5.0)) / 2.0;
+    var du = 1.0 / Math.sqrt(phi * phi + 1.0);
+    var dv = phi * du;
+    
+    nodes =
+    [
+        { p: new Vector3(0, +dv, +du), e: [], f: [] },
+        { p: new Vector3(0, +dv, -du), e: [], f: [] },
+        { p: new Vector3(0, -dv, +du), e: [], f: [] },
+        { p: new Vector3(0, -dv, -du), e: [], f: [] },
+        { p: new Vector3(+du, 0, +dv), e: [], f: [] },
+        { p: new Vector3(-du, 0, +dv), e: [], f: [] },
+        { p: new Vector3(+du, 0, -dv), e: [], f: [] },
+        { p: new Vector3(-du, 0, -dv), e: [], f: [] },
+        { p: new Vector3(+dv, +du, 0), e: [], f: [] },
+        { p: new Vector3(+dv, -du, 0), e: [], f: [] },
+        { p: new Vector3(-dv, +du, 0), e: [], f: [] },
+        { p: new Vector3(-dv, -du, 0), e: [], f: [] },
+    ];
+    
+    edges =
+    [
+        { n: [  0,  1, ], f: [], },
+        { n: [  0,  4, ], f: [], },
+        { n: [  0,  5, ], f: [], },
+        { n: [  0,  8, ], f: [], },
+        { n: [  0, 10, ], f: [], },
+        { n: [  1,  6, ], f: [], },
+        { n: [  1,  7, ], f: [], },
+        { n: [  1,  8, ], f: [], },
+        { n: [  1, 10, ], f: [], },
+        { n: [  2,  3, ], f: [], },
+        { n: [  2,  4, ], f: [], },
+        { n: [  2,  5, ], f: [], },
+        { n: [  2,  9, ], f: [], },
+        { n: [  2, 11, ], f: [], },
+        { n: [  3,  6, ], f: [], },
+        { n: [  3,  7, ], f: [], },
+        { n: [  3,  9, ], f: [], },
+        { n: [  3, 11, ], f: [], },
+        { n: [  4,  5, ], f: [], },
+        { n: [  4,  8, ], f: [], },
+        { n: [  4,  9, ], f: [], },
+        { n: [  5, 10, ], f: [], },
+        { n: [  5, 11, ], f: [], },
+        { n: [  6,  7, ], f: [], },
+        { n: [  6,  8, ], f: [], },
+        { n: [  6,  9, ], f: [], },
+        { n: [  7, 10, ], f: [], },
+        { n: [  7, 11, ], f: [], },
+        { n: [  8,  9, ], f: [], },
+        { n: [ 10, 11, ], f: [], },
+    ];
+    
+    faces =
+    [
+        { n: [  0,  1,  8 ], e: [  0,  7,  3 ], },
+        { n: [  0,  4,  5 ], e: [  1, 18,  2 ], },
+        { n: [  0,  5, 10 ], e: [  2, 21,  4 ], },
+        { n: [  0,  8,  4 ], e: [  3, 19,  1 ], },
+        { n: [  0, 10,  1 ], e: [  4,  8,  0 ], },
+        { n: [  1,  6,  8 ], e: [  5, 24,  7 ], },
+        { n: [  1,  7,  6 ], e: [  6, 23,  5 ], },
+        { n: [  1, 10,  7 ], e: [  8, 26,  6 ], },
+        { n: [  2,  3, 11 ], e: [  9, 17, 13 ], },
+        { n: [  2,  4,  9 ], e: [ 10, 20, 12 ], },
+        { n: [  2,  5,  4 ], e: [ 11, 18, 10 ], },
+        { n: [  2,  9,  3 ], e: [ 12, 16,  9 ], },
+        { n: [  2, 11,  5 ], e: [ 13, 22, 11 ], },
+        { n: [  3,  6,  7 ], e: [ 14, 23, 15 ], },
+        { n: [  3,  7, 11 ], e: [ 15, 27, 17 ], },
+        { n: [  3,  9,  6 ], e: [ 16, 25, 14 ], },
+        { n: [  4,  8,  9 ], e: [ 19, 28, 20 ], },
+        { n: [  5, 11, 10 ], e: [ 22, 29, 21 ], },
+        { n: [  6,  9,  8 ], e: [ 25, 28, 24 ], },
+        { n: [  7, 10, 11 ], e: [ 26, 29, 27 ], },
+    ];
+    
+    for (var i = 0; i < edges.length; ++i)
+        for (var j = 0; j < edges[i].n.length; ++j)
+            nodes[j].e.push(i);
+    
+    for (var i = 0; i < faces.length; ++i)
+        for (var j = 0; j < faces[i].n.length; ++j)
+            nodes[j].f.push(i);
+    
+    for (var i = 0; i < faces.length; ++i)
+        for (var j = 0; j < faces[i].e.length; ++j)
+            edges[j].f.push(i);
+    
+    return { nodes: nodes, edges: edges, faces: faces };
+}
+
+generateSubdividedIcosahedron(degree)
+{
+    var icosahedron = generateIcosahedron();
+    
+    var nodes = [];
+    for (var i = 0; i < icosahedron.nodes.length; ++i)
+    {
+        nodes.push({ p: icosahedron.nodes[i].p, e: [], f: [] });
+    }
+    
+    var edges = [];
+    for (var i = 0; i < icosahedron.edges.length; ++i)
+    {
+        var edge = icosahedron.edges[i];
+        edge.subdivided_n = [];
+        edge.subdivided_e = [];
+        var n0 = icosahedron.nodes[edge.n[0]];
+        var n1 = icosahedron.nodes[edge.n[1]];
+        var p0 = n0.p;
+        var p1 = n1.p;
+        var delta = p1.clone().sub(p0);
+        nodes[edge.n[0]].e.push(edges.length);
+        var priorNodeIndex = edge.n[0];
+        for (var s = 1; s < degree; ++s)
+        {
+            var edgeIndex = edges.length;
+            var nodeIndex = nodes.length;
+            edge.subdivided_e.push(edgeIndex);
+            edge.subdivided_n.push(nodeIndex);
+            edges.push({ n: [ priorNodeIndex, nodeIndex ], f: [] });
+            priorNodeIndex = nodeIndex;
+            nodes.push({ p: slerp(p0, p1, s / degree), e: [ edgeIndex, edgeIndex + 1 ], f: [] });
+        }
+        edge.subdivided_e.push(edges.length);
+        nodes[edge.n[1]].e.push(edges.length);
+        edges.push({ n: [ priorNodeIndex, edge.n[1] ], f: [] });
+    }
+
+    var faces = [];
+    for (var i = 0; i < icosahedron.faces.length; ++i)
+    {
+        var face = icosahedron.faces[i];
+        var edge0 = icosahedron.edges[face.e[0]];
+        var edge1 = icosahedron.edges[face.e[1]];
+        var edge2 = icosahedron.edges[face.e[2]];
+        var point0 = icosahedron.nodes[face.n[0]].p;
+        var point1 = icosahedron.nodes[face.n[1]].p;
+        var point2 = icosahedron.nodes[face.n[2]].p;
+        var delta = point1.clone().sub(point0);
+        
+        var getEdgeNode0 = (face.n[0] === edge0.n[0])
+            ? function(k) { return edge0.subdivided_n[k]; }
+            : function(k) { return edge0.subdivided_n[degree - 2 - k]; };
+        var getEdgeNode1 = (face.n[1] === edge1.n[0])
+            ? function(k) { return edge1.subdivided_n[k]; }
+            : function(k) { return edge1.subdivided_n[degree - 2 - k]; };
+        var getEdgeNode2 = (face.n[0] === edge2.n[0])
+            ? function(k) { return edge2.subdivided_n[k]; }
+            : function(k) { return edge2.subdivided_n[degree - 2 - k]; };
+
+        var faceNodes = [];
+        faceNodes.push(face.n[0]);
+        for (var j = 0; j < edge0.subdivided_n.length; ++j)
+            faceNodes.push(getEdgeNode0(j));
+        faceNodes.push(face.n[1]);
+        for (var s = 1; s < degree; ++s)
+        {
+            faceNodes.push(getEdgeNode2(s - 1));
+            var p0 = nodes[getEdgeNode2(s - 1)].p;
+            var p1 = nodes[getEdgeNode1(s - 1)].p;
+            for (var t = 1; t < degree - s; ++t)
+            {
+                faceNodes.push(nodes.length);
+                nodes.push({ p: slerp(p0, p1, t / (degree - s)), e: [], f: [], });
+            }
+            faceNodes.push(getEdgeNode1(s - 1));
+        }
+        faceNodes.push(face.n[2]);
+        
+        var getEdgeEdge0 = (face.n[0] === edge0.n[0])
+            ? function(k) { return edge0.subdivided_e[k]; }
+            : function(k) { return edge0.subdivided_e[degree - 1 - k]; };
+        var getEdgeEdge1 = (face.n[1] === edge1.n[0])
+            ? function(k) { return edge1.subdivided_e[k]; }
+            : function(k) { return edge1.subdivided_e[degree - 1 - k]; };
+        var getEdgeEdge2 = (face.n[0] === edge2.n[0])
+            ? function(k) { return edge2.subdivided_e[k]; }
+            : function(k) { return edge2.subdivided_e[degree - 1 - k]; };
+
+        var faceEdges0 = [];
+        for (var j = 0; j < degree; ++j)
+            faceEdges0.push(getEdgeEdge0(j));
+        var nodeIndex = degree + 1;
+        for (var s = 1; s < degree; ++s)
+        {
+            for (var t = 0; t < degree - s; ++t)
+            {
+                faceEdges0.push(edges.length);
+                var edge = { n: [ faceNodes[nodeIndex], faceNodes[nodeIndex + 1], ], f: [], };
+                nodes[edge.n[0]].e.push(edges.length);
+                nodes[edge.n[1]].e.push(edges.length);
+                edges.push(edge);
+                ++nodeIndex;
+            }
+            ++nodeIndex;
+        }
+
+        var faceEdges1 = [];
+        nodeIndex = 1;
+        for (var s = 0; s < degree; ++s)
+        {
+            for (var t = 1; t < degree - s; ++t)
+            {
+                faceEdges1.push(edges.length);
+                var edge = { n: [ faceNodes[nodeIndex], faceNodes[nodeIndex + degree - s], ], f: [], };
+                nodes[edge.n[0]].e.push(edges.length);
+                nodes[edge.n[1]].e.push(edges.length);
+                edges.push(edge);
+                ++nodeIndex;
+            }
+            faceEdges1.push(getEdgeEdge1(s));
+            nodeIndex += 2;
+        }
+
+        var faceEdges2 = [];
+        nodeIndex = 1;
+        for (var s = 0; s < degree; ++s)
+        {
+            faceEdges2.push(getEdgeEdge2(s));
+            for (var t = 1; t < degree - s; ++t)
+            {
+                faceEdges2.push(edges.length);
+                var edge = { n: [ faceNodes[nodeIndex], faceNodes[nodeIndex + degree - s + 1], ], f: [], };
+                nodes[edge.n[0]].e.push(edges.length);
+                nodes[edge.n[1]].e.push(edges.length);
+                edges.push(edge);
+                ++nodeIndex;
+            }
+            nodeIndex += 2;
+        }
+        
+        nodeIndex = 0;
+        edgeIndex = 0;
+        for (var s = 0; s < degree; ++s)
+        {
+            for (t = 1; t < degree - s + 1; ++t)
+            {
+                var subFace = {
+                    n: [ faceNodes[nodeIndex], faceNodes[nodeIndex + 1], faceNodes[nodeIndex + degree - s + 1], ],
+                    e: [ faceEdges0[edgeIndex], faceEdges1[edgeIndex], faceEdges2[edgeIndex], ], };
+                nodes[subFace.n[0]].f.push(faces.length);
+                nodes[subFace.n[1]].f.push(faces.length);
+                nodes[subFace.n[2]].f.push(faces.length);
+                edges[subFace.e[0]].f.push(faces.length);
+                edges[subFace.e[1]].f.push(faces.length);
+                edges[subFace.e[2]].f.push(faces.length);
+                faces.push(subFace);
+                ++nodeIndex;
+                ++edgeIndex;
+            }
+            ++nodeIndex;
+        }
+        
+        nodeIndex = 1;
+        edgeIndex = 0;
+        for (var s = 1; s < degree; ++s)
+        {
+            for (t = 1; t < degree - s + 1; ++t)
+            {
+                var subFace = {
+                    n: [ faceNodes[nodeIndex], faceNodes[nodeIndex + degree - s + 2], faceNodes[nodeIndex + degree - s + 1], ],
+                    e: [ faceEdges2[edgeIndex + 1], faceEdges0[edgeIndex + degree - s + 1], faceEdges1[edgeIndex], ], };
+                nodes[subFace.n[0]].f.push(faces.length);
+                nodes[subFace.n[1]].f.push(faces.length);
+                nodes[subFace.n[2]].f.push(faces.length);
+                edges[subFace.e[0]].f.push(faces.length);
+                edges[subFace.e[1]].f.push(faces.length);
+                edges[subFace.e[2]].f.push(faces.length);
+                faces.push(subFace);
+                ++nodeIndex;
+                ++edgeIndex;
+            }
+            nodeIndex += 2;
+            edgeIndex += 1;
+        }
+    }
+
+    return { nodes: nodes, edges: edges, faces: faces };
+}
+
+
+    //////////////////////////////////////////////////////////////
+
     isUVBroken ( uvs, ua, ub, uc ) {
 
         let vec2 = this.glMatrix.vec2;
@@ -1517,6 +1866,8 @@ export default class Prim {
 
         let vec2 = this.glMatrix.vec2;
 
+
+
     }
 
 
@@ -1549,7 +1900,7 @@ export default class Prim {
     }
 
     /** 
-     * Generic 3d shape (e.g. collada model).
+     * Generic 3d shape (e.g. Collada model).
      * @link https://dannywoodz.wordpress.com/2014/12/16/webgl-from-scratch-loading-a-mesh/
      * https://github.com/jagenjo/litegl.js/blob/master/src/mesh.js
      */
@@ -1585,6 +1936,269 @@ export default class Prim {
         return geometry;
 
     };
+
+
+
+
+    ggggeometryIcoSphere ( prim ) {
+
+/*
+            function lerp (out, a, b, t) {
+                var ax = a[0],
+                    ay = a[1],
+                    az = a[2];
+                    out[0] = ax + t * (b[0] - ax);
+                    out[1] = ay + t * (b[1] - ay);
+                    out[2] = az + t * (b[2] - az);
+                    return out;
+            };
+*/
+
+            var sideOrientation = 0; // options.sideOrientation || 0 ; //     BABYLON.Mesh.DEFAULTSIDE;
+            var radius = 1; //options.radius || 1;
+            var flat = true; // (options.flat === undefined) ? true : options.flat;
+            var subdivisions = 4; // options.subdivisions || 4;
+            var radiusX = radius; // options.radiusX || radius;
+            var radiusY = radius; // options.radiusY || radius;
+            var radiusZ = radius; // options.radiusZ || radius;
+
+            var t = (1 + Math.sqrt(5)) / 2;
+
+            // 12 vertex x,y,z
+            var ico_vertices = [
+                -1, t, -0, 1, t, 0, -1, -t, 0, 1, -t, 0,
+                0, -1, -t, 0, 1, -t, 0, -1, t, 0, 1, t,
+                t, 0, 1, t, 0, -1, -t, 0, 1, -t, 0, -1 // v8-11
+            ];
+            // index of 3 vertex makes a face of icopshere
+            var ico_indices = [
+                0, 11, 5, 0, 5, 1, 0, 1, 7, 0, 7, 10, 12, 22, 23,
+                1, 5, 20, 5, 11, 4, 23, 22, 13, 22, 18, 6, 7, 1, 8,
+                14, 21, 4, 14, 4, 2, 16, 13, 6, 15, 6, 19, 3, 8, 9,
+                4, 21, 5, 13, 17, 23, 6, 13, 22, 19, 6, 18, 9, 8, 1
+            ];
+            // vertex for uv have aliased position, not for UV
+            var vertices_unalias_id = [
+                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+                // vertex alias
+                0,
+                2,
+                3,
+                3,
+                3,
+                4,
+                7,
+                8,
+                9,
+                9,
+                10,
+                11 // 23: B + 12
+            ];
+            // uv as integer step (not pixels !)
+            var ico_vertexuv = [
+                5, 1, 3, 1, 6, 4, 0, 0,
+                5, 3, 4, 2, 2, 2, 4, 0,
+                2, 0, 1, 1, 6, 0, 6, 2,
+                // vertex alias (for same vertex on different faces)
+                0, 4,
+                3, 3,
+                4, 4,
+                3, 1,
+                4, 2,
+                4, 4,
+                0, 2,
+                1, 1,
+                2, 2,
+                3, 3,
+                1, 3,
+                2, 4 // 23: B + 12
+            ];
+            // Vertices[0, 1, ...9, A, B] : position on UV plane
+            // '+' indicate duplicate position to be fixed (3,9:0,2,3,4,7,8,A,B)
+            // First island of uv mapping
+            // v = 4h          3+  2
+            // v = 3h        9+  4
+            // v = 2h      9+  5   B
+            // v = 1h    9   1   0
+            // v = 0h  3   8   7   A
+            //     u = 0 1 2 3 4 5 6  *a
+            // Second island of uv mapping
+            // v = 4h  0+  B+  4+
+            // v = 3h    A+  2+
+            // v = 2h  7+  6   3+
+            // v = 1h    8+  3+
+            // v = 0h
+            //     u = 0 1 2 3 4 5 6  *a
+            // Face layout on texture UV mapping
+            // ============
+            // \ 4  /\ 16 /   ======
+            //  \  /  \  /   /\ 11 /
+            //   \/ 7  \/   /  \  /
+            //    =======  / 10 \/
+            //   /\ 17 /\  =======
+            //  /  \  /  \ \ 15 /\
+            // / 8  \/ 12 \ \  /  \
+            // ============  \/ 6  \
+            // \ 18 /\  ============
+            //  \  /  \ \ 5  /\ 0  /
+            //   \/ 13 \ \  /  \  /
+            //   =======  \/ 1  \/
+            //       =============
+            //      /\ 19 /\  2 /\
+            //     /  \  /  \  /  \
+            //    / 14 \/ 9  \/  3 \
+            //   ===================
+            // uv step is u:1 or 0.5, v:cos(30)=sqrt(3)/2, ratio approx is 84/97
+            var ustep = 138 / 1024;
+            var vstep = 239 / 1024;
+            var uoffset = 60 / 1024;
+            var voffset = 26 / 1024;
+            // Second island should have margin, not to touch the first island
+            // avoid any borderline artefact in pixel rounding
+            var island_u_offset = -40 / 1024;
+            var island_v_offset = +20 / 1024;
+            // face is either island 0 or 1 :
+            // second island is for faces : [4, 7, 8, 12, 13, 16, 17, 18]
+            var island = [
+                0, 0, 0, 0, 1,
+                0, 0, 1, 1, 0,
+                0, 0, 1, 1, 0,
+                0, 1, 1, 1, 0 //  15 - 19
+            ];
+            var vertices = [];
+            var indices = [];
+            var normals = [];
+            var texCoords = [];
+
+            var current_indice = 0;
+            // prepare array of 3 vector (empty) (to be worked in place, shared for each face)
+            var face_vertex_pos = new Array(3);
+            var face_vertex_uv = new Array(3);
+            var v012;
+            for (v012 = 0; v012 < 3; v012++) {
+                face_vertex_pos[v012] = vec3.create();
+                face_vertex_uv[v012] = vec3.create();
+            }
+            // create all with normals
+            for (var face = 0; face < 20; face++) {
+                // 3 vertex per face
+                for (v012 = 0; v012 < 3; v012++) {
+                    // look up vertex 0,1,2 to its index in 0 to 11 (or 23 including alias)
+                    var v_id = ico_indices[3 * face + v012];
+                    // vertex have 3D position (x,y,z)
+                    face_vertex_pos[v012].fromValues(ico_vertices[3 * vertices_unalias_id[v_id]], ico_vertices[3 * vertices_unalias_id[v_id] + 1], ico_vertices[3 * vertices_unalias_id[v_id] + 2]);
+                    // Normalize to get normal, then scale to radius
+                    //////////////face_vertex_pos[v012].normalize().scaleInPlace(radius);
+                    face_vertex_pos[v012] = vec3.normalize( face_vertex_pos[v012], face_vertex_pos[v012])
+                    face_vertex_pos[v012] = vec3.scale(face_vertex_pos[v012], radius)
+                    // uv Coordinates from vertex ID
+                    face_vertex_uv[v012].fromValues(ico_vertexuv[2 * v_id] * ustep + uoffset + island[face] * island_u_offset, ico_vertexuv[2 * v_id + 1] * vstep + voffset + island[face] * island_v_offset);
+                }
+                // Subdivide the face (interpolate pos, norm, uv)
+                // - pos is linear interpolation, then projected to sphere (converge polyhedron to sphere)
+                // - norm is linear interpolation of vertex corner normal
+                //   (to be checked if better to re-calc from face vertex, or if approximation is OK ??? )
+                // - uv is linear interpolation
+                //
+                // Topology is as below for sub-divide by 2
+                // vertex shown as v0,v1,v2
+                // interp index is i1 to progress in range [v0,v1[
+                // interp index is i2 to progress in range [v0,v2[
+                // face index as  (i1,i2)  for /\  : (i1,i2),(i1+1,i2),(i1,i2+1)
+                //            and (i1,i2)' for \/  : (i1+1,i2),(i1+1,i2+1),(i1,i2+1)
+                //
+                //
+                //                    i2    v2
+                //                    ^    ^
+                //                   /    / \
+                //                  /    /   \
+                //                 /    /     \
+                //                /    / (0,1) \
+                //               /    #---------\
+                //              /    / \ (0,0)'/ \
+                //             /    /   \     /   \
+                //            /    /     \   /     \
+                //           /    / (0,0) \ / (1,0) \
+                //          /    #---------#---------\
+                //              v0                    v1
+                //
+                //              --------------------> i1
+                //
+                // interp of (i1,i2):
+                //  along i2 :  x0=lerp(v0,v2, i2/S) <---> x1=lerp(v1,v2, i2/S)
+                //  along i1 :  lerp(x0,x1, i1/(S-i2))
+                //
+                // centroid of triangle is needed to get help normal computation
+                //  (c1,c2) are used for centroid location
+                var interp_vertex = function (i1, i2, c1, c2) {
+                    // vertex is interpolated from
+                    //   - face_vertex_pos[0..2]
+                    //   - face_vertex_uv[0..2]
+                    var pos_x0 = vec3.lerp(vec3.create(), face_vertex_pos[0], face_vertex_pos[2], i2 / subdivisions);
+                    var pos_x1 = vec3.lerp(vec3.create(), face_vertex_pos[1], face_vertex_pos[2], i2 / subdivisions);
+                    var pos_interp = (subdivisions === i2) ? face_vertex_pos[2] : BABYLON.Vector3.Lerp(pos_x0, pos_x1, i1 / (subdivisions - i2));
+                    pos_interp.normalize();
+                    var vertex_normal;
+                    if (flat) {
+                        // in flat mode, recalculate normal as face centroid normal
+                        var centroid_x0 = vec3.lerp(vec3.create(), face_vertex_pos[0], face_vertex_pos[2], c2 / subdivisions);
+                        var centroid_x1 = vec3.lerp(vec3.create(), face_vertex_pos[1], face_vertex_pos[2], c2 / subdivisions);
+                        vertex_normal = vec3.lerp(vec3.create(), centroid_x0, centroid_x1, c1 / (subdivisions - c2));
+                    }
+                    else {
+                        // in smooth mode, recalculate normal from each single vertex position
+                        vertex_normal = vec3.create(pos_interp.x, pos_interp.y, pos_interp.z);
+                    }
+                    // Vertex normal need correction due to X,Y,Z radius scaling
+                    vertex_normal.x /= radiusX;
+                    vertex_normal.y /= radiusY;
+                    vertex_normal.z /= radiusZ;
+                    vertex_normal.normalize();
+                    var uv_x0 = vec2.lerp(vec2.create(), face_vertex_uv[0], face_vertex_uv[2], i2 / subdivisions);
+                    var uv_x1 = vec2.lerp(vec2.create(), face_vertex_uv[1], face_vertex_uv[2], i2 / subdivisions);
+                    var uv_interp = (subdivisions === i2) ? face_vertex_uv[2] : vec2.lerp(vec2.create(), uv_x0, uv_x1, i1 / (subdivisions - i2));
+                    vertices.push(pos_interp.x * radiusX, pos_interp.y * radiusY, pos_interp.z * radiusZ);
+                    normals.push(vertex_normal.x, vertex_normal.y, vertex_normal.z);
+                    texCoords.push(uv_interp.x, uv_interp.y);
+                    // push each vertex has member of a face
+                    // Same vertex can bleong to multiple face, it is pushed multiple time (duplicate vertex are present)
+                    indices.push(current_indice);
+                    current_indice++;
+                };
+                for (var i2 = 0; i2 < subdivisions; i2++) {
+                    for (var i1 = 0; i1 + i2 < subdivisions; i1++) {
+                        // face : (i1,i2)  for /\  :
+                        // interp for : (i1,i2),(i1+1,i2),(i1,i2+1)
+                        interp_vertex(i1, i2, i1 + 1.0 / 3, i2 + 1.0 / 3);
+                        interp_vertex(i1 + 1, i2, i1 + 1.0 / 3, i2 + 1.0 / 3);
+                        interp_vertex(i1, i2 + 1, i1 + 1.0 / 3, i2 + 1.0 / 3);
+                        if (i1 + i2 + 1 < subdivisions) {
+                            // face : (i1,i2)' for \/  :
+                            // interp for (i1+1,i2),(i1+1,i2+1),(i1,i2+1)
+                            interp_vertex(i1 + 1, i2, i1 + 2.0 / 3, i2 + 2.0 / 3);
+                            interp_vertex(i1 + 1, i2 + 1, i1 + 2.0 / 3, i2 + 2.0 / 3);
+                            interp_vertex(i1, i2 + 1, i1 + 2.0 / 3, i2 + 2.0 / 3);
+                        }
+                    }
+                }
+            }
+            // Sides
+            this.computeSides(sideOrientation, vertices, indices, normals, texCoords);
+            // Result
+
+            return this.createBuffers ( vertices, indices, texCoords, normals, colors );
+
+/*
+            var vertexData = new VertexData();
+            vertexData.indices = indices;
+            vertexData.vertices = vertices;
+            vertexData.normals = normals;
+            vertexData.texCoords = texCoords;
+            return vertexData;
+*/
+
+    }
+
 
      /*
      * ---------------------------------------
@@ -1639,6 +2253,10 @@ export default class Prim {
         prim.orbitRadius = 0.0;
 
         prim.orbitAngular = 0.0;
+
+        // Side to render
+
+        prim.side = this.DEFAULT_SIDE; // TODO: Normals outside, inside or both !!!!!!!!!!!!!!!!!!!! CHANGE
 
         // Waypoints for scripted motion.
 
