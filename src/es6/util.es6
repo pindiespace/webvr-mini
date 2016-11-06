@@ -51,6 +51,92 @@ export default class Util {
 
     }
 
+
+    /** 
+     * Get a succession of values from a flat array
+     * @param {Array} arr a flat array.
+     * @param {Number} idx index into the array.
+     * @param {Number} size number of elements to get. This is 
+     * also assumed to be the 'stride' through the array.
+     * @returns {Array} requested elements in an Array.
+     */
+    getArr ( arr, idx, size ) {
+
+        let alen = arguments.length;
+
+        if ( ! arr || idx < 0 || size < 1 ) {
+
+            console.error( 'getArr() invalid params, arr:' + arr + ', index:' + idx + ' size:' + size );
+
+            return -1;
+
+        }
+        
+        let o = [];
+
+        for ( let i = 2; i < size; i++ ) {
+
+                o.push( arr[ ( idx * size ) + i ] );
+
+        }
+
+        return o;
+
+    }
+
+    /** 
+     * Get an object from a 2d array. Supply a variable list of 
+     * values. The number of values is assumed to be the 'walk' size 
+     * for the array.
+     * @param {Array} arr a flat array.
+     * @param {Number} index the stride into 2d array.
+     * @param {Number...} additional arguments. The array 'stride' is 
+     * assumed equal to the number of additional parameters.
+     */
+    setArr ( arr, index ) {
+
+        let alen = arguments.length;
+
+        if ( alen < 3 ) {
+
+            console.error( 'no value or index specified' );
+
+            return -1;
+
+        }
+
+        let size = alen - 2;
+
+        for ( let i = 2; i < alen; i++ ) {
+
+            arr[ ( idx * size ) + i ] - arguments[i];
+
+        }
+
+        return idx; // ending position 
+
+    }
+
+    /** 
+     * Given a multi-dimensional array, flatten to 
+     * a single-dimensional one.
+     */
+    flatten ( arr, mutable ) {
+        var nodes = (mutable && arr) || arr.slice(); // return a new array.
+        var flattened = [];
+
+        for (var node = nodes.shift(); node !== undefined; node = nodes.shift()) {
+            if (Array.isArray(node)) {
+                nodes.unshift.apply(nodes, node);
+            } else {
+                flattened.push(node);
+            }
+        }
+
+        return flattened;
+
+    }
+
     /** 
      * Random seed.
      */

@@ -488,7 +488,7 @@
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
-	    value: true
+	        value: true
 	});
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -497,131 +497,218 @@
 
 	var Util = function () {
 
-	    /** 
-	     * Utility functions.
-	     * Mersene Twister from:
-	     */
-
-	    function Util() {
-	        _classCallCheck(this, Util);
-
-	        console.log('in Util');
-
-	        // Mersene Twister parameters
-	    }
-
-	    // Confirm we have a string (after lodash)
-
-
-	    _createClass(Util, [{
-	        key: 'isString',
-	        value: function isString(str) {
-
-	            return typeof str == 'string' || isObjectLike(str) && objToString.call(str) == stringTag || false;
-	        }
-
-	        // See if we're running in an iframe.
-
-	    }, {
-	        key: 'isIFrame',
-	        value: function isIFrame() {
-
-	            try {
-
-	                return window.self !== window.top;
-	            } catch (e) {
-
-	                return true;
-	            }
-
-	            return false;
-	        }
-	    }, {
-	        key: 'isPowerOfTwo',
-	        value: function isPowerOfTwo(n) {
-
-	            return (n & n - 1) === 0;
-	        }
-	    }, {
-	        key: 'degToRad',
-	        value: function degToRad(degrees) {
-
-	            return degrees * Math.PI / 180;
-	        }
-
 	        /** 
-	         * Random seed.
+	         * Utility functions.
+	         * Mersene Twister from:
 	         */
 
-	    }, {
-	        key: 'getSeed',
-	        value: function getSeed() {
+	        function Util() {
+	                _classCallCheck(this, Util);
 
-	            var number = void 0;
+	                console.log('in Util');
 
-	            try {
+	                // Mersene Twister parameters
+	        }
 
-	                // If the client supports the more secure crypto lib
+	        // Confirm we have a string (after lodash)
 
-	                if (Uint32Array && window.crypto && window.crypto.getRandomValues) {
 
-	                    var numbers = new Uint32Array(1);
+	        _createClass(Util, [{
+	                key: 'isString',
+	                value: function isString(str) {
 
-	                    window.crypto.getRandomValues(numbers);
-
-	                    number = numbers.length ? numbers[0] + '' : null;
+	                        return typeof str == 'string' || isObjectLike(str) && objToString.call(str) == stringTag || false;
 	                }
-	            } catch (e) {} finally {
 
-	                if (!number) {
+	                // See if we're running in an iframe.
 
-	                    number = Math.floor(Math.random() * 1e9).toString() + new Date().getTime();
+	        }, {
+	                key: 'isIFrame',
+	                value: function isIFrame() {
+
+	                        try {
+
+	                                return window.self !== window.top;
+	                        } catch (e) {
+
+	                                return true;
+	                        }
+
+	                        return false;
 	                }
-	            }
+	        }, {
+	                key: 'isPowerOfTwo',
+	                value: function isPowerOfTwo(n) {
 
-	            // process between min and max. Number could be 0-10^9
+	                        return (n & n - 1) === 0;
+	                }
+	        }, {
+	                key: 'degToRad',
+	                value: function degToRad(degrees) {
 
-	            return number;
-	        }
-	    }, {
-	        key: 'getRand',
-	        value: function getRand(min, max) {
+	                        return degrees * Math.PI / 180;
+	                }
 
-	            if (min === undefined || max === undefined) {
+	                /** 
+	                 * Get a succession of values from a flat array
+	                 * @param {Array} arr a flat array.
+	                 * @param {Number} idx index into the array.
+	                 * @param {Number} size number of elements to get. This is 
+	                 * also assumed to be the 'stride' through the array.
+	                 * @returns {Array} requested elements in an Array.
+	                 */
 
-	                max = 1;
+	        }, {
+	                key: 'getArr',
+	                value: function getArr(arr, idx, size) {
 
-	                min = 0;
-	            }
+	                        var alen = arguments.length;
 
-	            return min + (Math.random() + 1 / (1 + this.getSeed())) % 1 * (max - min);
-	        }
-	    }, {
-	        key: 'getRandInt',
-	        value: function getRandInt(range) {
+	                        if (!arr || idx < 0 || size < 1) {
 
-	            return Math.floor(Math.random() * range);
-	        }
-	    }, {
-	        key: 'getFileExtension',
-	        value: function getFileExtension(fname) {
+	                                console.error('getArr() invalid params, arr:' + arr + ', index:' + idx + ' size:' + size);
 
-	            return fname.slice((fname.lastIndexOf('.') - 1 >>> 0) + 2).toLowerCase();
-	        }
+	                                return -1;
+	                        }
 
-	        /** 
-	         * Check the values of a Prim.
-	         */
+	                        var o = [];
 
-	    }, {
-	        key: 'primReadout',
-	        value: function primReadout(prim) {
+	                        for (var i = 2; i < size; i++) {
 
-	            console.log('prim:' + prim.name + 'type:' + prim.type + ' vertex:' + prim.geometry.vertices.itemSize + ', ' + prim.geometry.vertices.numItems + ', texture:' + prim.geometry.texCoords.itemSize + ', ' + prim.geometry.texCoords.numItems + ', index:' + prim.geometry.indices.itemSize, ', ' + prim.geometry.indices.numItems + ', normals:' + prim.geometry.normals.itemSize + ', ' + prim.geometry.normals.numItems);
-	        }
-	    }]);
+	                                o.push(arr[idx * size + i]);
+	                        }
 
-	    return Util;
+	                        return o;
+	                }
+
+	                /** 
+	                 * Get an object from a 2d array. Supply a variable list of 
+	                 * values. The number of values is assumed to be the 'walk' size 
+	                 * for the array.
+	                 * @param {Array} arr a flat array.
+	                 * @param {Number} index the stride into 2d array.
+	                 * @param {Number...} additional arguments. The array 'stride' is 
+	                 * assumed equal to the number of additional parameters.
+	                 */
+
+	        }, {
+	                key: 'setArr',
+	                value: function setArr(arr, index) {
+
+	                        var alen = arguments.length;
+
+	                        if (alen < 3) {
+
+	                                console.error('no value or index specified');
+
+	                                return -1;
+	                        }
+
+	                        var size = alen - 2;
+
+	                        for (var i = 2; i < alen; i++) {
+
+	                                arr[idx * size + i] - arguments[i];
+	                        }
+
+	                        return idx; // ending position 
+	                }
+
+	                /** 
+	                 * Given a multi-dimensional array, flatten to 
+	                 * a single-dimensional one.
+	                 */
+
+	        }, {
+	                key: 'flatten',
+	                value: function flatten(arr, mutable) {
+	                        var nodes = mutable && arr || arr.slice(); // return a new array.
+	                        var flattened = [];
+
+	                        for (var node = nodes.shift(); node !== undefined; node = nodes.shift()) {
+	                                if (Array.isArray(node)) {
+	                                        nodes.unshift.apply(nodes, node);
+	                                } else {
+	                                        flattened.push(node);
+	                                }
+	                        }
+
+	                        return flattened;
+	                }
+
+	                /** 
+	                 * Random seed.
+	                 */
+
+	        }, {
+	                key: 'getSeed',
+	                value: function getSeed() {
+
+	                        var number = void 0;
+
+	                        try {
+
+	                                // If the client supports the more secure crypto lib
+
+	                                if (Uint32Array && window.crypto && window.crypto.getRandomValues) {
+
+	                                        var numbers = new Uint32Array(1);
+
+	                                        window.crypto.getRandomValues(numbers);
+
+	                                        number = numbers.length ? numbers[0] + '' : null;
+	                                }
+	                        } catch (e) {} finally {
+
+	                                if (!number) {
+
+	                                        number = Math.floor(Math.random() * 1e9).toString() + new Date().getTime();
+	                                }
+	                        }
+
+	                        // process between min and max. Number could be 0-10^9
+
+	                        return number;
+	                }
+	        }, {
+	                key: 'getRand',
+	                value: function getRand(min, max) {
+
+	                        if (min === undefined || max === undefined) {
+
+	                                max = 1;
+
+	                                min = 0;
+	                        }
+
+	                        return min + (Math.random() + 1 / (1 + this.getSeed())) % 1 * (max - min);
+	                }
+	        }, {
+	                key: 'getRandInt',
+	                value: function getRandInt(range) {
+
+	                        return Math.floor(Math.random() * range);
+	                }
+	        }, {
+	                key: 'getFileExtension',
+	                value: function getFileExtension(fname) {
+
+	                        return fname.slice((fname.lastIndexOf('.') - 1 >>> 0) + 2).toLowerCase();
+	                }
+
+	                /** 
+	                 * Check the values of a Prim.
+	                 */
+
+	        }, {
+	                key: 'primReadout',
+	                value: function primReadout(prim) {
+
+	                        console.log('prim:' + prim.name + 'type:' + prim.type + ' vertex:' + prim.geometry.vertices.itemSize + ', ' + prim.geometry.vertices.numItems + ', texture:' + prim.geometry.texCoords.itemSize + ', ' + prim.geometry.texCoords.numItems + ', index:' + prim.geometry.indices.itemSize, ', ' + prim.geometry.indices.numItems + ', normals:' + prim.geometry.normals.itemSize + ', ' + prim.geometry.normals.numItems);
+	                }
+	        }]);
+
+	        return Util;
 	}();
 
 	exports.default = Util;
@@ -3456,6 +3543,8 @@
 
 	                        SPHERE: 'geometrySphere',
 
+	                        CUBESPHERE: 'geometryCubeSphere',
+
 	                        ICOSPHERE: 'geometryIcoSphere',
 
 	                        DOME: 'geometryDome',
@@ -3642,6 +3731,7 @@
 	                                        itemSize: 3,
 
 	                                        numItems: vertices.length / 3
+
 	                                },
 
 	                                texCoords: {
@@ -3690,7 +3780,9 @@
 
 	                                        numItems: indices.length
 
-	                                }
+	                                },
+
+	                                edges: {}
 
 	                        };
 	                }
@@ -3992,7 +4084,7 @@
 	                value: function geometryPoly(prim) {}
 
 	                /** 
-	                 * Create a cube geometry of a given size (units) centered 
+	                 * Create a (non-subdivided) cube geometry of a given size (units) centered 
 	                 * on a point.
 	                 * @param {GLMatrix.Vec3} center a 3d vector defining the center.
 	                 * @param {Size} width, height, depth, with 1.0 (unit) max size
@@ -4210,6 +4302,399 @@
 	                }
 
 	                /** 
+	                 * Create a spherical object from a cube mesh. Useful for cubemaps.
+	                 */
+
+	        }, {
+	                key: 'geometryCubeSphere',
+	                value: function geometryCubeSphere(prim) {
+
+	                        var vec3 = this.glMatrix.vec3;
+
+	                        var flatten = this.util.flatten;
+
+	                        var vertices = [];
+
+	                        var indices = [];
+
+	                        var texCoords = [];
+
+	                        var normals = [];
+
+	                        var colors = [];
+
+	                        var sx = prim.dimensions[0];
+	                        var sy = prim.dimensions[1];
+	                        var sz = prim.dimensions[2];
+
+	                        var nx = prim.divisions[0]; //1.0; // ???????/
+	                        var ny = prim.divisions[1];
+	                        var nz = prim.divisions[2];
+
+	                        var numVertices = (nx + 1) * (ny + 1) * 2 + (nx + 1) * (nz + 1) * 2 + (nz + 1) * (ny + 1) * 2;
+
+	                        var positions = [];
+	                        var norms = [];
+
+	                        var vertexIndex = 0;
+
+	                        function makeSide(u, v, w, su, sv, nu, nv, pw, flipu, flipv) {
+
+	                                var vertShift = vertexIndex;
+
+	                                for (var j = 0; j <= nv; j++) {
+
+	                                        for (var i = 0; i <= nu; i++) {
+
+	                                                // Vertices require addressing by vertexIndex.
+
+	                                                var vert = positions[vertexIndex] = [0, 0, 0];
+	                                                vert[u] = (-su / 2 + i * su / nu) * flipu;
+	                                                vert[v] = (-sv / 2 + j * sv / nv) * flipv;
+	                                                vert[w] = pw;
+
+	                                                // Normals.
+
+	                                                var normal = norms[vertexIndex] = [0, 0, 0];
+	                                                normal[u] = 0;
+	                                                normal[v] = 0;
+	                                                normal[w] = pw / Math.abs(pw);
+
+	                                                // Texture coords.
+
+	                                                texCoords.push(i / nu, 1.0 - j / nv);
+
+	                                                ++vertexIndex;
+	                                        }
+	                                }
+
+	                                // Compute indices.
+
+	                                console.log('VERTEXINDEX:' + vertexIndex + ' VERTSHIFT:' + vertShift);
+
+	                                for (var j = 0; j < nv; j++) {
+
+	                                        for (var i = 0; i < nu; i++) {
+
+	                                                var n = vertShift + j * (nu + 1) + i;
+	                                                indices.push(n, n + nu + 1, n + nu + 2);
+	                                                indices.push(n, n + nu + 2, n + 1);
+	                                        }
+	                                }
+	                        }
+
+	                        makeSide(0, 1, 2, sx, sy, nx, ny, sz / 2, 1, -1); //front
+	                        makeSide(0, 1, 2, sx, sy, nx, ny, -sz / 2, -1, -1); //back
+	                        makeSide(2, 1, 0, sz, sy, nz, ny, -sx / 2, 1, -1); //left
+	                        makeSide(2, 1, 0, sz, sy, nz, ny, sx / 2, -1, -1); //right
+	                        makeSide(0, 2, 1, sx, sz, nx, nz, sy / 2, 1, 1); //top
+	                        makeSide(0, 2, 1, sx, sz, nx, nz, -sy / 2, 1, -1); //bottom
+
+	                        // Round the edges of the cube.
+
+	                        ///////////////////////////////////////////////////
+	                        var tmp = [0, 0, 0];
+	                        var radius = 1.5;
+
+	                        var rx = sx / 2.0;
+	                        var ry = sy / 2.0;
+	                        var rz = sz / 2.0;
+
+	                        for (var i = 0; i < positions.length; i++) {
+
+	                                var pos = positions[i];
+	                                var normal = normals[i];
+	                                var inner = [pos[0], pos[1], pos[2]];
+
+	                                if (pos[0] < -rx + radius) {
+	                                        inner[0] = -rx + radius;
+	                                } else if (pos[0] > rx - radius) {
+	                                        inner[0] = rx - radius;
+	                                }
+
+	                                if (pos[1] < -ry + radius) {
+	                                        inner[1] = -ry + radius;
+	                                } else if (pos[1] > ry - radius) {
+	                                        inner[1] = ry - radius;
+	                                }
+
+	                                if (pos[2] < -rz + radius) {
+	                                        inner[2] = -rz + radius;
+	                                } else if (pos[2] > rz - radius) {
+	                                        inner[2] = rz - radius;
+	                                }
+
+	                                //Vec3.set(normal, pos);
+	                                normal = [pos[0], pos[1], pos[2]];
+	                                vec3.sub(normal, normal, inner);
+	                                vec3.normalize(normal, normal);
+
+	                                normals[i] = normal;
+
+	                                pos = [inner[0], inner[1], inner[2]]; //Vec3.set(pos, inner);
+	                                tmp = [normal[0], normal[1], normal[2]]; //Vec3.set(tmp, normal);
+	                                vec3.scale(tmp, tmp, radius);
+	                                vec3.add(pos, pos, tmp);
+
+	                                positions[i] = pos;
+	                        }
+
+	                        ///////////////////////////////////////////////////
+
+
+	                        // Flatten arrays we used multidimensonal access to compute.
+
+	                        vertices = flatten(positions, false);
+	                        normals = flatten(norms, false);
+
+	                        window.vertices = vertices;
+	                        window.indices = indices;
+	                        window.normals = normals;
+
+	                        return this.createBuffers(vertices, indices, texCoords, normals, colors);
+	                }
+
+	                // octahedron sphere generation
+	                // https://www.binpress.com/tutorial/creating-an-octahedron-sphere/162
+	                // https://experilous.com/1/blog/post/procedural-planet-generation
+	                // https://experilous.com/1/planet-generator/2014-09-28/planet-generator.js
+	                // another octahedron sphere 
+	                // https://www.binpress.com/tutorial/creating-an-octahedron-sphere/162
+	                // rounded cube
+	                // https://github.com/vorg/primitive-rounded-cube
+	                // rounded cube algorithim
+	                // http://catlikecoding.com/unity/tutorials/rounded-cube/
+	                // generalized catmull-clark subdivision algorithm
+	                // https://thiscouldbebetter.wordpress.com/2015/04/24/the-catmull-clark-subdivision-surface-algorithm-in-javascript/
+	                // cube inflation algorithm
+	                // http://mathproofs.blogspot.com.au/2005/07/mapping-cube-to-sphere.html
+	                // advanced toolset
+	                // https://www.geometrictools.com/Samples/Geometrics.html
+	                // Eigen
+	                // https://fossies.org/dox/eigen-3.2.10/icosphere_8cpp_source.html
+	                // Geometry prebuilt
+	                // http://paulbourke.net/geometry/roundcube/
+
+	        }, {
+	                key: 'isUVBroken',
+	                value: function isUVBroken(uvs, ua, ub, uc) {
+
+	                        var vec2 = this.glMatrix.vec2;
+
+	                        var tmpX = [0, 0, 0];
+	                        var tmpY = [0, 0, 0];
+
+	                        var uvA = [uvs[ua], uvs[ua + 1]];
+	                        var uvB = [uvs[ub], uvs[ub + 1]];
+	                        var uvC = [uvs[uc], uvs[uc + 1]];
+
+	                        tmpX = vec2.sub(tmpX, uvB, uvA);
+	                        tmpY = vec2.sub(tmpY, uvC, uvA);
+
+	                        // note: produces 3d vector
+
+	                        tmpX = vec2.cross(tmpX, tmpX, tmpY);
+
+	                        return tmpX[2] < 0;
+	                }
+	        }, {
+	                key: 'fixUVEdges',
+	                value: function fixUVEdges(cells, uvs, MIN, MAX) {
+
+	                        for (var i = 0; i < cells.length; i += 3) {
+
+	                                //var cell = cells[i]
+
+	                                var ui = i * 2 / 3;
+
+	                                var uv0 = uvs[cells[ui]];
+	                                var uv1 = uvs[cells[ui + 1]];
+	                                var uv2 = uvs[cells[ui + 2]];
+
+	                                var max = Math.max(uv0[0], uv1[0], uv2[0]);
+	                                var min = Math.min(uv0[0], uv1[0], uv2[0]);
+
+	                                if (max > MAX && min < MIN) {
+	                                        if (uv0[0] < MIN) uv0[0] += 1;
+	                                        if (uv1[0] < MIN) uv1[0] += 1;
+	                                        if (uv2[0] < MIN) uv2[0] += 1;
+	                                }
+	                        }
+	                }
+	        }, {
+	                key: 'revisit',
+	                value: function revisit(cache, face, uv, position, newVertices, newUvs) {
+
+	                        if (!(face in cache)) {
+
+	                                newVertices.push(position.slice());
+
+	                                newUvs.push(uv.slice());
+
+	                                var verticeIndex = newVertices.length - 1;
+
+	                                cache[face] = verticeIndex;
+
+	                                return verticeIndex;
+	                        } else {
+
+	                                return cache[face];
+	                        }
+	                }
+	        }, {
+	                key: 'fixWrappedUVs',
+	                value: function fixWrappedUVs(vertices, indices, texCoords) {
+
+	                        var MIN = 0.25;
+	                        var MAX = 0.75;
+
+	                        // make a copy.
+
+	                        var newVertices = vertices.slice();
+
+	                        var newtexCoords = texCoords.slice();
+
+	                        var visited = {};
+
+	                        for (var i = 0; i < indices.length; i += 3) {
+
+	                                var cell = indices[i];
+
+	                                //var a = cell[0]
+	                                //var b = cell[1]
+	                                //var c = cell[2]
+
+	                                // get the point position in the indices
+
+	                                var a = indices[i];
+	                                var b = indices[i + 1];
+	                                var c = indices[i + 2];
+
+	                                // get the equivalent uv indices
+
+	                                var ua = a * 3 / 2;
+	                                var ub = b * 3 / 2;
+	                                var uc = c * 3 / 2;
+
+	                                if (!this.isUVBroken(texCoords, ua, ub, uc)) {
+
+	                                        continue;
+	                                }
+
+	                                // converted!!!!!!!s
+	                                var p0 = [vertices[a], vertices[a + 1], vertices[a + 2]];
+	                                var p1 = [vertices[b], vertices[b + 1], vertices[b + 2]];
+	                                var p2 = [vertices[c], vertices[c + 1], vertices[c + 2]];
+
+	                                var udx1 = uvIndex * i;
+
+	                                // pull out the equivalen texture coordinate value
+
+	                                var uv0 = [texCoords[ua], texCoords[ua + 1]];
+	                                var uv1 = [texCoords[ub], texCoords[ub + 1]];
+	                                var uv2 = [texCoords[uc], texCoords[uc + 1]];
+
+	                                if (uv0[0] < MIN) {
+	                                        a = this.revisit(visited, a, uv0, p0, newVertices, newUvs);
+	                                }
+
+	                                if (uv1[0] < MIN) {
+	                                        b = this.revisit(visited, b, uv1, p1, newVertices, newUvs);
+	                                }
+
+	                                if (uv2[0] < MIN) {
+	                                        c = this.revisit(visited, c, uv2, p2, newVertices, newUvs);
+	                                }
+
+	                                //cell[0] = a
+	                                //cell[1] = b
+	                                //cell[2] = c
+
+	                                indices[i] = a;
+	                                indices[i + 1] = b;
+	                                indices[i + 2] = c;
+	                        }
+
+	                        this.fixUVEdges(indices, newtexCoords, MIN, MAX);
+
+	                        // modify mesh in place with new lists
+
+	                        vertices = newVertices;
+	                        texCoords = newtexCoords;
+	                }
+
+	                /** 
+	                 * Pole visit
+	                 */
+
+	        }, {
+	                key: 'poleVisit',
+	                value: function poleVisit(cell, poleIndex, b, c, uvs) {
+	                        var uv1 = uvs[b];
+	                        var uv2 = uvs[c];
+	                        uvs[poleIndex][0] = (uv1[0] + uv2[0]) / 2;
+	                        verticeIndex++;
+	                        newVertices.push(positions[poleIndex].slice());
+	                        newUvs.push(uvs[poleIndex].slice());
+	                        cell[0] = verticeIndex;
+	                }
+	        }, {
+	                key: 'firstYIndex',
+	                value: function firstYIndex(list, value) {
+
+	                        for (var i = 0; i < list.length; i += 3) {
+	                                var vec = list[i];
+	                                if (Math.abs(vec[i + 1] - value) <= 1e-4) {
+	                                        return i;
+	                                }
+	                        }
+	                        return -1;
+	                }
+
+	                /** 
+	                 * fix poleuvs
+	                 */
+
+	        }, {
+	                key: 'fixPoleUVs',
+	                value: function fixPoleUVs(positions, cells, uvs) {
+
+	                        var northIndex = this.firstYIndex(positions, 1);
+	                        var southIndex = this.firstYIndex(positions, -1);
+	                        if (northIndex === -1 || southIndex === -1) {
+	                                // could not find any poles, bail early
+	                                return;
+	                        }
+
+	                        // fast array copy.
+
+	                        var newVertices = positions.slice();
+
+	                        var newUvs = uvs.slice();
+
+	                        var verticeIndex = newVertices.length - 1;
+
+	                        for (var i = 0; i < cells.length; i += 3) {
+	                                var a = cells[i + 0];
+	                                var b = cells[i + 1];
+	                                var c = cells[i + 2];
+
+	                                var cell = [a, b, c];
+
+	                                if (a === northIndex) {
+	                                        this.poleVisit(cell, northIndex, b, c, uvs);
+	                                } else if (a === southIndex) {
+	                                        this.poleVisit(cell, southIndex, b, c, uvs);
+	                                }
+	                        }
+
+	                        return {
+	                                vertices: newVertices,
+	                                uvs: newUvs
+	                        };
+	                }
+
+	                /** 
 	                 * Get a midpoint along a face side in icosphere
 	                 */
 
@@ -4243,7 +4728,6 @@
 	                        var newCells = [];
 	                        var newPositions = [];
 	                        var midpoints = {};
-	                        //var f = [0, 1, 2];
 	                        var i = void 0,
 	                            l = 0;
 
@@ -4388,20 +4872,24 @@
 	                        console.log('original vertices:' + vertices.length + ' indices:' + indices.length);
 
 	                        //while (subdivisions-- > 0) {
-	                        ico = this.subDivideIco(vertices, indices);
-	                        vertices = ico.vertices;
-	                        indices = ico.indices;
-	                        ico = this.subDivideIco(vertices, indices);
-	                        vertices = ico.vertices;
-	                        indices = ico.indices;
-	                        ico = this.subDivideIco(vertices, indices);
-	                        vertices = ico.vertices;
-	                        indices = ico.indices;
+	                        //    ico = this.subDivideIco( vertices, indices );
+	                        //    vertices = ico.vertices;
+	                        //    indices = ico.indices;
+	                        //    ico = this.subDivideIco( vertices, indices );
+	                        //    vertices = ico.vertices;
+	                        //    indices = ico.indices;
+	                        //    ico = this.subDivideIco( vertices, indices );
+	                        //     vertices = ico.vertices;
+	                        //    indices = ico.indices;
 
 	                        //}
 
-	                        window.vertices = vertices;
-	                        window.indices = indices;
+	                        ////////////////////////window.vertices = vertices;
+	                        ///////////////////////window.indices = indices;
+
+	                        //this.fixPoleUVs( vertices, indices, texCoords );
+
+	                        //this.fixWrappedUVs( vertices, indices, texCoords );
 
 	                        //vertices = ico.vertices;
 	                        //indices = ico.indices;
@@ -4417,7 +4905,6 @@
 	                                var len = x * x + y * y + z * z;
 
 	                                if (len > 0) {
-	                                        //TODO: evaluate use of glm_invsqrt here?
 	                                        len = 1 / Math.sqrt(len);
 	                                        vertices[i] *= len;
 	                                        vertices[i + 1] *= len;
@@ -4452,198 +4939,26 @@
 	                }
 
 	                /** 
-	                 * Icosphere, iterated from icosohedron.
-	                 * http://blog.andreaskahler.com/2009/06/creating-icosphere-mesh-in-code.html
-	                 * 
-	                 * https://github.com/hughsk/icosphere/blob/master/index.js
+	                 * Icosphere, BabylonJS
 	                 */
 
 	        }, {
 	                key: 'geometryIco',
 	                value: function geometryIco(prim) {
 
-	                        var sideOrientation = options.sideOrientation || BABYLON.Mesh.DEFAULTSIDE;
-	                        var radius = options.radius || 1;
-	                        var flat = options.flat === undefined ? true : options.flat;
-	                        var subdivisions = options.subdivisions || 4;
-	                        var radiusX = options.radiusX || radius;
-	                        var radiusY = options.radiusY || radius;
-	                        var radiusZ = options.radiusZ || radius;
-	                        var t = (1 + Math.sqrt(5)) / 2;
-	                        // 12 vertex x,y,z
-	                        var ico_vertices = [-1, t, -0, 1, t, 0, -1, -t, 0, 1, -t, 0, 0, -1, -t, 0, 1, -t, 0, -1, t, 0, 1, t, t, 0, 1, t, 0, -1, -t, 0, 1, -t, 0, -1 // v8-11
-	                        ];
-	                        // index of 3 vertex makes a face of icosphere
-	                        var ico_indices = [0, 11, 5, 0, 5, 1, 0, 1, 7, 0, 7, 10, 12, 22, 23, 1, 5, 20, 5, 11, 4, 23, 22, 13, 22, 18, 6, 7, 1, 8, 14, 21, 4, 14, 4, 2, 16, 13, 6, 15, 6, 19, 3, 8, 9, 4, 21, 5, 13, 17, 23, 6, 13, 22, 19, 6, 18, 9, 8, 1];
-
-	                        // vertex for uv have aliased position, not for UV
-	                        var vertices_unalias_id = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
-	                        // vertex alias
-	                        0, 2, 3, 3, 3, 4, 7, 8, 9, 9, 10, 11 // 23: B + 12
-	                        ];
-	                        // uv as integer step (not pixels !)
-	                        var ico_vertexuv = [5, 1, 3, 1, 6, 4, 0, 0, 5, 3, 4, 2, 2, 2, 4, 0, 2, 0, 1, 1, 6, 0, 6, 2,
-	                        // vertex alias (for same vertex on different faces)
-	                        0, 4, 3, 3, 4, 4, 3, 1, 4, 2, 4, 4, 0, 2, 1, 1, 2, 2, 3, 3, 1, 3, 2, 4 // 23: B + 12
-	                        ];
-
-	                        // Vertices[0, 1, ...9, A, B] : position on UV plane
-	                        // '+' indicate duplicate position to be fixed (3,9:0,2,3,4,7,8,A,B)
-	                        // First island of uv mapping
-	                        // v = 4h          3+  2
-	                        // v = 3h        9+  4
-	                        // v = 2h      9+  5   B
-	                        // v = 1h    9   1   0
-	                        // v = 0h  3   8   7   A
-	                        //     u = 0 1 2 3 4 5 6  *a
-	                        // Second island of uv mapping
-	                        // v = 4h  0+  B+  4+
-	                        // v = 3h    A+  2+
-	                        // v = 2h  7+  6   3+
-	                        // v = 1h    8+  3+
-	                        // v = 0h
-	                        //     u = 0 1 2 3 4 5 6  *a
-	                        // Face layout on texture UV mapping
-	                        // ============
-	                        // \ 4  /\ 16 /   ======
-	                        //  \  /  \  /   /\ 11 /
-	                        //   \/ 7  \/   /  \  /
-	                        //    =======  / 10 \/
-	                        //   /\ 17 /\  =======
-	                        //  /  \  /  \ \ 15 /\
-	                        // / 8  \/ 12 \ \  /  \
-	                        // ============  \/ 6  \
-	                        // \ 18 /\  ============
-	                        //  \  /  \ \ 5  /\ 0  /
-	                        //   \/ 13 \ \  /  \  /
-	                        //   =======  \/ 1  \/
-	                        //       =============
-	                        //      /\ 19 /\  2 /\
-	                        //     /  \  /  \  /  \
-	                        //    / 14 \/ 9  \/  3 \
-	                        //   ===================
-	                        // uv step is u:1 or 0.5, v:cos(30)=sqrt(3)/2, ratio approx is 84/97
-
-	                        var ustep = 138 / 1024;
-	                        var vstep = 239 / 1024;
-	                        var uoffset = 60 / 1024;
-	                        var voffset = 26 / 1024;
-	                        // Second island should have margin, not to touch the first island
-	                        // avoid any borderline artefact in pixel rounding
-	                        var island_u_offset = -40 / 1024;
-	                        var island_v_offset = +20 / 1024;
-	                        // face is either island 0 or 1 :
-	                        // second island is for faces : [4, 7, 8, 12, 13, 16, 17, 18]
-	                        var island = [0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0 //  15 - 19
-	                        ];
-	                        var indices = [];
 	                        var vertices = [];
-	                        var normals = [];
+
+	                        var indices = [];
+
 	                        var texCoords = [];
-	                        var current_indice = 0;
-	                        // prepare array of 3 vector (empty) (to be worked in place, shared for each face)
-	                        var face_vertex_pos = new Array(3);
-	                        var face_vertex_uv = new Array(3);
-	                        var v012 = void 0;
-	                        for (v012 = 0; v012 < 3; v012++) {
-	                                face_vertex_pos[v012] = BABYLON.Vector3.Zero();
-	                                face_vertex_uv[v012] = BABYLON.Vector2.Zero();
-	                        }
 
-	                        for (var face = 0; face < 20; face++) {
+	                        var normals = [];
 
-	                                // 3 vertex per face
-	                                for (v012 = 0; v012 < 3; v012++) {
-	                                        // look up vertex 0,1,2 to its index in 0 to 11 (or 23 including alias)
-	                                        var v_id = ico_indices[3 * face + v012];
-	                                        // vertex have 3D position (x,y,z)
-	                                        face_vertex_pos[v012].copyFromFloats(ico_vertices[3 * vertices_unalias_id[v_id]], ico_vertices[3 * vertices_unalias_id[v_id] + 1], ico_vertices[3 * vertices_unalias_id[v_id] + 2]);
-	                                        // Normalize to get normal, then scale to radius
-	                                        face_vertex_pos[v012].normalize().scaleInPlace(radius);
-	                                        // uv Coordinates from vertex ID
-	                                        face_vertex_uv[v012].copyFromFloats(ico_vertexuv[2 * v_id] * ustep + uoffset + island[face] * island_u_offset, ico_vertexuv[2 * v_id + 1] * vstep + voffset + island[face] * island_v_offset);
-	                                }
+	                        var colors = [];
 
-	                                // create all with normals
-	                                for (var _face = 0; _face < 20; _face++) {
-	                                        // 3 vertex per face
-	                                        for (v012 = 0; v012 < 3; v012++) {
-	                                                // look up vertex 0,1,2 to its index in 0 to 11 (or 23 including alias)
-	                                                var _v_id = ico_indices[3 * _face + v012];
-	                                                // vertex have 3D position (x,y,z)
-	                                                face_vertex_pos[v012].copyFromFloats(ico_vertices[3 * vertices_unalias_id[_v_id]], ico_vertices[3 * vertices_unalias_id[_v_id] + 1], ico_vertices[3 * vertices_unalias_id[_v_id] + 2]);
-	                                                // Normalize to get normal, then scale to radius
-	                                                face_vertex_pos[v012].normalize().scaleInPlace(radius);
-	                                                // uv Coordinates from vertex ID
-	                                                face_vertex_uv[v012].copyFromFloats(ico_vertexuv[2 * _v_id] * ustep + uoffset + island[_face] * island_u_offset, ico_vertexuv[2 * _v_id + 1] * vstep + voffset + island[_face] * island_v_offset);
+	                        var vec3 = this.glMatrix.vec3;
 
-	                                                var interp_vertex = function interp_vertex(i1, i2, c1, c2) {
-	                                                        // vertex is interpolated from
-	                                                        //   - face_vertex_pos[0..2]
-	                                                        //   - face_vertex_uv[0..2]
-	                                                        var pos_x0 = BABYLON.Vector3.Lerp(face_vertex_pos[0], face_vertex_pos[2], i2 / subdivisions);
-	                                                        var pos_x1 = BABYLON.Vector3.Lerp(face_vertex_pos[1], face_vertex_pos[2], i2 / subdivisions);
-	                                                        var pos_interp = subdivisions === i2 ? face_vertex_pos[2] : BABYLON.Vector3.Lerp(pos_x0, pos_x1, i1 / (subdivisions - i2));
-	                                                        pos_interp.normalize();
-	                                                        var vertex_normal = void 0;
-	                                                        if (flat) {
-	                                                                // in flat mode, recalculate normal as face centroid normal
-	                                                                var centroid_x0 = BABYLON.Vector3.Lerp(face_vertex_pos[0], face_vertex_pos[2], c2 / subdivisions);
-	                                                                var centroid_x1 = BABYLON.Vector3.Lerp(face_vertex_pos[1], face_vertex_pos[2], c2 / subdivisions);
-	                                                                vertex_normal = BABYLON.Vector3.Lerp(centroid_x0, centroid_x1, c1 / (subdivisions - c2));
-	                                                        } else {
-	                                                                // in smooth mode, recalculate normal from each single vertex position
-	                                                                vertex_normal = new BABYLON.Vector3(pos_interp.x, pos_interp.y, pos_interp.z);
-	                                                        }
-	                                                        // Vertex normal need correction due to X,Y,Z radius scaling
-	                                                        vertex_normal.x /= radiusX;
-	                                                        vertex_normal.y /= radiusY;
-	                                                        vertex_normal.z /= radiusZ;
-	                                                        vertex_normal.normalize();
-	                                                        var uv_x0 = BABYLON.Vector2.Lerp(face_vertex_uv[0], face_vertex_uv[2], i2 / subdivisions);
-	                                                        var uv_x1 = BABYLON.Vector2.Lerp(face_vertex_uv[1], face_vertex_uv[2], i2 / subdivisions);
-	                                                        var uv_interp = subdivisions === i2 ? face_vertex_uv[2] : BABYLON.Vector2.Lerp(uv_x0, uv_x1, i1 / (subdivisions - i2));
-	                                                        vertices.push(pos_interp.x * radiusX, pos_interp.y * radiusY, pos_interp.z * radiusZ);
-	                                                        normals.push(vertex_normal.x, vertex_normal.y, vertex_normal.z);
-	                                                        texCoords.push(uv_interp.x, uv_interp.y);
-	                                                        // push each vertex has member of a face
-	                                                        // Same vertex can belong to multiple face, it is pushed multiple time (duplicate vertex are present)
-	                                                        indices.push(current_indice);
-	                                                        current_indice++;
-	                                                };
-
-	                                                for (var i2 = 0; i2 < subdivisions; i2++) {
-	                                                        for (var i1 = 0; i1 + i2 < subdivisions; i1++) {
-	                                                                // face : (i1,i2)  for /\  :
-	                                                                // interp for : (i1,i2),(i1+1,i2),(i1,i2+1)
-	                                                                interp_vertex(i1, i2, i1 + 1.0 / 3, i2 + 1.0 / 3);
-	                                                                interp_vertex(i1 + 1, i2, i1 + 1.0 / 3, i2 + 1.0 / 3);
-	                                                                interp_vertex(i1, i2 + 1, i1 + 1.0 / 3, i2 + 1.0 / 3);
-	                                                                if (i1 + i2 + 1 < subdivisions) {
-	                                                                        // face : (i1,i2)' for \/  :
-	                                                                        // interp for (i1+1,i2),(i1+1,i2+1),(i1,i2+1)
-	                                                                        interp_vertex(i1 + 1, i2, i1 + 2.0 / 3, i2 + 2.0 / 3);
-	                                                                        interp_vertex(i1 + 1, i2 + 1, i1 + 2.0 / 3, i2 + 2.0 / 3);
-	                                                                        interp_vertex(i1, i2 + 1, i1 + 2.0 / 3, i2 + 2.0 / 3);
-	                                                                }
-	                                                        }
-	                                                }
-	                                        }
-	                                }
-	                        }
-
-	                        /*
-	                        // Sides
-	                        //VertexData._ComputeSides(sideOrientation, vertices, indices, normals, uvs);
-	                        // Result
-	                        let vertexData = new VertexData();
-	                        vertexData.indices = indices;
-	                        vertexData.vertices = vertices;
-	                        vertexData.normals = normals;
-	                        vertexData.uvs = uvs;
-	                        return vertexData;
-	                        };
-	                        */
+	                        var vec2 = this.glMatrix.vec2;
 	                }
 
 	                /** 
@@ -5183,11 +5498,27 @@
 	                        ['img/webvr-logo2.png'], vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	                        ));
 
-	                        this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.SPHERE, 'texsphere', 1.0, vec3.fromValues(3, 3, 3), // dimensions
+	                        /*
+	                        this.dirlightTextureObjList.push( this.prim.createPrim(
+	                            this.prim.typeList.SPHERE,
+	                            'texsphere',
+	                            1.0,
+	                            vec3.fromValues( 3, 3, 3 ),            // dimensions
+	                            vec3.fromValues( 10, 10, 10 ),         // divisions
+	                            vec3.fromValues(2.5, -1.5, -2 ),       // position (absolute)
+	                            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+	                            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+	                            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+	                            ['img/mozvr-logo1.png'],               // texture present, NOT USED
+	                            vec4.fromValues( 0.5, 1.0, 0.2, 1.0)  // color
+	                        ) );
+	                        */
+
+	                        this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.CUBESPHERE, 'texsphere', 1.0, vec3.fromValues(3, 3, 3), // dimensions
 	                        vec3.fromValues(10, 10, 10), // divisions
 	                        vec3.fromValues(2.5, -1.5, -2), // position (absolute)
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(10), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
 	                        vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
 	                        ['img/mozvr-logo1.png'], // texture present, NOT USED
 	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
