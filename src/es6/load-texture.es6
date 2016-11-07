@@ -100,7 +100,7 @@ export default class LoadTexture extends LoadPool {
 
         loadObj.image.src = waitObj.source;
 
-        this.cacheCt++;
+        this.cacheCt++; // TODO: NOT NEEDED?
 
         return loadObj;
 

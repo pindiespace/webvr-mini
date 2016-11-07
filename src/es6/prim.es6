@@ -934,7 +934,7 @@ export default class Prim {
         let sy = prim.dimensions[1];
         let sz = prim.dimensions[2];
 
-        let nx = prim.divisions[0]; //1.0; // ???????/
+        let nx = prim.divisions[0];
         let ny = prim.divisions[1];
         let nz = prim.divisions[2];
 
@@ -1059,10 +1059,6 @@ export default class Prim {
 
     }
 
-
-///////////////////////////////////////////////////
-
-
         // Flatten arrays we used multidimensonal access to compute.
 
         vertices = flatten(positions, false);
@@ -1073,6 +1069,18 @@ export default class Prim {
 
     }
 
+
+    /** 
+     * Cylinder
+     */
+    geometryCylinder ( prim ) {
+
+
+
+    }
+
+    // More prims
+    // https://github.com/jagenjo/litegl.js/tree/master/src
 
     // octahedron sphere generation
     // https://www.binpress.com/tutorial/creating-an-octahedron-sphere/162
@@ -1094,329 +1102,6 @@ export default class Prim {
     // https://fossies.org/dox/eigen-3.2.10/icosphere_8cpp_source.html
     // Geometry prebuilt
     // http://paulbourke.net/geometry/roundcube/
-
-    //////////////////////////////////////////////////////////////
-
-    isUVBroken ( uvs, ua, ub, uc ) {
-
-        let vec2 = this.glMatrix.vec2;
-
-        var tmpX = [0, 0, 0];
-        var tmpY = [0, 0, 0];
-
-        var uvA = [ uvs[ua], uvs[ ua+1] ];
-        var uvB = [ uvs[ub], uvs[ ub+1] ];
-        var uvC = [ uvs[uc], uvs[ uc+1] ];
-
-        tmpX = vec2.sub( tmpX, uvB, uvA );
-        tmpY = vec2.sub( tmpY, uvC, uvA );
-
-        // note: produces 3d vector
-
-        tmpX = vec2.cross(tmpX, tmpX, tmpY);
-
-        return tmpX[2] < 0;
-
-    }
-
-    fixUVEdges ( cells, uvs, MIN, MAX ) {
-
-        for (var i = 0; i < cells.length; i+=3 ) {
-
-            //var cell = cells[i]
-
-            var ui = i * 2 / 3;
-
-            var uv0 = uvs[ cells[ ui   ] ]
-            var uv1 = uvs[ cells[ ui+1 ] ]
-            var uv2 = uvs[ cells[ ui+2 ] ]
-
-            var max = Math.max( uv0[0], uv1[0], uv2[0] )
-            var min = Math.min( uv0[0], uv1[0], uv2[0] )
-
-            if (max > MAX && min < MIN) {
-                if ( uv0[0] < MIN ) uv0[0] += 1
-                if ( uv1[0] < MIN ) uv1[0] += 1
-                if ( uv2[0] < MIN ) uv2[0] += 1
-
-            }
-        }
-    }
-
-
-    revisit ( cache, face, uv, position, newVertices, newUvs ) {
-
-        if ( ! ( face in cache ) ) {
-
-            newVertices.push( position.slice() )
-
-            newUvs.push( uv.slice() )
-
-            var verticeIndex = newVertices.length - 1
-
-            cache[face] = verticeIndex
-
-            return verticeIndex
-
-        } else {
-
-            return cache[face]
-
-        }
-
-    }
-
-    fixWrappedUVs ( vertices, indices, texCoords ) {
-
-        var MIN = 0.25
-        var MAX = 0.75
-
-        // make a copy.
-
-        var newVertices = vertices.slice()
-
-        var newtexCoords = texCoords.slice()
-
-        var visited = {}
-
-        for ( var i = 0; i < indices.length; i+= 3 ) {
-
-            var cell = indices[i]
-
-            //var a = cell[0]
-            //var b = cell[1]
-            //var c = cell[2]
-
-            // get the point position in the indices
-
-            var a = indices[ i ];
-            var b = indices[ i + 1];
-            var c = indices[ i + 2];
-
-            // get the equivalent uv indices
-
-            var ua = a * 3 / 2;
-            var ub = b * 3 / 2;
-            var uc = c * 3 / 2;
-
-            if ( ! this.isUVBroken( texCoords, ua, ub, uc ) ) {
-
-                continue;
-
-            }
-
-            // converted!!!!!!!s
-            var p0 = [ vertices[a], vertices[a+1], vertices[a+2] ]
-            var p1 = [ vertices[b], vertices[b+1], vertices[b+2] ]
-            var p2 = [ vertices[c], vertices[c+1], vertices[c+2] ]
-
-            var udx1 = uvIndex * i;
-
-            // pull out the equivalen texture coordinate value
-
-            var uv0 = [ texCoords[ ua ], texCoords[ ua+1 ] ]
-            var uv1 = [ texCoords[ ub ], texCoords[ ub+1 ] ]
-            var uv2 = [ texCoords[ uc ], texCoords[ uc+1 ] ]
-
-            if (uv0[0] < MIN) {
-                a = this.revisit( visited, a, uv0, p0, newVertices, newUvs )
-            }
-
-            if (uv1[0] < MIN) {
-                b = this.revisit( visited, b, uv1, p1, newVertices, newUvs )
-            }
-
-            if (uv2[0] < MIN) {
-                c = this.revisit( visited, c, uv2, p2, newVertices, newUvs )
-            }
-
-            //cell[0] = a
-            //cell[1] = b
-            //cell[2] = c
-
-            indices[i]   = a;
-            indices[i+1] = b;
-            indices[i+2] = c;
-
-
-        }
-
-
-        this.fixUVEdges( indices, newtexCoords, MIN, MAX)
-
-        // modify mesh in place with new lists
-
-        vertices = newVertices
-        texCoords = newtexCoords
-
-    }
-
-    /** 
-     * Pole visit
-     */
-    poleVisit (cell, poleIndex, b, c, uvs) {
-        var uv1 = uvs[b]
-        var uv2 = uvs[c]
-        uvs[poleIndex][0] = (uv1[0] + uv2[0]) / 2
-        verticeIndex++
-        newVertices.push(positions[poleIndex].slice())
-        newUvs.push(uvs[poleIndex].slice())
-        cell[0] = verticeIndex
-    }
-
-
-    firstYIndex (list, value) {
-
-        for (var i = 0; i < list.length; i += 3) {
-            var vec = list[i]
-            if (Math.abs(vec[ i + 1 ] - value) <= 1e-4) {
-                return i
-            }
-        }
-    return -1
-    }
-
-    /** 
-     * fix poleuvs
-     */
-    fixPoleUVs (positions, cells, uvs) {
-
-        var northIndex = this.firstYIndex(positions, 1)
-        var southIndex = this.firstYIndex(positions, -1)
-        if (northIndex === -1 || southIndex === -1) {
-            // could not find any poles, bail early
-            return
-        }
-
-        // fast array copy.
-
-        var newVertices = positions.slice();
-
-        var newUvs = uvs.slice()
-
-        var verticeIndex = newVertices.length - 1
-
-        for (var i = 0; i < cells.length; i += 3) {
-            var a = cells[ i + 0]
-            var b = cells[ i + 1]
-            var c = cells[ i + 2]
-
-            var cell = [ a, b, c ];
-
-            if (a === northIndex) {
-            this.poleVisit(cell, northIndex, b, c, uvs )
-            } else if (a === southIndex) {
-            this.poleVisit(cell, southIndex, b, c, uvs )
-            }
-        }
-
-        return {
-            vertices: newVertices,
-            uvs: newUvs
-        }
-
-    }
-
-    /** 
-     * Get a midpoint along a face side in icosphere
-     */
-    getMidPoint ( a, b, midPoints ) {
-
-        var point = [
-            ( a[0] + b[0] ) / 2, 
-            ( a[1] + b[1] ) / 2, 
-            ( a[2] + b[2] ) / 2
-        ];
-
-        var pointKey = point[ 0 ].toPrecision( 6 ) + ','
-                     + point[ 1 ].toPrecision( 6 ) + ','
-                     + point[ 2 ].toPrecision( 6 );
-
-        var cachedPoint = midPoints[ pointKey ];
-
-        if ( cachedPoint ) {
-
-            return cachedPoint;
-
-        } else {
-
-            return ( midPoints[ pointKey ] = point );
-
-        }
-
-    }
-
-    /** 
-     * Given an icosphere, subdivide
-     */
-    subDivideIco( vertices, indices ) {
-
-        var newCells = [];
-        var newPositions = [];
-        var midpoints = {};
-        let i, l = 0;
-
-        for (i = 0; i < indices.length; i+=3 ) {
-
-            var c0 = indices[i];
-            var c1 = indices[i + 1];
-            var c2 = indices[i + 2];
-
-            //console.log('c0:' + c0 + ' c1:' + c1 + ' c2:' + c2)
-
-            var v0 = [ vertices[ c0 ], vertices[ c0 + 1 ], vertices[ c0 + 2 ] ];
-            var v1 = [ vertices[ c1 ], vertices[ c1 + 1 ], vertices[ c1 + 2 ] ];
-            var v2 = [ vertices[ c2 ], vertices[ c2 + 1 ], vertices[ c2 + 2 ] ];
-
-            var a = this.getMidPoint( v0, v1, midpoints );
-            var b = this.getMidPoint( v1, v2, midpoints );
-            var c = this.getMidPoint( v2, v0, midpoints );
-
-            var ai = newPositions.indexOf(a) 
-            if (ai === -1) ai = l++, newPositions.push(a)
-            var bi = newPositions.indexOf(b)
-            if (bi === -1) bi = l++, newPositions.push(b)
-            var ci = newPositions.indexOf(c)
-            if (ci === -1) ci = l++, newPositions.push(c)
-
-            var v0i = newPositions.indexOf(v0)
-            if (v0i === -1) v0i = l++, newPositions.push(v0)
-            var v1i = newPositions.indexOf(v1)
-            if (v1i === -1) v1i = l++, newPositions.push(v1)
-            var v2i = newPositions.indexOf(v2)
-            if (v2i === -1) v2i = l++, newPositions.push(v2)
-
-            newCells.push(v0i, ai, ci)
-            newCells.push(v1i, bi, ai)
-            newCells.push(v2i, ci, bi)
-            newCells.push(ai, bi, ci)
-
-    }
-
-        vertices = [];
-
-        for( i = 0; i < newPositions.length; i++ ) {
-
-            vertices.push(newPositions[i][0], newPositions[i][1], newPositions[i][2]);
-
-        }
-
-        indices = [];
-
-        for ( i = 0; i < newCells.length; i++ ) {
-            indices.push(newCells[i])
-        }
-
-        console.log('new vertices:' + vertices.length + ' indices:' + indices.length)
-
-        // flatten vertices
-
-        return {
-            indices: indices,
-            vertices: vertices
-        }
-
-    }
 
     /** 
      * https://gamedevdaily.io/four-ways-to-create-a-mesh-for-a-sphere-d7956b825db4#.lkbq2omq5
@@ -1485,33 +1170,6 @@ export default class Prim {
 
         let i, u, v, x, y, z, ico, normal;
 
-        // Subdivide.
-
-        console.log('original vertices:' + vertices.length + ' indices:' + indices.length);
-
-        //while (subdivisions-- > 0) {
-        //    ico = this.subDivideIco( vertices, indices );
-        //    vertices = ico.vertices;
-        //    indices = ico.indices;
-        //    ico = this.subDivideIco( vertices, indices );
-        //    vertices = ico.vertices;
-        //    indices = ico.indices;
-        //    ico = this.subDivideIco( vertices, indices );
-       //     vertices = ico.vertices;
-        //    indices = ico.indices;
-
-        //}
-
-        ////////////////////////window.vertices = vertices;
-        ///////////////////////window.indices = indices;
-
-        //this.fixPoleUVs( vertices, indices, texCoords );
-
-        //this.fixWrappedUVs( vertices, indices, texCoords );
-
-        //vertices = ico.vertices;
-        //indices = ico.indices;
-
         // Normalize.
 
         for ( i = 0; i < vertices.length; i += 3 ) {
@@ -1578,13 +1236,6 @@ export default class Prim {
      * Cone
      */
     geometryCone ( prim ) {
-
-    }
-
-    /** 
-     * Cylinder
-     */
-    geometryCylinder ( prim ) {
 
     }
 
@@ -1758,7 +1409,7 @@ export default class Prim {
             var face_vertex_uv = new Array(3);
             var v012;
             for (v012 = 0; v012 < 3; v012++) {
-                face_vertex_pos[v012] = [0.0.0];
+                face_vertex_pos[v012] = [0,0,0];
                 face_vertex_uv[v012] = [0,0,0];
             }
             // create all with normals
@@ -1816,9 +1467,11 @@ export default class Prim {
                     // vertex is interpolated from
                     //   - face_vertex_pos[0..2]
                     //   - face_vertex_uv[0..2]
-                    var pos_x0 = vec3.lerp(pos_x0, face_vertex_pos[0], face_vertex_pos[2], i2 / subdivisions);
-                    var pos_x1 = vec3.lerp(pos_x1, face_vertex_pos[1], face_vertex_pos[2], i2 / subdivisions);
-                    var pos_interp = (subdivisions === i2) ? 
+                    var pos_x0 = [], pos_x1 = [];
+                    pos_x0 = vec3.lerp(pos_x0, face_vertex_pos[0], face_vertex_pos[2], i2 / subdivisions);
+                    pos_x1 = vec3.lerp(pos_x1, face_vertex_pos[1], face_vertex_pos[2], i2 / subdivisions);
+                    var pos_interp = [];
+                    pos_interp = (subdivisions === i2) ? 
                         face_vertex_pos[2] : 
                         vec3.lerp(pos_interp, pos_x0, pos_x1, i1 / (subdivisions - i2));
 
@@ -1829,8 +1482,9 @@ export default class Prim {
                     var vertex_normal;
                     if (flat) {
                         // in flat mode, recalculate normal as face centroid normal
-                        var centroid_x0 = vec3.lerp(centroid_x0, face_vertex_pos[0], face_vertex_pos[2], c2 / subdivisions);
-                        var centroid_x1 = vec3.lerp(centroid_x1, face_vertex_pos[1], face_vertex_pos[2], c2 / subdivisions);
+                        var centroid_x0 = [], centroid_x1 = [];
+                        centroid_x0 = vec3.lerp(centroid_x0, face_vertex_pos[0], face_vertex_pos[2], c2 / subdivisions);
+                        centroid_x1 = vec3.lerp(centroid_x1, face_vertex_pos[1], face_vertex_pos[2], c2 / subdivisions);
                         vertex_normal = vec3.lerp(vertex_normal, centroid_x0, centroid_x1, c1 / (subdivisions - c2));
                     }
                     else {
@@ -1841,14 +1495,16 @@ export default class Prim {
                     vertex_normal[0] /= radiusX;
                     vertex_normal[1] /= radiusY;
                     vertex_normal[2] /= radiusZ;
-                    vertex_normal = vec3.normalize( vertex_normal );
-                    var uv_x0 = vec2.lerp(uv_x0, face_vertex_uv[0], face_vertex_uv[2], i2 / subdivisions);
-                    var uv_x1 = vec2.lerp(uv_x1, face_vertex_uv[1], face_vertex_uv[2], i2 / subdivisions);
+                    var uv_x0 = [], uv_x1 = [];
+                    vertex_normal = vec3.normalize( vertex_normal, vertex_normal );
+                    uv_x0 = vec2.lerp(uv_x0, face_vertex_uv[0], face_vertex_uv[2], i2 / subdivisions);
+                    uv_x1 = vec2.lerp(uv_x1, face_vertex_uv[1], face_vertex_uv[2], i2 / subdivisions);
                     ////stopped here
-                    var uv_interp = (subdivisions === i2) ? face_vertex_uv[2] : BABYLON.Vector2.Lerp(uv_x0, uv_x1, i1 / (subdivisions - i2));
-                    positions.push(pos_interp.x * radiusX, pos_interp.y * radiusY, pos_interp.z * radiusZ);
-                    normals.push(vertex_normal.x, vertex_normal.y, vertex_normal.z);
-                    uvs.push(uv_interp.x, uv_interp.y);
+                    var uv_interp = [];
+                    uv_interp = (subdivisions === i2) ? face_vertex_uv[2] : vec2.lerp(uv_interp, uv_x0, uv_x1, i1 / (subdivisions - i2));
+                    positions.push(pos_interp[0] * radiusX, pos_interp[1] * radiusY, pos_interp[2] * radiusZ);
+                    normals.push(vertex_normal[0], vertex_normal[1], vertex_normal[2]);
+                    uvs.push(uv_interp[0], uv_interp[1]);
                     // push each vertex has member of a face
                     // Same vertex can bleong to multiple face, it is pushed multiple time (duplicate vertex are present)
                     indices.push(current_indice);
