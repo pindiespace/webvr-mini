@@ -4523,6 +4523,14 @@
 
 	            var vertexIndex = 0;
 
+	            makeSide(0, 1, 2, sx, sy, nx, ny, sz / 2, 1, -1); //front
+	            makeSide(0, 1, 2, sx, sy, nx, ny, -sz / 2, -1, -1); //back
+	            makeSide(2, 1, 0, sz, sy, nz, ny, -sx / 2, 1, -1); //left
+	            makeSide(2, 1, 0, sz, sy, nz, ny, sx / 2, -1, -1); //right
+	            makeSide(0, 2, 1, sx, sz, nx, nz, sy / 2, 1, 1); //top
+	            makeSide(0, 2, 1, sx, sz, nx, nz, -sy / 2, 1, -1); //bottom
+
+
 	            function makeSide(u, v, w, su, sv, nu, nv, pw, flipu, flipv) {
 
 	                var vertShift = vertexIndex;
@@ -4530,8 +4538,6 @@
 	                for (var j = 0; j <= nv; j++) {
 
 	                    for (var i = 0; i <= nu; i++) {
-
-	                        // Vertices require addressing by vertexIndex.
 
 	                        var vert = positions[vertexIndex] = [0, 0, 0];
 	                        vert[u] = (-su / 2 + i * su / nu) * flipu;
@@ -4555,8 +4561,6 @@
 
 	                // Compute indices.
 
-	                //////////console.log( 'VERTEXINDEX:' + vertexIndex + ' VERTSHIFT:' + vertShift)
-
 	                for (var j = 0; j < nv; j++) {
 
 	                    for (var i = 0; i < nu; i++) {
@@ -4568,16 +4572,8 @@
 	                }
 	            }
 
-	            makeSide(0, 1, 2, sx, sy, nx, ny, sz / 2, 1, -1); //front
-	            makeSide(0, 1, 2, sx, sy, nx, ny, -sz / 2, -1, -1); //back
-	            makeSide(2, 1, 0, sz, sy, nz, ny, -sx / 2, 1, -1); //left
-	            makeSide(2, 1, 0, sz, sy, nz, ny, sx / 2, -1, -1); //right
-	            makeSide(0, 2, 1, sx, sz, nx, nz, sy / 2, 1, 1); //top
-	            makeSide(0, 2, 1, sx, sz, nx, nz, -sy / 2, 1, -1); //bottom
-
 	            // Round the edges of the cube.
 
-	            ///////////////////////////////////////////////////
 	            var tmp = [0, 0, 0];
 	            var radius = 1.5;
 
@@ -4609,7 +4605,6 @@
 	                    inner[2] = rz - radius;
 	                }
 
-	                //Vec3.set(normal, pos);
 	                normal = [pos[0], pos[1], pos[2]];
 	                vec3.sub(normal, normal, inner);
 	                vec3.normalize(normal, normal);
@@ -4643,7 +4638,11 @@
 
 	        // More prims
 	        // https://github.com/jagenjo/litegl.js/tree/master/src
-
+	        // ////////////////////////////////
+	        // http://wiki.unity3d.com/index.php/ProceduralPrimitives
+	        // ////////////////////////////////
+	        // http://wiki.unity3d.com/index.php/ProceduralPrimitives
+	        //
 	        // octahedron sphere generation
 	        // https://www.binpress.com/tutorial/creating-an-octahedron-sphere/162
 	        // https://experilous.com/1/blog/post/procedural-planet-generation

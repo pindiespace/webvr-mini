@@ -979,6 +979,15 @@ export default class Prim {
 
         let vertexIndex = 0;
 
+
+        makeSide(0, 1, 2, sx, sy, nx, ny,  sz/2,  1, -1); //front
+        makeSide(0, 1, 2, sx, sy, nx, ny, -sz/2, -1, -1); //back
+        makeSide(2, 1, 0, sz, sy, nz, ny, -sx/2,  1, -1); //left
+        makeSide(2, 1, 0, sz, sy, nz, ny,  sx/2, -1, -1); //right
+        makeSide(0, 2, 1, sx, sz, nx, nz,  sy/2,  1,  1); //top
+        makeSide(0, 2, 1, sx, sz, nx, nz, -sy/2,  1, -1); //bottom
+
+
         function makeSide(u, v, w, su, sv, nu, nv, pw, flipu, flipv) {
 
             var vertShift = vertexIndex;
@@ -986,8 +995,6 @@ export default class Prim {
             for(var j=0; j<=nv; j++) {
 
                 for(var i=0; i<=nu; i++) {
-
-                    // Vertices require addressing by vertexIndex.
 
                     var vert = positions[vertexIndex] = [0,0,0];
                     vert[u] = (-su/2 + i*su/nu) * flipu;
@@ -1016,8 +1023,6 @@ export default class Prim {
 
             // Compute indices.
 
-            //////////console.log( 'VERTEXINDEX:' + vertexIndex + ' VERTSHIFT:' + vertShift)
-
             for(var j=0; j<nv; j++) {
 
                 for(var i=0; i<nu; i++) {
@@ -1030,68 +1035,59 @@ export default class Prim {
 
             }
 
-
         }
-
-        makeSide(0, 1, 2, sx, sy, nx, ny,  sz/2,  1, -1); //front
-        makeSide(0, 1, 2, sx, sy, nx, ny, -sz/2, -1, -1); //back
-        makeSide(2, 1, 0, sz, sy, nz, ny, -sx/2,  1, -1); //left
-        makeSide(2, 1, 0, sz, sy, nz, ny,  sx/2, -1, -1); //right
-        makeSide(0, 2, 1, sx, sz, nx, nz,  sy/2,  1,  1); //top
-        makeSide(0, 2, 1, sx, sz, nx, nz, -sy/2,  1, -1); //bottom
 
         // Round the edges of the cube.
 
-///////////////////////////////////////////////////
-    var tmp = [0,0,0];
-    var radius = 1.5;
+        var tmp = [0,0,0];
+        var radius = 1.5;
 
-    var rx = sx / 2.0;
-    var ry = sy / 2.0;
-    var rz = sz / 2.0;
+        var rx = sx / 2.0;
+        var ry = sy / 2.0;
+        var rz = sz / 2.0;
 
-    for(var i=0; i<positions.length; i++) {
+        for(var i=0; i<positions.length; i++) {
 
-        var pos = positions[i];
-        var normal = normals[i];
-        var inner = [pos[0], pos[1], pos[2]];
+            var pos = positions[i];
+            var normal = normals[i];
+            var inner = [pos[0], pos[1], pos[2]];
 
-        if (pos[0] < -rx + radius) {
-            inner[0] = -rx + radius;
+            if (pos[0] < -rx + radius) {
+                inner[0] = -rx + radius;
+            }
+            else if (pos[0] > rx - radius) {
+                inner[0] = rx - radius;
+            }
+
+            if (pos[1] < -ry + radius) {
+                inner[1] = -ry + radius;
+            }
+            else if (pos[1] > ry - radius) {
+                inner[1] = ry - radius;
+            }
+
+            if (pos[2] < -rz + radius) {
+                inner[2] = -rz + radius;
+            }
+
+            else if (pos[2] > rz - radius) {
+                inner[2] = rz - radius;
+            }
+
+            normal = [pos[0], pos[1], pos[2]]
+            vec3.sub(normal, normal, inner);
+            vec3.normalize(normal, normal);
+
+            normals[i] = normal;
+
+            pos = [ inner[0], inner[1], inner[2] ]; //Vec3.set(pos, inner);
+            tmp = [ normal[0], normal[1], normal[2] ]; //Vec3.set(tmp, normal);
+            vec3.scale(tmp, tmp, radius);
+            vec3.add(pos, pos, tmp);
+
+            positions[i] = pos;
+
         }
-        else if (pos[0] > rx - radius) {
-            inner[0] = rx - radius;
-        }
-
-        if (pos[1] < -ry + radius) {
-            inner[1] = -ry + radius;
-        }
-        else if (pos[1] > ry - radius) {
-            inner[1] = ry - radius;
-        }
-
-        if (pos[2] < -rz + radius) {
-            inner[2] = -rz + radius;
-        }
-        else if (pos[2] > rz - radius) {
-            inner[2] = rz - radius;
-        }
-
-        //Vec3.set(normal, pos);
-        normal = [pos[0], pos[1], pos[2]]
-        vec3.sub(normal, normal, inner);
-        vec3.normalize(normal, normal);
-
-        normals[i] = normal;
-
-        pos = [ inner[0], inner[1], inner[2] ]; //Vec3.set(pos, inner);
-        tmp = [ normal[0], normal[1], normal[2] ]; //Vec3.set(tmp, normal);
-        vec3.scale(tmp, tmp, radius);
-        vec3.add(pos, pos, tmp);
-
-        positions[i] = pos;
-
-    }
 
         // Flatten arrays we used multidimensonal access to compute.
 
@@ -1102,7 +1098,6 @@ export default class Prim {
         return this.createBuffers ( vertices, indices, texCoords, normals, colors );
 
     }
-
 
     /** 
      * Cylinder
@@ -1115,7 +1110,11 @@ export default class Prim {
 
     // More prims
     // https://github.com/jagenjo/litegl.js/tree/master/src
-
+    // ////////////////////////////////
+    // http://wiki.unity3d.com/index.php/ProceduralPrimitives
+    // ////////////////////////////////
+    // http://wiki.unity3d.com/index.php/ProceduralPrimitives
+    //
     // octahedron sphere generation
     // https://www.binpress.com/tutorial/creating-an-octahedron-sphere/162
     // https://experilous.com/1/blog/post/procedural-planet-generation
