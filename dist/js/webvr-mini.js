@@ -3804,6 +3804,17 @@
 
 	            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(texCoords), gl.STATIC_DRAW);
 
+	            // Tangents Buffer.
+
+	            // TODO: ADD TANGENTS!!!!!!!!!! TODO: TODO:
+	            var tangents = [];
+
+	            var tnBuffer = gl.createBuffer();
+
+	            gl.bindBuffer(gl.ARRAY_BUFFER, tnBuffer);
+
+	            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(tangents), gl.STATIC_DRAW);
+
 	            if (!colors) {
 
 	                console.warn('no colors present, creating default');
@@ -3833,6 +3844,44 @@
 
 	                },
 
+	                indices: {
+
+	                    data: indices,
+
+	                    buffer: iBuffer,
+
+	                    itemSize: 1,
+
+	                    numItems: indices.length
+
+	                },
+
+	                normals: {
+
+	                    data: normals,
+
+	                    buffer: nBuffer,
+
+	                    itemSize: 3,
+
+	                    numItems: normals.length / 3
+
+	                },
+
+	                tangents: {
+
+	                    data: tangents,
+
+	                    buffer: tnBuffer,
+
+	                    itemSize: 4,
+
+	                    numItems: tangents.length / 4
+
+	                },
+
+	                edges: {},
+
 	                texCoords: {
 
 	                    data: texCoords,
@@ -3855,33 +3904,7 @@
 
 	                    numItems: colors.length / 4
 
-	                },
-
-	                normals: {
-
-	                    data: normals,
-
-	                    buffer: nBuffer,
-
-	                    itemSize: 3,
-
-	                    numItems: normals.length / 3
-
-	                },
-
-	                indices: {
-
-	                    data: indices,
-
-	                    buffer: iBuffer,
-
-	                    itemSize: 1,
-
-	                    numItems: indices.length
-
-	                },
-
-	                edges: {}
+	                }
 
 	            };
 	        }
@@ -4149,9 +4172,11 @@
 
 	            var indices = [];
 
-	            var texCoords = [];
-
 	            var normals = [];
+
+	            var tangents = [];
+
+	            var texCoords = [];
 
 	            var colors = [];
 
@@ -4283,20 +4308,6 @@
 	            20, 21, 22, 20, 22, 23 // Left face
 	            ];
 
-	            var texCoords = [
-	            // Front face
-	            0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
-	            // Back face
-	            1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0,
-	            // Top face
-	            0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0,
-	            // Bottom face
-	            1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0,
-	            // Right face
-	            1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0,
-	            // Left face
-	            0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0];
-
 	            var normals = [
 	            // Front face
 	            0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0,
@@ -4310,6 +4321,22 @@
 	            1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0,
 	            // Left face
 	            -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0];
+
+	            var tangents = [];
+
+	            var texCoords = [
+	            // Front face
+	            0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
+	            // Back face
+	            1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0,
+	            // Top face
+	            0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0,
+	            // Bottom face
+	            1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0,
+	            // Right face
+	            1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0,
+	            // Left face
+	            0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0];
 
 	            var colors = [
 	            // Front face
@@ -4362,9 +4389,11 @@
 
 	            var indices = [];
 
-	            var texCoords = [];
-
 	            var normals = [];
+
+	            var tangents = [];
+
+	            var texCoords = [];
 
 	            var colors = [];
 
@@ -4471,9 +4500,11 @@
 
 	            var indices = [];
 
-	            var texCoords = [];
-
 	            var normals = [];
+
+	            var tangents = [];
+
+	            var texCoords = [];
 
 	            var colors = [];
 
@@ -4655,9 +4686,11 @@
 
 	            var indices = [];
 
-	            var texCoords = [];
-
 	            var normals = [];
+
+	            var tangents = [];
+
+	            var texCoords = [];
 
 	            var colors = [];
 
@@ -4873,9 +4906,11 @@
 
 	            var vertices = new Array((resolution + 1) * (resolution + 1) * 4 - (resolution * 2 - 1) * 3);
 
-	            var normals = new Array(vertices.length);
-
 	            var indices = new Array((1 << subdivisions * 2 + 3) * 3); // SHOULD BE 384
+
+	            var tangents = [];
+
+	            var normals = new Array(vertices.length);
 
 	            var colors = new Array(vertices.length * 4);
 
@@ -4883,9 +4918,7 @@
 
 	            var texCoords = new Array(vertices.length);
 
-	            ///////////
-	            var ct = 0;
-	            ///////////
+	            // initialize lots of default variables.
 
 	            var v = 0,
 	                vBottom = 0,
@@ -4902,13 +4935,19 @@
 	                vertices[v++] = getVecs('down');
 	            }
 
+	            //window.verts1 = vertices.slice();
+
 	            for (i = 1; i <= resolution; i++) {
 
 	                progress = i / resolution;
 
 	                to = vec3.lerp(out, getVecs('down'), getVecs('forward'), progress);
 
+	                ///console.log('tttttto:' + to)
+
 	                vertices[v++] = vec3.copy([0, 0, 0], to);
+
+	                ////onsole.log( 'at position v:' + parseInt(v-1) + ', to:' + to + ', array:' + vec3.copy( [0,0,0], to ))
 
 	                for (d = 0; d < 4; d++) {
 
@@ -4918,7 +4957,7 @@
 
 	                    t = createLowerStrip(i, v, vBottom, t, indices);
 
-	                    v = createVertexLine(from, to, i, v, indices);
+	                    v = createVertexLine(from, to, i, v, vertices);
 
 	                    vBottom += i > 1 ? i - 1 : 1;
 	                }
@@ -4942,7 +4981,7 @@
 
 	                    t = createUpperStrip(i, v, vBottom, t, indices);
 
-	                    v = createVertexLine(from, to, i, v, indices);
+	                    v = createVertexLine(from, to, i, v, vertices);
 
 	                    vBottom += i + 1;
 	                }
@@ -4961,16 +5000,127 @@
 	                vertices[v++] = getVecs('up');
 	            }
 
+	            // Create our Normals.
+
+	            for (i = 0; i < vertices.length; i++) {
+
+	                vertices[i] = vec3.normalize([0, 0, 0], vertices[i]);
+
+	                normals[i] = vec3.copy([0, 0, 0], vertices[i]);
+	            }
+
+	            createUV(vertices, texCoords);
+
+	            createTangents(vertices, tangents);
+
+	            vertices = flatten(vertices);
+	            texCoords = flatten(texCoords);
+	            normals = flatten(normals);
+	            tangents = flatten(tangents);
+
+	            // Create UV texCoords.
+
+	            ///////////////////
+	            function createUV(vertices, uv) {
+
+	                var previousX = 1;
+
+	                for (i = 0; i < vertices.length; i++) {
+
+	                    v = vertices[i];
+
+	                    if (v[0] == previousX) {
+	                        // was v.x
+
+	                        uv[i - 1][0] = 1; // was v.x
+	                    }
+
+	                    previousX = v[0]; // was v.x
+
+	                    var textureCoordinates = [0, 0];
+
+	                    textureCoordinates.x = Math.atan2(v[0], v[2]) / (-2 * Math.PI); // was v.x, v.z
+
+	                    if (textureCoordinates[0] < 0) {
+	                        // was textureCoordinates.x
+
+	                        textureCoordinates[0] += 1; // was textureCoordinates
+	                    }
+
+	                    textureCoordinates[1] = Math.asin(v[1]) / Math.PI + 0.5; // was v.y, textureCoordinates.y
+
+	                    uv[i] = textureCoordinates;
+	                }
+
+	                uv[vertices.length - 4][0] = 0.125;
+	                uv[0][0] = 0.125; // was v.x
+	                uv[vertices.length - 3][0] = 0.375;
+	                uv[1][0] = 0.375; // was v.x
+	                uv[vertices.length - 2][0] = 0.625;
+	                uv[2][0] = 0.625; // was v.x
+	                uv[vertices.length - 1][0] = 0.875;
+	                uv[3][0] = 0.875; // was v.x
+	            }
+
+	            ////////////////////
+	            function createTangents(vertices, tangents) {
+
+	                for (i = 0; i < vertices.Length; i++) {
+
+	                    v = vertices[i];
+
+	                    v[1] = 0; // was v.y
+
+	                    //v = v.normalized;
+	                    v = vec3.normalize([0, 0, 0], v);
+
+	                    tangent = [0, 0, 0, 0];
+
+	                    tangent[0] = -v[2];
+	                    tangent[1] = 0;
+	                    tangent[2] = v[0];
+	                    tangent[3] = -1;
+
+	                    tangents[i] = tangent;
+	                }
+
+	                //tangents[vertices.Length - 4] = tangents[0] = new Vector3(-1f, 0, -1f).normalized;
+	                tangents[vertices.length - 4] = [-1, 0, 1];
+	                tangents[0] = [-1, 0, -1];
+
+	                //tangents[vertices.Length - 3] = tangents[1] = new Vector3(1f, 0f, -1f).normalized;
+	                tangents[vertices.length - 3] = [1, 0, -1];
+	                tangents[1] = [1, 0, -1];
+
+	                //tangents[vertices.Length - 2] = tangents[2] = new Vector3(1f, 0f, 1f).normalized;
+	                tangents[vertices.length - 2] = [1, 0, 1];
+	                tangents[2] = [1, 0, 1];
+
+	                //tangents[vertices.Length - 1] = tangents[3] = new Vector3(-1f, 0f, 1f).normalized;
+	                tangents[vertices.length - 1] = [-1, 0, 1];
+	                tangents[3] = [-1, 0, 1];
+
+	                for (i = 0; i < 4; i++) {
+
+	                    tangents[vertices.length - 1 - i][3] = tangents[i][3] = -1;
+	                }
+	            }
+
+	            //vertices = flatten( vertices );
+
+
 	            function createVertexLine(from, to, steps, v, vertices) {
 
 	                for (var _i = 1; _i <= steps; _i++) {
 
-	                    console.log("V IS A:" + v);
+	                    //console.log("Vec3 " + v + " IS A:" + vec3.lerp( [0,0,0], from, to, i / steps ))
 
 	                    vertices[v++] = vec3.lerp([0, 0, 0], from, to, _i / steps);
-
-	                    console.log('VERTICES (v):' + v - 1 + ' val:' + vertices[v - 1]);
 	                }
+
+	                //window.verts2 = vertices.slice();
+
+	                //console.log("VECTOR ARRAY:" + vertices.length)
 
 	                return v;
 	            }
@@ -5112,6 +5262,7 @@
 	            var indices = [];
 	            var positions = [];
 	            var normals = [];
+	            var tangents = [];
 	            var texCoords = [];
 	            var colors = [];
 	            var uvs = [];
@@ -5753,7 +5904,7 @@
 
 	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.ICOSPHERE, 'icophere', 1.0, vec3.fromValues(3, 3, 3), // dimensions
 	            vec3.fromValues(4, 4, 4), // divisions
-	            vec3.fromValues(2.0, 2.5, -1), // position (absolute)
+	            vec3.fromValues(1.5, 2.5, -1), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
 	            vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
@@ -5763,8 +5914,8 @@
 
 	            //////////////////////////////////////////////////////////////
 	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.ICO, 'icoUnity', 1.0, vec3.fromValues(3, 3, 3), // dimensions
-	            vec3.fromValues(2, 2, 2), // divisions MAKE SMALLER
-	            vec3.fromValues(2.0, 2.5, -1), // position (absolute)
+	            vec3.fromValues(4, 4, 4), // divisions MAKE SMALLER
+	            vec3.fromValues(4.5, 3.5, -2), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
 	            vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x

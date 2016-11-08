@@ -220,7 +220,7 @@ export default class World {
             1.0,
             vec3.fromValues( 3, 3, 3 ),            // dimensions
             vec3.fromValues( 4, 4, 4 ),         // divisions
-            vec3.fromValues(2.0, 2.5, -1 ),       // position (absolute)
+            vec3.fromValues(1.5, 2.5, -1 ),       // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
@@ -234,8 +234,8 @@ export default class World {
             'icoUnity',
             1.0,
             vec3.fromValues( 3, 3, 3 ),            // dimensions
-            vec3.fromValues( 2, 2, 2 ),         // divisions MAKE SMALLER
-            vec3.fromValues(2.0, 2.5, -1 ),       // position (absolute)
+            vec3.fromValues( 4, 4, 4 ),         // divisions MAKE SMALLER
+            vec3.fromValues(4.5, 3.5, -2 ),       // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
