@@ -122,15 +122,29 @@ export default class Util {
      * a single-dimensional one.
      */
     flatten ( arr, mutable ) {
-        var nodes = (mutable && arr) || arr.slice(); // return a new array.
+
+        if ( mutable === undefined ) {
+
+            mutable = false;
+
+        }
+
+        var nodes = ( mutable && arr ) || arr.slice(); // return a new array.
+
         var flattened = [];
 
-        for (var node = nodes.shift(); node !== undefined; node = nodes.shift()) {
-            if (Array.isArray(node)) {
-                nodes.unshift.apply(nodes, node);
+        for ( var node = nodes.shift(); node !== undefined; node = nodes.shift() ) {
+
+            if ( Array.isArray( node ) ) {
+
+                nodes.unshift.apply( nodes, node );
+
             } else {
-                flattened.push(node);
+
+                flattened.push( node );
+
             }
+
         }
 
         return flattened;
@@ -203,18 +217,19 @@ export default class Util {
 
     /** 
      * Check the values of a Prim.
+     * TODO: why is itemsize of indices = 1??????
      */
     primReadout ( prim ) {
 
-        console.log( 'prim:' + prim.name + 'type:' + prim.type + 
-            ' vertex:' + prim.geometry.vertices.itemSize + 
-            ', ' + prim.geometry.vertices.numItems + 
-            ', texture:' + prim.geometry.texCoords.itemSize + 
-            ', ' + prim.geometry.texCoords.numItems + 
-            ', index:' + prim.geometry.indices.itemSize, 
-            ', ' + prim.geometry.indices.numItems + 
-            ', normals:' + prim.geometry.normals.itemSize + 
-            ', ' + prim.geometry.normals.numItems );
+        console.log( 'prim:' + prim.name + ' type:' + prim.type + 
+            ' vertex:(' + prim.geometry.vertices.itemSize + 
+            '), ' + prim.geometry.vertices.numItems + 
+            ', texture:(' + prim.geometry.texCoords.itemSize + 
+            '), ' + prim.geometry.texCoords.numItems + 
+            ', index:(' + prim.geometry.indices.itemSize, 
+            '), ' + prim.geometry.indices.numItems + 
+            ', normals:(' + prim.geometry.normals.itemSize + 
+            '), ' + prim.geometry.normals.numItems );
 
     }
 

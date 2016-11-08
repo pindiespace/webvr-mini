@@ -54,6 +54,8 @@ export default class Prim {
 
             ICODOME: 'geometryIcoDome',
 
+            ICO: 'geometryIco',
+
             CONE: 'geometryCone',
 
             CYLINDER: 'geometryCylinder',
@@ -982,7 +984,7 @@ export default class Prim {
 
             // Compute indices.
 
-            console.log( 'VERTEXINDEX:' + vertexIndex + ' VERTSHIFT:' + vertShift)
+            //////////console.log( 'VERTEXINDEX:' + vertexIndex + ' VERTSHIFT:' + vertShift)
 
             for(var j=0; j<nv; j++) {
 
@@ -1207,11 +1209,11 @@ export default class Prim {
 
         }
 
-        window.vertices = vertices;
-        window.indices = indices;
-        window.texCoords = texCoords;
-        window.normals = normals;
-        window.colors = colors;
+        //window.vertices = vertices;
+        //window.indices = indices;
+        ///window.texCoords = texCoords;
+        //window.normals = normals;
+        //window.colors = colors;
 
 
         return this.createBuffers ( vertices, indices, texCoords, normals, colors );
@@ -1278,8 +1280,211 @@ export default class Prim {
     };
 
 
+    /** 
+     * Adapted from Unity 3d tutorial.
+     */
+    geometryIco ( prim ) {
+
+        let vec3 = this.glMatrix.vec3;
+
+        let vec2 = this.glMatrix.vec2;
+
+        let flatten = this.util.flatten;
+
+        let subdivisions = prim.divisions[0];
+
+        let radius = prim.dimensions[0] * 0.5;
+
+        let resolution = 1 << subdivisions;
+
+        // Simulate Vector3.down, etc.
+        // https://docs.unity3d.com/ScriptReference/Vector3.html
+
+        function getVecs ( type ) {
+
+            switch (type) {
+                case 'back': return [0, 0, -1]; break;
+                case 'down': return [0, -1, 0]; break;
+                case 'forward': return [0, 0, 1]; break;
+                case 'left': return [-1, 0, 0]; break;
+                case 'one': return [1, 1, 1]; break;
+                case 'right': return [1, 0, 0]; break;
+                case 'up': return [0, 1, 0]; break;
+                case 'zero': return [0, 0, 0]; break;
+            }
+
+        }
+
+        let directions = [
+            'left',
+            'back',
+            'right',
+            'forward'
+        ];
+
+        console.log("RESOLUTION:" + resolution)
+
+        // Allocate memory
+
+        let vertices = new Array ( (resolution + 1) * (resolution + 1) * 4 - (resolution * 2 - 1) * 3 ) ;
+
+        let normals = new Array( vertices.length );
+
+        let indices = new Array( (1 << (subdivisions * 2 + 3)) * 3 ); // SHOULD BE 384
+
+        let colors = new Array( vertices.length * 4 );
+
+        console.log('size of indices:' + indices.length)
+
+        let texCoords = new Array( vertices.length );
+
+        ///////////
+        let ct = 0;
+        ///////////
+
+        let v = 0, vBottom = 0, t = 0, i, d, progress, from = getVecs( 'zero' ), to = getVecs( 'zero' ), out = getVecs( 'zero' );
+            
+        for ( i = 0; i < 4; i++ ) {
+
+            vertices[ v++ ] = getVecs('down');
+
+        }
+
+        for ( i = 1; i <= resolution; i++) {
+
+            progress = i / resolution;
+
+            to = vec3.lerp( out, getVecs( 'down' ), getVecs( 'forward' ), progress );
+
+            vertices[ v++ ] = vec3.copy( [0,0,0], to );
+
+            for ( d = 0; d < 4; d++) {
+
+                from = vec3.copy( out, to );
+
+                to = vec3.lerp( out, getVecs( 'down' ), getVecs( directions[ d ] ), progress );
+
+                t = createLowerStrip( i, v, vBottom, t, indices );
+
+                v = createVertexLine( from, to, i, v, indices );
+
+                vBottom += i > 1 ? (i - 1) : 1;
+
+            }
+
+            vBottom = v - 1 - i * 4;
+        }
+
+        for ( i = resolution - 1; i >= 1; i-- ) {
+
+                progress = i / resolution;
+
+                to = vec3.lerp( out, getVecs( 'up' ), getVecs( 'forward' ), progress );
+
+                vertices[ v++ ] = vec3.copy( [0,0,0], to );
+
+                for ( d = 0; d < 4; d++) {
+
+                    from = vec3.copy( out, to );
+
+                    to = vec3.lerp( out, getVecs( 'up' ), getVecs( directions[ d ] ), progress );
+
+                    t = createUpperStrip( i, v, vBottom, t, indices );
+
+                    v = createVertexLine( from, to, i, v, indices );
+
+                    vBottom += i + 1;
+                }
+
+                vBottom = v - 1 - i * 4;
+
+        }
+
+        for ( i = 0; i < 4; i++ ) {
+
+            indices[t++] = vBottom;
+
+            indices[t++] = v;
+
+            indices[t++] = ++vBottom;
+
+            vertices[v++] = getVecs( 'up' );
+
+        }
 
 
+        function createVertexLine ( from, to, steps, v, vertices ) {
+
+            for ( let i = 1; i <= steps; i++ ) {
+
+                console.log("V IS A:" + v)
+
+                vertices[ v++ ] = vec3.lerp( [0,0,0], from, to, i / steps );
+
+                console.log('VERTICES (v):' + v-1 + ' val:' + vertices[v-1])
+
+            }
+
+            return v;
+
+        }
+
+        function createLowerStrip ( steps, vTop, vBottom, t, triangles ) {
+
+            for ( let i = 1; i < steps; i++ ) {
+
+                triangles[t++] = vBottom;
+                triangles[t++] = vTop - 1;
+                triangles[t++] = vTop;
+
+                triangles[t++] = vBottom++;
+                triangles[t++] = vTop++;
+                triangles[t++] = vBottom;
+
+            }
+
+            triangles[t++] = vBottom;
+            triangles[t++] = vTop - 1;
+            triangles[t++] = vTop;
+
+            return t;
+
+        }
+
+        function createUpperStrip ( steps, vTop, vBottom, t, triangles ) {
+
+            triangles[t++] = vBottom;
+            triangles[t++] = vTop - 1;
+            triangles[t++] = ++vBottom;
+
+            for ( let i = 1; i <= steps; i++ ) {
+
+                triangles[t++] = vTop - 1;
+                triangles[t++] = vTop;
+                triangles[t++] = vBottom;
+                
+                triangles[t++] = vBottom;
+                triangles[t++] = vTop++;
+                triangles[t++] = ++vBottom;
+            }
+
+            return t;
+
+        }
+
+
+        window.vertices = vertices;
+        window.indices = indices;
+        window.normals = normals;
+        window.texCoords = texCoords;
+
+        return this.createBuffers ( vertices, indices, texCoords, normals, colors );
+
+    }
+
+    /** 
+     * after BabylonJS
+     */
     geometryIcoSphere ( prim ) {
 
             var sideOrientation = this.DEFAULT_SIDE;
@@ -1294,8 +1499,6 @@ export default class Prim {
             var vec3 = this.glMatrix.vec3;
 
             // PUT BABYLON FNS HERE FOR START
-
-
 
             var t = (1 + Math.sqrt(5)) / 2;
             // 12 vertex x,y,z
@@ -1399,9 +1602,12 @@ export default class Prim {
                 0, 0, 1, 1, 0,
                 0, 1, 1, 1, 0 //  15 - 19
             ];
+            var vertices = [];
             var indices = [];
             var positions = [];
             var normals = [];
+            var texCoords = [];
+            var colors = [];
             var uvs = [];
             var current_indice = 0;
             // prepare array of 3 vector (empty) (to be worked in place, shared for each face)
@@ -1535,11 +1741,6 @@ export default class Prim {
             vertices = positions;
 
             texCoords = uvs;
-
-        window.vertices = vertices;
-        window.indices = indices;
-        window.normals = normals;
-
 
             // Result
 

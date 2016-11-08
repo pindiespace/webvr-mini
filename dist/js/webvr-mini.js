@@ -622,13 +622,23 @@
 	    }, {
 	        key: 'flatten',
 	        value: function flatten(arr, mutable) {
+
+	            if (mutable === undefined) {
+
+	                mutable = false;
+	            }
+
 	            var nodes = mutable && arr || arr.slice(); // return a new array.
+
 	            var flattened = [];
 
 	            for (var node = nodes.shift(); node !== undefined; node = nodes.shift()) {
+
 	                if (Array.isArray(node)) {
+
 	                    nodes.unshift.apply(nodes, node);
 	                } else {
+
 	                    flattened.push(node);
 	                }
 	            }
@@ -698,13 +708,14 @@
 
 	        /** 
 	         * Check the values of a Prim.
+	         * TODO: why is itemsize of indices = 1??????
 	         */
 
 	    }, {
 	        key: 'primReadout',
 	        value: function primReadout(prim) {
 
-	            console.log('prim:' + prim.name + 'type:' + prim.type + ' vertex:' + prim.geometry.vertices.itemSize + ', ' + prim.geometry.vertices.numItems + ', texture:' + prim.geometry.texCoords.itemSize + ', ' + prim.geometry.texCoords.numItems + ', index:' + prim.geometry.indices.itemSize, ', ' + prim.geometry.indices.numItems + ', normals:' + prim.geometry.normals.itemSize + ', ' + prim.geometry.normals.numItems);
+	            console.log('prim:' + prim.name + ' type:' + prim.type + ' vertex:(' + prim.geometry.vertices.itemSize + '), ' + prim.geometry.vertices.numItems + ', texture:(' + prim.geometry.texCoords.itemSize + '), ' + prim.geometry.texCoords.numItems + ', index:(' + prim.geometry.indices.itemSize, '), ' + prim.geometry.indices.numItems + ', normals:(' + prim.geometry.normals.itemSize + '), ' + prim.geometry.normals.numItems);
 	        }
 	    }]);
 
@@ -3632,6 +3643,8 @@
 
 	            ICODOME: 'geometryIcoDome',
 
+	            ICO: 'geometryIco',
+
 	            CONE: 'geometryCone',
 
 	            CYLINDER: 'geometryCylinder',
@@ -4511,7 +4524,7 @@
 
 	                // Compute indices.
 
-	                console.log('VERTEXINDEX:' + vertexIndex + ' VERTSHIFT:' + vertShift);
+	                //////////console.log( 'VERTEXINDEX:' + vertexIndex + ' VERTSHIFT:' + vertShift)
 
 	                for (var j = 0; j < nv; j++) {
 
@@ -4733,11 +4746,12 @@
 	                colors.push(1, 1, 1, 1);
 	            }
 
-	            window.vertices = vertices;
-	            window.indices = indices;
-	            window.texCoords = texCoords;
-	            window.normals = normals;
-	            window.colors = colors;
+	            //window.vertices = vertices;
+	            //window.indices = indices;
+	            ///window.texCoords = texCoords;
+	            //window.normals = normals;
+	            //window.colors = colors;
+
 
 	            return this.createBuffers(vertices, indices, texCoords, normals, colors);
 	        }
@@ -4806,6 +4820,214 @@
 	            return geometry;
 	        }
 	    }, {
+	        key: 'geometryIco',
+
+
+	        /** 
+	         * Adapted from Unity 3d tutorial.
+	         */
+	        value: function geometryIco(prim) {
+
+	            var vec3 = this.glMatrix.vec3;
+
+	            var vec2 = this.glMatrix.vec2;
+
+	            var flatten = this.util.flatten;
+
+	            var subdivisions = prim.divisions[0];
+
+	            var radius = prim.dimensions[0] * 0.5;
+
+	            var resolution = 1 << subdivisions;
+
+	            // Simulate Vector3.down, etc.
+	            // https://docs.unity3d.com/ScriptReference/Vector3.html
+
+	            function getVecs(type) {
+
+	                switch (type) {
+	                    case 'back':
+	                        return [0, 0, -1];break;
+	                    case 'down':
+	                        return [0, -1, 0];break;
+	                    case 'forward':
+	                        return [0, 0, 1];break;
+	                    case 'left':
+	                        return [-1, 0, 0];break;
+	                    case 'one':
+	                        return [1, 1, 1];break;
+	                    case 'right':
+	                        return [1, 0, 0];break;
+	                    case 'up':
+	                        return [0, 1, 0];break;
+	                    case 'zero':
+	                        return [0, 0, 0];break;
+	                }
+	            }
+
+	            var directions = ['left', 'back', 'right', 'forward'];
+
+	            console.log("RESOLUTION:" + resolution);
+
+	            // Allocate memory
+
+	            var vertices = new Array((resolution + 1) * (resolution + 1) * 4 - (resolution * 2 - 1) * 3);
+
+	            var normals = new Array(vertices.length);
+
+	            var indices = new Array((1 << subdivisions * 2 + 3) * 3); // SHOULD BE 384
+
+	            var colors = new Array(vertices.length * 4);
+
+	            console.log('size of indices:' + indices.length);
+
+	            var texCoords = new Array(vertices.length);
+
+	            ///////////
+	            var ct = 0;
+	            ///////////
+
+	            var v = 0,
+	                vBottom = 0,
+	                t = 0,
+	                i = void 0,
+	                d = void 0,
+	                progress = void 0,
+	                from = getVecs('zero'),
+	                to = getVecs('zero'),
+	                out = getVecs('zero');
+
+	            for (i = 0; i < 4; i++) {
+
+	                vertices[v++] = getVecs('down');
+	            }
+
+	            for (i = 1; i <= resolution; i++) {
+
+	                progress = i / resolution;
+
+	                to = vec3.lerp(out, getVecs('down'), getVecs('forward'), progress);
+
+	                vertices[v++] = vec3.copy([0, 0, 0], to);
+
+	                for (d = 0; d < 4; d++) {
+
+	                    from = vec3.copy(out, to);
+
+	                    to = vec3.lerp(out, getVecs('down'), getVecs(directions[d]), progress);
+
+	                    t = createLowerStrip(i, v, vBottom, t, indices);
+
+	                    v = createVertexLine(from, to, i, v, indices);
+
+	                    vBottom += i > 1 ? i - 1 : 1;
+	                }
+
+	                vBottom = v - 1 - i * 4;
+	            }
+
+	            for (i = resolution - 1; i >= 1; i--) {
+
+	                progress = i / resolution;
+
+	                to = vec3.lerp(out, getVecs('up'), getVecs('forward'), progress);
+
+	                vertices[v++] = vec3.copy([0, 0, 0], to);
+
+	                for (d = 0; d < 4; d++) {
+
+	                    from = vec3.copy(out, to);
+
+	                    to = vec3.lerp(out, getVecs('up'), getVecs(directions[d]), progress);
+
+	                    t = createUpperStrip(i, v, vBottom, t, indices);
+
+	                    v = createVertexLine(from, to, i, v, indices);
+
+	                    vBottom += i + 1;
+	                }
+
+	                vBottom = v - 1 - i * 4;
+	            }
+
+	            for (i = 0; i < 4; i++) {
+
+	                indices[t++] = vBottom;
+
+	                indices[t++] = v;
+
+	                indices[t++] = ++vBottom;
+
+	                vertices[v++] = getVecs('up');
+	            }
+
+	            function createVertexLine(from, to, steps, v, vertices) {
+
+	                for (var _i = 1; _i <= steps; _i++) {
+
+	                    console.log("V IS A:" + v);
+
+	                    vertices[v++] = vec3.lerp([0, 0, 0], from, to, _i / steps);
+
+	                    console.log('VERTICES (v):' + v - 1 + ' val:' + vertices[v - 1]);
+	                }
+
+	                return v;
+	            }
+
+	            function createLowerStrip(steps, vTop, vBottom, t, triangles) {
+
+	                for (var _i2 = 1; _i2 < steps; _i2++) {
+
+	                    triangles[t++] = vBottom;
+	                    triangles[t++] = vTop - 1;
+	                    triangles[t++] = vTop;
+
+	                    triangles[t++] = vBottom++;
+	                    triangles[t++] = vTop++;
+	                    triangles[t++] = vBottom;
+	                }
+
+	                triangles[t++] = vBottom;
+	                triangles[t++] = vTop - 1;
+	                triangles[t++] = vTop;
+
+	                return t;
+	            }
+
+	            function createUpperStrip(steps, vTop, vBottom, t, triangles) {
+
+	                triangles[t++] = vBottom;
+	                triangles[t++] = vTop - 1;
+	                triangles[t++] = ++vBottom;
+
+	                for (var _i3 = 1; _i3 <= steps; _i3++) {
+
+	                    triangles[t++] = vTop - 1;
+	                    triangles[t++] = vTop;
+	                    triangles[t++] = vBottom;
+
+	                    triangles[t++] = vBottom;
+	                    triangles[t++] = vTop++;
+	                    triangles[t++] = ++vBottom;
+	                }
+
+	                return t;
+	            }
+
+	            window.vertices = vertices;
+	            window.indices = indices;
+	            window.normals = normals;
+	            window.texCoords = texCoords;
+
+	            return this.createBuffers(vertices, indices, texCoords, normals, colors);
+	        }
+
+	        /** 
+	         * after BabylonJS
+	         */
+
+	    }, {
 	        key: 'geometryIcoSphere',
 	        value: function geometryIcoSphere(prim) {
 
@@ -4821,7 +5043,6 @@
 	            var vec3 = this.glMatrix.vec3;
 
 	            // PUT BABYLON FNS HERE FOR START
-
 
 	            var t = (1 + Math.sqrt(5)) / 2;
 	            // 12 vertex x,y,z
@@ -4887,9 +5108,12 @@
 	            // second island is for faces : [4, 7, 8, 12, 13, 16, 17, 18]
 	            var island = [0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0 //  15 - 19
 	            ];
+	            var vertices = [];
 	            var indices = [];
 	            var positions = [];
 	            var normals = [];
+	            var texCoords = [];
+	            var colors = [];
 	            var uvs = [];
 	            var current_indice = 0;
 	            // prepare array of 3 vector (empty) (to be worked in place, shared for each face)
@@ -5022,10 +5246,6 @@
 	            vertices = positions;
 
 	            texCoords = uvs;
-
-	            window.vertices = vertices;
-	            window.indices = indices;
-	            window.normals = normals;
 
 	            // Result
 
@@ -5541,7 +5761,17 @@
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	            ));
 
-	            window.terrain = this.dirlightTextureObjList[1];
+	            //////////////////////////////////////////////////////////////
+	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.ICO, 'icoUnity', 1.0, vec3.fromValues(3, 3, 3), // dimensions
+	            vec3.fromValues(2, 2, 2), // divisions MAKE SMALLER
+	            vec3.fromValues(2.0, 2.5, -1), // position (absolute)
+	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	            vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	            ['img/mozvr-logo2.png'], // texture present, NOT USED
+	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+	            ));
+	            //////////////////////////////////////////////////////////////
 
 	            this.vs3 = this.renderer.shaderDirlightTexture.init(this.dirlightTextureObjList);
 
