@@ -15,7 +15,14 @@ export default class WebGL {
      * Great WebGL Examples:
      * http://alteredqualia.com/
      * Toji: https://github.com/toji/webvr-samples
+     * https://github.com/toji/webvr.info/blob/master/samples/05-room-scale.html
      * TWGL: @link http://twgljs.org/
+     * perspective Matrix
+     * @link http://www.rozengain.com/blog/2010/02/22/beginning-webgl-step-by-step-tutorial/ 
+     * 
+     * Google demos for kronos (including webworkers and particle systems)
+     * https://www.khronos.org/registry/webgl/sdk/demos/google/
+     * 
      * @constructor
      * @param {Object} config a configuration object, set in app.js.
      */

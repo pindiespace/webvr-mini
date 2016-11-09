@@ -648,6 +648,7 @@ export default class Prim {
 
     /** 
      * WebGL point.
+
      */
     geometryPoint ( prim ) {
 
@@ -655,8 +656,22 @@ export default class Prim {
 
     /** 
      * WebGL point cloud (particle system).
+     * https://github.com/potree/potree/releases
      */
     geometryPointCloud ( prim ) {
+
+    }
+
+    /** 
+     * WebGL particle system
+     * @link https://www.khronos.org/registry/webgl/sdk/demos/google/particles/index.html
+     * @link https://github.com/gouzhen1/WebGL-Particle-System/
+     * @link https://github.com/gouzhen1/WebGL-Particle-System/blob/master/index.html#L3
+     * @link http://nullprogram.com/blog/2014/06/29/
+     * https://codepen.io/kenjiSpecial/pen/yyeaKm
+
+     */
+    geometryParticleSystem () {
 
     }
 
