@@ -705,18 +705,6 @@
 
 	            return fname.slice((fname.lastIndexOf('.') - 1 >>> 0) + 2).toLowerCase();
 	        }
-
-	        /** 
-	         * Check the values of a Prim.
-	         * TODO: why is itemsize of indices = 1??????
-	         */
-
-	    }, {
-	        key: 'primReadout',
-	        value: function primReadout(prim) {
-
-	            console.log('prim:' + prim.name + ' type:' + prim.type + ' vertex:(' + prim.geometry.vertices.itemSize + '), ' + prim.geometry.vertices.numItems + ', texture:(' + prim.geometry.texCoords.itemSize + '), ' + prim.geometry.texCoords.numItems + ', index:(' + prim.geometry.indices.itemSize, '), ' + prim.geometry.indices.numItems + ', normals:(' + prim.geometry.normals.itemSize + '), ' + prim.geometry.normals.numItems);
-	        }
 	    }]);
 
 	    return Util;
@@ -3909,6 +3897,18 @@
 	            };
 	        }
 
+	        /** 
+	         * Check the values of a Prim.
+	         * TODO: why is itemsize of indices = 1??????
+	         */
+
+	    }, {
+	        key: 'primReadout',
+	        value: function primReadout(prim) {
+
+	            console.log('prim:' + prim.name + ' type:' + prim.type + ' vertex:(' + prim.geometry.vertices.itemSize + '), ' + prim.geometry.vertices.numItems + ', texture:(' + prim.geometry.texCoords.itemSize + '), ' + prim.geometry.texCoords.numItems + ', index:(' + prim.geometry.indices.itemSize, '), ' + prim.geometry.indices.numItems + ', normals:(' + prim.geometry.normals.itemSize + '), ' + prim.geometry.normals.numItems);
+	        }
+
 	        /* 
 	         * ---------------------------------------
 	         * NORMAL, INDEX, VERTEX CALCULATIONS
@@ -3967,7 +3967,8 @@
 	        }
 
 	        /** 
-	         * Compute normals for a 3d object.
+	         * Compute normals for a 3d object. NOTE: some routines compute their 
+	         * own normals.
 	         * Adapted from BabylonJS
 	         * https://github.com/BabylonJS/Babylon.js/blob/3fe3372053ac58505dbf7a2a6f3f52e3b92670c8/src/Mesh/babylon.mesh.vertexData.js
 	         * @link http://gamedev.stackexchange.com/questions/8191/any-reliable-polygon-normal-calculation-code
@@ -4126,6 +4127,115 @@
 	                    }
 	                    break;
 	            }
+	        }
+
+	        /** 
+	         * Compute tangents. NOTE: some routines compute their own tangents.
+	         * CodePen - http://codepen.io/ktmpower/pen/ZbGRpW
+	         * adapted from the C++ code from this link: http://www.terathon.com/code/tangent.html
+	         * TODO: CONVERT TO GLMATRIX
+	         * "The code below generates a four-component tangent T in which the handedness of the local coordinate system
+	         * is stored as ±1 in the w-coordinate. The bitangent vector B is then given by B = (N × T) · Tw."
+	         */
+
+	    }, {
+	        key: 'computeTangents',
+	        value: function computeTangents(vertices, indices, normals, texCoords) {
+
+	            var vec3 = this.glMatrix.vec3;
+
+	            var vertexCount = vertices.length / 4; // the vertices are assumed to be flattened vec4s (i.e. 4 floats per vertex)
+
+	            var tan1 = new Float32Array(normals.length);
+	            var tan2 = new Float32Array(normals.length);
+
+	            // the indices array specifies the triangles forming the object mesh (3 indices per triangle)
+	            var numIndices = indices.length;
+
+	            // for each triangle (step through indices 3 by 3)
+	            for (var i = 0; i < numIndices; i += 3) {
+
+	                var i1 = indices[i],
+	                    i2 = indices[i + 1],
+	                    _i = indices[i + 2];
+
+	                var j = i1 * 4;var v1x = vertices[j],
+	                    v1y = vertices[j + 1],
+	                    v1z = vertices[j + 2];
+	                var j = i2 * 4;var v2x = vertices[j],
+	                    v2y = vertices[j + 1],
+	                    v2z = vertices[j + 2];
+	                var j = _i * 4;var v3x = vertices[j],
+	                    v3y = vertices[j + 1],
+	                    v3z = vertices[j + 2];
+
+	                var x1 = v2x - v1x,
+	                    x2 = v3x - v1x;
+	                var y1 = v2y - v1y,
+	                    y2 = v3y - v1y;
+	                var z1 = v2z - v1z,
+	                    z2 = v3z - v1z;
+
+	                var j = i1 * 2;var w1x = texCoords[j],
+	                    w1y = texCoords[j + 1];
+	                var j = i2 * 2;var w2x = texCoords[j],
+	                    w2y = texCoords[j + 1];
+	                var j = _i * 2;var w3x = texCoords[j],
+	                    w3y = texCoords[j + 1];
+
+	                var s1 = w2x - w1x,
+	                    s2 = w3x - w1x;
+	                var t1 = w2y - w1y,
+	                    t2 = w3y - w1y;
+
+	                var r = 1.0 / (s1 * t2 - s2 * t1);
+
+	                var sx = (t2 * x1 - t1 * x2) * r,
+	                    sy = (t2 * y1 - t1 * y2) * r,
+	                    sz = (t2 * z1 - t1 * z2) * r;
+	                var tx = (s1 * x2 - s2 * x1) * r,
+	                    ty = (s1 * y2 - s2 * y1) * r,
+	                    tz = (s1 * z2 - s2 * z1) * r;
+
+	                var j = i1 * 3;tan1[j] += sx;tan1[j + 1] += sy;tan1[j + 2] += sz;
+	                tan2[j] += tx;tan2[j + 1] += ty;tan2[j + 2] += tz;
+	                var j = i2 * 3;tan1[j] += sx;tan1[j + 1] += sy;tan1[j + 2] += sz;
+	                tan2[j] += tx;tan2[j + 1] += ty;tan2[j + 2] += tz;
+	                var j = _i * 3;tan1[j] += sx;tan1[j + 1] += sy;tan1[j + 2] += sz;
+	                tan2[j] += tx;tan2[j + 1] += ty;tan2[j + 2] += tz;
+	            }
+
+	            var numVertices = vertices.length;
+	            var tangents = new Float32Array(numVertices);
+
+	            for (var i3 = 0, i4 = 0; i4 < numVertices; i3 += 3, i4 += 4) {
+
+	                // not very efficient here (used the vec3 type and dot/cross operations from MV.js)
+	                var n = [normals[i3], normals[i3 + 1], normals[i3 + 2]];
+	                var _t = [tan1[i3], tan1[i3 + 1], tan1[i3 + 2]];
+	                var _t2 = [tan2[i3], tan2[i3 + 1], tan2[i3 + 2]];
+
+	                // Gram-Schmidt orthogonalize
+	                ////////////////const tmp  = subtract(t1, scale(dot(n, t1), n));
+	                var tmp = vec3.sub([0, 0, 0], _t, vec3.scale([0, 0, 0], vec3.dot([0, 0, 0], n, _t), n));
+
+	                var len2 = tmp[0] * tmp[0] + tmp[1] * tmp[1] + tmp[2] * tmp[2];
+
+	                // normalize the vector only if non-zero length
+	                ///////////////const txyz = (len2 > 0) ? scale(1.0 / Math.sqrt(len2), tmp) : tmp;
+	                var txyz = len2 > 0 ? vec3.scale([0, 0, 0], 1.0 / Math.sqrt(len2), tmp) : tmp;
+
+	                // Calculate handedness
+	                //////////////const tw = (dot(cross(n, t1), t2) < 0.0) ? -1.0 : 1.0;
+	                var tw = vec3.dot([0, 0, 0], vec3.cross([0, 0, 0], n, _t), _t2) < 0.0 ? -1.0 : 1.0;
+
+	                tangents[i4] = txyz[0];
+	                tangents[i4 + 1] = txyz[1];
+	                tangents[i4 + 2] = txyz[2];
+	                tangents[i4 + 3] = tw;
+	            }
+
+	            return tangents;
 	        }
 
 	        /* 
@@ -4764,7 +4874,7 @@
 	                }
 	            }
 
-	            // Normals
+	            // Normals.
 
 	            for (i = 0; i < vertices.length; i += 3) {
 
@@ -4780,6 +4890,12 @@
 
 	                colors.push(1, 1, 1, 1);
 	            }
+
+	            // Tangents.
+
+	            this.computeTangents(vertices, indices, normals, texCoords);
+
+	            // Colors.
 
 	            //window.vertices = vertices;
 	            //window.indices = indices;
@@ -5136,11 +5252,11 @@
 
 	            function createVertexLine(from, to, steps, v, vertices) {
 
-	                for (var _i = 1; _i <= steps; _i++) {
+	                for (var _i2 = 1; _i2 <= steps; _i2++) {
 
 	                    //console.log("Vec3 " + v + " IS A:" + vec3.lerp( [0,0,0], from, to, i / steps ))
 
-	                    vertices[v++] = vec3.lerp([0, 0, 0], from, to, _i / steps);
+	                    vertices[v++] = vec3.lerp([0, 0, 0], from, to, _i2 / steps);
 	                }
 
 	                //window.verts2 = vertices.slice();
@@ -5152,7 +5268,7 @@
 
 	            function createLowerStrip(steps, vTop, vBottom, t, triangles) {
 
-	                for (var _i2 = 1; _i2 < steps; _i2++) {
+	                for (var _i3 = 1; _i3 < steps; _i3++) {
 
 	                    triangles[t++] = vBottom;
 	                    triangles[t++] = vTop - 1;
@@ -5176,7 +5292,7 @@
 	                triangles[t++] = vTop - 1;
 	                triangles[t++] = ++vBottom;
 
-	                for (var _i3 = 1; _i3 <= steps; _i3++) {
+	                for (var _i4 = 1; _i4 <= steps; _i4++) {
 
 	                    triangles[t++] = vTop - 1;
 	                    triangles[t++] = vTop;
@@ -5194,6 +5310,7 @@
 	            window.indices = indices;
 	            window.normals = normals;
 	            window.texCoords = texCoords;
+	            window.tangents = tangents;
 
 	            return this.createBuffers(vertices, indices, texCoords, normals, colors);
 	        }
@@ -5365,7 +5482,7 @@
 
 	            // Prim readout to console.
 
-	            this.util.primReadout(prim);
+	            this.primReadout(prim); // TODO: DEBUG!!!!!!!!!!!!!!!!!!!!!!
 
 	            return prim;
 	        }

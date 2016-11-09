@@ -215,22 +215,4 @@ export default class Util {
 
     }
 
-    /** 
-     * Check the values of a Prim.
-     * TODO: why is itemsize of indices = 1??????
-     */
-    primReadout ( prim ) {
-
-        console.log( 'prim:' + prim.name + ' type:' + prim.type + 
-            ' vertex:(' + prim.geometry.vertices.itemSize + 
-            '), ' + prim.geometry.vertices.numItems + 
-            ', texture:(' + prim.geometry.texCoords.itemSize + 
-            '), ' + prim.geometry.texCoords.numItems + 
-            ', index:(' + prim.geometry.indices.itemSize, 
-            '), ' + prim.geometry.indices.numItems + 
-            ', normals:(' + prim.geometry.normals.itemSize + 
-            '), ' + prim.geometry.normals.numItems );
-
-    }
-
 }
