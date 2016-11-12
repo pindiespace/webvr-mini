@@ -153,6 +153,70 @@ export default class Util {
     }
 
     /** 
+     * Concatenate typed and untyped arrays. if the first array is typed, 
+     * the second array is converted to the same type. The first array 
+     * receives the concatenation (no new Array is created).
+     * @param {Array|TypedArray} arr1 the first Array.
+     * @param {Array|TypedArray} arr2 the second Array.
+     * @returns {Array|TypedArray} the concatenated Array.
+     */
+    concatArr ( arr1, arr2 ) {
+
+            let result = null;
+
+        if ( arr1.type ) { // typed array
+
+            let firstLength = arr1.length;
+
+            switch ( arr1.type ) {
+
+                case 'Float32Array':
+                    result = new Float32Array( firstLength + second.length );
+                    if( arr2.type !== arr1.type ) {
+                        arr2 = Float32Array.from( arr2 );
+
+                    }
+                    break;
+
+                case 'Uint16Array':
+                    result = new Uint16Array( firstLength + second.length );
+                    if( arr2.type !== arr1.type ) {
+                        arr2 = Uint16Array.from( arr2 );
+
+                    }
+                    break;
+
+            }
+
+            result.set( arr1 );
+
+            result.set( arr2, firstLength );
+
+        } else {
+
+            if( arr2.type ) { // typed copied to untyped
+
+                for ( let i = 0; i < arr2.length; i++ ) {
+
+                    arr1.push( arr2[ i ] );
+
+                }
+
+                result = arr1;
+
+            } else {
+
+                result = arr1.concat( arr2 ); // both are untyped
+
+            }
+
+        }
+
+        return result;
+
+    }
+
+    /** 
      * Random seed.
      */
     getSeed() {

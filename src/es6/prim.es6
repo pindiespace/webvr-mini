@@ -42,6 +42,8 @@ export default class Prim {
 
             PLANE: 'geometryPlane',
 
+            CIRCLE: 'geometryCircle',
+
             POLY: 'geometryPoly',
 
             CUBE: 'geometryCube',
@@ -56,11 +58,19 @@ export default class Prim {
 
             DOME: 'geometryDome',
 
-            ICODOME: 'geometryIcoDome',
+            TOPDOME: 'geometryDome',
 
-            ICO: 'geometryIco',
+            BOTTOMDOME: 'geometryDome',
+
+            TOPICODOME: 'geometryTopIcoDome',
+
+            BOTTOMICODOME: 'geometryBottomIcoDome',
 
             CONE: 'geometryCone',
+
+            TOPCONE: 'geometryTopCone',
+
+            BOTTOMCONE: 'geometryBottomCone',
 
             CYLINDER: 'geometryCylinder',
 
@@ -142,186 +152,275 @@ export default class Prim {
     }
 
     /** 
-     * Create WebGL buffers using geometry data
-     * @param {Array} vertices an array of vertices, in glMatrix.vec3 objects.
-     * @param {Array} indices an array of indices for the vertices.
-     * @param {Array} textCoords an array of texture coordinates, in glMatrix.vec2 format.
-     * @param {Array} normals an array of normals, in glMatrix.vec3 format.
-     * @param {Array} tangents an array of tangents, in glMatrix.vec3 format.
-     * @param {Array} colors an array of colors, in glMatrix.vec4 format.
+     * Return an empty buffer object.
      */
-    createBuffers ( vertices, indices, texCoords, normals, tangents, colors ) {
-
-        let gl = this.webgl.getContext();
-
-        // Vertex Buffer Object.
-
-        if ( ! vertices ) {
-
-            console.log( 'no vertices present, creating default' );
-
-            vertices = new Float32Array( [ 0, 0, 0 ] );
-        }
-
-        let vBuffer = gl.createBuffer();
-
-        gl.bindBuffer( gl.ARRAY_BUFFER, vBuffer );
-
-        gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( vertices ), gl.STATIC_DRAW );
-
-        if ( ! indices ) {
-
-            console.log( 'no indices present, creating default' );
-
-            indices = new Uint16Array( [ 1 ] );
-        }
-
-        // Index buffer.
-
-        let iBuffer = gl.createBuffer();
-
-        gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, iBuffer );
-
-        gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( indices ), gl.STATIC_DRAW );
-
-        if ( ! normals ) {
-
-            console.log( 'no normals, present, creating default' );
-
-            normals = new Float32Array( [ 0, 1, 0 ] );
-
-        }
-
-        // Normals buffer.
-
-        let nBuffer = gl.createBuffer();
-
-        gl.bindBuffer( gl.ARRAY_BUFFER, nBuffer );
-
-        gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( normals ), gl.STATIC_DRAW );
-
-        if ( ! texCoords ) {
-
-            console.warn( 'no texture present, creating default' );
-
-            texCoords = new Float32Array( [ 0, 0 ] );
-
-        }
-
-        // Texture Buffer.
-
-        let tBuffer = gl.createBuffer();
-
-        gl.bindBuffer( gl.ARRAY_BUFFER, tBuffer );
-
-        gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( texCoords ), gl.STATIC_DRAW );
-
-        // Tangents Buffer.
-        // TODO: ADD THIS
-
-        let tnBuffer = gl.createBuffer();
-
-        gl.bindBuffer( gl.ARRAY_BUFFER, tnBuffer );
-
-        gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( tangents ), gl.STATIC_DRAW );
-
-
-        if ( ! colors ) {
-
-            console.warn( 'no colors present, creating default' );
-
-            colors = new Float32Array( [ 0.2, 0.5, 0.2, 1.0 ] );
-
-        }
-
-        let cBuffer = gl.createBuffer();
-
-        gl.bindBuffer( gl.ARRAY_BUFFER, cBuffer );
-
-        gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( colors ), gl.STATIC_DRAW );
-
-        // Return a complete object. TODO: don't really need vertices except for debugging.
+    createBufferObj () {
 
         return {
 
+            makeBuffers: true,
+
             vertices: {
 
-                data: vertices,
+                data: [],
 
-                buffer: vBuffer,
+                buffer: null,
 
                 itemSize: 3,
 
-                numItems: vertices.length / 3,
+                numItems: 0
 
             },
 
             indices: {
 
-                data: indices,
+                data: [],
 
-                buffer: iBuffer,
+                buffer: null,
 
                 itemSize: 1,
 
-                numItems: indices.length
+                numItems: 0
 
             },
 
             normals: {
 
-                data: normals,
+                data: [],
 
-                buffer: nBuffer,
+                buffer: null,
 
                 itemSize: 3,
 
-                numItems: normals.length / 3
+                numItems: 0
 
             },
 
             tangents: {
 
-                data: tangents,
+                data: [],
 
-                buffer: tnBuffer,
+                buffer: null,
 
                 itemSize: 4,
 
-                numItems: tangents.length / 4
+                numItems: 0
 
             },
 
             edges: {
 
+                data: [],
+
+                buffer: null,
+
+                itemSize: 4,
+
+                numItems: 0
+
             },
 
             texCoords: {
 
-                data: texCoords,
+                data: [],
 
-                buffer: tBuffer,
+                buffer: null,
 
                 itemSize: 2,
 
-                numItems: texCoords.length / 2
+                numItems: 0
 
             },
 
             colors: {
 
-                data: colors,
+                data: [],
 
-                buffer: cBuffer,
+                buffer: null,
 
                 itemSize: 4,
 
-                numItems: colors.length / 4
+                numItems: 0
 
             }
 
+        }
 
-        };
+    }
+
+    /** 
+     * Add data to create buffers, works if existing data is present. However, 
+     * indices must be consistent!
+     */
+    addBufferData( bufferObj, vertices, indices, texCoords, normals, tangents, colors ) {
+
+        let concat = this.util.concatArr;
+
+        concat( bufferObj.vertices.data, vertices );
+        concat( bufferObj.indices.data, indices );
+        concat( bufferObj.texCoords.data, texCoords );
+        concat( bufferObj.normals.data, normals );
+        concat( bufferObj.tangents.data, tangents );
+        concat( bufferObj.colors.data, colors );
+
+    }
+
+    /** 
+     * Create WebGL buffers using geometry data
+     * @param {Object} bufferObj custom object holding the following:
+     * an array of vertices, in glMatrix.vec3 objects.
+     * an array of indices for the vertices.
+     * an array of texture coordinates, in glMatrix.vec2 format.
+     * an array of normals, in glMatrix.vec3 format.
+     * an array of tangents, in glMatrix.vec3 format.
+     * an array of colors, in glMatrix.vec4 format.
+     */
+    createBuffers( bufferObj ) {
+
+            let gl = this.webgl.getContext();
+
+            let o;
+
+            // Vertex Buffer Object.
+
+            o = bufferObj.vertices;
+
+            if ( ! o.data ) {
+
+                console.log( 'no vertices present, creating default' );
+
+                o.data = new Float32Array( [ 0, 0, 0 ] );
+            }
+
+            o.buffer = gl.createBuffer();
+
+            gl.bindBuffer( gl.ARRAY_BUFFER, o.buffer );
+
+            gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( o.data ), gl.STATIC_DRAW );
+
+            o.numItems = o.data.length / o.itemSize;
+
+            // Create the Index buffer.
+
+            o = bufferObj.indices;
+
+            if ( ! o.data ) {
+
+                console.log( 'no indices present, creating default' );
+
+                o.data = new Uint16Array( [ 1 ] );
+
+            }
+
+            o.buffer = gl.createBuffer();
+
+            gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, o.buffer );
+
+            gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( o.data ), gl.STATIC_DRAW );
+
+            o.numItems = o.data.length / o.itemSize;
+
+            // create the Normals buffer.
+
+            o = bufferObj.normals;
+
+            if ( ! o.data ) {
+
+                console.log( 'no normals, present, creating default' );
+
+                o.data = new Float32Array( [ 0, 1, 0 ] );
+
+            }
+
+            o.buffer = gl.createBuffer();
+
+            gl.bindBuffer( gl.ARRAY_BUFFER, o.buffer );
+
+            gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( o.data ), gl.STATIC_DRAW );
+
+            o.numItems = o.data.length / o.itemSize;
+
+            // Create the primary Texture buffer.
+
+            o = bufferObj.texCoords;
+
+            if ( ! o.data ) {
+
+                console.warn( 'no texture present, creating default' );
+
+                o.data = new Float32Array( [ 0, 0 ] );
+
+            }
+
+            o.buffer = gl.createBuffer();
+
+            gl.bindBuffer( gl.ARRAY_BUFFER, o.buffer );
+
+            gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( o.data ), gl.STATIC_DRAW );
+
+            o.numItems = o.data.length / o.itemSize;
+
+            // create the Tangents Buffer.
+
+            o = bufferObj.tangents;
+
+            if ( ! o.data ) {
+
+                console.warn( 'no tangents present, creating default' );
+
+                o.data = new Float32Array( [ 0, 0, 0, 0 ] );
+
+            }
+
+            o.buffer = gl.createBuffer();
+
+            gl.bindBuffer( gl.ARRAY_BUFFER, o.buffer );
+
+            gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( o.data ), gl.STATIC_DRAW );
+
+            o.numItems = o.data.length / o.itemSize;
+
+            // Create the Edges buffer.
+
+            o = bufferObj.edges;
+
+            if( ! o.data ) {
+
+                console.warn( 'no edges present, creating default' );
+
+                o.data = new Float32Array( [0, 0, 0] );
+
+            }
+
+            o.buffer = gl.createBuffer();
+
+            gl.bindBuffer( gl.ARRAY_BUFFER, o.buffer );
+
+            gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( o.data ), gl.STATIC_DRAW );
+
+            o.numItems = o.data.length / o.itemSize;
+
+            // Create the Colors buffer.
+
+            o = bufferObj.colors;
+
+            if ( ! o.data ) {
+
+                console.warn( 'no colors present, creating default color' );
+
+                o.data = new Float32Array( [ 0.2, 0.5, 0.2, 1.0 ] );
+
+            }
+
+            o.buffer = gl.createBuffer();
+
+            gl.bindBuffer( gl.ARRAY_BUFFER, o.buffer );
+
+            gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( o.data ), gl.STATIC_DRAW );
+
+            o.numItems = o.data.length / o.itemSize;
+
+        return bufferObj;
 
     }
 
@@ -716,6 +815,29 @@ export default class Prim {
      */
     geometryPointCloud ( prim ) {
 
+        let vertices = prim.geometry.vertices.data;
+        let indices  = prim.geometry.indices.data;
+        let texCoords = prim.geometry.texCoords.data;
+        let normals = prim.geometry.normals.data;
+        let tangents = prim.geometry.tangents.data;
+        let colors = prim.geometry.colors.data;
+
+
+
+        // Return the buffer, or add array data to the existing Prim data.
+
+        if( prim.geometry.makeBuffers === true ) {
+
+            //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+            return this.createBuffers( prim.geometry );
+
+        } else {
+
+            return this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+        }
+
     }
 
     /** 
@@ -729,12 +851,58 @@ export default class Prim {
      */
     geometryParticleSystem () {
 
+        let vertices = prim.geometry.vertices.data;
+        let indices  = prim.geometry.indices.data;
+        let texCoords = prim.geometry.texCoords.data;
+        let normals = prim.geometry.normals.data;
+        let tangents = prim.geometry.tangents.data;
+        let colors = prim.geometry.colors.data;
+
+
+
+        // Return the buffer, or add array data to the existing Prim data.
+
+        if( prim.geometry.makeBuffers === true ) {
+
+            //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+            return this.createBuffers( prim.geometry );
+
+        } else {
+
+            return this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+        }
+
     }
 
     /** 
      * WebGL line.
      */
     geometryLine ( prim ) {
+
+        let vertices = prim.geometry.vertices.data;
+        let indices  = prim.geometry.indices.data;
+        let texCoords = prim.geometry.texCoords.data;
+        let normals = prim.geometry.normals.data;
+        let tangents = prim.geometry.tangents.data;
+        let colors = prim.geometry.colors.data;
+
+
+
+        // Return the buffer, or add array data to the existing Prim data.
+
+        if( prim.geometry.makeBuffers === true ) {
+
+            //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+            return this.createBuffers( prim.geometry );
+
+        } else {
+
+            return this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+        }
 
     }
 
@@ -745,17 +913,14 @@ export default class Prim {
 
         let vec3 = this.glMatrix.vec3;
 
-        let vertices = [];
+        // Shortcuts to Prim data arrays
 
-        let indices = [];
-
-        let normals = [];
-
-        let tangents = [];
-
-        let texCoords = [];
-
-        let colors = [];
+        let vertices = prim.geometry.vertices.data;
+        let indices  = prim.geometry.indices.data;
+        let texCoords = prim.geometry.texCoords.data;
+        let normals = prim.geometry.normals.data;
+        let tangents = prim.geometry.tangents.data;
+        let colors = prim.geometry.colors.data;
 
         let cols = prim.divisions[0] // x axis (really xz)
         let rows = prim.divisions[2]; // y axis
@@ -833,7 +998,21 @@ export default class Prim {
 
         this.computeNormals( vertices, indices, normals );
 
-        return this.createBuffers ( vertices, indices, texCoords, normals, tangents, colors );
+        // Return the buffer, or add array data to the existing Prim data.
+
+        if( prim.geometry.makeBuffers === true ) {
+
+            //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+            return this.createBuffers( prim.geometry );
+
+        } else {
+
+            return this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+        }
+
+        //return this.createBuffers ( this.createBufferObj(), vertices, indices, texCoords, normals, tangents, colors );
 
     }
 
@@ -854,6 +1033,8 @@ export default class Prim {
      */
     geometryCube ( prim ) {
 
+        // Shortcuts to Prim data arrays
+
         let x = prim.dimensions[ 0 ] / 2;
 
         let y = prim.dimensions[ 1 ] / 2;
@@ -862,7 +1043,7 @@ export default class Prim {
 
         // Create cube geometry.
 
-        let vertices = [
+        prim.geometry.vertices.data = [
             // Front face
             -1.0, -1.0,  1.0, // bottomleft
              1.0, -1.0,  1.0, // bottomright
@@ -895,7 +1076,7 @@ export default class Prim {
             -1.0,  1.0, -1.0
         ];
 
-        let indices = [
+        prim.geometry.indices.data = [
             0, 1, 2,      0, 2, 3,    // Front face
             4, 5, 6,      4, 6, 7,    // Back face
             8, 9, 10,     8, 10, 11,  // Top face
@@ -904,7 +1085,7 @@ export default class Prim {
             20, 21, 22,   20, 22, 23  // Left face
         ];
 
-        let normals = [
+        prim.geometry.normals.data = [
             // Front face
             0.0,  0.0,  1.0,
             0.0,  0.0,  1.0,
@@ -937,7 +1118,7 @@ export default class Prim {
             -1.0,  0.0,  0.0,
         ];
 
-        let texCoords = [
+        prim.geometry.texCoords.data = [
             // Front face
             0.0, 0.0,
             1.0, 0.0,
@@ -970,9 +1151,9 @@ export default class Prim {
             0.0, 1.0
         ];
 
-        let tangents = [];
+        prim.geometry.tangents.data = [];
 
-        let colors = [
+        prim.geometry.colors.data = [
             // Front face
             1.0,  1.0,  1.0,  1.0,    // white
             1.0,  0.0,  0.0,  1.0,    // red
@@ -1005,7 +1186,21 @@ export default class Prim {
             0.0,  0.0,  1.0,  1.0     // blue
         ];
 
-        return this.createBuffers ( vertices, indices, texCoords, normals, tangents, colors );
+        // Return the buffer, or add array data to the existing Prim data.
+
+        if( prim.geometry.makeBuffers === true ) {
+
+            //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+            return this.createBuffers( prim.geometry );
+
+        } else {
+
+            return this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+        }
+
+        //return this.createBuffers ( this.createBufferObj(), vertices, indices, texCoords, normals, tangents, colors );
 
     }
 
@@ -1019,17 +1214,12 @@ export default class Prim {
 
        // TODO: ACTIVATE RADIUS X, Y, Z for distorted spheres.
 
-        let vertices = [];
-
-        let indices = [];
-
-        let normals = [];
-
-        let texCoords = [];
-
-        let tangents = [];
-
-        let colors = [];
+        let vertices = prim.geometry.vertices.data;
+        let indices  = prim.geometry.indices.data;
+        let texCoords = prim.geometry.texCoords.data;
+        let normals = prim.geometry.normals.data;
+        let tangents = prim.geometry.tangents.data;
+        let colors = prim.geometry.colors.data;
 
         let latitudeBands = prim.divisions[1]; // y axis
 
@@ -1131,7 +1321,21 @@ export default class Prim {
 
         }
 
-        return this.createBuffers ( vertices, indices, texCoords, normals, colors );
+        // Return the buffer, or add array data to the existing Prim data.
+
+        if( prim.geometry.makeBuffers === true ) {
+
+            //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+            return this.createBuffers( prim.geometry );
+
+        } else {
+
+            return this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+        }
+
+        //return this.createBuffers ( this.createBufferObj(), vertices, indices, texCoords, normals, colors );
 
     }
 
@@ -1147,17 +1351,12 @@ export default class Prim {
 
         let flatten = this.util.flatten;
 
-        let vertices = [];
-
-        let indices = [];
-
-        let normals = [];
-
-        let texCoords = [];
-
-        let tangents = [];
-
-        let colors = [];
+        let vertices = prim.geometry.vertices.data;
+        let indices  = prim.geometry.indices.data;
+        let texCoords = prim.geometry.texCoords.data;
+        let normals = prim.geometry.normals.data;
+        let tangents = prim.geometry.tangents.data;
+        let colors = prim.geometry.colors.data;
 
         let sx = prim.dimensions[0];
         let sy = prim.dimensions[1];
@@ -1286,11 +1485,25 @@ export default class Prim {
 
         // Flatten arrays we used multidimensonal access to compute.
 
-        vertices = flatten(positions, false);
+        prim.geometry.vertices.data = flatten(positions, false);
 
-        normals = flatten(norms, false);
+        prim.geometry.normals.data = flatten(norms, false);
 
-        return this.createBuffers ( vertices, indices, texCoords, normals, tangents, colors );
+        // Return the buffer, or add array data to the existing Prim data.
+
+        if( prim.geometry.makeBuffers === true ) {
+
+            //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+            return this.createBuffers( prim.geometry );
+
+        } else {
+
+            return this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+        }
+
+        //return this.createBuffers ( this.createBufferObj(), vertices, indices, texCoords, normals, tangents, colors );
 
     }
 
@@ -1330,17 +1543,12 @@ export default class Prim {
 
         // Allocate memory
 
-        let vertices = new Array ( (resolution + 1) * (resolution + 1) * 4 - (resolution * 2 - 1) * 3 ) ;
-
-        let indices = new Array( (1 << (subdivisions * 2 + 3)) * 3 );
-
-        let normals = new Array( vertices.length );
-
-        let colors = new Array( vertices.length * 4 );
-
-        let texCoords = new Array( vertices.length );
-
-        let tangents = [];
+        let vertices = prim.geometry.vertices.data = new Array ( (resolution + 1) * (resolution + 1) * 4 - (resolution * 2 - 1) * 3 );
+        let indices  = prim.geometry.indices.data = new Array( (1 << (subdivisions * 2 + 3)) * 3 );;
+        let texCoords = prim.geometry.texCoords.data = new Array( vertices.length );
+        let normals = prim.geometry.normals.data = new Array( vertices.length );
+        let tangents = prim.geometry.tangents.data = new Array( vertices.length );
+        let colors = prim.geometry.colors.data = new Array( vertices.length * 4 );
 
         // initialize lots of default variables.
 
@@ -1452,14 +1660,14 @@ export default class Prim {
 
         // Tangents.
 
-        createTangents (vertices, tangents);
+        createTangents ( vertices, tangents );
 
         // Flatten the data arrays.
 
-        vertices = flatten(vertices, false );
-        texCoords = flatten(texCoords, false );
-        normals = flatten(normals, false )
-        tangents = flatten(tangents, false )
+        prim.geometry.vertices.data = flatten(vertices, false );
+        prim.geometry.texCoords.data = flatten(texCoords, false );
+        prim.geometry.normals.data = flatten(normals, false )
+        prim.geometry.tangents.data = flatten(tangents, false )
 
         // Helper functions.
 
@@ -1539,7 +1747,6 @@ export default class Prim {
 
             }
 
- 
             //tangents[vertices.Length - 4] = tangents[0] = new Vector3(-1f, 0, -1f).normalized;
             tangents[vertices.length - 4] = [-1, 0, 1];
             tangents[0] = [-1, 0, -1];
@@ -1628,7 +1835,22 @@ export default class Prim {
 
         }
 
-        return this.createBuffers ( vertices, indices, texCoords, normals, tangents, colors );
+        // Return the buffer, or add array data to the existing Prim data.
+
+        if( prim.geometry.makeBuffers === true ) {
+
+            //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+            return this.createBuffers( prim.geometry );
+
+        } else {
+
+            return this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+        }
+
+
+        //return this.createBuffers ( this.createBufferObj(), vertices, indices, texCoords, normals, tangents, colors );
 
     }
 
@@ -1719,8 +1941,120 @@ export default class Prim {
 
     /** 
      * Half-sphere, polar coordinates.
+     * @param {Prim} prim the object needing geometry.
      */
     geometryDome ( prim ) {
+
+        let latitudeBands = prim.divisions[1]; // y axis
+
+        let longitudeBands = prim.divisions[0] // x axis (really xz)
+
+        let radius = prim.dimensions[0] * 0.5;
+
+        // ADJUST
+
+        let dHeight = prim.dimensions[1];
+
+        // Shortcuts to Prim data arrays
+
+        let vertices = prim.geometry.vertices.data;
+        let indices  = prim.geometry.indices.data;
+        let texCoords = prim.geometry.texCoords.data;
+        let normals = prim.geometry.normals.data;
+        let tangents = prim.geometry.tangents.data;
+        let colors = prim.geometry.colors.data;
+
+        let x, y, z;
+
+        for (let latNumber = 0; latNumber <= latitudeBands / 2; latNumber++) {
+
+            let theta = latNumber * Math.PI / latitudeBands;
+
+            let sinTheta = Math.sin(theta);
+
+            let cosTheta = Math.cos(theta);
+
+            for (let longNumber = 0; longNumber <= longitudeBands; longNumber++) {
+
+                let phi = longNumber * 2 * Math.PI / longitudeBands;
+
+                let sinPhi = Math.sin(phi);
+
+                let cosPhi = Math.cos(phi);
+
+                // Texture coords.
+
+                let u = 1 - (longNumber / longitudeBands);
+
+                let v = 1 - (latNumber / latitudeBands);
+
+                // Compute vertex positions.
+
+                x = cosPhi * sinTheta;
+
+                z = sinPhi * sinTheta;
+
+                if ( prim.type === this.typeList.TOPDOME) {
+
+                    y = cosTheta;
+
+
+                } else if ( prim.type == this.typeList.BOTTOMDOME ) {
+
+                    y = 1 - cosTheta;
+
+                }
+
+
+                // Push values.
+
+                vertices.push(radius * x, radius * y, radius * z);
+
+                texCoords.push(u, v);
+
+                normals.push(x, y, z);
+
+            }
+
+        }
+
+        // Sphere indices.
+
+        for (let latNumber = 0; latNumber < latitudeBands / 2; latNumber++) {
+
+            for (let longNumber = 0; longNumber < longitudeBands; longNumber++) {
+
+                let first = (latNumber * (longitudeBands + 1)) + longNumber;
+
+                let second = first + longitudeBands + 1;
+
+                // Note: we're running culling in reverse from some tutorials here.
+
+                indices.push(first + 1, second + 1, second);
+
+                indices.push(first + 1, second, first);
+
+            }
+
+        }
+
+        //tangents = this.computeTangents( vertices, indices, normals, texCoords );
+
+        tangents = [];
+
+        // Return the buffer, or add array data to the existing Prim data.
+
+        if( prim.geometry.makeBuffers === true ) {
+
+            //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+            return this.createBuffers( prim.geometry );
+
+        } else {
+
+            return this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+        }
 
     }
 
@@ -1741,188 +2075,37 @@ export default class Prim {
      * @param {Number} bottomRadius the radius of the bottom of the cone.
      * @param {Number} topRadius the top radius of the cone.
      */
-    geometryCone ( prim, bottomRadius, topRadius ) {
+    geometryCone ( prim, type, bottomRadius, topRadius ) {
 
         // GlMatrix.
 
         let vec3 = this.glMatrix.vec3;
         let vec2 = this.glMatrix.vec2;
 
-        // Flatten method.
+        // Params.
 
-        // Default vectors.
-
-        let getVecs = this.getStdVec3;
-
-        let vertices = [];
-
-        let indices = [];
-
-        let normals = [];
-
-        let texCoords = [];
-
-        let tangents = [];
-
-        let colors = [];
-
-        let latitudeBands = prim.divisions[1]; // y axis
-
-        let longitudeBands = prim.divisions[0] // x axis (really xz)
-
-        let radius = prim.dimensions[0] * 0.5;
-
-        let x, y, z, theta, sinTheta, cosTheta, phi, sinPhi, cosPhi, latNumber, longNumber, u, v;
-
-        let first, second;
+        let vertices = prim.geometry.vertices.data;
+        let indices  = prim.geometry.indices.data;
+        let texCoords = prim.geometry.texCoords.data;
+        let normals = prim.geometry.normals.data;
+        let tangents = prim.geometry.tangents.data;
+        let colors = prim.geometry.colors.data;
 
 
-        // make the top cap, a collapsed half-sphere.
 
-        for ( latNumber = 0; latNumber <= latitudeBands / 2; latNumber++ ) {
+        // Return the buffer, or add array data to the existing Prim data.
 
-            theta = latNumber * Math.PI / latitudeBands;
+        if( prim.geometry.makeBuffers === true ) {
 
-            sinTheta = Math.sin(theta);
+            //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
 
-            cosTheta = Math.cos(theta);
+            return this.createBuffers( prim.geometry );
 
-            for ( longNumber = 0; longNumber <= longitudeBands ; longNumber++ ) {
+        } else {
 
-                phi = longNumber * 2 * Math.PI / longitudeBands;
-
-                sinPhi = Math.sin(phi);
-
-                cosPhi = Math.cos(phi);
-
-                // x, y, z will be ABOVE the cylinder
-
-                y = cosTheta + radius; ////////////////////////////////////
-
-                x = cosPhi * sinTheta;
-
-                z = sinPhi * sinTheta;
-
-                // Texture coords.
-
-                u = 1 - (longNumber / longitudeBands);
-
-                v = 1 - (latNumber / latitudeBands);
-
-                // Push values.
-
-                vertices.push( radius * x, radius * y, radius * z );
-
-                texCoords.push( u, v );
-
-                normals.push( x, y, z );
-
-            }
+            return this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
 
         }
-
-        // Indices.
-
-
-        for ( latNumber = 0; latNumber < latitudeBands / 2; latNumber++ ) {
-
-            for ( longNumber = 0; longNumber < longitudeBands; longNumber++ ) {
-
-                first = (latNumber * (longitudeBands + 1)) + longNumber;
-
-                second = first + longitudeBands + 1;
-
-                // Note: we're running culling in reverse from some tutorials here.
-
-                indices.push( first + 1, second + 1, second );
-
-                indices.push(first + 1, second, first);
-
-            }
-
-        }
-
-
-        ////////////////////////////////////////////////////
-        // make the cylinder
-
-        for ( latNumber = 0; latNumber <= latitudeBands; latNumber++ ) {
-
-            theta = latNumber * Math.PI / latitudeBands;
-
-            sinTheta = Math.sin(theta);
-
-            cosTheta = Math.cos(theta);
-
-            for ( longNumber = 0; longNumber <= longitudeBands; longNumber++ ) {
-
-                phi = longNumber * 2 * Math.PI / longitudeBands;
-
-                sinPhi = Math.sin(phi);
-
-                cosPhi = Math.cos(phi);
-
-                // Compute vertex positions.
-
-                y = cosTheta;
-
-                z = sinPhi;
-
-                x = cosPhi;
-
-                // Texture coords.
-
-                u = 1 - (longNumber / longitudeBands);
-
-                v = 1 - (latNumber / latitudeBands);
-
-                // Push values.
-
-                vertices.push( radius * x, radius * y, radius * z );
-
-                texCoords.push( u, v );
-
-                normals.push( x, y, z );
-
-            }
-
-        }
-
-        // make the bottom half, a collapsed half-sphere
-
-
-        // Indices.
-
-
-        for ( latNumber = 0; latNumber < latitudeBands; latNumber++ ) {
-
-            for ( longNumber = 0; longNumber < longitudeBands; longNumber++ ) {
-
-                first = (latNumber * (longitudeBands + 1)) + longNumber;
-
-                second = first + longitudeBands + 1;
-
-                // Note: we're running culling in reverse from some tutorials here.
-
-                indices.push( first + 1, second + 1, second );
-
-                indices.push(first + 1, second, first);
-
-            }
-
-        }
-
-////////////////////////////////////////////////////////
-
-
-
-        window.vertices = vertices;
-        window.indices = indices;
-        window.normals = normals;
-        window.texCoords = texCoords;
-        window.tangents = tangents;
-
-        return this.createBuffers ( vertices, indices, texCoords, normals, tangents, colors );
 
     }
 
@@ -2084,6 +2267,8 @@ export default class Prim {
         // Set the geometry, based on defined type.
 
         prim.type = type;
+
+        prim.geometry = this.createBufferObj(); ////////////////////////
 
         prim.geometry = this[ type ]( prim );
 

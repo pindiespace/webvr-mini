@@ -216,6 +216,19 @@ export default class World {
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0)  // color
         ) );
 
+        this.dirlightTextureObjList.push( this.prim.createPrim(
+            this.prim.typeList.BOTTOMDOME,
+            'TestDome',
+            1.0,
+            vec3.fromValues( 2, 3, 3 ),            // dimensions
+            vec3.fromValues( 10, 10, 10  ),            // divisions MAKE SMALLER
+            vec3.fromValues(-3.5, 1.5, -1 ),        // position (absolute)
+            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+            vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+            ['img/mozvr-logo2.png'],               // texture present
+            vec4.fromValues( 0.5, 1.0, 0.2, 1.0)  // color
+        ) );
 
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.ICOSPHERE,
@@ -245,6 +258,7 @@ export default class World {
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0)  // color
         ) );
 
+/*
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.CONE,
             'CanCone',
@@ -258,6 +272,8 @@ export default class World {
             ['img/mozvr-logo1.png'],               // texture present
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0)  // color
         ) );
+
+*/
 
         this.vs3 = this.renderer.shaderDirlightTexture.init( this.dirlightTextureObjList );
 

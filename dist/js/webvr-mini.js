@@ -648,6 +648,67 @@
 	                }
 
 	                /** 
+	                 * Concatenate typed and untyped arrays. if the first array is typed, 
+	                 * the second array is converted to the same type. The first array 
+	                 * receives the concatenation (no new Array is created).
+	                 * @param {Array|TypedArray} arr1 the first Array.
+	                 * @param {Array|TypedArray} arr2 the second Array.
+	                 * @returns {Array|TypedArray} the concatenated Array.
+	                 */
+
+	        }, {
+	                key: 'concatArr',
+	                value: function concatArr(arr1, arr2) {
+
+	                        var result = null;
+
+	                        if (arr1.type) {
+	                                // typed array
+
+	                                var firstLength = arr1.length;
+
+	                                switch (arr1.type) {
+
+	                                        case 'Float32Array':
+	                                                result = new Float32Array(firstLength + second.length);
+	                                                if (arr2.type !== arr1.type) {
+	                                                        arr2 = Float32Array.from(arr2);
+	                                                }
+	                                                break;
+
+	                                        case 'Uint16Array':
+	                                                result = new Uint16Array(firstLength + second.length);
+	                                                if (arr2.type !== arr1.type) {
+	                                                        arr2 = Uint16Array.from(arr2);
+	                                                }
+	                                                break;
+
+	                                }
+
+	                                result.set(arr1);
+
+	                                result.set(arr2, firstLength);
+	                        } else {
+
+	                                if (arr2.type) {
+	                                        // typed copied to untyped
+
+	                                        for (var i = 0; i < arr2.length; i++) {
+
+	                                                arr1.push(arr2[i]);
+	                                        }
+
+	                                        result = arr1;
+	                                } else {
+
+	                                        result = arr1.concat(arr2); // both are untyped
+	                                }
+	                        }
+
+	                        return result;
+	                }
+
+	                /** 
 	                 * Random seed.
 	                 */
 
@@ -3629,6 +3690,8 @@
 
 	                        PLANE: 'geometryPlane',
 
+	                        CIRCLE: 'geometryCircle',
+
 	                        POLY: 'geometryPoly',
 
 	                        CUBE: 'geometryCube',
@@ -3643,11 +3706,19 @@
 
 	                        DOME: 'geometryDome',
 
-	                        ICODOME: 'geometryIcoDome',
+	                        TOPDOME: 'geometryDome',
 
-	                        ICO: 'geometryIco',
+	                        BOTTOMDOME: 'geometryDome',
+
+	                        TOPICODOME: 'geometryTopIcoDome',
+
+	                        BOTTOMICODOME: 'geometryBottomIcoDome',
 
 	                        CONE: 'geometryCone',
+
+	                        TOPCONE: 'geometryTopCone',
+
+	                        BOTTOMCONE: 'geometryBottomCone',
 
 	                        CYLINDER: 'geometryCylinder',
 
@@ -3732,182 +3803,276 @@
 	                }
 
 	                /** 
-	                 * Create WebGL buffers using geometry data
-	                 * @param {Array} vertices an array of vertices, in glMatrix.vec3 objects.
-	                 * @param {Array} indices an array of indices for the vertices.
-	                 * @param {Array} textCoords an array of texture coordinates, in glMatrix.vec2 format.
-	                 * @param {Array} normals an array of normals, in glMatrix.vec3 format.
-	                 * @param {Array} tangents an array of tangents, in glMatrix.vec3 format.
-	                 * @param {Array} colors an array of colors, in glMatrix.vec4 format.
+	                 * Return an empty buffer object.
 	                 */
 
 	        }, {
-	                key: 'createBuffers',
-	                value: function createBuffers(vertices, indices, texCoords, normals, tangents, colors) {
-
-	                        var gl = this.webgl.getContext();
-
-	                        // Vertex Buffer Object.
-
-	                        if (!vertices) {
-
-	                                console.log('no vertices present, creating default');
-
-	                                vertices = new Float32Array([0, 0, 0]);
-	                        }
-
-	                        var vBuffer = gl.createBuffer();
-
-	                        gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
-
-	                        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-
-	                        if (!indices) {
-
-	                                console.log('no indices present, creating default');
-
-	                                indices = new Uint16Array([1]);
-	                        }
-
-	                        // Index buffer.
-
-	                        var iBuffer = gl.createBuffer();
-
-	                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, iBuffer);
-
-	                        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
-
-	                        if (!normals) {
-
-	                                console.log('no normals, present, creating default');
-
-	                                normals = new Float32Array([0, 1, 0]);
-	                        }
-
-	                        // Normals buffer.
-
-	                        var nBuffer = gl.createBuffer();
-
-	                        gl.bindBuffer(gl.ARRAY_BUFFER, nBuffer);
-
-	                        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
-
-	                        if (!texCoords) {
-
-	                                console.warn('no texture present, creating default');
-
-	                                texCoords = new Float32Array([0, 0]);
-	                        }
-
-	                        // Texture Buffer.
-
-	                        var tBuffer = gl.createBuffer();
-
-	                        gl.bindBuffer(gl.ARRAY_BUFFER, tBuffer);
-
-	                        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(texCoords), gl.STATIC_DRAW);
-
-	                        // Tangents Buffer.
-	                        // TODO: ADD THIS
-
-	                        var tnBuffer = gl.createBuffer();
-
-	                        gl.bindBuffer(gl.ARRAY_BUFFER, tnBuffer);
-
-	                        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(tangents), gl.STATIC_DRAW);
-
-	                        if (!colors) {
-
-	                                console.warn('no colors present, creating default');
-
-	                                colors = new Float32Array([0.2, 0.5, 0.2, 1.0]);
-	                        }
-
-	                        var cBuffer = gl.createBuffer();
-
-	                        gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
-
-	                        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
-
-	                        // Return a complete object. TODO: don't really need vertices except for debugging.
+	                key: 'createBufferObj',
+	                value: function createBufferObj() {
 
 	                        return {
 
+	                                makeBuffers: true,
+
 	                                vertices: {
 
-	                                        data: vertices,
+	                                        data: [],
 
-	                                        buffer: vBuffer,
+	                                        buffer: null,
 
 	                                        itemSize: 3,
 
-	                                        numItems: vertices.length / 3
+	                                        numItems: 0
 
 	                                },
 
 	                                indices: {
 
-	                                        data: indices,
+	                                        data: [],
 
-	                                        buffer: iBuffer,
+	                                        buffer: null,
 
 	                                        itemSize: 1,
 
-	                                        numItems: indices.length
+	                                        numItems: 0
 
 	                                },
 
 	                                normals: {
 
-	                                        data: normals,
+	                                        data: [],
 
-	                                        buffer: nBuffer,
+	                                        buffer: null,
 
 	                                        itemSize: 3,
 
-	                                        numItems: normals.length / 3
+	                                        numItems: 0
 
 	                                },
 
 	                                tangents: {
 
-	                                        data: tangents,
+	                                        data: [],
 
-	                                        buffer: tnBuffer,
+	                                        buffer: null,
 
 	                                        itemSize: 4,
 
-	                                        numItems: tangents.length / 4
+	                                        numItems: 0
 
 	                                },
 
-	                                edges: {},
+	                                edges: {
+
+	                                        data: [],
+
+	                                        buffer: null,
+
+	                                        itemSize: 4,
+
+	                                        numItems: 0
+
+	                                },
 
 	                                texCoords: {
 
-	                                        data: texCoords,
+	                                        data: [],
 
-	                                        buffer: tBuffer,
+	                                        buffer: null,
 
 	                                        itemSize: 2,
 
-	                                        numItems: texCoords.length / 2
+	                                        numItems: 0
 
 	                                },
 
 	                                colors: {
 
-	                                        data: colors,
+	                                        data: [],
 
-	                                        buffer: cBuffer,
+	                                        buffer: null,
 
 	                                        itemSize: 4,
 
-	                                        numItems: colors.length / 4
+	                                        numItems: 0
 
 	                                }
 
 	                        };
+	                }
+
+	                /** 
+	                 * Add data to create buffers, works if existing data is present. However, 
+	                 * indices must be consistent!
+	                 */
+
+	        }, {
+	                key: 'addBufferData',
+	                value: function addBufferData(bufferObj, vertices, indices, texCoords, normals, tangents, colors) {
+
+	                        var concat = this.util.concatArr;
+
+	                        concat(bufferObj.vertices.data, vertices);
+	                        concat(bufferObj.indices.data, indices);
+	                        concat(bufferObj.texCoords.data, texCoords);
+	                        concat(bufferObj.normals.data, normals);
+	                        concat(bufferObj.tangents.data, tangents);
+	                        concat(bufferObj.colors.data, colors);
+	                }
+
+	                /** 
+	                 * Create WebGL buffers using geometry data
+	                 * @param {Object} bufferObj custom object holding the following:
+	                 * an array of vertices, in glMatrix.vec3 objects.
+	                 * an array of indices for the vertices.
+	                 * an array of texture coordinates, in glMatrix.vec2 format.
+	                 * an array of normals, in glMatrix.vec3 format.
+	                 * an array of tangents, in glMatrix.vec3 format.
+	                 * an array of colors, in glMatrix.vec4 format.
+	                 */
+
+	        }, {
+	                key: 'createBuffers',
+	                value: function createBuffers(bufferObj) {
+
+	                        var gl = this.webgl.getContext();
+
+	                        var o = void 0;
+
+	                        // Vertex Buffer Object.
+
+	                        o = bufferObj.vertices;
+
+	                        if (!o.data) {
+
+	                                console.log('no vertices present, creating default');
+
+	                                o.data = new Float32Array([0, 0, 0]);
+	                        }
+
+	                        o.buffer = gl.createBuffer();
+
+	                        gl.bindBuffer(gl.ARRAY_BUFFER, o.buffer);
+
+	                        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(o.data), gl.STATIC_DRAW);
+
+	                        o.numItems = o.data.length / o.itemSize;
+
+	                        // Create the Index buffer.
+
+	                        o = bufferObj.indices;
+
+	                        if (!o.data) {
+
+	                                console.log('no indices present, creating default');
+
+	                                o.data = new Uint16Array([1]);
+	                        }
+
+	                        o.buffer = gl.createBuffer();
+
+	                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, o.buffer);
+
+	                        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(o.data), gl.STATIC_DRAW);
+
+	                        o.numItems = o.data.length / o.itemSize;
+
+	                        // create the Normals buffer.
+
+	                        o = bufferObj.normals;
+
+	                        if (!o.data) {
+
+	                                console.log('no normals, present, creating default');
+
+	                                o.data = new Float32Array([0, 1, 0]);
+	                        }
+
+	                        o.buffer = gl.createBuffer();
+
+	                        gl.bindBuffer(gl.ARRAY_BUFFER, o.buffer);
+
+	                        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(o.data), gl.STATIC_DRAW);
+
+	                        o.numItems = o.data.length / o.itemSize;
+
+	                        // Create the primary Texture buffer.
+
+	                        o = bufferObj.texCoords;
+
+	                        if (!o.data) {
+
+	                                console.warn('no texture present, creating default');
+
+	                                o.data = new Float32Array([0, 0]);
+	                        }
+
+	                        o.buffer = gl.createBuffer();
+
+	                        gl.bindBuffer(gl.ARRAY_BUFFER, o.buffer);
+
+	                        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(o.data), gl.STATIC_DRAW);
+
+	                        o.numItems = o.data.length / o.itemSize;
+
+	                        // create the Tangents Buffer.
+
+	                        o = bufferObj.tangents;
+
+	                        if (!o.data) {
+
+	                                console.warn('no tangents present, creating default');
+
+	                                o.data = new Float32Array([0, 0, 0, 0]);
+	                        }
+
+	                        o.buffer = gl.createBuffer();
+
+	                        gl.bindBuffer(gl.ARRAY_BUFFER, o.buffer);
+
+	                        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(o.data), gl.STATIC_DRAW);
+
+	                        o.numItems = o.data.length / o.itemSize;
+
+	                        // Create the Edges buffer.
+
+	                        o = bufferObj.edges;
+
+	                        if (!o.data) {
+
+	                                console.warn('no edges present, creating default');
+
+	                                o.data = new Float32Array([0, 0, 0]);
+	                        }
+
+	                        o.buffer = gl.createBuffer();
+
+	                        gl.bindBuffer(gl.ARRAY_BUFFER, o.buffer);
+
+	                        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(o.data), gl.STATIC_DRAW);
+
+	                        o.numItems = o.data.length / o.itemSize;
+
+	                        // Create the Colors buffer.
+
+	                        o = bufferObj.colors;
+
+	                        if (!o.data) {
+
+	                                console.warn('no colors present, creating default color');
+
+	                                o.data = new Float32Array([0.2, 0.5, 0.2, 1.0]);
+	                        }
+
+	                        o.buffer = gl.createBuffer();
+
+	                        gl.bindBuffer(gl.ARRAY_BUFFER, o.buffer);
+
+	                        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(o.data), gl.STATIC_DRAW);
+
+	                        o.numItems = o.data.length / o.itemSize;
+
+	                        return bufferObj;
 	                }
 
 	                /** 
@@ -4331,7 +4496,27 @@
 
 	        }, {
 	                key: 'geometryPointCloud',
-	                value: function geometryPointCloud(prim) {}
+	                value: function geometryPointCloud(prim) {
+
+	                        var vertices = prim.geometry.vertices.data;
+	                        var indices = prim.geometry.indices.data;
+	                        var texCoords = prim.geometry.texCoords.data;
+	                        var normals = prim.geometry.normals.data;
+	                        var tangents = prim.geometry.tangents.data;
+	                        var colors = prim.geometry.colors.data;
+
+	                        // Return the buffer, or add array data to the existing Prim data.
+
+	                        if (prim.geometry.makeBuffers === true) {
+
+	                                //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+	                                return this.createBuffers(prim.geometry);
+	                        } else {
+
+	                                return this.addBufferData(prim.geometry, vertices, indices, texCoords, normals, tangents, colors);
+	                        }
+	                }
 
 	                /** 
 	                 * WebGL particle system
@@ -4344,7 +4529,27 @@
 
 	        }, {
 	                key: 'geometryParticleSystem',
-	                value: function geometryParticleSystem() {}
+	                value: function geometryParticleSystem() {
+
+	                        var vertices = prim.geometry.vertices.data;
+	                        var indices = prim.geometry.indices.data;
+	                        var texCoords = prim.geometry.texCoords.data;
+	                        var normals = prim.geometry.normals.data;
+	                        var tangents = prim.geometry.tangents.data;
+	                        var colors = prim.geometry.colors.data;
+
+	                        // Return the buffer, or add array data to the existing Prim data.
+
+	                        if (prim.geometry.makeBuffers === true) {
+
+	                                //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+	                                return this.createBuffers(prim.geometry);
+	                        } else {
+
+	                                return this.addBufferData(prim.geometry, vertices, indices, texCoords, normals, tangents, colors);
+	                        }
+	                }
 
 	                /** 
 	                 * WebGL line.
@@ -4352,7 +4557,27 @@
 
 	        }, {
 	                key: 'geometryLine',
-	                value: function geometryLine(prim) {}
+	                value: function geometryLine(prim) {
+
+	                        var vertices = prim.geometry.vertices.data;
+	                        var indices = prim.geometry.indices.data;
+	                        var texCoords = prim.geometry.texCoords.data;
+	                        var normals = prim.geometry.normals.data;
+	                        var tangents = prim.geometry.tangents.data;
+	                        var colors = prim.geometry.colors.data;
+
+	                        // Return the buffer, or add array data to the existing Prim data.
+
+	                        if (prim.geometry.makeBuffers === true) {
+
+	                                //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+	                                return this.createBuffers(prim.geometry);
+	                        } else {
+
+	                                return this.addBufferData(prim.geometry, vertices, indices, texCoords, normals, tangents, colors);
+	                        }
+	                }
 
 	                /** 
 	                 * Plane (non-infinite, multiple vertices, can be turned into TERRAIN)
@@ -4364,17 +4589,14 @@
 
 	                        var vec3 = this.glMatrix.vec3;
 
-	                        var vertices = [];
+	                        // Shortcuts to Prim data arrays
 
-	                        var indices = [];
-
-	                        var normals = [];
-
-	                        var tangents = [];
-
-	                        var texCoords = [];
-
-	                        var colors = [];
+	                        var vertices = prim.geometry.vertices.data;
+	                        var indices = prim.geometry.indices.data;
+	                        var texCoords = prim.geometry.texCoords.data;
+	                        var normals = prim.geometry.normals.data;
+	                        var tangents = prim.geometry.tangents.data;
+	                        var colors = prim.geometry.colors.data;
 
 	                        var cols = prim.divisions[0]; // x axis (really xz)
 	                        var rows = prim.divisions[2]; // y axis
@@ -4447,7 +4669,19 @@
 
 	                        this.computeNormals(vertices, indices, normals);
 
-	                        return this.createBuffers(vertices, indices, texCoords, normals, tangents, colors);
+	                        // Return the buffer, or add array data to the existing Prim data.
+
+	                        if (prim.geometry.makeBuffers === true) {
+
+	                                //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+	                                return this.createBuffers(prim.geometry);
+	                        } else {
+
+	                                return this.addBufferData(prim.geometry, vertices, indices, texCoords, normals, tangents, colors);
+	                        }
+
+	                        //return this.createBuffers ( this.createBufferObj(), vertices, indices, texCoords, normals, tangents, colors );
 	                }
 
 	                /** 
@@ -4471,6 +4705,8 @@
 	                key: 'geometryCube',
 	                value: function geometryCube(prim) {
 
+	                        // Shortcuts to Prim data arrays
+
 	                        var x = prim.dimensions[0] / 2;
 
 	                        var y = prim.dimensions[1] / 2;
@@ -4479,7 +4715,7 @@
 
 	                        // Create cube geometry.
 
-	                        var vertices = [
+	                        prim.geometry.vertices.data = [
 	                        // Front face
 	                        -1.0, -1.0, 1.0, // bottomleft
 	                        1.0, -1.0, 1.0, // bottomright
@@ -4496,7 +4732,7 @@
 	                        // Left face
 	                        -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0];
 
-	                        var indices = [0, 1, 2, 0, 2, 3, // Front face
+	                        prim.geometry.indices.data = [0, 1, 2, 0, 2, 3, // Front face
 	                        4, 5, 6, 4, 6, 7, // Back face
 	                        8, 9, 10, 8, 10, 11, // Top face
 	                        12, 13, 14, 12, 14, 15, // Bottom face
@@ -4504,7 +4740,7 @@
 	                        20, 21, 22, 20, 22, 23 // Left face
 	                        ];
 
-	                        var normals = [
+	                        prim.geometry.normals.data = [
 	                        // Front face
 	                        0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0,
 	                        // Back face
@@ -4518,7 +4754,7 @@
 	                        // Left face
 	                        -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0];
 
-	                        var texCoords = [
+	                        prim.geometry.texCoords.data = [
 	                        // Front face
 	                        0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
 	                        // Back face
@@ -4532,9 +4768,9 @@
 	                        // Left face
 	                        0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0];
 
-	                        var tangents = [];
+	                        prim.geometry.tangents.data = [];
 
-	                        var colors = [
+	                        prim.geometry.colors.data = [
 	                        // Front face
 	                        1.0, 1.0, 1.0, 1.0, // white
 	                        1.0, 0.0, 0.0, 1.0, // red
@@ -4567,7 +4803,19 @@
 	                        0.0, 0.0, 1.0, 1.0 // blue
 	                        ];
 
-	                        return this.createBuffers(vertices, indices, texCoords, normals, tangents, colors);
+	                        // Return the buffer, or add array data to the existing Prim data.
+
+	                        if (prim.geometry.makeBuffers === true) {
+
+	                                //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+	                                return this.createBuffers(prim.geometry);
+	                        } else {
+
+	                                return this.addBufferData(prim.geometry, vertices, indices, texCoords, normals, tangents, colors);
+	                        }
+
+	                        //return this.createBuffers ( this.createBufferObj(), vertices, indices, texCoords, normals, tangents, colors );
 	                }
 
 	                /** 
@@ -4585,17 +4833,12 @@
 
 	                        // TODO: ACTIVATE RADIUS X, Y, Z for distorted spheres.
 
-	                        var vertices = [];
-
-	                        var indices = [];
-
-	                        var normals = [];
-
-	                        var texCoords = [];
-
-	                        var tangents = [];
-
-	                        var colors = [];
+	                        var vertices = prim.geometry.vertices.data;
+	                        var indices = prim.geometry.indices.data;
+	                        var texCoords = prim.geometry.texCoords.data;
+	                        var normals = prim.geometry.normals.data;
+	                        var tangents = prim.geometry.tangents.data;
+	                        var colors = prim.geometry.colors.data;
 
 	                        var latitudeBands = prim.divisions[1]; // y axis
 
@@ -4693,7 +4936,19 @@
 	                                }
 	                        }
 
-	                        return this.createBuffers(vertices, indices, texCoords, normals, colors);
+	                        // Return the buffer, or add array data to the existing Prim data.
+
+	                        if (prim.geometry.makeBuffers === true) {
+
+	                                //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+	                                return this.createBuffers(prim.geometry);
+	                        } else {
+
+	                                return this.addBufferData(prim.geometry, vertices, indices, texCoords, normals, tangents, colors);
+	                        }
+
+	                        //return this.createBuffers ( this.createBufferObj(), vertices, indices, texCoords, normals, colors );
 	                }
 
 	                /** 
@@ -4711,17 +4966,12 @@
 
 	                        var flatten = this.util.flatten;
 
-	                        var vertices = [];
-
-	                        var indices = [];
-
-	                        var normals = [];
-
-	                        var texCoords = [];
-
-	                        var tangents = [];
-
-	                        var colors = [];
+	                        var vertices = prim.geometry.vertices.data;
+	                        var indices = prim.geometry.indices.data;
+	                        var texCoords = prim.geometry.texCoords.data;
+	                        var normals = prim.geometry.normals.data;
+	                        var tangents = prim.geometry.tangents.data;
+	                        var colors = prim.geometry.colors.data;
 
 	                        var sx = prim.dimensions[0];
 	                        var sy = prim.dimensions[1];
@@ -4836,11 +5086,23 @@
 
 	                        // Flatten arrays we used multidimensonal access to compute.
 
-	                        vertices = flatten(positions, false);
+	                        prim.geometry.vertices.data = flatten(positions, false);
 
-	                        normals = flatten(norms, false);
+	                        prim.geometry.normals.data = flatten(norms, false);
 
-	                        return this.createBuffers(vertices, indices, texCoords, normals, tangents, colors);
+	                        // Return the buffer, or add array data to the existing Prim data.
+
+	                        if (prim.geometry.makeBuffers === true) {
+
+	                                //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+	                                return this.createBuffers(prim.geometry);
+	                        } else {
+
+	                                return this.addBufferData(prim.geometry, vertices, indices, texCoords, normals, tangents, colors);
+	                        }
+
+	                        //return this.createBuffers ( this.createBufferObj(), vertices, indices, texCoords, normals, tangents, colors );
 	                }
 
 	                /** 
@@ -4878,17 +5140,12 @@
 
 	                        // Allocate memory
 
-	                        var vertices = new Array((resolution + 1) * (resolution + 1) * 4 - (resolution * 2 - 1) * 3);
-
-	                        var indices = new Array((1 << subdivisions * 2 + 3) * 3);
-
-	                        var normals = new Array(vertices.length);
-
-	                        var colors = new Array(vertices.length * 4);
-
-	                        var texCoords = new Array(vertices.length);
-
-	                        var tangents = [];
+	                        var vertices = prim.geometry.vertices.data = new Array((resolution + 1) * (resolution + 1) * 4 - (resolution * 2 - 1) * 3);
+	                        var indices = prim.geometry.indices.data = new Array((1 << subdivisions * 2 + 3) * 3);;
+	                        var texCoords = prim.geometry.texCoords.data = new Array(vertices.length);
+	                        var normals = prim.geometry.normals.data = new Array(vertices.length);
+	                        var tangents = prim.geometry.tangents.data = new Array(vertices.length);
+	                        var colors = prim.geometry.colors.data = new Array(vertices.length * 4);
 
 	                        // initialize lots of default variables.
 
@@ -5006,10 +5263,10 @@
 
 	                        // Flatten the data arrays.
 
-	                        vertices = flatten(vertices, false);
-	                        texCoords = flatten(texCoords, false);
-	                        normals = flatten(normals, false);
-	                        tangents = flatten(tangents, false);
+	                        prim.geometry.vertices.data = flatten(vertices, false);
+	                        prim.geometry.texCoords.data = flatten(texCoords, false);
+	                        prim.geometry.normals.data = flatten(normals, false);
+	                        prim.geometry.tangents.data = flatten(tangents, false);
 
 	                        // Helper functions.
 
@@ -5167,7 +5424,19 @@
 	                                return t;
 	                        }
 
-	                        return this.createBuffers(vertices, indices, texCoords, normals, tangents, colors);
+	                        // Return the buffer, or add array data to the existing Prim data.
+
+	                        if (prim.geometry.makeBuffers === true) {
+
+	                                //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+	                                return this.createBuffers(prim.geometry);
+	                        } else {
+
+	                                return this.addBufferData(prim.geometry, vertices, indices, texCoords, normals, tangents, colors);
+	                        }
+
+	                        //return this.createBuffers ( this.createBufferObj(), vertices, indices, texCoords, normals, tangents, colors );
 	                }
 
 	                /** 
@@ -5261,11 +5530,116 @@
 
 	                /** 
 	                 * Half-sphere, polar coordinates.
+	                 * @param {Prim} prim the object needing geometry.
 	                 */
 
 	        }, {
 	                key: 'geometryDome',
-	                value: function geometryDome(prim) {}
+	                value: function geometryDome(prim) {
+
+	                        var latitudeBands = prim.divisions[1]; // y axis
+
+	                        var longitudeBands = prim.divisions[0]; // x axis (really xz)
+
+	                        var radius = prim.dimensions[0] * 0.5;
+
+	                        // ADJUST
+
+	                        var dHeight = prim.dimensions[1];
+
+	                        // Shortcuts to Prim data arrays
+
+	                        var vertices = prim.geometry.vertices.data;
+	                        var indices = prim.geometry.indices.data;
+	                        var texCoords = prim.geometry.texCoords.data;
+	                        var normals = prim.geometry.normals.data;
+	                        var tangents = prim.geometry.tangents.data;
+	                        var colors = prim.geometry.colors.data;
+
+	                        var x = void 0,
+	                            y = void 0,
+	                            z = void 0;
+
+	                        for (var latNumber = 0; latNumber <= latitudeBands / 2; latNumber++) {
+
+	                                var theta = latNumber * Math.PI / latitudeBands;
+
+	                                var sinTheta = Math.sin(theta);
+
+	                                var cosTheta = Math.cos(theta);
+
+	                                for (var longNumber = 0; longNumber <= longitudeBands; longNumber++) {
+
+	                                        var phi = longNumber * 2 * Math.PI / longitudeBands;
+
+	                                        var sinPhi = Math.sin(phi);
+
+	                                        var cosPhi = Math.cos(phi);
+
+	                                        // Texture coords.
+
+	                                        var u = 1 - longNumber / longitudeBands;
+
+	                                        var v = 1 - latNumber / latitudeBands;
+
+	                                        // Compute vertex positions.
+
+	                                        x = cosPhi * sinTheta;
+
+	                                        z = sinPhi * sinTheta;
+
+	                                        if (prim.type === this.typeList.TOPDOME) {
+
+	                                                y = cosTheta;
+	                                        } else if (prim.type == this.typeList.BOTTOMDOME) {
+
+	                                                y = 1 - cosTheta;
+	                                        }
+
+	                                        // Push values.
+
+	                                        vertices.push(radius * x, radius * y, radius * z);
+
+	                                        texCoords.push(u, v);
+
+	                                        normals.push(x, y, z);
+	                                }
+	                        }
+
+	                        // Sphere indices.
+
+	                        for (var _latNumber2 = 0; _latNumber2 < latitudeBands / 2; _latNumber2++) {
+
+	                                for (var _longNumber2 = 0; _longNumber2 < longitudeBands; _longNumber2++) {
+
+	                                        var first = _latNumber2 * (longitudeBands + 1) + _longNumber2;
+
+	                                        var second = first + longitudeBands + 1;
+
+	                                        // Note: we're running culling in reverse from some tutorials here.
+
+	                                        indices.push(first + 1, second + 1, second);
+
+	                                        indices.push(first + 1, second, first);
+	                                }
+	                        }
+
+	                        //tangents = this.computeTangents( vertices, indices, normals, texCoords );
+
+	                        tangents = [];
+
+	                        // Return the buffer, or add array data to the existing Prim data.
+
+	                        if (prim.geometry.makeBuffers === true) {
+
+	                                //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+	                                return this.createBuffers(prim.geometry);
+	                        } else {
+
+	                                return this.addBufferData(prim.geometry, vertices, indices, texCoords, normals, tangents, colors);
+	                        }
+	                }
 
 	                /** 
 	                 * Half-sphere, icosohedron based.
@@ -5288,190 +5662,33 @@
 
 	        }, {
 	                key: 'geometryCone',
-	                value: function geometryCone(prim, bottomRadius, topRadius) {
+	                value: function geometryCone(prim, type, bottomRadius, topRadius) {
 
 	                        // GlMatrix.
 
 	                        var vec3 = this.glMatrix.vec3;
 	                        var vec2 = this.glMatrix.vec2;
 
-	                        // Flatten method.
+	                        // Params.
 
-	                        // Default vectors.
+	                        var vertices = prim.geometry.vertices.data;
+	                        var indices = prim.geometry.indices.data;
+	                        var texCoords = prim.geometry.texCoords.data;
+	                        var normals = prim.geometry.normals.data;
+	                        var tangents = prim.geometry.tangents.data;
+	                        var colors = prim.geometry.colors.data;
 
-	                        var getVecs = this.getStdVec3;
+	                        // Return the buffer, or add array data to the existing Prim data.
 
-	                        var vertices = [];
+	                        if (prim.geometry.makeBuffers === true) {
 
-	                        var indices = [];
+	                                //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
 
-	                        var normals = [];
+	                                return this.createBuffers(prim.geometry);
+	                        } else {
 
-	                        var texCoords = [];
-
-	                        var tangents = [];
-
-	                        var colors = [];
-
-	                        var latitudeBands = prim.divisions[1]; // y axis
-
-	                        var longitudeBands = prim.divisions[0]; // x axis (really xz)
-
-	                        var radius = prim.dimensions[0] * 0.5;
-
-	                        var x = void 0,
-	                            y = void 0,
-	                            z = void 0,
-	                            theta = void 0,
-	                            sinTheta = void 0,
-	                            cosTheta = void 0,
-	                            phi = void 0,
-	                            sinPhi = void 0,
-	                            cosPhi = void 0,
-	                            latNumber = void 0,
-	                            longNumber = void 0,
-	                            u = void 0,
-	                            v = void 0;
-
-	                        var first = void 0,
-	                            second = void 0;
-
-	                        // make the top cap, a collapsed half-sphere.
-
-	                        for (latNumber = 0; latNumber <= latitudeBands / 2; latNumber++) {
-
-	                                theta = latNumber * Math.PI / latitudeBands;
-
-	                                sinTheta = Math.sin(theta);
-
-	                                cosTheta = Math.cos(theta);
-
-	                                for (longNumber = 0; longNumber <= longitudeBands; longNumber++) {
-
-	                                        phi = longNumber * 2 * Math.PI / longitudeBands;
-
-	                                        sinPhi = Math.sin(phi);
-
-	                                        cosPhi = Math.cos(phi);
-
-	                                        // x, y, z will be ABOVE the cylinder
-
-	                                        y = cosTheta + radius; ////////////////////////////////////
-
-	                                        x = cosPhi * sinTheta;
-
-	                                        z = sinPhi * sinTheta;
-
-	                                        // Texture coords.
-
-	                                        u = 1 - longNumber / longitudeBands;
-
-	                                        v = 1 - latNumber / latitudeBands;
-
-	                                        // Push values.
-
-	                                        vertices.push(radius * x, radius * y, radius * z);
-
-	                                        texCoords.push(u, v);
-
-	                                        normals.push(x, y, z);
-	                                }
+	                                return this.addBufferData(prim.geometry, vertices, indices, texCoords, normals, tangents, colors);
 	                        }
-
-	                        // Indices.
-
-
-	                        for (latNumber = 0; latNumber < latitudeBands / 2; latNumber++) {
-
-	                                for (longNumber = 0; longNumber < longitudeBands; longNumber++) {
-
-	                                        first = latNumber * (longitudeBands + 1) + longNumber;
-
-	                                        second = first + longitudeBands + 1;
-
-	                                        // Note: we're running culling in reverse from some tutorials here.
-
-	                                        indices.push(first + 1, second + 1, second);
-
-	                                        indices.push(first + 1, second, first);
-	                                }
-	                        }
-
-	                        ////////////////////////////////////////////////////
-	                        // make the cylinder
-
-	                        for (latNumber = 0; latNumber <= latitudeBands; latNumber++) {
-
-	                                theta = latNumber * Math.PI / latitudeBands;
-
-	                                sinTheta = Math.sin(theta);
-
-	                                cosTheta = Math.cos(theta);
-
-	                                for (longNumber = 0; longNumber <= longitudeBands; longNumber++) {
-
-	                                        phi = longNumber * 2 * Math.PI / longitudeBands;
-
-	                                        sinPhi = Math.sin(phi);
-
-	                                        cosPhi = Math.cos(phi);
-
-	                                        // Compute vertex positions.
-
-	                                        y = cosTheta;
-
-	                                        z = sinPhi;
-
-	                                        x = cosPhi;
-
-	                                        // Texture coords.
-
-	                                        u = 1 - longNumber / longitudeBands;
-
-	                                        v = 1 - latNumber / latitudeBands;
-
-	                                        // Push values.
-
-	                                        vertices.push(radius * x, radius * y, radius * z);
-
-	                                        texCoords.push(u, v);
-
-	                                        normals.push(x, y, z);
-	                                }
-	                        }
-
-	                        // make the bottom half, a collapsed half-sphere
-
-
-	                        // Indices.
-
-
-	                        for (latNumber = 0; latNumber < latitudeBands; latNumber++) {
-
-	                                for (longNumber = 0; longNumber < longitudeBands; longNumber++) {
-
-	                                        first = latNumber * (longitudeBands + 1) + longNumber;
-
-	                                        second = first + longitudeBands + 1;
-
-	                                        // Note: we're running culling in reverse from some tutorials here.
-
-	                                        indices.push(first + 1, second + 1, second);
-
-	                                        indices.push(first + 1, second, first);
-	                                }
-	                        }
-
-	                        ////////////////////////////////////////////////////////
-
-
-	                        window.vertices = vertices;
-	                        window.indices = indices;
-	                        window.normals = normals;
-	                        window.texCoords = texCoords;
-	                        window.tangents = tangents;
-
-	                        return this.createBuffers(vertices, indices, texCoords, normals, tangents, colors);
 	                }
 
 	                /** 
@@ -5649,6 +5866,8 @@
 	                        // Set the geometry, based on defined type.
 
 	                        prim.type = type;
+
+	                        prim.geometry = this.createBufferObj(); ////////////////////////
 
 	                        prim.geometry = this[type](prim);
 
@@ -6726,6 +6945,16 @@
 	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	                        ));
 
+	                        this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.BOTTOMDOME, 'TestDome', 1.0, vec3.fromValues(2, 3, 3), // dimensions
+	                        vec3.fromValues(10, 10, 10), // divisions MAKE SMALLER
+	                        vec3.fromValues(-3.5, 1.5, -1), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                        ['img/mozvr-logo2.png'], // texture present
+	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+	                        ));
+
 	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.ICOSPHERE, 'icophere', 1.0, vec3.fromValues(3, 3, 3), // dimensions
 	                        vec3.fromValues(4, 4, 4), // divisions
 	                        vec3.fromValues(1.5, 2.5, -1), // position (absolute)
@@ -6746,15 +6975,22 @@
 	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	                        ));
 
-	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CONE, 'CanCone', 1.0, vec3.fromValues(2, 3, 3), // dimensions
-	                        vec3.fromValues(10, 10, 10), // divisions MAKE SMALLER
-	                        vec3.fromValues(-3.5, 1.5, -1), // position (absolute)
-	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                        vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                        ['img/mozvr-logo1.png'], // texture present
-	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-	                        ));
+	                        /*
+	                                this.textureObjList.push( this.prim.createPrim(
+	                                    this.prim.typeList.CONE,
+	                                    'CanCone',
+	                                    1.0,
+	                                    vec3.fromValues( 2, 3, 3 ),            // dimensions
+	                                    vec3.fromValues( 10, 10, 10  ),            // divisions MAKE SMALLER
+	                                    vec3.fromValues(-3.5, 1.5, -1 ),        // position (absolute)
+	                                    vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+	                                    vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+	                                    vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+	                                    ['img/mozvr-logo1.png'],               // texture present
+	                                    vec4.fromValues( 0.5, 1.0, 0.2, 1.0)  // color
+	                                ) );
+	                        
+	                        */
 
 	                        this.vs3 = this.renderer.shaderDirlightTexture.init(this.dirlightTextureObjList);
 
