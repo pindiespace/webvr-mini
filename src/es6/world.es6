@@ -10,6 +10,9 @@ export default class World {
      * render() - rendering loop.
      * init() - create the world for this first time.
      * constructor() - initialize, passing in WebVR-Mini object.
+     * 
+     * TODO: add some standard world objects (e.g. 360 video player by default)
+     * @link https://github.com/flimshaw/Valiant360/blob/master/src/valiant.jquery.js
      */
 
     /** 
@@ -224,11 +227,10 @@ export default class World {
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-            ['img/mozvr-logo2.png'],               // texture present, NOT USED
+            ['img/mozvr-logo2.png'],               // texture present
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0)  // color
         ) );
 
-//////////////////////////////////////////////////////////////
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.ICOSPHERE,
             'icoUnity',
@@ -242,7 +244,20 @@ export default class World {
             ['img/uv-test.png'],               // texture present, NOT USED
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0)  // color
         ) );
-//////////////////////////////////////////////////////////////
+
+        this.textureObjList.push( this.prim.createPrim(
+            this.prim.typeList.CONE,
+            'CanCone',
+            1.0,
+            vec3.fromValues( 2, 3, 3 ),            // dimensions
+            vec3.fromValues( 10, 10, 10  ),            // divisions MAKE SMALLER
+            vec3.fromValues(-3.5, 1.5, -1 ),        // position (absolute)
+            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+            vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+            ['img/mozvr-logo1.png'],               // texture present
+            vec4.fromValues( 0.5, 1.0, 0.2, 1.0)  // color
+        ) );
 
         this.vs3 = this.renderer.shaderDirlightTexture.init( this.dirlightTextureObjList );
 

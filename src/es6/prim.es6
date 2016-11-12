@@ -6,6 +6,10 @@ export default class Prim {
     /** 
      * Create object primitives, and return vertex and index data 
      * suitable for creating a VBO and IBO.
+     * 
+     * NOTE: if you need more complex shapes, use a mesh file, or 
+     * a library like http://evanw.github.io/csg.js/ to implement 
+     * mesh operations.
      */
 
     constructor ( init, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo ) {
@@ -143,9 +147,10 @@ export default class Prim {
      * @param {Array} indices an array of indices for the vertices.
      * @param {Array} textCoords an array of texture coordinates, in glMatrix.vec2 format.
      * @param {Array} normals an array of normals, in glMatrix.vec3 format.
+     * @param {Array} tangents an array of tangents, in glMatrix.vec3 format.
      * @param {Array} colors an array of colors, in glMatrix.vec4 format.
      */
-    createBuffers ( vertices, indices, texCoords, normals, colors ) {
+    createBuffers ( vertices, indices, texCoords, normals, tangents, colors ) {
 
         let gl = this.webgl.getContext();
 
@@ -212,9 +217,7 @@ export default class Prim {
         gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( texCoords ), gl.STATIC_DRAW );
 
         // Tangents Buffer.
-
-        // TODO: ADD TANGENTS!!!!!!!!!! TODO: TODO:
-        let tangents = [];
+        // TODO: ADD THIS
 
         let tnBuffer = gl.createBuffer();
 
@@ -329,14 +332,47 @@ export default class Prim {
     primReadout ( prim ) {
 
         console.log( 'prim:' + prim.name + ' type:' + prim.type + 
+
             ' vertex:(' + prim.geometry.vertices.itemSize + 
+
             '), ' + prim.geometry.vertices.numItems + 
+
             ', texture:(' + prim.geometry.texCoords.itemSize + 
+
             '), ' + prim.geometry.texCoords.numItems + 
+
             ', index:(' + prim.geometry.indices.itemSize, 
+
             '), ' + prim.geometry.indices.numItems + 
+
             ', normals:(' + prim.geometry.normals.itemSize + 
+
             '), ' + prim.geometry.normals.numItems );
+
+    }
+
+    /* 
+     * ---------------------------------------
+     * DEFAULT VECTORS
+     * ---------------------------------------
+     */
+
+    /** 
+     * Simulate Vector3.down, etc. defaults (in many Unity scripts).
+     * @link https://docs.unity3d.com/ScriptReference/Vector3.html
+    */
+    getStdVec3 ( type ) {
+
+        switch (type) {
+            case 'back': return [0, 0, -1]; break;
+            case 'down': return [0, -1, 0]; break;
+            case 'forward': return [0, 0, 1]; break;
+            case 'left': return [-1, 0, 0]; break;
+            case 'one': return [1, 1, 1]; break;
+            case 'right': return [1, 0, 0]; break;
+            case 'up': return [0, 1, 0]; break;
+            case 'zero': return [0, 0, 0]; break;
+        }
 
     }
 
@@ -496,7 +532,19 @@ export default class Prim {
 
     }
 
-    computeSides ( sideOrientation, positions, indices, normals, uvs ) {
+    /** 
+     * Set or reset indices, normals, texCoords in-place, based on
+     * wether we draw to the front, back, or both. Adapted from 
+     * BabylonJS example.
+     * @param {ENUM} sideOrientation either front, back, or both.
+     * @param {glMatrix.vec3} vertices the 3d vertex coordinates.
+     * @param {glMatrix.vec3} indices the 3d face coordinates.
+     * @param {glMatrix.vec3} normals the 3d normals.
+     * @param {glMatrix.vec2} texCoords the 2d texture coordinates.
+     * @param {glMatrix.vec3} tangents the 4d tangent coordinates.
+     * TODO: tangents
+     */
+    computeSides ( sideOrientation, positions, indices, normals, uvs, tangents ) {
 
             var li = indices.length;
             var ln = normals.length;
@@ -639,6 +687,15 @@ export default class Prim {
 
     }
 
+    /** 
+     * Subdivide a mesh, keep vertices shared.
+     * @link http://answers.unity3d.com/questions/259127/does-anyone-have-any-code-to-subdivide-a-mesh-and.html
+     * @link https://thiscouldbebetter.wordpress.com/2015/04/24/the-catmull-clark-subdivision-surface-algorithm-in-javascript/
+     */
+    subdivide ( geometry ) {
+
+    }
+
 
     /* 
      * ---------------------------------------
@@ -648,7 +705,6 @@ export default class Prim {
 
     /** 
      * WebGL point.
-
      */
     geometryPoint ( prim ) {
 
@@ -777,12 +833,12 @@ export default class Prim {
 
         this.computeNormals( vertices, indices, normals );
 
-        return this.createBuffers ( vertices, indices, texCoords, normals, colors );
+        return this.createBuffers ( vertices, indices, texCoords, normals, tangents, colors );
 
     }
 
     /** 
-     * Polygon (flat)
+     * Polygon (flat), square to circular.
      */
     geometryPoly ( prim ) {
 
@@ -881,8 +937,6 @@ export default class Prim {
             -1.0,  0.0,  0.0,
         ];
 
-        let tangents = [];
-
         let texCoords = [
             // Front face
             0.0, 0.0,
@@ -915,6 +969,8 @@ export default class Prim {
             1.0, 1.0,
             0.0, 1.0
         ];
+
+        let tangents = [];
 
         let colors = [
             // Front face
@@ -949,15 +1005,17 @@ export default class Prim {
             0.0,  0.0,  1.0,  1.0     // blue
         ];
 
-        return this.createBuffers ( vertices, indices, texCoords, normals, colors );
+        return this.createBuffers ( vertices, indices, texCoords, normals, tangents, colors );
 
     }
 
     /** 
      * Sphere with polar points.
      * http://learningwebgl.com/blog/?p=1253
+     * @param {Prim} prim the prim needing geometry.
+     * @param {Boolean} sphere if true, make a sphere, otherwise a cylinder.
      */
-    geometrySphere ( prim ) {
+    geometrySphere ( prim, sphere = true ) {
 
        // TODO: ACTIVATE RADIUS X, Y, Z for distorted spheres.
 
@@ -967,9 +1025,9 @@ export default class Prim {
 
         let normals = [];
 
-        let tangents = [];
-
         let texCoords = [];
+
+        let tangents = [];
 
         let colors = [];
 
@@ -978,6 +1036,8 @@ export default class Prim {
         let longitudeBands = prim.divisions[0] // x axis (really xz)
 
         let radius = prim.dimensions[0] * 0.5;
+
+        let x, y, z;
 
         for (let latNumber = 0; latNumber <= latitudeBands; latNumber++) {
 
@@ -988,7 +1048,7 @@ export default class Prim {
             let cosTheta = Math.cos(theta);
 
             for (let longNumber = 0; longNumber <= longitudeBands; longNumber++) {
-        
+
                 let phi = longNumber * 2 * Math.PI / longitudeBands;
 
                 let sinPhi = Math.sin(phi);
@@ -997,11 +1057,21 @@ export default class Prim {
 
                 // Compute vertex positions.
 
-                let x = cosPhi * sinTheta;
+                y = cosTheta;
 
-                let y = cosTheta;
+                if ( sphere === true) {
 
-                let z = sinPhi * sinTheta;
+                    x = cosPhi * sinTheta;
+
+                    z = sinPhi * sinTheta;
+
+                } else {
+
+                    z = sinPhi; /////////////////// makes a helix if cosPhi not used
+
+                    x = cosPhi; ////////////////////
+
+                }
 
                 // Texture coords.
 
@@ -1066,7 +1136,10 @@ export default class Prim {
     }
 
     /** 
-     * Create a spherical object from a cube mesh. Useful for cubemaps.
+     * Create a spherical object from a cube mesh. Useful for cubemaps. If rounding 
+     * is zero, it is a cube.
+     * TODO: move vertices to better coverage
+     * @link https://github.com/caosdoar/spheres/
      */
     geometryCubeSphere ( prim ) {
 
@@ -1080,9 +1153,9 @@ export default class Prim {
 
         let normals = [];
 
-        let tangents = [];
-
         let texCoords = [];
+
+        let tangents = [];
 
         let colors = [];
 
@@ -1162,7 +1235,7 @@ export default class Prim {
         // Round the edges of the cube.
 
         var tmp = [0,0,0];
-        var radius = 1.5;
+        var radius = 1.5; // TODO: fraction of the dimensions!
 
         var rx = sx / 2.0;
         var ry = sy / 2.0;
@@ -1217,237 +1290,18 @@ export default class Prim {
 
         normals = flatten(norms, false);
 
-        return this.createBuffers ( vertices, indices, texCoords, normals, colors );
+        return this.createBuffers ( vertices, indices, texCoords, normals, tangents, colors );
 
     }
 
-    /** 
-     * Cylinder
-     */
-    geometryCylinder ( prim ) {
-
-
-
-    }
-
-    // More prims
-    // https://github.com/jagenjo/litegl.js/tree/master/src
-    // ////////////////////////////////
-    // http://wiki.unity3d.com/index.php/ProceduralPrimitives
-    // ////////////////////////////////
-    // http://wiki.unity3d.com/index.php/ProceduralPrimitives
-    //
-    // octahedron sphere generation
-    // https://www.binpress.com/tutorial/creating-an-octahedron-sphere/162
-    // https://experilous.com/1/blog/post/procedural-planet-generation
-    // https://experilous.com/1/planet-generator/2014-09-28/planet-generator.js
-    // another octahedron sphere 
-    // https://www.binpress.com/tutorial/creating-an-octahedron-sphere/162
-    // rounded cube
-    // https://github.com/vorg/primitive-rounded-cube
-    // rounded cube algorithim
-    // http://catlikecoding.com/unity/tutorials/rounded-cube/
-    // generalized catmull-clark subdivision algorithm
-    // https://thiscouldbebetter.wordpress.com/2015/04/24/the-catmull-clark-subdivision-surface-algorithm-in-javascript/
-    // cube inflation algorithm
-    // http://mathproofs.blogspot.com.au/2005/07/mapping-cube-to-sphere.html
-    // advanced toolset
-    // https://www.geometrictools.com/Samples/Geometrics.html
-    // Eigen
-    // https://fossies.org/dox/eigen-3.2.10/icosphere_8cpp_source.html
-    // Geometry prebuilt
-    // http://paulbourke.net/geometry/roundcube/
 
     /** 
-     * https://gamedevdaily.io/four-ways-to-create-a-mesh-for-a-sphere-d7956b825db4#.lkbq2omq5
-     * https://www.geometrictools.com/Samples/Geometrics.html
-     *
-     * https://github.com/glo-js/primitive-icosphere
-     * https://github.com/hughsk/icosphere
-     * http://mft-dev.dk/uv-mapping-sphere/
-     * http://donhavey.com/blog/tutorials/tutorial-3-the-icosahedron-sphere/
-     * http://blog.andreaskahler.com/2009/06/creating-icosphere-mesh-in-code.html
-     *
-     * https://www.binpress.com/tutorial/creating-an-octahedron-sphere/162
-     *
+     * Icosphere, adapted from Unity 3d tutorial.
+     * @link https://www.binpress.com/tutorial/creating-an-octahedron-sphere/162
+     * @param {Object} prim the primitive needing geometry.
+     * @param {Boolean} noSphere if false, make an icosohedron.
      */
-    geometryIcosohedron ( prim ) {
-
-        let vec3 = this.glMatrix.vec3;
-
-        let vertices = [];
-
-        let indices = [];
-
-        let normals = [];
-
-        let tangents = [];
-
-        let texCoords = [];
-
-        let colors = [];
-
-        var t = 0.5 + Math.sqrt(5) / 2;
-
-        vertices.push( -1, +t,  0 );
-        vertices.push( +1, +t,  0 );
-        vertices.push( -1, -t,  0 );
-        vertices.push( +1, -t,  0 );
-
-        vertices.push( 0, -1, +t );
-        vertices.push( 0, +1, +t );
-        vertices.push( 0, -1, -t );
-        vertices.push( 0, +1, -t );
-
-        vertices.push( +t,  0, -1 );
-        vertices.push( +t,  0, +1 );
-        vertices.push( -t,  0, -1 );
-        vertices.push( -t,  0, +1 );
-
-        indices.push( 0, 11, 5 )
-        indices.push( 0, 5, 1 )
-        indices.push( 0, 1, 7 )
-        indices.push( 0, 7, 10 )
-        indices.push( 0, 10, 11 )
-
-        indices.push( 1, 5, 9 )
-        indices.push( 5, 11, 4 )
-        indices.push( 11, 10, 2 )
-        indices.push( 10, 7, 6 )
-        indices.push( 7, 1, 8 )
-
-        indices.push( 3, 9, 4 )
-        indices.push( 3, 4, 2 )
-        indices.push( 3, 2, 6 )
-        indices.push( 3, 6, 8 )
-        indices.push( 3, 8, 9 )
-
-        indices.push( 4, 9, 5 )
-        indices.push( 2, 4, 11 )
-        indices.push( 6, 2, 10 )
-        indices.push( 8, 6, 7 )
-        indices.push( 9, 8, 1 )
-
-        let i, u, v, x, y, z, ico, normal;
-
-        // Normalize.
-
-        for ( i = 0; i < vertices.length; i += 3 ) {
-
-            x = vertices[i];
-            y = vertices[i + 1];
-            z = vertices[i + 2];
-
-            var len = x*x + y*y + z*z;
-
-            if (len > 0) {
-                len = 1 / Math.sqrt(len);
-                vertices[i] *= len;
-                vertices[i + 1] *= len;
-                vertices[i + 2] *= len;
-            }
-
-        }
-
-        // Normals.
-
-        for ( i = 0; i < vertices.length; i+=3 ) {
-
-            //var n = vec3.normalize( vec3.create(), [ vertices[i], vertices[i+1], vertices[i+2]])
-
-            // get UV from unit icosphere
-            u = 0.5 * ( -( Math.atan2( vertices[ i + 2], -vertices[ i ] ) / Math.PI) + 1.0);
-            v = 0.5 + Math.asin(vertices[ i + 1]) / Math.PI;
-            texCoords.push( 1- u, v );
-
-            // normals
-            normals.push( vertices[i], vertices[i+1], vertices[i+2])
-
-            colors.push( 1, 1, 1, 1 );
-
-        }
-
-        // Tangents.
-
-        this.computeTangents( vertices, indices, normals, texCoords );
-
-        // Colors.
-
-        //window.vertices = vertices;
-        //window.indices = indices;
-        ///window.texCoords = texCoords;
-        //window.normals = normals;
-        //window.colors = colors;
-
-
-        return this.createBuffers ( vertices, indices, texCoords, normals, colors );
-
-    }
-
-    /** 
-     * Half-sphere, polar coordinates.
-     */
-    geometryDome ( prim ) {
-
-    }
-
-    /** 
-     * Half-sphere, icosohedron based.
-     */
-    geometryIcoDome( prim ) {
-
-    }
-
-    /** 
-     * Cone
-     */
-    geometryCone ( prim ) {
-
-    }
-
-    /** 
-     * Generic 3d shape (e.g. Collada model).
-     * @link https://dannywoodz.wordpress.com/2014/12/16/webgl-from-scratch-loading-a-mesh/
-     * https://github.com/jagenjo/litegl.js/blob/master/src/mesh.js
-     */
-    geometryMesh ( prim ) {
-
-    }
-
-    /** 
-     * Generate terrain, using a heightMap, from a PLANE object.
-     */
-    geometryTerrain ( prim ) {
-
-        if ( ! prim.heightMap ) {
-
-            console.log( 'adding heightmap for:' + prim.name );
-
-            prim.heightMap = new Map2d( this.util );
-
-            // roughness 0.2 of 0-1, flatten = 1 of 0-1;
-
-            prim.heightMap[ prim.heightMap.type.DIAMOND ]( prim.divisions[0], prim.divisions[2], 0.6, 1 );
-
-            //prim.heightMap.scale( 165, 165 );
-
-            //prim.heightMap.scale( 25, 25 );
-
-        }
-
-        let geometry = this.geometryPlane( prim );
-
-        window.heightMap = prim.heightMap;
-
-        return geometry;
-
-    };
-
-
-    /** 
-     * Adapted from Unity 3d tutorial.
-     */
-    geometryIcoSphere ( prim ) {
+    geometryIcoSphere ( prim, sphere = true ) {
 
         let vec3 = this.glMatrix.vec3;
 
@@ -1461,23 +1315,9 @@ export default class Prim {
 
         let resolution = 1 << subdivisions;
 
-        // Simulate Vector3.down, etc.
-        // https://docs.unity3d.com/ScriptReference/Vector3.html
+        // Default vectors.
 
-        function getVecs ( type ) {
-
-            switch (type) {
-                case 'back': return [0, 0, -1]; break;
-                case 'down': return [0, -1, 0]; break;
-                case 'forward': return [0, 0, 1]; break;
-                case 'left': return [-1, 0, 0]; break;
-                case 'one': return [1, 1, 1]; break;
-                case 'right': return [1, 0, 0]; break;
-                case 'up': return [0, 1, 0]; break;
-                case 'zero': return [0, 0, 0]; break;
-            }
-
-        }
+        let getVecs = this.getStdVec3;
 
         let directions = [
             'left',
@@ -1492,17 +1332,15 @@ export default class Prim {
 
         let vertices = new Array ( (resolution + 1) * (resolution + 1) * 4 - (resolution * 2 - 1) * 3 ) ;
 
-        let indices = new Array( (1 << (subdivisions * 2 + 3)) * 3 ); // SHOULD BE 384
-
-        let tangents = [];
+        let indices = new Array( (1 << (subdivisions * 2 + 3)) * 3 );
 
         let normals = new Array( vertices.length );
 
         let colors = new Array( vertices.length * 4 );
 
-        console.log('size of indices:' + indices.length)
-
         let texCoords = new Array( vertices.length );
+
+        let tangents = [];
 
         // initialize lots of default variables.
 
@@ -1586,15 +1424,17 @@ export default class Prim {
 
         for (i = 0; i < vertices.length; i++ ) {
 
-            vertices[i] = vec3.normalize( [0,0,0], vertices[i]);
+            // Toggle icosphere with icosohedron.
+
+            if ( sphere === true ) {
+
+                vertices[i] = vec3.normalize( [0,0,0], vertices[i]);
+
+            }
 
             normals[i] = vec3.copy( [0,0,0], vertices[i] );
 
         }
-
-
-        //////////////////////////////////////////////////////////////
-
 
         // Scale
 
@@ -1606,21 +1446,25 @@ export default class Prim {
             }
         }
 
-        // TODO: NOT A SPHERE!!!!
+        // Texture coords.
 
         createUV ( vertices, texCoords );
 
+        // Tangents.
 
         createTangents (vertices, tangents);
 
-        vertices = flatten(vertices)
-        texCoords = flatten(texCoords)
-        normals = flatten(normals)
-        tangents = flatten(tangents)
+        // Flatten the data arrays.
+
+        vertices = flatten(vertices, false );
+        texCoords = flatten(texCoords, false );
+        normals = flatten(normals, false )
+        tangents = flatten(tangents, false )
+
+        // Helper functions.
 
         // Create UV texCoords.
 
-///////////////////
         function createUV ( vertices, uv ) {
 
             let previousX = 1;
@@ -1774,7 +1618,7 @@ export default class Prim {
                 triangles[t++] = vTop - 1;
                 triangles[t++] = vTop;
                 triangles[t++] = vBottom;
-                
+
                 triangles[t++] = vBottom;
                 triangles[t++] = vTop++;
                 triangles[t++] = ++vBottom;
@@ -1784,15 +1628,354 @@ export default class Prim {
 
         }
 
+        return this.createBuffers ( vertices, indices, texCoords, normals, tangents, colors );
+
+    }
+
+    /** 
+     * Open tube, created from sphere, open at both ends.
+     */
+    geometryTube ( prim ) {
+
+        return this.createSphere( prim, false ); 
+
+    }
+
+    /** 
+     * Closed cylinder, may be
+     */
+    geometryCan ( prim ) {
+
+
+    }
+
+    /** 
+     * Two spheres stuck on a cylinder
+     */
+    geometryCapsule ( prim ) {
+
+    }
+
+    // More prims
+    // Ogre 3d procedural
+    // https://bitbucket.org/transporter/ogre-procedural/src/ca6eb3363a53c2b53c055db5ce68c1d35daab0d5/library/include/?at=default
+    // https://bitbucket.org/transporter/ogre-procedural/wiki/Home
+    //
+    // https://github.com/jagenjo/litegl.js/tree/master/src
+    // ////////////////////////////////
+    // http://wiki.unity3d.com/index.php/ProceduralPrimitives
+    // ////////////////////////////////
+    // http://wiki.unity3d.com/index.php/ProceduralPrimitives
+    //
+    // octahedron sphere generation
+    // https://www.binpress.com/tutorial/creating-an-octahedron-sphere/162
+    // https://experilous.com/1/blog/post/procedural-planet-generation
+    // https://experilous.com/1/planet-generator/2014-09-28/planet-generator.js
+    // another octahedron sphere 
+    // https://www.binpress.com/tutorial/creating-an-octahedron-sphere/162
+    // rounded cube
+    // https://github.com/vorg/primitive-rounded-cube
+    // rounded cube algorithim
+    // http://catlikecoding.com/unity/tutorials/rounded-cube/
+    // generalized catmull-clark subdivision algorithm
+    // https://thiscouldbebetter.wordpress.com/2015/04/24/the-catmull-clark-subdivision-surface-algorithm-in-javascript/
+    // cube inflation algorithm
+    // http://mathproofs.blogspot.com.au/2005/07/mapping-cube-to-sphere.html
+    // advanced toolset
+    // https://www.geometrictools.com/Samples/Geometrics.html
+    // Eigen
+    // https://fossies.org/dox/eigen-3.2.10/icosphere_8cpp_source.html
+    // Geometry prebuilt
+    // http://paulbourke.net/geometry/roundcube/
+    // Lots of Webgl tricks!
+    // https://acko.net
+    // http://acko.net/blog/on-webgl/
+
+    /** 
+     * https://gamedevdaily.io/four-ways-to-create-a-mesh-for-a-sphere-d7956b825db4#.lkbq2omq5
+     * https://www.geometrictools.com/Samples/Geometrics.html
+     *
+     * https://github.com/glo-js/primitive-icosphere
+     * https://github.com/hughsk/icosphere
+     * http://mft-dev.dk/uv-mapping-sphere/
+     * http://donhavey.com/blog/tutorials/tutorial-3-the-icosahedron-sphere/
+     * http://blog.andreaskahler.com/2009/06/creating-icosphere-mesh-in-code.html
+     *
+     * https://www.binpress.com/tutorial/creating-an-octahedron-sphere/162
+     *
+     */
+    geometryIcosohedron ( prim ) {
+
+        return this.geometryIcoSphere( prim, false );
+
+    }
+
+    geometryPrism ( prim ) {
+
+        // TODO: return upper half of icosohedron, and close. (possibly by setting 
+        // bottom half to a comm y value)
+
+    }
+
+    /** 
+     * Half-sphere, polar coordinates.
+     */
+    geometryDome ( prim ) {
+
+    }
+
+    /** 
+     * Half-sphere, icosohedron based.
+     */
+    geometryIcoDome( prim ) {
+
+    }
+
+    /** 
+     * Cone, with closed bottom and top, can be expanded to 
+     * a closed cylinder. the prim.dimensions[] object describes the 
+     * bounding box; cone bottom and top width need to be separately 
+     * defined. 
+     * Divisions correspond to the number of sides.
+     * @param {Prim} prim the object needing geometry.
+     * @param {Number} bottomRadius the radius of the bottom of the cone.
+     * @param {Number} topRadius the top radius of the cone.
+     */
+    geometryCone ( prim, bottomRadius, topRadius ) {
+
+        // GlMatrix.
+
+        let vec3 = this.glMatrix.vec3;
+        let vec2 = this.glMatrix.vec2;
+
+        // Flatten method.
+
+        // Default vectors.
+
+        let getVecs = this.getStdVec3;
+
+        let vertices = [];
+
+        let indices = [];
+
+        let normals = [];
+
+        let texCoords = [];
+
+        let tangents = [];
+
+        let colors = [];
+
+        let latitudeBands = prim.divisions[1]; // y axis
+
+        let longitudeBands = prim.divisions[0] // x axis (really xz)
+
+        let radius = prim.dimensions[0] * 0.5;
+
+        let x, y, z, theta, sinTheta, cosTheta, phi, sinPhi, cosPhi, latNumber, longNumber, u, v;
+
+        let first, second;
+
+
+        // make the top cap, a collapsed half-sphere.
+
+        for ( latNumber = 0; latNumber <= latitudeBands / 2; latNumber++ ) {
+
+            theta = latNumber * Math.PI / latitudeBands;
+
+            sinTheta = Math.sin(theta);
+
+            cosTheta = Math.cos(theta);
+
+            for ( longNumber = 0; longNumber <= longitudeBands ; longNumber++ ) {
+
+                phi = longNumber * 2 * Math.PI / longitudeBands;
+
+                sinPhi = Math.sin(phi);
+
+                cosPhi = Math.cos(phi);
+
+                // x, y, z will be ABOVE the cylinder
+
+                y = cosTheta + radius; ////////////////////////////////////
+
+                x = cosPhi * sinTheta;
+
+                z = sinPhi * sinTheta;
+
+                // Texture coords.
+
+                u = 1 - (longNumber / longitudeBands);
+
+                v = 1 - (latNumber / latitudeBands);
+
+                // Push values.
+
+                vertices.push( radius * x, radius * y, radius * z );
+
+                texCoords.push( u, v );
+
+                normals.push( x, y, z );
+
+            }
+
+        }
+
+        // Indices.
+
+
+        for ( latNumber = 0; latNumber < latitudeBands / 2; latNumber++ ) {
+
+            for ( longNumber = 0; longNumber < longitudeBands; longNumber++ ) {
+
+                first = (latNumber * (longitudeBands + 1)) + longNumber;
+
+                second = first + longitudeBands + 1;
+
+                // Note: we're running culling in reverse from some tutorials here.
+
+                indices.push( first + 1, second + 1, second );
+
+                indices.push(first + 1, second, first);
+
+            }
+
+        }
+
+
+        ////////////////////////////////////////////////////
+        // make the cylinder
+
+        for ( latNumber = 0; latNumber <= latitudeBands; latNumber++ ) {
+
+            theta = latNumber * Math.PI / latitudeBands;
+
+            sinTheta = Math.sin(theta);
+
+            cosTheta = Math.cos(theta);
+
+            for ( longNumber = 0; longNumber <= longitudeBands; longNumber++ ) {
+
+                phi = longNumber * 2 * Math.PI / longitudeBands;
+
+                sinPhi = Math.sin(phi);
+
+                cosPhi = Math.cos(phi);
+
+                // Compute vertex positions.
+
+                y = cosTheta;
+
+                z = sinPhi;
+
+                x = cosPhi;
+
+                // Texture coords.
+
+                u = 1 - (longNumber / longitudeBands);
+
+                v = 1 - (latNumber / latitudeBands);
+
+                // Push values.
+
+                vertices.push( radius * x, radius * y, radius * z );
+
+                texCoords.push( u, v );
+
+                normals.push( x, y, z );
+
+            }
+
+        }
+
+        // make the bottom half, a collapsed half-sphere
+
+
+        // Indices.
+
+
+        for ( latNumber = 0; latNumber < latitudeBands; latNumber++ ) {
+
+            for ( longNumber = 0; longNumber < longitudeBands; longNumber++ ) {
+
+                first = (latNumber * (longitudeBands + 1)) + longNumber;
+
+                second = first + longitudeBands + 1;
+
+                // Note: we're running culling in reverse from some tutorials here.
+
+                indices.push( first + 1, second + 1, second );
+
+                indices.push(first + 1, second, first);
+
+            }
+
+        }
+
+////////////////////////////////////////////////////////
+
+
+
         window.vertices = vertices;
         window.indices = indices;
         window.normals = normals;
         window.texCoords = texCoords;
         window.tangents = tangents;
 
-        return this.createBuffers ( vertices, indices, texCoords, normals, colors );
+        return this.createBuffers ( vertices, indices, texCoords, normals, tangents, colors );
 
     }
+
+    /** 
+     * Generic 3d shape (e.g. Collada model).
+     * @link https://dannywoodz.wordpress.com/2014/12/16/webgl-from-scratch-loading-a-mesh/
+     * https://github.com/jagenjo/litegl.js/blob/master/src/mesh.js
+     */
+    geometryMesh ( prim ) {
+
+    }
+
+    /** 
+     * Generate terrain, using a heightMap, from a PLANE object.
+     */
+    geometryTerrain ( prim ) {
+
+        if ( ! prim.heightMap ) {
+
+            console.log( 'adding heightmap for:' + prim.name );
+
+            prim.heightMap = new Map2d( this.util );
+
+            // roughness 0.2 of 0-1, flatten = 1 of 0-1;
+
+            prim.heightMap[ prim.heightMap.type.DIAMOND ]( prim.divisions[0], prim.divisions[2], 0.6, 1 );
+
+            //prim.heightMap.scale( 165, 165 );
+
+            //prim.heightMap.scale( 25, 25 );
+
+        }
+
+        let geometry = this.geometryPlane( prim );
+
+        window.heightMap = prim.heightMap;
+
+        return geometry;
+
+    };
+
+    /** 
+     * Generate a heightmap on a spherical or spheroid surface
+     * Also some smoothing out.
+     * THIS ONE CONVERTS FROM TRIANGLES TO HEXAGONS.
+     * @link https://experilous.com/1/blog/post/procedural-planet-generation
+     * @link https://experilous.com/1/planet-generator/2014-09-28/planet-generator.js
+     */
+    geometryPlanet() {
+        // TODO: use heightmap to displace points on a cubesphere
+        // https://acko.net/blog/making-worlds-1-of-spheres-and-cubes/
+    }
+
 
      /*
      * ---------------------------------------
@@ -1979,7 +2162,8 @@ export default class Prim {
     }
 
     /** 
-     * Move vertices directly in geometry.
+     * Move vertices directly in geometry, i.e. for something 
+     * that always orbits a central point.
      * NOTE: normally, you will want to use a matrix transform.
      */
     move ( vertices, pos ) {
@@ -2011,6 +2195,7 @@ export default class Prim {
     /** 
      * Get the bounding box of a shape by getting the largest and 
      * smallest vertices in coordinate space.
+     * TODO: incomplete.
      */
     boundingBox ( vertices ) {
 
@@ -2044,6 +2229,7 @@ export default class Prim {
 
     /** 
      * Get the center of a shape.
+     * TODO: not complete.
      */
     getCenter ( vertices ) {
 
@@ -2063,15 +2249,15 @@ export default class Prim {
 
        return {
 
-            u_colorMult:             0,
+            colorMult:             0,
 
-            u_diffuse:               [ 1, 1, 1 ], // TODO: should be textures[0]
+            diffuse:               [ 1, 1, 1 ], // TODO: should be textures[0]
 
-            u_specular:              [ 1, 1, 1, 1 ],
+            specular:              [ 1, 1, 1, 1 ],
 
-            u_shininess:             this.util.getRand( 500 ),
+            shininess:             this.util.getRand( 500 ),
 
-            u_specularFactor:        this.util.getRand( 1 ) // TODO: MAY NOT BE RIGHT
+            specularFactor:        this.util.getRand( 1 ) // TODO: MAY NOT BE RIGHT
 
         }
 

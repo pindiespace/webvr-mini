@@ -119,11 +119,12 @@ export default class Util {
 
     /** 
      * Given a multi-dimensional array, flatten to 
-     * a single-dimensional one.
+     * a single-dimensional one. NOTE: only works for 
+     * Array(), not Float32Array!
      */
     flatten ( arr, mutable ) {
 
-        if ( mutable === undefined ) {
+        if ( mutable !== true && mutable !== false ) {
 
             mutable = false;
 

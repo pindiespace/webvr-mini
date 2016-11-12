@@ -19,6 +19,8 @@ export default class ShaderWater extends Shader {
      * - texture coordinate
      * - model-view matrix
      * - projection matrix
+     * Water example
+     * @link http://madebyevan.com/webgl-water/
      * --------------------------------------------------------------------
      */
 
