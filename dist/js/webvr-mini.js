@@ -4371,13 +4371,15 @@
 
 	                        var vec3 = this.glMatrix.vec3;
 
-	                        var vertexCount = vertices.length / 4; // the vertices are assumed to be flattened vec4s (i.e. 4 floats per vertex)
-
 	                        var tan1 = new Float32Array(normals.length);
 	                        var tan2 = new Float32Array(normals.length);
 
 	                        // the indices array specifies the triangles forming the object mesh (3 indices per triangle)
 	                        var numIndices = indices.length;
+	                        var numVertices = vertices.length;
+	                        var numNormals = normals.length;
+
+	                        //console.log("NUMVERTICES:" + numVertices / 3 + " NUMINDICES:" + numIndices / 3 + " NUMNORMALS:" + numNormals / 3)
 
 	                        // for each triangle (step through indices 3 by 3)
 	                        for (var i = 0; i < numIndices; i += 3) {
@@ -4386,13 +4388,13 @@
 	                                    i2 = indices[i + 1],
 	                                    _i = indices[i + 2];
 
-	                                var j = i1 * 4;var v1x = vertices[j],
+	                                var j = i1 * 3;var v1x = vertices[j],
 	                                    v1y = vertices[j + 1],
 	                                    v1z = vertices[j + 2];
-	                                var j = i2 * 4;var v2x = vertices[j],
+	                                var j = i2 * 3;var v2x = vertices[j],
 	                                    v2y = vertices[j + 1],
 	                                    v2z = vertices[j + 2];
-	                                var j = _i * 4;var v3x = vertices[j],
+	                                var j = _i * 3;var v3x = vertices[j],
 	                                    v3y = vertices[j + 1],
 	                                    v3z = vertices[j + 2];
 
@@ -4432,8 +4434,13 @@
 	                                tan2[j] += tx;tan2[j + 1] += ty;tan2[j + 2] += tz;
 	                        }
 
-	                        var numVertices = vertices.length;
-	                        var tangents = new Float32Array(numVertices);
+	                        var tangents = new Float32Array(numVertices * 4 / 3); // TODO: ADDED 4 to this!!
+	                        var numTangents = tangents.length / 4;
+
+	                        //console.log("TAN1:" + tan1)
+	                        //console.log("TAN2:" + tan2)
+
+	                        //console.log('NUMTANGENTS:' + numTangents)
 
 	                        for (var i3 = 0, i4 = 0; i4 < numVertices; i3 += 3, i4 += 4) {
 
@@ -4442,24 +4449,32 @@
 	                                var _t = [tan1[i3], tan1[i3 + 1], tan1[i3 + 2]];
 	                                var _t2 = [tan2[i3], tan2[i3 + 1], tan2[i3 + 2]];
 
+	                                //console.log('n:' + n + ' t1:' + t1 + ' t2:' + t2)
+
 	                                // Gram-Schmidt orthogonalize
 	                                ////////////////const tmp  = subtract(t1, scale(dot(n, t1), n));
-	                                var tmp = vec3.sub([0, 0, 0], _t, vec3.scale([0, 0, 0], vec3.dot([0, 0, 0], n, _t), n));
+	                                var tmp = vec3.sub([0, 0, 0], _t, vec3.scale([0, 0, 0], _t, vec3.dot(n, _t)));
+
+	                                //console.log("TMP:" + tmp) //NOT COMPUTING THIS RIGHT, all NAN
 
 	                                var len2 = tmp[0] * tmp[0] + tmp[1] * tmp[1] + tmp[2] * tmp[2];
 
 	                                // normalize the vector only if non-zero length
-	                                ///////////////const txyz = (len2 > 0) ? scale(1.0 / Math.sqrt(len2), tmp) : tmp;
-	                                var txyz = len2 > 0 ? vec3.scale([0, 0, 0], 1.0 / Math.sqrt(len2), tmp) : tmp;
+
+	                                var txyz = len2 > 0 ? vec3.scale([0, 0, 0], tmp, 1.0 / Math.sqrt(len2)) : tmp;
+
+	                                ////console.log("TXYZ:" + txyz );
 
 	                                // Calculate handedness
 	                                //////////////const tw = (dot(cross(n, t1), t2) < 0.0) ? -1.0 : 1.0;
-	                                var tw = vec3.dot([0, 0, 0], vec3.cross([0, 0, 0], n, _t), _t2) < 0.0 ? -1.0 : 1.0;
+	                                var tw = vec3.dot(vec3.cross([0, 0, 0], n, _t), _t2) < 0.0 ? -1.0 : 1.0;
 
 	                                tangents[i4] = txyz[0];
 	                                tangents[i4 + 1] = txyz[1];
 	                                tangents[i4 + 2] = txyz[2];
 	                                tangents[i4 + 3] = tw;
+
+	                                ///console.log("TW:" + tw)
 	                        }
 
 	                        return tangents;
@@ -4631,13 +4646,11 @@
 
 	                                        var v = 1 - rowNumber / rows;
 
-	                                        normals.push(0, 1.0, 0);
+	                                        vertices.push(incX * x - halfX, incY * y, incZ * z - halfZ);
 
 	                                        texCoords.push(u, v);
 
-	                                        vertices.push(incX * x - halfX);
-	                                        vertices.push(incY * y);
-	                                        vertices.push(incZ * z - halfZ);
+	                                        normals.push(0, 1.0, 0);
 	                                }
 	                        }
 
@@ -4653,17 +4666,9 @@
 
 	                                        // Note: we're running culling in reverse from some tutorials here.
 
-	                                        indices.push(first + 1);
+	                                        indices.push(first + 1, second + 1, second);
 
-	                                        indices.push(second + 1);
-
-	                                        indices.push(second);
-
-	                                        indices.push(first + 1);
-
-	                                        indices.push(second);
-
-	                                        indices.push(first);
+	                                        indices.push(first + 1, second, first);
 	                                }
 	                        }
 
@@ -4715,7 +4720,7 @@
 
 	                        // Create cube geometry.
 
-	                        prim.geometry.vertices.data = [
+	                        var vertices = prim.geometry.vertices.data = [
 	                        // Front face
 	                        -1.0, -1.0, 1.0, // bottomleft
 	                        1.0, -1.0, 1.0, // bottomright
@@ -4732,7 +4737,7 @@
 	                        // Left face
 	                        -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0];
 
-	                        prim.geometry.indices.data = [0, 1, 2, 0, 2, 3, // Front face
+	                        var indices = prim.geometry.indices.data = [0, 1, 2, 0, 2, 3, // Front face
 	                        4, 5, 6, 4, 6, 7, // Back face
 	                        8, 9, 10, 8, 10, 11, // Top face
 	                        12, 13, 14, 12, 14, 15, // Bottom face
@@ -4740,7 +4745,7 @@
 	                        20, 21, 22, 20, 22, 23 // Left face
 	                        ];
 
-	                        prim.geometry.normals.data = [
+	                        var normals = prim.geometry.normals.data = [
 	                        // Front face
 	                        0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0,
 	                        // Back face
@@ -4754,7 +4759,7 @@
 	                        // Left face
 	                        -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0];
 
-	                        prim.geometry.texCoords.data = [
+	                        var texCoords = prim.geometry.texCoords.data = [
 	                        // Front face
 	                        0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
 	                        // Back face
@@ -4768,9 +4773,9 @@
 	                        // Left face
 	                        0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0];
 
-	                        prim.geometry.tangents.data = [];
+	                        var tangents = prim.geometry.tangents.data = [];
 
-	                        prim.geometry.colors.data = [
+	                        var colors = prim.geometry.colors.data = [
 	                        // Front face
 	                        1.0, 1.0, 1.0, 1.0, // white
 	                        1.0, 0.0, 0.0, 1.0, // red
@@ -5164,8 +5169,6 @@
 	                                vertices[v++] = getVecs('down');
 	                        }
 
-	                        //window.verts1 = vertices.slice();
-
 	                        for (i = 1; i <= resolution; i++) {
 
 	                                progress = i / resolution;
@@ -5377,8 +5380,6 @@
 	                                        vertices[v++] = vec3.lerp([0, 0, 0], from, to, _i2 / steps);
 	                                }
 
-	                                //window.verts2 = vertices.slice();
-
 	                                //console.log("VECTOR ARRAY:" + vertices.length)
 
 	                                return v;
@@ -5537,9 +5538,9 @@
 	                key: 'geometryDome',
 	                value: function geometryDome(prim) {
 
-	                        var latitudeBands = prim.divisions[1]; // y axis
-
 	                        var longitudeBands = prim.divisions[0]; // x axis (really xz)
+
+	                        var latitudeBands = prim.divisions[1]; // y axis
 
 	                        var radius = prim.dimensions[0] * 0.5;
 
@@ -5624,9 +5625,9 @@
 	                                }
 	                        }
 
-	                        //tangents = this.computeTangents( vertices, indices, normals, texCoords );
+	                        prim.geometry.tangents.data = tangents = this.computeTangents(vertices, indices, normals, texCoords);
 
-	                        tangents = [];
+	                        window.geo = prim.geometry;
 
 	                        // Return the buffer, or add array data to the existing Prim data.
 
@@ -5669,7 +5670,35 @@
 	                        var vec3 = this.glMatrix.vec3;
 	                        var vec2 = this.glMatrix.vec2;
 
+	                        bottomRadius = 1.0;
+
+	                        topRadius = 0.5;
+
+	                        var multiplier = 1.0;
+
+	                        // scale so Cone fits the bounding box.
+
+	                        var biggest = Math.max(bottomRadius, topRadius);
+
+	                        var radRatio = biggest / prim.divisions[1];
+
+	                        bottomRadius *= radRatio;
+
+	                        topRadius *= radRatio;
+
 	                        // Params.
+
+	                        var latitudeBands = prim.divisions[1]; // y axis
+
+	                        var longitudeBands = prim.divisions[0]; // x axis (really xz)
+
+	                        var radius = prim.dimensions[0] * 0.5;
+
+	                        // ADJUST
+
+	                        var dHeight = prim.dimensions[1];
+
+	                        // Shortcuts to Prim data arrays
 
 	                        var vertices = prim.geometry.vertices.data;
 	                        var indices = prim.geometry.indices.data;
@@ -5677,6 +5706,88 @@
 	                        var normals = prim.geometry.normals.data;
 	                        var tangents = prim.geometry.tangents.data;
 	                        var colors = prim.geometry.colors.data;
+
+	                        var x = void 0,
+	                            y = void 0,
+	                            z = void 0;
+
+	                        for (var latNumber = 0; latNumber <= latitudeBands / 2; latNumber++) {
+
+	                                var theta = latNumber * Math.PI / latitudeBands;
+
+	                                var sinTheta = Math.sin(theta);
+
+	                                var cosTheta = Math.cos(theta);
+
+	                                for (var longNumber = 0; longNumber <= longitudeBands; longNumber++) {
+
+	                                        var phi = longNumber * 2 * Math.PI / longitudeBands;
+
+	                                        var sinPhi = Math.sin(phi);
+
+	                                        var cosPhi = Math.cos(phi);
+
+	                                        // Texture coords.
+
+	                                        var u = 1 - longNumber / longitudeBands;
+
+	                                        var v = 1 - latNumber / latitudeBands;
+
+	                                        // Compute vertex positions.
+
+	                                        x = cosPhi * sinTheta;
+
+	                                        z = sinPhi * sinTheta;
+
+	                                        if (prim.type === this.typeList.TOPDOME) {
+
+	                                                y = cosTheta;
+	                                        } else if (prim.type == this.typeList.BOTTOMDOME) {
+
+	                                                y = 1 - cosTheta;
+	                                        }
+
+	                                        // Push values.
+
+	                                        vertices.push(radius * x, radius * y, radius * z);
+
+	                                        texCoords.push(u, v);
+
+	                                        normals.push(x, y, z);
+	                                }
+	                        }
+
+	                        // Sphere indices.
+
+	                        for (var _latNumber3 = 0; _latNumber3 < latitudeBands / 2; _latNumber3++) {
+
+	                                for (var _longNumber3 = 0; _longNumber3 < longitudeBands; _longNumber3++) {
+
+	                                        var first = _latNumber3 * (longitudeBands + 1) + _longNumber3;
+
+	                                        var second = first + longitudeBands + 1;
+
+	                                        // Note: we're running culling in reverse from some tutorials here.
+
+	                                        indices.push(first + 1, second + 1, second);
+
+	                                        indices.push(first + 1, second, first);
+	                                }
+	                        }
+
+	                        prim.geometry.tangents.data = this.computeTangents(vertices, indices, normals, texCoords);
+
+	                        // Return the buffer, or add array data to the existing Prim data.
+
+	                        if (prim.geometry.makeBuffers === true) {
+
+	                                //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+	                                return this.createBuffers(prim.geometry);
+	                        } else {
+
+	                                return this.addBufferData(prim.geometry, vertices, indices, texCoords, normals, tangents, colors);
+	                        }
 
 	                        // Return the buffer, or add array data to the existing Prim data.
 
@@ -6955,7 +7066,7 @@
 	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	                        ));
 
-	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.ICOSPHERE, 'icophere', 1.0, vec3.fromValues(3, 3, 3), // dimensions
+	                        this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.ICOSPHERE, 'icophere', 1.0, vec3.fromValues(3, 3, 3), // dimensions
 	                        vec3.fromValues(4, 4, 4), // divisions
 	                        vec3.fromValues(1.5, 2.5, -1), // position (absolute)
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z

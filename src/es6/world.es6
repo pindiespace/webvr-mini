@@ -230,7 +230,7 @@ export default class World {
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0)  // color
         ) );
 
-        this.textureObjList.push( this.prim.createPrim(
+        this.dirlightTextureObjList.push( this.prim.createPrim(
             this.prim.typeList.ICOSPHERE,
             'icophere',
             1.0,

@@ -434,3 +434,158 @@ geometryIcosohedron( prim ) {
 */
 
     }
+
+
+
+
+
+
+///////////////////////////////////////////////////
+
+        let nbSides = 18;
+        let nbHeightSeg = 10; // Not implemented yet
+
+        let nbheightInc = nbHeightSeg; ///////////////////////////////////s
+ 
+        let nbVerticesCap = nbSides + 1;
+        let nbTriangles = nbSides + nbSides + nbSides*2;
+
+        let vertices = [];
+        let indices = [];
+        let normals = [];
+        let texCoords = [];
+        let tangents = [];
+        let colors = [];
+        
+        let vert = 0, t = 0;
+        let _2pi = Math.PI * 2;
+
+        let cos, sin, rad = 0, tri = 0;
+
+        // vertices.
+
+        // Bottom cap
+
+        let d = getVecs('down');
+
+        vertices.push( 0, 0, 0 ); //1st point in cap
+
+        texCoords.push( 0.5, 0.5 ); // 1st point in cap
+
+        for ( vert = 0; vert <= nbSides; vert++ ) {
+
+            rad = vert / nbSides * _2pi;
+
+            vertices.push( Math.cos( rad ) * bottomRadius, 0, Math.sin( rad ) * bottomRadius );
+
+            normals.push( d[0], d[1], d[2] );
+
+            texCoords.push( Math.cos( rad ) * .5 + .5, Math.sin( rad ) * .5 + .5 );
+
+        }
+
+
+        // Sides
+
+        for ( vert = 0; vert <= nbSides; vert++ ) {
+
+            rad = vert / nbSides * _2pi;
+            // TODO: internal cylinder here.
+
+            vertices.push( Math.cos( rad ) * topRadius, height, Math.sin( rad ) * topRadius );
+
+            vertices.push( Math.cos(rad) * bottomRadius, 0, Math.sin( rad ) * bottomRadius );
+
+            cos = Math.cos( rad );
+
+            normals.push( cos, 0, sin );
+
+            sin = Math.sin( rad );
+
+            normals.push( cos, 0, sin );
+
+            t = vert / nbSides;
+
+            texCoords.push( t, 1 );
+
+            texCoords.push( t, 0 )
+
+        }
+
+/*
+        let s = nbSides * 2 + 2;
+
+        vertices.push( vertices[s], vertices[s+1], vertices[s+2] );
+
+        normals.push( normals[s], normals[ s+1 ], normals[ s+2 ] );
+
+        s = nbSides * 2 + 3
+
+        vertices.push( vertices[s], vertices[s+1], vertices[s+2] );
+
+        normals.push( normals[s], normals[ s+1 ], normals[ s+2 ] );
+
+        texCoords.push( 1, 1 );
+
+        texCoords.push( 1, 0 );
+
+
+        // Top cap
+
+        d = getVecs('up');
+
+        vertices.push( 0, height, 0 ); // 1st point in cap.
+
+        texCoords.push( 0.5, 0.5 ); // 1st point in cap.
+
+        for ( vert = 0; vert <= nbSides; vert++ ) {
+
+            rad = vert / nbSides * _2pi;
+
+            vertices.push( Math.cos( rad ) * topRadius, height, Math.sin( rad ) * topRadius );
+
+            normals.push( d[0], d[1], d[2] );
+
+            texCoords.push( Math.cos(rad) * .5 + .5, Math.sin(rad) * .5 + .5 )
+
+        }
+
+*/
+
+
+/*
+
+        // Indices.
+        // Bottom cap
+
+        let tri = 0;
+
+        for ( tri = 0; tri < nbSides; tri++ ) {
+
+            indices.push( 0, tri + 1, tri + 2);
+
+        }
+
+
+        indices.push( 0, nbSides, 1 );
+
+
+        // Top cap
+        for ( tri = nbSides; tri < nbSides * 2; tri++ ) {
+
+            indices.push( tri + 2, tri + 1, nbVerticesCap );
+
+        }
+
+        indices.push( nbVerticesCap + 1, tri + 1, nbVerticesCap );
+
+        // Sides
+
+        for ( tri = nbSides * 2; tri <= nbTriangles; tri++ ) {
+
+            indices.push( tri + 2, tri + 1, tri + 0 );
+
+            indices.push( tri + 1, tri + 2, tri + 0 );
+
+        }
+*/

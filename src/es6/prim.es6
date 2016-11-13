@@ -505,21 +505,21 @@ export default class Prim {
 
         // Compute dot products.
 
-        dot00 = vec3.dot(v0, v0)
-        dot01 = vec3.dot(v0, v1)
-        dot02 = vec3.dot(v0, v2)
-        dot11 = vec3.dot(v1, v1)
-        dot12 = vec3.dot(v1, v2)
+        dot00 = vec3.dot( v0, v0 )
+        dot01 = vec3.dot( v0, v1 )
+        dot02 = vec3.dot( v0, v2 )
+        dot11 = vec3.dot( v1, v1 )
+        dot12 = vec3.dot( v1, v2 )
 
         // Compute barycentric coordinates.
 
-        let invDenom = 1 / (dot00 * dot11 - dot01 * dot01)
-        let u = (dot11 * dot02 - dot01 * dot12) * invDenom
-        let v = (dot00 * dot12 - dot01 * dot02) * invDenom
+        let invDenom = 1 / ( dot00 * dot11 - dot01 * dot01 )
+        let u = ( dot11 * dot02 - dot01 * dot12 ) * invDenom
+        let v = ( dot00 * dot12 - dot01 * dot02 ) * invDenom
 
         // Check if point is in triangle.
 
-        return (u >= 0) && (v >= 0) && (u + v < 1)
+        return ( u >= 0 ) && ( v >= 0 ) && ( u + v < 1 );
 
     }
 
@@ -677,7 +677,7 @@ export default class Prim {
                     var l = lp / 3;
                     for (var p = 0; p < lp; p++) {
                         positions[lp + p] = positions[p];
-                    }
+                    } 
                     // indices
                     for ( i = 0; i < li; i += 3) {
                         indices[i + li] = indices[i + 2] + l;
@@ -710,36 +710,38 @@ export default class Prim {
 
         let vec3 = this.glMatrix.vec3;
 
-        const vertexCount = vertices.length / 4; // the vertices are assumed to be flattened vec4s (i.e. 4 floats per vertex)
-
         var tan1 = new Float32Array( normals.length );
         var tan2 = new Float32Array( normals.length );
 
         // the indices array specifies the triangles forming the object mesh (3 indices per triangle)
-        const numIndices = indices.length; 
-  
+        const numIndices = indices.length;
+        const numVertices = vertices.length;
+        const numNormals = normals.length;
+
+        //console.log("NUMVERTICES:" + numVertices / 3 + " NUMINDICES:" + numIndices / 3 + " NUMNORMALS:" + numNormals / 3)
+
         // for each triangle (step through indices 3 by 3)
         for (var i = 0; i < numIndices; i += 3) {
 
             const i1 = indices[i], i2 = indices[i + 1], i3 = indices[i + 2];
+
+            var j = i1 * 3; const v1x = vertices[j], v1y = vertices[j + 1], v1z = vertices[j + 2];
+            var j = i2 * 3; const v2x = vertices[j], v2y = vertices[j + 1], v2z = vertices[j + 2];
+            var j = i3 * 3; const v3x = vertices[j], v3y = vertices[j + 1], v3z = vertices[j + 2];
     
-            var j = i1 * 4; const v1x = vertices[j], v1y = vertices[j + 1], v1z = vertices[j + 2];
-            var j = i2 * 4; const v2x = vertices[j], v2y = vertices[j + 1], v2z = vertices[j + 2];
-            var j = i3 * 4; const v3x = vertices[j], v3y = vertices[j + 1], v3z = vertices[j + 2];
-     
             const x1 = v2x - v1x, x2 = v3x - v1x;
             const y1 = v2y - v1y, y2 = v3y - v1y;
             const z1 = v2z - v1z, z2 = v3z - v1z;
-    
+
             var j = i1 * 2; const w1x = texCoords[j], w1y = texCoords[j + 1];
             var j = i2 * 2; const w2x = texCoords[j], w2y = texCoords[j + 1];
             var j = i3 * 2; const w3x = texCoords[j], w3y = texCoords[j + 1];
-    
+
             const s1 = w2x - w1x, s2 = w3x - w1x;
             const t1 = w2y - w1y, t2 = w3y - w1y;
-      
+
             const r = 1.0 / (s1 * t2 - s2 * t1);
-    
+
             const sx = (t2 * x1 - t1 * x2) * r, sy = (t2 * y1 - t1 * y2) * r, sz = (t2 * z1 - t1 * z2) * r;
             const tx = (s1 * x2 - s2 * x1) * r, ty = (s1 * y2 - s2 * y1) * r, tz = (s1 * z2 - s2 * z1) * r;
 
@@ -750,35 +752,48 @@ export default class Prim {
             var j = i3 * 3; tan1[j] += sx; tan1[j + 1] += sy; tan1[j + 2] += sz;
                     tan2[j] += tx; tan2[j + 1] += ty; tan2[j + 2] += tz;
         }
-  
-        const numVertices = vertices.length;
-        var tangents = new Float32Array( numVertices );
-    
+
+        var tangents = new Float32Array( numVertices * 4 / 3 ); // TODO: ADDED 4 to this!!
+        var numTangents = tangents.length / 4;
+
+        //console.log("TAN1:" + tan1)
+        //console.log("TAN2:" + tan2)
+
+        //console.log('NUMTANGENTS:' + numTangents)
+                                            
         for (var i3 = 0, i4 = 0; i4 < numVertices; i3 += 3, i4 += 4) {
 
             // not very efficient here (used the vec3 type and dot/cross operations from MV.js)
             const n  = [ normals[i3], normals[i3 + 1], normals[i3 + 2] ];
             const t1 = [ tan1   [i3], tan1   [i3 + 1], tan1   [i3 + 2] ];
             const t2 = [ tan2   [i3], tan2   [i3 + 1], tan2   [i3 + 2] ];
-    
+
+            //console.log('n:' + n + ' t1:' + t1 + ' t2:' + t2)
+
             // Gram-Schmidt orthogonalize
             ////////////////const tmp  = subtract(t1, scale(dot(n, t1), n));
-            const tmp = vec3.sub( [0,0,0], t1, vec3.scale( [0,0,0], vec3.dot( [0,0,0], n, t1), n) );
+            const tmp = vec3.sub( [0,0,0], t1, vec3.scale( [0,0,0], t1, vec3.dot( n, t1 ) ) );
+
+            //console.log("TMP:" + tmp) //NOT COMPUTING THIS RIGHT, all NAN
 
             const len2 = tmp[0] * tmp[0] + tmp[1] * tmp[1] + tmp[2] * tmp[2];
 
             // normalize the vector only if non-zero length
-            ///////////////const txyz = (len2 > 0) ? scale(1.0 / Math.sqrt(len2), tmp) : tmp;
-            const txyz = (len2 > 0) ? vec3.scale( [0,0,0], 1.0 / Math.sqrt(len2), tmp) : tmp;
-   
+
+            const txyz = ( len2 > 0 ) ? vec3.scale( [0,0,0], tmp, 1.0 / Math.sqrt( len2 ) ) : tmp;
+
+            ////console.log("TXYZ:" + txyz );
+
             // Calculate handedness
             //////////////const tw = (dot(cross(n, t1), t2) < 0.0) ? -1.0 : 1.0;
-            const tw = ( vec3.dot([0,0,0], vec3.cross([0,0,0], n, t1), t2) < 0.0 ) ? -1.0 : 1.0;
+            const tw = ( vec3.dot( vec3.cross( [0,0,0], n, t1 ), t2 ) < 0.0 ) ? -1.0 : 1.0;
 
             tangents[i4    ] = txyz[0];
             tangents[i4 + 1] = txyz[1];
             tangents[i4 + 2] = txyz[2];
             tangents[i4 + 3] = tw;
+
+            ///console.log("TW:" + tw)
 
         }
   
@@ -956,13 +971,11 @@ export default class Prim {
 
                 let v = 1 - (rowNumber / rows);
 
-                normals.push( 0, 1.0, 0 );
+                vertices.push( ( incX * x ) - halfX, ( incY * y), ( incZ * z ) - halfZ );
 
                 texCoords.push( u, v );
 
-                vertices.push( ( incX * x ) - halfX );
-                vertices.push( ( incY * y) );
-                vertices.push( ( incZ * z ) - halfZ );
+                normals.push( 0, 1.0, 0 );
 
             }
 
@@ -980,17 +993,9 @@ export default class Prim {
 
                 // Note: we're running culling in reverse from some tutorials here.
 
-                indices.push(first + 1);
+                indices.push( first + 1, second + 1, second );
 
-                indices.push(second + 1);
-
-                indices.push(second);
-
-                indices.push(first + 1);
-
-                indices.push(second);
-
-                indices.push(first);
+                indices.push( first + 1, second, first );
 
             }
 
@@ -1043,7 +1048,7 @@ export default class Prim {
 
         // Create cube geometry.
 
-        prim.geometry.vertices.data = [
+        let vertices = prim.geometry.vertices.data = [
             // Front face
             -1.0, -1.0,  1.0, // bottomleft
              1.0, -1.0,  1.0, // bottomright
@@ -1076,7 +1081,7 @@ export default class Prim {
             -1.0,  1.0, -1.0
         ];
 
-        prim.geometry.indices.data = [
+        let indices = prim.geometry.indices.data = [
             0, 1, 2,      0, 2, 3,    // Front face
             4, 5, 6,      4, 6, 7,    // Back face
             8, 9, 10,     8, 10, 11,  // Top face
@@ -1085,7 +1090,7 @@ export default class Prim {
             20, 21, 22,   20, 22, 23  // Left face
         ];
 
-        prim.geometry.normals.data = [
+        let normals = prim.geometry.normals.data = [
             // Front face
             0.0,  0.0,  1.0,
             0.0,  0.0,  1.0,
@@ -1118,7 +1123,7 @@ export default class Prim {
             -1.0,  0.0,  0.0,
         ];
 
-        prim.geometry.texCoords.data = [
+        let texCoords = prim.geometry.texCoords.data = [
             // Front face
             0.0, 0.0,
             1.0, 0.0,
@@ -1151,9 +1156,9 @@ export default class Prim {
             0.0, 1.0
         ];
 
-        prim.geometry.tangents.data = [];
+        let tangents = prim.geometry.tangents.data = [];
 
-        prim.geometry.colors.data = [
+        let colors = prim.geometry.colors.data = [
             // Front face
             1.0,  1.0,  1.0,  1.0,    // white
             1.0,  0.0,  0.0,  1.0,    // red
@@ -1560,8 +1565,6 @@ export default class Prim {
 
         }
 
-        //window.verts1 = vertices.slice();
-
         for ( i = 1; i <= resolution; i++) {
 
             progress = i / resolution;
@@ -1784,8 +1787,6 @@ export default class Prim {
 
             }
 
-            //window.verts2 = vertices.slice();
-
             //console.log("VECTOR ARRAY:" + vertices.length)
 
             return v;
@@ -1945,6 +1946,161 @@ export default class Prim {
      */
     geometryDome ( prim ) {
 
+        let longitudeBands = prim.divisions[0] // x axis (really xz)
+
+        let latitudeBands = prim.divisions[1]; // y axis
+
+        let radius = prim.dimensions[0] * 0.5;
+
+        // ADJUST
+
+        let dHeight = prim.dimensions[1];
+
+        // Shortcuts to Prim data arrays
+
+        let vertices = prim.geometry.vertices.data;
+        let indices  = prim.geometry.indices.data;
+        let texCoords = prim.geometry.texCoords.data;
+        let normals = prim.geometry.normals.data;
+        let tangents = prim.geometry.tangents.data;
+        let colors = prim.geometry.colors.data;
+
+        let x, y, z;
+
+        for (let latNumber = 0; latNumber <= latitudeBands / 2; latNumber++) {
+
+            let theta = latNumber * Math.PI / latitudeBands;
+
+            let sinTheta = Math.sin(theta);
+
+            let cosTheta = Math.cos(theta);
+
+            for (let longNumber = 0; longNumber <= longitudeBands; longNumber++) {
+
+                let phi = longNumber * 2 * Math.PI / longitudeBands;
+
+                let sinPhi = Math.sin(phi);
+
+                let cosPhi = Math.cos(phi);
+
+                // Texture coords.
+
+                let u = 1 - (longNumber / longitudeBands);
+
+                let v = 1 - (latNumber / latitudeBands);
+
+                // Compute vertex positions.
+
+                x = cosPhi * sinTheta;
+
+                z = sinPhi * sinTheta;
+
+                if ( prim.type === this.typeList.TOPDOME) {
+
+                    y = cosTheta;
+
+
+                } else if ( prim.type == this.typeList.BOTTOMDOME ) {
+
+                    y = 1 - cosTheta;
+
+                }
+
+                // Push values.
+
+                vertices.push(radius * x, radius * y, radius * z);
+
+                texCoords.push(u, v);
+
+                normals.push(x, y, z);
+
+            }
+
+        }
+
+        // Sphere indices.
+
+        for ( let latNumber = 0; latNumber < latitudeBands / 2; latNumber++ ) {
+
+            for ( let longNumber = 0; longNumber < longitudeBands; longNumber++ ) {
+
+                let first = (latNumber * (longitudeBands + 1)) + longNumber;
+
+                let second = first + longitudeBands + 1;
+
+                // Note: we're running culling in reverse from some tutorials here.
+
+                indices.push(first + 1, second + 1, second);
+
+                indices.push(first + 1, second, first);
+
+            }
+
+        }
+
+        prim.geometry.tangents.data = tangents = this.computeTangents( vertices, indices, normals, texCoords );
+
+        window.geo = prim.geometry;
+
+        // Return the buffer, or add array data to the existing Prim data.
+
+        if( prim.geometry.makeBuffers === true ) {
+
+            //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+            return this.createBuffers( prim.geometry );
+
+        } else {
+
+            return this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+        }
+
+    }
+
+    /** 
+     * Half-sphere, icosohedron based.
+     */
+    geometryIcoDome( prim ) {
+
+    }
+
+    /** 
+     * Cone, with closed bottom and top, can be expanded to 
+     * a closed cylinder. the prim.dimensions[] object describes the 
+     * bounding box; cone bottom and top width need to be separately 
+     * defined. 
+     * Divisions correspond to the number of sides.
+     * @param {Prim} prim the object needing geometry.
+     * @param {Number} bottomRadius the radius of the bottom of the cone.
+     * @param {Number} topRadius the top radius of the cone.
+     */
+    geometryCone ( prim, type, bottomRadius, topRadius ) {
+
+        // GlMatrix.
+
+        let vec3 = this.glMatrix.vec3;
+        let vec2 = this.glMatrix.vec2;
+
+        bottomRadius = 1.0;
+
+        topRadius = 0.5;
+
+        let multiplier = 1.0;
+
+        // scale so Cone fits the bounding box.
+
+        let biggest = Math.max( bottomRadius, topRadius );
+
+        let radRatio = biggest / prim.divisions[1];
+
+        bottomRadius *= radRatio;
+
+        topRadius *= radRatio;
+
+
+        // Params.
+
         let latitudeBands = prim.divisions[1]; // y axis
 
         let longitudeBands = prim.divisions[0] // x axis (really xz)
@@ -2005,7 +2161,6 @@ export default class Prim {
 
                 }
 
-
                 // Push values.
 
                 vertices.push(radius * x, radius * y, radius * z);
@@ -2038,9 +2193,7 @@ export default class Prim {
 
         }
 
-        //tangents = this.computeTangents( vertices, indices, normals, texCoords );
-
-        tangents = [];
+        prim.geometry.tangents.data = this.computeTangents( vertices, indices, normals, texCoords );
 
         // Return the buffer, or add array data to the existing Prim data.
 
@@ -2055,42 +2208,6 @@ export default class Prim {
             return this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
 
         }
-
-    }
-
-    /** 
-     * Half-sphere, icosohedron based.
-     */
-    geometryIcoDome( prim ) {
-
-    }
-
-    /** 
-     * Cone, with closed bottom and top, can be expanded to 
-     * a closed cylinder. the prim.dimensions[] object describes the 
-     * bounding box; cone bottom and top width need to be separately 
-     * defined. 
-     * Divisions correspond to the number of sides.
-     * @param {Prim} prim the object needing geometry.
-     * @param {Number} bottomRadius the radius of the bottom of the cone.
-     * @param {Number} topRadius the top radius of the cone.
-     */
-    geometryCone ( prim, type, bottomRadius, topRadius ) {
-
-        // GlMatrix.
-
-        let vec3 = this.glMatrix.vec3;
-        let vec2 = this.glMatrix.vec2;
-
-        // Params.
-
-        let vertices = prim.geometry.vertices.data;
-        let indices  = prim.geometry.indices.data;
-        let texCoords = prim.geometry.texCoords.data;
-        let normals = prim.geometry.normals.data;
-        let tangents = prim.geometry.tangents.data;
-        let colors = prim.geometry.colors.data;
-
 
 
         // Return the buffer, or add array data to the existing Prim data.

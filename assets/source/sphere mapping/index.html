@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+body { background-color: #EEEEFF; }
+</style>
+</head>
+
+<script id="vertex-shader" type="x-shader/x-vertex">
+
+uniform   mat4  modelViewMatrix;    // model to camera/view/eye space matrix (world space is skipped)
+uniform   mat4  projectionMatrix;   // camera/view/eye to clip space matrix
+uniform   mat3  normalsMatrix;      // a different transformation matrix is used for the normal vectors
+
+attribute vec4  vPosition;          // vertex position (model space)
+attribute vec3  vNormal;            // vertex normal   (model space, cartesian coordinates)
+attribute vec4  vTangent;           // vertex tangent  (calculated as per www.terathon.com/code/tangent.html)
+attribute vec2  vTexCoord;          // texture coordinates - input
+
+varying   vec3  viewPos;            // current position in the view space
+varying   vec2  texCoord;           // texture coordinates - output (to be interpolated)
+//varying   mat3  TBN;                // TBN (tangent to view space transformation) matrix
+                                    // NOTE: the normal vector is stored in the 3rd column i.e. TBN[2]
+varying   vec3  Normal0, Tangent0;
+varying   float handedness;
+                                    
+void main()
+{
+  // transform the vertex position from model to camera/view space
+  vec4 vertexPos4 = modelViewMatrix * vPosition;
+
+  // transform the vertex coordinates from the camera space into clip space 
+  gl_Position = projectionMatrix * vertexPos4;
+  
+  // the texture coordinates
+  texCoord = vTexCoord;
+  
+  // transform the homogeneous view coordinates into cartesian view coordinates
+  // (so that we can compare them with the light positions)
+  viewPos = vertexPos4.xyz / vertexPos4.w;
+  
+  // compute the normalized TBN vectors - using the code from this page:
+  // http://www.gamasutra.com/blogs/RobertBasler/20131122/205462/Three_Normal_Mapping_Techniques_Explained_For_the_Mathematically_Uninclined.php
+//  vec3 n = normalize( normalsMatrix * vNormal );
+//  vec3 t = normalize( normalsMatrix * vTangent.xyz );
+//  vec3 b = normalize( normalsMatrix * ( cross( vNormal, vTangent.xyz ) * vTangent.w ) );
+
+  // the three vectors form the TBN matrix that will help us transform the normals from the normal map
+  // texture to the view space
+//  TBN = mat3( t, b, n );
+
+  Normal0  = normalize( normalsMatrix * vNormal );
+  Tangent0 = normalize( normalsMatrix * vTangent.xyz );
+  handedness = vTangent.w;
+}
+</script>
+
+<script id="fragment-shader" type="x-shader/x-fragment">
+
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+
+const int TEXTURING   = 0;            // if texturing is off, the solid color is used instead
+const int LIGHTING    = 1;            // if lighting is off, the texture/solid color remains unaffected
+const int NORMMAPPING = 2;            // if normal mapping is off, the surface normal is used in lighting calculations
+const int ENVMAPPING  = 3;            // if this is on, the env map texture is sampled and multiplied with the texture color
+const int SPECMAPPING = 4;            // if specular map is on, it is used to choose the fragments on which the specular color
+                                      // and environment mapping is applied
+const int NUM_FLAGS   = 5;
+
+uniform int flags[NUM_FLAGS];         // boolean values for each of the flags
+
+uniform vec3  solidColor;             // solid material color (used if texturing is OFF)
+
+uniform vec3  lightPos0;              // position of the light sources (camera space, cartesian coords.)
+uniform vec3  lightAmb0;              // the ambient light intensities * colors
+uniform vec3  lightDiff0;             // the diffuse light intensities * colors
+uniform vec3  lightSpec0;             // the specular light intensities * colors
+uniform float matShininess;           // the specular exponent (shininess)
+
+uniform sampler2D   Tex0;             // the texture to use
+uniform samplerCube EnvTex;           // the environment map (cube map texture)
+uniform sampler2D   NormMap;          // the normal map texture
+uniform sampler2D   SpecMap;          // the specular map texture
+
+varying   vec3  viewPos;              // current position in the view space
+varying   vec2  texCoord;             // texture coordinates - output (to be interpolated)
+//varying   mat3  TBN;                  // TBN (tangent to view space transformation) matrix
+                                      // NOTE: the normal vector is stored in the 3rd column i.e. TBN[2]
+varying   vec3  Normal0, Tangent0;
+varying   float handedness;
+    
+// adapted from http://ogldev.atspace.co.uk/www/tutorial26/tutorial26.html    
+vec3 CalcBumpedNormal()
+{
+  vec3 Normal = normalize(Normal0), Tangent = normalize(Tangent0);
+  Tangent = normalize(Tangent - dot(Tangent, Normal) * Normal);
+  vec3 Bitangent = cross(Normal, Tangent) * handedness;
+  vec3 BumpMapNormal = texture2D(NormMap, texCoord).xyz * 2.0 - 1.0;
+  vec3 NewNormal = mat3(Tangent, Bitangent, Normal) * BumpMapNormal;
+  return normalize(NewNormal);
+}
+
+void main()
+{
+  // the vector to the viewer/eye is the vector to the origin point in view space
+  // (normalize b/c the linear interpolation doesn't conserve the vector lengths)
+  vec3 V = normalize(-viewPos);
+
+  // if not normal mapping, the normal vector is just the 3rd column of the TBN matrix
+  // otherwise, the perturbed normal as sampled from the normal map texture is used (and
+  // converted from tangent to the view space by multiplying with the TBN matrix)
+  //vec3 N = flags[NORMMAPPING] == 0 ? normalize(TBN[2]) : TBN * normalize( texture2D(NormMap, texCoord).xyz * 2.0 - 1.0 );
+  vec3 N = (flags[NORMMAPPING] == 0) ? normalize(Normal0) : CalcBumpedNormal();
+  
+  // if texturing is on, sample the current texture (otherwise, use the solid color)
+  vec3 texCol = (flags[TEXTURING] != 0) ? texture2D(Tex0, texCoord).rgb : solidColor;
+
+  // by default, all the fragments have a specular component; if a specular map is specified
+  // get this value from the red component of the texture color
+  float specFact = (flags[SPECMAPPING] == 0) ? 1.0 : 1.0-texture2D(SpecMap, texCoord).r;
+
+  // if lighting is enabled
+  if (flags[LIGHTING] != 0)
+  {
+    // determine the normalized vector to the light
+    vec3 L = normalize(lightPos0 - viewPos);
+
+    // the dot product of the normalized light and normal-to-surface vectors equals
+    // the cosine of the angle between them (lambertian diffuse reflection coefficient)
+    float Kd = max(dot(L, N), 0.0);
+
+    // start with a zero specular reflection coefficient
+    float Ks = 0.0;
+
+    // if the lambertian was <0, the angle between the light direction and the normal
+    // to the surface is over 90-degrees (on the other side) so consider neither
+    // a diffuse nor a specular component to the fragment color
+    if (Kd > 0.0)
+    {
+      // how far is the light source from the current point
+      // (compute an attenuation factor that inversely depends on the distance)
+      float dist = distance(lightPos0, viewPos);
+      float fatt = 1.0 / (1.0 + 0.125 * dist); // TODO: determine the dist coeff. in denominator
+
+      // ***** Gaussian *****
+      // taken from here: http://alfonse.bitbucket.org/oldtut/Illumination/Tut11%20Gaussian.html
+      // calculate the "half vector" (as for Blinn-Phong)
+      vec3 H = normalize(V + L);
+      
+      // then the angle (in radians) between half-vector and the surface normal
+      float angHN = acos(max(dot(H, N), 0.0));// angHN in [0,pi/2] (similar to Blinn)
+      
+      // the shininess is in [0,1] range
+      float alpha = 2.0 * angHN / (1.025 - matShininess);
+
+      // compute the specular reflection coefficient as exp(-a^2)
+      Ks = exp(-(alpha * alpha));
+     
+      // adjust the diffuse coefficient with the attenuation factor
+      Kd *= fatt;
+      
+      // and the specular also with the spec factor
+      Ks *= fatt * specFact;
+    }
+
+    // modulate the texture color with the combined lighting factor
+    texCol = /*lightAmb0 +*/ Kd * lightDiff0 * texCol + Ks * lightSpec0;
+  }
+
+  // if no environment mapping
+  if (flags[ENVMAPPING] == 0)
+  {
+    gl_FragColor = vec4(texCol, 1.0);
+  }
+  else
+  {
+    // use the reflected vector from the eye to the current surface point
+    // as the lookup key in the cube texture to get the environment color
+    vec3 envCol = textureCube(EnvTex, reflect(V, N)).rgb;
+    // this is more natural but we're mixing to suit our demos purposes
+    //gl_FragColor = vec4(texCol + envCol * specFact, 1.0);
+    gl_FragColor = vec4(mix(texCol, envCol, specFact), 1.0);
+  }
+  
+  // output the fragment color
+  //gl_FragColor = vec4(mix(envCol, texCol, specFact), 1.0);
+  //gl_FragColor = vec4(texCol * envCol, 1.0);
+  //gl_FragColor = vec4(vec3(specFact), 1.0);
+}
+</script>
+
+<script id="comptex_vs" type="x-shader/x-vertex">
+
+attribute vec2 vPosition;
+varying   vec2 vCoords;
+
+void main()
+{    
+  vCoords = vPosition;
+  gl_Position = vec4(vPosition.x, vPosition.y, 0.0, 1.0);
+}
+
+</script>
+
+<script id="comptex_fs" type="x-shader/x-fragment">
+
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+
+const float PI   = 3.141592653589793;
+const float PI_2 = 1.5707963267948966; // pi/2
+
+varying vec2 vCoords;
+uniform vec4 uParams; // function params (to generate variants for animation)
+uniform bool SCorr;   // sphere correction
+uniform bool mode;
+
+void main()
+{
+  float y = vCoords.y, x = vCoords.x;
+  if (SCorr) x *= cos(y * PI_2);
+  
+  if (mode)
+  {
+    x += uParams.x; y += uParams.y;
+    float r = sqrt(x * x + y * y) * PI * uParams.z;
+    
+    vec3 tmp;
+    
+    tmp.x = cos(r + uParams.w);
+    tmp.y = sin(r - uParams.w);
+    tmp.z = tmp.x * tmp.y + 1.0;
+    vec3 norm = normalize(tmp) * 0.5 + 0.5;
+    
+    gl_FragColor = vec4(norm, 1.0);
+  }
+  else
+  {
+    x += uParams.x; y += uParams.y;
+    float r   = sqrt(x * x + y * y) * PI;
+    float res = sin(r * uParams.z + uParams.w) * 0.5 + 0.5;
+
+    vec4 color = vec4(res, res, res, 1.0);
+
+    // prof. Angel's post-processing :)
+    if (color.g < 0.5) color.g = 2.0 * color.g;
+    else color.g = 2.0 - 2.0 * color.g;
+    color.b = 1.0 - color.b;
+
+    gl_FragColor = color;
+  }
+}
+</script>
+
+<script id="xformtex_vs" type="x-shader/x-vertex">
+
+attribute vec2 vPosition;
+
+void main()
+{    
+  gl_Position = vec4(vPosition.x, vPosition.y, 0.0, 1.0);
+}
+
+</script>
+
+<script id="xformtex_fs" type="x-shader/x-fragment">
+
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+
+uniform sampler2D Tex0;
+uniform vec2      uPel; // set by the CPU code to contain 1/width and 1/height
+
+//const vec3 rgb2int = vec3(0.2989, 0.5870, 0.1140);
+//float intensity( vec4 rgb ) { return dot( rgb.rgb, rgb2int); }
+float intensity( vec4 rgb ) { return rgb.r; }
+
+void main()
+{
+  // current pel position in [0,1] coordinates
+  vec2 xy = gl_FragCoord.xy * uPel;
+
+#if 1
+  const float scFact = 2.0;
+
+  float h00 = intensity( texture2D( Tex0, xy ) );
+  float h10 = intensity( texture2D( Tex0, xy + vec2(uPel.x, 0) ) );
+  float h01 = intensity( texture2D( Tex0, xy + vec2(0, uPel.y) ) );
+  
+  vec3 v10 = vec3(1, 0, scFact * (h10 - h00));
+  vec3 v01 = vec3(0, 1, scFact * (h01 - h00));
+  vec3 norm = normalize(cross(v10, v01)) * 0.5 + 0.5;
+  
+  gl_FragColor = vec4(norm, 1.0);
+//  gl_FragColor = vec4(norm, h00);
+#else
+  gl_FragColor = texture2D( Tex0, xy ); // simple copy
+#endif
+}
+
+</script>
+
+
+<script type="text/javascript" src="http://www.cs.unm.edu/~angel/COURSERA/CODE/Common/webgl-utils.js"></script>
+<script type="text/javascript" src="http://www.cs.unm.edu/~angel/COURSERA/CODE//Common/initShaders.js"></script>
+<script type="text/javascript" src="http://www.cs.unm.edu/~angel/COURSERA/CODE//Common/MV.js"></script>
+<script type="text/javascript" src="sphere_mapping.js"></script>
+
+<body>
+
+<canvas id="gl-canvas" width="800" height="800">
+Oops ... your browser doesn't support the HTML5 canvas element
+</canvas>
+<br><br>
+<div id="demoDesc"></div>
+<br>
+<button id = "NextDemo">NextDemo</button>
+<button id = "ToggleRot" hidden>Toggle auto rotation</button>
+
+</body>
+
+</html>

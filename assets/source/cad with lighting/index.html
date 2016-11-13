@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+body {
+  background-color: #EEEEFF;
+}
+#gl-canvas {
+  float:left;
+  padding:10px;     
+}
+#objType {
+    vertical-align: text-top;
+}
+#sceneObjs {
+    vertical-align: text-top;
+    width: 10em;
+}
+#specType {
+    vertical-align: text-top;
+}
+</style>
+</head>
+
+<script id="vertex-shader" type="x-shader/x-vertex">
+
+uniform   mat4 projectionMatrix; // camera to clip space matrix
+uniform   mat4 modelViewMatrix;  // model to camera space matrix
+uniform   mat3 normalsMatrix;    // a different transformation matrix is used for the normal vectors
+
+attribute vec4 vPosition;        // vertex position (model space)
+attribute vec3 vNormal;          // vertex normal   (model space, cartesian coordinates)
+
+varying   vec3 vertPos;          // vertex position (view space, cartesian coordinates)
+varying   vec3 normVect;         // normal vector   (view space, cartesian coordinates)
+
+void main()
+{
+  // transform the vertex position from model to camera/view space
+  vec4 vertPos4 = modelViewMatrix * vPosition;
+
+  // transform into cartesian coordinates
+  vertPos = vertPos4.xyz / vertPos4.w;
+  
+  // for the normal vector, apply the normals xform matrix
+  normVect = normalsMatrix * vNormal;
+  
+  // transform the vertex coordinates from the camera space into clip space 
+  gl_Position = projectionMatrix * vertPos4;
+}
+</script>
+
+<script id="fragment-shader" type="x-shader/x-fragment">
+
+precision mediump float;
+
+const int N_LIGHTS = 8;
+
+uniform vec3  lightPos    [N_LIGHTS]; // position of the light sources (camera space, cartesian coords.)
+uniform vec3  lightAmb    [N_LIGHTS]; // the ambient light intensities * colors
+uniform vec3  lightDiff   [N_LIGHTS]; // the diffuse light intensities * colors
+uniform vec3  lightSpec   [N_LIGHTS]; // the specular light intensities * colors
+uniform int   lightEnabled[N_LIGHTS]; // true if the corresponding light is enabled/used; false otherwise
+
+uniform vec3  matAmbient;             // ambient reflectance of the current material
+uniform vec3  matDiffuse;             // diffuse reflectance of the current material
+uniform vec3  matSpecular;            // specular reflectance of the current material
+uniform float matShininess;           // the specular exponent (shininess)
+
+uniform int   method;                 // 0 - Phong, 1 - Blinn-Phong, 2 - Gaussian
+
+varying vec3  vertPos;                // interpolated 3D position corresp. to the crt fragment
+varying vec3  normVect;               // interpolated normal vector (perpedicular to the surface)
+
+void main()
+{
+  // the vector to the viewer/eye is the vector to the origin point
+  // in the camera space we're working
+  vec3 V = normalize(-vertPos);
+
+  // normalize the interpolated normal vector
+  vec3 N = normalize(normVect);
+
+  // this will accumulate the contributions of the various light sources
+  // to the color of the current fragment
+  vec3 fColor = vec3(0, 0, 0);
+  
+  // for each of the light sources
+  for (int l = 0; l != N_LIGHTS; ++l)
+  {
+    // if the current light is ON/enabled
+    if (lightEnabled[l] != 0)
+    {
+      // determine the normalized vector to the light
+      vec3 L = normalize(lightPos[l] - vertPos);
+
+      // the dot product of the normalized light and normal-to-surface vectors equals
+      // the cosine of the angle between them (lambertian diffuse reflection coefficient)
+      float Kd = max(dot(L, N), 0.0);
+      
+      // start with a zero specular reflection coefficient
+      float Ks = 0.0;
+
+      // if the lambertian was <0, the angle between the light direction and the normal
+      // to the surface is over 90-degrees (on the other side) so consider neither
+      // a diffuse nor a specular component to the fragment color
+      if (Kd > 0.0)
+      {
+        // how far is the light source from the current point
+        // (compute an attenuation factor that inversely depends on the distance)
+        float dist = distance(lightPos[l], vertPos);
+        float fatt = 1.0;
+        //float fatt = 1.0 / (1.0 + 0.125 * dist); // TODO: determine the dist coeff. in denominator
+        //float fatt = 1.0 / (1.0 + dist * dist * (1.0/16.0));
+        
+        // ***** Phong *****
+        if (method == 0)
+        {
+          // compute the perfect reflector vector
+          vec3 R = reflect(-L, N);
+          
+          // the specular coefficient is computed as the cosine of the angle between R and V
+          // raised at a power derived from the shininess value
+          Ks = pow(max(dot(R, V), 0.0), (matShininess * 256.0 + 1.0));
+        }
+        // ***** Blinn-Phong *****
+        else if (method == 1)
+        {
+          // for the Blinn-Phong shading we need to compute the "half vector" between
+          // the (to the) light and (to) the viewer vectors
+          vec3 H = normalize(V + L);
+
+          // same as for Phong, but use the cosine of the angle between the half vector and
+          // the surface normal (H.N) instead of (R.V); also note that the exponent calculated
+          // from the shininess value is 4X greater for achieving similar results to Phong
+          Ks = pow(max(dot(H, N), 0.0), (matShininess * 1024.0+1.0));
+        }
+        // ***** Gaussian *****
+        // taken from here: http://alfonse.bitbucket.org/oldtut/Illumination/Tut11%20Gaussian.html
+        else
+        {
+          // calculate the "half vector" (as for Blinn-Phong)
+          vec3 H = normalize(V + L);
+          
+          // then the angle (in radians) between half-vector and the surface normal
+          float angHN = acos(max(dot(H, N), 0.0));// angHN in [0,pi/2] (similar to Blinn)
+          //float angHN = acos(dot(H, N));// angHN in [0,pi] (the source webpage used this but is it correct?)
+          
+          // the shininess is in [0,1] range
+          float alpha = 2.0 * angHN / (1.025 - matShininess);
+
+          // compute the specular reflection coefficient as exp(-a^2)
+          Ks = exp(-(alpha * alpha));        
+        }
+
+        // adjust the diffuse and specular coefficient with the attenuation factor
+        Kd *= fatt; Ks *= fatt;
+      }
+     
+      // add the three components corresponding to the current light source to the
+      // final fragment color
+      fColor +=      lightAmb [l] * matAmbient +
+                Kd * lightDiff[l] * matDiffuse +
+                Ks * lightSpec[l] * matSpecular;
+    }
+  }
+  
+  // output the computed fragment color
+  gl_FragColor = vec4(fColor, 1.0);
+}
+</script>
+
+<script type="text/javascript" src="http://www.cs.unm.edu/~angel/COURSERA/CODE/Common/webgl-utils.js"></script>
+<script type="text/javascript" src="http://www.cs.unm.edu/~angel/COURSERA/CODE/Common/initShaders.js"></script>
+<script type="text/javascript" src="http://www.cs.unm.edu/~angel/COURSERA/CODE/Common/MV.js"></script>
+<script type="text/javascript" src="cad_lights.js"></script>
+
+<body>
+
+<canvas id="gl-canvas" width="800" height="800">
+Oops ... your browser doesn't support the HTML5 canvas element
+</canvas>
+
+<div>
+Camera R: <input id="radVal" type="range" min="0" max="100" step="1" value="50"/>  <input id="radDisp" type="text" value="0.0" size="2" disabled>
+Camera &theta;:  <input id="thetaVal" type="range" min="0" max="100" step="1" value="50"/><input id="thetaDisp" type="text" value="0.0" size="2" disabled>
+Camera &phi;:    <input id="phiVal" type="range" min="0" max="100" step="1" value="50"/>  <input id="phiDisp" type="text" value="0.0" size="2" disabled>
+Animate camera:<input id="animate" type="checkbox"/><br>
+Perspective projection:<input id="perspective" type="checkbox" checked/>
+</div>
+
+<hr>
+
+<div>
+New object type:
+<select id="objType" size=5>
+  <option value="0" selected>Cube</option>
+  <option value="1">Cone</option>
+  <option value="2">Cylinder</option>
+  <option value="3">Sphere</option>  
+  <option value="4">Light</option>  
+</select>
+<button id = "newObject">Create new object</button>
+Random attributes for new objects:<input id="randColors" type="checkbox" checked/><br>
+<font color="red">NOTE: You must create at least 1 light object in order to see any lighting effects (otherwise, all the created objects will be rendered as black/zero color).</font> 
+</div>
+
+<hr>
+
+<div>
+Scene objects:
+<select id="sceneObjs" size=12>
+</select>
+<button id = "delObject">Delete selected object</button>
+<button id = "deleteAll">Delete all objects<br>(clear scene)</button>
+Scene color:<input id="sceneColor" type=color pattern="#[a-f0-9]{6}" title="hexadecimal color" placeholder="#000000" value=#808080>
+Specular highlights:
+<select id="specType" size=3>
+  <option value="0" selected>Phong</option>
+  <option value="1">Blinn-Phong</option>
+  <option value="2">Gaussian</option>
+</select>
+</div>
+
+<font color="red">NOTE: The (changeable) settings below apply to the currently selected object in the "Scene objects" drop-down list.</font> 
+
+<hr>
+
+<div id="objLightAttrs" hidden>
+Ambient:  <input id="ambCol" type=color pattern="#[a-f0-9]{6}" title="hexadecimal color" placeholder="#000000" value=#000080>&nbsp;&nbsp;&nbsp;
+Diffuse:  <input id="diffCol" type=color pattern="#[a-f0-9]{6}" title="hexadecimal color" placeholder="#000000" value=#8080F0>&nbsp;&nbsp;&nbsp;
+Specular: <input id="specCol" type=color pattern="#[a-f0-9]{6}" title="hexadecimal color" placeholder="#000000" value=#8080F0>&nbsp;&nbsp;&nbsp;
+Shininess:<input id="shininess" type="range" min="0" max="100" step="1" value="50"/>&nbsp;&nbsp;&nbsp;
+Enabled:  <input id="drawSolid" type="checkbox"/>
+<hr>
+</div>
+
+<div id="objAttrs" hidden>
+
+<div>Scaling:
+X:<input id="sXval" type="range" min="0" max="100" step="1" value="50"/><input id="sXdisp" type="text" value="1.0" size="2" disabled>
+Y:<input id="sYval" type="range" min="0" max="100" step="1" value="50"/><input id="sYdisp" type="text" value="1.0" size="2" disabled>
+Z:<input id="sZval" type="range" min="0" max="100" step="1" value="50"/><input id="sZdisp" type="text" value="1.0" size="2" disabled>
+Isotropic:<input id="isoScaling" type="checkbox" checked/><button id = "resetScale">Reset scale</button>
+</div>
+
+<div>Rotation:
+X:<input id="rXval" type="range" min="0" max="100" step="1" value="50"/><input id="rXdisp" type="text" value="0.0" size="2" disabled>
+Y:<input id="rYval" type="range" min="0" max="100" step="1" value="50"/><input id="rYdisp" type="text" value="0.0" size="2" disabled>
+Z:<input id="rZval" type="range" min="0" max="100" step="1" value="50"/><input id="rZdisp" type="text" value="0.0" size="2" disabled>
+<button id = "resetRotate">Reset rotation</button>
+</div>
+
+<div>Translation:
+X:<input id="tXval" type="range" min="0" max="100" step="1" value="50"/><input id="tXdisp" type="text" value="0.0" size="2" disabled>
+Y:<input id="tYval" type="range" min="0" max="100" step="1" value="50"/><input id="tYdisp" type="text" value="0.0" size="2" disabled>
+Z:<input id="tZval" type="range" min="0" max="100" step="1" value="50"/><input id="tZdisp" type="text" value="0.0" size="2" disabled>
+<button id = "resetTranslate">Reset translation</button>
+</div>
+<hr>
+</div>
+
+<div id="lightAttrs" hidden>
+Light R:      <input id="lightRad"     type="range" min="0" max="100" step="1" value="50"/><input id="lightRadDisp" type="text" value="0.0" size="2" disabled>
+Light &theta;:<input id="lightTheta"   type="range" min="0" max="100" step="1" value="50"/><input id="lightThetaDisp" type="text" value="0.0" size="2" disabled>
+Light &phi;:  <input id="lightPhi"     type="range" min="0" max="100" step="1" value="50"/><input id="lightPhiDisp" type="text" value="0.0" size="2" disabled>
+Animate light:<input id="lightAnimate" type="checkbox"/>
+<hr>
+</div>
+
+</body>
+
+</html>
