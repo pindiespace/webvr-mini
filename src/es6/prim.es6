@@ -58,9 +58,9 @@ export default class Prim {
 
             DOME: 'geometryDome',
 
-            TOPDOME: 'geometryDome',
+            TOPDOME: 'geometryTopDome',
 
-            BOTTOMDOME: 'geometryDome',
+            BOTTOMDOME: 'geometryBottomDome',
 
             TOPICODOME: 'geometryTopIcoDome',
 
@@ -257,10 +257,15 @@ export default class Prim {
         let concat = this.util.concatArr;
 
         concat( bufferObj.vertices.data, vertices );
+
         concat( bufferObj.indices.data, indices );
+
         concat( bufferObj.texCoords.data, texCoords );
+
         concat( bufferObj.normals.data, normals );
+
         concat( bufferObj.tangents.data, tangents );
+
         concat( bufferObj.colors.data, colors );
 
     }
@@ -290,6 +295,7 @@ export default class Prim {
                 console.log( 'no vertices present, creating default' );
 
                 o.data = new Float32Array( [ 0, 0, 0 ] );
+
             }
 
             o.buffer = gl.createBuffer();
@@ -457,7 +463,7 @@ export default class Prim {
      */
 
     /** 
-     * Simulate Vector3.down, etc. defaults (in many Unity scripts).
+     * Simulate Vector3.down, etc. defaults (in many Unity C# scripts).
      * @link https://docs.unity3d.com/ScriptReference/Vector3.html
     */
     getStdVec3 ( type ) {
@@ -822,6 +828,43 @@ export default class Prim {
      */
     geometryPoint ( prim ) {
 
+       let geo = prim.geometry;
+
+        // Shortcuts to Prim data arrays
+
+        let vertices = geo.vertices.data,
+        indices  = geo.indices.data,
+        texCoords = geo.texCoords.data,
+        normals = geo.normals.data,
+        tangents = geo.tangents.data,
+        colors = geo.colors.data;
+
+        // Vertices.
+
+
+        // Normals.
+
+        this.computeNormals( vertices, indices, normals );
+
+        // Tangents.
+
+        this.computeTangents( vertices, indices, normals, texCoords );
+
+        // Return the buffer, or add array data to the existing Prim data.
+
+        if( prim.geometry.makeBuffers === true ) {
+
+            //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+            return this.createBuffers( prim.geometry );
+
+        } else {
+
+            return this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+        }
+
+
     }
 
     /** 
@@ -830,14 +873,27 @@ export default class Prim {
      */
     geometryPointCloud ( prim ) {
 
-        let vertices = prim.geometry.vertices.data;
-        let indices  = prim.geometry.indices.data;
-        let texCoords = prim.geometry.texCoords.data;
-        let normals = prim.geometry.normals.data;
-        let tangents = prim.geometry.tangents.data;
-        let colors = prim.geometry.colors.data;
+       let geo = prim.geometry;
+
+        // Shortcuts to Prim data arrays
+
+        let vertices = geo.vertices.data,
+        indices  = geo.indices.data,
+        texCoords = geo.texCoords.data,
+        normals = geo.normals.data,
+        tangents = geo.tangents.data,
+        colors = geo.colors.data;
+
+        // Vertices.
 
 
+        // Normals.
+
+        this.computeNormals( vertices, indices, normals );
+
+        // Tangents.
+
+        this.computeTangents( vertices, indices, normals, texCoords );
 
         // Return the buffer, or add array data to the existing Prim data.
 
@@ -866,14 +922,27 @@ export default class Prim {
      */
     geometryParticleSystem () {
 
-        let vertices = prim.geometry.vertices.data;
-        let indices  = prim.geometry.indices.data;
-        let texCoords = prim.geometry.texCoords.data;
-        let normals = prim.geometry.normals.data;
-        let tangents = prim.geometry.tangents.data;
-        let colors = prim.geometry.colors.data;
+       let geo = prim.geometry;
+
+        // Shortcuts to Prim data arrays
+
+        let vertices = geo.vertices.data,
+        indices  = geo.indices.data,
+        texCoords = geo.texCoords.data,
+        normals = geo.normals.data,
+        tangents = geo.tangents.data,
+        colors = geo.colors.data;
+
+        // Vertices.
 
 
+        // Normals.
+
+        this.computeNormals( vertices, indices, normals );
+
+        // Tangents.
+
+        this.computeTangents( vertices, indices, normals, texCoords );
 
         // Return the buffer, or add array data to the existing Prim data.
 
@@ -896,13 +965,16 @@ export default class Prim {
      */
     geometryLine ( prim ) {
 
-        let vertices = prim.geometry.vertices.data;
-        let indices  = prim.geometry.indices.data;
-        let texCoords = prim.geometry.texCoords.data;
-        let normals = prim.geometry.normals.data;
-        let tangents = prim.geometry.tangents.data;
-        let colors = prim.geometry.colors.data;
+        let geo = prim.geometry;
 
+        let vertices = geo.vertices.data,
+        indices  = geo.indices.data,
+        texCoords = geo.texCoords.data,
+        normals = geo.normals.data,
+        tangents = geo.tangents.data,
+        colors = geo.colors.data;
+
+        // Vertices.
 
 
         // Return the buffer, or add array data to the existing Prim data.
@@ -928,34 +1000,38 @@ export default class Prim {
 
         let vec3 = this.glMatrix.vec3;
 
+        let geo = prim.geometry;
+
         // Shortcuts to Prim data arrays
 
-        let vertices = prim.geometry.vertices.data;
-        let indices  = prim.geometry.indices.data;
-        let texCoords = prim.geometry.texCoords.data;
-        let normals = prim.geometry.normals.data;
-        let tangents = prim.geometry.tangents.data;
-        let colors = prim.geometry.colors.data;
+        let vertices = geo.vertices.data,
+        indices  = geo.indices.data,
+        texCoords = geo.texCoords.data,
+        normals = geo.normals.data,
+        tangents = geo.tangents.data,
+        colors = geo.colors.data;
 
-        let cols = prim.divisions[0] // x axis (really xz)
-        let rows = prim.divisions[2]; // y axis
+        let cols = prim.divisions[ 0 ] // x axis (really xz)
+        let rows = prim.divisions[ 2 ]; // y axis
 
-        let halfX = prim.dimensions[0] / 2;
-        let halfZ = prim.dimensions[2] / 2;
+        let halfX = prim.dimensions[ 0 ] / 2;
+        let halfZ = prim.dimensions[ 2 ] / 2;
 
-        let incX = prim.dimensions[0] / prim.divisions[0];
+        let incX = prim.dimensions[ 0 ] / prim.divisions[ 0 ];
         let incY = 1.0;
-        let incZ = prim.dimensions[2] / prim.divisions[2];
+        let incZ = prim.dimensions[ 2 ] / prim.divisions[ 2 ];
 
-        for (let colNumber = 0; colNumber <= cols; colNumber++) {
+        for ( let colNumber = 0; colNumber <= cols; colNumber++ ) {
 
-            for (let rowNumber = 0; rowNumber <= rows; rowNumber++) {
+            for ( let rowNumber = 0; rowNumber <= rows; rowNumber++ ) {
 
                 // Vertex values.
 
                 let x = colNumber;
 
                 let y = 0;
+
+                // Get interpolated pixel height from heightmap.
 
                 if ( prim.heightMap ) {
 
@@ -970,6 +1046,8 @@ export default class Prim {
                 let u = (colNumber / cols);
 
                 let v = 1 - (rowNumber / rows);
+
+                // Add to arrays.
 
                 vertices.push( ( incX * x ) - halfX, ( incY * y), ( incZ * z ) - halfZ );
 
@@ -1001,7 +1079,13 @@ export default class Prim {
 
         }
 
+        // Normals.
+
         this.computeNormals( vertices, indices, normals );
+
+        // Tangents.
+
+        this.computeTangents( vertices, indices, normals, texCoords );
 
         // Return the buffer, or add array data to the existing Prim data.
 
@@ -1025,6 +1109,42 @@ export default class Prim {
      * Polygon (flat), square to circular.
      */
     geometryPoly ( prim ) {
+
+       let geo = prim.geometry;
+
+        // Shortcuts to Prim data arrays
+
+        let vertices = geo.vertices.data,
+        indices  = geo.indices.data,
+        texCoords = geo.texCoords.data,
+        normals = geo.normals.data,
+        tangents = geo.tangents.data,
+        colors = geo.colors.data;
+
+        // Vertices.
+
+
+        // Normals.
+
+        this.computeNormals( vertices, indices, normals );
+
+        // Tangents.
+
+        this.computeTangents( vertices, indices, normals, texCoords );
+
+        // Return the buffer, or add array data to the existing Prim data.
+
+        if( prim.geometry.makeBuffers === true ) {
+
+            //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+            return this.createBuffers( prim.geometry );
+
+        } else {
+
+            return this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+        }
 
     }
 
@@ -1209,32 +1329,51 @@ export default class Prim {
 
     }
 
+
     /** 
-     * Sphere with polar points.
-     * http://learningwebgl.com/blog/?p=1253
-     * @param {Prim} prim the prim needing geometry.
-     * @param {Boolean} sphere if true, make a sphere, otherwise a cylinder.
+     * Half-sphere, polar coordinates.
+     * @param {Prim} prim the object needing geometry.
      */
-    geometrySphere ( prim, sphere = true ) {
+    geometryDome ( prim ) {
 
-       // TODO: ACTIVATE RADIUS X, Y, Z for distorted spheres.
+        let longitudeBands = prim.divisions[ 0 ] // x axis (really xz)
 
-        let vertices = prim.geometry.vertices.data;
-        let indices  = prim.geometry.indices.data;
-        let texCoords = prim.geometry.texCoords.data;
-        let normals = prim.geometry.normals.data;
-        let tangents = prim.geometry.tangents.data;
-        let colors = prim.geometry.colors.data;
+        let latitudeBands = prim.divisions[ 1 ]; // y axis
 
-        let latitudeBands = prim.divisions[1]; // y axis
+        let radius = prim.dimensions[ 0 ] * 0.5;
 
-        let longitudeBands = prim.divisions[0] // x axis (really xz)
+        let latDist = 0;
 
-        let radius = prim.dimensions[0] * 0.5;
+        // ADJUST
 
-        let x, y, z;
+        let dHeight = prim.dimensions[1];
 
-        for (let latNumber = 0; latNumber <= latitudeBands; latNumber++) {
+        let geo = prim.geometry;
+
+        // Shortcuts to Prim data arrays.
+
+        let vertices = geo.vertices.data,
+        indices  = geo.indices.data,
+        texCoords = geo.texCoords.data,
+        normals = geo.normals.data,
+        tangents = geo.tangents.data,
+        colors = geo.colors.data;
+
+        // Sphere vs. dome
+
+        if ( prim.type === this.typeList.SPHERE ) {
+
+            latDist = latitudeBands;
+
+        } else {
+
+            latDist = latitudeBands / 2;
+
+        }
+
+        let x, y, z, u, v;
+
+        for (let latNumber = 0; latNumber <= latDist; latNumber++) {
 
             let theta = latNumber * Math.PI / latitudeBands;
 
@@ -1246,53 +1385,49 @@ export default class Prim {
 
                 let phi = longNumber * 2 * Math.PI / longitudeBands;
 
-                let sinPhi = Math.sin(phi);
+                let sinPhi = Math.sin( phi );
 
-                let cosPhi = Math.cos(phi);
+                let cosPhi = Math.cos( phi );
 
                 // Compute vertex positions.
 
-                y = cosTheta;
-
-                if ( sphere === true) {
+                if ( prim.type === this.typeList.SPHERE || prim.type === this.typeList.TOPDOME ) {
 
                     x = cosPhi * sinTheta;
 
                     z = sinPhi * sinTheta;
 
-                } else {
+                    y = cosTheta;
 
-                    z = sinPhi; /////////////////// makes a helix if cosPhi not used
+                    // Texture coords.
 
-                    x = cosPhi; ////////////////////
+                    u = 1 - (longNumber / longitudeBands);
+
+                    v = 1 - (latNumber / latitudeBands);
+
+                } else if ( prim.type === this.typeList.BOTTOMDOME ) {
+
+                    x = (cosPhi * sinTheta);
+
+                    z = (sinPhi * sinTheta);
+
+                    y = 1 - cosTheta;
+
+                    // Texture coords.
+
+                    u = (longNumber / longitudeBands);
+
+                    v = (latNumber / latitudeBands);
 
                 }
 
-                // Texture coords.
-
-                let u = 1 - (longNumber / longitudeBands);
-
-                let v = 1 - (latNumber / latitudeBands);
-
                 // Push values.
 
-                vertices.push(radius * x);
+                vertices.push(radius * x, radius * y, radius * z);
 
-                vertices.push(radius * y);
+                texCoords.push(u, v);
 
-                vertices.push(radius * z);
-
-                texCoords.push(u);
-
-                texCoords.push(v);
-
-                // Normals = normalized vertices for a Sphere.
-
-                normals.push(x);
-
-                normals.push(y);
-
-                normals.push(z);
+                normals.push(x, y, z);
 
             }
 
@@ -1300,9 +1435,9 @@ export default class Prim {
 
         // Sphere indices.
 
-        for (let latNumber = 0; latNumber < latitudeBands; latNumber++) {
+        for ( let latNumber = 0; latNumber < latDist; latNumber++ ) {
 
-            for (let longNumber = 0; longNumber < longitudeBands; longNumber++) {
+            for ( let longNumber = 0; longNumber < longitudeBands; longNumber++ ) {
 
                 let first = (latNumber * (longitudeBands + 1)) + longNumber;
 
@@ -1310,21 +1445,15 @@ export default class Prim {
 
                 // Note: we're running culling in reverse from some tutorials here.
 
-                indices.push(first + 1);
+                indices.push(first + 1, second + 1, second);
 
-                indices.push(second + 1);
-
-                indices.push(second);
-
-                indices.push(first + 1);
-
-                indices.push(second);
-
-                indices.push(first);
+                indices.push(first + 1, second, first);
 
             }
 
         }
+
+        geo.tangents.data = tangents = this.computeTangents( vertices, indices, normals, texCoords );
 
         // Return the buffer, or add array data to the existing Prim data.
 
@@ -1340,7 +1469,35 @@ export default class Prim {
 
         }
 
-        //return this.createBuffers ( this.createBufferObj(), vertices, indices, texCoords, normals, colors );
+    }
+
+    /** 
+     * Just create the top dome.
+     */
+    geometryTopDome ( prim ) {
+
+        return this.geometryDome( prim );
+
+    }
+
+    /** 
+     * Just create the bottom dome.
+     */
+    geometryBottomDome ( prim ) {
+
+        return this.geometryDome( prim );
+
+    }
+
+    /** 
+     * Sphere with polar points.
+     * http://learningwebgl.com/blog/?p=1253
+     * @param {Prim} prim the prim needing geometry.
+     * @param {Boolean} sphere if true, make a sphere, otherwise a cylinder.
+     */
+    geometrySphere ( prim ) {
+
+        return this.geometryDome( prim );
 
     }
 
@@ -1356,12 +1513,16 @@ export default class Prim {
 
         let flatten = this.util.flatten;
 
-        let vertices = prim.geometry.vertices.data;
-        let indices  = prim.geometry.indices.data;
-        let texCoords = prim.geometry.texCoords.data;
-        let normals = prim.geometry.normals.data;
-        let tangents = prim.geometry.tangents.data;
-        let colors = prim.geometry.colors.data;
+       let geo = prim.geometry;
+
+        // Shortcuts to Prim data arrays
+
+        let vertices = geo.vertices.data,
+        indices  = geo.indices.data,
+        texCoords = geo.texCoords.data,
+        normals = geo.normals.data,
+        tangents = geo.tangents.data,
+        colors = geo.colors.data;
 
         let sx = prim.dimensions[0];
         let sy = prim.dimensions[1];
@@ -1527,6 +1688,8 @@ export default class Prim {
 
         let flatten = this.util.flatten;
 
+
+
         let subdivisions = prim.divisions[0];
 
         let radius = prim.dimensions[0] * 0.5;
@@ -1548,12 +1711,14 @@ export default class Prim {
 
         // Allocate memory
 
-        let vertices = prim.geometry.vertices.data = new Array ( (resolution + 1) * (resolution + 1) * 4 - (resolution * 2 - 1) * 3 );
-        let indices  = prim.geometry.indices.data = new Array( (1 << (subdivisions * 2 + 3)) * 3 );;
-        let texCoords = prim.geometry.texCoords.data = new Array( vertices.length );
-        let normals = prim.geometry.normals.data = new Array( vertices.length );
-        let tangents = prim.geometry.tangents.data = new Array( vertices.length );
-        let colors = prim.geometry.colors.data = new Array( vertices.length * 4 );
+        let geo = prim.geometry;
+
+        let vertices = geo.vertices.data = new Array ( (resolution + 1) * (resolution + 1) * 4 - (resolution * 2 - 1) * 3 ),
+        indices  = geo.indices.data = new Array( (1 << (subdivisions * 2 + 3)) * 3 ),
+        texCoords = geo.texCoords.data = new Array( vertices.length ),
+        normals = geo.normals.data = new Array( vertices.length ),
+        tangents = geo.tangents.data = new Array( vertices.length ),
+        colors = geo.colors.data = new Array( vertices.length * 4 );
 
         // initialize lots of default variables.
 
@@ -1631,7 +1796,7 @@ export default class Prim {
 
         }
 
-        // Create our Normals.
+        // Create our Normals, and set sphere to unit size.
 
         for (i = 0; i < vertices.length; i++ ) {
 
@@ -1647,7 +1812,7 @@ export default class Prim {
 
         }
 
-        // Scale
+        // Scale the icosphere.
 
         if (radius != 1) {
             for (i = 0; i < vertices.Length; i++) {
@@ -1667,10 +1832,10 @@ export default class Prim {
 
         // Flatten the data arrays.
 
-        prim.geometry.vertices.data = flatten(vertices, false );
-        prim.geometry.texCoords.data = flatten(texCoords, false );
-        prim.geometry.normals.data = flatten(normals, false )
-        prim.geometry.tangents.data = flatten(tangents, false )
+        geo.vertices.data = flatten(vertices, false );
+        geo.texCoords.data = flatten(texCoords, false );
+        geo.normals.data = flatten(normals, false )
+        geo.tangents.data = flatten(tangents, false )
 
         // Helper functions.
 
@@ -1727,7 +1892,6 @@ export default class Prim {
 
         }
 
-////////////////////
         function createTangents (vertices, tangents) {
 
             for (i = 0; i < vertices.Length; i++) {
@@ -1773,9 +1937,6 @@ export default class Prim {
 
             }
         }
-
-        //vertices = flatten( vertices );
-
 
         function createVertexLine ( from, to, steps, v, vertices ) {
 
@@ -1849,9 +2010,6 @@ export default class Prim {
             return this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
 
         }
-
-
-        //return this.createBuffers ( this.createBufferObj(), vertices, indices, texCoords, normals, tangents, colors );
 
     }
 
@@ -1941,124 +2099,6 @@ export default class Prim {
     }
 
     /** 
-     * Half-sphere, polar coordinates.
-     * @param {Prim} prim the object needing geometry.
-     */
-    geometryDome ( prim ) {
-
-        let longitudeBands = prim.divisions[0] // x axis (really xz)
-
-        let latitudeBands = prim.divisions[1]; // y axis
-
-        let radius = prim.dimensions[0] * 0.5;
-
-        // ADJUST
-
-        let dHeight = prim.dimensions[1];
-
-        // Shortcuts to Prim data arrays
-
-        let vertices = prim.geometry.vertices.data;
-        let indices  = prim.geometry.indices.data;
-        let texCoords = prim.geometry.texCoords.data;
-        let normals = prim.geometry.normals.data;
-        let tangents = prim.geometry.tangents.data;
-        let colors = prim.geometry.colors.data;
-
-        let x, y, z;
-
-        for (let latNumber = 0; latNumber <= latitudeBands / 2; latNumber++) {
-
-            let theta = latNumber * Math.PI / latitudeBands;
-
-            let sinTheta = Math.sin(theta);
-
-            let cosTheta = Math.cos(theta);
-
-            for (let longNumber = 0; longNumber <= longitudeBands; longNumber++) {
-
-                let phi = longNumber * 2 * Math.PI / longitudeBands;
-
-                let sinPhi = Math.sin(phi);
-
-                let cosPhi = Math.cos(phi);
-
-                // Texture coords.
-
-                let u = 1 - (longNumber / longitudeBands);
-
-                let v = 1 - (latNumber / latitudeBands);
-
-                // Compute vertex positions.
-
-                x = cosPhi * sinTheta;
-
-                z = sinPhi * sinTheta;
-
-                if ( prim.type === this.typeList.TOPDOME) {
-
-                    y = cosTheta;
-
-
-                } else if ( prim.type == this.typeList.BOTTOMDOME ) {
-
-                    y = 1 - cosTheta;
-
-                }
-
-                // Push values.
-
-                vertices.push(radius * x, radius * y, radius * z);
-
-                texCoords.push(u, v);
-
-                normals.push(x, y, z);
-
-            }
-
-        }
-
-        // Sphere indices.
-
-        for ( let latNumber = 0; latNumber < latitudeBands / 2; latNumber++ ) {
-
-            for ( let longNumber = 0; longNumber < longitudeBands; longNumber++ ) {
-
-                let first = (latNumber * (longitudeBands + 1)) + longNumber;
-
-                let second = first + longitudeBands + 1;
-
-                // Note: we're running culling in reverse from some tutorials here.
-
-                indices.push(first + 1, second + 1, second);
-
-                indices.push(first + 1, second, first);
-
-            }
-
-        }
-
-        prim.geometry.tangents.data = tangents = this.computeTangents( vertices, indices, normals, texCoords );
-
-        window.geo = prim.geometry;
-
-        // Return the buffer, or add array data to the existing Prim data.
-
-        if( prim.geometry.makeBuffers === true ) {
-
-            //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
-
-            return this.createBuffers( prim.geometry );
-
-        } else {
-
-            return this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
-
-        }
-
-    }
-
-    /** 
      * Half-sphere, icosohedron based.
      */
     geometryIcoDome( prim ) {
@@ -2113,12 +2153,16 @@ export default class Prim {
 
         // Shortcuts to Prim data arrays
 
-        let vertices = prim.geometry.vertices.data;
-        let indices  = prim.geometry.indices.data;
-        let texCoords = prim.geometry.texCoords.data;
-        let normals = prim.geometry.normals.data;
-        let tangents = prim.geometry.tangents.data;
-        let colors = prim.geometry.colors.data;
+        let geo = prim.geometry;
+
+        // Shortcuts to Prim arrays.
+
+        let vertices = geo.vertices.data,
+        indices  = geo.indices.data,
+        texCoords = geo.texCoords.data,
+        normals = geo.normals.data,
+        tangents = geo.tangents.data,
+        colors = geo.colors.data;
 
         let x, y, z;
 
@@ -2232,6 +2276,42 @@ export default class Prim {
      * https://github.com/jagenjo/litegl.js/blob/master/src/mesh.js
      */
     geometryMesh ( prim ) {
+
+       let geo = prim.geometry;
+
+        // Shortcuts to Prim data arrays
+
+        let vertices = geo.vertices.data,
+        indices  = geo.indices.data,
+        texCoords = geo.texCoords.data,
+        normals = geo.normals.data,
+        tangents = geo.tangents.data,
+        colors = geo.colors.data;
+
+        // Vertices.
+
+
+        // Normals.
+
+        this.computeNormals( vertices, indices, normals );
+
+        // Tangents.
+
+        this.computeTangents( vertices, indices, normals, texCoords );
+
+        // Return the buffer, or add array data to the existing Prim data.
+
+        if( prim.geometry.makeBuffers === true ) {
+
+            //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+            return this.createBuffers( prim.geometry );
+
+        } else {
+
+            return this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+        }
 
     }
 
@@ -2385,7 +2465,9 @@ export default class Prim {
 
         prim.type = type;
 
-        prim.geometry = this.createBufferObj(); ////////////////////////
+        prim.geometry = this.createBufferObj();
+
+        // NOTE: mis-spelling type leads to error here...
 
         prim.geometry = this[ type ]( prim );
 
