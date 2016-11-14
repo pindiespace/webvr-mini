@@ -499,7 +499,6 @@
 
 	    /** 
 	     * Utility functions.
-	     * Mersene Twister from:
 	     */
 
 	    function Util() {
@@ -507,13 +506,47 @@
 
 	        console.log('in Util');
 
-	        // Mersene Twister parameters
+	        // Performance polyfill.
+
+	        this.setPerformance();
 	    }
 
-	    // Confirm we have a string (after lodash)
+	    /** 
+	     * Performance polyfill for timing.
+	     */
 
 
 	    _createClass(Util, [{
+	        key: 'setPerformance',
+	        value: function setPerformance() {
+
+	            if ('performance' in window == false) {
+
+	                window.performance = {};
+	            }
+
+	            Date.now = Date.now || function () {
+	                // can't use () => here!
+
+	                return new Date().getTime();
+	            };
+
+	            if ("now" in window.performance == false) {
+
+	                var nowOffset = Date.now();
+
+	                if (performance.timing && performance.timing.navigationStart) {
+
+	                    nowOffset = performance.timing.navigationStart;
+	                }
+
+	                window.performance.now = function () {
+
+	                    return Date.now() - nowOffset;
+	                };
+	            }
+	        }
+	    }, {
 	        key: 'isString',
 	        value: function isString(str) {
 
@@ -4690,15 +4723,17 @@
 	                tangents = geo.tangents.data,
 	                colors = geo.colors.data;
 
-	            var cols = prim.divisions[0]; // x axis (really xz)
-	            var rows = prim.divisions[2]; // y axis
+	            var cols = prim.divisions[0],
+	                // x axis (really xz)
+	            rows = prim.divisions[2]; // z axis
 
-	            var halfX = prim.dimensions[0] / 2;
-	            var halfZ = prim.dimensions[2] / 2;
+	            var halfX = prim.dimensions[0] / 2,
+	                // x axis
+	            halfZ = prim.dimensions[2] / 2; // z axis
 
-	            var incX = prim.dimensions[0] / prim.divisions[0];
-	            var incY = 1.0;
-	            var incZ = prim.dimensions[2] / prim.divisions[2];
+	            var incX = prim.dimensions[0] / prim.divisions[0],
+	                incY = 1.0,
+	                incZ = prim.dimensions[2] / prim.divisions[2];
 
 	            for (var colNumber = 0; colNumber <= cols; colNumber++) {
 
@@ -4954,17 +4989,7 @@
 	        key: 'geometryDome',
 	        value: function geometryDome(prim) {
 
-	            var longitudeBands = prim.divisions[0]; // x axis (really xz)
-
-	            var latitudeBands = prim.divisions[1]; // y axis
-
-	            var radius = prim.dimensions[0] * 0.5;
-
-	            var latDist = 0;
-
-	            // ADJUST
-
-	            var dHeight = prim.dimensions[1];
+	            var list = this.typeList;
 
 	            var geo = prim.geometry;
 
@@ -4977,14 +5002,40 @@
 	                tangents = geo.tangents.data,
 	                colors = geo.colors.data;
 
-	            // Sphere vs. dome
+	            var longitudeBands = prim.divisions[0]; // x axis (really xz)
 
-	            if (prim.type === this.typeList.SPHERE) {
+	            var latitudeBands = prim.divisions[1]; // y axis
+
+	            var radius = prim.dimensions[0] * 0.5;
+
+	            var latDist = 0;
+
+	            // Sphere vs. Dome
+
+	            if (prim.type === this.typeList.SPHERE || prim.type === this.typeList.CYLINDER) {
 
 	                latDist = latitudeBands;
 	            } else {
 
 	                latDist = latitudeBands / 2;
+	            }
+
+	            // Set some parameters based on type.
+
+	            switch (prim.type) {
+
+	                case list.SPHERE:
+	                case list.CYLINDER:
+	                    break;
+	                case list.DOME:
+	                case list.TOPDOME:
+	                case list.BOTTOMDOME:
+	                    break;
+	                case list.CONE:
+	                    break;
+	                default:
+	                    break;
+
 	            }
 
 	            var x = void 0,
@@ -5011,7 +5062,18 @@
 
 	                    // Compute vertex positions.
 
-	                    if (prim.type === this.typeList.SPHERE || prim.type === this.typeList.TOPDOME) {
+	                    if (prim.type === this.typeList.CYLINDER) {
+
+	                        x = cosPhi;
+
+	                        z = sinPhi;
+
+	                        y = cosTheta;
+
+	                        u = 1 - longNumber / longitudeBands;
+
+	                        v = 1 - latNumber / latitudeBands;
+	                    } else if (prim.type === this.typeList.SPHERE || prim.type === this.typeList.TOPDOME || prim.type === this.typeList.DOME) {
 
 	                        x = cosPhi * sinTheta;
 
@@ -5037,6 +5099,17 @@
 	                        u = longNumber / longitudeBands;
 
 	                        v = latNumber / latitudeBands;
+	                    } else if (prim.type === this.typeList.CONE) {
+
+	                        x = cosPhi;
+
+	                        z = sinPhi;
+
+	                        y = cosTheta;
+
+	                        u = 1 - longNumber / longitudeBands;
+
+	                        v = 1 - latNumber / latitudeBands;
 	                    }
 
 	                    // Push values.
@@ -5119,6 +5192,28 @@
 	        }
 
 	        /** 
+	         * Cylinder with open ends.
+	         */
+
+	    }, {
+	        key: 'geometryCylinder',
+	        value: function geometryCylinder(prim) {
+
+	            return this.geometryDome(prim);
+	        }
+
+	        /** 
+	         * Cone with beginning and ending radius, open ends.
+	         */
+
+	    }, {
+	        key: 'geometryCone',
+	        value: function geometryCone(prim) {
+
+	            return this.geometryDome(prim);
+	        }
+
+	        /** 
 	         * Create a spherical object from a cube mesh. Useful for cubemaps. If rounding 
 	         * is zero, it is a cube.
 	         * TODO: move vertices to better coverage
@@ -5166,7 +5261,6 @@
 	            makeSide(0, 2, 1, sx, sz, nx, nz, sy / 2, 1, 1); //top
 	            makeSide(0, 2, 1, sx, sz, nx, nz, -sy / 2, 1, -1); //bottom
 
-
 	            function makeSide(u, v, w, su, sv, nu, nv, pw, flipu, flipv) {
 
 	                var vertShift = vertexIndex;
@@ -5176,8 +5270,11 @@
 	                    for (var i = 0; i <= nu; i++) {
 
 	                        var vert = positions[vertexIndex] = [0, 0, 0];
+
 	                        vert[u] = (-su / 2 + i * su / nu) * flipu;
+
 	                        vert[v] = (-sv / 2 + j * sv / nv) * flipv;
+
 	                        vert[w] = pw;
 
 	                        // Normals.
@@ -5242,6 +5339,7 @@
 	                }
 
 	                normal = [pos[0], pos[1], pos[2]];
+
 	                vec3.sub(normal, normal, inner);
 	                vec3.normalize(normal, normal);
 
@@ -5249,6 +5347,7 @@
 
 	                pos = [inner[0], inner[1], inner[2]]; //Vec3.set(pos, inner);
 	                tmp = [normal[0], normal[1], normal[2]]; //Vec3.set(tmp, normal);
+
 	                vec3.scale(tmp, tmp, radius);
 	                vec3.add(pos, pos, tmp);
 
@@ -5294,6 +5393,8 @@
 	            var vec2 = this.glMatrix.vec2;
 
 	            var flatten = this.util.flatten;
+
+	            // Size and divisions.
 
 	            var subdivisions = prim.divisions[0];
 
@@ -5406,7 +5507,7 @@
 
 	                // Toggle icosphere with icosohedron.
 
-	                if (sphere === true) {
+	                if (prim.type === this.typeList.ICOSPHERE) {
 
 	                    vertices[i] = vec3.normalize([0, 0, 0], vertices[i]);
 	                }
@@ -5476,12 +5577,19 @@
 	                }
 
 	                uv[vertices.length - 4][0] = 0.125;
+
 	                uv[0][0] = 0.125; // was v.x
+
 	                uv[vertices.length - 3][0] = 0.375;
+
 	                uv[1][0] = 0.375; // was v.x
+
 	                uv[vertices.length - 2][0] = 0.625;
+
 	                uv[2][0] = 0.625; // was v.x
+
 	                uv[vertices.length - 1][0] = 0.875;
+
 	                uv[3][0] = 0.875; // was v.x
 
 	                // Our engine wraps opposite, so reverse first coordinate (can't do it until we do all coordinates).
@@ -5603,18 +5711,7 @@
 	        }
 
 	        /** 
-	         * Open tube, created from sphere, open at both ends.
-	         */
-
-	    }, {
-	        key: 'geometryTube',
-	        value: function geometryTube(prim) {
-
-	            return this.createSphere(prim, false);
-	        }
-
-	        /** 
-	         * Closed cylinder, may be
+	         * Closed cylinder with one texture.
 	         */
 
 	    }, {
@@ -5698,162 +5795,6 @@
 	    }, {
 	        key: 'geometryIcoDome',
 	        value: function geometryIcoDome(prim) {}
-
-	        /** 
-	         * Cone, with closed bottom and top, can be expanded to 
-	         * a closed cylinder. the prim.dimensions[] object describes the 
-	         * bounding box; cone bottom and top width need to be separately 
-	         * defined. 
-	         * Divisions correspond to the number of sides.
-	         * @param {Prim} prim the object needing geometry.
-	         * @param {Number} bottomRadius the radius of the bottom of the cone.
-	         * @param {Number} topRadius the top radius of the cone.
-	         */
-
-	    }, {
-	        key: 'geometryCone',
-	        value: function geometryCone(prim, type, bottomRadius, topRadius) {
-
-	            // GlMatrix.
-
-	            var vec3 = this.glMatrix.vec3;
-	            var vec2 = this.glMatrix.vec2;
-
-	            bottomRadius = 1.0;
-
-	            topRadius = 0.5;
-
-	            var multiplier = 1.0;
-
-	            // scale so Cone fits the bounding box.
-
-	            var biggest = Math.max(bottomRadius, topRadius);
-
-	            var radRatio = biggest / prim.divisions[1];
-
-	            bottomRadius *= radRatio;
-
-	            topRadius *= radRatio;
-
-	            // Params.
-
-	            var latitudeBands = prim.divisions[1]; // y axis
-
-	            var longitudeBands = prim.divisions[0]; // x axis (really xz)
-
-	            var radius = prim.dimensions[0] * 0.5;
-
-	            // ADJUST
-
-	            var dHeight = prim.dimensions[1];
-
-	            // Shortcuts to Prim data arrays
-
-	            var geo = prim.geometry;
-
-	            // Shortcuts to Prim arrays.
-
-	            var vertices = geo.vertices.data,
-	                indices = geo.indices.data,
-	                texCoords = geo.texCoords.data,
-	                normals = geo.normals.data,
-	                tangents = geo.tangents.data,
-	                colors = geo.colors.data;
-
-	            var x = void 0,
-	                y = void 0,
-	                z = void 0;
-
-	            for (var latNumber = 0; latNumber <= latitudeBands / 2; latNumber++) {
-
-	                var theta = latNumber * Math.PI / latitudeBands;
-
-	                var sinTheta = Math.sin(theta);
-
-	                var cosTheta = Math.cos(theta);
-
-	                for (var longNumber = 0; longNumber <= longitudeBands; longNumber++) {
-
-	                    var phi = longNumber * 2 * Math.PI / longitudeBands;
-
-	                    var sinPhi = Math.sin(phi);
-
-	                    var cosPhi = Math.cos(phi);
-
-	                    // Texture coords.
-
-	                    var u = 1 - longNumber / longitudeBands;
-
-	                    var v = 1 - latNumber / latitudeBands;
-
-	                    // Compute vertex positions.
-
-	                    x = cosPhi * sinTheta;
-
-	                    z = sinPhi * sinTheta;
-
-	                    if (prim.type === this.typeList.TOPDOME) {
-
-	                        y = cosTheta;
-	                    } else if (prim.type == this.typeList.BOTTOMDOME) {
-
-	                        y = 1 - cosTheta;
-	                    }
-
-	                    // Push values.
-
-	                    vertices.push(radius * x, radius * y, radius * z);
-
-	                    texCoords.push(u, v);
-
-	                    normals.push(x, y, z);
-	                }
-	            }
-
-	            // Sphere indices.
-
-	            for (var _latNumber2 = 0; _latNumber2 < latitudeBands / 2; _latNumber2++) {
-
-	                for (var _longNumber2 = 0; _longNumber2 < longitudeBands; _longNumber2++) {
-
-	                    var first = _latNumber2 * (longitudeBands + 1) + _longNumber2;
-
-	                    var second = first + longitudeBands + 1;
-
-	                    // Note: we're running culling in reverse from some tutorials here.
-
-	                    indices.push(first + 1, second + 1, second);
-
-	                    indices.push(first + 1, second, first);
-	                }
-	            }
-
-	            prim.geometry.tangents.data = this.computeTangents(vertices, indices, normals, texCoords);
-
-	            // Return the buffer, or add array data to the existing Prim data.
-
-	            if (prim.geometry.makeBuffers === true) {
-
-	                //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
-
-	                return this.createBuffers(prim.geometry);
-	            } else {
-
-	                return this.addBufferData(prim.geometry, vertices, indices, texCoords, normals, tangents, colors);
-	            }
-
-	            // Return the buffer, or add array data to the existing Prim data.
-
-	            if (prim.geometry.makeBuffers === true) {
-
-	                //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
-
-	                return this.createBuffers(prim.geometry);
-	            } else {
-
-	                return this.addBufferData(prim.geometry, vertices, indices, texCoords, normals, tangents, colors);
-	            }
-	        }
 
 	        /** 
 	         * Generic 3d shape (e.g. Collada model).
@@ -6067,6 +6008,10 @@
 	            prim.type = type;
 
 	            prim.geometry = this.createBufferObj();
+
+	            // Set start and end radius. For spheres, it is zero. For tubes, nonzero values.
+
+	            prim.radius = prim.startRadius = prim.endRadius = 0;
 
 	            // NOTE: mis-spelling type leads to error here...
 
@@ -7146,7 +7091,7 @@
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	            ));
 
-	            this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.BOTTOMDOME, 'TestDome', 1.0, vec3.fromValues(2, 3, 3), // dimensions
+	            this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.DOME, 'TestDome', 1.0, vec3.fromValues(2, 3, 3), // dimensions
 	            vec3.fromValues(10, 10, 10), // divisions MAKE SMALLER
 	            vec3.fromValues(-3.5, 1.5, -1), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z

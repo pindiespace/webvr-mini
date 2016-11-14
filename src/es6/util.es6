@@ -2,18 +2,54 @@ export default class Util {
 
     /** 
      * Utility functions.
-     * Mersene Twister from:
      */
 
     constructor () {
 
         console.log( 'in Util' );
 
-        // Mersene Twister parameters
+        // Performance polyfill.
+
+        this.setPerformance();
 
     }
 
-    // Confirm we have a string (after lodash)
+    /** 
+     * Performance polyfill for timing.
+     */
+    setPerformance () {
+
+        if ( 'performance' in window == false ) {
+
+            window.performance = {};
+
+        }
+
+        Date.now = ( Date.now || function () {  // can't use () => here!
+
+            return new Date().getTime();
+
+        } );
+
+        if ( "now" in window.performance == false ) {
+    
+            var nowOffset = Date.now();
+    
+            if ( performance.timing && performance.timing.navigationStart ) {
+
+                nowOffset = performance.timing.navigationStart;
+
+            }
+
+            window.performance.now = () => {
+
+                return Date.now() - nowOffset;
+
+            }
+
+        }
+
+    }
 
 
     isString( str ) {
@@ -252,7 +288,6 @@ export default class Util {
         return number;
 
     }
-
 
     getRand ( min, max ) {
 

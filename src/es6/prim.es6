@@ -1011,15 +1011,15 @@ export default class Prim {
         tangents = geo.tangents.data,
         colors = geo.colors.data;
 
-        let cols = prim.divisions[ 0 ] // x axis (really xz)
-        let rows = prim.divisions[ 2 ]; // y axis
+        let cols = prim.divisions[ 0 ], // x axis (really xz)
+        rows = prim.divisions[ 2 ]; // z axis
 
-        let halfX = prim.dimensions[ 0 ] / 2;
-        let halfZ = prim.dimensions[ 2 ] / 2;
+        let halfX = prim.dimensions[ 0 ] / 2, // x axis
+        halfZ = prim.dimensions[ 2 ] / 2; // z axis
 
-        let incX = prim.dimensions[ 0 ] / prim.divisions[ 0 ];
-        let incY = 1.0;
-        let incZ = prim.dimensions[ 2 ] / prim.divisions[ 2 ];
+        let incX = prim.dimensions[ 0 ] / prim.divisions[ 0 ],
+        incY = 1.0,
+        incZ = prim.dimensions[ 2 ] / prim.divisions[ 2 ];
 
         for ( let colNumber = 0; colNumber <= cols; colNumber++ ) {
 
@@ -1336,17 +1336,7 @@ export default class Prim {
      */
     geometryDome ( prim ) {
 
-        let longitudeBands = prim.divisions[ 0 ] // x axis (really xz)
-
-        let latitudeBands = prim.divisions[ 1 ]; // y axis
-
-        let radius = prim.dimensions[ 0 ] * 0.5;
-
-        let latDist = 0;
-
-        // ADJUST
-
-        let dHeight = prim.dimensions[1];
+        let list = this.typeList;
 
         let geo = prim.geometry;
 
@@ -1359,9 +1349,18 @@ export default class Prim {
         tangents = geo.tangents.data,
         colors = geo.colors.data;
 
-        // Sphere vs. dome
+        let longitudeBands = prim.divisions[ 0 ] // x axis (really xz)
 
-        if ( prim.type === this.typeList.SPHERE ) {
+        let latitudeBands = prim.divisions[ 1 ]; // y axis
+
+        let radius = prim.dimensions[ 0 ] * 0.5;
+
+        let latDist = 0;
+
+
+        // Sphere vs. Dome
+
+        if ( prim.type === this.typeList.SPHERE || prim.type === this.typeList.CYLINDER ) {
 
             latDist = latitudeBands;
 
@@ -1370,6 +1369,25 @@ export default class Prim {
             latDist = latitudeBands / 2;
 
         }
+
+        // Set some parameters based on type.
+
+        switch( prim.type ) {
+
+            case list.SPHERE:
+            case list.CYLINDER:
+                break;
+            case list.DOME:
+            case list.TOPDOME:
+            case list.BOTTOMDOME:
+                break;
+            case list.CONE:
+                break;
+            default:
+                break;
+
+        }
+
 
         let x, y, z, u, v;
 
@@ -1391,7 +1409,19 @@ export default class Prim {
 
                 // Compute vertex positions.
 
-                if ( prim.type === this.typeList.SPHERE || prim.type === this.typeList.TOPDOME ) {
+                if( prim.type === this.typeList.CYLINDER ) {
+
+                    x = cosPhi;
+
+                    z = sinPhi;
+
+                    y = cosTheta;
+
+                    u = 1 - (longNumber / longitudeBands);
+
+                    v = 1 - (latNumber / latitudeBands);
+
+                } else if ( prim.type === this.typeList.SPHERE || prim.type === this.typeList.TOPDOME || prim.type === this.typeList.DOME ) {
 
                     x = cosPhi * sinTheta;
 
@@ -1419,15 +1449,27 @@ export default class Prim {
 
                     v = (latNumber / latitudeBands);
 
+                } else if ( prim.type === this.typeList.CONE ) {
+
+                    x = cosPhi;
+
+                    z = sinPhi;
+
+                    y = cosTheta;
+
+                    u = 1 - (longNumber / longitudeBands);
+
+                    v = 1 - (latNumber / latitudeBands);
+
                 }
 
                 // Push values.
 
-                vertices.push(radius * x, radius * y, radius * z);
+                vertices.push( radius * x, radius * y, radius * z );
 
-                texCoords.push(u, v);
+                texCoords.push( u, v) ;
 
-                normals.push(x, y, z);
+                normals.push( x, y, z );
 
             }
 
@@ -1502,6 +1544,24 @@ export default class Prim {
     }
 
     /** 
+     * Cylinder with open ends.
+     */
+    geometryCylinder ( prim ) {
+
+        return this.geometryDome( prim );
+
+    }
+
+    /** 
+     * Cone with beginning and ending radius, open ends.
+     */
+    geometryCone ( prim ) {
+
+        return this.geometryDome( prim );
+
+    }
+
+    /** 
      * Create a spherical object from a cube mesh. Useful for cubemaps. If rounding 
      * is zero, it is a cube.
      * TODO: move vertices to better coverage
@@ -1513,7 +1573,7 @@ export default class Prim {
 
         let flatten = this.util.flatten;
 
-       let geo = prim.geometry;
+        let geo = prim.geometry;
 
         // Shortcuts to Prim data arrays
 
@@ -1524,49 +1584,50 @@ export default class Prim {
         tangents = geo.tangents.data,
         colors = geo.colors.data;
 
-        let sx = prim.dimensions[0];
-        let sy = prim.dimensions[1];
-        let sz = prim.dimensions[2];
+        let sx = prim.dimensions[ 0 ];
+        let sy = prim.dimensions[ 1 ];
+        let sz = prim.dimensions[ 2 ];
 
-        let nx = prim.divisions[0];
-        let ny = prim.divisions[1];
-        let nz = prim.divisions[2];
+        let nx = prim.divisions[ 0 ];
+        let ny = prim.divisions[ 1 ];
+        let nz = prim.divisions[ 2 ];
 
-        var numVertices = (nx + 1) * (ny + 1) * 2 + (nx + 1) * (nz + 1) * 2 + (nz + 1) * (ny + 1) * 2;
+        var numVertices = ( nx + 1 ) * ( ny + 1 ) * 2 + ( nx + 1 ) * ( nz + 1 ) * 2 + ( nz + 1 ) * ( ny + 1 ) * 2;
 
         var positions = [];
         var norms = [];
 
         let vertexIndex = 0;
 
-
-        makeSide(0, 1, 2, sx, sy, nx, ny,  sz/2,  1, -1); //front
-        makeSide(0, 1, 2, sx, sy, nx, ny, -sz/2, -1, -1); //back
-        makeSide(2, 1, 0, sz, sy, nz, ny, -sx/2,  1, -1); //left
-        makeSide(2, 1, 0, sz, sy, nz, ny,  sx/2, -1, -1); //right
-        makeSide(0, 2, 1, sx, sz, nx, nz,  sy/2,  1,  1); //top
-        makeSide(0, 2, 1, sx, sz, nx, nz, -sy/2,  1, -1); //bottom
-
+        makeSide( 0, 1, 2, sx, sy, nx, ny,  sz/2,  1, -1 ); //front
+        makeSide( 0, 1, 2, sx, sy, nx, ny, -sz/2, -1, -1 ); //back
+        makeSide( 2, 1, 0, sz, sy, nz, ny, -sx/2,  1, -1 ); //left
+        makeSide( 2, 1, 0, sz, sy, nz, ny,  sx/2, -1, -1 ); //right
+        makeSide( 0, 2, 1, sx, sz, nx, nz,  sy/2,  1,  1 ); //top
+        makeSide( 0, 2, 1, sx, sz, nx, nz, -sy/2,  1, -1 ); //bottom
 
         function makeSide(u, v, w, su, sv, nu, nv, pw, flipu, flipv) {
 
             var vertShift = vertexIndex;
 
-            for(var j=0; j<=nv; j++) {
+            for( var j = 0; j <= nv; j++ ) {
 
-                for(var i=0; i<=nu; i++) {
+                for( var i = 0; i <= nu; i++ ) {
 
-                    var vert = positions[vertexIndex] = [0,0,0];
-                    vert[u] = (-su/2 + i*su/nu) * flipu;
-                    vert[v] = (-sv/2 + j*sv/nv) * flipv;
-                    vert[w] = pw
+                    var vert = positions[ vertexIndex ] = [0,0,0];
+
+                    vert[ u ] = ( -su / 2 + i * su / nu ) * flipu;
+
+                    vert[ v ] = ( -sv/2 + j * sv / nv ) * flipv;
+
+                    vert[ w ] = pw
 
                     // Normals.
 
-                    var normal = norms[vertexIndex] = [0,0,0];
-                    normal[u] = 0
-                    normal[v] = 0
-                    normal[w] = pw/Math.abs(pw);
+                    var normal = norms[ vertexIndex ] = [0,0,0];
+                    normal[ u ] = 0
+                    normal[ v ] = 0
+                    normal[ w ] = pw / Math.abs( pw );
 
                     // Texture coords.
 
@@ -1606,7 +1667,7 @@ export default class Prim {
         var ry = sy / 2.0;
         var rz = sz / 2.0;
 
-        for(var i=0; i<positions.length; i++) {
+        for(var i = 0; i < positions.length; i++ ) {
 
             var pos = positions[i];
             var normal = normals[i];
@@ -1634,7 +1695,8 @@ export default class Prim {
                 inner[2] = rz - radius;
             }
 
-            normal = [pos[0], pos[1], pos[2]]
+            normal = [pos[0], pos[1], pos[2]];
+
             vec3.sub(normal, normal, inner);
             vec3.normalize(normal, normal);
 
@@ -1642,6 +1704,7 @@ export default class Prim {
 
             pos = [ inner[0], inner[1], inner[2] ]; //Vec3.set(pos, inner);
             tmp = [ normal[0], normal[1], normal[2] ]; //Vec3.set(tmp, normal);
+
             vec3.scale(tmp, tmp, radius);
             vec3.add(pos, pos, tmp);
 
@@ -1688,7 +1751,7 @@ export default class Prim {
 
         let flatten = this.util.flatten;
 
-
+        // Size and divisions.
 
         let subdivisions = prim.divisions[0];
 
@@ -1802,7 +1865,7 @@ export default class Prim {
 
             // Toggle icosphere with icosohedron.
 
-            if ( sphere === true ) {
+            if ( prim.type === this.typeList.ICOSPHERE ) {
 
                 vertices[i] = vec3.normalize( [0,0,0], vertices[i]);
 
@@ -1847,39 +1910,46 @@ export default class Prim {
 
             for ( i = 0; i < vertices.length; i++ ) {
 
-                v = vertices[i];
+                v = vertices[ i ];
 
-                if ( v[0] == previousX ) {  // was v.x
+                if ( v[ 0 ] == previousX ) {  // was v.x
 
-                    uv[i - 1][0] = 1;      // was v.x
-
-                }
-
-                previousX = v[0];           // was v.x
-
-                let textureCoordinates = [0,0];
-
-                textureCoordinates[0] = Math.atan2(v[0], v[2]) / (-2 * Math.PI);  // was v.x, v.z
-
-                if (textureCoordinates[0] < 0) {   // was textureCoordinates.x
-
-                    textureCoordinates[0] += 1;    // was textureCoordinates
+                    uv[ i - 1 ][ 0 ] = 1;      // was v.x
 
                 }
 
-                textureCoordinates[1] = Math.asin(v[1]) / Math.PI + 0.5;  // was v.y, textureCoordinates.y
+                previousX = v[ 0 ];           // was v.x
+
+                let textureCoordinates = [ 0,0 ];
+
+                textureCoordinates[ 0 ] = Math.atan2( v[ 0 ], v[ 2 ] ) / ( -2 * Math.PI );  // was v.x, v.z
+
+                if ( textureCoordinates[ 0 ] < 0 ) {   // was textureCoordinates.x
+
+                    textureCoordinates[ 0 ] += 1;    // was textureCoordinates
+
+                }
+
+                textureCoordinates[1] = Math.asin( v[ 1 ] ) / Math.PI + 0.5;  // was v.y, textureCoordinates.y
 
  
                 uv[i] = textureCoordinates;
             }
 
-            uv[vertices.length - 4][0] = 0.125
+            uv[vertices.length - 4][0] = 0.125;
+
             uv[0][0] = 0.125; // was v.x
+
             uv[vertices.length - 3][0] = 0.375
+
             uv[1][0] = 0.375; // was v.x
+
             uv[vertices.length - 2][0] = 0.625
+
             uv[2][0] = 0.625; // was v.x
+
             uv[vertices.length - 1][0] = 0.875
+
             uv[3][0] = 0.875; // was v.x
 
             // Our engine wraps opposite, so reverse first coordinate (can't do it until we do all coordinates).
@@ -1894,7 +1964,7 @@ export default class Prim {
 
         function createTangents (vertices, tangents) {
 
-            for (i = 0; i < vertices.Length; i++) {
+            for ( i = 0; i < vertices.Length; i++ ) {
 
                 v = vertices[i];
 
@@ -2013,20 +2083,11 @@ export default class Prim {
 
     }
 
-    /** 
-     * Open tube, created from sphere, open at both ends.
-     */
-    geometryTube ( prim ) {
-
-        return this.createSphere( prim, false ); 
-
-    }
 
     /** 
-     * Closed cylinder, may be
+     * Closed cylinder with one texture.
      */
     geometryCan ( prim ) {
-
 
     }
 
@@ -2105,170 +2166,6 @@ export default class Prim {
 
     }
 
-    /** 
-     * Cone, with closed bottom and top, can be expanded to 
-     * a closed cylinder. the prim.dimensions[] object describes the 
-     * bounding box; cone bottom and top width need to be separately 
-     * defined. 
-     * Divisions correspond to the number of sides.
-     * @param {Prim} prim the object needing geometry.
-     * @param {Number} bottomRadius the radius of the bottom of the cone.
-     * @param {Number} topRadius the top radius of the cone.
-     */
-    geometryCone ( prim, type, bottomRadius, topRadius ) {
-
-        // GlMatrix.
-
-        let vec3 = this.glMatrix.vec3;
-        let vec2 = this.glMatrix.vec2;
-
-        bottomRadius = 1.0;
-
-        topRadius = 0.5;
-
-        let multiplier = 1.0;
-
-        // scale so Cone fits the bounding box.
-
-        let biggest = Math.max( bottomRadius, topRadius );
-
-        let radRatio = biggest / prim.divisions[1];
-
-        bottomRadius *= radRatio;
-
-        topRadius *= radRatio;
-
-
-        // Params.
-
-        let latitudeBands = prim.divisions[1]; // y axis
-
-        let longitudeBands = prim.divisions[0] // x axis (really xz)
-
-        let radius = prim.dimensions[0] * 0.5;
-
-        // ADJUST
-
-        let dHeight = prim.dimensions[1];
-
-        // Shortcuts to Prim data arrays
-
-        let geo = prim.geometry;
-
-        // Shortcuts to Prim arrays.
-
-        let vertices = geo.vertices.data,
-        indices  = geo.indices.data,
-        texCoords = geo.texCoords.data,
-        normals = geo.normals.data,
-        tangents = geo.tangents.data,
-        colors = geo.colors.data;
-
-        let x, y, z;
-
-        for (let latNumber = 0; latNumber <= latitudeBands / 2; latNumber++) {
-
-            let theta = latNumber * Math.PI / latitudeBands;
-
-            let sinTheta = Math.sin(theta);
-
-            let cosTheta = Math.cos(theta);
-
-            for (let longNumber = 0; longNumber <= longitudeBands; longNumber++) {
-
-                let phi = longNumber * 2 * Math.PI / longitudeBands;
-
-                let sinPhi = Math.sin(phi);
-
-                let cosPhi = Math.cos(phi);
-
-                // Texture coords.
-
-                let u = 1 - (longNumber / longitudeBands);
-
-                let v = 1 - (latNumber / latitudeBands);
-
-                // Compute vertex positions.
-
-                x = cosPhi * sinTheta;
-
-                z = sinPhi * sinTheta;
-
-                if ( prim.type === this.typeList.TOPDOME) {
-
-                    y = cosTheta;
-
-
-                } else if ( prim.type == this.typeList.BOTTOMDOME ) {
-
-                    y = 1 - cosTheta;
-
-                }
-
-                // Push values.
-
-                vertices.push(radius * x, radius * y, radius * z);
-
-                texCoords.push(u, v);
-
-                normals.push(x, y, z);
-
-            }
-
-        }
-
-        // Sphere indices.
-
-        for (let latNumber = 0; latNumber < latitudeBands / 2; latNumber++) {
-
-            for (let longNumber = 0; longNumber < longitudeBands; longNumber++) {
-
-                let first = (latNumber * (longitudeBands + 1)) + longNumber;
-
-                let second = first + longitudeBands + 1;
-
-                // Note: we're running culling in reverse from some tutorials here.
-
-                indices.push(first + 1, second + 1, second);
-
-                indices.push(first + 1, second, first);
-
-            }
-
-        }
-
-        prim.geometry.tangents.data = this.computeTangents( vertices, indices, normals, texCoords );
-
-        // Return the buffer, or add array data to the existing Prim data.
-
-        if( prim.geometry.makeBuffers === true ) {
-
-            //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
-
-            return this.createBuffers( prim.geometry );
-
-        } else {
-
-            return this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
-
-        }
-
-
-        // Return the buffer, or add array data to the existing Prim data.
-
-        if( prim.geometry.makeBuffers === true ) {
-
-            //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
-
-            return this.createBuffers( prim.geometry );
-
-        } else {
-
-            return this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
-
-        }
-
-    }
 
     /** 
      * Generic 3d shape (e.g. Collada model).
@@ -2466,6 +2363,10 @@ export default class Prim {
         prim.type = type;
 
         prim.geometry = this.createBufferObj();
+
+        // Set start and end radius. For spheres, it is zero. For tubes, nonzero values.
+
+        prim.radius = prim.startRadius = prim.endRadius = 0;
 
         // NOTE: mis-spelling type leads to error here...
 

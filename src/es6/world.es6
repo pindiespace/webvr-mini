@@ -217,7 +217,7 @@ export default class World {
         ) );
 
         this.dirlightTextureObjList.push( this.prim.createPrim(
-            this.prim.typeList.BOTTOMDOME,
+            this.prim.typeList.DOME,
             'TestDome',
             1.0,
             vec3.fromValues( 2, 3, 3 ),            // dimensions
