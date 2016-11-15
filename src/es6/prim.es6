@@ -66,9 +66,13 @@ export default class Prim {
 
             TOPDOME: 'geometryTopDome',
 
+            SKYDOME: 'geometrySkyDome',
+
             BOTTOMDOME: 'geometryBottomDome',
 
             TOPICODOME: 'geometryTopIcoDome',
+
+            SKYICODOME: 'geometrySkyIcoDome',
 
             BOTTOMICODOME: 'geometryBottomIcoDome',
 
@@ -216,18 +220,6 @@ export default class Prim {
 
             },
 
-            edges: {
-
-                data: [],
-
-                buffer: null,
-
-                itemSize: 4,
-
-                numItems: 0
-
-            },
-
             texCoords: {
 
                 data: [],
@@ -298,7 +290,7 @@ export default class Prim {
 
             o = bufferObj.vertices;
 
-            if ( ! o.data ) {
+            if ( ! o.data.length ) {
 
                 console.log( 'no vertices present, creating default' );
 
@@ -318,7 +310,7 @@ export default class Prim {
 
             o = bufferObj.indices;
 
-            if ( ! o.data ) {
+            if ( ! o.data.length ) {
 
                 console.log( 'no indices present, creating default' );
 
@@ -338,7 +330,7 @@ export default class Prim {
 
             o = bufferObj.normals;
 
-            if ( ! o.data ) {
+            if ( ! o.data.length ) {
 
                 console.log( 'no normals, present, creating default' );
 
@@ -358,7 +350,7 @@ export default class Prim {
 
             o = bufferObj.texCoords;
 
-            if ( ! o.data ) {
+            if ( ! o.data.length ) {
 
                 console.warn( 'no texture present, creating default' );
 
@@ -378,7 +370,7 @@ export default class Prim {
 
             o = bufferObj.tangents;
 
-            if ( ! o.data ) {
+            if ( ! o.data.length ) {
 
                 console.warn( 'no tangents present, creating default' );
 
@@ -394,31 +386,12 @@ export default class Prim {
 
             o.numItems = o.data.length / o.itemSize;
 
-            // Create the Edges buffer.
-
-            o = bufferObj.edges;
-
-            if( ! o.data ) {
-
-                console.warn( 'no edges present, creating default' );
-
-                o.data = new Float32Array( [0, 0, 0] );
-
-            }
-
-            o.buffer = gl.createBuffer();
-
-            gl.bindBuffer( gl.ARRAY_BUFFER, o.buffer );
-
-            gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( o.data ), gl.STATIC_DRAW );
-
-            o.numItems = o.data.length / o.itemSize;
 
             // Create the Colors buffer.
 
             o = bufferObj.colors;
 
-            if ( ! o.data ) {
+            if ( ! o.data.length ) {
 
                 console.warn( 'no colors present, creating default color' );
 
@@ -437,6 +410,31 @@ export default class Prim {
         return bufferObj;
 
     }
+
+    randomColor () {
+
+        return [ Math.abs( Math.random() ) , Math.abs( Math.random() ) , Math.abs( Math.random() ) ];
+
+    }
+
+    /** 
+     * Create default (random) colors for Prim color array.
+     */
+    computeColors( normals, colors ) {
+
+        for ( var i = 0, len = normals.length; i < len; i++ ) {
+
+            //let c1 = this.randomColor();
+
+            //colors.push( c1[0], c1[1], c1[2], 1.0 );
+            colors.push( Math.abs( normals[0] ), Math.abs( normals[1] ), Math.abs( normals[2] ) );
+
+        }
+
+        return colors;
+
+    }
+
 
     /** 
      * Check the values of a Prim.
@@ -646,73 +644,6 @@ export default class Prim {
     }
 
     /** 
-     * Set or reset indices, normals, texCoords in-place, based on
-     * wether we draw to the front, back, or both. Adapted from 
-     * BabylonJS example.
-     * @param {ENUM} sideOrientation either front, back, or both.
-     * @param {glMatrix.vec3} vertices the 3d vertex coordinates.
-     * @param {glMatrix.vec3} indices the 3d face coordinates.
-     * @param {glMatrix.vec3} normals the 3d normals.
-     * @param {glMatrix.vec2} texCoords the 2d texture coordinates.
-     * @param {glMatrix.vec3} tangents the 4d tangent coordinates.
-     * TODO: tangents
-     */
-    computeSides ( sideOrientation, positions, indices, normals, uvs, tangents ) {
-
-            var li = indices.length;
-            var ln = normals.length;
-            var i;
-            var n;
-            sideOrientation = sideOrientation || this.DEFAULT_SIDE;
-
-            switch (sideOrientation) {
-
-                case this.FRONT_SIDE:
-                    // nothing changed
-                    break;
-
-                case this.BACK_SIDE:
-                    var tmp;
-                    // indices
-                    for (i = 0; i < li; i += 3) {
-                        tmp = indices[i];
-                        indices[i] = indices[i + 2];
-                        indices[i + 2] = tmp;
-                    }
-                    // normals
-                    for (n = 0; n < ln; n++) {
-                        normals[n] = -normals[n];
-                    }
-                    break;
-
-                case this.DOUBLE_SIDE:
-                    // positions
-                    var lp = positions.length;
-                    var l = lp / 3;
-                    for (var p = 0; p < lp; p++) {
-                        positions[lp + p] = positions[p];
-                    } 
-                    // indices
-                    for ( i = 0; i < li; i += 3) {
-                        indices[i + li] = indices[i + 2] + l;
-                        indices[i + 1 + li] = indices[i + 1] + l;
-                        indices[i + 2 + li] = indices[i] + l;
-                    }
-                    // normals
-                    for (n = 0; n < ln; n++) {
-                        normals[ln + n] = -normals[n];
-                    }
-                    // uvs
-                    var lu = uvs.length;
-                    for (var u = 0; u < lu; u++) {
-                        uvs[u + lu] = uvs[u];
-                    }
-                    break;
-            }
-
-    }
-
-    /** 
      * Compute tangents. NOTE: some routines compute their own tangents.
      * CodePen - http://codepen.io/ktmpower/pen/ZbGRpW
      * adapted from the C++ code from this link: http://www.terathon.com/code/tangent.html
@@ -849,18 +780,27 @@ export default class Prim {
 
         // Adjust dimensions (all are zero) 
 
-
-
         // Vertices.
 
+        // Indices.
 
         // Normals.
 
         this.computeNormals( vertices, indices, normals );
 
+        // Texture coordinates (if present).
+
         // Tangents.
 
         this.computeTangents( vertices, indices, normals, texCoords );
+
+        // Colors.
+
+        if( ! colors.length ) {
+
+            colors.push( this.randomColor(), this.randomColor(), this.randomColor(), 1.0 );
+
+        }
 
         // Return the buffer, or add array data to the existing Prim data.
 
@@ -898,6 +838,7 @@ export default class Prim {
 
         // Vertices.
 
+        // Indices.
 
         // Normals.
 
@@ -906,6 +847,14 @@ export default class Prim {
         // Tangents.
 
         this.computeTangents( vertices, indices, normals, texCoords );
+
+        // Colors.
+
+        if( ! colors.length ) {
+
+            geo.colors.data = this.computeColors( normals, colors );
+
+        }
 
         // Return the buffer, or add array data to the existing Prim data.
 
@@ -947,6 +896,7 @@ export default class Prim {
 
         // Vertices.
 
+        // Indices.
 
         // Normals.
 
@@ -956,11 +906,17 @@ export default class Prim {
 
         this.computeTangents( vertices, indices, normals, texCoords );
 
+        // Colors.
+
+        if( ! colors.length ) {
+
+            geo.colors.data = this.computeColors( normals, colors );
+
+        }
+
         // Return the buffer, or add array data to the existing Prim data.
 
         if( prim.geometry.makeBuffers === true ) {
-
-            //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
 
             return this.createBuffers( prim.geometry );
 
@@ -988,6 +944,19 @@ export default class Prim {
 
         // Vertices.
 
+        // Indices.
+
+        // Normals.
+
+        // Tangents.
+
+        // Colors.
+
+        if( ! colors.length ) {
+
+            geo.colors.data = this.computeColors( normals, colors );
+
+        }
 
         // Return the buffer, or add array data to the existing Prim data.
 
@@ -1101,11 +1070,21 @@ export default class Prim {
 
         this.computeTangents( vertices, indices, normals, texCoords );
 
+        // Colors.
+
+        if( ! colors.length ) {
+
+            colors = geo.colors.data = this.computeColors( normals, colors );
+
+        }
+
+        if(prim.name === 'colored ico' ) window.geo = geo;
+
+        //TODO: NOT WORK WITH COLORS!!!!!!!!!!!!!!!!
+
         // Return the buffer, or add array data to the existing Prim data.
 
         if( prim.geometry.makeBuffers === true ) {
-
-            //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
 
             return this.createBuffers( prim.geometry );
 
@@ -1114,8 +1093,6 @@ export default class Prim {
             return this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
 
         }
-
-        //return this.createBuffers ( this.createBufferObj(), vertices, indices, texCoords, normals, tangents, colors );
 
     }
 
@@ -1137,6 +1114,7 @@ export default class Prim {
 
         // Vertices.
 
+        // Indices.
 
         // Normals.
 
@@ -1145,6 +1123,14 @@ export default class Prim {
         // Tangents.
 
         this.computeTangents( vertices, indices, normals, texCoords );
+
+        // Colors.
+
+        if( ! colors.length ) {
+
+            geo.colors.data = this.computeColors( normals, colors );
+
+        }
 
         // Return the buffer, or add array data to the existing Prim data.
 
@@ -1170,176 +1156,9 @@ export default class Prim {
      * @param {Number} scale relative to unit size (1, 1, 1).
       name = 'unknown', scale = 1.0, dimensions, position, acceleration, rotation, textureImage, color
      */
-    geometryCube ( prim ) {
+    geometryCubeSphere ( prim ) {
 
-        // Shortcuts to Prim data arrays
-
-        let x = prim.dimensions[ 0 ] / 2;
-
-        let y = prim.dimensions[ 1 ] / 2;
-
-        let z = prim.dimensions[ 2 ] / 2 ;
-
-        // Create cube geometry.
-
-        let vertices = prim.geometry.vertices.data = [
-            // Front face
-            -1.0, -1.0,  1.0, // bottomleft
-             1.0, -1.0,  1.0, // bottomright
-             1.0,  1.0,  1.0, // topright
-            -1.0,  1.0,  1.0, // topleft
-            // Back face
-            -1.0, -1.0, -1.0,
-            -1.0,  1.0, -1.0,
-             1.0,  1.0, -1.0,
-             1.0, -1.0, -1.0,
-            // Top face
-            -1.0,  1.0, -1.0,
-            -1.0,  1.0,  1.0,
-             1.0,  1.0,  1.0,
-             1.0,  1.0, -1.0,
-            // Bottom face
-            -1.0, -1.0, -1.0,
-             1.0, -1.0, -1.0,
-             1.0, -1.0,  1.0,
-            -1.0, -1.0,  1.0,
-            // Right face
-             1.0, -1.0, -1.0,
-             1.0,  1.0, -1.0,
-             1.0,  1.0,  1.0,
-             1.0, -1.0,  1.0,
-            // Left face
-            -1.0, -1.0, -1.0,
-            -1.0, -1.0,  1.0,
-            -1.0,  1.0,  1.0,
-            -1.0,  1.0, -1.0
-        ];
-
-        let indices = prim.geometry.indices.data = [
-            0, 1, 2,      0, 2, 3,    // Front face
-            4, 5, 6,      4, 6, 7,    // Back face
-            8, 9, 10,     8, 10, 11,  // Top face
-            12, 13, 14,   12, 14, 15, // Bottom face
-            16, 17, 18,   16, 18, 19, // Right face //can't go to 30
-            20, 21, 22,   20, 22, 23  // Left face
-        ];
-
-        let normals = prim.geometry.normals.data = [
-            // Front face
-            0.0,  0.0,  1.0,
-            0.0,  0.0,  1.0,
-            0.0,  0.0,  1.0,
-            0.0,  0.0,  1.0,
-            // Back face
-            0.0,  0.0, -1.0,
-            0.0,  0.0, -1.0,
-            0.0,  0.0, -1.0,
-            0.0,  0.0, -1.0,
-            // Top face
-            0.0,  1.0,  0.0,
-            0.0,  1.0,  0.0,
-            0.0,  1.0,  0.0,
-            0.0,  1.0,  0.0,
-            // Bottom face
-            0.0, -1.0,  0.0,
-            0.0, -1.0,  0.0,
-            0.0, -1.0,  0.0,
-            0.0, -1.0,  0.0,
-            // Right face
-            1.0,  0.0,  0.0,
-            1.0,  0.0,  0.0,
-            1.0,  0.0,  0.0,
-            1.0,  0.0,  0.0,
-            // Left face
-            -1.0,  0.0,  0.0,
-            -1.0,  0.0,  0.0,
-            -1.0,  0.0,  0.0,
-            -1.0,  0.0,  0.0,
-        ];
-
-        let texCoords = prim.geometry.texCoords.data = [
-            // Front face
-            0.0, 0.0,
-            1.0, 0.0,
-            1.0, 1.0,
-            0.0, 1.0,
-            // Back face
-            1.0, 0.0,
-            1.0, 1.0,
-            0.0, 1.0,
-            0.0, 0.0,
-            // Top face
-            0.0, 1.0,
-            0.0, 0.0,
-            1.0, 0.0,
-            1.0, 1.0,
-            // Bottom face
-            1.0, 1.0,
-            0.0, 1.0,
-            0.0, 0.0,
-            1.0, 0.0,
-            // Right face
-            1.0, 0.0,
-            1.0, 1.0,
-            0.0, 1.0,
-            0.0, 0.0,
-            // Left face
-            0.0, 0.0,
-            1.0, 0.0,
-            1.0, 1.0,
-            0.0, 1.0
-        ];
-
-        let tangents = prim.geometry.tangents.data = [];
-
-        let colors = prim.geometry.colors.data = [
-            // Front face
-            1.0,  1.0,  1.0,  1.0,    // white
-            1.0,  0.0,  0.0,  1.0,    // red
-            0.0,  1.0,  0.0,  1.0,    // green
-            0.0,  0.0,  1.0,  1.0,    // blue
-            // Back face
-            1.0,  1.0,  1.0,  1.0,    // white
-            1.0,  0.0,  0.0,  1.0,    // red
-            0.0,  1.0,  0.0,  1.0,    // green
-            0.0,  0.0,  1.0,  1.0,    // blue
-            // Top face
-            1.0,  1.0,  1.0,  1.0,    // white
-            1.0,  0.0,  0.0,  1.0,    // red
-            0.0,  1.0,  0.0,  1.0,    // green
-            0.0,  0.0,  1.0,  1.0,    // blue
-            // Bottom face
-            1.0,  1.0,  1.0,  1.0,    // white
-            1.0,  0.0,  0.0,  1.0,    // red
-            0.0,  1.0,  0.0,  1.0,    // green
-            0.0,  0.0,  1.0,  1.0,    // blue
-            // Right face
-            1.0,  1.0,  1.0,  1.0,    // white
-            1.0,  0.0,  0.0,  1.0,    // red
-            0.0,  1.0,  0.0,  1.0,    // green
-            0.0,  0.0,  1.0,  1.0,    // blue
-            // Left face
-            1.0,  1.0,  1.0,  1.0,    // white
-            1.0,  0.0,  0.0,  1.0,    // red
-            0.0,  1.0,  0.0,  1.0,    // green
-            0.0,  0.0,  1.0,  1.0     // blue
-        ];
-
-        // Return the buffer, or add array data to the existing Prim data.
-
-        if( prim.geometry.makeBuffers === true ) {
-
-            //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
-
-            return this.createBuffers( prim.geometry );
-
-        } else {
-
-            return this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
-
-        }
-
-        //return this.createBuffers ( this.createBufferObj(), vertices, indices, texCoords, normals, tangents, colors );
+        return this.geometryCube( prim );
 
     }
 
@@ -1386,6 +1205,8 @@ export default class Prim {
             latDist = latitudeBands / 2;
 
         }
+
+        // Vertices, normals, texCoords.
 
         let x, y, z, u, v;
 
@@ -1539,7 +1360,17 @@ export default class Prim {
 
         }
 
+        // Tangents.
+
         geo.tangents.data = tangents = this.computeTangents( vertices, indices, normals, texCoords );
+
+        // Colors.
+
+        if( ! colors.length ) {
+
+            geo.colors.data = this.computeColors( normals, colors );
+
+        }
 
         // Return the buffer, or add array data to the existing Prim data.
 
@@ -1559,6 +1390,15 @@ export default class Prim {
      * Just create the top dome.
      */
     geometryTopDome ( prim ) {
+
+        return this.geometryDome( prim );
+
+    }
+
+    /** 
+     * Create a Dome object that is rendered inside only
+     */
+    geometrySkyDome ( prim ) {
 
         return this.geometryDome( prim );
 
@@ -1630,11 +1470,13 @@ export default class Prim {
      * TODO: move vertices to better coverage
      * @link https://github.com/caosdoar/spheres/
      */
-    geometryCubeSphere ( prim ) {
+    geometryCube ( prim ) {
 
         let vec3 = this.glMatrix.vec3;
 
         let flatten = this.util.flatten;
+
+        let list = this.typeList;
 
         let geo = prim.geometry;
 
@@ -1688,16 +1530,16 @@ export default class Prim {
                     // Normals.
 
                     var normal = norms[ vertexIndex ] = [0,0,0];
+
                     normal[ u ] = 0
+
                     normal[ v ] = 0
+
                     normal[ w ] = pw / Math.abs( pw );
 
                     // Texture coords.
 
-                    texCoords.push(
-                        i/nu,
-                        1.0 - j/nv
-                    );
+                    texCoords.push( i / nu, 1.0 - j / nv );
 
                     ++vertexIndex;
 
@@ -1711,8 +1553,10 @@ export default class Prim {
 
                 for(var i=0; i<nu; i++) {
 
-                    var n = vertShift + j * (nu + 1) + i
+                    var n = vertShift + j * (nu + 1) + i;
+
                     indices.push(n, n + nu  + 1, n + nu + 2);
+
                     indices.push(n, n + nu + 2, n + 1);
 
                 }
@@ -1721,68 +1565,98 @@ export default class Prim {
 
         }
 
-        // Round the edges of the cube.
+        // Round the edges of the cube to a sphere.
 
-        var tmp = [0,0,0];
-        var radius = 1.5; // TODO: fraction of the dimensions!
+        if ( prim.type === list.CUBESPHERE ) {
 
-        var rx = sx / 2.0;
-        var ry = sy / 2.0;
-        var rz = sz / 2.0;
+            var tmp = [0,0,0];
 
-        for(var i = 0; i < positions.length; i++ ) {
+            //var radius = 1.5; // TODO: fraction of the dimensions!
+            var radius =  prim.dimensions[ 0 ] / 2;
 
-            var pos = positions[i];
-            var normal = normals[i];
-            var inner = [pos[0], pos[1], pos[2]];
+            var rx = sx / 2.0;
 
-            if (pos[0] < -rx + radius) {
-                inner[0] = -rx + radius;
+            var ry = sy / 2.0;
+
+            var rz = sz / 2.0;
+
+            for(var i = 0; i < positions.length; i++ ) {
+
+                var pos = positions[i];
+
+                var normal = normals[i];
+
+                var inner = [pos[0], pos[1], pos[2]];
+
+                if (pos[0] < -rx + radius) {
+
+                    inner[0] = -rx + radius;
+
+                }
+                else if (pos[0] > rx - radius) {
+
+                    inner[0] = rx - radius;
+
+                }
+
+                if (pos[1] < -ry + radius) {
+
+                    inner[1] = -ry + radius;
+
+                }
+                else if (pos[1] > ry - radius) {
+
+                    inner[1] = ry - radius;
+
+                }
+
+                if (pos[2] < -rz + radius) {
+
+                    inner[2] = -rz + radius;
+
+                }
+
+                else if (pos[2] > rz - radius) {
+
+                    inner[2] = rz - radius;
+
+                }
+
+                normal = [pos[0], pos[1], pos[2]];
+
+                vec3.sub( normal, normal, inner );
+
+                vec3.normalize( normal, normal);
+
+                normals[i] = normal;
+
+                pos = [ inner[0], inner[1], inner[2] ];
+
+                tmp = [ normal[0], normal[1], normal[2] ];
+
+                vec3.scale(tmp, tmp, radius);
+
+                vec3.add(pos, pos, tmp);
+
+                positions[i] = pos;
+
             }
-            else if (pos[0] > rx - radius) {
-                inner[0] = rx - radius;
-            }
-
-            if (pos[1] < -ry + radius) {
-                inner[1] = -ry + radius;
-            }
-            else if (pos[1] > ry - radius) {
-                inner[1] = ry - radius;
-            }
-
-            if (pos[2] < -rz + radius) {
-                inner[2] = -rz + radius;
-            }
-
-            else if (pos[2] > rz - radius) {
-                inner[2] = rz - radius;
-            }
-
-            normal = [pos[0], pos[1], pos[2]];
-
-            vec3.sub(normal, normal, inner);
-
-            vec3.normalize(normal, normal);
-
-            normals[i] = normal;
-
-            pos = [ inner[0], inner[1], inner[2] ];
-
-            tmp = [ normal[0], normal[1], normal[2] ];
-
-            vec3.scale(tmp, tmp, radius);
-
-            vec3.add(pos, pos, tmp);
-
-            positions[i] = pos;
 
         }
 
         // Flatten arrays we used multidimensonal access to compute.
 
-        prim.geometry.vertices.data = flatten(positions, false);
+        vertices = geo.vertices.data = flatten( positions, false );
 
-        prim.geometry.normals.data = flatten(norms, false);
+        normals = geo.normals.data = flatten( norms, false );
+
+        // Colors.
+
+        if( ! colors.length ) {
+
+            colors = geo.colors.data = this.computeColors( normals, colors );
+
+        }
 
         // Return the buffer, or add array data to the existing Prim data.
 
@@ -1798,7 +1672,19 @@ export default class Prim {
 
         }
 
-        //return this.createBuffers ( this.createBufferObj(), vertices, indices, texCoords, normals, tangents, colors );
+    }
+
+    /** 
+     * Closed cylinder with one texture.
+     */
+    geometryCan ( prim ) {
+
+    }
+
+    /** 
+     * Two spheres stuck on a cylinder
+     */
+    geometryCapsule ( prim ) {
 
     }
 
@@ -1849,7 +1735,7 @@ export default class Prim {
         texCoords = geo.texCoords.data = new Array( vertices.length ),
         normals = geo.normals.data = new Array( vertices.length ),
         tangents = geo.tangents.data = new Array( vertices.length ),
-        colors = geo.colors.data = new Array( vertices.length * 4 );
+        colors = geo.colors.data; // colors NOTE: NOTE THAT WE ARE USING STANDARD JS ARRAYS
 
         // initialize lots of default variables.
 
@@ -1963,10 +1849,18 @@ export default class Prim {
 
         // Flatten the data arrays.
 
-        geo.vertices.data = flatten(vertices, false );
-        geo.texCoords.data = flatten(texCoords, false );
-        geo.normals.data = flatten(normals, false )
-        geo.tangents.data = flatten(tangents, false )
+        vertices = geo.vertices.data = flatten( vertices, false );
+        texCoords = geo.texCoords.data = flatten( texCoords, false );
+        normals = geo.normals.data = flatten(normals, false )
+        tangents = geo.tangents.data = flatten(tangents, false );
+
+        // Colors.
+
+        if( ! colors.length ) {
+            console.log("COMPUTE COLORS FOR ICO")
+            geo.colors.data = this.computeColors( normals, colors );
+
+        }
 
         // Helper functions.
 
@@ -2151,20 +2045,26 @@ export default class Prim {
 
     }
 
+    geometryIcosohedron ( prim ) {
 
-    /** 
-     * Closed cylinder with one texture.
-     */
-    geometryCan ( prim ) {
+        return this.geometryIcoSphere( prim, false );
 
     }
 
     /** 
-     * Two spheres stuck on a cylinder
+     * Half-sphere, icosohedron based.
      */
-    geometryCapsule ( prim ) {
+    geometryIcoDome( prim ) {
+
+    }   
+
+    geometryPrism ( prim ) {
+
+        // TODO: return upper half of icosohedron, and close. (possibly by setting 
+        // bottom half to a comm y value)
 
     }
+
 
     // More prims
     // Ogre 3d procedural
@@ -2214,26 +2114,6 @@ export default class Prim {
      * https://www.binpress.com/tutorial/creating-an-octahedron-sphere/162
      *
      */
-    geometryIcosohedron ( prim ) {
-
-        return this.geometryIcoSphere( prim, false );
-
-    }
-
-    geometryPrism ( prim ) {
-
-        // TODO: return upper half of icosohedron, and close. (possibly by setting 
-        // bottom half to a comm y value)
-
-    }
-
-    /** 
-     * Half-sphere, icosohedron based.
-     */
-    geometryIcoDome( prim ) {
-
-    }
-
 
     /** 
      * Generic 3d shape (e.g. Collada model).
@@ -2255,6 +2135,7 @@ export default class Prim {
 
         // Vertices.
 
+        // Indices.
 
         // Normals.
 
@@ -2263,6 +2144,14 @@ export default class Prim {
         // Tangents.
 
         this.computeTangents( vertices, indices, normals, texCoords );
+
+        // Colors.
+
+        if( ! colors.length ) {
+
+            geo.colors.data = this.computeColors( normals, colors );
+
+        }
 
         // Return the buffer, or add array data to the existing Prim data.
 

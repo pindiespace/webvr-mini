@@ -1,5 +1,192 @@
 /* old code we're not using anymore */
 
+    /** 
+     * Create a (non-subdivided) cube geometry of a given size (units) centered 
+     * on a point.
+     * @param {GLMatrix.Vec3} center a 3d vector defining the center.
+     * @param {Size} width, height, depth, with 1.0 (unit) max size
+     * @param {Number} scale relative to unit size (1, 1, 1).
+      name = 'unknown', scale = 1.0, dimensions, position, acceleration, rotation, textureImage, color
+     */
+    geometryCube ( prim ) {
+
+        // Shortcuts to Prim data arrays
+
+        let x = prim.dimensions[ 0 ] / 2;
+
+        let y = prim.dimensions[ 1 ] / 2;
+
+        let z = prim.dimensions[ 2 ] / 2 ;
+
+        // Create cube geometry.
+
+        let vertices = prim.geometry.vertices.data = [
+            // Front face
+            -1.0, -1.0,  1.0, // bottomleft
+             1.0, -1.0,  1.0, // bottomright
+             1.0,  1.0,  1.0, // topright
+            -1.0,  1.0,  1.0, // topleft
+            // Back face
+            -1.0, -1.0, -1.0,
+            -1.0,  1.0, -1.0,
+             1.0,  1.0, -1.0,
+             1.0, -1.0, -1.0,
+            // Top face
+            -1.0,  1.0, -1.0,
+            -1.0,  1.0,  1.0,
+             1.0,  1.0,  1.0,
+             1.0,  1.0, -1.0,
+            // Bottom face
+            -1.0, -1.0, -1.0,
+             1.0, -1.0, -1.0,
+             1.0, -1.0,  1.0,
+            -1.0, -1.0,  1.0,
+            // Right face
+             1.0, -1.0, -1.0,
+             1.0,  1.0, -1.0,
+             1.0,  1.0,  1.0,
+             1.0, -1.0,  1.0,
+            // Left face
+            -1.0, -1.0, -1.0,
+            -1.0, -1.0,  1.0,
+            -1.0,  1.0,  1.0,
+            -1.0,  1.0, -1.0
+        ];
+
+        let indices = prim.geometry.indices.data = [
+            0, 1, 2,      0, 2, 3,    // Front face
+            4, 5, 6,      4, 6, 7,    // Back face
+            8, 9, 10,     8, 10, 11,  // Top face
+            12, 13, 14,   12, 14, 15, // Bottom face
+            16, 17, 18,   16, 18, 19, // Right face //can't go to 30
+            20, 21, 22,   20, 22, 23  // Left face
+        ];
+
+        let normals = prim.geometry.normals.data = [
+            // Front face
+            0.0,  0.0,  1.0,
+            0.0,  0.0,  1.0,
+            0.0,  0.0,  1.0,
+            0.0,  0.0,  1.0,
+            // Back face
+            0.0,  0.0, -1.0,
+            0.0,  0.0, -1.0,
+            0.0,  0.0, -1.0,
+            0.0,  0.0, -1.0,
+            // Top face
+            0.0,  1.0,  0.0,
+            0.0,  1.0,  0.0,
+            0.0,  1.0,  0.0,
+            0.0,  1.0,  0.0,
+            // Bottom face
+            0.0, -1.0,  0.0,
+            0.0, -1.0,  0.0,
+            0.0, -1.0,  0.0,
+            0.0, -1.0,  0.0,
+            // Right face
+            1.0,  0.0,  0.0,
+            1.0,  0.0,  0.0,
+            1.0,  0.0,  0.0,
+            1.0,  0.0,  0.0,
+            // Left face
+            -1.0,  0.0,  0.0,
+            -1.0,  0.0,  0.0,
+            -1.0,  0.0,  0.0,
+            -1.0,  0.0,  0.0,
+        ];
+
+        let texCoords = prim.geometry.texCoords.data = [
+            // Front face
+            0.0, 0.0,
+            1.0, 0.0,
+            1.0, 1.0,
+            0.0, 1.0,
+            // Back face
+            1.0, 0.0,
+            1.0, 1.0,
+            0.0, 1.0,
+            0.0, 0.0,
+            // Top face
+            0.0, 1.0,
+            0.0, 0.0,
+            1.0, 0.0,
+            1.0, 1.0,
+            // Bottom face
+            1.0, 1.0,
+            0.0, 1.0,
+            0.0, 0.0,
+            1.0, 0.0,
+            // Right face
+            1.0, 0.0,
+            1.0, 1.0,
+            0.0, 1.0,
+            0.0, 0.0,
+            // Left face
+            0.0, 0.0,
+            1.0, 0.0,
+            1.0, 1.0,
+            0.0, 1.0
+        ];
+
+        let tangents = prim.geometry.tangents.data = [];
+
+        let colors = prim.geometry.colors.data = [
+            // Front face
+            1.0,  1.0,  1.0,  1.0,    // white
+            1.0,  0.0,  0.0,  1.0,    // red
+            0.0,  1.0,  0.0,  1.0,    // green
+            0.0,  0.0,  1.0,  1.0,    // blue
+            // Back face
+            1.0,  1.0,  1.0,  1.0,    // white
+            1.0,  0.0,  0.0,  1.0,    // red
+            0.0,  1.0,  0.0,  1.0,    // green
+            0.0,  0.0,  1.0,  1.0,    // blue
+            // Top face
+            1.0,  1.0,  1.0,  1.0,    // white
+            1.0,  0.0,  0.0,  1.0,    // red
+            0.0,  1.0,  0.0,  1.0,    // green
+            0.0,  0.0,  1.0,  1.0,    // blue
+            // Bottom face
+            1.0,  1.0,  1.0,  1.0,    // white
+            1.0,  0.0,  0.0,  1.0,    // red
+            0.0,  1.0,  0.0,  1.0,    // green
+            0.0,  0.0,  1.0,  1.0,    // blue
+            // Right face
+            1.0,  1.0,  1.0,  1.0,    // white
+            1.0,  0.0,  0.0,  1.0,    // red
+            0.0,  1.0,  0.0,  1.0,    // green
+            0.0,  0.0,  1.0,  1.0,    // blue
+            // Left face
+            1.0,  1.0,  1.0,  1.0,    // white
+            1.0,  0.0,  0.0,  1.0,    // red
+            0.0,  1.0,  0.0,  1.0,    // green
+            0.0,  0.0,  1.0,  1.0     // blue
+        ];
+
+        // Return the buffer, or add array data to the existing Prim data.
+
+        if( prim.geometry.makeBuffers === true ) {
+
+            //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+            return this.createBuffers( prim.geometry );
+
+        } else {
+
+            return this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+        }
+
+        //return this.createBuffers ( this.createBufferObj(), vertices, indices, texCoords, normals, tangents, colors );
+
+    }
+
+
+
+
+
+
+
 geometryIcosohedron( prim ) {
 
         let vec3 = this.glMatrix.vec3;
@@ -175,6 +362,74 @@ geometryIcosohedron( prim ) {
 
 
 
+    /** 
+     * Set or reset indices, normals, texCoords in-place, based on
+     * wether we draw to the front, back, or both. Adapted from 
+     * BabylonJS example.
+     * @param {ENUM} sideOrientation either front, back, or both.
+     * @param {glMatrix.vec3} vertices the 3d vertex coordinates.
+     * @param {glMatrix.vec3} indices the 3d face coordinates.
+     * @param {glMatrix.vec3} normals the 3d normals.
+     * @param {glMatrix.vec2} texCoords the 2d texture coordinates.
+     * @param {glMatrix.vec3} tangents the 4d tangent coordinates.
+     * TODO: tangents
+     */
+    computeSides ( sideOrientation, positions, indices, normals, uvs, tangents ) {
+
+            var li = indices.length;
+            var ln = normals.length;
+            var i;
+            var n;
+            sideOrientation = sideOrientation || this.DEFAULT_SIDE;
+
+            switch (sideOrientation) {
+
+                case this.FRONT_SIDE:
+                    // nothing changed
+                    break;
+
+                case this.BACK_SIDE:
+                    var tmp;
+                    // indices
+                    for (i = 0; i < li; i += 3) {
+                        tmp = indices[i];
+                        indices[i] = indices[i + 2];
+                        indices[i + 2] = tmp;
+                    }
+                    // normals
+                    for (n = 0; n < ln; n++) {
+                        normals[n] = -normals[n];
+                    }
+                    break;
+
+                case this.DOUBLE_SIDE:
+                    // positions
+                    var lp = positions.length;
+                    var l = lp / 3;
+                    for (var p = 0; p < lp; p++) {
+                        positions[lp + p] = positions[p];
+                    } 
+                    // indices
+                    for ( i = 0; i < li; i += 3) {
+                        indices[i + li] = indices[i + 2] + l;
+                        indices[i + 1 + li] = indices[i + 1] + l;
+                        indices[i + 2 + li] = indices[i] + l;
+                    }
+                    // normals
+                    for (n = 0; n < ln; n++) {
+                        normals[ln + n] = -normals[n];
+                    }
+                    // uvs
+                    var lu = uvs.length;
+                    for (var u = 0; u < lu; u++) {
+                        uvs[u + lu] = uvs[u];
+                    }
+                    break;
+            }
+
+    }
+
+    
 
     geometryIcoSphere ( prim ) {
 

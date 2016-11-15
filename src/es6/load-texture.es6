@@ -174,7 +174,7 @@ export default class LoadTexture extends LoadPool {
 
         textures.push( textureObj );
 
-        window.prim = loadObj.prim;
+        //window.prim = loadObj.prim;
 
         // Clear the object for re-use.
 
