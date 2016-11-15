@@ -10,6 +10,12 @@ export default class Prim {
      * NOTE: if you need more complex shapes, use a mesh file, or 
      * a library like http://evanw.github.io/csg.js/ to implement 
      * mesh operations.
+     * 
+     * Implicit objects (values are units, with 1.0 being normalized size).
+     * prim.position = [ x, y, z ]
+     * prim.dimensions = [ x, y, z, startRadius, endRadius ]
+     * prim.divisions = [ x, y, z ]
+     *
      */
 
     constructor ( init, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo ) {
@@ -65,6 +71,8 @@ export default class Prim {
             TOPICODOME: 'geometryTopIcoDome',
 
             BOTTOMICODOME: 'geometryBottomIcoDome',
+
+            SPINDLE: 'geometrySpindle', // top-shaped
 
             CONE: 'geometryCone',
 
@@ -839,6 +847,10 @@ export default class Prim {
         tangents = geo.tangents.data,
         colors = geo.colors.data;
 
+        // Adjust dimensions (all are zero) 
+
+
+
         // Vertices.
 
 
@@ -1016,6 +1028,8 @@ export default class Prim {
 
         let halfX = prim.dimensions[ 0 ] / 2, // x axis
         halfZ = prim.dimensions[ 2 ] / 2; // z axis
+
+        // Increments for building Plane.
 
         let incX = prim.dimensions[ 0 ] / prim.divisions[ 0 ],
         incY = 1.0,
@@ -1338,6 +1352,8 @@ export default class Prim {
 
         let list = this.typeList;
 
+        let vec3 = this.glMatrix.vec3;
+
         let geo = prim.geometry;
 
         // Shortcuts to Prim data arrays.
@@ -1353,14 +1369,15 @@ export default class Prim {
 
         let latitudeBands = prim.divisions[ 1 ]; // y axis
 
-        let radius = prim.dimensions[ 0 ] * 0.5;
+        //let radius = prim.dimensions[ 0 ] * 0.5;
 
-        let latDist = 0;
+        let radius = Math.max( prim.dimensions[0], prim.dimensions[1], prim.dimensions[2] ) * 0.5;
 
+        // Everything except sphere and cylinder is a half-object.
 
-        // Sphere vs. Dome
+        let latDist;
 
-        if ( prim.type === this.typeList.SPHERE || prim.type === this.typeList.CYLINDER ) {
+        if( prim.type === list.SPHERE || prim.type === list.CYLINDER || prim.type === list.SPINDLE ) {
 
             latDist = latitudeBands;
 
@@ -1369,25 +1386,6 @@ export default class Prim {
             latDist = latitudeBands / 2;
 
         }
-
-        // Set some parameters based on type.
-
-        switch( prim.type ) {
-
-            case list.SPHERE:
-            case list.CYLINDER:
-                break;
-            case list.DOME:
-            case list.TOPDOME:
-            case list.BOTTOMDOME:
-                break;
-            case list.CONE:
-                break;
-            default:
-                break;
-
-        }
-
 
         let x, y, z, u, v;
 
@@ -1409,7 +1407,7 @@ export default class Prim {
 
                 // Compute vertex positions.
 
-                if( prim.type === this.typeList.CYLINDER ) {
+                if( prim.type === list.CYLINDER ) {
 
                     x = cosPhi;
 
@@ -1421,13 +1419,13 @@ export default class Prim {
 
                     v = 1 - (latNumber / latitudeBands);
 
-                } else if ( prim.type === this.typeList.SPHERE || prim.type === this.typeList.TOPDOME || prim.type === this.typeList.DOME ) {
+                } else if ( prim.type === list.SPHERE || prim.type === list.TOPDOME || prim.type === list.DOME ) {
 
                     x = cosPhi * sinTheta;
 
                     z = sinPhi * sinTheta;
 
-                    y = cosTheta;
+                    y = cosTheta * 1.2; // TODO: TODO: WHY IS THIS CORRECTION NEEDED?????????????????
 
                     // Texture coords.
 
@@ -1435,27 +1433,43 @@ export default class Prim {
 
                     v = 1 - (latNumber / latitudeBands);
 
-                } else if ( prim.type === this.typeList.BOTTOMDOME ) {
+                } else if ( prim.type === list.BOTTOMDOME ) {
 
-                    x = (cosPhi * sinTheta);
+                    x = cosPhi * sinTheta;
 
-                    z = (sinPhi * sinTheta);
+                    z = sinPhi * sinTheta;
 
                     y = 1 - cosTheta;
 
                     // Texture coords.
 
-                    u = (longNumber / longitudeBands);
+                    u = longNumber / longitudeBands;
 
-                    v = (latNumber / latitudeBands);
+                    v = latNumber / latitudeBands;
 
-                } else if ( prim.type === this.typeList.CONE ) {
+                } else if ( prim.type === list.SPINDLE || prim.type === list.CONE || prim.type == list.TOPCONE ) {
 
-                    x = cosPhi;
+                    x = cosPhi * sinTheta;
 
-                    z = sinPhi;
+                    z = sinPhi * sinTheta;
 
-                    y = cosTheta;
+                    y = 1 - ( latNumber / latitudeBands ); //cosTheta;
+
+                    // Texture coords.
+
+                    u = 1 - (longNumber / longitudeBands);
+
+                    v = 1 - (latNumber / latitudeBands);
+
+                } else if ( prim.type === list.BOTTOMCONE ) {
+
+                    x = cosPhi * sinTheta;
+
+                    z = sinPhi * sinTheta;
+
+                    y = 2 * latNumber / latitudeBands;;
+
+                    // Texture coords.
 
                     u = 1 - (longNumber / longitudeBands);
 
@@ -1463,13 +1477,43 @@ export default class Prim {
 
                 }
 
-                // Push values.
+                // Adjust shape to specified dimensions.
+
+                x *= prim.dimensions[0];
+
+                y *= prim.dimensions[1];
+
+                z *= prim.dimensions[2];
+
+                // Adjust partial shapes to fill their bounding box.
+
+                if ( prim.type !== list.SPINDLE && prim.type !== list.SPHERE ) {
+
+                    //y *= 2;
+
+                }
+
+                // Push vertices.
 
                 vertices.push( radius * x, radius * y, radius * z );
 
-                texCoords.push( u, v) ;
+                // These were wrapped bottom->top, so reverse y on normals.
 
-                normals.push( x, y, z );
+                if ( prim.type === list.BOTTOMDOME || prim.type === list.BOTTOMCONE ) {
+
+                    y = -y; // flip the normals
+
+                }
+
+                texCoords.push( u, v);
+
+                // Push normals.
+
+                let n = vec3.normalize( [ 0, 0, 0 ], [ x, y, z ] );
+
+                normals.push( n[0], n[1], n[2] );
+
+                //normals.push( x, y, z );
 
             }
 
@@ -1500,8 +1544,6 @@ export default class Prim {
         // Return the buffer, or add array data to the existing Prim data.
 
         if( prim.geometry.makeBuffers === true ) {
-
-            //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
 
             return this.createBuffers( prim.geometry );
 
@@ -1553,9 +1595,30 @@ export default class Prim {
     }
 
     /** 
+     * Spindle (two cones stuck together)
+     */
+    geometrySpindle ( prim ) {
+
+        return this.geometryDome( prim );
+
+    }
+
+    /** 
      * Cone with beginning and ending radius, open ends.
      */
     geometryCone ( prim ) {
+
+        return this.geometryDome( prim );
+
+    }
+
+    geometryTopCone ( prim ) {
+
+        return this.geometryDome( prim );
+
+    }
+
+    geometryBottomCone ( prim ) {
 
         return this.geometryDome( prim );
 
@@ -1698,14 +1761,17 @@ export default class Prim {
             normal = [pos[0], pos[1], pos[2]];
 
             vec3.sub(normal, normal, inner);
+
             vec3.normalize(normal, normal);
 
             normals[i] = normal;
 
-            pos = [ inner[0], inner[1], inner[2] ]; //Vec3.set(pos, inner);
-            tmp = [ normal[0], normal[1], normal[2] ]; //Vec3.set(tmp, normal);
+            pos = [ inner[0], inner[1], inner[2] ];
+
+            tmp = [ normal[0], normal[1], normal[2] ];
 
             vec3.scale(tmp, tmp, radius);
+
             vec3.add(pos, pos, tmp);
 
             positions[i] = pos;
@@ -1750,6 +1816,8 @@ export default class Prim {
         let vec2 = this.glMatrix.vec2;
 
         let flatten = this.util.flatten;
+
+        let list = this.typeList;
 
         // Size and divisions.
 
@@ -1865,7 +1933,7 @@ export default class Prim {
 
             // Toggle icosphere with icosohedron.
 
-            if ( prim.type === this.typeList.ICOSPHERE ) {
+            if ( prim.type === list.ICOSPHERE ) {
 
                 vertices[i] = vec3.normalize( [0,0,0], vertices[i]);
 
@@ -2358,15 +2426,23 @@ export default class Prim {
 
         prim.children = [];
 
+        // startRadius and endRadius are used by a few Prims (e.g. Cone)
+
+        if ( dimensions[ 3 ] === undefined ) {
+
+            dimensions[ 4 ] = dimensions[ 3 ] = dimensions[ 0 ] / 2;
+
+        }
+
         // Set the geometry, based on defined type.
 
         prim.type = type;
 
         prim.geometry = this.createBufferObj();
 
-        // Set start and end radius. For spheres, it is zero. For tubes, nonzero values.
+        // Starting and ending radii. Individual Prims may adjust.
 
-        prim.radius = prim.startRadius = prim.endRadius = 0;
+        prim.dimensions[ 3 ] = prim.dimensions[ 4 ] = 0.5 * prim.dimensions[ 0 ]
 
         // NOTE: mis-spelling type leads to error here...
 

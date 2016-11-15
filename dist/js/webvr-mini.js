@@ -3690,6 +3690,12 @@
 	     * NOTE: if you need more complex shapes, use a mesh file, or 
 	     * a library like http://evanw.github.io/csg.js/ to implement 
 	     * mesh operations.
+	     * 
+	     * Implicit objects (values are units, with 1.0 being normalized size).
+	     * prim.position = [ x, y, z ]
+	     * prim.dimensions = [ x, y, z, startRadius, endRadius ]
+	     * prim.divisions = [ x, y, z ]
+	     *
 	     */
 
 	    function Prim(init, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo) {
@@ -3746,6 +3752,8 @@
 	            TOPICODOME: 'geometryTopIcoDome',
 
 	            BOTTOMICODOME: 'geometryBottomIcoDome',
+
+	            SPINDLE: 'geometrySpindle', // top-shaped
 
 	            CONE: 'geometryCone',
 
@@ -4553,6 +4561,9 @@
 	                tangents = geo.tangents.data,
 	                colors = geo.colors.data;
 
+	            // Adjust dimensions (all are zero) 
+
+
 	            // Vertices.
 
 
@@ -4730,6 +4741,8 @@
 	            var halfX = prim.dimensions[0] / 2,
 	                // x axis
 	            halfZ = prim.dimensions[2] / 2; // z axis
+
+	            // Increments for building Plane.
 
 	            var incX = prim.dimensions[0] / prim.divisions[0],
 	                incY = 1.0,
@@ -4991,6 +5004,8 @@
 
 	            var list = this.typeList;
 
+	            var vec3 = this.glMatrix.vec3;
+
 	            var geo = prim.geometry;
 
 	            // Shortcuts to Prim data arrays.
@@ -5006,36 +5021,20 @@
 
 	            var latitudeBands = prim.divisions[1]; // y axis
 
-	            var radius = prim.dimensions[0] * 0.5;
+	            //let radius = prim.dimensions[ 0 ] * 0.5;
 
-	            var latDist = 0;
+	            var radius = Math.max(prim.dimensions[0], prim.dimensions[1], prim.dimensions[2]) * 0.5;
 
-	            // Sphere vs. Dome
+	            // Everything except sphere and cylinder is a half-object.
 
-	            if (prim.type === this.typeList.SPHERE || prim.type === this.typeList.CYLINDER) {
+	            var latDist = void 0;
+
+	            if (prim.type === list.SPHERE || prim.type === list.CYLINDER || prim.type === list.SPINDLE) {
 
 	                latDist = latitudeBands;
 	            } else {
 
 	                latDist = latitudeBands / 2;
-	            }
-
-	            // Set some parameters based on type.
-
-	            switch (prim.type) {
-
-	                case list.SPHERE:
-	                case list.CYLINDER:
-	                    break;
-	                case list.DOME:
-	                case list.TOPDOME:
-	                case list.BOTTOMDOME:
-	                    break;
-	                case list.CONE:
-	                    break;
-	                default:
-	                    break;
-
 	            }
 
 	            var x = void 0,
@@ -5062,7 +5061,7 @@
 
 	                    // Compute vertex positions.
 
-	                    if (prim.type === this.typeList.CYLINDER) {
+	                    if (prim.type === list.CYLINDER) {
 
 	                        x = cosPhi;
 
@@ -5073,20 +5072,20 @@
 	                        u = 1 - longNumber / longitudeBands;
 
 	                        v = 1 - latNumber / latitudeBands;
-	                    } else if (prim.type === this.typeList.SPHERE || prim.type === this.typeList.TOPDOME || prim.type === this.typeList.DOME) {
+	                    } else if (prim.type === list.SPHERE || prim.type === list.TOPDOME || prim.type === list.DOME) {
 
 	                        x = cosPhi * sinTheta;
 
 	                        z = sinPhi * sinTheta;
 
-	                        y = cosTheta;
+	                        y = cosTheta * 1.2; // TODO: TODO: WHY IS THIS CORRECTION NEEDED?????????????????
 
 	                        // Texture coords.
 
 	                        u = 1 - longNumber / longitudeBands;
 
 	                        v = 1 - latNumber / latitudeBands;
-	                    } else if (prim.type === this.typeList.BOTTOMDOME) {
+	                    } else if (prim.type === list.BOTTOMDOME) {
 
 	                        x = cosPhi * sinTheta;
 
@@ -5099,26 +5098,68 @@
 	                        u = longNumber / longitudeBands;
 
 	                        v = latNumber / latitudeBands;
-	                    } else if (prim.type === this.typeList.CONE) {
+	                    } else if (prim.type === list.SPINDLE || prim.type === list.CONE || prim.type == list.TOPCONE) {
 
-	                        x = cosPhi;
+	                        x = cosPhi * sinTheta;
 
-	                        z = sinPhi;
+	                        z = sinPhi * sinTheta;
 
-	                        y = cosTheta;
+	                        y = 1 - latNumber / latitudeBands; //cosTheta;
+
+	                        // Texture coords.
+
+	                        u = 1 - longNumber / longitudeBands;
+
+	                        v = 1 - latNumber / latitudeBands;
+	                    } else if (prim.type === list.BOTTOMCONE) {
+
+	                        x = cosPhi * sinTheta;
+
+	                        z = sinPhi * sinTheta;
+
+	                        y = 2 * latNumber / latitudeBands;;
+
+	                        // Texture coords.
 
 	                        u = 1 - longNumber / longitudeBands;
 
 	                        v = 1 - latNumber / latitudeBands;
 	                    }
 
-	                    // Push values.
+	                    // Adjust shape to specified dimensions.
+
+	                    x *= prim.dimensions[0];
+
+	                    y *= prim.dimensions[1];
+
+	                    z *= prim.dimensions[2];
+
+	                    // Adjust partial shapes to fill their bounding box.
+
+	                    if (prim.type !== list.SPINDLE && prim.type !== list.SPHERE) {}
+
+	                    //y *= 2;
+
+	                    // Push vertices.
 
 	                    vertices.push(radius * x, radius * y, radius * z);
 
+	                    // These were wrapped bottom->top, so reverse y on normals.
+
+	                    if (prim.type === list.BOTTOMDOME || prim.type === list.BOTTOMCONE) {
+
+	                        y = -y; // flip the normals
+	                    }
+
 	                    texCoords.push(u, v);
 
-	                    normals.push(x, y, z);
+	                    // Push normals.
+
+	                    var n = vec3.normalize([0, 0, 0], [x, y, z]);
+
+	                    normals.push(n[0], n[1], n[2]);
+
+	                    //normals.push( x, y, z );
 	                }
 	            }
 
@@ -5145,8 +5186,6 @@
 	            // Return the buffer, or add array data to the existing Prim data.
 
 	            if (prim.geometry.makeBuffers === true) {
-
-	                //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
 
 	                return this.createBuffers(prim.geometry);
 	            } else {
@@ -5203,12 +5242,35 @@
 	        }
 
 	        /** 
+	         * Spindle (two cones stuck together)
+	         */
+
+	    }, {
+	        key: 'geometrySpindle',
+	        value: function geometrySpindle(prim) {
+
+	            return this.geometryDome(prim);
+	        }
+
+	        /** 
 	         * Cone with beginning and ending radius, open ends.
 	         */
 
 	    }, {
 	        key: 'geometryCone',
 	        value: function geometryCone(prim) {
+
+	            return this.geometryDome(prim);
+	        }
+	    }, {
+	        key: 'geometryTopCone',
+	        value: function geometryTopCone(prim) {
+
+	            return this.geometryDome(prim);
+	        }
+	    }, {
+	        key: 'geometryBottomCone',
+	        value: function geometryBottomCone(prim) {
 
 	            return this.geometryDome(prim);
 	        }
@@ -5341,14 +5403,17 @@
 	                normal = [pos[0], pos[1], pos[2]];
 
 	                vec3.sub(normal, normal, inner);
+
 	                vec3.normalize(normal, normal);
 
 	                normals[i] = normal;
 
-	                pos = [inner[0], inner[1], inner[2]]; //Vec3.set(pos, inner);
-	                tmp = [normal[0], normal[1], normal[2]]; //Vec3.set(tmp, normal);
+	                pos = [inner[0], inner[1], inner[2]];
+
+	                tmp = [normal[0], normal[1], normal[2]];
 
 	                vec3.scale(tmp, tmp, radius);
+
 	                vec3.add(pos, pos, tmp);
 
 	                positions[i] = pos;
@@ -5393,6 +5458,8 @@
 	            var vec2 = this.glMatrix.vec2;
 
 	            var flatten = this.util.flatten;
+
+	            var list = this.typeList;
 
 	            // Size and divisions.
 
@@ -5507,7 +5574,7 @@
 
 	                // Toggle icosphere with icosohedron.
 
-	                if (prim.type === this.typeList.ICOSPHERE) {
+	                if (prim.type === list.ICOSPHERE) {
 
 	                    vertices[i] = vec3.normalize([0, 0, 0], vertices[i]);
 	                }
@@ -6003,15 +6070,22 @@
 
 	            prim.children = [];
 
+	            // startRadius and endRadius are used by a few Prims (e.g. Cone)
+
+	            if (dimensions[3] === undefined) {
+
+	                dimensions[4] = dimensions[3] = dimensions[0] / 2;
+	            }
+
 	            // Set the geometry, based on defined type.
 
 	            prim.type = type;
 
 	            prim.geometry = this.createBufferObj();
 
-	            // Set start and end radius. For spheres, it is zero. For tubes, nonzero values.
+	            // Starting and ending radii. Individual Prims may adjust.
 
-	            prim.radius = prim.startRadius = prim.endRadius = 0;
+	            prim.dimensions[3] = prim.dimensions[4] = 0.5 * prim.dimensions[0];
 
 	            // NOTE: mis-spelling type leads to error here...
 
@@ -7061,9 +7135,9 @@
 	            ['img/webvr-logo2.png'], vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	            ));
 
-	            this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.SPHERE, 'texsphere', 1.0, vec3.fromValues(3, 3, 3), // dimensions
-	            vec3.fromValues(10, 10, 10), // divisions
-	            vec3.fromValues(-6, -0.3, -4), // position (absolute)
+	            this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.SPHERE, 'texsphere', 1.0, vec3.fromValues(1.5, 1.5, 1.5), // dimensions
+	            vec3.fromValues(30, 30, 30), // divisions
+	            vec3.fromValues(-5, -0.3, -2), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
 	            vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
@@ -7091,7 +7165,7 @@
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	            ));
 
-	            this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.DOME, 'TestDome', 1.0, vec3.fromValues(2, 3, 3), // dimensions
+	            this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.BOTTOMDOME, 'TestDome', 1.0, vec3.fromValues(1, 1, 1), // dimensions
 	            vec3.fromValues(10, 10, 10), // divisions MAKE SMALLER
 	            vec3.fromValues(-3.5, 1.5, -1), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
