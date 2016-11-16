@@ -4108,13 +4108,19 @@
 	        key: 'computeColors',
 	        value: function computeColors(normals, colors) {
 
-	            for (var i = 0, len = normals.length; i < len; i++) {
+	            var ct = 0;
+
+	            for (var i = 0, len = normals.length; i < len; i += 3) {
 
 	                //let c1 = this.randomColor();
 
 	                //colors.push( c1[0], c1[1], c1[2], 1.0 );
-	                colors.push(Math.abs(normals[0]), Math.abs(normals[1]), Math.abs(normals[2]));
+	                colors.push(normals[i], normals[i + 1], normals[i + 2], 1.0);
+
+	                ct++;
 	            }
+
+	            console.log("CT:" + ct + " VERTICES:" + normals.length / 3 + " COLORS:" + colors.length / 4);
 
 	            return colors;
 	        }
@@ -4392,14 +4398,14 @@
 	                var t1 = w2y - w1y,
 	                    t2 = w3y - w1y;
 
-	                var r = 1.0 / (s1 * t2 - s2 * t1);
+	                var _r = 1.0 / (s1 * t2 - s2 * t1);
 
-	                var sx = (t2 * x1 - t1 * x2) * r,
-	                    sy = (t2 * y1 - t1 * y2) * r,
-	                    sz = (t2 * z1 - t1 * z2) * r;
-	                var tx = (s1 * x2 - s2 * x1) * r,
-	                    ty = (s1 * y2 - s2 * y1) * r,
-	                    tz = (s1 * z2 - s2 * z1) * r;
+	                var sx = (t2 * x1 - t1 * x2) * _r,
+	                    sy = (t2 * y1 - t1 * y2) * _r,
+	                    sz = (t2 * z1 - t1 * z2) * _r;
+	                var tx = (s1 * x2 - s2 * x1) * _r,
+	                    ty = (s1 * y2 - s2 * y1) * _r,
+	                    tz = (s1 * z2 - s2 * z1) * _r;
 
 	                var j = i1 * 3;tan1[j] += sx;tan1[j + 1] += sy;tan1[j + 2] += sz;
 	                tan2[j] += tx;tan2[j + 1] += ty;tan2[j + 2] += tz;
@@ -4420,7 +4426,7 @@
 	            for (var i3 = 0, i4 = 0; i4 < numVertices; i3 += 3, i4 += 4) {
 
 	                // not very efficient here (used the vec3 type and dot/cross operations from MV.js)
-	                var n = [normals[i3], normals[i3 + 1], normals[i3 + 2]];
+	                var _n = [normals[i3], normals[i3 + 1], normals[i3 + 2]];
 	                var _t = [tan1[i3], tan1[i3 + 1], tan1[i3 + 2]];
 	                var _t2 = [tan2[i3], tan2[i3 + 1], tan2[i3 + 2]];
 
@@ -4428,7 +4434,7 @@
 
 	                // Gram-Schmidt orthogonalize
 	                ////////////////const tmp  = subtract(t1, scale(dot(n, t1), n));
-	                var tmp = vec3.sub([0, 0, 0], _t, vec3.scale([0, 0, 0], _t, vec3.dot(n, _t)));
+	                var tmp = vec3.sub([0, 0, 0], _t, vec3.scale([0, 0, 0], _t, vec3.dot(_n, _t)));
 
 	                //console.log("TMP:" + tmp) //NOT COMPUTING THIS RIGHT, all NAN
 
@@ -4442,7 +4448,7 @@
 
 	                // Calculate handedness
 	                //////////////const tw = (dot(cross(n, t1), t2) < 0.0) ? -1.0 : 1.0;
-	                var tw = vec3.dot(vec3.cross([0, 0, 0], n, _t), _t2) < 0.0 ? -1.0 : 1.0;
+	                var tw = vec3.dot(vec3.cross([0, 0, 0], _n, _t), _t2) < 0.0 ? -1.0 : 1.0;
 
 	                tangents[i4] = txyz[0];
 	                tangents[i4 + 1] = txyz[1];
@@ -5026,9 +5032,9 @@
 
 	                    // Push normals.
 
-	                    var n = vec3.normalize([0, 0, 0], [x, y, z]);
+	                    var _n2 = vec3.normalize([0, 0, 0], [x, y, z]);
 
-	                    normals.push(n[0], n[1], n[2]);
+	                    normals.push(_n2[0], _n2[1], _n2[2]);
 
 	                    //normals.push( x, y, z );
 	                }
@@ -5737,6 +5743,57 @@
 
 	        // TODO: return upper half of icosohedron, and close. (possibly by setting 
 	        // bottom half to a comm y value)
+
+	        /** 
+	         * Torus object
+	         * @link https://blogoben.wordpress.com/2011/10/26/webgl-basics-7-colored-torus/
+	         * Creates a 3D torus in the XY plane, returns the data in a new object composed of
+	         *   several Float32Array objects named 'vertices' and 'colors', according to
+	         *   the following parameters:
+	         * r:  big radius
+	         * sr: section radius
+	         * n:  number of faces
+	         * sn: number of faces on section
+	         * k:  factor between 0 and 1 defining the space between strips of the torus
+	         */
+
+	    }, {
+	        key: 'geometryTorus',
+	        value: function geometryTorus(prim) {
+	            // Temporary arrays for the vertices, normals and colors
+	            var tv = new Array();
+	            var tc = new Array();
+
+	            // Iterates along the big circle and then around a section
+	            for (var i = 0; i < n; i++) {
+	                // Iterates over all strip rounds
+	                for (var j = 0; j < sn + 1 * (i == n - 1); j++) {
+	                    // Iterates along the torus section
+	                    for (var v = 0; v < 2; v++) // Creates zigzag pattern (v equals 0 or 1)
+	                    {
+	                        // Pre-calculation of angles
+	                        var a = 2 * Math.PI * (i + j / sn + k * v) / n;
+	                        var sa = 2 * Math.PI * j / sn;
+	                        var x, y, z;
+
+	                        // Coordinates on the surface of the torus  
+	                        tv.push(x = (r + sr * Math.cos(sa)) * Math.cos(a)); // X
+	                        tv.push(y = (r + sr * Math.cos(sa)) * Math.sin(a)); // Y
+	                        tv.push(z = sr * Math.sin(sa)); // Z
+
+	                        // Colors
+	                        tc.push(0.5 + 0.5 * x); // R
+	                        tc.push(0.5 + 0.5 * y); // G
+	                        tc.push(0.5 + 0.5 * z); // B
+	                        tc.push(1.0); // Alpha
+	                    }
+	                }
+	            } // Converts and returns array
+	            var res = new Object();
+	            res.vertices = new Float32Array(tv);
+	            res.colors = new Float32Array(tc);
+	            return res;
+	        }
 
 	        // More prims
 	        // Ogre 3d procedural

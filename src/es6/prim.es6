@@ -422,14 +422,20 @@ export default class Prim {
      */
     computeColors( normals, colors ) {
 
-        for ( var i = 0, len = normals.length; i < len; i++ ) {
+        let ct = 0;
+
+        for ( var i = 0, len = normals.length; i < len; i += 3 ) {
 
             //let c1 = this.randomColor();
 
             //colors.push( c1[0], c1[1], c1[2], 1.0 );
-            colors.push( Math.abs( normals[0] ), Math.abs( normals[1] ), Math.abs( normals[2] ) );
+            colors.push( normals[i], normals[i+1], normals[i+2], 1.0 );
+
+            ct++;
 
         }
+
+        console.log("CT:" + ct + " VERTICES:" + normals.length / 3 + " COLORS:" + colors.length / 4)
 
         return colors;
 
@@ -2062,6 +2068,53 @@ export default class Prim {
 
         // TODO: return upper half of icosohedron, and close. (possibly by setting 
         // bottom half to a comm y value)
+
+    }
+
+    /** 
+     * Torus object
+     * @link https://blogoben.wordpress.com/2011/10/26/webgl-basics-7-colored-torus/
+     * Creates a 3D torus in the XY plane, returns the data in a new object composed of
+     *   several Float32Array objects named 'vertices' and 'colors', according to
+     *   the following parameters:
+     * r:  big radius
+     * sr: section radius
+     * n:  number of faces
+     * sn: number of faces on section
+     * k:  factor between 0 and 1 defining the space between strips of the torus
+     */
+    geometryTorus ( prim ) {
+// Temporary arrays for the vertices, normals and colors
+  var tv = new Array();
+  var tc = new Array();
+   
+  // Iterates along the big circle and then around a section
+  for(var i=0;i<n;i++)               // Iterates over all strip rounds
+    for(var j=0;j<sn+1*(i==n-1);j++) // Iterates along the torus section
+      for(var v=0;v<2;v++)           // Creates zigzag pattern (v equals 0 or 1)
+      {
+        // Pre-calculation of angles
+        var a =  2*Math.PI*(i+j/sn+k*v)/n;
+        var sa = 2*Math.PI*j/sn;
+        var x, y, z;
+       
+        // Coordinates on the surface of the torus  
+        tv.push(x = (r+sr*Math.cos(sa))*Math.cos(a)); // X
+        tv.push(y = (r+sr*Math.cos(sa))*Math.sin(a)); // Y
+        tv.push(z = sr*Math.sin(sa));                 // Z
+       
+        // Colors
+        tc.push(0.5+0.5*x);  // R
+        tc.push(0.5+0.5*y);  // G
+        tc.push(0.5+0.5*z);  // B
+        tc.push(1.0);  // Alpha
+      }
+ 
+  // Converts and returns array
+  var res = new Object();
+  res.vertices = new Float32Array(tv);
+  res.colors = new Float32Array(tc);
+  return res;
 
     }
 
