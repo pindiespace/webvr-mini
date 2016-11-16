@@ -209,6 +209,7 @@ export default class Util {
                 case 'Float32Array':
                     result = new Float32Array( firstLength + second.length );
                     if( arr2.type !== arr1.type ) {
+
                         arr2 = Float32Array.from( arr2 );
 
                     }
@@ -217,6 +218,7 @@ export default class Util {
                 case 'Uint16Array':
                     result = new Uint16Array( firstLength + second.length );
                     if( arr2.type !== arr1.type ) {
+
                         arr2 = Uint16Array.from( arr2 );
 
                     }
@@ -306,6 +308,12 @@ export default class Util {
     getRandInt ( range ) {
 
         return Math.floor( Math.random() * range );
+
+    }
+
+    randomColor () {
+
+        return [ Math.abs( Math.random() ) , Math.abs( Math.random() ) , Math.abs( Math.random() ) ];
 
     }
 

@@ -705,6 +705,7 @@
 	                    case 'Float32Array':
 	                        result = new Float32Array(firstLength + second.length);
 	                        if (arr2.type !== arr1.type) {
+
 	                            arr2 = Float32Array.from(arr2);
 	                        }
 	                        break;
@@ -712,6 +713,7 @@
 	                    case 'Uint16Array':
 	                        result = new Uint16Array(firstLength + second.length);
 	                        if (arr2.type !== arr1.type) {
+
 	                            arr2 = Uint16Array.from(arr2);
 	                        }
 	                        break;
@@ -793,6 +795,12 @@
 	        value: function getRandInt(range) {
 
 	            return Math.floor(Math.random() * range);
+	        }
+	    }, {
+	        key: 'randomColor',
+	        value: function randomColor() {
+
+	            return [Math.abs(Math.random()), Math.abs(Math.random()), Math.abs(Math.random())];
 	        }
 	    }, {
 	        key: 'getFileExtension',
@@ -3767,6 +3775,8 @@
 
 	            CYLINDER: 'geometryCylinder',
 
+	            TORUS: 'geometryTorus',
+
 	            MESH: 'geometryMesh',
 
 	            TERRAIN: 'geometryTerrain'
@@ -4093,22 +4103,14 @@
 
 	            return bufferObj;
 	        }
-	    }, {
-	        key: 'randomColor',
-	        value: function randomColor() {
-
-	            return [Math.abs(Math.random()), Math.abs(Math.random()), Math.abs(Math.random())];
-	        }
 
 	        /** 
-	         * Create default (random) colors for Prim color array.
+	         * Create default colors for Prim color array.
 	         */
 
 	    }, {
 	        key: 'computeColors',
 	        value: function computeColors(normals, colors) {
-
-	            var ct = 0;
 
 	            for (var i = 0, len = normals.length; i < len; i += 3) {
 
@@ -4116,11 +4118,9 @@
 
 	                //colors.push( c1[0], c1[1], c1[2], 1.0 );
 	                colors.push(normals[i], normals[i + 1], normals[i + 2], 1.0);
-
-	                ct++;
 	            }
 
-	            console.log("CT:" + ct + " VERTICES:" + normals.length / 3 + " COLORS:" + colors.length / 4);
+	            // console.log(" VERTICES:" + normals.length / 3 + " COLORS:" + colors.length / 4)
 
 	            return colors;
 	        }
@@ -4398,14 +4398,14 @@
 	                var t1 = w2y - w1y,
 	                    t2 = w3y - w1y;
 
-	                var _r = 1.0 / (s1 * t2 - s2 * t1);
+	                var r = 1.0 / (s1 * t2 - s2 * t1);
 
-	                var sx = (t2 * x1 - t1 * x2) * _r,
-	                    sy = (t2 * y1 - t1 * y2) * _r,
-	                    sz = (t2 * z1 - t1 * z2) * _r;
-	                var tx = (s1 * x2 - s2 * x1) * _r,
-	                    ty = (s1 * y2 - s2 * y1) * _r,
-	                    tz = (s1 * z2 - s2 * z1) * _r;
+	                var sx = (t2 * x1 - t1 * x2) * r,
+	                    sy = (t2 * y1 - t1 * y2) * r,
+	                    sz = (t2 * z1 - t1 * z2) * r;
+	                var tx = (s1 * x2 - s2 * x1) * r,
+	                    ty = (s1 * y2 - s2 * y1) * r,
+	                    tz = (s1 * z2 - s2 * z1) * r;
 
 	                var j = i1 * 3;tan1[j] += sx;tan1[j + 1] += sy;tan1[j + 2] += sz;
 	                tan2[j] += tx;tan2[j + 1] += ty;tan2[j + 2] += tz;
@@ -4426,7 +4426,7 @@
 	            for (var i3 = 0, i4 = 0; i4 < numVertices; i3 += 3, i4 += 4) {
 
 	                // not very efficient here (used the vec3 type and dot/cross operations from MV.js)
-	                var _n = [normals[i3], normals[i3 + 1], normals[i3 + 2]];
+	                var n = [normals[i3], normals[i3 + 1], normals[i3 + 2]];
 	                var _t = [tan1[i3], tan1[i3 + 1], tan1[i3 + 2]];
 	                var _t2 = [tan2[i3], tan2[i3 + 1], tan2[i3 + 2]];
 
@@ -4434,7 +4434,7 @@
 
 	                // Gram-Schmidt orthogonalize
 	                ////////////////const tmp  = subtract(t1, scale(dot(n, t1), n));
-	                var tmp = vec3.sub([0, 0, 0], _t, vec3.scale([0, 0, 0], _t, vec3.dot(_n, _t)));
+	                var tmp = vec3.sub([0, 0, 0], _t, vec3.scale([0, 0, 0], _t, vec3.dot(n, _t)));
 
 	                //console.log("TMP:" + tmp) //NOT COMPUTING THIS RIGHT, all NAN
 
@@ -4448,7 +4448,7 @@
 
 	                // Calculate handedness
 	                //////////////const tw = (dot(cross(n, t1), t2) < 0.0) ? -1.0 : 1.0;
-	                var tw = vec3.dot(vec3.cross([0, 0, 0], _n, _t), _t2) < 0.0 ? -1.0 : 1.0;
+	                var tw = vec3.dot(vec3.cross([0, 0, 0], n, _t), _t2) < 0.0 ? -1.0 : 1.0;
 
 	                tangents[i4] = txyz[0];
 	                tangents[i4 + 1] = txyz[1];
@@ -4487,6 +4487,8 @@
 
 	            var geo = prim.geometry;
 
+	            var util = this.util;
+
 	            // Shortcuts to Prim data arrays
 
 	            var vertices = geo.vertices.data,
@@ -4516,7 +4518,7 @@
 
 	            if (!colors.length) {
 
-	                colors.push(this.randomColor(), this.randomColor(), this.randomColor(), 1.0);
+	                colors.push(util.randomColor(), util.randomColor(), util.randomColor(), 1.0);
 	            }
 
 	            // Return the buffer, or add array data to the existing Prim data.
@@ -4853,22 +4855,6 @@
 	        }
 
 	        /** 
-	         * Create a (non-subdivided) cube geometry of a given size (units) centered 
-	         * on a point.
-	         * @param {GLMatrix.Vec3} center a 3d vector defining the center.
-	         * @param {Size} width, height, depth, with 1.0 (unit) max size
-	         * @param {Number} scale relative to unit size (1, 1, 1).
-	          name = 'unknown', scale = 1.0, dimensions, position, acceleration, rotation, textureImage, color
-	         */
-
-	    }, {
-	        key: 'geometryCubeSphere',
-	        value: function geometryCubeSphere(prim) {
-
-	            return this.geometryCube(prim);
-	        }
-
-	        /** 
 	         * Half-sphere, polar coordinates.
 	         * @param {Prim} prim the object needing geometry.
 	         */
@@ -5032,9 +5018,9 @@
 
 	                    // Push normals.
 
-	                    var _n2 = vec3.normalize([0, 0, 0], [x, y, z]);
+	                    var n = vec3.normalize([0, 0, 0], [x, y, z]);
 
-	                    normals.push(_n2[0], _n2[1], _n2[2]);
+	                    normals.push(n[0], n[1], n[2]);
 
 	                    //normals.push( x, y, z );
 	                }
@@ -5216,10 +5202,15 @@
 	            var vertexIndex = 0;
 
 	            makeSide(0, 1, 2, sx, sy, nx, ny, sz / 2, 1, -1); //front
+
 	            makeSide(0, 1, 2, sx, sy, nx, ny, -sz / 2, -1, -1); //back
+
 	            makeSide(2, 1, 0, sz, sy, nz, ny, -sx / 2, 1, -1); //left
+
 	            makeSide(2, 1, 0, sz, sy, nz, ny, sx / 2, -1, -1); //right
+
 	            makeSide(0, 2, 1, sx, sz, nx, nz, sy / 2, 1, 1); //top
+
 	            makeSide(0, 2, 1, sx, sz, nx, nz, -sy / 2, 1, -1); //bottom
 
 	            function makeSide(u, v, w, su, sv, nu, nv, pw, flipu, flipv) {
@@ -5362,6 +5353,22 @@
 
 	                return this.addBufferData(prim.geometry, vertices, indices, texCoords, normals, tangents, colors);
 	            }
+	        }
+
+	        /** 
+	         * Create a (non-subdivided) cube geometry of a given size (units) centered 
+	         * on a point.
+	         * @param {GLMatrix.Vec3} center a 3d vector defining the center.
+	         * @param {Size} width, height, depth, with 1.0 (unit) max size
+	         * @param {Number} scale relative to unit size (1, 1, 1).
+	          name = 'unknown', scale = 1.0, dimensions, position, acceleration, rotation, textureImage, color
+	         */
+
+	    }, {
+	        key: 'geometryCubeSphere',
+	        value: function geometryCubeSphere(prim) {
+
+	            return this.geometryCube(prim);
 	        }
 
 	        /** 
@@ -5550,7 +5557,7 @@
 	            // Colors.
 
 	            if (!colors.length) {
-	                console.log("COMPUTE COLORS FOR ICO");
+
 	                geo.colors.data = this.computeColors(normals, colors);
 	            }
 
@@ -5747,6 +5754,7 @@
 	        /** 
 	         * Torus object
 	         * @link https://blogoben.wordpress.com/2011/10/26/webgl-basics-7-colored-torus/
+	         * @link http://apparat-engine.blogspot.com/2013/04/procedural-meshes-torus.html
 	         * Creates a 3D torus in the XY plane, returns the data in a new object composed of
 	         *   several Float32Array objects named 'vertices' and 'colors', according to
 	         *   the following parameters:
@@ -5760,39 +5768,116 @@
 	    }, {
 	        key: 'geometryTorus',
 	        value: function geometryTorus(prim) {
-	            // Temporary arrays for the vertices, normals and colors
-	            var tv = new Array();
-	            var tc = new Array();
 
-	            // Iterates along the big circle and then around a section
-	            for (var i = 0; i < n; i++) {
-	                // Iterates over all strip rounds
-	                for (var j = 0; j < sn + 1 * (i == n - 1); j++) {
-	                    // Iterates along the torus section
-	                    for (var v = 0; v < 2; v++) // Creates zigzag pattern (v equals 0 or 1)
-	                    {
-	                        // Pre-calculation of angles
-	                        var a = 2 * Math.PI * (i + j / sn + k * v) / n;
-	                        var sa = 2 * Math.PI * j / sn;
-	                        var x, y, z;
+	            var vec3 = this.glMatrix.vec3;
 
-	                        // Coordinates on the surface of the torus  
-	                        tv.push(x = (r + sr * Math.cos(sa)) * Math.cos(a)); // X
-	                        tv.push(y = (r + sr * Math.cos(sa)) * Math.sin(a)); // Y
-	                        tv.push(z = sr * Math.sin(sa)); // Z
+	            var flatten = this.util.flatten;
 
-	                        // Colors
-	                        tc.push(0.5 + 0.5 * x); // R
-	                        tc.push(0.5 + 0.5 * y); // G
-	                        tc.push(0.5 + 0.5 * z); // B
-	                        tc.push(1.0); // Alpha
-	                    }
+	            var list = this.typeList;
+
+	            var geo = prim.geometry;
+
+	            // Shortcuts to Prim data arrays
+
+	            var vertices = geo.vertices.data,
+	                indices = geo.indices.data,
+	                texCoords = geo.texCoords.data,
+	                normals = geo.normals.data,
+	                tangents = geo.tangents.data,
+	                colors = geo.colors.data;
+
+	            var radius = 1.5,
+	                ringRadius = 0.25,
+	                sides = 36,
+	                rings = 24;
+
+	            var numVerticesPerRow = sides + 1;
+
+	            var numVerticesPerColumn = rings + 1;
+
+	            var numVertices = numVerticesPerRow * numVerticesPerColumn;
+
+	            var vertexStride = 3; // 3 bytes
+
+	            var SizeOfVertexBufferInBytes = numVertices * vertexStride;
+
+	            var theta = 0.0;
+
+	            var phi = 0.0;
+
+	            var verticalAngularStride = Math.PI * 2.0 / rings;
+
+	            var horizontalAngularStride = Math.PI * 2.0 / sides;
+
+	            var x = void 0,
+	                y = void 0,
+	                z = void 0;
+
+	            for (var verticalIt = 0; verticalIt < numVerticesPerColumn; verticalIt++) {
+
+	                theta = verticalAngularStride * verticalIt;
+
+	                for (var horizontalIt = 0; horizontalIt < numVerticesPerRow; horizontalIt++) {
+
+	                    phi = horizontalAngularStride * horizontalIt;
+
+	                    // position
+	                    x = Math.cos(theta) * (radius + ringRadius * Math.cos(phi));
+
+	                    y = Math.sin(theta) * (radius + ringRadius * Math.cos(phi));
+
+	                    z = ringRadius * Math.sin(phi);
+
+	                    vertices.push(x, y, z); // NOTE: x, z, y gives a horizontal torus! NOTE: MAY WANT TO DO FOR PLANE
+
+	                    var norm = vec3.normalize([0, 0, 0], [x, y, z]);
+
+	                    normals.push(norm[0], norm[1], norm[2]);
+
+	                    var u = horizontalIt / numVerticesPerRow;
+
+	                    var v = verticalIt / numVerticesPerColumn;
+
+	                    texCoords.push(u, v);
 	                }
-	            } // Converts and returns array
-	            var res = new Object();
-	            res.vertices = new Float32Array(tv);
-	            res.colors = new Float32Array(tc);
-	            return res;
+	            }
+
+	            var numIndices = sides * rings * 6;
+
+	            for (var _verticalIt = 0; _verticalIt < rings; _verticalIt++) {
+
+	                for (var _horizontalIt = 0; _horizontalIt < sides; _horizontalIt++) {
+
+	                    var lt = _horizontalIt + _verticalIt * numVerticesPerRow;
+	                    var rt = _horizontalIt + 1 + _verticalIt * numVerticesPerRow;
+
+	                    var lb = _horizontalIt + (_verticalIt + 1) * numVerticesPerRow;
+	                    var rb = _horizontalIt + 1 + (_verticalIt + 1) * numVerticesPerRow;
+
+	                    indices.push(lb, rb, rt, lb, rt, lt);
+	                }
+	            }
+
+	            // Colors.
+
+	            if (!colors.length) {
+
+	                colors = geo.colors.data = this.computeColors(normals, colors);
+	            }
+
+	            window.prim = prim;
+
+	            // Return the buffer, or add array data to the existing Prim data.
+
+	            if (prim.geometry.makeBuffers === true) {
+
+	                //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+	                return this.createBuffers(prim.geometry);
+	            } else {
+
+	                return this.addBufferData(prim.geometry, vertices, indices, texCoords, normals, tangents, colors);
+	            }
 	        }
 
 	        // More prims
@@ -7088,6 +7173,16 @@
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	            ));
 
+	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.TORUS, 'torus', 1.0, vec3.fromValues(1, 1, 1), // dimensions
+	            vec3.fromValues(9, 9, 9), // divisions
+	            vec3.fromValues(-1.8, 3, -3.5), // position (absolute)
+	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	            vec3.fromValues(util.degToRad(20), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	            vec3.fromValues(util.degToRad(0), util.degToRad(1), util.degToRad(0)), // angular velocity in x, y, x
+	            ['img/uv-test.png'], // texture present, NOT USED
+	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+	            ));
+
 	            this.vs2 = this.renderer.shaderColor.init(this.colorObjList);
 
 	            // LIT TEXTURE SHADER.
@@ -7156,7 +7251,7 @@
 
 	            this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.BOTTOMDOME, 'TestDome', 1.0, vec3.fromValues(1, 1, 1), // dimensions
 	            vec3.fromValues(10, 10, 10), // divisions MAKE SMALLER
-	            vec3.fromValues(-3.5, 1.5, -1), // position (absolute)
+	            vec3.fromValues(-4, 1.5, -0.5), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
 	            vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x

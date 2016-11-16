@@ -86,6 +86,8 @@ export default class Prim {
 
             CYLINDER: 'geometryCylinder',
 
+            TORUS: 'geometryTorus',
+
             MESH: 'geometryMesh',
 
             TERRAIN: 'geometryTerrain'
@@ -411,18 +413,10 @@ export default class Prim {
 
     }
 
-    randomColor () {
-
-        return [ Math.abs( Math.random() ) , Math.abs( Math.random() ) , Math.abs( Math.random() ) ];
-
-    }
-
     /** 
-     * Create default (random) colors for Prim color array.
+     * Create default colors for Prim color array.
      */
     computeColors( normals, colors ) {
-
-        let ct = 0;
 
         for ( var i = 0, len = normals.length; i < len; i += 3 ) {
 
@@ -431,11 +425,9 @@ export default class Prim {
             //colors.push( c1[0], c1[1], c1[2], 1.0 );
             colors.push( normals[i], normals[i+1], normals[i+2], 1.0 );
 
-            ct++;
-
         }
 
-        console.log("CT:" + ct + " VERTICES:" + normals.length / 3 + " COLORS:" + colors.length / 4)
+        // console.log(" VERTICES:" + normals.length / 3 + " COLORS:" + colors.length / 4)
 
         return colors;
 
@@ -775,6 +767,8 @@ export default class Prim {
 
        let geo = prim.geometry;
 
+       let util = this.util;
+
         // Shortcuts to Prim data arrays
 
         let vertices = geo.vertices.data,
@@ -804,7 +798,7 @@ export default class Prim {
 
         if( ! colors.length ) {
 
-            colors.push( this.randomColor(), this.randomColor(), this.randomColor(), 1.0 );
+            colors.push( util.randomColor(), util.randomColor(), util.randomColor(), 1.0 );
 
         }
 
@@ -1155,21 +1149,6 @@ export default class Prim {
     }
 
     /** 
-     * Create a (non-subdivided) cube geometry of a given size (units) centered 
-     * on a point.
-     * @param {GLMatrix.Vec3} center a 3d vector defining the center.
-     * @param {Size} width, height, depth, with 1.0 (unit) max size
-     * @param {Number} scale relative to unit size (1, 1, 1).
-      name = 'unknown', scale = 1.0, dimensions, position, acceleration, rotation, textureImage, color
-     */
-    geometryCubeSphere ( prim ) {
-
-        return this.geometryCube( prim );
-
-    }
-
-
-    /** 
      * Half-sphere, polar coordinates.
      * @param {Prim} prim the object needing geometry.
      */
@@ -1511,10 +1490,15 @@ export default class Prim {
         let vertexIndex = 0;
 
         makeSide( 0, 1, 2, sx, sy, nx, ny,  sz/2,  1, -1 ); //front
+
         makeSide( 0, 1, 2, sx, sy, nx, ny, -sz/2, -1, -1 ); //back
+
         makeSide( 2, 1, 0, sz, sy, nz, ny, -sx/2,  1, -1 ); //left
+
         makeSide( 2, 1, 0, sz, sy, nz, ny,  sx/2, -1, -1 ); //right
+
         makeSide( 0, 2, 1, sx, sz, nx, nz,  sy/2,  1,  1 ); //top
+
         makeSide( 0, 2, 1, sx, sz, nx, nz, -sy/2,  1, -1 ); //bottom
 
         function makeSide(u, v, w, su, sv, nu, nv, pw, flipu, flipv) {
@@ -1677,6 +1661,20 @@ export default class Prim {
             return this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
 
         }
+
+    }
+
+    /** 
+     * Create a (non-subdivided) cube geometry of a given size (units) centered 
+     * on a point.
+     * @param {GLMatrix.Vec3} center a 3d vector defining the center.
+     * @param {Size} width, height, depth, with 1.0 (unit) max size
+     * @param {Number} scale relative to unit size (1, 1, 1).
+      name = 'unknown', scale = 1.0, dimensions, position, acceleration, rotation, textureImage, color
+     */
+    geometryCubeSphere ( prim ) {
+
+        return this.geometryCube( prim );
 
     }
 
@@ -1863,7 +1861,7 @@ export default class Prim {
         // Colors.
 
         if( ! colors.length ) {
-            console.log("COMPUTE COLORS FOR ICO")
+
             geo.colors.data = this.computeColors( normals, colors );
 
         }
@@ -2074,6 +2072,7 @@ export default class Prim {
     /** 
      * Torus object
      * @link https://blogoben.wordpress.com/2011/10/26/webgl-basics-7-colored-torus/
+     * @link http://apparat-engine.blogspot.com/2013/04/procedural-meshes-torus.html
      * Creates a 3D torus in the XY plane, returns the data in a new object composed of
      *   several Float32Array objects named 'vertices' and 'colors', according to
      *   the following parameters:
@@ -2084,37 +2083,118 @@ export default class Prim {
      * k:  factor between 0 and 1 defining the space between strips of the torus
      */
     geometryTorus ( prim ) {
-// Temporary arrays for the vertices, normals and colors
-  var tv = new Array();
-  var tc = new Array();
-   
-  // Iterates along the big circle and then around a section
-  for(var i=0;i<n;i++)               // Iterates over all strip rounds
-    for(var j=0;j<sn+1*(i==n-1);j++) // Iterates along the torus section
-      for(var v=0;v<2;v++)           // Creates zigzag pattern (v equals 0 or 1)
-      {
-        // Pre-calculation of angles
-        var a =  2*Math.PI*(i+j/sn+k*v)/n;
-        var sa = 2*Math.PI*j/sn;
-        var x, y, z;
-       
-        // Coordinates on the surface of the torus  
-        tv.push(x = (r+sr*Math.cos(sa))*Math.cos(a)); // X
-        tv.push(y = (r+sr*Math.cos(sa))*Math.sin(a)); // Y
-        tv.push(z = sr*Math.sin(sa));                 // Z
-       
-        // Colors
-        tc.push(0.5+0.5*x);  // R
-        tc.push(0.5+0.5*y);  // G
-        tc.push(0.5+0.5*z);  // B
-        tc.push(1.0);  // Alpha
-      }
- 
-  // Converts and returns array
-  var res = new Object();
-  res.vertices = new Float32Array(tv);
-  res.colors = new Float32Array(tc);
-  return res;
+
+        let vec3 = this.glMatrix.vec3;
+
+        let flatten = this.util.flatten;
+
+        let list = this.typeList;
+
+        let geo = prim.geometry;
+
+
+        // Shortcuts to Prim data arrays
+
+        let vertices = geo.vertices.data,
+        indices  = geo.indices.data,
+        texCoords = geo.texCoords.data,
+        normals = geo.normals.data,
+        tangents = geo.tangents.data,
+        colors = geo.colors.data;
+
+        let radius = 1.5, ringRadius = 0.25, sides = 36, rings = 24;
+
+        let numVerticesPerRow = sides + 1;
+
+        let numVerticesPerColumn = rings + 1;
+
+        let numVertices = numVerticesPerRow * numVerticesPerColumn;
+
+        let vertexStride = 3; // 3 bytes
+
+        let SizeOfVertexBufferInBytes = numVertices * vertexStride;
+
+        let theta = 0.0;
+
+        let phi = 0.0;
+
+        let verticalAngularStride = Math.PI * 2.0 / rings;
+
+        let horizontalAngularStride = Math.PI * 2.0 / sides;
+
+        let x, y, z;
+
+        for (let verticalIt = 0; verticalIt < numVerticesPerColumn; verticalIt++) {
+            
+            theta = verticalAngularStride * verticalIt;
+
+            for (let horizontalIt = 0; horizontalIt < numVerticesPerRow; horizontalIt++) {
+          
+                phi = horizontalAngularStride * horizontalIt;
+
+                // position
+                x = Math.cos(theta) * (radius + ringRadius * Math.cos(phi));
+
+                y = Math.sin(theta) * (radius + ringRadius * Math.cos(phi));
+
+                z = ringRadius * Math.sin(phi);
+
+                vertices.push( x, y, z ); // NOTE: x, z, y gives a horizontal torus! NOTE: MAY WANT TO DO FOR PLANE
+
+                let norm = vec3.normalize( [0,0,0], [ x, y, z ] );
+
+                normals.push( norm[0], norm[1], norm[2] );
+
+                let u = horizontalIt / numVerticesPerRow;
+
+                let v = verticalIt / numVerticesPerColumn;
+
+                texCoords.push( u, v );
+
+            }
+        }
+
+        let numIndices = sides * rings * 6;
+        
+        for ( let verticalIt = 0; verticalIt < rings; verticalIt++) {
+
+            for ( let horizontalIt = 0; horizontalIt < sides; horizontalIt++) {
+
+                let lt = (horizontalIt + verticalIt * (numVerticesPerRow));
+                let rt = ((horizontalIt + 1) + verticalIt * (numVerticesPerRow));
+
+                let lb = (horizontalIt + (verticalIt + 1) * (numVerticesPerRow));
+                let rb = ((horizontalIt + 1) + (verticalIt + 1) * (numVerticesPerRow));
+
+                indices.push( lb, rb, rt, lb, rt, lt )
+
+            }
+
+        }
+
+        // Colors.
+
+        if( ! colors.length ) {
+
+            colors = geo.colors.data = this.computeColors( normals, colors );
+
+        }
+
+        window.prim = prim;
+
+        // Return the buffer, or add array data to the existing Prim data.
+
+        if( prim.geometry.makeBuffers === true ) {
+
+            //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+            return this.createBuffers( prim.geometry );
+
+        } else {
+
+            return this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+        }
 
     }
 
