@@ -104,6 +104,33 @@ export default class World {
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
+        this.textureObjList.push( this.prim.createPrim(
+            this.prim.typeList.SKYDOME,
+            'SkyDome',
+            1.0,
+            vec3.fromValues( 2, 2, 2 ),            // dimensions
+            vec3.fromValues( 10, 10, 10  ),            // divisions MAKE SMALLER
+            vec3.fromValues(-4, 1.5, -0.5 ),        // position (absolute)
+            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+            vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+            ['img/mozvr-logo2.png'],               // texture present
+            vec4.fromValues( 0.5, 1.0, 0.2, 1.0)  // color
+        ) );
+
+         this.textureObjList.push( this.prim.createPrim(
+            this.prim.typeList.TORUS,
+            'torus',
+            1.0,
+            vec3.fromValues( 1, 1, 1 ),            // dimensions
+            vec3.fromValues( 9, 9, 9 ),            // divisions
+            vec3.fromValues( -1.8, 3, -3.5 ),          // position (absolute)
+            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+            vec3.fromValues( util.degToRad( 20 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 1 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+            ['img/uv-test.png'],               // texture present, NOT USED
+            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
+        ) );
 
         this.vs1 = this.renderer.shaderTexture.init( this.textureObjList );
 
@@ -122,21 +149,6 @@ export default class World {
             vec3.fromValues( util.degToRad( 20 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 1 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
             ['img/webvr-logo3.png'],               // texture present, NOT USED
-            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
-        ) );
-
-
-         this.textureObjList.push( this.prim.createPrim(
-            this.prim.typeList.TORUS,
-            'torus',
-            1.0,
-            vec3.fromValues( 1, 1, 1 ),            // dimensions
-            vec3.fromValues( 9, 9, 9 ),            // divisions
-            vec3.fromValues( -1.8, 3, -3.5 ),          // position (absolute)
-            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-            vec3.fromValues( util.degToRad( 20 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 1 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-            ['img/uv-test.png'],               // texture present, NOT USED
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 

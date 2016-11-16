@@ -1179,7 +1179,7 @@ export default class Prim {
 
         // Everything except sphere and cylinder is a half-object.
 
-        let latDist;
+        let latStart = 0, longStart = 0, latDist;
 
         if( prim.type === list.SPHERE || prim.type === list.CYLINDER || prim.type === list.SPINDLE ) {
 
@@ -1195,7 +1195,7 @@ export default class Prim {
 
         let x, y, z, u, v;
 
-        for (let latNumber = 0; latNumber <= latDist; latNumber++) {
+        for (let latNumber = latStart; latNumber <= latDist; latNumber++) {
 
             let theta = latNumber * Math.PI / latitudeBands;
 
@@ -1203,7 +1203,7 @@ export default class Prim {
 
             let cosTheta = Math.cos(theta);
 
-            for (let longNumber = 0; longNumber <= longitudeBands; longNumber++) {
+            for (let longNumber = longStart; longNumber <= longitudeBands; longNumber++) {
 
                 let phi = longNumber * 2 * Math.PI / longitudeBands;
 
@@ -1225,7 +1225,8 @@ export default class Prim {
 
                     v = 1 - (latNumber / latitudeBands);
 
-                } else if ( prim.type === list.SPHERE || prim.type === list.TOPDOME || prim.type === list.DOME ) {
+                } else if ( prim.type === list.SPHERE || prim.type === list.TOPDOME || 
+                    prim.type === list.DOME || prim.type === list.SKYDOME ) {
 
                     x = cosPhi * sinTheta;
 
@@ -1305,6 +1306,8 @@ export default class Prim {
 
                 // These were wrapped bottom->top, so reverse y on normals.
 
+                // NOTE: TODO: probably for SkyDome as well...
+
                 if ( prim.type === list.BOTTOMDOME || prim.type === list.BOTTOMCONE ) {
 
                     y = -y; // flip the normals
@@ -1325,6 +1328,8 @@ export default class Prim {
 
         }
 
+        // TODO: make function allowing reverse winding, OR a utility reversing the indices.
+
         // Sphere indices.
 
         for ( let latNumber = 0; latNumber < latDist; latNumber++ ) {
@@ -1337,11 +1342,36 @@ export default class Prim {
 
                 // Note: we're running culling in reverse from some tutorials here.
 
-                indices.push(first + 1, second + 1, second);
+                    // texture visible from outside.
 
-                indices.push(first + 1, second, first);
+                    if( prim.type === list.SKYDOME ) {
+
+                        // TODO: wind so visible inside
+
+                        indices.push(first, second, first + 1);
+
+                        indices.push(second, second + 1 , first + 1 );
+                        
+
+                    } else {
+
+                        indices.push(first + 1, second + 1, second);
+
+                        indices.push(first + 1, second, first);
+
+                    }
+
+
+
+                // NOTE: for SkyDome, reverse indices.
 
             }
+
+        }
+
+        if ( prim.type === list.SKYDOME ) {
+
+            geo.indices.data = indices.reverse();
 
         }
 
@@ -2110,19 +2140,11 @@ export default class Prim {
 
         let numVertices = numVerticesPerRow * numVerticesPerColumn;
 
-        let vertexStride = 3; // 3 bytes
-
-        let SizeOfVertexBufferInBytes = numVertices * vertexStride;
-
-        let theta = 0.0;
-
-        let phi = 0.0;
-
         let verticalAngularStride = Math.PI * 2.0 / rings;
 
         let horizontalAngularStride = Math.PI * 2.0 / sides;
 
-        let x, y, z;
+        let theta = 0, phi = 0, x, y, z;
 
         for (let verticalIt = 0; verticalIt < numVerticesPerColumn; verticalIt++) {
             
@@ -2166,7 +2188,9 @@ export default class Prim {
                 let lb = (horizontalIt + (verticalIt + 1) * (numVerticesPerRow));
                 let rb = ((horizontalIt + 1) + (verticalIt + 1) * (numVerticesPerRow));
 
-                indices.push( lb, rb, rt, lb, rt, lt )
+                indices.push( lb, rb, rt, lb, rt, lt );
+
+                // note: wrap backwards to see inside of torus.
 
             }
 

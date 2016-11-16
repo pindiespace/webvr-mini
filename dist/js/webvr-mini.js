@@ -4888,7 +4888,9 @@
 
 	            // Everything except sphere and cylinder is a half-object.
 
-	            var latDist = void 0;
+	            var latStart = 0,
+	                longStart = 0,
+	                latDist = void 0;
 
 	            if (prim.type === list.SPHERE || prim.type === list.CYLINDER || prim.type === list.SPINDLE) {
 
@@ -4906,7 +4908,7 @@
 	                u = void 0,
 	                v = void 0;
 
-	            for (var latNumber = 0; latNumber <= latDist; latNumber++) {
+	            for (var latNumber = latStart; latNumber <= latDist; latNumber++) {
 
 	                var theta = latNumber * Math.PI / latitudeBands;
 
@@ -4914,7 +4916,7 @@
 
 	                var cosTheta = Math.cos(theta);
 
-	                for (var longNumber = 0; longNumber <= longitudeBands; longNumber++) {
+	                for (var longNumber = longStart; longNumber <= longitudeBands; longNumber++) {
 
 	                    var phi = longNumber * 2 * Math.PI / longitudeBands;
 
@@ -4935,7 +4937,7 @@
 	                        u = 1 - longNumber / longitudeBands;
 
 	                        v = 1 - latNumber / latitudeBands;
-	                    } else if (prim.type === list.SPHERE || prim.type === list.TOPDOME || prim.type === list.DOME) {
+	                    } else if (prim.type === list.SPHERE || prim.type === list.TOPDOME || prim.type === list.DOME || prim.type === list.SKYDOME) {
 
 	                        x = cosPhi * sinTheta;
 
@@ -5009,6 +5011,8 @@
 
 	                    // These were wrapped bottom->top, so reverse y on normals.
 
+	                    // NOTE: TODO: probably for SkyDome as well...
+
 	                    if (prim.type === list.BOTTOMDOME || prim.type === list.BOTTOMCONE) {
 
 	                        y = -y; // flip the normals
@@ -5026,6 +5030,8 @@
 	                }
 	            }
 
+	            // TODO: make function allowing reverse winding, OR a utility reversing the indices.
+
 	            // Sphere indices.
 
 	            for (var _latNumber = 0; _latNumber < latDist; _latNumber++) {
@@ -5038,10 +5044,29 @@
 
 	                    // Note: we're running culling in reverse from some tutorials here.
 
-	                    indices.push(first + 1, second + 1, second);
+	                    // texture visible from outside.
 
-	                    indices.push(first + 1, second, first);
+	                    if (prim.type === list.SKYDOME) {
+
+	                        // TODO: wind so visible inside
+
+	                        indices.push(first, second, first + 1);
+
+	                        indices.push(second, second + 1, first + 1);
+	                    } else {
+
+	                        indices.push(first + 1, second + 1, second);
+
+	                        indices.push(first + 1, second, first);
+	                    }
+
+	                    // NOTE: for SkyDome, reverse indices.
 	                }
+	            }
+
+	            if (prim.type === list.SKYDOME) {
+
+	                geo.indices.data = indices.reverse();
 	            }
 
 	            // Tangents.
@@ -5797,19 +5822,13 @@
 
 	            var numVertices = numVerticesPerRow * numVerticesPerColumn;
 
-	            var vertexStride = 3; // 3 bytes
-
-	            var SizeOfVertexBufferInBytes = numVertices * vertexStride;
-
-	            var theta = 0.0;
-
-	            var phi = 0.0;
-
 	            var verticalAngularStride = Math.PI * 2.0 / rings;
 
 	            var horizontalAngularStride = Math.PI * 2.0 / sides;
 
-	            var x = void 0,
+	            var theta = 0,
+	                phi = 0,
+	                x = void 0,
 	                y = void 0,
 	                z = void 0;
 
@@ -5855,6 +5874,8 @@
 	                    var rb = _horizontalIt + 1 + (_verticalIt + 1) * numVerticesPerRow;
 
 	                    indices.push(lb, rb, rt, lb, rt, lt);
+
+	                    // note: wrap backwards to see inside of torus.
 	                }
 	            }
 
@@ -7157,6 +7178,26 @@
 	            ['img/webvr-logo2.png'], vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	            ));
 
+	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.SKYDOME, 'SkyDome', 1.0, vec3.fromValues(2, 2, 2), // dimensions
+	            vec3.fromValues(10, 10, 10), // divisions MAKE SMALLER
+	            vec3.fromValues(-4, 1.5, -0.5), // position (absolute)
+	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	            vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	            ['img/mozvr-logo2.png'], // texture present
+	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+	            ));
+
+	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.TORUS, 'torus', 1.0, vec3.fromValues(1, 1, 1), // dimensions
+	            vec3.fromValues(9, 9, 9), // divisions
+	            vec3.fromValues(-1.8, 3, -3.5), // position (absolute)
+	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	            vec3.fromValues(util.degToRad(20), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	            vec3.fromValues(util.degToRad(0), util.degToRad(1), util.degToRad(0)), // angular velocity in x, y, x
+	            ['img/uv-test.png'], // texture present, NOT USED
+	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+	            ));
+
 	            this.vs1 = this.renderer.shaderTexture.init(this.textureObjList);
 
 	            // COLORED SHADER.
@@ -7170,16 +7211,6 @@
 	            vec3.fromValues(util.degToRad(20), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
 	            vec3.fromValues(util.degToRad(0), util.degToRad(1), util.degToRad(0)), // angular velocity in x, y, x
 	            ['img/webvr-logo3.png'], // texture present, NOT USED
-	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-	            ));
-
-	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.TORUS, 'torus', 1.0, vec3.fromValues(1, 1, 1), // dimensions
-	            vec3.fromValues(9, 9, 9), // divisions
-	            vec3.fromValues(-1.8, 3, -3.5), // position (absolute)
-	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	            vec3.fromValues(util.degToRad(20), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	            vec3.fromValues(util.degToRad(0), util.degToRad(1), util.degToRad(0)), // angular velocity in x, y, x
-	            ['img/uv-test.png'], // texture present, NOT USED
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	            ));
 
