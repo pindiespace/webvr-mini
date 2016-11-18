@@ -110,7 +110,7 @@ export default class World {
             1.0,
             vec3.fromValues( 2, 2, 2 ),            // dimensions
             vec3.fromValues( 10, 10, 10  ),            // divisions MAKE SMALLER
-            vec3.fromValues(-4, 1.5, -0.5 ),        // position (absolute)
+            vec3.fromValues(-4, 2.5, -0.5 ),        // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
@@ -207,7 +207,7 @@ export default class World {
             1.0,
             vec3.fromValues( 1.5, 1.5, 1.5 ),            // dimensions
             vec3.fromValues( 30, 30, 30 ),         // divisions
-            vec3.fromValues(-5, -0.3, -2 ),       // position (absolute)
+            vec3.fromValues(-5, -1.3, -2 ),       // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
@@ -250,7 +250,7 @@ export default class World {
             1.0,
             vec3.fromValues( 1, 1, 1 ),            // dimensions
             vec3.fromValues( 10, 10, 10  ),            // divisions MAKE SMALLER
-            vec3.fromValues(-4, 1.5, -0.5 ),        // position (absolute)
+            vec3.fromValues(-4, 0.5, -0.5 ),        // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
@@ -286,14 +286,15 @@ export default class World {
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0)  // color
         ) );
 
-/*
+
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.CONE,
             'CanCone',
             1.0,
-            vec3.fromValues( 2, 3, 3 ),            // dimensions
-            vec3.fromValues( 10, 10, 10  ),            // divisions MAKE SMALLER
-            vec3.fromValues(-3.5, 1.5, -1 ),        // position (absolute)
+            vec3.fromValues( 2, 2, 2, 1 ),            // dimensions INCLUDING start radius (last value)
+            vec3.fromValues( 100, 100, 100  ),            // divisions MAKE SMALLER
+            //vec3.fromValues(-3.5, -3.5, -1 ),        // position (absolute)
+                                            vec3.fromValues(0, 0, 1.5),
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
@@ -301,7 +302,7 @@ export default class World {
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0)  // color
         ) );
 
-*/
+
 
         this.vs3 = this.renderer.shaderDirlightTexture.init( this.dirlightTextureObjList );
 

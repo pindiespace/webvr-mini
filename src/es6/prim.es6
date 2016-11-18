@@ -1258,15 +1258,17 @@ export default class Prim {
 
         let latitudeBands = prim.divisions[ 1 ]; // y axis
 
-        //let radius = prim.dimensions[ 0 ] * 0.5;
+        // Radius is measured along the x axis.
 
-        let radius = Math.max( prim.dimensions[ 0 ], prim.dimensions[1], prim.dimensions[2] ) * 0.5;
+        let radius = prim.dimensions[ 0 ] * 0.5;
 
-        // Everything except sphere and cylinder is a half-object.
+        // Everything except SPHERE, CYLINDER, SPINDLE, and CONE is a half-object.
 
         let latStart = 0, longStart = 0, latDist;
 
-        if( prim.type === list.SPHERE || prim.type === list.CYLINDER || prim.type === list.SPINDLE ) {
+        if( prim.type === list.SPHERE || prim.type === list.CYLINDER || 
+
+            prim.type === list.SPINDLE ) {
 
             latDist = latitudeBands;
 
@@ -1278,17 +1280,17 @@ export default class Prim {
 
         // Vertices, normals, texCoords.
 
-        let x, y, z, u, v;
+        let latNumber, longNumber;
 
-        for (let latNumber = latStart; latNumber <= latDist; latNumber++) {
+        for ( latNumber = latStart; latNumber <= latDist; latNumber++ ) {
 
             let theta = latNumber * Math.PI / latitudeBands;
 
-            let sinTheta = Math.sin(theta);
+            let sinTheta = Math.sin( theta );
 
-            let cosTheta = Math.cos(theta);
+            let cosTheta = Math.cos( theta );
 
-            for (let longNumber = longStart; longNumber <= longitudeBands; longNumber++) {
+            for ( longNumber = longStart; longNumber <= longitudeBands; longNumber++ ) {
 
                 let phi = longNumber * 2 * Math.PI / longitudeBands;
 
@@ -1296,98 +1298,79 @@ export default class Prim {
 
                 let cosPhi = Math.cos( phi );
 
+                let x, y, z, u, v;
+
                 // Compute vertex positions.
 
-                if( prim.type === list.CYLINDER ) {
+                let lat = latNumber / latitudeBands;
 
-                    x = cosPhi;
+                let long = longNumber / longitudeBands;
 
-                    z = sinPhi;
+                switch( prim.type ) {
 
-                    y = cosTheta;
+                    case list.CYLINDER:
+                        x = cosPhi;
+                        z = sinPhi;
+                        y = cosTheta;
+                        u = 1 - long;
+                        v = 1 - lat;
+                        break;
 
-                    u = 1 - (longNumber / longitudeBands);
+                    case list.SPHERE:
+                    case list.TOPDOME:
+                    case list.DOME:
+                    case list.SKYDOME:
+                        x = cosPhi * sinTheta;
+                        z = sinPhi * sinTheta;
+                        y = cosTheta;
+                        u = 1 - long;
+                        v = 1 - lat;
+                        //console.log("LATBANDS:" + y)
+                        break;
 
-                    v = 1 - (latNumber / latitudeBands);
+                    case list.BOTTOMDOME:
+                        x = cosPhi * sinTheta;
+                        z = sinPhi * sinTheta;
+                        y = 1 - cosTheta;
+                        u = long;
+                        v = lat;
+                        break;
 
-                } else if ( prim.type === list.SPHERE || prim.type === list.TOPDOME || 
-                    prim.type === list.DOME || prim.type === list.SKYDOME ) {
+                    case list.SPINDLE:
+                    case list.CONE:
+                    case list.TOPCONE:
+                        x = cosPhi;
+                        z = sinPhi;
+                        y = 1 - lat;
+                        u = 1 - long;
+                        v = 1 - lat;
+                        console.log("y:" + y)
+                        break;
 
-                    x = cosPhi * sinTheta;
-
-                    z = sinPhi * sinTheta;
-
-                    y = cosTheta * 1.2; // TODO: TODO: WHY IS THIS CORRECTION NEEDED?????????????????
-
-                    // Texture coords.
-
-                    u = 1 - (longNumber / longitudeBands);
-
-                    v = 1 - (latNumber / latitudeBands);
-
-                } else if ( prim.type === list.BOTTOMDOME ) {
-
-                    x = cosPhi * sinTheta;
-
-                    z = sinPhi * sinTheta;
-
-                    y = 1 - cosTheta;
-
-                    // Texture coords.
-
-                    u = longNumber / longitudeBands;
-
-                    v = latNumber / latitudeBands;
-
-                } else if ( prim.type === list.SPINDLE || prim.type === list.CONE || prim.type == list.TOPCONE ) {
-
-                    x = cosPhi * sinTheta;
-
-                    z = sinPhi * sinTheta;
-
-                    y = 1 - ( latNumber / latitudeBands ); //cosTheta;
-
-                    // Texture coords.
-
-                    u = 1 - (longNumber / longitudeBands);
-
-                    v = 1 - (latNumber / latitudeBands);
-
-                } else if ( prim.type === list.BOTTOMCONE ) {
-
-                    x = cosPhi * sinTheta;
-
-                    z = sinPhi * sinTheta;
-
-                    y = 2 * latNumber / latitudeBands;;
-
-                    // Texture coords.
-
-                    u = 1 - (longNumber / longitudeBands);
-
-                    v = 1 - (latNumber / latitudeBands);
+                    case list.BOTTOMCONE:
+                        x = cosPhi * sinTheta;
+                        z = sinPhi * sinTheta;
+                        y = lat;
+                        u = 1 - long;
+                        v = 1 - lat;
+                        break;
 
                 }
 
                 // Scale shape to specified dimensions.
 
-                x *= prim.dimensions[ 0 ];
+                //x *= prim.dimensions[ 0 ];
 
-                y *= prim.dimensions[1];
+                //y *= prim.dimensions[ 1 ];
 
-                z *= prim.dimensions[2];
+                //z *= prim.dimensions[ 2 ];
 
                 // Adjust partial shapes to fill their bounding box.
 
-                if ( prim.type !== list.SPINDLE && prim.type !== list.SPHERE ) {
-
-                    //y *= 2;
-
-                }
-
                 // Push vertices.
 
-                vertices.push( radius * x, radius * y, radius * z );
+                //vertices.push( radius * x, radius * y, radius * z );
+                vertices.push( x, y, z );
 
                 // These were wrapped bottom->top, so reverse y on normals.
 
@@ -1399,15 +1382,13 @@ export default class Prim {
 
                 }
 
-                texCoords.push( u, v);
+                texCoords.push( u, v );
 
                 // Push normals.
 
                 let n = vec3.normalize( [ 0, 0, 0 ], [ x, y, z ] );
 
-                normals.push( n[ 0 ], n[1], n[2] );
-
-                //normals.push( x, y, z );
+                normals.push( n[ 0 ], n[ 1 ], n[ 2 ] );
 
             }
 
@@ -1417,37 +1398,37 @@ export default class Prim {
 
         // Sphere indices.
 
-        for ( let latNumber = 0; latNumber < latDist; latNumber++ ) {
+        for ( latNumber = 0; latNumber < latDist; latNumber++ ) {
 
-            for ( let longNumber = 0; longNumber < longitudeBands; longNumber++ ) {
+            for ( longNumber = 0; longNumber < longitudeBands; longNumber++ ) {
 
                 let first = (latNumber * (longitudeBands + 1)) + longNumber;
 
                 let second = first + longitudeBands + 1;
 
-                // Note: we're running culling in reverse from some tutorials here.
+                if( prim.type === list.SKYDOME ) {
 
-                    // texture visible from outside.
+                    // Texture only visible from the inside.
 
-                    if( prim.type === list.SKYDOME ) {
+                    indices.push( second, first, second + 1 );
 
-                        indices.push( second, first, second + 1 );
+                    indices.push( first, first + 1, second + 1 );
 
-                        indices.push( first, first + 1, second + 1 );
+                } else {
 
-                    } else {
+                    // Texture only visible outside.
 
-                        indices.push(first + 1, second + 1, second);
+                    indices.push(first + 1, second + 1, second);
 
-                        indices.push( first + 1, second, first );
+                    indices.push( first + 1, second, first );
 
-                    }
-
-                // NOTE: for SkyDome, reverse indices.
+                }
 
             }
 
         }
+
+        // Wind the SKYDOME backwards (fast).
 
         if ( prim.type === list.SKYDOME ) {
 

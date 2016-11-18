@@ -185,6 +185,81 @@
 
 
 
+/*
+                if( prim.type === list.CYLINDER ) {
+
+                    x = cosPhi;
+
+                    z = sinPhi;
+
+                    y = cosTheta;
+
+                    //  y = latNumber / latitudeBands; THIS IS THE PROBLEM
+
+                    u = 1 - (longNumber / longitudeBands);
+
+                    v = 1 - (latNumber / latitudeBands);
+
+                } else if ( prim.type === list.SPHERE || prim.type === list.TOPDOME || 
+
+                    prim.type === list.DOME || prim.type === list.SKYDOME ) {
+
+                    x = cosPhi * sinTheta;
+
+                    z = sinPhi * sinTheta;
+
+                    y = cosTheta; // 1.2 *  TODO: TODO: WHY IS THIS CORRECTION NEEDED?????????????????
+
+                    // Texture coords.
+
+                    u = 1 - ( longNumber / longitudeBands );
+
+                    v = 1 - ( latNumber / latitudeBands );
+
+                } else if ( prim.type === list.BOTTOMDOME ) {
+
+                    x = cosPhi * sinTheta;
+
+                    z = sinPhi * sinTheta;
+
+                    y = 1 - cosTheta;
+
+                    // Texture coords.
+
+                    u = longNumber / longitudeBands;
+
+                    v = latNumber / latitudeBands;
+
+                } else if ( prim.type === list.SPINDLE || prim.type === list.CONE || prim.type == list.TOPCONE ) {
+
+                    x = cosPhi * sinTheta;
+
+                    z = sinPhi * sinTheta;
+
+                    y = 1 - ( latNumber / latitudeBands ); //cosTheta;
+
+                    // Texture coords.
+
+                    u = 1 - ( longNumber / longitudeBands );
+
+                    v = 1 - ( latNumber / latitudeBands );
+
+                } else if ( prim.type === list.BOTTOMCONE ) {
+
+                    x = cosPhi * sinTheta;
+
+                    z = sinPhi * sinTheta;
+
+                    y = latNumber / latitudeBands;
+
+                    // Texture coords.
+
+                    u = 1 - ( longNumber / longitudeBands );
+
+                    v = 1 - ( latNumber / latitudeBands );
+
+                }
+    */
 
 
 geometryIcosohedron( prim ) {
