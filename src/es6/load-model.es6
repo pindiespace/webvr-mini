@@ -20,7 +20,7 @@ export default class LoadModel extends LoadPool {
 
     uploadModel ( loadObj, callback ) {
 
-    	// TODO: replace Sizzle with querySelector.
+        // TODO: replace Sizzle with querySelector.
 
 		var $ = Sizzle,
 			getInput = function(sem, par) {

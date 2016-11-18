@@ -66,11 +66,11 @@ export default class World {
      */
     init () {
 
-        let vec3 = this.glMatrix.vec3;
+        const vec3 = this.glMatrix.vec3;
 
-        let vec4 = this.glMatrix.vec4;
+        const vec4 = this.glMatrix.vec4;
 
-        let util = this.util;
+        const util = this.util;
 
 // TEXTURED SHADER.
 

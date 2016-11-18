@@ -372,7 +372,7 @@ export default class Map2d {
 
         let scale = roughness * size;
 
-        let util = this.util;
+        const util = this.util;
 
         if ( half < 1 ) return;
 
@@ -632,10 +632,6 @@ export default class Map2d {
         let y0 = x3 - x2 - x0 + x1;
         let y1 = x0 - x1 - y0;
         let y2 = x2 - x0;
-
-        let res = y0*zf*zf2 + y1*zf2 + y2*zf + x1;
-
-        //console.log('adjusted:' + res )
 
         return y0*zf*zf2 + y1*zf2 + y2*zf + x1;
 

@@ -76,8 +76,6 @@ export default class LoadTexture extends LoadPool {
      */
     createLoadObj ( waitObj ) {
 
-        let gl = this.webgl.getContext();
-
         let loadObj = {};
 
         loadObj.image = new Image();

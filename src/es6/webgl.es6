@@ -62,7 +62,7 @@ export default class WebGL {
      */
     clearTextures () {
 
-        let gl = this.gl;
+        const gl = this.gl;
 
         let len = gl.getParameter( gl.MAX_TEXTURE_IMAGE_UNITS );
 
@@ -133,7 +133,7 @@ export default class WebGL {
 
             if ( this.gl ) {
 
-                let gl = this.gl;
+                const gl = this.gl;
 
                 /* 
                  * Set up listeners for context lost and regained.
@@ -277,7 +277,6 @@ export default class WebGL {
 
             } // end of have a gl context
 
-            //return this.gl;
 
         } // end of if have a <canvas>
 
@@ -287,32 +286,6 @@ export default class WebGL {
 
     stats () {
 
-
-    }
-
-    /** 
-     * check if we are ready to render
-     */
-    ready () {
-
-        let gl = this.gl;
-
-        //////////////////////////////////console.log('webgl.ready(): this.gl:' + gl + ' this.glMatrix:' + this.glMatrix )
-
-        return ( !! ( gl && this.glMatrix ) );
-
-    }
-
-    /** 
-     * Clear the screen prior to redraw.
-     */
-    clear () {
-
-        let gl = this.gl;
-
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-        /////////////////////gl.viewport( 0, 0, gl.viewportWidth, gl.viewportHeight );
 
     }
 
@@ -338,7 +311,7 @@ export default class WebGL {
 
             let f = Math.max( window.devicePixelRatio, 1 );
 
-            let gl = this.getContext();
+            const gl = this.getContext();
 
             let c = this.getCanvas();
 
@@ -388,7 +361,7 @@ export default class WebGL {
 
         let gl = null;
 
-        if ( gl && this.contextCount > 1 ) {
+        if ( gl && this.contextCount > 0 ) {
 
             // Contexts are normally in garbage, can't be deleted without this!
 
@@ -426,6 +399,7 @@ export default class WebGL {
                         }
 
                         break;
+
                     }
 
                 } else {
@@ -437,6 +411,7 @@ export default class WebGL {
                         console.warn ( 'using release context mode:' + n[ i ] );
 
                         break;
+
                     }
 
                 }
@@ -452,43 +427,41 @@ export default class WebGL {
         } // end of while loop
 
 
-            /*
-             * If we got a context, assign WebGL version. Note that some 
-             * experimental versions don't have .getParameter
-             */
+        /*
+         * If we got a context, assign WebGL version. Note that some 
+         * experimental versions don't have .getParameter
+         */
 
-            if ( gl && typeof gl.getParameter == 'function' ) {
+        if ( gl && typeof gl.getParameter == 'function' ) {
 
-                this.contextCount++;
+            this.contextCount++;
 
+            this.gl = gl;
 
-                this.gl = gl;
+            // Check if this is a full WebGL2 stack
 
+            this.glVers = gl.getParameter( gl.VERSION ).toLowerCase();
 
-                // Check if this is a full WebGL2 stack
+            if ( i == 1 || i == 3 ) {
 
-                this.glVers = gl.getParameter( gl.VERSION ).toLowerCase();
+                console.warn( 'experimental context, .getParameter() may not work' );
 
-                if ( i == 1 || i == 3 ) {
+            }
 
-                    console.warn( 'experimental context, .getParameter() may not work' );
+            console.log( 'version:' + gl.getParameter( gl.VERSION));
 
-                }
+            // Take action, depending on version (identified by pos in our test array n).
 
-                console.log( 'version:' + gl.getParameter( gl.VERSION));
+            switch ( i ) {
 
-                // Take action, depending on version.
-
-                switch ( i ) {
-
-                    case 0:
-                    case 1:
-                        //if ( ! gl.TRANSFORM_FEEDBACK ) {
-                            // revert to 1.0
-                        //    console.log("TRANSFORM FEEDBACK NOT SUPPORTED")
-                        //}
-                        this.glVers = 2.0;
-                        break;
+                case 0:
+                case 1:
+                    //if ( ! gl.TRANSFORM_FEEDBACK ) {
+                    // revert to 1.0
+                    //    console.log("TRANSFORM FEEDBACK NOT SUPPORTED")
+                    //}
+                    this.glVers = 2.0;
+                    break;
 
                     case 2:
                     case 3:
@@ -508,7 +481,8 @@ export default class WebGL {
     }
 
     /** 
-     * Return the current context.
+     * Return the current context. Note that we don't store a 
+     * separate reference to the canvas.
      * @returns {WebGLRenderingContext} gl a WebGLRenderingContext.
      */
     getContext () {
@@ -546,12 +520,36 @@ export default class WebGL {
     }
 
     /** 
+     * check if we have a contex and are ready to render.
+     */
+    ready () {
+
+        const gl = this.gl;
+
+        return ( !! ( this.gl && this.glMatrix ) );
+
+    }
+
+    /** 
+     * Clear the screen prior to redraw.
+     */
+    clear () {
+
+        const gl = this.gl;
+
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+        /////////////////////gl.viewport( 0, 0, gl.viewportWidth, gl.viewportHeight );
+
+    }
+
+    /** 
      * Add vertex buffer support to WebGL 1.0
      * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only)l
      */
     addVertexBufferSupport ( gl ) {
 
-         let ext = gl.getExtension( 'OES_vertex_array_object' );
+         const ext = gl.getExtension( 'OES_vertex_array_object' );
 
         if ( ext ) {
 
@@ -601,7 +599,7 @@ export default class WebGL {
 
         } else if ( this.ready() ) {
 
-            let gl = this.gl;
+            const gl = this.gl;
 
             /*
              * remove first EOL, which might come from using <script>...</script> tags,
@@ -659,7 +657,7 @@ export default class WebGL {
      */
     fetchShader ( type, sourceURL ) {
 
-        let self = this;
+        const self = this;
 
         fetch( sourceURL, {
 
@@ -793,7 +791,7 @@ export default class WebGL {
 
         if ( this.ready() ) {
 
-            let gl = this.gl;
+            const gl = this.gl;
 
             let vso = this.createVertexShader( vs.code );
 
@@ -840,7 +838,7 @@ export default class WebGL {
       */
     createVarList ( source ) {
 
-        let len = source.length;
+        const len = source.length;
 
         let sp = ' ';
 
@@ -850,7 +848,7 @@ export default class WebGL {
 
         if( len ) {
 
-            for ( let i = 0; i < source.length; i++ ) {
+            for ( let i = 0; i < len; i++ ) {
 
                 let s = source[ i ];
 
@@ -925,7 +923,7 @@ export default class WebGL {
      */
     setAttributeArrays ( shaderProgram, attributes ) {
 
-        let gl = this.gl;
+        const gl = this.gl;
 
         for ( let i in attributes ) {
 
@@ -949,7 +947,7 @@ export default class WebGL {
 
     setUniformLocations ( shaderProgram, uniforms ) {
 
-        let gl = this.gl;
+        const gl = this.gl;
 
         for ( let i in uniforms ) {
 
@@ -976,11 +974,11 @@ export default class WebGL {
      */
     bindAttributeLocations ( program, attribLocationMap ) {
 
-        var gl = this.gl;
+        const gl = this.gl;
 
         if ( attribLocationMap ) {
 
-            for ( var attribName in attribLocationMap ) {
+            for ( let attribName in attribLocationMap ) {
 
                 console.log('binding attribute:' + attribName + ' to:' + attribLocationMap[attribName]);
 
@@ -1004,7 +1002,7 @@ export default class WebGL {
      */
     getAttributes ( program ) {
 
-        let gl = this.gl;
+        const gl = this.gl;
 
         let attrib = {};
 
@@ -1036,7 +1034,7 @@ export default class WebGL {
      */
     getUniforms ( program ) {
 
-        let gl = this.gl;
+        const gl = this.gl;
 
         let uniform = {};
 
@@ -1077,7 +1075,7 @@ export default class WebGL {
      */
     checkShaders ( vs, fs, program ) {
 
-        let gl = this.gl;
+        const gl = this.gl;
 
         if ( ! gl.getProgramParameter( program, gl.LINK_STATUS ) ) {
 

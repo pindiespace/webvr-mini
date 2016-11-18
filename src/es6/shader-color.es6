@@ -96,8 +96,6 @@ export default class ShaderColor extends Shader {
 
         window.vs2Vars = vsVars; /////////////////////////////////////////////////////////
 
-        let counter = 0;
-
         program.renderList = objList || [];
 
         // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html

@@ -15,6 +15,53 @@ export default class Prim {
      * prim.position = [ x, y, z ]
      * prim.dimensions = [ x, y, z, startRadius, endRadius ]
      * prim.divisions = [ x, y, z ]
+
+     * More prims
+     * Ogre 3d procedural
+     * https://bitbucket.org/transporter/ogre-procedural/src/ca6eb3363a53c2b53c055db5ce68c1d35daab0d5/library/include/?at=default
+     * https://bitbucket.org/transporter/ogre-procedural/wiki/Home
+     *
+     * https://github.com/jagenjo/litegl.js/tree/master/src
+     *
+     * http://wiki.unity3d.com/index.php/ProceduralPrimitives
+     *
+     * octahedron sphere generation
+     * https://www.binpress.com/tutorial/creating-an-octahedron-sphere/162
+     * https://experilous.com/1/blog/post/procedural-planet-generation
+     * https://experilous.com/1/planet-generator/2014-09-28/planet-generator.js
+     * another octahedron sphere 
+     * https://www.binpress.com/tutorial/creating-an-octahedron-sphere/162
+     * rounded cube
+     * https://github.com/vorg/primitive-rounded-cube
+     * rounded cube algorithim
+     * http://catlikecoding.com/unity/tutorials/rounded-cube/
+     *
+     * generalized catmull-clark subdivision algorithm
+     * https://thiscouldbebetter.wordpress.com/2015/04/24/the-catmull-clark-subdivision-surface-algorithm-in-javascript/
+     *
+     * cube inflation algorithm
+     * http://mathproofs.blogspot.com.au/2005/07/mapping-cube-to-sphere.html
+     * advanced toolset
+     * https://www.geometrictools.com/Samples/Geometrics.html
+     * Eigen
+     * https://fossies.org/dox/eigen-3.2.10/icosphere_8cpp_source.html
+     * Geometry prebuilt
+     * http://paulbourke.net/geometry/roundcube/
+     * Lots of Webgl tricks!
+     * https://acko.net
+     * http://acko.net/blog/on-webgl/
+     * 
+     * https://gamedevdaily.io/four-ways-to-create-a-mesh-for-a-sphere-d7956b825db4#.lkbq2omq5
+     * https://www.geometrictools.com/Samples/Geometrics.html
+     *
+     * https://github.com/glo-js/primitive-icosphere
+     * https://github.com/hughsk/icosphere
+     * http://mft-dev.dk/uv-mapping-sphere/
+     * http://donhavey.com/blog/tutorials/tutorial-3-the-icosahedron-sphere/
+     * http://blog.andreaskahler.com/2009/06/creating-icosphere-mesh-in-code.html
+     *
+     * https://www.binpress.com/tutorial/creating-an-octahedron-sphere/162
+     *
      *
      */
 
@@ -94,10 +141,36 @@ export default class Prim {
 
         };
 
-        this.DEFAULT_SIDE = 0;
-        this.FRONT_SIDE = 1;
-        this.BACK_SIDE = 1;
-        this.DOUBLE_SIDE = 2;
+        // Sideness, direction.
+
+        this.sides = {
+
+            DEFAULT_SIDE: 0,
+
+            FRONT_SIDE: 1,
+
+            BACK_SIDE: 2,
+
+            LEFT_SIDE: 3,
+
+            RIGHT_SIDE: 4,
+
+            TOP_SIDE: 5,
+
+            BOTTOM_SIDE: 6
+
+        };
+
+        // draw facing size, back side, or both sides (e.g. for flat Plane or Poly).
+
+        this.draw = {
+
+            FORWARD_SIDE: 10,
+
+            BACKWARD_SIDE: 11,
+
+            BOTH_SIDES: 12
+        };
 
     }
 
@@ -124,15 +197,19 @@ export default class Prim {
     }
 
     /** 
-     * Get the big array with all vertex data. Use to 
-     * send multiple prims sharing the same shader to one 
+     * Get the big array with all vertex data. Every time a 
+     * Prim is made, we store a reference in the this.objs[] 
+     * array. So, to make one, we just concatenate the 
+     * vertices. Use to send multiple prims sharing the same shader to one 
      * Renderer.
+     * @param {Array} vertices
+     * @returns {Array} vertices
      */
     setVertexData ( vertices ) {
 
         vertices = [];
 
-        let len = this.objs.length;
+        const len = this.objs.length;
 
         for ( let i in this.objs ) {
 
@@ -153,7 +230,7 @@ export default class Prim {
 
         indices = [];
 
-        let len = this.objs.length;
+        const len = this.objs.length;
 
         for ( let i in this.objs ) {
 
@@ -256,7 +333,7 @@ export default class Prim {
      */
     addBufferData( bufferObj, vertices, indices, texCoords, normals, tangents, colors ) {
 
-        let concat = this.util.concatArr;
+        const concat = this.util.concatArr;
 
         concat( bufferObj.vertices.data, vertices );
 
@@ -284,7 +361,7 @@ export default class Prim {
      */
     createBuffers( bufferObj ) {
 
-            let gl = this.webgl.getContext();
+            const gl = this.webgl.getContext();
 
             let o;
 
@@ -418,16 +495,11 @@ export default class Prim {
      */
     computeColors( normals, colors ) {
 
-        for ( var i = 0, len = normals.length; i < len; i += 3 ) {
+        for ( let i = 0, len = normals.length; i < len; i += 3 ) {
 
-            //let c1 = this.randomColor();
-
-            //colors.push( c1[0], c1[1], c1[2], 1.0 );
-            colors.push( normals[i], normals[i+1], normals[i+2], 1.0 );
+            colors.push( normals[ i ], normals[ i + 1 ], normals[ i + 2 ], 1.0 );
 
         }
-
-        // console.log(" VERTICES:" + normals.length / 3 + " COLORS:" + colors.length / 4)
 
         return colors;
 
@@ -436,7 +508,7 @@ export default class Prim {
 
     /** 
      * Check the values of a Prim.
-     * TODO: why is itemsize of indices = 1??????
+     * TODO: why is itemsize of indices = 1
      */
     primReadout ( prim ) {
 
@@ -472,15 +544,24 @@ export default class Prim {
     */
     getStdVec3 ( type ) {
 
-        switch (type) {
-            case 'back': return [0, 0, -1]; break;
-            case 'down': return [0, -1, 0]; break;
-            case 'forward': return [0, 0, 1]; break;
-            case 'left': return [-1, 0, 0]; break;
-            case 'one': return [1, 1, 1]; break;
-            case 'right': return [1, 0, 0]; break;
-            case 'up': return [0, 1, 0]; break;
-            case 'zero': return [0, 0, 0]; break;
+        switch ( type ) {
+
+            case 'back': return [ 0, 0,-1 ];
+
+            case 'down': return [ 0,-1, 0 ];
+
+            case 'forward': return [ 0, 0, 1];
+
+            case 'left': return [-1, 0, 0 ];
+
+            case 'one': return [ 1, 1, 1 ];
+
+            case 'right': return [ 1, 0, 0 ];
+
+            case 'up': return [ 0, 1, 0 ];
+
+            case 'zero': return [ 0, 0, 0 ];
+
         }
 
     }
@@ -503,7 +584,7 @@ export default class Prim {
      */
     pointInTriangle ( p, p0, p1, p2 ) {
 
-        let vec3 = this.glMatrix.vec3;
+        const vec3 = this.glMatrix.vec3;
 
         let v0, v1, v2, dot00, dot01, dot02, dot11, dot12;
 
@@ -651,15 +732,16 @@ export default class Prim {
      */
     computeTangents ( vertices, indices, normals, texCoords ) {
 
-        let vec3 = this.glMatrix.vec3;
+        const vec3 = this.glMatrix.vec3;
 
         var tan1 = new Float32Array( normals.length );
+
         var tan2 = new Float32Array( normals.length );
 
         // the indices array specifies the triangles forming the object mesh (3 indices per triangle)
         const numIndices = indices.length;
         const numVertices = vertices.length;
-        const numNormals = normals.length;
+        //const numNormals = normals.length;
 
         //console.log("NUMVERTICES:" + numVertices / 3 + " NUMINDICES:" + numIndices / 3 + " NUMNORMALS:" + numNormals / 3)
 
@@ -697,7 +779,7 @@ export default class Prim {
         }
 
         var tangents = new Float32Array( numVertices * 4 / 3 ); // TODO: ADDED 4 to this!!
-        var numTangents = tangents.length / 4;
+        //var numTangents = tangents.length / 4;
 
         //console.log("TAN1:" + tan1)
         //console.log("TAN2:" + tan2)
@@ -715,23 +797,23 @@ export default class Prim {
 
             // Gram-Schmidt orthogonalize
             ////////////////const tmp  = subtract(t1, scale(dot(n, t1), n));
-            const tmp = vec3.sub( [0,0,0], t1, vec3.scale( [0,0,0], t1, vec3.dot( n, t1 ) ) );
+            const tmp = vec3.sub( [ 0, 0, 0 ], t1, vec3.scale( [ 0, 0, 0 ], t1, vec3.dot( n, t1 ) ) );
 
             //console.log("TMP:" + tmp) //NOT COMPUTING THIS RIGHT, all NAN
 
-            const len2 = tmp[0] * tmp[0] + tmp[1] * tmp[1] + tmp[2] * tmp[2];
+            const len2 = tmp[ 0 ] * tmp[ 0 ] + tmp[1] * tmp[1] + tmp[2] * tmp[2];
 
             // normalize the vector only if non-zero length
 
-            const txyz = ( len2 > 0 ) ? vec3.scale( [0,0,0], tmp, 1.0 / Math.sqrt( len2 ) ) : tmp;
+            const txyz = ( len2 > 0 ) ? vec3.scale( [ 0, 0, 0 ], tmp, 1.0 / Math.sqrt( len2 ) ) : tmp;
 
             ////console.log("TXYZ:" + txyz );
 
             // Calculate handedness
             //////////////const tw = (dot(cross(n, t1), t2) < 0.0) ? -1.0 : 1.0;
-            const tw = ( vec3.dot( vec3.cross( [0,0,0], n, t1 ), t2 ) < 0.0 ) ? -1.0 : 1.0;
+            const tw = ( vec3.dot( vec3.cross( [ 0, 0, 0 ], n, t1 ), t2 ) < 0.0 ) ? -1.0 : 1.0;
 
-            tangents[i4    ] = txyz[0];
+            tangents[i4    ] = txyz[ 0 ];
             tangents[i4 + 1] = txyz[1];
             tangents[i4 + 2] = txyz[2];
             tangents[i4 + 3] = tw;
@@ -765,11 +847,11 @@ export default class Prim {
      */
     geometryPoint ( prim ) {
 
+       const util = this.util;
+
        let geo = prim.geometry;
 
-       let util = this.util;
-
-        // Shortcuts to Prim data arrays
+        // Shortcuts o Prim data arrays
 
         let vertices = geo.vertices.data,
         indices  = geo.indices.data,
@@ -975,11 +1057,14 @@ export default class Prim {
     }
 
     /** 
-     * Plane (non-infinite, multiple vertices, can be turned into TERRAIN)
+     * Plane (non-infinite, multiple vertices, can be turned into TERRAIN).
+     * Differs from sides of other prims in not defining curve radius.
+     * @param {Prim} prim the object needing buffers.
+     * @returns {BufferData} buffer data for Prim.
      */
     geometryPlane ( prim ) {
 
-        let vec3 = this.glMatrix.vec3;
+        //const vec3 = this.glMatrix.vec3;
 
         let geo = prim.geometry;
 
@@ -1154,9 +1239,9 @@ export default class Prim {
      */
     geometryDome ( prim ) {
 
-        let list = this.typeList;
+        const list = this.typeList;
 
-        let vec3 = this.glMatrix.vec3;
+        const vec3 = this.glMatrix.vec3;
 
         let geo = prim.geometry;
 
@@ -1175,7 +1260,7 @@ export default class Prim {
 
         //let radius = prim.dimensions[ 0 ] * 0.5;
 
-        let radius = Math.max( prim.dimensions[0], prim.dimensions[1], prim.dimensions[2] ) * 0.5;
+        let radius = Math.max( prim.dimensions[ 0 ], prim.dimensions[1], prim.dimensions[2] ) * 0.5;
 
         // Everything except sphere and cylinder is a half-object.
 
@@ -1284,9 +1369,9 @@ export default class Prim {
 
                 }
 
-                // Adjust shape to specified dimensions.
+                // Scale shape to specified dimensions.
 
-                x *= prim.dimensions[0];
+                x *= prim.dimensions[ 0 ];
 
                 y *= prim.dimensions[1];
 
@@ -1308,7 +1393,7 @@ export default class Prim {
 
                 // NOTE: TODO: probably for SkyDome as well...
 
-                if ( prim.type === list.BOTTOMDOME || prim.type === list.BOTTOMCONE ) {
+                if ( prim.type === list.BOTTOMDOME || prim.type === list.BOTTOMCONE || prim.type === list.SKYDOME ) {
 
                     y = -y; // flip the normals
 
@@ -1320,7 +1405,7 @@ export default class Prim {
 
                 let n = vec3.normalize( [ 0, 0, 0 ], [ x, y, z ] );
 
-                normals.push( n[0], n[1], n[2] );
+                normals.push( n[ 0 ], n[1], n[2] );
 
                 //normals.push( x, y, z );
 
@@ -1346,22 +1431,17 @@ export default class Prim {
 
                     if( prim.type === list.SKYDOME ) {
 
-                        // TODO: wind so visible inside
+                        indices.push( second, first, second + 1 );
 
-                        indices.push(first, second, first + 1);
-
-                        indices.push(second, second + 1 , first + 1 );
-                        
+                        indices.push( first, first + 1, second + 1 );
 
                     } else {
 
                         indices.push(first + 1, second + 1, second);
 
-                        indices.push(first + 1, second, first);
+                        indices.push( first + 1, second, first );
 
                     }
-
-
 
                 // NOTE: for SkyDome, reverse indices.
 
@@ -1480,18 +1560,18 @@ export default class Prim {
     }
 
     /** 
-     * Create a spherical object from a cube mesh. Useful for cubemaps. If rounding 
-     * is zero, it is a cube.
+     * Create a cube, or a spherical object from a cube mesh. Useful for cubemaps. 
+     * If rounding is zero, it is a cube.
      * TODO: move vertices to better coverage
      * @link https://github.com/caosdoar/spheres/
      */
     geometryCube ( prim ) {
 
-        let vec3 = this.glMatrix.vec3;
+        const vec3 = this.glMatrix.vec3;
 
-        let flatten = this.util.flatten;
+        const flatten = this.util.flatten;
 
-        let list = this.typeList;
+        const list = this.typeList;
 
         let geo = prim.geometry;
 
@@ -1505,31 +1585,36 @@ export default class Prim {
         colors = geo.colors.data;
 
         let sx = prim.dimensions[ 0 ];
+
         let sy = prim.dimensions[ 1 ];
+
         let sz = prim.dimensions[ 2 ];
 
         let nx = prim.divisions[ 0 ];
+
         let ny = prim.divisions[ 1 ];
+
         let nz = prim.divisions[ 2 ];
 
-        var numVertices = ( nx + 1 ) * ( ny + 1 ) * 2 + ( nx + 1 ) * ( nz + 1 ) * 2 + ( nz + 1 ) * ( ny + 1 ) * 2;
+        //var numVertices = ( nx + 1 ) * ( ny + 1 ) * 2 + ( nx + 1 ) * ( nz + 1 ) * 2 + ( nz + 1 ) * ( ny + 1 ) * 2;
 
         var positions = [];
+
         var norms = [];
 
         let vertexIndex = 0;
 
-        makeSide( 0, 1, 2, sx, sy, nx, ny,  sz/2,  1, -1 ); //front
+        makeSide( 0, 1, 2, sx, sy, nx, ny,  sz / 2,  1, -1 ); //front
 
-        makeSide( 0, 1, 2, sx, sy, nx, ny, -sz/2, -1, -1 ); //back
+        makeSide( 0, 1, 2, sx, sy, nx, ny, -sz / 2, -1, -1 ); //back
 
-        makeSide( 2, 1, 0, sz, sy, nz, ny, -sx/2,  1, -1 ); //left
+        makeSide( 2, 1, 0, sz, sy, nz, ny, -sx / 2,  1, -1 ); //left
 
-        makeSide( 2, 1, 0, sz, sy, nz, ny,  sx/2, -1, -1 ); //right
+        makeSide( 2, 1, 0, sz, sy, nz, ny,  sx / 2, -1, -1 ); //right
 
-        makeSide( 0, 2, 1, sx, sz, nx, nz,  sy/2,  1,  1 ); //top
+        makeSide( 0, 2, 1, sx, sz, nx, nz,  sy / 2,  1,  1 ); //top
 
-        makeSide( 0, 2, 1, sx, sz, nx, nz, -sy/2,  1, -1 ); //bottom
+        makeSide( 0, 2, 1, sx, sz, nx, nz, -sy / 2,  1, -1 ); //bottom
 
         function makeSide(u, v, w, su, sv, nu, nv, pw, flipu, flipv) {
 
@@ -1539,7 +1624,7 @@ export default class Prim {
 
                 for( var i = 0; i <= nu; i++ ) {
 
-                    var vert = positions[ vertexIndex ] = [0,0,0];
+                    var vert = positions[ vertexIndex ] = [ 0, 0, 0 ];
 
                     vert[ u ] = ( -su / 2 + i * su / nu ) * flipu;
 
@@ -1549,7 +1634,7 @@ export default class Prim {
 
                     // Normals.
 
-                    var normal = norms[ vertexIndex ] = [0,0,0];
+                    var normal = norms[ vertexIndex ] = [ 0, 0, 0 ];
 
                     normal[ u ] = 0
 
@@ -1589,7 +1674,7 @@ export default class Prim {
 
         if ( prim.type === list.CUBESPHERE ) {
 
-            var tmp = [0,0,0];
+            var tmp = [ 0, 0, 0 ];
 
             //var radius = 1.5; // TODO: fraction of the dimensions!
             var radius =  prim.dimensions[ 0 ] / 2;
@@ -1600,65 +1685,67 @@ export default class Prim {
 
             var rz = sz / 2.0;
 
-            for(var i = 0; i < positions.length; i++ ) {
+            for( var i = 0; i < positions.length; i++ ) {
 
-                var pos = positions[i];
+                var pos = positions[ i ];
 
-                var normal = normals[i];
+                var normal = normals[ i ];
 
-                var inner = [pos[0], pos[1], pos[2]];
+                var inner = [ pos[ 0 ], pos[ 1 ], pos[ 2 ] ];
 
-                if (pos[0] < -rx + radius) {
+                if ( pos[ 0 ] < -rx + radius ) {
 
-                    inner[0] = -rx + radius;
-
-                }
-                else if (pos[0] > rx - radius) {
-
-                    inner[0] = rx - radius;
+                    inner[ 0 ] = -rx + radius;
 
                 }
 
-                if (pos[1] < -ry + radius) {
+                else if ( pos[ 0 ] > rx - radius ) {
 
-                    inner[1] = -ry + radius;
+                    inner[ 0 ] = rx - radius;
 
                 }
+
+                if ( pos[ 1 ] < -ry + radius ) {
+
+                    inner[ 1 ] = -ry + radius;
+
+                }
+
                 else if (pos[1] > ry - radius) {
 
                     inner[1] = ry - radius;
 
                 }
 
-                if (pos[2] < -rz + radius) {
+                if ( pos[ 2 ] < -rz + radius ) {
 
-                    inner[2] = -rz + radius;
-
-                }
-
-                else if (pos[2] > rz - radius) {
-
-                    inner[2] = rz - radius;
+                    inner[ 2 ] = -rz + radius;
 
                 }
 
-                normal = [pos[0], pos[1], pos[2]];
+                else if ( pos[ 2 ] > rz - radius ) {
+
+                    inner[ 2 ] = rz - radius;
+
+                }
+
+                normal = [ pos[ 0 ], pos[ 1 ], pos[ 2 ] ];
 
                 vec3.sub( normal, normal, inner );
 
-                vec3.normalize( normal, normal);
+                vec3.normalize( normal, normal );
 
-                normals[i] = normal;
+                normals[ i ] = normal;
 
-                pos = [ inner[0], inner[1], inner[2] ];
+                pos = [ inner[ 0 ], inner[ 1 ], inner[ 2 ] ];
 
-                tmp = [ normal[0], normal[1], normal[2] ];
+                tmp = [ normal[ 0 ], normal[ 1 ], normal[ 2 ] ];
 
-                vec3.scale(tmp, tmp, radius);
+                vec3.scale( tmp, tmp, radius );
 
-                vec3.add(pos, pos, tmp);
+                vec3.add( pos, pos, tmp );
 
-                positions[i] = pos;
+                positions[ i ] = pos;
 
             }
 
@@ -1729,21 +1816,21 @@ export default class Prim {
      * @param {Object} prim the primitive needing geometry.
      * @param {Boolean} noSphere if false, make an icosohedron.
      */
-    geometryIcoSphere ( prim, sphere = true ) {
+    geometryIcoSphere ( prim ) {
 
-        let vec3 = this.glMatrix.vec3;
+        //const vec2 = this.glMatrix.vec2;
 
-        let vec2 = this.glMatrix.vec2;
+        const vec3 = this.glMatrix.vec3;
 
-        let flatten = this.util.flatten;
+        const flatten = this.util.flatten;
 
-        let list = this.typeList;
+        const list = this.typeList;
 
         // Size and divisions.
 
-        let subdivisions = prim.divisions[0];
+        let subdivisions = prim.divisions[ 0 ];
 
-        let radius = prim.dimensions[0] * 0.5;
+        let radius = prim.dimensions[ 0 ] * 0.5;
 
         let resolution = 1 << subdivisions;
 
@@ -1773,7 +1860,7 @@ export default class Prim {
 
         // initialize lots of default variables.
 
-        let v = 0, vBottom = 0, t = 0, i, d, progress, from = getVecs( 'zero' ), to = getVecs( 'zero' ), out = getVecs( 'zero' );
+        let v = 0, vBottom = 0, t = 0, i, d, progress, from = getVecs( 'zero' ), to = getVecs( 'zero' );
             
         for ( i = 0; i < 4; i++ ) {
 
@@ -1785,19 +1872,19 @@ export default class Prim {
 
             progress = i / resolution;
 
-            to = vec3.lerp( [0,0,0], getVecs( 'down' ), getVecs( 'forward' ), progress );
+            to = vec3.lerp( [ 0, 0, 0 ], getVecs( 'down' ), getVecs( 'forward' ), progress );
 
             ///console.log('tttttto:' + to)
 
-            vertices[ v++ ] = vec3.copy( [0,0,0], to );
+            vertices[ v++ ] = vec3.copy( [ 0, 0, 0 ], to );
 
-            ////onsole.log( 'at position v:' + parseInt(v-1) + ', to:' + to + ', array:' + vec3.copy( [0,0,0], to ))
+            ////onsole.log( 'at position v:' + parseInt(v-1) + ', to:' + to + ', array:' + vec3.copy( [ 0, 0, 0 ], to ))
 
             for ( d = 0; d < 4; d++) {
 
-                from = vec3.copy( [0,0,0], to );
+                from = vec3.copy( [ 0, 0, 0 ], to );
 
-                to = vec3.lerp( [0,0,0], getVecs( 'down' ), getVecs( directions[ d ] ), progress );
+                to = vec3.lerp( [ 0, 0, 0 ], getVecs( 'down' ), getVecs( directions[ d ] ), progress );
 
                 t = createLowerStrip( i, v, vBottom, t, indices );
 
@@ -1814,15 +1901,15 @@ export default class Prim {
 
                 progress = i / resolution;
 
-                to = vec3.lerp( [0,0,0], getVecs( 'up' ), getVecs( 'forward' ), progress );
+                to = vec3.lerp( [ 0, 0, 0 ], getVecs( 'up' ), getVecs( 'forward' ), progress );
 
-                vertices[ v++ ] = vec3.copy( [0,0,0], to );
+                vertices[ v++ ] = vec3.copy( [ 0, 0, 0 ], to );
 
                 for ( d = 0; d < 4; d++) {
 
-                    from = vec3.copy( [0,0,0], to );
+                    from = vec3.copy( [ 0, 0, 0 ], to );
 
-                    to = vec3.lerp( [0,0,0], getVecs( 'up' ), getVecs( directions[ d ] ), progress );
+                    to = vec3.lerp( [ 0, 0, 0 ], getVecs( 'up' ), getVecs( directions[ d ] ), progress );
 
                     t = createUpperStrip( i, v, vBottom, t, indices );
 
@@ -1855,22 +1942,12 @@ export default class Prim {
 
             if ( prim.type === list.ICOSPHERE ) {
 
-                vertices[i] = vec3.normalize( [0,0,0], vertices[i]);
+                vertices[i] = vec3.normalize( [ 0, 0, 0 ], vertices[i]);
 
             }
 
-            normals[i] = vec3.copy( [0,0,0], vertices[i] );
+            normals[i] = vec3.copy( [ 0, 0, 0 ], vertices[i] );
 
-        }
-
-        // Scale the icosphere.
-
-        if (radius != 1) {
-            for (i = 0; i < vertices.Length; i++) {
-                    vertices[i][0] *= radius;
-                    vertices[i][1] *= radius;
-                    vertices[i][2] *= radius;
-            }
         }
 
         // Texture coords.
@@ -1881,11 +1958,30 @@ export default class Prim {
 
         createTangents ( vertices, tangents );
 
+        // Scale. NOTE: this has to be after createUV and createTangents (assuming unit sphere).
+
+        if ( radius != 1 ) {
+
+            for ( i = 0; i < vertices.length; i++ ) {
+
+                    vertices[ i ][ 0 ] *= radius;
+
+                    vertices[ i ][ 1 ] *= radius;
+
+                    vertices[ i ][ 2 ] *= radius;
+
+            }
+
+        }
+
         // Flatten the data arrays.
 
         vertices = geo.vertices.data = flatten( vertices, false );
+
         texCoords = geo.texCoords.data = flatten( texCoords, false );
-        normals = geo.normals.data = flatten(normals, false )
+
+        normals = geo.normals.data = flatten(normals, false );
+
         tangents = geo.tangents.data = flatten(tangents, false );
 
         // Colors.
@@ -1916,7 +2012,7 @@ export default class Prim {
 
                 previousX = v[ 0 ];           // was v.x
 
-                let textureCoordinates = [ 0,0 ];
+                let textureCoordinates = [ 0, 0 ];
 
                 textureCoordinates[ 0 ] = Math.atan2( v[ 0 ], v[ 2 ] ) / ( -2 * Math.PI );  // was v.x, v.z
 
@@ -1926,33 +2022,33 @@ export default class Prim {
 
                 }
 
-                textureCoordinates[1] = Math.asin( v[ 1 ] ) / Math.PI + 0.5;  // was v.y, textureCoordinates.y
+                textureCoordinates[ 1 ] = Math.asin( v[ 1 ] ) / Math.PI + 0.5;  // was v.y, textureCoordinates.y
 
  
-                uv[i] = textureCoordinates;
+                uv[ i ] = textureCoordinates;
             }
 
-            uv[vertices.length - 4][0] = 0.125;
+            uv[ vertices.length - 4 ][ 0 ] = 0.125;
 
-            uv[0][0] = 0.125; // was v.x
+            uv[ 0 ][ 0 ] = 0.125; // was v.x
 
-            uv[vertices.length - 3][0] = 0.375
+            uv[ vertices.length - 3 ][ 0 ] = 0.375
 
-            uv[1][0] = 0.375; // was v.x
+            uv[ 1 ][ 0 ] = 0.375; // was v.x
 
-            uv[vertices.length - 2][0] = 0.625
+            uv[ vertices.length - 2][ 0 ] = 0.625
 
-            uv[2][0] = 0.625; // was v.x
+            uv[ 2 ][ 0 ] = 0.625; // was v.x
 
-            uv[vertices.length - 1][0] = 0.875
+            uv[vertices.length - 1][ 0 ] = 0.875
 
-            uv[3][0] = 0.875; // was v.x
+            uv[ 3 ][ 0 ] = 0.875; // was v.x
 
             // Our engine wraps opposite, so reverse first coordinate (can't do it until we do all coordinates).
 
-            for (i = 0; i < texCoords.length; i++ ) {
+            for ( i = 0; i < texCoords.length; i++ ) {
 
-                texCoords[i][0] = 1.0 - texCoords[i][0];
+                texCoords[ i ][ 0 ] = 1.0 - texCoords[ i ][ 0 ];
 
             }
 
@@ -1967,39 +2063,38 @@ export default class Prim {
                 v[1] = 0;            // was v.y
 
                 //v = v.normalized;
-                v = vec3.normalize( [0,0,0], v );
+                v = vec3.normalize( [ 0, 0, 0 ], v );
 
-                tangent = [0,0,0,0];
+                tangent = [ 0, 0, 0, 0 ];
 
-                tangent[0] = -v[2];
-                tangent[1] = 0;
-                tangent[2] = v[0];
-                tangent[3] = -1;
+                tangent[ 0 ] = -v[ 2 ];
+                tangent[ 1 ] = 0;
+                tangent[ 2 ] = v[ 0 ];
+                tangent[ 3 ] = -1;
 
-                tangents[i] = tangent;
+                tangents[ i ] = tangent;
 
             }
 
-            //tangents[vertices.Length - 4] = tangents[0] = new Vector3(-1f, 0, -1f).normalized;
-            tangents[vertices.length - 4] = [-1, 0, 1];
-            tangents[0] = [-1, 0, -1];
+            tangents[ vertices.length - 4 ] = [ -1, 0, 1 ];
 
-            //tangents[vertices.Length - 3] = tangents[1] = new Vector3(1f, 0f, -1f).normalized;
-            tangents[vertices.length - 3] = [1, 0, -1];
-            tangents[1] = [1, 0, -1];
+            tangents[ 0 ] = [ -1, 0, -1 ];
 
-            //tangents[vertices.Length - 2] = tangents[2] = new Vector3(1f, 0f, 1f).normalized;
-            tangents[vertices.length - 2] = [1, 0, 1];
-            tangents[2] = [1, 0, 1];
+            tangents[ vertices.length - 3 ] = [ 1, 0, -1 ];
 
-            //tangents[vertices.Length - 1] = tangents[3] = new Vector3(-1f, 0f, 1f).normalized;
-            tangents[vertices.length - 1] = [-1, 0, 1];
-            tangents[3] = [-1, 0, 1];
+            tangents[ 1 ] = [ 1, 0, -1 ];
 
+            tangents[ vertices.length - 2 ] = [ 1, 0, 1 ];
 
-            for (i = 0; i < 4; i++) {
+            tangents[ 2 ] = [ 1, 0, 1 ];
 
-                tangents[vertices.length - 1 - i][3] = tangents[i][3] = -1;
+            tangents[ vertices.length - 1 ] = [ -1, 0, 1 ];
+
+            tangents[ 3 ] = [ -1, 0, 1 ];
+
+            for ( i = 0; i < 4; i++ ) {
+
+                tangents[ vertices.length - 1 - i ][ 3 ] = tangents[ i ][ 3 ] = -1;
 
             }
         }
@@ -2008,9 +2103,9 @@ export default class Prim {
 
             for ( let i = 1; i <= steps; i++ ) {
 
-                //console.log("Vec3 " + v + " IS A:" + vec3.lerp( [0,0,0], from, to, i / steps ))
+                //console.log("Vec3 " + v + " IS A:" + vec3.lerp( [ 0, 0, 0 ], from, to, i / steps ))
 
-                vertices[ v++ ] = vec3.lerp( [0,0,0], from, to, i / steps );
+                vertices[ v++ ] = vec3.lerp( [ 0, 0, 0 ], from, to, i / steps );
 
             }
 
@@ -2114,14 +2209,13 @@ export default class Prim {
      */
     geometryTorus ( prim ) {
 
-        let vec3 = this.glMatrix.vec3;
+        const vec3 = this.glMatrix.vec3;
 
-        let flatten = this.util.flatten;
+        //const flatten = this.util.flatten;
 
-        let list = this.typeList;
+        //const list = this.typeList;
 
         let geo = prim.geometry;
-
 
         // Shortcuts to Prim data arrays
 
@@ -2138,7 +2232,7 @@ export default class Prim {
 
         let numVerticesPerColumn = rings + 1;
 
-        let numVertices = numVerticesPerRow * numVerticesPerColumn;
+        //let numVertices = numVerticesPerRow * numVerticesPerColumn;
 
         let verticalAngularStride = Math.PI * 2.0 / rings;
 
@@ -2146,26 +2240,26 @@ export default class Prim {
 
         let theta = 0, phi = 0, x, y, z;
 
-        for (let verticalIt = 0; verticalIt < numVerticesPerColumn; verticalIt++) {
+        for ( let verticalIt = 0; verticalIt < numVerticesPerColumn; verticalIt++ ) {
             
             theta = verticalAngularStride * verticalIt;
 
-            for (let horizontalIt = 0; horizontalIt < numVerticesPerRow; horizontalIt++) {
+            for ( let horizontalIt = 0; horizontalIt < numVerticesPerRow; horizontalIt++ ) {
           
                 phi = horizontalAngularStride * horizontalIt;
 
                 // position
-                x = Math.cos(theta) * (radius + ringRadius * Math.cos(phi));
+                x = Math.cos( theta ) * ( radius + ringRadius * Math.cos( phi ) );
 
-                y = Math.sin(theta) * (radius + ringRadius * Math.cos(phi));
+                y = Math.sin( theta ) * ( radius + ringRadius * Math.cos( phi ) );
 
                 z = ringRadius * Math.sin(phi);
 
                 vertices.push( x, y, z ); // NOTE: x, z, y gives a horizontal torus! NOTE: MAY WANT TO DO FOR PLANE
 
-                let norm = vec3.normalize( [0,0,0], [ x, y, z ] );
+                let norm = vec3.normalize( [ 0, 0, 0 ], [ x, y, z ] );
 
-                normals.push( norm[0], norm[1], norm[2] );
+                normals.push( norm[ 0 ], norm[ 1 ], norm[ 2 ] );
 
                 let u = horizontalIt / numVerticesPerRow;
 
@@ -2174,19 +2268,22 @@ export default class Prim {
                 texCoords.push( u, v );
 
             }
+
         }
 
-        let numIndices = sides * rings * 6;
-        
-        for ( let verticalIt = 0; verticalIt < rings; verticalIt++) {
+       // let numIndices = sides * rings * 6;
 
-            for ( let horizontalIt = 0; horizontalIt < sides; horizontalIt++) {
+        for ( let verticalIt = 0; verticalIt < rings; verticalIt++ ) {
 
-                let lt = (horizontalIt + verticalIt * (numVerticesPerRow));
-                let rt = ((horizontalIt + 1) + verticalIt * (numVerticesPerRow));
+            for ( let horizontalIt = 0; horizontalIt < sides; horizontalIt++ ) {
 
-                let lb = (horizontalIt + (verticalIt + 1) * (numVerticesPerRow));
-                let rb = ((horizontalIt + 1) + (verticalIt + 1) * (numVerticesPerRow));
+                let lt = ( horizontalIt + verticalIt * ( numVerticesPerRow) );
+
+                let rt = ( ( horizontalIt + 1 ) + verticalIt * ( numVerticesPerRow ) );
+
+                let lb = ( horizontalIt + ( verticalIt + 1) * ( numVerticesPerRow ) );
+
+                let rb = ( ( horizontalIt + 1 ) + ( verticalIt + 1 ) * ( numVerticesPerRow ) );
 
                 indices.push( lb, rb, rt, lb, rt, lt );
 
@@ -2204,8 +2301,6 @@ export default class Prim {
 
         }
 
-        window.prim = prim;
-
         // Return the buffer, or add array data to the existing Prim data.
 
         if( prim.geometry.makeBuffers === true ) {
@@ -2221,56 +2316,6 @@ export default class Prim {
         }
 
     }
-
-
-    // More prims
-    // Ogre 3d procedural
-    // https://bitbucket.org/transporter/ogre-procedural/src/ca6eb3363a53c2b53c055db5ce68c1d35daab0d5/library/include/?at=default
-    // https://bitbucket.org/transporter/ogre-procedural/wiki/Home
-    //
-    // https://github.com/jagenjo/litegl.js/tree/master/src
-    // ////////////////////////////////
-    // http://wiki.unity3d.com/index.php/ProceduralPrimitives
-    // ////////////////////////////////
-    // http://wiki.unity3d.com/index.php/ProceduralPrimitives
-    //
-    // octahedron sphere generation
-    // https://www.binpress.com/tutorial/creating-an-octahedron-sphere/162
-    // https://experilous.com/1/blog/post/procedural-planet-generation
-    // https://experilous.com/1/planet-generator/2014-09-28/planet-generator.js
-    // another octahedron sphere 
-    // https://www.binpress.com/tutorial/creating-an-octahedron-sphere/162
-    // rounded cube
-    // https://github.com/vorg/primitive-rounded-cube
-    // rounded cube algorithim
-    // http://catlikecoding.com/unity/tutorials/rounded-cube/
-    // generalized catmull-clark subdivision algorithm
-    // https://thiscouldbebetter.wordpress.com/2015/04/24/the-catmull-clark-subdivision-surface-algorithm-in-javascript/
-    // cube inflation algorithm
-    // http://mathproofs.blogspot.com.au/2005/07/mapping-cube-to-sphere.html
-    // advanced toolset
-    // https://www.geometrictools.com/Samples/Geometrics.html
-    // Eigen
-    // https://fossies.org/dox/eigen-3.2.10/icosphere_8cpp_source.html
-    // Geometry prebuilt
-    // http://paulbourke.net/geometry/roundcube/
-    // Lots of Webgl tricks!
-    // https://acko.net
-    // http://acko.net/blog/on-webgl/
-
-    /** 
-     * https://gamedevdaily.io/four-ways-to-create-a-mesh-for-a-sphere-d7956b825db4#.lkbq2omq5
-     * https://www.geometrictools.com/Samples/Geometrics.html
-     *
-     * https://github.com/glo-js/primitive-icosphere
-     * https://github.com/hughsk/icosphere
-     * http://mft-dev.dk/uv-mapping-sphere/
-     * http://donhavey.com/blog/tutorials/tutorial-3-the-icosahedron-sphere/
-     * http://blog.andreaskahler.com/2009/06/creating-icosphere-mesh-in-code.html
-     *
-     * https://www.binpress.com/tutorial/creating-an-octahedron-sphere/162
-     *
-     */
 
     /** 
      * Generic 3d shape (e.g. Collada model).
@@ -2339,7 +2384,7 @@ export default class Prim {
 
             // roughness 0.2 of 0-1, flatten = 1 of 0-1;
 
-            prim.heightMap[ prim.heightMap.type.DIAMOND ]( prim.divisions[0], prim.divisions[2], 0.6, 1 );
+            prim.heightMap[ prim.heightMap.type.DIAMOND ]( prim.divisions[ 0 ], prim.divisions[2], 0.6, 1 );
 
             //prim.heightMap.scale( 165, 165 );
 
@@ -2348,8 +2393,6 @@ export default class Prim {
         }
 
         let geometry = this.geometryPlane( prim );
-
-        window.heightMap = prim.heightMap;
 
         return geometry;
 
@@ -2382,15 +2425,13 @@ export default class Prim {
      * @param {GLMatrix.vec3} acceleration movement vector (acceleration) of object.
      * @param {GLMatrix.vec3} rotation rotation vector (spin) around center of object.
      * @param {String} textureImage the path to an image used to create a texture.
-     * @param {GLMatrix.vec4} color the default color of the object.
+     * @param {Array|GLMatrix.vec4} color the default color(s) of the object.
      */
     createPrim ( type, name = 'unknown', scale = 1.0, dimensions, divisions, position, acceleration, rotation, angular, textureImage, color ) {
 
-        let glMatrix = this.glMatrix;
+        const vec3 = this.glMatrix.vec3;
 
-        let vec3 = this.glMatrix.vec3;
-
-        let mat4 = this.glMatrix.mat4;
+        const mat4 = this.glMatrix.mat4;
 
         let prim = {};
 
@@ -2492,7 +2533,7 @@ export default class Prim {
 
         // NOTE: mis-spelling type leads to error here...
 
-        prim.geometry = this[ type ]( prim );
+        prim.geometry = this[ type ]( prim, color );
 
         // Standard Prim properties for position, translation, rotation, orbits. Used by shader/renderer objects (e.g. shaderTexture).
 
@@ -2571,7 +2612,7 @@ export default class Prim {
     /** 
      * Move vertices directly in geometry, i.e. for something 
      * that always orbits a central point.
-     * NOTE: normally, you will want to use a matrix transform.
+     * NOTE: normally, you will want to use a matrix transform to position objects.
      */
     move ( vertices, pos ) {
 
@@ -2579,11 +2620,11 @@ export default class Prim {
 
         let delta = [
 
-            center[0] - pos[0],
+            center[ 0 ] - pos[ 0 ],
 
-            center[1] - pos[1],
+            center[ 1 ] - pos[ 1 ],
 
-            center[2] = pos[2]
+            center[ 2 ] = pos[ 2 ]
 
         ];
 
@@ -2606,20 +2647,24 @@ export default class Prim {
      */
     boundingBox ( vertices ) {
 
-        let biggest = [0, 0, 0];
+        let biggest = [ 0, 0, 0 ];
 
-        let smallest = [0, 0, 0];
+        let smallest = [ 0, 0, 0 ];
 
         let minX, minY, minZ, maxX, maxY, maxZ;
 
         for ( let i = 0, len = vertices.length; i < len; i += 3 ) {
 
             minX = Math.min( vertices[ i ], minX );
+
             minY = Math.min( vertices[ i + 1 ], minY );
+
             minZ = Math.min( vertices[ i + 2 ], minZ );
 
             maxX = Math.max( vertices[ i ], maxX );
+
             maxY = Math.max( vertices[ i + 1 ], maxY );
+
             maxZ = Math.max( vertices[ i + 2 ], maxZ );
 
         }
@@ -2658,7 +2703,7 @@ export default class Prim {
 
             colorMult:             0,
 
-            diffuse:               [ 1, 1, 1 ], // TODO: should be textures[0]
+            diffuse:               [ 1, 1, 1 ], // TODO: should be textures[ 0 ]
 
             specular:              [ 1, 1, 1, 1 ],
 

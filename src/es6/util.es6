@@ -19,7 +19,7 @@ export default class Util {
      */
     setPerformance () {
 
-        if ( 'performance' in window == false ) {
+        if ( ! 'performance' in window ) {
 
             window.performance = {};
 
@@ -31,10 +31,10 @@ export default class Util {
 
         } );
 
-        if ( "now" in window.performance == false ) {
-    
-            var nowOffset = Date.now();
-    
+        if ( ! 'now' in window.performance ) {
+
+            let nowOffset = Date.now();
+
             if ( performance.timing && performance.timing.navigationStart ) {
 
                 nowOffset = performance.timing.navigationStart;
@@ -98,8 +98,6 @@ export default class Util {
      */
     getArr ( arr, idx, size ) {
 
-        let alen = arguments.length;
-
         if ( ! arr || idx < 0 || size < 1 ) {
 
             console.error( 'getArr() invalid params, arr:' + arr + ', index:' + idx + ' size:' + size );
@@ -131,7 +129,7 @@ export default class Util {
      */
     setArr ( arr, index ) {
 
-        let alen = arguments.length;
+        const alen = arguments.length;
 
         if ( alen < 3 ) {
 
@@ -141,7 +139,7 @@ export default class Util {
 
         }
 
-        let size = alen - 2;
+        const size = alen - 2;
 
         for ( let i = 2; i < alen; i++ ) {
 
@@ -166,11 +164,11 @@ export default class Util {
 
         }
 
-        var nodes = ( mutable && arr ) || arr.slice(); // return a new array.
+        let nodes = ( mutable && arr ) || arr.slice(); // return a new array.
 
-        var flattened = [];
+        let flattened = [];
 
-        for ( var node = nodes.shift(); node !== undefined; node = nodes.shift() ) {
+        for ( let node = nodes.shift(); node !== undefined; node = nodes.shift() ) {
 
             if ( Array.isArray( node ) ) {
 
@@ -198,7 +196,7 @@ export default class Util {
      */
     concatArr ( arr1, arr2 ) {
 
-            let result = null;
+        let result = null;
 
         if ( arr1.type ) { // typed array
 
@@ -209,18 +207,14 @@ export default class Util {
                 case 'Float32Array':
                     result = new Float32Array( firstLength + second.length );
                     if( arr2.type !== arr1.type ) {
-
                         arr2 = Float32Array.from( arr2 );
-
                     }
                     break;
 
                 case 'Uint16Array':
                     result = new Uint16Array( firstLength + second.length );
                     if( arr2.type !== arr1.type ) {
-
                         arr2 = Uint16Array.from( arr2 );
-
                     }
                     break;
 
