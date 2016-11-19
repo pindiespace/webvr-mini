@@ -12,8 +12,8 @@ export default class Prim {
      * mesh operations.
      * 
      * Implicit objects (values are units, with 1.0 being normalized size).
-     * prim.position = [ x, y, z ]
-     * prim.dimensions = [ x, y, z, startRadius, endRadius ]
+     * prim.position = [ x, y, z, w ] 
+     * prim.dimensions = [ x, y, z, startRadius |  ]
      * prim.divisions = [ x, y, z ]
 
      * More prims
@@ -1298,70 +1298,88 @@ export default class Prim {
 
                 let cosPhi = Math.cos( phi );
 
-                let x, y, z, u, v;
+                let x, y, z, u, v, r;
 
                 // Compute vertex positions.
 
-                let lat = latNumber / latitudeBands;
+                let lat = latNumber / latDist;
+
+                r = lat / 2; // radius.
 
                 let long = longNumber / longitudeBands;
 
                 switch( prim.type ) {
 
                     case list.CYLINDER:
-                        x = cosPhi;
-                        z = sinPhi;
-                        y = cosTheta;
+                        x = cosPhi / 2;
+                        z = sinPhi / 2;
+                        y = cosTheta / 2;
                         u = 1 - long;
                         v = 1 - lat;
                         break;
 
                     case list.SPHERE:
+                        x = cosPhi * sinTheta / 2;
+                        z = sinPhi * sinTheta / 2;
+                        y = cosTheta / 2;
+                        u = 1 - long;
+                        v = 1 - lat;
+                        break;
+
                     case list.TOPDOME:
                     case list.DOME:
                     case list.SKYDOME:
-                        x = cosPhi * sinTheta;
-                        z = sinPhi * sinTheta;
-                        y = cosTheta;
+                        x = cosPhi * sinTheta / 2;
+                        z = sinPhi * sinTheta / 2;
+                        y = cosTheta / 2;
                         u = 1 - long;
                         v = 1 - lat;
-                        //console.log("LATBANDS:" + y)
                         break;
 
                     case list.BOTTOMDOME:
-                        x = cosPhi * sinTheta;
-                        z = sinPhi * sinTheta;
-                        y = 1 - cosTheta;
+                        x = cosPhi * sinTheta / 2;
+                        z = sinPhi * sinTheta / 2;
+                        y = ( (1 - cosTheta) / 2 ) - 0.5;
                         u = long;
                         v = lat;
                         break;
 
                     case list.SPINDLE:
-                        // need linear 0-1-0
+                        if( lat <= 0.5 ) {
+                            x = cosPhi * lat;
+                            z = sinPhi * lat;
+                        } else {
+                            x = cosPhi * ( 1 - lat )
+                            z = sinPhi * ( 1 - lat )
+                        }
+                        y = 1 - lat - 0.5;
+                        u = 1 - long;
+                        v = 1 - lat;
                         break;
 
                     case list.CONE:
-                        x = cosPhi * lat * 2;
-                        z = sinPhi * lat * 2;
-                        y = 1 - ( lat * 4 );
-                        u = 1 - long * 2;
-                        v = 1 - lat * 2;
+                        x = cosPhi * lat / 2;
+                        z = sinPhi * lat / 2;
+                        y = ( 1 - lat ) - 0.5;
+                        u = 1 - long;
+                        v = 1 - lat;
                         break;
 
                     case list.TOPCONE:
-                        x = cosPhi * lat * 2;
-                        z = sinPhi * lat * 2;
-                        y = 1 - ( lat * 2 );
+                        x = cosPhi * r;
+                        z = sinPhi * r;
+                        //y = ( 1 - lat ) / 2;
+                        y = 0.5 - r;
                         u = 1 - long;
                         v = 1 - lat;
                         break;
 
                     case list.BOTTOMCONE:
                         // NOTE: using 1 - lat gives small hole half-sized.
-                        x = cosPhi * ( 1 - lat * 2 );
-                        z = sinPhi * ( 1 - lat * 2 );
-                        y = 1 - ( lat * 2 );
-                        u = long;
+                        x = cosPhi * ( 0.5 - r );
+                        z = sinPhi * ( 0.5 - r );
+                        y = 0.0 - r;
+                        u = 1 - long;
                         v = 1 - lat;
                         break;
 
@@ -1565,6 +1583,8 @@ export default class Prim {
         const list = this.typeList;
 
         let geo = prim.geometry;
+
+        window.dim = prim.dimensions;
 
         // Shortcuts to Prim data arrays
 
@@ -2217,7 +2237,17 @@ export default class Prim {
         tangents = geo.tangents.data,
         colors = geo.colors.data;
 
-        let radius = 1.5, ringRadius = 0.25, sides = 36, rings = 24;
+        let radius = prim.dimensions[ 0 ] / 2; // x coordinate
+
+        let ringRadius = prim.dimensions[ 3 ]; // ringradius
+
+        let rings = prim.divisions[ 0 ];
+
+        let sides = prim.divisions[ 1 ];
+
+        console.log(" radius:" + radius + " ringRadius:" + ringRadius + " rings:" + rings + " sides:" + sides)
+
+        radius = 0.5, ringRadius = 0.25, sides = 36, rings = 24;
 
         let numVerticesPerRow = sides + 1;
 

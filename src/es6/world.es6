@@ -80,9 +80,9 @@ export default class World {
             this.prim.typeList.CUBE,
             'first cube',                                        // name
             1.0,                                                 // scale
-            vec3.fromValues( 2, 2, 2 ),            // dimensions
+            vec4.fromValues( 1, 1, 1, 0 ),            // dimensions
             vec3.fromValues( 10, 10, 10 ),            // divisions
-            vec3.fromValues( 0, 0, 0 ),            // position (absolute)
+            vec3.fromValues( 1, 0, 2 ),            // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 1 ), util.degToRad( 1 ), util.degToRad( 1 ) ), // angular velocity in x, y, x
@@ -94,7 +94,7 @@ export default class World {
             this.prim.typeList.CUBE,
             'toji cube',
             1.0,
-            vec3.fromValues( 1, 1, 1 ),            // dimensions
+            vec4.fromValues( 1, 1, 1, 0 ),            // dimensions
             vec3.fromValues( 1, 1, 1 ),            // divisions
             vec3.fromValues( 5, 1, -3 ),           // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -108,7 +108,7 @@ export default class World {
             this.prim.typeList.SKYDOME,
             'SkyDome',
             1.0,
-            vec3.fromValues( 2, 2, 2 ),            // dimensions
+            vec4.fromValues( 2, 2, 2, 0 ),            // dimensions
             vec3.fromValues( 10, 10, 10  ),            // divisions MAKE SMALLER
             vec3.fromValues(-4, 2.5, -0.5 ),        // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -122,7 +122,7 @@ export default class World {
             this.prim.typeList.TORUS,
             'torus',
             1.0,
-            vec3.fromValues( 1, 1, 1 ),            // dimensions
+            vec4.fromValues( 1, 1, 1, 0.5 ),            // dimensions NOTE: last dimension = torus radius
             vec3.fromValues( 9, 9, 9 ),            // divisions
             vec3.fromValues( -1.8, 3, -3.5 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -142,7 +142,7 @@ export default class World {
             this.prim.typeList.CUBE,
             'colored cube',
             1.0,
-            vec3.fromValues( 1, 1, 1 ),            // dimensions
+            vec4.fromValues( 1, 1, 1, 0 ),            // dimensions
             vec3.fromValues( 3, 3, 3 ),            // divisions
             vec3.fromValues( -1, 3, -3 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -162,7 +162,7 @@ export default class World {
             this.prim.typeList.CUBE,
             'lit cube',
             1.0,
-            vec3.fromValues( 1, 1, 1 ),            // dimensions
+            vec4.fromValues( 1, 1, 1, 0 ),            // dimensions
             vec3.fromValues( 1, 1, 1 ),            // divisions
             vec3.fromValues( -3, -2, -3 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -176,7 +176,7 @@ export default class World {
             this.prim.typeList.TERRAIN,
             'terrain',
             1.0,
-            vec3.fromValues( 2, 2, 2 ),            // dimensions
+            vec4.fromValues( 2, 2, 2, 0 ),            // dimensions
             vec3.fromValues( 130, 5, 130 ),           // divisions
             vec3.fromValues(1.5, -1.5, 2 ),       // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -191,7 +191,7 @@ export default class World {
             this.prim.typeList.PLANE,
             'a plane',
             1.0,
-            vec3.fromValues( 2, 2, 2 ),            // dimensions
+            vec4.fromValues( 2, 2, 2, 0 ),            // dimensions
             vec3.fromValues( 50, 0, 50 ),          // divisions
             vec3.fromValues( 0, -2, 0 ),           // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -205,7 +205,7 @@ export default class World {
             this.prim.typeList.SPHERE,
             'texsphere',
             1.0,
-            vec3.fromValues( 1.5, 1.5, 1.5 ),            // dimensions
+            vec4.fromValues( 1.5, 1.5, 1.5, 0 ),            // dimensions
             vec3.fromValues( 30, 30, 30 ),         // divisions
             vec3.fromValues(-5, -1.3, -2 ),       // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -220,7 +220,7 @@ export default class World {
             this.prim.typeList.CUBESPHERE,
             'cubesphere',
             1.0,
-            vec3.fromValues( 3, 3, 3 ),            // dimensions
+            vec4.fromValues( 3, 3, 3, 0 ),            // dimensions
             vec3.fromValues( 10, 10, 10 ),         // divisions
             vec3.fromValues(2.5, -1.5, -2 ),       // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -234,7 +234,7 @@ export default class World {
             this.prim.typeList.ICOSOHEDRON,
             'icophere',
             1.0,
-            vec3.fromValues( 3, 3, 3 ),            // dimensions
+            vec4.fromValues( 3, 3, 3, 0 ),            // dimensions
             vec3.fromValues( 4, 4, 4 ),         // divisions
             vec3.fromValues(-2.5, 1.5, -1 ),       // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -248,7 +248,7 @@ export default class World {
             this.prim.typeList.BOTTOMDOME,
             'TestDome',
             1.0,
-            vec3.fromValues( 1, 1, 1 ),            // dimensions
+            vec4.fromValues( 1, 1, 1, 0 ),            // dimensions
             vec3.fromValues( 10, 10, 10  ),            // divisions MAKE SMALLER
             vec3.fromValues(-4, 0.5, -0.5 ),        // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -262,7 +262,7 @@ export default class World {
             this.prim.typeList.ICOSPHERE,
             'icophere',
             1.0,
-            vec3.fromValues( 3, 3, 3 ),            // dimensions
+            vec4.fromValues( 3, 3, 3, 0 ),            // dimensions
             vec3.fromValues( 4, 4, 4 ),            // divisions
             vec3.fromValues(1.5, 2.5, -1 ),        // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -276,7 +276,7 @@ export default class World {
             this.prim.typeList.ICOSPHERE,
             'icoUnity',
             1.0,
-            vec3.fromValues( 3, 3, 3 ),            // dimensions
+            vec4.fromValues( 3, 3, 3, 0 ),            // dimensions
             vec3.fromValues( 4, 4, 4 ),            // divisions MAKE SMALLER
             vec3.fromValues(4.5, 3.5, -2 ),        // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -286,22 +286,20 @@ export default class World {
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0)  // color
         ) );
 
-
         this.textureObjList.push( this.prim.createPrim(
-            this.prim.typeList.BOTTOMCONE,
-            'CanCone',
+            this.prim.typeList.TORUS,
+            'SPINDLE',
             1.0,
-            vec3.fromValues( 2, 2, 2, 1 ),            // dimensions INCLUDING start radius (last value)
-            vec3.fromValues( 100, 100, 100  ),            // divisions MAKE SMALLER
+            vec4.fromValues( 1, 1, 1, 0.5 ),            // dimensions INCLUDING start radius or torus radius(last value)
+            vec3.fromValues( 15, 15, 15 ),            // divisions MUST BE CONTROLLED TO < 5
             //vec3.fromValues(-3.5, -3.5, -1 ),        // position (absolute)
-                                            vec3.fromValues(0, 0, 1.5),
+                                            vec3.fromValues(-0.0, 0, 2.0),
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
             ['img/mozvr-logo1.png'],               // texture present
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0)  // color
         ) );
-
 
 
         this.vs3 = this.renderer.shaderDirlightTexture.init( this.dirlightTextureObjList );
