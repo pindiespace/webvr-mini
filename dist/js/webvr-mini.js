@@ -5060,15 +5060,9 @@
 	                                                        break;
 
 	                                                case list.BOTTOMCONE:
-
-	                                                        // x = cosPhi * sinTheta;
-	                                                        // z = sinPhi * sinTheta;
-	                                                        // y = 1 - cosTheta;
-	                                                        // u = long;
-	                                                        // v = lat;
-
-	                                                        x = cosPhi * (1 - lat);
-	                                                        z = sinPhi * (1 - lat);
+	                                                        // NOTE: using 1 - lat gives small hole half-sized.
+	                                                        x = cosPhi * (1 - lat * 2);
+	                                                        z = sinPhi * (1 - lat * 2);
 	                                                        y = 1 - lat * 2;
 	                                                        u = long;
 	                                                        v = 1 - lat;
