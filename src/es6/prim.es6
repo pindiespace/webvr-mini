@@ -1337,21 +1337,37 @@ export default class Prim {
                         break;
 
                     case list.SPINDLE:
+                        // need linear 0-1-0
+                        break;
+
                     case list.CONE:
+                        x = cosPhi * lat * 2;
+                        z = sinPhi * lat * 2;
+                        y = 1 - ( lat * 4 );
+                        u = 1 - long * 2;
+                        v = 1 - lat * 2;
+                        break;
+
                     case list.TOPCONE:
-                        x = cosPhi;
-                        z = sinPhi;
-                        y = 1 - lat;
+                        x = cosPhi * lat * 2;
+                        z = sinPhi * lat * 2;
+                        y = 1 - ( lat * 2 );
                         u = 1 - long;
                         v = 1 - lat;
-                        console.log("y:" + y)
                         break;
 
                     case list.BOTTOMCONE:
-                        x = cosPhi * sinTheta;
-                        z = sinPhi * sinTheta;
-                        y = lat;
-                        u = 1 - long;
+
+                       // x = cosPhi * sinTheta;
+                       // z = sinPhi * sinTheta;
+                       // y = 1 - cosTheta;
+                       // u = long;
+                       // v = lat;
+
+                        x = cosPhi * ( 1 - lat );
+                        z = sinPhi * ( 1 - lat );
+                        y = 1 - ( lat * 2 );
+                        u = long;
                         v = 1 - lat;
                         break;
 

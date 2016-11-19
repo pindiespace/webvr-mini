@@ -288,7 +288,7 @@ export default class World {
 
 
         this.textureObjList.push( this.prim.createPrim(
-            this.prim.typeList.CONE,
+            this.prim.typeList.BOTTOMCONE,
             'CanCone',
             1.0,
             vec3.fromValues( 2, 2, 2, 1 ),            // dimensions INCLUDING start radius (last value)
