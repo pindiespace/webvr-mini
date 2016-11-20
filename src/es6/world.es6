@@ -108,9 +108,9 @@ export default class World {
             this.prim.typeList.SKYDOME,
             'SkyDome',
             1.0,
-            vec4.fromValues( 2, 2, 2, 0 ),            // dimensions
+            vec4.fromValues( 1, 1, 1, 0 ),            // dimensions
             vec3.fromValues( 10, 10, 10  ),            // divisions MAKE SMALLER
-            vec3.fromValues(-4, 2.5, -0.5 ),        // position (absolute)
+            vec3.fromValues(-1, 0.5, 3 ),        // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
@@ -288,7 +288,7 @@ export default class World {
 
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.TORUS,
-            'SPINDLE',
+            'TORUS',
             1.0,
             vec4.fromValues( 1, 1, 1, 0.5 ),            // dimensions INCLUDING start radius or torus radius(last value)
             vec3.fromValues( 15, 15, 15 ),            // divisions MUST BE CONTROLLED TO < 5
@@ -301,6 +301,19 @@ export default class World {
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0)  // color
         ) );
 
+        this.textureObjList.push( this.prim.createPrim(
+            this.prim.typeList.CONE,
+            'TestCone',
+            1.0,
+            vec4.fromValues( 1, 1, 1, 0.5 ),            // dimensions INCLUDING CONE TRUNCATION
+            vec3.fromValues( 10, 10, 10  ),            // divisions MAKE SMALLER
+            vec3.fromValues(-1, 0, 2.0 ),        // position (absolute)
+            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+            vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+            ['img/mozvr-logo2.png'],               // texture present
+            vec4.fromValues( 0.5, 1.0, 0.2, 1.0)  // color
+        ) );
 
         this.vs3 = this.renderer.shaderDirlightTexture.init( this.dirlightTextureObjList );
 

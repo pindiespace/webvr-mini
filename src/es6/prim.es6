@@ -1252,7 +1252,7 @@ export default class Prim {
         texCoords = geo.texCoords.data,
         normals = geo.normals.data,
         tangents = geo.tangents.data,
-        colors = geo.colors.data;
+        colors = geo.colors.data; 
 
         let longitudeBands = prim.divisions[ 0 ] // x axis (really xz)
 
@@ -1261,6 +1261,8 @@ export default class Prim {
         // Radius is measured along the x axis.
 
         let radius = prim.dimensions[ 0 ] * 0.5;
+
+        let startCone = prim.dimensions[ 3 ];
 
         // Everything except SPHERE, CYLINDER, SPINDLE, and CONE is a half-object.
 
@@ -1328,11 +1330,18 @@ export default class Prim {
 
                     case list.TOPDOME:
                     case list.DOME:
-                    case list.SKYDOME:
                         x = cosPhi * sinTheta / 2;
                         z = sinPhi * sinTheta / 2;
                         y = cosTheta / 2;
                         u = 1 - long;
+                        v = 1 - lat;
+                        break;
+
+                    case list.SKYDOME:
+                        x = cosPhi * sinTheta / 2;
+                        z = sinPhi * sinTheta / 2;
+                        y = cosTheta / 2;
+                        u = long;
                         v = 1 - lat;
                         break;
 
@@ -1358,11 +1367,14 @@ export default class Prim {
                         break;
 
                     case list.CONE:
-                        x = cosPhi * lat / 2;
-                        z = sinPhi * lat / 2;
-                        y = ( 1 - lat ) - 0.5;
-                        u = 1 - long;
-                        v = 1 - lat;
+
+                        if ( lat > startCone ) {
+                            x = cosPhi * lat / 2;
+                            z = sinPhi * lat / 2;
+                            y = ( 1 - lat ) - 0.5;
+                            u = 1 - long;
+                            v = 1 - lat;
+                        }
                         break;
 
                     case list.TOPCONE:
@@ -1438,17 +1450,17 @@ export default class Prim {
 
                     // Texture only visible from the inside.
 
-                    indices.push( second, first, second + 1 );
+                    indices.push( first + 1, second + 1, second );
 
-                    indices.push( first, first + 1, second + 1 );
+                    indices.push( first, first + 1,  second );
 
                 } else {
 
                     // Texture only visible outside.
 
-                    indices.push(first + 1, second + 1, second);
+                    indices.push( first + 1, second + 1, second );
 
-                    indices.push( first + 1, second, first );
+                    indices.push( first, first + 1,  second );
 
                 }
 
