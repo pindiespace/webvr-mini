@@ -484,6 +484,8 @@ export default class Prim {
 
             o.numItems = o.data.length / o.itemSize;
 
+            bufferObj.makeBuffers = false; // they're created!
+
         return bufferObj;
 
     }
@@ -1258,6 +1260,12 @@ export default class Prim {
 
         // Radius is measured along the x axis.
 
+        let l = prim.dimensions[ 0 ];
+
+        let w = prim.dimensions[ 1 ];
+
+        let h = prim.dimensions[ 2 ];
+
         let radius = prim.dimensions[ 0 ] * 0.5;
 
         let startCone = prim.dimensions[ 3 ];
@@ -1405,21 +1413,6 @@ export default class Prim {
 
                 // Adjust partial shapes to fill their bounding box.
 
-                // Push vertices.
-
-                //vertices.push( radius * x, radius * y, radius * z );
-                vertices.push( x, y, z );
-
-                // These were wrapped bottom->top, so reverse y on normals.
-
-                // NOTE: TODO: probably for SkyDome as well...
-
-                if ( prim.type === list.BOTTOMDOME || prim.type === list.BOTTOMCONE || prim.type === list.SKYDOME ) {
-
-                    y = -y; // flip the normals
-
-                }
-
                 texCoords.push( u, v );
 
                 // Push normals.
@@ -1427,6 +1420,21 @@ export default class Prim {
                 let n = vec3.normalize( [ 0, 0, 0 ], [ x, y, z ] );
 
                 normals.push( n[ 0 ], n[ 1 ], n[ 2 ] );
+
+                // Push vertices.
+
+                //vertices.push( radius * x, radius * y, radius * z );
+                vertices.push( x * l, y * w, z * h );
+
+                // These were wrapped bottom->top, so reverse y on normals.
+
+                // NOTE: TODO: probably for SkyDome as well...
+
+                if ( prim.type === list.BOTTOMDOME || prim.type === list.BOTTOMCONE || prim.type === list.SKYDOME ) {
+
+                    y = -y; // the y value (have to flip indices backwards for SKYDOME for it to work).
+
+                }
 
             }
 
@@ -1981,15 +1989,19 @@ export default class Prim {
 
         // Scale. NOTE: this has to be after createUV and createTangents (assuming unit sphere).
 
+        // TODO: TEST TO MAKE SURE IT WORKS
+
+        // TODO: MAKE DOME INSTEAD OF SPHERE OPTION.
+
         if ( radius != 1 ) {
 
             for ( i = 0; i < vertices.length; i++ ) {
 
                     vertices[ i ][ 0 ] *= radius;
 
-                    vertices[ i ][ 1 ] *= radius;
+                    vertices[ i ][ 1 ] *= prim.dimensions[1] /2; //radius;
 
-                    vertices[ i ][ 2 ] *= radius;
+                    vertices[ i ][ 2 ] *= prim.dimensions[2]/2; //radius;
 
             }
 
@@ -2232,10 +2244,6 @@ export default class Prim {
 
         const vec3 = this.glMatrix.vec3;
 
-        //const flatten = this.util.flatten;
-
-        //const list = this.typeList;
-
         let geo = prim.geometry;
 
         // Shortcuts to Prim data arrays
@@ -2247,17 +2255,15 @@ export default class Prim {
         tangents = geo.tangents.data,
         colors = geo.colors.data;
 
-        let radius = prim.dimensions[ 0 ] / 2; // x coordinate
+        let radius = prim.dimensions[ 0 ] / 2; // x coordinate, width of torus in x direction
 
-        let ringRadius = prim.dimensions[ 3 ]; // ringradius
+        let ringRadius = prim.dimensions[ 2 ] / 2; // ringradius
 
         let rings = prim.divisions[ 0 ];
 
         let sides = prim.divisions[ 1 ];
 
-        console.log(" radius:" + radius + " ringRadius:" + ringRadius + " rings:" + rings + " sides:" + sides)
-
-        radius = 0.5, ringRadius = 0.25, sides = 36, rings = 24;
+       // radius = 0.5, ringRadius = 0.25, sides = 36, rings = 24;
 
         let numVerticesPerRow = sides + 1;
 
@@ -2472,9 +2478,9 @@ export default class Prim {
 
         prim.scale = scale;
 
-        prim.dimensions = dimensions || vec3.fromValues( 1, 1, 1 );
+        prim.dimensions = dimensions || vec4.fromValues( 1, 1, 1, 0 );
 
-        prim.divisions = divisions || vec3.fromValues( 1, 1, 1 );
+        prim.divisions = divisions || vec4.fromValues( 1, 1, 1, 0 );
 
         prim.position = position || vec3.create();
 
@@ -2557,6 +2563,10 @@ export default class Prim {
         prim.type = type;
 
         prim.geometry = this.createBufferObj();
+
+        // Copy geometry type for use in rendering/shaders later.
+
+        prim.geometry.type = type;
 
         // Starting and ending radii. Individual Prims may adjust.
 
