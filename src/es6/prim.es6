@@ -880,7 +880,7 @@ export default class Prim {
 
         if( ! colors.length ) {
 
-            colors.push( util.randomColor(), util.randomColor(), util.randomColor(), 1.0 );
+            colors.push( util.randomColor(), util.randomColor(), util.randomColor(), 1 );
 
         }
 
@@ -1058,6 +1058,7 @@ export default class Prim {
 
     /** 
      * Plane (non-infinite, multiple vertices, can be turned into TERRAIN).
+     * Drawn horizontal in the x/z axis, y (depth) = 0;
      * Differs from sides of other prims in not defining curve radius.
      * @param {Prim} prim the object needing buffers.
      * @returns {BufferData} buffer data for Prim.
@@ -1085,17 +1086,17 @@ export default class Prim {
 
         // Increments for building Plane.
 
-        let incX = prim.dimensions[ 0 ] / prim.divisions[ 0 ],
-        incY = 1.0,
+        let incX = prim.dimensions[ 0 ] / prim.divisions[ 0 ], 
+        incY = 1,
         incZ = prim.dimensions[ 2 ] / prim.divisions[ 2 ];
 
-        for ( let colNumber = 0; colNumber <= cols; colNumber++ ) {
+        for ( let colNum = 0; colNum <= cols; colNum++ ) {
 
-            for ( let rowNumber = 0; rowNumber <= rows; rowNumber++ ) {
+            for ( let rowNum = 0; rowNum <= rows; rowNum++ ) {
 
                 // Vertex values.
 
-                let x = colNumber;
+                let x = colNum;
 
                 let y = 0;
 
@@ -1103,39 +1104,44 @@ export default class Prim {
 
                 if ( prim.heightMap ) {
 
-                    y = prim.heightMap.getPixel( colNumber, rowNumber );
+                    y = prim.heightMap.getPixel( colNum, rowNum );
 
+                } else {
+
+                    normals.push( 0, 1, 0 );
                 }
 
-                let z = rowNumber;
+                let z = rowNum;
 
-                // Texture coords.
-
-                let u = (colNumber / cols);
-
-                let v = 1 - (rowNumber / rows);
-
-                // Add to arrays.
+                // Vertices.
 
                 vertices.push( ( incX * x ) - halfX, ( incY * y), ( incZ * z ) - halfZ );
 
+                // Texture coords.
+
+                let u = ( colNum / cols );
+
+                let v = 1 - ( rowNum / rows );                
+
                 texCoords.push( u, v );
 
-                normals.push( 0, 1.0, 0 );
+                // Normals computed separately, due to heightMap.
 
             }
 
         }
 
-        // Indices.
+        // Indices. (since we use rowNum < rows, not rowNum <= rows)
 
-        for (let rowNumber = 0; rowNumber < rows; rowNumber++) {
+        let first, second;
 
-            for (let colNumber = 0; colNumber < cols; colNumber++) {
+        for (let rowNum = 0; rowNum < rows; rowNum++) {
 
-                let first = (rowNumber * (cols + 1)) + colNumber;
+            for (let colNum = 0; colNum < cols; colNum++) {
 
-                let second = first + cols + 1;
+                first = (rowNum * (cols + 1)) + colNum;
+
+                second = first + cols + 1;
 
                 // Note: we're running culling in reverse from some tutorials here.
 
@@ -1147,9 +1153,13 @@ export default class Prim {
 
         }
 
-        // Normals.
+        // Normals need to be computed here if we have a heightMap.
 
-        this.computeNormals( vertices, indices, normals );
+        if ( prim.heightMap ) {
+
+            this.computeNormals( vertices, indices, normals );
+
+        }
 
         // Tangents.
 
@@ -1162,10 +1172,6 @@ export default class Prim {
             colors = geo.colors.data = this.computeColors( normals, colors );
 
         }
-
-        if(prim.name === 'colored ico' ) window.geo = geo;
-
-        //TODO: NOT WORK WITH COLORS!!!!!!!!!!!!!!!!
 
         // Return the buffer, or add array data to the existing Prim data.
 
@@ -1197,13 +1203,40 @@ export default class Prim {
         tangents = geo.tangents.data,
         colors = geo.colors.data;
 
-        // Vertices.
+        let l = prim.dimensions[ 0 ], 
+        w = prim.dimensions[ 2 ];
 
-        // Indices.
+        // Strategy is to determine number of sides, equally space, then connect.
 
-        // Normals.
+        let sides = prim.divisions[ 0 ];
 
-        this.computeNormals( vertices, indices, normals );
+        // Get the distance between Points in radians.
+
+        let sideInc = 2.0 * Math.PI * 1.0 / sides;
+
+        for ( let i = 0; i < sides; i++ ) {
+
+            // Vertices (also includes x/z sizing.
+
+            vertices.push( 
+
+                Math.sin( sideInc * i ) * l,
+                0.0,
+                Math.cos( sideInc * i ) * w
+
+            );
+
+            // Indices.
+
+            indices.push( i ); //NOT drawing triangles (use polygon shader)!
+
+            // Normals.
+
+            normals.push( 0, 1, 0 );
+
+        }
+
+        //this.computeNormals( vertices, indices, normals );
 
         // Tangents.
 
@@ -1237,7 +1270,7 @@ export default class Prim {
      * Half-sphere, polar coordinates.
      * @param {Prim} prim the object needing geometry.
      */
-    geometryDome ( prim ) {
+    geometrySphere ( prim ) {
 
         const list = this.typeList;
 
@@ -1260,15 +1293,11 @@ export default class Prim {
 
         // Radius is measured along the x axis.
 
-        let l = prim.dimensions[ 0 ];
-
-        let w = prim.dimensions[ 1 ];
-
-        let h = prim.dimensions[ 2 ];
-
-        let radius = prim.dimensions[ 0 ] * 0.5;
-
-        let startCone = prim.dimensions[ 3 ];
+        let l = prim.dimensions[ 0 ],
+        w = prim.dimensions[ 1 ], 
+        h = prim.dimensions[ 2 ], 
+        //radius = prim.dimensions[ 0 ] * 0.5, 
+        startCone = prim.dimensions[ 3 ];
 
         // Everything except SPHERE, CYLINDER, SPINDLE, and CONE is a half-object.
 
@@ -1288,19 +1317,19 @@ export default class Prim {
 
         // Vertices, normals, texCoords.
 
-        let latNumber, longNumber;
+        let latNum, longNum;
 
-        for ( latNumber = latStart; latNumber <= latDist; latNumber++ ) {
+        for ( latNum = latStart; latNum <= latDist; latNum++ ) {
 
-            let theta = latNumber * Math.PI / latitudeBands;
+            let theta = latNum * Math.PI / latitudeBands;
 
             let sinTheta = Math.sin( theta );
 
             let cosTheta = Math.cos( theta );
 
-            for ( longNumber = longStart; longNumber <= longitudeBands; longNumber++ ) {
+            for ( longNum = longStart; longNum <= longitudeBands; longNum++ ) {
 
-                let phi = longNumber * 2 * Math.PI / longitudeBands;
+                let phi = longNum * 2 * Math.PI / longitudeBands;
 
                 let sinPhi = Math.sin( phi );
 
@@ -1308,13 +1337,13 @@ export default class Prim {
 
                 let x, y, z, u, v, r;
 
-                // Compute vertex positions.
+                // Compute vertices.
 
-                let lat = latNumber / latDist;
+                let lat = latNum / latDist;
 
                 r = lat / 2; // radius.
 
-                let long = longNumber / longitudeBands;
+                let long = longNum / longitudeBands;
 
                 switch( prim.type ) {
 
@@ -1373,7 +1402,6 @@ export default class Prim {
                         break;
 
                     case list.CONE:
-
                         if ( lat > startCone ) {
                             x = cosPhi * lat / 2;
                             z = sinPhi * lat / 2;
@@ -1386,14 +1414,12 @@ export default class Prim {
                     case list.TOPCONE:
                         x = cosPhi * r;
                         z = sinPhi * r;
-                        //y = ( 1 - lat ) / 2;
                         y = 0.5 - r;
                         u = 1 - long;
                         v = 1 - lat;
                         break;
 
                     case list.BOTTOMCONE:
-                        // NOTE: using 1 - lat gives small hole half-sized.
                         x = cosPhi * ( 0.5 - r );
                         z = sinPhi * ( 0.5 - r );
                         y = 0.0 - r;
@@ -1403,15 +1429,7 @@ export default class Prim {
 
                 }
 
-                // Scale shape to specified dimensions.
-
-                //x *= prim.dimensions[ 0 ];
-
-                //y *= prim.dimensions[ 1 ];
-
-                //z *= prim.dimensions[ 2 ];
-
-                // Adjust partial shapes to fill their bounding box.
+                // Texture coords.
 
                 texCoords.push( u, v );
 
@@ -1423,7 +1441,6 @@ export default class Prim {
 
                 // Push vertices.
 
-                //vertices.push( radius * x, radius * y, radius * z );
                 vertices.push( x * l, y * w, z * h );
 
                 // These were wrapped bottom->top, so reverse y on normals.
@@ -1440,15 +1457,13 @@ export default class Prim {
 
         }
 
-        // TODO: make function allowing reverse winding, OR a utility reversing the indices.
-
         // Sphere indices.
 
-        for ( latNumber = 0; latNumber < latDist; latNumber++ ) {
+        for ( latNum = 0; latNum < latDist; latNum++ ) {
 
-            for ( longNumber = 0; longNumber < longitudeBands; longNumber++ ) {
+            for ( longNum = 0; longNum < longitudeBands; longNum++ ) {
 
-                let first = (latNumber * (longitudeBands + 1)) + longNumber;
+                let first = (latNum * (longitudeBands + 1)) + longNum;
 
                 let second = first + longitudeBands + 1;
 
@@ -1474,7 +1489,7 @@ export default class Prim {
 
         }
 
-        // Wind the SKYDOME backwards (fast).
+        // Wind the SKYDOME backwards.
 
         if ( prim.type === list.SKYDOME ) {
 
@@ -1513,7 +1528,7 @@ export default class Prim {
      */
     geometryTopDome ( prim ) {
 
-        return this.geometryDome( prim );
+        return this.geometrySphere( prim );
 
     }
 
@@ -1522,7 +1537,7 @@ export default class Prim {
      */
     geometrySkyDome ( prim ) {
 
-        return this.geometryDome( prim );
+        return this.geometrySphere( prim );
 
     }
 
@@ -1531,7 +1546,7 @@ export default class Prim {
      */
     geometryBottomDome ( prim ) {
 
-        return this.geometryDome( prim );
+        return this.geometrySphere( prim );
 
     }
 
@@ -1541,9 +1556,9 @@ export default class Prim {
      * @param {Prim} prim the prim needing geometry.
      * @param {Boolean} sphere if true, make a sphere, otherwise a cylinder.
      */
-    geometrySphere ( prim ) {
+    geometryDome ( prim ) {
 
-        return this.geometryDome( prim );
+        return this.geometrySphere( prim );
 
     }
 
@@ -1552,7 +1567,7 @@ export default class Prim {
      */
     geometryCylinder ( prim ) {
 
-        return this.geometryDome( prim );
+        return this.geometrySphere( prim );
 
     }
 
@@ -1561,7 +1576,7 @@ export default class Prim {
      */
     geometrySpindle ( prim ) {
 
-        return this.geometryDome( prim );
+        return this.geometrySphere( prim );
 
     }
 
@@ -1570,19 +1585,19 @@ export default class Prim {
      */
     geometryCone ( prim ) {
 
-        return this.geometryDome( prim );
+        return this.geometrySphere( prim );
 
     }
 
     geometryTopCone ( prim ) {
 
-        return this.geometryDome( prim );
+        return this.geometrySphere( prim );
 
     }
 
     geometryBottomCone ( prim ) {
 
-        return this.geometryDome( prim );
+        return this.geometrySphere( prim );
 
     }
 
@@ -2575,6 +2590,31 @@ export default class Prim {
         // NOTE: mis-spelling type leads to error here...
 
         prim.geometry = this[ type ]( prim, color );
+
+////////////////////
+/* 
+        // Colors.
+
+        if( ! colors.length ) {
+
+            colors = geo.colors.data = this.computeColors( normals, colors );
+
+        }
+
+        // Return the buffer, or add array data to the existing Prim data.
+
+        if( prim.geometry.makeBuffers === true ) {
+
+            return this.createBuffers( prim.geometry );
+
+        } else {
+
+            return this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+
+        }
+
+*/
+////////////////////
 
         // Standard Prim properties for position, translation, rotation, orbits. Used by shader/renderer objects (e.g. shaderTexture).
 

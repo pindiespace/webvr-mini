@@ -317,4 +317,21 @@ export default class Util {
 
     }
 
+    /** 
+     * Handle mouse events, in case we aren't in VR. This function
+     * adds mouse coordinates to the <canvas> element we are using to draw.
+     */
+    getMousePosition( canvas, e ) {
+
+        var r = canvas.getBoundingClientRect();
+
+        return { 
+
+            x: e.clientX - r.left,
+
+            y: e.clientY - r.top
+
+        }
+    }
+
 }
