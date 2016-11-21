@@ -208,14 +208,14 @@ export default class World {
             this.prim.typeList.SPHERE,
             'texsphere',
             1.0,
-            vec4.fromValues( 1.5, 1.5, 1.5, 0 ),            // dimensions
+            vec4.fromValues( 1.5, 1.5, 1.5, 0 ),   // dimensions
             vec4.fromValues( 30, 30, 30 ),         // divisions
             vec3.fromValues(-5, -1.3, -2 ),       // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
             ['img/mozvr-logo1.png'],               // texture present, NOT USED
-            vec4.fromValues( 0.5, 1.0, 0.2, 1.0)  // color
+            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
 
@@ -230,7 +230,7 @@ export default class World {
             vec3.fromValues( util.degToRad( 10 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
             ['img/mozvr-logo1.png'],               // texture present, NOT USED
-            vec4.fromValues( 0.5, 1.0, 0.2, 1.0)  // color
+            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
         this.dirlightTextureObjList.push( this.prim.createPrim(
@@ -244,7 +244,7 @@ export default class World {
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
             ['img/mozvr-logo2.png'],               // texture present, NOT USED
-            vec4.fromValues( 0.5, 1.0, 0.2, 1.0)  // color
+            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
         this.dirlightTextureObjList.push( this.prim.createPrim(
@@ -258,7 +258,7 @@ export default class World {
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
             ['img/mozvr-logo2.png'],               // texture present
-            vec4.fromValues( 0.5, 1.0, 0.2, 1.0)  // color
+            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
         this.dirlightTextureObjList.push( this.prim.createPrim(
@@ -272,7 +272,7 @@ export default class World {
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
             ['img/mozvr-logo2.png'],               // texture present
-            vec4.fromValues( 0.5, 1.0, 0.2, 1.0)   // color
+            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )   // color
         ) );
 
         this.textureObjList.push( this.prim.createPrim(
@@ -280,17 +280,17 @@ export default class World {
             'icoUnity',
             1.0,
             vec4.fromValues( 3, 3, 3, 0 ),            // dimensions
-            vec4.fromValues( 4, 4, 4 ),            // divisions MAKE SMALLER
+            vec4.fromValues( 16, 16, 16 ),            // 1 for icosohedron, 16 for good sphere
             vec3.fromValues(4.5, 3.5, -2 ),        // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
             ['img/uv-test.png'],               // texture present, NOT USED
-            vec4.fromValues( 0.5, 1.0, 0.2, 1.0)  // color
+            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
         this.textureObjList.push( this.prim.createPrim(
-            this.prim.typeList.TORUS,
+            this.prim.typeList.TORUS, // TORUS DEFAULT
             'TORUS1',
             1.0,
             vec4.fromValues( 1, 1, 0.5, 0 ),            // dimensions INCLUDING start radius or torus radius(last value)
@@ -301,7 +301,22 @@ export default class World {
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
             ['img/mozvr-logo1.png'],               // texture present
-            vec4.fromValues( 0.5, 1.0, 0.2, 1.0)  // color
+            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
+        ) );
+
+        this.textureObjList.push( this.prim.createPrim(
+            this.prim.typeList.CAP, // TORUS DEFAULT
+            'CAP',
+            1.0,
+            vec4.fromValues( 3, 3, 3, 0 ),            // dimensions INCLUDING start radius or torus radius(last value)
+            vec4.fromValues( 15, 15, 15 ),            // divisions MUST BE CONTROLLED TO < 5
+            //vec3.fromValues(-3.5, -3.5, -1 ),        // position (absolute)
+                                            vec3.fromValues(-0.0, 0, 2.0),
+            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+            vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+            ['img/mozvr-logo1.png'],               // texture present
+            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
         this.textureObjList.push( this.prim.createPrim(
@@ -315,7 +330,7 @@ export default class World {
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
             ['img/mozvr-logo2.png'],               // texture present
-            vec4.fromValues( 0.5, 1.0, 0.2, 1.0)  // color
+            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
         this.vs3 = this.renderer.shaderDirlightTexture.init( this.dirlightTextureObjList );

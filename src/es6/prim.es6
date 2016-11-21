@@ -99,6 +99,8 @@ export default class Prim {
 
             POLY: 'geometryPoly',
 
+            CAP: 'geometryCap',
+
             CUBE: 'geometryCube',
 
             SPHERE: 'geometrySphere',
@@ -347,6 +349,8 @@ export default class Prim {
 
         concat( bufferObj.colors.data, colors );
 
+        return bufferObj;
+
     }
 
     /** 
@@ -539,7 +543,8 @@ export default class Prim {
      */
 
     /** 
-     * Simulate Vector3.down, etc. defaults (in many Unity C# scripts).
+     * Standard vectors (similar to Unity) when needed. Call only 
+     * if using the array literal (e.g. [ 0, 0, 0,]) doesn't make sense.
      * @link https://docs.unity3d.com/ScriptReference/Vector3.html
     */
     getStdVec3 ( type ) {
@@ -1188,7 +1193,10 @@ export default class Prim {
     }
 
     /** 
-     * Polygon (flat), square to circular.
+     * Polygon (flat), square to circular. Used to cap 
+     * some Prims.
+     * @param {Prim} prim the object needing buffers.
+     * @returns {BufferData} buffer data for Prim.     
      */
     geometryPoly ( prim ) {
 
@@ -1226,7 +1234,7 @@ export default class Prim {
 
             );
 
-            // Indices.
+            // Indices (if we're not making a cap).
 
             indices.push( i ); //NOT drawing triangles (use polygon shader)!
 
@@ -1237,6 +1245,10 @@ export default class Prim {
         }
 
         //this.computeNormals( vertices, indices, normals );
+
+        // Indices (if we are making a cap) {
+
+
 
         // Tangents.
 
@@ -1296,8 +1308,9 @@ export default class Prim {
         let l = prim.dimensions[ 0 ],
         w = prim.dimensions[ 1 ], 
         h = prim.dimensions[ 2 ], 
-        //radius = prim.dimensions[ 0 ] * 0.5, 
-        startCone = prim.dimensions[ 3 ];
+        startSlice = prim.dimensions[ 3 ] || 0;
+
+        console.log( ">>>>>startSlice:" + startSlice)
 
         // Everything except SPHERE, CYLINDER, SPINDLE, and CONE is a half-object.
 
@@ -1309,15 +1322,21 @@ export default class Prim {
 
             latDist = latitudeBands;
 
+        } else if ( prim.type === list.CAP ) {
+
+            latDist = 1; // one flat object, central points + one ring.
+
         } else {
 
             latDist = latitudeBands / 2;
 
         }
 
+        startSlice = prim.dimensions[ 3 ] || 0;
+
         // Vertices, normals, texCoords.
 
-        let latNum, longNum;
+        let latNum, longNum, firstLatNum;
 
         for ( latNum = latStart; latNum <= latDist; latNum++ ) {
 
@@ -1328,6 +1347,8 @@ export default class Prim {
             let cosTheta = Math.cos( theta );
 
             for ( longNum = longStart; longNum <= longitudeBands; longNum++ ) {
+
+                //console.log("STARTSLICE FOR:" + prim.name + " = " + startSlice );
 
                 let phi = longNum * 2 * Math.PI / longitudeBands;
 
@@ -1341,26 +1362,35 @@ export default class Prim {
 
                 let lat = latNum / latDist;
 
+                // Only fill arrays if we reach the start of a Prim slice.
+
                 r = lat / 2; // radius.
+
+                firstLatNum = latNum;/////////////////////////////////
 
                 let long = longNum / longitudeBands;
 
+                u = 1 - long;
+                v = 1 - lat;
+
                 switch( prim.type ) {
+
+                    case list.CAP:
+                        x = cosPhi * r / 2;
+                        z = sinPhi * r / 2;
+                        y = 0;
+                        break;
 
                     case list.CYLINDER:
                         x = cosPhi / 2;
                         z = sinPhi / 2;
                         y = cosTheta / 2;
-                        u = 1 - long;
-                        v = 1 - lat;
                         break;
 
                     case list.SPHERE:
                         x = cosPhi * sinTheta / 2;
                         z = sinPhi * sinTheta / 2;
                         y = cosTheta / 2;
-                        u = 1 - long;
-                        v = 1 - lat;
                         break;
 
                     case list.TOPDOME:
@@ -1368,8 +1398,6 @@ export default class Prim {
                         x = cosPhi * sinTheta / 2;
                         z = sinPhi * sinTheta / 2;
                         y = cosTheta / 2;
-                        u = 1 - long;
-                        v = 1 - lat;
                         break;
 
                     case list.SKYDOME:
@@ -1377,7 +1405,7 @@ export default class Prim {
                         z = sinPhi * sinTheta / 2;
                         y = cosTheta / 2;
                         u = long;
-                        v = 1 - lat;
+                        //v = 1 - lat;
                         break;
 
                     case list.BOTTOMDOME:
@@ -1397,17 +1425,15 @@ export default class Prim {
                             z = sinPhi * ( 1 - lat )
                         }
                         y = 1 - lat - 0.5;
-                        u = 1 - long;
-                        v = 1 - lat;
                         break;
 
                     case list.CONE:
-                        if ( lat > startCone ) {
-                            x = cosPhi * lat / 2;
-                            z = sinPhi * lat / 2;
+                        x = cosPhi * lat / 2;
+                        z = sinPhi * lat / 2;
+                        if ( lat > startSlice ) {
                             y = ( 1 - lat ) - 0.5;
-                            u = 1 - long;
-                            v = 1 - lat;
+                        } else {
+                            y = 0;
                         }
                         break;
 
@@ -1415,16 +1441,12 @@ export default class Prim {
                         x = cosPhi * r;
                         z = sinPhi * r;
                         y = 0.5 - r;
-                        u = 1 - long;
-                        v = 1 - lat;
                         break;
 
                     case list.BOTTOMCONE:
                         x = cosPhi * ( 0.5 - r );
                         z = sinPhi * ( 0.5 - r );
                         y = 0.0 - r;
-                        u = 1 - long;
-                        v = 1 - lat;
                         break;
 
                 }
@@ -1445,51 +1467,49 @@ export default class Prim {
 
                 // These were wrapped bottom->top, so reverse y on normals.
 
-                // NOTE: TODO: probably for SkyDome as well...
-
                 if ( prim.type === list.BOTTOMDOME || prim.type === list.BOTTOMCONE || prim.type === list.SKYDOME ) {
 
                     y = -y; // the y value (have to flip indices backwards for SKYDOME for it to work).
 
                 }
 
-            }
+///////////////////////////////////////////
 
-        }
+                // Sphere indices.
 
-        // Sphere indices.
+                if ( latNum !== latDist && longNum !== longitudeBands ) {
 
-        for ( latNum = 0; latNum < latDist; latNum++ ) {
+                    let first = ( latNum * ( longitudeBands + 1 ) ) + longNum;
 
-            for ( longNum = 0; longNum < longitudeBands; longNum++ ) {
+                    let second = first + longitudeBands + 1;
 
-                let first = (latNum * (longitudeBands + 1)) + longNum;
+                    if( prim.type === list.SKYDOME ) {
 
-                let second = first + longitudeBands + 1;
+                        // Texture only visible from the inside.
 
-                if( prim.type === list.SKYDOME ) {
+                        indices.push( first + 1, second + 1, second );
 
-                    // Texture only visible from the inside.
+                        indices.push( first, first + 1,  second );
 
-                    indices.push( first + 1, second + 1, second );
+                    } else {
 
-                    indices.push( first, first + 1,  second );
+                        // Texture only visible outside.
 
-                } else {
+                        indices.push( first + 1, second + 1, second );
 
-                    // Texture only visible outside.
+                        indices.push( first, first + 1,  second );
 
-                    indices.push( first + 1, second + 1, second );
-
-                    indices.push( first, first + 1,  second );
+                    }
 
                 }
 
+///////////////////////////////////////////
+
             }
 
         }
 
-        // Wind the SKYDOME backwards.
+        // Wind the SKYDOME indices backwards.
 
         if ( prim.type === list.SKYDOME ) {
 
@@ -1520,6 +1540,15 @@ export default class Prim {
             return this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
 
         }
+
+    }
+
+    /** 
+     * Create a flat UV object.
+     */
+    geometryCap( prim ) {
+
+        return this.geometrySphere( prim );
 
     }
 
@@ -1585,16 +1614,49 @@ export default class Prim {
      */
     geometryCone ( prim ) {
 
-        return this.geometrySphere( prim );
+        if( prim.dimensions[ 3 ] !== 0 ) {
+
+            prim.geometry.makeBuffers = false;
+
+            let type = prim.type;
+
+            window.geo = prim.geometry;
+
+            prim.geometry.type = prim.type = this.typeList.CAP;
+
+            //prim.geometry = this.geometryCap( prim );
+
+            console.log(">>>>>>>..PRIM VERTICES:" + prim.geometry.vertices.data.length)
+
+            prim.geometry.makeBuffers = true;
+
+            prim.geometry.type = prim.type = type;
+
+        }
+
+        prim.geometry = this.geometrySphere( prim );
+
+        console.log(">>>>>>..PRIM VERTICES 2:" + prim.geometry.vertices.data.length)
+
+
+
+        return prim.geometry;
+
+        //return this.geometrySphere( prim );
 
     }
 
+    /** 
+     * Top cone, half a spindle.
+     */
     geometryTopCone ( prim ) {
 
         return this.geometrySphere( prim );
 
     }
 
+    /** 
+     * 
     geometryBottomCone ( prim ) {
 
         return this.geometrySphere( prim );
@@ -1617,8 +1679,6 @@ export default class Prim {
 
         let geo = prim.geometry;
 
-        window.dim = prim.dimensions;
-
         // Shortcuts to Prim data arrays
 
         let vertices = geo.vertices.data,
@@ -1628,17 +1688,12 @@ export default class Prim {
         tangents = geo.tangents.data,
         colors = geo.colors.data;
 
-        let sx = prim.dimensions[ 0 ];
-
-        let sy = prim.dimensions[ 1 ];
-
-        let sz = prim.dimensions[ 2 ];
-
-        let nx = prim.divisions[ 0 ];
-
-        let ny = prim.divisions[ 1 ];
-
-        let nz = prim.divisions[ 2 ];
+        let sx = prim.dimensions[ 0 ], 
+        sy = prim.dimensions[ 1 ], 
+        sz = prim.dimensions[ 2 ], 
+        nx = prim.divisions[ 0 ], 
+        ny = prim.divisions[ 1 ], 
+        nz = prim.divisions[ 2 ];
 
         //var numVertices = ( nx + 1 ) * ( ny + 1 ) * 2 + ( nx + 1 ) * ( nz + 1 ) * 2 + ( nz + 1 ) * ( ny + 1 ) * 2;
 
@@ -1660,7 +1715,7 @@ export default class Prim {
 
         makeSide( 0, 2, 1, sx, sz, nx, nz, -sy / 2,  1, -1 ); //bottom
 
-        function makeSide(u, v, w, su, sv, nu, nv, pw, flipu, flipv) {
+        function makeSide( u, v, w, su, sv, nu, nv, pw, flipu, flipv ) {
 
             var vertShift = vertexIndex;
 
@@ -1696,17 +1751,17 @@ export default class Prim {
 
             }
 
-            // Compute indices.
+            // Compute side indices.
 
-            for(var j=0; j<nv; j++) {
+            for(var j = 0; j < nv; j++ ) {
 
-                for(var i=0; i<nu; i++) {
+                for(var i = 0; i < nu; i++ ) {
 
-                    var n = vertShift + j * (nu + 1) + i;
+                    var n = vertShift + j * ( nu + 1 ) + i;
 
-                    indices.push(n, n + nu  + 1, n + nu + 2);
+                    indices.push( n, n + nu  + 1, n + nu + 2 );
 
-                    indices.push(n, n + nu + 2, n + 1);
+                    indices.push( n, n + nu + 2, n + 1 );
 
                 }
 
@@ -1755,9 +1810,9 @@ export default class Prim {
 
                 }
 
-                else if (pos[1] > ry - radius) {
+                else if ( pos[ 1 ] > ry - radius) {
 
-                    inner[1] = ry - radius;
+                    inner[ 1 ] = ry - radius;
 
                 }
 
@@ -1795,7 +1850,7 @@ export default class Prim {
 
         }
 
-        // Flatten arrays we used multidimensonal access to compute.
+        // Flatten arrays, since we created using 2 dimensions.
 
         vertices = geo.vertices.data = flatten( positions, false );
 
@@ -1857,6 +1912,7 @@ export default class Prim {
     /** 
      * Icosphere, adapted from Unity 3d tutorial.
      * @link https://www.binpress.com/tutorial/creating-an-octahedron-sphere/162
+     * divisions max: ~60
      * @param {Object} prim the primitive needing geometry.
      * @param {Boolean} noSphere if false, make an icosohedron.
      */
@@ -1876,7 +1932,7 @@ export default class Prim {
 
         let radius = prim.dimensions[ 0 ] * 0.5;
 
-        let resolution = 1 << subdivisions;
+        let resolution = subdivisions;
 
         // Default vectors.
 
@@ -1889,22 +1945,20 @@ export default class Prim {
             'forward'
         ];
 
-        console.log("RESOLUTION:" + resolution)
-
-        // Allocate memory
+        // Allocate memory, since we may have to access out-of-range vertices, indices.
 
         let geo = prim.geometry;
 
-        let vertices = geo.vertices.data = new Array ( (resolution + 1) * (resolution + 1) * 4 - (resolution * 2 - 1) * 3 ),
-        indices  = geo.indices.data = new Array( (1 << (subdivisions * 2 + 3)) * 3 ),
+        let vertices = geo.vertices.data = new Array ( ( resolution + 1 ) * ( resolution + 1 ) * 4 - (resolution * 2 - 1) * 3 ),
+        indices  = geo.indices.data = new Array( (1 << ( subdivisions * 2 + 3) ) * 3 ),
         texCoords = geo.texCoords.data = new Array( vertices.length ),
         normals = geo.normals.data = new Array( vertices.length ),
         tangents = geo.tangents.data = new Array( vertices.length ),
-        colors = geo.colors.data; // colors NOTE: NOTE THAT WE ARE USING STANDARD JS ARRAYS
+        colors = geo.colors.data;
 
-        // initialize lots of default variables.
+        // Initialize lots of default variables.
 
-        let v = 0, vBottom = 0, t = 0, i, d, progress, from = getVecs( 'zero' ), to = getVecs( 'zero' );
+        let v = 0, vBottom = 0, t = 0, i, d, progress, from, to;
             
         for ( i = 0; i < 4; i++ ) {
 
@@ -1912,17 +1966,13 @@ export default class Prim {
 
         }
 
-        for ( i = 1; i <= resolution; i++) {
+        for ( i = 1; i <= resolution; i++ ) {
 
             progress = i / resolution;
 
             to = vec3.lerp( [ 0, 0, 0 ], getVecs( 'down' ), getVecs( 'forward' ), progress );
 
-            ///console.log('tttttto:' + to)
-
             vertices[ v++ ] = vec3.copy( [ 0, 0, 0 ], to );
-
-            ////onsole.log( 'at position v:' + parseInt(v-1) + ', to:' + to + ', array:' + vec3.copy( [ 0, 0, 0 ], to ))
 
             for ( d = 0; d < 4; d++) {
 
@@ -1980,27 +2030,27 @@ export default class Prim {
 
         // Create our Normals, and set sphere to unit size.
 
-        for (i = 0; i < vertices.length; i++ ) {
+        for ( i = 0; i < vertices.length; i++ ) {
 
             // Toggle icosphere with icosohedron.
 
             if ( prim.type === list.ICOSPHERE ) {
 
-                vertices[i] = vec3.normalize( [ 0, 0, 0 ], vertices[i]);
+                vertices[i] = vec3.normalize( [ 0, 0, 0 ], vertices[ i ] );
 
             }
 
-            normals[i] = vec3.copy( [ 0, 0, 0 ], vertices[i] );
+            normals[i] = vec3.copy( [ 0, 0, 0 ], vertices[ i ] );
 
         }
 
         // Texture coords.
 
-        createUV ( vertices, texCoords );
+        createUV( vertices, texCoords );
 
         // Tangents.
 
-        createTangents ( vertices, tangents );
+        createTangents( vertices, tangents );
 
         // Scale. NOTE: this has to be after createUV and createTangents (assuming unit sphere).
 
@@ -2116,8 +2166,11 @@ export default class Prim {
                 tangent = [ 0, 0, 0, 0 ];
 
                 tangent[ 0 ] = -v[ 2 ];
+
                 tangent[ 1 ] = 0;
+
                 tangent[ 2 ] = v[ 0 ];
+
                 tangent[ 3 ] = -1;
 
                 tangents[ i ] = tangent;
@@ -2583,10 +2636,6 @@ export default class Prim {
 
         prim.geometry.type = type;
 
-        // Starting and ending radii. Individual Prims may adjust.
-
-        prim.dimensions[ 3 ] = prim.dimensions[ 4 ] = 0.5 * prim.dimensions[ 0 ]
-
         // NOTE: mis-spelling type leads to error here...
 
         prim.geometry = this[ type ]( prim, color );
@@ -2597,21 +2646,13 @@ export default class Prim {
 
         if( ! colors.length ) {
 
-            colors = geo.colors.data = this.computeColors( normals, colors );
+            prim.geometry.colors = this.computeColors( normals, colors );
 
         }
 
         // Return the buffer, or add array data to the existing Prim data.
 
-        if( prim.geometry.makeBuffers === true ) {
-
-            return this.createBuffers( prim.geometry );
-
-        } else {
-
-            return this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
-
-        }
+        prim.geometry = this.createBuffers( prim.geometry );
 
 */
 ////////////////////

@@ -198,37 +198,50 @@ export default class Util {
 
         let result = null;
 
-        if ( arr1.type ) { // typed array
+        let len1 = arr1.length;
 
-            let firstLength = arr1.length;
+        let len2 = arr2.length;
 
-            switch ( arr1.type ) {
+        if ( ArrayBuffer.isView( arr1 ) ) { // typed array
 
-                case 'Float32Array':
-                    result = new Float32Array( firstLength + second.length );
-                    if( arr2.type !== arr1.type ) {
+
+            // Convert both to array type of first array.
+
+            if ( arr1 instanceof Float32Array ) {
+
+                result = new Float32Array( len1 + len2 );
+
+                if( ! arr2 instanceof Float32Array ) {
+
                         arr2 = Float32Array.from( arr2 );
-                    }
-                    break;
 
-                case 'Uint16Array':
-                    result = new Uint16Array( firstLength + second.length );
-                    if( arr2.type !== arr1.type ) {
-                        arr2 = Uint16Array.from( arr2 );
-                    }
-                    break;
+                }
+
+            } else if ( arr1 instanceof Uint16Array ) {
+
+                result = new Uint16Array( len1 + len2 );
+
+                if( ! arr2 instanceof Uint16Array ) {
+
+                    arr2 = Uint16Array.from( arr2 );
+
+                }
 
             }
 
+            // Assign arr1 to output.
+
             result.set( arr1 );
 
-            result.set( arr2, firstLength );
+            // Append arr2 to arr1 in output.
+
+            result.set( arr2, len1 );
 
         } else {
 
-            if( arr2.type ) { // typed copied to untyped
+            if ( ArrayBuffer.isView( arr2 ) ) { // arr2 typed, copied to arr1, untyped
 
-                for ( let i = 0; i < arr2.length; i++ ) {
+                for ( let i = 0; i < len2; i++ ) {
 
                     arr1.push( arr2[ i ] );
 
@@ -238,7 +251,7 @@ export default class Util {
 
             } else {
 
-                result = arr1.concat( arr2 ); // both are untyped
+                result = arr1.concat( arr2 ); // both arrays are untyped
 
             }
 
@@ -323,7 +336,7 @@ export default class Util {
      */
     getMousePosition( canvas, e ) {
 
-        var r = canvas.getBoundingClientRect();
+        const r = canvas.getBoundingClientRect();
 
         return { 
 

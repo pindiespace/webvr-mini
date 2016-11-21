@@ -695,38 +695,47 @@
 
 	            var result = null;
 
-	            if (arr1.type) {
+	            var len1 = arr1.length;
+
+	            var len2 = arr2.length;
+
+	            if (ArrayBuffer.isView(arr1)) {
 	                // typed array
 
-	                var firstLength = arr1.length;
 
-	                switch (arr1.type) {
+	                // Convert both to array type of first array.
 
-	                    case 'Float32Array':
-	                        result = new Float32Array(firstLength + second.length);
-	                        if (arr2.type !== arr1.type) {
-	                            arr2 = Float32Array.from(arr2);
-	                        }
-	                        break;
+	                if (arr1 instanceof Float32Array) {
 
-	                    case 'Uint16Array':
-	                        result = new Uint16Array(firstLength + second.length);
-	                        if (arr2.type !== arr1.type) {
-	                            arr2 = Uint16Array.from(arr2);
-	                        }
-	                        break;
+	                    result = new Float32Array(len1 + len2);
 
+	                    if (!arr2 instanceof Float32Array) {
+
+	                        arr2 = Float32Array.from(arr2);
+	                    }
+	                } else if (arr1 instanceof Uint16Array) {
+
+	                    result = new Uint16Array(len1 + len2);
+
+	                    if (!arr2 instanceof Uint16Array) {
+
+	                        arr2 = Uint16Array.from(arr2);
+	                    }
 	                }
+
+	                // Assign arr1 to output.
 
 	                result.set(arr1);
 
-	                result.set(arr2, firstLength);
+	                // Append arr2 to arr1 in output.
+
+	                result.set(arr2, len1);
 	            } else {
 
-	                if (arr2.type) {
-	                    // typed copied to untyped
+	                if (ArrayBuffer.isView(arr2)) {
+	                    // arr2 typed, copied to arr1, untyped
 
-	                    for (var i = 0; i < arr2.length; i++) {
+	                    for (var i = 0; i < len2; i++) {
 
 	                        arr1.push(arr2[i]);
 	                    }
@@ -734,7 +743,7 @@
 	                    result = arr1;
 	                } else {
 
-	                    result = arr1.concat(arr2); // both are untyped
+	                    result = arr1.concat(arr2); // both arrays are untyped
 	                }
 	            }
 
@@ -3799,6 +3808,8 @@
 
 	            POLY: 'geometryPoly',
 
+	            CAP: 'geometryCap',
+
 	            CUBE: 'geometryCube',
 
 	            SPHERE: 'geometrySphere',
@@ -4054,6 +4065,8 @@
 	            concat(bufferObj.tangents.data, tangents);
 
 	            concat(bufferObj.colors.data, colors);
+
+	            return bufferObj;
 	        }
 
 	        /** 
@@ -4227,7 +4240,8 @@
 	         */
 
 	        /** 
-	         * Simulate Vector3.down, etc. defaults (in many Unity C# scripts).
+	         * Standard vectors (similar to Unity) when needed. Call only 
+	         * if using the array literal (e.g. [ 0, 0, 0,]) doesn't make sense.
 	         * @link https://docs.unity3d.com/ScriptReference/Vector3.html
 	        */
 
@@ -4906,7 +4920,10 @@
 	        }
 
 	        /** 
-	         * Polygon (flat), square to circular.
+	         * Polygon (flat), square to circular. Used to cap 
+	         * some Prims.
+	         * @param {Prim} prim the object needing buffers.
+	         * @returns {BufferData} buffer data for Prim.     
 	         */
 
 	    }, {
@@ -4941,7 +4958,7 @@
 
 	                vertices.push(Math.sin(sideInc * i) * l, 0.0, Math.cos(sideInc * i) * w);
 
-	                // Indices.
+	                // Indices (if we're not making a cap).
 
 	                indices.push(i); //NOT drawing triangles (use polygon shader)!
 
@@ -4951,6 +4968,9 @@
 	            }
 
 	            //this.computeNormals( vertices, indices, normals );
+
+	            // Indices (if we are making a cap) {
+
 
 	            // Tangents.
 
@@ -5009,9 +5029,9 @@
 	            var l = prim.dimensions[0],
 	                w = prim.dimensions[1],
 	                h = prim.dimensions[2],
+	                startSlice = prim.dimensions[3] || 0;
 
-	            //radius = prim.dimensions[ 0 ] * 0.5, 
-	            startCone = prim.dimensions[3];
+	            console.log(">>>>>startSlice:" + startSlice);
 
 	            // Everything except SPHERE, CYLINDER, SPINDLE, and CONE is a half-object.
 
@@ -5022,15 +5042,21 @@
 	            if (prim.type === list.SPHERE || prim.type === list.CYLINDER || prim.type === list.SPINDLE) {
 
 	                latDist = latitudeBands;
+	            } else if (prim.type === list.CAP) {
+
+	                latDist = 1; // one flat object, central points + one ring.
 	            } else {
 
 	                latDist = latitudeBands / 2;
 	            }
 
+	            startSlice = prim.dimensions[3] || 0;
+
 	            // Vertices, normals, texCoords.
 
 	            var latNum = void 0,
-	                longNum = void 0;
+	                longNum = void 0,
+	                firstLatNum = void 0;
 
 	            for (latNum = latStart; latNum <= latDist; latNum++) {
 
@@ -5041,6 +5067,8 @@
 	                var cosTheta = Math.cos(theta);
 
 	                for (longNum = longStart; longNum <= longitudeBands; longNum++) {
+
+	                    //console.log("STARTSLICE FOR:" + prim.name + " = " + startSlice );
 
 	                    var phi = longNum * 2 * Math.PI / longitudeBands;
 
@@ -5059,26 +5087,35 @@
 
 	                    var lat = latNum / latDist;
 
+	                    // Only fill arrays if we reach the start of a Prim slice.
+
 	                    r = lat / 2; // radius.
+
+	                    firstLatNum = latNum; /////////////////////////////////
 
 	                    var long = longNum / longitudeBands;
 
+	                    u = 1 - long;
+	                    v = 1 - lat;
+
 	                    switch (prim.type) {
+
+	                        case list.CAP:
+	                            x = cosPhi * r / 2;
+	                            z = sinPhi * r / 2;
+	                            y = 0;
+	                            break;
 
 	                        case list.CYLINDER:
 	                            x = cosPhi / 2;
 	                            z = sinPhi / 2;
 	                            y = cosTheta / 2;
-	                            u = 1 - long;
-	                            v = 1 - lat;
 	                            break;
 
 	                        case list.SPHERE:
 	                            x = cosPhi * sinTheta / 2;
 	                            z = sinPhi * sinTheta / 2;
 	                            y = cosTheta / 2;
-	                            u = 1 - long;
-	                            v = 1 - lat;
 	                            break;
 
 	                        case list.TOPDOME:
@@ -5086,8 +5123,6 @@
 	                            x = cosPhi * sinTheta / 2;
 	                            z = sinPhi * sinTheta / 2;
 	                            y = cosTheta / 2;
-	                            u = 1 - long;
-	                            v = 1 - lat;
 	                            break;
 
 	                        case list.SKYDOME:
@@ -5095,7 +5130,7 @@
 	                            z = sinPhi * sinTheta / 2;
 	                            y = cosTheta / 2;
 	                            u = long;
-	                            v = 1 - lat;
+	                            //v = 1 - lat;
 	                            break;
 
 	                        case list.BOTTOMDOME:
@@ -5115,17 +5150,15 @@
 	                                z = sinPhi * (1 - lat);
 	                            }
 	                            y = 1 - lat - 0.5;
-	                            u = 1 - long;
-	                            v = 1 - lat;
 	                            break;
 
 	                        case list.CONE:
-	                            if (lat > startCone) {
-	                                x = cosPhi * lat / 2;
-	                                z = sinPhi * lat / 2;
+	                            x = cosPhi * lat / 2;
+	                            z = sinPhi * lat / 2;
+	                            if (lat > startSlice) {
 	                                y = 1 - lat - 0.5;
-	                                u = 1 - long;
-	                                v = 1 - lat;
+	                            } else {
+	                                y = 0;
 	                            }
 	                            break;
 
@@ -5133,16 +5166,12 @@
 	                            x = cosPhi * r;
 	                            z = sinPhi * r;
 	                            y = 0.5 - r;
-	                            u = 1 - long;
-	                            v = 1 - lat;
 	                            break;
 
 	                        case list.BOTTOMCONE:
 	                            x = cosPhi * (0.5 - r);
 	                            z = sinPhi * (0.5 - r);
 	                            y = 0.0 - r;
-	                            u = 1 - long;
-	                            v = 1 - lat;
 	                            break;
 
 	                    }
@@ -5163,44 +5192,43 @@
 
 	                    // These were wrapped bottom->top, so reverse y on normals.
 
-	                    // NOTE: TODO: probably for SkyDome as well...
-
 	                    if (prim.type === list.BOTTOMDOME || prim.type === list.BOTTOMCONE || prim.type === list.SKYDOME) {
 
 	                        y = -y; // the y value (have to flip indices backwards for SKYDOME for it to work).
 	                    }
-	                }
-	            }
 
-	            // Sphere indices.
+	                    ///////////////////////////////////////////
 
-	            for (latNum = 0; latNum < latDist; latNum++) {
+	                    // Sphere indices.
 
-	                for (longNum = 0; longNum < longitudeBands; longNum++) {
+	                    if (latNum !== latDist && longNum !== longitudeBands) {
 
-	                    var first = latNum * (longitudeBands + 1) + longNum;
+	                        var first = latNum * (longitudeBands + 1) + longNum;
 
-	                    var second = first + longitudeBands + 1;
+	                        var second = first + longitudeBands + 1;
 
-	                    if (prim.type === list.SKYDOME) {
+	                        if (prim.type === list.SKYDOME) {
 
-	                        // Texture only visible from the inside.
+	                            // Texture only visible from the inside.
 
-	                        indices.push(first + 1, second + 1, second);
+	                            indices.push(first + 1, second + 1, second);
 
-	                        indices.push(first, first + 1, second);
-	                    } else {
+	                            indices.push(first, first + 1, second);
+	                        } else {
 
-	                        // Texture only visible outside.
+	                            // Texture only visible outside.
 
-	                        indices.push(first + 1, second + 1, second);
+	                            indices.push(first + 1, second + 1, second);
 
-	                        indices.push(first, first + 1, second);
+	                            indices.push(first, first + 1, second);
+	                        }
 	                    }
+
+	                    ///////////////////////////////////////////
 	                }
 	            }
 
-	            // Wind the SKYDOME backwards.
+	            // Wind the SKYDOME indices backwards.
 
 	            if (prim.type === list.SKYDOME) {
 
@@ -5227,6 +5255,17 @@
 
 	                return this.addBufferData(prim.geometry, vertices, indices, texCoords, normals, tangents, colors);
 	            }
+	        }
+
+	        /** 
+	         * Create a flat UV object.
+	         */
+
+	    }, {
+	        key: 'geometryCap',
+	        value: function geometryCap(prim) {
+
+	            return this.geometrySphere(prim);
 	        }
 
 	        /** 
@@ -5306,22 +5345,51 @@
 	        key: 'geometryCone',
 	        value: function geometryCone(prim) {
 
-	            return this.geometrySphere(prim);
+	            if (prim.dimensions[3] !== 0) {
+
+	                prim.geometry.makeBuffers = false;
+
+	                var type = prim.type;
+
+	                window.geo = prim.geometry;
+
+	                prim.geometry.type = prim.type = this.typeList.CAP;
+
+	                //prim.geometry = this.geometryCap( prim );
+
+	                console.log(">>>>>>>..PRIM VERTICES:" + prim.geometry.vertices.data.length);
+
+	                prim.geometry.makeBuffers = true;
+
+	                prim.geometry.type = prim.type = type;
+	            }
+
+	            prim.geometry = this.geometrySphere(prim);
+
+	            console.log(">>>>>>..PRIM VERTICES 2:" + prim.geometry.vertices.data.length);
+
+	            return prim.geometry;
+
+	            //return this.geometrySphere( prim );
 	        }
+
+	        /** 
+	         * Top cone, half a spindle.
+	         */
+
 	    }, {
 	        key: 'geometryTopCone',
 	        value: function geometryTopCone(prim) {
 
 	            return this.geometrySphere(prim);
 	        }
-	    }, {
-	        key: 'geometryBottomCone',
-	        value: function geometryBottomCone(prim) {
-
-	            return this.geometrySphere(prim);
-	        }
 
 	        /** 
+	         * 
+	        geometryBottomCone ( prim ) {
+	             return this.geometrySphere( prim );
+	         }
+	         /** 
 	         * Create a cube, or a spherical object from a cube mesh. Useful for cubemaps. 
 	         * If rounding is zero, it is a cube.
 	         * TODO: move vertices to better coverage
@@ -5340,8 +5408,6 @@
 
 	            var geo = prim.geometry;
 
-	            window.dim = prim.dimensions;
-
 	            // Shortcuts to Prim data arrays
 
 	            var vertices = geo.vertices.data,
@@ -5351,17 +5417,12 @@
 	                tangents = geo.tangents.data,
 	                colors = geo.colors.data;
 
-	            var sx = prim.dimensions[0];
-
-	            var sy = prim.dimensions[1];
-
-	            var sz = prim.dimensions[2];
-
-	            var nx = prim.divisions[0];
-
-	            var ny = prim.divisions[1];
-
-	            var nz = prim.divisions[2];
+	            var sx = prim.dimensions[0],
+	                sy = prim.dimensions[1],
+	                sz = prim.dimensions[2],
+	                nx = prim.divisions[0],
+	                ny = prim.divisions[1],
+	                nz = prim.divisions[2];
 
 	            //var numVertices = ( nx + 1 ) * ( ny + 1 ) * 2 + ( nx + 1 ) * ( nz + 1 ) * 2 + ( nz + 1 ) * ( ny + 1 ) * 2;
 
@@ -5417,7 +5478,7 @@
 	                    }
 	                }
 
-	                // Compute indices.
+	                // Compute side indices.
 
 	                for (var j = 0; j < nv; j++) {
 
@@ -5499,7 +5560,7 @@
 	                }
 	            }
 
-	            // Flatten arrays we used multidimensonal access to compute.
+	            // Flatten arrays, since we created using 2 dimensions.
 
 	            vertices = geo.vertices.data = flatten(positions, false);
 
@@ -5560,6 +5621,7 @@
 	        /** 
 	         * Icosphere, adapted from Unity 3d tutorial.
 	         * @link https://www.binpress.com/tutorial/creating-an-octahedron-sphere/162
+	         * divisions max: ~60
 	         * @param {Object} prim the primitive needing geometry.
 	         * @param {Boolean} noSphere if false, make an icosohedron.
 	         */
@@ -5582,7 +5644,7 @@
 
 	            var radius = prim.dimensions[0] * 0.5;
 
-	            var resolution = 1 << subdivisions;
+	            var resolution = subdivisions;
 
 	            // Default vectors.
 
@@ -5590,9 +5652,7 @@
 
 	            var directions = ['left', 'back', 'right', 'forward'];
 
-	            console.log("RESOLUTION:" + resolution);
-
-	            // Allocate memory
+	            // Allocate memory, since we may have to access out-of-range vertices, indices.
 
 	            var geo = prim.geometry;
 
@@ -5601,9 +5661,9 @@
 	                texCoords = geo.texCoords.data = new Array(vertices.length),
 	                normals = geo.normals.data = new Array(vertices.length),
 	                tangents = geo.tangents.data = new Array(vertices.length),
-	                colors = geo.colors.data; // colors NOTE: NOTE THAT WE ARE USING STANDARD JS ARRAYS
+	                colors = geo.colors.data;
 
-	            // initialize lots of default variables.
+	            // Initialize lots of default variables.
 
 	            var v = 0,
 	                vBottom = 0,
@@ -5611,8 +5671,8 @@
 	                i = void 0,
 	                d = void 0,
 	                progress = void 0,
-	                from = getVecs('zero'),
-	                to = getVecs('zero');
+	                from = void 0,
+	                to = void 0;
 
 	            for (i = 0; i < 4; i++) {
 
@@ -5625,11 +5685,7 @@
 
 	                to = vec3.lerp([0, 0, 0], getVecs('down'), getVecs('forward'), progress);
 
-	                ///console.log('tttttto:' + to)
-
 	                vertices[v++] = vec3.copy([0, 0, 0], to);
-
-	                ////onsole.log( 'at position v:' + parseInt(v-1) + ', to:' + to + ', array:' + vec3.copy( [ 0, 0, 0 ], to ))
 
 	                for (d = 0; d < 4; d++) {
 
@@ -5813,8 +5869,11 @@
 	                    tangent = [0, 0, 0, 0];
 
 	                    tangent[0] = -v[2];
+
 	                    tangent[1] = 0;
+
 	                    tangent[2] = v[0];
+
 	                    tangent[3] = -1;
 
 	                    tangents[i] = tangent;
@@ -6283,10 +6342,6 @@
 
 	            prim.geometry.type = type;
 
-	            // Starting and ending radii. Individual Prims may adjust.
-
-	            prim.dimensions[3] = prim.dimensions[4] = 0.5 * prim.dimensions[0];
-
 	            // NOTE: mis-spelling type leads to error here...
 
 	            prim.geometry = this[type](prim, color);
@@ -6297,21 +6352,13 @@
 	            
 	                    if( ! colors.length ) {
 	            
-	                        colors = geo.colors.data = this.computeColors( normals, colors );
+	                        prim.geometry.colors = this.computeColors( normals, colors );
 	            
 	                    }
 	            
 	                    // Return the buffer, or add array data to the existing Prim data.
 	            
-	                    if( prim.geometry.makeBuffers === true ) {
-	            
-	                        return this.createBuffers( prim.geometry );
-	            
-	                    } else {
-	            
-	                        return this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
-	            
-	                    }
+	                    prim.geometry = this.createBuffers( prim.geometry );
 	            
 	            */
 	            ////////////////////
@@ -7433,7 +7480,7 @@
 	            ));
 
 	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.ICOSPHERE, 'icoUnity', 1.0, vec4.fromValues(3, 3, 3, 0), // dimensions
-	            vec4.fromValues(4, 4, 4), // divisions MAKE SMALLER
+	            vec4.fromValues(16, 16, 16), // 1 for icosohedron, 16 for good sphere
 	            vec3.fromValues(4.5, 3.5, -2), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
@@ -7442,7 +7489,19 @@
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	            ));
 
-	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.TORUS, 'TORUS1', 1.0, vec4.fromValues(1, 1, 0.5, 0), // dimensions INCLUDING start radius or torus radius(last value)
+	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.TORUS, // TORUS DEFAULT
+	            'TORUS1', 1.0, vec4.fromValues(1, 1, 0.5, 0), // dimensions INCLUDING start radius or torus radius(last value)
+	            vec4.fromValues(15, 15, 15), // divisions MUST BE CONTROLLED TO < 5
+	            //vec3.fromValues(-3.5, -3.5, -1 ),        // position (absolute)
+	            vec3.fromValues(-0.0, 0, 2.0), vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	            vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	            ['img/mozvr-logo1.png'], // texture present
+	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+	            ));
+
+	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CAP, // TORUS DEFAULT
+	            'CAP', 1.0, vec4.fromValues(3, 3, 3, 0), // dimensions INCLUDING start radius or torus radius(last value)
 	            vec4.fromValues(15, 15, 15), // divisions MUST BE CONTROLLED TO < 5
 	            //vec3.fromValues(-3.5, -3.5, -1 ),        // position (absolute)
 	            vec3.fromValues(-0.0, 0, 2.0), vec3.fromValues(0, 0, 0), // acceleration in x, y, z
