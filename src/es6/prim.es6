@@ -363,11 +363,9 @@ export default class Prim {
 
             const gl = this.webgl.getContext();
 
-            let o;
-
             // Vertex Buffer Object.
 
-            o = bufferObj.vertices;
+            let o = bufferObj.vertices;
 
             if ( ! o.data.length ) {
 

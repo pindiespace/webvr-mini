@@ -4053,11 +4053,9 @@
 
 	                        var gl = this.webgl.getContext();
 
-	                        var o = void 0;
-
 	                        // Vertex Buffer Object.
 
-	                        o = bufferObj.vertices;
+	                        var o = bufferObj.vertices;
 
 	                        if (!o.data.length) {
 
