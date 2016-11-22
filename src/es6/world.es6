@@ -305,12 +305,12 @@ export default class World {
         ) );
 
         this.textureObjList.push( this.prim.createPrim(
-            this.prim.typeList.CAP, // TORUS DEFAULT
+            this.prim.typeList.CAP, // CAP DEFAULT, AT WORLD CENTER (also a UV polygon)
             'CAP',
             1.0,
-            vec4.fromValues( 3, 3, 3, 0 ),            // dimensions INCLUDING start radius or torus radius(last value)
-            vec4.fromValues( 15, 15, 15 ),            // divisions MUST BE CONTROLLED TO < 5
-            //vec3.fromValues(-3.5, -3.5, -1 ),        // position (absolute)
+            vec4.fromValues( 3, 3, 3, 0 ),         // dimensions INCLUDING start radius or torus radius(last value)
+            vec4.fromValues( 15, 15, 15 ),         // divisions MUST BE CONTROLLED TO < 5
+            //vec3.fromValues(-3.5, -3.5, -1 ),    // position (absolute)
                                             vec3.fromValues(-0.0, 0, 2.0),
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
@@ -323,14 +323,30 @@ export default class World {
             this.prim.typeList.CONE,
             'TestCone',
             1.0,
-            vec4.fromValues( 1, 3, 1, 0.5 ),            // dimensions (4th dimension is truncation of cone, none = 0, flat circle = 1.0)
-            vec4.fromValues( 10, 10, 10  ),            // divisions MAKE SMALLER
-            vec3.fromValues(-1, 0, 2.0 ),        // position (absolute)
+            vec4.fromValues( 1, 3, 1, 0.5 ),       // dimensions (4th dimension is truncation of cone, none = 0, flat circle = 1.0)
+            vec4.fromValues( 10, 10, 10  ),        // divisions MAKE SMALLER
+            vec3.fromValues(-1, 0, 2.0 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
             ['img/mozvr-logo2.png'],               // texture present
-            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
+            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color
+            true                                  // NOT CAPPED AT ENDS
+        ) );
+
+        this.textureObjList.push( this.prim.createPrim(
+            this.prim.typeList.CYLINDER,
+            'TestCylinder',
+            1.0,
+            vec4.fromValues( 0.5, 2, 0.5, 0 ),       // dimensions (4th dimension doesn't exist for cylinder)
+            vec4.fromValues( 10, 10, 10  ),        // divisions MAKE SMALLER
+            vec3.fromValues(-1.5, 0, 2.0 ),          // position (absolute)
+            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+            vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+            ['img/uv-test.png'],               // texture present
+            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color
+            true                                    // CAPPED AT ENDS
         ) );
 
         this.vs3 = this.renderer.shaderDirlightTexture.init( this.dirlightTextureObjList );

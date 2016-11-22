@@ -5031,8 +5031,6 @@
 	                h = prim.dimensions[2],
 	                startSlice = prim.dimensions[3] || 0;
 
-	            console.log(">>>>>startSlice:" + startSlice);
-
 	            // Everything except SPHERE, CYLINDER, SPINDLE, and CONE is a half-object.
 
 	            var latStart = 0,
@@ -5050,13 +5048,27 @@
 	                latDist = latitudeBands / 2;
 	            }
 
-	            startSlice = prim.dimensions[3] || 0;
+	            // If we have a cap, add one latBand for cone, 2 for cylinder.
+
+	            if (prim.cap) {
+
+	                if (prim.type === list.CONE) {
+
+	                    latDist += 1;
+	                    // TODO: need to elongate cone by the number of extra bands.
+	                    // TODO: so the y increment needs to be increased by the 
+	                    // TODO: ratio of extra added latBands.
+	                } else if (prim.type === list.CYLINDER) {
+
+	                    //latDist += 2;
+
+	                }
+	            }
 
 	            // Vertices, normals, texCoords.
 
 	            var latNum = void 0,
-	                longNum = void 0,
-	                firstLatNum = void 0;
+	                longNum = void 0;
 
 	            for (latNum = latStart; latNum <= latDist; latNum++) {
 
@@ -5090,8 +5102,6 @@
 	                    // Only fill arrays if we reach the start of a Prim slice.
 
 	                    r = lat / 2; // radius.
-
-	                    firstLatNum = latNum; /////////////////////////////////
 
 	                    var long = longNum / longitudeBands;
 
@@ -5160,6 +5170,11 @@
 	                            } else {
 	                                y = 0;
 	                            }
+	                            // end cap
+	                            if (prim.cap && latNum === latDist) {
+	                                x = z = 0;
+	                                y = 1 - (latDist - 1) / latDist - 0.5;
+	                            }
 	                            break;
 
 	                        case list.TOPCONE:
@@ -5197,8 +5212,6 @@
 	                        y = -y; // the y value (have to flip indices backwards for SKYDOME for it to work).
 	                    }
 
-	                    ///////////////////////////////////////////
-
 	                    // Sphere indices.
 
 	                    if (latNum !== latDist && longNum !== longitudeBands) {
@@ -5223,8 +5236,6 @@
 	                            indices.push(first, first + 1, second);
 	                        }
 	                    }
-
-	                    ///////////////////////////////////////////
 	                }
 	            }
 
@@ -5345,32 +5356,7 @@
 	        key: 'geometryCone',
 	        value: function geometryCone(prim) {
 
-	            if (prim.dimensions[3] !== 0) {
-
-	                prim.geometry.makeBuffers = false;
-
-	                var type = prim.type;
-
-	                window.geo = prim.geometry;
-
-	                prim.geometry.type = prim.type = this.typeList.CAP;
-
-	                //prim.geometry = this.geometryCap( prim );
-
-	                console.log(">>>>>>>..PRIM VERTICES:" + prim.geometry.vertices.data.length);
-
-	                prim.geometry.makeBuffers = true;
-
-	                prim.geometry.type = prim.type = type;
-	            }
-
-	            prim.geometry = this.geometrySphere(prim);
-
-	            console.log(">>>>>>..PRIM VERTICES 2:" + prim.geometry.vertices.data.length);
-
-	            return prim.geometry;
-
-	            //return this.geometrySphere( prim );
+	            return this.geometrySphere(prim);
 	        }
 
 	        /** 
@@ -6240,6 +6226,7 @@
 	            var angular = arguments[8];
 	            var textureImage = arguments[9];
 	            var color = arguments[10];
+	            var cap = arguments[11];
 
 
 	            var vec3 = this.glMatrix.vec3;
@@ -6253,6 +6240,8 @@
 	            prim.name = name;
 
 	            prim.scale = scale;
+
+	            prim.cap = cap || false;
 
 	            prim.dimensions = dimensions || vec4.fromValues(1, 1, 1, 0);
 
@@ -7500,10 +7489,10 @@
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	            ));
 
-	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CAP, // TORUS DEFAULT
+	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CAP, // CAP DEFAULT, AT WORLD CENTER (also a UV polygon)
 	            'CAP', 1.0, vec4.fromValues(3, 3, 3, 0), // dimensions INCLUDING start radius or torus radius(last value)
 	            vec4.fromValues(15, 15, 15), // divisions MUST BE CONTROLLED TO < 5
-	            //vec3.fromValues(-3.5, -3.5, -1 ),        // position (absolute)
+	            //vec3.fromValues(-3.5, -3.5, -1 ),    // position (absolute)
 	            vec3.fromValues(-0.0, 0, 2.0), vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
 	            vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
@@ -7518,7 +7507,19 @@
 	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
 	            vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
 	            ['img/mozvr-logo2.png'], // texture present
-	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+	            vec4.fromValues(0.5, 1.0, 0.2, 1.0), // color
+	            true // NOT CAPPED AT ENDS
+	            ));
+
+	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CYLINDER, 'TestCylinder', 1.0, vec4.fromValues(0.5, 2, 0.5, 0), // dimensions (4th dimension doesn't exist for cylinder)
+	            vec4.fromValues(10, 10, 10), // divisions MAKE SMALLER
+	            vec3.fromValues(-1.5, 0, 2.0), // position (absolute)
+	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	            vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	            ['img/uv-test.png'], // texture present
+	            vec4.fromValues(0.5, 1.0, 0.2, 1.0), // color
+	            true // CAPPED AT ENDS
 	            ));
 
 	            this.vs3 = this.renderer.shaderDirlightTexture.init(this.dirlightTextureObjList);

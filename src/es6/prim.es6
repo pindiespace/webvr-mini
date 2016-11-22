@@ -1310,7 +1310,6 @@ export default class Prim {
         h = prim.dimensions[ 2 ], 
         startSlice = prim.dimensions[ 3 ] || 0;
 
-        console.log( ">>>>>startSlice:" + startSlice)
 
         // Everything except SPHERE, CYLINDER, SPINDLE, and CONE is a half-object.
 
@@ -1332,11 +1331,28 @@ export default class Prim {
 
         }
 
-        startSlice = prim.dimensions[ 3 ] || 0;
+        // If we have a cap, add one latBand for cone, 2 for cylinder.
+
+        if ( prim.cap ) {
+
+            if( prim.type === list.CONE ) {
+
+                latDist += 1;
+                // TODO: need to elongate cone by the number of extra bands.
+                // TODO: so the y increment needs to be increased by the 
+                // TODO: ratio of extra added latBands.
+
+            } else if ( prim.type === list.CYLINDER ) {
+
+                //latDist += 2;
+
+            }
+
+        }
 
         // Vertices, normals, texCoords.
 
-        let latNum, longNum, firstLatNum;
+        let latNum, longNum;
 
         for ( latNum = latStart; latNum <= latDist; latNum++ ) {
 
@@ -1365,8 +1381,6 @@ export default class Prim {
                 // Only fill arrays if we reach the start of a Prim slice.
 
                 r = lat / 2; // radius.
-
-                firstLatNum = latNum;/////////////////////////////////
 
                 let long = longNum / longitudeBands;
 
@@ -1435,6 +1449,11 @@ export default class Prim {
                         } else {
                             y = 0;
                         }
+                        // end cap
+                        if ( prim.cap && latNum === latDist ) {
+                            x = z = 0;
+                            y = ( 1 - ( ( latDist - 1) / latDist ) ) - 0.5;
+                        }
                         break;
 
                     case list.TOPCONE:
@@ -1473,8 +1492,6 @@ export default class Prim {
 
                 }
 
-///////////////////////////////////////////
-
                 // Sphere indices.
 
                 if ( latNum !== latDist && longNum !== longitudeBands ) {
@@ -1503,11 +1520,10 @@ export default class Prim {
 
                 }
 
-///////////////////////////////////////////
-
             }
 
         }
+
 
         // Wind the SKYDOME indices backwards.
 
@@ -1614,35 +1630,7 @@ export default class Prim {
      */
     geometryCone ( prim ) {
 
-        if( prim.dimensions[ 3 ] !== 0 ) {
-
-            prim.geometry.makeBuffers = false;
-
-            let type = prim.type;
-
-            window.geo = prim.geometry;
-
-            prim.geometry.type = prim.type = this.typeList.CAP;
-
-            //prim.geometry = this.geometryCap( prim );
-
-            console.log(">>>>>>>..PRIM VERTICES:" + prim.geometry.vertices.data.length)
-
-            prim.geometry.makeBuffers = true;
-
-            prim.geometry.type = prim.type = type;
-
-        }
-
-        prim.geometry = this.geometrySphere( prim );
-
-        console.log(">>>>>>..PRIM VERTICES 2:" + prim.geometry.vertices.data.length)
-
-
-
-        return prim.geometry;
-
-        //return this.geometrySphere( prim );
+        return this.geometrySphere( prim );
 
     }
 
@@ -2532,7 +2520,8 @@ export default class Prim {
      * @param {String} textureImage the path to an image used to create a texture.
      * @param {Array|GLMatrix.vec4} color the default color(s) of the object.
      */
-    createPrim ( type, name = 'unknown', scale = 1.0, dimensions, divisions, position, acceleration, rotation, angular, textureImage, color ) {
+    createPrim ( type, name = 'unknown', scale = 1.0, dimensions, divisions, position, acceleration, 
+        rotation, angular, textureImage, color, cap ) {
 
         const vec3 = this.glMatrix.vec3;
 
@@ -2545,6 +2534,8 @@ export default class Prim {
         prim.name = name;
 
         prim.scale = scale;
+
+        prim.cap = cap || false;
 
         prim.dimensions = dimensions || vec4.fromValues( 1, 1, 1, 0 );
 
