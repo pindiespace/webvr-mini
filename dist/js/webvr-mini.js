@@ -3721,10 +3721,18 @@
 	     * mesh operations.
 	     * 
 	     * Implicit objects (values are units, with 1.0 being normalized size).
-	     * prim.position = [ x, y, z, w ] 
-	     * prim.dimensions = [ x, y, z, startRadius |  ]
-	     * prim.divisions = [ x, y, z ]
-	      * More prims
+	     * 
+	     * prim.position      = (vec5) [ x, y, z, startSlice | 0, endSlice | 0 ]
+	     * prim.dimensions    = (vec4) [ x, y, z, startRadius | 0 ]
+	     * prim.divisions     = (vec3) [ x, y, z ]
+	     * prim.acceleration  = (vec3) [ x, y, z ]
+	     * prim.rotation      = (vec3) [ x, y, z ]
+	     * prim.angular       = (vec3) [ x, y, z ]
+	     * prim.color         = [ red1, green1, blue1, alpha1, red2, blue2... ]
+	     * prim.texure1Arr    = [ texture1, texture2, texture3 ]
+	     * prim.audioArr      = [ AudioObj1, AudioObj2, AudioObj3...]
+	     * 
+	     * More prims
 	     * Ogre 3d procedural
 	     * https://bitbucket.org/transporter/ogre-procedural/src/ca6eb3363a53c2b53c055db5ce68c1d35daab0d5/library/include/?at=default
 	     * https://bitbucket.org/transporter/ogre-procedural/wiki/Home
@@ -4246,8 +4254,8 @@
 	        */
 
 	    }, {
-	        key: 'getStdVec3',
-	        value: function getStdVec3(type) {
+	        key: 'getStdVecs',
+	        value: function getStdVecs(type) {
 
 	            switch (type) {
 
@@ -4276,6 +4284,22 @@
 	                    return [0, 0, 0];
 
 	            }
+	        }
+
+	        /** 
+	         * Larger configuration vectors for Prims. additional values control slicing 
+	         * or flattening of part of a prim.
+	         * For CONE, the fourth value is truncation of the cone point.
+	         * For other Prims, the fourth and fifth values control the start and 
+	         * end of a cap on open prims (CYLINDER, CONE) and flattening of the 
+	         * top and bottom of SPHERE prims.
+	         */
+
+	    }, {
+	        key: 'vec5',
+	        value: function vec5(a, b, c, d, e) {
+
+	            return [a, b, c, d, e]; // dimensions, start slice (cone)
 	        }
 
 	        /* 
@@ -5029,7 +5053,10 @@
 	            var l = prim.dimensions[0],
 	                w = prim.dimensions[1],
 	                h = prim.dimensions[2],
-	                startSlice = prim.dimensions[3] || 0;
+	                startSlice = prim.dimensions[3] || 0,
+	                endSlice = prim.dimensions[4] || 0;
+
+	            console.log("^^^^^STARTSLICE:" + startSlice + " ENDSLICE:" + endSlice);
 
 	            // Everything except SPHERE, CYLINDER, SPINDLE, and CONE is a half-object.
 
@@ -5065,10 +5092,15 @@
 	                }
 	            }
 
+	            var count = 0; //////////////////////////////////////////////////
 	            // Vertices, normals, texCoords.
 
 	            var latNum = void 0,
-	                longNum = void 0;
+	                longNum = void 0,
+	                startY = 0,
+	                endY = 1.0;
+
+	            // adjust startSlice to where it actually will be drawn...
 
 	            for (latNum = latStart; latNum <= latDist; latNum++) {
 
@@ -5077,6 +5109,24 @@
 	                var sinTheta = Math.sin(theta);
 
 	                var cosTheta = Math.cos(theta);
+
+	                if (latNum / latDist > startSlice) {
+
+	                    startY = cosTheta / 2;
+
+	                    break;
+	                }
+	            }
+
+	            // Start our uv build loop.
+
+	            for (latNum = latStart; latNum <= latDist; latNum++) {
+
+	                var _theta = latNum * Math.PI / latitudeBands;
+
+	                var _sinTheta = Math.sin(_theta);
+
+	                var _cosTheta = Math.cos(_theta);
 
 	                for (longNum = longStart; longNum <= longitudeBands; longNum++) {
 
@@ -5117,36 +5167,55 @@
 	                            break;
 
 	                        case list.CYLINDER:
-	                            x = cosPhi / 2;
-	                            z = sinPhi / 2;
-	                            y = cosTheta / 2;
+
+	                            if (lat < startSlice) {
+	                                // y constant at zero, x and z cosP and sinTheta
+	                                x = cosPhi * r / 2;
+	                                z = sinPhi * r / 2;
+	                                y = startY;
+	                                console.log('START: latNum:' + latNum + ' count:' + count + ' startSlice:' + startSlice + ' x:' + x + ' y:' + y + ' z:' + z);
+	                            } else if (lat > endSlice) {
+	                                // y constant at max, x and z cosPhi and sinTheta
+	                                x = cosPhi * _sinTheta / 2;
+	                                z = cosPhi * _sinTheta / 2;
+	                                y = endY;
+	                                console.log('END: latNum:' + latNum + ' count:' + count + ' endSlice:' + endSlice + ' x:' + x + ' y:' + y + ' z:' + z);
+	                            } else {
+	                                x = cosPhi / 2;
+	                                z = sinPhi / 2;
+	                                y = _cosTheta / 2;
+	                                // constant radius
+	                                endY = y;
+	                                console.log('MAIN: latNum:' + latNum + ' count:' + count + ' inLocal:' + y + ' x:' + x + ' y:' + y + ' z:' + z);
+	                            }
+	                            count++;
 	                            break;
 
 	                        case list.SPHERE:
-	                            x = cosPhi * sinTheta / 2;
-	                            z = sinPhi * sinTheta / 2;
-	                            y = cosTheta / 2;
+	                            x = cosPhi * _sinTheta / 2;
+	                            z = sinPhi * _sinTheta / 2;
+	                            y = _cosTheta / 2;
 	                            break;
 
 	                        case list.TOPDOME:
 	                        case list.DOME:
-	                            x = cosPhi * sinTheta / 2;
-	                            z = sinPhi * sinTheta / 2;
-	                            y = cosTheta / 2;
+	                            x = cosPhi * _sinTheta / 2;
+	                            z = sinPhi * _sinTheta / 2;
+	                            y = _cosTheta / 2;
 	                            break;
 
 	                        case list.SKYDOME:
-	                            x = cosPhi * sinTheta / 2;
-	                            z = sinPhi * sinTheta / 2;
-	                            y = cosTheta / 2;
+	                            x = cosPhi * _sinTheta / 2;
+	                            z = sinPhi * _sinTheta / 2;
+	                            y = _cosTheta / 2;
 	                            u = long;
 	                            //v = 1 - lat;
 	                            break;
 
 	                        case list.BOTTOMDOME:
-	                            x = cosPhi * sinTheta / 2;
-	                            z = sinPhi * sinTheta / 2;
-	                            y = (1 - cosTheta) / 2 - 0.5;
+	                            x = cosPhi * _sinTheta / 2;
+	                            z = sinPhi * _sinTheta / 2;
+	                            y = (1 - _cosTheta) / 2 - 0.5;
 	                            u = long;
 	                            v = lat;
 	                            break;
@@ -5634,7 +5703,7 @@
 
 	            // Default vectors.
 
-	            var getVecs = this.getStdVec3;
+	            var getVecs = this.getStdVecs;
 
 	            var directions = ['left', 'back', 'right', 'forward'];
 
@@ -6217,16 +6286,15 @@
 	        key: 'createPrim',
 	        value: function createPrim(type) {
 	            var name = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'unknown';
-	            var scale = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 1.0;
-	            var dimensions = arguments[3];
-	            var divisions = arguments[4];
-	            var position = arguments[5];
-	            var acceleration = arguments[6];
-	            var rotation = arguments[7];
-	            var angular = arguments[8];
-	            var textureImage = arguments[9];
-	            var color = arguments[10];
-	            var cap = arguments[11];
+	            var dimensions = arguments[2];
+	            var divisions = arguments[3];
+	            var position = arguments[4];
+	            var acceleration = arguments[5];
+	            var rotation = arguments[6];
+	            var angular = arguments[7];
+	            var textureImage = arguments[8];
+	            var color = arguments[9];
+	            var cap = arguments[10];
 
 
 	            var vec3 = this.glMatrix.vec3;
@@ -6239,11 +6307,11 @@
 
 	            prim.name = name;
 
-	            prim.scale = scale;
+	            prim.scale = 1.0; // starting size = default scale
 
 	            prim.cap = cap || false;
 
-	            prim.dimensions = dimensions || vec4.fromValues(1, 1, 1, 0);
+	            prim.dimensions = dimensions || this.vec5(1, 1, 1, 0, 0);
 
 	            prim.divisions = divisions || vec4.fromValues(1, 1, 1, 0);
 
@@ -7318,6 +7386,8 @@
 
 	            var vec4 = this.glMatrix.vec4;
 
+	            var vec5 = this.prim.vec5;
+
 	            var util = this.util;
 
 	            // TEXTURED SHADER.
@@ -7325,8 +7395,7 @@
 	            this.textureObjList = [];
 
 	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CUBE, 'first cube', // name
-	            1.0, // scale
-	            vec4.fromValues(1, 1, 1, 0), // dimensions
+	            vec5(1, 1, 1, 0), // dimensions
 	            vec4.fromValues(10, 10, 10), // divisions
 	            vec3.fromValues(1, 0, 2), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -7335,7 +7404,7 @@
 	            ['img/crate.png', 'img/webvr-logo1.png'], // texture image
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0)));
 
-	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CUBE, 'toji cube', 1.0, vec4.fromValues(1, 1, 1, 0), // dimensions
+	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CUBE, 'toji cube', vec5(1, 1, 1, 0), // dimensions
 	            vec4.fromValues(1, 1, 1), // divisions
 	            vec3.fromValues(5, 1, -3), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -7346,7 +7415,7 @@
 
 	            // PRIMARY (BIG) SKYDOME
 
-	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.SKYDOME, 'SkyDome', 1.0, vec4.fromValues(18, 18, 18, 0), // dimensions
+	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.SKYDOME, 'SkyDome', vec5(18, 18, 18, 0), // dimensions
 	            vec4.fromValues(10, 10, 10), // divisions MAKE SMALLER
 	            vec3.fromValues(0, 0, 0), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -7356,7 +7425,7 @@
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	            ));
 
-	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.TORUS, 'torus2', 1.0, vec4.fromValues(1, 1, 0.5, 0), // dimensions (first is width along x, second  width along y, diameter of torus tube)
+	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.TORUS, 'torus2', vec5(1, 1, 0.5, 0), // dimensions (first is width along x, second  width along y, diameter of torus tube)
 	            vec4.fromValues(9, 9, 9, 1), // divisions (first is number of rings, second is number of sides)
 	            vec3.fromValues(-1.8, 3, -3.5), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -7372,7 +7441,7 @@
 
 	            this.colorObjList = [];
 
-	            this.colorObjList.push(this.prim.createPrim(this.prim.typeList.CUBE, 'colored cube', 1.0, vec4.fromValues(1, 1, 1, 0), // dimensions
+	            this.colorObjList.push(this.prim.createPrim(this.prim.typeList.CUBE, 'colored cube', vec5(1, 1, 1, 0), // dimensions
 	            vec4.fromValues(3, 3, 3), // divisions
 	            vec3.fromValues(-1, 3, -3), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -7388,7 +7457,7 @@
 
 	            this.dirlightTextureObjList = [];
 
-	            this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.CUBE, 'lit cube', 1.0, vec4.fromValues(1, 1, 1, 0), // dimensions
+	            this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.CUBE, 'lit cube', vec5(1, 1, 1, 0), // dimensions
 	            vec4.fromValues(1, 1, 1), // divisions
 	            vec3.fromValues(-3, -2, -3), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -7398,7 +7467,7 @@
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	            ));
 
-	            this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.TERRAIN, 'terrain', 1.0, vec4.fromValues(2, 2, 2, 0), // dimensions
+	            this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.TERRAIN, 'terrain', vec5(2, 2, 2, 0), // dimensions
 	            vec4.fromValues(130, 5, 130), // divisions
 	            vec3.fromValues(1.5, -1.5, 2), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -7409,7 +7478,7 @@
 	            null //heightMap                       // heightmap
 	            ));
 
-	            this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.PLANE, 'a plane', 1.0, vec4.fromValues(2, 2, 2, 0), // dimensions
+	            this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.PLANE, 'a plane', vec5(2, 2, 2, 0), // dimensions
 	            vec4.fromValues(50, 0, 50), // divisions
 	            vec3.fromValues(0, -2, 0), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -7418,7 +7487,7 @@
 	            ['img/webvr-logo2.png'], vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	            ));
 
-	            this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.SPHERE, 'texsphere', 1.0, vec4.fromValues(1.5, 1.5, 1.5, 0), // dimensions
+	            this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.SPHERE, 'texsphere', vec5(1.5, 1.5, 1.5, 0), // dimensions
 	            vec4.fromValues(30, 30, 30), // divisions
 	            vec3.fromValues(-5, -1.3, -2), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -7428,7 +7497,7 @@
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	            ));
 
-	            this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.CUBESPHERE, 'cubesphere', 1.0, vec4.fromValues(3, 3, 3, 0), // dimensions
+	            this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.CUBESPHERE, 'cubesphere', vec5(3, 3, 3, 0), // dimensions
 	            vec4.fromValues(10, 10, 10), // divisions
 	            vec3.fromValues(2.5, -1.5, -2), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -7438,7 +7507,7 @@
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	            ));
 
-	            this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.ICOSOHEDRON, 'icophere', 1.0, vec4.fromValues(3, 3, 3, 0), // dimensions
+	            this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.ICOSOHEDRON, 'icophere', vec5(3, 3, 3, 0), // dimensions
 	            vec4.fromValues(4, 4, 4), // divisions
 	            vec3.fromValues(-2.5, 2.0, -1), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -7448,7 +7517,7 @@
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	            ));
 
-	            this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.BOTTOMDOME, 'TestDome', 1.0, vec4.fromValues(1, 1, 1, 0), // dimensions
+	            this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.BOTTOMDOME, 'TestDome', vec5(1, 1, 1, 0), // dimensions
 	            vec4.fromValues(10, 10, 10), // divisions MAKE SMALLER
 	            vec3.fromValues(-4, 0.5, -0.5), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -7458,7 +7527,7 @@
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	            ));
 
-	            this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.ICOSPHERE, 'icophere', 1.0, vec4.fromValues(3, 3, 3, 0), // dimensions
+	            this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.ICOSPHERE, 'icophere', vec5(3, 3, 3, 0), // dimensions
 	            vec4.fromValues(4, 4, 4), // divisions
 	            vec3.fromValues(1.5, 2.5, -1), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -7468,7 +7537,7 @@
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	            ));
 
-	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.ICOSPHERE, 'icoUnity', 1.0, vec4.fromValues(3, 3, 3, 0), // dimensions
+	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.ICOSPHERE, 'icoUnity', vec5(3, 3, 3, 0), // dimensions
 	            vec4.fromValues(16, 16, 16), // 1 for icosohedron, 16 for good sphere
 	            vec3.fromValues(4.5, 3.5, -2), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -7479,7 +7548,7 @@
 	            ));
 
 	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.TORUS, // TORUS DEFAULT
-	            'TORUS1', 1.0, vec4.fromValues(1, 1, 0.5, 0), // dimensions INCLUDING start radius or torus radius(last value)
+	            'TORUS1', vec5(1, 1, 0.5, 0), // dimensions INCLUDING start radius or torus radius(last value)
 	            vec4.fromValues(15, 15, 15), // divisions MUST BE CONTROLLED TO < 5
 	            //vec3.fromValues(-3.5, -3.5, -1 ),        // position (absolute)
 	            vec3.fromValues(-0.0, 0, 2.0), vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -7490,7 +7559,7 @@
 	            ));
 
 	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CAP, // CAP DEFAULT, AT WORLD CENTER (also a UV polygon)
-	            'CAP', 1.0, vec4.fromValues(3, 3, 3, 0), // dimensions INCLUDING start radius or torus radius(last value)
+	            'CAP', vec5(3, 3, 3, 0), // dimensions INCLUDING start radius or torus radius(last value)
 	            vec4.fromValues(15, 15, 15), // divisions MUST BE CONTROLLED TO < 5
 	            //vec3.fromValues(-3.5, -3.5, -1 ),    // position (absolute)
 	            vec3.fromValues(-0.0, 0, 2.0), vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -7500,7 +7569,7 @@
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	            ));
 
-	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CONE, 'TestCone', 1.0, vec4.fromValues(1, 3, 1, 0.5), // dimensions (4th dimension is truncation of cone, none = 0, flat circle = 1.0)
+	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CONE, 'TestCone', vec5(1, 3, 1, 0.5), // dimensions (4th dimension is truncation of cone, none = 0, flat circle = 1.0)
 	            vec4.fromValues(10, 10, 10), // divisions MAKE SMALLER
 	            vec3.fromValues(-1, 0, 2.0), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -7511,15 +7580,16 @@
 	            true // NOT CAPPED AT ENDS
 	            ));
 
-	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CYLINDER, 'TestCylinder', 1.0, vec4.fromValues(0.5, 2, 0.5, 0), // dimensions (4th dimension doesn't exist for cylinder)
-	            vec4.fromValues(10, 10, 10), // divisions MAKE SMALLER
+	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CYLINDER, 'TestCylinder', vec5(0.6, 1, 0.6, 0.1, 0.9), // dimensions (4th dimension doesn't exist for cylinder)
+	            vec4.fromValues(20, 20, 20), // divisions MAKE SMALLER
 	            vec3.fromValues(-1.5, 0, 2.0), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
 	            vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	            ['img/uv-test.png'], // texture present
+	            ['img/soda-can.png'], // texture present
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0), // color
 	            true // CAPPED AT ENDS
+
 	            ));
 
 	            this.vs3 = this.renderer.shaderDirlightTexture.init(this.dirlightTextureObjList);

@@ -70,6 +70,8 @@ export default class World {
 
         const vec4 = this.glMatrix.vec4;
 
+        const vec5 = this.prim.vec5;
+
         const util = this.util;
 
 // TEXTURED SHADER.
@@ -79,8 +81,7 @@ export default class World {
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.CUBE,
             'first cube',                                        // name
-            1.0,                                                 // scale
-            vec4.fromValues( 1, 1, 1, 0 ),            // dimensions
+            vec5( 1, 1, 1, 0 ),            // dimensions
             vec4.fromValues( 10, 10, 10 ),            // divisions
             vec3.fromValues( 1, 0, 2 ),            // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -93,8 +94,7 @@ export default class World {
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.CUBE,
             'toji cube',
-            1.0,
-            vec4.fromValues( 1, 1, 1, 0 ),            // dimensions
+            vec5( 1, 1, 1, 0 ),            // dimensions
             vec4.fromValues( 1, 1, 1 ),            // divisions
             vec3.fromValues( 5, 1, -3 ),           // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -110,8 +110,7 @@ export default class World {
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.SKYDOME,
             'SkyDome',
-            1.0,
-            vec4.fromValues( 18, 18, 18, 0 ),            // dimensions
+            vec5( 18, 18, 18, 0 ),            // dimensions
             vec4.fromValues( 10, 10, 10  ),            // divisions MAKE SMALLER
             vec3.fromValues( 0, 0, 0 ),        // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -124,8 +123,7 @@ export default class World {
          this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.TORUS,
             'torus2',
-            1.0,
-            vec4.fromValues( 1, 1, 0.5, 0 ),         // dimensions (first is width along x, second  width along y, diameter of torus tube)
+            vec5( 1, 1, 0.5, 0 ),         // dimensions (first is width along x, second  width along y, diameter of torus tube)
             vec4.fromValues( 9, 9, 9, 1 ),            // divisions (first is number of rings, second is number of sides)
             vec3.fromValues( -1.8, 3, -3.5 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -144,8 +142,7 @@ export default class World {
          this.colorObjList.push( this.prim.createPrim(
             this.prim.typeList.CUBE,
             'colored cube',
-            1.0,
-            vec4.fromValues( 1, 1, 1, 0 ),            // dimensions
+            vec5( 1, 1, 1, 0 ),            // dimensions
             vec4.fromValues( 3, 3, 3 ),            // divisions
             vec3.fromValues( -1, 3, -3 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -164,8 +161,7 @@ export default class World {
          this.dirlightTextureObjList.push( this.prim.createPrim(
             this.prim.typeList.CUBE,
             'lit cube',
-            1.0,
-            vec4.fromValues( 1, 1, 1, 0 ),            // dimensions
+            vec5( 1, 1, 1, 0 ),            // dimensions
             vec4.fromValues( 1, 1, 1 ),            // divisions
             vec3.fromValues( -3, -2, -3 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -178,8 +174,7 @@ export default class World {
         this.dirlightTextureObjList.push( this.prim.createPrim(
             this.prim.typeList.TERRAIN,
             'terrain',
-            1.0,
-            vec4.fromValues( 2, 2, 2, 0 ),            // dimensions
+            vec5( 2, 2, 2, 0 ),            // dimensions
             vec4.fromValues( 130, 5, 130 ),           // divisions
             vec3.fromValues(1.5, -1.5, 2 ),       // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -193,8 +188,7 @@ export default class World {
         this.dirlightTextureObjList.push( this.prim.createPrim(
             this.prim.typeList.PLANE,
             'a plane',
-            1.0,
-            vec4.fromValues( 2, 2, 2, 0 ),            // dimensions
+            vec5( 2, 2, 2, 0 ),            // dimensions
             vec4.fromValues( 50, 0, 50 ),          // divisions
             vec3.fromValues( 0, -2, 0 ),           // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -207,8 +201,7 @@ export default class World {
         this.dirlightTextureObjList.push( this.prim.createPrim(
             this.prim.typeList.SPHERE,
             'texsphere',
-            1.0,
-            vec4.fromValues( 1.5, 1.5, 1.5, 0 ),   // dimensions
+            vec5( 1.5, 1.5, 1.5, 0 ),   // dimensions
             vec4.fromValues( 30, 30, 30 ),         // divisions
             vec3.fromValues(-5, -1.3, -2 ),       // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -222,8 +215,7 @@ export default class World {
         this.dirlightTextureObjList.push( this.prim.createPrim(
             this.prim.typeList.CUBESPHERE,
             'cubesphere',
-            1.0,
-            vec4.fromValues( 3, 3, 3, 0 ),            // dimensions
+            vec5( 3, 3, 3, 0 ),            // dimensions
             vec4.fromValues( 10, 10, 10 ),         // divisions
             vec3.fromValues(2.5, -1.5, -2 ),       // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -236,8 +228,7 @@ export default class World {
         this.dirlightTextureObjList.push( this.prim.createPrim(
             this.prim.typeList.ICOSOHEDRON,
             'icophere',
-            1.0,
-            vec4.fromValues( 3, 3, 3, 0 ),            // dimensions
+            vec5( 3, 3, 3, 0 ),            // dimensions
             vec4.fromValues( 4, 4, 4 ),         // divisions
             vec3.fromValues(-2.5, 2.0, -1 ),       // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -250,8 +241,7 @@ export default class World {
         this.dirlightTextureObjList.push( this.prim.createPrim(
             this.prim.typeList.BOTTOMDOME,
             'TestDome',
-            1.0,
-            vec4.fromValues( 1, 1, 1, 0 ),            // dimensions
+            vec5( 1, 1, 1, 0 ),            // dimensions
             vec4.fromValues( 10, 10, 10  ),            // divisions MAKE SMALLER
             vec3.fromValues(-4, 0.5, -0.5 ),        // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -264,8 +254,7 @@ export default class World {
         this.dirlightTextureObjList.push( this.prim.createPrim(
             this.prim.typeList.ICOSPHERE,
             'icophere',
-            1.0,
-            vec4.fromValues( 3, 3, 3, 0 ),            // dimensions
+            vec5( 3, 3, 3, 0 ),            // dimensions
             vec4.fromValues( 4, 4, 4 ),            // divisions
             vec3.fromValues(1.5, 2.5, -1 ),        // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -278,8 +267,7 @@ export default class World {
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.ICOSPHERE,
             'icoUnity',
-            1.0,
-            vec4.fromValues( 3, 3, 3, 0 ),            // dimensions
+            vec5( 3, 3, 3, 0 ),            // dimensions
             vec4.fromValues( 16, 16, 16 ),            // 1 for icosohedron, 16 for good sphere
             vec3.fromValues(4.5, 3.5, -2 ),        // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -292,8 +280,7 @@ export default class World {
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.TORUS, // TORUS DEFAULT
             'TORUS1',
-            1.0,
-            vec4.fromValues( 1, 1, 0.5, 0 ),            // dimensions INCLUDING start radius or torus radius(last value)
+            vec5( 1, 1, 0.5, 0 ),            // dimensions INCLUDING start radius or torus radius(last value)
             vec4.fromValues( 15, 15, 15 ),            // divisions MUST BE CONTROLLED TO < 5
             //vec3.fromValues(-3.5, -3.5, -1 ),        // position (absolute)
                                             vec3.fromValues(-0.0, 0, 2.0),
@@ -307,8 +294,7 @@ export default class World {
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.CAP, // CAP DEFAULT, AT WORLD CENTER (also a UV polygon)
             'CAP',
-            1.0,
-            vec4.fromValues( 3, 3, 3, 0 ),         // dimensions INCLUDING start radius or torus radius(last value)
+            vec5( 3, 3, 3, 0 ),         // dimensions INCLUDING start radius or torus radius(last value)
             vec4.fromValues( 15, 15, 15 ),         // divisions MUST BE CONTROLLED TO < 5
             //vec3.fromValues(-3.5, -3.5, -1 ),    // position (absolute)
                                             vec3.fromValues(-0.0, 0, 2.0),
@@ -322,8 +308,7 @@ export default class World {
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.CONE,
             'TestCone',
-            1.0,
-            vec4.fromValues( 1, 3, 1, 0.5 ),       // dimensions (4th dimension is truncation of cone, none = 0, flat circle = 1.0)
+            vec5( 1, 3, 1, 0.5 ),       // dimensions (4th dimension is truncation of cone, none = 0, flat circle = 1.0)
             vec4.fromValues( 10, 10, 10  ),        // divisions MAKE SMALLER
             vec3.fromValues(-1, 0, 2.0 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -337,16 +322,16 @@ export default class World {
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.CYLINDER,
             'TestCylinder',
-            1.0,
-            vec4.fromValues( 0.5, 2, 0.5, 0 ),       // dimensions (4th dimension doesn't exist for cylinder)
-            vec4.fromValues( 10, 10, 10  ),        // divisions MAKE SMALLER
+            vec5( 0.6, 1, 0.6, 0.1, 0.9 ),       // dimensions (4th dimension doesn't exist for cylinder)
+            vec4.fromValues( 20, 20, 20  ),        // divisions MAKE SMALLER
             vec3.fromValues(-1.5, 0, 2.0 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-            ['img/uv-test.png'],               // texture present
+            ['img/soda-can.png'],               // texture present
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color
             true                                    // CAPPED AT ENDS
+
         ) );
 
         this.vs3 = this.renderer.shaderDirlightTexture.init( this.dirlightTextureObjList );

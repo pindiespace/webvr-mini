@@ -12,10 +12,17 @@ export default class Prim {
      * mesh operations.
      * 
      * Implicit objects (values are units, with 1.0 being normalized size).
-     * prim.position = [ x, y, z, w ] 
-     * prim.dimensions = [ x, y, z, startRadius |  ]
-     * prim.divisions = [ x, y, z ]
-
+     * 
+     * prim.position      = (vec5) [ x, y, z, startSlice | 0, endSlice | 0 ]
+     * prim.dimensions    = (vec4) [ x, y, z, startRadius | 0 ]
+     * prim.divisions     = (vec3) [ x, y, z ]
+     * prim.acceleration  = (vec3) [ x, y, z ]
+     * prim.rotation      = (vec3) [ x, y, z ]
+     * prim.angular       = (vec3) [ x, y, z ]
+     * prim.color         = [ red1, green1, blue1, alpha1, red2, blue2... ]
+     * prim.texure1Arr    = [ texture1, texture2, texture3 ]
+     * prim.audioArr      = [ AudioObj1, AudioObj2, AudioObj3...]
+     * 
      * More prims
      * Ogre 3d procedural
      * https://bitbucket.org/transporter/ogre-procedural/src/ca6eb3363a53c2b53c055db5ce68c1d35daab0d5/library/include/?at=default
@@ -547,7 +554,7 @@ export default class Prim {
      * if using the array literal (e.g. [ 0, 0, 0,]) doesn't make sense.
      * @link https://docs.unity3d.com/ScriptReference/Vector3.html
     */
-    getStdVec3 ( type ) {
+    getStdVecs ( type ) {
 
         switch ( type ) {
 
@@ -568,6 +575,20 @@ export default class Prim {
             case 'zero': return [ 0, 0, 0 ];
 
         }
+
+    }
+
+    /** 
+     * Larger configuration vectors for Prims. additional values control slicing 
+     * or flattening of part of a prim.
+     * For CONE, the fourth value is truncation of the cone point.
+     * For other Prims, the fourth and fifth values control the start and 
+     * end of a cap on open prims (CYLINDER, CONE) and flattening of the 
+     * top and bottom of SPHERE prims.
+     */
+    vec5 ( a, b, c, d, e ) {
+
+        return [ a, b, c, d, e ]; // dimensions, start slice (cone)
 
     }
 
@@ -1308,7 +1329,10 @@ export default class Prim {
         let l = prim.dimensions[ 0 ],
         w = prim.dimensions[ 1 ], 
         h = prim.dimensions[ 2 ], 
-        startSlice = prim.dimensions[ 3 ] || 0;
+        startSlice = prim.dimensions[ 3 ] || 0,
+        endSlice = prim.dimensions[ 4 ] || 0;
+
+        console.log("^^^^^STARTSLICE:" + startSlice + " ENDSLICE:" + endSlice);
 
 
         // Everything except SPHERE, CYLINDER, SPINDLE, and CONE is a half-object.
@@ -1350,9 +1374,32 @@ export default class Prim {
 
         }
 
+        let count = 0; //////////////////////////////////////////////////
         // Vertices, normals, texCoords.
 
-        let latNum, longNum;
+        let latNum, longNum, startY = 0, endY = 1.0;
+
+        // adjust startSlice to where it actually will be drawn...
+
+        for ( latNum = latStart; latNum <= latDist; latNum++ ) {
+
+            let theta = latNum * Math.PI / latitudeBands;
+
+            let sinTheta = Math.sin( theta );
+
+            let cosTheta = Math.cos( theta );
+
+            if ( latNum / latDist > startSlice ) {
+
+                startY = cosTheta / 2;
+
+                break;
+
+            }
+
+        }
+
+        // Start our uv build loop.
 
         for ( latNum = latStart; latNum <= latDist; latNum++ ) {
 
@@ -1396,9 +1443,28 @@ export default class Prim {
                         break;
 
                     case list.CYLINDER:
-                        x = cosPhi / 2;
-                        z = sinPhi / 2;
-                        y = cosTheta / 2;
+
+                        if ( lat < startSlice ) {
+                            // y constant at zero, x and z cosP and sinTheta
+                            x = cosPhi * r / 2;
+                            z = sinPhi * r / 2;
+                            y = startY;
+                            console.log('START: latNum:' + latNum + ' count:' + count + ' startSlice:' + startSlice + ' x:' + x + ' y:' + y + ' z:' + z)
+                        } else if ( lat > endSlice ) {
+                            // y constant at max, x and z cosPhi and sinTheta
+                            x = cosPhi * sinTheta / 2;
+                            z = cosPhi * sinTheta / 2;
+                            y = endY;
+                            console.log('END: latNum:' + latNum + ' count:' + count + ' endSlice:' + endSlice + ' x:' + x + ' y:' + y + ' z:' + z)
+                        } else {
+                            x = cosPhi / 2;
+                            z = sinPhi / 2;
+                            y = cosTheta / 2;
+                            // constant radius
+                            endY = y;
+                            console.log('MAIN: latNum:' + latNum + ' count:' + count + ' inLocal:' + y + ' x:' + x + ' y:' + y + ' z:' + z)                            
+                        }
+                        count++;
                         break;
 
                     case list.SPHERE:
@@ -1924,7 +1990,7 @@ export default class Prim {
 
         // Default vectors.
 
-        let getVecs = this.getStdVec3;
+        let getVecs = this.getStdVecs;
 
         let directions = [
             'left',
@@ -2520,7 +2586,7 @@ export default class Prim {
      * @param {String} textureImage the path to an image used to create a texture.
      * @param {Array|GLMatrix.vec4} color the default color(s) of the object.
      */
-    createPrim ( type, name = 'unknown', scale = 1.0, dimensions, divisions, position, acceleration, 
+    createPrim ( type, name = 'unknown', dimensions, divisions, position, acceleration, 
         rotation, angular, textureImage, color, cap ) {
 
         const vec3 = this.glMatrix.vec3;
@@ -2533,11 +2599,11 @@ export default class Prim {
 
         prim.name = name;
 
-        prim.scale = scale;
+        prim.scale = 1.0; // starting size = default scale
 
         prim.cap = cap || false;
 
-        prim.dimensions = dimensions || vec4.fromValues( 1, 1, 1, 0 );
+        prim.dimensions = dimensions || this.vec5( 1, 1, 1, 0, 0 );
 
         prim.divisions = divisions || vec4.fromValues( 1, 1, 1, 0 );
 
