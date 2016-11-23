@@ -5054,9 +5054,7 @@
 	                w = prim.dimensions[1],
 	                h = prim.dimensions[2],
 	                startSlice = prim.dimensions[3] || 0,
-	                endSlice = prim.dimensions[4] || 0;
-
-	            console.log("^^^^^STARTSLICE:" + startSlice + " ENDSLICE:" + endSlice);
+	                endSlice = prim.dimensions[4] || 1.0;
 
 	            // Everything except SPHERE, CYLINDER, SPINDLE, and CONE is a half-object.
 
@@ -5064,7 +5062,7 @@
 	                longStart = 0,
 	                latDist = void 0;
 
-	            if (prim.type === list.SPHERE || prim.type === list.CYLINDER || prim.type === list.SPINDLE) {
+	            if (prim.type === list.SPHERE || prim.type === list.CYLINDER || prim.type === list.SPINDLE || prim.type === list.CONE) {
 
 	                latDist = latitudeBands;
 	            } else if (prim.type === list.CAP) {
@@ -5072,7 +5070,7 @@
 	                latDist = 1; // one flat object, central points + one ring.
 	            } else {
 
-	                latDist = latitudeBands / 2;
+	                latDist = latitudeBands / 2; // half-domes and half-cones
 	            }
 
 	            // Vertices, normals, texCoords.
@@ -5083,46 +5081,6 @@
 	                endY = 1.0,
 	                startLatInc = 0,
 	                endLatInc = 0;
-
-	            // Adjust startSlice to where it actually will be drawn...
-
-	            /*
-	                    if ( startSlice && startSlice > 0 || endSlice && endSlice < 1.0 ) {
-	            
-	                        for ( latNum = latStart; latNum <= latDist; latNum++ ) {
-	            
-	                            let theta = latNum * Math.PI / latitudeBands;
-	            
-	                            let sinTheta = Math.sin( theta );
-	            
-	                            let cosTheta = Math.cos( theta );
-	            
-	                            let lat = latNum / latDist;
-	            
-	                            if ( startSlice && startSlice !== 0 && lat < startSlice ) {
-	            
-	                                startY = cosTheta / 2;
-	            
-	                                if( latNum !== 0) startLatInc = 1 / latNum * 2;
-	            
-	            
-	                                console.log("SETTING STARTY:" + startY + ' startSlice:' + startSlice + ' lat:' + lat + ' startLatInc:' + startLatInc);
-	            
-	            
-	                            } else if ( endY === 1.0 && endSlice && lat !== 1.0 && lat > endSlice ) {
-	            
-	                                endY = cosTheta / 2;
-	            
-	                                endLatInc = 1 - ( 1 / latNum * 2);
-	            
-	                                console.log("SETTING ENDY:" + endY + ' endSlice:' + endSlice + ' lat:' + lat + ' endLatinc:' + endLatInc)
-	            
-	                            }
-	            
-	                        }
-	            
-	                    }
-	            */
 
 	            // Start our uv build loop.
 
@@ -5170,40 +5128,22 @@
 	                    switch (prim.type) {
 
 	                        case list.CAP:
-	                            x = cosPhi / 2;
-	                            z = sinPhi / 2;
+	                            x = cosPhi / 4;
+	                            z = sinPhi / 4;
 	                            y = 0;
 	                            break;
 
 	                        case list.CYLINDER:
-
-	                            if (lat <= startSlice) {
-	                                y = startSlice;
-	                            } else if (lat >= endSlice) {
-	                                y = endSlice;
+	                            if (startSlice > 0 && lat <= startSlice) {
+	                                y = 1 - startSlice;
+	                            } else if (endSlice !== 1.0 && lat >= endSlice) {
+	                                y = 1 - endSlice;
 	                            } else {
-	                                y = lat;
-	                                z = cosPhi / 2; // / 2;
-	                                x = sinPhi / 2; /// 2;
+	                                y = 1 - lat;
+	                                x = cosPhi / 2; // / 2; // REVERSED
+	                                z = sinPhi / 2; /// 2;
 	                            }
 
-	                            //////////////////////////////////
-	                            /*
-	                                                    if ( startSlice && startSlice !== 0 && lat < startSlice ) {
-	                                                        y = startY;
-	                                                        //console.log('START: latNum:' + latNum + ' startSlice:' + startSlice + ' x:' + x + ' y:' + y + ' z:' + z)
-	                                                    } else if ( endSlice && endSlice !== 1.0 && lat > endSlice ) {
-	                                                        y = endY;
-	                                                        //console.log('END: latNum:' + latNum + ' endSlice:' + endSlice + ' x:' + x + ' y:' + y + ' z:' + z)
-	                                                    } else {
-	                                                        x = cosPhi / 2;
-	                                                        z = sinPhi / 2;
-	                                                        //y = cosTheta / 2;
-	                                                        y = lat;
-	                                                        //console.log('MAIN: latNum:' + latNum + ' inLocal:' + y + ' x:' + x + ' y:' + y + ' z:' + z)                            
-	                                                    }
-	                            
-	                            */
 	                            break;
 
 	                        case list.SPHERE:
@@ -5240,42 +5180,24 @@
 
 	                        case list.CONE:
 
-	                            if (startSlice && startSlice !== 0 && lat < startSlice) {
-	                                y = startY;
-	                                //console.log('START: latNum:' + latNum + ' startSlice:' + startSlice + ' x:' + x + ' y:' + y + ' z:' + z)
-	                            } else if (endSlice && endSlice !== 1.0 && lat > endSlice) {
-	                                y = endY;
-	                                //console.log('END: latNum:' + latNum + ' endSlice:' + endSlice + ' x:' + x + ' y:' + y + ' z:' + z)
-	                            } else {
+	                            if (lat <= startSlice) {
 
-	                                //y = 0.5 - r;
-	                                y = lat;
-	                                //console.log('MAIN: latNum:' + latNum + ' inLocal:' + y + ' x:' + x + ' y:' + y + ' z:' + z)                            
+	                                y = 1 - startSlice;
+	                                x = cosPhi * r;
+	                                z = sinPhi * r;
+	                            } else if (lat > endSlice) {
+	                                // NOTE not >= so check if true!!!!
+	                                y = 1 - endSlice;
+	                                // NOTE: GOES ONE INC TOO FAR, so last Y is too large, flanged
+	                                // NOTE: otherwise OK.
+	                                x = cosPhi * sinTheta / 2;
+	                                z = sinPhi * sinTheta / 2;
+	                            } else {
+	                                y = 1 - lat;
+	                                x = cosPhi * r;
+	                                z = sinPhi * r;
 	                            }
-	                            x = cosPhi * r;
-	                            z = sinPhi * r;
-	                            y = lat;
-	                            console.log('coneY:' + y + ' startY:' + startY + ' endY:' + endY);
-	                            /*
-	                                                    if ( startSlice && startSlice !== 0 && lat < startSlice ) {
-	                                                        console.log("IN CONE STARTSLICE")
-	                                                        y = startY;
-	                                                        x = cosPhi * startLatInc;
-	                                                        z = sinPhi * startLatInc;
-	                                                    } else {
-	                                                    // else if ( endSlice && endSlice !== 1.0 && lat > endSlice ) {
-	                                                    //    y = endY;
-	                                                    //    x = cosPhi * ( 0.5 - r );
-	                                                    //    z = sinPhi * ( 0.5 - r );
-	                                                    //} else {
-	                            
-	                                                        x = cosPhi * r;
-	                                                        z = sinPhi * r;
-	                                                        y = 0.5 - r;
-	                                                    }
-	                                                    console.log('coneY:' + y);
-	                            
-	                            */
+
 	                            break;
 
 	                        case list.TOPCONE:
@@ -7598,23 +7520,23 @@
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	            ));
 
-	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CONE, 'TestCone', vec5(0.6, 1, 0.6, 0.2, 0.9), // dimensions (4th dimension is truncation of cone, none = 0, flat circle = 1.0)
+	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CONE, 'TestCone', vec5(0.6, 1, 0.6, 0.2, 0.7), // dimensions (4th dimension is truncation of cone, none = 0, flat circle = 1.0)
 	            vec4.fromValues(10, 10, 10), // divisions MAKE SMALLER
 	            vec3.fromValues(-1, 0, 2.0), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
 	            vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	            ['img/mozvr-logo2.png'], // texture present
+	            ['img/uv-test.png'], // texture present
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	            ));
 
-	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CYLINDER, 'TestCylinder', vec5(0.6, 1, 0.6, 0.1, 0.9), // dimensions (4th dimension doesn't exist for cylinder)
+	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CYLINDER, 'TestCylinder', vec5(0.6, 1, 0.6, 0.3, 0.7), // dimensions (4th dimension doesn't exist for cylinder)
 	            vec4.fromValues(40, 40, 40), // divisions MAKE SMALLER
 	            vec3.fromValues(-1.5, 0, 2.0), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
 	            vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	            ['img/soda-can.png'], // texture present
+	            ['img/uv-test.png'], // texture present
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0), // color
 	            true // CAPPED AT ENDS
 
