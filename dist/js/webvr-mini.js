@@ -5075,24 +5075,6 @@
 	                latDist = latitudeBands / 2;
 	            }
 
-	            // If we have a cap, add one latBand for cone, 2 for cylinder.
-
-	            if (prim.cap) {
-
-	                if (prim.type === list.CONE) {
-
-	                    latDist += 1;
-	                    // TODO: need to elongate cone by the number of extra bands.
-	                    // TODO: so the y increment needs to be increased by the 
-	                    // TODO: ratio of extra added latBands.
-	                } else if (prim.type === list.CYLINDER) {
-
-	                    //latDist += 2;
-
-	                }
-	            }
-
-	            var count = 0; //////////////////////////////////////////////////
 	            // Vertices, normals, texCoords.
 
 	            var latNum = void 0,
@@ -5100,7 +5082,7 @@
 	                startY = 0,
 	                endY = 1.0;
 
-	            // adjust startSlice to where it actually will be drawn...
+	            // Adjust startSlice to where it actually will be drawn...
 
 	            for (latNum = latStart; latNum <= latDist; latNum++) {
 
@@ -5110,11 +5092,14 @@
 
 	                var cosTheta = Math.cos(theta);
 
-	                if (latNum / latDist > startSlice) {
+	                var lat = latNum / latDist;
+
+	                if (startSlice && startSlice !== 0 && lat < startSlice) {
 
 	                    startY = cosTheta / 2;
+	                } else if (endSlice && lat !== 1.0 && lat > endSlice) {
 
-	                    break;
+	                    endY = cosTheta / 2;
 	                }
 	            }
 
@@ -5147,102 +5132,89 @@
 
 	                    // Compute vertices.
 
-	                    var lat = latNum / latDist;
+	                    var _lat = latNum / latDist;
 
 	                    // Only fill arrays if we reach the start of a Prim slice.
 
-	                    r = lat / 2; // radius.
+	                    r = _lat / 2; // radius.
 
 	                    var long = longNum / longitudeBands;
 
 	                    u = 1 - long;
-	                    v = 1 - lat;
+	                    v = 1 - _lat;
+
+	                    x = cosPhi * _sinTheta / 2;
+	                    z = sinPhi * _sinTheta / 2;
 
 	                    switch (prim.type) {
 
 	                        case list.CAP:
-	                            x = cosPhi * r / 2;
-	                            z = sinPhi * r / 2;
+	                            x = cosPhi / 2;
+	                            z = sinPhi / 2;
 	                            y = 0;
 	                            break;
 
 	                        case list.CYLINDER:
-
-	                            if (lat < startSlice) {
-	                                // y constant at zero, x and z cosP and sinTheta
-	                                x = cosPhi * r / 2;
-	                                z = sinPhi * r / 2;
+	                            if (startSlice && startSlice !== 0 && _lat < startSlice) {
 	                                y = startY;
-	                                console.log('START: latNum:' + latNum + ' count:' + count + ' startSlice:' + startSlice + ' x:' + x + ' y:' + y + ' z:' + z);
-	                            } else if (lat > endSlice) {
-	                                // y constant at max, x and z cosPhi and sinTheta
-	                                x = cosPhi * _sinTheta / 2;
-	                                z = cosPhi * _sinTheta / 2;
+	                                //console.log('START: latNum:' + latNum + ' startSlice:' + startSlice + ' x:' + x + ' y:' + y + ' z:' + z)
+	                            } else if (endSlice && endSlice !== 1.0 && _lat > endSlice) {
 	                                y = endY;
-	                                console.log('END: latNum:' + latNum + ' count:' + count + ' endSlice:' + endSlice + ' x:' + x + ' y:' + y + ' z:' + z);
+	                                //console.log('END: latNum:' + latNum + ' endSlice:' + endSlice + ' x:' + x + ' y:' + y + ' z:' + z)
 	                            } else {
 	                                x = cosPhi / 2;
 	                                z = sinPhi / 2;
 	                                y = _cosTheta / 2;
-	                                // constant radius
-	                                endY = y;
-	                                console.log('MAIN: latNum:' + latNum + ' count:' + count + ' inLocal:' + y + ' x:' + x + ' y:' + y + ' z:' + z);
+	                                //console.log('MAIN: latNum:' + latNum + ' inLocal:' + y + ' x:' + x + ' y:' + y + ' z:' + z)                            
 	                            }
-	                            count++;
 	                            break;
 
 	                        case list.SPHERE:
-	                            x = cosPhi * _sinTheta / 2;
-	                            z = sinPhi * _sinTheta / 2;
 	                            y = _cosTheta / 2;
 	                            break;
 
 	                        case list.TOPDOME:
 	                        case list.DOME:
-	                            x = cosPhi * _sinTheta / 2;
-	                            z = sinPhi * _sinTheta / 2;
 	                            y = _cosTheta / 2;
 	                            break;
 
 	                        case list.SKYDOME:
-	                            x = cosPhi * _sinTheta / 2;
-	                            z = sinPhi * _sinTheta / 2;
 	                            y = _cosTheta / 2;
 	                            u = long;
 	                            //v = 1 - lat;
 	                            break;
 
 	                        case list.BOTTOMDOME:
-	                            x = cosPhi * _sinTheta / 2;
-	                            z = sinPhi * _sinTheta / 2;
 	                            y = (1 - _cosTheta) / 2 - 0.5;
 	                            u = long;
-	                            v = lat;
+	                            v = _lat;
 	                            break;
 
 	                        case list.SPINDLE:
-	                            if (lat <= 0.5) {
-	                                x = cosPhi * lat;
-	                                z = sinPhi * lat;
+	                            if (_lat <= 0.5) {
+	                                x = cosPhi * _lat;
+	                                z = sinPhi * _lat;
 	                            } else {
-	                                x = cosPhi * (1 - lat);
-	                                z = sinPhi * (1 - lat);
+	                                x = cosPhi * (1 - _lat);
+	                                z = sinPhi * (1 - _lat);
 	                            }
-	                            y = 1 - lat - 0.5;
+	                            y = 1 - _lat - 0.5;
 	                            break;
 
 	                        case list.CONE:
-	                            x = cosPhi * lat / 2;
-	                            z = sinPhi * lat / 2;
-	                            if (lat > startSlice) {
-	                                y = 1 - lat - 0.5;
+	                            if (startSlice && startSlice !== 0 && _lat < startSlice) {
+	                                y = startY;
+	                                x = cosPhi * r;
+	                                z = sinPhi * r;
+	                            } else if (endSlice && endSlice !== 1.0 && _lat > endSlice) {
+	                                y = endY;
+	                                x = cosPhi * (0.5 - r);
+	                                z = sinPhi * (0.5 - r);
 	                            } else {
-	                                y = 0;
-	                            }
-	                            // end cap
-	                            if (prim.cap && latNum === latDist) {
-	                                x = z = 0;
-	                                y = 1 - (latDist - 1) / latDist - 0.5;
+	                                console.log("IN CONE");
+	                                x = cosPhi * r;
+	                                z = sinPhi * r;
+	                                y = 0.5 - r;
 	                            }
 	                            break;
 
@@ -6294,7 +6266,6 @@
 	            var angular = arguments[7];
 	            var textureImage = arguments[8];
 	            var color = arguments[9];
-	            var cap = arguments[10];
 
 
 	            var vec3 = this.glMatrix.vec3;
@@ -6308,8 +6279,6 @@
 	            prim.name = name;
 
 	            prim.scale = 1.0; // starting size = default scale
-
-	            prim.cap = cap || false;
 
 	            prim.dimensions = dimensions || this.vec5(1, 1, 1, 0, 0);
 
@@ -7569,19 +7538,18 @@
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	            ));
 
-	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CONE, 'TestCone', vec5(1, 3, 1, 0.5), // dimensions (4th dimension is truncation of cone, none = 0, flat circle = 1.0)
+	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CONE, 'TestCone', vec5(1, 3, 1, 0.0, 0.9), // dimensions (4th dimension is truncation of cone, none = 0, flat circle = 1.0)
 	            vec4.fromValues(10, 10, 10), // divisions MAKE SMALLER
 	            vec3.fromValues(-1, 0, 2.0), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
 	            vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
 	            ['img/mozvr-logo2.png'], // texture present
-	            vec4.fromValues(0.5, 1.0, 0.2, 1.0), // color
-	            true // NOT CAPPED AT ENDS
+	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	            ));
 
 	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CYLINDER, 'TestCylinder', vec5(0.6, 1, 0.6, 0.1, 0.9), // dimensions (4th dimension doesn't exist for cylinder)
-	            vec4.fromValues(20, 20, 20), // divisions MAKE SMALLER
+	            vec4.fromValues(40, 40, 40), // divisions MAKE SMALLER
 	            vec3.fromValues(-1.5, 0, 2.0), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)

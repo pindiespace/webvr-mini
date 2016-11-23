@@ -308,22 +308,21 @@ export default class World {
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.CONE,
             'TestCone',
-            vec5( 1, 3, 1, 0.5 ),       // dimensions (4th dimension is truncation of cone, none = 0, flat circle = 1.0)
+            vec5( 1, 3, 1, 0.0, 0.9 ),       // dimensions (4th dimension is truncation of cone, none = 0, flat circle = 1.0)
             vec4.fromValues( 10, 10, 10  ),        // divisions MAKE SMALLER
             vec3.fromValues(-1, 0, 2.0 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
             ['img/mozvr-logo2.png'],               // texture present
-            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color
-            true                                  // NOT CAPPED AT ENDS
+            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.CYLINDER,
             'TestCylinder',
             vec5( 0.6, 1, 0.6, 0.1, 0.9 ),       // dimensions (4th dimension doesn't exist for cylinder)
-            vec4.fromValues( 20, 20, 20  ),        // divisions MAKE SMALLER
+            vec4.fromValues( 40, 40, 40  ),        // divisions MAKE SMALLER
             vec3.fromValues(-1.5, 0, 2.0 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)

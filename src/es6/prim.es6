@@ -1355,31 +1355,11 @@ export default class Prim {
 
         }
 
-        // If we have a cap, add one latBand for cone, 2 for cylinder.
-
-        if ( prim.cap ) {
-
-            if( prim.type === list.CONE ) {
-
-                latDist += 1;
-                // TODO: need to elongate cone by the number of extra bands.
-                // TODO: so the y increment needs to be increased by the 
-                // TODO: ratio of extra added latBands.
-
-            } else if ( prim.type === list.CYLINDER ) {
-
-                //latDist += 2;
-
-            }
-
-        }
-
-        let count = 0; //////////////////////////////////////////////////
         // Vertices, normals, texCoords.
 
         let latNum, longNum, startY = 0, endY = 1.0;
 
-        // adjust startSlice to where it actually will be drawn...
+        // Adjust startSlice to where it actually will be drawn...
 
         for ( latNum = latStart; latNum <= latDist; latNum++ ) {
 
@@ -1389,11 +1369,15 @@ export default class Prim {
 
             let cosTheta = Math.cos( theta );
 
-            if ( latNum / latDist > startSlice ) {
+            let lat = latNum / latDist;
+
+            if ( startSlice && startSlice !== 0 && lat < startSlice ) {
 
                 startY = cosTheta / 2;
 
-                break;
+            } else if ( endSlice && lat !== 1.0 && lat > endSlice ) {
+
+                endY = cosTheta / 2;
 
             }
 
@@ -1434,63 +1418,48 @@ export default class Prim {
                 u = 1 - long;
                 v = 1 - lat;
 
+                x = cosPhi * sinTheta / 2;
+                z = sinPhi * sinTheta / 2;
+
                 switch( prim.type ) {
 
                     case list.CAP:
-                        x = cosPhi * r / 2;
-                        z = sinPhi * r / 2;
+                        x = cosPhi / 2;
+                        z = sinPhi / 2;
                         y = 0;
                         break;
 
                     case list.CYLINDER:
-
-                        if ( lat < startSlice ) {
-                            // y constant at zero, x and z cosP and sinTheta
-                            x = cosPhi * r / 2;
-                            z = sinPhi * r / 2;
+                        if ( startSlice && startSlice !== 0 && lat < startSlice ) {
                             y = startY;
-                            console.log('START: latNum:' + latNum + ' count:' + count + ' startSlice:' + startSlice + ' x:' + x + ' y:' + y + ' z:' + z)
-                        } else if ( lat > endSlice ) {
-                            // y constant at max, x and z cosPhi and sinTheta
-                            x = cosPhi * sinTheta / 2;
-                            z = cosPhi * sinTheta / 2;
+                            //console.log('START: latNum:' + latNum + ' startSlice:' + startSlice + ' x:' + x + ' y:' + y + ' z:' + z)
+                        } else if ( endSlice && endSlice !== 1.0 && lat > endSlice ) {
                             y = endY;
-                            console.log('END: latNum:' + latNum + ' count:' + count + ' endSlice:' + endSlice + ' x:' + x + ' y:' + y + ' z:' + z)
+                            //console.log('END: latNum:' + latNum + ' endSlice:' + endSlice + ' x:' + x + ' y:' + y + ' z:' + z)
                         } else {
                             x = cosPhi / 2;
                             z = sinPhi / 2;
                             y = cosTheta / 2;
-                            // constant radius
-                            endY = y;
-                            console.log('MAIN: latNum:' + latNum + ' count:' + count + ' inLocal:' + y + ' x:' + x + ' y:' + y + ' z:' + z)                            
+                            //console.log('MAIN: latNum:' + latNum + ' inLocal:' + y + ' x:' + x + ' y:' + y + ' z:' + z)                            
                         }
-                        count++;
                         break;
 
                     case list.SPHERE:
-                        x = cosPhi * sinTheta / 2;
-                        z = sinPhi * sinTheta / 2;
                         y = cosTheta / 2;
                         break;
 
                     case list.TOPDOME:
                     case list.DOME:
-                        x = cosPhi * sinTheta / 2;
-                        z = sinPhi * sinTheta / 2;
                         y = cosTheta / 2;
                         break;
 
                     case list.SKYDOME:
-                        x = cosPhi * sinTheta / 2;
-                        z = sinPhi * sinTheta / 2;
                         y = cosTheta / 2;
                         u = long;
                         //v = 1 - lat;
                         break;
 
                     case list.BOTTOMDOME:
-                        x = cosPhi * sinTheta / 2;
-                        z = sinPhi * sinTheta / 2;
                         y = ( (1 - cosTheta) / 2 ) - 0.5;
                         u = long;
                         v = lat;
@@ -1508,17 +1477,19 @@ export default class Prim {
                         break;
 
                     case list.CONE:
-                        x = cosPhi * lat / 2;
-                        z = sinPhi * lat / 2;
-                        if ( lat > startSlice ) {
-                            y = ( 1 - lat ) - 0.5;
+                        if ( startSlice && startSlice !== 0 && lat < startSlice ) {
+                            y = startY;
+                            x = cosPhi * r;
+                            z = sinPhi * r;
+                        } else if ( endSlice && endSlice !== 1.0 && lat > endSlice ) {
+                            y = endY;
+                            x = cosPhi * ( 0.5 - r );
+                            z = sinPhi * ( 0.5 - r );
                         } else {
-                            y = 0;
-                        }
-                        // end cap
-                        if ( prim.cap && latNum === latDist ) {
-                            x = z = 0;
-                            y = ( 1 - ( ( latDist - 1) / latDist ) ) - 0.5;
+                            console.log("IN CONE")
+                            x = cosPhi * r;
+                            z = sinPhi * r;
+                            y = 0.5 - r;
                         }
                         break;
 
@@ -2587,7 +2558,7 @@ export default class Prim {
      * @param {Array|GLMatrix.vec4} color the default color(s) of the object.
      */
     createPrim ( type, name = 'unknown', dimensions, divisions, position, acceleration, 
-        rotation, angular, textureImage, color, cap ) {
+        rotation, angular, textureImage, color ) {
 
         const vec3 = this.glMatrix.vec3;
 
@@ -2600,8 +2571,6 @@ export default class Prim {
         prim.name = name;
 
         prim.scale = 1.0; // starting size = default scale
-
-        prim.cap = cap || false;
 
         prim.dimensions = dimensions || this.vec5( 1, 1, 1, 0, 0 );
 
