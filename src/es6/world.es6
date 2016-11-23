@@ -308,7 +308,7 @@ export default class World {
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.CONE,
             'TestCone',
-            vec5( 1, 3, 1, 0.0, 0.9 ),       // dimensions (4th dimension is truncation of cone, none = 0, flat circle = 1.0)
+            vec5( 0.6, 1,  0.6, 0.2, 0.9 ),       // dimensions (4th dimension is truncation of cone, none = 0, flat circle = 1.0)
             vec4.fromValues( 10, 10, 10  ),        // divisions MAKE SMALLER
             vec3.fromValues(-1, 0, 2.0 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
