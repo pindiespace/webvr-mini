@@ -185,16 +185,29 @@ export default class World {
             null //heightMap                       // heightmap
         ) );
 
-        this.dirlightTextureObjList.push( this.prim.createPrim(
+        this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.PLANE,
-            'a plane',
-            vec5( 2, 2, 2, 0 ),            // dimensions
-            vec4.fromValues( 50, 0, 50 ),          // divisions
-            vec3.fromValues( 0, -2, 0 ),           // position (absolute)
+            'TestPlane',
+            vec5( 2, 1, 1, 0.0, 0.0 ),         // dimensions (4th dimension is truncation of cone, none = 0, flat circle = 1.0)
+            vec4.fromValues( 10, 10, 10  ),        // divisions MAKE SMALLER
+            vec3.fromValues(0, 0.-2, 0 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0  ), util.degToRad( 0 ) ), // rotation (absolute)
-            vec3.fromValues( util.degToRad( 0.5 ), util.degToRad( 0.0 ), util.degToRad( 0.0 ) ),  // angular velocity in x, y, x
-            ['img/webvr-logo2.png'],
+            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+            vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+            ['img/mozvr-logo2.png'],               // texture present
+            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
+        ) );
+
+        this.textureObjList.push( this.prim.createPrim(
+            this.prim.typeList.CURVEDPLANE,
+            'TestCone',
+            vec5( 2, 1, 1, 0.0, 0.0 ),         // dimensions (4th dimension is truncation of cone, none = 0, flat circle = 1.0)
+            vec4.fromValues( 10, 10, 10  ),        // divisions MAKE SMALLER
+            vec3.fromValues(-1.2, 0.0, 2.0 ),          // position (absolute)
+            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+            vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+            ['img/mozvr-logo2.png'],               // texture present
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
@@ -305,12 +318,15 @@ export default class World {
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
+        // DIMENSIONS INDICATE ANY X or Y CURVATURE.
+        // DIVISIONS FOR CUBED AND CURVED PLANE INDICATE SIDE TO DRAW
+
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.CONE,
             'TestCone',
-            vec5( 0.6, 1, 0.6, 0.2, 0.7 ),       // dimensions (4th dimension is truncation of cone, none = 0, flat circle = 1.0)
+            vec5( 1, 1, 1, 0.0, 0.0 ),         // dimensions (4th dimension is truncation of cone, none = 0, flat circle = 1.0)
             vec4.fromValues( 10, 10, 10  ),        // divisions MAKE SMALLER
-            vec3.fromValues(-1, 0, 2.0 ),          // position (absolute)
+            vec3.fromValues(-1, -1.5, 2.0 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
@@ -321,9 +337,9 @@ export default class World {
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.CYLINDER,
             'TestCylinder',
-            vec5( 0.6, 1, 0.6, 0.3, 0.7 ),       // dimensions (4th dimension doesn't exist for cylinder)
+            vec5( 1, 1, 1, 0.3, 0.7 ),       // dimensions (4th dimension doesn't exist for cylinder)
             vec4.fromValues( 40, 40, 40  ),        // divisions MAKE SMALLER
-            vec3.fromValues(-1.5, 0, 2.0 ),          // position (absolute)
+            vec3.fromValues(-1.5, -1.5, 2.0 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x

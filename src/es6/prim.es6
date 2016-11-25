@@ -102,6 +102,8 @@ export default class Prim {
 
             PLANE: 'geometryPlane',
 
+            CURVEDPLANE: 'geometryCurvedPlane',
+
             CIRCLE: 'geometryCircle',
 
             POLY: 'geometryPoly',
@@ -1091,7 +1093,15 @@ export default class Prim {
      */
     geometryPlane ( prim ) {
 
+        // NOTE: FOR SOME REASON THIS CAUSES PROBLEMS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+        //return this.geometryCube( prim );
+
+        ///////////////////////////////////////////////////////////////////////////////////////////
+
         //const vec3 = this.glMatrix.vec3;
+
+        let list = this.typeList;
 
         let geo = prim.geometry;
 
@@ -1137,7 +1147,17 @@ export default class Prim {
                     normals.push( 0, 1, 0 );
                 }
 
+                // Curve the plane if a curved plane.
+
                 let z = rowNum;
+
+                if ( prim.type === list.CURVEDPLANE ) {
+
+                    let xRadius = prim.dimensions[ 3 ];
+
+                    let yRadius = prim.dimensions[ 4 ];
+
+                }
 
                 // Vertices.
 
@@ -1147,7 +1167,7 @@ export default class Prim {
 
                 let u = ( colNum / cols );
 
-                let v = 1 - ( rowNum / rows );                
+                let v = 1 - ( rowNum / rows );
 
                 texCoords.push( u, v );
 
@@ -1214,8 +1234,18 @@ export default class Prim {
     }
 
     /** 
+     * Plane curved in one or two dimensions. 
+     * Useful for creating HUD displays.
+     */
+     geometryCurvedPlane( prim ) {
+
+        return this.geometryCube( prim );
+
+     }
+
+    /** 
      * Polygon (flat), square to circular. Used to cap 
-     * some Prims.
+     * some Prims, non uv (no central point).
      * @param {Prim} prim the object needing buffers.
      * @returns {BufferData} buffer data for Prim.     
      */
@@ -1268,8 +1298,6 @@ export default class Prim {
         //this.computeNormals( vertices, indices, normals );
 
         // Indices (if we are making a cap) {
-
-
 
         // Tangents.
 
@@ -1352,9 +1380,7 @@ export default class Prim {
 
         }
 
-        // Vertices, normals, texCoords.
-
-        let latNum, longNum, startY = 0, endY = 1.0, startLatInc = 0, endLatInc = 0;
+        let latNum, longNum;
 
         // Start our uv build loop.
 
@@ -1382,9 +1408,7 @@ export default class Prim {
 
                 let lat = latNum / latDist;
 
-                // Only fill arrays if we reach the start of a Prim slice.
-
-                r = lat / 2; // radius.
+                r = lat / 2; // use for no-spherical shapes.
 
                 let long = longNum / longitudeBands;
 
@@ -1411,10 +1435,10 @@ export default class Prim {
                         }
                         else {
                             y = 1 - lat;
-                            x = cosPhi / 2; // / 2; // REVERSED
-                            z = sinPhi / 2; /// 2;
+                            x = cosPhi / 2;
+                            z = sinPhi / 2;
                         }
-
+                        y -= 0.5;
                         break;
 
                     case list.SPHERE:
@@ -1450,26 +1474,24 @@ export default class Prim {
                         break;
 
                     case list.CONE:
-
                         if( lat <= startSlice ) {
 
                             y = 1 - startSlice;   
                             x = cosPhi * r;
                             z = sinPhi * r;
                         } 
-                        else if ( lat > endSlice ) { // NOTE not >= so check if true!!!!
+                        else if ( lat > endSlice ) { // NOTE: not >= endSlice
                             y = 1 - endSlice ;
-                            // NOTE: GOES ONE INC TOO FAR, so last Y is too large, flanged
-                            // NOTE: otherwise OK.
+  
                             x = cosPhi * sinTheta / 2
                             z = sinPhi * sinTheta / 2;
                         } 
                         else {
                             y = 1 - lat;
                             x = cosPhi * r;
-                            z = sinPhi * r;                           
+                            z = sinPhi * r;
                         }
-
+                        y -= 0.5;
                         break;
 
                     case list.TOPCONE:
@@ -1516,23 +1538,11 @@ export default class Prim {
 
                     let second = first + longitudeBands + 1;
 
-                    if( prim.type === list.SKYDOME ) {
+                    // Texture only visible outside.
 
-                        // Texture only visible from the inside.
+                    indices.push( first + 1, second + 1, second );
 
-                        indices.push( first + 1, second + 1, second );
-
-                        indices.push( first, first + 1,  second );
-
-                    } else {
-
-                        // Texture only visible outside.
-
-                        indices.push( first + 1, second + 1, second );
-
-                        indices.push( first, first + 1,  second );
-
-                    }
+                    indices.push( first, first + 1,  second );
 
                 }
 
@@ -1541,7 +1551,7 @@ export default class Prim {
         }
 
 
-        // Wind the SKYDOME indices backwards.
+        // Wind the SKYDOME indices backwards so texture displays inside.
 
         if ( prim.type === list.SKYDOME ) {
 
@@ -1576,7 +1586,7 @@ export default class Prim {
     }
 
     /** 
-     * Create a flat UV object.
+     * Create a flat, circular UV object.
      */
     geometryCap( prim ) {
 
@@ -1660,7 +1670,8 @@ export default class Prim {
     }
 
     /** 
-     * 
+     * Bottom Cone, half a spindle.
+     */
     geometryBottomCone ( prim ) {
 
         return this.geometrySphere( prim );
@@ -1692,9 +1703,9 @@ export default class Prim {
         tangents = geo.tangents.data,
         colors = geo.colors.data;
 
-        let sx = prim.dimensions[ 0 ], 
-        sy = prim.dimensions[ 1 ], 
-        sz = prim.dimensions[ 2 ], 
+        let sx = prim.dimensions[ 0 ],   // x width
+        sy = prim.dimensions[ 1 ],       // y height
+        sz = prim.dimensions[ 2 ],       // z depth
         nx = prim.divisions[ 0 ], 
         ny = prim.divisions[ 1 ], 
         nz = prim.divisions[ 2 ];
@@ -1707,19 +1718,41 @@ export default class Prim {
 
         let vertexIndex = 0;
 
-        makeSide( 0, 1, 2, sx, sy, nx, ny,  sz / 2,  1, -1 ); //front
+        if ( prim.type === list.CUBE || prim.type === list.CUBESPHERE ) {
 
-        makeSide( 0, 1, 2, sx, sy, nx, ny, -sz / 2, -1, -1 ); //back
+            makeSide( 0, 1, 2, sx, sy, nx, ny,  sz / 2,  1, -1 ); //front
 
-        makeSide( 2, 1, 0, sz, sy, nz, ny, -sx / 2,  1, -1 ); //left
+            makeSide( 0, 1, 2, sx, sy, nx, ny, -sz / 2, -1, -1 ); //back
 
-        makeSide( 2, 1, 0, sz, sy, nz, ny,  sx / 2, -1, -1 ); //right
+            makeSide( 2, 1, 0, sz, sy, nz, ny, -sx / 2,  1, -1 ); //left
 
-        makeSide( 0, 2, 1, sx, sz, nx, nz,  sy / 2,  1,  1 ); //top
+            makeSide( 2, 1, 0, sz, sy, nz, ny,  sx / 2, -1, -1 ); //right
 
-        makeSide( 0, 2, 1, sx, sz, nx, nz, -sy / 2,  1, -1 ); //bottom
+            makeSide( 0, 2, 1, sx, sz, nx, nz,  sy / 2,  1,  1 ); //top
+
+            makeSide( 0, 2, 1, sx, sz, nx, nz, -sy / 2,  1, -1 ); //bottom
+
+        } else if ( prim.type === list.CURVEDPLANE ) {
+
+            makeSide( 0, 1, 2, sx, sy, nx, ny,  sz / 2,  1, -1 ); //front forward facing side.
+
+        } else if ( prim.type === list.PLANE ) {
+
+            makeSide( 0, 2, 1, sx, sz, nx, nz,  sy / 2,  1,  1 ); // top facing side.v
+
+            window.prim = prim; //////////////////////check geometry!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+        }
+
+        if ( prim.heightMap ) {
+
+            this.computeNormals( vertices, indices, normals );
+
+        }
 
         function makeSide( u, v, w, su, sv, nu, nv, pw, flipu, flipv ) {
+
+            // Create a size, positioning in correct position.
 
             var vertShift = vertexIndex;
 
@@ -1733,7 +1766,15 @@ export default class Prim {
 
                     vert[ v ] = ( -sv/2 + j * sv / nv ) * flipv;
 
-                    vert[ w ] = pw
+                    // heightMap is always the middle, up-facing vector.
+
+                    if ( prim.heightMap ) {
+
+                        vert[ v ] += prim.heightMap.getPixel( j, i ); // TODO: MAY NEED TO TO i, j
+
+                    }
+
+                    vert[ w ] = pw;
 
                     // Normals.
 
@@ -1755,7 +1796,7 @@ export default class Prim {
 
             }
 
-            // Compute side indices.
+            // Compute indices.
 
             for(var j = 0; j < nv; j++ ) {
 
@@ -1771,7 +1812,7 @@ export default class Prim {
 
             }
 
-        }
+        } // end of makeSide.
 
         // Round the edges of the cube to a sphere.
 
@@ -1883,6 +1924,33 @@ export default class Prim {
         }
 
     }
+
+    /** 
+     * Generate terrain, using a heightMap, from a PLANE object.
+     */
+    geometryTerrain ( prim ) {
+
+        if ( ! prim.heightMap ) {
+
+            console.log( 'adding heightmap for:' + prim.name );
+
+            prim.heightMap = new Map2d( this.util );
+
+            // roughness 0.2 of 0-1, flatten = 1 of 0-1;
+
+            prim.heightMap[ prim.heightMap.type.DIAMOND ]( prim.divisions[ 0 ], prim.divisions[2], 0.6, 1 );
+
+            //prim.heightMap.scale( 165, 165 );
+
+            //prim.heightMap.scale( 25, 25 );
+
+        }
+
+        let geometry = this.geometryPlane( prim );
+
+        return geometry;
+
+    };
 
     /** 
      * Create a (non-subdivided) cube geometry of a given size (units) centered 
@@ -2479,33 +2547,6 @@ export default class Prim {
         }
 
     }
-
-    /** 
-     * Generate terrain, using a heightMap, from a PLANE object.
-     */
-    geometryTerrain ( prim ) {
-
-        if ( ! prim.heightMap ) {
-
-            console.log( 'adding heightmap for:' + prim.name );
-
-            prim.heightMap = new Map2d( this.util );
-
-            // roughness 0.2 of 0-1, flatten = 1 of 0-1;
-
-            prim.heightMap[ prim.heightMap.type.DIAMOND ]( prim.divisions[ 0 ], prim.divisions[2], 0.6, 1 );
-
-            //prim.heightMap.scale( 165, 165 );
-
-            //prim.heightMap.scale( 25, 25 );
-
-        }
-
-        let geometry = this.geometryPlane( prim );
-
-        return geometry;
-
-    };
 
     /** 
      * Generate a heightmap on a spherical or spheroid surface
