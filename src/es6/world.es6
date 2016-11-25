@@ -72,6 +72,10 @@ export default class World {
 
         const vec5 = this.prim.vec5;
 
+        const vec6 = this.prim.vec6;
+
+        const vec7 = this.prim.vec7;
+
         const util = this.util;
 
 // TEXTURED SHADER.
@@ -81,8 +85,8 @@ export default class World {
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.CUBE,
             'first cube',                                        // name
-            vec5( 1, 1, 1, 0 ),            // dimensions
-            vec5( 10, 10, 10 ),            // divisions
+            vec5( 1, 1, 1 ),            // dimensions
+            vec5( 10, 10, 10, 0 ),            // divisions, pass curving of edges as 4th parameter
             vec3.fromValues( 1, 0, 2 ),            // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
@@ -94,8 +98,8 @@ export default class World {
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.CUBE,
             'toji cube',
-            vec5( 1, 1, 1, 0 ),            // dimensions
-            vec5( 1, 1, 1 ),            // divisions
+            vec5( 1, 1, 1 ),            // dimensions
+            vec5( 1, 1, 1, 0 ),            // divisions, pass curving of edges as 4th parameter
             vec3.fromValues( 5, 1, -3 ),           // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 40 ), util.degToRad( 0  ), util.degToRad( 0 ) ), // rotation (absolute)
@@ -104,14 +108,13 @@ export default class World {
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
-
         // PRIMARY (BIG) SKYDOME
 
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.SKYDOME,
             'SkyDome',
             vec5( 18, 18, 18, 0 ),            // dimensions
-            vec5( 10, 10, 10  ),            // divisions MAKE SMALLER
+            vec5( 10, 10, 10 ),            // divisions MAKE SMALLER
             vec3.fromValues( 0, 0, 0 ),        // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
@@ -143,7 +146,7 @@ export default class World {
             this.prim.typeList.CUBE,
             'colored cube',
             vec5( 1, 1, 1, 0 ),            // dimensions
-            vec5( 3, 3, 3 ),            // divisions
+            vec5( 3, 3, 3 ),            // divisions, pass curving of edges as 4th parameter
             vec3.fromValues( -1, 3, -3 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 20 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
@@ -162,7 +165,7 @@ export default class World {
             this.prim.typeList.CUBE,
             'lit cube',
             vec5( 1, 1, 1, 0 ),            // dimensions
-            vec5( 1, 1, 1 ),            // divisions
+            vec5( 1, 1, 1 ),            // divisions, pass curving of edges as 4th parameter
             vec3.fromValues( -3, -2, -3 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 20 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
@@ -174,8 +177,8 @@ export default class World {
         this.dirlightTextureObjList.push( this.prim.createPrim(
             this.prim.typeList.TERRAIN,
             'terrain',
-            vec5( 2, 1, 2, 0, 0 ),            // NOTE: Y WILL CAUSE TERRAIN TO ORBIT!!!! NOTE: PASS ORIENTATION DESIRED
-            vec5( 100, 100, 100 ),           // divisions NOTE: PASS X, Y, Z CURVING
+            vec5( 2, 1, 2, this.prim.side.TOP, 0.1 ),            // NOTE: ORIENTATION DESIRED vec5[3], waterline = vec5[4]
+            vec5( 100, 100, 100 ),           // divisions
             vec3.fromValues( 1.5, -1.5, 2 ),       // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
@@ -187,10 +190,10 @@ export default class World {
 
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.PLANE,
-            'testPlane',
-            vec5( 2, 1, 1, 0.0, 0.0 ),         // dimensions NOTE PASS ORIENTATION DESIRED
-            vec5( 10, 10, 10 ),        // divisions, NOTE: PASS X, Y, Z CURVING
-            vec3.fromValues(-1.2, 1.0, 2.0 ),          // position (absolute)
+            'CurvedPlane',
+            vec5( 2, 1, 1, this.prim.side.FRONT ),         // pass orientation
+            vec5( 10, 10, 10 ),        // divisions
+            vec3.fromValues(-1, 0.0, 2.0 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
@@ -204,8 +207,8 @@ export default class World {
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.CURVEDPLANE,
             'CurvedPlane',
-            vec5( 2, 1, 1, 0.0, 0.0 ),         // dimensions NOTE: PASS ORIENTATION DESIRED
-            vec5( 10, 10, 10 ),        // divisions NOTE PASS X, Y, Z, CURVING FOR ARCS
+            vec5( 2, 1, 1, this.prim.side.FRONT, 5 ),         // dimensions NOTE: pass radius for curvature (also creates orbit) 
+            vec6( 10, 10, 10 ),        // divisions
             vec3.fromValues(-1.2, 0.0, 2.0 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
@@ -231,9 +234,9 @@ export default class World {
         this.dirlightTextureObjList.push( this.prim.createPrim(
             this.prim.typeList.CUBESPHERE,
             'cubesphere',
-            vec5( 3, 3, 3, 0 ),            // dimensions
-            vec5( 10, 10, 10 ),         // divisions
-            vec3.fromValues(0, -0.5, 1 ),       // position (absolute)
+            vec5( 3, 3, 3 ),            // dimensions
+            vec5( 10, 10, 10, 0 ),         // divisions 4th parameter is degree of rounding.
+            vec3.fromValues(3, -0.7, -1 ),       // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 10 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
@@ -326,7 +329,7 @@ export default class World {
             'TestCone',
             vec5( 1, 1, 1, 0.0, 0.0 ),         // dimensions (4th dimension is truncation of cone, none = 0, flat circle = 1.0)
             vec5( 10, 10, 10  ),        // divisions MAKE SMALLER
-            vec3.fromValues(-1, -1.5, 2.0 ),          // position (absolute)
+            vec3.fromValues(-0, -1.5, 2.0 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x

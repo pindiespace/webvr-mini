@@ -3862,23 +3862,23 @@
 
 	                };
 
-	                // Sideness, direction.
+	                // Sideness, direction. Mapped to equivalent unit vector names in this.getStdVecs()
 
-	                this.sides = {
+	                this.side = {
 
-	                        DEFAULT_SIDE: 0,
+	                        DEFAULT: 'up',
 
-	                        FRONT_SIDE: 1,
+	                        FRONT: 'forward',
 
-	                        BACK_SIDE: 2,
+	                        BACK: 'back',
 
-	                        LEFT_SIDE: 3,
+	                        LEFT: 'left',
 
-	                        RIGHT_SIDE: 4,
+	                        RIGHT: 'right',
 
-	                        TOP_SIDE: 5,
+	                        TOP: 'up',
 
-	                        BOTTOM_SIDE: 6
+	                        BOTTOM: 'down'
 
 	                };
 
@@ -4301,7 +4301,37 @@
 	                key: 'vec5',
 	                value: function vec5(a, b, c, d, e) {
 
+	                        d = d || 0;
+
+	                        e = e || 0;
+
 	                        return [a, b, c, d, e]; // dimensions, start slice (cone)
+	                }
+	        }, {
+	                key: 'vec6',
+	                value: function vec6(a, b, c, d, e, f) {
+
+	                        d = d || 0;
+
+	                        e = e || 0;
+
+	                        f = f || 0;
+
+	                        return [a, b, c, d, e, f];
+	                }
+	        }, {
+	                key: 'vec7',
+	                value: function vec7(a, b, c, d, e, f, g) {
+
+	                        d = d || 0;
+
+	                        e = e || 0;
+
+	                        f = f || 0;
+
+	                        g = g || 0;
+
+	                        return [a, b, c, d, e, f, g];
 	                }
 
 	                /* 
@@ -4836,6 +4866,8 @@
 
 	                        var geo = prim.geometry;
 
+	                        return this.geometryCube(prim);
+
 	                        // NOTE: FOR SOME REASON THIS CAUSES PROBLEMS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 	                        if (prim.name === 'terrain') {
@@ -4878,7 +4910,7 @@
 
 	                                for (var rowNum = 0; rowNum <= rows; rowNum++) {
 
-	                                        console.log(">>>>>>>>>>" + prim.name + " colnum:" + colNum + " rowNum:" + rowNum);
+	                                        //console.log( ">>>>>>>>>>" + prim.name + " colnum:" + colNum + " rowNum:" + rowNum )
 
 	                                        // Vertex values.
 
@@ -5442,6 +5474,8 @@
 
 	                        var list = this.typeList;
 
+	                        var side = this.side;
+
 	                        var geo = prim.geometry;
 
 	                        // Shortcuts to Prim data arrays
@@ -5486,30 +5520,44 @@
 	                                makeSide(0, 2, 1, sx, sz, nx, nz, sy / 2, 1, 1); //top
 
 	                                makeSide(0, 2, 1, sx, sz, nx, nz, -sy / 2, 1, -1); //bottom
-	                        } else if (prim.type === list.CURVEDPLANE) {
 
-	                                makeSide(0, 1, 2, sx, sy, nx, ny, sz / 2, 1, -1); //front forward facing side.
-	                        } else if (prim.name === 'terrain') {
+	                        } else if (prim.type === list.CURVEDPLANE || prim.type === list.PLANE || prim.type === list.TERRAIN) {
 
-	                                console.log("making terrain side....");
-	                                window.prim = prim; //////////////////////check geometry!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	                                switch (prim.dimensions[3]) {
 
-	                                makeSide(0, 2, 1, sx, sz, nx, nz, sy / 2, 1, 1); // top facing side.v
+	                                        case side.FRONT:
+	                                                makeSide(0, 1, 2, sx, sy, nx, ny, sz / 2, 1, -1); //front forward facing side.
+	                                                break;
 
-	                                // these all work!
+	                                        case side.BACK:
+	                                                makeSide(0, 1, 2, sx, sy, nx, ny, -sz / 2, -1, -1);
+	                                                break;
 
-	                                //makeSide( 0, 1, 2, sx, sy, nx, ny,  sz / 2,  1, -1 ); //front
+	                                        case side.LEFT:
+	                                                makeSide(2, 1, 0, sz, sy, nz, ny, -sx / 2, 1, -1);
+	                                                break;
 
-	                                //makeSide( 0, 1, 2, sx, sy, nx, ny, -sz / 2, -1, -1 ); //back
+	                                        case side.RIGHT:
+	                                                makeSide(2, 1, 0, sz, sy, nz, ny, sx / 2, -1, -1);
+	                                                break;
 
-	                                //makeSide( 2, 1, 0, sz, sy, nz, ny, -sx / 2,  1, -1 ); //left
+	                                        case side.TOP:
+	                                                makeSide(0, 2, 1, sx, sz, nx, nz, sy / 2, 1, 1);
+	                                                break;
 
-	                                //makeSide( 2, 1, 0, sz, sy, nz, ny,  sx / 2, -1, -1 ); //right
+	                                        case side.BOTTOM:
+	                                                makeSide(0, 2, 1, sx, sz, nx, nz, -sy / 2, 1, -1);
+	                                                break;
 
-	                                //makeSide( 0, 2, 1, sx, sz, nx, nz,  sy / 2,  1,  1 ); //top
+	                                        default:
+	                                                break;
 
-	                                //makeSide( 0, 2, 1, sx, sz, nx, nz, -sy / 2,  1, -1 ); //bottom
+	                                }
 
+	                                // makeSide( 0, 1, 2, sx, sy, nx, ny,  sz / 2,  1, -1 ); //front forward facing side.
+	                        } else {
+
+	                                console.error('unsupported Prim type:' + prim.type);
 	                        }
 
 	                        function makeSide(u, v, w, su, sv, nu, nv, pw, flipu, flipv) {
@@ -5570,11 +5618,15 @@
 
 	                        // Round the edges of the cube to a sphere.
 
-	                        if (prim.type === list.CUBESPHERE) {
+	                        if (prim.divisions[3] !== 0) {
+
+	                                console.log(';;;;;;;;;;;;;;;;rounding CUBE');
 
 	                                var tmp = [0, 0, 0];
 
-	                                var radius = prim.dimensions[0] / 2; // TODO: compute for radius in x, y, z
+	                                // Radius controlled by 4th parameter in divisions
+
+	                                var radius = prim.divisions[3];
 
 	                                var rx = sx / 2.0;
 
@@ -5636,11 +5688,22 @@
 	                                }
 	                        }
 
+	                        // Curve a flat plane, value = radius along x axis
+
+	                        if (prim.dimensions[3] !== 0) {}
+
+	                        // NOTE: should be front-facing FRONT
+
+	                        // z values need to be shifted relative to the parameter.
+
+
 	                        // Flatten arrays, since we created using 2 dimensions.
 
 	                        vertices = geo.vertices.data = flatten(positions, false);
 
 	                        normals = geo.normals.data = flatten(norms, false);
+
+	                        // Re-compute normals, which may have changed.
 
 	                        this.computeNormals(vertices, indices, normals);
 
@@ -5682,6 +5745,8 @@
 
 	                                prim.heightMap[prim.heightMap.type.DIAMOND](prim.divisions[0], prim.divisions[2], 0.6, 1);
 
+	                                // TODO: SCALE DOWN FOR WATERLINE.
+
 	                                //prim.heightMap.scale( 165, 165 );
 
 	                                //prim.heightMap.scale( 25, 25 );
@@ -5709,16 +5774,7 @@
 
 	                        prim.divisions[3] = prim.dimensions[0] / 2;
 
-	                        prim.divisions[4] = prim.dimensions[2] / 2;
-
-	                        //prim.heightMap = new Map2d( this.util );
-
-	                        //roughness 0.2 of 0-1, flatten = 1 of 0-1;
-
-	                        //prim.heightMap[ prim.heightMap.type.DIAMOND ]( prim.divisions[ 0 ], prim.divisions[2], 0.6, 1 );
-
 	                        // NOTE: if there is a heightmap, return, then 'pincusion' out the points.
-
 
 	                        return this.geometryCube(prim);
 	                }
@@ -6346,9 +6402,9 @@
 
 	                        prim.scale = 1.0; // starting size = default scale
 
-	                        prim.dimensions = dimensions || this.vec5(1, 1, 1, 0, 0);
+	                        prim.dimensions = dimensions || this.vec7(1, 1, 1, 0, 0, 0, 0);
 
-	                        prim.divisions = divisions || vec4.fromValues(1, 1, 1, 0);
+	                        prim.divisions = divisions || this.vec6(1, 1, 1, 0, 0, 0);
 
 	                        prim.position = position || vec3.create();
 
@@ -6419,10 +6475,11 @@
 
 	                        // startRadius and endRadius are used by a few Prims (e.g. Cone)
 
-	                        if (dimensions[3] === undefined) {
+	                        //if ( dimensions[ 3 ] === undefined ) {
 
-	                                dimensions[4] = dimensions[3] = dimensions[0] / 2;
-	                        }
+	                        //     dimensions[ 4 ] = dimensions[ 3 ] = dimensions[ 0 ] / 2;
+
+	                        // }
 
 	                        // Set the geometry, based on defined type.
 
@@ -7423,6 +7480,10 @@
 
 	                        var vec5 = this.prim.vec5;
 
+	                        var vec6 = this.prim.vec6;
+
+	                        var vec7 = this.prim.vec7;
+
 	                        var util = this.util;
 
 	                        // TEXTURED SHADER.
@@ -7430,8 +7491,8 @@
 	                        this.textureObjList = [];
 
 	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CUBE, 'first cube', // name
-	                        vec5(1, 1, 1, 0), // dimensions
-	                        vec5(10, 10, 10), // divisions
+	                        vec5(1, 1, 1), // dimensions
+	                        vec5(10, 10, 10, 0), // divisions, pass curving of edges as 4th parameter
 	                        vec3.fromValues(1, 0, 2), // position (absolute)
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
@@ -7439,8 +7500,8 @@
 	                        ['img/crate.png', 'img/webvr-logo1.png'], // texture image
 	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0)));
 
-	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CUBE, 'toji cube', vec5(1, 1, 1, 0), // dimensions
-	                        vec5(1, 1, 1), // divisions
+	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CUBE, 'toji cube', vec5(1, 1, 1), // dimensions
+	                        vec5(1, 1, 1, 0), // divisions, pass curving of edges as 4th parameter
 	                        vec3.fromValues(5, 1, -3), // position (absolute)
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	                        vec3.fromValues(util.degToRad(40), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
@@ -7477,7 +7538,7 @@
 	                        this.colorObjList = [];
 
 	                        this.colorObjList.push(this.prim.createPrim(this.prim.typeList.CUBE, 'colored cube', vec5(1, 1, 1, 0), // dimensions
-	                        vec5(3, 3, 3), // divisions
+	                        vec5(3, 3, 3), // divisions, pass curving of edges as 4th parameter
 	                        vec3.fromValues(-1, 3, -3), // position (absolute)
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	                        vec3.fromValues(util.degToRad(20), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
@@ -7493,7 +7554,7 @@
 	                        this.dirlightTextureObjList = [];
 
 	                        this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.CUBE, 'lit cube', vec5(1, 1, 1, 0), // dimensions
-	                        vec5(1, 1, 1), // divisions
+	                        vec5(1, 1, 1), // divisions, pass curving of edges as 4th parameter
 	                        vec3.fromValues(-3, -2, -3), // position (absolute)
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	                        vec3.fromValues(util.degToRad(20), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
@@ -7502,8 +7563,8 @@
 	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	                        ));
 
-	                        this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.TERRAIN, 'terrain', vec5(2, 1, 2, 0, 0), // NOTE: Y WILL CAUSE TERRAIN TO ORBIT!!!! NOTE: PASS ORIENTATION DESIRED
-	                        vec5(100, 100, 100), // divisions NOTE: PASS X, Y, Z CURVING
+	                        this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.TERRAIN, 'terrain', vec5(2, 1, 2, this.prim.side.TOP, 0.1), // NOTE: ORIENTATION DESIRED vec5[3], waterline = vec5[4]
+	                        vec5(100, 100, 100), // divisions
 	                        vec3.fromValues(1.5, -1.5, 2), // position (absolute)
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
@@ -7513,9 +7574,9 @@
 	                        null //heightMap                       // heightmap
 	                        ));
 
-	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.PLANE, 'testPlane', vec5(2, 1, 1, 0.0, 0.0), // dimensions NOTE PASS ORIENTATION DESIRED
-	                        vec5(10, 10, 10), // divisions, NOTE: PASS X, Y, Z CURVING
-	                        vec3.fromValues(-1.2, 1.0, 2.0), // position (absolute)
+	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.PLANE, 'CurvedPlane', vec5(2, 1, 1, this.prim.side.FRONT), // pass orientation
+	                        vec5(10, 10, 10), // divisions
+	                        vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
 	                        vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
@@ -7526,8 +7587,8 @@
 	                        // DIMENSIONS INDICATE ANY X or Y CURVATURE.
 	                        // DIVISIONS FOR CUBED AND CURVED PLANE INDICATE SIDE TO DRAW
 
-	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CURVEDPLANE, 'CurvedPlane', vec5(2, 1, 1, 0.0, 0.0), // dimensions NOTE: PASS ORIENTATION DESIRED
-	                        vec5(10, 10, 10), // divisions NOTE PASS X, Y, Z, CURVING FOR ARCS
+	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CURVEDPLANE, 'CurvedPlane', vec5(2, 1, 1, this.prim.side.FRONT, 5), // dimensions NOTE: pass radius for curvature (also creates orbit) 
+	                        vec6(10, 10, 10), // divisions
 	                        vec3.fromValues(-1.2, 0.0, 2.0), // position (absolute)
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
@@ -7546,9 +7607,9 @@
 	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	                        ));
 
-	                        this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.CUBESPHERE, 'cubesphere', vec5(3, 3, 3, 0), // dimensions
-	                        vec5(10, 10, 10), // divisions
-	                        vec3.fromValues(0, -0.5, 1), // position (absolute)
+	                        this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.CUBESPHERE, 'cubesphere', vec5(3, 3, 3), // dimensions
+	                        vec5(10, 10, 10, 0), // divisions 4th parameter is degree of rounding.
+	                        vec3.fromValues(3, -0.7, -1), // position (absolute)
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	                        vec3.fromValues(util.degToRad(10), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
 	                        vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
@@ -7620,7 +7681,7 @@
 
 	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CONE, 'TestCone', vec5(1, 1, 1, 0.0, 0.0), // dimensions (4th dimension is truncation of cone, none = 0, flat circle = 1.0)
 	                        vec5(10, 10, 10), // divisions MAKE SMALLER
-	                        vec3.fromValues(-1, -1.5, 2.0), // position (absolute)
+	                        vec3.fromValues(-0, -1.5, 2.0), // position (absolute)
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
 	                        vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x

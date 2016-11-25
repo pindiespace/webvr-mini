@@ -152,23 +152,23 @@ export default class Prim {
 
         };
 
-        // Sideness, direction.
+        // Sideness, direction. Mapped to equivalent unit vector names in this.getStdVecs()
 
-        this.sides = {
+        this.side = {
 
-            DEFAULT_SIDE: 0,
+            DEFAULT: 'up',
 
-            FRONT_SIDE: 1,
+            FRONT: 'forward',
 
-            BACK_SIDE: 2,
+            BACK: 'back',
 
-            LEFT_SIDE: 3,
+            LEFT: 'left',
 
-            RIGHT_SIDE: 4,
+            RIGHT: 'right',
 
-            TOP_SIDE: 5,
+            TOP: 'up',
 
-            BOTTOM_SIDE: 6
+            BOTTOM: 'down'
 
         };
 
@@ -590,7 +590,37 @@ export default class Prim {
      */
     vec5 ( a, b, c, d, e ) {
 
+        d = d || 0;
+
+        e = e || 0;
+
         return [ a, b, c, d, e ]; // dimensions, start slice (cone)
+
+    }
+
+    vec6 ( a, b, c, d, e, f ) {
+
+        d = d || 0;
+
+        e = e || 0;
+
+        f = f || 0;
+
+        return [ a, b, c, d, e, f ];
+
+    }
+
+    vec7 ( a, b, c, d, e, f, g ) {
+
+        d = d || 0;
+
+        e = e || 0;
+
+        f = f || 0;
+
+        g = g || 0;
+
+        return [ a, b, c, d, e, f, g ];
 
     }
 
@@ -1099,6 +1129,8 @@ export default class Prim {
 
         let geo = prim.geometry;
 
+        return this.geometryCube( prim );
+
 
         // NOTE: FOR SOME REASON THIS CAUSES PROBLEMS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -1140,7 +1172,7 @@ export default class Prim {
 
             for ( let rowNum = 0; rowNum <= rows; rowNum++ ) {
 
-                console.log( ">>>>>>>>>>" + prim.name + " colnum:" + colNum + " rowNum:" + rowNum )
+                //console.log( ">>>>>>>>>>" + prim.name + " colnum:" + colNum + " rowNum:" + rowNum )
 
                 // Vertex values.
 
@@ -1704,6 +1736,8 @@ export default class Prim {
 
         const list = this.typeList;
 
+        const side = this.side;
+
         let geo = prim.geometry;
 
         // Shortcuts to Prim data arrays
@@ -1743,32 +1777,46 @@ export default class Prim {
             makeSide( 0, 2, 1, sx, sz, nx, nz,  sy / 2,  1,  1 ); //top
 
             makeSide( 0, 2, 1, sx, sz, nx, nz, -sy / 2,  1, -1 ); //bottom
+ 
 
-        } else if ( prim.type === list.CURVEDPLANE ) {
+        } else if ( prim.type === list.CURVEDPLANE || prim.type === list.PLANE || prim.type === list.TERRAIN ) {
 
-            makeSide( 0, 1, 2, sx, sy, nx, ny,  sz / 2,  1, -1 ); //front forward facing side.
+            switch( prim.dimensions[ 3 ] ) {
 
-        } else if ( prim.name === 'terrain' ) {
+                case side.FRONT:
+                    makeSide( 0, 1, 2, sx, sy, nx, ny,  sz / 2,  1, -1 ); //front forward facing side.
+                    break;
 
-            console.log("making terrain side....")
-            window.prim = prim; //////////////////////check geometry!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                case side.BACK:
+                    makeSide( 0, 1, 2, sx, sy, nx, ny, -sz / 2, -1, -1 );
+                    break;
 
-            makeSide( 0, 2, 1, sx, sz, nx, nz,  sy / 2,  1,  1 ); // top facing side.v
+                case side.LEFT:
+                    makeSide( 2, 1, 0, sz, sy, nz, ny, -sx / 2,  1, -1 );
+                    break;
 
-            // these all work!
+                case side.RIGHT:
+                    makeSide( 2, 1, 0, sz, sy, nz, ny,  sx / 2, -1, -1 ); 
+                    break;
 
-            //makeSide( 0, 1, 2, sx, sy, nx, ny,  sz / 2,  1, -1 ); //front
+                case side.TOP:
+                    makeSide( 0, 2, 1, sx, sz, nx, nz,  sy / 2,  1,  1 );
+                    break;
 
-            //makeSide( 0, 1, 2, sx, sy, nx, ny, -sz / 2, -1, -1 ); //back
+                case side.BOTTOM:
+                    makeSide( 0, 2, 1, sx, sz, nx, nz, -sy / 2,  1, -1 );
+                    break;
 
-            //makeSide( 2, 1, 0, sz, sy, nz, ny, -sx / 2,  1, -1 ); //left
+                default:
+                    break;
 
-            //makeSide( 2, 1, 0, sz, sy, nz, ny,  sx / 2, -1, -1 ); //right
+            }
 
-            //makeSide( 0, 2, 1, sx, sz, nx, nz,  sy / 2,  1,  1 ); //top
+                   // makeSide( 0, 1, 2, sx, sy, nx, ny,  sz / 2,  1, -1 ); //front forward facing side.
 
-            //makeSide( 0, 2, 1, sx, sz, nx, nz, -sy / 2,  1, -1 ); //bottom
+        } else {
 
+            console.error( 'unsupported Prim type:' + prim.type );
 
         }
 
@@ -1836,11 +1884,15 @@ export default class Prim {
 
         // Round the edges of the cube to a sphere.
 
-        if ( prim.type === list.CUBESPHERE ) {
+        if ( prim.divisions[ 3 ] !== 0 ) {
+
+            console.log(';;;;;;;;;;;;;;;;rounding CUBE')
 
             var tmp = [ 0, 0, 0 ];
 
-            var radius =  prim.dimensions[ 0 ] / 2; // TODO: compute for radius in x, y, z
+            // Radius controlled by 4th parameter in divisions
+
+            var radius = prim.divisions[ 3 ];
 
             var rx = sx / 2.0;
 
@@ -1916,11 +1968,25 @@ export default class Prim {
 
         }
 
+        // Curve a flat plane, value = radius along x axis
+
+        if ( prim.dimensions[ 3 ] !== 0 ) {
+
+            // NOTE: should be front-facing FRONT
+
+            // z values need to be shifted relative to the parameter.
+
+
+
+        }
+
         // Flatten arrays, since we created using 2 dimensions.
 
         vertices = geo.vertices.data = flatten( positions, false );
 
         normals = geo.normals.data = flatten( norms, false );
+
+        // Re-compute normals, which may have changed.
 
         this.computeNormals( vertices, indices, normals )
 
@@ -1963,6 +2029,8 @@ export default class Prim {
 
             prim.heightMap[ prim.heightMap.type.DIAMOND ]( prim.divisions[ 0 ], prim.divisions[2], 0.6, 1 );
 
+            // TODO: SCALE DOWN FOR WATERLINE.
+
             //prim.heightMap.scale( 165, 165 );
 
             //prim.heightMap.scale( 25, 25 );
@@ -1989,16 +2057,7 @@ export default class Prim {
 
         prim.divisions[ 3 ] = prim.dimensions[ 0 ] / 2;
 
-        prim.divisions[ 4 ] = prim.dimensions[ 2 ] / 2;
-
-            //prim.heightMap = new Map2d( this.util );
-
-            //roughness 0.2 of 0-1, flatten = 1 of 0-1;
-
-           //prim.heightMap[ prim.heightMap.type.DIAMOND ]( prim.divisions[ 0 ], prim.divisions[2], 0.6, 1 );
-
            // NOTE: if there is a heightmap, return, then 'pincusion' out the points.
-
 
         return this.geometryCube( prim );
 
@@ -2630,9 +2689,9 @@ export default class Prim {
 
         prim.scale = 1.0; // starting size = default scale
 
-        prim.dimensions = dimensions || this.vec5( 1, 1, 1, 0, 0 );
+        prim.dimensions = dimensions || this.vec7( 1, 1, 1, 0, 0, 0, 0 );
 
-        prim.divisions = divisions || vec4.fromValues( 1, 1, 1, 0 );
+        prim.divisions = divisions || this.vec6( 1, 1, 1, 0, 0, 0 );
 
         prim.position = position || vec3.create();
 
@@ -2704,11 +2763,11 @@ export default class Prim {
 
         // startRadius and endRadius are used by a few Prims (e.g. Cone)
 
-        if ( dimensions[ 3 ] === undefined ) {
+        //if ( dimensions[ 3 ] === undefined ) {
 
-            dimensions[ 4 ] = dimensions[ 3 ] = dimensions[ 0 ] / 2;
+       //     dimensions[ 4 ] = dimensions[ 3 ] = dimensions[ 0 ] / 2;
 
-        }
+       // }
 
         // Set the geometry, based on defined type.
 
