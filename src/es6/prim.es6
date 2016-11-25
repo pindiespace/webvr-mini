@@ -1093,17 +1093,27 @@ export default class Prim {
      */
     geometryPlane ( prim ) {
 
-        // NOTE: FOR SOME REASON THIS CAUSES PROBLEMS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-        //return this.geometryCube( prim );
-
-        ///////////////////////////////////////////////////////////////////////////////////////////
-
         //const vec3 = this.glMatrix.vec3;
 
         let list = this.typeList;
 
         let geo = prim.geometry;
+
+
+        // NOTE: FOR SOME REASON THIS CAUSES PROBLEMS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+        if( prim.name === 'terrain' ) {
+            console.log(">>>>>>>CUBING TERRAIN")
+            window.terr = prim.geometry;
+            return this.geometryCube( prim );
+        } else if ( prim.name === 'TestPlane' ) {
+            console.log(">>>>>>>CUBING TESTPLANE")
+            window.plane = prim.geometry;
+            return this.geometryCube( prim );
+        }
+        console.log("WENT THROUGH WITH:" + prim.name)
+        ///////////////////////////////////////////////////////////////////////////////////////////
+
 
         // Shortcuts to Prim data arrays
 
@@ -1706,9 +1716,9 @@ export default class Prim {
         let sx = prim.dimensions[ 0 ],   // x width
         sy = prim.dimensions[ 1 ],       // y height
         sz = prim.dimensions[ 2 ],       // z depth
-        nx = prim.divisions[ 0 ], 
-        ny = prim.divisions[ 1 ], 
-        nz = prim.divisions[ 2 ];
+        nx = prim.divisions[ 0 ],        // should be x , j
+        ny = prim.divisions[ 1 ],        // should be y, i 
+        nz = prim.divisions[ 2 ];        // should be z
 
         //var numVertices = ( nx + 1 ) * ( ny + 1 ) * 2 + ( nx + 1 ) * ( nz + 1 ) * 2 + ( nz + 1 ) * ( ny + 1 ) * 2;
 
@@ -1770,7 +1780,7 @@ export default class Prim {
 
                     if ( prim.heightMap ) {
 
-                        vert[ v ] += prim.heightMap.getPixel( j, i ); // TODO: MAY NEED TO TO i, j
+                        vert[ v ] += prim.heightMap.getPixel( i, j ); //////////////////////////// TODO: MAY NEED TO TO i, j
 
                     }
 

@@ -174,8 +174,8 @@ export default class World {
         this.dirlightTextureObjList.push( this.prim.createPrim(
             this.prim.typeList.TERRAIN,
             'terrain',
-            vec5( 2, 2, 2, 0 ),            // dimensions
-            vec4.fromValues( 130, 5, 130 ),           // divisions
+            vec5( 2, 2, 2, 0, 0 ),            // dimensions (note: y value doesn't work!!!!)
+            vec4.fromValues( 10, 10, 10 ),           // divisions
             vec3.fromValues(1.5, -1.5, 2 ),       // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
@@ -188,7 +188,7 @@ export default class World {
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.PLANE,
             'TestPlane',
-            vec5( 2, 1, 1, 0.0, 0.0 ),         // dimensions (4th dimension is truncation of cone, none = 0, flat circle = 1.0)
+            vec5( 2, 2, 2, 0, 0 ),         // dimensions (4th dimension is truncation of cone, none = 0, flat circle = 1.0)
             vec4.fromValues( 10, 10, 10  ),        // divisions MAKE SMALLER
             vec3.fromValues(0, 0.-2, 0 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -197,6 +197,9 @@ export default class World {
             ['img/mozvr-logo2.png'],               // texture present
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
+
+       // DIMENSIONS INDICATE ANY X or Y CURVATURE.
+        // DIVISIONS FOR CUBED AND CURVED PLANE INDICATE SIDE TO DRAW
 
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.CURVEDPLANE,
@@ -317,9 +320,6 @@ export default class World {
             ['img/mozvr-logo1.png'],               // texture present
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
-
-        // DIMENSIONS INDICATE ANY X or Y CURVATURE.
-        // DIVISIONS FOR CUBED AND CURVED PLANE INDICATE SIDE TO DRAW
 
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.CONE,
