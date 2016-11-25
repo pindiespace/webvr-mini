@@ -1111,7 +1111,7 @@ export default class Prim {
             window.plane = prim.geometry;
             return this.geometryCube( prim );
         }
-        console.log("WENT THROUGH WITH:" + prim.name)
+        console.log(">>>>>>WENT THROUGH WITH:" + prim.name)
         ///////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -1139,6 +1139,8 @@ export default class Prim {
         for ( let colNum = 0; colNum <= cols; colNum++ ) {
 
             for ( let rowNum = 0; rowNum <= rows; rowNum++ ) {
+
+                console.log( ">>>>>>>>>>" + prim.name + " colnum:" + colNum + " rowNum:" + rowNum )
 
                 // Vertex values.
 
@@ -1746,17 +1748,27 @@ export default class Prim {
 
             makeSide( 0, 1, 2, sx, sy, nx, ny,  sz / 2,  1, -1 ); //front forward facing side.
 
-        } else if ( prim.type === list.PLANE ) {
+        } else if ( prim.name === 'terrain' ) {
+
+            console.log("making terrain side....")
+            window.prim = prim; //////////////////////check geometry!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
             makeSide( 0, 2, 1, sx, sz, nx, nz,  sy / 2,  1,  1 ); // top facing side.v
 
-            window.prim = prim; //////////////////////check geometry!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            // these all work!
 
-        }
+            //makeSide( 0, 1, 2, sx, sy, nx, ny,  sz / 2,  1, -1 ); //front
 
-        if ( prim.heightMap ) {
+            //makeSide( 0, 1, 2, sx, sy, nx, ny, -sz / 2, -1, -1 ); //back
 
-            this.computeNormals( vertices, indices, normals );
+            //makeSide( 2, 1, 0, sz, sy, nz, ny, -sx / 2,  1, -1 ); //left
+
+            //makeSide( 2, 1, 0, sz, sy, nz, ny,  sx / 2, -1, -1 ); //right
+
+            //makeSide( 0, 2, 1, sx, sz, nx, nz,  sy / 2,  1,  1 ); //top
+
+            //makeSide( 0, 2, 1, sx, sz, nx, nz, -sy / 2,  1, -1 ); //bottom
+
 
         }
 
@@ -1765,6 +1777,8 @@ export default class Prim {
             // Create a size, positioning in correct position.
 
             var vertShift = vertexIndex;
+
+            if( prim.name === 'testPlane') console.log( 'i:' + i + ' j:' + j)
 
             for( var j = 0; j <= nv; j++ ) {
 
@@ -1776,25 +1790,21 @@ export default class Prim {
 
                     vert[ v ] = ( -sv/2 + j * sv / nv ) * flipv;
 
+                    vert[ w ] = pw;
+
                     // heightMap is always the middle, up-facing vector.
 
                     if ( prim.heightMap ) {
 
-                        vert[ v ] += prim.heightMap.getPixel( i, j ); //////////////////////////// TODO: MAY NEED TO TO i, j
+                        // our 'y' for the TOP x/z MAY NEED TO CHANGE FOR EACH SIDE
+
+                        vert[ w ] = prim.heightMap.getPixel( i, j );
 
                     }
 
-                    vert[ w ] = pw;
-
                     // Normals.
 
-                    var normal = norms[ vertexIndex ] = [ 0, 0, 0 ];
-
-                    normal[ u ] = 0
-
-                    normal[ v ] = 0
-
-                    normal[ w ] = pw / Math.abs( pw );
+                    norms[ vertexIndex ] = [ 0, 0, 0 ];
 
                     // Texture coords.
 
@@ -1830,8 +1840,7 @@ export default class Prim {
 
             var tmp = [ 0, 0, 0 ];
 
-            //var radius = 1.5; // TODO: fraction of the dimensions!
-            var radius =  prim.dimensions[ 0 ] / 2;
+            var radius =  prim.dimensions[ 0 ] / 2; // TODO: compute for radius in x, y, z
 
             var rx = sx / 2.0;
 
@@ -1883,13 +1892,15 @@ export default class Prim {
 
                 }
 
+                // Re-compute position of moved vertex via normals.
+
                 normal = [ pos[ 0 ], pos[ 1 ], pos[ 2 ] ];
 
                 vec3.sub( normal, normal, inner );
 
                 vec3.normalize( normal, normal );
 
-                normals[ i ] = normal;
+                //normals[ i ] = normal;
 
                 pos = [ inner[ 0 ], inner[ 1 ], inner[ 2 ] ];
 
@@ -1910,6 +1921,8 @@ export default class Prim {
         vertices = geo.vertices.data = flatten( positions, false );
 
         normals = geo.normals.data = flatten( norms, false );
+
+        this.computeNormals( vertices, indices, normals )
 
         // Colors.
 
@@ -1956,9 +1969,9 @@ export default class Prim {
 
         }
 
-        let geometry = this.geometryPlane( prim );
+        // NOTE: this can make the heightmap in any orientation.
 
-        return geometry;
+        return this.geometryPlane( prim );
 
     };
 
@@ -1971,6 +1984,21 @@ export default class Prim {
       name = 'unknown', scale = 1.0, dimensions, position, acceleration, rotation, textureImage, color
      */
     geometryCubeSphere ( prim ) {
+
+        // force the rounding radii to a circle
+
+        prim.divisions[ 3 ] = prim.dimensions[ 0 ] / 2;
+
+        prim.divisions[ 4 ] = prim.dimensions[ 2 ] / 2;
+
+            //prim.heightMap = new Map2d( this.util );
+
+            //roughness 0.2 of 0-1, flatten = 1 of 0-1;
+
+           //prim.heightMap[ prim.heightMap.type.DIAMOND ]( prim.divisions[ 0 ], prim.divisions[2], 0.6, 1 );
+
+           // NOTE: if there is a heightmap, return, then 'pincusion' out the points.
+
 
         return this.geometryCube( prim );
 
