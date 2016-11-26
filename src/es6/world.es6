@@ -188,24 +188,68 @@ export default class World {
             null //heightMap                       // heightmap
         ) );
 
+///////////////////////////
+// PLANE
+
         this.textureObjList.push( this.prim.createPrim(
-            this.prim.typeList.PLANE,
+            this.prim.typeList.CURVEDOUTERPLANE,
             'CurvedPlane',
-            vec5( 2, 1, 1, this.prim.side.FRONT ),         // pass orientation
+            vec5( 2, 1, 1, this.prim.side.FRONT, 1 ),         // pass orientation ONE UNIT CURVE
             vec5( 10, 10, 10 ),        // divisions
             vec3.fromValues(-1, 0.0, 2.0 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-            vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-            ['img/mozvr-logo2.png'],               // texture present
+            vec3.fromValues( util.degToRad( 0.0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+            ['img/webvr-logo1.png'],               // texture present
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
+
+        this.textureObjList.push( this.prim.createPrim(
+            this.prim.typeList.CURVEDOUTERPLANE,
+            'CurvedPlane',
+            vec5( 2, 1, 1, this.prim.side.BACK, 1 ),         // pass orientation ONE UNIT CURVE
+            vec5( 10, 10, 10 ),        // divisions
+            vec3.fromValues(-1, 0.0, 2.0 ),          // position (absolute)
+            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+            vec3.fromValues( util.degToRad( 0.0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+            ['img/webvr-logo2.png'],               // texture present
+            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
+        ) );
+
+        this.textureObjList.push( this.prim.createPrim(
+            this.prim.typeList.CURVEDOUTERPLANE,
+            'CurvedPlane',
+            vec5( 2, 1, 1, this.prim.side.LEFT, 1 ),         // pass orientation ONE UNIT CURVE
+            vec5( 10, 10, 10 ),        // divisions
+            vec3.fromValues(-1, 0.0, 2.0 ),          // position (absolute)
+            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+            vec3.fromValues( util.degToRad( 0.0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+            ['img/webvr-logo3.png'],               // texture present
+            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
+        ) );
+
+        this.textureObjList.push( this.prim.createPrim(
+            this.prim.typeList.CURVEDOUTERPLANE,
+            'CurvedPlane',
+            vec5( 2, 1, 1, this.prim.side.RIGHT, 1 ),         // pass orientation ONE UNIT CURVE
+            vec5( 10, 10, 10 ),        // divisions
+            vec3.fromValues(-1, 0.0, 2.0 ),          // position (absolute)
+            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+            vec3.fromValues( util.degToRad( 0.0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+            ['img/webvr-logo4.png'],               // texture present
+            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
+        ) );
+
+//////////////////////////////////////////////////////////////////////
 
        // DIMENSIONS INDICATE ANY X or Y CURVATURE.
         // DIVISIONS FOR CUBED AND CURVED PLANE INDICATE SIDE TO DRAW
 
         this.textureObjList.push( this.prim.createPrim(
-            this.prim.typeList.CURVEDPLANE,
+            this.prim.typeList.CURVEDOUTERPLANE,
             'CurvedPlane',
             vec5( 2, 1, 1, this.prim.side.RIGHT, 1 ),         // dimensions NOTE: pass radius for curvature (also creates orbit) 
             vec6( 10, 10, 10 ),        // divisions

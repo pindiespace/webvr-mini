@@ -102,7 +102,9 @@ export default class Prim {
 
             PLANE: 'geometryPlane',
 
-            CURVEDPLANE: 'geometryCurvedPlane',
+            CURVEDOUTERPLANE: 'geometryCurvedOuterPlane',
+
+            CURVEDINNERPLANE: 'geometryCurvedInnerPlane',
 
             CIRCLE: 'geometryCircle',
 
@@ -1195,7 +1197,7 @@ export default class Prim {
 
                 let z = rowNum;
 
-                if ( prim.type === list.CURVEDPLANE ) {
+                if ( prim.type === list.CURVEDOUTERPLANE || prim.type === list.CURVEDINNERPLANE ) {
 
                     let xRadius = prim.dimensions[ 3 ];
 
@@ -1281,11 +1283,17 @@ export default class Prim {
      * Plane curved in one or two dimensions. 
      * Useful for creating HUD displays.
      */
-     geometryCurvedPlane( prim ) {
+     geometryCurvedOuterPlane( prim ) {
 
         return this.geometryCube( prim );
 
      }
+
+     geometryCurvedInnerPlane( prim ) {
+
+        return this.geometryCube( prim );
+
+     };
 
     /** 
      * Polygon (flat), square to circular. Used to cap 
@@ -1779,7 +1787,7 @@ export default class Prim {
             makeSide( 0, 2, 1, sx, sz, nx, nz, -sy / 2,  1, -1 ); //bottom
  
 
-        } else if ( prim.type === list.CURVEDPLANE || prim.type === list.PLANE || prim.type === list.TERRAIN ) {
+        } else if ( prim.type === list.CURVEDOUTERPLANE || prim.type === list.CURVEDINNERPLANE || prim.type === list.PLANE || prim.type === list.TERRAIN ) {
 
             switch( prim.dimensions[ 3 ] ) {
 
@@ -1793,7 +1801,7 @@ export default class Prim {
 
                 case side.LEFT:
                     // should be x width
-                    makeSide( 2, 1, 0, sz, sy, nz, ny, -sx / 2,  1, -1 ); // ROTATE xz -90 NOT WORKING WRONG SIZE LIKE BACK
+                    makeSide( 2, 1, 0, sx, sy, nz, ny, -sx / 2,  1, -1 ); // ROTATE xz -90 NOT WORKING WRONG SIZE LIKE BACK
                     break;
 
                 case side.RIGHT:
@@ -1968,7 +1976,7 @@ export default class Prim {
 
             }
 
-        } else if ( prim.type === list.CURVEDPLANE && prim.dimensions[ 4 ] && prim.dimensions[ 4 ] !== 0 ) {
+        } else if ( ( prim.type === list.CURVEDOUTERPLANE || prim.type === list.CURVEDINNERPLANE ) && prim.dimensions[ 4 ] && prim.dimensions[ 4 ] !== 0 ) {
 
 
               for( var i = 0; i < positions.length; i++ ) {
@@ -1977,19 +1985,19 @@ export default class Prim {
 
 ////////////////////////////////////////
                 case side.FRONT:
-                    positions[ i ][ 2 ] = Math.cos( positions[ i ][ 0 ] ) * prim.dimensions[ 4 ]; // AT BACK drawn on wrong side
+                    positions[ i ][ 2 ] = Math.cos( positions[ i ][ 0 ] ) * prim.dimensions[ 4 ]; // SEEN FROM OUTSIDE
                     break;
 
                 case side.BACK:
-                    positions[ i ][ 2 ] = -Math.cos( positions[ i ][ 0 ] ) * prim.dimensions[ 4 ]; // SEEN FROM INSIDE, CORRECT
+                    positions[ i ][ 2 ] = -Math.cos( positions[ i ][ 0 ] ) * prim.dimensions[ 4 ]; // SEEN FROM OUTSIDE
                     break;
 
                 case side.LEFT:
-                    positions[ i ][ 0 ] = Math.cos( positions[ i ][ 2 ] ) * prim.dimensions[ 4 ];
+                    positions[ i ][ 0 ] = -Math.cos( positions[ i ][ 2 ] ) * prim.dimensions[ 4 ]; // SEEN FROM OUTSIDE, - reverses
                     break;
 
                 case side.RIGHT:
-                    positions[ i ][ 0 ] = Math.cos( positions[ i ][ 2 ] ) * prim.dimensions[ 4 ];
+                    positions[ i ][ 0 ] = Math.cos( positions[ i ][ 2 ] ) * prim.dimensions[ 4 ]; // SEEN FROM outside, - reverses
                     break;
 
                 case side.TOP:
@@ -2814,6 +2822,8 @@ export default class Prim {
         prim.geometry.type = type;
 
         // NOTE: mis-spelling type leads to error here...
+
+        console.log('>>>>>>CREATING TYPE::::::' + prim.type)
 
         prim.geometry = this[ type ]( prim, color );
 

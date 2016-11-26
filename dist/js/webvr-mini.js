@@ -3812,7 +3812,9 @@
 
 	                        PLANE: 'geometryPlane',
 
-	                        CURVEDPLANE: 'geometryCurvedPlane',
+	                        CURVEDOUTERPLANE: 'geometryCurvedOuterPlane',
+
+	                        CURVEDINNERPLANE: 'geometryCurvedInnerPlane',
 
 	                        CIRCLE: 'geometryCircle',
 
@@ -4932,7 +4934,7 @@
 
 	                                        var z = rowNum;
 
-	                                        if (prim.type === list.CURVEDPLANE) {
+	                                        if (prim.type === list.CURVEDOUTERPLANE || prim.type === list.CURVEDINNERPLANE) {
 
 	                                                var xRadius = prim.dimensions[3];
 
@@ -5011,11 +5013,20 @@
 	                 */
 
 	        }, {
-	                key: 'geometryCurvedPlane',
-	                value: function geometryCurvedPlane(prim) {
+	                key: 'geometryCurvedOuterPlane',
+	                value: function geometryCurvedOuterPlane(prim) {
 
 	                        return this.geometryCube(prim);
 	                }
+	        }, {
+	                key: 'geometryCurvedInnerPlane',
+	                value: function geometryCurvedInnerPlane(prim) {
+
+	                        return this.geometryCube(prim);
+	                }
+	        }, {
+	                key: 'geometryPoly',
+
 
 	                /** 
 	                 * Polygon (flat), square to circular. Used to cap 
@@ -5023,9 +5034,6 @@
 	                 * @param {Prim} prim the object needing buffers.
 	                 * @returns {BufferData} buffer data for Prim.     
 	                 */
-
-	        }, {
-	                key: 'geometryPoly',
 	                value: function geometryPoly(prim) {
 
 	                        var geo = prim.geometry;
@@ -5521,7 +5529,7 @@
 
 	                                makeSide(0, 2, 1, sx, sz, nx, nz, -sy / 2, 1, -1); //bottom
 
-	                        } else if (prim.type === list.CURVEDPLANE || prim.type === list.PLANE || prim.type === list.TERRAIN) {
+	                        } else if (prim.type === list.CURVEDOUTERPLANE || prim.type === list.CURVEDINNERPLANE || prim.type === list.PLANE || prim.type === list.TERRAIN) {
 
 	                                switch (prim.dimensions[3]) {
 
@@ -5535,7 +5543,7 @@
 
 	                                        case side.LEFT:
 	                                                // should be x width
-	                                                makeSide(2, 1, 0, sz, sy, nz, ny, -sx / 2, 1, -1); // ROTATE xz -90 NOT WORKING WRONG SIZE LIKE BACK
+	                                                makeSide(2, 1, 0, sx, sy, nz, ny, -sx / 2, 1, -1); // ROTATE xz -90 NOT WORKING WRONG SIZE LIKE BACK
 	                                                break;
 
 	                                        case side.RIGHT:
@@ -5688,7 +5696,7 @@
 
 	                                        positions[i] = pos;
 	                                }
-	                        } else if (prim.type === list.CURVEDPLANE && prim.dimensions[4] && prim.dimensions[4] !== 0) {
+	                        } else if ((prim.type === list.CURVEDOUTERPLANE || prim.type === list.CURVEDINNERPLANE) && prim.dimensions[4] && prim.dimensions[4] !== 0) {
 
 	                                for (var i = 0; i < positions.length; i++) {
 
@@ -5696,19 +5704,19 @@
 
 	                                                ////////////////////////////////////////
 	                                                case side.FRONT:
-	                                                        positions[i][2] = Math.cos(positions[i][0]) * prim.dimensions[4]; // AT BACK drawn on wrong side
+	                                                        positions[i][2] = Math.cos(positions[i][0]) * prim.dimensions[4]; // SEEN FROM OUTSIDE
 	                                                        break;
 
 	                                                case side.BACK:
-	                                                        positions[i][2] = -Math.cos(positions[i][0]) * prim.dimensions[4]; // SEEN FROM INSIDE, CORRECT
+	                                                        positions[i][2] = -Math.cos(positions[i][0]) * prim.dimensions[4]; // SEEN FROM OUTSIDE
 	                                                        break;
 
 	                                                case side.LEFT:
-	                                                        positions[i][0] = Math.cos(positions[i][2]) * prim.dimensions[4];
+	                                                        positions[i][0] = -Math.cos(positions[i][2]) * prim.dimensions[4]; // SEEN FROM OUTSIDE, - reverses
 	                                                        break;
 
 	                                                case side.RIGHT:
-	                                                        positions[i][0] = Math.cos(positions[i][2]) * prim.dimensions[4];
+	                                                        positions[i][0] = Math.cos(positions[i][2]) * prim.dimensions[4]; // SEEN FROM outside, - reverses
 	                                                        break;
 
 	                                                case side.TOP:
@@ -6526,6 +6534,8 @@
 	                        prim.geometry.type = type;
 
 	                        // NOTE: mis-spelling type leads to error here...
+
+	                        console.log('>>>>>>CREATING TYPE::::::' + prim.type);
 
 	                        prim.geometry = this[type](prim, color);
 
@@ -7608,20 +7618,55 @@
 	                        null //heightMap                       // heightmap
 	                        ));
 
-	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.PLANE, 'CurvedPlane', vec5(2, 1, 1, this.prim.side.FRONT), // pass orientation
+	                        ///////////////////////////
+	                        // PLANE
+
+	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CURVEDOUTERPLANE, 'CurvedPlane', vec5(2, 1, 1, this.prim.side.FRONT, 1), // pass orientation ONE UNIT CURVE
 	                        vec5(10, 10, 10), // divisions
 	                        vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                        vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                        ['img/mozvr-logo2.png'], // texture present
+	                        vec3.fromValues(util.degToRad(0.0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                        ['img/webvr-logo1.png'], // texture present
 	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	                        ));
+
+	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CURVEDOUTERPLANE, 'CurvedPlane', vec5(2, 1, 1, this.prim.side.BACK, 1), // pass orientation ONE UNIT CURVE
+	                        vec5(10, 10, 10), // divisions
+	                        vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(0.0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                        ['img/webvr-logo2.png'], // texture present
+	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+	                        ));
+
+	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CURVEDOUTERPLANE, 'CurvedPlane', vec5(2, 1, 1, this.prim.side.LEFT, 1), // pass orientation ONE UNIT CURVE
+	                        vec5(10, 10, 10), // divisions
+	                        vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(0.0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                        ['img/webvr-logo3.png'], // texture present
+	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+	                        ));
+
+	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CURVEDOUTERPLANE, 'CurvedPlane', vec5(2, 1, 1, this.prim.side.RIGHT, 1), // pass orientation ONE UNIT CURVE
+	                        vec5(10, 10, 10), // divisions
+	                        vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(0.0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                        ['img/webvr-logo4.png'], // texture present
+	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+	                        ));
+
+	                        //////////////////////////////////////////////////////////////////////
 
 	                        // DIMENSIONS INDICATE ANY X or Y CURVATURE.
 	                        // DIVISIONS FOR CUBED AND CURVED PLANE INDICATE SIDE TO DRAW
 
-	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CURVEDPLANE, 'CurvedPlane', vec5(2, 1, 1, this.prim.side.RIGHT, 1), // dimensions NOTE: pass radius for curvature (also creates orbit) 
+	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CURVEDOUTERPLANE, 'CurvedPlane', vec5(2, 1, 1, this.prim.side.RIGHT, 1), // dimensions NOTE: pass radius for curvature (also creates orbit) 
 	                        vec6(10, 10, 10), // divisions
 	                        vec3.fromValues(-1.2, 0.0, 2.0), // position (absolute)
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
