@@ -98,7 +98,7 @@ export default class World {
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.CUBE,
             'toji cube',
-            vec5( 1, 1, 1 ),            // dimensions
+            vec5( 1, 1, 1, 0 ),            // dimensions
             vec5( 1, 1, 1, 0 ),            // divisions, pass curving of edges as 4th parameter
             vec3.fromValues( 5, 1, -3 ),           // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -146,7 +146,7 @@ export default class World {
             this.prim.typeList.CUBE,
             'colored cube',
             vec5( 1, 1, 1, 0 ),            // dimensions
-            vec5( 3, 3, 3 ),            // divisions, pass curving of edges as 4th parameter
+            vec5( 3, 3, 3 ),            // divisions
             vec3.fromValues( -1, 3, -3 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 20 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
@@ -165,7 +165,7 @@ export default class World {
             this.prim.typeList.CUBE,
             'lit cube',
             vec5( 1, 1, 1, 0 ),            // dimensions
-            vec5( 1, 1, 1 ),            // divisions, pass curving of edges as 4th parameter
+            vec5( 1, 1, 1 ),            // divisions
             vec3.fromValues( -3, -2, -3 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 20 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
@@ -207,7 +207,7 @@ export default class World {
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.CURVEDPLANE,
             'CurvedPlane',
-            vec5( 2, 1, 1, this.prim.side.FRONT, 5 ),         // dimensions NOTE: pass radius for curvature (also creates orbit) 
+            vec5( 2, 1, 1, this.prim.side.RIGHT, 1 ),         // dimensions NOTE: pass radius for curvature (also creates orbit) 
             vec6( 10, 10, 10 ),        // divisions
             vec3.fromValues(-1.2, 0.0, 2.0 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z

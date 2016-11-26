@@ -5530,23 +5530,25 @@
 	                                                break;
 
 	                                        case side.BACK:
-	                                                makeSide(0, 1, 2, sx, sy, nx, ny, -sz / 2, -1, -1);
+	                                                makeSide(0, 1, 2, sx, sy, nx, ny, -sz / 2, -1, -1); // ROTATE xz 180
 	                                                break;
 
 	                                        case side.LEFT:
-	                                                makeSide(2, 1, 0, sz, sy, nz, ny, -sx / 2, 1, -1);
+	                                                // should be x width
+	                                                makeSide(2, 1, 0, sz, sy, nz, ny, -sx / 2, 1, -1); // ROTATE xz -90 NOT WORKING WRONG SIZE LIKE BACK
 	                                                break;
 
 	                                        case side.RIGHT:
-	                                                makeSide(2, 1, 0, sz, sy, nz, ny, sx / 2, -1, -1);
+	                                                // should x width
+	                                                makeSide(2, 1, 0, sx, sy, nz, ny, sx / 2, -1, -1); // ROTATE xz 90 INVISIBLE FROM WRONG SIDE
 	                                                break;
 
 	                                        case side.TOP:
-	                                                makeSide(0, 2, 1, sx, sz, nx, nz, sy / 2, 1, 1);
+	                                                makeSide(0, 2, 1, sx, sy, nx, nz, sy / 2, 1, 1); // ROTATE xy axis
 	                                                break;
 
 	                                        case side.BOTTOM:
-	                                                makeSide(0, 2, 1, sx, sz, nx, nz, -sy / 2, 1, -1);
+	                                                makeSide(0, 2, 1, sx, -sy, nx, nz, -sy / 2, 1, -1); // ROTATE xy axis
 	                                                break;
 
 	                                        default:
@@ -5616,9 +5618,9 @@
 	                                }
 	                        } // end of makeSide.
 
-	                        // Round the edges of the cube to a sphere.
+	                        // Round the edges of the CUBE or SPHERECUBE to a sphere.
 
-	                        if (prim.divisions[3] !== 0) {
+	                        if ((prim.type === list.CUBE || prim.type === list.CUBESPHERE) && prim.divisions[3] !== 0) {
 
 	                                console.log(';;;;;;;;;;;;;;;;rounding CUBE');
 
@@ -5686,16 +5688,48 @@
 
 	                                        positions[i] = pos;
 	                                }
+	                        } else if (prim.type === list.CURVEDPLANE && prim.dimensions[4] && prim.dimensions[4] !== 0) {
+
+	                                for (var i = 0; i < positions.length; i++) {
+
+	                                        switch (prim.dimensions[3]) {
+
+	                                                ////////////////////////////////////////
+	                                                case side.FRONT:
+	                                                        positions[i][2] = Math.cos(positions[i][0]) * prim.dimensions[4]; // AT BACK drawn on wrong side
+	                                                        break;
+
+	                                                case side.BACK:
+	                                                        positions[i][2] = -Math.cos(positions[i][0]) * prim.dimensions[4]; // SEEN FROM INSIDE, CORRECT
+	                                                        break;
+
+	                                                case side.LEFT:
+	                                                        positions[i][0] = Math.cos(positions[i][2]) * prim.dimensions[4];
+	                                                        break;
+
+	                                                case side.RIGHT:
+	                                                        positions[i][0] = Math.cos(positions[i][2]) * prim.dimensions[4];
+	                                                        break;
+
+	                                                case side.TOP:
+	                                                        positions[i][1] = Math.cos(positions[i][0]) * prim.dimensions[4];
+	                                                        break;
+
+	                                                case side.BOTTOM:
+	                                                        positions[i][1] = -Math.cos(positions[i][0]) * prim.dimensions[4]; // SEEN FROM INSIDE< CORRECT
+	                                                        break;
+
+	                                                /////////////////////////////////////////
+
+
+	                                        }
+
+	                                        // switch for directions.
+	                                        // currently FRONT.
+
+	                                        //positions[ i ][ 2 ] = Math.cos( positions[ i ][ 0 ] ) * prim.dimensions[ 4 ];
+	                                }
 	                        }
-
-	                        // Curve a flat plane, value = radius along x axis
-
-	                        if (prim.dimensions[3] !== 0) {}
-
-	                        // NOTE: should be front-facing FRONT
-
-	                        // z values need to be shifted relative to the parameter.
-
 
 	                        // Flatten arrays, since we created using 2 dimensions.
 
@@ -7500,7 +7534,7 @@
 	                        ['img/crate.png', 'img/webvr-logo1.png'], // texture image
 	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0)));
 
-	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CUBE, 'toji cube', vec5(1, 1, 1), // dimensions
+	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CUBE, 'toji cube', vec5(1, 1, 1, 0), // dimensions
 	                        vec5(1, 1, 1, 0), // divisions, pass curving of edges as 4th parameter
 	                        vec3.fromValues(5, 1, -3), // position (absolute)
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -7538,7 +7572,7 @@
 	                        this.colorObjList = [];
 
 	                        this.colorObjList.push(this.prim.createPrim(this.prim.typeList.CUBE, 'colored cube', vec5(1, 1, 1, 0), // dimensions
-	                        vec5(3, 3, 3), // divisions, pass curving of edges as 4th parameter
+	                        vec5(3, 3, 3), // divisions
 	                        vec3.fromValues(-1, 3, -3), // position (absolute)
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	                        vec3.fromValues(util.degToRad(20), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
@@ -7554,7 +7588,7 @@
 	                        this.dirlightTextureObjList = [];
 
 	                        this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.CUBE, 'lit cube', vec5(1, 1, 1, 0), // dimensions
-	                        vec5(1, 1, 1), // divisions, pass curving of edges as 4th parameter
+	                        vec5(1, 1, 1), // divisions
 	                        vec3.fromValues(-3, -2, -3), // position (absolute)
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	                        vec3.fromValues(util.degToRad(20), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
@@ -7587,7 +7621,7 @@
 	                        // DIMENSIONS INDICATE ANY X or Y CURVATURE.
 	                        // DIVISIONS FOR CUBED AND CURVED PLANE INDICATE SIDE TO DRAW
 
-	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CURVEDPLANE, 'CurvedPlane', vec5(2, 1, 1, this.prim.side.FRONT, 5), // dimensions NOTE: pass radius for curvature (also creates orbit) 
+	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CURVEDPLANE, 'CurvedPlane', vec5(2, 1, 1, this.prim.side.RIGHT, 1), // dimensions NOTE: pass radius for curvature (also creates orbit) 
 	                        vec6(10, 10, 10), // divisions
 	                        vec3.fromValues(-1.2, 0.0, 2.0), // position (absolute)
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z

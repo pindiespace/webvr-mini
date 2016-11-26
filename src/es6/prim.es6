@@ -1788,23 +1788,25 @@ export default class Prim {
                     break;
 
                 case side.BACK:
-                    makeSide( 0, 1, 2, sx, sy, nx, ny, -sz / 2, -1, -1 );
+                    makeSide( 0, 1, 2, sx, sy, nx, ny, -sz / 2, -1, -1 ); // ROTATE xz 180
                     break;
 
                 case side.LEFT:
-                    makeSide( 2, 1, 0, sz, sy, nz, ny, -sx / 2,  1, -1 );
+                    // should be x width
+                    makeSide( 2, 1, 0, sz, sy, nz, ny, -sx / 2,  1, -1 ); // ROTATE xz -90 NOT WORKING WRONG SIZE LIKE BACK
                     break;
 
                 case side.RIGHT:
-                    makeSide( 2, 1, 0, sz, sy, nz, ny,  sx / 2, -1, -1 ); 
+                    // should x width
+                    makeSide( 2, 1, 0, sx, sy, nz, ny,  sx / 2, -1, -1 ); // ROTATE xz 90 INVISIBLE FROM WRONG SIDE
                     break;
 
-                case side.TOP:
-                    makeSide( 0, 2, 1, sx, sz, nx, nz,  sy / 2,  1,  1 );
+                case side.TOP: 
+                    makeSide( 0, 2, 1, sx, sy, nx, nz,  sy / 2,  1,  1 ); // ROTATE xy axis
                     break;
 
                 case side.BOTTOM:
-                    makeSide( 0, 2, 1, sx, sz, nx, nz, -sy / 2,  1, -1 );
+                    makeSide( 0, 2, 1, sx, -sy, nx, nz, -sy / 2,  1, -1 ); // ROTATE xy axis
                     break;
 
                 default:
@@ -1882,9 +1884,9 @@ export default class Prim {
 
         } // end of makeSide.
 
-        // Round the edges of the cube to a sphere.
+        // Round the edges of the CUBE or SPHERECUBE to a sphere.
 
-        if ( prim.divisions[ 3 ] !== 0 ) {
+        if ( ( prim.type === list.CUBE || prim.type === list.CUBESPHERE ) && prim.divisions[ 3 ] !== 0 ) {
 
             console.log(';;;;;;;;;;;;;;;;rounding CUBE')
 
@@ -1966,17 +1968,49 @@ export default class Prim {
 
             }
 
-        }
-
-        // Curve a flat plane, value = radius along x axis
-
-        if ( prim.dimensions[ 3 ] !== 0 ) {
-
-            // NOTE: should be front-facing FRONT
-
-            // z values need to be shifted relative to the parameter.
+        } else if ( prim.type === list.CURVEDPLANE && prim.dimensions[ 4 ] && prim.dimensions[ 4 ] !== 0 ) {
 
 
+              for( var i = 0; i < positions.length; i++ ) {
+
+                switch ( prim.dimensions[ 3 ] ) {
+
+////////////////////////////////////////
+                case side.FRONT:
+                    positions[ i ][ 2 ] = Math.cos( positions[ i ][ 0 ] ) * prim.dimensions[ 4 ]; // AT BACK drawn on wrong side
+                    break;
+
+                case side.BACK:
+                    positions[ i ][ 2 ] = -Math.cos( positions[ i ][ 0 ] ) * prim.dimensions[ 4 ]; // SEEN FROM INSIDE, CORRECT
+                    break;
+
+                case side.LEFT:
+                    positions[ i ][ 0 ] = Math.cos( positions[ i ][ 2 ] ) * prim.dimensions[ 4 ];
+                    break;
+
+                case side.RIGHT:
+                    positions[ i ][ 0 ] = Math.cos( positions[ i ][ 2 ] ) * prim.dimensions[ 4 ];
+                    break;
+
+                case side.TOP:
+                    positions[ i ][ 1 ] = Math.cos( positions[ i ][ 0 ] ) * prim.dimensions[ 4 ];
+                    break;
+
+                case side.BOTTOM:
+                    positions[ i ][ 1 ] = -Math.cos( positions[ i ][ 0 ] ) * prim.dimensions[ 4 ]; // SEEN FROM INSIDE< CORRECT
+                    break;
+
+/////////////////////////////////////////
+
+
+                }
+
+                // switch for directions.
+                // currently FRONT.
+
+                //positions[ i ][ 2 ] = Math.cos( positions[ i ][ 0 ] ) * prim.dimensions[ 4 ];
+
+              }
 
         }
 
