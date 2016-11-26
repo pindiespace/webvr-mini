@@ -87,7 +87,7 @@ module.exports = {
 
         // Define DEV and RELEASE variables from command-line (in package.json)
 
-        new ExtendedDefinePlugin({
+        new ExtendedDefinePlugin( {
 
             __VERSION__: JSON.stringify( '0.0.1' ),
 
@@ -95,7 +95,7 @@ module.exports = {
 
             __RELEASE__: JSON.stringify( JSON.parse( process.env.BUILD_RELEASE || 'false' ) )
 
-        }),
+        } ),
 
         /** 
          * WebPack just builds the main app JavaScript library.
@@ -103,7 +103,7 @@ module.exports = {
          * WebPack plugin copies a few minimal assets to the /dist folder
          */
 
-        new CopyWebpackPlugin([
+        new CopyWebpackPlugin( [
 
             {
 
@@ -111,8 +111,7 @@ module.exports = {
 
             }
 
-        ])
-
+        ] ),
 
     ],
 

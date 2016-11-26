@@ -393,8 +393,23 @@ export default class World {
             ['img/uv-test.png'],               // texture present
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color
             true                                    // CAPPED AT ENDS
-
         ) );
+
+/*
+        this.textureObjList.push( this.prim.createPrim(
+            this.prim.typeList.CUBESPHERE,
+            'TestCapsule',
+            vec5( 4, 1, 1, 0.3, 0.7 ),       // dimensions (4th dimension doesn't exist for cylinder)
+            vec5( 40, 40, 40  ),        // divisions MAKE SMALLER
+            vec3.fromValues(-2.0, -1.5, 2.0 ),          // position (absolute)
+            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+            vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+            ['img/uv-test.png'],               // texture present
+            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color
+            true                                    // CAPPED AT ENDS
+        ) );
+*/
 
         this.vs3 = this.renderer.shaderDirlightTexture.init( this.dirlightTextureObjList );
 

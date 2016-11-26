@@ -13,8 +13,8 @@ export default class Prim {
      * 
      * Implicit objects (values are units, with 1.0 being normalized size).
      * 
-     * prim.position      = (vec5) [ x, y, z, startSlice | 0, endSlice | 0 ]
-     * prim.dimensions    = (vec4) [ x, y, z, startRadius | 0 ]
+     * prim.position      = (vec5) [ x, y, z, rounding, | startSlice, endSlice,  ]
+     * prim.dimensions    = (vec4) [ x, y, z ]
      * prim.divisions     = (vec3) [ x, y, z ]
      * prim.acceleration  = (vec3) [ x, y, z ]
      * prim.rotation      = (vec3) [ x, y, z ]
@@ -71,7 +71,6 @@ export default class Prim {
      *
      *
      */
-
     constructor ( init, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo ) {
 
         console.log( 'in Prim class' );
@@ -112,21 +111,19 @@ export default class Prim {
 
             CURVEDINNERPLANE: 'geometryCurvedInnerPlane',
 
+            TERRAIN: 'geometryTerrain',
+
             CIRCLE: 'geometryCircle',
 
             POLY: 'geometryPoly',
 
-            CAP: 'geometryCap',
-
             CUBE: 'geometryCube',
-
-            SPHERE: 'geometrySphere',
-
-            ICOSOHEDRON: 'geometryIcosohedron',
 
             CUBESPHERE: 'geometryCubeSphere',
 
-            ICOSPHERE: 'geometryIcoSphere',
+            SPHERE: 'geometrySphere',
+
+            CAP: 'geometryCap',
 
             DOME: 'geometryDome',
 
@@ -136,27 +133,31 @@ export default class Prim {
 
             BOTTOMDOME: 'geometryBottomDome',
 
-            TOPICODOME: 'geometryTopIcoDome',
-
-            SKYICODOME: 'geometrySkyIcoDome',
-
-            BOTTOMICODOME: 'geometryBottomIcoDome',
-
-            SPINDLE: 'geometrySpindle', // top-shaped
-
             CONE: 'geometryCone',
 
             TOPCONE: 'geometryTopCone',
 
             BOTTOMCONE: 'geometryBottomCone',
 
+            SPINDLE: 'geometrySpindle',
+
             CYLINDER: 'geometryCylinder',
+
+            CAPSULE: 'geometryCapsule',
+
+            ICOSOHEDRON: 'geometryIcosohedron',
+
+            ICOSPHERE: 'geometryIcoSphere',
+
+            TOPICODOME: 'geometryTopIcoDome',
+
+            SKYICODOME: 'geometrySkyIcoDome',
+
+            BOTTOMICODOME: 'geometryBottomIcoDome',
 
             TORUS: 'geometryTorus',
 
-            MESH: 'geometryMesh',
-
-            TERRAIN: 'geometryTerrain'
+            MESH: 'geometryMesh'
 
         };
 
@@ -190,6 +191,32 @@ export default class Prim {
 
             BOTH_SIDES: 12
         };
+
+    }
+
+    /** 
+     * See if supplied Prim type is supported. Individual Prim factory 
+     * methods do more detailed checking.
+     * @param {String} type the prim type.
+     * @returns {Boolean} if supported, return true, else false.
+     */
+    checkType ( type ) {
+
+        let l = this.typeList;
+
+        // Object iteration.
+
+        for ( let i in l ) {
+
+            if ( l[ i ] === type ) {
+
+                return true;
+
+            }
+
+        }
+
+        return false;
 
     }
 
@@ -909,7 +936,14 @@ export default class Prim {
      */
 
     /** 
-     * WebGL point.
+     * type POINT
+     * rendered as GL_POINT.
+     * prim.dimensions    = (vec4) [ x, y, z, pointSize (pixels) | 0 ]
+     * prim.divisions     = (vec3) [ x, y, z ]
+     * 
+     * @param {Prim} the Prim needing geometry.
+     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
+     * Creating WebGL buffers is turned on or off conditionally in the method.
      */
     geometryPoint ( prim ) {
 
@@ -969,7 +1003,20 @@ export default class Prim {
 
     /** 
      * WebGL point cloud (particle system).
-     * https://github.com/potree/potree/releases
+     * Rendered as GL_POINT.
+     * @link https://github.com/potree/potree/releases
+     * @link https://www.khronos.org/registry/webgl/sdk/demos/google/particles/index.html
+     * @link https://github.com/gouzhen1/WebGL-Particle-System/
+     * @link https://github.com/gouzhen1/WebGL-Particle-System/blob/master/index.html#L3
+     * @link http://nullprogram.com/blog/2014/06/29/
+     * https://codepen.io/kenjiSpecial/pen/yyeaKm
+     * rendered as an array of WebGL POINT.
+     * 
+     * @param {Prim} the Prim needing geometry. 
+     * prim.dimensions    = (vec4) [ x, y, z, pointSize (pixels) | 0 ]
+     * prim.divisions     = (vec3) [ x, y, z ]
+     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
+     * Creating WebGL buffers is turned on or off conditionally in the method.
      */
     geometryPointCloud ( prim ) {
 
@@ -1021,63 +1068,14 @@ export default class Prim {
     }
 
     /** 
-     * WebGL particle system
-     * @link https://www.khronos.org/registry/webgl/sdk/demos/google/particles/index.html
-     * @link https://github.com/gouzhen1/WebGL-Particle-System/
-     * @link https://github.com/gouzhen1/WebGL-Particle-System/blob/master/index.html#L3
-     * @link http://nullprogram.com/blog/2014/06/29/
-     * https://codepen.io/kenjiSpecial/pen/yyeaKm
-
-     */
-    geometryParticleSystem () {
-
-       let geo = prim.geometry;
-
-        // Shortcuts to Prim data arrays
-
-        let vertices = geo.vertices.data,
-        indices  = geo.indices.data,
-        texCoords = geo.texCoords.data,
-        normals = geo.normals.data,
-        tangents = geo.tangents.data,
-        colors = geo.colors.data;
-
-        // Vertices.
-
-        // Indices.
-
-        // Normals.
-
-        this.computeNormals( vertices, indices, normals );
-
-        // Tangents.
-
-        this.computeTangents( vertices, indices, normals, texCoords );
-
-        // Colors.
-
-        if( ! colors.length ) {
-
-            geo.colors.data = this.computeColors( normals, colors );
-
-        }
-
-        // Return the buffer, or add array data to the existing Prim data.
-
-        if( prim.geometry.makeBuffers === true ) {
-
-            return this.createBuffers( prim.geometry );
-
-        } else {
-
-            return this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
-
-        }
-
-    }
-
-    /** 
-     * WebGL line.
+     * type LINE
+     * rendered as GL_LINE.
+     * prim.dimensions    = (vec4) [ x, y, z, thickness | 0 ]
+     * prim.divisions     = (vec3) [ x, y, z ]
+     * 
+     * @param {Prim} the Prim needing geometry. 
+     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
+     * Creating WebGL buffers is turned on or off conditionally in the method.
      */
     geometryLine ( prim ) {
 
@@ -1124,10 +1122,14 @@ export default class Prim {
 
 
     /** 
-     * Polygon (flat), square to circular. Used to cap 
-     * some Prims, non uv (no central point).
-     * @param {Prim} prim the object needing buffers.
-     * @returns {BufferData} buffer data for Prim.     
+     * type POLYGON.
+     * rendered as GL_POLYGON.
+     * prim.dimensions    = (vec4) [ x, y, z, startRadius | 0 ]
+     * prim.divisions     = (vec3) [ x, y, z ]
+     * 
+     * @param {Prim} the Prim needing geometry. 
+     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
+     * Creating WebGL buffers is turned on or off conditionally in the method.
      */
     geometryPoly ( prim ) {
 
@@ -1208,8 +1210,16 @@ export default class Prim {
     }
 
     /** 
-     * Half-sphere, polar coordinates.
-     * @param {Prim} prim the object needing geometry.
+     * Objects created with uv methods (i.e. they have polar points).
+     * rendered as GL_TRIANGLES.
+     * startSlice cuts off the cylinder, and wraps the texture across the top. 
+     * endSlize truncates the bottom of the cylinder, and wraps the texture across the bottom.
+     * for an open cylinder with no caps, set startSlice and endSlize to zero.
+     * prim.dimensions    = (vec4) [ x, y, z, startSlice | 0, endSlice | 0 ]
+     *
+     * @param {Prim} the Prim needing geometry. 
+     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
+     * Creating WebGL buffers is turned on or off conditionally in the method.
      */
     geometrySphere ( prim ) {
 
@@ -1307,13 +1317,12 @@ export default class Prim {
                         break;
 
                     case list.CYLINDER:
-                        if( startSlice > 0 && lat <= startSlice ) {
+                        if ( startSlice > 0 && lat <= startSlice ) {
                             y = 1 - startSlice;
                         }
                         else if ( endSlice !== 1.0 && lat >= endSlice ) {
                             y = 1 - endSlice;
-                        }
-                        else {
+                        } else {
                             y = 1 - lat;
                             x = cosPhi / 2;
                             z = sinPhi / 2;
@@ -1466,7 +1475,15 @@ export default class Prim {
     }
 
     /** 
-     * Create a flat, circular UV object.
+     * type CAP
+     * rendered as GL_TRIANGLES.
+     * Just a flattened half-sphere creating a circular 'lid'.
+     * prim.dimensions    = (vec4) [ x, y, z, startRadius | 0 ]
+     * prim.divisions     = (vec3) [ x, y, z ]
+     * 
+     * @param {Prim} the Prim needing geometry. 
+     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
+     * Creating WebGL buffers is turned on or off conditionally in the method.
      */
     geometryCap( prim ) {
 
@@ -1475,37 +1492,15 @@ export default class Prim {
     }
 
     /** 
-     * Just create the top dome.
-     */
-    geometryTopDome ( prim ) {
-
-        return this.geometrySphere( prim );
-
-    }
-
-    /** 
-     * Create a Dome object that is rendered inside only
-     */
-    geometrySkyDome ( prim ) {
-
-        return this.geometrySphere( prim );
-
-    }
-
-    /** 
-     * Just create the bottom dome.
-     */
-    geometryBottomDome ( prim ) {
-
-        return this.geometrySphere( prim );
-
-    }
-
-    /** 
-     * Sphere with polar points.
-     * http://learningwebgl.com/blog/?p=1253
-     * @param {Prim} prim the prim needing geometry.
-     * @param {Boolean} sphere if true, make a sphere, otherwise a cylinder.
+     * type DOME
+     * rendered as GL_TRIANGLES.
+     * Half-sphere, visible from outside.
+     * prim.dimensions    = (vec4) [ x, y, z, startRadius | 0 ]
+     * prim.divisions     = (vec3) [ x, y, z ]
+     * 
+     * @param {Prim} the Prim needing geometry. 
+     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
+     * Creating WebGL buffers is turned on or off conditionally in the method.
      */
     geometryDome ( prim ) {
 
@@ -1514,7 +1509,69 @@ export default class Prim {
     }
 
     /** 
-     * Cylinder with open ends.
+     * type TOPDOME.
+     * rendered as WebGL TRIANGLES.
+     * Half-sphere (equivalent to type DOME).
+     * prim.dimensions    = (vec4) [ x, y, z, startRadius | 0 ]
+     * prim.divisions     = (vec3) [ x, y, z ]
+     * 
+     * @param {Prim} the Prim needing geometry. 
+     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
+     * Creating WebGL buffers is turned on or off conditionally in the method.
+     */
+    geometryTopDome ( prim ) {
+
+        return this.geometrySphere( prim );
+
+    }
+
+    /** 
+     * type SKYDOME
+     * rendered as GL_TRIANGLES.
+     * Half-sphere, Indices are reversed, so texture displays inside by default.
+     * prim.dimensions    = (vec4) [ x, y, z, startRadius | 0 ]
+     * prim.divisions     = (vec3) [ x, y, z ]
+     * 
+     * @param {Prim} the Prim needing geometry. 
+     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
+     * Creating WebGL buffers is turned on or off conditionally in the method.
+     */
+    geometrySkyDome ( prim ) {
+
+        return this.geometrySphere( prim );
+
+    }
+
+    /** 
+     * type BOTTOMDOME
+     * rendered as GL_TRIANGLES.
+     * bowl shaped, formed from lower half of sphere.
+     * prim.dimensions    = (vec4) [ x, y, z ]
+     * prim.divisions     = (vec3) [ x, y, z ]
+     * 
+     * @param {Prim} the Prim needing geometry. 
+     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
+     * Creating WebGL buffers is turned on or off conditionally in the method.
+     */
+    geometryBottomDome ( prim ) {
+
+        return this.geometrySphere( prim );
+
+    }
+
+    /** 
+     * type CYLINDER
+     * rendered as GL_TRIANGLES.
+     * Cylinder, either open or closed, visible from outside.
+     * startSlice cuts off the cylinder, and wraps the texture across the top. 
+     * endSlize truncates the bottom of the cylinder, and wraps the texture across the bottom.
+     * for an open cylinder with no caps, set startSlice and endSlize to zero.
+     * prim.dimensions    = (vec4) [ x, y, z, startSlice | 0, endSlice | 0 ]
+     * prim.divisions     = (vec3) [ x, y, z ]
+     * 
+     * @param {Prim} the Prim needing geometry. 
+     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
+     * Creating WebGL buffers is turned on or off conditionally in the method.
      */
     geometryCylinder ( prim ) {
 
@@ -1523,16 +1580,18 @@ export default class Prim {
     }
 
     /** 
-     * Spindle (two cones stuck together)
-     */
-    geometrySpindle ( prim ) {
-
-        return this.geometrySphere( prim );
-
-    }
-
-    /** 
-     * Cone with beginning and ending radius, open ends.
+     * type CONE.
+     * rendered as GL_TRIANGLES (equivalent to TOPCONE).
+     * Cone can have segments sliced off its beginning or end.
+     * startSlice cuts off the cone, and wraps the texture across the top. 
+     * endSlize truncates the bottom of the cone, and wraps the texture across the bottom.
+     * for a cone with no caps, set startSlice and endSlize to zero.
+     * prim.dimensions    = (vec4) [ x, y, z, startSlice | 0, endSlice | 0 ]
+     * prim.divisions     = (vec3) [ x, y, z ]
+     * 
+     * @param {Prim} the Prim needing geometry. 
+     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
+     * Creating WebGL buffers is turned on or off conditionally in the method.
      */
     geometryCone ( prim ) {
 
@@ -1541,7 +1600,17 @@ export default class Prim {
     }
 
     /** 
-     * Top cone, half a spindle.
+     * type TOPCONE.
+     * rendered as GL_TRIANGLES.(equivalent to CONE).
+     * startSlice cuts off the cone, and wraps the texture across the top. 
+     * endSlize truncates the bottom of the cone, and wraps the texture across the bottom.
+     * for a cone with no caps, set startSlice and endSlize to zero.
+     * prim.dimensions    = (vec4) [ x, y, z, startSlice | 0, endSlice | 0 ]
+     * prim.divisions     = (vec3) [ x, y, z ]
+     *
+     * @param {Prim} the Prim needing geometry. 
+     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
+     * Creating WebGL buffers is turned on or off conditionally in the method.
      */
     geometryTopCone ( prim ) {
 
@@ -1550,7 +1619,18 @@ export default class Prim {
     }
 
     /** 
-     * Bottom Cone, half a spindle.
+     * type BOTTOMCONE
+     * rendered as GL_TRIANGLES.
+     * Cone structure, pointing downwards.
+     * startSlice cuts off the cone, and wraps the texture across the top. 
+     * endSlize truncates the bottom of the cone, and wraps the texture across the bottom.
+     * for a cone with no caps, set startSlice and endSlize to zero.
+     * prim.dimensions    = (vec4) [ x, y, z, startSlice | 0, endSlice | 0 ]
+     * prim.divisions     = (vec3) [ x, y, z ]
+     *
+     * @param {Prim} the Prim needing geometry. 
+     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
+     * Creating WebGL buffers is turned on or off conditionally in the method.
      */
     geometryBottomCone ( prim ) {
 
@@ -1558,11 +1638,55 @@ export default class Prim {
 
     }
 
+    /**
+     * TYPE SPINDLE.
+     * rendered as GL_TRIANGLES.
+     * Spindle (two cones stuck together).
+     * prim.dimensions    = (vec4) [ x, y, z ]
+     * prim.divisions     = (vec3) [ x, y, z ]
+     * 
+     * @param {Prim} the Prim needing geometry. 
+     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
+     * Creating WebGL buffers is turned on or off conditionally in the method.
+     */
+    geometrySpindle ( prim ) {
+
+        return this.geometrySphere( prim );
+
+    }
+
     /** 
-     * Create a cube, or a spherical object from a cube mesh. Useful for cubemaps. 
-     * If rounding is zero, it is a cube.
-     * TODO: move vertices to better coverage
-     * @link https://github.com/caosdoar/spheres/
+     * type CAPSULE
+     * rendered as WebGL TRIANGLES.
+     * a cylinder with two spheres on each end, similar to capped cylinder, 
+     * equivalent to a closed cube.
+     * prim.dimensions    = (vec4) [ x, y, z, startSlice | 0, endSlice | 0 ]
+     * prim.divisions     = (vec3) [ x, y, z ]
+     * 
+     * @param {Prim} the Prim needing geometry. 
+     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
+     * Creating WebGL buffers is turned on or off conditionally in the method.
+     */
+    geometryCapsule ( prim ) {
+
+
+
+    }
+
+    /** 
+     * Create a PLANE, CUBE, or spherical object from cube mesh.
+     * --------------------------------------------------------------------
+     * type CUBE.
+     * rendered as WebGL TRIANGLES.
+     * adjust curveRadius to round the edges of the Cube.
+     * used by several other Prim routines (CUBESPHERE, PLANE, OUTERPLANE, 
+     * INNERPLANE, CURVEDPLANE, CURVEDOUTERPLANE, CURVEDINNERPLANE)
+     * prim.dimensions    = (vec4) [ x, y, z, Prim.side, curveRadius ]
+     * prim.divisions     = (vec3) [ x, y, z ]
+     * 
+     * @param {Prim} the Prim needing geometry. 
+     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
+     * Creating WebGL buffers is turned on or off conditionally in the method.
      */
     geometryCube ( prim ) {
 
@@ -1590,7 +1714,7 @@ export default class Prim {
         sz = prim.dimensions[ 2 ],       // z depth
         nx = prim.divisions[ 0 ],        // should be x , j
         ny = prim.divisions[ 1 ],        // should be y, i 
-        nz = prim.divisions[ 2 ];        // should be z
+        nz = prim.divisions[ 2 ]         // should be z
 
         //var numVertices = ( nx + 1 ) * ( ny + 1 ) * 2 + ( nx + 1 ) * ( nz + 1 ) * 2 + ( nz + 1 ) * ( ny + 1 ) * 2;
 
@@ -1606,17 +1730,17 @@ export default class Prim {
 
             case list.CUBESPHERE:
 
-                makeSide( 0, 1, 2, sx, sy, nx, ny,  sz / 2,  1, -1 ); //front
+                makePlane( 0, 1, 2, sx, sy, nx, ny,  sz / 2,  1, -1 ); //front
 
-                makeSide( 0, 1, 2, sx, sy, nx, ny, -sz / 2, -1, -1 ); //back
+                makePlane( 0, 1, 2, sx, sy, nx, ny, -sz / 2, -1, -1 ); //back
 
-                makeSide( 2, 1, 0, sz, sy, nz, ny, -sx / 2,  1, -1 ); //left
+                makePlane( 2, 1, 0, sz, sy, nz, ny, -sx / 2,  1, -1 ); //left
 
-                makeSide( 2, 1, 0, sz, sy, nz, ny,  sx / 2, -1, -1 ); //right
+                makePlane( 2, 1, 0, sz, sy, nz, ny,  sx / 2, -1, -1 ); //right
 
-                makeSide( 0, 2, 1, sx, sz, nx, nz,  sy / 2,  1,  1 ); //top
+                makePlane( 0, 2, 1, sx, sz, nx, nz,  sy / 2,  1,  1 ); //top
 
-                makeSide( 0, 2, 1, sx, sz, nx, nz, -sy / 2,  1, -1 ); //bottom
+                makePlane( 0, 2, 1, sx, sz, nx, nz, -sy / 2,  1, -1 ); //bottom
 
                 break;
 
@@ -1625,30 +1749,30 @@ export default class Prim {
             case list.CURVEDINNERPLANE:
             case list.TERRAIN:
 
-                switch( prim.dimensions[ 3 ] ) {
+                switch( prim.dimensions[ 3 ] ) { // which side, based on cube sides
 
                     case side.FRONT:
-                        makeSide( 0, 1, 2, sx, sy, nx, ny, sz / 2,  1, -1 );
+                        makePlane( 0, 1, 2, sx, sy, nx, ny, sz / 2,  1, -1 );
                     break;
 
                     case side.BACK:
-                        makeSide( 0, 1, 2, sx, sy, nx, ny, -sz / 2, -1, -1 );
+                        makePlane( 0, 1, 2, sx, sy, nx, ny, -sz / 2, -1, -1 );
                     break;
 
                     case side.LEFT:
-                        makeSide( 2, 1, 0, sx, sy, nz, ny, -sx / 2,  1, -1 );
+                        makePlane( 2, 1, 0, sx, sy, nz, ny, -sx / 2,  1, -1 );
                     break;
 
                     case side.RIGHT:
-                        makeSide( 2, 1, 0, sx, sy, nz, ny,  sx / 2, -1, -1 ); 
+                        makePlane( 2, 1, 0, sx, sy, nz, ny,  sx / 2, -1, -1 ); 
                         break;
 
                     case side.TOP:
-                        makeSide( 0, 2, 1, sx, sy, nx, nz,  sy / 2,  1,  1 ); // ROTATE xy axis
+                        makePlane( 0, 2, 1, sx, sy, nx, nz,  sy / 2,  1,  1 ); // ROTATE xy axis
                         break;
 
                     case side.BOTTOM:
-                        makeSide( 0, 2, 1, sx, -sy, nx, nz, -sy / 2,  1, -1 ); // ROTATE xy axis
+                        makePlane( 0, 2, 1, sx, -sy, nx, nz, -sy / 2,  1, -1 ); // ROTATE xy axis
                         break;
 
                     default:
@@ -1662,8 +1786,9 @@ export default class Prim {
 
         }
 
+        // Make an individual Plane.
 
-        function makeSide( u, v, w, su, sv, nu, nv, pw, flipu, flipv ) {
+        function makePlane( u, v, w, su, sv, nu, nv, pw, flipu, flipv ) {
 
             // Create a size, positioning in correct position.
 
@@ -1723,7 +1848,7 @@ export default class Prim {
 
             }
 
-        } // end of makeSide.
+        } // end of makePlane.
 
         // Round the edges of the CUBE or SPHERECUBE to a sphere.
 
@@ -1813,48 +1938,64 @@ export default class Prim {
 
             let dSide = 1;
 
+            switch( prim.dimensions[ 3 ] ) {
+
+                case side.FRONT:
+                    if ( prim.type === list.CURVEDINNERPLANE || prim.type == list.INNERPLANE ) dSide = -1;
+                    break;
+
+                case side.BACK:
+                    if ( prim.type === list.CURVEDOUTERPLANE || prim.type === list.OUTERPLANE ) dSide = -1;
+                    break;
+
+                case side.LEFT:
+                    if ( prim.type === list.CURVEDOUTERPLANE || prim.type === list.OUTERPLANE ) dSide = -1;
+                    break;
+
+                case side.RIGHT:
+                    if ( prim.type === list.CURVEDINNERPLANE || prim.type === list.INNERPLANE ) dSide = -1;
+                    break;
+
+                case side.TOP:
+                    if ( prim.type === list.CURVEDOUTERPLANE || prim.type === list.OUTERPLANE ) dSide = -1;
+                    break;
+
+                case side.BOTTOM:
+                    if ( prim.type === list.CURVEDINNERPLANE || prim.type === list.INNERPLANE ) dSide = -1
+                    break;
+            }
+
             for( var i = 0; i < positions.length; i++ ) {
 
                 switch ( prim.dimensions[ 3 ] ) {
 
                 case side.FRONT:
-                    if ( prim.type === list.CURVEDINNERPLANE ) dSide = -1;
                     positions[ i ][ 2 ] = dSide * Math.cos( positions[ i ][ 0 ] ) * prim.dimensions[ 4 ];
                     break;
 
                 case side.BACK:
-                    if ( prim.type === list.CURVEDOUTERPLANE ) dSide = -1;
                     positions[ i ][ 2 ] = dSide * Math.cos( positions[ i ][ 0 ] ) * prim.dimensions[ 4 ];
                     break;
 
                 case side.LEFT:
-                    if ( prim.type === list.CURVEDOUTERPLANE ) dSide = -1;
                     positions[ i ][ 0 ] = dSide * Math.cos( positions[ i ][ 2 ] ) * prim.dimensions[ 4 ];
                     break;
 
                 case side.RIGHT:
-                    if ( prim.type === list.CURVEDINNERPLANE ) dSide = -1;
                     positions[ i ][ 0 ] = dSide * Math.cos( positions[ i ][ 2 ] ) * prim.dimensions[ 4 ];
                     break;
 
                 case side.TOP:
-                    if ( prim.type === list.CURVEDOUTERPLANE ) dSide = -1;
                     positions[ i ][ 1 ] = dSide * Math.cos( positions[ i ][ 0 ] ) * prim.dimensions[ 4 ];
                     break;
 
                 case side.BOTTOM:
-                    if ( prim.type === list.CURVEDINNERPLANE ) dSide = -1
                     positions[ i ][ 1 ] = -Math.cos( positions[ i ][ 0 ] ) * prim.dimensions[ 4 ]; // SEEN FROM INSIDE< CORRECT
                     break;
 
+                }
+
             }
-
-                // switch for directions.
-                // currently FRONT.
-
-                //positions[ i ][ 2 ] = Math.cos( positions[ i ][ 0 ] ) * prim.dimensions[ 4 ];
-
-              }
 
         }
 
@@ -1892,12 +2033,34 @@ export default class Prim {
 
     }
 
+    /** 
+     * type PLANE, OUTERPLANE
+     * rendered as WebGL TRIANGLES.
+     * visible from the 'outside' as defined by the outward vector from Prim.side.
+     * prim.dimensions    = (vec4) [ x, y, z, Prim.side ]
+     * prim.divisions     = (vec3) [ x, y, z ]
+     * 
+     * @param {Prim} the Prim needing geometry. 
+     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
+     * Creating WebGL buffers is turned on or off conditionally in the method.
+     */
     geometryOuterPlane ( prim ) {
 
         return this.geometryCube( prim );
 
     }
 
+    /** 
+     * type INNERPLANE
+     * rendered as WebGL TRIANGLES.
+     * visible from the 'inside', as defined by the outward vectore from Prim.side.
+     * prim.dimensions    = (vec4) [ x, y, z, Prim.side ]
+     * prim.divisions     = (vec3) [ x, y, z ]
+     * 
+     * @param {Prim} the Prim needing geometry. 
+     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
+     * Creating WebGL buffers is turned on or off conditionally in the method.
+     */
     geometryInnerPlane ( prim ) {
 
         return this.geometryCube( prim );
@@ -1905,8 +2068,16 @@ export default class Prim {
     }
 
     /** 
-     * Plane curved in one or two dimensions. 
-     * Useful for creating HUD displays.
+     * type CURVEDPLANE, CUREVEDOUTERPLANE
+     * rendered as WebGL TRIANGLES.
+     * visible from the 'outside' as defined by the outward vector from Prim.side.
+     * curve radius sets the amount of curve by assigning a radius for a circle.
+     * prim.dimensions    = (vec4) [ x, y, z, Prim.side, curveRadius | 0 ]
+     * prim.divisions     = (vec3) [ x, y, z ]
+     * 
+     * @param {Prim} the Prim needing geometry. 
+     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
+     * Creating WebGL buffers is turned on or off conditionally in the method.
      */
      geometryCurvedOuterPlane( prim ) {
 
@@ -1914,6 +2085,18 @@ export default class Prim {
 
      }
 
+     /** 
+     * type CURVEDINNERPLANE
+     * rendered as GL_TRIANGLES.
+     * visible from the 'inside', as defined by the outward vectore from Prim.side.
+     * curve radius sets the amount of curve by assigning a radius for a circle.
+     * prim.dimensions    = (vec4) [ x, y, z, Prim.side, curveRadius | 0 ]
+     * prim.divisions     = (vec3) [ x, y, z ]
+     * 
+     * @param {Prim} the Prim needing geometry. 
+     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
+     * Creating WebGL buffers is turned on or off conditionally in the method.
+     */
      geometryCurvedInnerPlane( prim ) {
 
         return this.geometryCube( prim );
@@ -1921,7 +2104,16 @@ export default class Prim {
      };
 
     /** 
-     * Generate terrain, using a heightMap, from a PLANE object.
+     * type TERRAIN.
+     * rendered as GL_TRIANGLES.
+     * Generate terrain, using a heightMap, from a PLANE object. The 
+     * heightMap values are interpolated for each vertex in the PLANE.
+     * prim.dimensions    = (vec4) [ x, y, z, Prim.side ]
+     * prim.divisions     = (vec3) [ x, y, z ]
+     * 
+     * @param {Prim} the Prim needing geometry. 
+     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
+     * Creating WebGL buffers is turned on or off conditionally in the method.
      */
     geometryTerrain ( prim ) {
 
@@ -1950,12 +2142,15 @@ export default class Prim {
     };
 
     /** 
-     * Create a (non-subdivided) cube geometry of a given size (units) centered 
-     * on a point.
-     * @param {GLMatrix.Vec3} center a 3d vector defining the center.
-     * @param {Size} width, height, depth, with 1.0 (unit) max size
-     * @param {Number} scale relative to unit size (1, 1, 1).
-      name = 'unknown', scale = 1.0, dimensions, position, acceleration, rotation, textureImage, color
+     * type CUBESPHERE.
+     * rendered as WebGL TRIANGLES.
+     * just sets the curveRadius to 1/2 of the prim size.
+     * prim.dimensions    = (vec4) [ x, y, z, Prim.side, curveRadius ]
+     * prim.divisions     = (vec3) [ x, y, z ]
+     * 
+     * @param {Prim} the Prim needing geometry. 
+     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
+     * Creating WebGL buffers is turned on or off conditionally in the method.
      */
     geometryCubeSphere ( prim ) {
 
@@ -1968,21 +2163,6 @@ export default class Prim {
         return this.geometryCube( prim );
 
     }
-
-    /** 
-     * Closed cylinder with one texture.
-     */
-    geometryCan ( prim ) {
-
-    }
-
-    /** 
-     * Two spheres stuck on a cylinder
-     */
-    geometryCapsule ( prim ) {
-
-    }
-
 
     /** 
      * Icosphere, adapted from Unity 3d tutorial.
@@ -2350,6 +2530,14 @@ export default class Prim {
 
     }
 
+    /** 
+     * type ICOSOHEDRON.
+     * create a icosohedron.
+     * 
+     * @param {Prim} the Prim needing geometry. 
+     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
+     * Creating WebGL buffers is turned on or off conditionally in the method.
+     */
     geometryIcosohedron ( prim ) {
 
         return this.geometryIcoSphere( prim, false );
@@ -2357,16 +2545,65 @@ export default class Prim {
     }
 
     /** 
-     * Half-sphere, icosohedron based.
+     * type PRISM.
+     * create a closed pyramid shape, half of an icosohedron.
+     * 
+     * @param {Prim} the Prim needing geometry. 
+     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
+     * Creating WebGL buffers is turned on or off conditionally in the method.
      */
-    geometryIcoDome( prim ) {
-
-    }   
-
     geometryPrism ( prim ) {
 
         // TODO: return upper half of icosohedron, and close. (possibly by setting 
         // bottom half to a comm y value)
+
+    }
+
+    /** 
+     * type ICODOME.
+     * create a half-sphere from an icosphere.
+     * 
+     * @param {Prim} the Prim needing geometry. 
+     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
+     * Creating WebGL buffers is turned on or off conditionally in the method.
+     */
+    geometryIcoDome( prim ) {
+
+    }
+
+    /** 
+     * type TOPICODOME.
+     * create a half-sphere from an icosphere.
+     * 
+     * @param {Prim} the Prim needing geometry. 
+     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
+     * Creating WebGL buffers is turned on or off conditionally in the method.
+     */
+    geometryTopIcoDome ( prim ) {
+
+    }
+
+    /** 
+     * type SKYICODOME.
+     * create a half-sphere with texture only visible from the inside.
+     * 
+     * @param {Prim} the Prim needing geometry. 
+     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
+     * Creating WebGL buffers is turned on or off conditionally in the method.
+     */
+    geometrySkyIcoDome ( prim ) {
+
+    }
+
+    /** 
+     * type BOTTOMICODOME.
+     * create a bowl shape from the lower half of an icosphere.
+     * 
+     * @param {Prim} the Prim needing geometry. 
+     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
+     * Creating WebGL buffers is turned on or off conditionally in the method.
+     */
+    geometryBottomIcoDome ( prim ) {
 
     }
 
@@ -2382,6 +2619,10 @@ export default class Prim {
      * n:  number of faces
      * sn: number of faces on section
      * k:  factor between 0 and 1 defining the space between strips of the torus
+     * 
+     * @param {Prim} the Prim needing geometry. 
+     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
+     * Creating WebGL buffers is turned on or off conditionally in the method.
      */
     geometryTorus ( prim ) {
 
@@ -2500,7 +2741,11 @@ export default class Prim {
     /** 
      * Generic 3d shape (e.g. Collada model).
      * @link https://dannywoodz.wordpress.com/2014/12/16/webgl-from-scratch-loading-a-mesh/
-     * https://github.com/jagenjo/litegl.js/blob/master/src/mesh.js
+     * @link https://github.com/jagenjo/litegl.js/blob/master/src/mesh.js
+     * 
+     * @param {Prim} the Prim needing geometry. 
+     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
+     * Creating WebGL buffers is turned on or off conditionally in the method.
      */
     geometryMesh ( prim ) {
 
@@ -2551,19 +2796,6 @@ export default class Prim {
 
     }
 
-    /** 
-     * Generate a heightmap on a spherical or spheroid surface
-     * Also some smoothing out.
-     * THIS ONE CONVERTS FROM TRIANGLES TO HEXAGONS.
-     * @link https://experilous.com/1/blog/post/procedural-planet-generation
-     * @link https://experilous.com/1/planet-generator/2014-09-28/planet-generator.js
-     */
-    geometryPlanet() {
-        // TODO: use heightmap to displace points on a cubesphere
-        // https://acko.net/blog/making-worlds-1-of-spheres-and-cubes/
-    }
-
-
      /*
      * ---------------------------------------
      * PRIMS
@@ -2586,6 +2818,13 @@ export default class Prim {
         const vec3 = this.glMatrix.vec3;
 
         const mat4 = this.glMatrix.mat4;
+
+        if ( ! this.checkType( type ) ) {
+
+            console.error( 'unsupported Prim type, ' + type );
+
+            return null;
+        }
 
         let prim = {};
 
@@ -2686,8 +2925,6 @@ export default class Prim {
         prim.geometry.type = type;
 
         // NOTE: mis-spelling type leads to error here...
-
-        console.log('>>>>>>CREATING TYPE::::::' + prim.type)
 
         prim.geometry = this[ type ]( prim, color );
 
