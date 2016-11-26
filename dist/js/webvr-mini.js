@@ -3810,7 +3810,13 @@
 
 	                        LINE: 'geometryLine',
 
-	                        PLANE: 'geometryPlane',
+	                        PLANE: 'geometryOuterPlane',
+
+	                        OUTERPLANE: 'geometryOuterPlane',
+
+	                        INNERPLANE: 'geometryInnerPlane',
+
+	                        CURVEDPLANE: 'geometryCurvedOuterPlane',
 
 	                        CURVEDOUTERPLANE: 'geometryCurvedOuterPlane',
 
@@ -4851,189 +4857,14 @@
 	                }
 
 	                /** 
-	                 * Plane (non-infinite, multiple vertices, can be turned into TERRAIN).
-	                 * Drawn horizontal in the x/z axis, y (depth) = 0;
-	                 * Differs from sides of other prims in not defining curve radius.
-	                 * @param {Prim} prim the object needing buffers.
-	                 * @returns {BufferData} buffer data for Prim.
-	                 */
-
-	        }, {
-	                key: 'geometryPlane',
-	                value: function geometryPlane(prim) {
-
-	                        //const vec3 = this.glMatrix.vec3;
-
-	                        var list = this.typeList;
-
-	                        var geo = prim.geometry;
-
-	                        return this.geometryCube(prim);
-
-	                        // NOTE: FOR SOME REASON THIS CAUSES PROBLEMS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-	                        if (prim.name === 'terrain') {
-	                                console.log(">>>>>>>CUBING TERRAIN");
-	                                window.terr = prim.geometry;
-	                                return this.geometryCube(prim);
-	                        } else if (prim.name === 'TestPlane') {
-	                                console.log(">>>>>>>CUBING TESTPLANE");
-	                                window.plane = prim.geometry;
-	                                return this.geometryCube(prim);
-	                        }
-	                        console.log(">>>>>>WENT THROUGH WITH:" + prim.name);
-	                        ///////////////////////////////////////////////////////////////////////////////////////////
-
-
-	                        // Shortcuts to Prim data arrays
-
-	                        var vertices = geo.vertices.data,
-	                            indices = geo.indices.data,
-	                            texCoords = geo.texCoords.data,
-	                            normals = geo.normals.data,
-	                            tangents = geo.tangents.data,
-	                            colors = geo.colors.data;
-
-	                        var cols = prim.divisions[0],
-	                            // x axis (really xz)
-	                        rows = prim.divisions[2]; // z axis
-
-	                        var halfX = prim.dimensions[0] / 2,
-	                            // x axis
-	                        halfZ = prim.dimensions[2] / 2; // z axis
-
-	                        // Increments for building Plane.
-
-	                        var incX = prim.dimensions[0] / prim.divisions[0],
-	                            incY = 1,
-	                            incZ = prim.dimensions[2] / prim.divisions[2];
-
-	                        for (var colNum = 0; colNum <= cols; colNum++) {
-
-	                                for (var rowNum = 0; rowNum <= rows; rowNum++) {
-
-	                                        //console.log( ">>>>>>>>>>" + prim.name + " colnum:" + colNum + " rowNum:" + rowNum )
-
-	                                        // Vertex values.
-
-	                                        var x = colNum;
-
-	                                        var y = 0;
-
-	                                        // Get interpolated pixel height from heightmap.
-
-	                                        if (prim.heightMap) {
-
-	                                                y = prim.heightMap.getPixel(colNum, rowNum);
-	                                        } else {
-
-	                                                normals.push(0, 1, 0);
-	                                        }
-
-	                                        // Curve the plane if a curved plane.
-
-	                                        var z = rowNum;
-
-	                                        if (prim.type === list.CURVEDOUTERPLANE || prim.type === list.CURVEDINNERPLANE) {
-
-	                                                var xRadius = prim.dimensions[3];
-
-	                                                var yRadius = prim.dimensions[4];
-	                                        }
-
-	                                        // Vertices.
-
-	                                        vertices.push(incX * x - halfX, incY * y, incZ * z - halfZ);
-
-	                                        // Texture coords.
-
-	                                        var u = colNum / cols;
-
-	                                        var v = 1 - rowNum / rows;
-
-	                                        texCoords.push(u, v);
-
-	                                        // Normals computed separately, due to heightMap.
-	                                }
-	                        }
-
-	                        // Indices. (since we use rowNum < rows, not rowNum <= rows)
-
-	                        var first = void 0,
-	                            second = void 0;
-
-	                        for (var _rowNum = 0; _rowNum < rows; _rowNum++) {
-
-	                                for (var _colNum = 0; _colNum < cols; _colNum++) {
-
-	                                        first = _rowNum * (cols + 1) + _colNum;
-
-	                                        second = first + cols + 1;
-
-	                                        // Note: we're running culling in reverse from some tutorials here.
-
-	                                        indices.push(first + 1, second + 1, second);
-
-	                                        indices.push(first + 1, second, first);
-	                                }
-	                        }
-
-	                        // Normals need to be computed here if we have a heightMap.
-
-	                        if (prim.heightMap) {
-
-	                                this.computeNormals(vertices, indices, normals);
-	                        }
-
-	                        // Tangents.
-
-	                        this.computeTangents(vertices, indices, normals, texCoords);
-
-	                        // Colors.
-
-	                        if (!colors.length) {
-
-	                                colors = geo.colors.data = this.computeColors(normals, colors);
-	                        }
-
-	                        // Return the buffer, or add array data to the existing Prim data.
-
-	                        if (prim.geometry.makeBuffers === true) {
-
-	                                return this.createBuffers(prim.geometry);
-	                        } else {
-
-	                                return this.addBufferData(prim.geometry, vertices, indices, texCoords, normals, tangents, colors);
-	                        }
-	                }
-
-	                /** 
-	                 * Plane curved in one or two dimensions. 
-	                 * Useful for creating HUD displays.
-	                 */
-
-	        }, {
-	                key: 'geometryCurvedOuterPlane',
-	                value: function geometryCurvedOuterPlane(prim) {
-
-	                        return this.geometryCube(prim);
-	                }
-	        }, {
-	                key: 'geometryCurvedInnerPlane',
-	                value: function geometryCurvedInnerPlane(prim) {
-
-	                        return this.geometryCube(prim);
-	                }
-	        }, {
-	                key: 'geometryPoly',
-
-
-	                /** 
 	                 * Polygon (flat), square to circular. Used to cap 
 	                 * some Prims, non uv (no central point).
 	                 * @param {Prim} prim the object needing buffers.
 	                 * @returns {BufferData} buffer data for Prim.     
 	                 */
+
+	        }, {
+	                key: 'geometryPoly',
 	                value: function geometryPoly(prim) {
 
 	                        var geo = prim.geometry;
@@ -5515,59 +5346,66 @@
 
 	                        var vertexIndex = 0;
 
-	                        if (prim.type === list.CUBE || prim.type === list.CUBESPHERE) {
+	                        switch (prim.type) {
 
-	                                makeSide(0, 1, 2, sx, sy, nx, ny, sz / 2, 1, -1); //front
+	                                case list.CUBE:
 
-	                                makeSide(0, 1, 2, sx, sy, nx, ny, -sz / 2, -1, -1); //back
+	                                case list.CUBESPHERE:
 
-	                                makeSide(2, 1, 0, sz, sy, nz, ny, -sx / 2, 1, -1); //left
+	                                        makeSide(0, 1, 2, sx, sy, nx, ny, sz / 2, 1, -1); //front
 
-	                                makeSide(2, 1, 0, sz, sy, nz, ny, sx / 2, -1, -1); //right
+	                                        makeSide(0, 1, 2, sx, sy, nx, ny, -sz / 2, -1, -1); //back
 
-	                                makeSide(0, 2, 1, sx, sz, nx, nz, sy / 2, 1, 1); //top
+	                                        makeSide(2, 1, 0, sz, sy, nz, ny, -sx / 2, 1, -1); //left
 
-	                                makeSide(0, 2, 1, sx, sz, nx, nz, -sy / 2, 1, -1); //bottom
+	                                        makeSide(2, 1, 0, sz, sy, nz, ny, sx / 2, -1, -1); //right
 
-	                        } else if (prim.type === list.CURVEDOUTERPLANE || prim.type === list.CURVEDINNERPLANE || prim.type === list.PLANE || prim.type === list.TERRAIN) {
+	                                        makeSide(0, 2, 1, sx, sz, nx, nz, sy / 2, 1, 1); //top
 
-	                                switch (prim.dimensions[3]) {
+	                                        makeSide(0, 2, 1, sx, sz, nx, nz, -sy / 2, 1, -1); //bottom
 
-	                                        case side.FRONT:
-	                                                makeSide(0, 1, 2, sx, sy, nx, ny, sz / 2, 1, -1); //front forward facing side.
-	                                                break;
+	                                        break;
 
-	                                        case side.BACK:
-	                                                makeSide(0, 1, 2, sx, sy, nx, ny, -sz / 2, -1, -1); // ROTATE xz 180
-	                                                break;
+	                                case list.PLANE:
+	                                case list.CURVEDOUTERPLANE:
+	                                case list.CURVEDINNERPLANE:
+	                                case list.TERRAIN:
 
-	                                        case side.LEFT:
-	                                                // should be x width
-	                                                makeSide(2, 1, 0, sx, sy, nz, ny, -sx / 2, 1, -1); // ROTATE xz -90 NOT WORKING WRONG SIZE LIKE BACK
-	                                                break;
+	                                        switch (prim.dimensions[3]) {
 
-	                                        case side.RIGHT:
-	                                                // should x width
-	                                                makeSide(2, 1, 0, sx, sy, nz, ny, sx / 2, -1, -1); // ROTATE xz 90 INVISIBLE FROM WRONG SIDE
-	                                                break;
+	                                                case side.FRONT:
+	                                                        makeSide(0, 1, 2, sx, sy, nx, ny, sz / 2, 1, -1);
+	                                                        break;
 
-	                                        case side.TOP:
-	                                                makeSide(0, 2, 1, sx, sy, nx, nz, sy / 2, 1, 1); // ROTATE xy axis
-	                                                break;
+	                                                case side.BACK:
+	                                                        makeSide(0, 1, 2, sx, sy, nx, ny, -sz / 2, -1, -1);
+	                                                        break;
 
-	                                        case side.BOTTOM:
-	                                                makeSide(0, 2, 1, sx, -sy, nx, nz, -sy / 2, 1, -1); // ROTATE xy axis
-	                                                break;
+	                                                case side.LEFT:
+	                                                        makeSide(2, 1, 0, sx, sy, nz, ny, -sx / 2, 1, -1);
+	                                                        break;
 
-	                                        default:
-	                                                break;
+	                                                case side.RIGHT:
+	                                                        makeSide(2, 1, 0, sx, sy, nz, ny, sx / 2, -1, -1);
+	                                                        break;
 
-	                                }
+	                                                case side.TOP:
+	                                                        makeSide(0, 2, 1, sx, sy, nx, nz, sy / 2, 1, 1); // ROTATE xy axis
+	                                                        break;
 
-	                                // makeSide( 0, 1, 2, sx, sy, nx, ny,  sz / 2,  1, -1 ); //front forward facing side.
-	                        } else {
+	                                                case side.BOTTOM:
+	                                                        makeSide(0, 2, 1, sx, -sy, nx, nz, -sy / 2, 1, -1); // ROTATE xy axis
+	                                                        break;
 
-	                                console.error('unsupported Prim type:' + prim.type);
+	                                                default:
+	                                                        break;
+
+	                                        }
+	                                        break;
+
+	                                default:
+	                                        break;
+
 	                        }
 
 	                        function makeSide(u, v, w, su, sv, nu, nv, pw, flipu, flipv) {
@@ -5698,37 +5536,41 @@
 	                                }
 	                        } else if ((prim.type === list.CURVEDOUTERPLANE || prim.type === list.CURVEDINNERPLANE) && prim.dimensions[4] && prim.dimensions[4] !== 0) {
 
+	                                var dSide = 1;
+
 	                                for (var i = 0; i < positions.length; i++) {
 
 	                                        switch (prim.dimensions[3]) {
 
-	                                                ////////////////////////////////////////
 	                                                case side.FRONT:
-	                                                        positions[i][2] = Math.cos(positions[i][0]) * prim.dimensions[4]; // SEEN FROM OUTSIDE
+	                                                        if (prim.type === list.CURVEDINNERPLANE) dSide = -1;
+	                                                        positions[i][2] = dSide * Math.cos(positions[i][0]) * prim.dimensions[4];
 	                                                        break;
 
 	                                                case side.BACK:
-	                                                        positions[i][2] = -Math.cos(positions[i][0]) * prim.dimensions[4]; // SEEN FROM OUTSIDE
+	                                                        if (prim.type === list.CURVEDOUTERPLANE) dSide = -1;
+	                                                        positions[i][2] = dSide * Math.cos(positions[i][0]) * prim.dimensions[4];
 	                                                        break;
 
 	                                                case side.LEFT:
-	                                                        positions[i][0] = -Math.cos(positions[i][2]) * prim.dimensions[4]; // SEEN FROM OUTSIDE, - reverses
+	                                                        if (prim.type === list.CURVEDOUTERPLANE) dSide = -1;
+	                                                        positions[i][0] = dSide * Math.cos(positions[i][2]) * prim.dimensions[4];
 	                                                        break;
 
 	                                                case side.RIGHT:
-	                                                        positions[i][0] = Math.cos(positions[i][2]) * prim.dimensions[4]; // SEEN FROM outside, - reverses
+	                                                        if (prim.type === list.CURVEDINNERPLANE) dSide = -1;
+	                                                        positions[i][0] = dSide * Math.cos(positions[i][2]) * prim.dimensions[4];
 	                                                        break;
 
 	                                                case side.TOP:
-	                                                        positions[i][1] = Math.cos(positions[i][0]) * prim.dimensions[4];
+	                                                        if (prim.type === list.CURVEDOUTERPLANE) dSide = -1;
+	                                                        positions[i][1] = dSide * Math.cos(positions[i][0]) * prim.dimensions[4];
 	                                                        break;
 
 	                                                case side.BOTTOM:
+	                                                        if (prim.type === list.CURVEDINNERPLANE) dSide = -1;
 	                                                        positions[i][1] = -Math.cos(positions[i][0]) * prim.dimensions[4]; // SEEN FROM INSIDE< CORRECT
 	                                                        break;
-
-	                                                /////////////////////////////////////////
-
 
 	                                        }
 
@@ -5768,13 +5610,43 @@
 	                                return this.addBufferData(prim.geometry, vertices, indices, texCoords, normals, tangents, colors);
 	                        }
 	                }
+	        }, {
+	                key: 'geometryOuterPlane',
+	                value: function geometryOuterPlane(prim) {
+
+	                        return this.geometryCube(prim);
+	                }
+	        }, {
+	                key: 'geometryInnerPlane',
+	                value: function geometryInnerPlane(prim) {
+
+	                        return this.geometryCube(prim);
+	                }
+
+	                /** 
+	                 * Plane curved in one or two dimensions. 
+	                 * Useful for creating HUD displays.
+	                 */
+
+	        }, {
+	                key: 'geometryCurvedOuterPlane',
+	                value: function geometryCurvedOuterPlane(prim) {
+
+	                        return this.geometryCube(prim);
+	                }
+	        }, {
+	                key: 'geometryCurvedInnerPlane',
+	                value: function geometryCurvedInnerPlane(prim) {
+
+	                        return this.geometryCube(prim);
+	                }
+	        }, {
+	                key: 'geometryTerrain',
+
 
 	                /** 
 	                 * Generate terrain, using a heightMap, from a PLANE object.
 	                 */
-
-	        }, {
-	                key: 'geometryTerrain',
 	                value: function geometryTerrain(prim) {
 
 	                        if (!prim.heightMap) {
@@ -5796,7 +5668,7 @@
 
 	                        // NOTE: this can make the heightmap in any orientation.
 
-	                        return this.geometryPlane(prim);
+	                        return this.geometryOuterPlane(prim);
 	                }
 	        }, {
 	                key: 'geometryCubeSphere',
@@ -7607,7 +7479,7 @@
 	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	                        ));
 
-	                        this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.TERRAIN, 'terrain', vec5(2, 1, 2, this.prim.side.TOP, 0.1), // NOTE: ORIENTATION DESIRED vec5[3], waterline = vec5[4]
+	                        this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.TERRAIN, 'terrain', vec5(2, 2, 44, this.prim.side.TOP, 0.1), // NOTE: ORIENTATION DESIRED vec5[3], waterline = vec5[4]
 	                        vec5(100, 100, 100), // divisions
 	                        vec3.fromValues(1.5, -1.5, 2), // position (absolute)
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -7621,7 +7493,7 @@
 	                        ///////////////////////////
 	                        // PLANE
 
-	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CURVEDOUTERPLANE, 'CurvedPlane', vec5(2, 1, 1, this.prim.side.FRONT, 1), // pass orientation ONE UNIT CURVE
+	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlane', vec5(2, 1, 1, this.prim.side.FRONT, 1), // pass orientation ONE UNIT CURVE
 	                        vec5(10, 10, 10), // divisions
 	                        vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -7631,7 +7503,7 @@
 	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	                        ));
 
-	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CURVEDOUTERPLANE, 'CurvedPlane', vec5(2, 1, 1, this.prim.side.BACK, 1), // pass orientation ONE UNIT CURVE
+	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlane', vec5(2, 1, 1, this.prim.side.BACK, 1), // pass orientation ONE UNIT CURVE
 	                        vec5(10, 10, 10), // divisions
 	                        vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -7641,7 +7513,7 @@
 	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	                        ));
 
-	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CURVEDOUTERPLANE, 'CurvedPlane', vec5(2, 1, 1, this.prim.side.LEFT, 1), // pass orientation ONE UNIT CURVE
+	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlane', vec5(2, 1, 1, this.prim.side.LEFT, 1), // pass orientation ONE UNIT CURVE
 	                        vec5(10, 10, 10), // divisions
 	                        vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -7651,7 +7523,7 @@
 	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	                        ));
 
-	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CURVEDOUTERPLANE, 'CurvedPlane', vec5(2, 1, 1, this.prim.side.RIGHT, 1), // pass orientation ONE UNIT CURVE
+	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlane', vec5(2, 1, 1, this.prim.side.RIGHT, 1), // pass orientation ONE UNIT CURVE
 	                        vec5(10, 10, 10), // divisions
 	                        vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z

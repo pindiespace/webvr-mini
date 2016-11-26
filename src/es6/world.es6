@@ -177,7 +177,7 @@ export default class World {
         this.dirlightTextureObjList.push( this.prim.createPrim(
             this.prim.typeList.TERRAIN,
             'terrain',
-            vec5( 2, 1, 2, this.prim.side.TOP, 0.1 ),            // NOTE: ORIENTATION DESIRED vec5[3], waterline = vec5[4]
+            vec5( 2, 2, 44, this.prim.side.TOP, 0.1 ),            // NOTE: ORIENTATION DESIRED vec5[3], waterline = vec5[4]
             vec5( 100, 100, 100 ),           // divisions
             vec3.fromValues( 1.5, -1.5, 2 ),       // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -192,7 +192,7 @@ export default class World {
 // PLANE
 
         this.textureObjList.push( this.prim.createPrim(
-            this.prim.typeList.CURVEDOUTERPLANE,
+            this.prim.typeList.CURVEDINNERPLANE,
             'CurvedPlane',
             vec5( 2, 1, 1, this.prim.side.FRONT, 1 ),         // pass orientation ONE UNIT CURVE
             vec5( 10, 10, 10 ),        // divisions
@@ -205,7 +205,7 @@ export default class World {
         ) );
 
         this.textureObjList.push( this.prim.createPrim(
-            this.prim.typeList.CURVEDOUTERPLANE,
+            this.prim.typeList.CURVEDINNERPLANE,
             'CurvedPlane',
             vec5( 2, 1, 1, this.prim.side.BACK, 1 ),         // pass orientation ONE UNIT CURVE
             vec5( 10, 10, 10 ),        // divisions
@@ -218,7 +218,7 @@ export default class World {
         ) );
 
         this.textureObjList.push( this.prim.createPrim(
-            this.prim.typeList.CURVEDOUTERPLANE,
+            this.prim.typeList.CURVEDINNERPLANE,
             'CurvedPlane',
             vec5( 2, 1, 1, this.prim.side.LEFT, 1 ),         // pass orientation ONE UNIT CURVE
             vec5( 10, 10, 10 ),        // divisions
@@ -231,7 +231,7 @@ export default class World {
         ) );
 
         this.textureObjList.push( this.prim.createPrim(
-            this.prim.typeList.CURVEDOUTERPLANE,
+            this.prim.typeList.CURVEDINNERPLANE,
             'CurvedPlane',
             vec5( 2, 1, 1, this.prim.side.RIGHT, 1 ),         // pass orientation ONE UNIT CURVE
             vec5( 10, 10, 10 ),        // divisions
