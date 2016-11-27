@@ -141,6 +141,8 @@ export default class Prim {
 
             SPINDLE: 'geometrySpindle',
 
+            TEARDROP: 'geometryTeardrop',
+
             CYLINDER: 'geometryCylinder',
 
             CAPSULE: 'geometryCapsule',
@@ -1288,6 +1290,16 @@ export default class Prim {
                         y = 1 - lat - 0.5;
                         break;
 
+                    case list.TEARDROP:
+                        if( lat < 0.5 ) {
+                            y = cosTheta / 2;
+                        } else {
+                            x = cosPhi * ( 1 - lat );
+                            z = sinPhi * ( 1 - lat );
+                            y = 1 - lat - 0.5;
+                        }
+                        break;
+
                     case list.CONE:
                         if( lat <= startSlice ) {
 
@@ -1568,6 +1580,12 @@ export default class Prim {
      * Creating WebGL buffers is turned on or off conditionally in the method.
      */
     geometrySpindle ( prim ) {
+
+        return this.geometrySphere( prim );
+
+    }
+
+    geometryTeardrop ( prim ) {
 
         return this.geometrySphere( prim );
 
