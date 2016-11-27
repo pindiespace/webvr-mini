@@ -360,7 +360,7 @@
 
 	var _prim2 = _interopRequireDefault(_prim);
 
-	var _world = __webpack_require__(22);
+	var _world = __webpack_require__(21);
 
 	var _world2 = _interopRequireDefault(_world);
 
@@ -381,7 +381,7 @@
 
 	// WebGL math library.
 
-	var glMatrix = __webpack_require__(23);
+	var glMatrix = __webpack_require__(22);
 
 	if (!glMatrix) {
 
@@ -420,7 +420,7 @@
 	    // require kronos webgl debug from node_modules
 	    // https://github.com/vorg/webgl-debug
 
-	    var debug = __webpack_require__(33);
+	    var debug = __webpack_require__(32);
 
 	    exports.webgl = webgl = new _webgl2.default(false, glMatrix, util, debug);
 
@@ -3702,9 +3702,13 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _map2d = __webpack_require__(21);
+	var _map2d = __webpack_require__(33);
 
 	var _map2d2 = _interopRequireDefault(_map2d);
+
+	var _map3d = __webpack_require__(34);
+
+	var _map3d2 = _interopRequireDefault(_map3d);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -3803,7 +3807,7 @@
 
 	                this.typeList = {
 
-	                        POINT: 'geometryPoint',
+	                        POINT: 'geometryPointCloud',
 
 	                        POINTCLOUD: 'geometryPointCloud',
 
@@ -4234,7 +4238,9 @@
 
 	                                console.warn('no colors present, creating default color');
 
-	                                o.data = new Float32Array([0.2, 0.5, 0.2, 1.0]);
+	                                o.data = new Float32Array(this.computeColors(normals, colors));
+
+	                                //o.data = new Float32Array( [ 0.2, 0.5, 0.2, 1.0 ] );
 	                        }
 
 	                        o.buffer = gl.createBuffer();
@@ -4676,70 +4682,6 @@
 	                 */
 
 	                /** 
-	                 * type POINT
-	                 * rendered as GL_POINT.
-	                 * prim.dimensions    = (vec4) [ x, y, z, pointSize (pixels) | 0 ]
-	                 * prim.divisions     = (vec3) [ x, y, z ]
-	                 * 
-	                 * @param {Prim} the Prim needing geometry.
-	                 * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
-	                 * Creating WebGL buffers is turned on or off conditionally in the method.
-	                 */
-
-	        }, {
-	                key: 'geometryPoint',
-	                value: function geometryPoint(prim) {
-
-	                        var util = this.util;
-
-	                        var geo = prim.geometry;
-
-	                        // Shortcuts o Prim data arrays
-
-	                        var vertices = geo.vertices.data,
-	                            indices = geo.indices.data,
-	                            texCoords = geo.texCoords.data,
-	                            normals = geo.normals.data,
-	                            tangents = geo.tangents.data,
-	                            colors = geo.colors.data;
-
-	                        // Adjust dimensions (all are zero) 
-
-	                        // Vertices.
-
-	                        // Indices.
-
-	                        // Normals.
-
-	                        this.computeNormals(vertices, indices, normals);
-
-	                        // Texture coordinates (if present).
-
-	                        // Tangents.
-
-	                        this.computeTangents(vertices, indices, normals, texCoords);
-
-	                        // Colors.
-
-	                        if (!colors.length) {
-
-	                                colors.push(util.randomColor(), util.randomColor(), util.randomColor(), 1);
-	                        }
-
-	                        // Return the buffer, or add array data to the existing Prim data.
-
-	                        if (prim.geometry.makeBuffers === true) {
-
-	                                //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
-
-	                                return this.createBuffers(prim.geometry);
-	                        } else {
-
-	                                return this.addBufferData(prim.geometry, vertices, indices, texCoords, normals, tangents, colors);
-	                        }
-	                }
-
-	                /** 
 	                 * WebGL point cloud (particle system).
 	                 * Rendered as GL_POINT.
 	                 * @link https://github.com/potree/potree/releases
@@ -4748,10 +4690,10 @@
 	                 * @link https://github.com/gouzhen1/WebGL-Particle-System/blob/master/index.html#L3
 	                 * @link http://nullprogram.com/blog/2014/06/29/
 	                 * https://codepen.io/kenjiSpecial/pen/yyeaKm
-	                 * rendered as an array of WebGL POINT.
+	                 * rendered as an array of GL_POINT.
 	                 * 
 	                 * @param {Prim} the Prim needing geometry. 
-	                 * prim.dimensions    = (vec4) [ x, y, z, pointSize (pixels) | 0 ]
+	                 * prim.dimensions    = (vec4) [ x, y, z, radius || 0, pointSize (pixels) | 0 ]
 	                 * prim.divisions     = (vec3) [ x, y, z ]
 	                 * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
 	                 * Creating WebGL buffers is turned on or off conditionally in the method.
@@ -4772,6 +4714,28 @@
 	                            tangents = geo.tangents.data,
 	                            colors = geo.colors.data;
 
+	                        // Expect points in Map3d object, or generate random.
+
+	                        var w = prim.dimensions[0],
+	                            h = prim.dimensions[1],
+	                            d = prim.dimensions[2],
+	                            radius = prim.dimensions[3],
+	                            pointSize = prim.dimensions[4] || 1,
+	                            numPoints = prim.divisions[0] || 1;
+
+	                        if (!prim.spaceMap) {
+
+	                                console.log('adding spaceMap for:' + prim.name);
+
+	                                prim.sphereMap = new _map3d2.default(this.util);
+
+	                                prim.sphereMap.initRandom(w, h, d, numPoints);
+
+	                                // roughness 0.2 of 0-1, flatten = 1 of 0-1;
+
+	                                prim.spaceMap[prim.spaceMap.type.CLOUD](prim.divisions[0], prim.divisions[1], prim.divisions[2], 0.6, 1);
+	                        }
+
 	                        // Vertices.
 
 	                        // Indices.
@@ -4784,18 +4748,11 @@
 
 	                        this.computeTangents(vertices, indices, normals, texCoords);
 
-	                        // Colors.
-
-	                        if (!colors.length) {
-
-	                                geo.colors.data = this.computeColors(normals, colors);
-	                        }
+	                        // Colors already present, or computed in this.createBuffers.
 
 	                        // Return the buffer, or add array data to the existing Prim data.
 
 	                        if (prim.geometry.makeBuffers === true) {
-
-	                                //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
 
 	                                return this.createBuffers(prim.geometry);
 	                        } else {
@@ -4846,8 +4803,6 @@
 	                        // Return the buffer, or add array data to the existing Prim data.
 
 	                        if (prim.geometry.makeBuffers === true) {
-
-	                                //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
 
 	                                return this.createBuffers(prim.geometry);
 	                        } else {
@@ -4923,17 +4878,9 @@
 	                                geo.colors.data = this.computeColors(normals, colors);
 	                        }
 
-	                        // Return the buffer, or add array data to the existing Prim data.
+	                        // Return the buffer.
 
-	                        if (prim.geometry.makeBuffers === true) {
-
-	                                //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
-
-	                                return this.createBuffers(prim.geometry);
-	                        } else {
-
-	                                return this.addBufferData(prim.geometry, vertices, indices, texCoords, normals, tangents, colors);
-	                        }
+	                        return this.createBuffers(prim.geometry);
 	                }
 
 	                /** 
@@ -5184,15 +5131,9 @@
 	                                geo.colors.data = this.computeColors(normals, colors);
 	                        }
 
-	                        // Return the buffer, or add array data to the existing Prim data.
+	                        // Return the buffer.
 
-	                        if (prim.geometry.makeBuffers === true) {
-
-	                                return this.createBuffers(prim.geometry);
-	                        } else {
-
-	                                return this.addBufferData(prim.geometry, vertices, indices, texCoords, normals, tangents, colors);
-	                        }
+	                        return this.createBuffers(prim.geometry);
 	                }
 
 	                /** 
@@ -5401,6 +5342,7 @@
 	                 * rendered as WebGL TRIANGLES.
 	                 * a cylinder with two spheres on each end, similar to capped cylinder, 
 	                 * equivalent to a closed cube.
+	                 * @link https://github.com/vorg/primitive-capsule
 	                 * prim.dimensions    = (vec4) [ x, y, z, startSlice | 0, endSlice | 0 ]
 	                 * prim.divisions     = (vec3) [ x, y, z ]
 	                 * 
@@ -5411,7 +5353,115 @@
 
 	        }, {
 	                key: 'geometryCapsule',
-	                value: function geometryCapsule(prim) {}
+	                value: function geometryCapsule(prim) {
+
+	                        var list = this.typeList;
+
+	                        var vec3 = this.glMatrix.vec3;
+
+	                        var util = this.util;
+
+	                        var geo = prim.geometry;
+
+	                        // Shortcuts to Prim data arrays.
+
+	                        var vertices = geo.vertices.data,
+	                            indices = geo.indices.data,
+	                            texCoords = geo.texCoords.data,
+	                            normals = geo.normals.data,
+	                            tangents = geo.tangents.data,
+	                            colors = geo.colors.data;
+
+	                        // Radius is measured along the x axis, height along y axis.
+
+	                        var radius = prim.dimensions[0] || 0.5,
+	                            height = prim.dimensions[1] || 1.0,
+	                            subdivisionsHeight = prim.divisions[0] || 12,
+	                            numSegments = prim.divisions[1] || 36;
+
+	                        var positions = [];
+	                        //var normals = [];
+	                        var uvs = [];
+	                        var cells = [];
+
+	                        function calculateRing(segments, r, y, dy) {
+
+	                                var segIncr = 1.0 / (segments - 1);
+
+	                                for (var s = 0; s < segments; s++) {
+
+	                                        var x = Math.cos(Math.PI * 2 * s * segIncr) * r;
+
+	                                        var z = Math.sin(Math.PI * 2 * s * segIncr) * r;
+
+	                                        positions.push(radius * x, radius * y + height * dy, radius * z);
+
+	                                        normals.push(x, y, z);
+
+	                                        var u = 1 - s * segIncr;
+
+	                                        var v = 0.5 + (radius * y + height * dy) / (2.0 * radius + height);
+
+	                                        uvs.push(u, v);
+	                                }
+	                        }
+
+	                        var ringsBody = subdivisionsHeight + 1;
+
+	                        var ringsTotal = subdivisionsHeight + ringsBody;
+
+	                        var bodyIncr = 1.0 / (ringsBody - 1);
+
+	                        var ringIncr = 1.0 / (subdivisionsHeight - 1);
+
+	                        for (var r = 0; r < subdivisionsHeight / 2; r++) {
+
+	                                calculateRing(numSegments, Math.sin(Math.PI * r * ringIncr), Math.sin(Math.PI * (r * ringIncr - 0.5)), -0.5);
+	                        }
+
+	                        for (var r = 0; r < ringsBody; r++) {
+
+	                                calculateRing(numSegments, 1.0, 0.0, r * bodyIncr - 0.5);
+	                        }
+
+	                        for (var r = subdivisionsHeight / 2; r < subdivisionsHeight; r++) {
+
+	                                calculateRing(numSegments, Math.sin(Math.PI * r * ringIncr), Math.sin(Math.PI * (r * ringIncr - 0.5)), +0.5);
+	                        }
+
+	                        for (var r = 0; r < ringsTotal - 1; r++) {
+
+	                                for (var s = 0; s < numSegments - 1; s++) {
+
+	                                        cells.push(r * numSegments + (s + 1), r * numSegments + (s + 0), (r + 1) * numSegments + (s + 1));
+
+	                                        cells.push((r + 1) * numSegments + (s + 0), (r + 1) * numSegments + (s + 1), r * numSegments + s);
+	                                }
+	                        }
+
+	                        geo.vertices.data = positions;
+
+	                        geo.indices.data = cells;
+
+	                        geo.normals.data = normals;
+
+	                        geo.texCoords.data = uvs;
+
+	                        // Tangents.
+
+	                        geo.tangents.data = tangents = this.computeTangents(vertices, indices, normals, texCoords);
+
+	                        // Colors.
+
+	                        if (!colors.length) {
+
+	                                geo.colors.data = this.computeColors(normals, colors);
+	                        }
+
+	                        // Return the buffer.
+
+	                        return this.createBuffers(prim.geometry);
+	                }
 
 	                /** 
 	                 * Create a PLANE, CUBE, or spherical object from cube mesh.
@@ -5596,8 +5646,6 @@
 
 	                        if ((prim.type === list.CUBE || prim.type === list.CUBESPHERE) && prim.divisions[3] !== 0) {
 
-	                                console.log(';;;;;;;;;;;;;;;;rounding CUBE');
-
 	                                var tmp = [0, 0, 0];
 
 	                                // Radius controlled by 4th parameter in divisions
@@ -5742,17 +5790,9 @@
 	                                colors = geo.colors.data = this.computeColors(normals, colors);
 	                        }
 
-	                        // Return the buffer, or add array data to the existing Prim data.
+	                        // Return the buffer.
 
-	                        if (prim.geometry.makeBuffers === true) {
-
-	                                //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
-
-	                                return this.createBuffers(prim.geometry);
-	                        } else {
-
-	                                return this.addBufferData(prim.geometry, vertices, indices, texCoords, normals, tangents, colors);
-	                        }
+	                        return this.createBuffers(prim.geometry);
 	                }
 
 	                /** 
@@ -6017,7 +6057,7 @@
 	                                vertices[v++] = getVecs('up');
 	                        }
 
-	                        // Create our Normals, and set sphere to unit size.
+	                        // Create our Normals, and set icosphere to unit size.
 
 	                        for (i = 0; i < vertices.length; i++) {
 
@@ -6234,17 +6274,9 @@
 	                                return t;
 	                        }
 
-	                        // Return the buffer, or add array data to the existing Prim data.
+	                        // Return the buffer.
 
-	                        if (prim.geometry.makeBuffers === true) {
-
-	                                //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
-
-	                                return this.createBuffers(prim.geometry);
-	                        } else {
-
-	                                return this.addBufferData(prim.geometry, vertices, indices, texCoords, normals, tangents, colors);
-	                        }
+	                        return this.createBuffers(prim.geometry);
 	                }
 
 	                /** 
@@ -6448,17 +6480,9 @@
 	                                colors = geo.colors.data = this.computeColors(normals, colors);
 	                        }
 
-	                        // Return the buffer, or add array data to the existing Prim data.
+	                        // Return the buffer.
 
-	                        if (prim.geometry.makeBuffers === true) {
-
-	                                //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
-
-	                                return this.createBuffers(prim.geometry);
-	                        } else {
-
-	                                return this.addBufferData(prim.geometry, vertices, indices, texCoords, normals, tangents, colors);
-	                        }
+	                        return this.createBuffers(prim.geometry);
 	                }
 
 	                /** 
@@ -6505,17 +6529,9 @@
 	                                geo.colors.data = this.computeColors(normals, colors);
 	                        }
 
-	                        // Return the buffer, or add array data to the existing Prim data.
+	                        // Return the buffer.
 
-	                        if (prim.geometry.makeBuffers === true) {
-
-	                                //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
-
-	                                return this.createBuffers(prim.geometry);
-	                        } else {
-
-	                                return this.addBufferData(prim.geometry, vertices, indices, texCoords, normals, tangents, colors);
-	                        }
+	                        return this.createBuffers(prim.geometry);
 	                }
 
 	                /*
@@ -6880,694 +6896,6 @@
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	var Map2d = function () {
-
-	        /* 
-	         * NOTE: using 'map.es6' causes a transpile error
-	         *
-	         * Generic map object, equivalent to a 2-dimensional array, used 
-	         * for heightmaps and color maps and other "maplike" data, including 
-	         * Image data in arrays.
-	         * Maps are defined in x (columns)  and z (rows) instead of 
-	         * x and y to match Prim definitions of heightMaps.
-	         * Maps can be scaled using bilinear or bicubic algorithms.
-	         *
-	         * @link https://www.html5rocks.com/en/tutorials/webgl/typed_arrays/
-	         *
-	         */
-
-	        function Map2d(util) {
-	                _classCallCheck(this, Map2d);
-
-	                console.log('in Map');
-
-	                this.util = util;
-
-	                this.type = {
-
-	                        PLANE: 'initPlane',
-
-	                        RANDOM: 'initRandom',
-
-	                        DIAMOND: 'initDiamond',
-
-	                        IMAGE: 'initImage'
-
-	                };
-
-	                this.edgeType = {
-
-	                        NONE: 0, // don't do anything
-
-	                        WRAP: 1, // wrap a out of range side to the opposite side
-
-	                        TOZERO: 2 // push down to zero
-
-	                };
-
-	                this.width = 0;
-
-	                this.depth = 0;
-
-	                this.low = 0;
-
-	                this.high = 0;
-
-	                this.map = null; // actual heightmap
-
-	                this.squareSize = 0; // max square that starts at 0, 0 and fits in Map2d.
-
-	                this.max = 0;
-
-	                // offscreen canvas for heightmaps from images.
-
-	                this.canvas = this.ctx = this.imgData = null;
-	        }
-
-	        _createClass(Map2d, [{
-	                key: 'checkParams',
-	                value: function checkParams(w, d, roughness, flatten) {
-
-	                        if (w < 1 || d < 1) {
-
-	                                console.error('invalid map width or height, was:' + w + ', ' + d);
-
-	                                return false;
-	                        } else if (roughness < 0 || roughness > 1.0) {
-
-	                                console.error('invalid Map roughness (0-1), was:' + roughness);
-
-	                                return false;
-	                        } else if (flatten < 0 || flatten > 1.0) {
-
-	                                console.error('invalid Map flatten (0-1.0), was:' + flatten);
-
-	                                return false;
-	                        }
-
-	                        return true;
-	                }
-
-	                /** 
-	                 * Get a Map pixel. For the diamond algorithm, this.max is a width or 
-	                 * height. For all others, it is the length of the entire array.
-	                 * @param {Number} x the x coordinate of the pixel (column)
-	                 * @param {Number} z the z coordinate of the pixel (row)
-	                 * @param {Enum} edgeFlag how to handle requests off the edge of the map 
-	                 * - WRAP: grab from other side, divide to zero).
-	                 * - TOZERO: reduce to zero, depending on unit distance from edge.
-	                 * @returns {Number} the Map value at the x, z position.
-	                 */
-
-	        }, {
-	                key: 'getPixel',
-	                value: function getPixel(x, z) {
-	                        var edgeFlag = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 1;
-
-
-	                        if (x < 0 || x > this.width || z < 0 || z > this.depth) {
-
-	                                switch (edgeFlag) {
-
-	                                        case this.edgeType.WRAP:
-	                                                if (x < 0) x = this.width - x;
-	                                                if (x > this.width - 1) x = x - this.width;
-	                                                if (z < 0) z = this.depth - z;
-	                                                if (z > this.depth - 1) z = z - this.depth;
-	                                                break;
-
-	                                        case this.edgeType.TOZERO:
-	                                                var xs = x;
-	                                                var zs = z;
-	                                                if (x < 0) x = 0;
-	                                                if (x > this.width - 1) x = this.width - 1;
-	                                                if (z < 0) z = 0;
-	                                                if (z > this.depth - 1) z = this.depth - 1;
-	                                                return this.map[x + this.squareSize * z] / (Math.abs(xs - x) + Math.abs(zs - z));
-	                                                break;
-
-	                                        default:
-	                                                console.error('getPixel out of range x:' + x + ' z:' + z + ' width:' + w + ' height:' + h + ' max:' + this.max);
-	                                                return -1;
-	                                                break;
-
-	                                }
-	                        }
-
-	                        return this.map[x + this.width * z];
-	                }
-
-	                /** 
-	                 * Set a pixel in the Map.
-	                 * @param {Number} x the x (column) coordinate in the Map.
-	                 * @param {Number} z the z (row) coordinate in the Map.
-	                 * @param {Number} val the value at a map coordinate, typically Float32
-	                 */
-
-	        }, {
-	                key: 'setPixel',
-	                value: function setPixel(x, z, val) {
-
-	                        if (x < 0 || x > this.max || z < 0 || z > this.max) {
-
-	                                console.error('setPixel out of range x:' + x + ' z:' + z + ' max:' + this.max);
-
-	                                return -1;
-	                        }
-
-	                        if (this.low > val) this.low = val;
-
-	                        if (this.high < val) this.high = val;
-
-	                        ///////////////////////////////////console.log("SETPIXEL: x:" + x + " z:" + z + " val:" + val + ' size:' + this.squareSize )
-
-	                        this.map[x + this.width * z] = val; // NOTE: was squareSize!!!!!!!
-	                }
-
-	                /** 
-	                 * Create a completely flat Map.
-	                 */
-
-	        }, {
-	                key: 'initPlane',
-	                value: function initPlane(w, d) {
-
-	                        if (this.checkParams(w, d, 0, 0)) {
-
-	                                this.img = this.map = null;
-
-	                                this.map = new Float32Array(w * d);
-
-	                                this.width = w;
-
-	                                this.depth = d;
-
-	                                this.squareSize = Math.min(w * d); // shortest face.
-	                        } else {
-
-	                                console.error('error creating Map using ' + this.type.PLANE);
-	                        }
-	                }
-
-	                /** 
-	                 * Generate a Map using completely random numbers clamped. 
-	                 * to a range.
-	                 */
-
-	        }, {
-	                key: 'initRandom',
-	                value: function initRandom(w, d, roughness) {
-
-	                        if (this.checkParams(w, d, roughness, 0)) {
-
-	                                this.map = new Float32Array(w * d);
-
-	                                this.width = w;
-
-	                                this.depth = d;
-
-	                                this.squareSize = Math.min(w, d);
-
-	                                this.max = this.squareSize - 1;
-
-	                                var util = this.util;
-
-	                                for (var i = 0, len = this.map.length; i < len; i++) {
-
-	                                        this.map[i] = util.getRand() * roughness;
-	                                }
-	                        } else {
-
-	                                console.error('error creating Map using ' + this.type.RANDOM);
-	                        }
-	                }
-
-	                /** 
-	                 * Create a blank heightmap in canvas ImageData format. If 
-	                 * random === true, make a random heightmap.
-	                 * https://github.com/hunterloftis/playfuljs-demos/blob/gh-pages/terrain/index.html
-	                 * @param {Number} w the width of the heightmap (x).
-	                 * @param {Number} h the height of the heightmap (z).
-	                 * @param {Boolean} create if true, make a proceedural heightmap using diamond algorithm.
-	                 * @param {Number} roughness if create === true, assign a roughness (0 - 1) to generated terrain.
-	                 */
-
-	        }, {
-	                key: 'initDiamond',
-	                value: function initDiamond(w, d, roughness, flatten) {
-
-	                        if (this.checkParams(w, d, roughness, flatten)) {
-
-	                                this.img = this.map = null;
-
-	                                // Get next highest power of 2 (scale back later).
-
-	                                console.log('starting width:' + w + ' height:' + d + ' roughness:' + roughness);
-
-	                                var n = Math.pow(2, Math.ceil(Math.log((w + d) / 2) / Math.log(2)));
-
-	                                console.warn('random map, selecting nearest power of 2 (' + n + ' x ' + n + ')');
-
-	                                // Set up for diamond algorithm.
-
-	                                this.squareSize = n + 1;
-
-	                                this.width = this.depth = n; // SQUARE
-
-	                                this.map = new Float32Array(this.squareSize * this.squareSize);
-
-	                                // For the Diamond algorithm, this.max is the length or width of the terrain.
-
-	                                this.max = this.squareSize - 1;
-
-	                                this.setPixel(0, 0, this.max);
-
-	                                this.setPixel(this.max, 0, this.max / 2);
-
-	                                this.setPixel(this.max, this.max, 0);
-
-	                                this.setPixel(0, this.max, this.max / 2);
-
-	                                // Start recursive terrain generation.
-
-	                                this.divide(this.max, roughness);
-
-	                                // The first pixel may be too high.
-
-	                                this.setPixel(0, 0, (this.getPixel(0, 1) + this.getPixel(1, 0)) / 2);
-
-	                                this.flatten(flatten / this.squareSize); // if divisions = 100, shrink height 1/ 100;
-	                        } else {
-
-	                                console.error('error creating Map using ' + this.type.DIAMOND);
-	                        }
-	                }
-
-	                /** 
-	                 * Use an RGBA image to create the heightmap, after drawing into <canvas>.
-	                 * @link https://www.html5rocks.com/en/tutorials/webgl/typed_arrays/
-	                 * @link http://stackoverflow.com/questions/39678642/trying-to-convert-imagedata-to-an-heightmap
-	                 * @param {Number} w desired heightmap width (x).
-	                 * @param {Number} d desired height (z) of heightmap.
-	                 */
-
-	        }, {
-	                key: 'initImage',
-	                value: function initImage(w, d, path, callback) {
-	                        var _this = this;
-
-	                        if (this.checkParams(w, d, roughness, flatten)) {}
-
-	                        if (!this.canvas) {
-
-	                                this.canvas = document.createElement('canvas');
-	                        }
-
-	                        if (!this.ctx) {
-
-	                                this.ctx = this.canvas.getContext('2d');
-	                        }
-
-	                        var img = new Image();
-
-	                        img.style.display = 'none';
-
-	                        img.onload = function () {
-
-	                                _this.ctx.drawImage(img, 0, 0);
-
-	                                // Uint8ClampedArray, RGBA 32-bit for all images.
-	                                //  let rgba = 'rgba(' + data[0] + ',' + data[1] + ',' + data[2] + ',' + (data[3] / 255) + ')';
-
-	                                _this.imgData = _this.ctx.getImageData(0, 0, img.width, img.height);
-
-	                                _this.width = img.width;
-
-	                                _this.depth = img.height;
-
-	                                _this.squareSize = Math.min(w, h); // largest square area starting with 0, 0
-
-	                                _this.max = _this.squareSize - 1;
-
-	                                // Pixel-level view.
-	                                //this.pixels = new Uint32Array( this.data.buffer );
-
-	                                _this.map = new Float32Array(_this.squareSize);
-
-	                                var j = 0;
-
-	                                var data = _this.imgData;
-
-	                                for (var i = 0, len = _this.data.length; i < len; i++) {
-
-	                                        _this.map[j++] = data[i] + data[i + 1] + data[i + 2] / 3;
-	                                }
-	                        };
-
-	                        img.onerror = function () {
-
-	                                console.error('image could not be loaded:' + path);
-	                        };
-
-	                        img.src = path;
-
-	                        callback(this.data);
-	                }
-
-	                /* 
-	                 * ---------------------------------------
-	                 * HEIGHTMAP GENERATION ALGORITHMS
-	                 * ---------------------------------------
-	                 */
-
-	                /** 
-	                 * Divide Map in Diamond algorithm.
-	                 */
-
-	        }, {
-	                key: 'divide',
-	                value: function divide(size, roughness) {
-
-	                        var x = void 0,
-	                            z = void 0,
-	                            half = size / 2;
-
-	                        var scale = roughness * size;
-
-	                        var util = this.util;
-
-	                        if (half < 1) return;
-
-	                        for (z = half; z < this.max; z += size) {
-
-	                                for (x = half; x < this.max; x += size) {
-
-	                                        this.square(x, z, half, util.getRand() * scale * 2 - scale);
-	                                }
-	                        }
-
-	                        for (z = 0; z <= this.max; z += half) {
-
-	                                for (x = (z + half) % size; x <= this.max; x += size) {
-
-	                                        this.diamond(x, z, half, util.getRand() * scale * 2 - scale);
-	                                }
-	                        }
-
-	                        this.divide(size / 2, roughness);
-	                }
-
-	                /** 
-	                 * Get average in Diamond algorithm.
-	                 */
-
-	        }, {
-	                key: 'average',
-	                value: function average(values) {
-
-	                        var valid = values.filter(function (val) {
-
-	                                return val !== -1;
-	                        });
-
-	                        var total = valid.reduce(function (sum, val) {
-
-	                                return sum + val;
-	                        }, 0);
-
-	                        return total / valid.length;
-	                }
-
-	                /** 
-	                 * new square, average value. Alternates with diamond.
-	                 */
-
-	        }, {
-	                key: 'square',
-	                value: function square(x, z, size, offset) {
-
-	                        var ave = this.average([this.getPixel(x - size, z - size), // upper left
-	                        this.getPixel(x + size, z - size), // upper right
-	                        this.getPixel(x + size, z + size), // lower right
-	                        this.getPixel(x - size, z + size) // lower left
-	                        ]);
-
-	                        this.setPixel(x, z, ave + offset);
-	                }
-
-	                /** 
-	                 * new diamond, average value. Alternates with square.
-	                 */
-
-	        }, {
-	                key: 'diamond',
-	                value: function diamond(x, z, size, offset) {
-
-	                        var ave = this.average([this.getPixel(x, z - size), // top
-	                        this.getPixel(x + size, z), // right
-	                        this.getPixel(x, z + size), // bottom
-	                        this.getPixel(x - size, z) // left
-	                        ]);
-
-	                        this.setPixel(x, z, ave + offset);
-	                }
-
-	                /* 
-	                 * ---------------------------------------
-	                 * SCALING/SMOOTHING ALGORITHMS
-	                 * ---------------------------------------
-	                 */
-
-	                /** 
-	                 * Scale heightMap y values (0.1 = 1/10 the max), 
-	                 * passing 0 will completely flatten the map.
-	                 */
-
-	        }, {
-	                key: 'flatten',
-	                value: function flatten(scale) {
-
-	                        var val = void 0;
-
-	                        if (this.map && this.map.length) {
-
-	                                var map = this.map;
-
-	                                for (var i = 0, len = map.length; i < len; i++) {
-
-	                                        map[i] *= scale;
-
-	                                        val = map[i];
-
-	                                        if (this.high < val) this.high = val;
-
-	                                        if (this.low > val) this.low = val;
-	                                }
-	                        }
-	                }
-
-	                /** 
-	                 * roughen an existing Map.
-	                 */
-
-	        }, {
-	                key: 'roughen',
-	                value: function roughen(percent) {
-
-	                        if (this.map && this.map.length) {}
-	                }
-
-	                /** 
-	                 * given an existing Map, scale to new dimensions, smoothing 
-	                 * with the biCubic or biLinear algorithm.
-	                 */
-
-	        }, {
-	                key: 'scale',
-	                value: function scale(w, h) {
-
-	                        if (this.checkParams(w, h, 0, 0)) {
-
-	                                var map = new Float32Array(w * h);
-
-	                                var xScale = this.width / w;
-
-	                                var zScale = this.depth / h;
-
-	                                console.log('original width:' + this.width + ' new:' + w + 'original height:' + this.depth + ' new:' + h);
-
-	                                console.log('xScale:' + xScale + ' zScale:' + zScale);
-
-	                                for (var z = 0; z < h; z++) {
-
-	                                        for (var x = 0; x < w; x++) {
-
-	                                                map[w * z + x] = this.biCubic(x * xScale, z * zScale);
-	                                        }
-	                                }
-
-	                                console.log('WIDTH:' + w + " HEIGHT:" + h);
-
-	                                this.map = map;
-
-	                                this.width = w;
-
-	                                this.depth = h;
-
-	                                this.squareSize = Math.min(w, h);
-
-	                                this.max = this.squareSize - 1;
-	                        }
-	                }
-
-	                /** 
-	                 * Given a point defined in 2d between 
-	                 * x and z, return an interpolation using a bilinear algorithm.
-	                 * @param {Array} heightmap 
-	                 * @param {Number} x = desired x position (between 0.0 and 1.0)
-	                 * @param {Number} z = desired z position (between 0.0 and 1.0)
-	                 */
-
-	        }, {
-	                key: 'biLinear',
-	                value: function biLinear(x, z) {
-
-	                        if (x < 0 || x > 1.0 || z < 0 || z > 1.0) {
-
-	                                console.error('heightmap x index out of range, x:' + x + ' z:' + z);
-
-	                                return null;
-	                        }
-
-	                        // Our x and z, scaled to heightmap divisions.
-
-	                        x *= this.width;
-	                        z *= this.depth;
-
-	                        // Points above and below our position.
-
-	                        var x1 = Math.min(x);
-	                        var x2 = Math.max(x);
-	                        var z1 = Math.min(z);
-	                        var z2 = Math.max(z);
-
-	                        // Interpolate along x axis, get interpolations above and below point.
-
-	                        var a = this.getPixel(x1, z1) * (x - x1) + this.getPixel(x1, z2) * (1 - x - x1);
-
-	                        var b = this.getPixel(z1, z2) * (x - x1) + this.getPixel(x2, z2) * (1 - x - x1);
-
-	                        // Interpolate these results along z axis.
-
-	                        var v = a * (z - z1) + b * (1 - z - z1);
-
-	                        return v;
-	                }
-
-	                /** 
-	                 * Given a point, and a collection of 16 neighboring points in 
-	                 * 2d, return a smoothed value for the point using the 
-	                 * biCubic interpolation algorithm.
-	                 * Adapted from:
-	                 * https://github.com/hughsk/bicubic-sample/blob/master/index.js
-	                 * https://github.com/hughsk/bicubic/blob/master/index.js
-	                 * @param {Number} xf 
-	                 * @param {Number} zf
-	                 */
-
-	        }, {
-	                key: 'biCubicPoint',
-	                value: function biCubicPoint(xf, zf, p00, p01, p02, p03, p10, p11, p12, p13, p20, p21, p22, p23, p30, p31, p32, p33) {
-
-	                        var zf2 = zf * zf;
-	                        var xf2 = xf * xf;
-	                        var xf3 = xf * xf2;
-
-	                        var x00 = p03 - p02 - p00 + p01;
-	                        var x01 = p00 - p01 - x00;
-	                        var x02 = p02 - p00;
-	                        var x0 = x00 * xf3 + x01 * xf2 + x02 * xf + p01;
-
-	                        var x10 = p13 - p12 - p10 + p11;
-	                        var x11 = p10 - p11 - x10;
-	                        var x12 = p12 - p10;
-	                        var x1 = x10 * xf3 + x11 * xf2 + x12 * xf + p11;
-
-	                        var x20 = p23 - p22 - p20 + p21;
-	                        var x21 = p20 - p21 - x20;
-	                        var x22 = p22 - p20;
-	                        var x2 = x20 * xf3 + x21 * xf2 + x22 * xf + p21;
-
-	                        var x30 = p33 - p32 - p30 + p31;
-	                        var x31 = p30 - p31 - x30;
-	                        var x32 = p32 - p30;
-	                        var x3 = x30 * xf3 + x31 * xf2 + x32 * xf + p31;
-
-	                        var y0 = x3 - x2 - x0 + x1;
-	                        var y1 = x0 - x1 - y0;
-	                        var y2 = x2 - x0;
-
-	                        return y0 * zf * zf2 + y1 * zf2 + y2 * zf + x1;
-	                }
-
-	                /** 
-	                 * value interpolation
-	                 */
-
-	        }, {
-	                key: 'biCubic',
-	                value: function biCubic(x, z) {
-
-	                        var x1 = Math.floor(x);
-	                        var z1 = Math.floor(z);
-	                        var x2 = x1 + 1;
-	                        var z2 = z1 + 1;
-
-	                        //console.log('lower pixel: for x:' + x + ' value:' + this.getPixel( x1, z1 ) + ' upper pixel for z:' + z + ' value:' + this.getPixel( x2, z2 ) );
-
-	                        var p00 = this.getPixel(x1 - 1, z1 - 1);
-	                        var p01 = this.getPixel(x1 - 1, z1);
-	                        var p02 = this.getPixel(x1 - 1, z2);
-	                        var p03 = this.getPixel(x1 - 1, z2 + 1);
-
-	                        var p10 = this.getPixel(x1, z1 - 1);
-	                        var p11 = this.getPixel(x1, z1);
-	                        var p12 = this.getPixel(x1, z2);
-	                        var p13 = this.getPixel(x1, z2 + 1);
-
-	                        var p20 = this.getPixel(x2, z1 - 1);
-	                        var p21 = this.getPixel(x2, z1);
-	                        var p22 = this.getPixel(x2, z2);
-	                        var p23 = this.getPixel(x2, z2 + 1);
-
-	                        var p30 = this.getPixel(x2 + 1, z1 - 1);
-	                        var p31 = this.getPixel(x2 + 1, z1);
-	                        var p32 = this.getPixel(x2 + 1, z2);
-	                        var p33 = this.getPixel(x2 + 1, z2 + 1);
-
-	                        return this.biCubicPoint(x - x1, z - z1, p00, p10, p20, p30, p01, p11, p21, p31, p02, p12, p22, p32, p03, p13, p23, p33);
-	                }
-	        }]);
-
-	        return Map2d;
-	}();
-
-	exports.default = Map2d;
-
-/***/ },
-/* 22 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	        value: true
-	});
-
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
 	var World = function () {
 
 	        /** 
@@ -7901,21 +7229,16 @@
 	                        true // CAPPED AT ENDS
 	                        ));
 
-	                        /*
-	                                this.textureObjList.push( this.prim.createPrim(
-	                                    this.prim.typeList.CUBESPHERE,
-	                                    'TestCapsule',
-	                                    vec5( 4, 1, 1, 0.3, 0.7 ),       // dimensions (4th dimension doesn't exist for cylinder)
-	                                    vec5( 40, 40, 40  ),        // divisions MAKE SMALLER
-	                                    vec3.fromValues(-2.0, -1.5, 2.0 ),          // position (absolute)
-	                                    vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-	                                    vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-	                                    vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-	                                    ['img/uv-test.png'],               // texture present
-	                                    vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color
-	                                    true                                    // CAPPED AT ENDS
-	                                ) );
-	                        */
+	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CAPSULE, 'TestCapsule', vec5(0.5, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
+	                        vec5(40, 40, 0), // divisions MAKE SMALLER
+	                        vec3.fromValues(-2.0, -1.5, 2.0), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                        ['img/uv-test.png'], // texture present
+	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0), // color
+	                        true // CAPPED AT ENDS
+	                        ));
 
 	                        this.vs3 = this.renderer.shaderDirlightTexture.init(this.dirlightTextureObjList);
 
@@ -7990,7 +7313,7 @@
 	exports.default = World;
 
 /***/ },
-/* 23 */
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -8021,18 +7344,18 @@
 	THE SOFTWARE. */
 	// END HEADER
 
-	exports.glMatrix = __webpack_require__(24);
-	exports.mat2 = __webpack_require__(25);
-	exports.mat2d = __webpack_require__(26);
-	exports.mat3 = __webpack_require__(27);
-	exports.mat4 = __webpack_require__(28);
-	exports.quat = __webpack_require__(29);
-	exports.vec2 = __webpack_require__(32);
-	exports.vec3 = __webpack_require__(30);
-	exports.vec4 = __webpack_require__(31);
+	exports.glMatrix = __webpack_require__(23);
+	exports.mat2 = __webpack_require__(24);
+	exports.mat2d = __webpack_require__(25);
+	exports.mat3 = __webpack_require__(26);
+	exports.mat4 = __webpack_require__(27);
+	exports.quat = __webpack_require__(28);
+	exports.vec2 = __webpack_require__(31);
+	exports.vec3 = __webpack_require__(29);
+	exports.vec4 = __webpack_require__(30);
 
 /***/ },
-/* 24 */
+/* 23 */
 /***/ function(module, exports) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -8108,7 +7431,7 @@
 
 
 /***/ },
-/* 25 */
+/* 24 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -8131,7 +7454,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(24);
+	var glMatrix = __webpack_require__(23);
 
 	/**
 	 * @class 2x2 Matrix
@@ -8550,7 +7873,7 @@
 
 
 /***/ },
-/* 26 */
+/* 25 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -8573,7 +7896,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(24);
+	var glMatrix = __webpack_require__(23);
 
 	/**
 	 * @class 2x3 Matrix
@@ -9025,7 +8348,7 @@
 
 
 /***/ },
-/* 27 */
+/* 26 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -9048,7 +8371,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(24);
+	var glMatrix = __webpack_require__(23);
 
 	/**
 	 * @class 3x3 Matrix
@@ -9777,7 +9100,7 @@
 
 
 /***/ },
-/* 28 */
+/* 27 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -9800,7 +9123,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(24);
+	var glMatrix = __webpack_require__(23);
 
 	/**
 	 * @class 4x4 Matrix
@@ -11919,7 +11242,7 @@
 
 
 /***/ },
-/* 29 */
+/* 28 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -11942,10 +11265,10 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(24);
-	var mat3 = __webpack_require__(27);
-	var vec3 = __webpack_require__(30);
-	var vec4 = __webpack_require__(31);
+	var glMatrix = __webpack_require__(23);
+	var mat3 = __webpack_require__(26);
+	var vec3 = __webpack_require__(29);
+	var vec4 = __webpack_require__(30);
 
 	/**
 	 * @class Quaternion
@@ -12525,7 +11848,7 @@
 
 
 /***/ },
-/* 30 */
+/* 29 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -12548,7 +11871,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(24);
+	var glMatrix = __webpack_require__(23);
 
 	/**
 	 * @class 3 Dimensional Vector
@@ -13308,7 +12631,7 @@
 
 
 /***/ },
-/* 31 */
+/* 30 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -13331,7 +12654,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(24);
+	var glMatrix = __webpack_require__(23);
 
 	/**
 	 * @class 4 Dimensional Vector
@@ -13923,7 +13246,7 @@
 
 
 /***/ },
-/* 32 */
+/* 31 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -13946,7 +13269,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(24);
+	var glMatrix = __webpack_require__(23);
 
 	/**
 	 * @class 2 Dimensional Vector
@@ -14516,7 +13839,7 @@
 
 
 /***/ },
-/* 33 */
+/* 32 */
 /***/ function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {/*
@@ -15475,6 +14798,853 @@
 	module.exports = WebGLDebugUtils;
 
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
+
+/***/ },
+/* 33 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	        value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var Map2d = function () {
+
+	        /* 
+	         * NOTE: using 'map.es6' causes a transpile error
+	         *
+	         * Generic map object, equivalent to a 2-dimensional array, used 
+	         * for heightmaps and color maps and other "maplike" data, including 
+	         * Image data in arrays.
+	         * Maps are defined in x (columns)  and z (rows) instead of 
+	         * x and y to match Prim definitions of heightMaps.
+	         * Maps can be scaled using bilinear or bicubic algorithms.
+	         *
+	         * @link https://www.html5rocks.com/en/tutorials/webgl/typed_arrays/
+	         *
+	         */
+
+	        function Map2d(util) {
+	                _classCallCheck(this, Map2d);
+
+	                console.log('in Map2d');
+
+	                this.util = util;
+
+	                this.type = {
+
+	                        PLANE: 'initPlane',
+
+	                        RANDOM: 'initRandom',
+
+	                        DIAMOND: 'initDiamond',
+
+	                        IMAGE: 'initImage'
+
+	                };
+
+	                this.edgeType = {
+
+	                        NONE: 0, // don't do anything
+
+	                        WRAP: 1, // wrap a out of range side to the opposite side
+
+	                        TOZERO: 2 // push down to zero
+
+	                };
+
+	                this.width = 0;
+
+	                this.depth = 0;
+
+	                this.low = 0;
+
+	                this.high = 0;
+
+	                this.map = null; // actual heightmap
+
+	                this.squareSize = 0; // max square that starts at 0, 0 and fits in Map2d.
+
+	                this.max = 0;
+
+	                // offscreen canvas for heightmaps from images.
+
+	                this.canvas = this.ctx = this.imgData = null;
+	        }
+
+	        _createClass(Map2d, [{
+	                key: 'checkParams',
+	                value: function checkParams(w, d, roughness, flatten) {
+
+	                        if (w < 1 || d < 1) {
+
+	                                console.error('invalid map width or height, was:' + w + ', ' + d);
+
+	                                return false;
+	                        } else if (roughness < 0 || roughness > 1.0) {
+
+	                                console.error('invalid Map roughness (0-1), was:' + roughness);
+
+	                                return false;
+	                        } else if (flatten < 0 || flatten > 1.0) {
+
+	                                console.error('invalid Map flatten (0-1.0), was:' + flatten);
+
+	                                return false;
+	                        }
+
+	                        return true;
+	                }
+
+	                /** 
+	                 * Get a Map pixel. For the diamond algorithm, this.max is a width or 
+	                 * height. For all others, it is the length of the entire array.
+	                 * @param {Number} x the x coordinate of the pixel (column)
+	                 * @param {Number} z the z coordinate of the pixel (row)
+	                 * @param {Enum} edgeFlag how to handle requests off the edge of the map 
+	                 * - WRAP: grab from other side, divide to zero).
+	                 * - TOZERO: reduce to zero, depending on unit distance from edge.
+	                 * @returns {Number} the Map value at the x, z position.
+	                 */
+
+	        }, {
+	                key: 'getPixel',
+	                value: function getPixel(x, z) {
+	                        var edgeFlag = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 1;
+
+
+	                        if (x < 0 || x > this.width || z < 0 || z > this.depth) {
+
+	                                switch (edgeFlag) {
+
+	                                        case this.edgeType.WRAP:
+	                                                if (x < 0) x = this.width - x;
+	                                                if (x > this.width - 1) x = x - this.width;
+	                                                if (z < 0) z = this.depth - z;
+	                                                if (z > this.depth - 1) z = z - this.depth;
+	                                                break;
+
+	                                        case this.edgeType.TOZERO:
+	                                                var xs = x;
+	                                                var zs = z;
+	                                                if (x < 0) x = 0;
+	                                                if (x > this.width - 1) x = this.width - 1;
+	                                                if (z < 0) z = 0;
+	                                                if (z > this.depth - 1) z = this.depth - 1;
+	                                                return this.map[x + this.squareSize * z] / (Math.abs(xs - x) + Math.abs(zs - z));
+	                                                break;
+
+	                                        default:
+	                                                console.error('getPixel out of range x:' + x + ' z:' + z + ' width:' + w + ' height:' + h + ' max:' + this.max);
+	                                                return -1;
+	                                                break;
+
+	                                }
+	                        }
+
+	                        return this.map[x + this.width * z];
+	                }
+
+	                /** 
+	                 * Set a pixel in the Map.
+	                 * @param {Number} x the x (column) coordinate in the Map.
+	                 * @param {Number} z the z (row) coordinate in the Map.
+	                 * @param {Number} val the value at a map coordinate, typically Float32
+	                 */
+
+	        }, {
+	                key: 'setPixel',
+	                value: function setPixel(x, z, val) {
+
+	                        if (x < 0 || x > this.max || z < 0 || z > this.max) {
+
+	                                console.error('setPixel out of range x:' + x + ' z:' + z + ' max:' + this.max);
+
+	                                return -1;
+	                        }
+
+	                        if (this.low > val) this.low = val;
+
+	                        if (this.high < val) this.high = val;
+
+	                        ///////////////////////////////////console.log("SETPIXEL: x:" + x + " z:" + z + " val:" + val + ' size:' + this.squareSize )
+
+	                        this.map[x + this.width * z] = val; // NOTE: was squareSize!!!!!!!
+	                }
+
+	                /** 
+	                 * Create a completely flat Map.
+	                 */
+
+	        }, {
+	                key: 'initPlane',
+	                value: function initPlane(w, d) {
+
+	                        if (this.checkParams(w, d, 0, 0)) {
+
+	                                this.img = this.map = null;
+
+	                                this.map = new Float32Array(w * d);
+
+	                                this.width = w;
+
+	                                this.depth = d;
+
+	                                this.squareSize = Math.min(w * d); // shortest face.
+	                        } else {
+
+	                                console.error('error creating Map2d using ' + this.type.PLANE);
+	                        }
+	                }
+
+	                /** 
+	                 * Generate a Map using completely random numbers clamped. 
+	                 * to a range.
+	                 */
+
+	        }, {
+	                key: 'initRandom',
+	                value: function initRandom(w, d, roughness) {
+
+	                        if (this.checkParams(w, d, roughness, 0)) {
+
+	                                this.map = new Float32Array(w * d);
+
+	                                this.width = w;
+
+	                                this.depth = d;
+
+	                                this.squareSize = Math.min(w, d);
+
+	                                this.max = this.squareSize - 1;
+
+	                                var util = this.util;
+
+	                                for (var i = 0, len = this.map.length; i < len; i++) {
+
+	                                        this.map[i] = util.getRand() * roughness;
+	                                }
+	                        } else {
+
+	                                console.error('error creating Map using ' + this.type.RANDOM);
+	                        }
+	                }
+
+	                /** 
+	                 * Create a blank heightmap in canvas ImageData format. If 
+	                 * random === true, make a random heightmap.
+	                 * https://github.com/hunterloftis/playfuljs-demos/blob/gh-pages/terrain/index.html
+	                 * @param {Number} w the width of the heightmap (x).
+	                 * @param {Number} h the height of the heightmap (z).
+	                 * @param {Boolean} create if true, make a proceedural heightmap using diamond algorithm.
+	                 * @param {Number} roughness if create === true, assign a roughness (0 - 1) to generated terrain.
+	                 */
+
+	        }, {
+	                key: 'initDiamond',
+	                value: function initDiamond(w, d, roughness, flatten) {
+
+	                        if (this.checkParams(w, d, roughness, flatten)) {
+
+	                                this.img = this.map = null;
+
+	                                // Get next highest power of 2 (scale back later).
+
+	                                console.log('starting width:' + w + ' height:' + d + ' roughness:' + roughness);
+
+	                                var n = Math.pow(2, Math.ceil(Math.log((w + d) / 2) / Math.log(2)));
+
+	                                console.warn('random map, selecting nearest power of 2 (' + n + ' x ' + n + ')');
+
+	                                // Set up for diamond algorithm.
+
+	                                this.squareSize = n + 1;
+
+	                                this.width = this.depth = n; // SQUARE
+
+	                                this.map = new Float32Array(this.squareSize * this.squareSize);
+
+	                                // For the Diamond algorithm, this.max is the length or width of the terrain.
+
+	                                this.max = this.squareSize - 1;
+
+	                                this.setPixel(0, 0, this.max);
+
+	                                this.setPixel(this.max, 0, this.max / 2);
+
+	                                this.setPixel(this.max, this.max, 0);
+
+	                                this.setPixel(0, this.max, this.max / 2);
+
+	                                // Start recursive terrain generation.
+
+	                                this.divide(this.max, roughness);
+
+	                                // The first pixel may be too high.
+
+	                                this.setPixel(0, 0, (this.getPixel(0, 1) + this.getPixel(1, 0)) / 2);
+
+	                                this.flatten(flatten / this.squareSize); // if divisions = 100, shrink height 1/ 100;
+	                        } else {
+
+	                                console.error('error creating Map using ' + this.type.DIAMOND);
+	                        }
+	                }
+
+	                /** 
+	                 * Use an RGBA image to create the heightmap, after drawing into <canvas>.
+	                 * @link https://www.html5rocks.com/en/tutorials/webgl/typed_arrays/
+	                 * @link http://stackoverflow.com/questions/39678642/trying-to-convert-imagedata-to-an-heightmap
+	                 * @param {Number} w desired heightmap width (x).
+	                 * @param {Number} d desired height (z) of heightmap.
+	                 */
+
+	        }, {
+	                key: 'initImage',
+	                value: function initImage(w, d, path, callback) {
+	                        var _this = this;
+
+	                        if (this.checkParams(w, d, roughness, flatten)) {}
+
+	                        if (!this.canvas) {
+
+	                                this.canvas = document.createElement('canvas');
+	                        }
+
+	                        if (!this.ctx) {
+
+	                                this.ctx = this.canvas.getContext('2d');
+	                        }
+
+	                        var img = new Image();
+
+	                        img.style.display = 'none';
+
+	                        img.onload = function () {
+
+	                                _this.ctx.drawImage(img, 0, 0);
+
+	                                // Uint8ClampedArray, RGBA 32-bit for all images.
+	                                //  let rgba = 'rgba(' + data[0] + ',' + data[1] + ',' + data[2] + ',' + (data[3] / 255) + ')';
+
+	                                _this.imgData = _this.ctx.getImageData(0, 0, img.width, img.height);
+
+	                                _this.width = img.width;
+
+	                                _this.depth = img.height;
+
+	                                _this.squareSize = Math.min(w, h); // largest square area starting with 0, 0
+
+	                                _this.max = _this.squareSize - 1;
+
+	                                // Pixel-level view.
+	                                //this.pixels = new Uint32Array( this.data.buffer );
+
+	                                _this.map = new Float32Array(_this.squareSize);
+
+	                                var j = 0;
+
+	                                var data = _this.imgData;
+
+	                                for (var i = 0, len = _this.data.length; i < len; i++) {
+
+	                                        _this.map[j++] = data[i] + data[i + 1] + data[i + 2] / 3;
+	                                }
+	                        };
+
+	                        img.onerror = function () {
+
+	                                console.error('image could not be loaded:' + path);
+	                        };
+
+	                        img.src = path;
+
+	                        callback(this.data);
+	                }
+
+	                /* 
+	                 * ---------------------------------------
+	                 * HEIGHTMAP GENERATION ALGORITHMS
+	                 * ---------------------------------------
+	                 */
+
+	                /** 
+	                 * Divide Map in Diamond algorithm.
+	                 */
+
+	        }, {
+	                key: 'divide',
+	                value: function divide(size, roughness) {
+
+	                        var x = void 0,
+	                            z = void 0,
+	                            half = size / 2;
+
+	                        var scale = roughness * size;
+
+	                        var util = this.util;
+
+	                        if (half < 1) return;
+
+	                        for (z = half; z < this.max; z += size) {
+
+	                                for (x = half; x < this.max; x += size) {
+
+	                                        this.square(x, z, half, util.getRand() * scale * 2 - scale);
+	                                }
+	                        }
+
+	                        for (z = 0; z <= this.max; z += half) {
+
+	                                for (x = (z + half) % size; x <= this.max; x += size) {
+
+	                                        this.diamond(x, z, half, util.getRand() * scale * 2 - scale);
+	                                }
+	                        }
+
+	                        this.divide(size / 2, roughness);
+	                }
+
+	                /** 
+	                 * Get average in Diamond algorithm.
+	                 */
+
+	        }, {
+	                key: 'average',
+	                value: function average(values) {
+
+	                        var valid = values.filter(function (val) {
+
+	                                return val !== -1;
+	                        });
+
+	                        var total = valid.reduce(function (sum, val) {
+
+	                                return sum + val;
+	                        }, 0);
+
+	                        return total / valid.length;
+	                }
+
+	                /** 
+	                 * new square, average value. Alternates with diamond.
+	                 */
+
+	        }, {
+	                key: 'square',
+	                value: function square(x, z, size, offset) {
+
+	                        var ave = this.average([this.getPixel(x - size, z - size), // upper left
+	                        this.getPixel(x + size, z - size), // upper right
+	                        this.getPixel(x + size, z + size), // lower right
+	                        this.getPixel(x - size, z + size) // lower left
+	                        ]);
+
+	                        this.setPixel(x, z, ave + offset);
+	                }
+
+	                /** 
+	                 * new diamond, average value. Alternates with square.
+	                 */
+
+	        }, {
+	                key: 'diamond',
+	                value: function diamond(x, z, size, offset) {
+
+	                        var ave = this.average([this.getPixel(x, z - size), // top
+	                        this.getPixel(x + size, z), // right
+	                        this.getPixel(x, z + size), // bottom
+	                        this.getPixel(x - size, z) // left
+	                        ]);
+
+	                        this.setPixel(x, z, ave + offset);
+	                }
+
+	                /* 
+	                 * ---------------------------------------
+	                 * SCALING/SMOOTHING ALGORITHMS
+	                 * ---------------------------------------
+	                 */
+
+	                /** 
+	                 * Scale heightMap y values (0.1 = 1/10 the max), 
+	                 * passing 0 will completely flatten the map.
+	                 */
+
+	        }, {
+	                key: 'flatten',
+	                value: function flatten(scale) {
+
+	                        var val = void 0;
+
+	                        if (this.map && this.map.length) {
+
+	                                var map = this.map;
+
+	                                for (var i = 0, len = map.length; i < len; i++) {
+
+	                                        map[i] *= scale;
+
+	                                        val = map[i];
+
+	                                        if (this.high < val) this.high = val;
+
+	                                        if (this.low > val) this.low = val;
+	                                }
+	                        }
+	                }
+
+	                /** 
+	                 * roughen an existing Map.
+	                 */
+
+	        }, {
+	                key: 'roughen',
+	                value: function roughen(percent) {
+
+	                        if (this.map && this.map.length) {}
+	                }
+
+	                /** 
+	                 * given an existing Map, scale to new dimensions, smoothing 
+	                 * with the biCubic or biLinear algorithm.
+	                 */
+
+	        }, {
+	                key: 'scale',
+	                value: function scale(w, h) {
+
+	                        if (this.checkParams(w, h, 0, 0)) {
+
+	                                var map = new Float32Array(w * h);
+
+	                                var xScale = this.width / w;
+
+	                                var zScale = this.depth / h;
+
+	                                console.log('original width:' + this.width + ' new:' + w + 'original height:' + this.depth + ' new:' + h);
+
+	                                console.log('xScale:' + xScale + ' zScale:' + zScale);
+
+	                                for (var z = 0; z < h; z++) {
+
+	                                        for (var x = 0; x < w; x++) {
+
+	                                                map[w * z + x] = this.biCubic(x * xScale, z * zScale);
+	                                        }
+	                                }
+
+	                                console.log('WIDTH:' + w + " HEIGHT:" + h);
+
+	                                this.map = map;
+
+	                                this.width = w;
+
+	                                this.depth = h;
+
+	                                this.squareSize = Math.min(w, h);
+
+	                                this.max = this.squareSize - 1;
+	                        }
+	                }
+
+	                /** 
+	                 * Given a point defined in 2d between 
+	                 * x and z, return an interpolation using a bilinear algorithm.
+	                 * @param {Array} heightmap 
+	                 * @param {Number} x = desired x position (between 0.0 and 1.0)
+	                 * @param {Number} z = desired z position (between 0.0 and 1.0)
+	                 */
+
+	        }, {
+	                key: 'biLinear',
+	                value: function biLinear(x, z) {
+
+	                        if (x < 0 || x > 1.0 || z < 0 || z > 1.0) {
+
+	                                console.error('heightmap x index out of range, x:' + x + ' z:' + z);
+
+	                                return null;
+	                        }
+
+	                        // Our x and z, scaled to heightmap divisions.
+
+	                        x *= this.width;
+	                        z *= this.depth;
+
+	                        // Points above and below our position.
+
+	                        var x1 = Math.min(x);
+	                        var x2 = Math.max(x);
+	                        var z1 = Math.min(z);
+	                        var z2 = Math.max(z);
+
+	                        // Interpolate along x axis, get interpolations above and below point.
+
+	                        var a = this.getPixel(x1, z1) * (x - x1) + this.getPixel(x1, z2) * (1 - x - x1);
+
+	                        var b = this.getPixel(z1, z2) * (x - x1) + this.getPixel(x2, z2) * (1 - x - x1);
+
+	                        // Interpolate these results along z axis.
+
+	                        var v = a * (z - z1) + b * (1 - z - z1);
+
+	                        return v;
+	                }
+
+	                /** 
+	                 * Given a point, and a collection of 16 neighboring points in 
+	                 * 2d, return a smoothed value for the point using the 
+	                 * biCubic interpolation algorithm.
+	                 * Adapted from:
+	                 * https://github.com/hughsk/bicubic-sample/blob/master/index.js
+	                 * https://github.com/hughsk/bicubic/blob/master/index.js
+	                 * @param {Number} xf 
+	                 * @param {Number} zf
+	                 */
+
+	        }, {
+	                key: 'biCubicPoint',
+	                value: function biCubicPoint(xf, zf, p00, p01, p02, p03, p10, p11, p12, p13, p20, p21, p22, p23, p30, p31, p32, p33) {
+
+	                        var zf2 = zf * zf;
+	                        var xf2 = xf * xf;
+	                        var xf3 = xf * xf2;
+
+	                        var x00 = p03 - p02 - p00 + p01;
+	                        var x01 = p00 - p01 - x00;
+	                        var x02 = p02 - p00;
+	                        var x0 = x00 * xf3 + x01 * xf2 + x02 * xf + p01;
+
+	                        var x10 = p13 - p12 - p10 + p11;
+	                        var x11 = p10 - p11 - x10;
+	                        var x12 = p12 - p10;
+	                        var x1 = x10 * xf3 + x11 * xf2 + x12 * xf + p11;
+
+	                        var x20 = p23 - p22 - p20 + p21;
+	                        var x21 = p20 - p21 - x20;
+	                        var x22 = p22 - p20;
+	                        var x2 = x20 * xf3 + x21 * xf2 + x22 * xf + p21;
+
+	                        var x30 = p33 - p32 - p30 + p31;
+	                        var x31 = p30 - p31 - x30;
+	                        var x32 = p32 - p30;
+	                        var x3 = x30 * xf3 + x31 * xf2 + x32 * xf + p31;
+
+	                        var y0 = x3 - x2 - x0 + x1;
+	                        var y1 = x0 - x1 - y0;
+	                        var y2 = x2 - x0;
+
+	                        return y0 * zf * zf2 + y1 * zf2 + y2 * zf + x1;
+	                }
+
+	                /** 
+	                 * value interpolation
+	                 */
+
+	        }, {
+	                key: 'biCubic',
+	                value: function biCubic(x, z) {
+
+	                        var x1 = Math.floor(x);
+	                        var z1 = Math.floor(z);
+	                        var x2 = x1 + 1;
+	                        var z2 = z1 + 1;
+
+	                        //console.log('lower pixel: for x:' + x + ' value:' + this.getPixel( x1, z1 ) + ' upper pixel for z:' + z + ' value:' + this.getPixel( x2, z2 ) );
+
+	                        var p00 = this.getPixel(x1 - 1, z1 - 1);
+	                        var p01 = this.getPixel(x1 - 1, z1);
+	                        var p02 = this.getPixel(x1 - 1, z2);
+	                        var p03 = this.getPixel(x1 - 1, z2 + 1);
+
+	                        var p10 = this.getPixel(x1, z1 - 1);
+	                        var p11 = this.getPixel(x1, z1);
+	                        var p12 = this.getPixel(x1, z2);
+	                        var p13 = this.getPixel(x1, z2 + 1);
+
+	                        var p20 = this.getPixel(x2, z1 - 1);
+	                        var p21 = this.getPixel(x2, z1);
+	                        var p22 = this.getPixel(x2, z2);
+	                        var p23 = this.getPixel(x2, z2 + 1);
+
+	                        var p30 = this.getPixel(x2 + 1, z1 - 1);
+	                        var p31 = this.getPixel(x2 + 1, z1);
+	                        var p32 = this.getPixel(x2 + 1, z2);
+	                        var p33 = this.getPixel(x2 + 1, z2 + 1);
+
+	                        return this.biCubicPoint(x - x1, z - z1, p00, p10, p20, p30, p01, p11, p21, p31, p02, p12, p22, p32, p03, p13, p23, p33);
+	                }
+	        }]);
+
+	        return Map2d;
+	}();
+
+	exports.default = Map2d;
+
+/***/ },
+/* 34 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var Map3d = function () {
+
+	    /* 
+	     * NOTE: using 'map.es6' causes a transpile error
+	     *
+	     * Generic map object, equivalent to a 2-dimensional array, used 
+	     * for heightmaps and color maps and other "maplike" data, including 
+	     * Image data in arrays.
+	     * Maps are defined in x (columns)  and z (rows) instead of 
+	     * x and y to match Prim definitions of heightMaps.
+	     * Maps can be scaled using bilinear or bicubic algorithms.
+	     *
+	     * @link https://www.html5rocks.com/en/tutorials/webgl/typed_arrays/
+	     *
+	     */
+
+	    function Map3d(util) {
+	        _classCallCheck(this, Map3d);
+
+	        console.log('in Map3d');
+
+	        this.util = util;
+
+	        this.type = {
+
+	            CLOUD: 'initPlane',
+
+	            SPHERE: 'initRandom'
+	        };
+
+	        this.width = 0;
+
+	        this.depth = 0;
+
+	        this.low = 0;
+
+	        this.high = 0;
+
+	        this.map = null; // actual heightmap
+	    }
+
+	    /** 
+	     * confirm our data is ok for a 3d map (pointcloud).
+	     */
+
+
+	    _createClass(Map3d, [{
+	        key: 'checkParams',
+	        value: function checkParams(w, h, d, roughness, flatten) {
+
+	            return false;
+	        }
+
+	        /** 
+	         * Get a 3D pixel. This allows interpolation of values (colors or other 
+	         * meta-data ) using 3d coordinates.
+	         *
+	         * @param {Number} x the x coordinate of the pixel (column)
+	         * @param {Number} z the z coordinate of the pixel (row)
+	         * @param {Enum} edgeFlag how to handle requests off the edge of the map 
+	         * - WRAP: grab from other side, divide to zero).
+	         * - TOZERO: reduce to zero, depending on unit distance from edge.
+	         * @returns {Number} the Map value at the x, z position.
+	         */
+
+	    }, {
+	        key: 'getPoint',
+	        value: function getPoint(x, y, z) {}
+
+	        /** 
+	         * Set a pixel in the Map.
+	         * @param {Number} x the x (column) coordinate in the Map.
+	         * @param {Number} z the z (row) coordinate in the Map.
+	         * @param {Number} val the value at a map coordinate, typically Float32
+	         */
+
+	    }, {
+	        key: 'setPoint',
+	        value: function setPoint(x, y, z, val) {}
+
+	        /** 
+	         * Generate a Map using completely random numbers clamped. 
+	         * to a range.
+	         */
+
+	    }, {
+	        key: 'initRandom',
+	        value: function initRandom(w, h, d, numPoints) {
+
+	            if (this.checkParams(w, d, roughness, 0)) {
+
+	                this.type = this.CLOUD;
+
+	                this.map = new Float32Array(numPoints);
+
+	                this.mapColors = new Float32Array(numPoints);
+
+	                this.width = w;
+
+	                this.height = h;
+
+	                this.depth = d;
+
+	                var util = this.util;
+
+	                for (var i = 0, len = this.map.length; i < len; i++) {
+
+	                    this.map.push(util.getRand() * w, util.getRand() * h, util.getRand() * d);
+
+	                    this.mapColors.push(util.getRand(0, 255), util.getRand(0, 255), util.getRand(0, 255), 1.0);
+	                }
+	            } else {
+
+	                console.error('error creating Map3d using ' + this.type.RANDOM);
+	            }
+	        }
+
+	        /** 
+	         * Set points on the surface of a sphere.
+	         */
+
+	    }, {
+	        key: 'initSphere',
+	        value: function initSphere(w, h, d, numPoints) {}
+
+	        /** 
+	         * Initialize a Map3d from data. The first parameter is always 3d coordinates,
+	         * after that an arbitrary number of arrays may be assigned at comparable positions
+	         * in the map object.
+	         */
+
+	    }, {
+	        key: 'initFromData',
+	        value: function initFromData(positions) {
+
+	            // TODO: use stellar or other data.
+
+	        }
+	    }]);
+
+	    return Map3d;
+	}();
+
+	exports.default = Map3d;
 
 /***/ }
 /******/ ]);

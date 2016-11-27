@@ -1,5 +1,5 @@
 import Map2d from './map2d';
-
+import Map3d from './map3d';
 
 export default class Prim {
 
@@ -93,7 +93,7 @@ export default class Prim {
 
         this.typeList = {
 
-            POINT: 'geometryPoint',
+            POINT: 'geometryPointCloud',
 
             POINTCLOUD: 'geometryPointCloud',
 
@@ -520,7 +520,9 @@ export default class Prim {
 
                 console.warn( 'no colors present, creating default color' );
 
-                o.data = new Float32Array( [ 0.2, 0.5, 0.2, 1.0 ] );
+                o.data = new Float32Array( this.computeColors( normals, colors ) );
+
+                //o.data = new Float32Array( [ 0.2, 0.5, 0.2, 1.0 ] );
 
             }
 
@@ -552,7 +554,6 @@ export default class Prim {
         return colors;
 
     }
-
 
     /** 
      * Check the values of a Prim.
@@ -935,71 +936,7 @@ export default class Prim {
      * ---------------------------------------
      */
 
-    /** 
-     * type POINT
-     * rendered as GL_POINT.
-     * prim.dimensions    = (vec4) [ x, y, z, pointSize (pixels) | 0 ]
-     * prim.divisions     = (vec3) [ x, y, z ]
-     * 
-     * @param {Prim} the Prim needing geometry.
-     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
-     * Creating WebGL buffers is turned on or off conditionally in the method.
-     */
-    geometryPoint ( prim ) {
 
-       const util = this.util;
-
-       let geo = prim.geometry;
-
-        // Shortcuts o Prim data arrays
-
-        let vertices = geo.vertices.data,
-        indices  = geo.indices.data,
-        texCoords = geo.texCoords.data,
-        normals = geo.normals.data,
-        tangents = geo.tangents.data,
-        colors = geo.colors.data;
-
-        // Adjust dimensions (all are zero) 
-
-        // Vertices.
-
-        // Indices.
-
-        // Normals.
-
-        this.computeNormals( vertices, indices, normals );
-
-        // Texture coordinates (if present).
-
-        // Tangents.
-
-        this.computeTangents( vertices, indices, normals, texCoords );
-
-        // Colors.
-
-        if( ! colors.length ) {
-
-            colors.push( util.randomColor(), util.randomColor(), util.randomColor(), 1 );
-
-        }
-
-        // Return the buffer, or add array data to the existing Prim data.
-
-        if( prim.geometry.makeBuffers === true ) {
-
-            //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
-
-            return this.createBuffers( prim.geometry );
-
-        } else {
-
-            return this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
-
-        }
-
-
-    }
 
     /** 
      * WebGL point cloud (particle system).
@@ -1010,10 +947,10 @@ export default class Prim {
      * @link https://github.com/gouzhen1/WebGL-Particle-System/blob/master/index.html#L3
      * @link http://nullprogram.com/blog/2014/06/29/
      * https://codepen.io/kenjiSpecial/pen/yyeaKm
-     * rendered as an array of WebGL POINT.
+     * rendered as an array of GL_POINT.
      * 
      * @param {Prim} the Prim needing geometry. 
-     * prim.dimensions    = (vec4) [ x, y, z, pointSize (pixels) | 0 ]
+     * prim.dimensions    = (vec4) [ x, y, z, radius || 0, pointSize (pixels) | 0 ]
      * prim.divisions     = (vec3) [ x, y, z ]
      * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
      * Creating WebGL buffers is turned on or off conditionally in the method.
@@ -1031,6 +968,29 @@ export default class Prim {
         tangents = geo.tangents.data,
         colors = geo.colors.data;
 
+        // Expect points in Map3d object, or generate random.
+
+        let w = prim.dimensions[ 0 ],
+        h = prim.dimensions[ 1 ],
+        d = prim.dimensions[ 2 ],
+        radius = prim.dimensions[ 3 ],
+        pointSize = prim.dimensions[ 4 ] || 1,
+        numPoints = prim.divisions[ 0 ] || 1;
+
+        if ( ! prim.spaceMap ) {
+
+            console.log( 'adding spaceMap for:' + prim.name );
+
+            prim.sphereMap = new Map3d( this.util );
+
+            prim.sphereMap.initRandom ( w, h, d, numPoints );
+
+            // roughness 0.2 of 0-1, flatten = 1 of 0-1;
+
+            prim.spaceMap[ prim.spaceMap.type.CLOUD ]( prim.divisions[ 0 ], prim.divisions[ 1 ], prim.divisions[2], 0.6, 1 );
+
+        }
+
         // Vertices.
 
         // Indices.
@@ -1043,19 +1003,11 @@ export default class Prim {
 
         this.computeTangents( vertices, indices, normals, texCoords );
 
-        // Colors.
-
-        if( ! colors.length ) {
-
-            geo.colors.data = this.computeColors( normals, colors );
-
-        }
+        // Colors already present, or computed in this.createBuffers.
 
         // Return the buffer, or add array data to the existing Prim data.
 
         if( prim.geometry.makeBuffers === true ) {
-
-            //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
 
             return this.createBuffers( prim.geometry );
 
@@ -1107,8 +1059,6 @@ export default class Prim {
         // Return the buffer, or add array data to the existing Prim data.
 
         if( prim.geometry.makeBuffers === true ) {
-
-            //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
 
             return this.createBuffers( prim.geometry );
 
@@ -1193,19 +1143,9 @@ export default class Prim {
 
         }
 
-        // Return the buffer, or add array data to the existing Prim data.
+        // Return the buffer.
 
-        if( prim.geometry.makeBuffers === true ) {
-
-            //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
-
-            return this.createBuffers( prim.geometry );
-
-        } else {
-
-            return this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
-
-        }
+        return this.createBuffers( prim.geometry );
 
     }
 
@@ -1460,17 +1400,9 @@ export default class Prim {
 
         }
 
-        // Return the buffer, or add array data to the existing Prim data.
+        // Return the buffer.
 
-        if( prim.geometry.makeBuffers === true ) {
-
-            return this.createBuffers( prim.geometry );
-
-        } else {
-
-            return this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
-
-        }
+        return this.createBuffers( prim.geometry );
 
     }
 
@@ -1660,6 +1592,7 @@ export default class Prim {
      * rendered as WebGL TRIANGLES.
      * a cylinder with two spheres on each end, similar to capped cylinder, 
      * equivalent to a closed cube.
+     * @link https://github.com/vorg/primitive-capsule
      * prim.dimensions    = (vec4) [ x, y, z, startSlice | 0, endSlice | 0 ]
      * prim.divisions     = (vec3) [ x, y, z ]
      * 
@@ -1669,7 +1602,128 @@ export default class Prim {
      */
     geometryCapsule ( prim ) {
 
+        const list = this.typeList;
 
+        const vec3 = this.glMatrix.vec3;
+
+        let util = this.util;
+
+        let geo = prim.geometry;
+
+        // Shortcuts to Prim data arrays.
+
+        let vertices = geo.vertices.data,
+        indices  = geo.indices.data,
+        texCoords = geo.texCoords.data,
+        normals = geo.normals.data,
+        tangents = geo.tangents.data,
+        colors = geo.colors.data; 
+
+        // Radius is measured along the x axis, height along y axis.
+
+        let radius = prim.dimensions[ 0 ] || 0.5,
+        height = prim.dimensions[ 1 ] || 1.0,
+        subdivisionsHeight = prim.divisions[ 0 ] || 12,
+        numSegments = prim.divisions[ 1 ] || 36;
+
+        var positions = [];
+        //var normals = [];
+        var uvs = [];
+        var cells = [];
+
+        function calculateRing( segments, r, y, dy ) {
+
+            var segIncr = 1.0 / ( segments - 1 );
+
+            for( var s = 0; s < segments; s++ ) {
+
+                var x = Math.cos( ( Math.PI * 2 ) * s * segIncr ) * r;
+
+                var z = Math.sin( ( Math.PI * 2 ) * s * segIncr ) * r;
+
+                positions.push( radius * x, radius * y + height * dy, radius * z );
+
+                normals.push( x, y, z )
+
+                var u =  1 - ( s * segIncr );
+
+                var v = 0.5 + ( ( radius * y + height * dy ) / ( 2.0 * radius + height ) );
+
+                uvs.push( u, v );
+
+            }
+        }
+
+        var ringsBody = subdivisionsHeight + 1;
+
+        var ringsTotal = subdivisionsHeight + ringsBody;
+
+
+        var bodyIncr = 1.0 / ( ringsBody - 1 );
+
+        var ringIncr = 1.0 / ( subdivisionsHeight - 1 );
+
+        for( var r = 0; r < subdivisionsHeight / 2; r++ ) {
+
+            calculateRing( numSegments, Math.sin( Math.PI * r * ringIncr), Math.sin( Math.PI * ( r * ringIncr - 0.5 ) ), -0.5 );
+
+        }
+
+        for( var r = 0; r < ringsBody; r++ ) {
+
+            calculateRing( numSegments, 1.0, 0.0, r * bodyIncr - 0.5);
+
+        }
+
+        for( var r = subdivisionsHeight / 2; r < subdivisionsHeight; r++ ) {
+
+            calculateRing( numSegments, Math.sin( Math.PI * r * ringIncr), Math.sin( Math.PI * ( r * ringIncr - 0.5 ) ), +0.5);
+
+        }
+
+        for( var r = 0; r < ringsTotal - 1; r++ ) {
+
+            for( var s = 0; s < numSegments - 1; s++ ) {
+
+                cells.push(
+                    ( r * numSegments + ( s + 1 ) ),
+                    ( r * numSegments + ( s + 0 ) ),
+                    ( ( r + 1 ) * numSegments + ( s + 1 ) )
+                    );
+
+                cells.push(
+                    ( ( r + 1 ) * numSegments + ( s + 0 ) ),
+                    ( ( r + 1 ) * numSegments + ( s + 1 ) ),
+                    ( r * numSegments + s )
+                 )
+
+            }
+
+        }
+
+        geo.vertices.data = positions;
+
+        geo.indices.data = cells;
+
+        geo.normals.data = normals;
+
+        geo.texCoords.data = uvs;
+
+        // Tangents.
+
+        geo.tangents.data = tangents = this.computeTangents( vertices, indices, normals, texCoords );
+
+        // Colors.
+
+        if( ! colors.length ) {
+
+            geo.colors.data = this.computeColors( normals, colors );
+
+        }
+
+        // Return the buffer.
+
+        return this.createBuffers( prim.geometry );
 
     }
 
@@ -1854,8 +1908,6 @@ export default class Prim {
 
         if ( ( prim.type === list.CUBE || prim.type === list.CUBESPHERE ) && prim.divisions[ 3 ] !== 0 ) {
 
-            console.log(';;;;;;;;;;;;;;;;rounding CUBE')
-
             var tmp = [ 0, 0, 0 ];
 
             // Radius controlled by 4th parameter in divisions
@@ -2017,19 +2069,9 @@ export default class Prim {
 
         }
 
-        // Return the buffer, or add array data to the existing Prim data.
+        // Return the buffer.
 
-        if( prim.geometry.makeBuffers === true ) {
-
-            //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
-
-            return this.createBuffers( prim.geometry );
-
-        } else {
-
-            return this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
-
-        }
+        return this.createBuffers( prim.geometry );
 
     }
 
@@ -2273,17 +2315,17 @@ export default class Prim {
 
         for ( i = 0; i < 4; i++ ) {
 
-            indices[t++] = vBottom;
+            indices[ t++ ] = vBottom;
 
-            indices[t++] = v;
+            indices[ t++ ] = v;
 
-            indices[t++] = ++vBottom;
+            indices[ t++ ] = ++vBottom;
 
-            vertices[v++] = getVecs( 'up' );
+            vertices[ v++ ] = getVecs( 'up' );
 
         }
 
-        // Create our Normals, and set sphere to unit size.
+        // Create our Normals, and set icosphere to unit size.
 
         for ( i = 0; i < vertices.length; i++ ) {
 
@@ -2514,19 +2556,9 @@ export default class Prim {
 
         }
 
-        // Return the buffer, or add array data to the existing Prim data.
+        // Return the buffer.
 
-        if( prim.geometry.makeBuffers === true ) {
-
-            //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
-
-            return this.createBuffers( prim.geometry );
-
-        } else {
-
-            return this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
-
-        }
+        return this.createBuffers( prim.geometry );
 
     }
 
@@ -2722,19 +2754,9 @@ export default class Prim {
 
         }
 
-        // Return the buffer, or add array data to the existing Prim data.
+        // Return the buffer.
 
-        if( prim.geometry.makeBuffers === true ) {
-
-            //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
-
-            return this.createBuffers( prim.geometry );
-
-        } else {
-
-            return this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
-
-        }
+        return this.createBuffers( prim.geometry );
 
     }
 
@@ -2780,19 +2802,9 @@ export default class Prim {
 
         }
 
-        // Return the buffer, or add array data to the existing Prim data.
+        // Return the buffer.
 
-        if( prim.geometry.makeBuffers === true ) {
-
-            //this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
-
-            return this.createBuffers( prim.geometry );
-
-        } else {
-
-            return this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
-
-        }
+        return this.createBuffers( prim.geometry );
 
     }
 

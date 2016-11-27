@@ -18,7 +18,7 @@ export default class Map2d {
 
     constructor ( util ) {
 
-        console.log( 'in Map' );
+        console.log( 'in Map2d' );
 
         this.util = util;
 
@@ -182,7 +182,7 @@ export default class Map2d {
 
         } else {
 
-            console.error( 'error creating Map using ' + this.type.PLANE );
+            console.error( 'error creating Map2d using ' + this.type.PLANE );
 
         }
 
