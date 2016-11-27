@@ -646,20 +646,6 @@ export default class Prim {
 
     }
 
-    vec7 ( a, b, c, d, e, f, g ) {
-
-        d = d || 0;
-
-        e = e || 0;
-
-        f = f || 0;
-
-        g = g || 0;
-
-        return [ a, b, c, d, e, f, g ];
-
-    }
-
     /* 
      * ---------------------------------------
      * NORMAL, INDEX, VERTEX CALCULATIONS
@@ -1593,7 +1579,10 @@ export default class Prim {
      * a cylinder with two spheres on each end, similar to capped cylinder, 
      * equivalent to a closed cube.
      * @link https://github.com/vorg/primitive-capsule
-     * prim.dimensions    = (vec4) [ x, y, z, startSlice | 0, endSlice | 0 ]
+     * position x axis is the radius, y axis is the height z not used
+     * dimensions x is number of steps along the y axis, dimensions y is the number of radial 
+     * divisions around the capsule.
+     * prim.dimensions    = (vec4) [ x, y, z ]
      * prim.divisions     = (vec3) [ x, y, z ]
      * 
      * @param {Prim} the Prim needing geometry. 
@@ -1624,7 +1613,7 @@ export default class Prim {
         let radius = prim.dimensions[ 0 ] || 0.5,
         height = prim.dimensions[ 1 ] || 1.0,
         subdivisionsHeight = prim.divisions[ 0 ] || 12,
-        numSegments = prim.divisions[ 1 ] || 36;
+        numSegments = prim.divisions[ 1 ] || 12;
 
         var positions = [];
         //var normals = [];
@@ -2255,8 +2244,9 @@ export default class Prim {
 
         // Initialize lots of default variables.
 
+
         let v = 0, vBottom = 0, t = 0, i, d, progress, from, to;
-            
+
         for ( i = 0; i < 4; i++ ) {
 
             vertices[ v++ ] = getVecs('down');
@@ -2286,6 +2276,7 @@ export default class Prim {
             }
 
             vBottom = v - 1 - i * 4;
+
         }
 
         for ( i = resolution - 1; i >= 1; i-- ) {
@@ -3103,13 +3094,32 @@ export default class Prim {
 
     /** 
      * Get the center of a shape.
-     * TODO: not complete.
+     * @param {Array|Float32Array} a flat array of 3d vertices.
+     * @returns {GlMatrix.vec3} a array with the centroid x, y, z. 
      */
-    getCenter ( vertices ) {
+    getCentroid ( vertices ) {
 
-        let box = this.boundingBox( vertices );
+        let centroid = [ 0, 0, 0 ];
 
-        // find the centroid point (not necessarily part of the shape).
+        let len = vertices.length;
+
+        for( let i = 0; i < len; i += 3 ) {
+
+            centroid[ 0 ] += vertices[ i ];
+
+            centroid[ 1 ] += vertices[ i + 1 ];
+
+            centroid[ 2 ] += vertices[ i + 2 ];
+
+        }
+
+        centroid[ 0 ] /= len;
+
+        centroid[ 1 ] /= len;
+
+        centroid[ 2 ] /= len;
+
+        return centroid;
 
     }
 

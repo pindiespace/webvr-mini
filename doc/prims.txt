@@ -139,6 +139,15 @@ PRIM TYPES:
      * ---------------------------------------------------------------------
      * type CAPSULE
      * rendered as WebGL TRIANGLES.
+     * position x axis is the radius, y axis is the height z not used
+     * dimensions x is number of steps along the y axis, dimensions y is the number of radial 
+     * divisions around the capsule.
+     * prim.dimensions    = (vec3) [ x, y, z ]
+     * prim.divisions     = (vec3) [ x, y, z ]
+
+     * ---------------------------------------------------------------------
+     * type CAPSULE
+     * rendered as WebGL TRIANGLES.
      * a cylinder with two spheres on each end, similar to capped cylinder
      * prim.dimensions    = (vec4) [ x, y, z, startSlice | 0, endSlice | 0 ]
      * prim.divisions     = (vec3) [ x, y, z ]
