@@ -360,7 +360,7 @@
 
 	var _prim2 = _interopRequireDefault(_prim);
 
-	var _world = __webpack_require__(22);
+	var _world = __webpack_require__(23);
 
 	var _world2 = _interopRequireDefault(_world);
 
@@ -381,7 +381,7 @@
 
 	// WebGL math library.
 
-	var glMatrix = __webpack_require__(23);
+	var glMatrix = __webpack_require__(24);
 
 	if (!glMatrix) {
 
@@ -420,7 +420,7 @@
 	    // require kronos webgl debug from node_modules
 	    // https://github.com/vorg/webgl-debug
 
-	    var debug = __webpack_require__(33);
+	    var debug = __webpack_require__(34);
 
 	    exports.webgl = webgl = new _webgl2.default(false, glMatrix, util, debug);
 
@@ -3706,7 +3706,7 @@
 
 	var _map2d2 = _interopRequireDefault(_map2d);
 
-	var _map3d = __webpack_require__(34);
+	var _map3d = __webpack_require__(22);
 
 	var _map3d2 = _interopRequireDefault(_map3d);
 
@@ -4240,7 +4240,7 @@
 
 	                                console.warn('no colors present, creating default color');
 
-	                                o.data = new Float32Array(this.computeColors(normals, colors));
+	                                o.data = new Float32Array(this.computeColors(bufferObj.normals.data, o.data));
 
 	                                //o.data = new Float32Array( [ 0.2, 0.5, 0.2, 1.0 ] );
 	                        }
@@ -4921,7 +4921,7 @@
 	                            longStart = 0,
 	                            latDist = void 0;
 
-	                        if (prim.type === list.SPHERE || prim.type === list.CYLINDER || prim.type === list.SPINDLE || prim.type === list.CONE) {
+	                        if (prim.type === list.SPHERE || prim.type === list.CYLINDER || prim.type === list.SPINDLE || prim.type === list.CONE || prim.type === list.TEARDROP) {
 
 	                                latDist = latitudeBands;
 	                        } else if (prim.type === list.CAP) {
@@ -5019,23 +5019,23 @@
 	                                                        break;
 
 	                                                case list.SPINDLE:
-	                                                        if (lat <= 0.5) {
+	                                                        if (lat <= 0.4) {
 	                                                                x = cosPhi * lat;
 	                                                                z = sinPhi * lat;
 	                                                        } else {
-	                                                                x = cosPhi * (1 - lat);
-	                                                                z = sinPhi * (1 - lat);
+	                                                                x = cosPhi * (1 - lat + 1 / latDist);
+	                                                                z = sinPhi * (1 - lat + 1 / latDist);
 	                                                        }
 	                                                        y = 1 - lat - 0.5;
 	                                                        break;
 
 	                                                case list.TEARDROP:
 	                                                        if (lat < 0.5) {
-	                                                                y = cosTheta / 2;
+	                                                                y = cosTheta / 4;
 	                                                        } else {
-	                                                                x = cosPhi * (1 - lat);
-	                                                                z = sinPhi * (1 - lat);
-	                                                                y = 1 - lat - 0.5;
+	                                                                x = 2 * cosPhi * (0.5 - r);
+	                                                                z = 2 * sinPhi * (0.5 - r);
+	                                                                y = cosTheta / 2;
 	                                                        }
 	                                                        break;
 
@@ -5122,12 +5122,7 @@
 
 	                        geo.tangents.data = tangents = this.computeTangents(vertices, indices, normals, texCoords);
 
-	                        // Colors.
-
-	                        if (!colors.length) {
-
-	                                geo.colors.data = this.computeColors(normals, colors);
-	                        }
+	                        // Color array is pre-created, or gets a default in createBuffers().
 
 	                        // Return the buffer.
 
@@ -5458,12 +5453,7 @@
 
 	                        geo.tangents.data = tangents = this.computeTangents(vertices, indices, normals, texCoords);
 
-	                        // Colors.
-
-	                        if (!colors.length) {
-
-	                                geo.colors.data = this.computeColors(normals, colors);
-	                        }
+	                        // Color array is pre-created, or gets a default in createBuffers().
 
 	                        // Return the buffer.
 
@@ -5790,12 +5780,7 @@
 
 	                        this.computeNormals(vertices, indices, normals);
 
-	                        // Colors.
-
-	                        if (!colors.length) {
-
-	                                colors = geo.colors.data = this.computeColors(normals, colors);
-	                        }
+	                        // Color array is pre-created, or gets a default in createBuffers().
 
 	                        // Return the buffer.
 
@@ -6115,12 +6100,7 @@
 
 	                        tangents = geo.tangents.data = flatten(tangents, false);
 
-	                        // Colors.
-
-	                        if (!colors.length) {
-
-	                                geo.colors.data = this.computeColors(normals, colors);
-	                        }
+	                        // Color array is pre-created, or gets a default in createBuffers().
 
 	                        // Helper functions.
 
@@ -6481,17 +6461,25 @@
 	                                }
 	                        }
 
-	                        // Colors.
-
-	                        if (!colors.length) {
-
-	                                colors = geo.colors.data = this.computeColors(normals, colors);
-	                        }
+	                        // Color array is pre-created, or gets a default in createBuffers().
 
 	                        // Return the buffer.
 
 	                        return this.createBuffers(prim.geometry);
 	                }
+
+	                ///////////////////////////////////////////////////////////////////////
+	                // geo primitives
+	                // USE THIS!!!! https://github.com/nickdesaulniers/prims
+	                // https://github.com/mhintz/platonic/tree/master/src
+	                // https://github.com/azmobi2/html5-webgl-geometry-shapes/blob/master/webgl_geometry_shapes.html
+	                // Subdivide algorithm
+	                // https://github.com/mikolalysenko/loop-subdivide
+	                // https://github.com/Erkaman/gl-catmull-clark
+	                // https://www.ibiblio.org/e-notes/Splines/models/loop.js
+	                // convert fonts to texture
+	                // https://github.com/framelab/fontmatic
+	                ///////////////////////////////////////////////////////////////////////
 
 	                /** 
 	                 * Generic 3d shape (e.g. Collada model).
@@ -6530,12 +6518,7 @@
 
 	                        this.computeTangents(vertices, indices, normals, texCoords);
 
-	                        // Colors.
-
-	                        if (!colors.length) {
-
-	                                geo.colors.data = this.computeColors(normals, colors);
-	                        }
+	                        // Color array is pre-created, or gets a default in createBuffers().
 
 	                        // Return the buffer.
 
@@ -7603,6 +7586,165 @@
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var Map3d = function () {
+
+	    /* 
+	     * NOTE: using 'map.es6' causes a transpile error
+	     *
+	     * Generic map object, equivalent to a 2-dimensional array, used 
+	     * for heightmaps and color maps and other "maplike" data, including 
+	     * Image data in arrays.
+	     * Maps are defined in x (columns)  and z (rows) instead of 
+	     * x and y to match Prim definitions of heightMaps.
+	     * Maps can be scaled using bilinear or bicubic algorithms.
+	     *
+	     * @link https://www.html5rocks.com/en/tutorials/webgl/typed_arrays/
+	     *
+	     */
+
+	    function Map3d(util) {
+	        _classCallCheck(this, Map3d);
+
+	        console.log('in Map3d');
+
+	        this.util = util;
+
+	        this.type = {
+
+	            CLOUD: 'initPlane',
+
+	            SPHERE: 'initRandom'
+	        };
+
+	        this.width = 0;
+
+	        this.depth = 0;
+
+	        this.low = 0;
+
+	        this.high = 0;
+
+	        this.map = null; // actual heightmap
+	    }
+
+	    /** 
+	     * confirm our data is ok for a 3d map (pointcloud).
+	     */
+
+
+	    _createClass(Map3d, [{
+	        key: 'checkParams',
+	        value: function checkParams(w, h, d, roughness, flatten) {
+
+	            return false;
+	        }
+
+	        /** 
+	         * Get a 3D pixel. This allows interpolation of values (colors or other 
+	         * meta-data ) using 3d coordinates.
+	         *
+	         * @param {Number} x the x coordinate of the pixel (column)
+	         * @param {Number} z the z coordinate of the pixel (row)
+	         * @param {Enum} edgeFlag how to handle requests off the edge of the map 
+	         * - WRAP: grab from other side, divide to zero).
+	         * - TOZERO: reduce to zero, depending on unit distance from edge.
+	         * @returns {Number} the Map value at the x, z position.
+	         */
+
+	    }, {
+	        key: 'getPoint',
+	        value: function getPoint(x, y, z) {}
+
+	        /** 
+	         * Set a pixel in the Map.
+	         * @param {Number} x the x (column) coordinate in the Map.
+	         * @param {Number} z the z (row) coordinate in the Map.
+	         * @param {Number} val the value at a map coordinate, typically Float32
+	         */
+
+	    }, {
+	        key: 'setPoint',
+	        value: function setPoint(x, y, z, val) {}
+
+	        /** 
+	         * Generate a Map using completely random numbers clamped. 
+	         * to a range.
+	         */
+
+	    }, {
+	        key: 'initRandom',
+	        value: function initRandom(w, h, d, numPoints) {
+
+	            if (this.checkParams(w, d, roughness, 0)) {
+
+	                this.type = this.CLOUD;
+
+	                this.map = new Float32Array(numPoints);
+
+	                this.mapColors = new Float32Array(numPoints);
+
+	                this.width = w;
+
+	                this.height = h;
+
+	                this.depth = d;
+
+	                var util = this.util;
+
+	                for (var i = 0, len = this.map.length; i < len; i++) {
+
+	                    this.map.push(util.getRand() * w, util.getRand() * h, util.getRand() * d);
+
+	                    this.mapColors.push(util.getRand(0, 255), util.getRand(0, 255), util.getRand(0, 255), 1.0);
+	                }
+	            } else {
+
+	                console.error('error creating Map3d using ' + this.type.RANDOM);
+	            }
+	        }
+
+	        /** 
+	         * Set points on the surface of a sphere.
+	         */
+
+	    }, {
+	        key: 'initSphere',
+	        value: function initSphere(w, h, d, numPoints) {}
+
+	        /** 
+	         * Initialize a Map3d from data. The first parameter is always 3d coordinates,
+	         * after that an arbitrary number of arrays may be assigned at comparable positions
+	         * in the map object.
+	         */
+
+	    }, {
+	        key: 'initFromData',
+	        value: function initFromData(positions) {
+
+	            // TODO: use stellar or other data.
+
+	        }
+	    }]);
+
+	    return Map3d;
+	}();
+
+	exports.default = Map3d;
+
+/***/ },
+/* 23 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
 	        value: true
 	});
 
@@ -7687,10 +7829,6 @@
 	                        var vec4 = this.glMatrix.vec4;
 
 	                        var vec5 = this.prim.vec5;
-
-	                        var vec6 = this.prim.vec6;
-
-	                        var vec7 = this.prim.vec7;
 
 	                        var util = this.util;
 
@@ -7831,7 +7969,7 @@
 	                        // DIVISIONS FOR CUBED AND CURVED PLANE INDICATE SIDE TO DRAW
 
 	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CURVEDOUTERPLANE, 'CurvedPlane', vec5(2, 1, 1, this.prim.side.RIGHT, 1), // dimensions NOTE: pass radius for curvature (also creates orbit) 
-	                        vec6(10, 10, 10), // divisions
+	                        vec3.fromValues(10, 10, 10), // divisions
 	                        vec3.fromValues(-1.2, 0.0, 2.0), // position (absolute)
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
@@ -7954,6 +8092,17 @@
 	                        true // CAPPED AT ENDS
 	                        ));
 
+	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.TEARDROP, 'TestCapsule', vec5(1, 2, 1), // dimensions (4th dimension doesn't exist for cylinder)
+	                        vec5(40, 40, 0), // divisions MAKE SMALLER
+	                        vec3.fromValues(-2.0, -0.5, 2.0), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                        ['img/uv-test.png'], // texture present
+	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0), // color
+	                        true // CAPPED AT ENDS
+	                        ));
+
 	                        this.vs3 = this.renderer.shaderDirlightTexture.init(this.dirlightTextureObjList);
 
 	                        // Finished object creation, start rendering...
@@ -8027,7 +8176,7 @@
 	exports.default = World;
 
 /***/ },
-/* 23 */
+/* 24 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -8058,18 +8207,18 @@
 	THE SOFTWARE. */
 	// END HEADER
 
-	exports.glMatrix = __webpack_require__(24);
-	exports.mat2 = __webpack_require__(25);
-	exports.mat2d = __webpack_require__(26);
-	exports.mat3 = __webpack_require__(27);
-	exports.mat4 = __webpack_require__(28);
-	exports.quat = __webpack_require__(29);
-	exports.vec2 = __webpack_require__(32);
-	exports.vec3 = __webpack_require__(30);
-	exports.vec4 = __webpack_require__(31);
+	exports.glMatrix = __webpack_require__(25);
+	exports.mat2 = __webpack_require__(26);
+	exports.mat2d = __webpack_require__(27);
+	exports.mat3 = __webpack_require__(28);
+	exports.mat4 = __webpack_require__(29);
+	exports.quat = __webpack_require__(30);
+	exports.vec2 = __webpack_require__(33);
+	exports.vec3 = __webpack_require__(31);
+	exports.vec4 = __webpack_require__(32);
 
 /***/ },
-/* 24 */
+/* 25 */
 /***/ function(module, exports) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -8145,7 +8294,7 @@
 
 
 /***/ },
-/* 25 */
+/* 26 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -8168,7 +8317,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(24);
+	var glMatrix = __webpack_require__(25);
 
 	/**
 	 * @class 2x2 Matrix
@@ -8587,7 +8736,7 @@
 
 
 /***/ },
-/* 26 */
+/* 27 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -8610,7 +8759,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(24);
+	var glMatrix = __webpack_require__(25);
 
 	/**
 	 * @class 2x3 Matrix
@@ -9062,7 +9211,7 @@
 
 
 /***/ },
-/* 27 */
+/* 28 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -9085,7 +9234,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(24);
+	var glMatrix = __webpack_require__(25);
 
 	/**
 	 * @class 3x3 Matrix
@@ -9814,7 +9963,7 @@
 
 
 /***/ },
-/* 28 */
+/* 29 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -9837,7 +9986,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(24);
+	var glMatrix = __webpack_require__(25);
 
 	/**
 	 * @class 4x4 Matrix
@@ -11956,7 +12105,7 @@
 
 
 /***/ },
-/* 29 */
+/* 30 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -11979,10 +12128,10 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(24);
-	var mat3 = __webpack_require__(27);
-	var vec3 = __webpack_require__(30);
-	var vec4 = __webpack_require__(31);
+	var glMatrix = __webpack_require__(25);
+	var mat3 = __webpack_require__(28);
+	var vec3 = __webpack_require__(31);
+	var vec4 = __webpack_require__(32);
 
 	/**
 	 * @class Quaternion
@@ -12562,7 +12711,7 @@
 
 
 /***/ },
-/* 30 */
+/* 31 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -12585,7 +12734,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(24);
+	var glMatrix = __webpack_require__(25);
 
 	/**
 	 * @class 3 Dimensional Vector
@@ -13345,7 +13494,7 @@
 
 
 /***/ },
-/* 31 */
+/* 32 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -13368,7 +13517,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(24);
+	var glMatrix = __webpack_require__(25);
 
 	/**
 	 * @class 4 Dimensional Vector
@@ -13960,7 +14109,7 @@
 
 
 /***/ },
-/* 32 */
+/* 33 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -13983,7 +14132,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(24);
+	var glMatrix = __webpack_require__(25);
 
 	/**
 	 * @class 2 Dimensional Vector
@@ -14553,7 +14702,7 @@
 
 
 /***/ },
-/* 33 */
+/* 34 */
 /***/ function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {/*
@@ -15512,165 +15661,6 @@
 	module.exports = WebGLDebugUtils;
 
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
-
-/***/ },
-/* 34 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	var Map3d = function () {
-
-	    /* 
-	     * NOTE: using 'map.es6' causes a transpile error
-	     *
-	     * Generic map object, equivalent to a 2-dimensional array, used 
-	     * for heightmaps and color maps and other "maplike" data, including 
-	     * Image data in arrays.
-	     * Maps are defined in x (columns)  and z (rows) instead of 
-	     * x and y to match Prim definitions of heightMaps.
-	     * Maps can be scaled using bilinear or bicubic algorithms.
-	     *
-	     * @link https://www.html5rocks.com/en/tutorials/webgl/typed_arrays/
-	     *
-	     */
-
-	    function Map3d(util) {
-	        _classCallCheck(this, Map3d);
-
-	        console.log('in Map3d');
-
-	        this.util = util;
-
-	        this.type = {
-
-	            CLOUD: 'initPlane',
-
-	            SPHERE: 'initRandom'
-	        };
-
-	        this.width = 0;
-
-	        this.depth = 0;
-
-	        this.low = 0;
-
-	        this.high = 0;
-
-	        this.map = null; // actual heightmap
-	    }
-
-	    /** 
-	     * confirm our data is ok for a 3d map (pointcloud).
-	     */
-
-
-	    _createClass(Map3d, [{
-	        key: 'checkParams',
-	        value: function checkParams(w, h, d, roughness, flatten) {
-
-	            return false;
-	        }
-
-	        /** 
-	         * Get a 3D pixel. This allows interpolation of values (colors or other 
-	         * meta-data ) using 3d coordinates.
-	         *
-	         * @param {Number} x the x coordinate of the pixel (column)
-	         * @param {Number} z the z coordinate of the pixel (row)
-	         * @param {Enum} edgeFlag how to handle requests off the edge of the map 
-	         * - WRAP: grab from other side, divide to zero).
-	         * - TOZERO: reduce to zero, depending on unit distance from edge.
-	         * @returns {Number} the Map value at the x, z position.
-	         */
-
-	    }, {
-	        key: 'getPoint',
-	        value: function getPoint(x, y, z) {}
-
-	        /** 
-	         * Set a pixel in the Map.
-	         * @param {Number} x the x (column) coordinate in the Map.
-	         * @param {Number} z the z (row) coordinate in the Map.
-	         * @param {Number} val the value at a map coordinate, typically Float32
-	         */
-
-	    }, {
-	        key: 'setPoint',
-	        value: function setPoint(x, y, z, val) {}
-
-	        /** 
-	         * Generate a Map using completely random numbers clamped. 
-	         * to a range.
-	         */
-
-	    }, {
-	        key: 'initRandom',
-	        value: function initRandom(w, h, d, numPoints) {
-
-	            if (this.checkParams(w, d, roughness, 0)) {
-
-	                this.type = this.CLOUD;
-
-	                this.map = new Float32Array(numPoints);
-
-	                this.mapColors = new Float32Array(numPoints);
-
-	                this.width = w;
-
-	                this.height = h;
-
-	                this.depth = d;
-
-	                var util = this.util;
-
-	                for (var i = 0, len = this.map.length; i < len; i++) {
-
-	                    this.map.push(util.getRand() * w, util.getRand() * h, util.getRand() * d);
-
-	                    this.mapColors.push(util.getRand(0, 255), util.getRand(0, 255), util.getRand(0, 255), 1.0);
-	                }
-	            } else {
-
-	                console.error('error creating Map3d using ' + this.type.RANDOM);
-	            }
-	        }
-
-	        /** 
-	         * Set points on the surface of a sphere.
-	         */
-
-	    }, {
-	        key: 'initSphere',
-	        value: function initSphere(w, h, d, numPoints) {}
-
-	        /** 
-	         * Initialize a Map3d from data. The first parameter is always 3d coordinates,
-	         * after that an arbitrary number of arrays may be assigned at comparable positions
-	         * in the map object.
-	         */
-
-	    }, {
-	        key: 'initFromData',
-	        value: function initFromData(positions) {
-
-	            // TODO: use stellar or other data.
-
-	        }
-	    }]);
-
-	    return Map3d;
-	}();
-
-	exports.default = Map3d;
 
 /***/ }
 /******/ ]);

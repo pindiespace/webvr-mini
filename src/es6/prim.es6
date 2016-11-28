@@ -522,7 +522,7 @@ export default class Prim {
 
                 console.warn( 'no colors present, creating default color' );
 
-                o.data = new Float32Array( this.computeColors( normals, colors ) );
+                o.data = new Float32Array( this.computeColors( bufferObj.normals.data, o.data ) );
 
                 //o.data = new Float32Array( [ 0.2, 0.5, 0.2, 1.0 ] );
 
@@ -1184,7 +1184,7 @@ export default class Prim {
 
         if( prim.type === list.SPHERE || prim.type === list.CYLINDER || 
 
-            prim.type === list.SPINDLE || prim.type === list.CONE ) {
+            prim.type === list.SPINDLE || prim.type === list.CONE || prim.type === list.TEARDROP ) {
 
             latDist = latitudeBands;
 
@@ -1280,23 +1280,23 @@ export default class Prim {
                         break;
 
                     case list.SPINDLE:
-                        if( lat <= 0.5 ) {
+                        if( lat <= 0.4 ) {
                             x = cosPhi * lat;
                             z = sinPhi * lat;
                         } else {
-                            x = cosPhi * ( 1 - lat )
-                            z = sinPhi * ( 1 - lat )
+                            x = cosPhi * ( 1 - lat + ( 1 / latDist ) )
+                            z = sinPhi * ( 1 - lat + ( 1 / latDist ) )
                         }
-                        y = 1 - lat - 0.5;
+                            y = 1 - lat - 0.5;
                         break;
 
                     case list.TEARDROP:
                         if( lat < 0.5 ) {
-                            y = cosTheta / 2;
+                            y = cosTheta / 4;
                         } else {
-                            x = cosPhi * ( 1 - lat );
-                            z = sinPhi * ( 1 - lat );
-                            y = 1 - lat - 0.5;
+                            x = 2 * cosPhi * ( 0.5  - r );
+                            z = 2 * sinPhi * ( 0.5  - r );
+                            y = cosTheta / 2;
                         }
                         break;
 
@@ -1390,13 +1390,7 @@ export default class Prim {
 
         geo.tangents.data = tangents = this.computeTangents( vertices, indices, normals, texCoords );
 
-        // Colors.
-
-        if( ! colors.length ) {
-
-            geo.colors.data = this.computeColors( normals, colors );
-
-        }
+        // Color array is pre-created, or gets a default in createBuffers().
 
         // Return the buffer.
 
@@ -1720,13 +1714,7 @@ export default class Prim {
 
         geo.tangents.data = tangents = this.computeTangents( vertices, indices, normals, texCoords );
 
-        // Colors.
-
-        if( ! colors.length ) {
-
-            geo.colors.data = this.computeColors( normals, colors );
-
-        }
+        // Color array is pre-created, or gets a default in createBuffers().
 
         // Return the buffer.
 
@@ -2068,13 +2056,7 @@ export default class Prim {
 
         this.computeNormals( vertices, indices, normals )
 
-        // Colors.
-
-        if( ! colors.length ) {
-
-            colors = geo.colors.data = this.computeColors( normals, colors );
-
-        }
+        // Color array is pre-created, or gets a default in createBuffers().
 
         // Return the buffer.
 
@@ -2388,13 +2370,7 @@ export default class Prim {
 
         tangents = geo.tangents.data = flatten(tangents, false );
 
-        // Colors.
-
-        if( ! colors.length ) {
-
-            geo.colors.data = this.computeColors( normals, colors );
-
-        }
+        // Color array is pre-created, or gets a default in createBuffers().
 
         // Helper functions.
 
@@ -2755,19 +2731,27 @@ export default class Prim {
 
         }
 
-        // Colors.
-
-        if( ! colors.length ) {
-
-            colors = geo.colors.data = this.computeColors( normals, colors );
-
-        }
+        // Color array is pre-created, or gets a default in createBuffers().
 
         // Return the buffer.
 
         return this.createBuffers( prim.geometry );
 
     }
+
+
+    ///////////////////////////////////////////////////////////////////////
+    // geo primitives
+    // USE THIS!!!! https://github.com/nickdesaulniers/prims
+    // https://github.com/mhintz/platonic/tree/master/src
+    // https://github.com/azmobi2/html5-webgl-geometry-shapes/blob/master/webgl_geometry_shapes.html
+    // Subdivide algorithm
+    // https://github.com/mikolalysenko/loop-subdivide
+    // https://github.com/Erkaman/gl-catmull-clark
+    // https://www.ibiblio.org/e-notes/Splines/models/loop.js
+    // convert fonts to texture
+    // https://github.com/framelab/fontmatic
+    ///////////////////////////////////////////////////////////////////////
 
     /** 
      * Generic 3d shape (e.g. Collada model).
@@ -2803,13 +2787,7 @@ export default class Prim {
 
         this.computeTangents( vertices, indices, normals, texCoords );
 
-        // Colors.
-
-        if( ! colors.length ) {
-
-            geo.colors.data = this.computeColors( normals, colors );
-
-        }
+        // Color array is pre-created, or gets a default in createBuffers().
 
         // Return the buffer.
 
