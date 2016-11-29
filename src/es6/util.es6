@@ -152,6 +152,24 @@ export default class Util {
     }
 
     /** 
+     * Check if an array is multi-dimensional, and needs flattening.
+     * @param {Array} arr a standard JS array
+     * @returns {Boolean} if multi-dimensional, return true, else false.
+     */
+    canFlatten( arr ) {
+
+        window.arr = arr;
+        
+        if ( typeof arr[ 0 ][ 0 ] != 'undefined' && arr[ 0 ][ 0 ].constructor === Array ) {
+
+            return true;
+        }
+
+        return false;
+
+    }
+
+    /** 
      * Given a multi-dimensional array, flatten to 
      * a single-dimensional one. NOTE: only works for 
      * Array(), not Float32Array!
@@ -183,6 +201,27 @@ export default class Util {
         }
 
         return flattened;
+
+    }
+
+    /** 
+     * Given a flat array, convert to multi-dimensional.
+     */
+    unFlatten( arr, subsize ) {
+
+        let ct = 0;
+
+        let nodes = []; // multi-dimensional
+
+        let sub = new Array();
+
+        for ( let i = 0, len = arr.length; i < len; i += subsize ) {
+
+            nodes.push( arr.splice( i, subsize ) ); 
+
+        }
+
+        return nodes;
 
     }
 

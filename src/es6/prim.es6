@@ -650,9 +650,32 @@ export default class Prim {
 
     /* 
      * ---------------------------------------
-     * NORMAL, INDEX, VERTEX CALCULATIONS
+     * NORMAL, INDEX, VERTEX, TRIANGLE, QUAD CALCULATIONS
      * ---------------------------------------
      */
+
+    /** 
+     * Subdivide a mesh, WITHOUT smoothing.
+     * Comprehensive description.
+     * @link http://www.rorydriscoll.com/2008/08/01/catmull-clark-subdivision-the-basics/
+     * USE:
+     * USE: https://blog.nobel-joergensen.com/2010/12/25/procedural-generated-mesh-in-unity/
+     * USE: http://wiki.unity3d.com/index.php/MeshSubdivision
+     * USE: https://thiscouldbebetter.wordpress.com/2015/04/24/the-catmull-clark-subdivision-surface-algorithm-in-javascript/
+     * USE: https://github.com/Erkaman/gl-catmull-clark/blob/master/index.js
+     * Examples:
+     * @link http://vorg.github.io/pex/docs/pex-geom/Geometry.html
+     * @link http://answers.unity3d.com/questions/259127/does-anyone-have-any-code-to-subdivide-a-mesh-and.html
+     * @link https://thiscouldbebetter.wordpress.com/2015/04/24/the-catmull-clark-subdivision-surface-algorithm-in-javascript/
+     */
+    subDivide ( geometry, center ) {
+
+        // TODO: NOT DONE!!!!
+
+
+        return geometry;
+
+    }
 
     /**
      * Compute whether point is in a triangle, wrapped 
@@ -699,8 +722,8 @@ export default class Prim {
     /** 
      * Compute normals for a 3d object. NOTE: some routines compute their 
      * own normals.
-     * Adapted from BabylonJS
-     * https://github.com/BabylonJS/Babylon.js/blob/3fe3372053ac58505dbf7a2a6f3f52e3b92670c8/src/Mesh/babylon.mesh.vertexData.js
+     * Adapted from BabylonJS version.
+     * @link https://github.com/BabylonJS/Babylon.js/blob/3fe3372053ac58505dbf7a2a6f3f52e3b92670c8/src/Mesh/babylon.mesh.vertexData.js
      * @link http://gamedev.stackexchange.com/questions/8191/any-reliable-polygon-normal-calculation-code
      * @link https://www.opengl.org/wiki/Calculating_a_Surface_Normal
      */
@@ -908,23 +931,11 @@ export default class Prim {
 
     }
 
-    /** 
-     * Subdivide a mesh, keep vertices shared.
-     * @link http://answers.unity3d.com/questions/259127/does-anyone-have-any-code-to-subdivide-a-mesh-and.html
-     * @link https://thiscouldbebetter.wordpress.com/2015/04/24/the-catmull-clark-subdivision-surface-algorithm-in-javascript/
-     */
-    subdivide ( geometry ) {
-
-    }
-
-
     /* 
      * ---------------------------------------
      * GEOMETRY
      * ---------------------------------------
      */
-
-
 
     /** 
      * WebGL point cloud (particle system).
@@ -1376,6 +1387,8 @@ export default class Prim {
             }
 
         }
+
+        //////////////////geo = this.subDivide( geo );
 
 
         // Wind the SKYDOME indices backwards so texture displays inside.
@@ -2046,6 +2059,7 @@ export default class Prim {
 
         }
 
+        
         // Flatten arrays, since we created using 2 dimensions.
 
         vertices = geo.vertices.data = flatten( positions, false );
@@ -2054,7 +2068,7 @@ export default class Prim {
 
         // Re-compute normals, which may have changed.
 
-        this.computeNormals( vertices, indices, normals )
+        this.computeNormals( vertices, indices, normals );
 
         // Color array is pre-created, or gets a default in createBuffers().
 
@@ -2562,21 +2576,6 @@ export default class Prim {
     }
 
     /** 
-     * type PRISM.
-     * create a closed pyramid shape, half of an icosohedron.
-     * 
-     * @param {Prim} the Prim needing geometry. 
-     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
-     * Creating WebGL buffers is turned on or off conditionally in the method.
-     */
-    geometryPrism ( prim ) {
-
-        // TODO: return upper half of icosohedron, and close. (possibly by setting 
-        // bottom half to a comm y value)
-
-    }
-
-    /** 
      * type ICODOME.
      * create a half-sphere from an icosphere.
      * 
@@ -2623,6 +2622,43 @@ export default class Prim {
     geometryBottomIcoDome ( prim ) {
 
     }
+
+
+    /** 
+     * Create an octahedron
+     * Core create
+     * https://github.com/nickdesaulniers/prims/blob/master/octahedron.js
+     * subdivide?
+     * https://github.com/nickdesaulniers/prims/blob/master/octahedron.js
+     */
+    geometryOctahedron ( prim ) {
+        
+    }
+
+    /** 
+     * type PRISM.
+     * create a closed pyramid shape, half of an icosohedron.
+     * 
+     * @param {Prim} the Prim needing geometry. 
+     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
+     * Creating WebGL buffers is turned on or off conditionally in the method.
+     */
+    geometryPrism ( prim ) {
+
+        // TODO: return upper half of icosohedron, and close. (possibly by setting 
+        // bottom half to a comm y value)
+
+    }
+
+    /** 
+     * Dodecahedron
+     * http://vorg.github.io/pex/docs/pex-gen/Dodecahedron.html
+     */
+    geometryDodecahedron( prim ) {
+
+
+    }
+
 
     /** 
      * Torus object
