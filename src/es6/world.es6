@@ -288,8 +288,8 @@ export default class World {
             this.prim.typeList.ICOSOHEDRON,
             'icophere',
             vec5( 3, 3, 3, 0 ),            // dimensions
-            vec5( 4, 4, 4 ),         // divisions
-            vec3.fromValues(-2.5, 2.0, -1 ),       // position (absolute)
+            vec5( 8, 8, 8 ),         // divisions
+            vec3.fromValues(0.5, 3.5, -2 ),       // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
@@ -308,19 +308,6 @@ export default class World {
             vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
             ['img/mozvr-logo2.png'],               // texture present
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
-        ) );
-
-        this.dirlightTextureObjList.push( this.prim.createPrim(
-            this.prim.typeList.ICOSPHERE,
-            'icophere',
-            vec5( 3, 3, 3, 0 ),            // dimensions
-            vec5( 4, 4, 4 ),            // divisions
-            vec3.fromValues(1.5, 2.5, -1 ),        // position (absolute)
-            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-            ['img/mozvr-logo2.png'],               // texture present
-            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )   // color
         ) );
 
         this.textureObjList.push( this.prim.createPrim(
@@ -387,8 +374,7 @@ export default class World {
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
             ['img/uv-test.png'],               // texture present
-            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color
-            true                                    // CAPPED AT ENDS
+            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
 
@@ -402,8 +388,7 @@ export default class World {
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
             ['img/uv-test.png'],               // texture present
-            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color
-            true                                    // CAPPED AT ENDS
+            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
 
@@ -417,8 +402,21 @@ export default class World {
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
             ['img/uv-test.png'],               // texture present
-            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color
-            true                                    // CAPPED AT ENDS
+            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
+        ) );
+
+
+        this.colorObjList.push( this.prim.createPrim(
+            this.prim.typeList.DODECAHEDRON,
+            'Octahedron',
+            vec5( 1, 1, 1 ),       // dimensions (4th dimension doesn't exist for cylinder)
+            vec5( 40, 40, 0  ),        // divisions MAKE SMALLER
+            vec3.fromValues(-1.5, 0, 2.0 ),          // position (absolute)
+            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+            vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+            ['img/crate.png'],               // texture present
+            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
 

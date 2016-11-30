@@ -149,6 +149,8 @@ export default class Prim {
 
             ICOSOHEDRON: 'geometryIcosohedron',
 
+            PYRAMID: 'geometryPyramid',
+
             ICOSPHERE: 'geometryIcoSphere',
 
             TOPICODOME: 'geometryTopIcoDome',
@@ -156,6 +158,10 @@ export default class Prim {
             SKYICODOME: 'geometrySkyIcoDome',
 
             BOTTOMICODOME: 'geometryBottomIcoDome',
+
+            OCTAHEDRON: 'geometryOctahedron',
+
+            DODECAHEDRON: 'geometryDodecahedron',
 
             TORUS: 'geometryTorus',
 
@@ -311,13 +317,25 @@ export default class Prim {
 
             },
 
-            indices: {
+            indices: { // where to start drawing GL_TRIANGLES.
 
                 data: [],
 
                 buffer: null,
 
                 itemSize: 1,
+
+                numItems: 0
+
+            },
+
+            sides: { // a collection of triangles creating a side on the shape.
+
+                data: [],
+
+                buffer: null,
+
+                itemSize: 3,
 
                 numItems: 0
 
@@ -452,6 +470,21 @@ export default class Prim {
             gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( o.data ), gl.STATIC_DRAW );
 
             o.numItems = o.data.length / o.itemSize;
+
+            // Create the Sides buffer, a kind of indices buffer.
+
+            o = bufferObj.sides;
+
+            if ( ! o.data.length ) {
+
+                console.warn( 'no sides present, creating default' );
+
+                o.data = new Uint16Array( [ 1 ] );
+
+            }
+
+            // TODO: SUPPORT BY SIDE DRAWING FOR SOME PRIMS.
+            // TODO: SUPPORT
 
             // create the Normals buffer.
 
@@ -964,8 +997,7 @@ export default class Prim {
         indices  = geo.indices.data,
         texCoords = geo.texCoords.data,
         normals = geo.normals.data,
-        tangents = geo.tangents.data,
-        colors = geo.colors.data;
+        tangents = geo.tangents.data
 
         // Expect points in Map3d object, or generate random.
 
@@ -1036,8 +1068,7 @@ export default class Prim {
         indices  = geo.indices.data,
         texCoords = geo.texCoords.data,
         normals = geo.normals.data,
-        tangents = geo.tangents.data,
-        colors = geo.colors.data;
+        tangents = geo.tangents.data;
 
         // Vertices.
 
@@ -1090,8 +1121,7 @@ export default class Prim {
         indices  = geo.indices.data,
         texCoords = geo.texCoords.data,
         normals = geo.normals.data,
-        tangents = geo.tangents.data,
-        colors = geo.colors.data;
+        tangents = geo.tangents.data;
 
         let l = prim.dimensions[ 0 ], 
         w = prim.dimensions[ 2 ];
@@ -1174,8 +1204,7 @@ export default class Prim {
         indices  = geo.indices.data,
         texCoords = geo.texCoords.data,
         normals = geo.normals.data,
-        tangents = geo.tangents.data,
-        colors = geo.colors.data; 
+        tangents = geo.tangents.data; 
 
         let longitudeBands = prim.divisions[ 0 ] // x axis (really xz)
 
@@ -1630,8 +1659,7 @@ export default class Prim {
         indices  = geo.indices.data,
         texCoords = geo.texCoords.data,
         normals = geo.normals.data,
-        tangents = geo.tangents.data,
-        colors = geo.colors.data; 
+        tangents = geo.tangents.data; 
 
         // Radius is measured along the x axis, height along y axis.
 
@@ -1768,8 +1796,7 @@ export default class Prim {
         indices  = geo.indices.data,
         texCoords = geo.texCoords.data,
         normals = geo.normals.data,
-        tangents = geo.tangents.data,
-        colors = geo.colors.data;
+        tangents = geo.tangents.data;
 
         let sx = prim.dimensions[ 0 ],   // x width
         sy = prim.dimensions[ 1 ],       // y height
@@ -2228,7 +2255,19 @@ export default class Prim {
 
         // Size and divisions.
 
-        let subdivisions = prim.divisions[ 0 ];
+        let subdivisions;
+
+        subdivisions = prim.divisions[ 0 ];
+
+        if ( prim.type === list.ICOSOHEDRON ) {
+
+            subdivisions = 2;
+
+        } else {
+
+            subdivisions = prim.divisions[ 0 ]
+
+        }
 
         let radius = prim.dimensions[ 0 ] * 0.5;
 
@@ -2249,15 +2288,15 @@ export default class Prim {
 
         let geo = prim.geometry;
 
+        // TODO: halve index length if making a dome.
+
         let vertices = geo.vertices.data = new Array ( ( resolution + 1 ) * ( resolution + 1 ) * 4 - (resolution * 2 - 1) * 3 ),
         indices  = geo.indices.data = new Array( (1 << ( subdivisions * 2 + 3) ) * 3 ),
         texCoords = geo.texCoords.data = new Array( vertices.length ),
         normals = geo.normals.data = new Array( vertices.length ),
-        tangents = geo.tangents.data = new Array( vertices.length ),
-        colors = geo.colors.data;
+        tangents = geo.tangents.data = new Array( vertices.length );
 
         // Initialize lots of default variables.
-
 
         let v = 0, vBottom = 0, t = 0, i, d, progress, from, to;
 
@@ -2336,11 +2375,15 @@ export default class Prim {
 
             // Toggle icosphere with icosohedron.
 
-            if ( prim.type === list.ICOSPHERE ) {
+            //if ( prim.type === list.ICOSPHERE ) {
+
+            if ( prim.type !== list.OCTAHEDRON ) {
 
                 vertices[i] = vec3.normalize( [ 0, 0, 0 ], vertices[ i ] );
 
             }
+
+            //}
 
             normals[i] = vec3.copy( [ 0, 0, 0 ], vertices[ i ] );
 
@@ -2366,9 +2409,9 @@ export default class Prim {
 
                     vertices[ i ][ 0 ] *= radius;
 
-                    vertices[ i ][ 1 ] *= prim.dimensions[1] /2; //radius;
+                    vertices[ i ][ 1 ] *= prim.dimensions[1] / 2; //radius;
 
-                    vertices[ i ][ 2 ] *= prim.dimensions[2]/2; //radius;
+                    vertices[ i ][ 2 ] *= prim.dimensions[2] / 2; //radius;
 
             }
 
@@ -2555,6 +2598,8 @@ export default class Prim {
 
         }
 
+        window.geo = geo;
+
         // Return the buffer.
 
         return this.createBuffers( prim.geometry );
@@ -2572,6 +2617,21 @@ export default class Prim {
     geometryIcosohedron ( prim ) {
 
         return this.geometryIcoSphere( prim, false );
+
+    }
+
+    /** 
+     * type PYRAMID.
+     * create a closed pyramid shape, half of an icosohedron.
+     * 
+     * @param {Prim} the Prim needing geometry. 
+     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
+     * Creating WebGL buffers is turned on or off conditionally in the method.
+     */
+    geometryPyramid ( prim ) {
+
+        // TODO: return upper half of icosohedron, and close. (possibly by setting 
+        // bottom half to a comm y value)
 
     }
 
@@ -2626,39 +2686,251 @@ export default class Prim {
 
     /** 
      * Create an octahedron
-     * Core create
-     * https://github.com/nickdesaulniers/prims/blob/master/octahedron.js
-     * subdivide?
-     * https://github.com/nickdesaulniers/prims/blob/master/octahedron.js
-     */
-    geometryOctahedron ( prim ) {
-        
-    }
-
-    /** 
-     * type PRISM.
-     * create a closed pyramid shape, half of an icosohedron.
+     * Note: the icosphere algorith returns an octahedron if we don't "inflate" 
+     * the object's vertices by normalizing.
+     * 
+     * Additional links:
+     * @link https://github.com/nickdesaulniers/prims/blob/master/octahedron.js
+     * @link http://paulbourke.net/geometry/platonic/
      * 
      * @param {Prim} the Prim needing geometry. 
      * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
      * Creating WebGL buffers is turned on or off conditionally in the method.
      */
-    geometryPrism ( prim ) {
+    geometryOctahedron ( prim ) {
 
-        // TODO: return upper half of icosohedron, and close. (possibly by setting 
-        // bottom half to a comm y value)
+        return this.geometryIcoSphere( prim );
 
     }
 
     /** 
      * Dodecahedron
-     * http://vorg.github.io/pex/docs/pex-gen/Dodecahedron.html
+     * @link https://github.com/prideout/par/blob/master/par_shapes.h
+     * @link https://github.com/nickdesaulniers/prims/blob/master/dodecahedron.js
+     * @link http://vorg.github.io/pex/docs/pex-gen/Dodecahedron.html
      */
-    geometryDodecahedron( prim ) {
+    geometryDodecahedron ( prim ) {
 
+        const vec3 = this.glMatrix.vec3;
+
+        let geo = prim.geometry;
+
+        // Shortcuts to Prim data arrays
+
+        // TODO: abstract the creation of the triangle fan for each pentagon.
+
+        let vertices = geo.vertices.data,
+        indices  = geo.indices.data,
+        sides = geo.sides.data,
+        texCoords = geo.texCoords.data,
+        normals = geo.normals.data,
+        tangents = geo.tangents.data;
+
+        // Size and divisions.
+
+        let wi = prim.dimensions[ 0 ];
+
+        let hi = prim.dimensions[ 1 ];
+
+        let de = prim.dimensions[ 2 ];
+
+        let subdivisions = prim.divisions[ 0 ];
+
+        var phi = ( 1 + Math.sqrt( 5 ) ) / 2;
+
+        var b = 1 / phi;
+
+        var c = 2 - phi;
+
+        var ertices = [
+             b,  b,  b,   0,  1,  c,  -b,  b,  b,  -c,  0,  1,   c,  0,  1,
+            -b, -b,  b,   0, -1,  c,   b, -b,  b,   c,  0,  1,  -c,  0,  1,
+             b, -b, -b,   0, -1, -c,  -b, -b, -b,  -c,  0, -1,   c,  0, -1,
+            -b,  b, -b,   0,  1, -c,   b,  b, -b,   c,  0, -1,  -c,  0, -1,
+             0,  1, -c,   0,  1,  c,   b,  b,  b,   1,  c,  0,   b,  b, -b,
+             0,  1,  c,   0,  1, -c,  -b,  b, -b,  -1,  c,  0,  -b,  b,  b,
+             0, -1, -c,   0, -1,  c,  -b, -b,  b,  -1, -c,  0,  -b, -b, -b,
+             0, -1,  c,   0, -1, -c,   b, -b, -b,   1, -c,  0,   b, -b,  b,
+             b,  b,  b,   c,  0,  1,   b, -b,  b,   1, -c,  0,   1,  c,  0,
+             b, -b, -b,   c,  0, -1,   b,  b, -b,   1,  c,  0,   1, -c,  0,
+            -b,  b, -b,  -c,  0, -1,  -b, -b, -b,  -1, -c,  0,  -1,  c,  0,
+            -b, -b,  b,  -c,  0,  1,  -b,  b,  b,  -1,  c,  0,  -1, -c,  0
+        ];
+
+
+
+        // The problem is that the five points listed are not 5 triangles, so we have
+        // to find the middle of each set of five, and duplicate the last point.
+        // Am I proud of this code?  No.
+
+        for ( let i = 0; i < ertices.length; i += 15) {
+
+            var a = [ertices[i], ertices[i + 1], ertices[i + 2]];
+            var b = [ertices[i + 3], ertices[i + 4], ertices[i + 5]];
+            var c = [ertices[i + 6], ertices[i + 7], ertices[i + 8]];
+            var d = [ertices[i + 9], ertices[i + 10], ertices[i + 11]];
+            var e = [ertices[i + 12], ertices[i + 13], ertices[i + 14]];
+        
+            var center = [
+                ( a[ 0 ] + b[ 0 ] + c[ 0 ] + d[ 0 ] + e[ 0 ] ) / 5,
+                ( a[ 1 ] + b[ 1 ] + c[ 1 ] + d[ 1 ] + e[ 1 ] ) / 5,
+                ( a[ 2 ] + b[ 2 ] + c[ 2 ] + d[ 2 ] + e[ 2 ] ) / 5
+            ];
+
+            let side = [];
+
+            vertices.push.apply(vertices, a);
+            side.push( a );
+
+            vertices.push.apply(vertices, b);
+            side.push( b );
+
+            vertices.push.apply(vertices, center);
+            side.push( center );
+
+            vertices.push.apply(vertices, b);
+            side.push( b );
+
+            vertices.push.apply(vertices, c);
+            side.push( c );
+
+            vertices.push.apply(vertices, center);
+            side.push( center );
+
+            vertices.push.apply(vertices, c);
+            side.push( c );
+
+            vertices.push.apply(vertices, d);
+            side.push( d );
+
+            vertices.push.apply(vertices, center);
+            side.push( center );
+
+            vertices.push.apply(vertices, d);
+            side.push( d );
+
+            vertices.push.apply(vertices, e);
+            side.push( e );
+
+            vertices.push.apply(vertices, center);
+            side.push( center );
+
+            vertices.push.apply(vertices, e);
+            side.push( e );
+
+            vertices.push.apply(vertices, a);
+            side.push( a );
+
+            vertices.push.apply(vertices, center);
+            side.push( center );
+
+            sides.push( side );
+
+        }
+
+        // Indices.
+
+        for ( var ii = 0, len = vertices.length / 3; ii < len; ii++ ) {
+
+            indices.push( ii );
+
+        }
+
+        for ( var i = 0; i < vertices.length; i += 15) {
+
+            setUV( i );
+            setUV( i + 3);
+            setUV( i + 6 );
+            setUV( i + 9);
+            setUV( i + 12);
+
+        }
+
+        // Normals.
+
+        for ( var i = 0; i < vertices.length; i += 9 ) {
+
+            var a = [ vertices[ i     ], vertices[ i + 1 ], vertices[ i + 2 ] ];
+
+            var b = [ vertices[ i + 3 ], vertices[ i + 4 ], vertices[ i + 5 ] ];
+
+            var c = [ vertices[ i + 6 ], vertices[ i + 7 ], vertices[ i + 8 ] ];
+
+            // Normalizing is probably not necessary.
+            // It should also be seperated out.
+
+            // Create normals.
+
+            let d = vec3.sub( [ 0, 0, 0 ], a, b );
+
+            let e = vec3.sub( [ 0, 0, 0 ], a, c );
+
+            let f = vec3.cross( [ 0, 0, 0 ], d, e );
+
+            let normal = vec3.normalize( [ 0, 0, 0 ], f );
+
+            normals.push( 
+
+                normal[ 0 ], normal[ 1 ], normal[ 2 ],
+
+                normal[ 0 ], normal[ 1 ], normal[ 2 ],
+
+                normal[ 0 ], normal[ 1 ], normal[ 2 ]
+
+            );
+
+            // Scale.
+
+            vertices[ i ]     *= wi;
+
+            vertices[ i + 1 ] *= hi;
+
+            vertices[ i + 2 ] *= de;
+
+            vertices[ i + 3 ] *= wi;
+
+            vertices[ i + 4 ] *= hi;
+
+            vertices[ i + 5 ] *= de;
+
+            vertices[ i + 6 ] *= wi;
+
+            vertices[ i + 7 ] *= hi;
+
+            vertices[ i + 8 ] *= de;
+
+        }
+
+
+            // Texture coordinates using positions on a sphere.
+            // https://www.mvps.org/directx/articles/spheremap.htm
+
+
+            function setUV ( vPos ) {
+
+              let u, v;
+
+                u = Math.atan2( vertices[ vPos ], vertices[ vPos + 2 ] ) / ( 2 * Math.PI );  // was v.x, v.z
+
+                if ( u < 0 ) {   // was textureCoordinates.x
+
+                    u += 1;    // was textureCoordinates
+
+                }
+
+                v = Math.asin( vertices[ vPos + 1 ] ) / Math.PI + 0.5;  // was v.y, textureCoordinates.y
+
+                // corrections. TODO:
+              
+                texCoords.push( u, v );
+
+            }
+
+        // Return the buffer.
+
+        return this.createBuffers( prim.geometry );
 
     }
-
 
     /** 
      * Torus object
@@ -2689,8 +2961,7 @@ export default class Prim {
         indices  = geo.indices.data,
         texCoords = geo.texCoords.data,
         normals = geo.normals.data,
-        tangents = geo.tangents.data,
-        colors = geo.colors.data;
+        tangents = geo.tangents.data;
 
         let radius = prim.dimensions[ 0 ] / 2; // x coordinate, width of torus in x direction
 
@@ -2808,8 +3079,7 @@ export default class Prim {
         indices  = geo.indices.data,
         texCoords = geo.texCoords.data,
         normals = geo.normals.data,
-        tangents = geo.tangents.data,
-        colors = geo.colors.data;
+        tangents = geo.tangents.data;
 
         // Vertices.
 
@@ -2962,23 +3232,6 @@ export default class Prim {
         // NOTE: mis-spelling type leads to error here...
 
         prim.geometry = this[ type ]( prim, color );
-
-////////////////////
-/* 
-        // Colors.
-
-        if( ! colors.length ) {
-
-            prim.geometry.colors = this.computeColors( normals, colors );
-
-        }
-
-        // Return the buffer, or add array data to the existing Prim data.
-
-        prim.geometry = this.createBuffers( prim.geometry );
-
-*/
-////////////////////
 
         // Standard Prim properties for position, translation, rotation, orbits. Used by shader/renderer objects (e.g. shaderTexture).
 
