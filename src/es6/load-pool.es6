@@ -1,4 +1,4 @@
-export default class LoadPool {
+class LoadPool {
 
     /**
      * Base loader class. We don't use promise.all since we want to keep a 
@@ -148,3 +148,5 @@ export default class LoadPool {
     }
 
 }
+
+export default LoadPool;

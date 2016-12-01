@@ -1,6 +1,6 @@
 import Shader from './shader'
 
-export default class ShaderColor extends Shader {
+class ShaderColor extends Shader {
 
     constructor ( init, util, glMatrix, webgl, prim ) {
 
@@ -169,3 +169,5 @@ export default class ShaderColor extends Shader {
     }
 
 }
+
+export default ShaderColor;

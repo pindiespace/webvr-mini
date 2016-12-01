@@ -1,6 +1,6 @@
 import LoadPool from  './load-pool';
 
-export default class LoadFont extends LoadPool {
+class LoadFont extends LoadPool {
 
     /** 
      * Load and configure fonts for use.
@@ -22,3 +22,5 @@ export default class LoadFont extends LoadPool {
 
 
 }
+
+export default LoadFont;

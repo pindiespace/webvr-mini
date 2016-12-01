@@ -1,9 +1,10 @@
 import Map2d from './map2d';
 import Map3d from './map3d';
 
-export default class Prim {
+class Prim {
 
     /** 
+     * @class
      * Create object primitives, and return vertex and index data 
      * suitable for creating a VBO and IBO.
      * 
@@ -3433,3 +3434,7 @@ export default class Prim {
     }
 
 }
+
+// We put this here because of JSDoc(!)
+
+export default Prim;

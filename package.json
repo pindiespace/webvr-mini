@@ -3,9 +3,7 @@
   "version": "0.0.1",
   "main": "./src/js/app.js",
   "scripts": {
-    "build": "cross-env BUILD_RELEASE=true BUILD_DEV=false webpack --config webpack-production.config.js -p",
-    "dev": "cross-env BUILD_RELEASE=false BUILD_DEV=true webpack",
-    "start": "webpack-dev-server --inline --devtool eval --progress --colors --content-base dist"
+    "esdoc": "esdoc -c ./esdoc.json"
   },
   "author": "pete markiewicz",
   "license": "MIT",
@@ -20,6 +18,7 @@
     "babel-preset-react": "^6.11.1",
     "copy-webpack-plugin": "^3.0.1",
     "cross-env": "^3.0.0",
+    "esdoc": "^0.4.8",
     "extended-define-webpack-plugin": "^0.1.0",
     "file-loader": "^0.9.0",
     "gl-matrix": "^2.3.2",

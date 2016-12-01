@@ -1,6 +1,4 @@
-
-
-export default class Map2d {
+class Map2d {
 
     /* 
      * NOTE: using 'map.es6' causes a transpile error
@@ -680,3 +678,5 @@ export default class Map2d {
     }
 
 }
+
+export default Map2d;

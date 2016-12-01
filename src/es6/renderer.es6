@@ -1,4 +1,4 @@
-export default class Renderer {
+class Renderer {
 
     constructor ( init, util, glMatrix, webgl, shaderTexture, shaderColor, shaderDirlightTexture ) {
 
@@ -26,3 +26,5 @@ export default class Renderer {
 
 
 }
+
+export default Renderer;

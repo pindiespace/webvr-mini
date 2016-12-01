@@ -1,4 +1,4 @@
-export default class Shader {
+class Shader {
 
     /* 
      * Renderers.
@@ -23,7 +23,6 @@ export default class Shader {
      * Basic MVC
      * https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_model_view_projection
      */
-
     constructor ( init, util, glMatrix, webgl, prim ) {
 
         console.log( 'In Shader class' );
@@ -156,3 +155,5 @@ export default class Shader {
     }
 
 }
+
+export default Shader;

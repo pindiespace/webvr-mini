@@ -1,6 +1,4 @@
-
-
-export default class Map3d {
+class Map3d {
 
     /* 
      * NOTE: using 'map.es6' causes a transpile error
@@ -15,7 +13,6 @@ export default class Map3d {
      * @link https://www.html5rocks.com/en/tutorials/webgl/typed_arrays/
      *
      */
-
     constructor ( util ) {
 
         console.log( 'in Map3d' );
@@ -145,3 +142,5 @@ export default class Map3d {
 
 
 }
+
+export default Map3d;

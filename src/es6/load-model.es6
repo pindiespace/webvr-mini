@@ -1,6 +1,6 @@
 import LoadPool from  './load-pool';
 
-export default class LoadModel extends LoadPool {
+class LoadModel extends LoadPool {
 
     /**
      * Base loader class.
@@ -94,3 +94,5 @@ export default class LoadModel extends LoadPool {
 
 
 }
+
+export default LoadModel;

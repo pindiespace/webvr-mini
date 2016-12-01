@@ -1,0 +1,10 @@
+{
+  "source": "./src",
+  "destination": "./doc",
+  "includes": ["\\.(js|es6)$"],
+  "excludes": ["\\.config\\.(js|es6)$"],
+  "title": "WebVR-Mini",
+  "manual": {
+    "overview": ["./README.md"]
+  }
+}

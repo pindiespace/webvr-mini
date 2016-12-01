@@ -1,6 +1,6 @@
 import Shader from './shader'
 
-export default class ShaderMetal extends Shader {
+class ShaderMetal extends Shader {
 
     constructor ( init, util, glMatrix, webgl, prim ) {
 
@@ -24,3 +24,5 @@ export default class ShaderMetal extends Shader {
 
 
 }
+
+export default ShaderMetal;

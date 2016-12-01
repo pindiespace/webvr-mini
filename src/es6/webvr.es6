@@ -1,4 +1,4 @@
-export default class WebVR {
+class WebVR {
 
     constructor ( init, util, glMatrix, webgl  ) {
 
@@ -24,3 +24,5 @@ export default class WebVR {
     }
 
 }
+
+export default WebVR;

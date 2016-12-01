@@ -1,6 +1,6 @@
 import Shader from './shader'
 
-export default class ShaderTerrain extends Shader {
+class ShaderTerrain extends Shader {
 
     constructor ( init, util, glMatrix, webgl, prim ) {
 
@@ -27,3 +27,5 @@ export default class ShaderTerrain extends Shader {
 
 
 }
+
+export default ShaderTerrain;

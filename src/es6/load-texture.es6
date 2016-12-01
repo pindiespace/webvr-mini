@@ -1,6 +1,6 @@
 import LoadPool from  './load-pool';
 
-export default class LoadTexture extends LoadPool {
+class LoadTexture extends LoadPool {
 
     /**
      * Texture loader, using a texture pool.
@@ -203,3 +203,5 @@ export default class LoadTexture extends LoadPool {
     // load() and update() are defined in the superclass.
 
 }
+
+export default LoadTexture;

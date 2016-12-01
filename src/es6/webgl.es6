@@ -1,4 +1,4 @@
-export default class WebGL {
+class WebGL {
 
     /**
      * References:
@@ -1115,3 +1115,5 @@ export default class WebGL {
     }
 
 }
+
+export default WebGL;

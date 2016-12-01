@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base data-ice="baseUrl" href="../../../">
+  <title data-ice="title">src/es6/map2d.es6 | WebVR-Mini API Document</title>
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+  <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
+  <script src="script/prettify/prettify.js"></script>
+  
+  
+  <script src="script/manual.js"></script>
+</head>
+<body class="layout-container" data-ice="rootContainer">
+
+<header>
+  <a href="./">Home</a>
+  <a href="./manual/index.html" data-ice="manualHeaderLink">Manual</a>
+  <a href="identifiers.html">Reference</a>
+  <a href="source.html">Source</a>
+  
+  
+  <div class="search-box">
+  <span>
+    <img src="./image/search.png">
+    <span class="search-input-edge"></span><input class="search-input"><span class="search-input-edge"></span>
+  </span>
+    <ul class="search-result"></ul>
+  </div>
+</header>
+
+<nav class="navigation" data-ice="nav"><div>
+  <ul>
+    
+  <li data-ice="doc"><div data-ice="dirPath" class="nav-dir-path">es6</div><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/es6/load-audio.es6~LoadAudio.html">LoadAudio</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/es6/load-font.es6~LoadFont.html">LoadFont</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/es6/load-model.es6~LoadModel.html">LoadModel</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/es6/load-pool.es6~LoadPool.html">LoadPool</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/es6/load-texture.es6~LoadTexture.html">LoadTexture</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/es6/load-video.es6~LoadVideo.html">LoadVideo</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/es6/map2d.es6~Map2d.html">Map2d</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/es6/map3d.es6~Map3d.html">Map3d</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/es6/prim.es6~Prim.html">Prim</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/es6/renderer.es6~Renderer.html">Renderer</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/es6/shader-color.es6~ShaderColor.html">ShaderColor</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/es6/shader-dirlight-texture.es6~ShaderDirlightTexture.html">ShaderDirlightTexture</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/es6/shader-metal.es6~ShaderMetal.html">ShaderMetal</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/es6/shader-terrain.es6~ShaderTerrain.html">ShaderTerrain</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/es6/shader-texture.es6~ShaderTexture.html">ShaderTexture</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/es6/shader-water.es6~ShaderWater.html">ShaderWater</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/es6/shader.es6~Shader.html">Shader</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/es6/util.es6~Util.html">Util</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/es6/webgl.es6~WebGL.html">WebGL</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/es6/webvr.es6~WebVR.html">WebVR</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-loadAudio">loadAudio</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-loadModel">loadModel</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-loadTexture">loadTexture</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-loadVideo">loadVideo</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-prim">prim</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-util">util</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-webgl">webgl</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-webvr">webvr</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-world">world</a></span></span></li>
+</ul>
+</div>
+</nav>
+
+<div class="content" data-ice="content"><h1 data-ice="title">src/es6/map2d.es6</h1>
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">class Map2d {
+
+    /* 
+     * NOTE: using &apos;map.es6&apos; causes a transpile error
+     *
+     * Generic map object, equivalent to a 2-dimensional array, used 
+     * for heightmaps and color maps and other &quot;maplike&quot; data, including 
+     * Image data in arrays.
+     * Maps are defined in x (columns)  and z (rows) instead of 
+     * x and y to match Prim definitions of heightMaps.
+     * Maps can be scaled using bilinear or bicubic algorithms.
+     *
+     * @link https://www.html5rocks.com/en/tutorials/webgl/typed_arrays/
+     *
+     */
+
+    constructor ( util ) {
+
+        console.log( &apos;in Map2d&apos; );
+
+        this.util = util;
+
+        this.type = {
+
+            PLANE: &apos;initPlane&apos;,
+
+            RANDOM: &apos;initRandom&apos;,
+
+            DIAMOND: &apos;initDiamond&apos;,
+
+            IMAGE: &apos;initImage&apos;
+
+        };
+
+        this.edgeType = {
+
+            NONE: 0,      // don&apos;t do anything
+
+            WRAP: 1,      // wrap a out of range side to the opposite side
+
+            TOZERO: 2     // push down to zero
+
+        };
+
+        this.width = 0;
+
+        this.depth = 0;
+
+        this.low = 0;
+
+        this.high = 0;
+
+        this.map = null; // actual heightmap
+
+        this.squareSize = 0; // max square that starts at 0, 0 and fits in Map2d.
+
+        this.max = 0;
+
+        // offscreen canvas for heightmaps from images.
+
+        this.canvas = this.ctx = this.imgData = null;
+
+    }
+
+    checkParams ( w, d, roughness, flatten ) {
+
+        if( w &lt; 1 || d &lt; 1 ) {
+
+            console.error( &apos;invalid map width or height, was:&apos; + w + &apos;, &apos; + d );
+
+            return false;
+
+        } else if ( roughness &lt; 0 || roughness &gt; 1.0 ) {
+
+            console.error( &apos;invalid Map roughness (0-1), was:&apos; + roughness );
+
+            return false;
+
+        } else if ( flatten &lt; 0 || flatten &gt; 1.0 ) {
+
+            console.error( &apos;invalid Map flatten (0-1.0), was:&apos; + flatten );
+
+            return false;
+
+        }
+
+        return true;
+
+    }
+
+
+    /** 
+     * Get a Map pixel. For the diamond algorithm, this.max is a width or 
+     * height. For all others, it is the length of the entire array.
+     * @param {Number} x the x coordinate of the pixel (column)
+     * @param {Number} z the z coordinate of the pixel (row)
+     * @param {Enum} edgeFlag how to handle requests off the edge of the map 
+     * - WRAP: grab from other side, divide to zero).
+     * - TOZERO: reduce to zero, depending on unit distance from edge.
+     * @returns {Number} the Map value at the x, z position.
+     */
+    getPixel ( x, z, edgeFlag = 1 ) {
+
+        if ( x &lt; 0 || x &gt; this.width || z &lt; 0 || z &gt; this.depth ) {
+
+            switch ( edgeFlag ) {
+
+                case this.edgeType.WRAP:
+                    if ( x &lt; 0 ) x = this.width - x;
+                    if ( x &gt; this.width - 1 ) x = x - this.width;
+                    if ( z &lt; 0 ) z = this.depth - z;
+                    if ( z &gt; this.depth - 1 ) z = z - this.depth;
+                    break;
+
+                case this.edgeType.TOZERO:
+                    let xs = x;
+                    let zs = z;
+                    if ( x &lt; 0 ) x = 0;
+                    if( x &gt; this.width - 1 ) x = this.width - 1;
+                    if( z &lt; 0 ) z = 0;
+                    if( z &gt; this.depth - 1 ) z = this.depth - 1;
+                    return this.map[ x + this.squareSize * z ] / ( Math.abs( xs - x ) + Math.abs( zs - z ) );
+                    break;
+
+                default:
+                    console.error( &apos;getPixel out of range x:&apos; + x + &apos; z:&apos; + z + &apos; width:&apos; + w + &apos; height:&apos; + h + &apos; max:&apos; + this.max );
+                    return -1;
+                    break;
+
+            }
+
+        }
+
+        return this.map[ x + this.width * z ];
+
+    }
+
+    /** 
+     * Set a pixel in the Map.
+     * @param {Number} x the x (column) coordinate in the Map.
+     * @param {Number} z the z (row) coordinate in the Map.
+     * @param {Number} val the value at a map coordinate, typically Float32
+     */
+    setPixel ( x, z, val ) {
+
+        if ( x &lt; 0 || x &gt; this.max || z &lt; 0 || z &gt; this.max ) {
+
+            console.error( &apos;setPixel out of range x:&apos; + x + &apos; z:&apos; + z + &apos; max:&apos; + this.max );
+
+            return -1;
+
+        }
+
+        if ( this.low &gt; val ) this.low = val;
+
+        if( this.high &lt; val ) this.high = val;
+
+        ///////////////////////////////////console.log(&quot;SETPIXEL: x:&quot; + x + &quot; z:&quot; + z + &quot; val:&quot; + val + &apos; size:&apos; + this.squareSize )
+
+        this.map[ x + this.width * z ] = val; // NOTE: was squareSize!!!!!!!
+
+    }
+
+    /** 
+     * Create a completely flat Map.
+     */
+    initPlane ( w, d ) {
+
+        if ( this.checkParams ( w, d, 0, 0 ) ) {
+
+            this.img = this.map = null;
+
+            this.map = new Float32Array( w * d );
+
+            this.width = w;
+
+            this.depth = d;
+
+            this.squareSize = Math.min( w * d ); // shortest face.
+
+        } else {
+
+            console.error( &apos;error creating Map2d using &apos; + this.type.PLANE );
+
+        }
+
+    }
+
+    /** 
+     * Generate a Map using completely random numbers clamped. 
+     * to a range.
+     */
+    initRandom ( w, d, roughness ) {
+
+        if( this.checkParams( w, d, roughness, 0 ) ) {
+
+            this.map = new Float32Array( w * d );
+
+            this.width = w;
+
+            this.depth = d;
+
+            this.squareSize = Math.min( w, d );
+
+            this.max = this.squareSize - 1;
+
+            let util = this.util;
+
+            for ( let i = 0, len = this.map.length; i &lt; len; i++ ) {
+
+                this.map[i] = util.getRand() * roughness;
+
+            }
+
+        } else {
+
+            console.error( &apos;error creating Map using &apos; + this.type.RANDOM );
+
+        }
+
+    }
+
+    /** 
+     * Create a blank heightmap in canvas ImageData format. If 
+     * random === true, make a random heightmap.
+     * https://github.com/hunterloftis/playfuljs-demos/blob/gh-pages/terrain/index.html
+     * @param {Number} w the width of the heightmap (x).
+     * @param {Number} h the height of the heightmap (z).
+     * @param {Boolean} create if true, make a proceedural heightmap using diamond algorithm.
+     * @param {Number} roughness if create === true, assign a roughness (0 - 1) to generated terrain.
+     */
+    initDiamond ( w, d, roughness, flatten ) {
+
+        if( this.checkParams( w, d, roughness, flatten ) ) {
+
+            this.img = this.map = null;
+
+            // Get next highest power of 2 (scale back later).
+
+            console.log(&apos;starting width:&apos; + w + &apos; height:&apos; + d + &apos; roughness:&apos; + roughness );
+
+            let n = Math.pow( 2, Math.ceil( Math.log( ( w + d ) / 2 ) / Math.log( 2 ) ) );
+
+            console.warn( &apos;random map, selecting nearest power of 2 (&apos; + n + &apos; x &apos; + n + &apos;)&apos; );
+
+            // Set up for diamond algorithm.
+
+            this.squareSize = n + 1;
+
+            this.width = this.depth = n; // SQUARE
+
+            this.map = new Float32Array( this.squareSize * this.squareSize );
+
+            // For the Diamond algorithm, this.max is the length or width of the terrain.
+
+            this.max = this.squareSize - 1;
+
+            this.setPixel( 0, 0, this.max );
+
+            this.setPixel( this.max, 0, this.max / 2 );
+
+            this.setPixel( this.max, this.max, 0 );
+
+            this.setPixel( 0, this.max, this.max / 2 );
+
+            // Start recursive terrain generation.
+
+            this.divide( this.max, roughness );
+
+            // The first pixel may be too high.
+
+            this.setPixel( 0, 0, (this.getPixel( 0, 1 ) + this.getPixel( 1, 0 ) ) / 2 );
+
+            this.flatten( flatten / this.squareSize ); // if divisions = 100, shrink height 1/ 100;
+
+            } else {
+
+                console.error( &apos;error creating Map using &apos; + this.type.DIAMOND );
+
+            }
+
+    }
+
+    /** 
+     * Use an RGBA image to create the heightmap, after drawing into &lt;canvas&gt;.
+     * @link https://www.html5rocks.com/en/tutorials/webgl/typed_arrays/
+     * @link http://stackoverflow.com/questions/39678642/trying-to-convert-imagedata-to-an-heightmap
+     * @param {Number} w desired heightmap width (x).
+     * @param {Number} d desired height (z) of heightmap.
+     */
+    initImage ( w, d, path, callback ) {
+
+        if( this.checkParams( w, d, roughness, flatten ) ) {
+
+        }
+
+        if ( ! this.canvas ) {
+
+            this.canvas = document.createElement( &apos;canvas&apos; );
+
+        }
+
+        if ( ! this.ctx ) {
+
+            this.ctx = this.canvas.getContext( &apos;2d&apos; );
+
+        }
+
+        let img = new Image();
+
+        img.style.display = &apos;none&apos;;
+
+        img.onload = () =&gt; {
+
+            this.ctx.drawImage( img, 0, 0 );
+
+            // Uint8ClampedArray, RGBA 32-bit for all images.
+            //  let rgba = &apos;rgba(&apos; + data[0] + &apos;,&apos; + data[1] + &apos;,&apos; + data[2] + &apos;,&apos; + (data[3] / 255) + &apos;)&apos;;
+
+            this.imgData = this.ctx.getImageData(0, 0, img.width, img.height );
+
+            this.width = img.width;
+
+            this.depth = img.height;
+
+            this.squareSize = Math.min( w, h ); // largest square area starting with 0, 0
+
+            this.max = this.squareSize - 1;
+
+            // Pixel-level view.
+            //this.pixels = new Uint32Array( this.data.buffer );
+
+            this.map = new Float32Array( this.squareSize );
+
+            let j = 0;
+
+            let data = this.imgData;
+
+            for ( let i = 0, len = this.data.length; i &lt; len; i++ ) {
+
+                this.map[j++] = data[i] + data[i + 1] + data [ i + 2 ] / 3;
+
+            }
+
+        }
+
+        img.onerror = () =&gt; {
+
+            console.error( &apos;image could not be loaded:&apos; + path );
+        }
+
+        img.src = path;
+
+        callback( this.data );
+
+    }
+
+    /* 
+     * ---------------------------------------
+     * HEIGHTMAP GENERATION ALGORITHMS
+     * ---------------------------------------
+     */
+
+    /** 
+     * Divide Map in Diamond algorithm.
+     */
+    divide( size, roughness ) {
+
+        let x, z, half = size / 2;
+
+        let scale = roughness * size;
+
+        const util = this.util;
+
+        if ( half &lt; 1 ) return;
+
+        for ( z = half; z &lt; this.max; z += size ) {
+
+            for ( x = half; x &lt; this.max; x += size ) {
+
+              this.square( x, z, half, util.getRand() * scale * 2 - scale );
+
+            }
+
+        }
+
+        for ( z = 0; z &lt;= this.max; z += half ) {
+
+            for ( x = (z + half) % size; x &lt;= this.max; x += size ) {
+
+              this.diamond( x, z, half, util.getRand() * scale * 2 - scale );
+
+            }
+
+          }
+
+        this.divide( size / 2, roughness );
+
+    }
+
+    /** 
+     * Get average in Diamond algorithm.
+     */
+    average( values ) {
+
+        let valid = values.filter( function( val ) { 
+
+            return val !== -1; 
+
+        });
+
+        let total = valid.reduce( function( sum, val ) { 
+
+            return sum + val;
+
+        }, 0);
+
+        return total / valid.length;
+
+    }
+
+    /** 
+     * new square, average value. Alternates with diamond.
+     */
+    square( x, z, size, offset ) {
+
+        let ave = this.average ( [
+            this.getPixel( x - size, z - size ),   // upper left
+            this.getPixel( x + size, z - size ),   // upper right
+            this.getPixel( x + size, z + size ),   // lower right
+            this.getPixel( x - size, z + size )    // lower left
+        ] );
+
+        this.setPixel( x, z, ave + offset );
+
+    }
+
+    /** 
+     * new diamond, average value. Alternates with square.
+     */
+    diamond( x, z, size, offset ) {
+
+        let ave = this.average( [
+            this.getPixel( x, z - size ),      // top
+            this.getPixel( x + size, z ),      // right
+            this.getPixel( x, z + size ),      // bottom
+            this.getPixel( x - size, z )       // left
+        ] );
+
+        this.setPixel( x, z, ave + offset );
+
+    }
+
+    /* 
+     * ---------------------------------------
+     * SCALING/SMOOTHING ALGORITHMS
+     * ---------------------------------------
+     */
+
+
+    /** 
+     * Scale heightMap y values (0.1 = 1/10 the max), 
+     * passing 0 will completely flatten the map.
+     */
+    flatten ( scale ) {
+
+        let val;
+
+        if( this.map &amp;&amp; this.map.length ) {
+
+            let map = this.map;
+
+            for ( let i = 0, len = map.length; i &lt; len; i++ ) {
+
+                map[ i ] *= scale;
+
+                val = map[ i ];
+
+                if( this.high &lt; val ) this.high = val;
+
+                if( this.low &gt; val ) this.low = val;
+
+            }
+
+        }
+
+    }
+
+    /** 
+     * roughen an existing Map.
+     */
+    roughen ( percent ) {
+
+        if( this.map &amp;&amp; this.map.length ) {
+
+        }
+
+    }
+
+    /** 
+     * given an existing Map, scale to new dimensions, smoothing 
+     * with the biCubic or biLinear algorithm.
+     */
+    scale ( w, h ) {
+
+        if ( this.checkParams( w, h, 0, 0 ) ) {
+
+            let map = new Float32Array( w * h );
+
+            let xScale = this.width / w;
+
+            let zScale = this.depth / h;
+
+            console.log(&apos;original width:&apos; + this.width + &apos; new:&apos; + w + &apos;original height:&apos; + this.depth + &apos; new:&apos; + h )
+
+            console.log(&apos;xScale:&apos; + xScale + &apos; zScale:&apos; + zScale);
+
+            for ( let z = 0; z &lt; h; z++ ) {
+
+                for ( let x = 0; x &lt; w; x++ ) {
+
+                    map[ w * z + x ] = this.biCubic( x * xScale, z * zScale);
+
+                }
+
+            }
+
+        console.log(&apos;WIDTH:&apos; + w + &quot; HEIGHT:&quot; + h)
+
+        this.map = map;
+
+        this.width = w;
+
+        this.depth = h;
+
+        this.squareSize = Math.min( w, h );
+
+        this.max = this.squareSize - 1;
+
+        }
+
+    }
+
+    /** 
+     * Given a point defined in 2d between 
+     * x and z, return an interpolation using a bilinear algorithm.
+     * @param {Array} heightmap 
+     * @param {Number} x = desired x position (between 0.0 and 1.0)
+     * @param {Number} z = desired z position (between 0.0 and 1.0)
+     */
+    biLinear ( x, z ) {
+
+        if ( x &lt; 0 || x &gt; 1.0 || z &lt; 0 || z &gt; 1.0 ) {
+
+            console.error( &apos;heightmap x index out of range, x:&apos; + x + &apos; z:&apos; + z );
+
+            return null;
+        }
+
+        // Our x and z, scaled to heightmap divisions.
+
+        x *= this.width;
+        z *= this.depth;
+
+        // Points above and below our position.
+
+        let x1 = Math.min( x );
+        let x2 = Math.max( x );
+        let z1 = Math.min( z );
+        let z2 = Math.max( z );
+
+        // Interpolate along x axis, get interpolations above and below point.
+
+        let a = this.getPixel( x1, z1 ) * (x - x1) + 
+            this.getPixel( x1, z2 ) * (1 - x - x1);
+
+        let b = this.getPixel( z1, z2 ) * (x - x1) +
+            this.getPixel( x2, z2 ) * (1 - x - x1);
+
+        // Interpolate these results along z axis.
+
+        let v = a * (z - z1) + b * (1 - z - z1);
+
+        return v;
+
+    }
+
+    /** 
+     * Given a point, and a collection of 16 neighboring points in 
+     * 2d, return a smoothed value for the point using the 
+     * biCubic interpolation algorithm.
+     * Adapted from:
+     * https://github.com/hughsk/bicubic-sample/blob/master/index.js
+     * https://github.com/hughsk/bicubic/blob/master/index.js
+     * @param {Number} xf 
+     * @param {Number} zf
+     */
+
+    biCubicPoint ( xf, zf, 
+        p00, p01, p02, p03, 
+        p10, p11, p12, p13, 
+        p20, p21, p22, p23, 
+        p30, p31, p32, p33
+    ) {
+
+        let zf2 = zf * zf;
+        let xf2 = xf * xf;
+        let xf3 = xf * xf2;
+
+        let x00 = p03 - p02 - p00 + p01;
+        let x01 = p00 - p01 - x00;
+        let x02 = p02 - p00;
+        let x0 = x00*xf3 + x01*xf2 + x02*xf + p01;
+
+        let x10 = p13 - p12 - p10 + p11;
+        let x11 = p10 - p11 - x10;
+        let x12 = p12 - p10;
+        let x1 = x10*xf3 + x11*xf2 + x12*xf + p11;
+
+        let x20 = p23 - p22 - p20 + p21;
+        let x21 = p20 - p21 - x20;
+        let x22 = p22 - p20;
+        let x2 = x20*xf3 + x21*xf2 + x22*xf + p21;
+
+        let x30 = p33 - p32 - p30 + p31;
+        let x31 = p30 - p31 - x30;
+        let x32 = p32 - p30;
+        let x3 = x30*xf3 + x31*xf2 + x32*xf + p31;
+
+        let y0 = x3 - x2 - x0 + x1;
+        let y1 = x0 - x1 - y0;
+        let y2 = x2 - x0;
+
+        return y0*zf*zf2 + y1*zf2 + y2*zf + x1;
+
+    }
+
+    /** 
+     * value interpolation
+     */
+    biCubic ( x, z ) {
+
+        let x1 = Math.floor( x );
+        let z1 = Math.floor( z );
+        let x2 = x1 + 1;
+        let z2 = z1 + 1;
+
+        //console.log(&apos;lower pixel: for x:&apos; + x + &apos; value:&apos; + this.getPixel( x1, z1 ) + &apos; upper pixel for z:&apos; + z + &apos; value:&apos; + this.getPixel( x2, z2 ) );
+
+        let p00 = this.getPixel( x1 - 1, z1 - 1);
+        let p01 = this.getPixel( x1 - 1, z1 );
+        let p02 = this.getPixel( x1 - 1, z2 );
+        let p03 = this.getPixel( x1 - 1, z2 + 1 );
+
+        let p10 = this.getPixel( x1, z1 - 1 );
+        let p11 = this.getPixel( x1, z1 );
+        let p12 = this.getPixel( x1, z2 );
+        let p13 = this.getPixel( x1, z2 + 1 );
+
+        let p20 = this.getPixel( x2, z1 - 1);
+        let p21 = this.getPixel( x2, z1 );
+        let p22 = this.getPixel( x2, z2 );
+        let p23 = this.getPixel( x2, z2 + 1);
+
+        let p30 = this.getPixel( x2 + 1, z1 - 1);
+        let p31 = this.getPixel( x2 + 1, z1 );
+        let p32 = this.getPixel( x2 + 1, z2 );
+        let p33 = this.getPixel( x2 + 1, z2 + 1 );
+
+        return this.biCubicPoint(
+            x - x1, 
+            z - z1, 
+            p00, p10, p20, p30, 
+            p01, p11, p21, p31, 
+            p02, p12, p22, p32, 
+            p03, p13, p23, p33
+        );
+    }
+
+}
+
+export default Map2d;</code></pre>
+
+</div>
+
+<footer class="footer">
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(0.4.8)</span></a>
+</footer>
+
+<script src="script/search_index.js"></script>
+<script src="script/search.js"></script>
+<script src="script/pretty-print.js"></script>
+<script src="script/inherited-summary.js"></script>
+<script src="script/test-summary.js"></script>
+<script src="script/inner-link.js"></script>
+<script src="script/patch-for-local.js"></script>
+</body>
+</html>

@@ -1,4 +1,7 @@
-export default class World {
+/** 
+ * Loads objects and renderers and runs the rendering loop.
+ */
+class World {
 
     /** 
      * The World class creates the scene, and should be uniquely 
@@ -16,8 +19,8 @@ export default class World {
      */
 
     /** 
-     * constructor.
-     * @param {WeVRMini} webvr the webvr module.
+     * constructor for World.
+     * @param {WebVRMini} webvr the webvr module.
      */
     constructor ( webgl, prim, renderer ) {
 
@@ -484,3 +487,5 @@ export default class World {
     }
 
 }
+
+export default World;

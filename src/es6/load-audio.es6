@@ -1,6 +1,6 @@
 import LoadPool from  './load-pool';
 
-export default class LoadAudio extends LoadPool {
+class LoadAudio extends LoadPool {
 
     /**
      * Base loader class.
@@ -98,3 +98,5 @@ export default class LoadAudio extends LoadPool {
     }
 
 }
+
+export default LoadAudio;

@@ -1,6 +1,6 @@
 import Shader from './shader'
 
-export default class ShaderWater extends Shader {
+class ShaderWater extends Shader {
 
     constructor ( init, util, glMatrix, webgl, prim ) {
 
@@ -26,3 +26,5 @@ export default class ShaderWater extends Shader {
 
 
 }
+
+export default ShaderWater;

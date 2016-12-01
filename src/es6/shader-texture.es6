@@ -1,6 +1,6 @@
 import Shader from './shader'
 
-export default class ShaderTexture extends Shader {
+class ShaderTexture extends Shader {
 
     constructor ( init, util, glMatrix, webgl, prim ) {
 
@@ -201,3 +201,5 @@ export default class ShaderTexture extends Shader {
     }
 
 }
+
+export default ShaderTexture;

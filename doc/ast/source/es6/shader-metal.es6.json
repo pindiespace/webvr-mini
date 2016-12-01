@@ -1,0 +1,1201 @@
+{
+  "type": "Program",
+  "body": [
+    {
+      "type": "ImportDeclaration",
+      "specifiers": [
+        {
+          "type": "ImportDefaultSpecifier",
+          "local": {
+            "type": "Identifier",
+            "name": "Shader",
+            "range": [
+              7,
+              13
+            ],
+            "loc": {
+              "start": {
+                "line": 1,
+                "column": 7
+              },
+              "end": {
+                "line": 1,
+                "column": 13
+              }
+            }
+          },
+          "range": [
+            7,
+            13
+          ],
+          "loc": {
+            "start": {
+              "line": 1,
+              "column": 7
+            },
+            "end": {
+              "line": 1,
+              "column": 13
+            }
+          }
+        }
+      ],
+      "source": {
+        "type": "Literal",
+        "value": "./shader",
+        "raw": "'./shader'",
+        "range": [
+          19,
+          29
+        ],
+        "loc": {
+          "start": {
+            "line": 1,
+            "column": 19
+          },
+          "end": {
+            "line": 1,
+            "column": 29
+          }
+        }
+      },
+      "range": [
+        0,
+        33
+      ],
+      "loc": {
+        "start": {
+          "line": 1,
+          "column": 0
+        },
+        "end": {
+          "line": 3,
+          "column": 0
+        }
+      }
+    },
+    {
+      "type": "Identifier",
+      "id": {
+        "type": "Identifier",
+        "name": "ShaderMetal",
+        "range": [
+          39,
+          50
+        ],
+        "loc": {
+          "start": {
+            "line": 3,
+            "column": 6
+          },
+          "end": {
+            "line": 3,
+            "column": 17
+          }
+        }
+      },
+      "superClass": {
+        "type": "Identifier",
+        "name": "Shader",
+        "range": [
+          59,
+          65
+        ],
+        "loc": {
+          "start": {
+            "line": 3,
+            "column": 26
+          },
+          "end": {
+            "line": 3,
+            "column": 32
+          }
+        }
+      },
+      "body": {
+        "type": "ClassBody",
+        "body": [
+          {
+            "type": "MethodDefinition",
+            "key": {
+              "type": "Identifier",
+              "name": "constructor",
+              "range": [
+                75,
+                86
+              ],
+              "loc": {
+                "start": {
+                  "line": 5,
+                  "column": 4
+                },
+                "end": {
+                  "line": 5,
+                  "column": 15
+                }
+              }
+            },
+            "value": {
+              "type": "FunctionExpression",
+              "id": null,
+              "params": [
+                {
+                  "type": "Identifier",
+                  "name": "init",
+                  "range": [
+                    89,
+                    93
+                  ],
+                  "loc": {
+                    "start": {
+                      "line": 5,
+                      "column": 18
+                    },
+                    "end": {
+                      "line": 5,
+                      "column": 22
+                    }
+                  }
+                },
+                {
+                  "type": "Identifier",
+                  "name": "util",
+                  "range": [
+                    95,
+                    99
+                  ],
+                  "loc": {
+                    "start": {
+                      "line": 5,
+                      "column": 24
+                    },
+                    "end": {
+                      "line": 5,
+                      "column": 28
+                    }
+                  }
+                },
+                {
+                  "type": "Identifier",
+                  "name": "glMatrix",
+                  "range": [
+                    101,
+                    109
+                  ],
+                  "loc": {
+                    "start": {
+                      "line": 5,
+                      "column": 30
+                    },
+                    "end": {
+                      "line": 5,
+                      "column": 38
+                    }
+                  }
+                },
+                {
+                  "type": "Identifier",
+                  "name": "webgl",
+                  "range": [
+                    111,
+                    116
+                  ],
+                  "loc": {
+                    "start": {
+                      "line": 5,
+                      "column": 40
+                    },
+                    "end": {
+                      "line": 5,
+                      "column": 45
+                    }
+                  }
+                },
+                {
+                  "type": "Identifier",
+                  "name": "prim",
+                  "range": [
+                    118,
+                    122
+                  ],
+                  "loc": {
+                    "start": {
+                      "line": 5,
+                      "column": 47
+                    },
+                    "end": {
+                      "line": 5,
+                      "column": 51
+                    }
+                  }
+                }
+              ],
+              "body": {
+                "type": "BlockStatement",
+                "body": [
+                  {
+                    "type": "ExpressionStatement",
+                    "expression": {
+                      "type": "CallExpression",
+                      "callee": {
+                        "type": "Super",
+                        "range": [
+                          138,
+                          143
+                        ],
+                        "loc": {
+                          "start": {
+                            "line": 7,
+                            "column": 8
+                          },
+                          "end": {
+                            "line": 7,
+                            "column": 13
+                          }
+                        }
+                      },
+                      "arguments": [
+                        {
+                          "type": "Identifier",
+                          "name": "init",
+                          "range": [
+                            145,
+                            149
+                          ],
+                          "loc": {
+                            "start": {
+                              "line": 7,
+                              "column": 15
+                            },
+                            "end": {
+                              "line": 7,
+                              "column": 19
+                            }
+                          }
+                        },
+                        {
+                          "type": "Identifier",
+                          "name": "util",
+                          "range": [
+                            151,
+                            155
+                          ],
+                          "loc": {
+                            "start": {
+                              "line": 7,
+                              "column": 21
+                            },
+                            "end": {
+                              "line": 7,
+                              "column": 25
+                            }
+                          }
+                        },
+                        {
+                          "type": "Identifier",
+                          "name": "glMatrix",
+                          "range": [
+                            157,
+                            165
+                          ],
+                          "loc": {
+                            "start": {
+                              "line": 7,
+                              "column": 27
+                            },
+                            "end": {
+                              "line": 7,
+                              "column": 35
+                            }
+                          }
+                        },
+                        {
+                          "type": "Identifier",
+                          "name": "webgl",
+                          "range": [
+                            167,
+                            172
+                          ],
+                          "loc": {
+                            "start": {
+                              "line": 7,
+                              "column": 37
+                            },
+                            "end": {
+                              "line": 7,
+                              "column": 42
+                            }
+                          }
+                        },
+                        {
+                          "type": "Identifier",
+                          "name": "prim",
+                          "range": [
+                            174,
+                            178
+                          ],
+                          "loc": {
+                            "start": {
+                              "line": 7,
+                              "column": 44
+                            },
+                            "end": {
+                              "line": 7,
+                              "column": 48
+                            }
+                          }
+                        }
+                      ],
+                      "range": [
+                        138,
+                        180
+                      ],
+                      "loc": {
+                        "start": {
+                          "line": 7,
+                          "column": 8
+                        },
+                        "end": {
+                          "line": 7,
+                          "column": 50
+                        }
+                      }
+                    },
+                    "range": [
+                      138,
+                      181
+                    ],
+                    "loc": {
+                      "start": {
+                        "line": 7,
+                        "column": 8
+                      },
+                      "end": {
+                        "line": 7,
+                        "column": 51
+                      }
+                    }
+                  },
+                  {
+                    "type": "ExpressionStatement",
+                    "expression": {
+                      "type": "CallExpression",
+                      "callee": {
+                        "type": "MemberExpression",
+                        "computed": false,
+                        "object": {
+                          "type": "Identifier",
+                          "name": "console",
+                          "range": [
+                            193,
+                            200
+                          ],
+                          "loc": {
+                            "start": {
+                              "line": 9,
+                              "column": 8
+                            },
+                            "end": {
+                              "line": 9,
+                              "column": 15
+                            }
+                          }
+                        },
+                        "property": {
+                          "type": "Identifier",
+                          "name": "log",
+                          "range": [
+                            201,
+                            204
+                          ],
+                          "loc": {
+                            "start": {
+                              "line": 9,
+                              "column": 16
+                            },
+                            "end": {
+                              "line": 9,
+                              "column": 19
+                            }
+                          }
+                        },
+                        "range": [
+                          193,
+                          204
+                        ],
+                        "loc": {
+                          "start": {
+                            "line": 9,
+                            "column": 8
+                          },
+                          "end": {
+                            "line": 9,
+                            "column": 19
+                          }
+                        }
+                      },
+                      "arguments": [
+                        {
+                          "type": "Literal",
+                          "value": "In ShaderMetal class",
+                          "raw": "'In ShaderMetal class'",
+                          "range": [
+                            206,
+                            228
+                          ],
+                          "loc": {
+                            "start": {
+                              "line": 9,
+                              "column": 21
+                            },
+                            "end": {
+                              "line": 9,
+                              "column": 43
+                            }
+                          }
+                        }
+                      ],
+                      "range": [
+                        193,
+                        230
+                      ],
+                      "loc": {
+                        "start": {
+                          "line": 9,
+                          "column": 8
+                        },
+                        "end": {
+                          "line": 9,
+                          "column": 45
+                        }
+                      }
+                    },
+                    "range": [
+                      193,
+                      231
+                    ],
+                    "loc": {
+                      "start": {
+                        "line": 9,
+                        "column": 8
+                      },
+                      "end": {
+                        "line": 9,
+                        "column": 46
+                      }
+                    }
+                  }
+                ],
+                "range": [
+                  125,
+                  240
+                ],
+                "loc": {
+                  "start": {
+                    "line": 5,
+                    "column": 54
+                  },
+                  "end": {
+                    "line": 11,
+                    "column": 5
+                  }
+                }
+              },
+              "generator": false,
+              "expression": false,
+              "range": [
+                87,
+                240
+              ],
+              "loc": {
+                "start": {
+                  "line": 5,
+                  "column": 16
+                },
+                "end": {
+                  "line": 11,
+                  "column": 5
+                }
+              }
+            },
+            "kind": "constructor",
+            "computed": false,
+            "range": [
+              75,
+              240
+            ],
+            "loc": {
+              "start": {
+                "line": 5,
+                "column": 4
+              },
+              "end": {
+                "line": 11,
+                "column": 5
+              }
+            },
+            "trailingComments": [
+              {
+                "type": "Block",
+                "value": "* \r\n     * --------------------------------------------------------------------\r\n     * VERTEX SHADER 3\r\n     * a directionally-lit textured object vertex shader.\r\n     * @link http://learningwebgl.com/blog/?p=684\r\n     * - vertex position\r\n     * - texture coordinate\r\n     * - model-view matrix\r\n     * - projection matrix\r\n     * --------------------------------------------------------------------\r\n     ",
+                "range": [
+                  248,
+                  660
+                ],
+                "loc": {
+                  "start": {
+                    "line": 13,
+                    "column": 4
+                  },
+                  "end": {
+                    "line": 23,
+                    "column": 7
+                  }
+                }
+              }
+            ],
+            "static": false
+          }
+        ],
+        "range": [
+          66,
+          667
+        ],
+        "loc": {
+          "start": {
+            "line": 3,
+            "column": 33
+          },
+          "end": {
+            "line": 26,
+            "column": 1
+          }
+        }
+      },
+      "range": [
+        33,
+        667
+      ],
+      "loc": {
+        "start": {
+          "line": 3,
+          "column": 0
+        },
+        "end": {
+          "line": 26,
+          "column": 1
+        }
+      },
+      "name": "_",
+      "leadingComments": [],
+      "trailingComments": []
+    },
+    {
+      "type": "Identifier",
+      "declaration": {
+        "type": "Identifier",
+        "name": "ShaderMetal",
+        "range": [
+          686,
+          697
+        ],
+        "loc": {
+          "start": {
+            "line": 28,
+            "column": 15
+          },
+          "end": {
+            "line": 28,
+            "column": 26
+          }
+        }
+      },
+      "range": [
+        671,
+        698
+      ],
+      "loc": {
+        "start": {
+          "line": 28,
+          "column": 0
+        },
+        "end": {
+          "line": 28,
+          "column": 27
+        }
+      },
+      "leadingComments": [],
+      "name": "_",
+      "trailingComments": []
+    },
+    {
+      "type": "ExportDefaultDeclaration",
+      "declaration": {
+        "type": "ClassDeclaration",
+        "id": {
+          "type": "Identifier",
+          "name": "ShaderMetal",
+          "range": [
+            39,
+            50
+          ],
+          "loc": {
+            "start": {
+              "line": 3,
+              "column": 6
+            },
+            "end": {
+              "line": 3,
+              "column": 17
+            }
+          }
+        },
+        "superClass": {
+          "type": "Identifier",
+          "name": "Shader",
+          "range": [
+            59,
+            65
+          ],
+          "loc": {
+            "start": {
+              "line": 3,
+              "column": 26
+            },
+            "end": {
+              "line": 3,
+              "column": 32
+            }
+          }
+        },
+        "body": {
+          "type": "ClassBody",
+          "body": [
+            {
+              "type": "MethodDefinition",
+              "key": {
+                "type": "Identifier",
+                "name": "constructor",
+                "range": [
+                  75,
+                  86
+                ],
+                "loc": {
+                  "start": {
+                    "line": 5,
+                    "column": 4
+                  },
+                  "end": {
+                    "line": 5,
+                    "column": 15
+                  }
+                }
+              },
+              "value": {
+                "type": "FunctionExpression",
+                "id": null,
+                "params": [
+                  {
+                    "type": "Identifier",
+                    "name": "init",
+                    "range": [
+                      89,
+                      93
+                    ],
+                    "loc": {
+                      "start": {
+                        "line": 5,
+                        "column": 18
+                      },
+                      "end": {
+                        "line": 5,
+                        "column": 22
+                      }
+                    }
+                  },
+                  {
+                    "type": "Identifier",
+                    "name": "util",
+                    "range": [
+                      95,
+                      99
+                    ],
+                    "loc": {
+                      "start": {
+                        "line": 5,
+                        "column": 24
+                      },
+                      "end": {
+                        "line": 5,
+                        "column": 28
+                      }
+                    }
+                  },
+                  {
+                    "type": "Identifier",
+                    "name": "glMatrix",
+                    "range": [
+                      101,
+                      109
+                    ],
+                    "loc": {
+                      "start": {
+                        "line": 5,
+                        "column": 30
+                      },
+                      "end": {
+                        "line": 5,
+                        "column": 38
+                      }
+                    }
+                  },
+                  {
+                    "type": "Identifier",
+                    "name": "webgl",
+                    "range": [
+                      111,
+                      116
+                    ],
+                    "loc": {
+                      "start": {
+                        "line": 5,
+                        "column": 40
+                      },
+                      "end": {
+                        "line": 5,
+                        "column": 45
+                      }
+                    }
+                  },
+                  {
+                    "type": "Identifier",
+                    "name": "prim",
+                    "range": [
+                      118,
+                      122
+                    ],
+                    "loc": {
+                      "start": {
+                        "line": 5,
+                        "column": 47
+                      },
+                      "end": {
+                        "line": 5,
+                        "column": 51
+                      }
+                    }
+                  }
+                ],
+                "body": {
+                  "type": "BlockStatement",
+                  "body": [
+                    {
+                      "type": "ExpressionStatement",
+                      "expression": {
+                        "type": "CallExpression",
+                        "callee": {
+                          "type": "Super",
+                          "range": [
+                            138,
+                            143
+                          ],
+                          "loc": {
+                            "start": {
+                              "line": 7,
+                              "column": 8
+                            },
+                            "end": {
+                              "line": 7,
+                              "column": 13
+                            }
+                          }
+                        },
+                        "arguments": [
+                          {
+                            "type": "Identifier",
+                            "name": "init",
+                            "range": [
+                              145,
+                              149
+                            ],
+                            "loc": {
+                              "start": {
+                                "line": 7,
+                                "column": 15
+                              },
+                              "end": {
+                                "line": 7,
+                                "column": 19
+                              }
+                            }
+                          },
+                          {
+                            "type": "Identifier",
+                            "name": "util",
+                            "range": [
+                              151,
+                              155
+                            ],
+                            "loc": {
+                              "start": {
+                                "line": 7,
+                                "column": 21
+                              },
+                              "end": {
+                                "line": 7,
+                                "column": 25
+                              }
+                            }
+                          },
+                          {
+                            "type": "Identifier",
+                            "name": "glMatrix",
+                            "range": [
+                              157,
+                              165
+                            ],
+                            "loc": {
+                              "start": {
+                                "line": 7,
+                                "column": 27
+                              },
+                              "end": {
+                                "line": 7,
+                                "column": 35
+                              }
+                            }
+                          },
+                          {
+                            "type": "Identifier",
+                            "name": "webgl",
+                            "range": [
+                              167,
+                              172
+                            ],
+                            "loc": {
+                              "start": {
+                                "line": 7,
+                                "column": 37
+                              },
+                              "end": {
+                                "line": 7,
+                                "column": 42
+                              }
+                            }
+                          },
+                          {
+                            "type": "Identifier",
+                            "name": "prim",
+                            "range": [
+                              174,
+                              178
+                            ],
+                            "loc": {
+                              "start": {
+                                "line": 7,
+                                "column": 44
+                              },
+                              "end": {
+                                "line": 7,
+                                "column": 48
+                              }
+                            }
+                          }
+                        ],
+                        "range": [
+                          138,
+                          180
+                        ],
+                        "loc": {
+                          "start": {
+                            "line": 7,
+                            "column": 8
+                          },
+                          "end": {
+                            "line": 7,
+                            "column": 50
+                          }
+                        }
+                      },
+                      "range": [
+                        138,
+                        181
+                      ],
+                      "loc": {
+                        "start": {
+                          "line": 7,
+                          "column": 8
+                        },
+                        "end": {
+                          "line": 7,
+                          "column": 51
+                        }
+                      }
+                    },
+                    {
+                      "type": "ExpressionStatement",
+                      "expression": {
+                        "type": "CallExpression",
+                        "callee": {
+                          "type": "MemberExpression",
+                          "computed": false,
+                          "object": {
+                            "type": "Identifier",
+                            "name": "console",
+                            "range": [
+                              193,
+                              200
+                            ],
+                            "loc": {
+                              "start": {
+                                "line": 9,
+                                "column": 8
+                              },
+                              "end": {
+                                "line": 9,
+                                "column": 15
+                              }
+                            }
+                          },
+                          "property": {
+                            "type": "Identifier",
+                            "name": "log",
+                            "range": [
+                              201,
+                              204
+                            ],
+                            "loc": {
+                              "start": {
+                                "line": 9,
+                                "column": 16
+                              },
+                              "end": {
+                                "line": 9,
+                                "column": 19
+                              }
+                            }
+                          },
+                          "range": [
+                            193,
+                            204
+                          ],
+                          "loc": {
+                            "start": {
+                              "line": 9,
+                              "column": 8
+                            },
+                            "end": {
+                              "line": 9,
+                              "column": 19
+                            }
+                          }
+                        },
+                        "arguments": [
+                          {
+                            "type": "Literal",
+                            "value": "In ShaderMetal class",
+                            "raw": "'In ShaderMetal class'",
+                            "range": [
+                              206,
+                              228
+                            ],
+                            "loc": {
+                              "start": {
+                                "line": 9,
+                                "column": 21
+                              },
+                              "end": {
+                                "line": 9,
+                                "column": 43
+                              }
+                            }
+                          }
+                        ],
+                        "range": [
+                          193,
+                          230
+                        ],
+                        "loc": {
+                          "start": {
+                            "line": 9,
+                            "column": 8
+                          },
+                          "end": {
+                            "line": 9,
+                            "column": 45
+                          }
+                        }
+                      },
+                      "range": [
+                        193,
+                        231
+                      ],
+                      "loc": {
+                        "start": {
+                          "line": 9,
+                          "column": 8
+                        },
+                        "end": {
+                          "line": 9,
+                          "column": 46
+                        }
+                      }
+                    }
+                  ],
+                  "range": [
+                    125,
+                    240
+                  ],
+                  "loc": {
+                    "start": {
+                      "line": 5,
+                      "column": 54
+                    },
+                    "end": {
+                      "line": 11,
+                      "column": 5
+                    }
+                  }
+                },
+                "generator": false,
+                "expression": false,
+                "range": [
+                  87,
+                  240
+                ],
+                "loc": {
+                  "start": {
+                    "line": 5,
+                    "column": 16
+                  },
+                  "end": {
+                    "line": 11,
+                    "column": 5
+                  }
+                }
+              },
+              "kind": "constructor",
+              "computed": false,
+              "range": [
+                75,
+                240
+              ],
+              "loc": {
+                "start": {
+                  "line": 5,
+                  "column": 4
+                },
+                "end": {
+                  "line": 11,
+                  "column": 5
+                }
+              },
+              "trailingComments": [
+                {
+                  "type": "Block",
+                  "value": "* \r\n     * --------------------------------------------------------------------\r\n     * VERTEX SHADER 3\r\n     * a directionally-lit textured object vertex shader.\r\n     * @link http://learningwebgl.com/blog/?p=684\r\n     * - vertex position\r\n     * - texture coordinate\r\n     * - model-view matrix\r\n     * - projection matrix\r\n     * --------------------------------------------------------------------\r\n     ",
+                  "range": [
+                    248,
+                    660
+                  ],
+                  "loc": {
+                    "start": {
+                      "line": 13,
+                      "column": 4
+                    },
+                    "end": {
+                      "line": 23,
+                      "column": 7
+                    }
+                  }
+                }
+              ],
+              "static": false
+            }
+          ],
+          "range": [
+            66,
+            667
+          ],
+          "loc": {
+            "start": {
+              "line": 3,
+              "column": 33
+            },
+            "end": {
+              "line": 26,
+              "column": 1
+            }
+          }
+        },
+        "range": [
+          33,
+          667
+        ],
+        "loc": {
+          "start": {
+            "line": 3,
+            "column": 0
+          },
+          "end": {
+            "line": 26,
+            "column": 1
+          }
+        },
+        "__esdoc__pseudo_export": false,
+        "leadingComments": [],
+        "trailingComments": []
+      },
+      "range": [
+        671,
+        698
+      ],
+      "loc": {
+        "start": {
+          "line": 28,
+          "column": 0
+        },
+        "end": {
+          "line": 28,
+          "column": 27
+        }
+      },
+      "leadingComments": null
+    }
+  ],
+  "sourceType": "module",
+  "range": [
+    0,
+    698
+  ],
+  "loc": {
+    "start": {
+      "line": 1,
+      "column": 0
+    },
+    "end": {
+      "line": 28,
+      "column": 27
+    }
+  },
+  "comments": [
+    {
+      "type": "Block",
+      "value": "* \r\n     * --------------------------------------------------------------------\r\n     * VERTEX SHADER 3\r\n     * a directionally-lit textured object vertex shader.\r\n     * @link http://learningwebgl.com/blog/?p=684\r\n     * - vertex position\r\n     * - texture coordinate\r\n     * - model-view matrix\r\n     * - projection matrix\r\n     * --------------------------------------------------------------------\r\n     ",
+      "range": [
+        248,
+        660
+      ],
+      "loc": {
+        "start": {
+          "line": 13,
+          "column": 4
+        },
+        "end": {
+          "line": 23,
+          "column": 7
+        }
+      }
+    }
+  ]
+}

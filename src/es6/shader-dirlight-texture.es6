@@ -1,6 +1,6 @@
 import Shader from './shader'
 
-export default class ShaderDirlightTexture extends Shader {
+class ShaderDirlightTexture extends Shader {
 
     constructor ( init, util, glMatrix, webgl, prim ) {
 
@@ -306,3 +306,5 @@ export default class ShaderDirlightTexture extends Shader {
     }
 
 }
+
+export default ShaderDirlightTexture;

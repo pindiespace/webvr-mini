@@ -1,4 +1,4 @@
-export default class Util {
+class Util {
 
     /** 
      * Utility functions.
@@ -124,7 +124,7 @@ export default class Util {
      * for the array.
      * @param {Array} arr a flat array.
      * @param {Number} index the stride into 2d array.
-     * @param {Number...} additional arguments. The array 'stride' is 
+     * @param {...Number} additional arguments. The array 'stride' is 
      * assumed equal to the number of additional parameters.
      */
     setArr ( arr, index ) {
@@ -387,3 +387,5 @@ export default class Util {
     }
 
 }
+
+export default Util;

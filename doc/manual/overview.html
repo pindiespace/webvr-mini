@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base data-ice="baseUrl" href="../">
+  <title data-ice="title">Overview</title>
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+  <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
+  <script src="script/prettify/prettify.js"></script>
+  
+  
+  <script src="script/manual.js"></script>
+</head>
+<body class="layout-container manual-root" data-ice="rootContainer">
+
+<header>
+  <a href="./">Home</a>
+  <a href="./manual/index.html" data-ice="manualHeaderLink">Manual</a>
+  <a href="identifiers.html">Reference</a>
+  <a href="source.html">Source</a>
+  
+  
+  <div class="search-box">
+  <span>
+    <img src="./image/search.png">
+    <span class="search-input-edge"></span><input class="search-input"><span class="search-input-edge"></span>
+  </span>
+    <ul class="search-result"></ul>
+  </div>
+</header>
+
+<nav class="navigation" data-ice="nav"><div class="manual-toc-root">
+  
+<div data-ice="manual" data-toc-name="overview">
+    <h1 class="manual-toc-title"><a href="manual/overview.html" data-ice="title">Overview</a></h1>
+    <ul class="manual-toc">
+      
+    <li data-ice="manualNav" class="indent-h1"><span class="manual-dot"></span><a href="manual/overview.html#webvr-mini" data-ice="link">webvr-mini</a></li>
+<li data-ice="manualNav" class="indent-h2"><span class="manual-dot"></span><a href="manual/overview.html#building" data-ice="link">building</a></li>
+<li data-ice="manualNav" class="indent-h2"><span class="manual-dot"></span><a href="manual/overview.html#note-on-environment-variables" data-ice="link">note on environment variables</a></li>
+<li data-ice="manualNav" class="indent-h2"><span class="manual-dot"></span><a href="manual/overview.html#references" data-ice="link">References</a></li>
+</ul>
+  </div>
+<div data-ice="manual" data-toc-name="reference">
+    <h1 class="manual-toc-title"><a href="identifiers.html" data-ice="title">Reference</a></h1>
+    <ul class="manual-toc">
+      
+    <li data-ice="manualNav" class="indent-h1"><span class="manual-dot"></span><a href="identifiers.html#class" data-ice="link">Class</a></li>
+<li data-ice="manualNav" class="indent-h1"><span class="manual-dot"></span><a href="identifiers.html#variable" data-ice="link">Variable</a></li>
+</ul>
+  </div>
+</div>
+</nav>
+
+<div class="content" data-ice="content"><div class="github-markdown">
+  <div class="manual-breadcrumb-list">
+    <a href="./manual/./index.html">Manual</a>
+    <span>&#xBB;</span>
+    <span data-ice="title">Overview</span>
+  </div>
+  <div data-ice="content"><h1 id="webvr-mini">webvr-mini</h1>
+<p>mini library offering basic webgl and webvr support</p>
+<h2 id="building">building</h2>
+<p>npm install webpack -g
+npm install webpack-dev-server -g
+npm install</p>
+<p>##development
+To run debugging, use the following npm command (in a separate window)</p>
+<p>npm run dev</p>
+<p>To minify and run production, excluding debugging libraries, type.</p>
+<p>npm run build</p>
+<p>#start the server
+Start webpack watching in first console window
+&quot;start&quot;: &quot;webpack-dev-server --inline --devtool eval --progress --colors --content-base dist&quot;</p>
+<p>#Checking things in the console</p>
+<p>To see auto-updates, access using the dev server URL. NOTE: this will only show 
+internal console.logs. You can&apos;t see objects attached to the window from here, since we 
+are in an &lt;iframe&gt;.</p>
+<p><a href="http://localhost:8080/webpack-dev-server/">http://localhost:8080/webpack-dev-server/</a></p>
+<p>To see the site without auto-updates, and with GLOBAL windows object visible in the Console, use
+<a href="http://localhost:8080">http://localhost:8080</a></p>
+<h2 id="note-on-environment-variables">note on environment variables</h2>
+<p>Environment variables are passed in at npm, and re-worked in webpack.</p>
+<p>&quot;build&quot;: &quot;cross-env BUILD_RELEASE=true BUILD_DEV=false webpack --config webpack-production.config.js -p&quot;,
+&quot;dev&quot;: &quot;cross-env BUILD_RELEASE=false BUILD_DEV=true webpack&quot;,</p>
+<p><strong>DEV</strong> means we are in a development environment</p>
+<p><strong>RELEASE</strong> means we are in a production environment</p>
+<h2 id="references">References</h2>
+<p>WebGL Fundamentals (from twgl)
+@link <a href="http://webglfundamentals.org/">http://webglfundamentals.org/</a></p>
+<p>Learning WebGL
+@link <a href="http://learningwebgl.com/blog/?page_id=1217">http://learningwebgl.com/blog/?page_id=1217</a></p>
+<p>TWGL Docs
+@link <a href="http://twgljs.org/">http://twgljs.org/</a></p>
+<p>Barebones WebGL Routines (font-loader in ui.js)
+<a href="https://github.com/williame/barebones.js/tree/gh-pages/barebones.js">https://github.com/williame/barebones.js/tree/gh-pages/barebones.js</a></p>
+<p>Cinematic Camera Movement (three.js)
+@link <a href="https://nathanselikoff.com/2552/code-sketches/basic-camera-movement-three-js-webgl">https://nathanselikoff.com/2552/code-sketches/basic-camera-movement-three-js-webgl</a></p>
+<p>First-Person Camera
+@link <a href="https://github.com/shama/first-person-camera">https://github.com/shama/first-person-camera</a></p>
+<p>OpenGL Game from Scratch
+@link <a href="http://crongdor.com/2016/04/01/making-the-game-from-scratch/">http://crongdor.com/2016/04/01/making-the-game-from-scratch/</a></p>
+<p>Some WebGL Samples (incd. dynamic clouds)
+@link <a href="https://www.ibiblio.org/e-notes/webgl/webgl.htm">https://www.ibiblio.org/e-notes/webgl/webgl.htm</a></p>
+</div>
+</div>
+</div>
+
+<footer class="footer">
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(0.4.8)</span></a>
+</footer>
+
+<script src="script/search_index.js"></script>
+<script src="script/search.js"></script>
+<script src="script/pretty-print.js"></script>
+<script src="script/inherited-summary.js"></script>
+<script src="script/test-summary.js"></script>
+<script src="script/inner-link.js"></script>
+<script src="script/patch-for-local.js"></script>
+</body>
+</html>

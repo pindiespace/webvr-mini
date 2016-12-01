@@ -1,0 +1,1411 @@
+{
+  "type": "Program",
+  "body": [
+    {
+      "type": "ImportDeclaration",
+      "specifiers": [
+        {
+          "type": "ImportDefaultSpecifier",
+          "local": {
+            "type": "Identifier",
+            "name": "LoadPool",
+            "range": [
+              7,
+              15
+            ],
+            "loc": {
+              "start": {
+                "line": 1,
+                "column": 7
+              },
+              "end": {
+                "line": 1,
+                "column": 15
+              }
+            }
+          },
+          "range": [
+            7,
+            15
+          ],
+          "loc": {
+            "start": {
+              "line": 1,
+              "column": 7
+            },
+            "end": {
+              "line": 1,
+              "column": 15
+            }
+          }
+        }
+      ],
+      "source": {
+        "type": "Literal",
+        "value": "./load-pool",
+        "raw": "'./load-pool'",
+        "range": [
+          22,
+          35
+        ],
+        "loc": {
+          "start": {
+            "line": 1,
+            "column": 22
+          },
+          "end": {
+            "line": 1,
+            "column": 35
+          }
+        }
+      },
+      "range": [
+        0,
+        36
+      ],
+      "loc": {
+        "start": {
+          "line": 1,
+          "column": 0
+        },
+        "end": {
+          "line": 1,
+          "column": 36
+        }
+      }
+    },
+    {
+      "type": "Identifier",
+      "id": {
+        "type": "Identifier",
+        "name": "LoadFont",
+        "range": [
+          46,
+          54
+        ],
+        "loc": {
+          "start": {
+            "line": 3,
+            "column": 6
+          },
+          "end": {
+            "line": 3,
+            "column": 14
+          }
+        }
+      },
+      "superClass": {
+        "type": "Identifier",
+        "name": "LoadPool",
+        "range": [
+          63,
+          71
+        ],
+        "loc": {
+          "start": {
+            "line": 3,
+            "column": 23
+          },
+          "end": {
+            "line": 3,
+            "column": 31
+          }
+        }
+      },
+      "body": {
+        "type": "ClassBody",
+        "body": [
+          {
+            "type": "MethodDefinition",
+            "key": {
+              "type": "Identifier",
+              "name": "constructor",
+              "range": [
+                249,
+                260
+              ],
+              "loc": {
+                "start": {
+                  "line": 11,
+                  "column": 4
+                },
+                "end": {
+                  "line": 11,
+                  "column": 15
+                }
+              }
+            },
+            "value": {
+              "type": "FunctionExpression",
+              "id": null,
+              "params": [
+                {
+                  "type": "Identifier",
+                  "name": "init",
+                  "range": [
+                    263,
+                    267
+                  ],
+                  "loc": {
+                    "start": {
+                      "line": 11,
+                      "column": 18
+                    },
+                    "end": {
+                      "line": 11,
+                      "column": 22
+                    }
+                  }
+                },
+                {
+                  "type": "Identifier",
+                  "name": "util",
+                  "range": [
+                    269,
+                    273
+                  ],
+                  "loc": {
+                    "start": {
+                      "line": 11,
+                      "column": 24
+                    },
+                    "end": {
+                      "line": 11,
+                      "column": 28
+                    }
+                  }
+                },
+                {
+                  "type": "Identifier",
+                  "name": "glMatrix",
+                  "range": [
+                    275,
+                    283
+                  ],
+                  "loc": {
+                    "start": {
+                      "line": 11,
+                      "column": 30
+                    },
+                    "end": {
+                      "line": 11,
+                      "column": 38
+                    }
+                  }
+                },
+                {
+                  "type": "Identifier",
+                  "name": "webgl",
+                  "range": [
+                    285,
+                    290
+                  ],
+                  "loc": {
+                    "start": {
+                      "line": 11,
+                      "column": 40
+                    },
+                    "end": {
+                      "line": 11,
+                      "column": 45
+                    }
+                  }
+                }
+              ],
+              "body": {
+                "type": "BlockStatement",
+                "body": [
+                  {
+                    "type": "ExpressionStatement",
+                    "expression": {
+                      "type": "CallExpression",
+                      "callee": {
+                        "type": "MemberExpression",
+                        "computed": false,
+                        "object": {
+                          "type": "Identifier",
+                          "name": "console",
+                          "range": [
+                            306,
+                            313
+                          ],
+                          "loc": {
+                            "start": {
+                              "line": 13,
+                              "column": 8
+                            },
+                            "end": {
+                              "line": 13,
+                              "column": 15
+                            }
+                          }
+                        },
+                        "property": {
+                          "type": "Identifier",
+                          "name": "log",
+                          "range": [
+                            314,
+                            317
+                          ],
+                          "loc": {
+                            "start": {
+                              "line": 13,
+                              "column": 16
+                            },
+                            "end": {
+                              "line": 13,
+                              "column": 19
+                            }
+                          }
+                        },
+                        "range": [
+                          306,
+                          317
+                        ],
+                        "loc": {
+                          "start": {
+                            "line": 13,
+                            "column": 8
+                          },
+                          "end": {
+                            "line": 13,
+                            "column": 19
+                          }
+                        }
+                      },
+                      "arguments": [
+                        {
+                          "type": "Literal",
+                          "value": "in LoadFont class",
+                          "raw": "'in LoadFont class'",
+                          "range": [
+                            319,
+                            338
+                          ],
+                          "loc": {
+                            "start": {
+                              "line": 13,
+                              "column": 21
+                            },
+                            "end": {
+                              "line": 13,
+                              "column": 40
+                            }
+                          }
+                        }
+                      ],
+                      "range": [
+                        306,
+                        340
+                      ],
+                      "loc": {
+                        "start": {
+                          "line": 13,
+                          "column": 8
+                        },
+                        "end": {
+                          "line": 13,
+                          "column": 42
+                        }
+                      }
+                    },
+                    "range": [
+                      306,
+                      341
+                    ],
+                    "loc": {
+                      "start": {
+                        "line": 13,
+                        "column": 8
+                      },
+                      "end": {
+                        "line": 13,
+                        "column": 43
+                      }
+                    },
+                    "trailingComments": [
+                      {
+                        "type": "Line",
+                        "value": " Init superclass.",
+                        "range": [
+                          353,
+                          372
+                        ],
+                        "loc": {
+                          "start": {
+                            "line": 15,
+                            "column": 8
+                          },
+                          "end": {
+                            "line": 15,
+                            "column": 27
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "VariableDeclaration",
+                    "declarations": [
+                      {
+                        "type": "VariableDeclarator",
+                        "id": {
+                          "type": "Identifier",
+                          "name": "MAX_CACHE_FONTS",
+                          "range": [
+                            388,
+                            403
+                          ],
+                          "loc": {
+                            "start": {
+                              "line": 17,
+                              "column": 12
+                            },
+                            "end": {
+                              "line": 17,
+                              "column": 27
+                            }
+                          }
+                        },
+                        "init": {
+                          "type": "Literal",
+                          "value": 3,
+                          "raw": "3",
+                          "range": [
+                            406,
+                            407
+                          ],
+                          "loc": {
+                            "start": {
+                              "line": 17,
+                              "column": 30
+                            },
+                            "end": {
+                              "line": 17,
+                              "column": 31
+                            }
+                          }
+                        },
+                        "range": [
+                          388,
+                          407
+                        ],
+                        "loc": {
+                          "start": {
+                            "line": 17,
+                            "column": 12
+                          },
+                          "end": {
+                            "line": 17,
+                            "column": 31
+                          }
+                        }
+                      }
+                    ],
+                    "kind": "let",
+                    "range": [
+                      384,
+                      408
+                    ],
+                    "loc": {
+                      "start": {
+                        "line": 17,
+                        "column": 8
+                      },
+                      "end": {
+                        "line": 17,
+                        "column": 32
+                      }
+                    },
+                    "leadingComments": [
+                      {
+                        "type": "Line",
+                        "value": " Init superclass.",
+                        "range": [
+                          353,
+                          372
+                        ],
+                        "loc": {
+                          "start": {
+                            "line": 15,
+                            "column": 8
+                          },
+                          "end": {
+                            "line": 15,
+                            "column": 27
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "ExpressionStatement",
+                    "expression": {
+                      "type": "CallExpression",
+                      "callee": {
+                        "type": "Super",
+                        "range": [
+                          420,
+                          425
+                        ],
+                        "loc": {
+                          "start": {
+                            "line": 19,
+                            "column": 8
+                          },
+                          "end": {
+                            "line": 19,
+                            "column": 13
+                          }
+                        }
+                      },
+                      "arguments": [
+                        {
+                          "type": "Identifier",
+                          "name": "init",
+                          "range": [
+                            427,
+                            431
+                          ],
+                          "loc": {
+                            "start": {
+                              "line": 19,
+                              "column": 15
+                            },
+                            "end": {
+                              "line": 19,
+                              "column": 19
+                            }
+                          }
+                        },
+                        {
+                          "type": "Identifier",
+                          "name": "util",
+                          "range": [
+                            433,
+                            437
+                          ],
+                          "loc": {
+                            "start": {
+                              "line": 19,
+                              "column": 21
+                            },
+                            "end": {
+                              "line": 19,
+                              "column": 25
+                            }
+                          }
+                        },
+                        {
+                          "type": "Identifier",
+                          "name": "glMatrix",
+                          "range": [
+                            439,
+                            447
+                          ],
+                          "loc": {
+                            "start": {
+                              "line": 19,
+                              "column": 27
+                            },
+                            "end": {
+                              "line": 19,
+                              "column": 35
+                            }
+                          }
+                        },
+                        {
+                          "type": "Identifier",
+                          "name": "webgl",
+                          "range": [
+                            449,
+                            454
+                          ],
+                          "loc": {
+                            "start": {
+                              "line": 19,
+                              "column": 37
+                            },
+                            "end": {
+                              "line": 19,
+                              "column": 42
+                            }
+                          }
+                        },
+                        {
+                          "type": "Identifier",
+                          "name": "MAX_CACHE_FONTS",
+                          "range": [
+                            456,
+                            471
+                          ],
+                          "loc": {
+                            "start": {
+                              "line": 19,
+                              "column": 44
+                            },
+                            "end": {
+                              "line": 19,
+                              "column": 59
+                            }
+                          }
+                        }
+                      ],
+                      "range": [
+                        420,
+                        473
+                      ],
+                      "loc": {
+                        "start": {
+                          "line": 19,
+                          "column": 8
+                        },
+                        "end": {
+                          "line": 19,
+                          "column": 61
+                        }
+                      }
+                    },
+                    "range": [
+                      420,
+                      474
+                    ],
+                    "loc": {
+                      "start": {
+                        "line": 19,
+                        "column": 8
+                      },
+                      "end": {
+                        "line": 19,
+                        "column": 62
+                      }
+                    }
+                  }
+                ],
+                "range": [
+                  293,
+                  483
+                ],
+                "loc": {
+                  "start": {
+                    "line": 11,
+                    "column": 48
+                  },
+                  "end": {
+                    "line": 21,
+                    "column": 5
+                  }
+                }
+              },
+              "generator": false,
+              "expression": false,
+              "range": [
+                261,
+                483
+              ],
+              "loc": {
+                "start": {
+                  "line": 11,
+                  "column": 16
+                },
+                "end": {
+                  "line": 21,
+                  "column": 5
+                }
+              }
+            },
+            "kind": "constructor",
+            "computed": false,
+            "range": [
+              249,
+              483
+            ],
+            "loc": {
+              "start": {
+                "line": 11,
+                "column": 4
+              },
+              "end": {
+                "line": 21,
+                "column": 5
+              }
+            },
+            "leadingComments": [
+              {
+                "type": "Block",
+                "value": "* \r\n     * Load and configure fonts for use.\r\n     * Working with fonts:\r\n     * @link https://www.html5rocks.com/en/tutorials/webgl/million_letters/\r\n     ",
+                "range": [
+                  81,
+                  241
+                ],
+                "loc": {
+                  "start": {
+                    "line": 5,
+                    "column": 4
+                  },
+                  "end": {
+                    "line": 9,
+                    "column": 7
+                  }
+                }
+              }
+            ],
+            "static": false
+          }
+        ],
+        "range": [
+          72,
+          490
+        ],
+        "loc": {
+          "start": {
+            "line": 3,
+            "column": 32
+          },
+          "end": {
+            "line": 24,
+            "column": 1
+          }
+        }
+      },
+      "range": [
+        40,
+        490
+      ],
+      "loc": {
+        "start": {
+          "line": 3,
+          "column": 0
+        },
+        "end": {
+          "line": 24,
+          "column": 1
+        }
+      },
+      "name": "_",
+      "leadingComments": [],
+      "trailingComments": []
+    },
+    {
+      "type": "Identifier",
+      "declaration": {
+        "type": "Identifier",
+        "name": "LoadFont",
+        "range": [
+          509,
+          517
+        ],
+        "loc": {
+          "start": {
+            "line": 26,
+            "column": 15
+          },
+          "end": {
+            "line": 26,
+            "column": 23
+          }
+        }
+      },
+      "range": [
+        494,
+        518
+      ],
+      "loc": {
+        "start": {
+          "line": 26,
+          "column": 0
+        },
+        "end": {
+          "line": 26,
+          "column": 24
+        }
+      },
+      "name": "_",
+      "leadingComments": [],
+      "trailingComments": []
+    },
+    {
+      "type": "ExportDefaultDeclaration",
+      "declaration": {
+        "type": "ClassDeclaration",
+        "id": {
+          "type": "Identifier",
+          "name": "LoadFont",
+          "range": [
+            46,
+            54
+          ],
+          "loc": {
+            "start": {
+              "line": 3,
+              "column": 6
+            },
+            "end": {
+              "line": 3,
+              "column": 14
+            }
+          }
+        },
+        "superClass": {
+          "type": "Identifier",
+          "name": "LoadPool",
+          "range": [
+            63,
+            71
+          ],
+          "loc": {
+            "start": {
+              "line": 3,
+              "column": 23
+            },
+            "end": {
+              "line": 3,
+              "column": 31
+            }
+          }
+        },
+        "body": {
+          "type": "ClassBody",
+          "body": [
+            {
+              "type": "MethodDefinition",
+              "key": {
+                "type": "Identifier",
+                "name": "constructor",
+                "range": [
+                  249,
+                  260
+                ],
+                "loc": {
+                  "start": {
+                    "line": 11,
+                    "column": 4
+                  },
+                  "end": {
+                    "line": 11,
+                    "column": 15
+                  }
+                }
+              },
+              "value": {
+                "type": "FunctionExpression",
+                "id": null,
+                "params": [
+                  {
+                    "type": "Identifier",
+                    "name": "init",
+                    "range": [
+                      263,
+                      267
+                    ],
+                    "loc": {
+                      "start": {
+                        "line": 11,
+                        "column": 18
+                      },
+                      "end": {
+                        "line": 11,
+                        "column": 22
+                      }
+                    }
+                  },
+                  {
+                    "type": "Identifier",
+                    "name": "util",
+                    "range": [
+                      269,
+                      273
+                    ],
+                    "loc": {
+                      "start": {
+                        "line": 11,
+                        "column": 24
+                      },
+                      "end": {
+                        "line": 11,
+                        "column": 28
+                      }
+                    }
+                  },
+                  {
+                    "type": "Identifier",
+                    "name": "glMatrix",
+                    "range": [
+                      275,
+                      283
+                    ],
+                    "loc": {
+                      "start": {
+                        "line": 11,
+                        "column": 30
+                      },
+                      "end": {
+                        "line": 11,
+                        "column": 38
+                      }
+                    }
+                  },
+                  {
+                    "type": "Identifier",
+                    "name": "webgl",
+                    "range": [
+                      285,
+                      290
+                    ],
+                    "loc": {
+                      "start": {
+                        "line": 11,
+                        "column": 40
+                      },
+                      "end": {
+                        "line": 11,
+                        "column": 45
+                      }
+                    }
+                  }
+                ],
+                "body": {
+                  "type": "BlockStatement",
+                  "body": [
+                    {
+                      "type": "ExpressionStatement",
+                      "expression": {
+                        "type": "CallExpression",
+                        "callee": {
+                          "type": "MemberExpression",
+                          "computed": false,
+                          "object": {
+                            "type": "Identifier",
+                            "name": "console",
+                            "range": [
+                              306,
+                              313
+                            ],
+                            "loc": {
+                              "start": {
+                                "line": 13,
+                                "column": 8
+                              },
+                              "end": {
+                                "line": 13,
+                                "column": 15
+                              }
+                            }
+                          },
+                          "property": {
+                            "type": "Identifier",
+                            "name": "log",
+                            "range": [
+                              314,
+                              317
+                            ],
+                            "loc": {
+                              "start": {
+                                "line": 13,
+                                "column": 16
+                              },
+                              "end": {
+                                "line": 13,
+                                "column": 19
+                              }
+                            }
+                          },
+                          "range": [
+                            306,
+                            317
+                          ],
+                          "loc": {
+                            "start": {
+                              "line": 13,
+                              "column": 8
+                            },
+                            "end": {
+                              "line": 13,
+                              "column": 19
+                            }
+                          }
+                        },
+                        "arguments": [
+                          {
+                            "type": "Literal",
+                            "value": "in LoadFont class",
+                            "raw": "'in LoadFont class'",
+                            "range": [
+                              319,
+                              338
+                            ],
+                            "loc": {
+                              "start": {
+                                "line": 13,
+                                "column": 21
+                              },
+                              "end": {
+                                "line": 13,
+                                "column": 40
+                              }
+                            }
+                          }
+                        ],
+                        "range": [
+                          306,
+                          340
+                        ],
+                        "loc": {
+                          "start": {
+                            "line": 13,
+                            "column": 8
+                          },
+                          "end": {
+                            "line": 13,
+                            "column": 42
+                          }
+                        }
+                      },
+                      "range": [
+                        306,
+                        341
+                      ],
+                      "loc": {
+                        "start": {
+                          "line": 13,
+                          "column": 8
+                        },
+                        "end": {
+                          "line": 13,
+                          "column": 43
+                        }
+                      },
+                      "trailingComments": [
+                        {
+                          "type": "Line",
+                          "value": " Init superclass.",
+                          "range": [
+                            353,
+                            372
+                          ],
+                          "loc": {
+                            "start": {
+                              "line": 15,
+                              "column": 8
+                            },
+                            "end": {
+                              "line": 15,
+                              "column": 27
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "VariableDeclaration",
+                      "declarations": [
+                        {
+                          "type": "VariableDeclarator",
+                          "id": {
+                            "type": "Identifier",
+                            "name": "MAX_CACHE_FONTS",
+                            "range": [
+                              388,
+                              403
+                            ],
+                            "loc": {
+                              "start": {
+                                "line": 17,
+                                "column": 12
+                              },
+                              "end": {
+                                "line": 17,
+                                "column": 27
+                              }
+                            }
+                          },
+                          "init": {
+                            "type": "Literal",
+                            "value": 3,
+                            "raw": "3",
+                            "range": [
+                              406,
+                              407
+                            ],
+                            "loc": {
+                              "start": {
+                                "line": 17,
+                                "column": 30
+                              },
+                              "end": {
+                                "line": 17,
+                                "column": 31
+                              }
+                            }
+                          },
+                          "range": [
+                            388,
+                            407
+                          ],
+                          "loc": {
+                            "start": {
+                              "line": 17,
+                              "column": 12
+                            },
+                            "end": {
+                              "line": 17,
+                              "column": 31
+                            }
+                          }
+                        }
+                      ],
+                      "kind": "let",
+                      "range": [
+                        384,
+                        408
+                      ],
+                      "loc": {
+                        "start": {
+                          "line": 17,
+                          "column": 8
+                        },
+                        "end": {
+                          "line": 17,
+                          "column": 32
+                        }
+                      },
+                      "leadingComments": [
+                        {
+                          "type": "Line",
+                          "value": " Init superclass.",
+                          "range": [
+                            353,
+                            372
+                          ],
+                          "loc": {
+                            "start": {
+                              "line": 15,
+                              "column": 8
+                            },
+                            "end": {
+                              "line": 15,
+                              "column": 27
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "ExpressionStatement",
+                      "expression": {
+                        "type": "CallExpression",
+                        "callee": {
+                          "type": "Super",
+                          "range": [
+                            420,
+                            425
+                          ],
+                          "loc": {
+                            "start": {
+                              "line": 19,
+                              "column": 8
+                            },
+                            "end": {
+                              "line": 19,
+                              "column": 13
+                            }
+                          }
+                        },
+                        "arguments": [
+                          {
+                            "type": "Identifier",
+                            "name": "init",
+                            "range": [
+                              427,
+                              431
+                            ],
+                            "loc": {
+                              "start": {
+                                "line": 19,
+                                "column": 15
+                              },
+                              "end": {
+                                "line": 19,
+                                "column": 19
+                              }
+                            }
+                          },
+                          {
+                            "type": "Identifier",
+                            "name": "util",
+                            "range": [
+                              433,
+                              437
+                            ],
+                            "loc": {
+                              "start": {
+                                "line": 19,
+                                "column": 21
+                              },
+                              "end": {
+                                "line": 19,
+                                "column": 25
+                              }
+                            }
+                          },
+                          {
+                            "type": "Identifier",
+                            "name": "glMatrix",
+                            "range": [
+                              439,
+                              447
+                            ],
+                            "loc": {
+                              "start": {
+                                "line": 19,
+                                "column": 27
+                              },
+                              "end": {
+                                "line": 19,
+                                "column": 35
+                              }
+                            }
+                          },
+                          {
+                            "type": "Identifier",
+                            "name": "webgl",
+                            "range": [
+                              449,
+                              454
+                            ],
+                            "loc": {
+                              "start": {
+                                "line": 19,
+                                "column": 37
+                              },
+                              "end": {
+                                "line": 19,
+                                "column": 42
+                              }
+                            }
+                          },
+                          {
+                            "type": "Identifier",
+                            "name": "MAX_CACHE_FONTS",
+                            "range": [
+                              456,
+                              471
+                            ],
+                            "loc": {
+                              "start": {
+                                "line": 19,
+                                "column": 44
+                              },
+                              "end": {
+                                "line": 19,
+                                "column": 59
+                              }
+                            }
+                          }
+                        ],
+                        "range": [
+                          420,
+                          473
+                        ],
+                        "loc": {
+                          "start": {
+                            "line": 19,
+                            "column": 8
+                          },
+                          "end": {
+                            "line": 19,
+                            "column": 61
+                          }
+                        }
+                      },
+                      "range": [
+                        420,
+                        474
+                      ],
+                      "loc": {
+                        "start": {
+                          "line": 19,
+                          "column": 8
+                        },
+                        "end": {
+                          "line": 19,
+                          "column": 62
+                        }
+                      }
+                    }
+                  ],
+                  "range": [
+                    293,
+                    483
+                  ],
+                  "loc": {
+                    "start": {
+                      "line": 11,
+                      "column": 48
+                    },
+                    "end": {
+                      "line": 21,
+                      "column": 5
+                    }
+                  }
+                },
+                "generator": false,
+                "expression": false,
+                "range": [
+                  261,
+                  483
+                ],
+                "loc": {
+                  "start": {
+                    "line": 11,
+                    "column": 16
+                  },
+                  "end": {
+                    "line": 21,
+                    "column": 5
+                  }
+                }
+              },
+              "kind": "constructor",
+              "computed": false,
+              "range": [
+                249,
+                483
+              ],
+              "loc": {
+                "start": {
+                  "line": 11,
+                  "column": 4
+                },
+                "end": {
+                  "line": 21,
+                  "column": 5
+                }
+              },
+              "leadingComments": [
+                {
+                  "type": "Block",
+                  "value": "* \r\n     * Load and configure fonts for use.\r\n     * Working with fonts:\r\n     * @link https://www.html5rocks.com/en/tutorials/webgl/million_letters/\r\n     ",
+                  "range": [
+                    81,
+                    241
+                  ],
+                  "loc": {
+                    "start": {
+                      "line": 5,
+                      "column": 4
+                    },
+                    "end": {
+                      "line": 9,
+                      "column": 7
+                    }
+                  }
+                }
+              ],
+              "static": false
+            }
+          ],
+          "range": [
+            72,
+            490
+          ],
+          "loc": {
+            "start": {
+              "line": 3,
+              "column": 32
+            },
+            "end": {
+              "line": 24,
+              "column": 1
+            }
+          }
+        },
+        "range": [
+          40,
+          490
+        ],
+        "loc": {
+          "start": {
+            "line": 3,
+            "column": 0
+          },
+          "end": {
+            "line": 24,
+            "column": 1
+          }
+        },
+        "__esdoc__pseudo_export": false,
+        "leadingComments": [],
+        "trailingComments": []
+      },
+      "range": [
+        494,
+        518
+      ],
+      "loc": {
+        "start": {
+          "line": 26,
+          "column": 0
+        },
+        "end": {
+          "line": 26,
+          "column": 24
+        }
+      },
+      "leadingComments": null
+    }
+  ],
+  "sourceType": "module",
+  "range": [
+    0,
+    518
+  ],
+  "loc": {
+    "start": {
+      "line": 1,
+      "column": 0
+    },
+    "end": {
+      "line": 26,
+      "column": 24
+    }
+  },
+  "comments": [
+    {
+      "type": "Block",
+      "value": "* \r\n     * Load and configure fonts for use.\r\n     * Working with fonts:\r\n     * @link https://www.html5rocks.com/en/tutorials/webgl/million_letters/\r\n     ",
+      "range": [
+        81,
+        241
+      ],
+      "loc": {
+        "start": {
+          "line": 5,
+          "column": 4
+        },
+        "end": {
+          "line": 9,
+          "column": 7
+        }
+      }
+    },
+    {
+      "type": "Line",
+      "value": " Init superclass.",
+      "range": [
+        353,
+        372
+      ],
+      "loc": {
+        "start": {
+          "line": 15,
+          "column": 8
+        },
+        "end": {
+          "line": 15,
+          "column": 27
+        }
+      }
+    }
+  ]
+}

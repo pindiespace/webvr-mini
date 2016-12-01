@@ -1,6 +1,6 @@
 import LoadPool from  './load-pool';
 
-export default class LoadVideo extends LoadPool {
+class LoadVideo extends LoadPool {
 
     /**
      * Base loader class.
@@ -20,3 +20,5 @@ export default class LoadVideo extends LoadPool {
 
 
 }
+
+export default LoadVideo;
