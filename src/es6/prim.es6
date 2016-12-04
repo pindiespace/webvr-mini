@@ -696,11 +696,16 @@ class Prim {
 
             let vertex = vertices[ i ];
 
+            //console.log("VVVVERTICES i:" + i + ' vertex:' + vertex)
+
             c[ 0 ] += vertex[ 0 ];
 
             c[ 1 ] += vertex[ 1 ];
 
             c[ 2 ] += vertex[ 2 ];
+
+            console.log( "CCCCCCCCCC i:" + i + " vertex:" + c )
+
 
         }
 
@@ -709,6 +714,10 @@ class Prim {
         c[ 1 ] /= len;
 
         c[ 2 ] /= len;
+
+        //console.log( '======================')
+        //console.log( "FFFFFFINAL c:" + c)
+        //console.log( '======================')
 
         return c;
 
@@ -726,6 +735,8 @@ class Prim {
 
         let center = this.computeCentroid( vertices );
 
+        window.center = center; ///////////////////////////////
+
         let len = indices.length;
 
         let vtx = [];
@@ -736,15 +747,19 @@ class Prim {
 
         let idx = [];
 
+        console.log( '>>>>>>LEN:' + len)
+
         // We re-do the indices calculations, since we insert a central point.
 
-        for ( let i = 0; i < len - 1; i += 2 ) {
+        for ( let i = 1; i < len; i++ ) {
 
-            let v1 = vertices[ indices[ i ] ];
+            let v1 = vertices[ indices[ i - 1 ] ];
 
-            let v2 = vertices[ indices[ i + 1 ] ];
+            let v2 = vertices[ indices[ i ] ];
 
-            vtx.push( v1, v2, center );
+            console.log( 'v1:' + v1 + ' v2:' + v2)
+
+            vtx.push( v2, v1, center );
 
             let lenv = vtx.length;
 
@@ -788,6 +803,18 @@ class Prim {
             } // local texture coords
 
         } // end of for loop
+
+        // push final values joining point to beginning.
+
+        //vtx.push( vertices[ indices[ indices.length - 1 ] ] );
+
+        //vtx.push( vertices[ indices[ 0 ] ] );
+
+        //vtx.push( center );
+
+        
+
+
 
         return {
             vertices: vtx,
@@ -2840,7 +2867,7 @@ class Prim {
 
     geometryDoDo ( prim ) {
 
-/*
+
         const vec3 = this.glMatrix.vec3;
 
         const flatten = this.util.flatten;
@@ -2856,10 +2883,6 @@ class Prim {
         normals = geo.normals.data,
         tangents = geo.tangents.data;
 
-*/
-
-     let vertices, indices, texCoords, normals, tangents, faces, edges;
-
 
         let r = prim.divisions[ 0 ] || 0.5;
 
@@ -2868,7 +2891,7 @@ class Prim {
         var b = 0.5 * 1 / phi;
         var c = 0.5 * ( 2 - phi );
 
-        vertices = [
+        let vtx = [
 
             [ c,  0,  a ],    // 0
             [-c,  0,  a ],    // 1
@@ -2903,7 +2926,7 @@ class Prim {
       // 8-11 + 2
       // 12-15 + 3
       // 16-19 + 4
-      faces = [
+      let faces = [
             [  4,  3,  2,  1,  0 ],
             [  7,  6,  5,  0,  1 ],
             [ 12, 11, 10,  9,  8 ],
@@ -2918,32 +2941,29 @@ class Prim {
             [  7,  1,  2, 17, 18 ]
         ];
 
-        let newPoints = [];
 
-        let newIndices = [];
+        vertices = vertices.map( function ( v ) {
 
-        let geo = {};
+            return vec3.normalize( v, v );   
+        
+            }
+        
+        );
 
-        geo.newVertices = [];
+        //for ( let i = 0; i < faces.length; i++ ) {
 
-        geo.newIndices = [];
+            let i = 0;
 
-        geo.newNormals = [];
+            let len = vertices.length;
 
-        geo.newTexCoords = [];
-
-
-        for ( let i = 0; i < faces.length; i++ ) {
-
-            let fan = this.computeFan ( vertices, faces[ i ], true );
+            let fan = this.computeFan ( vtx, faces[ i ], true );
 
             console.log("MADE A FAN______________________________________")
 
-            geo.newVertices = geo.newVertices.concat( fan.vertices );
+            vertices = vertices.concat( fan.vertices );
 
             // Adjust indices to position
 
-            let len = geo.newVertices.length;
 
             for ( let i = 0; i < fan.indices.length; i++ ) {
 
@@ -2951,28 +2971,32 @@ class Prim {
 
             }
 
-            geo.newIndices = geo.newIndices.concat( fan.indices );
+            indices = indices.concat( fan.indices );
 
-            geo.newTexCoords = geo.newTexCoords.concat( fan.texCoords );
+            texCoords = texCoords.concat( fan.texCoords );
 
-            geo.newNormals = geo.newNormals.concat( fan.normals );
+            normals = normals.concat( fan.normals );
 
 
-        }
+        // }
 
+        // flatten
+
+        geo.vertices.data = flatten( vertices );
+
+        geo.indices.data = indices;
+
+        geo.texCoords.data = flatten( texCoords );
+
+        geo.normals.data = flatten( normals );
 
         window.geo = geo;
 
-
-        // compute indices for drawing a side and the whole shape.
-
-
-//  vertices = vertices.map(function(v) { return v.normalize().scale(r); })
-
+        //  vertices = vertices.map(function(v) { return v.normalize().scale(r); })
 
         // Return the buffer.
 
-        /////////////////////return this.createBuffers( prim.geometry );
+        return this.createBuffers( prim.geometry );
 
     }
 
@@ -3001,7 +3025,9 @@ class Prim {
         normals = geo.normals.data,
         tangents = geo.tangents.data;
 
-        this.geometryDoDo( prim ); ///////////////////////////////////////////////////
+        return this.geometryDoDo( prim ); ///////////////////////////////////////////////////
+
+        return;
 
         // Size and divisions.
 
@@ -3232,7 +3258,7 @@ class Prim {
                 //if ( i > 449 && i < 495 ) { u = 0; v = 0; } // tenth side, right right next to face
                 // corrections. TODO:
 
-                console.log( 'vPos:' + vPos + ' u:' + u + ' v:' + v )
+                ////////////////////////////////////console.log( 'vPos:' + vPos + ' u:' + u + ' v:' + v )
 
                 texCoords.push( u, v );
 
@@ -3357,6 +3383,22 @@ class Prim {
         // Return the buffer.
 
         return this.createBuffers( prim.geometry );
+
+    }
+
+
+    /** 
+     * Create terrain with hexagon grid with each grid element independently addressible.
+     * @link http://catlikecoding.com/unity/tutorials/hex-map-1/
+     */
+    hexTerrain ( prim ) { 
+
+    }
+
+    /** 
+     * Create terrain with octagon grid, with each grid element independently addressible.
+     */
+    octTerrain ( prim ) {
 
     }
 

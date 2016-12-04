@@ -413,10 +413,10 @@ class World {
 
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.DODECAHEDRON,
-            'Octahedron',
+            'Dodecahedron',
             vec5( 1, 1, 1 ),       // dimensions (4th dimension doesn't exist for cylinder)
             vec5( 40, 40, 0  ),        // divisions MAKE SMALLER
-            vec3.fromValues(-1.7, 2, -1.0 ),          // position (absolute)
+            vec3.fromValues(-1.0, 0.5, 3.0 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x

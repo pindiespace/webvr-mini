@@ -360,7 +360,7 @@
 
 	var _prim2 = _interopRequireDefault(_prim);
 
-	var _world = __webpack_require__(22);
+	var _world = __webpack_require__(23);
 
 	var _world2 = _interopRequireDefault(_world);
 
@@ -381,7 +381,7 @@
 
 	// WebGL math library.
 
-	var glMatrix = __webpack_require__(23);
+	var glMatrix = __webpack_require__(24);
 
 	if (!glMatrix) {
 
@@ -420,7 +420,7 @@
 	    // require kronos webgl debug from node_modules
 	    // https://github.com/vorg/webgl-debug
 
-	    var debug = __webpack_require__(33);
+	    var debug = __webpack_require__(34);
 
 	    exports.webgl = webgl = new _webgl2.default(false, glMatrix, util, debug);
 
@@ -3735,7 +3735,7 @@
 /* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
-	'use strict';Object.defineProperty(exports,"__esModule",{value:true});var _createClass=function(){function defineProperties(target,props){for(var i=0;i<props.length;i++){var descriptor=props[i];descriptor.enumerable=descriptor.enumerable||false;descriptor.configurable=true;if("value"in descriptor)descriptor.writable=true;Object.defineProperty(target,descriptor.key,descriptor);}}return function(Constructor,protoProps,staticProps){if(protoProps)defineProperties(Constructor.prototype,protoProps);if(staticProps)defineProperties(Constructor,staticProps);return Constructor;};}();var _map2d=__webpack_require__(21);var _map2d2=_interopRequireDefault(_map2d);var _map3d=__webpack_require__(34);var _map3d2=_interopRequireDefault(_map3d);function _interopRequireDefault(obj){return obj&&obj.__esModule?obj:{default:obj};}function _classCallCheck(instance,Constructor){if(!(instance instanceof Constructor)){throw new TypeError("Cannot call a class as a function");}}var Prim=function(){/** 
+	'use strict';Object.defineProperty(exports,"__esModule",{value:true});var _createClass=function(){function defineProperties(target,props){for(var i=0;i<props.length;i++){var descriptor=props[i];descriptor.enumerable=descriptor.enumerable||false;descriptor.configurable=true;if("value"in descriptor)descriptor.writable=true;Object.defineProperty(target,descriptor.key,descriptor);}}return function(Constructor,protoProps,staticProps){if(protoProps)defineProperties(Constructor.prototype,protoProps);if(staticProps)defineProperties(Constructor,staticProps);return Constructor;};}();var _map2d=__webpack_require__(21);var _map2d2=_interopRequireDefault(_map2d);var _map3d=__webpack_require__(22);var _map3d2=_interopRequireDefault(_map3d);function _interopRequireDefault(obj){return obj&&obj.__esModule?obj:{default:obj};}function _classCallCheck(instance,Constructor){if(!(instance instanceof Constructor)){throw new TypeError("Cannot call a class as a function");}}var Prim=function(){/** 
 	     * @class
 	     * Create object primitives, and return vertex and index data 
 	     * suitable for creating a VBO and IBO.
@@ -3881,15 +3881,24 @@
 	     * find the center between any set of 3d points
 	     * @param {[vec3]} vertices an array of xyz points.
 	     * @returns {vec3} the center point.
-	     */},{key:'computeCentroid',value:function computeCentroid(vertices){var c=[0,0,0],len=vertices.length;for(var _i5=0;_i5<len;_i5++){var vertex=vertices[_i5];c[0]+=vertex[0];c[1]+=vertex[1];c[2]+=vertex[2];}c[0]/=len;c[1]/=len;c[2]/=len;return c;}/** 
+	     */},{key:'computeCentroid',value:function computeCentroid(vertices){var c=[0,0,0],len=vertices.length;for(var _i5=0;_i5<len;_i5++){var vertex=vertices[_i5];//console.log("VVVVERTICES i:" + i + ' vertex:' + vertex)
+	c[0]+=vertex[0];c[1]+=vertex[1];c[2]+=vertex[2];console.log("CCCCCCCCCC i:"+_i5+" vertex:"+c);}c[0]/=len;c[1]/=len;c[2]/=len;//console.log( '======================')
+	//console.log( "FFFFFFINAL c:" + c)
+	//console.log( '======================')
+	return c;}/** 
 	     * given a set of points, compute a triangle fan a central point.
 	     * @param {[...vec3]} vertices an array of UN-FLATTENED xyz points.
 	     * @param {[uint16]} indices the sequence to read triangles.
 	     * @returns {Object} UN-FLATTENED vertices, indices, texCoords nomals, tangents.
-	     */},{key:'computeFan',value:function computeFan(vertices,indices,localTexCoords){var vec3=this.glMatrix.vec3;var center=this.computeCentroid(vertices);var len=indices.length;var vtx=[];var tex=[];var nor=[];var idx=[];// We re-do the indices calculations, since we insert a central point.
-	for(var _i6=0;_i6<len-1;_i6+=2){var v1=vertices[indices[_i6]];var v2=vertices[indices[_i6+1]];vtx.push(v1,v2,center);var lenv=vtx.length;idx.push(lenv-3,lenv-2,lenv-1);nor.push(v1,v2,center);// If the local flag is set, compute texture coordinates from original vertices.
+	     */},{key:'computeFan',value:function computeFan(vertices,indices,localTexCoords){var vec3=this.glMatrix.vec3;var center=this.computeCentroid(vertices);window.center=center;///////////////////////////////
+	var len=indices.length;var vtx=[];var tex=[];var nor=[];var idx=[];console.log('>>>>>>LEN:'+len);// We re-do the indices calculations, since we insert a central point.
+	for(var _i6=1;_i6<len;_i6++){var v1=vertices[indices[_i6-1]];var v2=vertices[indices[_i6]];console.log('v1:'+v1+' v2:'+v2);vtx.push(v2,v1,center);var lenv=vtx.length;idx.push(lenv-3,lenv-2,lenv-1);nor.push(v1,v2,center);// If the local flag is set, compute texture coordinates from original vertices.
 	if(localTexCoords){var dist=void 0,angle=void 0;dist=vec3.distance(center,v1);angle=vec3.angle(center,v1);tex.push([Math.cos(angle)*2*dist,Math.sin(angle)*2*dist]);dist=vec3.distance(center,v2);angle=vec3.angle(center,v2);tex.push([Math.cos(angle)*2*dist,Math.sin(angle)*2*dist]);tex.push([0.5,0.5]);}// local texture coords
 	}// end of for loop
+	// push final values joining point to beginning.
+	//vtx.push( vertices[ indices[ indices.length - 1 ] ] );
+	//vtx.push( vertices[ indices[ 0 ] ] );
+	//vtx.push( center );
 	return{vertices:vtx,indices:idx,texCoords:tex,normals:nor};}/** 
 	     * Subdivide a mesh, WITHOUT smoothing.
 	     * Comprehensive description.
@@ -4418,23 +4427,8 @@
 	     * @param {Prim} the Prim needing geometry. 
 	     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
 	     * Creating WebGL buffers is turned on or off conditionally in the method.
-	     */},{key:'geometryOctahedron',value:function geometryOctahedron(prim){return this.geometryIcoSphere(prim);}},{key:'geometryDoDo',value:function geometryDoDo(prim){/*
-	        const vec3 = this.glMatrix.vec3;
-
-	        const flatten = this.util.flatten;
-
-	        let geo = prim.geometry;
-
-	        // Shortcuts to Prim data arrays.
-
-	        let vertices = geo.vertices.data,
-	        indices  = geo.indices.data,
-	        sides = geo.sides.data,
-	        texCoords = geo.texCoords.data,
-	        normals = geo.normals.data,
-	        tangents = geo.tangents.data;
-
-	*/var vertices=void 0,indices=void 0,texCoords=void 0,normals=void 0,tangents=void 0,faces=void 0,edges=void 0;var r=prim.divisions[0]||0.5;var phi=(1+Math.sqrt(5))/2;var a=0.5;var b=0.5*1/phi;var c=0.5*(2-phi);vertices=[[c,0,a],// 0
+	     */},{key:'geometryOctahedron',value:function geometryOctahedron(prim){return this.geometryIcoSphere(prim);}},{key:'geometryDoDo',value:function geometryDoDo(prim){var vec3=this.glMatrix.vec3;var flatten=this.util.flatten;var geo=prim.geometry;// Shortcuts to Prim data arrays.
+	var vertices=geo.vertices.data,indices=geo.indices.data,sides=geo.sides.data,texCoords=geo.texCoords.data,normals=geo.normals.data,tangents=geo.tangents.data;var r=prim.divisions[0]||0.5;var phi=(1+Math.sqrt(5))/2;var a=0.5;var b=0.5*1/phi;var c=0.5*(2-phi);var vtx=[[c,0,a],// 0
 	[-c,0,a],// 1
 	[-b,b,b],// 2
 	[0,a,c],// 3
@@ -4460,25 +4454,26 @@
 	// 8-11 + 2
 	// 12-15 + 3
 	// 16-19 + 4
-	faces=[[4,3,2,1,0],[7,6,5,0,1],[12,11,10,9,8],[15,14,13,8,9],[14,3,4,16,13],[3,14,15,17,2],[11,6,7,18,10],[6,11,12,19,5],[4,0,5,19,16],[12,8,13,16,19],[15,9,10,18,17],[7,1,2,17,18]];var newPoints=[];var newIndices=[];var geo={};geo.newVertices=[];geo.newIndices=[];geo.newNormals=[];geo.newTexCoords=[];for(var _i12=0;_i12<faces.length;_i12++){var fan=this.computeFan(vertices,faces[_i12],true);console.log("MADE A FAN______________________________________");geo.newVertices=geo.newVertices.concat(fan.vertices);// Adjust indices to position
-	var len=geo.newVertices.length;for(var _i13=0;_i13<fan.indices.length;_i13++){fan.indices[_i13]+=len;}geo.newIndices=geo.newIndices.concat(fan.indices);geo.newTexCoords=geo.newTexCoords.concat(fan.texCoords);geo.newNormals=geo.newNormals.concat(fan.normals);}window.geo=geo;// compute indices for drawing a side and the whole shape.
-	//  vertices = vertices.map(function(v) { return v.normalize().scale(r); })
+	var faces=[[4,3,2,1,0],[7,6,5,0,1],[12,11,10,9,8],[15,14,13,8,9],[14,3,4,16,13],[3,14,15,17,2],[11,6,7,18,10],[6,11,12,19,5],[4,0,5,19,16],[12,8,13,16,19],[15,9,10,18,17],[7,1,2,17,18]];vertices=vertices.map(function(v){return vec3.normalize(v,v);});//for ( let i = 0; i < faces.length; i++ ) {
+	var i=0;var len=vertices.length;var fan=this.computeFan(vtx,faces[i],true);console.log("MADE A FAN______________________________________");vertices=vertices.concat(fan.vertices);// Adjust indices to position
+	for(var _i12=0;_i12<fan.indices.length;_i12++){fan.indices[_i12]+=len;}indices=indices.concat(fan.indices);texCoords=texCoords.concat(fan.texCoords);normals=normals.concat(fan.normals);// }
+	// flatten
+	geo.vertices.data=flatten(vertices);geo.indices.data=indices;geo.texCoords.data=flatten(texCoords);geo.normals.data=flatten(normals);window.geo=geo;//  vertices = vertices.map(function(v) { return v.normalize().scale(r); })
 	// Return the buffer.
-	/////////////////////return this.createBuffers( prim.geometry );
-	}/** 
+	return this.createBuffers(prim.geometry);}/** 
 	     * Dodecahedron
 	     * @link https://github.com/prideout/par/blob/master/par_shapes.h
 	     * @link https://github.com/nickdesaulniers/prims/blob/master/dodecahedron.js
 	     * @link http://vorg.github.io/pex/docs/pex-gen/Dodecahedron.html
 	     */},{key:'geometryDodecahedron',value:function geometryDodecahedron(prim){var vec3=this.glMatrix.vec3;var flatten=this.util.flatten;var geo=prim.geometry;// Shortcuts to Prim data arrays
 	// TODO: abstract the creation of the triangle fan for each pentagon.
-	var vertices=geo.vertices.data,indices=geo.indices.data,sides=geo.sides.data,texCoords=geo.texCoords.data,normals=geo.normals.data,tangents=geo.tangents.data;this.geometryDoDo(prim);///////////////////////////////////////////////////
-	// Size and divisions.
+	var vertices=geo.vertices.data,indices=geo.indices.data,sides=geo.sides.data,texCoords=geo.texCoords.data,normals=geo.normals.data,tangents=geo.tangents.data;return this.geometryDoDo(prim);///////////////////////////////////////////////////
+	return;// Size and divisions.
 	var wi=prim.dimensions[0];var hi=prim.dimensions[1];var de=prim.dimensions[2];var subdivisions=prim.divisions[0];var phi=(1+Math.sqrt(5))/2;var b=1/phi;var c=2-phi;var ertices=[b,b,b,0,1,c,-b,b,b,-c,0,1,c,0,1,-b,-b,b,0,-1,c,b,-b,b,c,0,1,-c,0,1,b,-b,-b,0,-1,-c,-b,-b,-b,-c,0,-1,c,0,-1,-b,b,-b,0,1,-c,b,b,-b,c,0,-1,-c,0,-1,0,1,-c,0,1,c,b,b,b,1,c,0,b,b,-b,0,1,c,0,1,-c,-b,b,-b,-1,c,0,-b,b,b,0,-1,-c,0,-1,c,-b,-b,b,-1,-c,0,-b,-b,-b,0,-1,c,0,-1,-c,b,-b,-b,1,-c,0,b,-b,b,b,b,b,c,0,1,b,-b,b,1,-c,0,1,c,0,b,-b,-b,c,0,-1,b,b,-b,1,c,0,1,-c,0,-b,b,-b,-c,0,-1,-b,-b,-b,-1,-c,0,-1,c,0,-b,-b,b,-c,0,1,-b,b,b,-1,c,0,-1,-c,0];var sideLen=15;// coordinates per side, Points /= 3
 	// The problem is that the five points listed are not 5 triangles, so we have
 	// to find the middle of each set of five, and duplicate the last point.
 	// Am I proud of this code?  No.
-	for(var _i14=0;_i14<ertices.length;_i14+=sideLen){var a=[ertices[_i14],ertices[_i14+1],ertices[_i14+2]];var b=[ertices[_i14+3],ertices[_i14+4],ertices[_i14+5]];var c=[ertices[_i14+6],ertices[_i14+7],ertices[_i14+8]];var d=[ertices[_i14+9],ertices[_i14+10],ertices[_i14+11]];var e=[ertices[_i14+12],ertices[_i14+13],ertices[_i14+14]];var center=[(a[0]+b[0]+c[0]+d[0]+e[0])/5,(a[1]+b[1]+c[1]+d[1]+e[1])/5,(a[2]+b[2]+c[2]+d[2]+e[2])/5];var side=[];vertices.push.apply(vertices,a);side.push(a);vertices.push.apply(vertices,b);side.push(b);vertices.push.apply(vertices,center);side.push(center);vertices.push.apply(vertices,b);side.push(b);vertices.push.apply(vertices,c);side.push(c);vertices.push.apply(vertices,center);side.push(center);vertices.push.apply(vertices,c);side.push(c);vertices.push.apply(vertices,d);side.push(d);vertices.push.apply(vertices,center);side.push(center);vertices.push.apply(vertices,d);side.push(d);vertices.push.apply(vertices,e);side.push(e);vertices.push.apply(vertices,center);side.push(center);vertices.push.apply(vertices,e);side.push(e);vertices.push.apply(vertices,a);side.push(a);vertices.push.apply(vertices,center);side.push(center);sides.push(flatten(side));}// Indices (read linearly through vertices).
+	for(var _i13=0;_i13<ertices.length;_i13+=sideLen){var a=[ertices[_i13],ertices[_i13+1],ertices[_i13+2]];var b=[ertices[_i13+3],ertices[_i13+4],ertices[_i13+5]];var c=[ertices[_i13+6],ertices[_i13+7],ertices[_i13+8]];var d=[ertices[_i13+9],ertices[_i13+10],ertices[_i13+11]];var e=[ertices[_i13+12],ertices[_i13+13],ertices[_i13+14]];var center=[(a[0]+b[0]+c[0]+d[0]+e[0])/5,(a[1]+b[1]+c[1]+d[1]+e[1])/5,(a[2]+b[2]+c[2]+d[2]+e[2])/5];var side=[];vertices.push.apply(vertices,a);side.push(a);vertices.push.apply(vertices,b);side.push(b);vertices.push.apply(vertices,center);side.push(center);vertices.push.apply(vertices,b);side.push(b);vertices.push.apply(vertices,c);side.push(c);vertices.push.apply(vertices,center);side.push(center);vertices.push.apply(vertices,c);side.push(c);vertices.push.apply(vertices,d);side.push(d);vertices.push.apply(vertices,center);side.push(center);vertices.push.apply(vertices,d);side.push(d);vertices.push.apply(vertices,e);side.push(e);vertices.push.apply(vertices,center);side.push(center);vertices.push.apply(vertices,e);side.push(e);vertices.push.apply(vertices,a);side.push(a);vertices.push.apply(vertices,center);side.push(center);sides.push(flatten(side));}// Indices (read linearly through vertices).
 	for(var ii=0,len=vertices.length/3;ii<len;ii++){indices.push(ii);}geo.testSides=[];for(var i=0;i<vertices.length;i+=sideLen){var sd=[];var tx=void 0;tx=setUV(i);sd.push({x:vertices[i],y:vertices[i+1],z:vertices[i+2],u:tx[0],v:tx[1]});////////////////////////////////////
 	tx=setUV(i+3);sd.push({x:vertices[i],y:vertices[i+1],z:vertices[i+2],u:tx[0],v:tx[1]});////////////////////////////////////
 	tx=setUV(i+6);sd.push({x:vertices[i],y:vertices[i+1],z:vertices[i+2],u:tx[0],v:tx[1]});////////////////////////////////////
@@ -4508,7 +4503,8 @@
 	//if ( i > 404 && i < 450 ) { u = 0; v = 0; } // ninth side, left, right next to face
 	//if ( i > 449 && i < 495 ) { u = 0; v = 0; } // tenth side, right right next to face
 	// corrections. TODO:
-	console.log('vPos:'+vPos+' u:'+u+' v:'+v);texCoords.push(u,v);return[u,v];////////////////////////////
+	////////////////////////////////////console.log( 'vPos:' + vPos + ' u:' + u + ' v:' + v )
+	texCoords.push(u,v);return[u,v];////////////////////////////
 	}// Return the buffer.
 	return this.createBuffers(prim.geometry);}/** 
 	     * Torus object
@@ -4537,7 +4533,12 @@
 	for(var _verticalIt=0;_verticalIt<rings;_verticalIt++){for(var _horizontalIt=0;_horizontalIt<sides;_horizontalIt++){var lt=_horizontalIt+_verticalIt*numVerticesPerRow;var rt=_horizontalIt+1+_verticalIt*numVerticesPerRow;var lb=_horizontalIt+(_verticalIt+1)*numVerticesPerRow;var rb=_horizontalIt+1+(_verticalIt+1)*numVerticesPerRow;indices.push(lb,rb,rt,lb,rt,lt);// note: wrap backwards to see inside of torus.
 	}}// Color array is pre-created, or gets a default in createBuffers().
 	// Return the buffer.
-	return this.createBuffers(prim.geometry);}///////////////////////////////////////////////////////////////////////
+	return this.createBuffers(prim.geometry);}/** 
+	     * Create terrain with hexagon grid with each grid element independently addressible.
+	     * @link http://catlikecoding.com/unity/tutorials/hex-map-1/
+	     */},{key:'hexTerrain',value:function hexTerrain(prim){}/** 
+	     * Create terrain with octagon grid, with each grid element independently addressible.
+	     */},{key:'octTerrain',value:function octTerrain(prim){}///////////////////////////////////////////////////////////////////////
 	// geo primitives
 	// USE THIS!!!! https://github.com/nickdesaulniers/prims
 	// https://github.com/mhintz/platonic/tree/master/src
@@ -4588,7 +4589,7 @@
 	prim.textures=[];// Store multiple sounds for one Prim.
 	prim.audio=[];// Store multiple videos for one Prim.
 	prim.video=[];// Multiple textures per Prim. Rendering defines how textures for each Prim type are used.
-	for(var _i15=0;_i15<textureImage.length;_i15++){this.loadTexture.load(textureImage[_i15],prim);}// Define Prim material (only one material type at a time per Prim ).
+	for(var _i14=0;_i14<textureImage.length;_i14++){this.loadTexture.load(textureImage[_i14],prim);}// Define Prim material (only one material type at a time per Prim ).
 	prim.material=this.setMaterial();// Define Prim light (it glows) not how it is lit.
 	this.light={direction:[1,1,1],color:[255,255,255]};// Parent Node.
 	prim.parentNode=null;// Child Prim array.
@@ -4618,21 +4619,21 @@
 	     * ---------------------------------------
 	     *//** 
 	     * Scale vertices directly, without changing position.
-	     */},{key:'scale',value:function scale(vertices,_scale){var oldPos=this.getCenter(vertices);for(var _i16=0,len=vertices.length;_i16<len;_i16++){vertices[_i16]*=_scale;}this.move(vertices,oldPos);}/** 
+	     */},{key:'scale',value:function scale(vertices,_scale){var oldPos=this.getCenter(vertices);for(var _i15=0,len=vertices.length;_i15<len;_i15++){vertices[_i15]*=_scale;}this.move(vertices,oldPos);}/** 
 	     * Move vertices directly in geometry, i.e. for something 
 	     * that always orbits a central point.
 	     * NOTE: normally, you will want to use a matrix transform to position objects.
-	     */},{key:'move',value:function move(vertices,pos){var center=this.getCenter(vertices);var delta=[center[0]-pos[0],center[1]-pos[1],center[2]=pos[2]];for(var _i17=0,len=vertices.length;_i17<len;_i17+=3){vertices[_i17]=delta[0];vertices[_i17+1]=delta[1];vertices[_i17+2]=delta[2];}}/** 
+	     */},{key:'move',value:function move(vertices,pos){var center=this.getCenter(vertices);var delta=[center[0]-pos[0],center[1]-pos[1],center[2]=pos[2]];for(var _i16=0,len=vertices.length;_i16<len;_i16+=3){vertices[_i16]=delta[0];vertices[_i16+1]=delta[1];vertices[_i16+2]=delta[2];}}/** 
 	     * Get the bounding box of a shape by getting the largest and 
 	     * smallest vertices in coordinate space.
 	     * TODO: incomplete.
-	     */},{key:'boundingBox',value:function boundingBox(vertices){var biggest=[0,0,0];var smallest=[0,0,0];var minX=void 0,minY=void 0,minZ=void 0,maxX=void 0,maxY=void 0,maxZ=void 0;for(var _i18=0,len=vertices.length;_i18<len;_i18+=3){minX=Math.min(vertices[_i18],minX);minY=Math.min(vertices[_i18+1],minY);minZ=Math.min(vertices[_i18+2],minZ);maxX=Math.max(vertices[_i18],maxX);maxY=Math.max(vertices[_i18+1],maxY);maxZ=Math.max(vertices[_i18+2],maxZ);}// Create cube points.
+	     */},{key:'boundingBox',value:function boundingBox(vertices){var biggest=[0,0,0];var smallest=[0,0,0];var minX=void 0,minY=void 0,minZ=void 0,maxX=void 0,maxY=void 0,maxZ=void 0;for(var _i17=0,len=vertices.length;_i17<len;_i17+=3){minX=Math.min(vertices[_i17],minX);minY=Math.min(vertices[_i17+1],minY);minZ=Math.min(vertices[_i17+2],minZ);maxX=Math.max(vertices[_i17],maxX);maxY=Math.max(vertices[_i17+1],maxY);maxZ=Math.max(vertices[_i17+2],maxZ);}// Create cube points.
 	// TODO: not complete.
 	var box=[];return box;}/** 
 	     * Get the center of a shape.
 	     * @param {Array|Float32Array} a flat array of 3d vertices.
 	     * @returns {GlMatrix.vec3} a array with the centroid x, y, z. 
-	     */},{key:'getCentroid',value:function getCentroid(vertices){var centroid=[0,0,0];var len=vertices.length;for(var _i19=0;_i19<len;_i19+=3){centroid[0]+=vertices[_i19];centroid[1]+=vertices[_i19+1];centroid[2]+=vertices[_i19+2];}centroid[0]/=len;centroid[1]/=len;centroid[2]/=len;return centroid;}/** 
+	     */},{key:'getCentroid',value:function getCentroid(vertices){var centroid=[0,0,0];var len=vertices.length;for(var _i18=0;_i18<len;_i18+=3){centroid[0]+=vertices[_i18];centroid[1]+=vertices[_i18+1];centroid[2]+=vertices[_i18+2];}centroid[0]/=len;centroid[1]/=len;centroid[2]/=len;return centroid;}/** 
 	     * Set a material for a prim.
 	     * @link http://webglfundamentals.org/webgl/lessons/webgl-less-code-more-fun.html
 	     * didn't use chroma (but could)
@@ -5337,6 +5338,164 @@
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var Map3d = function () {
+
+	    /* 
+	     * NOTE: using 'map.es6' causes a transpile error
+	     *
+	     * Generic map object, equivalent to a 2-dimensional array, used 
+	     * for heightmaps and color maps and other "maplike" data, including 
+	     * Image data in arrays.
+	     * Maps are defined in x (columns)  and z (rows) instead of 
+	     * x and y to match Prim definitions of heightMaps.
+	     * Maps can be scaled using bilinear or bicubic algorithms.
+	     *
+	     * @link https://www.html5rocks.com/en/tutorials/webgl/typed_arrays/
+	     *
+	     */
+	    function Map3d(util) {
+	        _classCallCheck(this, Map3d);
+
+	        console.log('in Map3d');
+
+	        this.util = util;
+
+	        this.type = {
+
+	            CLOUD: 'initPlane',
+
+	            SPHERE: 'initRandom'
+	        };
+
+	        this.width = 0;
+
+	        this.depth = 0;
+
+	        this.low = 0;
+
+	        this.high = 0;
+
+	        this.map = null; // actual heightmap
+	    }
+
+	    /** 
+	     * confirm our data is ok for a 3d map (pointcloud).
+	     */
+
+
+	    _createClass(Map3d, [{
+	        key: 'checkParams',
+	        value: function checkParams(w, h, d, roughness, flatten) {
+
+	            return false;
+	        }
+
+	        /** 
+	         * Get a 3D pixel. This allows interpolation of values (colors or other 
+	         * meta-data ) using 3d coordinates.
+	         *
+	         * @param {Number} x the x coordinate of the pixel (column)
+	         * @param {Number} z the z coordinate of the pixel (row)
+	         * @param {Enum} edgeFlag how to handle requests off the edge of the map 
+	         * - WRAP: grab from other side, divide to zero).
+	         * - TOZERO: reduce to zero, depending on unit distance from edge.
+	         * @returns {Number} the Map value at the x, z position.
+	         */
+
+	    }, {
+	        key: 'getPoint',
+	        value: function getPoint(x, y, z) {}
+
+	        /** 
+	         * Set a pixel in the Map.
+	         * @param {Number} x the x (column) coordinate in the Map.
+	         * @param {Number} z the z (row) coordinate in the Map.
+	         * @param {Number} val the value at a map coordinate, typically Float32
+	         */
+
+	    }, {
+	        key: 'setPoint',
+	        value: function setPoint(x, y, z, val) {}
+
+	        /** 
+	         * Generate a Map using completely random numbers clamped. 
+	         * to a range.
+	         */
+
+	    }, {
+	        key: 'initRandom',
+	        value: function initRandom(w, h, d, numPoints) {
+
+	            if (this.checkParams(w, d, roughness, 0)) {
+
+	                this.type = this.CLOUD;
+
+	                this.map = new Float32Array(numPoints);
+
+	                this.mapColors = new Float32Array(numPoints);
+
+	                this.width = w;
+
+	                this.height = h;
+
+	                this.depth = d;
+
+	                var util = this.util;
+
+	                for (var i = 0, len = this.map.length; i < len; i++) {
+
+	                    this.map.push(util.getRand() * w, util.getRand() * h, util.getRand() * d);
+
+	                    this.mapColors.push(util.getRand(0, 255), util.getRand(0, 255), util.getRand(0, 255), 1.0);
+	                }
+	            } else {
+
+	                console.error('error creating Map3d using ' + this.type.RANDOM);
+	            }
+	        }
+
+	        /** 
+	         * Set points on the surface of a sphere.
+	         */
+
+	    }, {
+	        key: 'initSphere',
+	        value: function initSphere(w, h, d, numPoints) {}
+
+	        /** 
+	         * Initialize a Map3d from data. The first parameter is always 3d coordinates,
+	         * after that an arbitrary number of arrays may be assigned at comparable positions
+	         * in the map object.
+	         */
+
+	    }, {
+	        key: 'initFromData',
+	        value: function initFromData(positions) {
+
+	            // TODO: use stellar or other data.
+
+	        }
+	    }]);
+
+	    return Map3d;
+	}();
+
+	exports.default = Map3d;
+
+/***/ },
+/* 23 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
 	        value: true
 	});
 
@@ -5687,9 +5846,9 @@
 	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	                        ));
 
-	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.DODECAHEDRON, 'Octahedron', vec5(1, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
+	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.DODECAHEDRON, 'Dodecahedron', vec5(1, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
 	                        vec5(40, 40, 0), // divisions MAKE SMALLER
-	                        vec3.fromValues(-1.7, 2, -1.0), // position (absolute)
+	                        vec3.fromValues(-1.0, 0.5, 3.0), // position (absolute)
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
 	                        vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
@@ -5770,7 +5929,7 @@
 	exports.default = World;
 
 /***/ },
-/* 23 */
+/* 24 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -5801,18 +5960,18 @@
 	THE SOFTWARE. */
 	// END HEADER
 
-	exports.glMatrix = __webpack_require__(24);
-	exports.mat2 = __webpack_require__(25);
-	exports.mat2d = __webpack_require__(26);
-	exports.mat3 = __webpack_require__(27);
-	exports.mat4 = __webpack_require__(28);
-	exports.quat = __webpack_require__(29);
-	exports.vec2 = __webpack_require__(32);
-	exports.vec3 = __webpack_require__(30);
-	exports.vec4 = __webpack_require__(31);
+	exports.glMatrix = __webpack_require__(25);
+	exports.mat2 = __webpack_require__(26);
+	exports.mat2d = __webpack_require__(27);
+	exports.mat3 = __webpack_require__(28);
+	exports.mat4 = __webpack_require__(29);
+	exports.quat = __webpack_require__(30);
+	exports.vec2 = __webpack_require__(33);
+	exports.vec3 = __webpack_require__(31);
+	exports.vec4 = __webpack_require__(32);
 
 /***/ },
-/* 24 */
+/* 25 */
 /***/ function(module, exports) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -5888,7 +6047,7 @@
 
 
 /***/ },
-/* 25 */
+/* 26 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -5911,7 +6070,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(24);
+	var glMatrix = __webpack_require__(25);
 
 	/**
 	 * @class 2x2 Matrix
@@ -6330,7 +6489,7 @@
 
 
 /***/ },
-/* 26 */
+/* 27 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -6353,7 +6512,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(24);
+	var glMatrix = __webpack_require__(25);
 
 	/**
 	 * @class 2x3 Matrix
@@ -6805,7 +6964,7 @@
 
 
 /***/ },
-/* 27 */
+/* 28 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -6828,7 +6987,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(24);
+	var glMatrix = __webpack_require__(25);
 
 	/**
 	 * @class 3x3 Matrix
@@ -7557,7 +7716,7 @@
 
 
 /***/ },
-/* 28 */
+/* 29 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -7580,7 +7739,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(24);
+	var glMatrix = __webpack_require__(25);
 
 	/**
 	 * @class 4x4 Matrix
@@ -9699,7 +9858,7 @@
 
 
 /***/ },
-/* 29 */
+/* 30 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -9722,10 +9881,10 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(24);
-	var mat3 = __webpack_require__(27);
-	var vec3 = __webpack_require__(30);
-	var vec4 = __webpack_require__(31);
+	var glMatrix = __webpack_require__(25);
+	var mat3 = __webpack_require__(28);
+	var vec3 = __webpack_require__(31);
+	var vec4 = __webpack_require__(32);
 
 	/**
 	 * @class Quaternion
@@ -10305,7 +10464,7 @@
 
 
 /***/ },
-/* 30 */
+/* 31 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -10328,7 +10487,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(24);
+	var glMatrix = __webpack_require__(25);
 
 	/**
 	 * @class 3 Dimensional Vector
@@ -11088,7 +11247,7 @@
 
 
 /***/ },
-/* 31 */
+/* 32 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -11111,7 +11270,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(24);
+	var glMatrix = __webpack_require__(25);
 
 	/**
 	 * @class 4 Dimensional Vector
@@ -11703,7 +11862,7 @@
 
 
 /***/ },
-/* 32 */
+/* 33 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -11726,7 +11885,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(24);
+	var glMatrix = __webpack_require__(25);
 
 	/**
 	 * @class 2 Dimensional Vector
@@ -12296,7 +12455,7 @@
 
 
 /***/ },
-/* 33 */
+/* 34 */
 /***/ function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {/*
@@ -13255,164 +13414,6 @@
 	module.exports = WebGLDebugUtils;
 
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
-
-/***/ },
-/* 34 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	var Map3d = function () {
-
-	    /* 
-	     * NOTE: using 'map.es6' causes a transpile error
-	     *
-	     * Generic map object, equivalent to a 2-dimensional array, used 
-	     * for heightmaps and color maps and other "maplike" data, including 
-	     * Image data in arrays.
-	     * Maps are defined in x (columns)  and z (rows) instead of 
-	     * x and y to match Prim definitions of heightMaps.
-	     * Maps can be scaled using bilinear or bicubic algorithms.
-	     *
-	     * @link https://www.html5rocks.com/en/tutorials/webgl/typed_arrays/
-	     *
-	     */
-	    function Map3d(util) {
-	        _classCallCheck(this, Map3d);
-
-	        console.log('in Map3d');
-
-	        this.util = util;
-
-	        this.type = {
-
-	            CLOUD: 'initPlane',
-
-	            SPHERE: 'initRandom'
-	        };
-
-	        this.width = 0;
-
-	        this.depth = 0;
-
-	        this.low = 0;
-
-	        this.high = 0;
-
-	        this.map = null; // actual heightmap
-	    }
-
-	    /** 
-	     * confirm our data is ok for a 3d map (pointcloud).
-	     */
-
-
-	    _createClass(Map3d, [{
-	        key: 'checkParams',
-	        value: function checkParams(w, h, d, roughness, flatten) {
-
-	            return false;
-	        }
-
-	        /** 
-	         * Get a 3D pixel. This allows interpolation of values (colors or other 
-	         * meta-data ) using 3d coordinates.
-	         *
-	         * @param {Number} x the x coordinate of the pixel (column)
-	         * @param {Number} z the z coordinate of the pixel (row)
-	         * @param {Enum} edgeFlag how to handle requests off the edge of the map 
-	         * - WRAP: grab from other side, divide to zero).
-	         * - TOZERO: reduce to zero, depending on unit distance from edge.
-	         * @returns {Number} the Map value at the x, z position.
-	         */
-
-	    }, {
-	        key: 'getPoint',
-	        value: function getPoint(x, y, z) {}
-
-	        /** 
-	         * Set a pixel in the Map.
-	         * @param {Number} x the x (column) coordinate in the Map.
-	         * @param {Number} z the z (row) coordinate in the Map.
-	         * @param {Number} val the value at a map coordinate, typically Float32
-	         */
-
-	    }, {
-	        key: 'setPoint',
-	        value: function setPoint(x, y, z, val) {}
-
-	        /** 
-	         * Generate a Map using completely random numbers clamped. 
-	         * to a range.
-	         */
-
-	    }, {
-	        key: 'initRandom',
-	        value: function initRandom(w, h, d, numPoints) {
-
-	            if (this.checkParams(w, d, roughness, 0)) {
-
-	                this.type = this.CLOUD;
-
-	                this.map = new Float32Array(numPoints);
-
-	                this.mapColors = new Float32Array(numPoints);
-
-	                this.width = w;
-
-	                this.height = h;
-
-	                this.depth = d;
-
-	                var util = this.util;
-
-	                for (var i = 0, len = this.map.length; i < len; i++) {
-
-	                    this.map.push(util.getRand() * w, util.getRand() * h, util.getRand() * d);
-
-	                    this.mapColors.push(util.getRand(0, 255), util.getRand(0, 255), util.getRand(0, 255), 1.0);
-	                }
-	            } else {
-
-	                console.error('error creating Map3d using ' + this.type.RANDOM);
-	            }
-	        }
-
-	        /** 
-	         * Set points on the surface of a sphere.
-	         */
-
-	    }, {
-	        key: 'initSphere',
-	        value: function initSphere(w, h, d, numPoints) {}
-
-	        /** 
-	         * Initialize a Map3d from data. The first parameter is always 3d coordinates,
-	         * after that an arbitrary number of arrays may be assigned at comparable positions
-	         * in the map object.
-	         */
-
-	    }, {
-	        key: 'initFromData',
-	        value: function initFromData(positions) {
-
-	            // TODO: use stellar or other data.
-
-	        }
-	    }]);
-
-	    return Map3d;
-	}();
-
-	exports.default = Map3d;
 
 /***/ }
 /******/ ]);
