@@ -20,7 +20,9 @@ class World {
 
     /** 
      * constructor for World.
-     * @param {WebVRMini} webvr the webvr module.
+     * @param {WebGL} webgl the webgl module.
+     * @param {Prim} prim the object/mesh primitives module.
+     * @param {Renderer} renderer the GLSL rendering module.
      */
     constructor ( webgl, prim, renderer ) {
 
@@ -176,7 +178,7 @@ class World {
         this.dirlightTextureObjList.push( this.prim.createPrim(
             this.prim.typeList.TERRAIN,
             'terrain',
-            vec5( 2, 2, 44, this.prim.side.TOP, 0.1 ),            // NOTE: ORIENTATION DESIRED vec5[3], waterline = vec5[4]
+            vec5( 2, 2, 44, this.prim.sides.TOP, 0.1 ),            // NOTE: ORIENTATION DESIRED vec5[3], waterline = vec5[4]
             vec5( 100, 100, 100 ),           // divisions
             vec3.fromValues( 1.5, -1.5, 2 ),       // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -193,7 +195,7 @@ class World {
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.CURVEDINNERPLANE,
             'CurvedPlane',
-            vec5( 2, 1, 1, this.prim.side.FRONT, 1 ),         // pass orientation ONE UNIT CURVE
+            vec5( 2, 1, 1, this.prim.sides.FRONT, 1 ),         // pass orientation ONE UNIT CURVE
             vec5( 10, 10, 10 ),        // divisions
             vec3.fromValues(-1, 0.0, 2.0 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -206,7 +208,7 @@ class World {
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.CURVEDINNERPLANE,
             'CurvedPlane',
-            vec5( 2, 1, 1, this.prim.side.BACK, 1 ),         // pass orientation ONE UNIT CURVE
+            vec5( 2, 1, 1, this.prim.sides.BACK, 1 ),         // pass orientation ONE UNIT CURVE
             vec5( 10, 10, 10 ),        // divisions
             vec3.fromValues(-1, 0.0, 2.0 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -219,7 +221,7 @@ class World {
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.CURVEDINNERPLANE,
             'CurvedPlane',
-            vec5( 2, 1, 1, this.prim.side.LEFT, 1 ),         // pass orientation ONE UNIT CURVE
+            vec5( 2, 1, 1, this.prim.sides.LEFT, 1 ),         // pass orientation ONE UNIT CURVE
             vec5( 10, 10, 10 ),        // divisions
             vec3.fromValues(-1, 0.0, 2.0 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -232,7 +234,7 @@ class World {
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.CURVEDINNERPLANE,
             'CurvedPlane',
-            vec5( 2, 1, 1, this.prim.side.RIGHT, 1 ),         // pass orientation ONE UNIT CURVE
+            vec5( 2, 1, 1, this.prim.sides.RIGHT, 1 ),         // pass orientation ONE UNIT CURVE
             vec5( 10, 10, 10 ),        // divisions
             vec3.fromValues(-1, 0.0, 2.0 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -250,7 +252,7 @@ class World {
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.CURVEDOUTERPLANE,
             'CurvedPlane',
-            vec5( 2, 1, 1, this.prim.side.RIGHT, 1 ),         // dimensions NOTE: pass radius for curvature (also creates orbit) 
+            vec5( 2, 1, 1, this.prim.sides.RIGHT, 1 ),         // dimensions NOTE: pass radius for curvature (also creates orbit) 
             vec3.fromValues( 10, 10, 10 ),        // divisions
             vec3.fromValues(-1.2, 0.0, 2.0 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -409,12 +411,12 @@ class World {
         ) );
 
 
-        this.colorObjList.push( this.prim.createPrim(
+        this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.DODECAHEDRON,
             'Octahedron',
             vec5( 1, 1, 1 ),       // dimensions (4th dimension doesn't exist for cylinder)
             vec5( 40, 40, 0  ),        // divisions MAKE SMALLER
-            vec3.fromValues(-1.5, 0, 2.0 ),          // position (absolute)
+            vec3.fromValues(-1.7, 2, -1.0 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
