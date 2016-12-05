@@ -3,7 +3,10 @@
   "version": "0.0.1",
   "main": "./src/js/app.js",
   "scripts": {
-    "esdoc": "esdoc -c ./esdoc.json"
+    "esdoc": "esdoc -c ./esdoc.json",
+    "build": "cross-env BUILD_RELEASE=true BUILD_DEV=false webpack --config webpack-production.config.js -p",
+    "dev": "cross-env BUILD_RELEASE=false BUILD_DEV=true webpack",
+    "start": "webpack-dev-server --inline --devtool eval --progress --colors --content-base dist"
   },
   "author": "pete markiewicz",
   "license": "MIT",

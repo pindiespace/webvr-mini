@@ -196,6 +196,8 @@ class Prim {
 
         };
 
+        this.TWO_PI = Math.PI * 2;
+
     }
 
     /** 
@@ -872,6 +874,8 @@ class Prim {
 
         }
 
+        window.vv = vv;
+
         let box = this.computeBoundingBox( vv );
 
         // Get the topLeft and bottomRight points (bounding rectangle).
@@ -905,17 +909,27 @@ class Prim {
 
         let lenv = vv.length;
 
+        let env = lenv - 1;
+
         for ( let i = 1; i < lenv; i++ ) {
 
             let p1 = i - 1;
 
             let p2 = i;
 
-            if ( i === lenv - 1 ) p2 = 0;
+            if ( i === lenv - 1 ) {
+
+                p2 = 0;
+
+            }
 
             let v1 = vv[ p1 ];
 
             let v2 = vv[ p2 ];
+
+            console.log( 'i:' + i )
+            console.log( 'v1:' + v1 + ' p1:' + p1 );
+            console.log( 'v2:' + v2 + ' p2:' + p2 );
 
             ///////////////////////console.log( 'v1:' + v1 + ' v2:' + v2);
 
@@ -928,59 +942,26 @@ class Prim {
 
             if ( localTexCoords ) {
 
-                let dist, angle, xDist, yDist;
+                let dist, angle, xDist, yDist, u, v;
 
                 dist = vec3.distance( center, v1 );
 
-                ///////////////////////////////////////////////////////
-                // rather than transforming with quaternions, reconstruct the polygon in xy space
-                //xDist = scalePos( v1[ 0 ], box.topLeft[ 0 ], box.bottomRight[ 0 ] );
-                //yDist = scalePos( v1[ 1 ], box.topLeft[ 1 ], box.bottomRight[ 1 ] );
+                // Assumes a regular polygon.
 
-                console.log( 'X topLeft:' + box.topLeft[ 0 ] + ', ' + v1[0] + ', ' + xDist + ', bottomRight:' + box.bottomRight[0] );
-                console.log( 'Y topLeft:' + box.topLeft[ 1 ] + ', ' + v1[1] + ', ' + yDist + ', bottomRight:' + box.bottomRight[1] );
+                u = Math.cos( 2 * Math.PI * p2 / ( lenv - 1) ) / 2 + .5;
 
-                //angle = p1 / 57.29577957795135;
-                //xDist = 0.5 + (dist*Math.sin(angle));
-                //yDist = 0.5 + (dist*Math.cos(angle));  
-                xDist = Math.cos(2*Math.PI*p1/lenv)/2 + .5
-                yDist = Math.sin(2*Math.PI*p1/lenv)/2 + .5
-
-                 tex.push( [ xDist, yDist ] );
-
-                //xDist = scalePos( v2[ 0 ], box.topLeft[ 0 ], box.bottomRight[ 0 ] ) - 0.5;
-                //yDist = scalePos( v2[ 1 ], box.topLeft[ 1 ], box.bottomRight[ 1 ] ) - 0.5;
-                xDist = Math.cos(2*Math.PI*p2/lenv)/2 + .5
-                yDist = Math.sin(2*Math.PI*p2/lenv)/2 + .5
-                //angle = p2 / 57.29577957795135;
-                //xDist = 0.5 + (dist*Math.sin(angle));
-               // yDist = 0.5 + (dist*Math.cos(angle));  
-
-                tex.push( [ xDist, yDist ] );
-
-
-                // Push the central point.
-
-                tex.push( [ 0.5, 0.5 ] );
+                v = Math.sin( 2 * Math.PI * p2 / ( lenv - 1 ) ) / 2 + .5;
+            
+                tex.push( u, v );
 
 
             } // local texture coords
 
         } // end of for loop
 
-        // push final values joining point to beginning.
+        // Push the center point texture coordinate.
 
-/*
-        vtx.push( vv[ vv.length - 1 ] );
-
-        vtx.push( vv[ 0 ] );
-
-        vtx.push( center );
-
-        let lenv = vv.length;
-
-        idx.push( lenv - 3, lenv - 2, lenv - 1 );
-*/
+        tex.push( 0.5, 0.5 );
 
         return {
             vertices: vv,
@@ -3137,6 +3118,10 @@ class Prim {
                 fan.indices[ i ] += len;
 
             }
+
+            // NOTE: FOR GLOBAL WRAPPING:
+            // u = 0.5 + Math.atan2( v2[ 2 ], v2[ 0 ] ) / 2 * Math.PI;
+            // v = 0.5 - Math.asin( v2[ 1 ] ) / Math.PI;
 
             indices = indices.concat( fan.indices );
 
