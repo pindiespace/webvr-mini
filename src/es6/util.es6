@@ -87,6 +87,16 @@ class Util {
 
     }
 
+    /** 
+     * Given a range, determine the normalized position 
+     * of a value in the range.
+     */
+    scalePos( num, start, end ) {
+
+        return ( num - end ) / (start - end );
+
+    }
+
 
     /** 
      * Get a succession of values from a flat array

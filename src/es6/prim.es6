@@ -683,9 +683,27 @@ class Prim {
      * ---------------------------------------
      */
 
+    computeAngle3d ( a, b, c ) {
+
+        let ab = [ b[0] - a[0], b[1] - a[1], b[2] - a[2] ];
+        let bc = [ c[0] - b[0], c[1] - b[1], c[2] - b[2] ];
+
+        let abVec = Math.sqrt( ab[0] * ab[0] + ab[1] * ab[1] + ab[2] * ab[2] );
+        let bcVec = Math.sqrt( bc[0] * bc[0] + bc[1] * bc[1] + bc[2] * bc[2] );
+
+        let abNorm = [ ab[0] / abVec, ab[1] / abVec, ab[2] / abVec ];
+        let bcNorm = [ bc[0] / bcVec, bc[1] / bcVec, bc[2] / bcVec ];
+
+        let res = abNorm[0] * bcNorm[0] + abNorm[1] * bcNorm[1] + abNorm[2] * bcNorm[2];
+
+        return Math.acos( res ); //*180.0/ 3.141592653589793;
+
+    }
+
+
     /**
      * find the center between any set of 3d points
-     * @param {[vec3]} vertices an array of xyz points.
+     * @param {[...vec3]} vertices an array of xyz points.
      * @returns {vec3} the center point.
      */ 
     computeCentroid ( vertices ) {
@@ -704,9 +722,6 @@ class Prim {
 
             c[ 2 ] += vertex[ 2 ];
 
-            console.log( "CCCCCCCCCC i:" + i + " vertex:" + c )
-
-
         }
 
         c[ 0 ] /= len;
@@ -723,6 +738,118 @@ class Prim {
 
     }
 
+    computeMassCentroid( verticies ) {
+
+        let vec3 = this.glMatrix.vec3;
+
+        var s = [ 0, 0, 0 ];
+
+        var areaTotal = 0.0;
+
+        var p1 = verticies[ 0 ];
+
+        var p2 = verticies[ 1 ];
+
+        for (var i = 2; i < verticies.length; i++) {
+
+            var p3 = verticies[ i ];
+
+            var edge1 = vec3.subtract( [ 0, 0, 0 ], p3, p1 );
+            var edge2 = vec3.subtract( [ 0, 0, 0 ], p3, p2 );
+
+            var crossProduct = vec3.cross( [ 0, 0, 0 ], edge1, edge2 );
+
+            var area = vec3.length( crossProduct ) / 2;
+
+            s.X += area * ( p1[ 0 ] + p2[ 0 ] + p3[ 0 ] ) / 3;
+            s.Y += area * ( p1[ 1 ] + p2[ 1 ] + p3[ 1 ] ) / 3;
+            s.Z += area * ( p1[ 2 ] + p2[ 2 ] + p3[ 2 ] ) / 3;
+
+            areaTotal += area;
+
+            p2 = vec3.copy( [ 0, 0, 0 ], p3 );
+
+        }
+
+        var point = [
+            s[ 0 ] / areaTotal,
+            s[ 1 ] / areaTotal,
+            s[ 2 ] / areaTotal
+        ];
+
+        return point;
+
+    }
+
+    /** 
+     * bounding box for a set of 3d points. NOT the same 
+     * as a standard cube, since each side is a quad without 
+     * further divisions.
+     * @param {[...vec3]} vertices a list of points to be enclosed in the bounding box.
+     * @returns{Box} a Box object.
+     */
+    computeBoundingBox( vertices ) {
+
+        let vec3 = this.glMatrix.vec3;
+
+        let box = {
+
+            vertices: [],
+
+            indices: [],
+
+            normals: [],
+
+            texCoords: []
+
+        }; 
+
+        let tx = 0, ty = 0, tz = 0, bx = 0, by = 0, bz = 0;
+
+        for( let i = 0; i < vertices.length; i++ ) {
+
+            let v = vertices[ i ];
+
+            tx = Math.min( tx, v[ 0 ] );
+
+            ty = Math.min( ty, v[ 1 ] );
+
+            tz = Math.min( tz, v[ 2 ] );
+
+            bx = Math.max( bx, v[ 0 ] );
+
+            by = Math.max( by, v[ 1 ] );
+
+            bz = Math.max( bz, v[ 2 ] );
+
+        }
+
+        // Two quads, vary by z values only, clockwise.
+
+        box.vertices.push( 
+            [ tx, ty, tz ],  // topLeft
+            [ bx, ty, tz ],   // r
+            [ bx, by, tz ],  // b
+            [ tx, by, tz ],  // l
+
+            [ tx, ty, bz ],  // t
+            [ bx, ty, bz ],  // r
+            [ bx, by, bz ],  // bottomRight
+            [ tx, by, bz ]   // l
+        );
+
+        box.topLeft = box.vertices[ 0 ];
+
+        box.bottomRight = box.vertices[ 6 ];
+
+        box.dimensions = vec3.subtract( [ 0, 0, 0 ], box.bottomRight, box.topLeft );
+
+        // if we draw it, add more here.
+
+        return box;
+
+    }
+
     /** 
      * given a set of points, compute a triangle fan a central point.
      * @param {[...vec3]} vertices an array of UN-FLATTENED xyz points.
@@ -733,9 +860,36 @@ class Prim {
 
         let vec3 = this.glMatrix.vec3;
 
-        let center = this.computeCentroid( vertices );
+        let scalePos = this.util.scalePos;
 
-        window.center = center; ///////////////////////////////
+        let vv = [];
+
+        // Get the subset of vertices we should take by following indices.
+
+        for ( let i = 0; i < indices.length; i++ ) {
+
+            vv.push( vertices[ indices[ i ] ] );
+
+        }
+
+        let box = this.computeBoundingBox( vv );
+
+        // Get the topLeft and bottomRight points (bounding rectangle).
+
+        let center = this.computeCentroid( vv );
+
+        // Get the first point in the polygon.
+
+        let v0 = vv[ 0 ];
+
+        // Use this when we want the center of the whole object the polygon is part of.
+        //let center = this.calculateMassCentroid( vv );
+
+        // Add a central point so we can create a triangle fan.
+
+        vv.push( center );
+
+        let centerPos = vv.length - 1;
 
         let len = indices.length;
 
@@ -747,55 +901,65 @@ class Prim {
 
         let idx = [];
 
-        console.log( '>>>>>>LEN:' + len)
-
         // We re-do the indices calculations, since we insert a central point.
 
-        for ( let i = 1; i < len; i++ ) {
+        let lenv = vv.length;
 
-            let v1 = vertices[ indices[ i - 1 ] ];
+        for ( let i = 1; i < lenv; i++ ) {
 
-            let v2 = vertices[ indices[ i ] ];
+            let p1 = i - 1;
 
-            console.log( 'v1:' + v1 + ' v2:' + v2)
+            let p2 = i;
 
-            vtx.push( v2, v1, center );
+            if ( i === lenv - 1 ) p2 = 0;
 
-            let lenv = vtx.length;
+            let v1 = vv[ p1 ];
 
-            idx.push( lenv - 3, lenv - 2, lenv - 1 );
+            let v2 = vv[ p2 ];
+
+            ///////////////////////console.log( 'v1:' + v1 + ' v2:' + v2);
+
+            idx.push( p1, p2, centerPos );
 
             nor.push( v1, v2, center );
 
             // If the local flag is set, compute texture coordinates from original vertices.
+            // http://stackoverflow.com/questions/15552521/how-to-determine-uv-texture-coordinates-for-n-sided-polygon
 
             if ( localTexCoords ) {
 
-                let dist, angle;
+                let dist, angle, xDist, yDist;
 
                 dist = vec3.distance( center, v1 );
 
-                angle = vec3.angle( center, v1 );
+                ///////////////////////////////////////////////////////
+                // rather than transforming with quaternions, reconstruct the polygon in xy space
+                //xDist = scalePos( v1[ 0 ], box.topLeft[ 0 ], box.bottomRight[ 0 ] );
+                //yDist = scalePos( v1[ 1 ], box.topLeft[ 1 ], box.bottomRight[ 1 ] );
 
-                tex.push( [
+                console.log( 'X topLeft:' + box.topLeft[ 0 ] + ', ' + v1[0] + ', ' + xDist + ', bottomRight:' + box.bottomRight[0] );
+                console.log( 'Y topLeft:' + box.topLeft[ 1 ] + ', ' + v1[1] + ', ' + yDist + ', bottomRight:' + box.bottomRight[1] );
 
-                    Math.cos( angle ) * 2 * dist,
+                //angle = p1 / 57.29577957795135;
+                //xDist = 0.5 + (dist*Math.sin(angle));
+                //yDist = 0.5 + (dist*Math.cos(angle));  
+                xDist = Math.cos(2*Math.PI*p1/lenv)/2 + .5
+                yDist = Math.sin(2*Math.PI*p1/lenv)/2 + .5
 
-                    Math.sin( angle ) * 2 * dist
+                 tex.push( [ xDist, yDist ] );
 
-                ] );
+                //xDist = scalePos( v2[ 0 ], box.topLeft[ 0 ], box.bottomRight[ 0 ] ) - 0.5;
+                //yDist = scalePos( v2[ 1 ], box.topLeft[ 1 ], box.bottomRight[ 1 ] ) - 0.5;
+                xDist = Math.cos(2*Math.PI*p2/lenv)/2 + .5
+                yDist = Math.sin(2*Math.PI*p2/lenv)/2 + .5
+                //angle = p2 / 57.29577957795135;
+                //xDist = 0.5 + (dist*Math.sin(angle));
+               // yDist = 0.5 + (dist*Math.cos(angle));  
 
-                dist = vec3.distance( center, v2 );
+                tex.push( [ xDist, yDist ] );
 
-                angle = vec3.angle( center, v2 );
 
-                tex.push( [
-
-                    Math.cos( angle ) * 2 * dist,
-
-                    Math.sin( angle ) * 2 * dist
-
-                ] );
+                // Push the central point.
 
                 tex.push( [ 0.5, 0.5 ] );
 
@@ -806,18 +970,20 @@ class Prim {
 
         // push final values joining point to beginning.
 
-        //vtx.push( vertices[ indices[ indices.length - 1 ] ] );
+/*
+        vtx.push( vv[ vv.length - 1 ] );
 
-        //vtx.push( vertices[ indices[ 0 ] ] );
+        vtx.push( vv[ 0 ] );
 
-        //vtx.push( center );
+        vtx.push( center );
 
-        
+        let lenv = vv.length;
 
-
+        idx.push( lenv - 3, lenv - 2, lenv - 1 );
+*/
 
         return {
-            vertices: vtx,
+            vertices: vv,
             indices: idx,
             texCoords: tex,
             normals: nor
@@ -2944,17 +3110,17 @@ class Prim {
 
         vertices = vertices.map( function ( v ) {
 
-            return vec3.normalize( v, v );   
+            return vec3.normalize( v, v );
         
             }
         
         );
 
-        //for ( let i = 0; i < faces.length; i++ ) {
-
-            let i = 0;
+       for ( let i = 0; i < faces.length; i++ ) {
 
             let len = vertices.length;
+
+            // The fan is a flat polygon, constructed with face points.
 
             let fan = this.computeFan ( vtx, faces[ i ], true );
 
@@ -2963,6 +3129,7 @@ class Prim {
             vertices = vertices.concat( fan.vertices );
 
             // Adjust indices to position
+            window.fan = fan;
 
 
             for ( let i = 0; i < fan.indices.length; i++ ) {
@@ -2977,8 +3144,7 @@ class Prim {
 
             normals = normals.concat( fan.normals );
 
-
-        // }
+        }
 
         // flatten
 
@@ -3691,76 +3857,6 @@ class Prim {
             vertices[ i + 2 ] = delta[ 2 ];
 
         }
-
-    }
-
-    /** 
-     * Get the bounding box of a shape by getting the largest and 
-     * smallest vertices in coordinate space.
-     * TODO: incomplete.
-     */
-    boundingBox ( vertices ) {
-
-        let biggest = [ 0, 0, 0 ];
-
-        let smallest = [ 0, 0, 0 ];
-
-        let minX, minY, minZ, maxX, maxY, maxZ;
-
-        for ( let i = 0, len = vertices.length; i < len; i += 3 ) {
-
-            minX = Math.min( vertices[ i ], minX );
-
-            minY = Math.min( vertices[ i + 1 ], minY );
-
-            minZ = Math.min( vertices[ i + 2 ], minZ );
-
-            maxX = Math.max( vertices[ i ], maxX );
-
-            maxY = Math.max( vertices[ i + 1 ], maxY );
-
-            maxZ = Math.max( vertices[ i + 2 ], maxZ );
-
-        }
-
-        // Create cube points.
-
-        // TODO: not complete.
-
-        let box = [];
-
-        return box;
-
-    }
-
-    /** 
-     * Get the center of a shape.
-     * @param {Array|Float32Array} a flat array of 3d vertices.
-     * @returns {GlMatrix.vec3} a array with the centroid x, y, z. 
-     */
-    getCentroid ( vertices ) {
-
-        let centroid = [ 0, 0, 0 ];
-
-        let len = vertices.length;
-
-        for( let i = 0; i < len; i += 3 ) {
-
-            centroid[ 0 ] += vertices[ i ];
-
-            centroid[ 1 ] += vertices[ i + 1 ];
-
-            centroid[ 2 ] += vertices[ i + 2 ];
-
-        }
-
-        centroid[ 0 ] /= len;
-
-        centroid[ 1 ] /= len;
-
-        centroid[ 2 ] /= len;
-
-        return centroid;
 
     }
 
