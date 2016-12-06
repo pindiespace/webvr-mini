@@ -421,7 +421,8 @@ class World {
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
             ['img/crate.png'],               // texture present
-            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
+            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color,
+            true                                    // if true, apply texture to each face
         ) );
 
 

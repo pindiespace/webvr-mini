@@ -196,6 +196,11 @@ class Prim {
 
         };
 
+        // Visible from inside or outside.
+
+        this.OUTSIDE = 0,
+        this.INSIDE = 1;
+
         this.TWO_PI = Math.PI * 2;
 
     }
@@ -236,11 +241,11 @@ class Prim {
 
         let uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace( /[xy]/g, function( c ) {
 
-            let r = (d + Math.random()*16)%16 | 0;
+            let r = (d + Math.random() * 16 ) % 16 | 0;
 
-            d = Math.floor(d/16);
+            d = Math.floor( d / 16 );
 
-            return ( c=='x' ? r : ( r&0x3|0x8 ) ).toString( 16 );
+            return ( c == 'x' ? r : ( r&0x3|0x8 ) ).toString( 16 );
 
         } );
 
@@ -685,6 +690,28 @@ class Prim {
      * ---------------------------------------
      */
 
+    /** 
+     * Get spherical coordinates (u, v) for normalized unit vector.
+     */
+    computeSphereCoords ( vtx ) {
+
+        let u = Math.atan2( vtx[ 0 ], vtx[ 2 ] ) / ( 2 * Math.PI );  // was v.x, v.z
+
+        let v = Math.asin( vtx[ 1 ] ) / Math.PI + 0.5;  // was v.y, textureCoordinates.y
+
+        if ( u < 0 ) {
+
+            u += 1;
+
+        }
+
+        return [ u, v ];
+
+    }
+
+    /** 
+     * Computed the angle between 2 3d points.
+     */
     computeAngle3d ( a, b, c ) {
 
         let ab = [ b[0] - a[0], b[1] - a[1], b[2] - a[2] ];
@@ -698,7 +725,7 @@ class Prim {
 
         let res = abNorm[0] * bcNorm[0] + abNorm[1] * bcNorm[1] + abNorm[2] * bcNorm[2];
 
-        return Math.acos( res ); //*180.0/ 3.141592653589793;
+        return Math.acos( res );
 
     }
 
@@ -858,7 +885,7 @@ class Prim {
      * @param {[uint16]} indices the sequence to read triangles.
      * @returns {Object} UN-FLATTENED vertices, indices, texCoords nomals, tangents.
      */
-    computeFan ( vertices, indices, localTexCoords ) {
+    computeFan ( vertices, indices ) {
 
         let vec3 = this.glMatrix.vec3;
 
@@ -873,8 +900,6 @@ class Prim {
             vv.push( vertices[ indices[ i ] ] );
 
         }
-
-        window.vv = vv;
 
         let box = this.computeBoundingBox( vv );
 
@@ -927,35 +952,23 @@ class Prim {
 
             let v2 = vv[ p2 ];
 
-            console.log( 'i:' + i )
-            console.log( 'v1:' + v1 + ' p1:' + p1 );
-            console.log( 'v2:' + v2 + ' p2:' + p2 );
-
-            ///////////////////////console.log( 'v1:' + v1 + ' v2:' + v2);
-
             idx.push( p1, p2, centerPos );
 
             nor.push( v1, v2, center );
 
-            // If the local flag is set, compute texture coordinates from original vertices.
-            // http://stackoverflow.com/questions/15552521/how-to-determine-uv-texture-coordinates-for-n-sided-polygon
+            // Texture coords computed local to triangle fan.
 
-            if ( localTexCoords ) {
+            let dist, angle, xDist, yDist, u, v;
 
-                let dist, angle, xDist, yDist, u, v;
+            dist = vec3.distance( center, v1 );
 
-                dist = vec3.distance( center, v1 );
+            // Assumes a regular polygon.
 
-                // Assumes a regular polygon.
+            u = Math.cos( 2 * Math.PI * p2 / ( lenv - 1) ) / 2 + .5;
 
-                u = Math.cos( 2 * Math.PI * p2 / ( lenv - 1) ) / 2 + .5;
-
-                v = Math.sin( 2 * Math.PI * p2 / ( lenv - 1 ) ) / 2 + .5;
+            v = Math.sin( 2 * Math.PI * p2 / ( lenv - 1 ) ) / 2 + .5;
             
-                tex.push( u, v );
-
-
-            } // local texture coords
+            tex.push( u, v );
 
         } // end of for loop
 
@@ -964,10 +977,15 @@ class Prim {
         tex.push( 0.5, 0.5 );
 
         return {
+
             vertices: vv,
+
             indices: idx,
+
             texCoords: tex,
+
             normals: nor
+
         }
 
     }
@@ -1014,22 +1032,30 @@ class Prim {
         // Compute vectors.
 
         v0 = vec3.sub( v0, p2, p0 );
+
         v1 = vec3.sub( v1, p1, p0 );
+
         v2 = vec3.sub( v2, p, p0 );
 
         // Compute dot products.
 
-        dot00 = vec3.dot( v0, v0 )
-        dot01 = vec3.dot( v0, v1 )
-        dot02 = vec3.dot( v0, v2 )
-        dot11 = vec3.dot( v1, v1 )
-        dot12 = vec3.dot( v1, v2 )
+        dot00 = vec3.dot( v0, v0 );
+
+        dot01 = vec3.dot( v0, v1 );
+
+        dot02 = vec3.dot( v0, v2 );
+
+        dot11 = vec3.dot( v1, v1 );
+
+        dot12 = vec3.dot( v1, v2 );
 
         // Compute barycentric coordinates.
 
-        let invDenom = 1 / ( dot00 * dot11 - dot01 * dot01 )
-        let u = ( dot11 * dot02 - dot01 * dot12 ) * invDenom
-        let v = ( dot00 * dot12 - dot01 * dot02 ) * invDenom
+        let invDenom = 1 / ( dot00 * dot11 - dot01 * dot01 );
+
+        let u = ( dot11 * dot02 - dot01 * dot12 ) * invDenom;
+
+        let v = ( dot00 * dot12 - dot01 * dot02 ) * invDenom;
 
         // Check if point is in triangle.
 
@@ -1038,8 +1064,8 @@ class Prim {
     }
 
     /** 
-     * Compute normals for a 3d object. NOTE: some routines compute their 
-     * own normals.
+     * Compute normals for a 3d object. 
+     * NOTE: some routines compute their own normals.
      * Adapted from BabylonJS version.
      * @link https://github.com/BabylonJS/Babylon.js/blob/3fe3372053ac58505dbf7a2a6f3f52e3b92670c8/src/Mesh/babylon.mesh.vertexData.js
      * @link http://gamedev.stackexchange.com/questions/8191/any-reliable-polygon-normal-calculation-code
@@ -1779,7 +1805,7 @@ class Prim {
     /** 
      * type SKYDOME
      * rendered as GL_TRIANGLES.
-     * Half-sphere, Indices are reversed, so texture displays inside by default.
+     * Half-sphere, order of drawing is reversed, so texture displays inside by default.
      * prim.dimensions    = (vec4) [ x, y, z, startRadius | 0 ]
      * prim.divisions     = (vec3) [ x, y, z ]
      * 
@@ -1788,6 +1814,8 @@ class Prim {
      * Creating WebGL buffers is turned on or off conditionally in the method.
      */
     geometrySkyDome ( prim ) {
+
+        prim.visibleFrom = this.INSIDE;
 
         return this.geometrySphere( prim );
 
@@ -2978,6 +3006,8 @@ class Prim {
      */
     geometrySkyIcoDome ( prim ) {
 
+        prim.visibleFrom = this.INSIDE;
+
     }
 
     /** 
@@ -3012,8 +3042,13 @@ class Prim {
 
     }
 
-    geometryDoDo ( prim ) {
-
+    /** 
+     * Dodecahedron
+     * @link https://github.com/prideout/par/blob/master/par_shapes.h
+     * @link https://github.com/nickdesaulniers/prims/blob/master/dodecahedron.js
+     * @link http://vorg.github.io/pex/docs/pex-gen/Dodecahedron.html
+     */
+    geometryDodecahedron ( prim ) {
 
         const vec3 = this.glMatrix.vec3;
 
@@ -3030,6 +3065,9 @@ class Prim {
         normals = geo.normals.data,
         tangents = geo.tangents.data;
 
+        let w = prim.dimensions[ 0 ],
+        h = prim.dimensions[ 1 ],
+        d = prim.dimensions[ 2 ];
 
         let r = prim.divisions[ 0 ] || 0.5;
 
@@ -3068,11 +3106,7 @@ class Prim {
         ];
 
       //vertices = vertices.map(function(v) { return v.normalize().scale(r); })
-      // 0-3 nothing
-      // 4-7 +1
-      // 8-11 + 2
-      // 12-15 + 3
-      // 16-19 + 4
+
       let faces = [
             [  4,  3,  2,  1,  0 ],
             [  7,  6,  5,  0,  1 ],
@@ -3088,50 +3122,116 @@ class Prim {
             [  7,  1,  2, 17, 18 ]
         ];
 
+        if ( prim.applyTexToFace ) {
 
-        vertices = vertices.map( function ( v ) {
+            for ( let i = 0; i < faces.length; i++ ) {
 
-            return vec3.normalize( v, v );
-        
-            }
-        
-        );
+                let len = vertices.length;
 
-       for ( let i = 0; i < faces.length; i++ ) {
+                // The fan is a flat polygon, constructed with face points, shared vertices.
 
-            let len = vertices.length;
+                let fan = this.computeFan ( vtx, faces[ i ] );
 
-            // The fan is a flat polygon, constructed with face points.
+                vertices = vertices.concat( fan.vertices );
 
-            let fan = this.computeFan ( vtx, faces[ i ], true );
+                for ( let i = 0; i < fan.indices.length; i++ ) {
 
-            console.log("MADE A FAN______________________________________")
+                    fan.indices[ i ] += len;
 
-            vertices = vertices.concat( fan.vertices );
+                }
 
-            // Adjust indices to position
-            window.fan = fan;
+                indices = indices.concat( fan.indices );
 
+                texCoords = texCoords.concat( fan.texCoords );
 
-            for ( let i = 0; i < fan.indices.length; i++ ) {
-
-                fan.indices[ i ] += len;
+                normals = normals.concat( fan.normals );
 
             }
 
-            // NOTE: FOR GLOBAL WRAPPING:
-            // u = 0.5 + Math.atan2( v2[ 2 ], v2[ 0 ] ) / 2 * Math.PI;
-            // v = 0.5 - Math.asin( v2[ 1 ] ) / Math.PI;
+        } else {
 
-            indices = indices.concat( fan.indices );
+            let computeSphereCoords = this.computeSphereCoords;
 
-            texCoords = texCoords.concat( fan.texCoords );
+            for ( let i = 0; i < faces.length; i++ ) {
 
-            normals = normals.concat( fan.normals );
+                let vv = faces[ i ]; // indices to vertices
+
+                let vvv = []; // saved vertices
+            
+                let lenv = vv.length;
+
+                for ( let j = 0; j < vv.length; j++ ) {
+
+                    vvv.push( vtx[ vv[ j ] ] );
+
+                }
+
+                let center = this.computeCentroid( vvv );
+
+                for ( let i = 1; i <= lenv; i++ ) {
+
+                    let p1 = i - 1;
+
+                    let p2 = i;
+
+                    if ( i === lenv ) {
+                        p1 = p2 - 1;
+                        p2 = 0;                        
+                    }
+
+                    let v1 = vvv[ p1 ];
+
+                    let v2 = vvv[ p2 ];
+
+                    console.log( ' p1:' + p1 + ' p2:' + p2 );
+                    //console.log( ' v1:' + v1 );
+                    //console.log( ' v2:' + v2 );
+                    //console.log( ' ce:' + center );
+
+                    vertices.push( 
+                        vec3.copy( [ 0, 0, 0 ], v1 ), 
+                        vec3.copy( [ 0, 0, 0 ], v2 ),
+                        vec3.copy( [ 0, 0, 0 ], center ) );
+
+                    let cLen = vertices.length - 1;
+
+                    indices.push( cLen - 2, cLen - 1, cLen );
+
+                    normals.push( 
+                        vec3.copy( [ 0, 0, 0 ], v1 ), 
+                        vec3.copy( [ 0, 0, 0 ], v2 ),
+                        vec3.copy( [ 0, 0, 0 ], center ) );
+
+                    texCoords.push(
+
+                        computeSphereCoords( v1 ),
+
+                        computeSphereCoords( v2 ),
+
+                        computeSphereCoords( center )
+
+                    );
+
+
+                } // end of 'for' loop.
+
+            } // end of 'faces' loop.
+
+        } // end of wrap whole object with one texture.
+
+        for ( let i = 0; i < vertices.length; i++ ) {
+
+            let vv = vertices[ i ];
+
+            vv[ 0 ] *= w;
+
+            vv[ 1 ] *= h;
+
+            vv[ 2 ] *= d;
 
         }
 
-        // flatten
+        // Flatten.
 
         geo.vertices.data = flatten( vertices );
 
@@ -3140,282 +3240,6 @@ class Prim {
         geo.texCoords.data = flatten( texCoords );
 
         geo.normals.data = flatten( normals );
-
-        window.geo = geo;
-
-        //  vertices = vertices.map(function(v) { return v.normalize().scale(r); })
-
-        // Return the buffer.
-
-        return this.createBuffers( prim.geometry );
-
-    }
-
-    /** 
-     * Dodecahedron
-     * @link https://github.com/prideout/par/blob/master/par_shapes.h
-     * @link https://github.com/nickdesaulniers/prims/blob/master/dodecahedron.js
-     * @link http://vorg.github.io/pex/docs/pex-gen/Dodecahedron.html
-     */
-    geometryDodecahedron ( prim ) {
-
-        const vec3 = this.glMatrix.vec3;
-
-        const flatten = this.util.flatten;
-
-        let geo = prim.geometry;
-
-        // Shortcuts to Prim data arrays
-
-        // TODO: abstract the creation of the triangle fan for each pentagon.
-
-        let vertices = geo.vertices.data,
-        indices  = geo.indices.data,
-        sides = geo.sides.data,
-        texCoords = geo.texCoords.data,
-        normals = geo.normals.data,
-        tangents = geo.tangents.data;
-
-        return this.geometryDoDo( prim ); ///////////////////////////////////////////////////
-
-        return;
-
-        // Size and divisions.
-
-        let wi = prim.dimensions[ 0 ];
-
-        let hi = prim.dimensions[ 1 ];
-
-        let de = prim.dimensions[ 2 ];
-
-        let subdivisions = prim.divisions[ 0 ];
-
-        var phi = ( 1 + Math.sqrt( 5 ) ) / 2;
-
-        var b = 1 / phi;
-
-        var c = 2 - phi;
-
-        var ertices = [
-             b,  b,  b,   0,  1,  c,  -b,  b,  b,  -c,  0,  1,   c,  0,  1,
-            -b, -b,  b,   0, -1,  c,   b, -b,  b,   c,  0,  1,  -c,  0,  1,
-             b, -b, -b,   0, -1, -c,  -b, -b, -b,  -c,  0, -1,   c,  0, -1,
-            -b,  b, -b,   0,  1, -c,   b,  b, -b,   c,  0, -1,  -c,  0, -1,
-             0,  1, -c,   0,  1,  c,   b,  b,  b,   1,  c,  0,   b,  b, -b,
-             0,  1,  c,   0,  1, -c,  -b,  b, -b,  -1,  c,  0,  -b,  b,  b,
-             0, -1, -c,   0, -1,  c,  -b, -b,  b,  -1, -c,  0,  -b, -b, -b,
-             0, -1,  c,   0, -1, -c,   b, -b, -b,   1, -c,  0,   b, -b,  b,
-             b,  b,  b,   c,  0,  1,   b, -b,  b,   1, -c,  0,   1,  c,  0,
-             b, -b, -b,   c,  0, -1,   b,  b, -b,   1,  c,  0,   1, -c,  0,
-            -b,  b, -b,  -c,  0, -1,  -b, -b, -b,  -1, -c,  0,  -1,  c,  0,
-            -b, -b,  b,  -c,  0,  1,  -b,  b,  b,  -1,  c,  0,  -1, -c,  0
-        ];
-
-        let sideLen = 15; // coordinates per side, Points /= 3
-
-        // The problem is that the five points listed are not 5 triangles, so we have
-        // to find the middle of each set of five, and duplicate the last point.
-        // Am I proud of this code?  No.
-
-        for ( let i = 0; i < ertices.length; i += sideLen ) {
-
-            var a = [ertices[i], ertices[i + 1], ertices[i + 2]];
-            var b = [ertices[i + 3], ertices[i + 4], ertices[i + 5]];
-            var c = [ertices[i + 6], ertices[i + 7], ertices[i + 8]];
-            var d = [ertices[i + 9], ertices[i + 10], ertices[i + 11]];
-            var e = [ertices[i + 12], ertices[i + 13], ertices[i + 14]];
-
-            var center = [
-                ( a[ 0 ] + b[ 0 ] + c[ 0 ] + d[ 0 ] + e[ 0 ] ) / 5,
-                ( a[ 1 ] + b[ 1 ] + c[ 1 ] + d[ 1 ] + e[ 1 ] ) / 5,
-                ( a[ 2 ] + b[ 2 ] + c[ 2 ] + d[ 2 ] + e[ 2 ] ) / 5
-            ];
-
-            let side = [];
-
-            vertices.push.apply(vertices, a);
-            side.push( a );
-
-            vertices.push.apply(vertices, b);
-            side.push( b );
-
-            vertices.push.apply(vertices, center);
-            side.push( center );
-
-            vertices.push.apply(vertices, b);
-            side.push( b );
-
-            vertices.push.apply(vertices, c);
-            side.push( c );
-
-            vertices.push.apply(vertices, center);
-            side.push( center );
-
-            vertices.push.apply(vertices, c);
-            side.push( c );
-
-            vertices.push.apply(vertices, d);
-            side.push( d );
-
-            vertices.push.apply(vertices, center);
-            side.push( center );
-
-            vertices.push.apply(vertices, d);
-            side.push( d );
-
-            vertices.push.apply(vertices, e);
-            side.push( e );
-
-            vertices.push.apply(vertices, center);
-            side.push( center );
-
-            vertices.push.apply(vertices, e);
-            side.push( e );
-
-            vertices.push.apply(vertices, a);
-            side.push( a );
-
-            vertices.push.apply(vertices, center);
-            side.push( center );
-
-            sides.push( flatten( side ) );
-
-        }
-
-        // Indices (read linearly through vertices).
-
-        for ( var ii = 0, len = vertices.length / 3; ii < len; ii++ ) {
-
-            indices.push( ii );
-
-        }
-
-        geo.testSides = [];
-
-        for ( var i = 0; i < vertices.length; i += sideLen ) {
-
-            let sd = [];
-            let tx;
-
-            tx = setUV( i );
-
-            sd.push( { x: vertices[i], y: vertices[ i + 1], z: vertices[i + 2], u: tx[0], v: tx[1] } ); ////////////////////////////////////
-
-            tx = setUV( i + 3 );
-
-            sd.push( { x: vertices[i], y: vertices[ i + 1], z: vertices[i + 2], u: tx[0], v: tx[1] } ); ////////////////////////////////////
-
-            tx = setUV( i + 6 );
-
-            sd.push( { x: vertices[i], y: vertices[ i + 1], z: vertices[i + 2], u: tx[0], v: tx[1] } ); ////////////////////////////////////
-
-            tx = setUV( i + 9 );
-
-            sd.push( { x: vertices[i], y: vertices[ i + 1], z: vertices[i + 2], u: tx[0], v: tx[1] } ); ////////////////////////////////////
-
-            tx = setUV( i + 12 );
-
-            sd.push( { x: vertices[i], y: vertices[ i + 1], z: vertices[i + 2], u: tx[0], v: tx[1] } ); ////////////////////////////////////
-
-            geo.testSides[ parseInt( i / sideLen ) ] = sd; ///////////////////testo
-
-        }
-
-        // Normals.
-
-        for ( var i = 0; i < vertices.length; i += 9 ) {
-
-            var a = [ vertices[ i     ], vertices[ i + 1 ], vertices[ i + 2 ] ];
-
-            var b = [ vertices[ i + 3 ], vertices[ i + 4 ], vertices[ i + 5 ] ];
-
-            var c = [ vertices[ i + 6 ], vertices[ i + 7 ], vertices[ i + 8 ] ];
-
-            // Normalizing is probably not necessary.
-            // It should also be seperated out.
-
-            // Create normals.
-
-            let d = vec3.sub( [ 0, 0, 0 ], a, b );
-
-            let e = vec3.sub( [ 0, 0, 0 ], a, c );
-
-            let f = vec3.cross( [ 0, 0, 0 ], d, e );
-
-            let normal = vec3.normalize( [ 0, 0, 0 ], f );
-
-            normals.push( 
-
-                normal[ 0 ], normal[ 1 ], normal[ 2 ],
-
-                normal[ 0 ], normal[ 1 ], normal[ 2 ],
-
-                normal[ 0 ], normal[ 1 ], normal[ 2 ]
-
-            );
-
-            // Scale.
-
-            vertices[ i ]     *= wi;
-
-            vertices[ i + 1 ] *= hi;
-
-            vertices[ i + 2 ] *= de;
-
-            vertices[ i + 3 ] *= wi;
-
-            vertices[ i + 4 ] *= hi;
-
-            vertices[ i + 5 ] *= de;
-
-            vertices[ i + 6 ] *= wi;
-
-            vertices[ i + 7 ] *= hi;
-
-            vertices[ i + 8 ] *= de;
-
-        }
-
-            // Texture coordinates using positions on a sphere.
-            // https://www.mvps.org/directx/articles/spheremap.htm
-
-
-            function setUV ( vPos ) {
-
-                let currSide = i / sideLen;
-
-                let u, v;
-
-                u = Math.atan2( vertices[ vPos ], vertices[ vPos + 2 ] ) / ( 2 * Math.PI );  // was v.x, v.z
-
-                v = Math.asin( vertices[ vPos + 1 ] ) / Math.PI + 0.5;  // was v.y, textureCoordinates.y
-
-                if ( u < 0 ) {   // was textureCoordinates.x
-
-                    u += 1;    // was textureCoordinates
-
-                } 
-
-                //if( i < 45 ) { u = 0; v = 0; } //first side, upper, exactly opposite face (DISTORT)
-                //if( vPos > 44 && vPos < 90 ) { u = 0; v = 0; } //second side, lower, exactly opposite face
-                //if ( i > 89 && i < 135 )  { u = 0; v = 0; } //third side, bottom of face
-                //if ( i > 134 && i < 180 )  { u = 0; v = 0; } //fourth side, top of face
-                //if ( i > 177 && i < 225 )  { u = 0; v = 0; } //*** fourth side, jumps DOWN by one point, PARTIAL to upper left of face unless we drop from 180 to 177
-                //if ( i > 224 && i < 270 ) { u = 0; v = 0; }  // fifth side, to upper right of face
-                //if ( i > 267 && i < 315 ) { u = 0; v = 0; } // ** sixth side, jumps DOWN by one point, lower right of face
-                //if ( i > 314 && i < 360 ) { u = 0; v = 0; } // seventh side, bottom left side
-                //if ( i > 359 && i < 405 ) { u = 0; v = 0; } // eighth side, left, almost completely around from face
-                //if ( i > 404 && i < 450 ) { u = 0; v = 0; } // ninth side, left, right next to face
-                //if ( i > 449 && i < 495 ) { u = 0; v = 0; } // tenth side, right right next to face
-                // corrections. TODO:
-
-                ////////////////////////////////////console.log( 'vPos:' + vPos + ' u:' + u + ' v:' + v )
-
-                texCoords.push( u, v );
-
-                return [ u, v ]; ////////////////////////////
-
-            }
 
         // Return the buffer.
 
@@ -3623,9 +3447,11 @@ class Prim {
      * @param {GLMatrix.vec3} rotation rotation vector (spin) around center of object.
      * @param {String} textureImage the path to an image used to create a texture.
      * @param {Array|GLMatrix.vec4} color the default color(s) of the object.
+     * @param {Boolean} applyTexToFace if true, apply texture to each face, else apply texture to 
+     * the entire object.
      */
     createPrim ( type, name = 'unknown', dimensions, divisions, position, acceleration, 
-        rotation, angular, textureImage, color ) {
+        rotation, angular, textureImage, color, applyTexToFace = false ) {
 
         const vec3 = this.glMatrix.vec3;
 
@@ -3668,9 +3494,11 @@ class Prim {
 
         prim.orbitAngular = 0.0;
 
-        // Side to render
+        // Visible from outside (counterclockwise) or inside (clockwise).
 
-        prim.side = this.DEFAULT_SIDE; // TODO: Normals outside, inside or both !!!!!!!!!!!!!!!!!!!! CHANGE
+        prim.visibleFrom = this.OUTSIDE;
+
+        prim.applyTexToFace = applyTexToFace;
 
         // Waypoints for scripted motion.
 

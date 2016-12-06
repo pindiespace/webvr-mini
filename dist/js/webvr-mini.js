@@ -3816,7 +3816,8 @@
 	     *
 	     *
 	     */function Prim(init,util,glMatrix,webgl,loadModel,loadTexture,loadAudio,loadVideo){_classCallCheck(this,Prim);console.log('in Prim class');this.util=util;this.webgl=webgl;this.glMatrix=glMatrix;this.loadModel=loadModel;this.loadTexture=loadTexture;this.loadAudio=loadAudio;this.loadVideo=loadVideo;this.objs=[];this.typeList={POINT:'geometryPointCloud',POINTCLOUD:'geometryPointCloud',LINE:'geometryLine',PLANE:'geometryOuterPlane',OUTERPLANE:'geometryOuterPlane',INNERPLANE:'geometryInnerPlane',CURVEDPLANE:'geometryCurvedOuterPlane',CURVEDOUTERPLANE:'geometryCurvedOuterPlane',CURVEDINNERPLANE:'geometryCurvedInnerPlane',TERRAIN:'geometryTerrain',CIRCLE:'geometryCircle',POLY:'geometryPoly',CUBE:'geometryCube',CUBESPHERE:'geometryCubeSphere',SPHERE:'geometrySphere',CAP:'geometryCap',DOME:'geometryDome',TOPDOME:'geometryTopDome',SKYDOME:'geometrySkyDome',BOTTOMDOME:'geometryBottomDome',CONE:'geometryCone',TOPCONE:'geometryTopCone',BOTTOMCONE:'geometryBottomCone',SPINDLE:'geometrySpindle',TEARDROP:'geometryTeardrop',CYLINDER:'geometryCylinder',CAPSULE:'geometryCapsule',ICOSOHEDRON:'geometryIcosohedron',PYRAMID:'geometryPyramid',ICOSPHERE:'geometryIcoSphere',TOPICODOME:'geometryTopIcoDome',SKYICODOME:'geometrySkyIcoDome',BOTTOMICODOME:'geometryBottomIcoDome',OCTAHEDRON:'geometryOctahedron',DODECAHEDRON:'geometryDodecahedron',TORUS:'geometryTorus',MESH:'geometryMesh'};// Sideness, direction. Mapped to equivalent unit vector names in this.getStdVecs()
-	this.sides={DEFAULT:'up',FORWARD:'forward',FRONT:'forward',BACK:'back',LEFT:'left',RIGHT:'right',UP:'up',TOP:'up',DOWN:'down',BOTTOM:'down'};this.TWO_PI=Math.PI*2;}/** 
+	this.sides={DEFAULT:'up',FORWARD:'forward',FRONT:'forward',BACK:'back',LEFT:'left',RIGHT:'right',UP:'up',TOP:'up',DOWN:'down',BOTTOM:'down'};// Visible from inside or outside.
+	this.OUTSIDE=0,this.INSIDE=1;this.TWO_PI=Math.PI*2;}/** 
 	     * See if supplied Prim type is supported. Individual Prim factory 
 	     * methods do more detailed checking.
 	     * @param {String} type the prim type.
@@ -3889,8 +3890,13 @@
 	     * ---------------------------------------
 	     * NORMAL, INDEX, VERTEX, TRIANGLE, QUAD CALCULATIONS
 	     * ---------------------------------------
-	     */},{key:'computeAngle3d',value:function computeAngle3d(a,b,c){var ab=[b[0]-a[0],b[1]-a[1],b[2]-a[2]];var bc=[c[0]-b[0],c[1]-b[1],c[2]-b[2]];var abVec=Math.sqrt(ab[0]*ab[0]+ab[1]*ab[1]+ab[2]*ab[2]);var bcVec=Math.sqrt(bc[0]*bc[0]+bc[1]*bc[1]+bc[2]*bc[2]);var abNorm=[ab[0]/abVec,ab[1]/abVec,ab[2]/abVec];var bcNorm=[bc[0]/bcVec,bc[1]/bcVec,bc[2]/bcVec];var res=abNorm[0]*bcNorm[0]+abNorm[1]*bcNorm[1]+abNorm[2]*bcNorm[2];return Math.acos(res);//*180.0/ 3.141592653589793;
-	}/**
+	     *//** 
+	     * Get spherical coordinates (u, v) for normalized unit vector.
+	     */},{key:'computeSphereCoords',value:function computeSphereCoords(vtx){var u=Math.atan2(vtx[0],vtx[2])/(2*Math.PI);// was v.x, v.z
+	var v=Math.asin(vtx[1])/Math.PI+0.5;// was v.y, textureCoordinates.y
+	if(u<0){u+=1;}return[u,v];}/** 
+	     * Computed the angle between 2 3d points.
+	     */},{key:'computeAngle3d',value:function computeAngle3d(a,b,c){var ab=[b[0]-a[0],b[1]-a[1],b[2]-a[2]];var bc=[c[0]-b[0],c[1]-b[1],c[2]-b[2]];var abVec=Math.sqrt(ab[0]*ab[0]+ab[1]*ab[1]+ab[2]*ab[2]);var bcVec=Math.sqrt(bc[0]*bc[0]+bc[1]*bc[1]+bc[2]*bc[2]);var abNorm=[ab[0]/abVec,ab[1]/abVec,ab[2]/abVec];var bcNorm=[bc[0]/bcVec,bc[1]/bcVec,bc[2]/bcVec];var res=abNorm[0]*bcNorm[0]+abNorm[1]*bcNorm[1]+abNorm[2]*bcNorm[2];return Math.acos(res);}/**
 	     * find the center between any set of 3d points
 	     * @param {[...vec3]} vertices an array of xyz points.
 	     * @returns {vec3} the center point.
@@ -3919,19 +3925,16 @@
 	     * @param {[...vec3]} vertices an array of UN-FLATTENED xyz points.
 	     * @param {[uint16]} indices the sequence to read triangles.
 	     * @returns {Object} UN-FLATTENED vertices, indices, texCoords nomals, tangents.
-	     */},{key:'computeFan',value:function computeFan(vertices,indices,localTexCoords){var vec3=this.glMatrix.vec3;var scalePos=this.util.scalePos;var vv=[];// Get the subset of vertices we should take by following indices.
-	for(var _i7=0;_i7<indices.length;_i7++){vv.push(vertices[indices[_i7]]);}window.vv=vv;var box=this.computeBoundingBox(vv);// Get the topLeft and bottomRight points (bounding rectangle).
+	     */},{key:'computeFan',value:function computeFan(vertices,indices){var vec3=this.glMatrix.vec3;var scalePos=this.util.scalePos;var vv=[];// Get the subset of vertices we should take by following indices.
+	for(var _i7=0;_i7<indices.length;_i7++){vv.push(vertices[indices[_i7]]);}var box=this.computeBoundingBox(vv);// Get the topLeft and bottomRight points (bounding rectangle).
 	var center=this.computeCentroid(vv);// Get the first point in the polygon.
 	var v0=vv[0];// Use this when we want the center of the whole object the polygon is part of.
 	//let center = this.calculateMassCentroid( vv );
 	// Add a central point so we can create a triangle fan.
 	vv.push(center);var centerPos=vv.length-1;var len=indices.length;var vtx=[];var tex=[];var nor=[];var idx=[];// We re-do the indices calculations, since we insert a central point.
-	var lenv=vv.length;var env=lenv-1;for(var _i8=1;_i8<lenv;_i8++){var p1=_i8-1;var p2=_i8;if(_i8===lenv-1){p2=0;}var v1=vv[p1];var v2=vv[p2];console.log('i:'+_i8);console.log('v1:'+v1+' p1:'+p1);console.log('v2:'+v2+' p2:'+p2);///////////////////////console.log( 'v1:' + v1 + ' v2:' + v2);
-	idx.push(p1,p2,centerPos);nor.push(v1,v2,center);// If the local flag is set, compute texture coordinates from original vertices.
-	// http://stackoverflow.com/questions/15552521/how-to-determine-uv-texture-coordinates-for-n-sided-polygon
-	if(localTexCoords){var dist=void 0,angle=void 0,xDist=void 0,yDist=void 0,u=void 0,v=void 0;dist=vec3.distance(center,v1);// Assumes a regular polygon.
-	u=Math.cos(2*Math.PI*p2/(lenv-1))/2+.5;v=Math.sin(2*Math.PI*p2/(lenv-1))/2+.5;tex.push(u,v);}// local texture coords
-	}// end of for loop
+	var lenv=vv.length;var env=lenv-1;for(var _i8=1;_i8<lenv;_i8++){var p1=_i8-1;var p2=_i8;if(_i8===lenv-1){p2=0;}var v1=vv[p1];var v2=vv[p2];idx.push(p1,p2,centerPos);nor.push(v1,v2,center);// Texture coords computed local to triangle fan.
+	var dist=void 0,angle=void 0,xDist=void 0,yDist=void 0,u=void 0,v=void 0;dist=vec3.distance(center,v1);// Assumes a regular polygon.
+	u=Math.cos(2*Math.PI*p2/(lenv-1))/2+.5;v=Math.sin(2*Math.PI*p2/(lenv-1))/2+.5;tex.push(u,v);}// end of for loop
 	// Push the center point texture coordinate.
 	tex.push(0.5,0.5);return{vertices:vv,indices:idx,texCoords:tex,normals:nor};}/** 
 	     * Subdivide a mesh, WITHOUT smoothing.
@@ -3961,8 +3964,8 @@
 	dot00=vec3.dot(v0,v0);dot01=vec3.dot(v0,v1);dot02=vec3.dot(v0,v2);dot11=vec3.dot(v1,v1);dot12=vec3.dot(v1,v2);// Compute barycentric coordinates.
 	var invDenom=1/(dot00*dot11-dot01*dot01);var u=(dot11*dot02-dot01*dot12)*invDenom;var v=(dot00*dot12-dot01*dot02)*invDenom;// Check if point is in triangle.
 	return u>=0&&v>=0&&u+v<1;}/** 
-	     * Compute normals for a 3d object. NOTE: some routines compute their 
-	     * own normals.
+	     * Compute normals for a 3d object. 
+	     * NOTE: some routines compute their own normals.
 	     * Adapted from BabylonJS version.
 	     * @link https://github.com/BabylonJS/Babylon.js/blob/3fe3372053ac58505dbf7a2a6f3f52e3b92670c8/src/Mesh/babylon.mesh.vertexData.js
 	     * @link http://gamedev.stackexchange.com/questions/8191/any-reliable-polygon-normal-calculation-code
@@ -4134,14 +4137,14 @@
 	     */},{key:'geometryTopDome',value:function geometryTopDome(prim){return this.geometrySphere(prim);}/** 
 	     * type SKYDOME
 	     * rendered as GL_TRIANGLES.
-	     * Half-sphere, Indices are reversed, so texture displays inside by default.
+	     * Half-sphere, order of drawing is reversed, so texture displays inside by default.
 	     * prim.dimensions    = (vec4) [ x, y, z, startRadius | 0 ]
 	     * prim.divisions     = (vec3) [ x, y, z ]
 	     * 
 	     * @param {Prim} the Prim needing geometry. 
 	     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
 	     * Creating WebGL buffers is turned on or off conditionally in the method.
-	     */},{key:'geometrySkyDome',value:function geometrySkyDome(prim){return this.geometrySphere(prim);}/** 
+	     */},{key:'geometrySkyDome',value:function geometrySkyDome(prim){prim.visibleFrom=this.INSIDE;return this.geometrySphere(prim);}/** 
 	     * type BOTTOMDOME
 	     * rendered as GL_TRIANGLES.
 	     * bowl shaped, formed from lower half of sphere.
@@ -4442,7 +4445,7 @@
 	     * @param {Prim} the Prim needing geometry. 
 	     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
 	     * Creating WebGL buffers is turned on or off conditionally in the method.
-	     */},{key:'geometrySkyIcoDome',value:function geometrySkyIcoDome(prim){}/** 
+	     */},{key:'geometrySkyIcoDome',value:function geometrySkyIcoDome(prim){prim.visibleFrom=this.INSIDE;}/** 
 	     * type BOTTOMICODOME.
 	     * create a bowl shape from the lower half of an icosphere.
 	     * 
@@ -4461,8 +4464,13 @@
 	     * @param {Prim} the Prim needing geometry. 
 	     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
 	     * Creating WebGL buffers is turned on or off conditionally in the method.
-	     */},{key:'geometryOctahedron',value:function geometryOctahedron(prim){return this.geometryIcoSphere(prim);}},{key:'geometryDoDo',value:function geometryDoDo(prim){var vec3=this.glMatrix.vec3;var flatten=this.util.flatten;var geo=prim.geometry;// Shortcuts to Prim data arrays.
-	var vertices=geo.vertices.data,indices=geo.indices.data,sides=geo.sides.data,texCoords=geo.texCoords.data,normals=geo.normals.data,tangents=geo.tangents.data;var r=prim.divisions[0]||0.5;var phi=(1+Math.sqrt(5))/2;var a=0.5;var b=0.5*1/phi;var c=0.5*(2-phi);var vtx=[[c,0,a],// 0
+	     */},{key:'geometryOctahedron',value:function geometryOctahedron(prim){return this.geometryIcoSphere(prim);}/** 
+	     * Dodecahedron
+	     * @link https://github.com/prideout/par/blob/master/par_shapes.h
+	     * @link https://github.com/nickdesaulniers/prims/blob/master/dodecahedron.js
+	     * @link http://vorg.github.io/pex/docs/pex-gen/Dodecahedron.html
+	     */},{key:'geometryDodecahedron',value:function geometryDodecahedron(prim){var vec3=this.glMatrix.vec3;var flatten=this.util.flatten;var geo=prim.geometry;// Shortcuts to Prim data arrays.
+	var vertices=geo.vertices.data,indices=geo.indices.data,sides=geo.sides.data,texCoords=geo.texCoords.data,normals=geo.normals.data,tangents=geo.tangents.data;var w=prim.dimensions[0],h=prim.dimensions[1],d=prim.dimensions[2];var r=prim.divisions[0]||0.5;var phi=(1+Math.sqrt(5))/2;var a=0.5;var b=0.5*1/phi;var c=0.5*(2-phi);var vtx=[[c,0,a],// 0
 	[-c,0,a],// 1
 	[-b,b,b],// 2
 	[0,a,c],// 3
@@ -4483,65 +4491,17 @@
 	[-a,-c,0],// 18 + 4 = 23
 	[a,-c,0]// 19 + 4 = 24
 	];//vertices = vertices.map(function(v) { return v.normalize().scale(r); })
-	// 0-3 nothing
-	// 4-7 +1
-	// 8-11 + 2
-	// 12-15 + 3
-	// 16-19 + 4
-	var faces=[[4,3,2,1,0],[7,6,5,0,1],[12,11,10,9,8],[15,14,13,8,9],[14,3,4,16,13],[3,14,15,17,2],[11,6,7,18,10],[6,11,12,19,5],[4,0,5,19,16],[12,8,13,16,19],[15,9,10,18,17],[7,1,2,17,18]];vertices=vertices.map(function(v){return vec3.normalize(v,v);});for(var _i14=0;_i14<faces.length;_i14++){var len=vertices.length;// The fan is a flat polygon, constructed with face points.
-	var fan=this.computeFan(vtx,faces[_i14],true);console.log("MADE A FAN______________________________________");vertices=vertices.concat(fan.vertices);// Adjust indices to position
-	window.fan=fan;for(var _i15=0;_i15<fan.indices.length;_i15++){fan.indices[_i15]+=len;}// NOTE: FOR GLOBAL WRAPPING:
-	// u = 0.5 + Math.atan2( v2[ 2 ], v2[ 0 ] ) / 2 * Math.PI;
-	// v = 0.5 - Math.asin( v2[ 1 ] ) / Math.PI;
-	indices=indices.concat(fan.indices);texCoords=texCoords.concat(fan.texCoords);normals=normals.concat(fan.normals);}// flatten
-	geo.vertices.data=flatten(vertices);geo.indices.data=indices;geo.texCoords.data=flatten(texCoords);geo.normals.data=flatten(normals);window.geo=geo;//  vertices = vertices.map(function(v) { return v.normalize().scale(r); })
-	// Return the buffer.
-	return this.createBuffers(prim.geometry);}/** 
-	     * Dodecahedron
-	     * @link https://github.com/prideout/par/blob/master/par_shapes.h
-	     * @link https://github.com/nickdesaulniers/prims/blob/master/dodecahedron.js
-	     * @link http://vorg.github.io/pex/docs/pex-gen/Dodecahedron.html
-	     */},{key:'geometryDodecahedron',value:function geometryDodecahedron(prim){var vec3=this.glMatrix.vec3;var flatten=this.util.flatten;var geo=prim.geometry;// Shortcuts to Prim data arrays
-	// TODO: abstract the creation of the triangle fan for each pentagon.
-	var vertices=geo.vertices.data,indices=geo.indices.data,sides=geo.sides.data,texCoords=geo.texCoords.data,normals=geo.normals.data,tangents=geo.tangents.data;return this.geometryDoDo(prim);///////////////////////////////////////////////////
-	return;// Size and divisions.
-	var wi=prim.dimensions[0];var hi=prim.dimensions[1];var de=prim.dimensions[2];var subdivisions=prim.divisions[0];var phi=(1+Math.sqrt(5))/2;var b=1/phi;var c=2-phi;var ertices=[b,b,b,0,1,c,-b,b,b,-c,0,1,c,0,1,-b,-b,b,0,-1,c,b,-b,b,c,0,1,-c,0,1,b,-b,-b,0,-1,-c,-b,-b,-b,-c,0,-1,c,0,-1,-b,b,-b,0,1,-c,b,b,-b,c,0,-1,-c,0,-1,0,1,-c,0,1,c,b,b,b,1,c,0,b,b,-b,0,1,c,0,1,-c,-b,b,-b,-1,c,0,-b,b,b,0,-1,-c,0,-1,c,-b,-b,b,-1,-c,0,-b,-b,-b,0,-1,c,0,-1,-c,b,-b,-b,1,-c,0,b,-b,b,b,b,b,c,0,1,b,-b,b,1,-c,0,1,c,0,b,-b,-b,c,0,-1,b,b,-b,1,c,0,1,-c,0,-b,b,-b,-c,0,-1,-b,-b,-b,-1,-c,0,-1,c,0,-b,-b,b,-c,0,1,-b,b,b,-1,c,0,-1,-c,0];var sideLen=15;// coordinates per side, Points /= 3
-	// The problem is that the five points listed are not 5 triangles, so we have
-	// to find the middle of each set of five, and duplicate the last point.
-	// Am I proud of this code?  No.
-	for(var _i16=0;_i16<ertices.length;_i16+=sideLen){var a=[ertices[_i16],ertices[_i16+1],ertices[_i16+2]];var b=[ertices[_i16+3],ertices[_i16+4],ertices[_i16+5]];var c=[ertices[_i16+6],ertices[_i16+7],ertices[_i16+8]];var d=[ertices[_i16+9],ertices[_i16+10],ertices[_i16+11]];var e=[ertices[_i16+12],ertices[_i16+13],ertices[_i16+14]];var center=[(a[0]+b[0]+c[0]+d[0]+e[0])/5,(a[1]+b[1]+c[1]+d[1]+e[1])/5,(a[2]+b[2]+c[2]+d[2]+e[2])/5];var side=[];vertices.push.apply(vertices,a);side.push(a);vertices.push.apply(vertices,b);side.push(b);vertices.push.apply(vertices,center);side.push(center);vertices.push.apply(vertices,b);side.push(b);vertices.push.apply(vertices,c);side.push(c);vertices.push.apply(vertices,center);side.push(center);vertices.push.apply(vertices,c);side.push(c);vertices.push.apply(vertices,d);side.push(d);vertices.push.apply(vertices,center);side.push(center);vertices.push.apply(vertices,d);side.push(d);vertices.push.apply(vertices,e);side.push(e);vertices.push.apply(vertices,center);side.push(center);vertices.push.apply(vertices,e);side.push(e);vertices.push.apply(vertices,a);side.push(a);vertices.push.apply(vertices,center);side.push(center);sides.push(flatten(side));}// Indices (read linearly through vertices).
-	for(var ii=0,len=vertices.length/3;ii<len;ii++){indices.push(ii);}geo.testSides=[];for(var i=0;i<vertices.length;i+=sideLen){var sd=[];var tx=void 0;tx=setUV(i);sd.push({x:vertices[i],y:vertices[i+1],z:vertices[i+2],u:tx[0],v:tx[1]});////////////////////////////////////
-	tx=setUV(i+3);sd.push({x:vertices[i],y:vertices[i+1],z:vertices[i+2],u:tx[0],v:tx[1]});////////////////////////////////////
-	tx=setUV(i+6);sd.push({x:vertices[i],y:vertices[i+1],z:vertices[i+2],u:tx[0],v:tx[1]});////////////////////////////////////
-	tx=setUV(i+9);sd.push({x:vertices[i],y:vertices[i+1],z:vertices[i+2],u:tx[0],v:tx[1]});////////////////////////////////////
-	tx=setUV(i+12);sd.push({x:vertices[i],y:vertices[i+1],z:vertices[i+2],u:tx[0],v:tx[1]});////////////////////////////////////
-	geo.testSides[parseInt(i/sideLen)]=sd;///////////////////testo
-	}// Normals.
-	for(var i=0;i<vertices.length;i+=9){var a=[vertices[i],vertices[i+1],vertices[i+2]];var b=[vertices[i+3],vertices[i+4],vertices[i+5]];var c=[vertices[i+6],vertices[i+7],vertices[i+8]];// Normalizing is probably not necessary.
-	// It should also be seperated out.
-	// Create normals.
-	var _d=vec3.sub([0,0,0],a,b);var _e=vec3.sub([0,0,0],a,c);var f=vec3.cross([0,0,0],_d,_e);var normal=vec3.normalize([0,0,0],f);normals.push(normal[0],normal[1],normal[2],normal[0],normal[1],normal[2],normal[0],normal[1],normal[2]);// Scale.
-	vertices[i]*=wi;vertices[i+1]*=hi;vertices[i+2]*=de;vertices[i+3]*=wi;vertices[i+4]*=hi;vertices[i+5]*=de;vertices[i+6]*=wi;vertices[i+7]*=hi;vertices[i+8]*=de;}// Texture coordinates using positions on a sphere.
-	// https://www.mvps.org/directx/articles/spheremap.htm
-	function setUV(vPos){var currSide=i/sideLen;var u=void 0,v=void 0;u=Math.atan2(vertices[vPos],vertices[vPos+2])/(2*Math.PI);// was v.x, v.z
-	v=Math.asin(vertices[vPos+1])/Math.PI+0.5;// was v.y, textureCoordinates.y
-	if(u<0){// was textureCoordinates.x
-	u+=1;// was textureCoordinates
-	}//if( i < 45 ) { u = 0; v = 0; } //first side, upper, exactly opposite face (DISTORT)
-	//if( vPos > 44 && vPos < 90 ) { u = 0; v = 0; } //second side, lower, exactly opposite face
-	//if ( i > 89 && i < 135 )  { u = 0; v = 0; } //third side, bottom of face
-	//if ( i > 134 && i < 180 )  { u = 0; v = 0; } //fourth side, top of face
-	//if ( i > 177 && i < 225 )  { u = 0; v = 0; } //*** fourth side, jumps DOWN by one point, PARTIAL to upper left of face unless we drop from 180 to 177
-	//if ( i > 224 && i < 270 ) { u = 0; v = 0; }  // fifth side, to upper right of face
-	//if ( i > 267 && i < 315 ) { u = 0; v = 0; } // ** sixth side, jumps DOWN by one point, lower right of face
-	//if ( i > 314 && i < 360 ) { u = 0; v = 0; } // seventh side, bottom left side
-	//if ( i > 359 && i < 405 ) { u = 0; v = 0; } // eighth side, left, almost completely around from face
-	//if ( i > 404 && i < 450 ) { u = 0; v = 0; } // ninth side, left, right next to face
-	//if ( i > 449 && i < 495 ) { u = 0; v = 0; } // tenth side, right right next to face
-	// corrections. TODO:
-	////////////////////////////////////console.log( 'vPos:' + vPos + ' u:' + u + ' v:' + v )
-	texCoords.push(u,v);return[u,v];////////////////////////////
-	}// Return the buffer.
+	var faces=[[4,3,2,1,0],[7,6,5,0,1],[12,11,10,9,8],[15,14,13,8,9],[14,3,4,16,13],[3,14,15,17,2],[11,6,7,18,10],[6,11,12,19,5],[4,0,5,19,16],[12,8,13,16,19],[15,9,10,18,17],[7,1,2,17,18]];if(prim.applyTexToFace){for(var _i14=0;_i14<faces.length;_i14++){var len=vertices.length;// The fan is a flat polygon, constructed with face points, shared vertices.
+	var fan=this.computeFan(vtx,faces[_i14]);vertices=vertices.concat(fan.vertices);for(var _i15=0;_i15<fan.indices.length;_i15++){fan.indices[_i15]+=len;}indices=indices.concat(fan.indices);texCoords=texCoords.concat(fan.texCoords);normals=normals.concat(fan.normals);}}else{var computeSphereCoords=this.computeSphereCoords;for(var _i16=0;_i16<faces.length;_i16++){var vv=faces[_i16];// indices to vertices
+	var vvv=[];// saved vertices
+	var lenv=vv.length;for(var j=0;j<vv.length;j++){vvv.push(vtx[vv[j]]);}var center=this.computeCentroid(vvv);for(var _i17=1;_i17<=lenv;_i17++){var p1=_i17-1;var p2=_i17;if(_i17===lenv){p1=p2-1;p2=0;}var v1=vvv[p1];var v2=vvv[p2];console.log(' p1:'+p1+' p2:'+p2);//console.log( ' v1:' + v1 );
+	//console.log( ' v2:' + v2 );
+	//console.log( ' ce:' + center );
+	vertices.push(vec3.copy([0,0,0],v1),vec3.copy([0,0,0],v2),vec3.copy([0,0,0],center));var cLen=vertices.length-1;indices.push(cLen-2,cLen-1,cLen);normals.push(vec3.copy([0,0,0],v1),vec3.copy([0,0,0],v2),vec3.copy([0,0,0],center));texCoords.push(computeSphereCoords(v1),computeSphereCoords(v2),computeSphereCoords(center));}// end of 'for' loop.
+	}// end of 'faces' loop.
+	}// end of wrap whole object with one texture.
+	for(var _i18=0;_i18<vertices.length;_i18++){var _vv=vertices[_i18];_vv[0]*=w;_vv[1]*=h;_vv[2]*=d;}// Flatten.
+	geo.vertices.data=flatten(vertices);geo.indices.data=indices;geo.texCoords.data=flatten(texCoords);geo.normals.data=flatten(normals);// Return the buffer.
 	return this.createBuffers(prim.geometry);}/** 
 	     * Torus object
 	     * @link https://blogoben.wordpress.com/2011/10/26/webgl-basics-7-colored-torus/
@@ -4614,18 +4574,19 @@
 	     * @param {GLMatrix.vec3} rotation rotation vector (spin) around center of object.
 	     * @param {String} textureImage the path to an image used to create a texture.
 	     * @param {Array|GLMatrix.vec4} color the default color(s) of the object.
-	     */},{key:'createPrim',value:function createPrim(type){var name=arguments.length>1&&arguments[1]!==undefined?arguments[1]:'unknown';var dimensions=arguments[2];var divisions=arguments[3];var position=arguments[4];var acceleration=arguments[5];var rotation=arguments[6];var angular=arguments[7];var textureImage=arguments[8];var color=arguments[9];var vec3=this.glMatrix.vec3;var mat4=this.glMatrix.mat4;if(!this.checkType(type)){console.error('unsupported Prim type, '+type);return null;}var prim={};prim.id=this.setId();prim.name=name;prim.scale=1.0;// starting size = default scale
+	     * @param {Boolean} applyTexToFace if true, apply texture to each face, else apply texture to 
+	     * the entire object.
+	     */},{key:'createPrim',value:function createPrim(type){var name=arguments.length>1&&arguments[1]!==undefined?arguments[1]:'unknown';var dimensions=arguments[2];var divisions=arguments[3];var position=arguments[4];var acceleration=arguments[5];var rotation=arguments[6];var angular=arguments[7];var textureImage=arguments[8];var color=arguments[9];var applyTexToFace=arguments.length>10&&arguments[10]!==undefined?arguments[10]:false;var vec3=this.glMatrix.vec3;var mat4=this.glMatrix.mat4;if(!this.checkType(type)){console.error('unsupported Prim type, '+type);return null;}var prim={};prim.id=this.setId();prim.name=name;prim.scale=1.0;// starting size = default scale
 	prim.dimensions=dimensions||this.vec7(1,1,1,0,0,0,0);prim.divisions=divisions||this.vec6(1,1,1,0,0,0);prim.position=position||vec3.create();prim.acceleration=acceleration||vec3.create();// The absolute .rotation object includes rotation on x, y, z axis
 	prim.rotation=rotation||vec3.create();// The acceleration object indicates velocity on angular motion in x, y, z
 	prim.angular=angular||vec3.create();// The orbit defines a center that the object orbits around, and orbital velocity.
-	prim.orbitRadius=0.0;prim.orbitAngular=0.0;// Side to render
-	prim.side=this.DEFAULT_SIDE;// TODO: Normals outside, inside or both !!!!!!!!!!!!!!!!!!!! CHANGE
-	// Waypoints for scripted motion.
+	prim.orbitRadius=0.0;prim.orbitAngular=0.0;// Visible from outside (counterclockwise) or inside (clockwise).
+	prim.visibleFrom=this.OUTSIDE;prim.applyTexToFace=applyTexToFace;// Waypoints for scripted motion.
 	prim.waypoints=[];// Store multiple textures for one Prim.
 	prim.textures=[];// Store multiple sounds for one Prim.
 	prim.audio=[];// Store multiple videos for one Prim.
 	prim.video=[];// Multiple textures per Prim. Rendering defines how textures for each Prim type are used.
-	for(var _i17=0;_i17<textureImage.length;_i17++){this.loadTexture.load(textureImage[_i17],prim);}// Define Prim material (only one material type at a time per Prim ).
+	for(var _i19=0;_i19<textureImage.length;_i19++){this.loadTexture.load(textureImage[_i19],prim);}// Define Prim material (only one material type at a time per Prim ).
 	prim.material=this.setMaterial();// Define Prim light (it glows) not how it is lit.
 	this.light={direction:[1,1,1],color:[255,255,255]};// Parent Node.
 	prim.parentNode=null;// Child Prim array.
@@ -4655,11 +4616,11 @@
 	     * ---------------------------------------
 	     *//** 
 	     * Scale vertices directly, without changing position.
-	     */},{key:'scale',value:function scale(vertices,_scale){var oldPos=this.getCenter(vertices);for(var _i18=0,len=vertices.length;_i18<len;_i18++){vertices[_i18]*=_scale;}this.move(vertices,oldPos);}/** 
+	     */},{key:'scale',value:function scale(vertices,_scale){var oldPos=this.getCenter(vertices);for(var _i20=0,len=vertices.length;_i20<len;_i20++){vertices[_i20]*=_scale;}this.move(vertices,oldPos);}/** 
 	     * Move vertices directly in geometry, i.e. for something 
 	     * that always orbits a central point.
 	     * NOTE: normally, you will want to use a matrix transform to position objects.
-	     */},{key:'move',value:function move(vertices,pos){var center=this.getCenter(vertices);var delta=[center[0]-pos[0],center[1]-pos[1],center[2]=pos[2]];for(var _i19=0,len=vertices.length;_i19<len;_i19+=3){vertices[_i19]=delta[0];vertices[_i19+1]=delta[1];vertices[_i19+2]=delta[2];}}/** 
+	     */},{key:'move',value:function move(vertices,pos){var center=this.getCenter(vertices);var delta=[center[0]-pos[0],center[1]-pos[1],center[2]=pos[2]];for(var _i21=0,len=vertices.length;_i21<len;_i21+=3){vertices[_i21]=delta[0];vertices[_i21+1]=delta[1];vertices[_i21+2]=delta[2];}}/** 
 	     * Set a material for a prim.
 	     * @link http://webglfundamentals.org/webgl/lessons/webgl-less-code-more-fun.html
 	     * didn't use chroma (but could)
@@ -5879,7 +5840,8 @@
 	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
 	            vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
 	            ['img/crate.png'], // texture present
-	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+	            vec4.fromValues(0.5, 1.0, 0.2, 1.0), // color,
+	            true // if true, apply texture to each face
 	            ));
 
 	            this.vs3 = this.renderer.shaderDirlightTexture.init(this.dirlightTextureObjList);
