@@ -1,4 +1,6 @@
-class Map2d {
+import Mapd from  './mapd';
+
+class Map2d extends Mapd {
 
     /* 
      * NOTE: using 'map.es6' causes a transpile error
@@ -13,12 +15,13 @@ class Map2d {
      * @link https://www.html5rocks.com/en/tutorials/webgl/typed_arrays/
      *
      */
-
     constructor ( util ) {
 
         console.log( 'in Map2d' );
 
-        this.util = util;
+        super ( util );
+
+        //this.util = util;
 
         this.type = {
 

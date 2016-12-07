@@ -1,4 +1,6 @@
-class Map3d {
+import Mapd from  './mapd';
+
+class Map3d extends Mapd {
 
     /* 
      * NOTE: using 'map.es6' causes a transpile error
@@ -17,7 +19,9 @@ class Map3d {
 
         console.log( 'in Map3d' );
 
-        this.util = util;
+        super ( util );
+
+        //this.util = util;
 
         this.type = {
 

@@ -24,6 +24,27 @@ class Prim {
      * prim.texure1Arr    = [ texture1, texture2, texture3 ]
      * prim.audioArr      = [ AudioObj1, AudioObj2, AudioObj3...]
      * 
+     * ---------------------------------------------------------------
+     * Code rules
+     * 1. vertices = final vertex data for computation or rendering
+     * 2. vtx = any initialization vertices (e.g. for complex polyhedra)
+     * 3. v, vv = local vertex or vertex array.
+     * 4. when using GlMatrix functions, do 'in place' conversion first. 
+     *    If not practical, return the result. If not practical, use an 
+     *    object literal:
+     *    a. vec3.sub( resultPt, a, b );
+     *    b. resultPt = vec3.sub( resultPt, a, b );
+     *    c. resultPt = vec3.sub( [ 0, 0, 0 ], a, b );
+     * ---------------------------------------------------------------
+     * 
+     * geo primitives
+     * USE THIS!!!! https://github.com/nickdesaulniers/prims
+     * https://github.com/mhintz/platonic/tree/master/src
+     * https://github.com/azmobi2/html5-webgl-geometry-shapes/blob/master/webgl_geometry_shapes.html
+     * 
+     * convert fonts to texture
+     * https://github.com/framelab/fontmatic
+     * 
      * More prims
      * Ogre 3d procedural
      * https://bitbucket.org/transporter/ogre-procedural/src/ca6eb3363a53c2b53c055db5ce68c1d35daab0d5/library/include/?at=default
@@ -32,27 +53,9 @@ class Prim {
      * https://github.com/jagenjo/litegl.js/tree/master/src
      *
      * http://wiki.unity3d.com/index.php/ProceduralPrimitives
-     *
-     * octahedron sphere generation
-     * https://www.binpress.com/tutorial/creating-an-octahedron-sphere/162
-     * https://experilous.com/1/blog/post/procedural-planet-generation
-     * https://experilous.com/1/planet-generator/2014-09-28/planet-generator.js
-     * another octahedron sphere 
-     * https://www.binpress.com/tutorial/creating-an-octahedron-sphere/162
-     * rounded cube
-     * https://github.com/vorg/primitive-rounded-cube
-     * rounded cube algorithim
-     * http://catlikecoding.com/unity/tutorials/rounded-cube/
-     *
-     * generalized catmull-clark subdivision algorithm
-     * https://thiscouldbebetter.wordpress.com/2015/04/24/the-catmull-clark-subdivision-surface-algorithm-in-javascript/
-     *
-     * cube inflation algorithm
-     * http://mathproofs.blogspot.com.au/2005/07/mapping-cube-to-sphere.html
+     * 
      * advanced toolset
      * https://www.geometrictools.com/Samples/Geometrics.html
-     * Eigen
-     * https://fossies.org/dox/eigen-3.2.10/icosphere_8cpp_source.html
      * Geometry prebuilt
      * http://paulbourke.net/geometry/roundcube/
      * Lots of Webgl tricks!
@@ -60,17 +63,8 @@ class Prim {
      * http://acko.net/blog/on-webgl/
      * 
      * https://gamedevdaily.io/four-ways-to-create-a-mesh-for-a-sphere-d7956b825db4#.lkbq2omq5
-     * https://www.geometrictools.com/Samples/Geometrics.html
      *
-     * https://github.com/glo-js/primitive-icosphere
-     * https://github.com/hughsk/icosphere
-     * http://mft-dev.dk/uv-mapping-sphere/
-     * http://donhavey.com/blog/tutorials/tutorial-3-the-icosahedron-sphere/
-     * http://blog.andreaskahler.com/2009/06/creating-icosphere-mesh-in-code.html
-     *
-     * https://www.binpress.com/tutorial/creating-an-octahedron-sphere/162
-     *
-     *
+     * 
      */
     constructor ( init, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo ) {
 
@@ -200,6 +194,8 @@ class Prim {
 
         this.OUTSIDE = 0,
         this.INSIDE = 1;
+
+        // Shorthand.
 
         this.TWO_PI = Math.PI * 2;
 
@@ -579,21 +575,6 @@ class Prim {
     }
 
     /** 
-     * Create default colors for Prim color array.
-     */
-    computeColors( normals, colors ) {
-
-        for ( let i = 0, len = normals.length; i < len; i += 3 ) {
-
-            colors.push( normals[ i ], normals[ i + 1 ], normals[ i + 2 ], 1.0 );
-
-        }
-
-        return colors;
-
-    }
-
-    /** 
      * Check the values of a Prim.
      * TODO: why is itemsize of indices = 1
      */
@@ -621,7 +602,7 @@ class Prim {
 
     /* 
      * ---------------------------------------
-     * DEFAULT VECTORS
+     * DEFAULT VECTORS AND OBJECTS
      * ---------------------------------------
      */
 
@@ -660,7 +641,8 @@ class Prim {
      * For CONE, the fourth value is truncation of the cone point.
      * For other Prims, the fourth and fifth values control the start and 
      * end of a cap on open prims (CYLINDER, CONE) and flattening of the 
-     * top and bottom of SPHERE prims.
+     * top and bottom of SPHERE prims. This stretches the texture across the 
+     * ends of the Prim. 
      */
     vec5 ( a, b, c, d, e ) {
 
@@ -691,131 +673,26 @@ class Prim {
      */
 
     /** 
-     * Get spherical coordinates (u, v) for normalized unit vector.
+     * Create default colors for Prim color array.
      */
-    computeSphereCoords ( vtx ) {
+    computeColors( normals, colors ) {
 
-        let u = Math.atan2( vtx[ 0 ], vtx[ 2 ] ) / ( 2 * Math.PI );  // was v.x, v.z
+        for ( let i = 0, len = normals.length; i < len; i += 3 ) {
 
-        let v = Math.asin( vtx[ 1 ] ) / Math.PI + 0.5;  // was v.y, textureCoordinates.y
-
-        if ( u < 0 ) {
-
-            u += 1;
+            colors.push( normals[ i ], normals[ i + 1 ], normals[ i + 2 ], 1.0 );
 
         }
 
-        return [ u, v ];
+        return colors;
 
     }
 
     /** 
-     * Computed the angle between 2 3d points.
-     */
-    computeAngle3d ( a, b, c ) {
-
-        let ab = [ b[0] - a[0], b[1] - a[1], b[2] - a[2] ];
-        let bc = [ c[0] - b[0], c[1] - b[1], c[2] - b[2] ];
-
-        let abVec = Math.sqrt( ab[0] * ab[0] + ab[1] * ab[1] + ab[2] * ab[2] );
-        let bcVec = Math.sqrt( bc[0] * bc[0] + bc[1] * bc[1] + bc[2] * bc[2] );
-
-        let abNorm = [ ab[0] / abVec, ab[1] / abVec, ab[2] / abVec ];
-        let bcNorm = [ bc[0] / bcVec, bc[1] / bcVec, bc[2] / bcVec ];
-
-        let res = abNorm[0] * bcNorm[0] + abNorm[1] * bcNorm[1] + abNorm[2] * bcNorm[2];
-
-        return Math.acos( res );
-
-    }
-
-
-    /**
-     * find the center between any set of 3d points
-     * @param {[...vec3]} vertices an array of xyz points.
-     * @returns {vec3} the center point.
-     */ 
-    computeCentroid ( vertices ) {
-
-        let c = [ 0, 0, 0 ], len = vertices.length;
-
-        for ( let i = 0; i < len; i++ ) {
-
-            let vertex = vertices[ i ];
-
-            //console.log("VVVVERTICES i:" + i + ' vertex:' + vertex)
-
-            c[ 0 ] += vertex[ 0 ];
-
-            c[ 1 ] += vertex[ 1 ];
-
-            c[ 2 ] += vertex[ 2 ];
-
-        }
-
-        c[ 0 ] /= len;
-
-        c[ 1 ] /= len;
-
-        c[ 2 ] /= len;
-
-        //console.log( '======================')
-        //console.log( "FFFFFFINAL c:" + c)
-        //console.log( '======================')
-
-        return c;
-
-    }
-
-    computeMassCentroid( verticies ) {
-
-        let vec3 = this.glMatrix.vec3;
-
-        var s = [ 0, 0, 0 ];
-
-        var areaTotal = 0.0;
-
-        var p1 = verticies[ 0 ];
-
-        var p2 = verticies[ 1 ];
-
-        for (var i = 2; i < verticies.length; i++) {
-
-            var p3 = verticies[ i ];
-
-            var edge1 = vec3.subtract( [ 0, 0, 0 ], p3, p1 );
-            var edge2 = vec3.subtract( [ 0, 0, 0 ], p3, p2 );
-
-            var crossProduct = vec3.cross( [ 0, 0, 0 ], edge1, edge2 );
-
-            var area = vec3.length( crossProduct ) / 2;
-
-            s.X += area * ( p1[ 0 ] + p2[ 0 ] + p3[ 0 ] ) / 3;
-            s.Y += area * ( p1[ 1 ] + p2[ 1 ] + p3[ 1 ] ) / 3;
-            s.Z += area * ( p1[ 2 ] + p2[ 2 ] + p3[ 2 ] ) / 3;
-
-            areaTotal += area;
-
-            p2 = vec3.copy( [ 0, 0, 0 ], p3 );
-
-        }
-
-        var point = [
-            s[ 0 ] / areaTotal,
-            s[ 1 ] / areaTotal,
-            s[ 2 ] / areaTotal
-        ];
-
-        return point;
-
-    }
-
-    /** 
-     * bounding box for a set of 3d points. NOT the same 
-     * as a standard cube, since each side is a quad without 
+     * Bounding box for a set of 3d points. This object is NO the same 
+     * as a standard Cube, since each side is a quad without 
      * further divisions.
      * @param {[...vec3]} vertices a list of points to be enclosed in the bounding box.
-     * @returns{Box} a Box object.
+     * @returns{Box} a BoundingBox object.
      */
     computeBoundingBox( vertices ) {
 
@@ -880,150 +757,150 @@ class Prim {
     }
 
     /** 
-     * given a set of points, compute a triangle fan a central point.
-     * @param {[...vec3]} vertices an array of UN-FLATTENED xyz points.
-     * @param {[uint16]} indices the sequence to read triangles.
-     * @returns {Object} UN-FLATTENED vertices, indices, texCoords nomals, tangents.
+     * Get spherical coordinates (u, v) for normalized unit vector.
      */
-    computeFan ( vertices, indices ) {
+    computeSphereCoords ( vtx ) {
 
-        let vec3 = this.glMatrix.vec3;
+        let u = Math.atan2( vtx[ 0 ], vtx[ 2 ] ) / ( this.TWO_PI );  // x, z
 
-        let scalePos = this.util.scalePos;
+        let v = Math.asin( vtx[ 1 ] ) / Math.PI + 0.5; // y
 
-        let vv = [];
+        if ( u < 0 ) {
 
-        // Get the subset of vertices we should take by following indices.
-
-        for ( let i = 0; i < indices.length; i++ ) {
-
-            vv.push( vertices[ indices[ i ] ] );
+            u += 1;
 
         }
 
-        let box = this.computeBoundingBox( vv );
-
-        // Get the topLeft and bottomRight points (bounding rectangle).
-
-        let center = this.computeCentroid( vv );
-
-        // Get the first point in the polygon.
-
-        let v0 = vv[ 0 ];
-
-        // Use this when we want the center of the whole object the polygon is part of.
-        //let center = this.calculateMassCentroid( vv );
-
-        // Add a central point so we can create a triangle fan.
-
-        vv.push( center );
-
-        let centerPos = vv.length - 1;
-
-        let len = indices.length;
-
-        let vtx = [];
-
-        let tex = [];
-
-        let nor = [];
-
-        let idx = [];
-
-        // We re-do the indices calculations, since we insert a central point.
-
-        let lenv = vv.length;
-
-        let env = lenv - 1;
-
-        for ( let i = 1; i < lenv; i++ ) {
-
-            let p1 = i - 1;
-
-            let p2 = i;
-
-            if ( i === lenv - 1 ) {
-
-                p2 = 0;
-
-            }
-
-            let v1 = vv[ p1 ];
-
-            let v2 = vv[ p2 ];
-
-            idx.push( p1, p2, centerPos );
-
-            nor.push( v1, v2, center );
-
-            // Texture coords computed local to triangle fan.
-
-            let dist, angle, xDist, yDist, u, v;
-
-            dist = vec3.distance( center, v1 );
-
-            // Assumes a regular polygon.
-
-            u = Math.cos( 2 * Math.PI * p2 / ( lenv - 1) ) / 2 + .5;
-
-            v = Math.sin( 2 * Math.PI * p2 / ( lenv - 1 ) ) / 2 + .5;
-            
-            tex.push( u, v );
-
-        } // end of for loop
-
-        // Push the center point texture coordinate.
-
-        tex.push( 0.5, 0.5 );
-
-        return {
-
-            vertices: vv,
-
-            indices: idx,
-
-            texCoords: tex,
-
-            normals: nor
-
-        }
+        return [ u, v ];
 
     }
 
     /** 
-     * Subdivide a mesh, WITHOUT smoothing.
-     * Comprehensive description.
-     * @link http://www.rorydriscoll.com/2008/08/01/catmull-clark-subdivision-the-basics/
-     * USE:
-     * USE: https://blog.nobel-joergensen.com/2010/12/25/procedural-generated-mesh-in-unity/
-     * USE: http://wiki.unity3d.com/index.php/MeshSubdivision
-     * USE: https://thiscouldbebetter.wordpress.com/2015/04/24/the-catmull-clark-subdivision-surface-algorithm-in-javascript/
-     * USE: https://github.com/Erkaman/gl-catmull-clark/blob/master/index.js
-     * Examples:
-     * @link http://vorg.github.io/pex/docs/pex-geom/Geometry.html
-     * @link http://answers.unity3d.com/questions/259127/does-anyone-have-any-code-to-subdivide-a-mesh-and.html
-     * @link https://thiscouldbebetter.wordpress.com/2015/04/24/the-catmull-clark-subdivision-surface-algorithm-in-javascript/
+     * Computed the angle between three 3d points defining a Plane.
+     * @param {GlMatrix.vec3} a first Point in angle.
+     * @param {GlMatrix.vec3} b second axis point in angle.
+     * @param {GlMatrix.vec3} c third point defining angle.
+     * @returns {Number} the angle between the points.
      */
-    subDivide ( geometry, center ) {
+    computeAngle3d ( a, b, c ) {
 
-        // TODO: NOT DONE!!!!
+        let ab = [ b[ 0 ] - a[ 0 ], b[ 1 ] - a[ 1 ], b[ 2 ] - a[ 2 ] ];
 
+        let bc = [ c[ 0 ] - b[ 0 ], c[ 1 ] - b[ 1 ], c[ 2 ] - b[ 2 ] ];
 
-        return geometry;
+        let abVec = Math.sqrt( ab[ 0 ] * ab[ 0 ] + ab[ 1 ] * ab[ 1 ] + ab[ 2 ] * ab[ 2 ] );
+
+        let bcVec = Math.sqrt( bc[ 0 ] * bc[ 0 ] + bc[ 1 ] * bc[ 1 ] + bc[ 2 ] * bc[ 2 ] );
+
+        let abNorm = [ ab[ 0 ] / abVec, ab[ 1 ] / abVec, ab[ 2 ] / abVec ];
+
+        let bcNorm = [ bc[ 0 ] / bcVec, bc[ 1 ] / bcVec, bc[ 2 ] / bcVec ];
+
+        let res = abNorm[ 0 ] * bcNorm[ 0 ] + abNorm[ 1 ] * bcNorm[ 1 ] + abNorm[ 2 ] * bcNorm[ 2 ];
+
+        return Math.acos( res );
 
     }
 
+
     /**
-     * Compute whether point is in a triangle, wrapped 
-     * clockwise (begin with a, end with c)
-     * @link http://blackpawn.com/texts/pointinpoly/
+     * Find the center between any set of 3d points
+     * @param {[...vec3]} vertices an array of xyz points.
+     * @returns {vec3} the center point.
+     */ 
+    computeCentroid ( vertices ) {
+
+        let c = [ 0, 0, 0 ], len = vertices.length;
+
+        for ( let i = 0; i < len; i++ ) {
+
+            let vertex = vertices[ i ];
+
+            //console.log("VVVVERTICES i:" + i + ' vertex:' + vertex)
+
+            c[ 0 ] += vertex[ 0 ];
+
+            c[ 1 ] += vertex[ 1 ];
+
+            c[ 2 ] += vertex[ 2 ];
+
+        }
+
+        c[ 0 ] /= len;
+
+        c[ 1 ] /= len;
+
+        c[ 2 ] /= len;
+
+        return c;
+
+    }
+
+    /** 
+     * Compute an area-weighted centroid point for a Prim.
+     * @param {Array[...GlMatrix.vec3]} vertices a list of 3d vertices.
+     * @param {GlMatrix.vec3} the centroid Point.
+     */
+    computeMassCentroid( verticies ) {
+
+        let vec3 = this.glMatrix.vec3;
+
+        var c = [ 0, 0, 0 ];
+
+        var areaTotal = 0.0;
+
+        var p1 = verticies[ 0 ];
+
+        var p2 = verticies[ 1 ];
+
+        for (var i = 2; i < verticies.length; i++) {
+
+            var p3 = verticies[ i ];
+
+            var edge1 = vec3.subtract( [ 0, 0, 0 ], p3, p1 );
+
+            var edge2 = vec3.subtract( [ 0, 0, 0 ], p3, p2 );
+
+            var crossProduct = vec3.cross( [ 0, 0, 0 ], edge1, edge2 );
+
+            var area = vec3.length( crossProduct ) / 2;
+
+            c[ 0 ] += area * ( p1[ 0 ] + p2[ 0 ] + p3[ 0 ] ) / 3;
+
+            c[ 1 ] += area * ( p1[ 1 ] + p2[ 1 ] + p3[ 1 ] ) / 3;
+
+            c[ 2 ] += area * ( p1[ 2 ] + p2[ 2 ] + p3[ 2 ] ) / 3;
+
+            areaTotal += area;
+
+            p2 = vec3.copy( [ 0, 0, 0 ], p3 );
+
+        }
+
+        var point = [
+
+            c[ 0 ] / areaTotal,
+
+            c[ 1 ] / areaTotal,
+
+            c[ 2 ] / areaTotal
+
+        ];
+
+        return point;
+
+    }
+
+    /** 
+     * Compute barycentric coordinates of a Point relative 
+     * to a triangle defined by three Points.
      * @param {vec3} p the point to test.
      * @param {vec3} p0 first clockwise vertex of triangle.
      * @param {vec3} p1 second clockwise vertex of triangle.
      * @param {vec3} p2 third clockwise vertex of triangle.
-     * @returns {Boolean} if point in triangle, return true, else false.
+     * @returns {GlMatrix.vec2} uv coordinates of Point relative to triangle.
      */
-    pointInTriangle ( p, p0, p1, p2 ) {
+    computeBaryCentric( p, p0, p1, p2 ) {
 
         const vec3 = this.glMatrix.vec3;
 
@@ -1057,9 +934,155 @@ class Prim {
 
         let v = ( dot00 * dot12 - dot01 * dot02 ) * invDenom;
 
-        // Check if point is in triangle.
+        return [ u, v ];
+
+    }
+
+
+    /**
+     * Compute whether point is in a triangle, wrapped 
+     * clockwise (begin with a, end with c)
+     * @link http://blackpawn.com/texts/pointinpoly/
+     * @param {vec3} p the point to test.
+     * @param {vec3} p0 first clockwise vertex of triangle.
+     * @param {vec3} p1 second clockwise vertex of triangle.
+     * @param {vec3} p2 third clockwise vertex of triangle.
+     * @returns {Boolean} if point in triangle, return true, else false.
+     */
+    pointInTriangle ( p, p0, p1, p2 ) {
+
+        let uv = this.computeBaryCentric( p, p0, p1, p2 );
+
+        // Check if Point is in triangle.
 
         return ( u >= 0 ) && ( v >= 0 ) && ( u + v < 1 );
+
+    }
+
+    /** 
+     * Given a set of points, compute a triangle fan around a central Point.
+     * @param {[...vec3]} vertices an array of UN-FLATTENED xyz points.
+     * @param {[uint16]} indices the sequence to read triangles.
+     * @returns {Object} UN-FLATTENED vertices, indices, texCoords nomals, tangents.
+     */
+    computeFan ( vertices, indices ) {
+
+        let vec3 = this.glMatrix.vec3;
+
+        let scalePos = this.util.scalePos;
+
+        let vv = [];
+
+        // Get the subset of vertices we should take by following indices.
+
+        for ( let i = 0; i < indices.length; i++ ) {
+
+            vv.push( vertices[ indices[ i ] ] );
+
+        }
+
+        let box = this.computeBoundingBox( vv );
+
+        // Get the topLeft and bottomRight points (bounding rectangle).
+
+        let center = this.computeCentroid( vv );
+
+        // Use this when we want the center of the whole object the polygon is part of.
+        //let center = this.calculateMassCentroid( vv );
+
+        // Add a central point so we can create a triangle fan.
+
+        vv.push( center );
+
+        let centerPos = vv.length - 1;
+
+        let len = indices.length;
+
+        let vtx = [], tex = [], nor = [], idx = [];
+
+        // We re-do the indices calculations, since we insert a central point.
+
+        let lenv = vv.length;
+
+        let env = lenv - 1;
+
+        for ( let i = 1; i < lenv; i++ ) {
+
+            let p1 = i - 1;
+
+            let p2 = i;
+
+            if ( i === lenv - 1 ) {
+
+                p2 = 0;
+
+            }
+
+            let v1 = vv[ p1 ];
+
+            let v2 = vv[ p2 ];
+
+            idx.push( p1, p2, centerPos );
+
+            nor.push( v1, v2, center );
+
+            // Assumes a regular polygon.
+
+            tex.push(
+
+                Math.cos( this.TWO_PI * p2 / ( lenv - 1 ) ) / 2 + .5,
+
+                Math.sin( this.TWO_PI * p2 / ( lenv - 1 ) ) / 2 + .5
+
+            );
+
+
+        } // end of for loop
+
+        // Push the center point texture coordinate.
+
+        tex.push( 0.5, 0.5 );
+
+        return {
+
+            vertices: vv,
+
+            indices: idx,
+
+            texCoords: tex,
+
+            normals: nor
+
+        }
+
+    }
+
+    /** 
+     * Subdivide a mesh, WITHOUT smoothing.
+     * Comprehensive description.
+     * @link http://www.rorydriscoll.com/2008/08/01/catmull-clark-subdivision-the-basics/
+     * USE:
+     * USE: https://blog.nobel-joergensen.com/2010/12/25/procedural-generated-mesh-in-unity/
+     * USE: http://wiki.unity3d.com/index.php/MeshSubdivision
+     * USE: https://thiscouldbebetter.wordpress.com/2015/04/24/the-catmull-clark-subdivision-surface-algorithm-in-javascript/
+     * USE: https://github.com/Erkaman/gl-catmull-clark/blob/master/index.js
+     * Examples:
+     * Subdivide algorithm
+     * https://github.com/mikolalysenko/loop-subdivide
+     * https://github.com/Erkaman/gl-catmull-clark
+     * https://www.ibiblio.org/e-notes/Splines/models/loop.js
+     * generalized catmull-clark subdivision algorithm
+     * https://thiscouldbebetter.wordpress.com/2015/04/24/the-catmull-clark-subdivision-surface-algorithm-in-javascript/
+     * @link http://vorg.github.io/pex/docs/pex-geom/Geometry.html
+     * @link http://answers.unity3d.com/questions/259127/does-anyone-have-any-code-to-subdivide-a-mesh-and.html
+     * @link https://thiscouldbebetter.wordpress.com/2015/04/24/the-catmull-clark-subdivision-surface-algorithm-in-javascript/
+     */
+    subDivide ( geometry, center ) {
+
+        // TODO: NOT DONE!!!!
+
+
+        return geometry;
 
     }
 
@@ -1250,7 +1273,7 @@ class Prim {
 
             //console.log("TMP:" + tmp) //NOT COMPUTING THIS RIGHT, all NAN
 
-            const len2 = tmp[ 0 ] * tmp[ 0 ] + tmp[1] * tmp[1] + tmp[2] * tmp[2];
+            const len2 = tmp[ 0 ] * tmp[ 0 ] + tmp[ 1 ] * tmp[ 1 ] + tmp[ 2 ] * tmp[ 2 ];
 
             // normalize the vector only if non-zero length
 
@@ -1263,8 +1286,8 @@ class Prim {
             const tw = ( vec3.dot( vec3.cross( [ 0, 0, 0 ], n, t1 ), t2 ) < 0.0 ) ? -1.0 : 1.0;
 
             tangents[i4    ] = txyz[ 0 ];
-            tangents[i4 + 1] = txyz[1];
-            tangents[i4 + 2] = txyz[2];
+            tangents[i4 + 1] = txyz[ 1 ];
+            tangents[i4 + 2] = txyz[ 2 ];
             tangents[i4 + 3] = tw;
 
             ///console.log("TW:" + tw)
@@ -1329,7 +1352,7 @@ class Prim {
 
             // roughness 0.2 of 0-1, flatten = 1 of 0-1;
 
-            prim.spaceMap[ prim.spaceMap.type.CLOUD ]( prim.divisions[ 0 ], prim.divisions[ 1 ], prim.divisions[2], 0.6, 1 );
+            prim.spaceMap[ prim.spaceMap.type.CLOUD ]( prim.divisions[ 0 ], prim.divisions[ 1 ], prim.divisions[ 2 ], 0.6, 1 );
 
         }
 
@@ -1565,7 +1588,7 @@ class Prim {
 
                 //console.log("STARTSLICE FOR:" + prim.name + " = " + startSlice );
 
-                let phi = longNum * 2 * Math.PI / longitudeBands;
+                let phi = longNum * this.TWO_PI / longitudeBands;
 
                 let sinPhi = Math.sin( phi );
 
@@ -1958,6 +1981,8 @@ class Prim {
      */
     geometryCapsule ( prim ) {
 
+        const TWO_PI = this.TWO_PI;
+
         const list = this.typeList;
 
         const vec3 = this.glMatrix.vec3;
@@ -1992,9 +2017,9 @@ class Prim {
 
             for( var s = 0; s < segments; s++ ) {
 
-                var x = Math.cos( ( Math.PI * 2 ) * s * segIncr ) * r;
+                var x = Math.cos( ( TWO_PI ) * s * segIncr ) * r;
 
-                var z = Math.sin( ( Math.PI * 2 ) * s * segIncr ) * r;
+                var z = Math.sin( ( TWO_PI ) * s * segIncr ) * r;
 
                 positions.push( radius * x, radius * y + height * dy, radius * z );
 
@@ -2528,7 +2553,7 @@ class Prim {
 
             // roughness 0.2 of 0-1, flatten = 1 of 0-1;
 
-            prim.heightMap[ prim.heightMap.type.DIAMOND ]( prim.divisions[ 0 ], prim.divisions[2], 0.6, 1 );
+            prim.heightMap[ prim.heightMap.type.DIAMOND ]( prim.divisions[ 0 ], prim.divisions[ 2 ], 0.6, 1 );
 
             // TODO: SCALE DOWN FOR WATERLINE.
 
@@ -2545,8 +2570,26 @@ class Prim {
     };
 
     /** 
+     * Create terrain with hexagon grid with each grid element independently addressible.
+     * @link http://catlikecoding.com/unity/tutorials/hex-map-1/
+     */
+    geometryHexTerrain ( prim ) { 
+
+    }
+
+    /** 
+     * Create terrain with octagon grid, with each grid element independently addressible.
+     */
+    geometryOctTerrain ( prim ) {
+
+    }
+
+    /** 
      * type CUBESPHERE.
      * rendered as WebGL TRIANGLES.
+     * http://catlikecoding.com/unity/tutorials/rounded-cube/
+     * http://mathproofs.blogspot.com.au/2005/07/mapping-cube-to-sphere.html
+     * 
      * just sets the curveRadius to 1/2 of the prim size.
      * prim.dimensions    = (vec4) [ x, y, z, Prim.side, curveRadius ]
      * prim.divisions     = (vec3) [ x, y, z ]
@@ -2570,13 +2613,25 @@ class Prim {
     /** 
      * Icosphere, adapted from Unity 3d tutorial.
      * @link https://www.binpress.com/tutorial/creating-an-octahedron-sphere/162
+     * @link https://bitbucket.org/transporter/ogre-procedural/src/ca6eb3363a53c2b53c055db5ce68c1d35daab0d5/library/src/ProceduralIcoSphereGenerator.cpp?at=default&fileviewer=file-view-default
+     * http://donhavey.com/blog/tutorials/tutorial-3-the-icosahedron-sphere/
+     * http://blog.andreaskahler.com/2009/06/creating-icosphere-mesh-in-code.html
+     * https://github.com/glo-js/primitive-icosphere
+     * https://github.com/hughsk/icosphere
+     * http://mft-dev.dk/uv-mapping-sphere/
+     * octahedron sphere generation
+     * https://www.binpress.com/tutorial/creating-an-octahedron-sphere/162
+     * https://experilous.com/1/blog/post/procedural-planet-generation
+     * https://experilous.com/1/planet-generator/2014-09-28/planet-generator.js
+     * https://fossies.org/dox/eigen-3.2.10/icosphere_8cpp_source.html
+     * 
      * divisions max: ~60
      * @param {Object} prim the primitive needing geometry.
      * @param {Boolean} noSphere if false, make an icosohedron.
      */
     geometryIcoSphere ( prim ) {
 
-        //const vec2 = this.glMatrix.vec2;
+        let TWO_PI = this.TWO_PI; // connect scope to internal functions.
 
         const vec3 = this.glMatrix.vec3;
 
@@ -2748,9 +2803,9 @@ class Prim {
 
                     vertices[ i ][ 0 ] *= radius;
 
-                    vertices[ i ][ 1 ] *= prim.dimensions[1] / 2; //radius;
+                    vertices[ i ][ 1 ] *= prim.dimensions[ 1 ] / 2; //radius;
 
-                    vertices[ i ][ 2 ] *= prim.dimensions[2] / 2; //radius;
+                    vertices[ i ][ 2 ] *= prim.dimensions[ 2 ] / 2; //radius;
 
             }
 
@@ -2790,7 +2845,7 @@ class Prim {
 
                 let textureCoordinates = [ 0, 0 ];
 
-                textureCoordinates[ 0 ] = Math.atan2( v[ 0 ], v[ 2 ] ) / ( -2 * Math.PI );  // was v.x, v.z
+                textureCoordinates[ 0 ] = Math.atan2( v[ 0 ], v[ 2 ] ) / ( -TWO_PI );  // was v.x, v.z
 
                 if ( textureCoordinates[ 0 ] < 0 ) {   // was textureCoordinates.x
 
@@ -2836,7 +2891,7 @@ class Prim {
 
                 v = vertices[ i ];
 
-                v[1] = 0;            // was v.y
+                v[ 1 ] = 0;            // was v.y
 
                 //v = v.normalized;
                 v = vec3.normalize( [ 0, 0, 0 ], v );
@@ -3031,6 +3086,7 @@ class Prim {
      * Additional links:
      * @link https://github.com/nickdesaulniers/prims/blob/master/octahedron.js
      * @link http://paulbourke.net/geometry/platonic/
+     * @link https://www.binpress.com/tutorial/creating-an-octahedron-sphere/162
      * 
      * @param {Prim} the Prim needing geometry. 
      * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
@@ -3294,9 +3350,9 @@ class Prim {
 
         //let numVertices = numVerticesPerRow * numVerticesPerColumn;
 
-        let verticalAngularStride = Math.PI * 2.0 / rings;
+        let verticalAngularStride = this.TWO_PI / rings;
 
-        let horizontalAngularStride = Math.PI * 2.0 / sides;
+        let horizontalAngularStride = this.TWO_PI / sides;
 
         let theta = 0, phi = 0, x, y, z;
 
@@ -3361,35 +3417,13 @@ class Prim {
 
     }
 
-
     /** 
-     * Create terrain with hexagon grid with each grid element independently addressible.
-     * @link http://catlikecoding.com/unity/tutorials/hex-map-1/
+     * a Torus that doesn't close
      */
-    hexTerrain ( prim ) { 
+    geometrySpring ( prim ) {
+
 
     }
-
-    /** 
-     * Create terrain with octagon grid, with each grid element independently addressible.
-     */
-    octTerrain ( prim ) {
-
-    }
-
-
-    ///////////////////////////////////////////////////////////////////////
-    // geo primitives
-    // USE THIS!!!! https://github.com/nickdesaulniers/prims
-    // https://github.com/mhintz/platonic/tree/master/src
-    // https://github.com/azmobi2/html5-webgl-geometry-shapes/blob/master/webgl_geometry_shapes.html
-    // Subdivide algorithm
-    // https://github.com/mikolalysenko/loop-subdivide
-    // https://github.com/Erkaman/gl-catmull-clark
-    // https://www.ibiblio.org/e-notes/Splines/models/loop.js
-    // convert fonts to texture
-    // https://github.com/framelab/fontmatic
-    ///////////////////////////////////////////////////////////////////////
 
     /** 
      * Generic 3d shape (e.g. Collada model).

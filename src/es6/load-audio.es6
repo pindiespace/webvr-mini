@@ -12,9 +12,9 @@ class LoadAudio extends LoadPool {
 
         console.log( 'in LoadAudio class' );
 
-        let MAX_CACHE_AUDIO = 3;
-
         super( init, util, glMatrix, webgl, MAX_CACHE_AUDIO );
+
+        let MAX_CACHE_AUDIO = 3;
 
         this.audioCtx = new ( window.AudioContext || window.webkitAudioContext )();
 
