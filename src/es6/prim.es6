@@ -8,6 +8,12 @@ class Prim {
      * Create object primitives, and return vertex and index data 
      * suitable for creating a VBO and IBO.
      * 
+     * TODO: 
+     * 1. regularize prim creation
+     * - local vertex, index, etc
+     * - vertices used in-place, instead of returned
+     * - arrays created first in prim creation, then routine, then WebGL buffers added
+     * 
      * NOTE: if you need more complex shapes, use a mesh file, or 
      * a library like http://evanw.github.io/csg.js/ to implement 
      * mesh operations.
@@ -312,7 +318,9 @@ class Prim {
 
                 itemSize: 3,
 
-                numItems: 0
+                numItems: 0,
+
+                dirty: false
 
             },
 
@@ -324,7 +332,9 @@ class Prim {
 
                 itemSize: 1,
 
-                numItems: 0
+                numItems: 0,
+
+                dirty: false
 
             },
 
@@ -336,7 +346,9 @@ class Prim {
 
                 itemSize: 3,
 
-                numItems: 0
+                numItems: 0,
+
+                dirty: false
 
             },
 
@@ -348,7 +360,9 @@ class Prim {
 
                 itemSize: 3,
 
-                numItems: 0
+                numItems: 0,
+
+                dirty: false
 
             },
 
@@ -360,7 +374,9 @@ class Prim {
 
                 itemSize: 4,
 
-                numItems: 0
+                numItems: 0,
+
+                dirty: false
 
             },
 
@@ -372,7 +388,9 @@ class Prim {
 
                 itemSize: 2,
 
-                numItems: 0
+                numItems: 0,
+
+                dirty: false
 
             },
 
@@ -384,7 +402,9 @@ class Prim {
 
                 itemSize: 4,
 
-                numItems: 0
+                numItems: 0,
+
+                dirty: false
 
             }
 
@@ -396,7 +416,7 @@ class Prim {
      * Add data to create buffers, works if existing data is present. However, 
      * indices must be consistent!
      */
-    addBufferData( bufferObj, vertices, indices, texCoords, normals, tangents, colors ) {
+    addBufferData( bufferObj, vertices, indices, texCoords, normals, tangents = [], colors = [] ) {
 
         const concat = this.util.concatArr;
 
@@ -644,23 +664,13 @@ class Prim {
      * top and bottom of SPHERE prims. This stretches the texture across the 
      * ends of the Prim. 
      */
-    vec5 ( a, b, c, d, e ) {
-
-        d = d || 0;
-
-        e = e || 0;
+    vec5 ( a, b, c, d = 0, e = 0 ) {
 
         return [ a, b, c, d, e ]; // dimensions, start slice (cone)
 
     }
 
-    vec6 ( a, b, c, d, e, f ) {
-
-        d = d || 0;
-
-        e = e || 0;
-
-        f = f || 0;
+    vec6 ( a, b, c, d = 0, e = 0, f = 0 ) {
 
         return [ a, b, c, d, e, f ];
 
@@ -900,7 +910,7 @@ class Prim {
      * @param {vec3} p2 third clockwise vertex of triangle.
      * @returns {GlMatrix.vec2} uv coordinates of Point relative to triangle.
      */
-    computeBaryCentric( p, p0, p1, p2 ) {
+    computeBarycentric( p, p0, p1, p2 ) {
 
         const vec3 = this.glMatrix.vec3;
 
@@ -949,7 +959,7 @@ class Prim {
      * @param {vec3} p2 third clockwise vertex of triangle.
      * @returns {Boolean} if point in triangle, return true, else false.
      */
-    pointInTriangle ( p, p0, p1, p2 ) {
+    computePointInTriangle ( p, p0, p1, p2 ) {
 
         let uv = this.computeBaryCentric( p, p0, p1, p2 );
 
@@ -958,6 +968,56 @@ class Prim {
         return ( u >= 0 ) && ( v >= 0 ) && ( u + v < 1 );
 
     }
+
+    /** 
+     * Scale vertices directly, without changing position.
+     */
+    computeScale ( vertices, scale ) {
+
+        let oldPos = this.getCenter( vertices );
+
+        for ( let i = 0, len = vertices.length; i < len; i++ ) {
+
+            vertices[ i ] *= scale;
+
+        }
+
+        this.moveTo( oldPos );
+
+    }
+
+    /** 
+     * Move vertices directly in geometry, i.e. for something 
+     * that always orbits a central point.
+     * NOTE: normally, you will want to use a matrix transform to position objects.
+     * @param {GLMatrix.vec3} pos - the new position.
+     */
+    computeMove ( vertices, pos ) {
+
+        let center = this.getCentroid( vertices );
+
+        let delta = [
+
+            center[ 0 ] - pos[ 0 ],
+
+            center[ 1 ] - pos[ 1 ],
+
+            center[ 2 ] - pos[ 2 ]
+
+        ];
+
+        for ( let i = 0, len = vertices.length; i < len; i += 3 ) {
+
+            vertices[i] = delta[ 0 ];
+
+            vertices[ i + 1 ] = delta[ 1 ];
+
+            vertices[ i + 2 ] = delta[ 2 ];
+
+        }
+
+    }
+
 
     /** 
      * Given a set of points, compute a triangle fan around a central Point.
@@ -995,8 +1055,6 @@ class Prim {
         vv.push( center );
 
         let centerPos = vv.length - 1;
-
-        let len = indices.length;
 
         let vtx = [], tex = [], nor = [], idx = [];
 
@@ -1054,6 +1112,13 @@ class Prim {
             normals: nor
 
         }
+
+    }
+
+    /** 
+     * Convert from one Prim geometry to another
+     */
+    computeMorph ( newGeometry, easing, geometry ) {
 
     }
 
@@ -1323,15 +1388,11 @@ class Prim {
      */
     geometryPointCloud ( prim ) {
 
-       let geo = prim.geometry;
+        let geo = prim.geometry;
 
         // Shortcuts to Prim data arrays
 
-        let vertices = geo.vertices.data,
-        indices  = geo.indices.data,
-        texCoords = geo.texCoords.data,
-        normals = geo.normals.data,
-        tangents = geo.tangents.data
+        let vertices = [], indices = [], texCoords = [], normals = [], tangents = [];
 
         // Expect points in Map3d object, or generate random.
 
@@ -1352,11 +1413,13 @@ class Prim {
 
             // roughness 0.2 of 0-1, flatten = 1 of 0-1;
 
-            prim.spaceMap[ prim.spaceMap.type.CLOUD ]( prim.divisions[ 0 ], prim.divisions[ 1 ], prim.divisions[ 2 ], 0.6, 1 );
+            //prim.spaceMap[ prim.spaceMap.type.CLOUD ]( prim.divisions[ 0 ], prim.divisions[ 1 ], prim.divisions[ 2 ], 0.6, 1 );
 
         }
 
         // Vertices.
+
+
 
         // Indices.
 
@@ -1378,7 +1441,20 @@ class Prim {
 
         } else {
 
-            return this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
+        return {
+
+            vertices: vv,
+
+            indices: idx,
+
+            texCoords: tex,
+
+            normals: nor
+
+        }
+
+        return this.addBufferData( 
+            prim.geometry, vv, idx, tex, norm );
 
         }
 
@@ -3504,7 +3580,7 @@ class Prim {
 
         prim.name = name;
 
-        prim.scale = 1.0; // starting size = default scale
+        prim.type = type;
 
         prim.dimensions = dimensions || this.vec7( 1, 1, 1, 0, 0, 0, 0 );
 
@@ -3528,69 +3604,15 @@ class Prim {
 
         prim.orbitAngular = 0.0;
 
+        prim.material = {};
+
+        prim.light = {};
+
         // Visible from outside (counterclockwise) or inside (clockwise).
 
         prim.visibleFrom = this.OUTSIDE;
 
         prim.applyTexToFace = applyTexToFace;
-
-        // Waypoints for scripted motion.
-
-        prim.waypoints = [];
-
-        // Store multiple textures for one Prim.
-
-        prim.textures = [];
-
-        // Store multiple sounds for one Prim.
-
-        prim.audio = [];
-
-        // Store multiple videos for one Prim.
-
-        prim.video = [];
-
-        // Multiple textures per Prim. Rendering defines how textures for each Prim type are used.
-
-        for ( let i = 0; i < textureImage.length; i++ ) {
-
-            this.loadTexture.load( textureImage[ i ], prim );
-
-        }
-
-        // Define Prim material (only one material type at a time per Prim ).
-
-        prim.material = this.setMaterial();
-
-        // Define Prim light (it glows) not how it is lit.
-
-        this.light = {
-
-            direction: [ 1, 1, 1 ],
-
-            color: [ 255, 255, 255 ]
-
-        };
-
-        // Parent Node.
-
-        prim.parentNode = null;
-
-        // Child Prim array.
-
-        prim.children = [];
-
-        // startRadius and endRadius are used by a few Prims (e.g. Cone)
-
-        //if ( dimensions[ 3 ] === undefined ) {
-
-       //     dimensions[ 4 ] = dimensions[ 3 ] = dimensions[ 0 ] / 2;
-
-       // }
-
-        // Set the geometry, based on defined type.
-
-        prim.type = type;
 
         prim.geometry = this.createBufferObj();
 
@@ -3598,15 +3620,27 @@ class Prim {
 
         prim.geometry.type = type;
 
+        // TODO: create arrays here
+
+        // TODO: shouldn't have to run .createBufferObj first!!!!
+
+        // TODO: regularize
+
         // NOTE: mis-spelling type leads to error here...
 
         prim.geometry = this[ type ]( prim, color );
 
-        // Standard Prim properties for position, translation, rotation, orbits. Used by shader/renderer objects (e.g. shaderTexture).
+        if ( prim.geometry.type === this.typeList.POINTCLOUD ) {
 
-        // Note: should use scale matrix
-        // TODO: @link https://nickdesaulniers.github.io/RawWebGL/#/16
+            // TODO: create buffers HERE.
 
+        }
+
+        // Set internal functions.
+
+        /** 
+         * Set the model-view matrix
+         */
         prim.setMV = ( mvMatrix ) => {
 
             let p = prim;
@@ -3632,20 +3666,114 @@ class Prim {
             vec3.add( p.rotation, p.rotation, p.angular );
 
             mat4.rotate( mvMatrix, mvMatrix, p.rotation[ 0 ], [ 1, 0, 0 ] );
+
             mat4.rotate( mvMatrix, mvMatrix, p.rotation[ 1 ], [ 0, 1, 0 ] );
+
             mat4.rotate( mvMatrix, mvMatrix, p.rotation[ 2 ], [ 0, 0, 1 ] );
 
             return mvMatrix;
 
+        };
+
+        /** 
+         * Set a material for a prim.
+         * @link http://webglfundamentals.org/webgl/lessons/webgl-less-code-more-fun.html
+         * didn't use chroma (but could)
+         * @link https://github.com/gka/chroma.js/blob/gh-pages/src/index.md
+         */
+        prim.setMaterial = ( colorMult = 1, diffuse = [ 0, 0, 0 ], specular = [ 1, 1, 1, 1 ], shininess = 250, specularFactor = 1 ) => {
+
+            let p = prim;
+
+            p.material.colorMult = colorMult;
+
+            p.diffuse = diffuse;
+
+            p.specular = specular;
+
+            p.shininess = shininess;
+
+            p.specularFactor = specularFactor;
+
+        };
+
+        /** 
+         * Set the Prim as a glowing object. Global lights 
+         * are handled by the World.
+         */
+        prim.setLight = ( direction = [ 1, 1, 1 ], color = [ 255, 255, 255 ], prim = this ) => {
+
+            let p = prim;
+
+            p.light.direction = direction;
+
+            p.light.color = color;
+
+        };
+
+        // Set the geometry, based on defined type.
+
+        // TODO: make WebGL buffers here
+
+        // Standard Prim properties for position, translation, rotation, orbits. Used by shader/renderer objects (e.g. shaderTexture).
+
+        // Note: should use scale matrix
+        // TODO: @link https://nickdesaulniers.github.io/RawWebGL/#/16
+
+        prim.scale = ( scale ) => { this.scale ( scale, prim.geometry.vertices ); };
+
+        prim.moveTo = ( pos ) => { this.computeMove( scale, prim.geometry.vertices ); };
+
+        prim.morph = ( newGeometry, easing ) => { this.morph( newGeometry, easing, prim.geometry ); };
+
+
+        // Waypoints for scripted motion.
+
+        prim.waypoints = [];
+
+        // Store multiple textures for one Prim.
+
+        prim.textures = [];
+
+        // Store multiple sounds for one Prim.
+
+        prim.audio = [];
+
+        // Store multiple videos for one Prim.
+
+        prim.video = [];
+
+        // Multiple textures per Prim. Rendering defines how textures for each Prim type are used.
+
+        for ( let i = 0; i < textureImage.length; i++ ) {
+
+            this.loadTexture.load( textureImage[ i ], prim );
+
         }
+
+        prim.scale = 1.0;
+
+        // Define Prim material (only one material type at a time per Prim ).
+
+        prim.setMaterial();
+
+        //prim.setLight();
+
+        // Parent Node.
+
+        prim.parentNode = null;
+
+        // Child Prim array.
+
+        prim.children = [];
 
         prim.renderId = -1; // NOT ASSIGNED. TODO: Assign a renderer to each Prim.
 
-        // Push into our list;
+        // Push into our list of all Prims.
 
         this.objs.push( prim );
 
-        // Prim readout to console.
+        // TODO: Prim readout to console.
 
         this.primReadout( prim ); // TODO: DEBUG!!!!!!!!!!!!!!!!!!!!!!
 
@@ -3653,86 +3781,8 @@ class Prim {
 
     }
 
-    /* 
-     * ---------------------------------------
-     * PRIM TRANSFORMS AND PROPERTIES
-     * ---------------------------------------
-     */
+} // End of class.
 
-    /** 
-     * Scale vertices directly, without changing position.
-     */
-    scale ( vertices, scale ) {
-
-        let oldPos = this.getCenter( vertices );
-
-        for ( let i = 0, len = vertices.length; i < len; i++ ) {
-
-            vertices[ i ] *= scale;
-
-        }
-
-        this.move( vertices, oldPos );
-
-    }
-
-    /** 
-     * Move vertices directly in geometry, i.e. for something 
-     * that always orbits a central point.
-     * NOTE: normally, you will want to use a matrix transform to position objects.
-     */
-    move ( vertices, pos ) {
-
-        let center = this.getCenter( vertices );
-
-        let delta = [
-
-            center[ 0 ] - pos[ 0 ],
-
-            center[ 1 ] - pos[ 1 ],
-
-            center[ 2 ] = pos[ 2 ]
-
-        ];
-
-        for ( let i = 0, len = vertices.length; i < len; i += 3 ) {
-
-            vertices[i] = delta[ 0 ];
-
-            vertices[ i + 1 ] = delta[ 1 ];
-
-            vertices[ i + 2 ] = delta[ 2 ];
-
-        }
-
-    }
-
-    /** 
-     * Set a material for a prim.
-     * @link http://webglfundamentals.org/webgl/lessons/webgl-less-code-more-fun.html
-     * didn't use chroma (but could)
-     * @link https://github.com/gka/chroma.js/blob/gh-pages/src/index.md
-     */
-    setMaterial ( prim ) {
-
-       return {
-
-            colorMult:             0,
-
-            diffuse:               [ 1, 1, 1 ], // TODO: should be textures[ 0 ]
-
-            specular:              [ 1, 1, 1, 1 ],
-
-            shininess:             this.util.getRand( 500 ),
-
-            specularFactor:        this.util.getRand( 1 ) // TODO: MAY NOT BE RIGHT
-
-        }
-
-    }
-
-}
-
-// We put this here because of JSDoc(!)
+// We put this here because of JSDoc(!).
 
 export default Prim;
