@@ -328,13 +328,13 @@ class World {
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
-        this.textureObjList.push( this.prim.createPrim(
+        this.dirlightTextureObjList.push( this.prim.createPrim(
             this.prim.typeList.TORUS, // TORUS DEFAULT
             'TORUS1',
             vec5( 1, 1, 0.5, 0 ),            // dimensions INCLUDING start radius or torus radius(last value)
             vec5( 15, 15, 15 ),            // divisions MUST BE CONTROLLED TO < 5
             //vec3.fromValues(-3.5, -3.5, -1 ),        // position (absolute)
-                                            vec3.fromValues(-0.0, 0, 2.0),
+            vec3.fromValues(-0.0, 0, 2.0),
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x

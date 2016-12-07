@@ -8,11 +8,16 @@ class Prim {
      * Create object primitives, and return vertex and index data 
      * suitable for creating a VBO and IBO.
      * 
-     * TODO: 
+     * TODO: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
      * 1. regularize prim creation
      * - local vertex, index, etc
      * - vertices used in-place, instead of returned
      * - arrays created first in prim creation, then routine, then WebGL buffers added
+     * 2. Texture indexing
+     * - create startpoints in indices for swapping textures for complex objects
+     * - create methods getting just the partial vertices, indices, etc. for manipulation.
+     * 3. Update routines
+     * - update when Prim modified (re-compute normals, tangents, smooth, optimize)
      * 
      * NOTE: if you need more complex shapes, use a mesh file, or 
      * a library like http://evanw.github.io/csg.js/ to implement 
@@ -116,13 +121,13 @@ class Prim {
 
             CIRCLE: 'geometryCircle',
 
-            POLY: 'geometryPoly',
-
             CUBE: 'geometryCube',
 
             CUBESPHERE: 'geometryCubeSphere',
 
             SPHERE: 'geometrySphere',
+
+            DISC: 'geometryCap',
 
             CAP: 'geometryCap',
 
@@ -304,7 +309,7 @@ class Prim {
     /** 
      * Return an empty buffer object.
      */
-    createBufferObj () {
+    createGeoObj () {
 
         return {
 
@@ -416,21 +421,21 @@ class Prim {
      * Add data to create buffers, works if existing data is present. However, 
      * indices must be consistent!
      */
-    addBufferData( bufferObj, vertices, indices, texCoords, normals, tangents = [], colors = [] ) {
+    addBufferData( bufferObj, vertices, indices, normals, texCoords, tangents = [], colors = [] ) {
 
         const concat = this.util.concatArr;
 
-        concat( bufferObj.vertices.data, vertices );
+        bufferObj.vertices.data = concat( bufferObj.vertices.data, vertices ),
 
-        concat( bufferObj.indices.data, indices );
+        bufferObj.indices.data = concat( bufferObj.indices.data, indices ),
 
-        concat( bufferObj.texCoords.data, texCoords );
+        bufferObj.normals.data = concat( bufferObj.normals.data, normals ),
 
-        concat( bufferObj.normals.data, normals );
+        bufferObj.texCoords.data = concat( bufferObj.texCoords.data, texCoords ),
 
-        concat( bufferObj.tangents.data, tangents );
+        bufferObj.tangents.data = concat( bufferObj.tangents.data, tangents ),
 
-        concat( bufferObj.colors.data, colors );
+        bufferObj.colors.data = concat( bufferObj.colors.data, colors );
 
         return bufferObj;
 
@@ -446,7 +451,7 @@ class Prim {
      * an array of tangents, in glMatrix.vec3 format.
      * an array of colors, in glMatrix.vec4 format.
      */
-    createBuffers( bufferObj ) {
+    createGLBuffers( bufferObj ) {
 
             const gl = this.webgl.getContext();
 
@@ -1109,45 +1114,13 @@ class Prim {
 
             texCoords: tex,
 
-            normals: nor
+            normals: nor,
+
+            tangents: [],
+
+            colors: []
 
         }
-
-    }
-
-    /** 
-     * Convert from one Prim geometry to another
-     */
-    computeMorph ( newGeometry, easing, geometry ) {
-
-    }
-
-    /** 
-     * Subdivide a mesh, WITHOUT smoothing.
-     * Comprehensive description.
-     * @link http://www.rorydriscoll.com/2008/08/01/catmull-clark-subdivision-the-basics/
-     * USE:
-     * USE: https://blog.nobel-joergensen.com/2010/12/25/procedural-generated-mesh-in-unity/
-     * USE: http://wiki.unity3d.com/index.php/MeshSubdivision
-     * USE: https://thiscouldbebetter.wordpress.com/2015/04/24/the-catmull-clark-subdivision-surface-algorithm-in-javascript/
-     * USE: https://github.com/Erkaman/gl-catmull-clark/blob/master/index.js
-     * Examples:
-     * Subdivide algorithm
-     * https://github.com/mikolalysenko/loop-subdivide
-     * https://github.com/Erkaman/gl-catmull-clark
-     * https://www.ibiblio.org/e-notes/Splines/models/loop.js
-     * generalized catmull-clark subdivision algorithm
-     * https://thiscouldbebetter.wordpress.com/2015/04/24/the-catmull-clark-subdivision-surface-algorithm-in-javascript/
-     * @link http://vorg.github.io/pex/docs/pex-geom/Geometry.html
-     * @link http://answers.unity3d.com/questions/259127/does-anyone-have-any-code-to-subdivide-a-mesh-and.html
-     * @link https://thiscouldbebetter.wordpress.com/2015/04/24/the-catmull-clark-subdivision-surface-algorithm-in-javascript/
-     */
-    subDivide ( geometry, center ) {
-
-        // TODO: NOT DONE!!!!
-
-
-        return geometry;
 
     }
 
@@ -1363,9 +1336,45 @@ class Prim {
 
     }
 
+    /** 
+     * Convert from one Prim geometry to another
+     */
+    computeMorph ( newGeometry, easing, geometry ) {
+
+    }
+
+    /** 
+     * Subdivide a mesh, WITHOUT smoothing.
+     * Comprehensive description.
+     * @link http://www.rorydriscoll.com/2008/08/01/catmull-clark-subdivision-the-basics/
+     * USE:
+     * USE: https://blog.nobel-joergensen.com/2010/12/25/procedural-generated-mesh-in-unity/
+     * USE: http://wiki.unity3d.com/index.php/MeshSubdivision
+     * USE: https://thiscouldbebetter.wordpress.com/2015/04/24/the-catmull-clark-subdivision-surface-algorithm-in-javascript/
+     * USE: https://github.com/Erkaman/gl-catmull-clark/blob/master/index.js
+     * Examples:
+     * Subdivide algorithm
+     * https://github.com/mikolalysenko/loop-subdivide
+     * https://github.com/Erkaman/gl-catmull-clark
+     * https://www.ibiblio.org/e-notes/Splines/models/loop.js
+     * generalized catmull-clark subdivision algorithm
+     * https://thiscouldbebetter.wordpress.com/2015/04/24/the-catmull-clark-subdivision-surface-algorithm-in-javascript/
+     * @link http://vorg.github.io/pex/docs/pex-geom/Geometry.html
+     * @link http://answers.unity3d.com/questions/259127/does-anyone-have-any-code-to-subdivide-a-mesh-and.html
+     * @link https://thiscouldbebetter.wordpress.com/2015/04/24/the-catmull-clark-subdivision-surface-algorithm-in-javascript/
+     */
+    computeSubdivide ( geometry, center ) {
+
+        // TODO: NOT DONE!!!!
+
+
+        return geometry;
+
+    }
+
     /* 
      * ---------------------------------------
-     * GEOMETRY
+     * GEOMETRY CREATORS
      * ---------------------------------------
      */
 
@@ -1419,44 +1428,21 @@ class Prim {
 
         // Vertices.
 
-
-
         // Indices.
 
         // Normals.
 
         this.computeNormals( vertices, indices, normals );
 
-        // Tangents.
+        // Texture coordinates.
+
+        // Tangents (not used).
 
         this.computeTangents( vertices, indices, normals, texCoords );
 
-        // Colors already present, or computed in this.createBuffers.
+        // Colors already present, or computed in this.createGLBuffers.
 
-        // Return the buffer, or add array data to the existing Prim data.
-
-        if( prim.geometry.makeBuffers === true ) {
-
-            return this.createBuffers( prim.geometry );
-
-        } else {
-
-        return {
-
-            vertices: vv,
-
-            indices: idx,
-
-            texCoords: tex,
-
-            normals: nor
-
-        }
-
-        return this.addBufferData( 
-            prim.geometry, vv, idx, tex, norm );
-
-        }
+        return this.addBufferData( bufferObj, vertices, indices, texCoords, normals, tangents, colors );
 
     }
 
@@ -1474,11 +1460,19 @@ class Prim {
 
         let geo = prim.geometry;
 
-        let vertices = geo.vertices.data,
-        indices  = geo.indices.data,
-        texCoords = geo.texCoords.data,
-        normals = geo.normals.data,
-        tangents = geo.tangents.data;
+        // Shortcuts to Prim data arrays
+
+        let vertices = [], indices = [], texCoords = [], normals = [], tangents = [];
+
+        // Expect points in Map3d object, or generate random.
+
+        let w = prim.dimensions[ 0 ],
+        h = prim.dimensions[ 1 ],
+        d = prim.dimensions[ 2 ],
+        radius = prim.dimensions[ 3 ],
+        pointSize = prim.dimensions[ 4 ] || 1,
+        numPoints = prim.divisions[ 0 ] || 1;
+
 
         // Vertices.
 
@@ -1490,101 +1484,11 @@ class Prim {
 
         // Colors.
 
-        if( ! colors.length ) {
-
-            geo.colors.data = this.computeColors( normals, colors );
-
-        }
-
         // Return the buffer, or add array data to the existing Prim data.
 
-        if( prim.geometry.makeBuffers === true ) {
+        // Return data to build WebGL buffers.
 
-            return this.createBuffers( prim.geometry );
-
-        } else {
-
-            return this.addBufferData( prim.geometry, vertices, indices, texCoords, normals, tangents, colors );
-
-        }
-
-    }
-
-
-    /** 
-     * type POLYGON.
-     * rendered as GL_POLYGON.
-     * prim.dimensions    = (vec4) [ x, y, z, startRadius | 0 ]
-     * prim.divisions     = (vec3) [ x, y, z ]
-     * 
-     * @param {Prim} the Prim needing geometry. 
-     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
-     * Creating WebGL buffers is turned on or off conditionally in the method.
-     */
-    geometryPoly ( prim ) {
-
-       let geo = prim.geometry;
-
-        // Shortcuts to Prim data arrays
-
-        let vertices = geo.vertices.data,
-        indices  = geo.indices.data,
-        texCoords = geo.texCoords.data,
-        normals = geo.normals.data,
-        tangents = geo.tangents.data;
-
-        let l = prim.dimensions[ 0 ], 
-        w = prim.dimensions[ 2 ];
-
-        // Strategy is to determine number of sides, equally space, then connect.
-
-        let sides = prim.divisions[ 0 ];
-
-        // Get the distance between Points in radians.
-
-        let sideInc = 2.0 * Math.PI * 1.0 / sides;
-
-        for ( let i = 0; i < sides; i++ ) {
-
-            vertices.push( 
-
-                Math.sin( sideInc * i ),
-                0.0,
-                Math.cos( sideInc * i )
-
-            );
-
-
-
-            // Normals.
-
-            normals.push( 0, 1, 0 );
-
-        }
-
-        // Indices (if we're not making a cap).
-
-        indices.push( i ); 
-
-        //this.computeNormals( vertices, indices, normals );
-
-        // Indices (if we are making a cap) {
-
-        // Tangents.
-
-        this.computeTangents( vertices, indices, normals, texCoords );
-
-        // Colors.
-
-        if( ! colors.length ) {
-
-            geo.colors.data = this.computeColors( normals, colors );
-
-        }
-
-        // Return the buffer.
-
-        return this.createBuffers( prim.geometry );
+        return this.addBufferData( prim.geometry, vertices, indices, normals, texCoords, tangents );
 
     }
 
@@ -1842,11 +1746,11 @@ class Prim {
 
         geo.tangents.data = tangents = this.computeTangents( vertices, indices, normals, texCoords );
 
-        // Color array is pre-created, or gets a default in createBuffers().
+        // Color array is pre-created, or gets a default in createGLBuffers().
 
         // Return the buffer.
 
-        return this.createBuffers( prim.geometry );
+        return this.createGLBuffers( prim.geometry );
 
     }
 
@@ -2169,11 +2073,11 @@ class Prim {
 
         geo.tangents.data = tangents = this.computeTangents( vertices, indices, normals, texCoords );
 
-        // Color array is pre-created, or gets a default in createBuffers().
+        // Color array is pre-created, or gets a default in createGLBuffers().
 
         // Return the buffer.
 
-        return this.createBuffers( prim.geometry );
+        return this.createGLBuffers( prim.geometry );
 
     }
 
@@ -2529,11 +2433,11 @@ class Prim {
 
         this.computeNormals( vertices, indices, normals );
 
-        // Color array is pre-created, or gets a default in createBuffers().
+        // Color array is pre-created, or gets a default in createGLBuffers().
 
         // Return the buffer.
 
-        return this.createBuffers( prim.geometry );
+        return this.createGLBuffers( prim.geometry );
 
     }
 
@@ -2897,7 +2801,7 @@ class Prim {
 
         tangents = geo.tangents.data = flatten(tangents, false );
 
-        // Color array is pre-created, or gets a default in createBuffers().
+        // Color array is pre-created, or gets a default in createGLBuffers().
 
         // Helper functions.
 
@@ -3070,7 +2974,7 @@ class Prim {
 
         // Return the buffer.
 
-        return this.createBuffers( prim.geometry );
+        return this.createGLBuffers( prim.geometry );
 
     }
 
@@ -3190,12 +3094,7 @@ class Prim {
 
         // Shortcuts to Prim data arrays.
 
-        let vertices = geo.vertices.data,
-        indices  = geo.indices.data,
-        sides = geo.sides.data,
-        texCoords = geo.texCoords.data,
-        normals = geo.normals.data,
-        tangents = geo.tangents.data;
+        let vertices = [], indices  = [], normals = [], texCoords = [], tangents = [];
 
         let w = prim.dimensions[ 0 ],
         h = prim.dimensions[ 1 ],
@@ -3365,17 +3264,17 @@ class Prim {
 
         // Flatten.
 
-        geo.vertices.data = flatten( vertices );
+        vertices = flatten( vertices );
 
-        geo.indices.data = indices;
+        texCoords = flatten( texCoords );
 
-        geo.texCoords.data = flatten( texCoords );
+        normals = flatten( normals );
 
-        geo.normals.data = flatten( normals );
+        // Color array is pre-created, or gets a default in createGLBuffers().
 
         // Return the buffer.
 
-        return this.createBuffers( prim.geometry );
+        return this.addBufferData( prim.geometry, vertices, indices, normals, texCoords, tangents );
 
     }
 
@@ -3404,11 +3303,7 @@ class Prim {
 
         // Shortcuts to Prim data arrays
 
-        let vertices = geo.vertices.data,
-        indices  = geo.indices.data,
-        texCoords = geo.texCoords.data,
-        normals = geo.normals.data,
-        tangents = geo.tangents.data;
+        let vertices = [], indices  = [], normals = [], texCoords = [], tangents = [];
 
         let radius = prim.dimensions[ 0 ] / 2; // x coordinate, width of torus in x direction
 
@@ -3418,7 +3313,7 @@ class Prim {
 
         let sides = prim.divisions[ 1 ];
 
-       // radius = 0.5, ringRadius = 0.25, sides = 36, rings = 24;
+        // typical: radius = 0.5, ringRadius = 0.25, sides = 36, rings = 24;
 
         let numVerticesPerRow = sides + 1;
 
@@ -3479,17 +3374,17 @@ class Prim {
 
                 indices.push( lb, rb, rt, lb, rt, lt );
 
-                // note: wrap backwards to see inside of torus.
+                // note: wrap backwards to see inside of torus (tunnel?).
 
             }
 
         }
 
-        // Color array is pre-created, or gets a default in createBuffers().
+        // Color array is pre-created, or gets a default in createGLBuffers().
 
         // Return the buffer.
 
-        return this.createBuffers( prim.geometry );
+        return this.addBufferData( prim.geometry, vertices, indices, normals, texCoords, tangents );
 
     }
 
@@ -3516,11 +3411,7 @@ class Prim {
 
         // Shortcuts to Prim data arrays
 
-        let vertices = geo.vertices.data,
-        indices  = geo.indices.data,
-        texCoords = geo.texCoords.data,
-        normals = geo.normals.data,
-        tangents = geo.tangents.data;
+        let vertices = [], indices  = [], normals = [], texCoords = [], tangents = [];
 
         // Vertices.
 
@@ -3534,11 +3425,11 @@ class Prim {
 
         this.computeTangents( vertices, indices, normals, texCoords );
 
-        // Color array is pre-created, or gets a default in createBuffers().
+        // Color array is pre-created, or gets a default in createGLBuffers().
 
         // Return the buffer.
 
-        return this.createBuffers( prim.geometry );
+        return this.createGLBuffers( prim.geometry );
 
     }
 
@@ -3614,7 +3505,7 @@ class Prim {
 
         prim.applyTexToFace = applyTexToFace;
 
-        prim.geometry = this.createBufferObj();
+        prim.geometry = this.createGeoObj();
 
         // Copy geometry type for use in rendering/shaders later.
 
@@ -3622,17 +3513,22 @@ class Prim {
 
         // TODO: create arrays here
 
-        // TODO: shouldn't have to run .createBufferObj first!!!!
+        // TODO: shouldn't have to run .createGeoObj first!!!!
 
         // TODO: regularize
 
-        // NOTE: mis-spelling type leads to error here...
+        // TODO: bufferObj should be called 'geometry'
 
-        prim.geometry = this[ type ]( prim, color );
+        // TODO: have a 'checkType' here to flag errors
 
-        if ( prim.geometry.type === this.typeList.POINTCLOUD ) {
+        if ( prim.geometry.type === this.typeList.TORUS || 
+        prim.geometry.type === this.typeList.DODECAHEDRON ) {
+            prim.geometry = this.createGeoObj();
+            prim.geometry = this[ type ]( prim, color );            
+            prim.geometry = this.createGLBuffers( prim.geometry );
+        } else {
 
-            // TODO: create buffers HERE.
+            prim.geometry = this[ type ]( prim, color );
 
         }
 
