@@ -1,7 +1,7 @@
 {
-  "coverage": "48.17%",
-  "expectCount": 274,
-  "actualCount": 132,
+  "coverage": "49.82%",
+  "expectCount": 281,
+  "actualCount": 140,
   "files": {
     "src/es6/load-audio.es6": {
       "expectCount": 6,
@@ -66,64 +66,69 @@
       ]
     },
     "src/es6/map2d.es6": {
-      "expectCount": 33,
+      "expectCount": 32,
       "actualCount": 16,
       "undocumentLines": [
-        1,
-        61,
-        65,
-        17,
-        305,
-        47,
-        35,
-        51,
-        171,
-        320,
-        49,
-        53,
-        57,
-        55,
-        23,
-        21,
-        45
+        3,
+        64,
+        68,
+        18,
+        308,
+        50,
+        38,
+        54,
+        174,
+        323,
+        52,
+        56,
+        60,
+        58,
+        26,
+        48
       ]
     },
     "src/es6/map3d.es6": {
-      "expectCount": 17,
+      "expectCount": 16,
       "actualCount": 6,
       "undocumentLines": [
-        1,
-        16,
-        32,
-        93,
+        3,
+        18,
         36,
-        34,
+        97,
+        40,
         38,
-        89,
-        22,
-        20,
-        30
+        42,
+        93,
+        26,
+        34
+      ]
+    },
+    "src/es6/mapd.es6": {
+      "expectCount": 3,
+      "actualCount": 1,
+      "undocumentLines": [
+        1,
+        8
       ]
     },
     "src/es6/prim.es6": {
-      "expectCount": 70,
-      "actualCount": 55,
+      "expectCount": 76,
+      "actualCount": 62,
       "undocumentLines": [
         4,
-        195,
-        1625,
-        83,
-        3199,
-        89,
-        85,
-        87,
-        91,
-        93,
-        175,
-        95,
-        79,
-        673,
-        81
+        211,
+        1929,
+        88,
+        94,
+        90,
+        92,
+        96,
+        98,
+        180,
+        100,
+        84,
+        668,
+        86
       ]
     },
     "src/es6/renderer.es6": {
@@ -215,14 +220,14 @@
       "actualCount": 10,
       "undocumentLines": [
         1,
-        84,
-        366,
-        340,
-        354,
-        62,
-        78,
-        55,
-        360
+        83,
+        364,
+        338,
+        352,
+        61,
+        77,
+        54,
+        358
       ]
     },
     "src/es6/webgl.es6": {

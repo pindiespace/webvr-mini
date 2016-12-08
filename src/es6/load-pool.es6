@@ -88,8 +88,6 @@ class LoadPool {
 
         let loadCache = this.loadCache;
 
-        let lLen = loadCache.length;
-
         let waitObj = waitCache[0];
 
         /////////console.log( 'in update(), have a waitObj waiting...' + waitObj.attach.name + ' src:' + waitObj.source );
@@ -106,7 +104,7 @@ class LoadPool {
 
         } else {
 
-            for ( i; i < lLen; i++ ) {
+            for ( i; i < loadCache.length; i++ ) {
 
                 if ( ! loadCache[ i ] ) {
 

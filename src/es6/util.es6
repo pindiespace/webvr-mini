@@ -51,7 +51,6 @@ class Util {
 
     }
 
-
     isString( str ) {
 
         return typeof str == 'string' || ( isObjectLike( str ) && objToString.call( str ) == stringTag) || false;
@@ -86,17 +85,6 @@ class Util {
         return degrees * Math.PI / 180;
 
     }
-
-    /** 
-     * Given a range, determine the normalized position 
-     * of a value in the range.
-     */
-    scalePos( num, start, end ) {
-
-        return ( num - end ) / (start - end );
-
-    }
-
 
     /** 
      * Get a succession of values from a flat array

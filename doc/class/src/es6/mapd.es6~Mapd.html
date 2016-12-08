@@ -2,8 +2,8 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <base data-ice="baseUrl">
-  <title data-ice="title">WebVR-Mini API Document</title>
+  <base data-ice="baseUrl" href="../../../">
+  <title data-ice="title">Mapd | WebVR-Mini API Document</title>
   <link type="text/css" rel="stylesheet" href="css/style.css">
   <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
   <script src="script/prettify/prettify.js"></script>
@@ -66,51 +66,221 @@
 </div>
 </nav>
 
-<div class="content" data-ice="content"><div data-ice="index" class="github-markdown"><h1 id="webvr-mini">webvr-mini</h1>
-<p>mini library offering basic webgl and webvr support</p>
-<h2 id="building">building</h2>
-<p>npm install webpack -g
-npm install webpack-dev-server -g
-npm install</p>
-<p>##development
-To run debugging, use the following npm command (in a separate window)</p>
-<p>npm run dev</p>
-<p>To minify and run production, excluding debugging libraries, type.</p>
-<p>npm run build</p>
-<p>#start the server
-Start webpack watching in first console window
-&quot;start&quot;: &quot;webpack-dev-server --inline --devtool eval --progress --colors --content-base dist&quot;</p>
-<p>#Checking things in the console</p>
-<p>To see auto-updates, access using the dev server URL. NOTE: this will only show 
-internal console.logs. You can&apos;t see objects attached to the window from here, since we 
-are in an &lt;iframe&gt;.</p>
-<p><a href="http://localhost:8080/webpack-dev-server/">http://localhost:8080/webpack-dev-server/</a></p>
-<p>To see the site without auto-updates, and with GLOBAL windows object visible in the Console, use
-<a href="http://localhost:8080">http://localhost:8080</a></p>
-<h2 id="note-on-environment-variables">note on environment variables</h2>
-<p>Environment variables are passed in at npm, and re-worked in webpack.</p>
-<p>&quot;build&quot;: &quot;cross-env BUILD_RELEASE=true BUILD_DEV=false webpack --config webpack-production.config.js -p&quot;,
-&quot;dev&quot;: &quot;cross-env BUILD_RELEASE=false BUILD_DEV=true webpack&quot;,</p>
-<p><strong>DEV</strong> means we are in a development environment</p>
-<p><strong>RELEASE</strong> means we are in a production environment</p>
-<h2 id="references">References</h2>
-<p>WebGL Fundamentals (from twgl)
-@link <a href="http://webglfundamentals.org/">http://webglfundamentals.org/</a></p>
-<p>Learning WebGL
-@link <a href="http://learningwebgl.com/blog/?page_id=1217">http://learningwebgl.com/blog/?page_id=1217</a></p>
-<p>TWGL Docs
-@link <a href="http://twgljs.org/">http://twgljs.org/</a></p>
-<p>Barebones WebGL Routines (font-loader in ui.js)
-<a href="https://github.com/williame/barebones.js/tree/gh-pages/barebones.js">https://github.com/williame/barebones.js/tree/gh-pages/barebones.js</a></p>
-<p>Cinematic Camera Movement (three.js)
-@link <a href="https://nathanselikoff.com/2552/code-sketches/basic-camera-movement-three-js-webgl">https://nathanselikoff.com/2552/code-sketches/basic-camera-movement-three-js-webgl</a></p>
-<p>First-Person Camera
-@link <a href="https://github.com/shama/first-person-camera">https://github.com/shama/first-person-camera</a></p>
-<p>OpenGL Game from Scratch
-@link <a href="http://crongdor.com/2016/04/01/making-the-game-from-scratch/">http://crongdor.com/2016/04/01/making-the-game-from-scratch/</a></p>
-<p>Some WebGL Samples (incd. dynamic clouds)
-@link <a href="https://www.ibiblio.org/e-notes/webgl/webgl.htm">https://www.ibiblio.org/e-notes/webgl/webgl.htm</a></p>
+<div class="content" data-ice="content"><div class="header-notice">
+  <div data-ice="importPath" class="import-path"><pre class="prettyprint"><code data-ice="importPathCode">import Mapd from &apos;<span><a href="file/src/es6/mapd.es6.html#lineNumber1">webvr-mini/src/es6/mapd.es6</a></span>&apos;</code></pre></div>
+  <span data-ice="access">public</span>
+  <span data-ice="kind">class</span>
+  
+  
+  
+  <span data-ice="source">| <span><a href="file/src/es6/mapd.es6.html#lineNumber1">source</a></span></span>
 </div>
+
+<div class="self-detail detail">
+  <h1 data-ice="name">Mapd</h1>
+
+  
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+
+  
+  
+  
+
+  
+
+  
+
+  
+
+  
+</div>
+
+
+
+<div data-ice="constructorSummary"><h2>Constructor Summary</h2><table class="summary" data-ice="summary">
+  <thead><tr><td data-ice="title" colspan="3">Public Constructor</td></tr></thead>
+  <tbody>
+  
+  <tr data-ice="target">
+    <td>
+      <span class="access" data-ice="access">public</span>
+      
+      
+      
+      <span class="override" data-ice="override"></span>
+    </td>
+    <td>
+      <div>
+        <p>
+           <span data-ice="name"><span><a href="class/src/es6/mapd.es6~Mapd.html#instance-constructor-constructor">constructor</a></span></span><span data-ice="signature">(util: <span>*</span>)</span>
+        </p>
+      </div>
+      <div>
+        
+        
+        <div data-ice="description"><p>General map class.</p>
+</div>
+      </div>
+    </td>
+    <td>
+      
+      
+    </td>
+  </tr>
+</tbody>
+</table>
+</div>
+<div data-ice="memberSummary"><h2>Member Summary</h2><table class="summary" data-ice="summary">
+  <thead><tr><td data-ice="title" colspan="3">Public Members</td></tr></thead>
+  <tbody>
+  
+  <tr data-ice="target">
+    <td>
+      <span class="access" data-ice="access">public</span>
+      
+      
+      
+      <span class="override" data-ice="override"></span>
+    </td>
+    <td>
+      <div>
+        <p>
+           <span data-ice="name"><span><a href="class/src/es6/mapd.es6~Mapd.html#instance-member-util">util</a></span></span><span data-ice="signature">: <span>*</span></span>
+        </p>
+      </div>
+      <div>
+        
+        
+        
+      </div>
+    </td>
+    <td>
+      
+      
+    </td>
+  </tr>
+</tbody>
+</table>
+</div>
+
+
+
+
+
+
+<div data-ice="constructorDetails"><h2 data-ice="title">Public Constructors</h2>
+
+<div class="detail" data-ice="detail">
+  <h3 data-ice="anchor" id="instance-constructor-constructor">
+    <span class="access" data-ice="access">public</span>
+    
+    
+    
+    
+    <span data-ice="name">constructor</span><span data-ice="signature">(util: <span>*</span>)</span>
+    <span class="right-info">
+      
+      
+      <span data-ice="source"><span><a href="file/src/es6/mapd.es6.html#lineNumber6">source</a></span></span>
+    </span>
+  </h3>
+
+  
+  
+  
+  <div data-ice="description"><p>General map class.</p>
+</div>
+
+  
+
+  <div data-ice="properties"><div data-ice="properties">
+  <h4 data-ice="title">Params:</h4>
+  <table class="params">
+    <thead>
+    <tr><td>Name</td><td>Type</td><td>Attribute</td><td>Description</td></tr>
+    </thead>
+    <tbody>
+    
+    <tr data-ice="property" data-depth="0">
+      <td data-ice="name" data-depth="0">util</td>
+      <td data-ice="type"><span>*</span></td>
+      <td data-ice="appendix"></td>
+      <td data-ice="description"></td>
+    </tr>
+</tbody>
+  </table>
+</div>
+</div>
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+</div>
+</div>
+<div data-ice="memberDetails"><h2 data-ice="title">Public Members</h2>
+
+<div class="detail" data-ice="detail">
+  <h3 data-ice="anchor" id="instance-member-util">
+    <span class="access" data-ice="access">public</span>
+    
+    
+    
+    
+    <span data-ice="name">util</span><span data-ice="signature">: <span>*</span></span>
+    <span class="right-info">
+      
+      
+      <span data-ice="source"><span><a href="file/src/es6/mapd.es6.html#lineNumber8">source</a></span></span>
+    </span>
+  </h3>
+
+  
+  
+  
+  
+
+  
+
+  <div data-ice="properties">
+</div>
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+</div>
+</div>
+
 </div>
 
 <footer class="footer">

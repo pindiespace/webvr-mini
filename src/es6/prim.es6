@@ -220,21 +220,15 @@ class Prim {
      */
     checkType ( type ) {
 
-        let l = this.typeList;
+        // Confirm we have a factory function for this type.
 
-        // Object iteration.
+        if ( typeof type == 'function' ) {
 
-        for ( let i in l ) {
-
-            if ( l[ i ] === type ) {
-
-                return true;
-
-            }
+            return true;
 
         }
 
-        return false;
+        return true;
 
     }
 
@@ -273,8 +267,6 @@ class Prim {
 
         vertices = [];
 
-        const len = this.objs.length;
-
         for ( let i in this.objs ) {
 
             vertices = vertices.concat( this.objs[i].vertices );
@@ -293,8 +285,6 @@ class Prim {
     setIndexData ( indices ) {
 
         indices = [];
-
-        const len = this.objs.length;
 
         for ( let i in this.objs ) {
 
@@ -323,9 +313,7 @@ class Prim {
 
                 itemSize: 3,
 
-                numItems: 0,
-
-                dirty: false
+                numItems: 0
 
             },
 
@@ -337,9 +325,7 @@ class Prim {
 
                 itemSize: 1,
 
-                numItems: 0,
-
-                dirty: false
+                numItems: 0
 
             },
 
@@ -351,9 +337,7 @@ class Prim {
 
                 itemSize: 3,
 
-                numItems: 0,
-
-                dirty: false
+                numItems: 0
 
             },
 
@@ -365,9 +349,7 @@ class Prim {
 
                 itemSize: 3,
 
-                numItems: 0,
-
-                dirty: false
+                numItems: 0
 
             },
 
@@ -379,9 +361,7 @@ class Prim {
 
                 itemSize: 4,
 
-                numItems: 0,
-
-                dirty: false
+                numItems: 0
 
             },
 
@@ -393,9 +373,7 @@ class Prim {
 
                 itemSize: 2,
 
-                numItems: 0,
-
-                dirty: false
+                numItems: 0
 
             },
 
@@ -407,9 +385,7 @@ class Prim {
 
                 itemSize: 4,
 
-                numItems: 0,
-
-                dirty: false
+                numItems: 0
 
             }
 
@@ -570,7 +546,6 @@ class Prim {
 
             o.numItems = o.data.length / o.itemSize;
 
-
             // Create the Colors buffer.
 
             o = bufferObj.colors;
@@ -580,8 +555,6 @@ class Prim {
                 console.warn( 'no colors present, creating default color' );
 
                 o.data = new Float32Array( this.computeColors( bufferObj.normals.data, o.data ) );
-
-                //o.data = new Float32Array( [ 0.2, 0.5, 0.2, 1.0 ] );
 
             }
 
@@ -692,7 +665,7 @@ class Prim {
      */
     computeColors( normals, colors ) {
 
-        for ( let i = 0, len = normals.length; i < len; i += 3 ) {
+        for ( let i = 0; i < normals.length; i += 3 ) {
 
             colors.push( normals[ i ], normals[ i + 1 ], normals[ i + 2 ], 1.0 );
 
@@ -803,17 +776,15 @@ class Prim {
 
         let bc = [ c[ 0 ] - b[ 0 ], c[ 1 ] - b[ 1 ], c[ 2 ] - b[ 2 ] ];
 
-        let abVec = Math.sqrt( ab[ 0 ] * ab[ 0 ] + ab[ 1 ] * ab[ 1 ] + ab[ 2 ] * ab[ 2 ] );
+        let abDist = Math.sqrt( ab[ 0 ] * ab[ 0 ] + ab[ 1 ] * ab[ 1 ] + ab[ 2 ] * ab[ 2 ] );
 
-        let bcVec = Math.sqrt( bc[ 0 ] * bc[ 0 ] + bc[ 1 ] * bc[ 1 ] + bc[ 2 ] * bc[ 2 ] );
+        let bcDist = Math.sqrt( bc[ 0 ] * bc[ 0 ] + bc[ 1 ] * bc[ 1 ] + bc[ 2 ] * bc[ 2 ] );
 
-        let abNorm = [ ab[ 0 ] / abVec, ab[ 1 ] / abVec, ab[ 2 ] / abVec ];
+        let abNorm = [ ab[ 0 ] / abDist, ab[ 1 ] / abDist, ab[ 2 ] / abDist ];
 
-        let bcNorm = [ bc[ 0 ] / bcVec, bc[ 1 ] / bcVec, bc[ 2 ] / bcVec ];
+        let bcNorm = [ bc[ 0 ] / bcDist, bc[ 1 ] / bcDist, bc[ 2 ] / bcDist ];
 
-        let res = abNorm[ 0 ] * bcNorm[ 0 ] + abNorm[ 1 ] * bcNorm[ 1 ] + abNorm[ 2 ] * bcNorm[ 2 ];
-
-        return Math.acos( res );
+        return Math.acos( abNorm[ 0 ] * bcNorm[ 0 ] + abNorm[ 1 ] * bcNorm[ 1 ] + abNorm[ 2 ] * bcNorm[ 2 ] );
 
     }
 
@@ -825,13 +796,13 @@ class Prim {
      */ 
     computeCentroid ( vertices ) {
 
-        let c = [ 0, 0, 0 ], len = vertices.length;
+        let c = [ 0, 0, 0 ];
+
+        let len = vertices.length;
 
         for ( let i = 0; i < len; i++ ) {
 
             let vertex = vertices[ i ];
-
-            //console.log("VVVVERTICES i:" + i + ' vertex:' + vertex)
 
             c[ 0 ] += vertex[ 0 ];
 
@@ -853,10 +824,11 @@ class Prim {
 
     /** 
      * Compute an area-weighted centroid point for a Prim.
+     * Use this when we want the center of the whole object the polygon is part of.
      * @param {Array[...GlMatrix.vec3]} vertices a list of 3d vertices.
      * @param {GlMatrix.vec3} the centroid Point.
      */
-    computeMassCentroid( verticies ) {
+    computeMassCentroid( vertices ) {
 
         let vec3 = this.glMatrix.vec3;
 
@@ -864,13 +836,13 @@ class Prim {
 
         var areaTotal = 0.0;
 
-        var p1 = verticies[ 0 ];
+        var p1 = vertices[ 0 ];
 
-        var p2 = verticies[ 1 ];
+        var p2 = vertices[ 1 ];
 
-        for (var i = 2; i < verticies.length; i++) {
+        for (var i = 2; i < vertices.length; i++) {
 
-            var p3 = verticies[ i ];
+            var p3 = vertices[ i ];
 
             var edge1 = vec3.subtract( [ 0, 0, 0 ], p3, p1 );
 
@@ -919,7 +891,7 @@ class Prim {
 
         const vec3 = this.glMatrix.vec3;
 
-        let v0, v1, v2, dot00, dot01, dot02, dot11, dot12;
+        let v0, v1, v2, d00, d01, d02, d11, d12;
 
         // Compute vectors.
 
@@ -931,23 +903,23 @@ class Prim {
 
         // Compute dot products.
 
-        dot00 = vec3.dot( v0, v0 );
+        d00 = vec3.dot( v0, v0 );
 
-        dot01 = vec3.dot( v0, v1 );
+        d01 = vec3.dot( v0, v1 );
 
-        dot02 = vec3.dot( v0, v2 );
+        d02 = vec3.dot( v0, v2 );
 
-        dot11 = vec3.dot( v1, v1 );
+        d11 = vec3.dot( v1, v1 );
 
-        dot12 = vec3.dot( v1, v2 );
+        d12 = vec3.dot( v1, v2 );
 
         // Compute barycentric coordinates.
 
-        let invDenom = 1 / ( dot00 * dot11 - dot01 * dot01 );
+        let invDenom = 1 / ( d00 * d11 - d01 * d01 );
 
-        let u = ( dot11 * dot02 - dot01 * dot12 ) * invDenom;
+        let u = ( d11 * d02 - d01 * d12 ) * invDenom;
 
-        let v = ( dot00 * dot12 - dot01 * dot02 ) * invDenom;
+        let v = ( d00 * d12 - d01 * d02 ) * invDenom;
 
         return [ u, v ];
 
@@ -981,7 +953,7 @@ class Prim {
 
         let oldPos = this.getCenter( vertices );
 
-        for ( let i = 0, len = vertices.length; i < len; i++ ) {
+        for ( let i = 0; i < vertices.length; i++ ) {
 
             vertices[ i ] *= scale;
 
@@ -1011,7 +983,7 @@ class Prim {
 
         ];
 
-        for ( let i = 0, len = vertices.length; i < len; i += 3 ) {
+        for ( let i = 0; i < vertices.length; i += 3 ) {
 
             vertices[i] = delta[ 0 ];
 
@@ -1025,7 +997,7 @@ class Prim {
 
 
     /** 
-     * Given a set of points, compute a triangle fan around a central Point.
+     * Given a set of Points, compute a triangle fan around the Centroid for those points.
      * @param {[...vec3]} vertices an array of UN-FLATTENED xyz points.
      * @param {[uint16]} indices the sequence to read triangles.
      * @returns {Object} UN-FLATTENED vertices, indices, texCoords nomals, tangents.
@@ -1033,8 +1005,6 @@ class Prim {
     computeFan ( vertices, indices ) {
 
         let vec3 = this.glMatrix.vec3;
-
-        let scalePos = this.util.scalePos;
 
         let vv = [];
 
@@ -1051,9 +1021,6 @@ class Prim {
         // Get the topLeft and bottomRight points (bounding rectangle).
 
         let center = this.computeCentroid( vv );
-
-        // Use this when we want the center of the whole object the polygon is part of.
-        //let center = this.calculateMassCentroid( vv );
 
         // Add a central point so we can create a triangle fan.
 
@@ -1099,7 +1066,6 @@ class Prim {
 
             );
 
-
         } // end of for loop
 
         // Push the center point texture coordinate.
@@ -1131,6 +1097,9 @@ class Prim {
      * @link https://github.com/BabylonJS/Babylon.js/blob/3fe3372053ac58505dbf7a2a6f3f52e3b92670c8/src/Mesh/babylon.mesh.vertexData.js
      * @link http://gamedev.stackexchange.com/questions/8191/any-reliable-polygon-normal-calculation-code
      * @link https://www.opengl.org/wiki/Calculating_a_Surface_Normal
+     * @param {[...GLMatrix.vec3]} vertices the current 3d position coordinates.
+     * @param {Array} current indices into the vertices.
+     * @param {[...GLMatrix.vec3]} normals the normals array to recalculate.
      */
     computeNormals ( vertices, indices, normals ) {
 
@@ -1162,11 +1131,11 @@ class Prim {
 
         let i3 = 0;
 
-        for (index = 0; index < vertices.length; index++) {
+        //for ( index = 0; index < vertices.length; index++ ) {
 
-                normals[index] = 0.0;
+                //normals[index] = 0.0;
 
-        }
+        //}
 
         // index triplet = 1 face
 
@@ -1213,6 +1182,7 @@ class Prim {
         // last normalization of each normal
 
         for (index = 0; index < normals.length / 3; index++) {
+
             faceNormalx = normals[index * 3];
             faceNormaly = -normals[index * 3 + 1];
             faceNormalz = normals[index * 3 + 2];
@@ -1222,7 +1192,7 @@ class Prim {
             faceNormaly /= length;
             faceNormalz /= length;
 
-            // NOTE: added negative (-) to x, z to match lighting model.
+            // NOTE: added negative (-) to x, z to match our lighting model.
 
             normals[index * 3] = -faceNormalx;
             normals[index * 3 + 1] = faceNormaly;
@@ -1240,7 +1210,7 @@ class Prim {
      * "The code below generates a four-component tangent T in which the handedness of the local coordinate system
      * is stored as ±1 in the w-coordinate. The bitangent vector B is then given by B = (N × T) · Tw."
      */
-    computeTangents ( vertices, indices, normals, texCoords ) {
+    computeTangents ( vertices, indices, normals, texCoords, tangents ) {
 
         const vec3 = this.glMatrix.vec3;
 
@@ -1288,14 +1258,14 @@ class Prim {
                     tan2[j] += tx; tan2[j + 1] += ty; tan2[j + 2] += tz;
         }
 
-        var tangents = new Float32Array( numVertices * 4 / 3 ); // TODO: ADDED 4 to this!!
+        tangents = new Float32Array( numVertices * 4 / 3 ); // TODO: ADDED 4 to this!!
         //var numTangents = tangents.length / 4;
 
         //console.log("TAN1:" + tan1)
         //console.log("TAN2:" + tan2)
 
         //console.log('NUMTANGENTS:' + numTangents)
-                                            
+
         for (var i3 = 0, i4 = 0; i4 < numVertices; i3 += 3, i4 += 4) {
 
             // not very efficient here (used the vec3 type and dot/cross operations from MV.js)
@@ -1337,7 +1307,7 @@ class Prim {
     }
 
     /** 
-     * Convert from one Prim geometry to another
+     * Convert from one Prim geometry to another, alters geometry.
      */
     computeMorph ( newGeometry, easing, geometry ) {
 
@@ -1438,7 +1408,7 @@ class Prim {
 
         // Tangents (not used).
 
-        this.computeTangents( vertices, indices, normals, texCoords );
+        this.computeTangents( vertices, indices, normals, texCoords, tangents );
 
         // Colors already present, or computed in this.createGLBuffers.
 
@@ -1514,11 +1484,12 @@ class Prim {
 
         // Shortcuts to Prim data arrays.
 
-        let vertices = geo.vertices.data,
-        indices  = geo.indices.data,
-        texCoords = geo.texCoords.data,
-        normals = geo.normals.data,
-        tangents = geo.tangents.data; 
+        //let vertices = geo.vertices.data,
+        //indices  = geo.indices.data,
+        //texCoords = geo.texCoords.data,
+        //normals = geo.normals.data,
+        //tangents = geo.tangents.data;
+        let vertices = [], indices  = [], normals = [], texCoords = [], tangents = [];
 
         let longitudeBands = prim.divisions[ 0 ] // x axis (really xz)
 
@@ -1744,13 +1715,17 @@ class Prim {
 
         // Tangents.
 
-        geo.tangents.data = tangents = this.computeTangents( vertices, indices, normals, texCoords );
+        this.computeTangents( vertices, indices, normals, texCoords, tangents );
 
-        // Color array is pre-created, or gets a default in createGLBuffers().
+        // Color array is pre-created, or gets a default when WebGL buffers are created.
 
         // Return the buffer.
 
-        return this.createGLBuffers( prim.geometry );
+        return this.addBufferData( prim.geometry, vertices, indices, normals, texCoords, tangents );
+
+        // Return the buffer.
+
+        //return this.createGLBuffers( prim.geometry );
 
     }
 
@@ -1973,23 +1948,16 @@ class Prim {
 
         // Shortcuts to Prim data arrays.
 
-        let vertices = geo.vertices.data,
-        indices  = geo.indices.data,
-        texCoords = geo.texCoords.data,
-        normals = geo.normals.data,
-        tangents = geo.tangents.data; 
+        let vertices = [], indices  = [], normals = [], texCoords = [], tangents = [];
 
         // Radius is measured along the x axis, height along y axis.
 
         let radius = prim.dimensions[ 0 ] || 0.5,
         height = prim.dimensions[ 1 ] || 1.0,
-        subdivisionsHeight = prim.divisions[ 0 ] || 12,
+        segmentHeight = prim.divisions[ 0 ] || 12,
         numSegments = prim.divisions[ 1 ] || 12;
 
-        var positions = [];
-        //var normals = [];
-        var uvs = [];
-        var cells = [];
+        // Compute a capsule ring.
 
         function calculateRing( segments, r, y, dy ) {
 
@@ -2001,7 +1969,7 @@ class Prim {
 
                 var z = Math.sin( ( TWO_PI ) * s * segIncr ) * r;
 
-                positions.push( radius * x, radius * y + height * dy, radius * z );
+                vertices.push( radius * x, radius * y + height * dy, radius * z );
 
                 normals.push( x, y, z )
 
@@ -2009,21 +1977,21 @@ class Prim {
 
                 var v = 0.5 + ( ( radius * y + height * dy ) / ( 2.0 * radius + height ) );
 
-                uvs.push( u, v );
+                texCoords.push( u, v );
 
             }
         }
 
-        var ringsBody = subdivisionsHeight + 1;
+        var ringsBody = segmentHeight + 1;
 
-        var ringsTotal = subdivisionsHeight + ringsBody;
+        var ringsTotal = segmentHeight + ringsBody;
 
 
         var bodyIncr = 1.0 / ( ringsBody - 1 );
 
-        var ringIncr = 1.0 / ( subdivisionsHeight - 1 );
+        var ringIncr = 1.0 / ( segmentHeight - 1 );
 
-        for( var r = 0; r < subdivisionsHeight / 2; r++ ) {
+        for( var r = 0; r < segmentHeight / 2; r++ ) {
 
             calculateRing( numSegments, Math.sin( Math.PI * r * ringIncr), Math.sin( Math.PI * ( r * ringIncr - 0.5 ) ), -0.5 );
 
@@ -2035,7 +2003,7 @@ class Prim {
 
         }
 
-        for( var r = subdivisionsHeight / 2; r < subdivisionsHeight; r++ ) {
+        for( var r = segmentHeight / 2; r < segmentHeight; r++ ) {
 
             calculateRing( numSegments, Math.sin( Math.PI * r * ringIncr), Math.sin( Math.PI * ( r * ringIncr - 0.5 ) ), +0.5);
 
@@ -2045,39 +2013,39 @@ class Prim {
 
             for( var s = 0; s < numSegments - 1; s++ ) {
 
-                cells.push(
+                indices.push(
+
                     ( r * numSegments + ( s + 1 ) ),
+
                     ( r * numSegments + ( s + 0 ) ),
+
                     ( ( r + 1 ) * numSegments + ( s + 1 ) )
+
                     );
 
-                cells.push(
+                indices.push(
+
                     ( ( r + 1 ) * numSegments + ( s + 0 ) ),
+
                     ( ( r + 1 ) * numSegments + ( s + 1 ) ),
+
                     ( r * numSegments + s )
+
                  )
 
             }
 
         }
 
-        geo.vertices.data = positions;
-
-        geo.indices.data = cells;
-
-        geo.normals.data = normals;
-
-        geo.texCoords.data = uvs;
-
         // Tangents.
 
-        geo.tangents.data = tangents = this.computeTangents( vertices, indices, normals, texCoords );
+        this.computeTangents( vertices, indices, normals, texCoords, tangents );
 
-        // Color array is pre-created, or gets a default in createGLBuffers().
+        // Color array is pre-created, or gets a default when WebGL buffers are created.
 
         // Return the buffer.
 
-        return this.createGLBuffers( prim.geometry );
+        return this.addBufferData( prim.geometry, vertices, indices, normals, texCoords, tangents );
 
     }
 
@@ -2112,11 +2080,13 @@ class Prim {
 
         // Shortcuts to Prim data arrays
 
-        let vertices = geo.vertices.data,
-        indices  = geo.indices.data,
-        texCoords = geo.texCoords.data,
-        normals = geo.normals.data,
-        tangents = geo.tangents.data;
+        //let vertices = geo.vertices.data,
+        //indices  = geo.indices.data,
+        //texCoords = geo.texCoords.data,
+        //normals = geo.normals.data,
+        //tangents = geo.tangents.data;
+
+        let vertices = [], indices  = [], normals = [], texCoords = [], tangents = [];
 
         let sx = prim.dimensions[ 0 ],   // x width
         sy = prim.dimensions[ 1 ],       // y height
@@ -2425,19 +2395,23 @@ class Prim {
         
         // Flatten arrays, since we created using 2 dimensions.
 
-        vertices = geo.vertices.data = flatten( positions, false );
+        vertices = flatten( positions, false );
 
-        normals = geo.normals.data = flatten( norms, false );
+        normals = flatten( norms, false );
 
         // Re-compute normals, which may have changed.
 
         this.computeNormals( vertices, indices, normals );
 
-        // Color array is pre-created, or gets a default in createGLBuffers().
+        // Color array is pre-created, or gets a default when WebGL buffers are created.
 
         // Return the buffer.
 
-        return this.createGLBuffers( prim.geometry );
+        return this.addBufferData( prim.geometry, vertices, indices, normals, texCoords, tangents );
+
+        // Return the buffer.
+
+        //return this.createGLBuffers( prim.geometry );
 
     }
 
@@ -2658,11 +2632,11 @@ class Prim {
 
         // TODO: halve index length if making a dome.
 
-        let vertices = geo.vertices.data = new Array ( ( resolution + 1 ) * ( resolution + 1 ) * 4 - (resolution * 2 - 1) * 3 ),
-        indices  = geo.indices.data = new Array( (1 << ( subdivisions * 2 + 3) ) * 3 ),
-        texCoords = geo.texCoords.data = new Array( vertices.length ),
-        normals = geo.normals.data = new Array( vertices.length ),
-        tangents = geo.tangents.data = new Array( vertices.length );
+        let vertices = new Array ( ( resolution + 1 ) * ( resolution + 1 ) * 4 - (resolution * 2 - 1) * 3 ),
+        indices  = new Array( (1 << ( subdivisions * 2 + 3) ) * 3 ),
+        texCoords = new Array( vertices.length ),
+        normals = new Array( vertices.length ),
+        tangents = new Array( vertices.length );
 
         // Initialize lots of default variables.
 
@@ -2679,7 +2653,6 @@ class Prim {
 
             progress = i / resolution;
 
-            //to = vec3.lerp( [ 0, 0, 0 ], getVecs( 'down' ), getVecs( 'forward' ), progress );
             to = vec3.lerp( [ 0, 0, 0 ], getVecs( side.DOWN ), getVecs( side.FORWARD ), progress );
 
             vertices[ v++ ] = vec3.copy( [ 0, 0, 0 ], to );
@@ -2688,7 +2661,6 @@ class Prim {
 
                 from = vec3.copy( [ 0, 0, 0 ], to );
 
-                //to = vec3.lerp( [ 0, 0, 0 ], getVecs( 'down' ), getVecs( directions[ d ] ), progress );
                 to = vec3.lerp( [ 0, 0, 0 ], getVecs( side.DOWN ), getVecs( directions[ d ] ), progress );
 
                 t = createLowerStrip( i, v, vBottom, t, indices );
@@ -2707,7 +2679,6 @@ class Prim {
 
                 progress = i / resolution;
 
-                //to = vec3.lerp( [ 0, 0, 0 ], getVecs( 'up' ), getVecs( 'forward' ), progress );
                 to = vec3.lerp( [ 0, 0, 0 ], getVecs( side.UP ), getVecs( side.FORWARD ), progress );
 
                 vertices[ v++ ] = vec3.copy( [ 0, 0, 0 ], to );
@@ -2716,7 +2687,6 @@ class Prim {
 
                     from = vec3.copy( [ 0, 0, 0 ], to );
 
-                    //to = vec3.lerp( [ 0, 0, 0 ], getVecs( 'up' ), getVecs( directions[ d ] ), progress );
                     to = vec3.lerp( [ 0, 0, 0 ], getVecs( side.UP ), getVecs( directions[ d ] ), progress );
 
                     t = createUpperStrip( i, v, vBottom, t, indices );
@@ -2749,15 +2719,12 @@ class Prim {
 
             // Toggle icosphere with icosohedron.
 
-            //if ( prim.type === list.ICOSPHERE ) {
 
             if ( prim.type !== list.OCTAHEDRON ) {
 
                 vertices[i] = vec3.normalize( [ 0, 0, 0 ], vertices[ i ] );
 
             }
-
-            //}
 
             normals[i] = vec3.copy( [ 0, 0, 0 ], vertices[ i ] );
 
@@ -2772,10 +2739,6 @@ class Prim {
         createTangents( vertices, tangents );
 
         // Scale. NOTE: this has to be after createUV and createTangents (assuming unit sphere).
-
-        // TODO: TEST TO MAKE SURE IT WORKS
-
-        // TODO: MAKE DOME INSTEAD OF SPHERE OPTION.
 
         if ( radius != 1 ) {
 
@@ -2793,15 +2756,13 @@ class Prim {
 
         // Flatten the data arrays.
 
-        vertices = geo.vertices.data = flatten( vertices, false );
+        vertices = flatten( vertices, false );
 
-        texCoords = geo.texCoords.data = flatten( texCoords, false );
+        texCoords = flatten( texCoords, false );
 
-        normals = geo.normals.data = flatten(normals, false );
+        normals = flatten(normals, false );
 
-        tangents = geo.tangents.data = flatten(tangents, false );
-
-        // Color array is pre-created, or gets a default in createGLBuffers().
+        tangents = flatten(tangents, false );
 
         // Helper functions.
 
@@ -2871,7 +2832,7 @@ class Prim {
 
                 v = vertices[ i ];
 
-                v[ 1 ] = 0;            // was v.y
+                v[ 1 ] = 0;
 
                 //v = v.normalized;
                 v = vec3.normalize( [ 0, 0, 0 ], v );
@@ -2972,9 +2933,13 @@ class Prim {
 
         }
 
+        // Color array is pre-created, or gets a default when WebGL buffers are created.
+
         // Return the buffer.
 
-        return this.createGLBuffers( prim.geometry );
+        return this.addBufferData( prim.geometry, vertices, indices, normals, texCoords, tangents );
+
+        //return this.createGLBuffers( prim.geometry );
 
     }
 
@@ -3206,18 +3171,16 @@ class Prim {
                     let p2 = i;
 
                     if ( i === lenv ) {
+
                         p1 = p2 - 1;
-                        p2 = 0;                        
+
+                        p2 = 0;
+
                     }
 
                     let v1 = vvv[ p1 ];
 
                     let v2 = vvv[ p2 ];
-
-                    console.log( ' p1:' + p1 + ' p2:' + p2 );
-                    //console.log( ' v1:' + v1 );
-                    //console.log( ' v2:' + v2 );
-                    //console.log( ' ce:' + center );
 
                     vertices.push( 
                         vec3.copy( [ 0, 0, 0 ], v1 ), 
@@ -3270,7 +3233,7 @@ class Prim {
 
         normals = flatten( normals );
 
-        // Color array is pre-created, or gets a default in createGLBuffers().
+        // Color array is pre-created, or gets a default when WebGL buffers are created.
 
         // Return the buffer.
 
@@ -3315,42 +3278,41 @@ class Prim {
 
         // typical: radius = 0.5, ringRadius = 0.25, sides = 36, rings = 24;
 
-        let numVerticesPerRow = sides + 1;
+        let vertsPerRow = sides + 1;
 
-        let numVerticesPerColumn = rings + 1;
+        let vertsPerColumn = rings + 1;
 
-        //let numVertices = numVerticesPerRow * numVerticesPerColumn;
+        let ringStride = this.TWO_PI / rings;
 
-        let verticalAngularStride = this.TWO_PI / rings;
-
-        let horizontalAngularStride = this.TWO_PI / sides;
+        let torusStride = this.TWO_PI / sides;
 
         let theta = 0, phi = 0, x, y, z;
 
-        for ( let verticalIt = 0; verticalIt < numVerticesPerColumn; verticalIt++ ) {
+        for ( let vertColumn = 0; vertColumn < vertsPerColumn; vertColumn++ ) {
             
-            theta = verticalAngularStride * verticalIt;
+            theta = ringStride * vertColumn;
 
-            for ( let horizontalIt = 0; horizontalIt < numVerticesPerRow; horizontalIt++ ) {
+            for ( let horizRow = 0; horizRow < vertsPerRow; horizRow++ ) {
           
-                phi = horizontalAngularStride * horizontalIt;
+                phi = torusStride * horizRow;
 
-                // position
+                // Position.
+
                 x = Math.cos( theta ) * ( radius + ringRadius * Math.cos( phi ) );
 
                 y = Math.sin( theta ) * ( radius + ringRadius * Math.cos( phi ) );
 
                 z = ringRadius * Math.sin(phi);
 
-                vertices.push( x, y, z ); // NOTE: x, z, y gives a horizontal torus! NOTE: MAY WANT TO DO FOR PLANE
+                vertices.push( x, y, z ); // NOTE: x, z, y gives a horizontal torus
 
                 let norm = vec3.normalize( [ 0, 0, 0 ], [ x, y, z ] );
 
                 normals.push( norm[ 0 ], norm[ 1 ], norm[ 2 ] );
 
-                let u = horizontalIt / numVerticesPerRow;
+                let u = horizRow / vertsPerRow;
 
-                let v = verticalIt / numVerticesPerColumn;
+                let v = vertColumn / vertsPerColumn;
 
                 texCoords.push( u, v );
 
@@ -3360,27 +3322,27 @@ class Prim {
 
        // let numIndices = sides * rings * 6;
 
-        for ( let verticalIt = 0; verticalIt < rings; verticalIt++ ) {
+        for ( let vertColumn = 0; vertColumn < rings; vertColumn++ ) {
 
-            for ( let horizontalIt = 0; horizontalIt < sides; horizontalIt++ ) {
+            for ( let horizRow = 0; horizRow < sides; horizRow++ ) {
 
-                let lt = ( horizontalIt + verticalIt * ( numVerticesPerRow) );
+                let lt = ( horizRow + vertColumn * ( vertsPerRow) );
 
-                let rt = ( ( horizontalIt + 1 ) + verticalIt * ( numVerticesPerRow ) );
+                let rt = ( ( horizRow + 1 ) + vertColumn * ( vertsPerRow ) );
 
-                let lb = ( horizontalIt + ( verticalIt + 1) * ( numVerticesPerRow ) );
+                let lb = ( horizRow + ( vertColumn + 1) * ( vertsPerRow ) );
 
-                let rb = ( ( horizontalIt + 1 ) + ( verticalIt + 1 ) * ( numVerticesPerRow ) );
+                let rb = ( ( horizRow + 1 ) + ( vertColumn + 1 ) * ( vertsPerRow ) );
 
                 indices.push( lb, rb, rt, lb, rt, lt );
 
-                // note: wrap backwards to see inside of torus (tunnel?).
+                // NOTE: wrap backwards to see inside of torus (tunnel?).
 
             }
 
         }
 
-        // Color array is pre-created, or gets a default in createGLBuffers().
+        // Color array is pre-created, or gets a default when WebGL buffers are created.
 
         // Return the buffer.
 
@@ -3423,9 +3385,9 @@ class Prim {
 
         // Tangents.
 
-        this.computeTangents( vertices, indices, normals, texCoords );
+        this.computeTangents( vertices, indices, normals, texCoords, tangents );
 
-        // Color array is pre-created, or gets a default in createGLBuffers().
+        // Color array is pre-created, or gets a default when WebGL buffers are created.
 
         // Return the buffer.
 
@@ -3433,7 +3395,7 @@ class Prim {
 
     }
 
-     /*
+    /*
      * ---------------------------------------
      * PRIMS
      * ---------------------------------------
@@ -3451,8 +3413,12 @@ class Prim {
      * @param {Boolean} applyTexToFace if true, apply texture to each face, else apply texture to 
      * the entire object.
      */
-    createPrim ( type, name = 'unknown', dimensions, divisions, position, acceleration, 
-        rotation, angular, textureImage, color, applyTexToFace = false ) {
+    createPrim ( type, name = 'unknown', 
+        dimensions = this.vec7( 1, 1, 1, 0, 0, 0, 0 ), 
+        divisions = this.vec6( 1, 1, 1, 0, 0, 0 ), 
+        position = this.glMatrix.vec3.create(), acceleration = this.glMatrix.vec3.create(), 
+        rotation = this.glMatrix.vec3.create(), angular = this.glMatrix.vec3.create(), 
+        textureImages, color, applyTexToFace = false ) {
 
         const vec3 = this.glMatrix.vec3;
 
@@ -3460,7 +3426,7 @@ class Prim {
 
         if ( ! this.checkType( type ) ) {
 
-            console.error( 'unsupported Prim type, ' + type );
+            console.error( 'unsupported Prim type:' + type );
 
             return null;
         }
@@ -3495,6 +3461,8 @@ class Prim {
 
         prim.orbitAngular = 0.0;
 
+        // Lighting and materials.
+
         prim.material = {};
 
         prim.light = {};
@@ -3505,32 +3473,17 @@ class Prim {
 
         prim.applyTexToFace = applyTexToFace;
 
-        prim.geometry = this.createGeoObj();
+        // Geometry factory function.
 
-        // Copy geometry type for use in rendering/shaders later.
+        prim.geometry = this.createGeoObj();
 
         prim.geometry.type = type;
 
-        // TODO: create arrays here
+        prim.geometry = this.createGeoObj();
 
-        // TODO: shouldn't have to run .createGeoObj first!!!!
+        prim.geometry = this[ type ]( prim, color );
 
-        // TODO: regularize
-
-        // TODO: bufferObj should be called 'geometry'
-
-        // TODO: have a 'checkType' here to flag errors
-
-        if ( prim.geometry.type === this.typeList.TORUS || 
-        prim.geometry.type === this.typeList.DODECAHEDRON ) {
-            prim.geometry = this.createGeoObj();
-            prim.geometry = this[ type ]( prim, color );            
-            prim.geometry = this.createGLBuffers( prim.geometry );
-        } else {
-
-            prim.geometry = this[ type ]( prim, color );
-
-        }
+        prim.geometry = this.createGLBuffers( prim.geometry );
 
         // Set internal functions.
 
@@ -3607,14 +3560,7 @@ class Prim {
 
         };
 
-        // Set the geometry, based on defined type.
-
-        // TODO: make WebGL buffers here
-
-        // Standard Prim properties for position, translation, rotation, orbits. Used by shader/renderer objects (e.g. shaderTexture).
-
-        // Note: should use scale matrix
-        // TODO: @link https://nickdesaulniers.github.io/RawWebGL/#/16
+        // Shared with factory functions.
 
         prim.scale = ( scale ) => { this.scale ( scale, prim.geometry.vertices ); };
 
@@ -3622,8 +3568,7 @@ class Prim {
 
         prim.morph = ( newGeometry, easing ) => { this.morph( newGeometry, easing, prim.geometry ); };
 
-
-        // Waypoints for scripted motion.
+        // Waypoints for scripted motion or timelines.
 
         prim.waypoints = [];
 
@@ -3641,9 +3586,9 @@ class Prim {
 
         // Multiple textures per Prim. Rendering defines how textures for each Prim type are used.
 
-        for ( let i = 0; i < textureImage.length; i++ ) {
+        for ( let i = 0; i < textureImages.length; i++ ) {
 
-            this.loadTexture.load( textureImage[ i ], prim );
+            this.loadTexture.load( textureImages[ i ], prim );
 
         }
 

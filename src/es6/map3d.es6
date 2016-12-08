@@ -100,7 +100,7 @@ class Map3d extends Mapd {
 
             let util = this.util;
 
-            for ( let i = 0, len = this.map.length; i < len; i++ ) {
+            for ( let i = 0; i < this.map.length; i++ ) {
 
                 this.map.push( 
                     util.getRand() * w, 
