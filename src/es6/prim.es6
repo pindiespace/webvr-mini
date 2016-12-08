@@ -201,10 +201,13 @@ class Prim {
 
         };
 
+        this.FLOAT32 = 'float32',
+        this.UINT32 = 'uint32';
+
         // Visible from inside or outside.
 
-        this.OUTSIDE = 0,
-        this.INSIDE = 1;
+        this.OUTSIDE = 100,
+        this.INSIDE = 101;
 
         // Shorthand.
 
@@ -418,7 +421,59 @@ class Prim {
     }
 
     /** 
-     * Create WebGL buffers using geometry data
+     * Bind a WebGL buffer
+     * @param {Object} o the bufferObj for for particular array (e.g. vertex, tangent).
+     * @param {String} type the typed-array type.
+     */
+    bindGLBuffer( o, type ) {
+
+        const gl = this.webgl.getContext();
+
+        o.buffer = gl.createBuffer();
+
+        gl.bindBuffer( gl.ARRAY_BUFFER, o.buffer );
+
+        switch( type ) {
+
+            case this.FLOAT32:
+
+                if (  o.data instanceof Float32Array ) {
+
+                        gl.bufferData( gl.ARRAY_BUFFER, o.data, gl.STATIC_DRAW );
+
+                    } else {
+
+                        gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( o.data ), gl.STATIC_DRAW );
+
+                    }
+
+                break;
+
+            case this.UINT16:
+
+                o.buffer = gl.createBuffer();
+
+                gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, o.buffer );
+
+                gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( o.data ), gl.STATIC_DRAW );
+
+                o.numItems = o.data.length / o.itemSize;
+
+                break;
+
+            default:
+
+                console.error( 'GL buffer type ' + type );
+
+                break;
+
+        }
+
+    }
+
+    /** 
+     * Create WebGL buffers using geometry data. Note that the 
+     * size is for flattened arrays.
      * @param {Object} bufferObj custom object holding the following:
      * an array of vertices, in glMatrix.vec3 objects.
      * an array of indices for the vertices.
@@ -443,13 +498,7 @@ class Prim {
 
             }
 
-            o.buffer = gl.createBuffer();
-
-            gl.bindBuffer( gl.ARRAY_BUFFER, o.buffer );
-
-            gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( o.data ), gl.STATIC_DRAW );
-
-            o.numItems = o.data.length / o.itemSize;
+            this.bindGLBuffer( o, this.FLOAT32 );
 
             // Create the Index buffer.
 
@@ -463,13 +512,7 @@ class Prim {
 
             }
 
-            o.buffer = gl.createBuffer();
-
-            gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, o.buffer );
-
-            gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( o.data ), gl.STATIC_DRAW );
-
-            o.numItems = o.data.length / o.itemSize;
+            this.bindGLBuffer( o, this.UINT16 );
 
             // Create the Sides buffer, a kind of indices buffer.
 
@@ -483,8 +526,7 @@ class Prim {
 
             }
 
-            // TODO: SUPPORT BY SIDE DRAWING FOR SOME PRIMS.
-            // TODO: SUPPORT
+            this.bindGLBuffer( o, this.UINT16 );
 
             // create the Normals buffer.
 
@@ -498,13 +540,7 @@ class Prim {
 
             }
 
-            o.buffer = gl.createBuffer();
-
-            gl.bindBuffer( gl.ARRAY_BUFFER, o.buffer );
-
-            gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( o.data ), gl.STATIC_DRAW );
-
-            o.numItems = o.data.length / o.itemSize;
+            this.bindGLBuffer( o, this.FLOAT32 );
 
             // Create the primary Texture buffer.
 
@@ -518,13 +554,7 @@ class Prim {
 
             }
 
-            o.buffer = gl.createBuffer();
-
-            gl.bindBuffer( gl.ARRAY_BUFFER, o.buffer );
-
-            gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( o.data ), gl.STATIC_DRAW );
-
-            o.numItems = o.data.length / o.itemSize;
+            this.bindGLBuffer( o, this.FLOAT32 );
 
             // create the Tangents Buffer.
 
@@ -538,13 +568,7 @@ class Prim {
 
             }
 
-            o.buffer = gl.createBuffer();
-
-            gl.bindBuffer( gl.ARRAY_BUFFER, o.buffer );
-
-            gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( o.data ), gl.STATIC_DRAW );
-
-            o.numItems = o.data.length / o.itemSize;
+            this.bindGLBuffer( o, this.FLOAT32 );
 
             // Create the Colors buffer.
 
@@ -558,15 +582,11 @@ class Prim {
 
             }
 
-            o.buffer = gl.createBuffer();
+            this.bindGLBuffer( o, this.FLOAT32 );
 
-            gl.bindBuffer( gl.ARRAY_BUFFER, o.buffer );
+            // Set the flag.
 
-            gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( o.data ), gl.STATIC_DRAW );
-
-            o.numItems = o.data.length / o.itemSize;
-
-            bufferObj.makeBuffers = false; // they're created!
+            bufferObj.makeBuffers = false;
 
         return bufferObj;
 
@@ -830,27 +850,27 @@ class Prim {
      */
     computeMassCentroid( vertices ) {
 
-        let vec3 = this.glMatrix.vec3;
+        const vec3 = this.glMatrix.vec3;
 
-        var c = [ 0, 0, 0 ];
+        let c = [ 0, 0, 0 ];
 
-        var areaTotal = 0.0;
+        let areaTotal = 0.0;
 
-        var p1 = vertices[ 0 ];
+        let p1 = vertices[ 0 ];
 
-        var p2 = vertices[ 1 ];
+        let p2 = vertices[ 1 ];
 
-        for (var i = 2; i < vertices.length; i++) {
+        for ( let i = 2; i < vertices.length; i++ ) {
 
-            var p3 = vertices[ i ];
+            let p3 = vertices[ i ];
 
-            var edge1 = vec3.subtract( [ 0, 0, 0 ], p3, p1 );
+            let edge1 = vec3.subtract( [ 0, 0, 0 ], p3, p1 );
 
-            var edge2 = vec3.subtract( [ 0, 0, 0 ], p3, p2 );
+            let edge2 = vec3.subtract( [ 0, 0, 0 ], p3, p2 );
 
-            var crossProduct = vec3.cross( [ 0, 0, 0 ], edge1, edge2 );
+            let crossProduct = vec3.cross( [ 0, 0, 0 ], edge1, edge2 );
 
-            var area = vec3.length( crossProduct ) / 2;
+            let area = vec3.length( crossProduct ) / 2;
 
             c[ 0 ] += area * ( p1[ 0 ] + p2[ 0 ] + p3[ 0 ] ) / 3;
 
@@ -864,7 +884,7 @@ class Prim {
 
         }
 
-        var point = [
+        return [
 
             c[ 0 ] / areaTotal,
 
@@ -873,8 +893,6 @@ class Prim {
             c[ 2 ] / areaTotal
 
         ];
-
-        return point;
 
     }
 
@@ -1093,7 +1111,7 @@ class Prim {
     /** 
      * Compute normals for a 3d object. 
      * NOTE: some routines compute their own normals.
-     * Adapted from BabylonJS version.
+     * Adapted from BabylonJS version:
      * @link https://github.com/BabylonJS/Babylon.js/blob/3fe3372053ac58505dbf7a2a6f3f52e3b92670c8/src/Mesh/babylon.mesh.vertexData.js
      * @link http://gamedev.stackexchange.com/questions/8191/any-reliable-polygon-normal-calculation-code
      * @link https://www.opengl.org/wiki/Calculating_a_Surface_Normal
@@ -1103,102 +1121,119 @@ class Prim {
      */
     computeNormals ( vertices, indices, normals ) {
 
-        let index = 0;
+        let idx = 0;
 
-        let p1p2x = 0.0;
+        let p1p2x = 0.0, p1p2y = 0.0, p1p2z = 0.0;
 
-        let p1p2y = 0.0;
+        let p3p2x = 0.0, p3p2y = 0.0, p3p2z = 0.0;
 
-        let p1p2z = 0.0;
-
-        let p3p2x = 0.0;
-
-        let p3p2y = 0.0;
-
-        let p3p2z = 0.0;
-
-        let faceNormalx = 0.0;
-
-        let faceNormaly = 0.0;
-
-        let faceNormalz = 0.0;
+        let faceNormalx = 0.0, faceNormaly = 0.0, faceNormalz = 0.0;
 
         let length = 0.0;
 
-        let i1 = 0;
+        let i1 = 0, i2 = 0, i3 = 0;
 
-        let i2 = 0;
+        normals = new Float32Array( vertices.length );
 
-        let i3 = 0;
-
-        //for ( index = 0; index < vertices.length; index++ ) {
-
-                //normals[index] = 0.0;
-
-        //}
-
-        // index triplet = 1 face
+        // Index triangle = 1 face.
 
         let nbFaces = indices.length / 3;
 
-        for (index = 0; index < nbFaces; index++) {
+        for ( idx = 0; idx < nbFaces; idx++ ) {
 
-            i1 = indices[index * 3]; // get the indexes of each vertex of the face
-            i2 = indices[index * 3 + 1];
-            i3 = indices[index * 3 + 2];
+            i1 = indices[ idx * 3]; // get the idxes of each vertex of the face
+
+            i2 = indices[ idx * 3 + 1 ];
+
+            i3 = indices[ idx * 3 + 2 ];
 
             // Get face vertex values.
 
-            p1p2x = vertices[i1 * 3] - vertices[i2 * 3]; // compute two vectors per face
-            p1p2y = vertices[i1 * 3 + 1] - vertices[i2 * 3 + 1];
-            p1p2z = vertices[i1 * 3 + 2] - vertices[i2 * 3 + 2];
-            p3p2x = vertices[i3 * 3] - vertices[i2 * 3];
-            p3p2y = vertices[i3 * 3 + 1] - vertices[i2 * 3 + 1];
-            p3p2z = vertices[i3 * 3 + 2] - vertices[i2 * 3 + 2];
+            p1p2x = vertices[ i1 * 3 ] - vertices[ i2 * 3 ]; // compute two vectors per face
 
-            faceNormalx = p1p2y * p3p2z - p1p2z * p3p2y; // compute the face normal with cross product
+            p1p2y = vertices[ i1 * 3 + 1 ] - vertices[ i2 * 3 + 1 ];
+
+            p1p2z = vertices[ i1 * 3 + 2 ] - vertices[ i2 * 3 + 2 ];
+
+            p3p2x = vertices[ i3 * 3 ] - vertices[ i2 * 3];
+
+            p3p2y = vertices[ i3 * 3 + 1 ] - vertices[ i2 * 3 + 1 ];
+
+            p3p2z = vertices[ i3 * 3 + 2 ] - vertices[ i2 * 3 + 2 ];
+
+            // Compute the face normal with cross product.
+
+            faceNormalx = p1p2y * p3p2z - p1p2z * p3p2y;
+
             faceNormaly = p1p2z * p3p2x - p1p2x * p3p2z;
+
             faceNormalz = p1p2x * p3p2y - p1p2y * p3p2x;
 
-            length = Math.sqrt(faceNormalx * faceNormalx + faceNormaly * faceNormaly + faceNormalz * faceNormalz);
+            // Get normalized length of face normal.
+
+            length = Math.sqrt( faceNormalx * faceNormalx + faceNormaly * faceNormaly + faceNormalz * faceNormalz );
+
             length = (length === 0) ? 1.0 : length;
+
             faceNormalx /= length; // normalize this normal
+
             faceNormaly /= length;
+
             faceNormalz /= length;
 
             // Accumulate all the normals defined for the face.
 
             normals[i1 * 3] += faceNormalx;
+
             normals[i1 * 3 + 1] += faceNormaly;
+
             normals[i1 * 3 + 2] += faceNormalz;
+
             normals[i2 * 3] += faceNormalx;
+
             normals[i2 * 3 + 1] += faceNormaly;
+
             normals[i2 * 3 + 2] += faceNormalz;
+
             normals[i3 * 3] += faceNormalx;
+
             normals[i3 * 3 + 1] += faceNormaly;
+
             normals[i3 * 3 + 2] += faceNormalz;
+
         }
 
-        // last normalization of each normal
+        // Last normalization of each normal
 
-        for (index = 0; index < normals.length / 3; index++) {
+        for ( idx = 0; idx < normals.length / 3; idx++ ) {
 
-            faceNormalx = normals[index * 3];
-            faceNormaly = -normals[index * 3 + 1];
-            faceNormalz = normals[index * 3 + 2];
-            length = Math.sqrt(faceNormalx * faceNormalx + faceNormaly * faceNormaly + faceNormalz * faceNormalz);
+            faceNormalx =  normals[ idx * 3 ];
+
+            faceNormaly = -normals[ idx * 3 + 1 ];
+
+            faceNormalz =  normals[ idx * 3 + 2 ];
+
+            length = Math.sqrt( faceNormalx * faceNormalx + faceNormaly * faceNormaly + faceNormalz * faceNormalz );
+
             length = (length === 0) ? 1.0 : length;
+
             faceNormalx /= length;
+
             faceNormaly /= length;
+
             faceNormalz /= length;
 
             // NOTE: added negative (-) to x, z to match our lighting model.
 
-            normals[index * 3] = -faceNormalx;
-            normals[index * 3 + 1] = faceNormaly;
-            normals[index * 3 + 2] = -faceNormalz;
+            normals[ idx * 3 ] = -faceNormalx;
+
+            normals[ idx * 3 + 1 ] = faceNormaly;
+
+            normals[ idx * 3 + 2 ] = -faceNormalz;
 
         }
+
+        return normals;
 
     }
 
@@ -1214,64 +1249,79 @@ class Prim {
 
         const vec3 = this.glMatrix.vec3;
 
-        var tan1 = new Float32Array( normals.length );
+        let tan1 = new Float32Array( normals.length );
 
-        var tan2 = new Float32Array( normals.length );
+        let tan2 = new Float32Array( normals.length );
 
         // the indices array specifies the triangles forming the object mesh (3 indices per triangle)
+
         const numIndices = indices.length;
+
         const numVertices = vertices.length;
+
         //const numNormals = normals.length;
 
-        //console.log("NUMVERTICES:" + numVertices / 3 + " NUMINDICES:" + numIndices / 3 + " NUMNORMALS:" + numNormals / 3)
+        tangents = new Float32Array( numVertices * 4 / 3 ); // TODO: ADDED 4 to this!!
 
         // for each triangle (step through indices 3 by 3)
+
         for (var i = 0; i < numIndices; i += 3) {
 
-            const i1 = indices[i], i2 = indices[i + 1], i3 = indices[i + 2];
+            const i1 = indices[i], i2 = indices[ i + 1 ], i3 = indices[ i + 2 ];
 
-            var j = i1 * 3; const v1x = vertices[j], v1y = vertices[j + 1], v1z = vertices[j + 2];
-            var j = i2 * 3; const v2x = vertices[j], v2y = vertices[j + 1], v2z = vertices[j + 2];
-            var j = i3 * 3; const v3x = vertices[j], v3y = vertices[j + 1], v3z = vertices[j + 2];
+            let j = i1 * 3; const v1x = vertices[ j ], v1y = vertices[ j + 1 ], v1z = vertices[ j + 2 ];
+
+            j = i2 * 3; const v2x = vertices[ j ], v2y = vertices[ j + 1 ], v2z = vertices[ j + 2 ];
+
+            j = i3 * 3; const v3x = vertices[ j ], v3y = vertices[ j + 1 ], v3z = vertices[ j + 2 ];
     
             const x1 = v2x - v1x, x2 = v3x - v1x;
+
             const y1 = v2y - v1y, y2 = v3y - v1y;
+
             const z1 = v2z - v1z, z2 = v3z - v1z;
 
-            var j = i1 * 2; const w1x = texCoords[j], w1y = texCoords[j + 1];
-            var j = i2 * 2; const w2x = texCoords[j], w2y = texCoords[j + 1];
-            var j = i3 * 2; const w3x = texCoords[j], w3y = texCoords[j + 1];
+            j = i1 * 2; const w1x = texCoords[ j ], w1y = texCoords[ j + 1 ];
+
+            j = i2 * 2; const w2x = texCoords[ j ], w2y = texCoords[ j + 1 ];
+
+            j = i3 * 2; const w3x = texCoords[ j ], w3y = texCoords[ j + 1 ];
 
             const s1 = w2x - w1x, s2 = w3x - w1x;
+
             const t1 = w2y - w1y, t2 = w3y - w1y;
 
-            const r = 1.0 / (s1 * t2 - s2 * t1);
+            const r = 1.0 / ( s1 * t2 - s2 * t1 );
 
-            const sx = (t2 * x1 - t1 * x2) * r, sy = (t2 * y1 - t1 * y2) * r, sz = (t2 * z1 - t1 * z2) * r;
-            const tx = (s1 * x2 - s2 * x1) * r, ty = (s1 * y2 - s2 * y1) * r, tz = (s1 * z2 - s2 * z1) * r;
+            const sx = ( t2 * x1 - t1 * x2 ) * r, sy = ( t2 * y1 - t1 * y2 ) * r, sz = ( t2 * z1 - t1 * z2 ) * r;
 
-            var j = i1 * 3; tan1[j] += sx; tan1[j + 1] += sy; tan1[j + 2] += sz;
-                    tan2[j] += tx; tan2[j + 1] += ty; tan2[j + 2] += tz;
-            var j = i2 * 3; tan1[j] += sx; tan1[j + 1] += sy; tan1[j + 2] += sz;
-                    tan2[j] += tx; tan2[j + 1] += ty; tan2[j + 2] += tz;
-            var j = i3 * 3; tan1[j] += sx; tan1[j + 1] += sy; tan1[j + 2] += sz;
-                    tan2[j] += tx; tan2[j + 1] += ty; tan2[j + 2] += tz;
+            const tx = ( s1 * x2 - s2 * x1 ) * r, ty = ( s1 * y2 - s2 * y1 ) * r, tz = ( s1 * z2 - s2 * z1 ) * r;
+
+            j = i1 * 3; tan1[ j ] += sx; tan1[ j + 1 ] += sy; tan1[ j + 2 ] += sz;
+
+            tan2[ j ] += tx; tan2[ j + 1 ] += ty; tan2[ j + 2 ] += tz;
+
+            j = i2 * 3; tan1[ j ] += sx; tan1[ j + 1 ] += sy; tan1[ j + 2 ] += sz;
+
+            tan2[ j ] += tx; tan2[ j + 1 ] += ty; tan2[ j + 2 ] += tz;
+
+            j = i3 * 3; tan1[ j ] += sx; tan1[ j + 1 ] += sy; tan1[ j + 2 ] += sz;
+
+            tan2[ j ] += tx; tan2[ j + 1 ] += ty; tan2[ j + 2 ] += tz;
+
         }
 
-        tangents = new Float32Array( numVertices * 4 / 3 ); // TODO: ADDED 4 to this!!
-        //var numTangents = tangents.length / 4;
-
-        //console.log("TAN1:" + tan1)
-        //console.log("TAN2:" + tan2)
-
-        //console.log('NUMTANGENTS:' + numTangents)
+        // Loop through vertices.
 
         for (var i3 = 0, i4 = 0; i4 < numVertices; i3 += 3, i4 += 4) {
 
             // not very efficient here (used the vec3 type and dot/cross operations from MV.js)
-            const n  = [ normals[i3], normals[i3 + 1], normals[i3 + 2] ];
-            const t1 = [ tan1   [i3], tan1   [i3 + 1], tan1   [i3 + 2] ];
-            const t2 = [ tan2   [i3], tan2   [i3 + 1], tan2   [i3 + 2] ];
+
+            const n  = [ normals[ i3 ], normals[ i3 + 1 ], normals[ i3 + 2 ] ];
+
+            const t1 = [ tan1   [ i3 ], tan1   [ i3 + 1 ], tan1   [ i3 + 2 ] ];
+
+            const t2 = [ tan2   [ i3 ], tan2   [ i3 + 1 ], tan2   [ i3 + 2 ] ];
 
             //console.log('n:' + n + ' t1:' + t1 + ' t2:' + t2)
 
@@ -1293,15 +1343,16 @@ class Prim {
             //////////////const tw = (dot(cross(n, t1), t2) < 0.0) ? -1.0 : 1.0;
             const tw = ( vec3.dot( vec3.cross( [ 0, 0, 0 ], n, t1 ), t2 ) < 0.0 ) ? -1.0 : 1.0;
 
-            tangents[i4    ] = txyz[ 0 ];
-            tangents[i4 + 1] = txyz[ 1 ];
-            tangents[i4 + 2] = txyz[ 2 ];
-            tangents[i4 + 3] = tw;
+            tangents[ i4     ] = txyz[ 0 ];
 
-            ///console.log("TW:" + tw)
+            tangents[ i4 + 1 ] = txyz[ 1 ];
+
+            tangents[ i4 + 2 ] = txyz[ 2 ];
+
+            tangents[ i4 + 3 ] = tw;
 
         }
-  
+
         return tangents;
 
     }
@@ -2111,17 +2162,17 @@ class Prim {
 
             case list.CUBESPHERE:
 
-                makePlane( 0, 1, 2, sx, sy, nx, ny,  sz / 2,  1, -1, side.FRONT ); //front
+                computeSquare( 0, 1, 2, sx, sy, nx, ny,  sz / 2,  1, -1, side.FRONT ); //front
 
-                makePlane( 0, 1, 2, sx, sy, nx, ny, -sz / 2, -1, -1, side.BACK ); //back
+                computeSquare( 0, 1, 2, sx, sy, nx, ny, -sz / 2, -1, -1, side.BACK ); //back
 
-                makePlane( 2, 1, 0, sz, sy, nz, ny, -sx / 2,  1, -1, side.LEFT ); //left
+                computeSquare( 2, 1, 0, sz, sy, nz, ny, -sx / 2,  1, -1, side.LEFT ); //left
 
-                makePlane( 2, 1, 0, sz, sy, nz, ny,  sx / 2, -1, -1, side.RIGHT ); //right
+                computeSquare( 2, 1, 0, sz, sy, nz, ny,  sx / 2, -1, -1, side.RIGHT ); //right
 
-                makePlane( 0, 2, 1, sx, sz, nx, nz,  sy / 2,  1,  1, side.TOP ); //top
+                computeSquare( 0, 2, 1, sx, sz, nx, nz,  sy / 2,  1,  1, side.TOP ); //top
 
-                makePlane( 0, 2, 1, sx, sz, nx, nz, -sy / 2,  1, -1, side.BOTTOM ); //bottom
+                computeSquare( 0, 2, 1, sx, sz, nx, nz, -sy / 2,  1, -1, side.BOTTOM ); //bottom
 
                 break;
 
@@ -2133,27 +2184,27 @@ class Prim {
                 switch( prim.dimensions[ 3 ] ) { // which side, based on cube sides
 
                     case side.FRONT:
-                        makePlane( 0, 1, 2, sx, sy, nx, ny, sz / 2,  1, -1, side.FRONT );
+                        computeSquare( 0, 1, 2, sx, sy, nx, ny, sz / 2,  1, -1, side.FRONT );
                     break;
 
                     case side.BACK:
-                        makePlane( 0, 1, 2, sx, sy, nx, ny, -sz / 2, -1, -1, side.BACK );
+                        computeSquare( 0, 1, 2, sx, sy, nx, ny, -sz / 2, -1, -1, side.BACK );
                     break;
 
                     case side.LEFT:
-                        makePlane( 2, 1, 0, sx, sy, nz, ny, -sx / 2,  1, -1, side.LEFT );
+                        computeSquare( 2, 1, 0, sx, sy, nz, ny, -sx / 2,  1, -1, side.LEFT );
                     break;
 
                     case side.RIGHT:
-                        makePlane( 2, 1, 0, sx, sy, nz, ny,  sx / 2, -1, -1, side.RIGHT ); 
+                        computeSquare( 2, 1, 0, sx, sy, nz, ny,  sx / 2, -1, -1, side.RIGHT ); 
                         break;
 
                     case side.TOP:
-                        makePlane( 0, 2, 1, sx, sy, nx, nz,  sy / 2,  1,  1, side.TOP ); // ROTATE xy axis
+                        computeSquare( 0, 2, 1, sx, sy, nx, nz,  sy / 2,  1,  1, side.TOP ); // ROTATE xy axis
                         break;
 
                     case side.BOTTOM:
-                        makePlane( 0, 2, 1, sx, -sy, nx, nz, -sy / 2,  1, -1, side.BOTTOM ); // ROTATE xy axis
+                        computeSquare( 0, 2, 1, sx, -sy, nx, nz, -sy / 2,  1, -1, side.BOTTOM ); // ROTATE xy axis
                         break;
 
                     default:
@@ -2169,9 +2220,9 @@ class Prim {
 
         // Make an individual Plane.
 
-        function makePlane( u, v, w, su, sv, nu, nv, pw, flipu, flipv, currSide ) {
+        function computeSquare( u, v, w, su, sv, nu, nv, pw, flipu, flipv, currSide ) {
 
-            // Create a size, positioning in correct position.
+            // Create a square, positioning in correct position.
 
             var vertShift = vertexIndex;
 
@@ -2243,7 +2294,7 @@ class Prim {
 
             sides[ currSide ] = side;
 
-        } // end of makePlane.
+        } // end of computeSquare.
 
         // Round the edges of the CUBE or SPHERECUBE to a sphere.
 
@@ -2399,9 +2450,13 @@ class Prim {
 
         normals = flatten( norms, false );
 
+        console.log(" IN CUBE< NORMALS ARE:" + normals.length)
+
         // Re-compute normals, which may have changed.
 
-        this.computeNormals( vertices, indices, normals );
+        normals = this.computeNormals( vertices, indices, normals );
+
+        console.log(" IN CUBE NORMALS NOW ARE>...." + normals.length)
 
         // Color array is pre-created, or gets a default when WebGL buffers are created.
 
@@ -3129,6 +3184,8 @@ class Prim {
                 let fan = this.computeFan ( vtx, faces[ i ] );
 
                 vertices = vertices.concat( fan.vertices );
+
+                // Update the indices to reflect concatenation.
 
                 for ( let i = 0; i < fan.indices.length; i++ ) {
 

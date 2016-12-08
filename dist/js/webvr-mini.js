@@ -3807,8 +3807,8 @@
 	     *
 	     * 
 	     */function Prim(init,util,glMatrix,webgl,loadModel,loadTexture,loadAudio,loadVideo){_classCallCheck(this,Prim);console.log('in Prim class');this.util=util;this.webgl=webgl;this.glMatrix=glMatrix;this.loadModel=loadModel;this.loadTexture=loadTexture;this.loadAudio=loadAudio;this.loadVideo=loadVideo;this.objs=[];this.typeList={POINT:'geometryPointCloud',POINTCLOUD:'geometryPointCloud',LINE:'geometryLine',PLANE:'geometryOuterPlane',OUTERPLANE:'geometryOuterPlane',INNERPLANE:'geometryInnerPlane',CURVEDPLANE:'geometryCurvedOuterPlane',CURVEDOUTERPLANE:'geometryCurvedOuterPlane',CURVEDINNERPLANE:'geometryCurvedInnerPlane',TERRAIN:'geometryTerrain',CIRCLE:'geometryCircle',CUBE:'geometryCube',CUBESPHERE:'geometryCubeSphere',SPHERE:'geometrySphere',DISC:'geometryCap',CAP:'geometryCap',DOME:'geometryDome',TOPDOME:'geometryTopDome',SKYDOME:'geometrySkyDome',BOTTOMDOME:'geometryBottomDome',CONE:'geometryCone',TOPCONE:'geometryTopCone',BOTTOMCONE:'geometryBottomCone',SPINDLE:'geometrySpindle',TEARDROP:'geometryTeardrop',CYLINDER:'geometryCylinder',CAPSULE:'geometryCapsule',ICOSOHEDRON:'geometryIcosohedron',PYRAMID:'geometryPyramid',ICOSPHERE:'geometryIcoSphere',TOPICODOME:'geometryTopIcoDome',SKYICODOME:'geometrySkyIcoDome',BOTTOMICODOME:'geometryBottomIcoDome',OCTAHEDRON:'geometryOctahedron',DODECAHEDRON:'geometryDodecahedron',TORUS:'geometryTorus',MESH:'geometryMesh'};// Sideness, direction. Mapped to equivalent unit vector names in this.getStdVecs()
-	this.sides={DEFAULT:'up',FORWARD:'forward',FRONT:'forward',BACK:'back',LEFT:'left',RIGHT:'right',UP:'up',TOP:'up',DOWN:'down',BOTTOM:'down'};// Visible from inside or outside.
-	this.OUTSIDE=0,this.INSIDE=1;// Shorthand.
+	this.sides={DEFAULT:'up',FORWARD:'forward',FRONT:'forward',BACK:'back',LEFT:'left',RIGHT:'right',UP:'up',TOP:'up',DOWN:'down',BOTTOM:'down'};this.FLOAT32='float32',this.UINT32='uint32';// Visible from inside or outside.
+	this.OUTSIDE=100,this.INSIDE=101;// Shorthand.
 	this.TWO_PI=Math.PI*2;}/** 
 	     * See if supplied Prim type is supported. Individual Prim factory 
 	     * methods do more detailed checking.
@@ -3838,7 +3838,12 @@
 	     * Add data to create buffers, works if existing data is present. However, 
 	     * indices must be consistent!
 	     */},{key:'addBufferData',value:function addBufferData(bufferObj,vertices,indices,normals,texCoords){var tangents=arguments.length>5&&arguments[5]!==undefined?arguments[5]:[];var colors=arguments.length>6&&arguments[6]!==undefined?arguments[6]:[];var concat=this.util.concatArr;bufferObj.vertices.data=concat(bufferObj.vertices.data,vertices),bufferObj.indices.data=concat(bufferObj.indices.data,indices),bufferObj.normals.data=concat(bufferObj.normals.data,normals),bufferObj.texCoords.data=concat(bufferObj.texCoords.data,texCoords),bufferObj.tangents.data=concat(bufferObj.tangents.data,tangents),bufferObj.colors.data=concat(bufferObj.colors.data,colors);return bufferObj;}/** 
-	     * Create WebGL buffers using geometry data
+	     * Bind a WebGL buffer
+	     * @param {Object} o the bufferObj for for particular array (e.g. vertex, tangent).
+	     * @param {String} type the typed-array type.
+	     */},{key:'bindGLBuffer',value:function bindGLBuffer(o,type){var gl=this.webgl.getContext();o.buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,o.buffer);switch(type){case this.FLOAT32:if(o.data instanceof Float32Array){gl.bufferData(gl.ARRAY_BUFFER,o.data,gl.STATIC_DRAW);}else{gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(o.data),gl.STATIC_DRAW);}break;case this.UINT16:o.buffer=gl.createBuffer();gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,o.buffer);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(o.data),gl.STATIC_DRAW);o.numItems=o.data.length/o.itemSize;break;default:console.error('GL buffer type '+type);break;}}/** 
+	     * Create WebGL buffers using geometry data. Note that the 
+	     * size is for flattened arrays.
 	     * @param {Object} bufferObj custom object holding the following:
 	     * an array of vertices, in glMatrix.vec3 objects.
 	     * an array of indices for the vertices.
@@ -3847,16 +3852,14 @@
 	     * an array of tangents, in glMatrix.vec3 format.
 	     * an array of colors, in glMatrix.vec4 format.
 	     */},{key:'createGLBuffers',value:function createGLBuffers(bufferObj){var gl=this.webgl.getContext();// Vertex Buffer Object.
-	var o=bufferObj.vertices;if(!o.data.length){console.log('no vertices present, creating default');o.data=new Float32Array([0,0,0]);}o.buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,o.buffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(o.data),gl.STATIC_DRAW);o.numItems=o.data.length/o.itemSize;// Create the Index buffer.
-	o=bufferObj.indices;if(!o.data.length){console.log('no indices present, creating default');o.data=new Uint16Array([1]);}o.buffer=gl.createBuffer();gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,o.buffer);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(o.data),gl.STATIC_DRAW);o.numItems=o.data.length/o.itemSize;// Create the Sides buffer, a kind of indices buffer.
-	o=bufferObj.sides;if(!o.data.length){console.warn('no sides present, creating default');o.data=new Uint16Array([1]);}// TODO: SUPPORT BY SIDE DRAWING FOR SOME PRIMS.
-	// TODO: SUPPORT
-	// create the Normals buffer.
-	o=bufferObj.normals;if(!o.data.length){console.log('no normals, present, creating default');o.data=new Float32Array([0,1,0]);}o.buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,o.buffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(o.data),gl.STATIC_DRAW);o.numItems=o.data.length/o.itemSize;// Create the primary Texture buffer.
-	o=bufferObj.texCoords;if(!o.data.length){console.warn('no texture present, creating default');o.data=new Float32Array([0,0]);}o.buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,o.buffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(o.data),gl.STATIC_DRAW);o.numItems=o.data.length/o.itemSize;// create the Tangents Buffer.
-	o=bufferObj.tangents;if(!o.data.length){console.warn('no tangents present, creating default');o.data=new Float32Array([0,0,0,0]);}o.buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,o.buffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(o.data),gl.STATIC_DRAW);o.numItems=o.data.length/o.itemSize;// Create the Colors buffer.
-	o=bufferObj.colors;if(!o.data.length){console.warn('no colors present, creating default color');o.data=new Float32Array(this.computeColors(bufferObj.normals.data,o.data));}o.buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,o.buffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(o.data),gl.STATIC_DRAW);o.numItems=o.data.length/o.itemSize;bufferObj.makeBuffers=false;// they're created!
-	return bufferObj;}/** 
+	var o=bufferObj.vertices;if(!o.data.length){console.log('no vertices present, creating default');o.data=new Float32Array([0,0,0]);}this.bindGLBuffer(o,this.FLOAT32);// Create the Index buffer.
+	o=bufferObj.indices;if(!o.data.length){console.log('no indices present, creating default');o.data=new Uint16Array([1]);}this.bindGLBuffer(o,this.UINT16);// Create the Sides buffer, a kind of indices buffer.
+	o=bufferObj.sides;if(!o.data.length){console.warn('no sides present, creating default');o.data=new Uint16Array([1]);}this.bindGLBuffer(o,this.UINT16);// create the Normals buffer.
+	o=bufferObj.normals;if(!o.data.length){console.log('no normals, present, creating default');o.data=new Float32Array([0,1,0]);}this.bindGLBuffer(o,this.FLOAT32);// Create the primary Texture buffer.
+	o=bufferObj.texCoords;if(!o.data.length){console.warn('no texture present, creating default');o.data=new Float32Array([0,0]);}this.bindGLBuffer(o,this.FLOAT32);// create the Tangents Buffer.
+	o=bufferObj.tangents;if(!o.data.length){console.warn('no tangents present, creating default');o.data=new Float32Array([0,0,0,0]);}this.bindGLBuffer(o,this.FLOAT32);// Create the Colors buffer.
+	o=bufferObj.colors;if(!o.data.length){console.warn('no colors present, creating default color');o.data=new Float32Array(this.computeColors(bufferObj.normals.data,o.data));}this.bindGLBuffer(o,this.FLOAT32);// Set the flag.
+	bufferObj.makeBuffers=false;return bufferObj;}/** 
 	     * Check the values of a Prim.
 	     * TODO: why is itemsize of indices = 1
 	     */},{key:'primReadout',value:function primReadout(prim){console.log('prim:'+prim.name+' type:'+prim.type+' vertex:('+prim.geometry.vertices.itemSize+'), '+prim.geometry.vertices.numItems+', texture:('+prim.geometry.texCoords.itemSize+'), '+prim.geometry.texCoords.numItems+', index:('+prim.geometry.indices.itemSize,'), '+prim.geometry.indices.numItems+', normals:('+prim.geometry.normals.itemSize+'), '+prim.geometry.normals.numItems);}/* 
@@ -3917,7 +3920,7 @@
 	     * Use this when we want the center of the whole object the polygon is part of.
 	     * @param {Array[...GlMatrix.vec3]} vertices a list of 3d vertices.
 	     * @param {GlMatrix.vec3} the centroid Point.
-	     */},{key:'computeMassCentroid',value:function computeMassCentroid(vertices){var vec3=this.glMatrix.vec3;var c=[0,0,0];var areaTotal=0.0;var p1=vertices[0];var p2=vertices[1];for(var i=2;i<vertices.length;i++){var p3=vertices[i];var edge1=vec3.subtract([0,0,0],p3,p1);var edge2=vec3.subtract([0,0,0],p3,p2);var crossProduct=vec3.cross([0,0,0],edge1,edge2);var area=vec3.length(crossProduct)/2;c[0]+=area*(p1[0]+p2[0]+p3[0])/3;c[1]+=area*(p1[1]+p2[1]+p3[1])/3;c[2]+=area*(p1[2]+p2[2]+p3[2])/3;areaTotal+=area;p2=vec3.copy([0,0,0],p3);}var point=[c[0]/areaTotal,c[1]/areaTotal,c[2]/areaTotal];return point;}/** 
+	     */},{key:'computeMassCentroid',value:function computeMassCentroid(vertices){var vec3=this.glMatrix.vec3;var c=[0,0,0];var areaTotal=0.0;var p1=vertices[0];var p2=vertices[1];for(var i=2;i<vertices.length;i++){var p3=vertices[i];var edge1=vec3.subtract([0,0,0],p3,p1);var edge2=vec3.subtract([0,0,0],p3,p2);var crossProduct=vec3.cross([0,0,0],edge1,edge2);var area=vec3.length(crossProduct)/2;c[0]+=area*(p1[0]+p2[0]+p3[0])/3;c[1]+=area*(p1[1]+p2[1]+p3[1])/3;c[2]+=area*(p1[2]+p2[2]+p3[2])/3;areaTotal+=area;p2=vec3.copy([0,0,0],p3);}return[c[0]/areaTotal,c[1]/areaTotal,c[2]/areaTotal];}/** 
 	     * Compute barycentric coordinates of a Point relative 
 	     * to a triangle defined by three Points.
 	     * @param {vec3} p the point to test.
@@ -3960,26 +3963,24 @@
 	tex.push(0.5,0.5);return{vertices:vv,indices:idx,texCoords:tex,normals:nor,tangents:[],colors:[]};}/** 
 	     * Compute normals for a 3d object. 
 	     * NOTE: some routines compute their own normals.
-	     * Adapted from BabylonJS version.
+	     * Adapted from BabylonJS version:
 	     * @link https://github.com/BabylonJS/Babylon.js/blob/3fe3372053ac58505dbf7a2a6f3f52e3b92670c8/src/Mesh/babylon.mesh.vertexData.js
 	     * @link http://gamedev.stackexchange.com/questions/8191/any-reliable-polygon-normal-calculation-code
 	     * @link https://www.opengl.org/wiki/Calculating_a_Surface_Normal
 	     * @param {[...GLMatrix.vec3]} vertices the current 3d position coordinates.
 	     * @param {Array} current indices into the vertices.
 	     * @param {[...GLMatrix.vec3]} normals the normals array to recalculate.
-	     */},{key:'computeNormals',value:function computeNormals(vertices,indices,normals){var index=0;var p1p2x=0.0;var p1p2y=0.0;var p1p2z=0.0;var p3p2x=0.0;var p3p2y=0.0;var p3p2z=0.0;var faceNormalx=0.0;var faceNormaly=0.0;var faceNormalz=0.0;var length=0.0;var i1=0;var i2=0;var i3=0;//for ( index = 0; index < vertices.length; index++ ) {
-	//normals[index] = 0.0;
-	//}
-	// index triplet = 1 face
-	var nbFaces=indices.length/3;for(index=0;index<nbFaces;index++){i1=indices[index*3];// get the indexes of each vertex of the face
-	i2=indices[index*3+1];i3=indices[index*3+2];// Get face vertex values.
+	     */},{key:'computeNormals',value:function computeNormals(vertices,indices,normals){var idx=0;var p1p2x=0.0,p1p2y=0.0,p1p2z=0.0;var p3p2x=0.0,p3p2y=0.0,p3p2z=0.0;var faceNormalx=0.0,faceNormaly=0.0,faceNormalz=0.0;var length=0.0;var i1=0,i2=0,i3=0;normals=new Float32Array(vertices.length);// Index triangle = 1 face.
+	var nbFaces=indices.length/3;for(idx=0;idx<nbFaces;idx++){i1=indices[idx*3];// get the idxes of each vertex of the face
+	i2=indices[idx*3+1];i3=indices[idx*3+2];// Get face vertex values.
 	p1p2x=vertices[i1*3]-vertices[i2*3];// compute two vectors per face
-	p1p2y=vertices[i1*3+1]-vertices[i2*3+1];p1p2z=vertices[i1*3+2]-vertices[i2*3+2];p3p2x=vertices[i3*3]-vertices[i2*3];p3p2y=vertices[i3*3+1]-vertices[i2*3+1];p3p2z=vertices[i3*3+2]-vertices[i2*3+2];faceNormalx=p1p2y*p3p2z-p1p2z*p3p2y;// compute the face normal with cross product
-	faceNormaly=p1p2z*p3p2x-p1p2x*p3p2z;faceNormalz=p1p2x*p3p2y-p1p2y*p3p2x;length=Math.sqrt(faceNormalx*faceNormalx+faceNormaly*faceNormaly+faceNormalz*faceNormalz);length=length===0?1.0:length;faceNormalx/=length;// normalize this normal
+	p1p2y=vertices[i1*3+1]-vertices[i2*3+1];p1p2z=vertices[i1*3+2]-vertices[i2*3+2];p3p2x=vertices[i3*3]-vertices[i2*3];p3p2y=vertices[i3*3+1]-vertices[i2*3+1];p3p2z=vertices[i3*3+2]-vertices[i2*3+2];// Compute the face normal with cross product.
+	faceNormalx=p1p2y*p3p2z-p1p2z*p3p2y;faceNormaly=p1p2z*p3p2x-p1p2x*p3p2z;faceNormalz=p1p2x*p3p2y-p1p2y*p3p2x;// Get normalized length of face normal.
+	length=Math.sqrt(faceNormalx*faceNormalx+faceNormaly*faceNormaly+faceNormalz*faceNormalz);length=length===0?1.0:length;faceNormalx/=length;// normalize this normal
 	faceNormaly/=length;faceNormalz/=length;// Accumulate all the normals defined for the face.
-	normals[i1*3]+=faceNormalx;normals[i1*3+1]+=faceNormaly;normals[i1*3+2]+=faceNormalz;normals[i2*3]+=faceNormalx;normals[i2*3+1]+=faceNormaly;normals[i2*3+2]+=faceNormalz;normals[i3*3]+=faceNormalx;normals[i3*3+1]+=faceNormaly;normals[i3*3+2]+=faceNormalz;}// last normalization of each normal
-	for(index=0;index<normals.length/3;index++){faceNormalx=normals[index*3];faceNormaly=-normals[index*3+1];faceNormalz=normals[index*3+2];length=Math.sqrt(faceNormalx*faceNormalx+faceNormaly*faceNormaly+faceNormalz*faceNormalz);length=length===0?1.0:length;faceNormalx/=length;faceNormaly/=length;faceNormalz/=length;// NOTE: added negative (-) to x, z to match our lighting model.
-	normals[index*3]=-faceNormalx;normals[index*3+1]=faceNormaly;normals[index*3+2]=-faceNormalz;}}/** 
+	normals[i1*3]+=faceNormalx;normals[i1*3+1]+=faceNormaly;normals[i1*3+2]+=faceNormalz;normals[i2*3]+=faceNormalx;normals[i2*3+1]+=faceNormaly;normals[i2*3+2]+=faceNormalz;normals[i3*3]+=faceNormalx;normals[i3*3+1]+=faceNormaly;normals[i3*3+2]+=faceNormalz;}// Last normalization of each normal
+	for(idx=0;idx<normals.length/3;idx++){faceNormalx=normals[idx*3];faceNormaly=-normals[idx*3+1];faceNormalz=normals[idx*3+2];length=Math.sqrt(faceNormalx*faceNormalx+faceNormaly*faceNormaly+faceNormalz*faceNormalz);length=length===0?1.0:length;faceNormalx/=length;faceNormaly/=length;faceNormalz/=length;// NOTE: added negative (-) to x, z to match our lighting model.
+	normals[idx*3]=-faceNormalx;normals[idx*3+1]=faceNormaly;normals[idx*3+2]=-faceNormalz;}return normals;}/** 
 	     * Compute tangents. NOTE: some routines compute their own tangents.
 	     * CodePen - http://codepen.io/ktmpower/pen/ZbGRpW
 	     * adapted from the C++ code from this link: http://www.terathon.com/code/tangent.html
@@ -3988,13 +3989,9 @@
 	     * is stored as ±1 in the w-coordinate. The bitangent vector B is then given by B = (N × T) · Tw."
 	     */},{key:'computeTangents',value:function computeTangents(vertices,indices,normals,texCoords,tangents){var vec3=this.glMatrix.vec3;var tan1=new Float32Array(normals.length);var tan2=new Float32Array(normals.length);// the indices array specifies the triangles forming the object mesh (3 indices per triangle)
 	var numIndices=indices.length;var numVertices=vertices.length;//const numNormals = normals.length;
-	//console.log("NUMVERTICES:" + numVertices / 3 + " NUMINDICES:" + numIndices / 3 + " NUMNORMALS:" + numNormals / 3)
+	tangents=new Float32Array(numVertices*4/3);// TODO: ADDED 4 to this!!
 	// for each triangle (step through indices 3 by 3)
-	for(var i=0;i<numIndices;i+=3){var i1=indices[i],i2=indices[i+1],_i2=indices[i+2];var j=i1*3;var v1x=vertices[j],v1y=vertices[j+1],v1z=vertices[j+2];var j=i2*3;var v2x=vertices[j],v2y=vertices[j+1],v2z=vertices[j+2];var j=_i2*3;var v3x=vertices[j],v3y=vertices[j+1],v3z=vertices[j+2];var x1=v2x-v1x,x2=v3x-v1x;var y1=v2y-v1y,y2=v3y-v1y;var z1=v2z-v1z,z2=v3z-v1z;var j=i1*2;var w1x=texCoords[j],w1y=texCoords[j+1];var j=i2*2;var w2x=texCoords[j],w2y=texCoords[j+1];var j=_i2*2;var w3x=texCoords[j],w3y=texCoords[j+1];var s1=w2x-w1x,s2=w3x-w1x;var t1=w2y-w1y,t2=w3y-w1y;var r=1.0/(s1*t2-s2*t1);var sx=(t2*x1-t1*x2)*r,sy=(t2*y1-t1*y2)*r,sz=(t2*z1-t1*z2)*r;var tx=(s1*x2-s2*x1)*r,ty=(s1*y2-s2*y1)*r,tz=(s1*z2-s2*z1)*r;var j=i1*3;tan1[j]+=sx;tan1[j+1]+=sy;tan1[j+2]+=sz;tan2[j]+=tx;tan2[j+1]+=ty;tan2[j+2]+=tz;var j=i2*3;tan1[j]+=sx;tan1[j+1]+=sy;tan1[j+2]+=sz;tan2[j]+=tx;tan2[j+1]+=ty;tan2[j+2]+=tz;var j=_i2*3;tan1[j]+=sx;tan1[j+1]+=sy;tan1[j+2]+=sz;tan2[j]+=tx;tan2[j+1]+=ty;tan2[j+2]+=tz;}tangents=new Float32Array(numVertices*4/3);// TODO: ADDED 4 to this!!
-	//var numTangents = tangents.length / 4;
-	//console.log("TAN1:" + tan1)
-	//console.log("TAN2:" + tan2)
-	//console.log('NUMTANGENTS:' + numTangents)
+	for(var i=0;i<numIndices;i+=3){var i1=indices[i],i2=indices[i+1],_i2=indices[i+2];var j=i1*3;var v1x=vertices[j],v1y=vertices[j+1],v1z=vertices[j+2];j=i2*3;var v2x=vertices[j],v2y=vertices[j+1],v2z=vertices[j+2];j=_i2*3;var v3x=vertices[j],v3y=vertices[j+1],v3z=vertices[j+2];var x1=v2x-v1x,x2=v3x-v1x;var y1=v2y-v1y,y2=v3y-v1y;var z1=v2z-v1z,z2=v3z-v1z;j=i1*2;var w1x=texCoords[j],w1y=texCoords[j+1];j=i2*2;var w2x=texCoords[j],w2y=texCoords[j+1];j=_i2*2;var w3x=texCoords[j],w3y=texCoords[j+1];var s1=w2x-w1x,s2=w3x-w1x;var t1=w2y-w1y,t2=w3y-w1y;var r=1.0/(s1*t2-s2*t1);var sx=(t2*x1-t1*x2)*r,sy=(t2*y1-t1*y2)*r,sz=(t2*z1-t1*z2)*r;var tx=(s1*x2-s2*x1)*r,ty=(s1*y2-s2*y1)*r,tz=(s1*z2-s2*z1)*r;j=i1*3;tan1[j]+=sx;tan1[j+1]+=sy;tan1[j+2]+=sz;tan2[j]+=tx;tan2[j+1]+=ty;tan2[j+2]+=tz;j=i2*3;tan1[j]+=sx;tan1[j+1]+=sy;tan1[j+2]+=sz;tan2[j]+=tx;tan2[j+1]+=ty;tan2[j+2]+=tz;j=_i2*3;tan1[j]+=sx;tan1[j+1]+=sy;tan1[j+2]+=sz;tan2[j]+=tx;tan2[j+1]+=ty;tan2[j+2]+=tz;}// Loop through vertices.
 	for(var i3=0,i4=0;i4<numVertices;i3+=3,i4+=4){// not very efficient here (used the vec3 type and dot/cross operations from MV.js)
 	var n=[normals[i3],normals[i3+1],normals[i3+2]];var _t=[tan1[i3],tan1[i3+1],tan1[i3+2]];var _t2=[tan2[i3],tan2[i3+1],tan2[i3+2]];//console.log('n:' + n + ' t1:' + t1 + ' t2:' + t2)
 	// Gram-Schmidt orthogonalize
@@ -4004,8 +4001,7 @@
 	var txyz=len2>0?vec3.scale([0,0,0],tmp,1.0/Math.sqrt(len2)):tmp;////console.log("TXYZ:" + txyz );
 	// Calculate handedness
 	//////////////const tw = (dot(cross(n, t1), t2) < 0.0) ? -1.0 : 1.0;
-	var tw=vec3.dot(vec3.cross([0,0,0],n,_t),_t2)<0.0?-1.0:1.0;tangents[i4]=txyz[0];tangents[i4+1]=txyz[1];tangents[i4+2]=txyz[2];tangents[i4+3]=tw;///console.log("TW:" + tw)
-	}return tangents;}/** 
+	var tw=vec3.dot(vec3.cross([0,0,0],n,_t),_t2)<0.0?-1.0:1.0;tangents[i4]=txyz[0];tangents[i4+1]=txyz[1];tangents[i4+2]=txyz[2];tangents[i4+3]=tw;}return tangents;}/** 
 	     * Convert from one Prim geometry to another, alters geometry.
 	     */},{key:'computeMorph',value:function computeMorph(newGeometry,easing,geometry){}/** 
 	     * Subdivide a mesh, WITHOUT smoothing.
@@ -4279,17 +4275,17 @@
 	ny=prim.divisions[1],// should be y, i 
 	nz=prim.divisions[2];// should be z
 	//var numVertices = ( nx + 1 ) * ( ny + 1 ) * 2 + ( nx + 1 ) * ( nz + 1 ) * 2 + ( nz + 1 ) * ( ny + 1 ) * 2;
-	var positions=[];var norms=[];var sides=[];var vertexIndex=0;switch(prim.type){case list.CUBE:case list.CUBESPHERE:makePlane(0,1,2,sx,sy,nx,ny,sz/2,1,-1,side.FRONT);//front
-	makePlane(0,1,2,sx,sy,nx,ny,-sz/2,-1,-1,side.BACK);//back
-	makePlane(2,1,0,sz,sy,nz,ny,-sx/2,1,-1,side.LEFT);//left
-	makePlane(2,1,0,sz,sy,nz,ny,sx/2,-1,-1,side.RIGHT);//right
-	makePlane(0,2,1,sx,sz,nx,nz,sy/2,1,1,side.TOP);//top
-	makePlane(0,2,1,sx,sz,nx,nz,-sy/2,1,-1,side.BOTTOM);//bottom
+	var positions=[];var norms=[];var sides=[];var vertexIndex=0;switch(prim.type){case list.CUBE:case list.CUBESPHERE:computeSquare(0,1,2,sx,sy,nx,ny,sz/2,1,-1,side.FRONT);//front
+	computeSquare(0,1,2,sx,sy,nx,ny,-sz/2,-1,-1,side.BACK);//back
+	computeSquare(2,1,0,sz,sy,nz,ny,-sx/2,1,-1,side.LEFT);//left
+	computeSquare(2,1,0,sz,sy,nz,ny,sx/2,-1,-1,side.RIGHT);//right
+	computeSquare(0,2,1,sx,sz,nx,nz,sy/2,1,1,side.TOP);//top
+	computeSquare(0,2,1,sx,sz,nx,nz,-sy/2,1,-1,side.BOTTOM);//bottom
 	break;case list.PLANE:case list.CURVEDOUTERPLANE:case list.CURVEDINNERPLANE:case list.TERRAIN:switch(prim.dimensions[3]){// which side, based on cube sides
-	case side.FRONT:makePlane(0,1,2,sx,sy,nx,ny,sz/2,1,-1,side.FRONT);break;case side.BACK:makePlane(0,1,2,sx,sy,nx,ny,-sz/2,-1,-1,side.BACK);break;case side.LEFT:makePlane(2,1,0,sx,sy,nz,ny,-sx/2,1,-1,side.LEFT);break;case side.RIGHT:makePlane(2,1,0,sx,sy,nz,ny,sx/2,-1,-1,side.RIGHT);break;case side.TOP:makePlane(0,2,1,sx,sy,nx,nz,sy/2,1,1,side.TOP);// ROTATE xy axis
-	break;case side.BOTTOM:makePlane(0,2,1,sx,-sy,nx,nz,-sy/2,1,-1,side.BOTTOM);// ROTATE xy axis
+	case side.FRONT:computeSquare(0,1,2,sx,sy,nx,ny,sz/2,1,-1,side.FRONT);break;case side.BACK:computeSquare(0,1,2,sx,sy,nx,ny,-sz/2,-1,-1,side.BACK);break;case side.LEFT:computeSquare(2,1,0,sx,sy,nz,ny,-sx/2,1,-1,side.LEFT);break;case side.RIGHT:computeSquare(2,1,0,sx,sy,nz,ny,sx/2,-1,-1,side.RIGHT);break;case side.TOP:computeSquare(0,2,1,sx,sy,nx,nz,sy/2,1,1,side.TOP);// ROTATE xy axis
+	break;case side.BOTTOM:computeSquare(0,2,1,sx,-sy,nx,nz,-sy/2,1,-1,side.BOTTOM);// ROTATE xy axis
 	break;default:break;}break;default:break;}// Make an individual Plane.
-	function makePlane(u,v,w,su,sv,nu,nv,pw,flipu,flipv,currSide){// Create a size, positioning in correct position.
+	function computeSquare(u,v,w,su,sv,nu,nv,pw,flipu,flipv,currSide){// Create a square, positioning in correct position.
 	var vertShift=vertexIndex;if(prim.name==='testPlane')console.log('i:'+i+' j:'+j);for(var j=0;j<=nv;j++){for(var i=0;i<=nu;i++){var vert=positions[vertexIndex]=[0,0,0];vert[u]=(-su/2+i*su/nu)*flipu;vert[v]=(-sv/2+j*sv/nv)*flipv;vert[w]=pw;// heightMap is always the middle, up-facing vector.
 	if(prim.heightMap){// our 'y' for the TOP x/z MAY NEED TO CHANGE FOR EACH SIDE
 	vert[w]=prim.heightMap.getPixel(i,j);}// Normals.
@@ -4298,15 +4294,15 @@
 	var side=[];for(var j=0;j<nv;j++){for(var i=0;i<nu;i++){var n=vertShift+j*(nu+1)+i;// Indices for entire prim.
 	indices.push(n,n+nu+1,n+nu+2);indices.push(n,n+nu+2,n+1);// Individual sides.
 	side.push(n,n+nu+1,n+nu+2);side.push(n,n+nu+2,n+1);}}// Save the indices for this side.
-	sides[currSide]=side;}// end of makePlane.
+	sides[currSide]=side;}// end of computeSquare.
 	// Round the edges of the CUBE or SPHERECUBE to a sphere.
 	if((prim.type===list.CUBE||prim.type===list.CUBESPHERE)&&prim.divisions[3]!==0){var tmp=[0,0,0];// Radius controlled by 4th parameter in divisions
 	var radius=prim.divisions[3];var rx=sx/2.0;var ry=sy/2.0;var rz=sz/2.0;for(var i=0;i<positions.length;i++){var pos=positions[i];var normal=normals[i];var inner=[pos[0],pos[1],pos[2]];if(pos[0]<-rx+radius){inner[0]=-rx+radius;}else if(pos[0]>rx-radius){inner[0]=rx-radius;}if(pos[1]<-ry+radius){inner[1]=-ry+radius;}else if(pos[1]>ry-radius){inner[1]=ry-radius;}if(pos[2]<-rz+radius){inner[2]=-rz+radius;}else if(pos[2]>rz-radius){inner[2]=rz-radius;}// Re-compute position of moved vertex via normals.
 	normal=[pos[0],pos[1],pos[2]];vec3.sub(normal,normal,inner);vec3.normalize(normal,normal);//normals[ i ] = normal;
 	pos=[inner[0],inner[1],inner[2]];tmp=[normal[0],normal[1],normal[2]];vec3.scale(tmp,tmp,radius);vec3.add(pos,pos,tmp);positions[i]=pos;}}else if((prim.type===list.CURVEDOUTERPLANE||prim.type===list.CURVEDINNERPLANE)&&prim.dimensions[4]&&prim.dimensions[4]!==0){var dSide=1;switch(prim.dimensions[3]){case side.FRONT:if(prim.type===list.CURVEDINNERPLANE||prim.type==list.INNERPLANE)dSide=-1;break;case side.BACK:if(prim.type===list.CURVEDOUTERPLANE||prim.type===list.OUTERPLANE)dSide=-1;break;case side.LEFT:if(prim.type===list.CURVEDOUTERPLANE||prim.type===list.OUTERPLANE)dSide=-1;break;case side.RIGHT:if(prim.type===list.CURVEDINNERPLANE||prim.type===list.INNERPLANE)dSide=-1;break;case side.TOP:if(prim.type===list.CURVEDOUTERPLANE||prim.type===list.OUTERPLANE)dSide=-1;break;case side.BOTTOM:if(prim.type===list.CURVEDINNERPLANE||prim.type===list.INNERPLANE)dSide=-1;break;}for(var i=0;i<positions.length;i++){switch(prim.dimensions[3]){case side.FRONT:positions[i][2]=dSide*Math.cos(positions[i][0])*prim.dimensions[4];break;case side.BACK:positions[i][2]=dSide*Math.cos(positions[i][0])*prim.dimensions[4];break;case side.LEFT:positions[i][0]=dSide*Math.cos(positions[i][2])*prim.dimensions[4];break;case side.RIGHT:positions[i][0]=dSide*Math.cos(positions[i][2])*prim.dimensions[4];break;case side.TOP:positions[i][1]=dSide*Math.cos(positions[i][0])*prim.dimensions[4];break;case side.BOTTOM:positions[i][1]=-Math.cos(positions[i][0])*prim.dimensions[4];// SEEN FROM INSIDE< CORRECT
 	break;}}}// Flatten arrays, since we created using 2 dimensions.
-	vertices=flatten(positions,false);normals=flatten(norms,false);// Re-compute normals, which may have changed.
-	this.computeNormals(vertices,indices,normals);// Color array is pre-created, or gets a default when WebGL buffers are created.
+	vertices=flatten(positions,false);normals=flatten(norms,false);console.log(" IN CUBE< NORMALS ARE:"+normals.length);// Re-compute normals, which may have changed.
+	normals=this.computeNormals(vertices,indices,normals);console.log(" IN CUBE NORMALS NOW ARE>...."+normals.length);// Color array is pre-created, or gets a default when WebGL buffers are created.
 	// Return the buffer.
 	return this.addBufferData(prim.geometry,vertices,indices,normals,texCoords,tangents);// Return the buffer.
 	//return this.createGLBuffers( prim.geometry );
@@ -4526,7 +4522,8 @@
 	[a,-c,0]// 19 + 4 = 24
 	];//vertices = vertices.map(function(v) { return v.normalize().scale(r); })
 	var faces=[[4,3,2,1,0],[7,6,5,0,1],[12,11,10,9,8],[15,14,13,8,9],[14,3,4,16,13],[3,14,15,17,2],[11,6,7,18,10],[6,11,12,19,5],[4,0,5,19,16],[12,8,13,16,19],[15,9,10,18,17],[7,1,2,17,18]];if(prim.applyTexToFace){for(var i=0;i<faces.length;i++){var len=vertices.length;// The fan is a flat polygon, constructed with face points, shared vertices.
-	var fan=this.computeFan(vtx,faces[i]);vertices=vertices.concat(fan.vertices);for(var _i6=0;_i6<fan.indices.length;_i6++){fan.indices[_i6]+=len;}indices=indices.concat(fan.indices);texCoords=texCoords.concat(fan.texCoords);normals=normals.concat(fan.normals);}}else{var computeSphereCoords=this.computeSphereCoords;for(var _i7=0;_i7<faces.length;_i7++){var vv=faces[_i7];// indices to vertices
+	var fan=this.computeFan(vtx,faces[i]);vertices=vertices.concat(fan.vertices);// Update the indices to reflect concatenation.
+	for(var _i6=0;_i6<fan.indices.length;_i6++){fan.indices[_i6]+=len;}indices=indices.concat(fan.indices);texCoords=texCoords.concat(fan.texCoords);normals=normals.concat(fan.normals);}}else{var computeSphereCoords=this.computeSphereCoords;for(var _i7=0;_i7<faces.length;_i7++){var vv=faces[_i7];// indices to vertices
 	var vvv=[];// saved vertices
 	var lenv=vv.length;for(var j=0;j<vv.length;j++){vvv.push(vtx[vv[j]]);}var center=this.computeCentroid(vvv);for(var _i8=1;_i8<=lenv;_i8++){var p1=_i8-1;var p2=_i8;if(_i8===lenv){p1=p2-1;p2=0;}var v1=vvv[p1];var v2=vvv[p2];vertices.push(vec3.copy([0,0,0],v1),vec3.copy([0,0,0],v2),vec3.copy([0,0,0],center));var cLen=vertices.length-1;indices.push(cLen-2,cLen-1,cLen);normals.push(vec3.copy([0,0,0],v1),vec3.copy([0,0,0],v2),vec3.copy([0,0,0],center));texCoords.push(computeSphereCoords(v1),computeSphereCoords(v2),computeSphereCoords(center));}// end of 'for' loop.
 	}// end of 'faces' loop.
