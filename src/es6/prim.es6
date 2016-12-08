@@ -47,6 +47,9 @@ class Prim {
      *    b. resultPt = vec3.sub( resultPt, a, b );
      *    c. resultPt = vec3.sub( [ 0, 0, 0 ], a, b );
      * ---------------------------------------------------------------
+     *
+     * Array optimization
+     * https://gamealchemist.wordpress.com/2013/05/01/lets-get-those-javascript-arrays-to-work-fast/
      * 
      * geo primitives
      * USE THIS!!!! https://github.com/nickdesaulniers/prims
@@ -153,6 +156,8 @@ class Prim {
 
             CAPSULE: 'geometryCapsule',
 
+            PRISM: 'geometryPrism',
+
             ICOSOHEDRON: 'geometryIcosohedron',
 
             PYRAMID: 'geometryPyramid',
@@ -177,7 +182,7 @@ class Prim {
 
         // Sideness, direction. Mapped to equivalent unit vector names in this.getStdVecs()
 
-        this.sides = {
+        this.directions = {
 
             DEFAULT: 'up',
 
@@ -626,28 +631,32 @@ class Prim {
 
     /** 
      * Standard vectors (similar to Unity) when needed. Call only 
-     * if using the array literal (e.g. [ 0, 0, 0,]) doesn't make sense.
+     * if using the array literal (e.g. [ 0, 0, 0,]) doesn't make sense. 
+     * Note you may need to go "let getStdVecs = this.getStdVecs.bind( this)" 
+     * in your calling function.
      * @link https://docs.unity3d.com/ScriptReference/Vector3.html
     */
     getStdVecs ( type ) {
 
+        let dir = this.directions;
+
         switch ( type ) {
 
-            case 'back': return [ 0, 0,-1 ];
+            case dir.BACK: return [ 0, 0,-1 ];
 
-            case 'down': return [ 0,-1, 0 ];
+            case dir.DOWN: return [ 0,-1, 0 ];
 
-            case 'forward': return [ 0, 0, 1];
+            case dir.FORWARD: return [ 0, 0, 1];
 
-            case 'left': return [-1, 0, 0 ];
+            case dir.LEFT: return [-1, 0, 0 ];
 
-            case 'right': return [ 1, 0, 0 ];
+            case dir.RIGHT: return [ 1, 0, 0 ];
 
-            case 'up': return [ 0, 1, 0 ];
+            case dir.UP: return [ 0, 1, 0 ];
 
-            case 'one': return [ 1, 1, 1 ];
+            case dir.ONE: return [ 1, 1, 1 ];
 
-            case 'zero': return [ 0, 0, 0 ];
+            case dir.ZERO: return [ 0, 0, 0 ];
 
         }
 
@@ -724,16 +733,11 @@ class Prim {
 
             let v = vertices[ i ];
 
-            tx = Math.min( tx, v[ 0 ] );
-
-            ty = Math.min( ty, v[ 1 ] );
-
-            tz = Math.min( tz, v[ 2 ] );
-
-            bx = Math.max( bx, v[ 0 ] );
-
-            by = Math.max( by, v[ 1 ] );
-
+            tx = Math.min( tx, v[ 0 ] ),
+            ty = Math.min( ty, v[ 1 ] ),
+            tz = Math.min( tz, v[ 2 ] ),
+            bx = Math.max( bx, v[ 0 ] ),
+            by = Math.max( by, v[ 1 ] ),
             bz = Math.max( bz, v[ 2 ] );
 
         }
@@ -824,17 +828,17 @@ class Prim {
 
             let vertex = vertices[ i ];
 
-            c[ 0 ] += vertex[ 0 ];
+            c[ 0 ] += vertex[ 0 ],
 
-            c[ 1 ] += vertex[ 1 ];
+            c[ 1 ] += vertex[ 1 ],
 
             c[ 2 ] += vertex[ 2 ];
 
         }
 
-        c[ 0 ] /= len;
+        c[ 0 ] /= len,
 
-        c[ 1 ] /= len;
+        c[ 1 ] /= len,
 
         c[ 2 ] /= len;
 
@@ -872,9 +876,9 @@ class Prim {
 
             let area = vec3.length( crossProduct ) / 2;
 
-            c[ 0 ] += area * ( p1[ 0 ] + p2[ 0 ] + p3[ 0 ] ) / 3;
+            c[ 0 ] += area * ( p1[ 0 ] + p2[ 0 ] + p3[ 0 ] ) / 3,
 
-            c[ 1 ] += area * ( p1[ 1 ] + p2[ 1 ] + p3[ 1 ] ) / 3;
+            c[ 1 ] += area * ( p1[ 1 ] + p2[ 1 ] + p3[ 1 ] ) / 3,
 
             c[ 2 ] += area * ( p1[ 2 ] + p2[ 2 ] + p3[ 2 ] ) / 3;
 
@@ -1034,8 +1038,6 @@ class Prim {
 
         }
 
-        let box = this.computeBoundingBox( vv );
-
         // Get the topLeft and bottomRight points (bounding rectangle).
 
         let center = this.computeCentroid( vv );
@@ -1046,7 +1048,7 @@ class Prim {
 
         let centerPos = vv.length - 1;
 
-        let vtx = [], tex = [], nor = [], idx = [];
+        let vtx = [], tex = [], norms = [], idx = [];
 
         // We re-do the indices calculations, since we insert a central point.
 
@@ -1072,7 +1074,7 @@ class Prim {
 
             idx.push( p1, p2, centerPos );
 
-            nor.push( v1, v2, center );
+            norms.push( v1, v2, center );
 
             // Assumes a regular polygon.
 
@@ -1098,7 +1100,7 @@ class Prim {
 
             texCoords: tex,
 
-            normals: nor,
+            normals: norms,
 
             tangents: [],
 
@@ -1265,7 +1267,7 @@ class Prim {
 
         // for each triangle (step through indices 3 by 3)
 
-        for (var i = 0; i < numIndices; i += 3) {
+        for (let i = 0; i < numIndices; i += 3) {
 
             const i1 = indices[i], i2 = indices[ i + 1 ], i3 = indices[ i + 2 ];
 
@@ -1313,7 +1315,7 @@ class Prim {
 
         // Loop through vertices.
 
-        for (var i3 = 0, i4 = 0; i4 < numVertices; i3 += 3, i4 += 4) {
+        for (let i3 = 0, i4 = 0; i4 < numVertices; i3 += 3, i4 += 4) {
 
             // not very efficient here (used the vec3 type and dot/cross operations from MV.js)
 
@@ -1535,11 +1537,6 @@ class Prim {
 
         // Shortcuts to Prim data arrays.
 
-        //let vertices = geo.vertices.data,
-        //indices  = geo.indices.data,
-        //texCoords = geo.texCoords.data,
-        //normals = geo.normals.data,
-        //tangents = geo.tangents.data;
         let vertices = [], indices  = [], normals = [], texCoords = [], tangents = [];
 
         let longitudeBands = prim.divisions[ 0 ] // x axis (really xz)
@@ -1587,8 +1584,6 @@ class Prim {
             let cosTheta = Math.cos( theta );
 
             for ( longNum = longStart; longNum <= longitudeBands; longNum++ ) {
-
-                //console.log("STARTSLICE FOR:" + prim.name + " = " + startSlice );
 
                 let phi = longNum * this.TWO_PI / longitudeBands;
 
@@ -1753,9 +1748,6 @@ class Prim {
 
         }
 
-        //////////////////geo = this.subDivide( geo );
-
-
         // Wind the SKYDOME indices backwards so texture displays inside.
 
         if ( prim.type === list.SKYDOME ) {
@@ -1773,10 +1765,6 @@ class Prim {
         // Return the buffer.
 
         return this.addBufferData( prim.geometry, vertices, indices, normals, texCoords, tangents );
-
-        // Return the buffer.
-
-        //return this.createGLBuffers( prim.geometry );
 
     }
 
@@ -2012,57 +2000,57 @@ class Prim {
 
         function calculateRing( segments, r, y, dy ) {
 
-            var segIncr = 1.0 / ( segments - 1 );
+            let segIncr = 1.0 / ( segments - 1 );
 
-            for( var s = 0; s < segments; s++ ) {
+            for( let s = 0; s < segments; s++ ) {
 
-                var x = Math.cos( ( TWO_PI ) * s * segIncr ) * r;
+                let x = Math.cos( ( TWO_PI ) * s * segIncr ) * r;
 
-                var z = Math.sin( ( TWO_PI ) * s * segIncr ) * r;
+                let z = Math.sin( ( TWO_PI ) * s * segIncr ) * r;
 
                 vertices.push( radius * x, radius * y + height * dy, radius * z );
 
                 normals.push( x, y, z )
 
-                var u =  1 - ( s * segIncr );
+                let u =  1 - ( s * segIncr );
 
-                var v = 0.5 + ( ( radius * y + height * dy ) / ( 2.0 * radius + height ) );
+                let v = 0.5 + ( ( radius * y + height * dy ) / ( 2.0 * radius + height ) );
 
                 texCoords.push( u, v );
 
             }
         }
 
-        var ringsBody = segmentHeight + 1;
+        let ringsBody = segmentHeight + 1;
 
-        var ringsTotal = segmentHeight + ringsBody;
+        let ringsTotal = segmentHeight + ringsBody;
 
 
-        var bodyIncr = 1.0 / ( ringsBody - 1 );
+        let bodyIncr = 1.0 / ( ringsBody - 1 );
 
-        var ringIncr = 1.0 / ( segmentHeight - 1 );
+        let ringIncr = 1.0 / ( segmentHeight - 1 );
 
-        for( var r = 0; r < segmentHeight / 2; r++ ) {
+        for( let r = 0; r < segmentHeight / 2; r++ ) {
 
             calculateRing( numSegments, Math.sin( Math.PI * r * ringIncr), Math.sin( Math.PI * ( r * ringIncr - 0.5 ) ), -0.5 );
 
         }
 
-        for( var r = 0; r < ringsBody; r++ ) {
+        for( let r = 0; r < ringsBody; r++ ) {
 
             calculateRing( numSegments, 1.0, 0.0, r * bodyIncr - 0.5);
 
         }
 
-        for( var r = segmentHeight / 2; r < segmentHeight; r++ ) {
+        for( let r = segmentHeight / 2; r < segmentHeight; r++ ) {
 
             calculateRing( numSegments, Math.sin( Math.PI * r * ringIncr), Math.sin( Math.PI * ( r * ringIncr - 0.5 ) ), +0.5);
 
         }
 
-        for( var r = 0; r < ringsTotal - 1; r++ ) {
+        for( let r = 0; r < ringsTotal - 1; r++ ) {
 
-            for( var s = 0; s < numSegments - 1; s++ ) {
+            for( let s = 0; s < numSegments - 1; s++ ) {
 
                 indices.push(
 
@@ -2125,17 +2113,11 @@ class Prim {
 
         const list = this.typeList;
 
-        const side = this.sides;
+        const side = this.directions;
 
         let geo = prim.geometry;
 
         // Shortcuts to Prim data arrays
-
-        //let vertices = geo.vertices.data,
-        //indices  = geo.indices.data,
-        //texCoords = geo.texCoords.data,
-        //normals = geo.normals.data,
-        //tangents = geo.tangents.data;
 
         let vertices = [], indices  = [], normals = [], texCoords = [], tangents = [];
 
@@ -2148,11 +2130,11 @@ class Prim {
 
         //var numVertices = ( nx + 1 ) * ( ny + 1 ) * 2 + ( nx + 1 ) * ( nz + 1 ) * 2 + ( nz + 1 ) * ( ny + 1 ) * 2;
 
-        var positions = [];
+        let positions = [];
 
-        var norms = [];
+        let norms = [];
 
-        var sides = [];
+        let sides = [];
 
         let vertexIndex = 0;
 
@@ -2162,15 +2144,15 @@ class Prim {
 
             case list.CUBESPHERE:
 
-                computeSquare( 0, 1, 2, sx, sy, nx, ny,  sz / 2,  1, -1, side.FRONT ); //front
+                computeSquare( 0, 1, 2, sx, sy, nx, ny,  sz / 2,  1, -1, side.FRONT );  //front
 
-                computeSquare( 0, 1, 2, sx, sy, nx, ny, -sz / 2, -1, -1, side.BACK ); //back
+                computeSquare( 0, 1, 2, sx, sy, nx, ny, -sz / 2, -1, -1, side.BACK );   //back
 
-                computeSquare( 2, 1, 0, sz, sy, nz, ny, -sx / 2,  1, -1, side.LEFT ); //left
+                computeSquare( 2, 1, 0, sz, sy, nz, ny, -sx / 2,  1, -1, side.LEFT );   //left
 
-                computeSquare( 2, 1, 0, sz, sy, nz, ny,  sx / 2, -1, -1, side.RIGHT ); //right
+                computeSquare( 2, 1, 0, sz, sy, nz, ny,  sx / 2, -1, -1, side.RIGHT );  //right
 
-                computeSquare( 0, 2, 1, sx, sz, nx, nz,  sy / 2,  1,  1, side.TOP ); //top
+                computeSquare( 0, 2, 1, sx, sz, nx, nz,  sy / 2,  1,  1, side.TOP );    //top
 
                 computeSquare( 0, 2, 1, sx, sz, nx, nz, -sy / 2,  1, -1, side.BOTTOM ); //bottom
 
@@ -2224,15 +2206,15 @@ class Prim {
 
             // Create a square, positioning in correct position.
 
-            var vertShift = vertexIndex;
+            let vertShift = vertexIndex;
 
             if( prim.name === 'testPlane') console.log( 'i:' + i + ' j:' + j)
 
-            for( var j = 0; j <= nv; j++ ) {
+            for( let j = 0; j <= nv; j++ ) {
 
-                for( var i = 0; i <= nu; i++ ) {
+                for( let i = 0; i <= nu; i++ ) {
 
-                    var vert = positions[ vertexIndex ] = [ 0, 0, 0 ];
+                    let vert = positions[ vertexIndex ] = [ 0, 0, 0 ];
 
                     vert[ u ] = ( -su / 2 + i * su / nu ) * flipu;
 
@@ -2268,11 +2250,11 @@ class Prim {
 
             let side = [];
 
-            for(var j = 0; j < nv; j++ ) {
+            for(let j = 0; j < nv; j++ ) {
 
-                for(var i = 0; i < nu; i++ ) {
+                for(let i = 0; i < nu; i++ ) {
 
-                    var n = vertShift + j * ( nu + 1 ) + i;
+                    let n = vertShift + j * ( nu + 1 ) + i;
 
                     // Indices for entire prim.
 
@@ -2300,25 +2282,25 @@ class Prim {
 
         if ( ( prim.type === list.CUBE || prim.type === list.CUBESPHERE ) && prim.divisions[ 3 ] !== 0 ) {
 
-            var tmp = [ 0, 0, 0 ];
+            let tmp = [ 0, 0, 0 ];
 
             // Radius controlled by 4th parameter in divisions
 
-            var radius = prim.divisions[ 3 ];
+            let radius = prim.divisions[ 3 ];
 
-            var rx = sx / 2.0;
+            let rx = sx / 2.0;
 
-            var ry = sy / 2.0;
+            let ry = sy / 2.0;
 
-            var rz = sz / 2.0;
+            let rz = sz / 2.0;
 
-            for( var i = 0; i < positions.length; i++ ) {
+            for( let i = 0; i < positions.length; i++ ) {
 
-                var pos = positions[ i ];
+                let pos = positions[ i ];
 
-                var normal = normals[ i ];
+                let normal = normals[ i ];
 
-                var inner = [ pos[ 0 ], pos[ 1 ], pos[ 2 ] ];
+                let inner = [ pos[ 0 ], pos[ 1 ], pos[ 2 ] ];
 
                 if ( pos[ 0 ] < -rx + radius ) {
 
@@ -2409,7 +2391,7 @@ class Prim {
                     break;
             }
 
-            for( var i = 0; i < positions.length; i++ ) {
+            for( let i = 0; i < positions.length; i++ ) {
 
                 switch ( prim.dimensions[ 3 ] ) {
 
@@ -2443,14 +2425,11 @@ class Prim {
 
         }
 
-        
         // Flatten arrays, since we created using 2 dimensions.
 
         vertices = flatten( positions, false );
 
         normals = flatten( norms, false );
-
-        console.log(" IN CUBE< NORMALS ARE:" + normals.length)
 
         // Re-compute normals, which may have changed.
 
@@ -2458,15 +2437,9 @@ class Prim {
 
         console.log(" IN CUBE NORMALS NOW ARE>...." + normals.length)
 
-        // Color array is pre-created, or gets a default when WebGL buffers are created.
-
         // Return the buffer.
 
         return this.addBufferData( prim.geometry, vertices, indices, normals, texCoords, tangents );
-
-        // Return the buffer.
-
-        //return this.createGLBuffers( prim.geometry );
 
     }
 
@@ -2648,7 +2621,7 @@ class Prim {
 
         const list = this.typeList;
 
-        const side = this.sides;
+        const side = this.directions;
 
         // Size and divisions.
 
@@ -2672,7 +2645,7 @@ class Prim {
 
         // Default vectors.
 
-        let getVecs = this.getStdVecs;
+        let getStdVecs = this.getStdVecs.bind( this );
 
         let directions = [
             side.LEFT,
@@ -2699,8 +2672,8 @@ class Prim {
 
         for ( i = 0; i < 4; i++ ) {
 
-            //vertices[ v++ ] = getVecs('down');
-            vertices[ v++ ] = getVecs( side.DOWN );
+            //vertices[ v++ ] = getStdVecs('down');
+            vertices[ v++ ] = getStdVecs( side.DOWN );
 
         }
 
@@ -2708,21 +2681,21 @@ class Prim {
 
             progress = i / resolution;
 
-            to = vec3.lerp( [ 0, 0, 0 ], getVecs( side.DOWN ), getVecs( side.FORWARD ), progress );
+            to = vec3.lerp( [ 0, 0, 0 ], getStdVecs( side.DOWN ), getStdVecs( side.FORWARD ), progress );
 
             vertices[ v++ ] = vec3.copy( [ 0, 0, 0 ], to );
 
-            for ( d = 0; d < 4; d++) {
+            for ( d = 0; d < 4; d++ ) {
 
                 from = vec3.copy( [ 0, 0, 0 ], to );
 
-                to = vec3.lerp( [ 0, 0, 0 ], getVecs( side.DOWN ), getVecs( directions[ d ] ), progress );
+                to = vec3.lerp( [ 0, 0, 0 ], getStdVecs( side.DOWN ), getStdVecs( directions[ d ] ), progress );
 
                 t = createLowerStrip( i, v, vBottom, t, indices );
 
                 v = createVertexLine( from, to, i, v, vertices );
 
-                vBottom += i > 1 ? (i - 1) : 1;
+                vBottom += i > 1 ? ( i - 1 ) : 1;
 
             }
 
@@ -2734,7 +2707,7 @@ class Prim {
 
                 progress = i / resolution;
 
-                to = vec3.lerp( [ 0, 0, 0 ], getVecs( side.UP ), getVecs( side.FORWARD ), progress );
+                to = vec3.lerp( [ 0, 0, 0 ], getStdVecs( side.UP ), getStdVecs( side.FORWARD ), progress );
 
                 vertices[ v++ ] = vec3.copy( [ 0, 0, 0 ], to );
 
@@ -2742,7 +2715,7 @@ class Prim {
 
                     from = vec3.copy( [ 0, 0, 0 ], to );
 
-                    to = vec3.lerp( [ 0, 0, 0 ], getVecs( side.UP ), getVecs( directions[ d ] ), progress );
+                    to = vec3.lerp( [ 0, 0, 0 ], getStdVecs( side.UP ), getStdVecs( directions[ d ] ), progress );
 
                     t = createUpperStrip( i, v, vBottom, t, indices );
 
@@ -2764,7 +2737,7 @@ class Prim {
 
             indices[ t++ ] = ++vBottom;
 
-            vertices[ v++ ] = getVecs( 'up' );
+            vertices[ v++ ] = getStdVecs( side.UP );
 
         }
 
@@ -2792,8 +2765,6 @@ class Prim {
         // Tangents.
 
         createTangents( vertices, tangents );
-
-        // Scale. NOTE: this has to be after createUV and createTangents (assuming unit sphere).
 
         if ( radius != 1 ) {
 
@@ -2889,7 +2860,6 @@ class Prim {
 
                 v[ 1 ] = 0;
 
-                //v = v.normalized;
                 v = vec3.normalize( [ 0, 0, 0 ], v );
 
                 tangent = [ 0, 0, 0, 0 ];
@@ -2938,8 +2908,6 @@ class Prim {
                 vertices[ v++ ] = vec3.lerp( [ 0, 0, 0 ], from, to, i / steps );
 
             }
-
-            //console.log("VECTOR ARRAY:" + vertices.length)
 
             return v;
 
@@ -3009,6 +2977,16 @@ class Prim {
     geometryIcosohedron ( prim ) {
 
         return this.geometryIcoSphere( prim, false );
+
+    }
+
+    /** 
+     * type PRISM.
+     * create a closed prism type shape.
+     */
+    geometryPrism( prim ) {
+
+        // TODO code needs to be written.
 
     }
 
@@ -3122,10 +3100,10 @@ class Prim {
 
         let r = prim.divisions[ 0 ] || 0.5;
 
-        var phi = ( 1 + Math.sqrt( 5 ) ) / 2;
-        var a = 0.5;
-        var b = 0.5 * 1 / phi;
-        var c = 0.5 * ( 2 - phi );
+        let phi = ( 1 + Math.sqrt( 5 ) ) / 2;
+        let a = 0.5;
+        let b = 0.5 * 1 / phi;
+        let c = 0.5 * ( 2 - phi );
 
         let vtx = [
 
@@ -3542,7 +3520,11 @@ class Prim {
 
         prim.geometry = this.createGLBuffers( prim.geometry );
 
-        // Set internal functions.
+        // Compute the bounding box.
+
+        prim.boundingBox = this.computeBoundingBox( prim.geometry.vertices.data );
+
+        // Internal functions.
 
         /** 
          * Set the model-view matrix
@@ -3617,13 +3599,13 @@ class Prim {
 
         };
 
-        // Shared with factory functions.
+        // Shared with factory functions. Normally, we used matrix transforms to accomplish this.
 
-        prim.scale = ( scale ) => { this.scale ( scale, prim.geometry.vertices ); };
+        prim.scaleVertices = ( scale ) => { this.scale ( scale, prim.geometry.vertices ); };
 
-        prim.moveTo = ( pos ) => { this.computeMove( scale, prim.geometry.vertices ); };
+        prim.moveVertices = ( pos ) => { this.computeMove( scale, prim.geometry.vertices ); };
 
-        prim.morph = ( newGeometry, easing ) => { this.morph( newGeometry, easing, prim.geometry ); };
+        prim.morphVertices = ( newGeometry, easing ) => { this.morph( newGeometry, easing, prim.geometry ); };
 
         // Waypoints for scripted motion or timelines.
 

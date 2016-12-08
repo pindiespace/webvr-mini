@@ -3777,6 +3777,9 @@
 	     *    b. resultPt = vec3.sub( resultPt, a, b );
 	     *    c. resultPt = vec3.sub( [ 0, 0, 0 ], a, b );
 	     * ---------------------------------------------------------------
+	     *
+	     * Array optimization
+	     * https://gamealchemist.wordpress.com/2013/05/01/lets-get-those-javascript-arrays-to-work-fast/
 	     * 
 	     * geo primitives
 	     * USE THIS!!!! https://github.com/nickdesaulniers/prims
@@ -3806,8 +3809,8 @@
 	     * https://gamedevdaily.io/four-ways-to-create-a-mesh-for-a-sphere-d7956b825db4#.lkbq2omq5
 	     *
 	     * 
-	     */function Prim(init,util,glMatrix,webgl,loadModel,loadTexture,loadAudio,loadVideo){_classCallCheck(this,Prim);console.log('in Prim class');this.util=util;this.webgl=webgl;this.glMatrix=glMatrix;this.loadModel=loadModel;this.loadTexture=loadTexture;this.loadAudio=loadAudio;this.loadVideo=loadVideo;this.objs=[];this.typeList={POINT:'geometryPointCloud',POINTCLOUD:'geometryPointCloud',LINE:'geometryLine',PLANE:'geometryOuterPlane',OUTERPLANE:'geometryOuterPlane',INNERPLANE:'geometryInnerPlane',CURVEDPLANE:'geometryCurvedOuterPlane',CURVEDOUTERPLANE:'geometryCurvedOuterPlane',CURVEDINNERPLANE:'geometryCurvedInnerPlane',TERRAIN:'geometryTerrain',CIRCLE:'geometryCircle',CUBE:'geometryCube',CUBESPHERE:'geometryCubeSphere',SPHERE:'geometrySphere',DISC:'geometryCap',CAP:'geometryCap',DOME:'geometryDome',TOPDOME:'geometryTopDome',SKYDOME:'geometrySkyDome',BOTTOMDOME:'geometryBottomDome',CONE:'geometryCone',TOPCONE:'geometryTopCone',BOTTOMCONE:'geometryBottomCone',SPINDLE:'geometrySpindle',TEARDROP:'geometryTeardrop',CYLINDER:'geometryCylinder',CAPSULE:'geometryCapsule',ICOSOHEDRON:'geometryIcosohedron',PYRAMID:'geometryPyramid',ICOSPHERE:'geometryIcoSphere',TOPICODOME:'geometryTopIcoDome',SKYICODOME:'geometrySkyIcoDome',BOTTOMICODOME:'geometryBottomIcoDome',OCTAHEDRON:'geometryOctahedron',DODECAHEDRON:'geometryDodecahedron',TORUS:'geometryTorus',MESH:'geometryMesh'};// Sideness, direction. Mapped to equivalent unit vector names in this.getStdVecs()
-	this.sides={DEFAULT:'up',FORWARD:'forward',FRONT:'forward',BACK:'back',LEFT:'left',RIGHT:'right',UP:'up',TOP:'up',DOWN:'down',BOTTOM:'down'};this.FLOAT32='float32',this.UINT32='uint32';// Visible from inside or outside.
+	     */function Prim(init,util,glMatrix,webgl,loadModel,loadTexture,loadAudio,loadVideo){_classCallCheck(this,Prim);console.log('in Prim class');this.util=util;this.webgl=webgl;this.glMatrix=glMatrix;this.loadModel=loadModel;this.loadTexture=loadTexture;this.loadAudio=loadAudio;this.loadVideo=loadVideo;this.objs=[];this.typeList={POINT:'geometryPointCloud',POINTCLOUD:'geometryPointCloud',LINE:'geometryLine',PLANE:'geometryOuterPlane',OUTERPLANE:'geometryOuterPlane',INNERPLANE:'geometryInnerPlane',CURVEDPLANE:'geometryCurvedOuterPlane',CURVEDOUTERPLANE:'geometryCurvedOuterPlane',CURVEDINNERPLANE:'geometryCurvedInnerPlane',TERRAIN:'geometryTerrain',CIRCLE:'geometryCircle',CUBE:'geometryCube',CUBESPHERE:'geometryCubeSphere',SPHERE:'geometrySphere',DISC:'geometryCap',CAP:'geometryCap',DOME:'geometryDome',TOPDOME:'geometryTopDome',SKYDOME:'geometrySkyDome',BOTTOMDOME:'geometryBottomDome',CONE:'geometryCone',TOPCONE:'geometryTopCone',BOTTOMCONE:'geometryBottomCone',SPINDLE:'geometrySpindle',TEARDROP:'geometryTeardrop',CYLINDER:'geometryCylinder',CAPSULE:'geometryCapsule',PRISM:'geometryPrism',ICOSOHEDRON:'geometryIcosohedron',PYRAMID:'geometryPyramid',ICOSPHERE:'geometryIcoSphere',TOPICODOME:'geometryTopIcoDome',SKYICODOME:'geometrySkyIcoDome',BOTTOMICODOME:'geometryBottomIcoDome',OCTAHEDRON:'geometryOctahedron',DODECAHEDRON:'geometryDodecahedron',TORUS:'geometryTorus',MESH:'geometryMesh'};// Sideness, direction. Mapped to equivalent unit vector names in this.getStdVecs()
+	this.directions={DEFAULT:'up',FORWARD:'forward',FRONT:'forward',BACK:'back',LEFT:'left',RIGHT:'right',UP:'up',TOP:'up',DOWN:'down',BOTTOM:'down'};this.FLOAT32='float32',this.UINT32='uint32';// Visible from inside or outside.
 	this.OUTSIDE=100,this.INSIDE=101;// Shorthand.
 	this.TWO_PI=Math.PI*2;}/** 
 	     * See if supplied Prim type is supported. Individual Prim factory 
@@ -3826,11 +3829,11 @@
 	     * Renderer.
 	     * @param {Array} vertices
 	     * @returns {Array} vertices
-	     */},{key:'setVertexData',value:function setVertexData(vertices){vertices=[];for(var i in this.objs){vertices=vertices.concat(this.objs[i].vertices);}return vertices;}/** 
+	     */},{key:'setVertexData',value:function setVertexData(vertices){vertices=[];for(var _i in this.objs){vertices=vertices.concat(this.objs[_i].vertices);}return vertices;}/** 
 	     * get the big array with all index data. Use to 
 	     * send multiple prims sharing the same shader to one 
 	     * Renderer.
-	     */},{key:'setIndexData',value:function setIndexData(indices){indices=[];for(var i in this.objs){indices=indices.concat(this.objs[i].indices);}return indices;}/** 
+	     */},{key:'setIndexData',value:function setIndexData(indices){indices=[];for(var _i2 in this.objs){indices=indices.concat(this.objs[_i2].indices);}return indices;}/** 
 	     * Return an empty buffer object.
 	     */},{key:'createGeoObj',value:function createGeoObj(){return{makeBuffers:true,vertices:{data:[],buffer:null,itemSize:3,numItems:0},indices:{// where to start drawing GL_TRIANGLES.
 	data:[],buffer:null,itemSize:1,numItems:0},sides:{// a collection of triangles creating a side on the shape.
@@ -3868,9 +3871,11 @@
 	     * ---------------------------------------
 	     *//** 
 	     * Standard vectors (similar to Unity) when needed. Call only 
-	     * if using the array literal (e.g. [ 0, 0, 0,]) doesn't make sense.
+	     * if using the array literal (e.g. [ 0, 0, 0,]) doesn't make sense. 
+	     * Note you may need to go "let getStdVecs = this.getStdVecs.bind( this)" 
+	     * in your calling function.
 	     * @link https://docs.unity3d.com/ScriptReference/Vector3.html
-	    */},{key:'getStdVecs',value:function getStdVecs(type){switch(type){case'back':return[0,0,-1];case'down':return[0,-1,0];case'forward':return[0,0,1];case'left':return[-1,0,0];case'right':return[1,0,0];case'up':return[0,1,0];case'one':return[1,1,1];case'zero':return[0,0,0];}}/** 
+	    */},{key:'getStdVecs',value:function getStdVecs(type){var dir=this.directions;switch(type){case dir.BACK:return[0,0,-1];case dir.DOWN:return[0,-1,0];case dir.FORWARD:return[0,0,1];case dir.LEFT:return[-1,0,0];case dir.RIGHT:return[1,0,0];case dir.UP:return[0,1,0];case dir.ONE:return[1,1,1];case dir.ZERO:return[0,0,0];}}/** 
 	     * Larger configuration vectors for Prims. additional values control slicing 
 	     * or flattening of part of a prim.
 	     * For CONE, the fourth value is truncation of the cone point.
@@ -3885,13 +3890,13 @@
 	     * ---------------------------------------
 	     *//** 
 	     * Create default colors for Prim color array.
-	     */},{key:'computeColors',value:function computeColors(normals,colors){for(var i=0;i<normals.length;i+=3){colors.push(normals[i],normals[i+1],normals[i+2],1.0);}return colors;}/** 
+	     */},{key:'computeColors',value:function computeColors(normals,colors){for(var _i3=0;_i3<normals.length;_i3+=3){colors.push(normals[_i3],normals[_i3+1],normals[_i3+2],1.0);}return colors;}/** 
 	     * Bounding box for a set of 3d points. This object is NO the same 
 	     * as a standard Cube, since each side is a quad without 
 	     * further divisions.
 	     * @param {[...vec3]} vertices a list of points to be enclosed in the bounding box.
 	     * @returns{Box} a BoundingBox object.
-	     */},{key:'computeBoundingBox',value:function computeBoundingBox(vertices){var vec3=this.glMatrix.vec3;var box={vertices:[],indices:[],normals:[],texCoords:[]};var tx=0,ty=0,tz=0,bx=0,by=0,bz=0;for(var i=0;i<vertices.length;i++){var _v=vertices[i];tx=Math.min(tx,_v[0]);ty=Math.min(ty,_v[1]);tz=Math.min(tz,_v[2]);bx=Math.max(bx,_v[0]);by=Math.max(by,_v[1]);bz=Math.max(bz,_v[2]);}// Two quads, vary by z values only, clockwise.
+	     */},{key:'computeBoundingBox',value:function computeBoundingBox(vertices){var vec3=this.glMatrix.vec3;var box={vertices:[],indices:[],normals:[],texCoords:[]};var tx=0,ty=0,tz=0,bx=0,by=0,bz=0;for(var _i4=0;_i4<vertices.length;_i4++){var _v=vertices[_i4];tx=Math.min(tx,_v[0]),ty=Math.min(ty,_v[1]),tz=Math.min(tz,_v[2]),bx=Math.max(bx,_v[0]),by=Math.max(by,_v[1]),bz=Math.max(bz,_v[2]);}// Two quads, vary by z values only, clockwise.
 	box.vertices.push([tx,ty,tz],// topLeft
 	[bx,ty,tz],// r
 	[bx,by,tz],// b
@@ -3915,12 +3920,12 @@
 	     * Find the center between any set of 3d points
 	     * @param {[...vec3]} vertices an array of xyz points.
 	     * @returns {vec3} the center point.
-	     */},{key:'computeCentroid',value:function computeCentroid(vertices){var c=[0,0,0];var len=vertices.length;for(var i=0;i<len;i++){var vertex=vertices[i];c[0]+=vertex[0];c[1]+=vertex[1];c[2]+=vertex[2];}c[0]/=len;c[1]/=len;c[2]/=len;return c;}/** 
+	     */},{key:'computeCentroid',value:function computeCentroid(vertices){var c=[0,0,0];var len=vertices.length;for(var _i5=0;_i5<len;_i5++){var vertex=vertices[_i5];c[0]+=vertex[0],c[1]+=vertex[1],c[2]+=vertex[2];}c[0]/=len,c[1]/=len,c[2]/=len;return c;}/** 
 	     * Compute an area-weighted centroid point for a Prim.
 	     * Use this when we want the center of the whole object the polygon is part of.
 	     * @param {Array[...GlMatrix.vec3]} vertices a list of 3d vertices.
 	     * @param {GlMatrix.vec3} the centroid Point.
-	     */},{key:'computeMassCentroid',value:function computeMassCentroid(vertices){var vec3=this.glMatrix.vec3;var c=[0,0,0];var areaTotal=0.0;var p1=vertices[0];var p2=vertices[1];for(var i=2;i<vertices.length;i++){var p3=vertices[i];var edge1=vec3.subtract([0,0,0],p3,p1);var edge2=vec3.subtract([0,0,0],p3,p2);var crossProduct=vec3.cross([0,0,0],edge1,edge2);var area=vec3.length(crossProduct)/2;c[0]+=area*(p1[0]+p2[0]+p3[0])/3;c[1]+=area*(p1[1]+p2[1]+p3[1])/3;c[2]+=area*(p1[2]+p2[2]+p3[2])/3;areaTotal+=area;p2=vec3.copy([0,0,0],p3);}return[c[0]/areaTotal,c[1]/areaTotal,c[2]/areaTotal];}/** 
+	     */},{key:'computeMassCentroid',value:function computeMassCentroid(vertices){var vec3=this.glMatrix.vec3;var c=[0,0,0];var areaTotal=0.0;var p1=vertices[0];var p2=vertices[1];for(var _i6=2;_i6<vertices.length;_i6++){var p3=vertices[_i6];var edge1=vec3.subtract([0,0,0],p3,p1);var edge2=vec3.subtract([0,0,0],p3,p2);var crossProduct=vec3.cross([0,0,0],edge1,edge2);var area=vec3.length(crossProduct)/2;c[0]+=area*(p1[0]+p2[0]+p3[0])/3,c[1]+=area*(p1[1]+p2[1]+p3[1])/3,c[2]+=area*(p1[2]+p2[2]+p3[2])/3;areaTotal+=area;p2=vec3.copy([0,0,0],p3);}return[c[0]/areaTotal,c[1]/areaTotal,c[2]/areaTotal];}/** 
 	     * Compute barycentric coordinates of a Point relative 
 	     * to a triangle defined by three Points.
 	     * @param {vec3} p the point to test.
@@ -3943,24 +3948,24 @@
 	     */},{key:'computePointInTriangle',value:function computePointInTriangle(p,p0,p1,p2){var uv=this.computeBaryCentric(p,p0,p1,p2);// Check if Point is in triangle.
 	return u>=0&&v>=0&&u+v<1;}/** 
 	     * Scale vertices directly, without changing position.
-	     */},{key:'computeScale',value:function computeScale(vertices,scale){var oldPos=this.getCenter(vertices);for(var i=0;i<vertices.length;i++){vertices[i]*=scale;}this.moveTo(oldPos);}/** 
+	     */},{key:'computeScale',value:function computeScale(vertices,scale){var oldPos=this.getCenter(vertices);for(var _i7=0;_i7<vertices.length;_i7++){vertices[_i7]*=scale;}this.moveTo(oldPos);}/** 
 	     * Move vertices directly in geometry, i.e. for something 
 	     * that always orbits a central point.
 	     * NOTE: normally, you will want to use a matrix transform to position objects.
 	     * @param {GLMatrix.vec3} pos - the new position.
-	     */},{key:'computeMove',value:function computeMove(vertices,pos){var center=this.getCentroid(vertices);var delta=[center[0]-pos[0],center[1]-pos[1],center[2]-pos[2]];for(var i=0;i<vertices.length;i+=3){vertices[i]=delta[0];vertices[i+1]=delta[1];vertices[i+2]=delta[2];}}/** 
+	     */},{key:'computeMove',value:function computeMove(vertices,pos){var center=this.getCentroid(vertices);var delta=[center[0]-pos[0],center[1]-pos[1],center[2]-pos[2]];for(var _i8=0;_i8<vertices.length;_i8+=3){vertices[_i8]=delta[0];vertices[_i8+1]=delta[1];vertices[_i8+2]=delta[2];}}/** 
 	     * Given a set of Points, compute a triangle fan around the Centroid for those points.
 	     * @param {[...vec3]} vertices an array of UN-FLATTENED xyz points.
 	     * @param {[uint16]} indices the sequence to read triangles.
 	     * @returns {Object} UN-FLATTENED vertices, indices, texCoords nomals, tangents.
 	     */},{key:'computeFan',value:function computeFan(vertices,indices){var vec3=this.glMatrix.vec3;var vv=[];// Get the subset of vertices we should take by following indices.
-	for(var i=0;i<indices.length;i++){vv.push(vertices[indices[i]]);}var box=this.computeBoundingBox(vv);// Get the topLeft and bottomRight points (bounding rectangle).
+	for(var _i9=0;_i9<indices.length;_i9++){vv.push(vertices[indices[_i9]]);}// Get the topLeft and bottomRight points (bounding rectangle).
 	var center=this.computeCentroid(vv);// Add a central point so we can create a triangle fan.
-	vv.push(center);var centerPos=vv.length-1;var vtx=[],tex=[],nor=[],idx=[];// We re-do the indices calculations, since we insert a central point.
-	var lenv=vv.length;var env=lenv-1;for(var _i=1;_i<lenv;_i++){var p1=_i-1;var p2=_i;if(_i===lenv-1){p2=0;}var v1=vv[p1];var v2=vv[p2];idx.push(p1,p2,centerPos);nor.push(v1,v2,center);// Assumes a regular polygon.
+	vv.push(center);var centerPos=vv.length-1;var vtx=[],tex=[],norms=[],idx=[];// We re-do the indices calculations, since we insert a central point.
+	var lenv=vv.length;var env=lenv-1;for(var _i10=1;_i10<lenv;_i10++){var p1=_i10-1;var p2=_i10;if(_i10===lenv-1){p2=0;}var v1=vv[p1];var v2=vv[p2];idx.push(p1,p2,centerPos);norms.push(v1,v2,center);// Assumes a regular polygon.
 	tex.push(Math.cos(this.TWO_PI*p2/(lenv-1))/2+.5,Math.sin(this.TWO_PI*p2/(lenv-1))/2+.5);}// end of for loop
 	// Push the center point texture coordinate.
-	tex.push(0.5,0.5);return{vertices:vv,indices:idx,texCoords:tex,normals:nor,tangents:[],colors:[]};}/** 
+	tex.push(0.5,0.5);return{vertices:vv,indices:idx,texCoords:tex,normals:norms,tangents:[],colors:[]};}/** 
 	     * Compute normals for a 3d object. 
 	     * NOTE: some routines compute their own normals.
 	     * Adapted from BabylonJS version:
@@ -3991,9 +3996,9 @@
 	var numIndices=indices.length;var numVertices=vertices.length;//const numNormals = normals.length;
 	tangents=new Float32Array(numVertices*4/3);// TODO: ADDED 4 to this!!
 	// for each triangle (step through indices 3 by 3)
-	for(var i=0;i<numIndices;i+=3){var i1=indices[i],i2=indices[i+1],_i2=indices[i+2];var j=i1*3;var v1x=vertices[j],v1y=vertices[j+1],v1z=vertices[j+2];j=i2*3;var v2x=vertices[j],v2y=vertices[j+1],v2z=vertices[j+2];j=_i2*3;var v3x=vertices[j],v3y=vertices[j+1],v3z=vertices[j+2];var x1=v2x-v1x,x2=v3x-v1x;var y1=v2y-v1y,y2=v3y-v1y;var z1=v2z-v1z,z2=v3z-v1z;j=i1*2;var w1x=texCoords[j],w1y=texCoords[j+1];j=i2*2;var w2x=texCoords[j],w2y=texCoords[j+1];j=_i2*2;var w3x=texCoords[j],w3y=texCoords[j+1];var s1=w2x-w1x,s2=w3x-w1x;var t1=w2y-w1y,t2=w3y-w1y;var r=1.0/(s1*t2-s2*t1);var sx=(t2*x1-t1*x2)*r,sy=(t2*y1-t1*y2)*r,sz=(t2*z1-t1*z2)*r;var tx=(s1*x2-s2*x1)*r,ty=(s1*y2-s2*y1)*r,tz=(s1*z2-s2*z1)*r;j=i1*3;tan1[j]+=sx;tan1[j+1]+=sy;tan1[j+2]+=sz;tan2[j]+=tx;tan2[j+1]+=ty;tan2[j+2]+=tz;j=i2*3;tan1[j]+=sx;tan1[j+1]+=sy;tan1[j+2]+=sz;tan2[j]+=tx;tan2[j+1]+=ty;tan2[j+2]+=tz;j=_i2*3;tan1[j]+=sx;tan1[j+1]+=sy;tan1[j+2]+=sz;tan2[j]+=tx;tan2[j+1]+=ty;tan2[j+2]+=tz;}// Loop through vertices.
-	for(var i3=0,i4=0;i4<numVertices;i3+=3,i4+=4){// not very efficient here (used the vec3 type and dot/cross operations from MV.js)
-	var n=[normals[i3],normals[i3+1],normals[i3+2]];var _t=[tan1[i3],tan1[i3+1],tan1[i3+2]];var _t2=[tan2[i3],tan2[i3+1],tan2[i3+2]];//console.log('n:' + n + ' t1:' + t1 + ' t2:' + t2)
+	for(var _i11=0;_i11<numIndices;_i11+=3){var i1=indices[_i11],i2=indices[_i11+1],i3=indices[_i11+2];var _j=i1*3;var v1x=vertices[_j],v1y=vertices[_j+1],v1z=vertices[_j+2];_j=i2*3;var v2x=vertices[_j],v2y=vertices[_j+1],v2z=vertices[_j+2];_j=i3*3;var v3x=vertices[_j],v3y=vertices[_j+1],v3z=vertices[_j+2];var x1=v2x-v1x,x2=v3x-v1x;var y1=v2y-v1y,y2=v3y-v1y;var z1=v2z-v1z,z2=v3z-v1z;_j=i1*2;var w1x=texCoords[_j],w1y=texCoords[_j+1];_j=i2*2;var w2x=texCoords[_j],w2y=texCoords[_j+1];_j=i3*2;var w3x=texCoords[_j],w3y=texCoords[_j+1];var s1=w2x-w1x,s2=w3x-w1x;var t1=w2y-w1y,t2=w3y-w1y;var r=1.0/(s1*t2-s2*t1);var sx=(t2*x1-t1*x2)*r,sy=(t2*y1-t1*y2)*r,sz=(t2*z1-t1*z2)*r;var tx=(s1*x2-s2*x1)*r,ty=(s1*y2-s2*y1)*r,tz=(s1*z2-s2*z1)*r;_j=i1*3;tan1[_j]+=sx;tan1[_j+1]+=sy;tan1[_j+2]+=sz;tan2[_j]+=tx;tan2[_j+1]+=ty;tan2[_j+2]+=tz;_j=i2*3;tan1[_j]+=sx;tan1[_j+1]+=sy;tan1[_j+2]+=sz;tan2[_j]+=tx;tan2[_j+1]+=ty;tan2[_j+2]+=tz;_j=i3*3;tan1[_j]+=sx;tan1[_j+1]+=sy;tan1[_j+2]+=sz;tan2[_j]+=tx;tan2[_j+1]+=ty;tan2[_j+2]+=tz;}// Loop through vertices.
+	for(var _i12=0,i4=0;i4<numVertices;_i12+=3,i4+=4){// not very efficient here (used the vec3 type and dot/cross operations from MV.js)
+	var n=[normals[_i12],normals[_i12+1],normals[_i12+2]];var _t=[tan1[_i12],tan1[_i12+1],tan1[_i12+2]];var _t2=[tan2[_i12],tan2[_i12+1],tan2[_i12+2]];//console.log('n:' + n + ' t1:' + t1 + ' t2:' + t2)
 	// Gram-Schmidt orthogonalize
 	////////////////const tmp  = subtract(t1, scale(dot(n, t1), n));
 	var tmp=vec3.sub([0,0,0],_t,vec3.scale([0,0,0],_t,vec3.dot(n,_t)));//console.log("TMP:" + tmp) //NOT COMPUTING THIS RIGHT, all NAN
@@ -4083,11 +4088,6 @@
 	     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
 	     * Creating WebGL buffers is turned on or off conditionally in the method.
 	     */},{key:'geometrySphere',value:function geometrySphere(prim){var list=this.typeList;var vec3=this.glMatrix.vec3;var geo=prim.geometry;// Shortcuts to Prim data arrays.
-	//let vertices = geo.vertices.data,
-	//indices  = geo.indices.data,
-	//texCoords = geo.texCoords.data,
-	//normals = geo.normals.data,
-	//tangents = geo.tangents.data;
 	var vertices=[],indices=[],normals=[],texCoords=[],tangents=[];var longitudeBands=prim.divisions[0];// x axis (really xz)
 	var latitudeBands=prim.divisions[1];// y axis
 	// Radius is measured along the x axis.
@@ -4095,8 +4095,7 @@
 	var latStart=0,longStart=0,latDist=void 0;if(prim.type===list.SPHERE||prim.type===list.CYLINDER||prim.type===list.SPINDLE||prim.type===list.CONE||prim.type===list.TEARDROP){latDist=latitudeBands;}else if(prim.type===list.CAP){latDist=1;// one flat object, central points + one ring.
 	}else{latDist=latitudeBands/2;// half-domes and half-cones
 	}var latNum=void 0,longNum=void 0;// Start our uv build loop.
-	for(latNum=latStart;latNum<=latDist;latNum++){var theta=latNum*Math.PI/latitudeBands;var sinTheta=Math.sin(theta);var cosTheta=Math.cos(theta);for(longNum=longStart;longNum<=longitudeBands;longNum++){//console.log("STARTSLICE FOR:" + prim.name + " = " + startSlice );
-	var phi=longNum*this.TWO_PI/longitudeBands;var sinPhi=Math.sin(phi);var cosPhi=Math.cos(phi);var x=void 0,y=void 0,z=void 0,_u=void 0,_v2=void 0,r=void 0;// Compute vertices.
+	for(latNum=latStart;latNum<=latDist;latNum++){var theta=latNum*Math.PI/latitudeBands;var sinTheta=Math.sin(theta);var cosTheta=Math.cos(theta);for(longNum=longStart;longNum<=longitudeBands;longNum++){var phi=longNum*this.TWO_PI/longitudeBands;var sinPhi=Math.sin(phi);var cosPhi=Math.cos(phi);var x=void 0,y=void 0,z=void 0,_u=void 0,_v2=void 0,r=void 0;// Compute vertices.
 	var lat=latNum/latDist;r=lat/2;// use for no-spherical shapes.
 	var long=longNum/longitudeBands;_u=1-long;_v2=1-lat;x=cosPhi*sinTheta/2;z=sinPhi*sinTheta/2;switch(prim.type){case list.CAP:x=cosPhi/4;z=sinPhi/4;y=0;break;case list.CYLINDER:if(startSlice>0&&lat<=startSlice){y=1-startSlice;}else if(endSlice!==1.0&&lat>=endSlice){y=1-endSlice;}else{y=1-lat;x=cosPhi/2;z=sinPhi/2;}y-=0.5;break;case list.SPHERE:y=cosTheta/2;break;case list.TOPDOME:case list.DOME:y=cosTheta/2;break;case list.SKYDOME:y=cosTheta/2;_u=long;//v = 1 - lat;
 	break;case list.BOTTOMDOME:y=(1-cosTheta)/2-0.5;_u=long;_v2=lat;break;case list.SPINDLE:if(lat<=0.4){x=cosPhi*lat;z=sinPhi*lat;}else{x=cosPhi*(1-lat+1/latDist);z=sinPhi*(1-lat+1/latDist);}y=1-lat-0.5;break;case list.TEARDROP:if(lat<0.5){y=cosTheta/4;}else{x=2*cosPhi*(0.5-r);z=2*sinPhi*(0.5-r);y=cosTheta/2;}break;case list.CONE:if(lat<=startSlice){y=1-startSlice;x=cosPhi*r;z=sinPhi*r;}else if(lat>endSlice){// NOTE: not >= endSlice
@@ -4107,14 +4106,11 @@
 	if(prim.type===list.BOTTOMDOME||prim.type===list.BOTTOMCONE||prim.type===list.SKYDOME){y=-y;// the y value (have to flip indices backwards for SKYDOME for it to work).
 	}// Sphere indices.
 	if(latNum!==latDist&&longNum!==longitudeBands){var first=latNum*(longitudeBands+1)+longNum;var second=first+longitudeBands+1;// Texture only visible outside.
-	indices.push(first+1,second+1,second);indices.push(first,first+1,second);}}}//////////////////geo = this.subDivide( geo );
-	// Wind the SKYDOME indices backwards so texture displays inside.
+	indices.push(first+1,second+1,second);indices.push(first,first+1,second);}}}// Wind the SKYDOME indices backwards so texture displays inside.
 	if(prim.type===list.SKYDOME){geo.indices.data=indices.reverse();}// Tangents.
 	this.computeTangents(vertices,indices,normals,texCoords,tangents);// Color array is pre-created, or gets a default when WebGL buffers are created.
 	// Return the buffer.
-	return this.addBufferData(prim.geometry,vertices,indices,normals,texCoords,tangents);// Return the buffer.
-	//return this.createGLBuffers( prim.geometry );
-	}/** 
+	return this.addBufferData(prim.geometry,vertices,indices,normals,texCoords,tangents);}/** 
 	     * type CAP
 	     * rendered as GL_TRIANGLES.
 	     * Just a flattened half-sphere creating a circular 'lid'.
@@ -4243,7 +4239,7 @@
 	     */},{key:'geometryCapsule',value:function geometryCapsule(prim){var TWO_PI=this.TWO_PI;var list=this.typeList;var vec3=this.glMatrix.vec3;var util=this.util;var geo=prim.geometry;// Shortcuts to Prim data arrays.
 	var vertices=[],indices=[],normals=[],texCoords=[],tangents=[];// Radius is measured along the x axis, height along y axis.
 	var radius=prim.dimensions[0]||0.5,height=prim.dimensions[1]||1.0,segmentHeight=prim.divisions[0]||12,numSegments=prim.divisions[1]||12;// Compute a capsule ring.
-	function calculateRing(segments,r,y,dy){var segIncr=1.0/(segments-1);for(var s=0;s<segments;s++){var x=Math.cos(TWO_PI*s*segIncr)*r;var z=Math.sin(TWO_PI*s*segIncr)*r;vertices.push(radius*x,radius*y+height*dy,radius*z);normals.push(x,y,z);var u=1-s*segIncr;var v=0.5+(radius*y+height*dy)/(2.0*radius+height);texCoords.push(u,v);}}var ringsBody=segmentHeight+1;var ringsTotal=segmentHeight+ringsBody;var bodyIncr=1.0/(ringsBody-1);var ringIncr=1.0/(segmentHeight-1);for(var r=0;r<segmentHeight/2;r++){calculateRing(numSegments,Math.sin(Math.PI*r*ringIncr),Math.sin(Math.PI*(r*ringIncr-0.5)),-0.5);}for(var r=0;r<ringsBody;r++){calculateRing(numSegments,1.0,0.0,r*bodyIncr-0.5);}for(var r=segmentHeight/2;r<segmentHeight;r++){calculateRing(numSegments,Math.sin(Math.PI*r*ringIncr),Math.sin(Math.PI*(r*ringIncr-0.5)),+0.5);}for(var r=0;r<ringsTotal-1;r++){for(var s=0;s<numSegments-1;s++){indices.push(r*numSegments+(s+1),r*numSegments+(s+0),(r+1)*numSegments+(s+1));indices.push((r+1)*numSegments+(s+0),(r+1)*numSegments+(s+1),r*numSegments+s);}}// Tangents.
+	function calculateRing(segments,r,y,dy){var segIncr=1.0/(segments-1);for(var s=0;s<segments;s++){var x=Math.cos(TWO_PI*s*segIncr)*r;var z=Math.sin(TWO_PI*s*segIncr)*r;vertices.push(radius*x,radius*y+height*dy,radius*z);normals.push(x,y,z);var _u2=1-s*segIncr;var _v3=0.5+(radius*y+height*dy)/(2.0*radius+height);texCoords.push(_u2,_v3);}}var ringsBody=segmentHeight+1;var ringsTotal=segmentHeight+ringsBody;var bodyIncr=1.0/(ringsBody-1);var ringIncr=1.0/(segmentHeight-1);for(var r=0;r<segmentHeight/2;r++){calculateRing(numSegments,Math.sin(Math.PI*r*ringIncr),Math.sin(Math.PI*(r*ringIncr-0.5)),-0.5);}for(var _r=0;_r<ringsBody;_r++){calculateRing(numSegments,1.0,0.0,_r*bodyIncr-0.5);}for(var _r2=segmentHeight/2;_r2<segmentHeight;_r2++){calculateRing(numSegments,Math.sin(Math.PI*_r2*ringIncr),Math.sin(Math.PI*(_r2*ringIncr-0.5)),+0.5);}for(var _r3=0;_r3<ringsTotal-1;_r3++){for(var s=0;s<numSegments-1;s++){indices.push(_r3*numSegments+(s+1),_r3*numSegments+(s+0),(_r3+1)*numSegments+(s+1));indices.push((_r3+1)*numSegments+(s+0),(_r3+1)*numSegments+(s+1),_r3*numSegments+s);}}// Tangents.
 	this.computeTangents(vertices,indices,normals,texCoords,tangents);// Color array is pre-created, or gets a default when WebGL buffers are created.
 	// Return the buffer.
 	return this.addBufferData(prim.geometry,vertices,indices,normals,texCoords,tangents);}/** 
@@ -4262,12 +4258,7 @@
 	     * @param {Prim} the Prim needing geometry. 
 	     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
 	     * Creating WebGL buffers is turned on or off conditionally in the method.
-	     */},{key:'geometryCube',value:function geometryCube(prim){var vec3=this.glMatrix.vec3;var flatten=this.util.flatten;var list=this.typeList;var side=this.sides;var geo=prim.geometry;// Shortcuts to Prim data arrays
-	//let vertices = geo.vertices.data,
-	//indices  = geo.indices.data,
-	//texCoords = geo.texCoords.data,
-	//normals = geo.normals.data,
-	//tangents = geo.tangents.data;
+	     */},{key:'geometryCube',value:function geometryCube(prim){var vec3=this.glMatrix.vec3;var flatten=this.util.flatten;var list=this.typeList;var side=this.directions;var geo=prim.geometry;// Shortcuts to Prim data arrays
 	var vertices=[],indices=[],normals=[],texCoords=[],tangents=[];var sx=prim.dimensions[0],// x width
 	sy=prim.dimensions[1],// y height
 	sz=prim.dimensions[2],// z depth
@@ -4286,27 +4277,24 @@
 	break;case side.BOTTOM:computeSquare(0,2,1,sx,-sy,nx,nz,-sy/2,1,-1,side.BOTTOM);// ROTATE xy axis
 	break;default:break;}break;default:break;}// Make an individual Plane.
 	function computeSquare(u,v,w,su,sv,nu,nv,pw,flipu,flipv,currSide){// Create a square, positioning in correct position.
-	var vertShift=vertexIndex;if(prim.name==='testPlane')console.log('i:'+i+' j:'+j);for(var j=0;j<=nv;j++){for(var i=0;i<=nu;i++){var vert=positions[vertexIndex]=[0,0,0];vert[u]=(-su/2+i*su/nu)*flipu;vert[v]=(-sv/2+j*sv/nv)*flipv;vert[w]=pw;// heightMap is always the middle, up-facing vector.
+	var vertShift=vertexIndex;if(prim.name==='testPlane')console.log('i:'+i+' j:'+j);for(var _j2=0;_j2<=nv;_j2++){for(var _i13=0;_i13<=nu;_i13++){var vert=positions[vertexIndex]=[0,0,0];vert[u]=(-su/2+_i13*su/nu)*flipu;vert[v]=(-sv/2+_j2*sv/nv)*flipv;vert[w]=pw;// heightMap is always the middle, up-facing vector.
 	if(prim.heightMap){// our 'y' for the TOP x/z MAY NEED TO CHANGE FOR EACH SIDE
-	vert[w]=prim.heightMap.getPixel(i,j);}// Normals.
+	vert[w]=prim.heightMap.getPixel(_i13,_j2);}// Normals.
 	norms[vertexIndex]=[0,0,0];// Texture coords.
-	texCoords.push(i/nu,1.0-j/nv);++vertexIndex;}}// Compute indices and sides.
-	var side=[];for(var j=0;j<nv;j++){for(var i=0;i<nu;i++){var n=vertShift+j*(nu+1)+i;// Indices for entire prim.
+	texCoords.push(_i13/nu,1.0-_j2/nv);++vertexIndex;}}// Compute indices and sides.
+	var side=[];for(var _j3=0;_j3<nv;_j3++){for(var _i14=0;_i14<nu;_i14++){var n=vertShift+_j3*(nu+1)+_i14;// Indices for entire prim.
 	indices.push(n,n+nu+1,n+nu+2);indices.push(n,n+nu+2,n+1);// Individual sides.
 	side.push(n,n+nu+1,n+nu+2);side.push(n,n+nu+2,n+1);}}// Save the indices for this side.
 	sides[currSide]=side;}// end of computeSquare.
 	// Round the edges of the CUBE or SPHERECUBE to a sphere.
 	if((prim.type===list.CUBE||prim.type===list.CUBESPHERE)&&prim.divisions[3]!==0){var tmp=[0,0,0];// Radius controlled by 4th parameter in divisions
-	var radius=prim.divisions[3];var rx=sx/2.0;var ry=sy/2.0;var rz=sz/2.0;for(var i=0;i<positions.length;i++){var pos=positions[i];var normal=normals[i];var inner=[pos[0],pos[1],pos[2]];if(pos[0]<-rx+radius){inner[0]=-rx+radius;}else if(pos[0]>rx-radius){inner[0]=rx-radius;}if(pos[1]<-ry+radius){inner[1]=-ry+radius;}else if(pos[1]>ry-radius){inner[1]=ry-radius;}if(pos[2]<-rz+radius){inner[2]=-rz+radius;}else if(pos[2]>rz-radius){inner[2]=rz-radius;}// Re-compute position of moved vertex via normals.
+	var radius=prim.divisions[3];var rx=sx/2.0;var ry=sy/2.0;var rz=sz/2.0;for(var _i15=0;_i15<positions.length;_i15++){var pos=positions[_i15];var normal=normals[_i15];var inner=[pos[0],pos[1],pos[2]];if(pos[0]<-rx+radius){inner[0]=-rx+radius;}else if(pos[0]>rx-radius){inner[0]=rx-radius;}if(pos[1]<-ry+radius){inner[1]=-ry+radius;}else if(pos[1]>ry-radius){inner[1]=ry-radius;}if(pos[2]<-rz+radius){inner[2]=-rz+radius;}else if(pos[2]>rz-radius){inner[2]=rz-radius;}// Re-compute position of moved vertex via normals.
 	normal=[pos[0],pos[1],pos[2]];vec3.sub(normal,normal,inner);vec3.normalize(normal,normal);//normals[ i ] = normal;
-	pos=[inner[0],inner[1],inner[2]];tmp=[normal[0],normal[1],normal[2]];vec3.scale(tmp,tmp,radius);vec3.add(pos,pos,tmp);positions[i]=pos;}}else if((prim.type===list.CURVEDOUTERPLANE||prim.type===list.CURVEDINNERPLANE)&&prim.dimensions[4]&&prim.dimensions[4]!==0){var dSide=1;switch(prim.dimensions[3]){case side.FRONT:if(prim.type===list.CURVEDINNERPLANE||prim.type==list.INNERPLANE)dSide=-1;break;case side.BACK:if(prim.type===list.CURVEDOUTERPLANE||prim.type===list.OUTERPLANE)dSide=-1;break;case side.LEFT:if(prim.type===list.CURVEDOUTERPLANE||prim.type===list.OUTERPLANE)dSide=-1;break;case side.RIGHT:if(prim.type===list.CURVEDINNERPLANE||prim.type===list.INNERPLANE)dSide=-1;break;case side.TOP:if(prim.type===list.CURVEDOUTERPLANE||prim.type===list.OUTERPLANE)dSide=-1;break;case side.BOTTOM:if(prim.type===list.CURVEDINNERPLANE||prim.type===list.INNERPLANE)dSide=-1;break;}for(var i=0;i<positions.length;i++){switch(prim.dimensions[3]){case side.FRONT:positions[i][2]=dSide*Math.cos(positions[i][0])*prim.dimensions[4];break;case side.BACK:positions[i][2]=dSide*Math.cos(positions[i][0])*prim.dimensions[4];break;case side.LEFT:positions[i][0]=dSide*Math.cos(positions[i][2])*prim.dimensions[4];break;case side.RIGHT:positions[i][0]=dSide*Math.cos(positions[i][2])*prim.dimensions[4];break;case side.TOP:positions[i][1]=dSide*Math.cos(positions[i][0])*prim.dimensions[4];break;case side.BOTTOM:positions[i][1]=-Math.cos(positions[i][0])*prim.dimensions[4];// SEEN FROM INSIDE< CORRECT
+	pos=[inner[0],inner[1],inner[2]];tmp=[normal[0],normal[1],normal[2]];vec3.scale(tmp,tmp,radius);vec3.add(pos,pos,tmp);positions[_i15]=pos;}}else if((prim.type===list.CURVEDOUTERPLANE||prim.type===list.CURVEDINNERPLANE)&&prim.dimensions[4]&&prim.dimensions[4]!==0){var dSide=1;switch(prim.dimensions[3]){case side.FRONT:if(prim.type===list.CURVEDINNERPLANE||prim.type==list.INNERPLANE)dSide=-1;break;case side.BACK:if(prim.type===list.CURVEDOUTERPLANE||prim.type===list.OUTERPLANE)dSide=-1;break;case side.LEFT:if(prim.type===list.CURVEDOUTERPLANE||prim.type===list.OUTERPLANE)dSide=-1;break;case side.RIGHT:if(prim.type===list.CURVEDINNERPLANE||prim.type===list.INNERPLANE)dSide=-1;break;case side.TOP:if(prim.type===list.CURVEDOUTERPLANE||prim.type===list.OUTERPLANE)dSide=-1;break;case side.BOTTOM:if(prim.type===list.CURVEDINNERPLANE||prim.type===list.INNERPLANE)dSide=-1;break;}for(var _i16=0;_i16<positions.length;_i16++){switch(prim.dimensions[3]){case side.FRONT:positions[_i16][2]=dSide*Math.cos(positions[_i16][0])*prim.dimensions[4];break;case side.BACK:positions[_i16][2]=dSide*Math.cos(positions[_i16][0])*prim.dimensions[4];break;case side.LEFT:positions[_i16][0]=dSide*Math.cos(positions[_i16][2])*prim.dimensions[4];break;case side.RIGHT:positions[_i16][0]=dSide*Math.cos(positions[_i16][2])*prim.dimensions[4];break;case side.TOP:positions[_i16][1]=dSide*Math.cos(positions[_i16][0])*prim.dimensions[4];break;case side.BOTTOM:positions[_i16][1]=-Math.cos(positions[_i16][0])*prim.dimensions[4];// SEEN FROM INSIDE< CORRECT
 	break;}}}// Flatten arrays, since we created using 2 dimensions.
-	vertices=flatten(positions,false);normals=flatten(norms,false);console.log(" IN CUBE< NORMALS ARE:"+normals.length);// Re-compute normals, which may have changed.
-	normals=this.computeNormals(vertices,indices,normals);console.log(" IN CUBE NORMALS NOW ARE>...."+normals.length);// Color array is pre-created, or gets a default when WebGL buffers are created.
-	// Return the buffer.
-	return this.addBufferData(prim.geometry,vertices,indices,normals,texCoords,tangents);// Return the buffer.
-	//return this.createGLBuffers( prim.geometry );
-	}/** 
+	vertices=flatten(positions,false);normals=flatten(norms,false);// Re-compute normals, which may have changed.
+	normals=this.computeNormals(vertices,indices,normals);console.log(" IN CUBE NORMALS NOW ARE>...."+normals.length);// Return the buffer.
+	return this.addBufferData(prim.geometry,vertices,indices,normals,texCoords,tangents);}/** 
 	     * type PLANE, OUTERPLANE
 	     * rendered as WebGL TRIANGLES.
 	     * visible from the 'outside' as defined by the outward vector from Prim.side.
@@ -4403,18 +4391,17 @@
 	     * @param {Object} prim the primitive needing geometry.
 	     * @param {Boolean} noSphere if false, make an icosohedron.
 	     */},{key:'geometryIcoSphere',value:function geometryIcoSphere(prim){var TWO_PI=this.TWO_PI;// connect scope to internal functions.
-	var vec3=this.glMatrix.vec3;var flatten=this.util.flatten;var list=this.typeList;var side=this.sides;// Size and divisions.
+	var vec3=this.glMatrix.vec3;var flatten=this.util.flatten;var list=this.typeList;var side=this.directions;// Size and divisions.
 	var subdivisions=void 0;subdivisions=prim.divisions[0];if(prim.type===list.ICOSOHEDRON){subdivisions=2;}else{subdivisions=prim.divisions[0];}var radius=prim.dimensions[0]*0.5;var resolution=subdivisions;// Default vectors.
-	var getVecs=this.getStdVecs;var directions=[side.LEFT,side.BACK,side.RIGHT,side.FORWARD];// Allocate memory, since we may have to access out-of-range vertices, indices.
+	var getStdVecs=this.getStdVecs.bind(this);var directions=[side.LEFT,side.BACK,side.RIGHT,side.FORWARD];// Allocate memory, since we may have to access out-of-range vertices, indices.
 	var geo=prim.geometry;// TODO: halve index length if making a dome.
 	var vertices=new Array((resolution+1)*(resolution+1)*4-(resolution*2-1)*3),indices=new Array((1<<subdivisions*2+3)*3),texCoords=new Array(vertices.length),normals=new Array(vertices.length),tangents=new Array(vertices.length);// Initialize lots of default variables.
-	var v=0,vBottom=0,t=0,i=void 0,d=void 0,progress=void 0,from=void 0,to=void 0;for(i=0;i<4;i++){//vertices[ v++ ] = getVecs('down');
-	vertices[v++]=getVecs(side.DOWN);}for(i=1;i<=resolution;i++){progress=i/resolution;to=vec3.lerp([0,0,0],getVecs(side.DOWN),getVecs(side.FORWARD),progress);vertices[v++]=vec3.copy([0,0,0],to);for(d=0;d<4;d++){from=vec3.copy([0,0,0],to);to=vec3.lerp([0,0,0],getVecs(side.DOWN),getVecs(directions[d]),progress);t=createLowerStrip(i,v,vBottom,t,indices);v=createVertexLine(from,to,i,v,vertices);vBottom+=i>1?i-1:1;}vBottom=v-1-i*4;}for(i=resolution-1;i>=1;i--){progress=i/resolution;to=vec3.lerp([0,0,0],getVecs(side.UP),getVecs(side.FORWARD),progress);vertices[v++]=vec3.copy([0,0,0],to);for(d=0;d<4;d++){from=vec3.copy([0,0,0],to);to=vec3.lerp([0,0,0],getVecs(side.UP),getVecs(directions[d]),progress);t=createUpperStrip(i,v,vBottom,t,indices);v=createVertexLine(from,to,i,v,vertices);vBottom+=i+1;}vBottom=v-1-i*4;}for(i=0;i<4;i++){indices[t++]=vBottom;indices[t++]=v;indices[t++]=++vBottom;vertices[v++]=getVecs('up');}// Create our Normals, and set icosphere to unit size.
+	var v=0,vBottom=0,t=0,i=void 0,d=void 0,progress=void 0,from=void 0,to=void 0;for(i=0;i<4;i++){//vertices[ v++ ] = getStdVecs('down');
+	vertices[v++]=getStdVecs(side.DOWN);}for(i=1;i<=resolution;i++){progress=i/resolution;to=vec3.lerp([0,0,0],getStdVecs(side.DOWN),getStdVecs(side.FORWARD),progress);vertices[v++]=vec3.copy([0,0,0],to);for(d=0;d<4;d++){from=vec3.copy([0,0,0],to);to=vec3.lerp([0,0,0],getStdVecs(side.DOWN),getStdVecs(directions[d]),progress);t=createLowerStrip(i,v,vBottom,t,indices);v=createVertexLine(from,to,i,v,vertices);vBottom+=i>1?i-1:1;}vBottom=v-1-i*4;}for(i=resolution-1;i>=1;i--){progress=i/resolution;to=vec3.lerp([0,0,0],getStdVecs(side.UP),getStdVecs(side.FORWARD),progress);vertices[v++]=vec3.copy([0,0,0],to);for(d=0;d<4;d++){from=vec3.copy([0,0,0],to);to=vec3.lerp([0,0,0],getStdVecs(side.UP),getStdVecs(directions[d]),progress);t=createUpperStrip(i,v,vBottom,t,indices);v=createVertexLine(from,to,i,v,vertices);vBottom+=i+1;}vBottom=v-1-i*4;}for(i=0;i<4;i++){indices[t++]=vBottom;indices[t++]=v;indices[t++]=++vBottom;vertices[v++]=getStdVecs(side.UP);}// Create our Normals, and set icosphere to unit size.
 	for(i=0;i<vertices.length;i++){// Toggle icosphere with icosohedron.
 	if(prim.type!==list.OCTAHEDRON){vertices[i]=vec3.normalize([0,0,0],vertices[i]);}normals[i]=vec3.copy([0,0,0],vertices[i]);}// Texture coords.
 	createUV(vertices,texCoords);// Tangents.
-	createTangents(vertices,tangents);// Scale. NOTE: this has to be after createUV and createTangents (assuming unit sphere).
-	if(radius!=1){for(i=0;i<vertices.length;i++){vertices[i][0]*=radius;vertices[i][1]*=prim.dimensions[1]/2;//radius;
+	createTangents(vertices,tangents);if(radius!=1){for(i=0;i<vertices.length;i++){vertices[i][0]*=radius;vertices[i][1]*=prim.dimensions[1]/2;//radius;
 	vertices[i][2]*=prim.dimensions[2]/2;//radius;
 	}}// Flatten the data arrays.
 	vertices=flatten(vertices,false);texCoords=flatten(texCoords,false);normals=flatten(normals,false);tangents=flatten(tangents,false);// Helper functions.
@@ -4431,10 +4418,8 @@
 	uv[vertices.length-2][0]=0.625;uv[2][0]=0.625;// was v.x
 	uv[vertices.length-1][0]=0.875;uv[3][0]=0.875;// was v.x
 	// Our engine wraps opposite, so reverse first coordinate (can't do it until we do all coordinates).
-	for(i=0;i<texCoords.length;i++){texCoords[i][0]=1.0-texCoords[i][0];}}function createTangents(vertices,tangents){for(i=0;i<vertices.Length;i++){v=vertices[i];v[1]=0;//v = v.normalized;
-	v=vec3.normalize([0,0,0],v);tangent=[0,0,0,0];tangent[0]=-v[2];tangent[1]=0;tangent[2]=v[0];tangent[3]=-1;tangents[i]=tangent;}tangents[vertices.length-4]=[-1,0,1];tangents[0]=[-1,0,-1];tangents[vertices.length-3]=[1,0,-1];tangents[1]=[1,0,-1];tangents[vertices.length-2]=[1,0,1];tangents[2]=[1,0,1];tangents[vertices.length-1]=[-1,0,1];tangents[3]=[-1,0,1];for(i=0;i<4;i++){tangents[vertices.length-1-i][3]=tangents[i][3]=-1;}}function createVertexLine(from,to,steps,v,vertices){for(var _i3=1;_i3<=steps;_i3++){//console.log("Vec3 " + v + " IS A:" + vec3.lerp( [ 0, 0, 0 ], from, to, i / steps ))
-	vertices[v++]=vec3.lerp([0,0,0],from,to,_i3/steps);}//console.log("VECTOR ARRAY:" + vertices.length)
-	return v;}function createLowerStrip(steps,vTop,vBottom,t,triangles){for(var _i4=1;_i4<steps;_i4++){triangles[t++]=vBottom;triangles[t++]=vTop-1;triangles[t++]=vTop;triangles[t++]=vBottom++;triangles[t++]=vTop++;triangles[t++]=vBottom;}triangles[t++]=vBottom;triangles[t++]=vTop-1;triangles[t++]=vTop;return t;}function createUpperStrip(steps,vTop,vBottom,t,triangles){triangles[t++]=vBottom;triangles[t++]=vTop-1;triangles[t++]=++vBottom;for(var _i5=1;_i5<=steps;_i5++){triangles[t++]=vTop-1;triangles[t++]=vTop;triangles[t++]=vBottom;triangles[t++]=vBottom;triangles[t++]=vTop++;triangles[t++]=++vBottom;}return t;}// Color array is pre-created, or gets a default when WebGL buffers are created.
+	for(i=0;i<texCoords.length;i++){texCoords[i][0]=1.0-texCoords[i][0];}}function createTangents(vertices,tangents){for(i=0;i<vertices.Length;i++){v=vertices[i];v[1]=0;v=vec3.normalize([0,0,0],v);tangent=[0,0,0,0];tangent[0]=-v[2];tangent[1]=0;tangent[2]=v[0];tangent[3]=-1;tangents[i]=tangent;}tangents[vertices.length-4]=[-1,0,1];tangents[0]=[-1,0,-1];tangents[vertices.length-3]=[1,0,-1];tangents[1]=[1,0,-1];tangents[vertices.length-2]=[1,0,1];tangents[2]=[1,0,1];tangents[vertices.length-1]=[-1,0,1];tangents[3]=[-1,0,1];for(i=0;i<4;i++){tangents[vertices.length-1-i][3]=tangents[i][3]=-1;}}function createVertexLine(from,to,steps,v,vertices){for(var _i17=1;_i17<=steps;_i17++){//console.log("Vec3 " + v + " IS A:" + vec3.lerp( [ 0, 0, 0 ], from, to, i / steps ))
+	vertices[v++]=vec3.lerp([0,0,0],from,to,_i17/steps);}return v;}function createLowerStrip(steps,vTop,vBottom,t,triangles){for(var _i18=1;_i18<steps;_i18++){triangles[t++]=vBottom;triangles[t++]=vTop-1;triangles[t++]=vTop;triangles[t++]=vBottom++;triangles[t++]=vTop++;triangles[t++]=vBottom;}triangles[t++]=vBottom;triangles[t++]=vTop-1;triangles[t++]=vTop;return t;}function createUpperStrip(steps,vTop,vBottom,t,triangles){triangles[t++]=vBottom;triangles[t++]=vTop-1;triangles[t++]=++vBottom;for(var _i19=1;_i19<=steps;_i19++){triangles[t++]=vTop-1;triangles[t++]=vTop;triangles[t++]=vBottom;triangles[t++]=vBottom;triangles[t++]=vTop++;triangles[t++]=++vBottom;}return t;}// Color array is pre-created, or gets a default when WebGL buffers are created.
 	// Return the buffer.
 	return this.addBufferData(prim.geometry,vertices,indices,normals,texCoords,tangents);//return this.createGLBuffers( prim.geometry );
 	}/** 
@@ -4445,6 +4430,10 @@
 	     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
 	     * Creating WebGL buffers is turned on or off conditionally in the method.
 	     */},{key:'geometryIcosohedron',value:function geometryIcosohedron(prim){return this.geometryIcoSphere(prim,false);}/** 
+	     * type PRISM.
+	     * create a closed prism type shape.
+	     */},{key:'geometryPrism',value:function geometryPrism(prim){}// TODO code needs to be written.
+	/** 
 	     * type PYRAMID.
 	     * create a closed pyramid shape, half of an icosohedron.
 	     * 
@@ -4521,14 +4510,14 @@
 	[-a,-c,0],// 18 + 4 = 23
 	[a,-c,0]// 19 + 4 = 24
 	];//vertices = vertices.map(function(v) { return v.normalize().scale(r); })
-	var faces=[[4,3,2,1,0],[7,6,5,0,1],[12,11,10,9,8],[15,14,13,8,9],[14,3,4,16,13],[3,14,15,17,2],[11,6,7,18,10],[6,11,12,19,5],[4,0,5,19,16],[12,8,13,16,19],[15,9,10,18,17],[7,1,2,17,18]];if(prim.applyTexToFace){for(var i=0;i<faces.length;i++){var len=vertices.length;// The fan is a flat polygon, constructed with face points, shared vertices.
-	var fan=this.computeFan(vtx,faces[i]);vertices=vertices.concat(fan.vertices);// Update the indices to reflect concatenation.
-	for(var _i6=0;_i6<fan.indices.length;_i6++){fan.indices[_i6]+=len;}indices=indices.concat(fan.indices);texCoords=texCoords.concat(fan.texCoords);normals=normals.concat(fan.normals);}}else{var computeSphereCoords=this.computeSphereCoords;for(var _i7=0;_i7<faces.length;_i7++){var vv=faces[_i7];// indices to vertices
+	var faces=[[4,3,2,1,0],[7,6,5,0,1],[12,11,10,9,8],[15,14,13,8,9],[14,3,4,16,13],[3,14,15,17,2],[11,6,7,18,10],[6,11,12,19,5],[4,0,5,19,16],[12,8,13,16,19],[15,9,10,18,17],[7,1,2,17,18]];if(prim.applyTexToFace){for(var _i20=0;_i20<faces.length;_i20++){var len=vertices.length;// The fan is a flat polygon, constructed with face points, shared vertices.
+	var fan=this.computeFan(vtx,faces[_i20]);vertices=vertices.concat(fan.vertices);// Update the indices to reflect concatenation.
+	for(var _i21=0;_i21<fan.indices.length;_i21++){fan.indices[_i21]+=len;}indices=indices.concat(fan.indices);texCoords=texCoords.concat(fan.texCoords);normals=normals.concat(fan.normals);}}else{var computeSphereCoords=this.computeSphereCoords;for(var _i22=0;_i22<faces.length;_i22++){var vv=faces[_i22];// indices to vertices
 	var vvv=[];// saved vertices
-	var lenv=vv.length;for(var j=0;j<vv.length;j++){vvv.push(vtx[vv[j]]);}var center=this.computeCentroid(vvv);for(var _i8=1;_i8<=lenv;_i8++){var p1=_i8-1;var p2=_i8;if(_i8===lenv){p1=p2-1;p2=0;}var v1=vvv[p1];var v2=vvv[p2];vertices.push(vec3.copy([0,0,0],v1),vec3.copy([0,0,0],v2),vec3.copy([0,0,0],center));var cLen=vertices.length-1;indices.push(cLen-2,cLen-1,cLen);normals.push(vec3.copy([0,0,0],v1),vec3.copy([0,0,0],v2),vec3.copy([0,0,0],center));texCoords.push(computeSphereCoords(v1),computeSphereCoords(v2),computeSphereCoords(center));}// end of 'for' loop.
+	var lenv=vv.length;for(var _j4=0;_j4<vv.length;_j4++){vvv.push(vtx[vv[_j4]]);}var center=this.computeCentroid(vvv);for(var _i23=1;_i23<=lenv;_i23++){var p1=_i23-1;var p2=_i23;if(_i23===lenv){p1=p2-1;p2=0;}var v1=vvv[p1];var v2=vvv[p2];vertices.push(vec3.copy([0,0,0],v1),vec3.copy([0,0,0],v2),vec3.copy([0,0,0],center));var cLen=vertices.length-1;indices.push(cLen-2,cLen-1,cLen);normals.push(vec3.copy([0,0,0],v1),vec3.copy([0,0,0],v2),vec3.copy([0,0,0],center));texCoords.push(computeSphereCoords(v1),computeSphereCoords(v2),computeSphereCoords(center));}// end of 'for' loop.
 	}// end of 'faces' loop.
 	}// end of wrap whole object with one texture.
-	for(var _i9=0;_i9<vertices.length;_i9++){var _vv=vertices[_i9];_vv[0]*=w;_vv[1]*=h;_vv[2]*=d;}// Flatten.
+	for(var _i24=0;_i24<vertices.length;_i24++){var _vv=vertices[_i24];_vv[0]*=w;_vv[1]*=h;_vv[2]*=d;}// Flatten.
 	vertices=flatten(vertices);texCoords=flatten(texCoords);normals=flatten(normals);// Color array is pre-created, or gets a default when WebGL buffers are created.
 	// Return the buffer.
 	return this.addBufferData(prim.geometry,vertices,indices,normals,texCoords,tangents);}/** 
@@ -4553,7 +4542,7 @@
 	var rings=prim.divisions[0];var sides=prim.divisions[1];// typical: radius = 0.5, ringRadius = 0.25, sides = 36, rings = 24;
 	var vertsPerRow=sides+1;var vertsPerColumn=rings+1;var ringStride=this.TWO_PI/rings;var torusStride=this.TWO_PI/sides;var theta=0,phi=0,x=void 0,y=void 0,z=void 0;for(var vertColumn=0;vertColumn<vertsPerColumn;vertColumn++){theta=ringStride*vertColumn;for(var horizRow=0;horizRow<vertsPerRow;horizRow++){phi=torusStride*horizRow;// Position.
 	x=Math.cos(theta)*(radius+ringRadius*Math.cos(phi));y=Math.sin(theta)*(radius+ringRadius*Math.cos(phi));z=ringRadius*Math.sin(phi);vertices.push(x,y,z);// NOTE: x, z, y gives a horizontal torus
-	var norm=vec3.normalize([0,0,0],[x,y,z]);normals.push(norm[0],norm[1],norm[2]);var _u2=horizRow/vertsPerRow;var _v3=vertColumn/vertsPerColumn;texCoords.push(_u2,_v3);}}// let numIndices = sides * rings * 6;
+	var norm=vec3.normalize([0,0,0],[x,y,z]);normals.push(norm[0],norm[1],norm[2]);var _u3=horizRow/vertsPerRow;var _v4=vertColumn/vertsPerColumn;texCoords.push(_u3,_v4);}}// let numIndices = sides * rings * 6;
 	for(var _vertColumn=0;_vertColumn<rings;_vertColumn++){for(var _horizRow=0;_horizRow<sides;_horizRow++){var lt=_horizRow+_vertColumn*vertsPerRow;var rt=_horizRow+1+_vertColumn*vertsPerRow;var lb=_horizRow+(_vertColumn+1)*vertsPerRow;var rb=_horizRow+1+(_vertColumn+1)*vertsPerRow;indices.push(lb,rb,rt,lb,rt,lt);// NOTE: wrap backwards to see inside of torus (tunnel?).
 	}}// Color array is pre-created, or gets a default when WebGL buffers are created.
 	// Return the buffer.
@@ -4595,7 +4584,8 @@
 	prim.orbitRadius=0.0;prim.orbitAngular=0.0;// Lighting and materials.
 	prim.material={};prim.light={};// Visible from outside (counterclockwise) or inside (clockwise).
 	prim.visibleFrom=this.OUTSIDE;prim.applyTexToFace=applyTexToFace;// Geometry factory function.
-	prim.geometry=this.createGeoObj();prim.geometry.type=type;prim.geometry=this.createGeoObj();prim.geometry=this[type](prim,color);prim.geometry=this.createGLBuffers(prim.geometry);// Set internal functions.
+	prim.geometry=this.createGeoObj();prim.geometry.type=type;prim.geometry=this.createGeoObj();prim.geometry=this[type](prim,color);prim.geometry=this.createGLBuffers(prim.geometry);// Compute the bounding box.
+	prim.boundingBox=this.computeBoundingBox(prim.geometry.vertices.data);// Internal functions.
 	/** 
 	         * Set the model-view matrix
 	         */prim.setMV=function(mvMatrix){var p=prim;mat4.identity(mvMatrix);var z=-5;// Translate.
@@ -4612,13 +4602,13 @@
 	         */prim.setMaterial=function(){var colorMult=arguments.length>0&&arguments[0]!==undefined?arguments[0]:1;var diffuse=arguments.length>1&&arguments[1]!==undefined?arguments[1]:[0,0,0];var specular=arguments.length>2&&arguments[2]!==undefined?arguments[2]:[1,1,1,1];var shininess=arguments.length>3&&arguments[3]!==undefined?arguments[3]:250;var specularFactor=arguments.length>4&&arguments[4]!==undefined?arguments[4]:1;var p=prim;p.material.colorMult=colorMult;p.diffuse=diffuse;p.specular=specular;p.shininess=shininess;p.specularFactor=specularFactor;};/** 
 	         * Set the Prim as a glowing object. Global lights 
 	         * are handled by the World.
-	         */prim.setLight=function(){var direction=arguments.length>0&&arguments[0]!==undefined?arguments[0]:[1,1,1];var color=arguments.length>1&&arguments[1]!==undefined?arguments[1]:[255,255,255];var prim=arguments.length>2&&arguments[2]!==undefined?arguments[2]:_this;var p=prim;p.light.direction=direction;p.light.color=color;};// Shared with factory functions.
-	prim.scale=function(scale){_this.scale(scale,prim.geometry.vertices);};prim.moveTo=function(pos){_this.computeMove(scale,prim.geometry.vertices);};prim.morph=function(newGeometry,easing){_this.morph(newGeometry,easing,prim.geometry);};// Waypoints for scripted motion or timelines.
+	         */prim.setLight=function(){var direction=arguments.length>0&&arguments[0]!==undefined?arguments[0]:[1,1,1];var color=arguments.length>1&&arguments[1]!==undefined?arguments[1]:[255,255,255];var prim=arguments.length>2&&arguments[2]!==undefined?arguments[2]:_this;var p=prim;p.light.direction=direction;p.light.color=color;};// Shared with factory functions. Normally, we used matrix transforms to accomplish this.
+	prim.scaleVertices=function(scale){_this.scale(scale,prim.geometry.vertices);};prim.moveVertices=function(pos){_this.computeMove(scale,prim.geometry.vertices);};prim.morphVertices=function(newGeometry,easing){_this.morph(newGeometry,easing,prim.geometry);};// Waypoints for scripted motion or timelines.
 	prim.waypoints=[];// Store multiple textures for one Prim.
 	prim.textures=[];// Store multiple sounds for one Prim.
 	prim.audio=[];// Store multiple videos for one Prim.
 	prim.video=[];// Multiple textures per Prim. Rendering defines how textures for each Prim type are used.
-	for(var i=0;i<textureImages.length;i++){this.loadTexture.load(textureImages[i],prim);}prim.scale=1.0;// Define Prim material (only one material type at a time per Prim ).
+	for(var _i25=0;_i25<textureImages.length;_i25++){this.loadTexture.load(textureImages[_i25],prim);}prim.scale=1.0;// Define Prim material (only one material type at a time per Prim ).
 	prim.setMaterial();//prim.setLight();
 	// Parent Node.
 	prim.parentNode=null;// Child Prim array.
@@ -5508,7 +5498,7 @@
 	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	                        ));
 
-	                        this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.TERRAIN, 'terrain', vec5(2, 2, 44, this.prim.sides.TOP, 0.1), // NOTE: ORIENTATION DESIRED vec5[3], waterline = vec5[4]
+	                        this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.TERRAIN, 'terrain', vec5(2, 2, 44, this.prim.directions.TOP, 0.1), // NOTE: ORIENTATION DESIRED vec5[3], waterline = vec5[4]
 	                        vec5(100, 100, 100), // divisions
 	                        vec3.fromValues(1.5, -1.5, 2), // position (absolute)
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -5522,7 +5512,7 @@
 	                        ///////////////////////////
 	                        // PLANE
 
-	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlane', vec5(2, 1, 1, this.prim.sides.FRONT, 1), // pass orientation ONE UNIT CURVE
+	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlane', vec5(2, 1, 1, this.prim.directions.FRONT, 1), // pass orientation ONE UNIT CURVE
 	                        vec5(10, 10, 10), // divisions
 	                        vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -5532,7 +5522,7 @@
 	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	                        ));
 
-	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlane', vec5(2, 1, 1, this.prim.sides.BACK, 1), // pass orientation ONE UNIT CURVE
+	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlane', vec5(2, 1, 1, this.prim.directions.BACK, 1), // pass orientation ONE UNIT CURVE
 	                        vec5(10, 10, 10), // divisions
 	                        vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -5542,7 +5532,7 @@
 	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	                        ));
 
-	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlane', vec5(2, 1, 1, this.prim.sides.LEFT, 1), // pass orientation ONE UNIT CURVE
+	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlane', vec5(2, 1, 1, this.prim.directions.LEFT, 1), // pass orientation ONE UNIT CURVE
 	                        vec5(10, 10, 10), // divisions
 	                        vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -5552,7 +5542,7 @@
 	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	                        ));
 
-	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlane', vec5(2, 1, 1, this.prim.sides.RIGHT, 1), // pass orientation ONE UNIT CURVE
+	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlane', vec5(2, 1, 1, this.prim.directions.RIGHT, 1), // pass orientation ONE UNIT CURVE
 	                        vec5(10, 10, 10), // divisions
 	                        vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -5567,7 +5557,7 @@
 	                        // DIMENSIONS INDICATE ANY X or Y CURVATURE.
 	                        // DIVISIONS FOR CUBED AND CURVED PLANE INDICATE SIDE TO DRAW
 
-	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CURVEDOUTERPLANE, 'CurvedPlane', vec5(2, 1, 1, this.prim.sides.RIGHT, 1), // dimensions NOTE: pass radius for curvature (also creates orbit) 
+	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CURVEDOUTERPLANE, 'CurvedPlane', vec5(2, 1, 1, this.prim.directions.RIGHT, 1), // dimensions NOTE: pass radius for curvature (also creates orbit) 
 	                        vec3.fromValues(10, 10, 10), // divisions
 	                        vec3.fromValues(-1.2, 0.0, 2.0), // position (absolute)
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z

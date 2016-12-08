@@ -178,7 +178,7 @@ class World {
         this.dirlightTextureObjList.push( this.prim.createPrim(
             this.prim.typeList.TERRAIN,
             'terrain',
-            vec5( 2, 2, 44, this.prim.sides.TOP, 0.1 ),            // NOTE: ORIENTATION DESIRED vec5[3], waterline = vec5[4]
+            vec5( 2, 2, 44, this.prim.directions.TOP, 0.1 ),            // NOTE: ORIENTATION DESIRED vec5[3], waterline = vec5[4]
             vec5( 100, 100, 100 ),           // divisions
             vec3.fromValues( 1.5, -1.5, 2 ),       // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -195,7 +195,7 @@ class World {
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.CURVEDINNERPLANE,
             'CurvedPlane',
-            vec5( 2, 1, 1, this.prim.sides.FRONT, 1 ),         // pass orientation ONE UNIT CURVE
+            vec5( 2, 1, 1, this.prim.directions.FRONT, 1 ),         // pass orientation ONE UNIT CURVE
             vec5( 10, 10, 10 ),        // divisions
             vec3.fromValues(-1, 0.0, 2.0 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -208,7 +208,7 @@ class World {
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.CURVEDINNERPLANE,
             'CurvedPlane',
-            vec5( 2, 1, 1, this.prim.sides.BACK, 1 ),         // pass orientation ONE UNIT CURVE
+            vec5( 2, 1, 1, this.prim.directions.BACK, 1 ),         // pass orientation ONE UNIT CURVE
             vec5( 10, 10, 10 ),        // divisions
             vec3.fromValues(-1, 0.0, 2.0 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -221,7 +221,7 @@ class World {
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.CURVEDINNERPLANE,
             'CurvedPlane',
-            vec5( 2, 1, 1, this.prim.sides.LEFT, 1 ),         // pass orientation ONE UNIT CURVE
+            vec5( 2, 1, 1, this.prim.directions.LEFT, 1 ),         // pass orientation ONE UNIT CURVE
             vec5( 10, 10, 10 ),        // divisions
             vec3.fromValues(-1, 0.0, 2.0 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -234,7 +234,7 @@ class World {
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.CURVEDINNERPLANE,
             'CurvedPlane',
-            vec5( 2, 1, 1, this.prim.sides.RIGHT, 1 ),         // pass orientation ONE UNIT CURVE
+            vec5( 2, 1, 1, this.prim.directions.RIGHT, 1 ),         // pass orientation ONE UNIT CURVE
             vec5( 10, 10, 10 ),        // divisions
             vec3.fromValues(-1, 0.0, 2.0 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -252,7 +252,7 @@ class World {
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.CURVEDOUTERPLANE,
             'CurvedPlane',
-            vec5( 2, 1, 1, this.prim.sides.RIGHT, 1 ),         // dimensions NOTE: pass radius for curvature (also creates orbit) 
+            vec5( 2, 1, 1, this.prim.directions.RIGHT, 1 ),         // dimensions NOTE: pass radius for curvature (also creates orbit) 
             vec3.fromValues( 10, 10, 10 ),        // divisions
             vec3.fromValues(-1.2, 0.0, 2.0 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
