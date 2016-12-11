@@ -969,56 +969,6 @@ class Prim {
     }
 
     /** 
-     * Scale vertices directly, without changing position.
-     */
-    computeScale ( vertices, scale ) {
-
-        let oldPos = this.getCenter( vertices );
-
-        for ( let i = 0; i < vertices.length; i++ ) {
-
-            vertices[ i ] *= scale;
-
-        }
-
-        this.moveTo( oldPos );
-
-    }
-
-    /** 
-     * Move vertices directly in geometry, i.e. for something 
-     * that always orbits a central point.
-     * NOTE: normally, you will want to use a matrix transform to position objects.
-     * @param {GLMatrix.vec3} pos - the new position.
-     */
-    computeMove ( vertices, pos ) {
-
-        let center = this.getCentroid( vertices );
-
-        let delta = [
-
-            center[ 0 ] - pos[ 0 ],
-
-            center[ 1 ] - pos[ 1 ],
-
-            center[ 2 ] - pos[ 2 ]
-
-        ];
-
-        for ( let i = 0; i < vertices.length; i += 3 ) {
-
-            vertices[i] = delta[ 0 ];
-
-            vertices[ i + 1 ] = delta[ 1 ];
-
-            vertices[ i + 2 ] = delta[ 2 ];
-
-        }
-
-    }
-
-
-    /** 
      * Given a set of Points, compute a triangle fan around the Centroid for those points.
      * @param {[...vec3]} vertices an array of UN-FLATTENED xyz points.
      * @param {[uint16]} indices the sequence to read triangles.
@@ -1360,15 +1310,54 @@ class Prim {
     }
 
     /** 
-     * Convert from one Prim geometry to another, alters geometry.
+     * Given a mesh of vertices, compute the quads 
+     * from the indices (path through triangles)
+     * https://github.com/Erkaman/gl-quads-to-tris
+     * https://github.com/Erkaman/gl-catmull-clark/blob/master/index.js   THIS ONE
+     * https://en.wikipedia.org/wiki/Catmull%E2%80%93Clark_subdivision_surface
+     * https://vorg.github.io/pex/docs/pex-geom/Geometry.html
+     * http://www.rorydriscoll.com/2008/08/01/catmull-clark-subdivision-the-basics/
+     * NOTE: quads = "cells" = "face"
      */
-    computeMorph ( newGeometry, easing, geometry ) {
+    computeTrisToQuads ( indices ) {
+
+        quads = [];
+
+        for ( let i = 0; i < indices.length - 6; i += 6 ) {
+
+            quads.push( indices[ 0 ], indices[ 1 ], indices[ 2 ],indices[ 6 ] );
+
+        }
+
+        return quads;
 
     }
 
     /** 
-     * Subdivide a mesh, WITHOUT smoothing.
+     * convert quads to tris for drawing.
+     */
+    computeQuadsToTris ( quads ) {
+
+        var vertices = [];
+
+        for (let i = 0; i < quads.length; ++i ) {
+
+            let quad = quads[ i ];
+
+            vtx.push( [cell[ 0 ], cell[ 1 ], cell [ 2 ] ] );
+
+            vtx.push([cell[ 0 ], cell[ 2 ], cell[ 3 ] ] );
+
+        }
+
+        return vtx;
+
+    }
+
+    /** 
+     * Subdivide a mesh
      * Comprehensive description.
+     * http://www.rorydriscoll.com/2008/08/01/catmull-clark-subdivision-the-basics/
      * @link http://www.rorydriscoll.com/2008/08/01/catmull-clark-subdivision-the-basics/
      * USE:
      * USE: https://blog.nobel-joergensen.com/2010/12/25/procedural-generated-mesh-in-unity/
@@ -1390,8 +1379,69 @@ class Prim {
 
         // TODO: NOT DONE!!!!
 
+        // use indices to return faces.
+
+        // use indices to return previous and next face
+
 
         return geometry;
+
+    }
+
+    /** 
+     * Convert from one Prim geometry to another, alters geometry.
+     */
+    computeMorph ( newGeometry, easing, geometry ) {
+
+    }
+
+
+    /** 
+     * Scale vertices directly, without changing position.
+     */
+    computeScale ( vertices, scale ) {
+
+        let oldPos = this.getCenter( vertices );
+
+        for ( let i = 0; i < vertices.length; i++ ) {
+
+            vertices[ i ] *= scale;
+
+        }
+
+        this.moveTo( oldPos );
+
+    }
+
+    /** 
+     * Move vertices directly in geometry, i.e. for something 
+     * that always orbits a central point.
+     * NOTE: normally, you will want to use a matrix transform to position objects.
+     * @param {GLMatrix.vec3} pos - the new position.
+     */
+    computeMove ( vertices, pos ) {
+
+        let center = this.getCentroid( vertices );
+
+        let delta = [
+
+            center[ 0 ] - pos[ 0 ],
+
+            center[ 1 ] - pos[ 1 ],
+
+            center[ 2 ] - pos[ 2 ]
+
+        ];
+
+        for ( let i = 0; i < vertices.length; i += 3 ) {
+
+            vertices[i] = delta[ 0 ];
+
+            vertices[ i + 1 ] = delta[ 1 ];
+
+            vertices[ i + 2 ] = delta[ 2 ];
+
+        }
 
     }
 
@@ -2936,9 +2986,8 @@ class Prim {
         }
 
         function createUpperStrip ( steps, vTop, vBottom, t, triangles ) {
-
-            triangles[t++] = vBottom;
-            triangles[t++] = vTop - 1;
+               triangles[t++] = vBottom;
+            triangles[t++] = vTop - 1;   
             triangles[t++] = ++vBottom;
 
             for ( let i = 1; i <= steps; i++ ) {
