@@ -1375,7 +1375,7 @@ class Prim {
      * @link http://answers.unity3d.com/questions/259127/does-anyone-have-any-code-to-subdivide-a-mesh-and.html
      * @link https://thiscouldbebetter.wordpress.com/2015/04/24/the-catmull-clark-subdivision-surface-algorithm-in-javascript/
      */
-    computeSubdivide ( geometry, center ) {
+    computeSubdivide ( vertices, indices ) {
 
         // TODO: NOT DONE!!!!
 
@@ -1383,8 +1383,50 @@ class Prim {
 
         // use indices to return previous and next face
 
+        // http://www.cs.cmu.edu/afs/cs/academic/class/15462-s13/www/lec_slides/project2_slides.pdf
 
-        return geometry;
+        // get a list of all edges, organized as 'first-second'
+
+        let hyp = '-'
+
+        // Create a new Points array.
+
+        let pts = new Array( indices.length ); // create Point neighborhood
+
+        for ( let i = 0; i < pts.length; i++ ) {
+
+            console.log('indices:' + indices[ i ] )
+
+            pts[ indices[ i ] ] = [];
+
+        }
+
+        // First pass gets the central point (p0), and two more points (p1, p2) below that point.
+        // NOTE: this pushes 18 arrays, the forward, and the reverse. We should only save the forward.
+        // TODO: analyze triangles
+
+        for ( let i = 0; i < indices.length; i ++ ) {
+
+            let p1 = indices[ i ];
+
+            let p2 = indices[ i + 1 ];
+
+            let p3 = indices[ i + 2 ];
+
+            if ( p1 ) pts[ indices[ i ] ].push( [ p1, p2, p3 ] );
+
+            if ( p2 ) pts[ indices[ i + 1 ] ].push( [ p1, p2, p3 ] );
+
+            if ( p3 ) pts[ indices[ i + 2 ] ].push( [ p1, p2, p3 ] );
+
+        }
+
+        // We now have a set of triangles for each Point
+
+        window.pts = pts;
+        window.indices = indices;
+
+        //return geometry;
 
     }
 
@@ -3425,6 +3467,10 @@ class Prim {
             }
 
         }
+
+        ///////////////////////////
+        this.computeSubdivide( vertices, indices );
+        //////////////////////////
 
         // Color array is pre-created, or gets a default when WebGL buffers are created.
 
