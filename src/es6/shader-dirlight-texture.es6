@@ -235,6 +235,7 @@ class ShaderDirlightTexture extends Shader {
                 gl.vertexAttribPointer( vsVars.attribute.vec3.aVertexPosition, obj.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0 );
 
                 // Bind normals buffer.
+
                 gl.bindBuffer( gl.ARRAY_BUFFER, obj.geometry.normals.buffer );
                 gl.enableVertexAttribArray( vsVars.attribute.vec3.aVertexNormal );
                 gl.vertexAttribPointer( vsVars.attribute.vec3.aVertexNormal, obj.geometry.normals.itemSize, gl.FLOAT, false, 0, 0);

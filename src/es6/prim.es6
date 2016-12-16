@@ -1377,53 +1377,19 @@ class Prim {
      */
     computeSubdivide ( vertices, indices ) {
 
-        // TODO: NOT DONE!!!!
+        let pts = new Array( vertices.length / 3 );
 
-        // use indices to return faces.
-
-        // use indices to return previous and next face
-
-        // http://www.cs.cmu.edu/afs/cs/academic/class/15462-s13/www/lec_slides/project2_slides.pdf
-
-        // get a list of all edges, organized as 'first-second'
-
-        let hyp = '-'
-
-        // Create a new Points array.
-
-        let pts = new Array( indices.length ); // create Point neighborhood
-
-        for ( let i = 0; i < pts.length; i++ ) {
-
-            console.log('indices:' + indices[ i ] )
-
-            pts[ indices[ i ] ] = [];
+        function checkPt( pt1, pt2 ) {
 
         }
 
-        // First pass gets the central point (p0), and two more points (p1, p2) below that point.
-        // NOTE: this pushes 18 arrays, the forward, and the reverse. We should only save the forward.
-        // TODO: analyze triangles
+        for ( let i = 0; i < vertices.length; i += 3 ) {
 
-        for ( let i = 0; i < indices.length; i ++ ) {
-
-            let p1 = indices[ i ];
-
-            let p2 = indices[ i + 1 ];
-
-            let p3 = indices[ i + 2 ];
-
-            if ( p1 ) pts[ indices[ i ] ].push( [ p1, p2, p3 ] );
-
-            if ( p2 ) pts[ indices[ i + 1 ] ].push( [ p1, p2, p3 ] );
-
-            if ( p3 ) pts[ indices[ i + 2 ] ].push( [ p1, p2, p3 ] );
 
         }
 
-        // We now have a set of triangles for each Point
+        window.vertices = vertices;
 
-        window.pts = pts;
         window.indices = indices;
 
         //return geometry;
