@@ -86,6 +86,22 @@ class Util {
 
     }
 
+    containsAll( arr1, arr2 ) {
+
+        arr2.every( arr2Item => arr1.includes( arr2Item ) );
+
+    }
+
+    /** 
+     * compare two arrays, return true if identical number of elements, 
+     * and all values are the same.
+     */
+    compArr ( arr1, arr2 ) {
+
+        return this.containsAll(arr1, arr2) && this.containsAll(arr2, arr1);
+
+    }
+
     /** 
      * Get a succession of values from a flat array
      * @param {Array} arr a flat array.
@@ -205,17 +221,29 @@ class Util {
     /** 
      * Given a flat array, convert to multi-dimensional.
      */
-    unFlatten( arr, subsize ) {
+    unFlatten( arr, subSize ) {
 
-        let ct = 0;
+        let ct = 0, ct2 = 0;
 
         let nodes = []; // multi-dimensional
 
-        let sub = new Array();
+        let len = arr.length / subSize;
 
-        for ( let i = 0, len = arr.length; i < len; i += subsize ) {
+        let sub = new Array( len );
 
-            nodes.push( arr.splice( i, subsize ) ); 
+        // HMMMM ERROR HERE??????
+
+        for ( let i = 0; i < len; i += subSize ) {
+
+            let a = new Array( subSize );
+
+            for ( let j = 0; j < subSize; j++ ) {
+
+                a[ j ] =  arr[ ct++ ];
+
+            }
+
+            nodes[ ct2++ ] = a;
 
         }
 

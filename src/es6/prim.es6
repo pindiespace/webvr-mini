@@ -1377,20 +1377,49 @@ class Prim {
      */
     computeSubdivide ( vertices, indices ) {
 
-        let pts = new Array( vertices.length / 3 );
+        let util = this.util;
 
-        function checkPt( pt1, pt2 ) {
+        let pts = util.unFlatten( vertices, 3 );
 
-        }
+        let tris = util.unFlatten( indices, 3 );
 
-        for ( let i = 0; i < vertices.length; i += 3 ) {
+        let groups = new Array( pts.length );
 
+        window.tris = tris;
 
-        }
+        window.pts = pts;
+
+        window.groups = groups;
 
         window.vertices = vertices;
 
         window.indices = indices;
+
+        for ( let i = 0; i < pts.length; i++ ) {
+
+            groups[ i ] = { pt: i, surround: [] }; // add first point (ourselves)
+
+            for( let j = 0; j < tris.length; j++ ) {
+
+                let tri = tris[ j ];
+
+                console.log('TRI IS:' + tri)
+
+                for ( let k = 0; k < tri.length; k++ ) {
+
+                    if( tri[ k ] === i ) { // reference in indices matches position in pts
+
+                        groups[ i ].surround.push( tri );
+
+                    }
+
+                }
+
+            }
+
+        }
+
+
 
         //return geometry;
 

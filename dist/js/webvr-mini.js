@@ -583,6 +583,26 @@
 
 	                        return degrees * Math.PI / 180;
 	                }
+	        }, {
+	                key: 'containsAll',
+	                value: function containsAll(arr1, arr2) {
+
+	                        arr2.every(function (arr2Item) {
+	                                return arr1.includes(arr2Item);
+	                        });
+	                }
+
+	                /** 
+	                 * compare two arrays, return true if identical number of elements, 
+	                 * and all values are the same.
+	                 */
+
+	        }, {
+	                key: 'compArr',
+	                value: function compArr(arr1, arr2) {
+
+	                        return this.containsAll(arr1, arr2) && this.containsAll(arr2, arr1);
+	                }
 
 	                /** 
 	                 * Get a succession of values from a flat array
@@ -706,17 +726,29 @@
 
 	        }, {
 	                key: 'unFlatten',
-	                value: function unFlatten(arr, subsize) {
+	                value: function unFlatten(arr, subSize) {
 
-	                        var ct = 0;
+	                        var ct = 0,
+	                            ct2 = 0;
 
 	                        var nodes = []; // multi-dimensional
 
-	                        var sub = new Array();
+	                        var len = arr.length / subSize;
 
-	                        for (var i = 0, len = arr.length; i < len; i += subsize) {
+	                        var sub = new Array(len);
 
-	                                nodes.push(arr.splice(i, subsize));
+	                        // HMMMM ERROR HERE??????
+
+	                        for (var i = 0; i < len; i += subSize) {
+
+	                                var a = new Array(subSize);
+
+	                                for (var j = 0; j < subSize; j++) {
+
+	                                        a[j] = arr[ct++];
+	                                }
+
+	                                nodes[ct2++] = a;
 	                        }
 
 	                        return nodes;
@@ -4031,7 +4063,9 @@
 	     * @link http://vorg.github.io/pex/docs/pex-geom/Geometry.html
 	     * @link http://answers.unity3d.com/questions/259127/does-anyone-have-any-code-to-subdivide-a-mesh-and.html
 	     * @link https://thiscouldbebetter.wordpress.com/2015/04/24/the-catmull-clark-subdivision-surface-algorithm-in-javascript/
-	     */},{key:'computeSubdivide',value:function computeSubdivide(vertices,indices){var pts=new Array(vertices.length/3);function checkPt(pt1,pt2){}for(var _i13=0;_i13<vertices.length;_i13+=3){}window.vertices=vertices;window.indices=indices;//return geometry;
+	     */},{key:'computeSubdivide',value:function computeSubdivide(vertices,indices){var util=this.util;var pts=util.unFlatten(vertices,3);var tris=util.unFlatten(indices,3);var groups=new Array(pts.length);window.tris=tris;window.pts=pts;window.groups=groups;window.vertices=vertices;window.indices=indices;for(var _i13=0;_i13<pts.length;_i13++){groups[_i13]={pt:_i13,surround:[]};// add first point (ourselves)
+	for(var _j2=0;_j2<tris.length;_j2++){var tri=tris[_j2];console.log('TRI IS:'+tri);for(var k=0;k<tri.length;k++){if(tri[k]===_i13){// reference in indices matches position in pts
+	groups[_i13].surround.push(tri);}}}}//return geometry;
 	}/** 
 	     * Convert from one Prim geometry to another, alters geometry.
 	     */},{key:'computeMorph',value:function computeMorph(newGeometry,easing,geometry){}/** 
@@ -4290,12 +4324,12 @@
 	break;case side.BOTTOM:computeSquare(0,2,1,sx,-sy,nx,nz,-sy/2,1,-1,side.BOTTOM);// ROTATE xy axis
 	break;default:break;}break;default:break;}// Make an individual Plane.
 	function computeSquare(u,v,w,su,sv,nu,nv,pw,flipu,flipv,currSide){// Create a square, positioning in correct position.
-	var vertShift=vertexIndex;if(prim.name==='testPlane')console.log('i:'+i+' j:'+j);for(var _j2=0;_j2<=nv;_j2++){for(var _i16=0;_i16<=nu;_i16++){var vert=positions[vertexIndex]=[0,0,0];vert[u]=(-su/2+_i16*su/nu)*flipu;vert[v]=(-sv/2+_j2*sv/nv)*flipv;vert[w]=pw;// heightMap is always the middle, up-facing vector.
+	var vertShift=vertexIndex;if(prim.name==='testPlane')console.log('i:'+i+' j:'+j);for(var _j3=0;_j3<=nv;_j3++){for(var _i16=0;_i16<=nu;_i16++){var vert=positions[vertexIndex]=[0,0,0];vert[u]=(-su/2+_i16*su/nu)*flipu;vert[v]=(-sv/2+_j3*sv/nv)*flipv;vert[w]=pw;// heightMap is always the middle, up-facing vector.
 	if(prim.heightMap){// our 'y' for the TOP x/z MAY NEED TO CHANGE FOR EACH SIDE
-	vert[w]=prim.heightMap.getPixel(_i16,_j2);}// Normals.
+	vert[w]=prim.heightMap.getPixel(_i16,_j3);}// Normals.
 	norms[vertexIndex]=[0,0,0];// Texture coords.
-	texCoords.push(_i16/nu,1.0-_j2/nv);++vertexIndex;}}// Compute indices and sides.
-	var side=[];for(var _j3=0;_j3<nv;_j3++){for(var _i17=0;_i17<nu;_i17++){var n=vertShift+_j3*(nu+1)+_i17;// Indices for entire prim.
+	texCoords.push(_i16/nu,1.0-_j3/nv);++vertexIndex;}}// Compute indices and sides.
+	var side=[];for(var _j4=0;_j4<nv;_j4++){for(var _i17=0;_i17<nu;_i17++){var n=vertShift+_j4*(nu+1)+_i17;// Indices for entire prim.
 	indices.push(n,n+nu+1,n+nu+2);indices.push(n,n+nu+2,n+1);// Individual sides.
 	side.push(n,n+nu+1,n+nu+2);side.push(n,n+nu+2,n+1);}}// Save the indices for this side.
 	sides[currSide]=side;}// end of computeSquare.
@@ -4527,7 +4561,7 @@
 	var fan=this.computeFan(vtx,faces[_i23]);vertices=vertices.concat(fan.vertices);// Update the indices to reflect concatenation.
 	for(var _i24=0;_i24<fan.indices.length;_i24++){fan.indices[_i24]+=len;}indices=indices.concat(fan.indices);texCoords=texCoords.concat(fan.texCoords);normals=normals.concat(fan.normals);}}else{var computeSphereCoords=this.computeSphereCoords;for(var _i25=0;_i25<faces.length;_i25++){var vv=faces[_i25];// indices to vertices
 	var vvv=[];// saved vertices
-	var lenv=vv.length;for(var _j4=0;_j4<vv.length;_j4++){vvv.push(vtx[vv[_j4]]);}var center=this.computeCentroid(vvv);for(var _i26=1;_i26<=lenv;_i26++){var p1=_i26-1;var p2=_i26;if(_i26===lenv){p1=p2-1;p2=0;}var v1=vvv[p1];var v2=vvv[p2];vertices.push(vec3.copy([0,0,0],v1),vec3.copy([0,0,0],v2),vec3.copy([0,0,0],center));var cLen=vertices.length-1;indices.push(cLen-2,cLen-1,cLen);normals.push(vec3.copy([0,0,0],v1),vec3.copy([0,0,0],v2),vec3.copy([0,0,0],center));texCoords.push(computeSphereCoords(v1),computeSphereCoords(v2),computeSphereCoords(center));}// end of 'for' loop.
+	var lenv=vv.length;for(var _j5=0;_j5<vv.length;_j5++){vvv.push(vtx[vv[_j5]]);}var center=this.computeCentroid(vvv);for(var _i26=1;_i26<=lenv;_i26++){var p1=_i26-1;var p2=_i26;if(_i26===lenv){p1=p2-1;p2=0;}var v1=vvv[p1];var v2=vvv[p2];vertices.push(vec3.copy([0,0,0],v1),vec3.copy([0,0,0],v2),vec3.copy([0,0,0],center));var cLen=vertices.length-1;indices.push(cLen-2,cLen-1,cLen);normals.push(vec3.copy([0,0,0],v1),vec3.copy([0,0,0],v2),vec3.copy([0,0,0],center));texCoords.push(computeSphereCoords(v1),computeSphereCoords(v2),computeSphereCoords(center));}// end of 'for' loop.
 	}// end of 'faces' loop.
 	}// end of wrap whole object with one texture.
 	for(var _i27=0;_i27<vertices.length;_i27++){var _vv=vertices[_i27];_vv[0]*=w;_vv[1]*=h;_vv[2]*=d;}// Flatten.
