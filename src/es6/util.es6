@@ -220,6 +220,9 @@ class Util {
 
     /** 
      * Given a flat array, convert to multi-dimensional.
+     * @param {Array} original (flattened) array.
+     * @param {Number} subSize the 'chunk' of the array being put into a sub-array.
+     * @returns{Array} a 2-dimensional array with each element in the second dimension of subSize length.
      */
     unFlatten( arr, subSize ) {
 
@@ -227,23 +230,19 @@ class Util {
 
         let nodes = []; // multi-dimensional
 
-        let len = arr.length / subSize;
+        let sub = new Array( arr.length / subSize );
 
-        let sub = new Array( len );
-
-        // HMMMM ERROR HERE??????
-
-        for ( let i = 0; i < len; i += subSize ) {
+        for ( let i = 0; i < arr.length; i += subSize ) {
 
             let a = new Array( subSize );
 
             for ( let j = 0; j < subSize; j++ ) {
 
-                a[ j ] =  arr[ ct++ ];
+                a[ j ] =  arr[ ct2++ ];
 
             }
 
-            nodes[ ct2++ ] = a;
+            nodes[ ct++ ] = a;
 
         }
 

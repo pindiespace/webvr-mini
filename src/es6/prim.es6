@@ -1319,40 +1319,6 @@ class Prim {
      * http://www.rorydriscoll.com/2008/08/01/catmull-clark-subdivision-the-basics/
      * NOTE: quads = "cells" = "face"
      */
-    computeTrisToQuads ( indices ) {
-
-        quads = [];
-
-        for ( let i = 0; i < indices.length - 6; i += 6 ) {
-
-            quads.push( indices[ 0 ], indices[ 1 ], indices[ 2 ],indices[ 6 ] );
-
-        }
-
-        return quads;
-
-    }
-
-    /** 
-     * convert quads to tris for drawing.
-     */
-    computeQuadsToTris ( quads ) {
-
-        var vertices = [];
-
-        for (let i = 0; i < quads.length; ++i ) {
-
-            let quad = quads[ i ];
-
-            vtx.push( [cell[ 0 ], cell[ 1 ], cell [ 2 ] ] );
-
-            vtx.push([cell[ 0 ], cell[ 2 ], cell[ 3 ] ] );
-
-        }
-
-        return vtx;
-
-    }
 
     /** 
      * Subdivide a mesh
@@ -1379,46 +1345,224 @@ class Prim {
 
         let util = this.util;
 
-        let pts = util.unFlatten( vertices, 3 );
+        let positions = util.unFlatten( vertices, 3 );
 
-        let tris = util.unFlatten( indices, 3 );
+        let cells = util.unFlatten( indices, 3 );
 
-        let groups = new Array( pts.length );
-
-        window.tris = tris;
-
-        window.pts = pts;
-
-        window.groups = groups;
-
-        window.vertices = vertices;
-
-        window.indices = indices;
-
-        for ( let i = 0; i < pts.length; i++ ) {
-
-            groups[ i ] = { pt: i, surround: [] }; // add first point (ourselves)
-
-            for( let j = 0; j < tris.length; j++ ) {
-
-                let tri = tris[ j ];
-
-                console.log('TRI IS:' + tri)
-
-                for ( let k = 0; k < tri.length; k++ ) {
-
-                    if( tri[ k ] === i ) { // reference in indices matches position in pts
-
-                        groups[ i ].surround.push( tri );
-
-                    }
-
-                }
-
-            }
-
+        //Counts number of trailing zeros
+        function countTrailingZeros(v) {
+          var c = 32;
+          v &= -v;
+          if (v) c--;
+          if (v & 0x0000FFFF) c -= 16;
+          if (v & 0x00FF00FF) c -= 8;
+          if (v & 0x0F0F0F0F) c -= 4;
+          if (v & 0x33333333) c -= 2;
+          if (v & 0x55555555) c -= 1;
+          return c;
         }
 
+        function popCount (v) {
+            v = v - ((v >>> 1) & 0x55555555);
+            v = (v & 0x33333333) + ((v >>> 2) & 0x33333333);
+            return ((v + (v >>> 4) & 0xF0F0F0F) * 0x1010101) >>> 24;
+        }
+
+        function nextCombination (v) {
+            var t = v | (v - 1);
+            return (t + 1) | (((~t & -~t) - 1) >>> (countTrailingZeros(v) + 1));
+        }
+
+        function opposite(u, v, f) {
+            for(var i=0; i<3; ++i) {
+                if(f[i] !== u && f[i] !== v) {
+                    return f[i];
+                }
+            }
+            return 0;
+        }
+
+        function normalize(cells, attr) {
+            if(attr) {
+                var len = cells.length
+                var zipped = new Array(len)
+                for(var i=0; i<len; ++i) {
+                    zipped[i] = [cells[i], attr[i]]
+                }
+                zipped.sort(compareZipped)
+                for(var i=0; i<len; ++i) {
+                    cells[i] = zipped[i][0]
+                    attr[i] = zipped[i][1]
+                }
+            return cells
+                } else {
+                cells.sort(compareCells)
+                return cells
+            }
+        }
+
+        //Ranks a pair of cells up to permutation
+        function compareCells(a, b) {
+          var n = a.length
+            , t = a.length - b.length
+            , min = Math.min
+          if(t) {
+            return t
+          }
+          switch(n) {
+            case 0:
+              return 0;
+            case 1:
+              return a[0] - b[0];
+            case 2:
+              var d = a[0]+a[1]-b[0]-b[1]
+              if(d) {
+                return d
+              }
+              return min(a[0],a[1]) - min(b[0],b[1])
+            case 3:
+              var l1 = a[0]+a[1]
+                , m1 = b[0]+b[1]
+              d = l1+a[2] - (m1+b[2])
+              if(d) {
+                return d
+              }
+              var l0 = min(a[0], a[1])
+                , m0 = min(b[0], b[1])
+                , d  = min(l0, a[2]) - min(m0, b[2])
+              if(d) {
+                return d
+              }
+              return min(l0+a[2], l1) - min(m0+b[2], m1)
+            
+            //TODO: Maybe optimize n=4 as well?
+            
+            default:
+              var as = a.slice(0)
+              as.sort()
+              var bs = b.slice(0)
+              bs.sort()
+              for(var i=0; i<n; ++i) {
+                t = as[i] - bs[i]
+                if(t) {
+                  return t
+                }
+              }
+              return 0
+          }
+        }
+
+        //Removes all duplicate cells in the complex
+        function unique(cells) {
+            if(cells.length === 0) {
+                return []
+            }
+            var ptr = 1, len = cells.length
+            for(var i=1; i<len; ++i) {
+                var a = cells[i]
+                if(compareCells(a, cells[i-1])) {
+                    if(i === ptr) {
+                        ptr++
+                        continue
+                    }
+                    cells[ptr++] = a
+                }
+            }
+            cells.length = ptr
+            return cells
+        }
+
+        //Builds an index for an n-cell.  This is more general than dual, but less efficient
+        function incidence(from_cells, to_cells) {
+          var index = new Array(from_cells.length)
+          for(var i=0, il=index.length; i<il; ++i) {
+            index[i] = []
+          }
+          var b = []
+          for(var i=0, n=to_cells.length; i<n; ++i) {
+            var c = to_cells[i]
+            var cl = c.length
+            for(var k=1, kn=(1<<cl); k<kn; ++k) {
+              b.length = popCount(k)
+              var l = 0
+              for(var j=0; j<cl; ++j) {
+                if(k & (1<<j)) {
+                  b[l++] = c[j]
+                }
+              }
+              var idx=findCell(from_cells, b)
+              if(idx < 0) {
+                continue
+              }
+              while(true) {
+                index[idx++].push(i)
+                if(idx >= from_cells.length || compareCells(from_cells[idx], b) !== 0) {
+                  break
+                }
+              }
+            }
+          }
+          return index
+        }
+
+        //Computes the dual of the mesh.  This is basically an optimized version of buildIndex for the situation where from_cells is just the list of vertices
+        function dual(cells, vertex_count) {
+          if(!vertex_count) {
+            return incidence(unique(skeleton(cells, 0)), cells, 0)
+          }
+          var res = new Array(vertex_count)
+          for(var i=0; i<vertex_count; ++i) {
+            res[i] = []
+          }
+          for(var i=0, len=cells.length; i<len; ++i) {
+            var c = cells[i]
+            for(var j=0, cl=c.length; j<cl; ++j) {
+              res[c[j]].push(i)
+            }
+          }
+          return res
+        }
+
+        //Enumerates all of the n-cells of a cell complex
+        function skeleton(cells, n) {
+            if(n < 0) {
+                return []
+            }
+            var result = [], k0 = (1<<(n+1))-1
+            for(var i=0; i<cells.length; ++i) {
+                var c = cells[i]
+                for(var k=k0; k<(1<<c.length); k=nextCombination(k)) {
+                    var b = new Array(n+1), l = 0
+                    for(var j=0; j<c.length; ++j) {
+                        if(k & (1<<j)) {
+                            b[l++] = c[j]
+                        }
+                    }
+                    result.push(b)
+                }
+            }
+            return normalize(result)
+           
+        }
+
+        function nskel(cells, n) {
+            return unique(normalize(skeleton(cells, n)))
+        }
+
+        /////////////////////////////////////////////////////////
+        // START
+
+        var e_verts = [0,0,0]
+        var v_verts = [0,0,0]
+        var e = [0,0]
+
+        var edges       = nskel(cells, 1)
+        //var e_incidence = top.incidence(edges, cells)
+        //var dual        = top.dual(cells, positions.length)
+        //var npositions  = []
+        //var ncells      = []
+        //var e_indices   = new Array(edges.length)
+        //var v_indices   = new Array(positions.length)
 
 
         //return geometry;
