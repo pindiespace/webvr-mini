@@ -172,11 +172,10 @@ class Util {
      */
     canFlatten( arr ) {
 
-        window.arr = arr;
-        
-        if ( typeof arr[ 0 ][ 0 ] != 'undefined' && arr[ 0 ][ 0 ].constructor === Array ) {
+        if ( ( typeof arr[ 0 ][ 0 ] !== "undefined" ) && arr[ 0 ].constructor === Array ) {
 
             return true;
+
         }
 
         return false;

@@ -813,6 +813,21 @@ class Prim {
     }
 
 
+    computeMidPoint( vertices, index1, index2 ) {
+
+        let vec3 = this.glMatrix.vec3;
+
+        var v1 = vertices[ index1 ];
+
+        var v2 = vertixes[ index2 ];
+
+        // NOTE: divideByScalar equivalent uses vec3.scale( out, a, 1/b )
+
+        return ( vec3.scale( [ 0, 0, 0 ], vec3.add( [ 0, 0, 0 ], v1, v2 ), 0.5 ) );
+
+    }
+
+
     /**
      * Find the center between any set of 3d points
      * @param {[...vec3]} vertices an array of xyz points.
@@ -1310,7 +1325,7 @@ class Prim {
     }
 
     /** 
-     * Given a mesh of vertices, compute the quads 
+     * Given a mesh of vertices, compute the quads and indexing. 
      * from the indices (path through triangles)
      * https://github.com/Erkaman/gl-quads-to-tris
      * https://github.com/Erkaman/gl-catmull-clark/blob/master/index.js   THIS ONE
@@ -1319,6 +1334,95 @@ class Prim {
      * http://www.rorydriscoll.com/2008/08/01/catmull-clark-subdivision-the-basics/
      * NOTE: quads = "cells" = "face"
      */
+    computeQuadsFromTris ( triIndices ) {
+
+        let util = this.util;
+
+        let idx = triIndices;
+
+        let quads = new Array( idx.length / 2 );
+
+        let ct = 0;
+
+        if ( ! util.canFlatten( idx ) ) {
+
+            console.error( 'trisToQuads() error: flattened arrays not supported' );
+
+            return null;
+
+        }
+
+        // Array of GL_TRIANGLES (0, 1, 2, 0, 2, 3) to quads.
+
+        for ( let i = 0; i < idx.length; i+= 2 ) {
+
+            quads[ ct++ ] = [
+
+                idx[ i ][0],
+
+                idx[ i ][1],
+
+                idx[ i + 1 ][1],
+
+                idx[ i + 1 ][2]
+
+            ];
+
+        }
+
+        return quads;
+
+    }
+
+    /** 
+     * given a mesh of quads, compute the triangles and indexing.
+     */
+    computeTrisFromQuads( quadIndices ) {
+
+        let util = this.util;
+
+        let tris = new Array( quadIndices.length * 2 );
+
+        let ct = 0;
+
+        if( ! util.canFlatten( quadIndices ) ) {
+
+            console.error( 'Prim.quadsToTris() error: flattened quad arrays not used in this program' );
+
+            return null;
+
+        }
+
+        for ( let i = 0; i < quadIndices.length; i++ ) {
+
+            let quad = quadIndices[ i ];
+
+            tris[ ct++ ] = [
+
+                quad[ i ], 
+
+                quad[ i + 1 ],
+
+                quad[ i + 2 ]
+
+            ];
+
+            tris[ ct++ ] = [
+
+                quad[ i ],
+
+                quad[ i + 2 ],
+
+                quad[ i + 3 ]
+
+            ]
+
+        }
+
+        return tris;
+
+    }
+
 
     /** 
      * Subdivide a mesh
@@ -1345,225 +1449,184 @@ class Prim {
 
         let util = this.util;
 
-        let positions = util.unFlatten( vertices, 3 );
+        let vec3 = this.glMatrix.vec3;
 
-        let cells = util.unFlatten( indices, 3 );
+        let v = util.unFlatten( vertices, 3 );
 
-        //Counts number of trailing zeros
-        function countTrailingZeros(v) {
-          var c = 32;
-          v &= -v;
-          if (v) c--;
-          if (v & 0x0000FFFF) c -= 16;
-          if (v & 0x00FF00FF) c -= 8;
-          if (v & 0x0F0F0F0F) c -= 4;
-          if (v & 0x33333333) c -= 2;
-          if (v & 0x55555555) c -= 1;
-          return c;
+        // Augment vertices
+
+        let vtx = new Array( v.length );
+
+        let tris = util.unFlatten( indices, 3 );
+
+        let quads = this.computeQuadsFromTris( tris );
+
+        let faces = [];
+
+        let edges = [];
+
+        window.indices = indices;
+
+        window.tris = tris;
+
+        window.quads = quads;
+
+        window.vtx = vtx;
+
+        window.faces = faces;
+
+        window.edges = edges;
+
+        // https://thiscouldbebetter.wordpress.com/2015/04/24/the-catmull-clark-subdivision-surface-algorithm-in-javascript/
+
+        // Based on a description of Catmull-Clark subdivision at the URL
+        // "https://en.wikipedia.org/wiki/Catmull-clark_subdivision".
+
+        function Edge( minIndex, maxIndex ) {
+
+            this.vertexIndices = [ minIndex, maxIndex ];
+
+            this.faceIndices = [];
+
+        }; // end of Edge
+
+        function Face( quad ) {
+
+            this.vertexIndices = quad;
+
+            this.edgeIndices = [];
+
+
+        }; // end of Face
+
+        function Vertex( vec ) {
+
+            this.pos = vec;
+
+            this.edgeIndices = [];
+
+            this.faceIndices = [];
+
+        }; // end of vertex
+
+        // Build Vertex object out of vec3.
+
+        for ( let i = 0; i < v.length; i++ ) {
+
+            vtx[ i ] = new Vertex( v[ i ] );
+
         }
 
-        function popCount (v) {
-            v = v - ((v >>> 1) & 0x55555555);
-            v = (v & 0x33333333) + ((v >>> 2) & 0x33333333);
-            return ((v + (v >>> 4) & 0xF0F0F0F) * 0x1010101) >>> 24;
-        }
+        ///////////////////////
+        // initialize
+        // quads = 'vertexIndicesForFaces'
 
-        function nextCombination (v) {
-            var t = v | (v - 1);
-            return (t + 1) | (((~t & -~t) - 1) >>> (countTrailingZeros(v) + 1));
-        }
+        var minMaxIndexLookup = [];
 
-        function opposite(u, v, f) {
-            for(var i=0; i<3; ++i) {
-                if(f[i] !== u && f[i] !== v) {
-                    return f[i];
+        // For each Face (a quad).
+
+        for (var f = 0; f < quads.length; f++) {
+
+            let quadIndices = quads[ f ];
+
+            let faceLength = quads.length;
+
+            let face = new Face( quadIndices );
+
+            // For each vertex in the face.
+
+            let quadLength = quadIndices.length;
+
+            for (var vi = 0; vi < quadLength; vi++) {
+
+                var viNext = (vi + 1) % quadLength;
+
+                var vertexIndex = quadIndices[ vi ];
+
+                var vertexIndexNext = quadIndices[ viNext ];
+
+                var vertex = vtx[ vertexIndex ];
+
+                var vertexNext = vtx[ vertexIndexNext ];
+
+                vertex.faceIndices.push( f );
+
+                // Find which vertex came first.
+
+                var minIndex = Math.min( vertexIndex, vertexIndexNext );
+
+                var maxIndex = Math.max( vertexIndex, vertexIndexNext );
+
+                var maxEdgeLookup = minMaxIndexLookup[ minIndex ];
+
+                if ( maxEdgeLookup == null ) {
+
+                    maxEdgeLookup = [];
+
+                    minMaxIndexLookup[ minIndex ] = maxEdgeLookup; // minimun index is set to null array
+
                 }
-            }
-            return 0;
-        }
 
-        function normalize(cells, attr) {
-            if(attr) {
-                var len = cells.length
-                var zipped = new Array(len)
-                for(var i=0; i<len; ++i) {
-                    zipped[i] = [cells[i], attr[i]]
-                }
-                zipped.sort(compareZipped)
-                for(var i=0; i<len; ++i) {
-                    cells[i] = zipped[i][0]
-                    attr[i] = zipped[i][1]
-                }
-            return cells
-                } else {
-                cells.sort(compareCells)
-                return cells
-            }
-        }
+                var edgeIndex = maxEdgeLookup[maxIndex];
 
-        //Ranks a pair of cells up to permutation
-        function compareCells(a, b) {
-          var n = a.length
-            , t = a.length - b.length
-            , min = Math.min
-          if(t) {
-            return t
-          }
-          switch(n) {
-            case 0:
-              return 0;
-            case 1:
-              return a[0] - b[0];
-            case 2:
-              var d = a[0]+a[1]-b[0]-b[1]
-              if(d) {
-                return d
-              }
-              return min(a[0],a[1]) - min(b[0],b[1])
-            case 3:
-              var l1 = a[0]+a[1]
-                , m1 = b[0]+b[1]
-              d = l1+a[2] - (m1+b[2])
-              if(d) {
-                return d
-              }
-              var l0 = min(a[0], a[1])
-                , m0 = min(b[0], b[1])
-                , d  = min(l0, a[2]) - min(m0, b[2])
-              if(d) {
-                return d
-              }
-              return min(l0+a[2], l1) - min(m0+b[2], m1)
-            
-            //TODO: Maybe optimize n=4 as well?
-            
-            default:
-              var as = a.slice(0)
-              as.sort()
-              var bs = b.slice(0)
-              bs.sort()
-              for(var i=0; i<n; ++i) {
-                t = as[i] - bs[i]
-                if(t) {
-                  return t
-                }
-              }
-              return 0
-          }
-        }
+                if (edgeIndex == null) {
 
-        //Removes all duplicate cells in the complex
-        function unique(cells) {
-            if(cells.length === 0) {
-                return []
-            }
-            var ptr = 1, len = cells.length
-            for(var i=1; i<len; ++i) {
-                var a = cells[i]
-                if(compareCells(a, cells[i-1])) {
-                    if(i === ptr) {
-                        ptr++
-                        continue
-                    }
-                    cells[ptr++] = a
-                }
-            }
-            cells.length = ptr
-            return cells
-        }
+                    var edge = new Edge( minIndex, maxIndex );
 
-        //Builds an index for an n-cell.  This is more general than dual, but less efficient
-        function incidence(from_cells, to_cells) {
-          var index = new Array(from_cells.length)
-          for(var i=0, il=index.length; i<il; ++i) {
-            index[i] = []
-          }
-          var b = []
-          for(var i=0, n=to_cells.length; i<n; ++i) {
-            var c = to_cells[i]
-            var cl = c.length
-            for(var k=1, kn=(1<<cl); k<kn; ++k) {
-              b.length = popCount(k)
-              var l = 0
-              for(var j=0; j<cl; ++j) {
-                if(k & (1<<j)) {
-                  b[l++] = c[j]
-                }
-              }
-              var idx=findCell(from_cells, b)
-              if(idx < 0) {
-                continue
-              }
-              while(true) {
-                index[idx++].push(i)
-                if(idx >= from_cells.length || compareCells(from_cells[idx], b) !== 0) {
-                  break
-                }
-              }
-            }
-          }
-          return index
-        }
+                    edgeIndex = edges.length;
 
-        //Computes the dual of the mesh.  This is basically an optimized version of buildIndex for the situation where from_cells is just the list of vertices
-        function dual(cells, vertex_count) {
-          if(!vertex_count) {
-            return incidence(unique(skeleton(cells, 0)), cells, 0)
-          }
-          var res = new Array(vertex_count)
-          for(var i=0; i<vertex_count; ++i) {
-            res[i] = []
-          }
-          for(var i=0, len=cells.length; i<len; ++i) {
-            var c = cells[i]
-            for(var j=0, cl=c.length; j<cl; ++j) {
-              res[c[j]].push(i)
-            }
-          }
-          return res
-        }
+                    edges.push( edge );
 
-        //Enumerates all of the n-cells of a cell complex
-        function skeleton(cells, n) {
-            if(n < 0) {
-                return []
-            }
-            var result = [], k0 = (1<<(n+1))-1
-            for(var i=0; i<cells.length; ++i) {
-                var c = cells[i]
-                for(var k=k0; k<(1<<c.length); k=nextCombination(k)) {
-                    var b = new Array(n+1), l = 0
-                    for(var j=0; j<c.length; ++j) {
-                        if(k & (1<<j)) {
-                            b[l++] = c[j]
+                }
+
+                maxEdgeLookup[ maxIndex ] = edgeIndex;
+
+                // hack
+                // Is there away to avoid this indexOf call?
+
+                if ( face.edgeIndices.indexOf( edgeIndex ) == -1 ) {
+
+                    face.edgeIndices.push( edgeIndex );
+
+                }
+
+                ///////////////////////////////////////////////
+
+                for ( var ei = 0; ei < face.edgeIndices.length; ei++ ) {
+
+                    var edgeIndex = face.edgeIndices[ ei ];
+
+                    var edge = edges[ edgeIndex ];
+
+                    edge.vertexIndices.push( f );
+
+                    for ( var vi = 0; vi < edge.vertexIndices.length; vi++ ) {
+
+                        var vertexIndex = edge.vertexIndices[ vi ];
+
+                        var vertex = vtx[ vertexIndex ];
+
+                        // hack
+                        // Is there away to avoid this indexOf call?
+                        if ( vertex.edgeIndices.indexOf( edgeIndex ) == -1 ) {
+
+                            vertex.edgeIndices.push( edgeIndex );
+
                         }
+
                     }
-                    result.push(b)
+
                 }
-            }
-            return normalize(result)
-           
-        }
 
-        function nskel(cells, n) {
-            return unique(normalize(skeleton(cells, n)))
-        }
+                faces.push(face);
 
-        /////////////////////////////////////////////////////////
-        // START
+            } // inner for
 
-        var e_verts = [0,0,0]
-        var v_verts = [0,0,0]
-        var e = [0,0]
+        } // outer for
 
-        var edges       = nskel(cells, 1)
-        //var e_incidence = top.incidence(edges, cells)
-        //var dual        = top.dual(cells, positions.length)
-        //var npositions  = []
-        //var ncells      = []
-        //var e_indices   = new Array(edges.length)
-        //var v_indices   = new Array(positions.length)
-
+        //////////////////////
+        // subdivide
+        console.log("BEGIN SUBDIVIDE")
 
         //return geometry;
 
@@ -3605,7 +3668,7 @@ class Prim {
 
             }
 
-        }
+        } 
 
         ///////////////////////////
         this.computeSubdivide( vertices, indices );
