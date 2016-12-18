@@ -1465,18 +1465,6 @@ class Prim {
 
         let edges = [];
 
-        window.indices = indices;
-
-        window.tris = tris;
-
-        window.quads = quads;
-
-        window.vtx = vtx;
-
-        window.faces = faces;
-
-        window.edges = edges;
-
         // https://thiscouldbebetter.wordpress.com/2015/04/24/the-catmull-clark-subdivision-surface-algorithm-in-javascript/
 
         // Based on a description of Catmull-Clark subdivision at the URL
@@ -1517,114 +1505,132 @@ class Prim {
 
         }
 
-        ///////////////////////
-        // initialize
-        // quads = 'vertexIndicesForFaces'
+        /////////////////////////////////////////////////////
+        // CUBE DATA
+        vertices = [
+        {pos:{x:-1,y:-1,z:-1},edgeIndices:[],faceIndices:[]},
+        {pos:{x:1,y:-1,z:-1},edgeIndices:[],faceIndices:[]},
+        {pos:{x:1,y:1,z:-1},edgeIndices:[],faceIndices:[]},
+        {pos:{x:-1,y:1,z:-1},edgeIndices:[],faceIndices:[]},
+        {pos:{x:-1,y:-1,z:1},edgeIndices:[],faceIndices:[]},
+        {pos:{x:1,y:-1,z:1},edgeIndices:[],faceIndices:[]},
+        {pos:{x:1,y:1,z:1},edgeIndices:[],faceIndices:[]},
+        {pos:{x:-1,y:1,z:1},edgeIndices:[],faceIndices:[]}
+        ];
 
-        var minMaxIndexLookup = [];
+        quads = [[0,1,2,3],[0,1,5,4],[1,2,6,5],[2,3,7,6],[3,0,4,7],[4,5,6,7]];
 
-        // For each Face (a quad).
+        window.faces = faces;
+        window.edges = edges;
 
-        for (var f = 0; f < quads.length; f++) {
+        //let quads = quads;
 
-            let quadIndices = quads[ f ];
+        ////////////////////////////////////////////////////////////////////////////////////////
+    let minMaxLookup = [];
 
-            let faceLength = quads.length;
+    let quadLen = 4; // side of quads face, change for other face sizes.
 
-            let face = new Face( quadIndices );
+    for ( let f = 0; f < quads.length; f++ ) {
 
-            // For each vertex in the face.
+        let quad = quads[ f ];
 
-            let quadLength = quadIndices.length;
+        //let quadLen = quad.length; 
 
-            for (var vi = 0; vi < quadLength; vi++) {
+        let face = new Face( quad );
 
-                var viNext = (vi + 1) % quadLength;
+        for ( let vi = 0; vi < quadLen; vi++ ) {
 
-                var vertexIndex = quadIndices[ vi ];
+            // Get the working position in the quad.
 
-                var vertexIndexNext = quadIndices[ viNext ];
+            let viNext = ( vi + 1 ) % quadLen;
 
-                var vertex = vtx[ vertexIndex ];
+            // get current and next index for quad vertices.
 
-                var vertexNext = vtx[ vertexIndexNext ];
+            let vi0 = quad[ vi ];
 
-                vertex.faceIndices.push( f );
+            let vi1 = quad[ viNext ];
 
-                // Find which vertex came first.
+            let vertex = vertices[ vi0 ];
 
-                var minIndex = Math.min( vertexIndex, vertexIndexNext );
+            let vertexNext = vertices[ vi1 ];
 
-                var maxIndex = Math.max( vertexIndex, vertexIndexNext );
+            vertex.faceIndices.push( f );
 
-                var maxEdgeLookup = minMaxIndexLookup[ minIndex ];
+            // Get the larger and smaller of the two indices.
 
-                if ( maxEdgeLookup == null ) {
+            let iMin = Math.min( vi0, vi1 );
 
-                    maxEdgeLookup = [];
+            let iMax = Math.max( vi0, vi1 );
 
-                    minMaxIndexLookup[ minIndex ] = maxEdgeLookup; // minimun index is set to null array
+            // Initialize sed minMaxMLookup
 
-                }
+            let maxLookup = minMaxLookup[ iMin ];
 
-                var edgeIndex = maxEdgeLookup[maxIndex];
+            if ( maxLookup == null ) {
 
-                if (edgeIndex == null) {
+                maxLookup = [];
 
-                    var edge = new Edge( minIndex, maxIndex );
+                minMaxLookup[ iMin ] = maxLookup;
 
-                    edgeIndex = edges.length;
+            }
 
-                    edges.push( edge );
+            let edgeIndex = maxLookup[ iMax ];
 
-                }
+            if (edgeIndex == null ) {
 
-                maxEdgeLookup[ maxIndex ] = edgeIndex;
+                let edge = new Edge( iMin, iMax );
+
+                edgeIndex = edges.length;
+
+                edges.push(edge);
+
+            }
+
+            maxLookup[ iMax ] = edgeIndex;
+
+            // hack
+            // Is there away to avoid this indexOf call?
+
+            if ( face.edgeIndices.indexOf( edgeIndex ) == -1 ) {
+
+                face.edgeIndices.push( edgeIndex );
+
+            }
+        }
+
+        for ( let ei = 0; ei < face.edgeIndices.length; ei++) {
+
+            let edgeIndex = face.edgeIndices[ei];
+
+            let edge = edges[edgeIndex];
+
+            edge.faceIndices.push( f );
+
+            for ( let vi = 0; vi < edge.vertexIndices.length; vi++ ) {
+
+                let vi0 = edge.vertexIndices[vi];
+
+                let vertex = vertices[ vi0 ];
 
                 // hack
                 // Is there away to avoid this indexOf call?
+                if ( vertex.edgeIndices.indexOf( edgeIndex ) == -1 ) {
 
-                if ( face.edgeIndices.indexOf( edgeIndex ) == -1 ) {
-
-                    face.edgeIndices.push( edgeIndex );
-
-                }
-
-                ///////////////////////////////////////////////
-
-                for ( var ei = 0; ei < face.edgeIndices.length; ei++ ) {
-
-                    var edgeIndex = face.edgeIndices[ ei ];
-
-                    var edge = edges[ edgeIndex ];
-
-                    edge.vertexIndices.push( f );
-
-                    for ( var vi = 0; vi < edge.vertexIndices.length; vi++ ) {
-
-                        var vertexIndex = edge.vertexIndices[ vi ];
-
-                        var vertex = vtx[ vertexIndex ];
-
-                        // hack
-                        // Is there away to avoid this indexOf call?
-                        if ( vertex.edgeIndices.indexOf( edgeIndex ) == -1 ) {
-
-                            vertex.edgeIndices.push( edgeIndex );
-
-                        }
-
-                    }
+                    vertex.edgeIndices.push( edgeIndex );
 
                 }
+            }
+        }
 
-                faces.push(face);
+        faces.push(face);
+    }
 
-            } // inner for
+    console.log("FFFFACES:" + faces[5].edgeIndices )
+    console.log("FFFFACES:" + faces[5].vertexIndices )
+    console.log("EEDDGGES:" + edges[3].faceIndices )
+    console.log("EEDDGGES:" + edges[3].vertexIndices )
 
-        } // outer for
-
-        //////////////////////
+        ///////////////////////////////////////////////////////////////////////////////////////
         // subdivide
         console.log("BEGIN SUBDIVIDE")
 

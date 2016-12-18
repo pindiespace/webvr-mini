@@ -1,0 +1,967 @@
+<html>
+<body>
+
+<div id="divMain"></div>
+
+<script type="text/javascript">
+
+// main
+
+function MeshSubdivisionTest()
+{
+	// do nothing
+}
+{
+	MeshSubdivisionTest.prototype.main = function()
+	{
+		var viewSize = new Coords(400, 400, 0);
+
+		var camera = new Camera
+		(
+			viewSize,
+			160, // focalLength
+			new Coords(-2, -.8, -.75), // pos
+			new Orientation
+			(
+				new Coords(2, 1, 1), // forward
+				new Coords(0, 0, 1) // down
+			)
+		);
+
+		//var torusVertices = 
+
+		//var torusIndices = 
+
+		var cubeVertices = [
+				new Vertex(new Coords(-1, -1, -1)),
+				new Vertex(new Coords(1, -1, -1)),
+				new Vertex(new Coords(1, 1, -1)),
+				new Vertex(new Coords(-1, 1, -1)),
+
+				new Vertex(new Coords(-1, -1, 1)),
+				new Vertex(new Coords(1, -1, 1)),
+				new Vertex(new Coords(1, 1, 1)),
+				new Vertex(new Coords(-1, 1, 1)),
+			],
+
+		cubeFaceIndices = [
+				[ 0, 1, 2, 3 ], // top
+				
+				[ 0, 1, 5, 4 ], // north
+				[ 1, 2, 6, 5 ], // east
+				[ 2, 3, 7, 6 ], // south
+				[ 3, 0, 4, 7 ], // east
+				[ 4, 5, 6, 7 ], // bottom
+			];
+
+
+		var meshCube = new Mesh
+		(
+			"Cube",
+			// vertices
+			cubeVertices,
+
+			cubeFaceIndices 
+
+		);
+
+		window.meshCube = meshCube
+
+		//var meshCubeSubdivided = meshCube.subdivide();
+
+		//var meshCubeSubdividedTwice = meshCubeSubdivided.subdivide();
+
+		var scene = new Scene
+		(
+			camera,
+			// meshes
+			[
+				meshCube,
+				//meshCubeSubdivided,
+				//meshCubeSubdividedTwice,
+			]			
+		);
+
+		Globals.Instance.initialize(viewSize, scene);
+	}	
+}
+
+// extensions
+
+function ArrayExtensions()
+{
+	// extension class
+}
+{
+	Array.prototype.append = function(other)
+	{
+		for (var i = 0; i < other.length; i++)
+		{
+			this.push(other[i]);
+		}
+
+		return this;
+	}
+}
+
+// classes
+
+function Camera(viewSize, focalLength, pos, orientation)
+{
+	this.viewSize = viewSize;
+	this.focalLength = focalLength;
+	this.pos = pos;
+	this.orientation = orientation;
+
+	this.viewSizeHalf = this.viewSize.clone().divideScalar(2);
+}
+{
+	Camera.prototype.transformWorldToViewCoords = function(coordsToTransform)
+	{
+		coordsToTransform.subtract
+		(
+			this.pos
+		).overwriteWithXYZ
+		(
+			coordsToTransform.dotProduct(this.orientation.right),
+			coordsToTransform.dotProduct(this.orientation.down),
+			coordsToTransform.dotProduct(this.orientation.forward)
+		);
+
+		var depth = coordsToTransform.z;
+
+		coordsToTransform.multiplyScalar
+		(
+			this.focalLength
+		).divideScalar
+		(
+			depth
+		).add
+		(
+			this.viewSizeHalf
+		);
+
+		return coordsToTransform;
+	}
+}
+
+function ColorHelper()
+{
+	// static class
+}
+{
+	ColorHelper.random = function()
+	{
+		var hueMax = 360;
+		var hue = Math.floor(Math.random() * hueMax);
+		var returnValue = 
+			"hsl("
+			+ hue
+			+ ", 100%, 50%)";
+
+		return returnValue;
+	}
+}
+
+function Coords(x, y, z)
+{
+	this.x = x;
+	this.y = y;
+	this.z = z;
+}
+{
+	Coords.prototype.add = function(other)
+	{
+		this.x += other.x;
+		this.y += other.y;
+		this.z += other.z;
+		return this;
+	}
+
+	Coords.prototype.clear = function()
+	{
+		this.x = 0;
+		this.y = 0;
+		this.z = 0;
+		return this;
+	}
+
+	Coords.prototype.clone = function()
+	{
+		return new Coords(this.x, this.y, this.z);
+	}
+
+	Coords.prototype.crossProduct = function(other)
+	{
+		return this.overwriteWithXYZ
+		(
+			this.y * other.z - other.y * this.z,
+			other.x * this.z - this.x * other.z,
+			this.x * other.y - other.x * this.y
+		);
+	}
+	
+	Coords.prototype.divideScalar = function(scalar)
+	{
+		this.x /= scalar;
+		this.y /= scalar;
+		this.z /= scalar;
+		return this;
+	}
+
+	Coords.prototype.dotProduct = function(other)
+	{
+		return (this.x * other.x + this.y * other.y + this.z * other.z);
+	}
+
+	Coords.prototype.magnitude = function()
+	{
+		return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+	}
+
+	Coords.prototype.multiplyScalar = function(scalar)
+	{
+		this.x *= scalar;
+		this.y *= scalar;
+		this.z *= scalar;
+		return this;
+	}
+
+	Coords.prototype.normalize = function()
+	{
+		return this.divideScalar(this.magnitude());
+	}
+
+	Coords.prototype.overwriteWith = function(other)
+	{
+		this.x = other.x;
+		this.y = other.y;
+		this.z = other.z;
+		return this;
+	}
+
+	Coords.prototype.overwriteWithXYZ = function(x, y, z)
+	{
+		this.x = x;
+		this.y = y;
+		this.z = z;
+		return this;
+	}
+
+	Coords.prototype.subtract = function(other)
+	{
+		this.x -= other.x;
+		this.y -= other.y;
+		this.z -= other.z;
+		return this;
+	}
+}
+
+function DisplayHelper(viewSize)
+{
+	this.viewSize = viewSize;
+}
+{
+	DisplayHelper.prototype.clear = function()
+	{
+		this.graphics.fillStyle = "Black";
+		this.graphics.fillRect
+		(
+			0,
+			0,
+			this.viewSize.x,
+			this.viewSize.y
+		);
+
+		this.graphics.strokeStyle = "Gray";
+		this.graphics.strokeRect
+		(
+			0,
+			0,
+			this.viewSize.x,
+			this.viewSize.y
+		);
+	}
+
+	DisplayHelper.prototype.drawMeshForCamera = function(mesh, camera)
+	{
+		this.graphics.strokeStyle = mesh.color;
+
+		var drawPos = new Coords();
+
+		var drawEdges = true;
+		if (drawEdges == true)
+		for (var e = 0; e < mesh.edges.length; e++)
+		{
+			var edge = mesh.edges[e];
+			
+			var vertexIndexStart = edge.vertexIndices[0];
+			var vertexIndexEnd = edge.vertexIndices[1];
+			
+			var vertexStart = mesh.vertices[vertexIndexStart];
+			var vertexEnd = mesh.vertices[vertexIndexEnd];
+
+			var vertexStartPos = vertexStart.pos;
+			var vertexEndPos = vertexEnd.pos;
+
+			this.graphics.beginPath();
+				
+			drawPos.overwriteWith(vertexStartPos);
+			camera.transformWorldToViewCoords(drawPos);
+			this.graphics.moveTo(drawPos.x, drawPos.y);
+
+			drawPos.overwriteWith(vertexEndPos);
+			camera.transformWorldToViewCoords(drawPos);
+			this.graphics.lineTo(drawPos.x, drawPos.y);
+			
+			this.graphics.stroke();					
+		}
+
+		var drawVertices = true;
+		if (drawVertices == true)
+		{
+			for (var v = 0; v < mesh.vertices.length; v++)
+			{
+				var vertex = mesh.vertices[v];
+				var vertexPos = vertex.pos;
+				drawPos.overwriteWith(vertexPos);
+				camera.transformWorldToViewCoords(drawPos);
+				this.graphics.beginPath();
+				this.graphics.arc
+				(
+					drawPos.x, drawPos.y, // center
+					3, // radius
+					0, Math.PI * 2 // start and stop angles
+				);
+				this.graphics.stroke();
+			}
+		}
+	}
+
+	DisplayHelper.prototype.drawScene = function(scene)
+	{
+		this.clear();
+
+		for (var m = 0; m < scene.meshes.length; m++)
+		{
+			var mesh = scene.meshes[m];
+			this.drawMeshForCamera(mesh, scene.camera);
+		}
+	}
+
+	DisplayHelper.prototype.initialize = function()
+	{
+		var canvas = document.createElement("canvas");
+		canvas.width = this.viewSize.x;
+		canvas.height = this.viewSize.y;
+		
+		this.graphics = canvas.getContext("2d");
+		
+		var divMain = document.getElementById("divMain");
+		divMain.appendChild(canvas);
+	}
+}
+
+function Edge(vertexIndices)
+{
+	this.vertexIndices = vertexIndices;
+	this.faceIndices = [];
+}
+{
+	Edge.prototype.midpoint = function(mesh)
+	{
+		var returnValue = mesh.vertices[this.vertexIndices[0]].pos.clone().add
+		(
+			mesh.vertices[this.vertexIndices[1]].pos
+		).divideScalar(2);
+
+		return returnValue;
+	}
+
+	Edge.prototype.vertexPositions = function(mesh)
+	{
+		var returnValue = 
+		[
+			mesh.vertices[this.vertexIndices[0]].pos,
+			mesh.vertices[this.vertexIndices[1]].pos,
+		];
+
+		return returnValue;
+	}
+}
+
+function Face(vertexIndices)
+{
+	this.vertexIndices = vertexIndices;
+	this.edgeIndices = [];
+}
+
+function Globals()
+{}
+{
+	Globals.Instance = new Globals();
+
+	Globals.prototype.initialize = function(viewSize, scene)
+	{
+		this.scene = scene;
+
+		this.displayHelper = new DisplayHelper(viewSize);
+		this.displayHelper.initialize();
+		this.displayHelper.drawScene(this.scene);
+
+		this.inputHelper = new InputHelper();
+		this.inputHelper.initialize();
+	}
+}
+
+function InputHelper()
+{}
+{
+	InputHelper.prototype.initialize = function()
+	{
+		document.body.onkeydown = this.handleEventKeyDown.bind(this);
+		document.body.onkeyup = this.handleEventKeyUp.bind(this);
+	}
+
+	// events
+
+	InputHelper.prototype.handleEventKeyDown = function(event)
+	{
+		this.keyCodePressed = event.keyCode;
+
+		var scene = Globals.Instance.scene;
+		var camera = scene.camera;
+		var distanceToMove = .1;
+		var amountToTurn = .1;
+
+		if (this.keyCodePressed == 65) // A
+		{
+			camera.pos.subtract
+			(
+				camera.orientation.right.clone().multiplyScalar
+				(
+					distanceToMove
+				)
+			);
+		}
+		else if (this.keyCodePressed == 67) // C
+		{
+			camera.orientation.forward.add
+			(
+				camera.orientation.right.clone().multiplyScalar
+				(
+					amountToTurn
+				)
+			);
+
+			camera.orientation.orthogonalizeAxes();
+		}
+		else if (this.keyCodePressed == 68) // D
+		{
+			camera.pos.add
+			(
+				camera.orientation.right.clone().multiplyScalar
+				(
+					distanceToMove
+				)
+			);
+		}
+		else if (this.keyCodePressed == 69) // E
+		{
+			camera.orientation.down.add
+			(
+				camera.orientation.right.clone().multiplyScalar
+				(
+					amountToTurn
+				)
+			);
+
+			camera.orientation.orthogonalizeAxes();
+		}
+		else if (this.keyCodePressed == 70) // F
+		{
+			camera.pos.add
+			(
+				camera.orientation.down.clone().multiplyScalar
+				(
+					distanceToMove
+				)
+			);
+		}
+		else if (this.keyCodePressed == 81) // Q
+		{
+			camera.orientation.down.subtract
+			(
+				camera.orientation.right.clone().multiplyScalar
+				(
+					amountToTurn
+				)
+			);
+
+			camera.orientation.orthogonalizeAxes();
+		}
+		else if (this.keyCodePressed == 82) // R
+		{
+			camera.pos.subtract
+			(
+				camera.orientation.down.clone().multiplyScalar
+				(
+					distanceToMove
+				)
+			);
+		}
+		else if (this.keyCodePressed == 83) // S
+		{
+			camera.pos.subtract
+			(
+				camera.orientation.forward.clone().multiplyScalar
+				(
+					distanceToMove
+				)
+			);
+		}
+		else if (this.keyCodePressed == 87) // W
+		{
+			camera.pos.add
+			(
+				camera.orientation.forward.clone().multiplyScalar
+				(
+					distanceToMove
+				)
+			);
+		}
+		else if (this.keyCodePressed == 90) // Z
+		{
+			camera.orientation.forward.subtract
+			(
+				camera.orientation.right.clone().multiplyScalar
+				(
+					amountToTurn
+				)
+			);
+
+			camera.orientation.orthogonalizeAxes();
+		}
+
+		Globals.Instance.displayHelper.drawScene(scene);
+	}
+
+	InputHelper.prototype.handleEventKeyUp = function(event)
+	{
+		this.keyCodePressed = null;
+	}
+}
+
+function Mesh(name, vertices, vertexIndicesForFaces)
+{
+	this.name = name;
+	this.vertices = vertices;
+
+	this.color = ColorHelper.random();
+
+	this.faces = [];
+
+	this.edges = [];
+	var vertexIndicesMinMaxToEdgeIndexLookup = [];
+
+	///////////////////////////////////////
+
+	window.vertices = this.vertices;
+	window.faces = this.faces;
+	window.edges = this.edges;
+
+	///////////////////////////////////////
+
+	for (var f = 0; f < vertexIndicesForFaces.length; f++)
+	{
+		var vertexIndicesForFace = vertexIndicesForFaces[f];
+		var numberOfVerticesInFace = vertexIndicesForFace.length; 
+
+		var face = new Face(vertexIndicesForFace);
+
+		for (var vi = 0; vi < numberOfVerticesInFace; vi++)
+		{
+			var viNext = (vi + 1) % numberOfVerticesInFace;
+
+			var vertexIndex = vertexIndicesForFace[vi];
+			var vertexIndexNext = vertexIndicesForFace[viNext];
+
+			var vertex = this.vertices[vertexIndex];
+			var vertexNext = this.vertices[vertexIndexNext];
+
+			vertex.faceIndices.push(f);
+
+			var vertexIndexMin = Math.min(vertexIndex, vertexIndexNext);
+			var vertexIndexMax = Math.max(vertexIndex, vertexIndexNext);
+
+			var vertexIndexMaxToEdgeIndexLookup = 
+				vertexIndicesMinMaxToEdgeIndexLookup[vertexIndexMin];
+
+			if (vertexIndexMaxToEdgeIndexLookup == null)
+			{
+				vertexIndexMaxToEdgeIndexLookup = [];
+				vertexIndicesMinMaxToEdgeIndexLookup[vertexIndexMin] =
+					vertexIndexMaxToEdgeIndexLookup;
+			}
+
+			var edgeIndex = vertexIndexMaxToEdgeIndexLookup[vertexIndexMax];
+
+			if (edgeIndex == null)
+			{
+				var edge = new Edge([vertexIndexMin, vertexIndexMax]);
+				edgeIndex = this.edges.length;
+				this.edges.push(edge);
+			}
+
+			vertexIndexMaxToEdgeIndexLookup[vertexIndexMax] = edgeIndex;
+
+			// hack
+			// Is there away to avoid this indexOf call?
+
+			if (face.edgeIndices.indexOf(edgeIndex) == -1)
+			{
+				face.edgeIndices.push(edgeIndex);
+			}
+		}
+
+		for (var ei = 0; ei < face.edgeIndices.length; ei++)
+		{
+			var edgeIndex = face.edgeIndices[ei];
+			var edge = this.edges[edgeIndex];
+			edge.faceIndices.push(f);
+
+			for (var vi = 0; vi < edge.vertexIndices.length; vi++)
+			{
+				var vertexIndex = edge.vertexIndices[vi];
+				var vertex = this.vertices[vertexIndex];
+
+				// hack
+				// Is there away to avoid this indexOf call?
+				if (vertex.edgeIndices.indexOf(edgeIndex) == -1)
+				{
+					vertex.edgeIndices.push(edgeIndex);
+				}
+			}
+		}
+
+		this.faces.push(face);
+	}
+
+} // end Mesh constructor
+{
+	Mesh.prototype.subdivide = function()
+	{
+		// Based on a description of Catmull-Clark subdivision at the URL
+		// "https://en.wikipedia.org/wiki/Catmull-clark_subdivision".
+
+		var numberOfFacesOriginal = this.faces.length;
+		var numberOfEdgesOriginal = this.edges.length;
+		var numberOfVerticesOriginal = this.vertices.length;
+
+		var facePoints = [];
+		var edgePoints = [];
+
+		var sumOfVertexPositions = new Coords();
+		var averageOfVertexPositions = new Coords();
+
+		for (var f = 0; f < numberOfFacesOriginal; f++)
+		{
+			var face = this.faces[f];
+
+			var numberOfVerticesInFace = face.vertexIndices.length;
+			sumOfVertexPositions.clear();
+
+			for (var vi = 0; vi < numberOfVerticesInFace; vi++)
+			{
+				var vertexIndex = face.vertexIndices[vi];
+				var vertexPos = this.vertices[vertexIndex].pos;
+				sumOfVertexPositions.add(vertexPos);
+			}
+
+			averageOfVertexPositions.overwriteWith
+			(
+				sumOfVertexPositions
+			).divideScalar
+			(
+				numberOfVerticesInFace
+			);
+
+			facePoints.push(averageOfVertexPositions.clone());
+
+		} // end for each face
+
+		for (var e = 0; e < numberOfEdgesOriginal; e++)
+		{
+			var edge = this.edges[e];
+
+			sumOfVertexPositions.clear();
+
+			for (var vi = 0; vi < edge.vertexIndices.length; vi++)
+			{
+				var vertexIndex = edge.vertexIndices[vi];
+				var vertexPos = this.vertices[vertexIndex].pos;
+				sumOfVertexPositions.add(vertexPos);
+			}
+
+			var numberOfFacesAdjacent = edge.faceIndices.length;
+
+			for (var fi = 0; fi < numberOfFacesAdjacent; fi++)
+			{
+				var faceIndex = edge.faceIndices[fi];
+				var facePoint = facePoints[faceIndex];
+				sumOfVertexPositions.add(facePoint);
+			}
+
+			var numberOfVertices = 
+				edge.vertexIndices.length
+				+ numberOfFacesAdjacent;
+
+			averageOfVertexPositions.overwriteWith
+			(
+				sumOfVertexPositions
+			).divideScalar
+			(
+				numberOfVertices
+			);
+
+			edgePoints.push(averageOfVertexPositions.clone());
+
+		} // end for each edge
+
+		var edgesFromFaceToEdgePoints = [];
+
+		for (var f = 0; f < numberOfFacesOriginal; f++)
+		{
+			var face = this.faces[f];
+			var facePoint = facePoints[f];
+
+			var numberOfEdgesInFace = face.edgeIndices.length;
+
+			for (var ei = 0; ei < numberOfEdgesInFace; ei++)
+			{
+				var edgeIndex = face.edgeIndices[ei];
+				var edgePoint = edgePoints[edgeIndex];
+
+				var edgeFromFacePointToEdgePoint = 
+				[
+					numberOfVerticesOriginal 
+						+ numberOfEdgesOriginal
+						+ f,
+					numberOfVerticesOriginal
+						+ edgeIndex
+				];
+
+				edgesFromFaceToEdgePoints.push
+				(
+					edgeFromFacePointToEdgePoint
+				);
+			}
+
+		} // end for each face
+
+		var edgesFromVerticesToEdgePoints = [];
+
+		var verticesNew = [];
+
+		for (var v = 0; v < this.vertices.length; v++)
+		{
+			var vertex = this.vertices[v];
+			var vertexPos = vertex.pos;
+
+			// Are these always the same?
+			var numberOfFacesAdjacent = vertex.faceIndices.length;
+			var numberOfEdgesAdjacent = vertex.edgeIndices.length;
+
+			sumOfVertexPositions.clear();
+
+			for (var fi = 0; fi < numberOfFacesAdjacent; fi++)
+			{
+				var faceIndex = vertex.faceIndices[fi];
+				var facePoint = facePoints[faceIndex];
+				sumOfVertexPositions.add(facePoint);
+			}
+
+			var averageOfFacePointsAdjacent = sumOfVertexPositions.clone().divideScalar
+			(
+				numberOfFacesAdjacent
+			);
+
+			sumOfVertexPositions.clear();
+
+			for (var ei = 0; ei < numberOfEdgesAdjacent; ei++)
+			{
+				var edgeIndex = vertex.edgeIndices[ei];
+				var edge = this.edges[edgeIndex];
+				var edgeMidpoint = edge.midpoint(this);
+				sumOfVertexPositions.add(edgeMidpoint);
+
+				var edgeFromVertexToEdgePoint =
+				[
+					v,
+					numberOfVerticesOriginal + edgeIndex
+				];
+
+				edgesFromVerticesToEdgePoints.push
+				(
+					edgeFromVertexToEdgePoint
+				);
+			}
+
+			var averageOfEdgeMidpointsAdjacent = sumOfVertexPositions.clone().divideScalar
+			(
+				numberOfEdgesAdjacent
+			);
+
+			var vertexNewPos = vertexPos.clone().multiplyScalar
+			(
+				numberOfFacesAdjacent - 3
+			).add
+			(
+				averageOfFacePointsAdjacent
+			).add
+			(
+				averageOfEdgeMidpointsAdjacent
+			).add // (again)
+			(
+				averageOfEdgeMidpointsAdjacent
+			).divideScalar
+			(
+				numberOfFacesAdjacent
+			);		
+
+			verticesNew.push(new Vertex(vertexNewPos));
+	
+		} // end for each vertex
+
+		verticesNew.append(Vertex.manyFromPositions(edgePoints));
+		verticesNew.append(Vertex.manyFromPositions(facePoints));
+
+		var vertexIndicesForFacesNew = [];
+
+		for (var f = 0; f < numberOfFacesOriginal; f++)
+		{
+			var faceOriginal = this.faces[f];
+			var facePoint = facePoints[f];
+
+			for (var vi = 0; vi < faceOriginal.vertexIndices.length; vi++)
+			{
+				var vertexIndex = faceOriginal.vertexIndices[vi];
+				var vertexOriginal = this.vertices[vertexIndex];
+				var vertexNew = verticesNew[vertexIndex];
+
+				var edgeIndicesShared = [];
+
+				for (var ei = 0; ei < vertexOriginal.edgeIndices.length; ei++)
+				{
+					var edgeIndex = vertexOriginal.edgeIndices[ei];
+
+					for (var ei2 = 0; ei2 < faceOriginal.edgeIndices.length; ei2++)
+					{
+						var edgeIndex2 = faceOriginal.edgeIndices[ei2];
+						if (edgeIndex2 == edgeIndex)
+						{
+							edgeIndicesShared.push(edgeIndex);
+						}
+					}
+				}
+
+				var vertexIndicesForFaceNew = 
+				[
+					// facePoint
+					numberOfVerticesOriginal 
+						+ numberOfEdgesOriginal 
+						+ f, 
+
+					// edgePoint0
+					numberOfVerticesOriginal
+						+ edgeIndicesShared[0],
+
+					// corner vertex
+					vertexIndex,
+
+					// edgePoint1
+					numberOfVerticesOriginal
+						+ edgeIndicesShared[1],
+				];
+
+				vertexIndicesForFacesNew.push(vertexIndicesForFaceNew);
+			}
+		}
+
+		var returnValue = new Mesh
+		(
+			this.name + "_Subdivided",
+			verticesNew,
+			vertexIndicesForFacesNew
+		);
+
+		return returnValue;
+		
+	} // end function subdivde()
+
+} // end class Mesh
+
+function Orientation(forward, down)
+{
+	this.forward = forward.clone().normalize();
+	this.down = down.clone().normalize();
+	this.right = new Coords();
+	this.orthogonalizeAxes();
+}
+{
+	Orientation.prototype.orthogonalizeAxes = function()
+	{
+		this.right.overwriteWith
+		(
+			this.down
+		).normalize().crossProduct
+		(
+			this.forward
+		).normalize();
+	
+		this.down.overwriteWith
+		(
+			this.forward
+		).crossProduct
+		(
+			this.right
+		).normalize();
+	}
+}
+
+function Scene(camera, meshes)
+{
+	this.camera = camera;
+	this.meshes = meshes;
+}
+
+function Vertex(pos)
+{
+	this.pos = pos;
+	this.edgeIndices = [];
+	this.faceIndices = [];
+}
+{
+	Vertex.manyFromPositions = function(positions)
+	{
+		var returnValues = [];
+
+		for (var i = 0; i < positions.length; i++)
+		{
+			var position = positions[i];
+			var vertex = new Vertex(position);
+			returnValues.push(vertex);
+		}
+
+		return returnValues;
+	}
+}
+
+// run
+
+new MeshSubdivisionTest().main();
+
+</script>
+
+</body>
+</html>
