@@ -1423,6 +1423,158 @@ class Prim {
 
     }
 
+    /** 
+     * Compute quad faces and edges, used for 
+     * subdivision via
+     * @param {Array} quads an array of quad indices for a Prim.
+     * @param {Array} vtx an array of vertex3 objects.
+     */
+    computeQuadFaceEdges( quads, vtx ) {
+
+        function Edge( minIndex, maxIndex ) {
+
+            this.vertexIndices = [ minIndex, maxIndex ];
+
+            this.faceIndices = [];
+
+ // end of Edge
+
+            Edge.prototype.midpoint = function(mesh) {
+
+                var returnValue = mesh.vertices[this.vertexIndices[0]].pos.clone().add(
+
+                    mesh.vertices[this.vertexIndices[1]].pos ).divideScalar(2);
+
+                return returnValue;
+
+            }
+
+        };
+        function Face( quad ) {
+
+            this.vertexIndices = quad;
+
+            this.edgeIndices = [];
+
+        }; // end of Face
+
+        let faces = [];
+
+        let edges = [];
+
+        let minMaxLookup = [];
+
+        let quadLen = quads[ 0 ].length ; // side of quads face, change for other face sizes.
+
+        for ( let f = 0; f < quads.length; f++ ) {
+
+            let quad = quads[ f ];
+
+            //let quadLen = quad.length; 
+
+            let face = new Face( quad );
+
+            for ( let vi = 0; vi < quadLen; vi++ ) {
+
+                // Get the working position in the quad.
+
+                let viNext = ( vi + 1 ) % quadLen;
+
+                // get current and next index for quad vertices.
+
+                let vi0 = quad[ vi ];
+
+                let vi1 = quad[ viNext ];
+
+                let vertex = vtx[ vi0 ];
+
+                let vertexNext = vtx[ vi1 ];
+
+                vertex.faceIndices.push( f );
+
+                // Get the larger and smaller of the two indices.
+
+                let iMin = Math.min( vi0, vi1 );
+
+                let iMax = Math.max( vi0, vi1 );
+
+                // Initialize minMaxMLookup
+
+                let maxLookup = minMaxLookup[ iMin ];
+
+                console.log("maxlookup is a:" + maxLookup)
+
+                if ( maxLookup === undefined ) {
+
+                    maxLookup = [];
+
+                    minMaxLookup[ iMin ] = maxLookup;
+
+                }
+
+                let edgeIndex = maxLookup[ iMax ];
+
+                console.log("edgeIndex is a:" + edgeIndex )
+
+                if (edgeIndex === undefined ) {
+
+                    let edge = new Edge( iMin, iMax );
+
+                    edgeIndex = edges.length;
+
+                    edges.push( edge );
+
+                }
+
+                maxLookup[ iMax ] = edgeIndex;
+
+                // hack
+                // Is there away to avoid this indexOf call?
+
+                if ( face.edgeIndices.indexOf( edgeIndex ) == -1 ) {
+
+                    face.edgeIndices.push( edgeIndex );
+
+                }
+            }
+
+            for ( let ei = 0; ei < face.edgeIndices.length; ei++ ) {
+
+                let edgeIndex = face.edgeIndices[ ei ];
+
+                let edge = edges[ edgeIndex ];
+
+                edge.faceIndices.push( f );
+
+                for ( let vi = 0; vi < edge.vertexIndices.length; vi++ ) {
+
+                    let vi0 = edge.vertexIndices[ vi ];
+
+                    let vertex = vtx[ vi0 ];
+
+                    // hack
+                    // Is there away to avoid this indexOf call?
+
+                    if ( vertex.edgeIndices.indexOf( edgeIndex ) == -1 ) {
+
+                        vertex.edgeIndices.push( edgeIndex );
+
+                    }
+
+                }
+
+            }
+
+            faces.push(face);
+
+        }  // outer loop.
+
+        return {
+            faces : faces,
+            edges: edges
+        };
+
+    }
 
     /** 
      * Subdivide a mesh
@@ -1430,10 +1582,9 @@ class Prim {
      * http://www.rorydriscoll.com/2008/08/01/catmull-clark-subdivision-the-basics/
      * @link http://www.rorydriscoll.com/2008/08/01/catmull-clark-subdivision-the-basics/
      * USE:
-     * USE: https://blog.nobel-joergensen.com/2010/12/25/procedural-generated-mesh-in-unity/
-     * USE: http://wiki.unity3d.com/index.php/MeshSubdivision
-     * USE: https://thiscouldbebetter.wordpress.com/2015/04/24/the-catmull-clark-subdivision-surface-algorithm-in-javascript/
-     * USE: https://github.com/Erkaman/gl-catmull-clark/blob/master/index.js
+     * https://blog.nobel-joergensen.com/2010/12/25/procedural-generated-mesh-in-unity/
+     * http://wiki.unity3d.com/index.php/MeshSubdivision
+     * https://github.com/Erkaman/gl-catmull-clark/blob/master/index.js
      * Examples:
      * Subdivide algorithm
      * https://github.com/mikolalysenko/loop-subdivide
@@ -1443,6 +1594,7 @@ class Prim {
      * https://thiscouldbebetter.wordpress.com/2015/04/24/the-catmull-clark-subdivision-surface-algorithm-in-javascript/
      * @link http://vorg.github.io/pex/docs/pex-geom/Geometry.html
      * @link http://answers.unity3d.com/questions/259127/does-anyone-have-any-code-to-subdivide-a-mesh-and.html
+     * USE:
      * @link https://thiscouldbebetter.wordpress.com/2015/04/24/the-catmull-clark-subdivision-surface-algorithm-in-javascript/
      */
     computeSubdivide ( vertices, indices ) {
@@ -1451,41 +1603,104 @@ class Prim {
 
         let vec3 = this.glMatrix.vec3;
 
-        let v = util.unFlatten( vertices, 3 );
-
-        // Augment vertices
-
-        let vtx = new Array( v.length );
-
-        let tris = util.unFlatten( indices, 3 );
-
-        let quads = this.computeQuadsFromTris( tris );
-
-        let faces = [];
-
-        let edges = [];
-
-        // https://thiscouldbebetter.wordpress.com/2015/04/24/the-catmull-clark-subdivision-surface-algorithm-in-javascript/
-
-        // Based on a description of Catmull-Clark subdivision at the URL
-        // "https://en.wikipedia.org/wiki/Catmull-clark_subdivision".
-
-        function Edge( minIndex, maxIndex ) {
-
-            this.vertexIndices = [ minIndex, maxIndex ];
-
-            this.faceIndices = [];
-
-        }; // end of Edge
-
-        function Face( quad ) {
-
-            this.vertexIndices = quad;
-
-            this.edgeIndices = [];
+        let vtx, tris;
 
 
-        }; // end of Face
+        function Coords( x, y, z ) {
+
+            this.x = x;
+
+            this.y = y;
+
+            this.z = z;
+
+            Coords.prototype.add = function(other)
+            {
+                this.x += other.x;
+                this.y += other.y;
+                this.z += other.z;
+                return this;
+            }
+
+            Coords.prototype.clear = function()
+            {
+                this.x = 0;
+                this.y = 0;
+                this.z = 0;
+                return this;
+            }
+
+            Coords.prototype.clone = function()
+            {
+                return new Coords(this.x, this.y, this.z);
+            }
+
+            Coords.prototype.crossProduct = function(other)
+            {
+                return this.overwriteWithXYZ
+                (
+                    this.y * other.z - other.y * this.z,
+                    other.x * this.z - this.x * other.z,
+                    this.x * other.y - other.x * this.y
+                );
+            }
+            
+            Coords.prototype.divideScalar = function(scalar)
+            {
+                this.x /= scalar;
+                this.y /= scalar;
+                this.z /= scalar;
+                return this;
+            }
+
+            Coords.prototype.dotProduct = function(other)
+            {
+                return (this.x * other.x + this.y * other.y + this.z * other.z);
+            }
+
+            Coords.prototype.magnitude = function()
+            {
+                return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+            }
+
+            Coords.prototype.multiplyScalar = function(scalar)
+            {
+                this.x *= scalar;
+                this.y *= scalar;
+                this.z *= scalar;
+                return this;
+            }
+
+            Coords.prototype.normalize = function()
+            {
+                return this.divideScalar(this.magnitude());
+            }
+
+            Coords.prototype.overwriteWith = function(other)
+            {
+                this.x = other.x;
+                this.y = other.y;
+                this.z = other.z;
+                return this;
+            }
+
+            Coords.prototype.overwriteWithXYZ = function(x, y, z)
+            {
+                this.x = x;
+                this.y = y;
+                this.z = z;
+                return this;
+            }
+
+            Coords.prototype.subtract = function(other)
+            {
+                this.x -= other.x;
+                this.y -= other.y;
+                this.z -= other.z;
+                return this;
+            }
+
+        }; // end of Coords
 
         function Vertex( vec ) {
 
@@ -1495,19 +1710,74 @@ class Prim {
 
             this.faceIndices = [];
 
-        }; // end of vertex
+        }; // end of Vertex
 
-        // Build Vertex object out of vec3.
+        Vertex.manyFromPositions = function(positions) {
 
-        for ( let i = 0; i < v.length; i++ ) {
+            var returnValues = [];
 
-            vtx[ i ] = new Vertex( v[ i ] );
+            for (var i = 0; i < positions.length; i++) {
+                var position = positions[i];
+                var vertex = new Vertex(position);
+                returnValues.push(vertex);
+            }
+
+            return returnValues;
 
         }
 
+        // Compute midpoint through two 
+        function midPoint( vertices, indices ) {
+
+            var returnValue = vertices[ indices[ 0] ].pos.clone().add (
+                vertices[ indices[ 1 ] ].pos
+            ).divideScalar(2);
+
+            return returnValue;
+
+        }
+
+        // handle both flattened and unflattened vertices.
+
+        if ( ! util.canFlatten( vertices ) ) {
+
+            let v = util.unFlatten( vertices, 3 );
+
+            // Augment vertices
+
+            vtx = new Array( v.length );
+
+            // Build Vertex object out of vec3.
+
+            for ( let i = 0; i < v.length; i++ ) {
+
+                vtx[ i ] = new Vertex( v[ i ] );
+
+            }
+
+        } else {
+
+            vtx = vertices;
+
+        }
+
+        if ( ! util.canFlatten( indices ) ) {
+
+            tris = util.unFlatten( indices, 3 );
+
+        } else {
+
+            tris = indices;
+
+        }
+
+        // requires unflattened indices, in triangles
+
+        let quads = this.computeQuadsFromTris( tris );
+
         /////////////////////////////////////////////////////
         // CUBE DATA
-        vertices = [
+        vtx = [
         {pos:{x:-1,y:-1,z:-1},edgeIndices:[],faceIndices:[]},
         {pos:{x:1,y:-1,z:-1},edgeIndices:[],faceIndices:[]},
         {pos:{x:1,y:1,z:-1},edgeIndices:[],faceIndices:[]},
@@ -1520,119 +1790,138 @@ class Prim {
 
         quads = [[0,1,2,3],[0,1,5,4],[1,2,6,5],[2,3,7,6],[3,0,4,7],[4,5,6,7]];
 
+
         window.faces = faces;
         window.edges = edges;
 
         //let quads = quads;
 
-        ////////////////////////////////////////////////////////////////////////////////////////
-    let minMaxLookup = [];
+        let faceEdges = this.computeQuadFaceEdges( quads, vtx );
 
-    let quadLen = 4; // side of quads face, change for other face sizes.
+        window.faceEdges = faceEdges;
 
-    for ( let f = 0; f < quads.length; f++ ) {
+        let faces = faceEdges.faces;
+        let edges = faceEdges.edges;
 
-        let quad = quads[ f ];
-
-        //let quadLen = quad.length; 
-
-        let face = new Face( quad );
-
-        for ( let vi = 0; vi < quadLen; vi++ ) {
-
-            // Get the working position in the quad.
-
-            let viNext = ( vi + 1 ) % quadLen;
-
-            // get current and next index for quad vertices.
-
-            let vi0 = quad[ vi ];
-
-            let vi1 = quad[ viNext ];
-
-            let vertex = vertices[ vi0 ];
-
-            let vertexNext = vertices[ vi1 ];
-
-            vertex.faceIndices.push( f );
-
-            // Get the larger and smaller of the two indices.
-
-            let iMin = Math.min( vi0, vi1 );
-
-            let iMax = Math.max( vi0, vi1 );
-
-            // Initialize sed minMaxMLookup
-
-            let maxLookup = minMaxLookup[ iMin ];
-
-            if ( maxLookup == null ) {
-
-                maxLookup = [];
-
-                minMaxLookup[ iMin ] = maxLookup;
-
-            }
-
-            let edgeIndex = maxLookup[ iMax ];
-
-            if (edgeIndex == null ) {
-
-                let edge = new Edge( iMin, iMax );
-
-                edgeIndex = edges.length;
-
-                edges.push(edge);
-
-            }
-
-            maxLookup[ iMax ] = edgeIndex;
-
-            // hack
-            // Is there away to avoid this indexOf call?
-
-            if ( face.edgeIndices.indexOf( edgeIndex ) == -1 ) {
-
-                face.edgeIndices.push( edgeIndex );
-
-            }
-        }
-
-        for ( let ei = 0; ei < face.edgeIndices.length; ei++) {
-
-            let edgeIndex = face.edgeIndices[ei];
-
-            let edge = edges[edgeIndex];
-
-            edge.faceIndices.push( f );
-
-            for ( let vi = 0; vi < edge.vertexIndices.length; vi++ ) {
-
-                let vi0 = edge.vertexIndices[vi];
-
-                let vertex = vertices[ vi0 ];
-
-                // hack
-                // Is there away to avoid this indexOf call?
-                if ( vertex.edgeIndices.indexOf( edgeIndex ) == -1 ) {
-
-                    vertex.edgeIndices.push( edgeIndex );
-
-                }
-            }
-        }
-
-        faces.push(face);
-    }
-
-    console.log("FFFFACES:" + faces[5].edgeIndices )
-    console.log("FFFFACES:" + faces[5].vertexIndices )
-    console.log("EEDDGGES:" + edges[3].faceIndices )
-    console.log("EEDDGGES:" + edges[3].vertexIndices )
+        console.log("FFFFACES[5]:" + faces[5].edgeIndices )
+        console.log("FFFFACES[5]:" + faces[5].vertexIndices )
+        console.log("EEDDGGES[3]:" + edges[3].faceIndices )
+        console.log("EEDDGGES[3]:" + edges[3].vertexIndices )
 
         ///////////////////////////////////////////////////////////////////////////////////////
-        // subdivide
+        // BEGIN SUBDIVIDE
+
         console.log("BEGIN SUBDIVIDE")
+
+        var numberOfFacesOriginal = faces.length;
+        var numberOfEdgesOriginal = edges.length;
+        var numberOfVerticesOriginal = vtx.length;
+
+        var facePoints = [];
+        var edgePoints = [];
+
+        var sumOfVertexPositions = new Coords();
+        var averageOfVertexPositions = new Coords();
+
+        // Face computations.
+
+        for (var f = 0; f < numberOfFacesOriginal; f++) {
+
+            var face = faces[f];
+
+            var numberOfVerticesInFace = face.vertexIndices.length;
+
+            sumOfVertexPositions.clear();
+
+            for ( var vi = 0; vi < numberOfVerticesInFace; vi++ ) {
+
+                var vertexIndex = face.vertexIndices[vi];
+
+                var vertexPos = vtx[vertexIndex].pos;
+
+                sumOfVertexPositions.add(vertexPos);
+
+            }
+
+            averageOfVertexPositions.overwriteWith(
+                sumOfVertexPositions ).divideScalar( numberOfVerticesInFace );
+
+            facePoints.push(averageOfVertexPositions.clone());
+
+        } // end for each face
+
+        // Edge computations.
+
+        for (var e = 0; e < numberOfEdgesOriginal; e++) {
+
+            var edge = edges[e];
+
+            sumOfVertexPositions.clear();
+
+            for (var vi = 0; vi < edge.vertexIndices.length; vi++) {
+                var vertexIndex = edge.vertexIndices[vi];
+                var vertexPos = vtx[vertexIndex].pos;
+                sumOfVertexPositions.add(vertexPos);
+            }
+
+            var numberOfFacesAdjacent = edge.faceIndices.length;
+
+            for (var fi = 0; fi < numberOfFacesAdjacent; fi++) {
+                var faceIndex = edge.faceIndices[fi];
+                var facePoint = facePoints[faceIndex];
+                sumOfVertexPositions.add(facePoint);
+            }
+
+            var numberOfVertices = 
+                edge.vertexIndices.length
+                + numberOfFacesAdjacent;
+
+            averageOfVertexPositions.overwriteWith( 
+                sumOfVertexPositions ).divideScalar( numberOfVertices );
+
+            edgePoints.push( averageOfVertexPositions.clone() );
+
+        } // end for each edge
+
+        var edgesFromFaceToEdgePoints = [];
+
+        for (var f = 0; f < numberOfFacesOriginal; f++)
+        {
+            var face = faces[f];
+            var facePoint = facePoints[f];
+
+            var numberOfEdgesInFace = face.edgeIndices.length;
+
+            for (var ei = 0; ei < numberOfEdgesInFace; ei++)
+            {
+                var edgeIndex = face.edgeIndices[ei];
+                var edgePoint = edgePoints[edgeIndex];
+
+                var edgeFromFacePointToEdgePoint = 
+                [
+                    numberOfVerticesOriginal 
+                        + numberOfEdgesOriginal
+                        + f,
+                    numberOfVerticesOriginal
+                        + edgeIndex
+                ];
+
+                edgesFromFaceToEdgePoints.push
+                (
+                    edgeFromFacePointToEdgePoint
+                );
+            }
+
+        } // end for each face
+
+        var edgesFromVerticesToEdgePoints = [];
+
+        var verticesNew = [];
+
+
+
+        // END OF SUBDIVIDE
+        ///////////////////////////////////////////////////////////////////////////////////////
 
         //return geometry;
 
