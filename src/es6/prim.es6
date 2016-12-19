@@ -1441,9 +1441,6 @@ class Prim {
 
             Edge.prototype.midpoint = function( vtx ) {
 
-                console.log("index0:" + this.vertexIndices[ 0 ] + " vtx0:" + vtx[this.vertexIndices[ 0 ] ] )
-                return;
-
                 var returnValue = vtx[this.vertexIndices[0]].pos.clone().add( 
 
                     vtx[this.vertexIndices[1]].pos ).divideScalar(2);
@@ -1618,29 +1615,25 @@ class Prim {
 
             this.z = z;
 
-            Coords.prototype.add = function(other)
-            {
+            Coords.prototype.add = function(other) {
                 this.x += other.x;
                 this.y += other.y;
                 this.z += other.z;
                 return this;
             }
 
-            Coords.prototype.clear = function()
-            {
+            Coords.prototype.clear = function() {
                 this.x = 0;
                 this.y = 0;
                 this.z = 0;
                 return this;
             }
 
-            Coords.prototype.clone = function()
-            {
+            Coords.prototype.clone = function() {
                 return new Coords(this.x, this.y, this.z);
             }
 
-            Coords.prototype.crossProduct = function(other)
-            {
+            Coords.prototype.crossProduct = function(other) {
                 return this.overwriteWithXYZ
                 (
                     this.y * other.z - other.y * this.z,
@@ -1649,55 +1642,47 @@ class Prim {
                 );
             }
             
-            Coords.prototype.divideScalar = function(scalar)
-            {
+            Coords.prototype.divideScalar = function(scalar) {
                 this.x /= scalar;
                 this.y /= scalar;
                 this.z /= scalar;
                 return this;
             }
 
-            Coords.prototype.dotProduct = function(other)
-            {
+            Coords.prototype.dotProduct = function(other) {
                 return (this.x * other.x + this.y * other.y + this.z * other.z);
             }
 
-            Coords.prototype.magnitude = function()
-            {
+            Coords.prototype.magnitude = function() {
                 return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
             }
 
-            Coords.prototype.multiplyScalar = function(scalar)
-            {
+            Coords.prototype.multiplyScalar = function(scalar) {
                 this.x *= scalar;
                 this.y *= scalar;
                 this.z *= scalar;
                 return this;
             }
 
-            Coords.prototype.normalize = function()
-            {
+            Coords.prototype.normalize = function() {
                 return this.divideScalar(this.magnitude());
             }
 
-            Coords.prototype.overwriteWith = function(other)
-            {
+            Coords.prototype.overwriteWith = function(other) {
                 this.x = other.x;
                 this.y = other.y;
                 this.z = other.z;
                 return this;
             }
 
-            Coords.prototype.overwriteWithXYZ = function(x, y, z)
-            {
+            Coords.prototype.overwriteWithXYZ = function(x, y, z) {
                 this.x = x;
                 this.y = y;
                 this.z = z;
                 return this;
             }
 
-            Coords.prototype.subtract = function(other)
-            {
+            Coords.prototype.subtract = function(other) {
                 this.x -= other.x;
                 this.y -= other.y;
                 this.z -= other.z;
@@ -1706,9 +1691,13 @@ class Prim {
 
         }; // end of Coords
 
+        // Adapt to our flattened vec3.
+
         function Vertex( vec ) {
 
             this.pos = vec;
+
+            this.pos = new Coords( vec[ 0 ], vec[ 1 ], vec[ 2 ] );
 
             this.edgeIndices = [];
 
@@ -1727,17 +1716,6 @@ class Prim {
             }
 
             return returnValues;
-
-        }
-
-        // Compute midpoint through two 
-        function midPoint( vertices, indices ) {
-
-            var returnValue = vertices[ indices[ 0] ].pos.clone().add (
-                vertices[ indices[ 1 ] ].pos
-            ).divideScalar(2);
-
-            return returnValue;
 
         }
 
@@ -1812,251 +1790,15 @@ class Prim {
         console.log("EEDDGGES[3]:" + edges[3].faceIndices )
         console.log("EEDDGGES[3]:" + edges[3].vertexIndices )
 
+        window.vtx = vtx;
+        window.faces = faces;
+        window.edges = edges;
+
         ///////////////////////////////////////////////////////////////////////////////////////
         // BEGIN SUBDIVIDE
 
         console.log("BEGIN SUBDIVIDE")
 
-        var numberOfFacesOriginal = faces.length;
-        var numberOfEdgesOriginal = edges.length;
-        var numberOfVerticesOriginal = vtx.length;
-
-        var facePoints = [];
-        var edgePoints = [];
-
-        var sumOfVertexPositions = new Coords();
-        var averageOfVertexPositions = new Coords();
-
-        // Face computations.
-
-        for (var f = 0; f < numberOfFacesOriginal; f++) {
-
-            var face = faces[f];
-
-            var numberOfVerticesInFace = face.vertexIndices.length;
-
-            sumOfVertexPositions.clear();
-
-            for ( var vi = 0; vi < numberOfVerticesInFace; vi++ ) {
-
-                var vertexIndex = face.vertexIndices[vi];
-
-                var vertexPos = vtx[vertexIndex].pos;
-
-                sumOfVertexPositions.add(vertexPos);
-
-            }
-
-            averageOfVertexPositions.overwriteWith(
-                sumOfVertexPositions ).divideScalar( numberOfVerticesInFace );
-
-            facePoints.push(averageOfVertexPositions.clone());
-
-        } // end for each face
-
-        // Edge computations.
-
-        for (var e = 0; e < numberOfEdgesOriginal; e++) {
-
-            var edge = edges[e];
-
-            sumOfVertexPositions.clear();
-
-            for (var vi = 0; vi < edge.vertexIndices.length; vi++) {
-                var vertexIndex = edge.vertexIndices[vi];
-                var vertexPos = vtx[vertexIndex].pos;
-                sumOfVertexPositions.add(vertexPos);
-            }
-
-            var numberOfFacesAdjacent = edge.faceIndices.length;
-
-            for (var fi = 0; fi < numberOfFacesAdjacent; fi++) {
-                var faceIndex = edge.faceIndices[fi];
-                var facePoint = facePoints[faceIndex];
-                sumOfVertexPositions.add(facePoint);
-            }
-
-            var numberOfVertices = 
-                edge.vertexIndices.length
-                + numberOfFacesAdjacent;
-
-            averageOfVertexPositions.overwriteWith( 
-                sumOfVertexPositions ).divideScalar( numberOfVertices );
-
-            edgePoints.push( averageOfVertexPositions.clone() );
-
-        } // end for each edge
-
-        var edgesFromFaceToEdgePoints = [];
-
-        for (var f = 0; f < numberOfFacesOriginal; f++)
-        {
-            var face = faces[f];
-            var facePoint = facePoints[f];
-
-            var numberOfEdgesInFace = face.edgeIndices.length;
-
-            for (var ei = 0; ei < numberOfEdgesInFace; ei++)
-            {
-                var edgeIndex = face.edgeIndices[ei];
-                var edgePoint = edgePoints[edgeIndex];
-
-                var edgeFromFacePointToEdgePoint = 
-                [
-                    numberOfVerticesOriginal 
-                        + numberOfEdgesOriginal
-                        + f,
-                    numberOfVerticesOriginal
-                        + edgeIndex
-                ];
-
-                edgesFromFaceToEdgePoints.push
-                (
-                    edgeFromFacePointToEdgePoint
-                );
-            }
-
-        } // end for each face
-
-        var edgesFromVerticesToEdgePoints = [];
-
-        var verticesNew = [];
-
-
-for (var v = 0; v < vtx.length; v++)
-        {
-            var vertex = vtx[v];
-            var vertexPos = vertex.pos;
-
-            // Are these always the same?
-            var numberOfFacesAdjacent = vertex.faceIndices.length;
-            var numberOfEdgesAdjacent = vertex.edgeIndices.length;
-
-            sumOfVertexPositions.clear();
-
-            for (var fi = 0; fi < numberOfFacesAdjacent; fi++)
-            {
-                var faceIndex = vertex.faceIndices[fi];
-                var facePoint = facePoints[faceIndex];
-                sumOfVertexPositions.add(facePoint);
-            }
-
-            var averageOfFacePointsAdjacent = sumOfVertexPositions.clone().divideScalar
-            (
-                numberOfFacesAdjacent
-            );
-
-            sumOfVertexPositions.clear();
-
-            for (var ei = 0; ei < numberOfEdgesAdjacent; ei++)
-            {
-                var edgeIndex = vertex.edgeIndices[ei];
-                var edge = edges[edgeIndex];
-
-                console.log("EDGE MIDPOINT")
-                var edgeMidpoint = edge.midpoint( vtx );
-
-                sumOfVertexPositions.add(edgeMidpoint);
-
-                var edgeFromVertexToEdgePoint =
-                [
-                    v,
-                    numberOfVerticesOriginal + edgeIndex
-                ];
-
-                edgesFromVerticesToEdgePoints.push
-                (
-                    edgeFromVertexToEdgePoint
-                );
-            }
-
-            var averageOfEdgeMidpointsAdjacent = sumOfVertexPositions.clone().divideScalar
-            (
-                numberOfEdgesAdjacent
-            );
-
-            var vertexNewPos = vertexPos.clone().multiplyScalar
-            (
-                numberOfFacesAdjacent - 3
-            ).add
-            (
-                averageOfFacePointsAdjacent
-            ).add
-            (
-                averageOfEdgeMidpointsAdjacent
-            ).add // (again)
-            (
-                averageOfEdgeMidpointsAdjacent
-            ).divideScalar
-            (
-                numberOfFacesAdjacent
-            );      
-
-            verticesNew.push(new Vertex(vertexNewPos));
-    
-        } // end for each vertex
-
-        verticesNew.append(Vertex.manyFromPositions(edgePoints));
-        verticesNew.append(Vertex.manyFromPositions(facePoints));
-
-        var vertexIndicesForFacesNew = [];
-
-        for (var f = 0; f < numberOfFacesOriginal; f++)
-        {
-            var faceOriginal = this.faces[f];
-            var facePoint = facePoints[f];
-
-            for (var vi = 0; vi < faceOriginal.vertexIndices.length; vi++)
-            {
-                var vertexIndex = faceOriginal.vertexIndices[vi];
-                var vertexOriginal = this.vertices[vertexIndex];
-                var vertexNew = verticesNew[vertexIndex];
-
-                var edgeIndicesShared = [];
-
-                for (var ei = 0; ei < vertexOriginal.edgeIndices.length; ei++)
-                {
-                    var edgeIndex = vertexOriginal.edgeIndices[ei];
-
-                    for (var ei2 = 0; ei2 < faceOriginal.edgeIndices.length; ei2++)
-                    {
-                        var edgeIndex2 = faceOriginal.edgeIndices[ei2];
-                        if (edgeIndex2 == edgeIndex)
-                        {
-                            edgeIndicesShared.push(edgeIndex);
-                        }
-                    }
-                }
-
-                var vertexIndicesForFaceNew = 
-                [
-                    // facePoint
-                    numberOfVerticesOriginal 
-                        + numberOfEdgesOriginal 
-                        + f, 
-
-                    // edgePoint0
-                    numberOfVerticesOriginal
-                        + edgeIndicesShared[0],
-
-                    // corner vertex
-                    vertexIndex,
-
-                    // edgePoint1
-                    numberOfVerticesOriginal
-                        + edgeIndicesShared[1],
-                ];
-
-                vertexIndicesForFacesNew.push(vertexIndicesForFaceNew);
-            }
-        }
-
-        var returnValue = {
-            vertices: verticesNew,
-            indices: vertexIndicesForFacesNew
-        };
-
-        return returnValue;
 
         // END OF SUBDIVIDE
         ///////////////////////////////////////////////////////////////////////////////////////
