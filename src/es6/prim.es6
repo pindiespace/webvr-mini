@@ -1725,7 +1725,7 @@ class Prim {
 
             let v = util.unFlatten( vertices, 3 );
 
-            // Augment vertices
+            // convert our vertices to Vertex objects. 
 
             vtx = new Array( v.length );
 
@@ -1770,6 +1770,19 @@ class Prim {
         {pos:{x:-1,y:1,z:1},edgeIndices:[],faceIndices:[]}
         ];
 
+        vtx = [
+
+        new Vertex( -1, -1, -1 ),
+        new Vertex( 1, -1, -1 ),
+        new Vertex( 1, 1, -1 ),
+        new Vertex( -1, 1, -1 ),
+        new Vertex( 1, -1, 1 ),
+        new Vertex( 1, -1, 1 ),
+        new Vertex( 1, 1, 1 ),
+        new Vertex( -1, 1, 1 ),
+
+        ]
+
         quads = [[0,1,2,3],[0,1,5,4],[1,2,6,5],[2,3,7,6],[3,0,4,7],[4,5,6,7]];
 
 
@@ -1798,6 +1811,255 @@ class Prim {
         // BEGIN SUBDIVIDE
 
         console.log("BEGIN SUBDIVIDE")
+
+        var numberOfFacesOriginal = faces.length;
+        var numberOfEdgesOriginal = edges.length;
+        var numberOfVerticesOriginal = vtx.length;
+
+        var facePoints = [];
+        var edgePoints = [];
+
+        var sumOfVertexPositions = new Coords();
+        var averageOfVertexPositions = new Coords();
+
+        for (var f = 0; f < numberOfFacesOriginal; f++)
+        {
+            var face = faces[f];
+
+            var numberOfVerticesInFace = face.vertexIndices.length;
+            sumOfVertexPositions.clear();
+
+            for (var vi = 0; vi < numberOfVerticesInFace; vi++)
+            {
+                var vertexIndex = face.vertexIndices[vi];
+                var vertexPos = vtx[vertexIndex].pos;
+                sumOfVertexPositions.add(vertexPos);
+            }
+
+            averageOfVertexPositions.overwriteWith
+            (
+                sumOfVertexPositions
+            ).divideScalar
+            (
+                numberOfVerticesInFace
+            );
+
+            facePoints.push(averageOfVertexPositions.clone());
+
+        } // end for each face
+
+        for (var e = 0; e < numberOfEdgesOriginal; e++)
+        {
+            var edge = edges[e];
+
+            sumOfVertexPositions.clear();
+
+            for (var vi = 0; vi < edge.vertexIndices.length; vi++)
+            {
+                var vertexIndex = edge.vertexIndices[vi];
+                var vertexPos = vtx[vertexIndex].pos;
+                sumOfVertexPositions.add(vertexPos);
+            }
+
+            var numberOfFacesAdjacent = edge.faceIndices.length;
+
+            for (var fi = 0; fi < numberOfFacesAdjacent; fi++)
+            {
+                var faceIndex = edge.faceIndices[fi];
+                var facePoint = facePoints[faceIndex];
+                sumOfVertexPositions.add(facePoint);
+            }
+
+            var numberOfVertices = 
+                edge.vertexIndices.length
+                + numberOfFacesAdjacent;
+
+            averageOfVertexPositions.overwriteWith
+            (
+                sumOfVertexPositions
+            ).divideScalar
+            (
+                numberOfVertices
+            );
+
+            edgePoints.push(averageOfVertexPositions.clone());
+
+        } // end for each edge
+
+        var edgesFromFaceToEdgePoints = [];
+
+        for (var f = 0; f < numberOfFacesOriginal; f++)
+        {
+            var face = faces[f];
+            var facePoint = facePoints[f];
+
+            var numberOfEdgesInFace = face.edgeIndices.length;
+
+            for (var ei = 0; ei < numberOfEdgesInFace; ei++)
+            {
+                var edgeIndex = face.edgeIndices[ei];
+                var edgePoint = edgePoints[edgeIndex];
+
+                var edgeFromFacePointToEdgePoint = 
+                [
+                    numberOfVerticesOriginal 
+                        + numberOfEdgesOriginal
+                        + f,
+                    numberOfVerticesOriginal
+                        + edgeIndex
+                ];
+
+                edgesFromFaceToEdgePoints.push
+                (
+                    edgeFromFacePointToEdgePoint
+                );
+            }
+
+        } // end for each face
+
+        var edgesFromVerticesToEdgePoints = [];
+
+        var verticesNew = [];
+
+        ///////////////////////////////////////////////////////////////////////////////////////
+for (var v = 0; v < vtx.length; v++)
+        {
+            var vertex = vtx[v];
+            var vertexPos = vertex.pos;
+
+            // Are these always the same?
+            var numberOfFacesAdjacent = vertex.faceIndices.length;
+            var numberOfEdgesAdjacent = vertex.edgeIndices.length;
+
+            sumOfVertexPositions.clear();
+
+            for (var fi = 0; fi < numberOfFacesAdjacent; fi++)
+            {
+                var faceIndex = vertex.faceIndices[fi];
+                var facePoint = facePoints[faceIndex];
+                sumOfVertexPositions.add(facePoint);
+            }
+
+            var averageOfFacePointsAdjacent = sumOfVertexPositions.clone().divideScalar
+            (
+                numberOfFacesAdjacent
+            );
+
+            sumOfVertexPositions.clear();
+
+            for (var ei = 0; ei < numberOfEdgesAdjacent; ei++)
+            {
+                var edgeIndex = vertex.edgeIndices[ei];
+                var edge = edges[edgeIndex];
+                var edgeMidpoint = edge.midpoint(vtx);
+                sumOfVertexPositions.add(edgeMidpoint);
+
+                var edgeFromVertexToEdgePoint =
+                [
+                    v,
+                    numberOfVerticesOriginal + edgeIndex
+                ];
+
+                edgesFromVerticesToEdgePoints.push
+                (
+                    edgeFromVertexToEdgePoint
+                );
+            }
+
+            var averageOfEdgeMidpointsAdjacent = sumOfVertexPositions.clone().divideScalar
+            (
+                numberOfEdgesAdjacent
+            );
+
+            var vertexNewPos = vertexPos.clone().multiplyScalar
+            (
+                numberOfFacesAdjacent - 3
+            ).add
+            (
+                averageOfFacePointsAdjacent
+            ).add
+            (
+                averageOfEdgeMidpointsAdjacent
+            ).add // (again)
+            (
+                averageOfEdgeMidpointsAdjacent
+            ).divideScalar
+            (
+                numberOfFacesAdjacent
+            );      
+
+            verticesNew.push(new Vertex(vertexNewPos));
+    
+        } // end for each vertex 
+
+        ///////////////CONCATENATE OPERATOR
+
+        //verticesNew.append(Vertex.manyFromPositions(edgePoints));
+        //verticesNew.append(Vertex.manyFromPositions(facePoints));
+
+        verticesNew = util.concatArr( verticesNew, Vertex.manyFromPositions( edgePoints ) );
+        verticesNew = util.concatArr( verticesNew, Vertex.manyFromPositions( facePoints ) );
+
+        var vertexIndicesForFacesNew = [];
+
+        for (var f = 0; f < numberOfFacesOriginal; f++)
+        {
+            var faceOriginal = faces[f];
+            var facePoint = facePoints[f];
+
+            for (var vi = 0; vi < faceOriginal.vertexIndices.length; vi++)
+            {
+                var vertexIndex = faceOriginal.vertexIndices[vi];
+                var vertexOriginal = vtx[vertexIndex];
+                var vertexNew = verticesNew[vertexIndex];
+
+                var edgeIndicesShared = [];
+
+                for (var ei = 0; ei < vertexOriginal.edgeIndices.length; ei++)
+                {
+                    var edgeIndex = vertexOriginal.edgeIndices[ei];
+
+                    for (var ei2 = 0; ei2 < faceOriginal.edgeIndices.length; ei2++)
+                    {
+                        var edgeIndex2 = faceOriginal.edgeIndices[ei2];
+                        if (edgeIndex2 == edgeIndex)
+                        {
+                            edgeIndicesShared.push(edgeIndex);
+                        }
+                    }
+                }
+
+                var vertexIndicesForFaceNew = 
+                [
+                    // facePoint
+                    numberOfVerticesOriginal 
+                        + numberOfEdgesOriginal 
+                        + f, 
+
+                    // edgePoint0
+                    numberOfVerticesOriginal
+                        + edgeIndicesShared[0],
+
+                    // corner vertex
+                    vertexIndex,
+
+                    // edgePoint1
+                    numberOfVerticesOriginal
+                        + edgeIndicesShared[1],
+                ];
+
+                vertexIndicesForFacesNew.push(vertexIndicesForFaceNew);
+            }
+        }
+
+
+        window.verticesNew = verticesNew;
+        window.indicesNew = vertexIndicesForFacesNew;
+
+        return {
+            vertices: verticesNew,
+            indices: vertexIndicesForFacesNew
+        };
 
 
         // END OF SUBDIVIDE
