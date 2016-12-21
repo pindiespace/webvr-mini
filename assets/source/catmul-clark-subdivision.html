@@ -28,10 +28,6 @@ function MeshSubdivisionTest()
 			)
 		);
 
-		//var torusVertices = 
-
-		//var torusIndices = 
-
 		var cubeVertices = [
 				new Vertex(new Coords(-1, -1, -1)),
 				new Vertex(new Coords(1, -1, -1)),
@@ -67,7 +63,7 @@ function MeshSubdivisionTest()
 
 		window.meshCube = meshCube
 
-		//var meshCubeSubdivided = meshCube.subdivide();
+		var meshCubeSubdivided = meshCube.subdivide();
 
 		//var meshCubeSubdividedTwice = meshCubeSubdivided.subdivide();
 
@@ -77,7 +73,7 @@ function MeshSubdivisionTest()
 			// meshes
 			[
 				meshCube,
-				//meshCubeSubdivided,
+				meshCubeSubdivided,
 				//meshCubeSubdividedTwice,
 			]			
 		);
@@ -370,10 +366,18 @@ function Edge(vertexIndices)
 {
 	Edge.prototype.midpoint = function(mesh)
 	{
+
+		 //console.log("vertexIndices: " + this.vertexIndices[ 0 ] + ', ' + this.vertexIndices[ 1 ] );
+
+
+
 		var returnValue = mesh.vertices[this.vertexIndices[0]].pos.clone().add
 		(
 			mesh.vertices[this.vertexIndices[1]].pos
 		).divideScalar(2);
+
+		console.log("EDGEMIDPOINT:" + returnValue.x); ////////////////////////////////CHAGED
+
 
 		return returnValue;
 	}
@@ -792,7 +796,9 @@ function Mesh(name, vertices, vertexIndicesForFaces)
 			{
 				var edgeIndex = vertex.edgeIndices[ei];
 				var edge = this.edges[edgeIndex];
+
 				var edgeMidpoint = edge.midpoint(this);
+				
 				sumOfVertexPositions.add(edgeMidpoint);
 
 				var edgeFromVertexToEdgePoint =
@@ -894,6 +900,11 @@ function Mesh(name, vertices, vertexIndicesForFaces)
 			verticesNew,
 			vertexIndicesForFacesNew
 		);
+
+		////////////////////////////
+		// For unit test
+		window.verticesNew = verticesNew;
+		window.indicesNew = vertexIndicesForFacesNew;
 
 		return returnValue;
 		
