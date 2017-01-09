@@ -1,5 +1,6 @@
 import Map2d from './map2d';
 import Map3d from './map3d';
+import Morph from './morph';
 
 class Prim {
 

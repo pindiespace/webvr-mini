@@ -356,11 +356,15 @@
 
 	var _renderer2 = _interopRequireDefault(_renderer);
 
+	var _morph = __webpack_require__(24);
+
+	var _morph2 = _interopRequireDefault(_morph);
+
 	var _prim = __webpack_require__(20);
 
 	var _prim2 = _interopRequireDefault(_prim);
 
-	var _world = __webpack_require__(24);
+	var _world = __webpack_require__(25);
 
 	var _world2 = _interopRequireDefault(_world);
 
@@ -381,7 +385,7 @@
 
 	// WebGL math library.
 
-	var glMatrix = __webpack_require__(25);
+	var glMatrix = __webpack_require__(26);
 
 	if (!glMatrix) {
 
@@ -403,6 +407,10 @@
 
 	// import Map2d from './map2d';
 
+	// Morphing functions for prim.
+
+	// Object primitives.
+
 	// Import the world (variable object, changes with each VR world).
 
 	// Init Util first to create shortcuts.
@@ -420,7 +428,7 @@
 	    // require kronos webgl debug from node_modules
 	    // https://github.com/vorg/webgl-debug
 
-	    var debug = __webpack_require__(35);
+	    var debug = __webpack_require__(36);
 
 	    exports.webgl = webgl = new _webgl2.default(false, glMatrix, util, debug);
 
@@ -3727,7 +3735,7 @@
 /* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
-	'use strict';Object.defineProperty(exports,"__esModule",{value:true});var _createClass=function(){function defineProperties(target,props){for(var i=0;i<props.length;i++){var descriptor=props[i];descriptor.enumerable=descriptor.enumerable||false;descriptor.configurable=true;if("value"in descriptor)descriptor.writable=true;Object.defineProperty(target,descriptor.key,descriptor);}}return function(Constructor,protoProps,staticProps){if(protoProps)defineProperties(Constructor.prototype,protoProps);if(staticProps)defineProperties(Constructor,staticProps);return Constructor;};}();var _map2d=__webpack_require__(21);var _map2d2=_interopRequireDefault(_map2d);var _map3d=__webpack_require__(23);var _map3d2=_interopRequireDefault(_map3d);function _interopRequireDefault(obj){return obj&&obj.__esModule?obj:{default:obj};}function _classCallCheck(instance,Constructor){if(!(instance instanceof Constructor)){throw new TypeError("Cannot call a class as a function");}}var Prim=function(){/** 
+	'use strict';Object.defineProperty(exports,"__esModule",{value:true});var _createClass=function(){function defineProperties(target,props){for(var i=0;i<props.length;i++){var descriptor=props[i];descriptor.enumerable=descriptor.enumerable||false;descriptor.configurable=true;if("value"in descriptor)descriptor.writable=true;Object.defineProperty(target,descriptor.key,descriptor);}}return function(Constructor,protoProps,staticProps){if(protoProps)defineProperties(Constructor.prototype,protoProps);if(staticProps)defineProperties(Constructor,staticProps);return Constructor;};}();var _map2d=__webpack_require__(21);var _map2d2=_interopRequireDefault(_map2d);var _map3d=__webpack_require__(23);var _map3d2=_interopRequireDefault(_map3d);var _morph=__webpack_require__(24);var _morph2=_interopRequireDefault(_morph);function _interopRequireDefault(obj){return obj&&obj.__esModule?obj:{default:obj};}function _classCallCheck(instance,Constructor){if(!(instance instanceof Constructor)){throw new TypeError("Cannot call a class as a function");}}var Prim=function(){/** 
 	     * @class
 	     * Create object primitives, and return vertex and index data 
 	     * suitable for creating a VBO and IBO.
@@ -5627,6 +5635,49 @@
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+	var Morph = function () {
+	        function Morph(init, util, glMatrix, webgl) {
+	                _classCallCheck(this, Morph);
+
+	                console.log('in morph class');
+
+	                this.util = util;
+
+	                this.glMatrix = glMatrix;
+
+	                this.webgl = webgl;
+
+	                if (this.init === true) {
+
+	                        // Do something.
+
+	                }
+	        }
+
+	        _createClass(Morph, [{
+	                key: 'init',
+	                value: function init() {}
+	        }]);
+
+	        return Morph;
+	}();
+
+	exports.default = Morph;
+
+/***/ },
+/* 25 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	        value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
 	/** 
 	 * Loads objects and renderers and runs the rendering loop.
 	 */
@@ -6054,7 +6105,7 @@
 	exports.default = World;
 
 /***/ },
-/* 25 */
+/* 26 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -6085,18 +6136,18 @@
 	THE SOFTWARE. */
 	// END HEADER
 
-	exports.glMatrix = __webpack_require__(26);
-	exports.mat2 = __webpack_require__(27);
-	exports.mat2d = __webpack_require__(28);
-	exports.mat3 = __webpack_require__(29);
-	exports.mat4 = __webpack_require__(30);
-	exports.quat = __webpack_require__(31);
-	exports.vec2 = __webpack_require__(34);
-	exports.vec3 = __webpack_require__(32);
-	exports.vec4 = __webpack_require__(33);
+	exports.glMatrix = __webpack_require__(27);
+	exports.mat2 = __webpack_require__(28);
+	exports.mat2d = __webpack_require__(29);
+	exports.mat3 = __webpack_require__(30);
+	exports.mat4 = __webpack_require__(31);
+	exports.quat = __webpack_require__(32);
+	exports.vec2 = __webpack_require__(35);
+	exports.vec3 = __webpack_require__(33);
+	exports.vec4 = __webpack_require__(34);
 
 /***/ },
-/* 26 */
+/* 27 */
 /***/ function(module, exports) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -6172,7 +6223,7 @@
 
 
 /***/ },
-/* 27 */
+/* 28 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -6195,7 +6246,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(26);
+	var glMatrix = __webpack_require__(27);
 
 	/**
 	 * @class 2x2 Matrix
@@ -6614,7 +6665,7 @@
 
 
 /***/ },
-/* 28 */
+/* 29 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -6637,7 +6688,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(26);
+	var glMatrix = __webpack_require__(27);
 
 	/**
 	 * @class 2x3 Matrix
@@ -7089,7 +7140,7 @@
 
 
 /***/ },
-/* 29 */
+/* 30 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -7112,7 +7163,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(26);
+	var glMatrix = __webpack_require__(27);
 
 	/**
 	 * @class 3x3 Matrix
@@ -7841,7 +7892,7 @@
 
 
 /***/ },
-/* 30 */
+/* 31 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -7864,7 +7915,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(26);
+	var glMatrix = __webpack_require__(27);
 
 	/**
 	 * @class 4x4 Matrix
@@ -9983,7 +10034,7 @@
 
 
 /***/ },
-/* 31 */
+/* 32 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -10006,10 +10057,10 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(26);
-	var mat3 = __webpack_require__(29);
-	var vec3 = __webpack_require__(32);
-	var vec4 = __webpack_require__(33);
+	var glMatrix = __webpack_require__(27);
+	var mat3 = __webpack_require__(30);
+	var vec3 = __webpack_require__(33);
+	var vec4 = __webpack_require__(34);
 
 	/**
 	 * @class Quaternion
@@ -10589,7 +10640,7 @@
 
 
 /***/ },
-/* 32 */
+/* 33 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -10612,7 +10663,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(26);
+	var glMatrix = __webpack_require__(27);
 
 	/**
 	 * @class 3 Dimensional Vector
@@ -11372,7 +11423,7 @@
 
 
 /***/ },
-/* 33 */
+/* 34 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -11395,7 +11446,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(26);
+	var glMatrix = __webpack_require__(27);
 
 	/**
 	 * @class 4 Dimensional Vector
@@ -11987,7 +12038,7 @@
 
 
 /***/ },
-/* 34 */
+/* 35 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -12010,7 +12061,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(26);
+	var glMatrix = __webpack_require__(27);
 
 	/**
 	 * @class 2 Dimensional Vector
@@ -12580,7 +12631,7 @@
 
 
 /***/ },
-/* 35 */
+/* 36 */
 /***/ function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {/*

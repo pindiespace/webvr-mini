@@ -65,6 +65,12 @@ import Renderer from './renderer';
 
 // import Map2d from './map2d';
 
+// Morphing functions for prim.
+
+import Morph from './morph';
+
+// Object primitives.
+
 import Prim from './prim';
 
 // Import the world (variable object, changes with each VR world).
