@@ -356,10 +356,6 @@
 
 	var _renderer2 = _interopRequireDefault(_renderer);
 
-	var _morph = __webpack_require__(24);
-
-	var _morph2 = _interopRequireDefault(_morph);
-
 	var _prim = __webpack_require__(20);
 
 	var _prim2 = _interopRequireDefault(_prim);
@@ -406,8 +402,8 @@
 	// All objects.
 
 	// import Map2d from './map2d';
-
-	// Morphing functions for prim.
+	// import Map3d from './map3d';
+	// import Morph from './morph';
 
 	// Object primitives.
 
@@ -3811,7 +3807,8 @@
 	     * https://gamedevdaily.io/four-ways-to-create-a-mesh-for-a-sphere-d7956b825db4#.lkbq2omq5
 	     *
 	     * 
-	     */function Prim(init,util,glMatrix,webgl,loadModel,loadTexture,loadAudio,loadVideo){_classCallCheck(this,Prim);console.log('in Prim class');this.util=util;this.webgl=webgl;this.glMatrix=glMatrix;this.loadModel=loadModel;this.loadTexture=loadTexture;this.loadAudio=loadAudio;this.loadVideo=loadVideo;this.objs=[];this.typeList={POINT:'geometryPointCloud',POINTCLOUD:'geometryPointCloud',LINE:'geometryLine',PLANE:'geometryOuterPlane',OUTERPLANE:'geometryOuterPlane',INNERPLANE:'geometryInnerPlane',CURVEDPLANE:'geometryCurvedOuterPlane',CURVEDOUTERPLANE:'geometryCurvedOuterPlane',CURVEDINNERPLANE:'geometryCurvedInnerPlane',TERRAIN:'geometryTerrain',CIRCLE:'geometryCircle',CUBE:'geometryCube',CUBESPHERE:'geometryCubeSphere',SPHERE:'geometrySphere',DISC:'geometryCap',CAP:'geometryCap',DOME:'geometryDome',TOPDOME:'geometryTopDome',SKYDOME:'geometrySkyDome',BOTTOMDOME:'geometryBottomDome',CONE:'geometryCone',TOPCONE:'geometryTopCone',BOTTOMCONE:'geometryBottomCone',SPINDLE:'geometrySpindle',TEARDROP:'geometryTeardrop',CYLINDER:'geometryCylinder',CAPSULE:'geometryCapsule',PRISM:'geometryPrism',ICOSOHEDRON:'geometryIcosohedron',PYRAMID:'geometryPyramid',ICOSPHERE:'geometryIcoSphere',TOPICODOME:'geometryTopIcoDome',SKYICODOME:'geometrySkyIcoDome',BOTTOMICODOME:'geometryBottomIcoDome',OCTAHEDRON:'geometryOctahedron',DODECAHEDRON:'geometryDodecahedron',TORUS:'geometryTorus',MESH:'geometryMesh'};// Sideness, direction. Mapped to equivalent unit vector names in this.getStdVecs()
+	     */function Prim(init,util,glMatrix,webgl,loadModel,loadTexture,loadAudio,loadVideo){_classCallCheck(this,Prim);console.log('in Prim class');this.util=util;this.webgl=webgl;this.glMatrix=glMatrix;this.loadModel=loadModel;this.loadTexture=loadTexture;this.loadAudio=loadAudio;this.loadVideo=loadVideo;// If we need distortion and smoothing for the Prims
+	this.morph=new _morph2.default(true,util,glMatrix,webgl);this.objs=[];this.typeList={POINT:'geometryPointCloud',POINTCLOUD:'geometryPointCloud',LINE:'geometryLine',PLANE:'geometryOuterPlane',OUTERPLANE:'geometryOuterPlane',INNERPLANE:'geometryInnerPlane',CURVEDPLANE:'geometryCurvedOuterPlane',CURVEDOUTERPLANE:'geometryCurvedOuterPlane',CURVEDINNERPLANE:'geometryCurvedInnerPlane',TERRAIN:'geometryTerrain',CIRCLE:'geometryCircle',CUBE:'geometryCube',CUBESPHERE:'geometryCubeSphere',SPHERE:'geometrySphere',DISC:'geometryCap',CAP:'geometryCap',DOME:'geometryDome',TOPDOME:'geometryTopDome',SKYDOME:'geometrySkyDome',BOTTOMDOME:'geometryBottomDome',CONE:'geometryCone',TOPCONE:'geometryTopCone',BOTTOMCONE:'geometryBottomCone',SPINDLE:'geometrySpindle',TEARDROP:'geometryTeardrop',CYLINDER:'geometryCylinder',CAPSULE:'geometryCapsule',PRISM:'geometryPrism',ICOSOHEDRON:'geometryIcosohedron',PYRAMID:'geometryPyramid',ICOSPHERE:'geometryIcoSphere',TOPICODOME:'geometryTopIcoDome',SKYICODOME:'geometrySkyIcoDome',BOTTOMICODOME:'geometryBottomIcoDome',OCTAHEDRON:'geometryOctahedron',DODECAHEDRON:'geometryDodecahedron',TORUS:'geometryTorus',MESH:'geometryMesh'};// Sideness, direction. Mapped to equivalent unit vector names in this.getStdVecs()
 	this.directions={DEFAULT:'up',FORWARD:'forward',FRONT:'forward',BACK:'back',LEFT:'left',RIGHT:'right',UP:'up',TOP:'up',DOWN:'down',BOTTOM:'down'};this.FLOAT32='float32',this.UINT32='uint32';// Visible from inside or outside.
 	this.OUTSIDE=100,this.INSIDE=101;// Shorthand.
 	this.TWO_PI=Math.PI*2;}/** 
@@ -4003,131 +4000,13 @@
 	// Calculate handedness
 	//////////////const tw = (dot(cross(n, t1), t2) < 0.0) ? -1.0 : 1.0;
 	var tw=vec3.dot(vec3.cross([0,0,0],n,_t),_t2)<0.0?-1.0:1.0;tangents[i4]=txyz[0];tangents[i4+1]=txyz[1];tangents[i4+2]=txyz[2];tangents[i4+3]=tw;}return tangents;}/** 
-	     * Given a mesh of vertices, compute the quads and indexing. 
-	     * from the indices (path through triangles)
-	     * https://github.com/Erkaman/gl-quads-to-tris
-	     * https://github.com/Erkaman/gl-catmull-clark/blob/master/index.js   THIS ONE
-	     * https://en.wikipedia.org/wiki/Catmull%E2%80%93Clark_subdivision_surface
-	     * https://vorg.github.io/pex/docs/pex-geom/Geometry.html
-	     * http://www.rorydriscoll.com/2008/08/01/catmull-clark-subdivision-the-basics/
-	     * NOTE: quads = "cells" = "face"
-	     */},{key:'computeQuadsFromTris',value:function computeQuadsFromTris(triIndices){var util=this.util;var idx=triIndices;var quads=new Array(idx.length/2);var ct=0;if(!util.canFlatten(idx)){console.error('trisToQuads() error: flattened arrays not supported');return null;}// Array of GL_TRIANGLES (0, 1, 2, 0, 2, 3) to quads.
-	for(var _i11=0;_i11<idx.length;_i11+=2){quads[ct++]=[idx[_i11][0],idx[_i11][1],idx[_i11+1][1],idx[_i11+1][2]];}return quads;}/** 
-	     * given a mesh of quads, compute the triangles and indexing.
-	     */},{key:'computeTrisFromQuads',value:function computeTrisFromQuads(quadIndices){var util=this.util;var tris=new Array(quadIndices.length*2);var ct=0;if(!util.canFlatten(quadIndices)){console.error('Prim.quadsToTris() error: flattened quad arrays not used in this program');return null;}for(var _i12=0;_i12<quadIndices.length;_i12++){var quad=quadIndices[_i12];console.log("quadindices:"+quad);///////////////////////////
-	tris[ct++]=[quad[0],quad[1],quad[2]];tris[ct++]=[quad[0],quad[2],quad[3]];}return tris;}/** 
-	     * Compute quad faces and edges, used for 
-	     * subdivision via
-	     * @param {Array} quads an array of quad indices for a Prim.
-	     * @param {Array} vtx an array of vertex3 objects.
-	     */},{key:'computeQuadFaceEdges',value:function computeQuadFaceEdges(quads,vtx){function Edge(minIndex,maxIndex){this.vertexIndices=[minIndex,maxIndex];this.faceIndices=[];// end of Edge
-	Edge.prototype.midpoint=function(vtx){////////console.log("vertexIndices: " + this.vertexIndices[ 0 ] + ', ' + this.vertexIndices[ 1 ] );
-	var returnValue=vtx[this.vertexIndices[0]].pos.clone().add(vtx[this.vertexIndices[1]].pos).divideScalar(2);/////////////console.log("EDGEMIDPOINT:" + returnValue.x); ////////////////////////////////CHAGED
-	return returnValue;};};function Face(quad){this.vertexIndices=quad;this.edgeIndices=[];};// end of Face
-	var faces=[];var edges=[];var minMaxLookup=[];var quadLen=quads[0].length;// side of quads face, change for other face sizes.
-	for(var f=0;f<quads.length;f++){var quad=quads[f];//let quadLen = quad.length; 
-	var face=new Face(quad);for(var vi=0;vi<quadLen;vi++){// Get the working position in the quad.
-	var viNext=(vi+1)%quadLen;// get current and next index for quad vertices.
-	var vi0=quad[vi];var vi1=quad[viNext];var vertex=vtx[vi0];var vertexNext=vtx[vi1];vertex.faceIndices.push(f);// Get the larger and smaller of the two indices.
-	var iMin=Math.min(vi0,vi1);var iMax=Math.max(vi0,vi1);// Initialize minMaxMLookup
-	var maxLookup=minMaxLookup[iMin];///////////console.log("maxlookup is a:" + maxLookup)
-	if(maxLookup===undefined){maxLookup=[];minMaxLookup[iMin]=maxLookup;}var edgeIndex=maxLookup[iMax];///////////console.log("edgeIndex is a:" + edgeIndex )
-	if(edgeIndex===undefined){var edge=new Edge(iMin,iMax);edgeIndex=edges.length;edges.push(edge);}maxLookup[iMax]=edgeIndex;// hack
-	// Is there away to avoid this indexOf call?
-	if(face.edgeIndices.indexOf(edgeIndex)==-1){face.edgeIndices.push(edgeIndex);}}for(var ei=0;ei<face.edgeIndices.length;ei++){var _edgeIndex=face.edgeIndices[ei];var _edge=edges[_edgeIndex];_edge.faceIndices.push(f);for(var _vi=0;_vi<_edge.vertexIndices.length;_vi++){var _vi2=_edge.vertexIndices[_vi];var _vertex=vtx[_vi2];// hack
-	// Is there away to avoid this indexOf call?
-	if(_vertex.edgeIndices.indexOf(_edgeIndex)==-1){_vertex.edgeIndices.push(_edgeIndex);}}}faces.push(face);}// outer loop.
-	return{faces:faces,edges:edges};}/** 
-	     * Subdivide a mesh
-	     * Comprehensive description.
-	     * http://www.rorydriscoll.com/2008/08/01/catmull-clark-subdivision-the-basics/
-	     * @link http://www.rorydriscoll.com/2008/08/01/catmull-clark-subdivision-the-basics/
-	     * USE:
-	     * https://blog.nobel-joergensen.com/2010/12/25/procedural-generated-mesh-in-unity/
-	     * http://wiki.unity3d.com/index.php/MeshSubdivision
-	     * https://github.com/Erkaman/gl-catmull-clark/blob/master/index.js
-	     * Examples:
-	     * Subdivide algorithm
-	     * https://github.com/mikolalysenko/loop-subdivide
-	     * https://github.com/Erkaman/gl-catmull-clark
-	     * https://www.ibiblio.org/e-notes/Splines/models/loop.js
-	     * generalized catmull-clark subdivision algorithm
-	     * https://thiscouldbebetter.wordpress.com/2015/04/24/the-catmull-clark-subdivision-surface-algorithm-in-javascript/
-	     * @link http://vorg.github.io/pex/docs/pex-geom/Geometry.html
-	     * @link http://answers.unity3d.com/questions/259127/does-anyone-have-any-code-to-subdivide-a-mesh-and.html
-	     * USE:
-	     * @link https://thiscouldbebetter.wordpress.com/2015/04/24/the-catmull-clark-subdivision-surface-algorithm-in-javascript/
-	     */},{key:'computeSubdivide',value:function computeSubdivide(vertices,indices){var util=this.util;var vec3=this.glMatrix.vec3;var vtx=void 0,tris=void 0;function Coords(x,y,z){this.x=x;this.y=y;this.z=z;Coords.prototype.add=function(other){this.x+=other.x;this.y+=other.y;this.z+=other.z;return this;};Coords.prototype.clear=function(){this.x=0;this.y=0;this.z=0;return this;};Coords.prototype.clone=function(){return new Coords(this.x,this.y,this.z);};Coords.prototype.crossProduct=function(other){return this.overwriteWithXYZ(this.y*other.z-other.y*this.z,other.x*this.z-this.x*other.z,this.x*other.y-other.x*this.y);};Coords.prototype.divideScalar=function(scalar){this.x/=scalar;this.y/=scalar;this.z/=scalar;return this;};Coords.prototype.dotProduct=function(other){return this.x*other.x+this.y*other.y+this.z*other.z;};Coords.prototype.magnitude=function(){return Math.sqrt(this.x*this.x+this.y*this.y+this.z*this.z);};Coords.prototype.multiplyScalar=function(scalar){this.x*=scalar;this.y*=scalar;this.z*=scalar;return this;};Coords.prototype.normalize=function(){return this.divideScalar(this.magnitude());};Coords.prototype.overwriteWith=function(other){this.x=other.x;this.y=other.y;this.z=other.z;return this;};Coords.prototype.overwriteWithXYZ=function(x,y,z){this.x=x;this.y=y;this.z=z;return this;};Coords.prototype.subtract=function(other){this.x-=other.x;this.y-=other.y;this.z-=other.z;return this;};};// end of Coords
-	// Adapt to our flattened vec3.
-	function Vertex(vec){this.pos=new Coords(vec[0],vec[1],vec[2]);this.edgeIndices=[];this.faceIndices=[];};// end of Vertex
-	Vertex.manyFromPositions=function(positions){var returnValues=[];for(var i=0;i<positions.length;i++){var position=positions[i];var vertex=new Vertex([position.x,position.y,position.z]);///CHANGED!!!!!!!!!
-	returnValues.push(vertex);}return returnValues;};// handle both flattened and unflattened vertices.
-	if(!util.canFlatten(vertices)){var _v2=util.unFlatten(vertices,3);// convert our vertices to Vertex objects. 
-	vtx=new Array(_v2.length);// Build Vertex object out of vec3.
-	for(var _i13=0;_i13<_v2.length;_i13++){// NOTE: this is our array, so it is OK
-	vtx[_i13]=new Vertex(_v2[_i13]);}}else{vtx=vertices;}if(!util.canFlatten(indices)){tris=util.unFlatten(indices,3);}else{tris=indices;}// requires unflattened indices, in triangles
-	var quads=this.computeQuadsFromTris(tris);/////////////////////////////////////////////////////
-	// CUBE DATA
-	// NOTE: we define Vertex differently from the original code.
-	vtx=[new Vertex([-1,-1,-1]),new Vertex([1,-1,-1]),new Vertex([1,1,-1]),new Vertex([-1,1,-1]),new Vertex([-1,-1,1]),new Vertex([1,-1,1]),new Vertex([1,1,1]),new Vertex([-1,1,1])];// Cube quads
-	quads=[[0,1,2,3],[0,1,5,4],[1,2,6,5],[2,3,7,6],[3,0,4,7],[4,5,6,7]];window.faces=faces;window.edges=edges;//let quads = quads;
-	var faceEdges=this.computeQuadFaceEdges(quads,vtx);window.faceEdges=faceEdges;var faces=faceEdges.faces;var edges=faceEdges.edges;console.log("-------------FIRST UNIT TEST-------------------");window.vtx=vtx;window.faces=faces;window.edges=edges;// Run a unit test
-	var faceTest=[{vertexIndices:[0,1,2,3],edgeIndices:[0,1,2,3]},{vertexIndices:[0,1,5,4],edgeIndices:[0,4,5,6]},{vertexIndices:[1,2,6,5],edgeIndices:[1,7,8,4]},{vertexIndices:[2,3,7,6],edgeIndices:[2,9,10,7]},{vertexIndices:[3,0,4,7],edgeIndices:[3,6,11,9]},{vertexIndices:[4,5,6,7],edgeIndices:[5,8,10,11]}];window.faceTest=faceTest;var ff=[],fft=[],ee=[],eet=[];for(var _i14 in faceTest){var ft=faceTest[_i14];var vit=ft.vertexIndices;///////////////
-	var eeit=ft.edgeIndices;var _f=faces[_i14];var _vi3=_f.vertexIndices;/////////////////
-	var eei=_f.edgeIndices;// TEST
-	for(var _j2 in vit){fft.push(vit[_j2]);}// OURS
-	for(var _j3 in eeit){eet.push(eeit[_j3]);}// TEST
-	for(var _j4 in _vi3){ff.push(_vi3[_j4]);}// OURS
-	for(var _j5 in eei){ee.push(eei[_j5]);}}window.ff=ff;window.fft=fft;window.eet=eet;window.ee=ee;// NOW COMPARE Face VERTICES
-	console.log('testing face vertices...');for(var _j6 in ff){if(ff[_j6]!==fft[_j6]){console.error('ERROR in face vertices at position:'+_j6);}}console.log('testing face indices...');for(var _j7 in ee){if(ee[_j7]!==eet[_j7]){console.error('ERROR in face indices at position:'+_j7);}}console.log("-------------SECOND UNIT TEST-------------------");var edgeTest=[{vertexIndices:[0,1],faceIndices:[0,1]},{vertexIndices:[1,2],faceIndices:[0,2]},{vertexIndices:[2,3],faceIndices:[0,3]},{vertexIndices:[0,3],faceIndices:[0,4]},{vertexIndices:[1,5],faceIndices:[1,2]},{vertexIndices:[4,5],faceIndices:[1,5]},{vertexIndices:[0,4],faceIndices:[1,4]},{vertexIndices:[2,6],faceIndices:[2,3]},{vertexIndices:[5,6],faceIndices:[2,5]},{vertexIndices:[3,7],faceIndices:[3,4]},{vertexIndices:[6,7],faceIndices:[3,5]},{vertexIndices:[4,7],faceIndices:[4,5]}];var edgT=[],edg=[];// TEST EDGE ARRAY
-	for(var _j8 in edgeTest){var edgTj=edgeTest[_j8];edgT.push(edgTj.vertexIndices[0],edgTj.vertexIndices[1],edgTj.faceIndices[0],edgTj.faceIndices[1]);}// OUR EDGE ARRAY
-	for(var _j9 in edges){var edgj=edges[_j9];edg.push(edgj.vertexIndices[0],edgj.vertexIndices[1],edgj.faceIndices[0],edgj.faceIndices[1]);}window.edgT=edgT;window.edg=edg;// COMPARE EDGE ARRAYS
-	for(var _j10 in edgT){if(edgT[_j10]!==edg[_j10]){console.error('Error in Edges at position:'+_j10);}}///////////////////////////////////////////////////////////////////////////////////////
-	// BEGIN SUBDIVIDE
-	console.log("BEGIN SUBDIVIDE");var numberOfFacesOriginal=faces.length;var numberOfEdgesOriginal=edges.length;var numberOfVerticesOriginal=vtx.length;console.log("Number of faces original: "+numberOfFacesOriginal);////////////////
-	console.log("Number of edges original: "+numberOfEdgesOriginal);console.log("Number of vertices original:"+numberOfVerticesOriginal);var facePoints=[];var edgePoints=[];var sumOfVertexPositions=new Coords();var averageOfVertexPositions=new Coords();for(var f=0;f<numberOfFacesOriginal;f++){var face=faces[f];var numberOfVerticesInFace=face.vertexIndices.length;sumOfVertexPositions.clear();for(var vi=0;vi<numberOfVerticesInFace;vi++){var vertexIndex=face.vertexIndices[vi];var vertexPos=vtx[vertexIndex].pos;sumOfVertexPositions.add(vertexPos);}averageOfVertexPositions.overwriteWith(sumOfVertexPositions).divideScalar(numberOfVerticesInFace);facePoints.push(averageOfVertexPositions.clone());}// end for each face
-	for(var e=0;e<numberOfEdgesOriginal;e++){var edge=edges[e];sumOfVertexPositions.clear();for(var vi=0;vi<edge.vertexIndices.length;vi++){var vertexIndex=edge.vertexIndices[vi];var vertexPos=vtx[vertexIndex].pos;sumOfVertexPositions.add(vertexPos);}var numberOfFacesAdjacent=edge.faceIndices.length;for(var fi=0;fi<numberOfFacesAdjacent;fi++){var faceIndex=edge.faceIndices[fi];var facePoint=facePoints[faceIndex];sumOfVertexPositions.add(facePoint);}var numberOfVertices=edge.vertexIndices.length+numberOfFacesAdjacent;averageOfVertexPositions.overwriteWith(sumOfVertexPositions).divideScalar(numberOfVertices);edgePoints.push(averageOfVertexPositions.clone());}// end for each edge
-	var edgesFromFaceToEdgePoints=[];for(var f=0;f<numberOfFacesOriginal;f++){var face=faces[f];var facePoint=facePoints[f];var numberOfEdgesInFace=face.edgeIndices.length;for(var ei=0;ei<numberOfEdgesInFace;ei++){var edgeIndex=face.edgeIndices[ei];var edgePoint=edgePoints[edgeIndex];var edgeFromFacePointToEdgePoint=[numberOfVerticesOriginal+numberOfEdgesOriginal+f,numberOfVerticesOriginal+edgeIndex];edgesFromFaceToEdgePoints.push(edgeFromFacePointToEdgePoint);}}// end for each face
-	var edgesFromVerticesToEdgePoints=[];var verticesNew=[];///////////////////////////////////////////////////////////////////////////////////////
-	for(var v=0;v<vtx.length;v++){var vertex=vtx[v];var vertexPos=vertex.pos;// Are these always the same?
-	var numberOfFacesAdjacent=vertex.faceIndices.length;var numberOfEdgesAdjacent=vertex.edgeIndices.length;sumOfVertexPositions.clear();for(var fi=0;fi<numberOfFacesAdjacent;fi++){var faceIndex=vertex.faceIndices[fi];var facePoint=facePoints[faceIndex];sumOfVertexPositions.add(facePoint);}var averageOfFacePointsAdjacent=sumOfVertexPositions.clone().divideScalar(numberOfFacesAdjacent);sumOfVertexPositions.clear();for(var ei=0;ei<numberOfEdgesAdjacent;ei++){var edgeIndex=vertex.edgeIndices[ei];var edge=edges[edgeIndex];var edgeMidpoint=edge.midpoint(vtx);///////////////////////CHANGED
-	sumOfVertexPositions.add(edgeMidpoint);var edgeFromVertexToEdgePoint=[v,numberOfVerticesOriginal+edgeIndex];edgesFromVerticesToEdgePoints.push(edgeFromVertexToEdgePoint);}var averageOfEdgeMidpointsAdjacent=sumOfVertexPositions.clone().divideScalar(numberOfEdgesAdjacent);var vertexNewPos=vertexPos.clone().multiplyScalar(numberOfFacesAdjacent-3).add(averageOfFacePointsAdjacent).add(averageOfEdgeMidpointsAdjacent).add(averageOfEdgeMidpointsAdjacent).divideScalar(numberOfFacesAdjacent);verticesNew.push(new Vertex([vertexNewPos.x,vertexNewPos.y,vertexNewPos.z]));// CHANGED!!!!
-	}// end for each vertex 
-	///////////////CONCATENATE OPERATOR
-	//verticesNew.append(Vertex.manyFromPositions(edgePoints));
-	//verticesNew.append(Vertex.manyFromPositions(facePoints));
-	verticesNew=util.concatArr(verticesNew,Vertex.manyFromPositions(edgePoints));verticesNew=util.concatArr(verticesNew,Vertex.manyFromPositions(facePoints));window.edgePoint=edgePoints;var vertexIndicesForFacesNew=[];for(var f=0;f<numberOfFacesOriginal;f++){var faceOriginal=faces[f];var facePoint=facePoints[f];for(var vi=0;vi<faceOriginal.vertexIndices.length;vi++){var vertexIndex=faceOriginal.vertexIndices[vi];var vertexOriginal=vtx[vertexIndex];var vertexNew=verticesNew[vertexIndex];var edgeIndicesShared=[];for(var ei=0;ei<vertexOriginal.edgeIndices.length;ei++){var edgeIndex=vertexOriginal.edgeIndices[ei];for(var ei2=0;ei2<faceOriginal.edgeIndices.length;ei2++){var edgeIndex2=faceOriginal.edgeIndices[ei2];if(edgeIndex2==edgeIndex){edgeIndicesShared.push(edgeIndex);}}}var vertexIndicesForFaceNew=[// facePoint
-	numberOfVerticesOriginal+numberOfEdgesOriginal+f,// edgePoint0
-	numberOfVerticesOriginal+edgeIndicesShared[0],// corner vertex
-	vertexIndex,// edgePoint1
-	numberOfVerticesOriginal+edgeIndicesShared[1]];vertexIndicesForFacesNew.push(vertexIndicesForFaceNew);}}// NOTE: verticesNew has right positions, but is EMPTY!
-	window.verticesNew=verticesNew;window.indicesNew=vertexIndicesForFacesNew;// HAVE TO RECOMPUTE EDGE INDICES AND FACE INDICES
-	window.newFaceEdges=this.computeQuadFaceEdges(vertexIndicesForFacesNew,verticesNew);///////////////////////////////////////////////////////////////////////////
-	// THIRD UNIT TEST ( test vertices )
-	///////////////////////////////////////////////////////////////////////////
-	// TEST VERTICES
-	var vvn=[],tvn=[];var testVerticesNew=[{pos:{x:-0.5555555555555555,y:-0.5555555555555555,z:-0.5555555555555555},edgeIndices:[1,2,13],faceIndices:[0,4,17]},{pos:{x:0.5555555555555555,y:-0.5555555555555555,z:-0.5555555555555555},edgeIndices:[4,5,15],faceIndices:[1,5,8]},{pos:{x:0.5555555555555555,y:0.5555555555555555,z:-0.5555555555555555},edgeIndices:[7,8,24],faceIndices:[2,9,12]},{pos:{x:-0.5555555555555555,y:0.5555555555555555,z:-0.5555555555555555},edgeIndices:[10,11,32],faceIndices:[3,13,16]},{pos:{x:-0.5555555555555555,y:-0.5555555555555555,z:0.5555555555555555},edgeIndices:[20,21,41],faceIndices:[7,18,20]},{pos:{x:0.5555555555555555,y:-0.5555555555555555,z:0.5555555555555555},edgeIndices:[17,18,29],faceIndices:[6,11,21]},{pos:{x:0.5555555555555555,y:0.5555555555555555,z:0.5555555555555555},edgeIndices:[26,27,37],faceIndices:[10,15,22]},{pos:{x:-0.5555555555555555,y:0.5555555555555555,z:0.5555555555555555},edgeIndices:[34,35,43],faceIndices:[14,19,23]},{pos:{x:0,y:-0.75,z:-0.75},edgeIndices:[0,1,4,12],faceIndices:[0,1,4,5]},{pos:{x:0.75,y:0,z:-0.75},edgeIndices:[5,6,7,22],faceIndices:[1,2,8,9]},{pos:{x:0,y:0.75,z:-0.75},edgeIndices:[8,9,10,30],faceIndices:[2,3,12,13]},{pos:{x:-0.75,y:0,z:-0.75},edgeIndices:[2,3,11,38],faceIndices:[0,3,16,17]},{pos:{x:0.75,y:-0.75,z:0},edgeIndices:[15,16,17,23],faceIndices:[5,6,8,11]},{pos:{x:0,y:-0.75,z:0.75},edgeIndices:[18,19,20,44],faceIndices:[6,7,20,21]},{pos:{x:-0.75,y:-0.75,z:0},edgeIndices:[13,14,21,40],faceIndices:[4,7,17,18]},{pos:{x:0.75,y:0.75,z:0},edgeIndices:[24,25,26,31],faceIndices:[9,10,12,15]},{pos:{x:0.75,y:0,z:0.75},edgeIndices:[27,28,29,46],faceIndices:[10,11,21,22]},{pos:{x:-0.75,y:0.75,z:0},edgeIndices:[32,33,34,39],faceIndices:[13,14,16,19]},{pos:{x:0,y:0.75,z:0.75},edgeIndices:[35,36,37,47],faceIndices:[14,15,22,23]},{pos:{x:-0.75,y:0,z:0.75},edgeIndices:[41,42,43,45],faceIndices:[18,19,20,23]},{pos:{x:0,y:0,z:-1},edgeIndices:[0,3,6,9],faceIndices:[0,1,2,3]},{pos:{x:0,y:-1,z:0},edgeIndices:[12,14,16,19],faceIndices:[4,5,6,7]},{pos:{x:1,y:0,z:0},edgeIndices:[22,23,25,28],faceIndices:[8,9,10,11]},{pos:{x:0,y:1,z:0},edgeIndices:[30,31,33,36],faceIndices:[12,13,14,15]},{pos:{x:-1,y:0,z:0},edgeIndices:[38,39,40,42],faceIndices:[16,17,18,19]},{pos:{x:0,y:0,z:1},edgeIndices:[44,45,46,47],faceIndices:[20,21,22,23]}];for(var _j11 in testVerticesNew){// TEST ONES
-	var tvninst=testVerticesNew[_j11];vvn.push(tvninst.pos.x,tvninst.pos.y,tvninst.pos.z);vvn.push(tvninst.edgeIndices[0],tvninst.edgeIndices[1],tvninst.edgeIndices[2]);vvn.push(tvninst.faceIndices[0],tvninst.faceIndices[1],tvninst.faceIndices[2]);// OUR ONES
-	var vnews=verticesNew[_j11];tvn.push(vnews.pos.x,vnews.pos.y,vnews.pos.z);tvn.push(vnews.edgeIndices[0],vnews.edgeIndices[1],vnews.edgeIndices[2]);tvn.push(vnews.faceIndices[0],vnews.faceIndices[1],vnews.faceIndices[2]);}// COMPARE
-	window.vvn=vvn;window.tvn=tvn;console.log("BEGINNING FINAL VERTEX TEST........");for(var j in vvn){if(vvn[j]!==tvn[j]){console.error("final vertices don't match at:"+j+", ",vvn[j]+", "+tvn[j]);}}// TEST INDICES
-	var iin=[],tin=[];var testIndicesNew=[[20,8,0,11],[20,8,1,9],[20,9,2,10],[20,10,3,11],[21,8,0,14],[21,8,1,12],[21,12,5,13],[21,13,4,14],[22,9,1,12],[22,9,2,15],[22,15,6,16],[22,12,5,16],[23,10,2,15],[23,10,3,17],[23,17,7,18],[23,15,6,18],[24,11,3,17],[24,11,0,14],[24,14,4,19],[24,17,7,19],[25,13,4,19],[25,13,5,16],[25,16,6,18],[25,18,7,19]];for(var _j12 in testIndicesNew){var tiinst=testIndicesNew[_j12];tin.push(tiinst[0],tiinst[1],tiinst[2],tiinst[3]);}for(var _j13 in indicesNew){var iinst=indicesNew[_j13];iin.push(iinst[0],iinst[1],iinst[2],iinst[3]);}// COMPARE
-	console.log("FINAL INDICES TEST (quads match)...");for(var _j14 in indicesNew){if(tin[_j14]!==iin[_j14]){console.error("quads don't match at pos:"+_j14);}}// END OF UNIT TESTS
-	//////////////////////////////////////////////////
-	// NOTE: each kind of Prim will have to deal with texture Coordinates
-	// convert indices to triangles and vertices to standard vertices.
-	var flattenedIndices=this.computeTrisFromQuads(vertexIndicesForFacesNew);console.log("flattenedindices length:"+flattenedIndices);var subbed={vertices:verticesNew,subindices:vertexIndicesForFacesNew,indices:flattenedIndices};window.subbed=subbed;return subbed;// END OF SUBDIVIDE
-	///////////////////////////////////////////////////////////////////////////////////////
-	//return geometry;
-	}/** 
-	     * Convert from one Prim geometry to another, alters geometry.
-	     */},{key:'computeMorph',value:function computeMorph(newGeometry,easing,geometry){}/** 
 	     * Scale vertices directly, without changing position.
-	     */},{key:'computeScale',value:function computeScale(vertices,scale){var oldPos=this.getCenter(vertices);for(var _i15=0;_i15<vertices.length;_i15++){vertices[_i15]*=scale;}this.moveTo(oldPos);}/** 
+	     */},{key:'computeScale',value:function computeScale(vertices,scale){var oldPos=this.getCenter(vertices);for(var _i11=0;_i11<vertices.length;_i11++){vertices[_i11]*=scale;}this.moveTo(oldPos);}/** 
 	     * Move vertices directly in geometry, i.e. for something 
 	     * that always orbits a central point.
 	     * NOTE: normally, you will want to use a matrix transform to position objects.
 	     * @param {GLMatrix.vec3} pos - the new position.
-	     */},{key:'computeMove',value:function computeMove(vertices,pos){var center=this.getCentroid(vertices);var delta=[center[0]-pos[0],center[1]-pos[1],center[2]-pos[2]];for(var _i16=0;_i16<vertices.length;_i16+=3){vertices[_i16]=delta[0];vertices[_i16+1]=delta[1];vertices[_i16+2]=delta[2];}}/* 
+	     */},{key:'computeMove',value:function computeMove(vertices,pos){var center=this.getCentroid(vertices);var delta=[center[0]-pos[0],center[1]-pos[1],center[2]-pos[2]];for(var _i12=0;_i12<vertices.length;_i12+=3){vertices[_i12]=delta[0];vertices[_i12+1]=delta[1];vertices[_i12+2]=delta[2];}}/* 
 	     * ---------------------------------------
 	     * GEOMETRY CREATORS
 	     * ---------------------------------------
@@ -4194,12 +4073,12 @@
 	var latStart=0,longStart=0,latDist=void 0;if(prim.type===list.SPHERE||prim.type===list.CYLINDER||prim.type===list.SPINDLE||prim.type===list.CONE||prim.type===list.TEARDROP){latDist=latitudeBands;}else if(prim.type===list.CAP){latDist=1;// one flat object, central points + one ring.
 	}else{latDist=latitudeBands/2;// half-domes and half-cones
 	}var latNum=void 0,longNum=void 0;// Start our uv build loop.
-	for(latNum=latStart;latNum<=latDist;latNum++){var theta=latNum*Math.PI/latitudeBands;var sinTheta=Math.sin(theta);var cosTheta=Math.cos(theta);for(longNum=longStart;longNum<=longitudeBands;longNum++){var phi=longNum*this.TWO_PI/longitudeBands;var sinPhi=Math.sin(phi);var cosPhi=Math.cos(phi);var x=void 0,y=void 0,z=void 0,_u=void 0,_v3=void 0,r=void 0;// Compute vertices.
+	for(latNum=latStart;latNum<=latDist;latNum++){var theta=latNum*Math.PI/latitudeBands;var sinTheta=Math.sin(theta);var cosTheta=Math.cos(theta);for(longNum=longStart;longNum<=longitudeBands;longNum++){var phi=longNum*this.TWO_PI/longitudeBands;var sinPhi=Math.sin(phi);var cosPhi=Math.cos(phi);var x=void 0,y=void 0,z=void 0,_u=void 0,_v2=void 0,r=void 0;// Compute vertices.
 	var lat=latNum/latDist;r=lat/2;// use for no-spherical shapes.
-	var long=longNum/longitudeBands;_u=1-long;_v3=1-lat;x=cosPhi*sinTheta/2;z=sinPhi*sinTheta/2;switch(prim.type){case list.CAP:x=cosPhi/4;z=sinPhi/4;y=0;break;case list.CYLINDER:if(startSlice>0&&lat<=startSlice){y=1-startSlice;}else if(endSlice!==1.0&&lat>=endSlice){y=1-endSlice;}else{y=1-lat;x=cosPhi/2;z=sinPhi/2;}y-=0.5;break;case list.SPHERE:y=cosTheta/2;break;case list.TOPDOME:case list.DOME:y=cosTheta/2;break;case list.SKYDOME:y=cosTheta/2;_u=long;//v = 1 - lat;
-	break;case list.BOTTOMDOME:y=(1-cosTheta)/2-0.5;_u=long;_v3=lat;break;case list.SPINDLE:if(lat<=0.4){x=cosPhi*lat;z=sinPhi*lat;}else{x=cosPhi*(1-lat+1/latDist);z=sinPhi*(1-lat+1/latDist);}y=1-lat-0.5;break;case list.TEARDROP:if(lat<0.5){y=cosTheta/4;}else{x=2*cosPhi*(0.5-r);z=2*sinPhi*(0.5-r);y=cosTheta/2;}break;case list.CONE:if(lat<=startSlice){y=1-startSlice;x=cosPhi*r;z=sinPhi*r;}else if(lat>endSlice){// NOTE: not >= endSlice
+	var long=longNum/longitudeBands;_u=1-long;_v2=1-lat;x=cosPhi*sinTheta/2;z=sinPhi*sinTheta/2;switch(prim.type){case list.CAP:x=cosPhi/4;z=sinPhi/4;y=0;break;case list.CYLINDER:if(startSlice>0&&lat<=startSlice){y=1-startSlice;}else if(endSlice!==1.0&&lat>=endSlice){y=1-endSlice;}else{y=1-lat;x=cosPhi/2;z=sinPhi/2;}y-=0.5;break;case list.SPHERE:y=cosTheta/2;break;case list.TOPDOME:case list.DOME:y=cosTheta/2;break;case list.SKYDOME:y=cosTheta/2;_u=long;//v = 1 - lat;
+	break;case list.BOTTOMDOME:y=(1-cosTheta)/2-0.5;_u=long;_v2=lat;break;case list.SPINDLE:if(lat<=0.4){x=cosPhi*lat;z=sinPhi*lat;}else{x=cosPhi*(1-lat+1/latDist);z=sinPhi*(1-lat+1/latDist);}y=1-lat-0.5;break;case list.TEARDROP:if(lat<0.5){y=cosTheta/4;}else{x=2*cosPhi*(0.5-r);z=2*sinPhi*(0.5-r);y=cosTheta/2;}break;case list.CONE:if(lat<=startSlice){y=1-startSlice;x=cosPhi*r;z=sinPhi*r;}else if(lat>endSlice){// NOTE: not >= endSlice
 	y=1-endSlice;x=cosPhi*sinTheta/2;z=sinPhi*sinTheta/2;}else{y=1-lat;x=cosPhi*r;z=sinPhi*r;}y-=0.5;break;case list.TOPCONE:x=cosPhi*r;z=sinPhi*r;y=0.5-r;break;case list.BOTTOMCONE:x=cosPhi*(0.5-r);z=sinPhi*(0.5-r);y=0.0-r;break;}// Texture coords.
-	texCoords.push(_u,_v3);// Push normals.
+	texCoords.push(_u,_v2);// Push normals.
 	var n=vec3.normalize([0,0,0],[x,y,z]);normals.push(n[0],n[1],n[2]);// Push vertices.
 	vertices.push(x*l,y*w,z*h);// These were wrapped bottom->top, so reverse y on normals.
 	if(prim.type===list.BOTTOMDOME||prim.type===list.BOTTOMCONE||prim.type===list.SKYDOME){y=-y;// the y value (have to flip indices backwards for SKYDOME for it to work).
@@ -4338,7 +4217,7 @@
 	     */},{key:'geometryCapsule',value:function geometryCapsule(prim){var TWO_PI=this.TWO_PI;var list=this.typeList;var vec3=this.glMatrix.vec3;var util=this.util;var geo=prim.geometry;// Shortcuts to Prim data arrays.
 	var vertices=[],indices=[],normals=[],texCoords=[],tangents=[];// Radius is measured along the x axis, height along y axis.
 	var radius=prim.dimensions[0]||0.5,height=prim.dimensions[1]||1.0,segmentHeight=prim.divisions[0]||12,numSegments=prim.divisions[1]||12;// Compute a capsule ring.
-	function calculateRing(segments,r,y,dy){var segIncr=1.0/(segments-1);for(var s=0;s<segments;s++){var x=Math.cos(TWO_PI*s*segIncr)*r;var z=Math.sin(TWO_PI*s*segIncr)*r;vertices.push(radius*x,radius*y+height*dy,radius*z);normals.push(x,y,z);var _u2=1-s*segIncr;var _v4=0.5+(radius*y+height*dy)/(2.0*radius+height);texCoords.push(_u2,_v4);}}var ringsBody=segmentHeight+1;var ringsTotal=segmentHeight+ringsBody;var bodyIncr=1.0/(ringsBody-1);var ringIncr=1.0/(segmentHeight-1);for(var r=0;r<segmentHeight/2;r++){calculateRing(numSegments,Math.sin(Math.PI*r*ringIncr),Math.sin(Math.PI*(r*ringIncr-0.5)),-0.5);}for(var _r=0;_r<ringsBody;_r++){calculateRing(numSegments,1.0,0.0,_r*bodyIncr-0.5);}for(var _r2=segmentHeight/2;_r2<segmentHeight;_r2++){calculateRing(numSegments,Math.sin(Math.PI*_r2*ringIncr),Math.sin(Math.PI*(_r2*ringIncr-0.5)),+0.5);}for(var _r3=0;_r3<ringsTotal-1;_r3++){for(var s=0;s<numSegments-1;s++){indices.push(_r3*numSegments+(s+1),_r3*numSegments+(s+0),(_r3+1)*numSegments+(s+1));indices.push((_r3+1)*numSegments+(s+0),(_r3+1)*numSegments+(s+1),_r3*numSegments+s);}}// Tangents.
+	function calculateRing(segments,r,y,dy){var segIncr=1.0/(segments-1);for(var s=0;s<segments;s++){var x=Math.cos(TWO_PI*s*segIncr)*r;var z=Math.sin(TWO_PI*s*segIncr)*r;vertices.push(radius*x,radius*y+height*dy,radius*z);normals.push(x,y,z);var _u2=1-s*segIncr;var _v3=0.5+(radius*y+height*dy)/(2.0*radius+height);texCoords.push(_u2,_v3);}}var ringsBody=segmentHeight+1;var ringsTotal=segmentHeight+ringsBody;var bodyIncr=1.0/(ringsBody-1);var ringIncr=1.0/(segmentHeight-1);for(var r=0;r<segmentHeight/2;r++){calculateRing(numSegments,Math.sin(Math.PI*r*ringIncr),Math.sin(Math.PI*(r*ringIncr-0.5)),-0.5);}for(var _r=0;_r<ringsBody;_r++){calculateRing(numSegments,1.0,0.0,_r*bodyIncr-0.5);}for(var _r2=segmentHeight/2;_r2<segmentHeight;_r2++){calculateRing(numSegments,Math.sin(Math.PI*_r2*ringIncr),Math.sin(Math.PI*(_r2*ringIncr-0.5)),+0.5);}for(var _r3=0;_r3<ringsTotal-1;_r3++){for(var s=0;s<numSegments-1;s++){indices.push(_r3*numSegments+(s+1),_r3*numSegments+(s+0),(_r3+1)*numSegments+(s+1));indices.push((_r3+1)*numSegments+(s+0),(_r3+1)*numSegments+(s+1),_r3*numSegments+s);}}// Tangents.
 	this.computeTangents(vertices,indices,normals,texCoords,tangents);// Color array is pre-created, or gets a default when WebGL buffers are created.
 	// Return the buffer.
 	return this.addBufferData(prim.geometry,vertices,indices,normals,texCoords,tangents);}/** 
@@ -4376,20 +4255,20 @@
 	break;case side.BOTTOM:computeSquare(0,2,1,sx,-sy,nx,nz,-sy/2,1,-1,side.BOTTOM);// ROTATE xy axis
 	break;default:break;}break;default:break;}// Make an individual Plane.
 	function computeSquare(u,v,w,su,sv,nu,nv,pw,flipu,flipv,currSide){// Create a square, positioning in correct position.
-	var vertShift=vertexIndex;if(prim.name==='testPlane')console.log('i:'+i+' j:'+j);for(var _j15=0;_j15<=nv;_j15++){for(var _i17=0;_i17<=nu;_i17++){var vert=positions[vertexIndex]=[0,0,0];vert[u]=(-su/2+_i17*su/nu)*flipu;vert[v]=(-sv/2+_j15*sv/nv)*flipv;vert[w]=pw;// heightMap is always the middle, up-facing vector.
+	var vertShift=vertexIndex;if(prim.name==='testPlane')console.log('i:'+i+' j:'+j);for(var _j2=0;_j2<=nv;_j2++){for(var _i13=0;_i13<=nu;_i13++){var vert=positions[vertexIndex]=[0,0,0];vert[u]=(-su/2+_i13*su/nu)*flipu;vert[v]=(-sv/2+_j2*sv/nv)*flipv;vert[w]=pw;// heightMap is always the middle, up-facing vector.
 	if(prim.heightMap){// our 'y' for the TOP x/z MAY NEED TO CHANGE FOR EACH SIDE
-	vert[w]=prim.heightMap.getPixel(_i17,_j15);}// Normals.
+	vert[w]=prim.heightMap.getPixel(_i13,_j2);}// Normals.
 	norms[vertexIndex]=[0,0,0];// Texture coords.
-	texCoords.push(_i17/nu,1.0-_j15/nv);++vertexIndex;}}// Compute indices and sides.
-	var side=[];for(var _j16=0;_j16<nv;_j16++){for(var _i18=0;_i18<nu;_i18++){var n=vertShift+_j16*(nu+1)+_i18;// Indices for entire prim.
+	texCoords.push(_i13/nu,1.0-_j2/nv);++vertexIndex;}}// Compute indices and sides.
+	var side=[];for(var _j3=0;_j3<nv;_j3++){for(var _i14=0;_i14<nu;_i14++){var n=vertShift+_j3*(nu+1)+_i14;// Indices for entire prim.
 	indices.push(n,n+nu+1,n+nu+2);indices.push(n,n+nu+2,n+1);// Individual sides.
 	side.push(n,n+nu+1,n+nu+2);side.push(n,n+nu+2,n+1);}}// Save the indices for this side.
 	sides[currSide]=side;}// end of computeSquare.
 	// Round the edges of the CUBE or SPHERECUBE to a sphere.
 	if((prim.type===list.CUBE||prim.type===list.CUBESPHERE)&&prim.divisions[3]!==0){var tmp=[0,0,0];// Radius controlled by 4th parameter in divisions
-	var radius=prim.divisions[3];var rx=sx/2.0;var ry=sy/2.0;var rz=sz/2.0;for(var _i19=0;_i19<positions.length;_i19++){var pos=positions[_i19];var normal=normals[_i19];var inner=[pos[0],pos[1],pos[2]];if(pos[0]<-rx+radius){inner[0]=-rx+radius;}else if(pos[0]>rx-radius){inner[0]=rx-radius;}if(pos[1]<-ry+radius){inner[1]=-ry+radius;}else if(pos[1]>ry-radius){inner[1]=ry-radius;}if(pos[2]<-rz+radius){inner[2]=-rz+radius;}else if(pos[2]>rz-radius){inner[2]=rz-radius;}// Re-compute position of moved vertex via normals.
+	var radius=prim.divisions[3];var rx=sx/2.0;var ry=sy/2.0;var rz=sz/2.0;for(var _i15=0;_i15<positions.length;_i15++){var pos=positions[_i15];var normal=normals[_i15];var inner=[pos[0],pos[1],pos[2]];if(pos[0]<-rx+radius){inner[0]=-rx+radius;}else if(pos[0]>rx-radius){inner[0]=rx-radius;}if(pos[1]<-ry+radius){inner[1]=-ry+radius;}else if(pos[1]>ry-radius){inner[1]=ry-radius;}if(pos[2]<-rz+radius){inner[2]=-rz+radius;}else if(pos[2]>rz-radius){inner[2]=rz-radius;}// Re-compute position of moved vertex via normals.
 	normal=[pos[0],pos[1],pos[2]];vec3.sub(normal,normal,inner);vec3.normalize(normal,normal);//normals[ i ] = normal;
-	pos=[inner[0],inner[1],inner[2]];tmp=[normal[0],normal[1],normal[2]];vec3.scale(tmp,tmp,radius);vec3.add(pos,pos,tmp);positions[_i19]=pos;}}else if((prim.type===list.CURVEDOUTERPLANE||prim.type===list.CURVEDINNERPLANE)&&prim.dimensions[4]&&prim.dimensions[4]!==0){var dSide=1;switch(prim.dimensions[3]){case side.FRONT:if(prim.type===list.CURVEDINNERPLANE||prim.type==list.INNERPLANE)dSide=-1;break;case side.BACK:if(prim.type===list.CURVEDOUTERPLANE||prim.type===list.OUTERPLANE)dSide=-1;break;case side.LEFT:if(prim.type===list.CURVEDOUTERPLANE||prim.type===list.OUTERPLANE)dSide=-1;break;case side.RIGHT:if(prim.type===list.CURVEDINNERPLANE||prim.type===list.INNERPLANE)dSide=-1;break;case side.TOP:if(prim.type===list.CURVEDOUTERPLANE||prim.type===list.OUTERPLANE)dSide=-1;break;case side.BOTTOM:if(prim.type===list.CURVEDINNERPLANE||prim.type===list.INNERPLANE)dSide=-1;break;}for(var _i20=0;_i20<positions.length;_i20++){switch(prim.dimensions[3]){case side.FRONT:positions[_i20][2]=dSide*Math.cos(positions[_i20][0])*prim.dimensions[4];break;case side.BACK:positions[_i20][2]=dSide*Math.cos(positions[_i20][0])*prim.dimensions[4];break;case side.LEFT:positions[_i20][0]=dSide*Math.cos(positions[_i20][2])*prim.dimensions[4];break;case side.RIGHT:positions[_i20][0]=dSide*Math.cos(positions[_i20][2])*prim.dimensions[4];break;case side.TOP:positions[_i20][1]=dSide*Math.cos(positions[_i20][0])*prim.dimensions[4];break;case side.BOTTOM:positions[_i20][1]=-Math.cos(positions[_i20][0])*prim.dimensions[4];// SEEN FROM INSIDE< CORRECT
+	pos=[inner[0],inner[1],inner[2]];tmp=[normal[0],normal[1],normal[2]];vec3.scale(tmp,tmp,radius);vec3.add(pos,pos,tmp);positions[_i15]=pos;}}else if((prim.type===list.CURVEDOUTERPLANE||prim.type===list.CURVEDINNERPLANE)&&prim.dimensions[4]&&prim.dimensions[4]!==0){var dSide=1;switch(prim.dimensions[3]){case side.FRONT:if(prim.type===list.CURVEDINNERPLANE||prim.type==list.INNERPLANE)dSide=-1;break;case side.BACK:if(prim.type===list.CURVEDOUTERPLANE||prim.type===list.OUTERPLANE)dSide=-1;break;case side.LEFT:if(prim.type===list.CURVEDOUTERPLANE||prim.type===list.OUTERPLANE)dSide=-1;break;case side.RIGHT:if(prim.type===list.CURVEDINNERPLANE||prim.type===list.INNERPLANE)dSide=-1;break;case side.TOP:if(prim.type===list.CURVEDOUTERPLANE||prim.type===list.OUTERPLANE)dSide=-1;break;case side.BOTTOM:if(prim.type===list.CURVEDINNERPLANE||prim.type===list.INNERPLANE)dSide=-1;break;}for(var _i16=0;_i16<positions.length;_i16++){switch(prim.dimensions[3]){case side.FRONT:positions[_i16][2]=dSide*Math.cos(positions[_i16][0])*prim.dimensions[4];break;case side.BACK:positions[_i16][2]=dSide*Math.cos(positions[_i16][0])*prim.dimensions[4];break;case side.LEFT:positions[_i16][0]=dSide*Math.cos(positions[_i16][2])*prim.dimensions[4];break;case side.RIGHT:positions[_i16][0]=dSide*Math.cos(positions[_i16][2])*prim.dimensions[4];break;case side.TOP:positions[_i16][1]=dSide*Math.cos(positions[_i16][0])*prim.dimensions[4];break;case side.BOTTOM:positions[_i16][1]=-Math.cos(positions[_i16][0])*prim.dimensions[4];// SEEN FROM INSIDE< CORRECT
 	break;}}}// Flatten arrays, since we created using 2 dimensions.
 	vertices=flatten(positions,false);normals=flatten(norms,false);// Re-compute normals, which may have changed.
 	normals=this.computeNormals(vertices,indices,normals);console.log(" IN CUBE NORMALS NOW ARE>...."+normals.length);// Return the buffer.
@@ -4517,8 +4396,8 @@
 	uv[vertices.length-2][0]=0.625;uv[2][0]=0.625;// was v.x
 	uv[vertices.length-1][0]=0.875;uv[3][0]=0.875;// was v.x
 	// Our engine wraps opposite, so reverse first coordinate (can't do it until we do all coordinates).
-	for(i=0;i<texCoords.length;i++){texCoords[i][0]=1.0-texCoords[i][0];}}function createTangents(vertices,tangents){for(i=0;i<vertices.Length;i++){v=vertices[i];v[1]=0;v=vec3.normalize([0,0,0],v);tangent=[0,0,0,0];tangent[0]=-v[2];tangent[1]=0;tangent[2]=v[0];tangent[3]=-1;tangents[i]=tangent;}tangents[vertices.length-4]=[-1,0,1];tangents[0]=[-1,0,-1];tangents[vertices.length-3]=[1,0,-1];tangents[1]=[1,0,-1];tangents[vertices.length-2]=[1,0,1];tangents[2]=[1,0,1];tangents[vertices.length-1]=[-1,0,1];tangents[3]=[-1,0,1];for(i=0;i<4;i++){tangents[vertices.length-1-i][3]=tangents[i][3]=-1;}}function createVertexLine(from,to,steps,v,vertices){for(var _i21=1;_i21<=steps;_i21++){//console.log("Vec3 " + v + " IS A:" + vec3.lerp( [ 0, 0, 0 ], from, to, i / steps ))
-	vertices[v++]=vec3.lerp([0,0,0],from,to,_i21/steps);}return v;}function createLowerStrip(steps,vTop,vBottom,t,triangles){for(var _i22=1;_i22<steps;_i22++){triangles[t++]=vBottom;triangles[t++]=vTop-1;triangles[t++]=vTop;triangles[t++]=vBottom++;triangles[t++]=vTop++;triangles[t++]=vBottom;}triangles[t++]=vBottom;triangles[t++]=vTop-1;triangles[t++]=vTop;return t;}function createUpperStrip(steps,vTop,vBottom,t,triangles){triangles[t++]=vBottom;triangles[t++]=vTop-1;triangles[t++]=++vBottom;for(var _i23=1;_i23<=steps;_i23++){triangles[t++]=vTop-1;triangles[t++]=vTop;triangles[t++]=vBottom;triangles[t++]=vBottom;triangles[t++]=vTop++;triangles[t++]=++vBottom;}return t;}// Color array is pre-created, or gets a default when WebGL buffers are created.
+	for(i=0;i<texCoords.length;i++){texCoords[i][0]=1.0-texCoords[i][0];}}function createTangents(vertices,tangents){for(i=0;i<vertices.Length;i++){v=vertices[i];v[1]=0;v=vec3.normalize([0,0,0],v);tangent=[0,0,0,0];tangent[0]=-v[2];tangent[1]=0;tangent[2]=v[0];tangent[3]=-1;tangents[i]=tangent;}tangents[vertices.length-4]=[-1,0,1];tangents[0]=[-1,0,-1];tangents[vertices.length-3]=[1,0,-1];tangents[1]=[1,0,-1];tangents[vertices.length-2]=[1,0,1];tangents[2]=[1,0,1];tangents[vertices.length-1]=[-1,0,1];tangents[3]=[-1,0,1];for(i=0;i<4;i++){tangents[vertices.length-1-i][3]=tangents[i][3]=-1;}}function createVertexLine(from,to,steps,v,vertices){for(var _i17=1;_i17<=steps;_i17++){//console.log("Vec3 " + v + " IS A:" + vec3.lerp( [ 0, 0, 0 ], from, to, i / steps ))
+	vertices[v++]=vec3.lerp([0,0,0],from,to,_i17/steps);}return v;}function createLowerStrip(steps,vTop,vBottom,t,triangles){for(var _i18=1;_i18<steps;_i18++){triangles[t++]=vBottom;triangles[t++]=vTop-1;triangles[t++]=vTop;triangles[t++]=vBottom++;triangles[t++]=vTop++;triangles[t++]=vBottom;}triangles[t++]=vBottom;triangles[t++]=vTop-1;triangles[t++]=vTop;return t;}function createUpperStrip(steps,vTop,vBottom,t,triangles){triangles[t++]=vBottom;triangles[t++]=vTop-1;triangles[t++]=++vBottom;for(var _i19=1;_i19<=steps;_i19++){triangles[t++]=vTop-1;triangles[t++]=vTop;triangles[t++]=vBottom;triangles[t++]=vBottom;triangles[t++]=vTop++;triangles[t++]=++vBottom;}return t;}// Color array is pre-created, or gets a default when WebGL buffers are created.
 	// Return the buffer.
 	return this.addBufferData(prim.geometry,vertices,indices,normals,texCoords,tangents);//return this.createGLBuffers( prim.geometry );
 	}/** 
@@ -4609,14 +4488,14 @@
 	[-a,-c,0],// 18 + 4 = 23
 	[a,-c,0]// 19 + 4 = 24
 	];//vertices = vertices.map(function(v) { return v.normalize().scale(r); })
-	var faces=[[4,3,2,1,0],[7,6,5,0,1],[12,11,10,9,8],[15,14,13,8,9],[14,3,4,16,13],[3,14,15,17,2],[11,6,7,18,10],[6,11,12,19,5],[4,0,5,19,16],[12,8,13,16,19],[15,9,10,18,17],[7,1,2,17,18]];if(prim.applyTexToFace){for(var _i24=0;_i24<faces.length;_i24++){var len=vertices.length;// The fan is a flat polygon, constructed with face points, shared vertices.
-	var fan=this.computeFan(vtx,faces[_i24]);vertices=vertices.concat(fan.vertices);// Update the indices to reflect concatenation.
-	for(var _i25=0;_i25<fan.indices.length;_i25++){fan.indices[_i25]+=len;}indices=indices.concat(fan.indices);texCoords=texCoords.concat(fan.texCoords);normals=normals.concat(fan.normals);}}else{var computeSphereCoords=this.computeSphereCoords;for(var _i26=0;_i26<faces.length;_i26++){var vv=faces[_i26];// indices to vertices
+	var faces=[[4,3,2,1,0],[7,6,5,0,1],[12,11,10,9,8],[15,14,13,8,9],[14,3,4,16,13],[3,14,15,17,2],[11,6,7,18,10],[6,11,12,19,5],[4,0,5,19,16],[12,8,13,16,19],[15,9,10,18,17],[7,1,2,17,18]];if(prim.applyTexToFace){for(var _i20=0;_i20<faces.length;_i20++){var len=vertices.length;// The fan is a flat polygon, constructed with face points, shared vertices.
+	var fan=this.computeFan(vtx,faces[_i20]);vertices=vertices.concat(fan.vertices);// Update the indices to reflect concatenation.
+	for(var _i21=0;_i21<fan.indices.length;_i21++){fan.indices[_i21]+=len;}indices=indices.concat(fan.indices);texCoords=texCoords.concat(fan.texCoords);normals=normals.concat(fan.normals);}}else{var computeSphereCoords=this.computeSphereCoords;for(var _i22=0;_i22<faces.length;_i22++){var vv=faces[_i22];// indices to vertices
 	var vvv=[];// saved vertices
-	var lenv=vv.length;for(var _j17=0;_j17<vv.length;_j17++){vvv.push(vtx[vv[_j17]]);}var center=this.computeCentroid(vvv);for(var _i27=1;_i27<=lenv;_i27++){var p1=_i27-1;var p2=_i27;if(_i27===lenv){p1=p2-1;p2=0;}var v1=vvv[p1];var v2=vvv[p2];vertices.push(vec3.copy([0,0,0],v1),vec3.copy([0,0,0],v2),vec3.copy([0,0,0],center));var cLen=vertices.length-1;indices.push(cLen-2,cLen-1,cLen);normals.push(vec3.copy([0,0,0],v1),vec3.copy([0,0,0],v2),vec3.copy([0,0,0],center));texCoords.push(computeSphereCoords(v1),computeSphereCoords(v2),computeSphereCoords(center));}// end of 'for' loop.
+	var lenv=vv.length;for(var _j4=0;_j4<vv.length;_j4++){vvv.push(vtx[vv[_j4]]);}var center=this.computeCentroid(vvv);for(var _i23=1;_i23<=lenv;_i23++){var p1=_i23-1;var p2=_i23;if(_i23===lenv){p1=p2-1;p2=0;}var v1=vvv[p1];var v2=vvv[p2];vertices.push(vec3.copy([0,0,0],v1),vec3.copy([0,0,0],v2),vec3.copy([0,0,0],center));var cLen=vertices.length-1;indices.push(cLen-2,cLen-1,cLen);normals.push(vec3.copy([0,0,0],v1),vec3.copy([0,0,0],v2),vec3.copy([0,0,0],center));texCoords.push(computeSphereCoords(v1),computeSphereCoords(v2),computeSphereCoords(center));}// end of 'for' loop.
 	}// end of 'faces' loop.
 	}// end of wrap whole object with one texture.
-	for(var _i28=0;_i28<vertices.length;_i28++){var _vv=vertices[_i28];_vv[0]*=w;_vv[1]*=h;_vv[2]*=d;}// Flatten.
+	for(var _i24=0;_i24<vertices.length;_i24++){var _vv=vertices[_i24];_vv[0]*=w;_vv[1]*=h;_vv[2]*=d;}// Flatten.
 	vertices=flatten(vertices);texCoords=flatten(texCoords);normals=flatten(normals);// Color array is pre-created, or gets a default when WebGL buffers are created.
 	// Return the buffer.
 	return this.addBufferData(prim.geometry,vertices,indices,normals,texCoords,tangents);}/** 
@@ -4641,10 +4520,10 @@
 	var rings=prim.divisions[0];var sides=prim.divisions[1];// typical: radius = 0.5, ringRadius = 0.25, sides = 36, rings = 24;
 	var vertsPerRow=sides+1;var vertsPerColumn=rings+1;var ringStride=this.TWO_PI/rings;var torusStride=this.TWO_PI/sides;var theta=0,phi=0,x=void 0,y=void 0,z=void 0;for(var vertColumn=0;vertColumn<vertsPerColumn;vertColumn++){theta=ringStride*vertColumn;for(var horizRow=0;horizRow<vertsPerRow;horizRow++){phi=torusStride*horizRow;// Position.
 	x=Math.cos(theta)*(radius+ringRadius*Math.cos(phi));y=Math.sin(theta)*(radius+ringRadius*Math.cos(phi));z=ringRadius*Math.sin(phi);vertices.push(x,y,z);// NOTE: x, z, y gives a horizontal torus
-	var norm=vec3.normalize([0,0,0],[x,y,z]);normals.push(norm[0],norm[1],norm[2]);var _u3=horizRow/vertsPerRow;var _v5=vertColumn/vertsPerColumn;texCoords.push(_u3,_v5);}}// let numIndices = sides * rings * 6;
+	var norm=vec3.normalize([0,0,0],[x,y,z]);normals.push(norm[0],norm[1],norm[2]);var _u3=horizRow/vertsPerRow;var _v4=vertColumn/vertsPerColumn;texCoords.push(_u3,_v4);}}// let numIndices = sides * rings * 6;
 	for(var _vertColumn=0;_vertColumn<rings;_vertColumn++){for(var _horizRow=0;_horizRow<sides;_horizRow++){var lt=_horizRow+_vertColumn*vertsPerRow;var rt=_horizRow+1+_vertColumn*vertsPerRow;var lb=_horizRow+(_vertColumn+1)*vertsPerRow;var rb=_horizRow+1+(_vertColumn+1)*vertsPerRow;indices.push(lb,rb,rt,lb,rt,lt);// NOTE: wrap backwards to see inside of torus (tunnel?).
 	}}///////////////////////////
-	this.computeSubdivide(vertices,indices);//////////////////////////
+	this.morph.computeSubdivide(vertices,indices,texCoords);//////////////////////////
 	// Color array is pre-created, or gets a default when WebGL buffers are created.
 	// Return the buffer.
 	return this.addBufferData(prim.geometry,vertices,indices,normals,texCoords,tangents);}/** 
@@ -4709,7 +4588,7 @@
 	prim.textures=[];// Store multiple sounds for one Prim.
 	prim.audio=[];// Store multiple videos for one Prim.
 	prim.video=[];// Multiple textures per Prim. Rendering defines how textures for each Prim type are used.
-	for(var _i29=0;_i29<textureImages.length;_i29++){this.loadTexture.load(textureImages[_i29],prim);}prim.scale=1.0;// Define Prim material (only one material type at a time per Prim ).
+	for(var _i25=0;_i25<textureImages.length;_i25++){this.loadTexture.load(textureImages[_i25],prim);}prim.scale=1.0;// Define Prim material (only one material type at a time per Prim ).
 	prim.setMaterial();//prim.setLight();
 	// Parent Node.
 	prim.parentNode=null;// Child Prim array.
@@ -5654,9 +5533,854 @@
 	                }
 	        }
 
+	        /** 
+	         * Given a mesh of vertice rendered as triangles, compute the quads and indexing. 
+	         * from the indices (path through triangles)
+	         * https://github.com/Erkaman/gl-quads-to-tris
+	         * https://github.com/Erkaman/gl-catmull-clark/blob/master/index.js   THIS ONE
+	         * https://en.wikipedia.org/wiki/Catmull%E2%80%93Clark_subdivision_surface
+	         * https://vorg.github.io/pex/docs/pex-geom/Geometry.html
+	         * http://www.rorydriscoll.com/2008/08/01/catmull-clark-subdivision-the-basics/
+	         * NOTE: quads = "cells" = "face"
+	         */
+
+
 	        _createClass(Morph, [{
-	                key: 'init',
-	                value: function init() {}
+	                key: 'computeQuadsFromTris',
+	                value: function computeQuadsFromTris(triIndices) {
+
+	                        var util = this.util;
+
+	                        var idx = triIndices;
+
+	                        var quads = new Array(idx.length / 2);
+
+	                        var ct = 0;
+
+	                        if (!util.canFlatten(idx)) {
+
+	                                console.error('Morph.trisToQuads() error: flattened arrays not supported');
+
+	                                return null;
+	                        }
+
+	                        // Array of GL_TRIANGLES (0, 1, 2, 0, 2, 3) to quads.
+
+	                        for (var i = 0; i < idx.length; i += 2) {
+
+	                                quads[ct++] = [idx[i][0], idx[i][1], idx[i + 1][1], idx[i + 1][2]];
+	                        }
+
+	                        return quads;
+	                }
+
+	                /** 
+	                 * given a mesh of quads, compute the triangles and indexing.
+	                 */
+
+	        }, {
+	                key: 'computeTrisFromQuads',
+	                value: function computeTrisFromQuads(quadIndices) {
+
+	                        var util = this.util;
+
+	                        var tris = new Array(quadIndices.length * 2);
+
+	                        var ct = 0;
+
+	                        if (!util.canFlatten(quadIndices)) {
+
+	                                console.error('Morph.quadsToTris() error: flattened quad arrays not used in this program');
+
+	                                return null;
+	                        }
+
+	                        for (var i = 0; i < quadIndices.length; i++) {
+
+	                                var quad = quadIndices[i];
+
+	                                console.log("quadindices:" + quad); ///////////////////////////
+
+	                                tris[ct++] = [quad[0], quad[1], quad[2]];
+
+	                                tris[ct++] = [quad[0], quad[2], quad[3]];
+	                        }
+
+	                        return tris;
+	                }
+
+	                /** 
+	                 * Compute quad faces and edges, used for 
+	                 * subdivision via
+	                 * @param {Array} quads an array of quad indices for a Prim.
+	                 * @param {Array} vtx an array of vertex3 objects.
+	                 */
+
+	        }, {
+	                key: 'computeQuadFaceEdges',
+	                value: function computeQuadFaceEdges(quads, vtx) {
+
+	                        function Edge(minIndex, maxIndex) {
+
+	                                this.vertexIndices = [minIndex, maxIndex];
+
+	                                this.faceIndices = [];
+
+	                                Edge.prototype.midpoint = function (vtx) {
+
+	                                        ////////console.log("vertexIndices: " + this.vertexIndices[ 0 ] + ', ' + this.vertexIndices[ 1 ] );
+
+	                                        var returnValue = vtx[this.vertexIndices[0]].pos.clone().add(vtx[this.vertexIndices[1]].pos).divideScalar(2);
+
+	                                        return returnValue;
+	                                };
+	                        };
+
+	                        function Face(quad) {
+
+	                                this.vertexIndices = quad;
+
+	                                this.edgeIndices = [];
+	                        }; // end of Face
+
+	                        var faces = [];
+
+	                        var edges = [];
+
+	                        var minMaxLookup = [];
+
+	                        var quadLen = quads[0].length; // side of quads face, change for other face sizes.
+
+	                        for (var f = 0; f < quads.length; f++) {
+
+	                                var quad = quads[f];
+
+	                                //let quadLen = quad.length; 
+
+	                                var face = new Face(quad);
+
+	                                for (var vi = 0; vi < quadLen; vi++) {
+
+	                                        // Get the working position in the quad.
+
+	                                        var viNext = (vi + 1) % quadLen;
+
+	                                        // get current and next index for quad vertices.
+
+	                                        var vi0 = quad[vi];
+
+	                                        var vi1 = quad[viNext];
+
+	                                        var vertex = vtx[vi0];
+
+	                                        var vertexNext = vtx[vi1];
+
+	                                        vertex.faceIndices.push(f);
+
+	                                        // Get the larger and smaller of the two indices.
+
+	                                        var iMin = Math.min(vi0, vi1);
+
+	                                        var iMax = Math.max(vi0, vi1);
+
+	                                        // Initialize minMaxMLookup
+
+	                                        var maxLookup = minMaxLookup[iMin];
+
+	                                        ///////////console.log("maxlookup is a:" + maxLookup)
+
+	                                        if (maxLookup === undefined) {
+
+	                                                maxLookup = [];
+
+	                                                minMaxLookup[iMin] = maxLookup;
+	                                        }
+
+	                                        var edgeIndex = maxLookup[iMax];
+
+	                                        ///////////console.log("edgeIndex is a:" + edgeIndex )
+
+	                                        if (edgeIndex === undefined) {
+
+	                                                var edge = new Edge(iMin, iMax);
+
+	                                                edgeIndex = edges.length;
+
+	                                                edges.push(edge);
+	                                        }
+
+	                                        maxLookup[iMax] = edgeIndex;
+
+	                                        // hack
+	                                        // Is there away to avoid this indexOf call?
+
+	                                        if (face.edgeIndices.indexOf(edgeIndex) == -1) {
+
+	                                                face.edgeIndices.push(edgeIndex);
+	                                        }
+	                                }
+
+	                                for (var ei = 0; ei < face.edgeIndices.length; ei++) {
+
+	                                        var _edgeIndex = face.edgeIndices[ei];
+
+	                                        var _edge = edges[_edgeIndex];
+
+	                                        _edge.faceIndices.push(f);
+
+	                                        for (var _vi = 0; _vi < _edge.vertexIndices.length; _vi++) {
+
+	                                                var _vi2 = _edge.vertexIndices[_vi];
+
+	                                                var _vertex = vtx[_vi2];
+
+	                                                // hack
+	                                                // Is there away to avoid this indexOf call?
+
+	                                                if (_vertex.edgeIndices.indexOf(_edgeIndex) == -1) {
+
+	                                                        _vertex.edgeIndices.push(_edgeIndex);
+	                                                }
+	                                        }
+	                                }
+
+	                                faces.push(face);
+	                        } // outer loop.
+
+	                        return {
+	                                faces: faces,
+	                                edges: edges
+	                        };
+	                }
+
+	                /** 
+	                 * Subdivide a mesh
+	                 * Comprehensive description.
+	                 * http://www.rorydriscoll.com/2008/08/01/catmull-clark-subdivision-the-basics/
+	                 * @link http://www.rorydriscoll.com/2008/08/01/catmull-clark-subdivision-the-basics/
+	                 * USE:
+	                 * https://blog.nobel-joergensen.com/2010/12/25/procedural-generated-mesh-in-unity/
+	                 * http://wiki.unity3d.com/index.php/MeshSubdivision
+	                 * https://github.com/Erkaman/gl-catmull-clark/blob/master/index.js
+	                 * Examples:
+	                 * Subdivide algorithm
+	                 * https://github.com/mikolalysenko/loop-subdivide
+	                 * https://github.com/Erkaman/gl-catmull-clark
+	                 * https://www.ibiblio.org/e-notes/Splines/models/loop.js
+	                 * generalized catmull-clark subdivision algorithm
+	                 * https://thiscouldbebetter.wordpress.com/2015/04/24/the-catmull-clark-subdivision-surface-algorithm-in-javascript/
+	                 * @link http://vorg.github.io/pex/docs/pex-geom/Geometry.html
+	                 * @link http://answers.unity3d.com/questions/259127/does-anyone-have-any-code-to-subdivide-a-mesh-and.html
+	                 * USE:
+	                 * @link https://thiscouldbebetter.wordpress.com/2015/04/24/the-catmull-clark-subdivision-surface-algorithm-in-javascript/
+	                 */
+
+	        }, {
+	                key: 'computeSubdivide',
+	                value: function computeSubdivide(vertices, indices, texCoords) {
+
+	                        var util = this.util;
+
+	                        var vec3 = this.glMatrix.vec3;
+
+	                        var vtx = void 0,
+	                            tris = void 0;
+
+	                        function Coords(x, y, z) {
+
+	                                this.x = x;
+
+	                                this.y = y;
+
+	                                this.z = z;
+
+	                                Coords.prototype.add = function (other) {
+	                                        this.x += other.x;
+	                                        this.y += other.y;
+	                                        this.z += other.z;
+	                                        return this;
+	                                };
+
+	                                Coords.prototype.clear = function () {
+	                                        this.x = 0;
+	                                        this.y = 0;
+	                                        this.z = 0;
+	                                        return this;
+	                                };
+
+	                                Coords.prototype.clone = function () {
+	                                        return new Coords(this.x, this.y, this.z);
+	                                };
+
+	                                Coords.prototype.crossProduct = function (other) {
+	                                        return this.overwriteWithXYZ(this.y * other.z - other.y * this.z, other.x * this.z - this.x * other.z, this.x * other.y - other.x * this.y);
+	                                };
+
+	                                Coords.prototype.divideScalar = function (scalar) {
+	                                        this.x /= scalar;
+	                                        this.y /= scalar;
+	                                        this.z /= scalar;
+	                                        return this;
+	                                };
+
+	                                Coords.prototype.dotProduct = function (other) {
+	                                        return this.x * other.x + this.y * other.y + this.z * other.z;
+	                                };
+
+	                                Coords.prototype.magnitude = function () {
+	                                        return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+	                                };
+
+	                                Coords.prototype.multiplyScalar = function (scalar) {
+	                                        this.x *= scalar;
+	                                        this.y *= scalar;
+	                                        this.z *= scalar;
+	                                        return this;
+	                                };
+
+	                                Coords.prototype.normalize = function () {
+	                                        return this.divideScalar(this.magnitude());
+	                                };
+
+	                                Coords.prototype.overwriteWith = function (other) {
+	                                        this.x = other.x;
+	                                        this.y = other.y;
+	                                        this.z = other.z;
+	                                        return this;
+	                                };
+
+	                                Coords.prototype.overwriteWithXYZ = function (x, y, z) {
+	                                        this.x = x;
+	                                        this.y = y;
+	                                        this.z = z;
+	                                        return this;
+	                                };
+
+	                                Coords.prototype.subtract = function (other) {
+	                                        this.x -= other.x;
+	                                        this.y -= other.y;
+	                                        this.z -= other.z;
+	                                        return this;
+	                                };
+	                        }; // end of Coords
+
+	                        // Adapt to our flattened vec3.
+
+	                        function Vertex(vec) {
+
+	                                this.pos = new Coords(vec[0], vec[1], vec[2]);
+
+	                                this.edgeIndices = [];
+
+	                                this.faceIndices = [];
+	                        }; // end of Vertex
+
+	                        Vertex.manyFromPositions = function (positions) {
+
+	                                var returnValues = [];
+
+	                                for (var i = 0; i < positions.length; i++) {
+	                                        var position = positions[i];
+	                                        var vertex = new Vertex([position.x, position.y, position.z]); ///CHANGED!!!!!!!!!
+	                                        returnValues.push(vertex);
+	                                }
+
+	                                return returnValues;
+	                        };
+
+	                        // handle both flattened and unflattened vertices.
+
+	                        if (!util.canFlatten(vertices)) {
+
+	                                var _v = util.unFlatten(vertices, 3);
+
+	                                // Build Vertex object out of vec3.
+
+	                                vtx = new Array(_v.length);
+
+	                                for (var i = 0; i < _v.length; i++) {
+
+	                                        // NOTE: this is our array, so it is OK
+
+	                                        vtx[i] = new Vertex(_v[i]);
+	                                }
+	                        } else {
+
+	                                vtx = vertices;
+	                        }
+
+	                        if (!util.canFlatten(indices)) {
+
+	                                tris = util.unFlatten(indices, 3);
+	                        } else {
+
+	                                tris = indices;
+	                        }
+
+	                        // requires unflattened indices, in triangles
+
+	                        var quads = this.computeQuadsFromTris(tris);
+
+	                        /////////////////////////////////////////////////////
+	                        // TEST CUBE DATA
+	                        // NOTE: we define Vertex differently from the original code.
+
+	                        vtx = [new Vertex([-1, -1, -1]), new Vertex([1, -1, -1]), new Vertex([1, 1, -1]), new Vertex([-1, 1, -1]), new Vertex([-1, -1, 1]), new Vertex([1, -1, 1]), new Vertex([1, 1, 1]), new Vertex([-1, 1, 1])];
+
+	                        // Cube quads
+	                        quads = [[0, 1, 2, 3], [0, 1, 5, 4], [1, 2, 6, 5], [2, 3, 7, 6], [3, 0, 4, 7], [4, 5, 6, 7]];
+
+	                        window.faces = faces;
+	                        window.edges = edges;
+
+	                        //let quads = quads;
+
+	                        // Compute the Faces and Edges for each Quad.
+
+	                        var faceEdges = this.computeQuadFaceEdges(quads, vtx);
+
+	                        window.faceEdges = faceEdges;
+
+	                        var faces = faceEdges.faces;
+	                        var edges = faceEdges.edges;
+
+	                        console.log("-------------FIRST UNIT TEST-------------------");
+	                        window.vtx = vtx;
+	                        window.faces = faces;
+	                        window.edges = edges;
+
+	                        // Run a unit test
+	                        var faceTest = [{ vertexIndices: [0, 1, 2, 3], edgeIndices: [0, 1, 2, 3] }, { vertexIndices: [0, 1, 5, 4], edgeIndices: [0, 4, 5, 6] }, { vertexIndices: [1, 2, 6, 5], edgeIndices: [1, 7, 8, 4] }, { vertexIndices: [2, 3, 7, 6], edgeIndices: [2, 9, 10, 7] }, { vertexIndices: [3, 0, 4, 7], edgeIndices: [3, 6, 11, 9] }, { vertexIndices: [4, 5, 6, 7], edgeIndices: [5, 8, 10, 11] }];
+	                        window.faceTest = faceTest;
+	                        var ff = [],
+	                            fft = [],
+	                            ee = [],
+	                            eet = [];
+
+	                        for (var _i in faceTest) {
+
+	                                var ft = faceTest[_i];
+	                                var vit = ft.vertexIndices; ///////////////
+	                                var eeit = ft.edgeIndices;
+
+	                                var _f = faces[_i];
+	                                var _vi3 = _f.vertexIndices; /////////////////
+	                                var eei = _f.edgeIndices;
+
+	                                // TEST
+	                                for (var _j in vit) {
+	                                        fft.push(vit[_j]);
+	                                }
+	                                // OURS
+	                                for (var _j2 in eeit) {
+	                                        eet.push(eeit[_j2]);
+	                                }
+	                                // TEST
+	                                for (var _j3 in _vi3) {
+	                                        ff.push(_vi3[_j3]);
+	                                }
+	                                // OURS
+	                                for (var _j4 in eei) {
+	                                        ee.push(eei[_j4]);
+	                                }
+	                        }
+
+	                        window.ff = ff;
+	                        window.fft = fft;
+	                        window.eet = eet;
+	                        window.ee = ee;
+
+	                        // NOW COMPARE Face VERTICES
+	                        console.log('testing face vertices...');
+	                        for (var _j5 in ff) {
+	                                if (ff[_j5] !== fft[_j5]) {
+	                                        console.error('ERROR in face vertices at position:' + _j5);
+	                                }
+	                        }
+	                        console.log('testing face indices...');
+	                        for (var _j6 in ee) {
+	                                if (ee[_j6] !== eet[_j6]) {
+	                                        console.error('ERROR in face indices at position:' + _j6);
+	                                }
+	                        }
+
+	                        console.log("-------------SECOND UNIT TEST-------------------");
+
+	                        var edgeTest = [{ vertexIndices: [0, 1], faceIndices: [0, 1] }, { vertexIndices: [1, 2], faceIndices: [0, 2] }, { vertexIndices: [2, 3], faceIndices: [0, 3] }, { vertexIndices: [0, 3], faceIndices: [0, 4] }, { vertexIndices: [1, 5], faceIndices: [1, 2] }, { vertexIndices: [4, 5], faceIndices: [1, 5] }, { vertexIndices: [0, 4], faceIndices: [1, 4] }, { vertexIndices: [2, 6], faceIndices: [2, 3] }, { vertexIndices: [5, 6], faceIndices: [2, 5] }, { vertexIndices: [3, 7], faceIndices: [3, 4] }, { vertexIndices: [6, 7], faceIndices: [3, 5] }, { vertexIndices: [4, 7], faceIndices: [4, 5] }];
+
+	                        var edgT = [],
+	                            edg = [];
+	                        // TEST EDGE ARRAY
+	                        for (var _j7 in edgeTest) {
+	                                var edgTj = edgeTest[_j7];
+	                                edgT.push(edgTj.vertexIndices[0], edgTj.vertexIndices[1], edgTj.faceIndices[0], edgTj.faceIndices[1]);
+	                        }
+	                        // OUR EDGE ARRAY
+	                        for (var _j8 in edges) {
+	                                var edgj = edges[_j8];
+	                                edg.push(edgj.vertexIndices[0], edgj.vertexIndices[1], edgj.faceIndices[0], edgj.faceIndices[1]);
+	                        }
+	                        window.edgT = edgT;
+	                        window.edg = edg;
+	                        // COMPARE EDGE ARRAYS
+	                        for (var _j9 in edgT) {
+	                                if (edgT[_j9] !== edg[_j9]) {
+	                                        console.error('Error in Edges at position:' + _j9);
+	                                }
+	                        }
+
+	                        ///////////////////////////////////////////////////////////////////////////////////////
+	                        // BEGIN SUBDIVIDE
+
+	                        console.log("----------BEGIN SUBDIVIDE------------");
+
+	                        var numberOfFacesOriginal = faces.length;
+	                        var numberOfEdgesOriginal = edges.length;
+	                        var numberOfVerticesOriginal = vtx.length;
+
+	                        console.log("Number of faces original: " + numberOfFacesOriginal); ////////////////
+	                        console.log("Number of edges original: " + numberOfEdgesOriginal);
+	                        console.log("Number of vertices original:" + numberOfVerticesOriginal);
+
+	                        var facePoints = [];
+	                        var edgePoints = [];
+
+	                        var sumOfVertexPositions = new Coords();
+
+	                        var averageOfVertexPositions = new Coords();
+
+	                        // Loop through the original Faces, and create an average Vertex.
+
+	                        for (var f = 0; f < numberOfFacesOriginal; f++) {
+
+	                                var face = faces[f];
+
+	                                var numberOfVerticesInFace = face.vertexIndices.length;
+
+	                                sumOfVertexPositions.clear();
+
+	                                // Sum all Vertexes for each Face.
+
+	                                for (var vi = 0; vi < numberOfVerticesInFace; vi++) {
+
+	                                        var vertexIndex = face.vertexIndices[vi];
+
+	                                        var vertexPos = vtx[vertexIndex].pos;
+
+	                                        sumOfVertexPositions.add(vertexPos);
+	                                }
+
+	                                // Compute a new averaged Coord for the Face.
+
+	                                averageOfVertexPositions.overwriteWith(sumOfVertexPositions).divideScalar(numberOfVerticesInFace);
+
+	                                // Save to facePoints, key = position of original Face
+
+	                                facePoints.push(averageOfVertexPositions.clone());
+	                        } // end for each face
+
+
+	                        // Loop through the original Edges, and compute an averaged midpoint.
+
+	                        for (var e = 0; e < numberOfEdgesOriginal; e++) {
+
+	                                var edge = edges[e];
+
+	                                sumOfVertexPositions.clear();
+
+	                                for (var vi = 0; vi < edge.vertexIndices.length; vi++) {
+
+	                                        var vertexIndex = edge.vertexIndices[vi];
+
+	                                        var vertexPos = vtx[vertexIndex].pos;
+
+	                                        sumOfVertexPositions.add(vertexPos);
+	                                }
+
+	                                var numberOfFacesAdjacent = edge.faceIndices.length;
+
+	                                for (var fi = 0; fi < numberOfFacesAdjacent; fi++) {
+
+	                                        // Sum vertices from adjacent Face.
+
+	                                        var faceIndex = edge.faceIndices[fi];
+
+	                                        var facePoint = facePoints[faceIndex];
+
+	                                        sumOfVertexPositions.add(facePoint);
+	                                }
+
+	                                var numberOfVertices = edge.vertexIndices.length + numberOfFacesAdjacent;
+
+	                                // Create new a Coords averaged with the Edge, plus adjacent Face.
+
+	                                averageOfVertexPositions.overwriteWith(sumOfVertexPositions).divideScalar(numberOfVertices);
+
+	                                // Save to edgePoints, key = position of original Edge.
+
+	                                edgePoints.push(averageOfVertexPositions.clone());
+	                        } // end for each Edge
+
+
+	                        var edgesFromFaceToEdgePoints = [];
+
+	                        // Loop through our faces, and add in the new Coords.
+
+	                        for (var f = 0; f < numberOfFacesOriginal; f++) {
+
+	                                var face = faces[f];
+
+	                                // Get the Face Coord.
+
+	                                var facePoint = facePoints[f];
+
+	                                var numberOfEdgesInFace = face.edgeIndices.length;
+
+	                                for (var ei = 0; ei < numberOfEdgesInFace; ei++) {
+
+	                                        // Get the Edge Coords.
+
+	                                        var edgeIndex = face.edgeIndices[ei];
+
+	                                        var edgePoint = edgePoints[edgeIndex];
+
+	                                        // compute the new index, and wrap in Array.
+
+	                                        var edgeFromFacePointToEdgePoint = [numberOfVerticesOriginal + numberOfEdgesOriginal + f, numberOfVerticesOriginal + edgeIndex];
+
+	                                        // save the new positions in the array.
+
+	                                        edgesFromFaceToEdgePoints.push(edgeFromFacePointToEdgePoint);
+	                                }
+	                        } // end for each face
+
+	                        // Re-write the new array list
+
+	                        var edgesFromVerticesToEdgePoints = [];
+
+	                        var verticesNew = [];
+
+	                        ///////////////////////////////////////////////////////////////////////////////////////
+	                        for (var v = 0; v < vtx.length; v++) {
+
+	                                var vertex = vtx[v];
+
+	                                var vertexPos = vertex.pos;
+
+	                                // Are these always the same?
+
+	                                var numberOfFacesAdjacent = vertex.faceIndices.length;
+
+	                                var numberOfEdgesAdjacent = vertex.edgeIndices.length;
+
+	                                sumOfVertexPositions.clear();
+
+	                                // Sum the Face Coords for the current vertex, and average.
+
+	                                for (var fi = 0; fi < numberOfFacesAdjacent; fi++) {
+
+	                                        var faceIndex = vertex.faceIndices[fi];
+
+	                                        var facePoint = facePoints[faceIndex];
+
+	                                        sumOfVertexPositions.add(facePoint);
+	                                }
+
+	                                // Get the average Coord position (centroid).
+
+	                                var averageOfFacePointsAdjacent = sumOfVertexPositions.clone().divideScalar(numberOfFacesAdjacent);
+
+	                                sumOfVertexPositions.clear();
+
+	                                // Sum the Edge Coords for the current vertex, and average.
+
+	                                for (var ei = 0; ei < numberOfEdgesAdjacent; ei++) {
+
+	                                        var edgeIndex = vertex.edgeIndices[ei];
+
+	                                        var edge = edges[edgeIndex];
+
+	                                        var edgeMidpoint = edge.midpoint(vtx); ///////////////////////CHANGED
+
+	                                        sumOfVertexPositions.add(edgeMidpoint);
+
+	                                        var edgeFromVertexToEdgePoint = [v, numberOfVerticesOriginal + edgeIndex];
+
+	                                        edgesFromVerticesToEdgePoints.push(edgeFromVertexToEdgePoint);
+	                                }
+
+	                                // Get the average Coord position.
+
+	                                var averageOfEdgeMidpointsAdjacent = sumOfVertexPositions.clone().divideScalar(numberOfEdgesAdjacent);
+
+	                                // Re-compute the Vertex Coord position based on added and adjusted Coords.
+
+	                                var vertexNewPos = vertexPos.clone().multiplyScalar(numberOfFacesAdjacent - 3).add(averageOfFacePointsAdjacent).add(averageOfEdgeMidpointsAdjacent).add(averageOfEdgeMidpointsAdjacent).divideScalar(numberOfFacesAdjacent);
+
+	                                verticesNew.push(new Vertex([vertexNewPos.x, vertexNewPos.y, vertexNewPos.z])); // CHANGED!!!!
+	                        } // end for each vertex 
+
+	                        ///////////////CONCATENATE OPERATOR
+
+	                        //verticesNew.append(Vertex.manyFromPositions(edgePoints));
+	                        //verticesNew.append(Vertex.manyFromPositions(facePoints));
+
+	                        // Add the Face points and Edge Points.
+
+	                        verticesNew = util.concatArr(verticesNew, Vertex.manyFromPositions(edgePoints));
+
+	                        verticesNew = util.concatArr(verticesNew, Vertex.manyFromPositions(facePoints));
+
+	                        window.edgePoint = edgePoints;
+
+	                        // Re-compute the indices for each Face.
+
+	                        var vertexIndicesForFacesNew = [];
+
+	                        for (var f = 0; f < numberOfFacesOriginal; f++) {
+
+	                                var faceOriginal = faces[f];
+
+	                                var facePoint = facePoints[f];
+
+	                                for (var vi = 0; vi < faceOriginal.vertexIndices.length; vi++) {
+
+	                                        var vertexIndex = faceOriginal.vertexIndices[vi];
+
+	                                        var vertexOriginal = vtx[vertexIndex];
+
+	                                        var vertexNew = verticesNew[vertexIndex];
+
+	                                        var edgeIndicesShared = [];
+
+	                                        for (var ei = 0; ei < vertexOriginal.edgeIndices.length; ei++) {
+
+	                                                var edgeIndex = vertexOriginal.edgeIndices[ei];
+
+	                                                for (var ei2 = 0; ei2 < faceOriginal.edgeIndices.length; ei2++) {
+
+	                                                        var edgeIndex2 = faceOriginal.edgeIndices[ei2];
+
+	                                                        if (edgeIndex2 == edgeIndex) {
+
+	                                                                edgeIndicesShared.push(edgeIndex);
+	                                                        }
+	                                                }
+	                                        }
+
+	                                        var vertexIndicesForFaceNew = [
+
+	                                        // facePoint
+	                                        numberOfVerticesOriginal + numberOfEdgesOriginal + f,
+
+	                                        // edgePoint0
+	                                        numberOfVerticesOriginal + edgeIndicesShared[0],
+
+	                                        // corner vertex
+	                                        vertexIndex,
+
+	                                        // edgePoint1
+	                                        numberOfVerticesOriginal + edgeIndicesShared[1]];
+
+	                                        vertexIndicesForFacesNew.push(vertexIndicesForFaceNew);
+	                                }
+	                        }
+
+	                        // NOTE: verticesNew has right positions, but is EMPTY!
+
+	                        window.verticesNew = verticesNew;
+	                        window.indicesNew = vertexIndicesForFacesNew;
+
+	                        // HAVE TO RECOMPUTE EDGE INDICES AND FACE INDICES
+	                        window.newFaceEdges = this.computeQuadFaceEdges(vertexIndicesForFacesNew, verticesNew);
+
+	                        ///////////////////////////////////////////////////////////////////////////
+	                        // THIRD UNIT TEST ( test vertices )
+	                        ///////////////////////////////////////////////////////////////////////////
+	                        // TEST VERTICES
+	                        var vvn = [],
+	                            tvn = [];
+	                        var testVerticesNew = [{ pos: { x: -0.5555555555555555, y: -0.5555555555555555, z: -0.5555555555555555 }, edgeIndices: [1, 2, 13], faceIndices: [0, 4, 17] }, { pos: { x: 0.5555555555555555, y: -0.5555555555555555, z: -0.5555555555555555 }, edgeIndices: [4, 5, 15], faceIndices: [1, 5, 8] }, { pos: { x: 0.5555555555555555, y: 0.5555555555555555, z: -0.5555555555555555 }, edgeIndices: [7, 8, 24], faceIndices: [2, 9, 12] }, { pos: { x: -0.5555555555555555, y: 0.5555555555555555, z: -0.5555555555555555 }, edgeIndices: [10, 11, 32], faceIndices: [3, 13, 16] }, { pos: { x: -0.5555555555555555, y: -0.5555555555555555, z: 0.5555555555555555 }, edgeIndices: [20, 21, 41], faceIndices: [7, 18, 20] }, { pos: { x: 0.5555555555555555, y: -0.5555555555555555, z: 0.5555555555555555 }, edgeIndices: [17, 18, 29], faceIndices: [6, 11, 21] }, { pos: { x: 0.5555555555555555, y: 0.5555555555555555, z: 0.5555555555555555 }, edgeIndices: [26, 27, 37], faceIndices: [10, 15, 22] }, { pos: { x: -0.5555555555555555, y: 0.5555555555555555, z: 0.5555555555555555 }, edgeIndices: [34, 35, 43], faceIndices: [14, 19, 23] }, { pos: { x: 0, y: -0.75, z: -0.75 }, edgeIndices: [0, 1, 4, 12], faceIndices: [0, 1, 4, 5] }, { pos: { x: 0.75, y: 0, z: -0.75 }, edgeIndices: [5, 6, 7, 22], faceIndices: [1, 2, 8, 9] }, { pos: { x: 0, y: 0.75, z: -0.75 }, edgeIndices: [8, 9, 10, 30], faceIndices: [2, 3, 12, 13] }, { pos: { x: -0.75, y: 0, z: -0.75 }, edgeIndices: [2, 3, 11, 38], faceIndices: [0, 3, 16, 17] }, { pos: { x: 0.75, y: -0.75, z: 0 }, edgeIndices: [15, 16, 17, 23], faceIndices: [5, 6, 8, 11] }, { pos: { x: 0, y: -0.75, z: 0.75 }, edgeIndices: [18, 19, 20, 44], faceIndices: [6, 7, 20, 21] }, { pos: { x: -0.75, y: -0.75, z: 0 }, edgeIndices: [13, 14, 21, 40], faceIndices: [4, 7, 17, 18] }, { pos: { x: 0.75, y: 0.75, z: 0 }, edgeIndices: [24, 25, 26, 31], faceIndices: [9, 10, 12, 15] }, { pos: { x: 0.75, y: 0, z: 0.75 }, edgeIndices: [27, 28, 29, 46], faceIndices: [10, 11, 21, 22] }, { pos: { x: -0.75, y: 0.75, z: 0 }, edgeIndices: [32, 33, 34, 39], faceIndices: [13, 14, 16, 19] }, { pos: { x: 0, y: 0.75, z: 0.75 }, edgeIndices: [35, 36, 37, 47], faceIndices: [14, 15, 22, 23] }, { pos: { x: -0.75, y: 0, z: 0.75 }, edgeIndices: [41, 42, 43, 45], faceIndices: [18, 19, 20, 23] }, { pos: { x: 0, y: 0, z: -1 }, edgeIndices: [0, 3, 6, 9], faceIndices: [0, 1, 2, 3] }, { pos: { x: 0, y: -1, z: 0 }, edgeIndices: [12, 14, 16, 19], faceIndices: [4, 5, 6, 7] }, { pos: { x: 1, y: 0, z: 0 }, edgeIndices: [22, 23, 25, 28], faceIndices: [8, 9, 10, 11] }, { pos: { x: 0, y: 1, z: 0 }, edgeIndices: [30, 31, 33, 36], faceIndices: [12, 13, 14, 15] }, { pos: { x: -1, y: 0, z: 0 }, edgeIndices: [38, 39, 40, 42], faceIndices: [16, 17, 18, 19] }, { pos: { x: 0, y: 0, z: 1 }, edgeIndices: [44, 45, 46, 47], faceIndices: [20, 21, 22, 23] }];
+	                        for (var _j10 in testVerticesNew) {
+	                                // TEST ONES
+	                                var tvninst = testVerticesNew[_j10];
+	                                vvn.push(tvninst.pos.x, tvninst.pos.y, tvninst.pos.z);
+	                                vvn.push(tvninst.edgeIndices[0], tvninst.edgeIndices[1], tvninst.edgeIndices[2]);
+	                                vvn.push(tvninst.faceIndices[0], tvninst.faceIndices[1], tvninst.faceIndices[2]);
+	                                // OUR ONES
+	                                var vnews = verticesNew[_j10];
+	                                tvn.push(vnews.pos.x, vnews.pos.y, vnews.pos.z);
+	                                tvn.push(vnews.edgeIndices[0], vnews.edgeIndices[1], vnews.edgeIndices[2]);
+	                                tvn.push(vnews.faceIndices[0], vnews.faceIndices[1], vnews.faceIndices[2]);
+	                        }
+	                        // COMPARE
+	                        window.vvn = vvn;
+	                        window.tvn = tvn;
+
+	                        console.log("---------BEGINNING FINAL VERTEX TEST--------------");
+
+	                        for (var j in vvn) {
+
+	                                if (vvn[j] !== tvn[j]) {
+	                                        console.error("final vertices don't match at:" + j + ", ", vvn[j] + ", " + tvn[j]);
+	                                }
+	                        }
+
+	                        // TEST INDICES
+	                        var iin = [],
+	                            tin = [];
+	                        var testIndicesNew = [[20, 8, 0, 11], [20, 8, 1, 9], [20, 9, 2, 10], [20, 10, 3, 11], [21, 8, 0, 14], [21, 8, 1, 12], [21, 12, 5, 13], [21, 13, 4, 14], [22, 9, 1, 12], [22, 9, 2, 15], [22, 15, 6, 16], [22, 12, 5, 16], [23, 10, 2, 15], [23, 10, 3, 17], [23, 17, 7, 18], [23, 15, 6, 18], [24, 11, 3, 17], [24, 11, 0, 14], [24, 14, 4, 19], [24, 17, 7, 19], [25, 13, 4, 19], [25, 13, 5, 16], [25, 16, 6, 18], [25, 18, 7, 19]];
+	                        for (var _j11 in testIndicesNew) {
+	                                var tiinst = testIndicesNew[_j11];
+	                                tin.push(tiinst[0], tiinst[1], tiinst[2], tiinst[3]);
+	                        }
+
+	                        for (var _j12 in indicesNew) {
+	                                var iinst = indicesNew[_j12];
+	                                iin.push(iinst[0], iinst[1], iinst[2], iinst[3]);
+	                        }
+
+	                        // COMPARE
+	                        console.log("---------FINAL INDICES TEST (quads match)--------------");
+	                        for (var _j13 in indicesNew) {
+	                                if (tin[_j13] !== iin[_j13]) {
+	                                        console.error("quads don't match at pos:" + _j13);
+	                                }
+	                        }
+
+	                        // END OF UNIT TESTS
+	                        //////////////////////////////////////////////////
+	                        // NOTE: each kind of Prim will have to deal with texture Coordinates
+	                        // convert indices to triangles and vertices to standard vertices.
+	                        var flattenedIndices = this.computeTrisFromQuads(vertexIndicesForFacesNew);
+	                        console.log("flattenedindices length:" + flattenedIndices);
+
+	                        var subbed = {
+	                                vertices: verticesNew,
+	                                subindices: vertexIndicesForFacesNew,
+	                                indices: flattenedIndices
+	                        };
+
+	                        window.subbed = subbed;
+
+	                        return subbed;
+
+	                        // END OF SUBDIVIDE
+	                        ///////////////////////////////////////////////////////////////////////////////////////
+
+	                        //return geometry;
+	                }
+
+	                /** 
+	                 * Convert from one Prim geometry to another, alters geometry.
+	                 */
+
+	        }, {
+	                key: 'computeMorph',
+	                value: function computeMorph(newGeometry, easing, geometry) {
+
+	                        console.error('computeMorph not implemented');
+	                }
 	        }]);
 
 	        return Morph;

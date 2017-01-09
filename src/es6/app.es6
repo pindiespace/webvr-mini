@@ -64,10 +64,8 @@ import Renderer from './renderer';
 // All objects.
 
 // import Map2d from './map2d';
-
-// Morphing functions for prim.
-
-import Morph from './morph';
+// import Map3d from './map3d';
+// import Morph from './morph';
 
 // Object primitives.
 
