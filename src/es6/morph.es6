@@ -120,6 +120,26 @@ class Morph {
     }
 
 
+    /**
+     * Given the Vertex object, flatten it to a simple array of coordinates.
+     */
+    flattenVertexList( vtx ) {
+
+        let vertices = [];
+
+        for ( let i = 0; i < vtx.length; i++ ) {
+
+            let pos = vtx[ i ].pos;
+
+            vertices.push( pos.x, pos.y, pos.z )
+
+        }
+
+        return vertices;
+
+    }
+
+
     /** 
      * Compute quad faces and edges, used for 
      * subdivision via
@@ -585,6 +605,9 @@ class Morph {
         var facePoints = [];
         var edgePoints = [];
 
+        var faceTexCoords = [];
+        var edgeTexCoords = [];
+
         var sumOfVertexPositions = new Coords();
 
         var averageOfVertexPositions = new Coords();
@@ -924,18 +947,25 @@ class Morph {
         //////////////////////////////////////////////////
         // NOTE: each kind of Prim will have to deal with texture Coordinates
         // convert indices to triangles and vertices to standard vertices.
-        let flattenedIndices = this.computeTrisFromQuads( vertexIndicesForFacesNew )
-        console.log("flattenedindices length:" + flattenedIndices)
+        indices = util.flatten( this.computeTrisFromQuads( vertexIndicesForFacesNew ) );
 
-        let subbed = {
-            vertices: verticesNew,
+        vertices = this.flattenVertexList( verticesNew );
+
+        // TEMP MAKE LARGER TO SEE
+
+        for ( let i = 0; i < vertices.length; i++ ) {
+
+            vertices[ i ] *= 2;
+
+        }
+
+        return {
+            vertices: vertices,
             subindices: vertexIndicesForFacesNew,
-            indices: flattenedIndices
+            indices: indices
         };
 
-        window.subbed = subbed;
-
-        return subbed;
+  
 
         // END OF SUBDIVIDE
         ///////////////////////////////////////////////////////////////////////////////////////

@@ -2420,6 +2420,35 @@ class Prim {
 
         console.log(" IN CUBE NORMALS NOW ARE>...." + normals.length)
 
+        ///////////////////////////
+        ///////////////////////////
+        ///////////////////////////
+        ///////////////////////////
+        let divided = this.morph.computeSubdivide( vertices, indices, texCoords );
+
+        window.divided = divided;
+
+        console.log("NAME OF PRIM:" + prim.name)
+
+
+        if ( prim.name === 'colored cube' ) {
+
+            console.log("DISPLAYING COLORED CUBE")
+
+            //////////let gl = this.webgl;
+
+            //////////gl.cullFace(gl.FRONT_AND_BACK);
+
+            vertices = divided.vertices;
+            indices = divided.indices;
+            normals = this.computeNormals( vertices, indices, normals );
+
+        }
+        //////////////////////////
+        //////////////////////////
+        //////////////////////////
+        /////////////////////////
+
         // Return the buffer.
 
         return this.addBufferData( prim.geometry, vertices, indices, normals, texCoords, tangents );
@@ -3357,11 +3386,7 @@ class Prim {
 
             }
 
-        } 
-
-        ///////////////////////////
-        this.morph.computeSubdivide( vertices, indices, texCoords );
-        //////////////////////////
+        }
 
         // Color array is pre-created, or gets a default when WebGL buffers are created.
 

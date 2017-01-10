@@ -146,9 +146,9 @@ class World {
          this.colorObjList.push( this.prim.createPrim(
             this.prim.typeList.CUBE,
             'colored cube',
-            vec5( 1, 1, 1, 0 ),            // dimensions
+            vec5( 3, 3, 3, 0 ),            // dimensions
             vec5( 3, 3, 3 ),            // divisions
-            vec3.fromValues( -1, 3, -3 ),          // position (absolute)
+            vec3.fromValues( -1, 2, -1 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 20 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 1 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
