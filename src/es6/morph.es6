@@ -19,6 +19,73 @@ class Morph {
     }
 
     /** 
+     * Given a triangle, computing if it is wound clockwise or counter-clockwise relative 
+     * to the viewpoint. Needed since the morph routines sometimes reverse the 
+     * winding order of individual polygons.
+     * @param {Array} vertices an array of vertices
+     */
+    computeWinding( vertices, i1, i2, i3, viewpointVec ) {
+
+        let vec3 = this.glMatrix.vec3;
+
+        let v1 = [ vertices[ i1 ], vertices[ i1 + 1 ], vertices[ i1 + 2 ] ];
+
+        let v2 = [ vertices[ i2 ], vertices[ i2 + 1 ], vertices[ i2 + 2 ] ];
+
+        let v3 = [ vertices[ i3 ], vertices[ i3 + 1 ], vertices[ i3 + 2 ] ];
+
+        let a = vec3.sub( [ 0, 0, 0 ], v1, v2 );
+
+        let b = vec3.sub( [ 0, 0, 0 ], v1, v3 );
+
+        let cross = vec3.cross( [ 0, 0, 0 ], a, b );
+
+        let cosA = vec3.dot( cross, viewpointVec ) / ( Length(cross) * Length(viewpointVec ) );
+
+        // the sign of the cosine will tell you if the wind faces forward, or reverse.
+
+        let angle = Math.acos( cosA );
+
+        console.log( 'cosA:' + cosA + ' ANGLE:' + angle );
+
+        /*
+         polygon normal
+        Vector a,b;
+        a = v1 - v2;
+        b = v1 - v3;
+        return Cross(a,b);   
+        */
+
+        /*
+        https://www.gamedev.net/topic/187478-q-howto-determine-whether-a-triangle-is-cw-or-ccw/
+        First compute the vector perpendicular (senkrecht) to the polygon. 
+        This can be done using the cross product (Kreuzprodukt oder Vektor-Produkt). 
+        Then you can see if the polygon faces away or not by computing the angle between 
+        this vector and the vector from the polygon to the viewpoint. If it''s less 
+        than 90 degrees, the polygon is front-facing, else it''s back-facing.
+         You can compute the cosine (Cosinus) of the angle by using the dot product (Skalarprodukt oder Inneres Produkt). 
+        */
+
+    }
+
+    /**
+     * Compute the midpoint between two vertices forming an edge.
+     */ 
+    computeMidPoint( vertices, index1, index2 ) {
+
+        let vec3 = this.glMatrix.vec3;
+
+        var v1 = vertices[ index1 ];
+
+        var v2 = vertixes[ index2 ];
+
+        // NOTE: divideByScalar equivalent uses vec3.scale( out, a, 1/b )
+
+        return ( vec3.scale( [ 0, 0, 0 ], vec3.add( [ 0, 0, 0 ], v1, v2 ), 0.5 ) );
+
+    }
+
+    /** 
      * Given a mesh of vertice rendered as triangles, compute the quads and indexing. 
      * from the indices (path through triangles)
      * https://github.com/Erkaman/gl-quads-to-tris
@@ -27,6 +94,8 @@ class Morph {
      * https://vorg.github.io/pex/docs/pex-geom/Geometry.html
      * http://www.rorydriscoll.com/2008/08/01/catmull-clark-subdivision-the-basics/
      * NOTE: quads = "cells" = "face"
+     * @param {Array} triIndices in the format [[1, 2, 3], [1,2,3]...]
+     * @returns {Array} quad indices in the format [[1,2,3,4],[1,2,3,4]...]
      */
     computeQuadsFromTris ( triIndices ) {
 
@@ -70,6 +139,8 @@ class Morph {
 
     /** 
      * given a mesh of quads, compute the triangles and indexing.
+     * @param {Array} quadIndices a quad index array in the format [[1,2,3,4],[1,2,3,4],...]
+     * @returns {Array} a triangle index array in the format [[1, 2, 3], [1,2,3]...]
      */
     computeTrisFromQuads( quadIndices ) {
 
@@ -297,7 +368,6 @@ class Morph {
     /** 
      * Subdivide a mesh
      * Comprehensive description.
-     * http://www.rorydriscoll.com/2008/08/01/catmull-clark-subdivision-the-basics/
      * @link http://www.rorydriscoll.com/2008/08/01/catmull-clark-subdivision-the-basics/
      * USE:
      * https://blog.nobel-joergensen.com/2010/12/25/procedural-generated-mesh-in-unity/
@@ -846,9 +916,9 @@ class Morph {
 
                     var edgeIndex = vertexOriginal.edgeIndices[ei];
 
-                    for (var ei2 = 0; ei2 < faceOriginal.edgeIndices.length; ei2++) {
+                    for ( var ei2 = 0; ei2 < faceOriginal.edgeIndices.length; ei2++ ) {
 
-                        var edgeIndex2 = faceOriginal.edgeIndices[ei2];
+                        var edgeIndex2 = faceOriginal.edgeIndices[ ei2 ];
 
                         if (edgeIndex2 == edgeIndex) {
 
@@ -875,7 +945,7 @@ class Morph {
                     numberOfVerticesOriginal + edgeIndicesShared[1],
                 ];
 
-                vertexIndicesForFacesNew.push(vertexIndicesForFaceNew);
+               vertexIndicesForFacesNew.push(vertexIndicesForFaceNew);
 
             }
 
@@ -888,7 +958,6 @@ class Morph {
 
         // HAVE TO RECOMPUTE EDGE INDICES AND FACE INDICES
         window.newFaceEdges = this.computeQuadFaceEdges( vertexIndicesForFacesNew, verticesNew );
-
 
         ///////////////////////////////////////////////////////////////////////////
         // THIRD UNIT TEST ( test vertices )
@@ -945,19 +1014,22 @@ class Morph {
 
         // END OF UNIT TESTS
         //////////////////////////////////////////////////
+
         // NOTE: each kind of Prim will have to deal with texture Coordinates
         // convert indices to triangles and vertices to standard vertices.
         indices = util.flatten( this.computeTrisFromQuads( vertexIndicesForFacesNew ) );
 
+        // Convert Vertex to flattened coordinate data
         vertices = this.flattenVertexList( verticesNew );
 
         // TEMP MAKE LARGER TO SEE
+        // TODO: remove
 
-        for ( let i = 0; i < vertices.length; i++ ) {
+        //for ( let i = 0; i < vertices.length; i++ ) {
 
-            vertices[ i ] *= 2;
+        //    vertices[ i ] *= 2;
 
-        }
+        //}
 
         return {
             vertices: vertices,

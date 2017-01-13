@@ -817,22 +817,6 @@ class Prim {
 
     }
 
-
-    computeMidPoint( vertices, index1, index2 ) {
-
-        let vec3 = this.glMatrix.vec3;
-
-        var v1 = vertices[ index1 ];
-
-        var v2 = vertixes[ index2 ];
-
-        // NOTE: divideByScalar equivalent uses vec3.scale( out, a, 1/b )
-
-        return ( vec3.scale( [ 0, 0, 0 ], vec3.add( [ 0, 0, 0 ], v1, v2 ), 0.5 ) );
-
-    }
-
-
     /**
      * Find the center between any set of 3d points
      * @param {[...vec3]} vertices an array of xyz points.
@@ -1109,11 +1093,11 @@ class Prim {
 
         // Index triangle = 1 face.
 
-        let nbFaces = indices.length / 3;
+        let nbFaces = indices.length / 3; // INEFFICIENT, REFACTOR!!!!!!, DIVIDE, THEN MULTPLY
 
         for ( idx = 0; idx < nbFaces; idx++ ) {
 
-            i1 = indices[ idx * 3]; // get the idxes of each vertex of the face
+            i1 = indices[ idx * 3 ]; // get the idxes of each vertex of the face
 
             i2 = indices[ idx * 3 + 1 ];
 
@@ -1208,6 +1192,7 @@ class Prim {
         return normals;
 
     }
+
 
     /** 
      * Compute tangents. NOTE: some routines compute their own tangents.
@@ -2424,21 +2409,10 @@ class Prim {
         ///////////////////////////
         ///////////////////////////
         ///////////////////////////
-        let divided = this.morph.computeSubdivide( vertices, indices, texCoords );
-
-        window.divided = divided;
-
-        console.log("NAME OF PRIM:" + prim.name)
-
-
         if ( prim.name === 'colored cube' ) {
 
             console.log("DISPLAYING COLORED CUBE")
-
-            //////////let gl = this.webgl;
-
-            //////////gl.cullFace(gl.FRONT_AND_BACK);
-
+            let divided = this.morph.computeSubdivide( vertices, indices, texCoords );
             vertices = divided.vertices;
             indices = divided.indices;
             normals = this.computeNormals( vertices, indices, normals );
