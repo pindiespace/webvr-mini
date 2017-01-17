@@ -575,11 +575,34 @@
 
 	                        return false;
 	                }
+
+	                /** 
+	                 * Check if a variable can be coerced to a number.
+	                 */
+
+	        }, {
+	                key: 'isNumber',
+	                value: function isNumber(n) {
+
+	                        return Number.isFinite(parseFloat(n));
+	                }
 	        }, {
 	                key: 'isPowerOfTwo',
 	                value: function isPowerOfTwo(n) {
 
 	                        return (n & n - 1) === 0;
+	                }
+	        }, {
+	                key: 'isEven',
+	                value: function isEven(n) {
+
+	                        return n % 2 == 0;
+	                }
+	        }, {
+	                key: 'isOdd',
+	                value: function isOdd(n) {
+
+	                        return Math.abs(n % 2) == 1;
 	                }
 	        }, {
 	                key: 'degToRad',
@@ -5704,18 +5727,36 @@
 
 	                                var quad = quadIndices[i];
 
+	                                // TODO: WE MIGHT ALTERNATE QUADS!!!!!!
+
 	                                // NOTE: THIS SHOWS THAT WINDING NEEDS TO BE REVERSED ON SOME OF THESE
 
 	                                console.log("quadindices:" + quad); ///////////////////////////
 
-	                                tris[ct++] = [
+	                                // TODO:
+	                                if (util.isEven(i)) {
+	                                        tris[ct++] = [quad[0], quad[2], quad[1]];
+	                                } else {
+	                                        tris[ct++] = [quad[0], quad[1], quad[2]];
+	                                }
 
-	                                // SWITCHING THIS FROM 0, 1, 2, gave a half-quad everywhere!!!
-
-	                                quad[0], quad[2], quad[1]];
+	                                /*
+	                                            tris[ ct++ ] = [
+	                                
+	                                            // SWITCHING THIS FROM 0, 1, 2, gave a half-quad everywhere!!!
+	                                
+	                                                quad[ 0 ], 
+	                                                quad[ 2 ],
+	                                                quad[ 1 ],
+	                                
+	                                            ];
+	                                */
 
 	                                // TODO: GIVE ENTIRE TRIANGLE ONE COLOR
 	                                // TODO: CHECK ORIENTATION AT THIS POINT.
+
+	                                // TODO:
+	                                if (util.isEven(i)) {} else {}
 
 	                                tris[ct++] = [
 

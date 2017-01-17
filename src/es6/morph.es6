@@ -184,10 +184,28 @@ class Morph {
 
             let quad = quadIndices[ i ];
 
+            // TODO: WE MIGHT ALTERNATE QUADS!!!!!!
+
             // NOTE: THIS SHOWS THAT WINDING NEEDS TO BE REVERSED ON SOME OF THESE
 
             console.log("quadindices:" + quad); ///////////////////////////
 
+            // TODO:
+            if( util.isEven( i ) ) {
+                tris[ ct++ ] = [
+                quad[ 0 ], 
+                quad[ 2 ],
+                quad[ 1 ],
+                ]
+            } else {
+                tris[ ct++ ] = [
+                quad[ 0 ], 
+                quad[ 1 ],
+                quad[ 2 ],
+                ]
+            }
+
+/*
             tris[ ct++ ] = [
 
             // SWITCHING THIS FROM 0, 1, 2, gave a half-quad everywhere!!!
@@ -197,9 +215,17 @@ class Morph {
                 quad[ 1 ],
 
             ];
+*/
 
             // TODO: GIVE ENTIRE TRIANGLE ONE COLOR
             // TODO: CHECK ORIENTATION AT THIS POINT.
+
+            // TODO:
+            if( util.isEven( i ) ) {
+                
+            } else {
+
+            }
 
             tris[ ct++ ] = [
 

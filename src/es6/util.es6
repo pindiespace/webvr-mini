@@ -74,9 +74,30 @@ class Util {
 
     }
 
-    isPowerOfTwo( n ) {
+    /** 
+     * Check if a variable can be coerced to a number.
+     */
+    isNumber ( n ) {
 
-        return ( n & (n - 1) ) === 0;
+        return Number.isFinite( parseFloat( n ) );
+
+    }
+
+    isPowerOfTwo ( n ) {
+
+        return ( n & ( n - 1 ) ) === 0;
+
+    }
+
+    isEven ( n ) {
+
+        return n % 2 == 0;
+
+    }
+
+    isOdd ( n ) {
+
+        return Math.abs( n % 2 ) == 1;
 
     }
 
@@ -86,7 +107,7 @@ class Util {
 
     }
 
-    containsAll( arr1, arr2 ) {
+    containsAll ( arr1, arr2 ) {
 
         arr2.every( arr2Item => arr1.includes( arr2Item ) );
 
