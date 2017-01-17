@@ -5549,29 +5549,53 @@
 
 	        _createClass(Morph, [{
 	                key: 'computeWinding',
-	                value: function computeWinding(vertices, i1, i2, i3, viewpointVec) {
+	                value: function computeWinding(vertices, indices, viewpointVec) {
 
 	                        var vec3 = this.glMatrix.vec3;
 
-	                        var v1 = [vertices[i1], vertices[i1 + 1], vertices[i1 + 2]];
+	                        var i1 = void 0,
+	                            i2 = void 0,
+	                            i3 = void 0;
 
-	                        var v2 = [vertices[i2], vertices[i2 + 1], vertices[i2 + 2]];
+	                        window.verts = vertices;
+	                        window.inds = indices;
 
-	                        var v3 = [vertices[i3], vertices[i3 + 1], vertices[i3 + 2]];
-
-	                        var a = vec3.sub([0, 0, 0], v1, v2);
-
-	                        var b = vec3.sub([0, 0, 0], v1, v3);
-
-	                        var cross = vec3.cross([0, 0, 0], a, b);
-
-	                        var cosA = vec3.dot(cross, viewpointVec) / (Length(cross) * Length(viewpointVec));
-
-	                        // the sign of the cosine will tell you if the wind faces forward, or reverse.
-
-	                        var angle = Math.acos(cosA);
-
-	                        console.log('cosA:' + cosA + ' ANGLE:' + angle);
+	                        /*
+	                                for ( let i = 0; i < indices.length; i += 3 ) {
+	                        
+	                                    i1 = indices[ i ];
+	                        
+	                                    i2 = indices[ i + 1 ];
+	                        
+	                                    i3 = indices[ i + 2 ];
+	                        
+	                                    console.log("i1:" + i1 + " i2:" + i2 + " i3:" + i3);
+	                        
+	                                    let v1 = [ vertices[ i1 ], vertices[ i1 + 1 ], vertices[ i1 + 2 ] ];
+	                        
+	                                    let v2 = [ vertices[ i2 ], vertices[ i2 + 1 ], vertices[ i2 + 2 ] ];
+	                        
+	                                    let v3 = [ vertices[ i3 ], vertices[ i3 + 1 ], vertices[ i3 + 2 ] ];
+	                        
+	                                    verts2.push( [v1, v2, v3 ] );
+	                        
+	                                    let a = vec3.sub( [ 0, 0, 0 ], v1, v2 );
+	                        
+	                                    let b = vec3.sub( [ 0, 0, 0 ], v1, v3 );
+	                        
+	                                    let cross = vec3.cross( [ 0, 0, 0 ], a, b );
+	                        
+	                                    let cosA = vec3.dot( cross, viewpointVec ) / ( vec3.length( cross ) * vec3.length(   viewpointVec ) );
+	                        
+	                                    // the sign of the cosine will tell you if the wind faces forward, or reverse.
+	                        
+	                                    let angle = Math.acos( cosA );
+	                        
+	                                    console.log( 'cosA:' + cosA + ' ANGLE:' + angle );
+	                        
+	                                }
+	                        
+	                                */
 
 	                        /*
 	                         polygon normal
@@ -5680,11 +5704,30 @@
 
 	                                var quad = quadIndices[i];
 
+	                                // NOTE: THIS SHOWS THAT WINDING NEEDS TO BE REVERSED ON SOME OF THESE
+
 	                                console.log("quadindices:" + quad); ///////////////////////////
 
-	                                tris[ct++] = [quad[0], quad[1], quad[2]];
+	                                tris[ct++] = [
 
-	                                tris[ct++] = [quad[0], quad[2], quad[3]];
+	                                // SWITCHING THIS FROM 0, 1, 2, gave a half-quad everywhere!!!
+
+	                                quad[0], quad[2], quad[1]];
+
+	                                // TODO: GIVE ENTIRE TRIANGLE ONE COLOR
+	                                // TODO: CHECK ORIENTATION AT THIS POINT.
+
+	                                tris[ct++] = [
+
+	                                //SWITCHING THIS FROM 0, 2, 3 gave a half-quad everywhere (if first was 0, 1, 2) !!!!!!
+
+	                                //quad[ 0 ],
+	                                //quad[ 3 ],
+	                                //quad[ 2 ],
+
+	                                quad[0], quad[2], quad[3]];
+
+	                                // TODO: CHECK ORIENTATION AT THIS POINT.
 	                        }
 
 	                        return tris;
@@ -6453,22 +6496,20 @@
 
 	                        // END OF UNIT TESTS
 	                        //////////////////////////////////////////////////
+	                        // !!!!!!!!!!!!!!!!!!!!!
 
 	                        // NOTE: each kind of Prim will have to deal with texture Coordinates
 	                        // convert indices to triangles and vertices to standard vertices.
-	                        indices = util.flatten(this.computeTrisFromQuads(vertexIndicesForFacesNew));
+	                        indices = this.computeTrisFromQuads(vertexIndicesForFacesNew);
+
+	                        // TODO: MOVED THIS TO UNFLATTENED
+
+	                        this.computeWinding(verticesNew, indices, [0, 0, 0]);
+
+	                        indices = util.flatten(indices);
 
 	                        // Convert Vertex to flattened coordinate data
 	                        vertices = this.flattenVertexList(verticesNew);
-
-	                        // TEMP MAKE LARGER TO SEE
-	                        // TODO: remove
-
-	                        //for ( let i = 0; i < vertices.length; i++ ) {
-
-	                        //    vertices[ i ] *= 2;
-
-	                        //}
 
 	                        return {
 	                                vertices: vertices,
@@ -6651,7 +6692,7 @@
 
 	                        this.colorObjList.push(this.prim.createPrim(this.prim.typeList.CUBE, 'colored cube', vec5(3, 3, 3, 0), // dimensions
 	                        vec5(3, 3, 3), // divisions
-	                        vec3.fromValues(-1, 2, -1), // position (absolute)
+	                        vec3.fromValues(0.2, 0.5, 3), // position (absolute)
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	                        vec3.fromValues(util.degToRad(20), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
 	                        vec3.fromValues(util.degToRad(0), util.degToRad(1), util.degToRad(0)), // angular velocity in x, y, x
