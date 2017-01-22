@@ -610,6 +610,20 @@
 
 	                        return degrees * Math.PI / 180;
 	                }
+
+	                /** 
+	                 * return the fractional (non-integer) portion 
+	                 * of a number.
+	                 * @param {Number} n the float number
+	                 * @returns {Number} the fractional part of the number;
+	                 */
+
+	        }, {
+	                key: 'frac',
+	                value: function frac(n) {
+
+	                        return n % 1;
+	                }
 	        }, {
 	                key: 'containsAll',
 	                value: function containsAll(arr1, arr2) {
@@ -3990,7 +4004,9 @@
 	     * @param {[...GLMatrix.vec3]} vertices the current 3d position coordinates.
 	     * @param {Array} current indices into the vertices.
 	     * @param {[...GLMatrix.vec3]} normals the normals array to recalculate.
-	     */},{key:'computeNormals',value:function computeNormals(vertices,indices,normals){var idx=0;var p1p2x=0.0,p1p2y=0.0,p1p2z=0.0;var p3p2x=0.0,p3p2y=0.0,p3p2z=0.0;var faceNormalx=0.0,faceNormaly=0.0,faceNormalz=0.0;var length=0.0;var i1=0,i2=0,i3=0;normals=new Float32Array(vertices.length);// Index triangle = 1 face.
+	     * @param {Boolean} justFace if true, return the face normal for all three vertices in a triangle, 
+	     *        otherwise, compute each vertex normal separately.
+	     */},{key:'computeNormals',value:function computeNormals(vertices,indices,normals,justFace){var idx=0;var p1p2x=0.0,p1p2y=0.0,p1p2z=0.0;var p3p2x=0.0,p3p2y=0.0,p3p2z=0.0;var faceNormalx=0.0,faceNormaly=0.0,faceNormalz=0.0;var length=0.0;var i1=0,i2=0,i3=0;normals=new Float32Array(vertices.length);// Index triangle = 1 face.
 	var nbFaces=indices.length/3;// INEFFICIENT, REFACTOR!!!!!!, DIVIDE, THEN MULTPLY
 	for(idx=0;idx<nbFaces;idx++){i1=indices[idx*3];// get the idxes of each vertex of the face
 	i2=indices[idx*3+1];i3=indices[idx*3+2];// Get face vertex values.
@@ -4029,7 +4045,7 @@
 	     * that always orbits a central point.
 	     * NOTE: normally, you will want to use a matrix transform to position objects.
 	     * @param {GLMatrix.vec3} pos - the new position.
-	     */},{key:'computeMove',value:function computeMove(vertices,pos){var center=this.getCentroid(vertices);var delta=[center[0]-pos[0],center[1]-pos[1],center[2]-pos[2]];for(var _i12=0;_i12<vertices.length;_i12+=3){vertices[_i12]=delta[0];vertices[_i12+1]=delta[1];vertices[_i12+2]=delta[2];}}/* 
+	     */},{key:'computeMove',value:function computeMove(vertices,pos){var center=this.computeCentroid(vertices);var delta=[center[0]-pos[0],center[1]-pos[1],center[2]-pos[2]];for(var _i12=0;_i12<vertices.length;_i12+=3){vertices[_i12]=delta[0];vertices[_i12+1]=delta[1];vertices[_i12+2]=delta[2];}}/* 
 	     * ---------------------------------------
 	     * GEOMETRY CREATORS
 	     * ---------------------------------------
@@ -4298,7 +4314,8 @@
 	///////////////////////////
 	///////////////////////////
 	///////////////////////////
-	if(prim.name==='colored cube'){console.log("DISPLAYING COLORED CUBE");var divided=this.morph.computeSubdivide(vertices,indices,texCoords);vertices=divided.vertices;indices=divided.indices;normals=this.computeNormals(vertices,indices,normals);}//////////////////////////
+	if(prim.name==='colored cube'){console.log("DISPLAYING COLORED CUBE");// Sending in texture coords and normals speeds subdivision calculation.
+	var divided=this.morph.computeSubdivide(vertices,indices,texCoords,normals);vertices=divided.vertices;indices=divided.indices;normals=this.computeNormals(vertices,indices,normals);}//////////////////////////
 	//////////////////////////
 	//////////////////////////
 	/////////////////////////
@@ -5563,62 +5580,85 @@
 	        }
 
 	        /** 
-	         * Given a triangle, computing if it is wound clockwise or counter-clockwise relative 
+	         * Given a triangle, compute if it is wound clockwise or counter-clockwise relative 
 	         * to the viewpoint. Needed since the morph routines sometimes reverse the 
 	         * winding order of individual polygons.
-	         * @param {Array} vertices an array of vertices
+	         * @param {Number} i1 first index of triangle Vertex.
+	         * @param {Number} i2 second index of triangle Vertex.
+	         * @param {Number} i3 third index of triangle Vertex.
+	         * @param {Array[Vertex]} vertices an array of vertices.
+	         * @param {Array[Number]} viewPointVec the viewpoint relative to the object.
 	         */
 
 
 	        _createClass(Morph, [{
 	                key: 'computeWinding',
-	                value: function computeWinding(vertices, indices, viewpointVec) {
+	                value: function computeWinding(i1, i2, i3, vtx) {
+	                        var viewpointVec = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : [0, 0, -1000];
+
 
 	                        var vec3 = this.glMatrix.vec3;
 
-	                        var i1 = void 0,
-	                            i2 = void 0,
-	                            i3 = void 0;
+	                        //let viewpointVec = [ 0, 0, -1000 ];
 
-	                        window.verts = vertices;
-	                        window.inds = indices;
+	                        window.verts = vtx;
+
+	                        // Get the triangle vertices
+
+	                        var v1 = vtx[i1].pos;
+
+	                        var v2 = vtx[i2].pos;
+
+	                        var v3 = vtx[i3].pos;
+
+	                        // Get the normal for the triangle
+
+	                        var a = vec3.sub([0, 0, 0], [v1.x, v1.y, v1.z], [v2.x, v2.y, v2.z]);
+
+	                        var b = vec3.sub([0, 0, 0], [v1.x, v1.y, v1.z], [v3.x, v3.y, v3.z]);
+
+	                        var cross = vec3.cross([0, 0, 0], a, b);
+
+	                        var cosA = vec3.dot(cross, viewpointVec) / (vec3.length(cross) * vec3.length(viewpointVec));
+
+	                        var angleA = Math.acos(cosA);
+
+	                        // get the same value for the face normal
+
+	                        // Get the (normalized) centroid = triangle face normal
+
+	                        var center = v1.clone().add(v2).add(v3).divideScalar(3);
+
+	                        var cosB = vec3.dot([center.x, center.y, center.z], viewpointVec) / (vec3.length([center.x, center.y, center.z]) * vec3.length(viewpointVec));
+
+	                        var angleB = Math.acos(cosB);
+
+	                        /////////////console.log( 'cosA:' + cosA + ' cosB:' + cosB + ' ANGLEA:' + angleA + ' ANGLEB:' + angleB );
+
+	                        if (cosA >= 0) cosA = 1;else cosA = -1;
+	                        if (cosB >= 0) cosB = 1;else cosB = -1;
+
+	                        console.log(cosA + ', ' + cosB);
+
+	                        if (cosA === cosB) {
+
+	                                return 1;
+	                        } else {
+
+	                                return -1;
+	                        }
 
 	                        /*
-	                                for ( let i = 0; i < indices.length; i += 3 ) {
+	                                if ( cosA > 0 ) {
 	                        
-	                                    i1 = indices[ i ];
+	                                    return -1;  // facing away
 	                        
-	                                    i2 = indices[ i + 1 ];
+	                                } else {
 	                        
-	                                    i3 = indices[ i + 2 ];
+	                                    return 1;  // facing forward
 	                        
-	                                    console.log("i1:" + i1 + " i2:" + i2 + " i3:" + i3);
-	                        
-	                                    let v1 = [ vertices[ i1 ], vertices[ i1 + 1 ], vertices[ i1 + 2 ] ];
-	                        
-	                                    let v2 = [ vertices[ i2 ], vertices[ i2 + 1 ], vertices[ i2 + 2 ] ];
-	                        
-	                                    let v3 = [ vertices[ i3 ], vertices[ i3 + 1 ], vertices[ i3 + 2 ] ];
-	                        
-	                                    verts2.push( [v1, v2, v3 ] );
-	                        
-	                                    let a = vec3.sub( [ 0, 0, 0 ], v1, v2 );
-	                        
-	                                    let b = vec3.sub( [ 0, 0, 0 ], v1, v3 );
-	                        
-	                                    let cross = vec3.cross( [ 0, 0, 0 ], a, b );
-	                        
-	                                    let cosA = vec3.dot( cross, viewpointVec ) / ( vec3.length( cross ) * vec3.length(   viewpointVec ) );
-	                        
-	                                    // the sign of the cosine will tell you if the wind faces forward, or reverse.
-	                        
-	                                    let angle = Math.acos( cosA );
-	                        
-	                                    console.log( 'cosA:' + cosA + ' ANGLE:' + angle );
-	                        
-	                                }
-	                        
-	                                */
+	                                };
+	                        */
 
 	                        /*
 	                         polygon normal
@@ -5708,13 +5748,17 @@
 
 	        }, {
 	                key: 'computeTrisFromQuads',
-	                value: function computeTrisFromQuads(quadIndices) {
+	                value: function computeTrisFromQuads(quadIndices, vtx) {
+
+	                        // TODO: STRUCTURE OF VTX, what to pass to computeWinding 
 
 	                        var util = this.util;
 
 	                        var tris = new Array(quadIndices.length * 2);
 
-	                        var ct = 0;
+	                        var ct = 0,
+	                            sign1 = 1,
+	                            sign2 = 1;
 
 	                        if (!util.canFlatten(quadIndices)) {
 
@@ -5722,6 +5766,8 @@
 
 	                                return null;
 	                        }
+
+	                        // Loop through vertices pointed to by the quadIndices
 
 	                        for (var i = 0; i < quadIndices.length; i++) {
 
@@ -5733,17 +5779,18 @@
 
 	                                console.log("quadindices:" + quad); ///////////////////////////
 
-	                                // TODO:
-	                                if (util.isEven(i)) {
+	                                sign1 = this.computeWinding(quad[0], quad[2], quad[1], vtx);
+
+	                                if (sign1 > 0) {
+	                                        console.log("sign1 same");
 	                                        tris[ct++] = [quad[0], quad[2], quad[1]];
 	                                } else {
+	                                        console.log("sign1 different");
 	                                        tris[ct++] = [quad[0], quad[1], quad[2]];
 	                                }
 
 	                                /*
 	                                            tris[ ct++ ] = [
-	                                
-	                                            // SWITCHING THIS FROM 0, 1, 2, gave a half-quad everywhere!!!
 	                                
 	                                                quad[ 0 ], 
 	                                                quad[ 2 ],
@@ -5752,24 +5799,28 @@
 	                                            ];
 	                                */
 
-	                                // TODO: GIVE ENTIRE TRIANGLE ONE COLOR
-	                                // TODO: CHECK ORIENTATION AT THIS POINT.
+	                                sign2 = this.computeWinding(quad[0], quad[2], quad[3], vtx);
 
-	                                // TODO:
-	                                if (util.isEven(i)) {} else {}
+	                                if (sign2 > 0) {
+	                                        console.log("sign2 same");
+	                                        tris[ct++] = [quad[0], quad[2], quad[3]];
+	                                } else {
+	                                        console.log("sign2 differnt");
+	                                        tris[ct++] = [quad[0], quad[3], quad[2]];
+	                                }
 
-	                                tris[ct++] = [
+	                                /*
+	                                            tris[ ct++ ] = [
+	                                
+	                                                quad[ 0 ],
+	                                                quad[ 2 ],
+	                                                quad[ 3 ]
+	                                
+	                                            ];
+	                                */
 
-	                                //SWITCHING THIS FROM 0, 2, 3 gave a half-quad everywhere (if first was 0, 1, 2) !!!!!!
-
-	                                //quad[ 0 ],
-	                                //quad[ 3 ],
-	                                //quad[ 2 ],
-
-	                                quad[0], quad[2], quad[3]];
-
-	                                // TODO: CHECK ORIENTATION AT THIS POINT.
-	                        }
+	                                console.log("sign1:" + sign1 + " sign2:" + sign2);
+	                        } // end of quad loop
 
 	                        return tris;
 	                }
@@ -5799,6 +5850,7 @@
 	                 * subdivision via
 	                 * @param {Array} quads an array of quad indices for a Prim.
 	                 * @param {Array} vtx an array of vertex3 objects.
+	                 * @returns {Coord} the middle coordinate
 	                 */
 
 	        }, {
@@ -5813,9 +5865,13 @@
 
 	                                Edge.prototype.midpoint = function (vtx) {
 
+	                                        var vtx0 = vtx[this.vertexIndices[0]];
+
+	                                        var vtx1 = vtx[this.vertexIndices[1]];
+
 	                                        ////////console.log("vertexIndices: " + this.vertexIndices[ 0 ] + ', ' + this.vertexIndices[ 1 ] );
 
-	                                        var returnValue = vtx[this.vertexIndices[0]].pos.clone().add(vtx[this.vertexIndices[1]].pos).divideScalar(2);
+	                                        var returnValue = vtx0.pos.clone().add(vtx1.pos).divideScalar(2);
 
 	                                        return returnValue;
 	                                };
@@ -5961,16 +6017,24 @@
 
 	        }, {
 	                key: 'computeSubdivide',
-	                value: function computeSubdivide(vertices, indices, texCoords) {
+	                value: function computeSubdivide(vertices, indices, texCoords, normals) {
 
 	                        var util = this.util;
 
 	                        var vec3 = this.glMatrix.vec3;
 
 	                        var vtx = void 0,
-	                            tris = void 0;
+	                            tris = void 0,
+	                            tCoords = void 0,
+	                            tNorms = void 0;
 
 	                        function Coords(x, y, z) {
+	                                var u = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0;
+	                                var v = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : 0;
+	                                var nx = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : 0;
+	                                var ny = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : 0;
+	                                var nz = arguments.length > 7 && arguments[7] !== undefined ? arguments[7] : 0;
+
 
 	                                this.x = x;
 
@@ -5978,81 +6042,217 @@
 
 	                                this.z = z;
 
+	                                this.u = u;
+
+	                                this.v = v;
+
+	                                this.nx = nx;
+
+	                                this.ny = ny;
+
+	                                this.nz = nz;
+
+	                                Coords.prototype.flatten = function () {
+
+	                                        return [this.x, this.y, this.z];
+	                                };
+
 	                                Coords.prototype.add = function (other) {
+
 	                                        this.x += other.x;
+
 	                                        this.y += other.y;
+
 	                                        this.z += other.z;
-	                                        return this;
-	                                };
 
-	                                Coords.prototype.clear = function () {
-	                                        this.x = 0;
-	                                        this.y = 0;
-	                                        this.z = 0;
-	                                        return this;
-	                                };
+	                                        // Texture coordinates are computed as an average
 
-	                                Coords.prototype.clone = function () {
-	                                        return new Coords(this.x, this.y, this.z);
-	                                };
+	                                        this.u += other.u;
 
-	                                Coords.prototype.crossProduct = function (other) {
-	                                        return this.overwriteWithXYZ(this.y * other.z - other.y * this.z, other.x * this.z - this.x * other.z, this.x * other.y - other.x * this.y);
-	                                };
+	                                        this.u /= 2;
 
-	                                Coords.prototype.divideScalar = function (scalar) {
-	                                        this.x /= scalar;
-	                                        this.y /= scalar;
-	                                        this.z /= scalar;
-	                                        return this;
-	                                };
+	                                        this.v += other.v;
 
-	                                Coords.prototype.dotProduct = function (other) {
-	                                        return this.x * other.x + this.y * other.y + this.z * other.z;
-	                                };
+	                                        this.v /= 2;
 
-	                                Coords.prototype.magnitude = function () {
-	                                        return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
-	                                };
+	                                        // Normals have to be normalized
 
-	                                Coords.prototype.multiplyScalar = function (scalar) {
-	                                        this.x *= scalar;
-	                                        this.y *= scalar;
-	                                        this.z *= scalar;
-	                                        return this;
-	                                };
+	                                        this.nx += other.nx;
 
-	                                Coords.prototype.normalize = function () {
-	                                        return this.divideScalar(this.magnitude());
-	                                };
+	                                        this.ny += other.ny;
 
-	                                Coords.prototype.overwriteWith = function (other) {
-	                                        this.x = other.x;
-	                                        this.y = other.y;
-	                                        this.z = other.z;
-	                                        return this;
-	                                };
+	                                        this.nz += other.nz;
 
-	                                Coords.prototype.overwriteWithXYZ = function (x, y, z) {
-	                                        this.x = x;
-	                                        this.y = y;
-	                                        this.z = z;
+	                                        var length = Math.sqrt(this.nx * this.nx + this.ny * this.ny + this.nz * this.nz);
+
+	                                        length = length === 0 ? 1.0 : length;
+
+	                                        this.nx /= length;
+
+	                                        this.ny /= length;
+
+	                                        this.nz /= length;
+
 	                                        return this;
 	                                };
 
 	                                Coords.prototype.subtract = function (other) {
+
 	                                        this.x -= other.x;
+
 	                                        this.y -= other.y;
+
 	                                        this.z -= other.z;
+
+	                                        // Texture coordinates are computed as an average.
+
+	                                        this.u += other.u;
+
+	                                        this.u /= 2;
+
+	                                        this.v += other.v;
+
+	                                        this.v /= 2;
+
+	                                        // Normals need to be recomputed.
+
+	                                        this.nx -= other.nx;
+
+	                                        this.ny -= other.ny;
+
+	                                        this.nz -= other.nz;
+
+	                                        var length = Math.sqrt(this.nx * this.nx + this.ny * this.ny + this.nz * this.nz);
+
+	                                        length = length === 0 ? 1.0 : length;
+
+	                                        this.nx /= length;
+
+	                                        this.ny /= length;
+
+	                                        this.nz /= length;
+
+	                                        return this;
+	                                };
+
+	                                Coords.prototype.clear = function () {
+
+	                                        this.x = this.y = this.z = 0;
+
+	                                        this.u = this.v = 0;
+
+	                                        this.nx = this.ny = this.nz = 0;
+
+	                                        return this;
+	                                };
+
+	                                Coords.prototype.clone = function () {
+
+	                                        return new Coords(this.x, this.y, this.z, this.u, this.v, this.nx, this.ny, this.nz);
+	                                };
+
+	                                Coords.prototype.multiplyScalar = function (scalar) {
+
+	                                        this.x *= scalar;
+
+	                                        this.y *= scalar;
+
+	                                        this.z *= scalar;
+
+	                                        // Normals and texcoords unchanged by a multiply.
+
+	                                        return this;
+	                                };
+
+	                                Coords.prototype.divideScalar = function (scalar) {
+
+	                                        this.x /= scalar;
+
+	                                        this.y /= scalar;
+
+	                                        this.z /= scalar;
+
+	                                        // normals and texCoords unchanged by a divide
+
+	                                        return this;
+	                                };
+
+	                                Coords.prototype.crossProduct = function (other) {
+
+	                                        // Normals, texCoords aren't involved.
+
+	                                        return this.overwriteWithXYZ(this.y * other.z - other.y * this.z, other.x * this.z - this.x * other.z, this.x * other.y - other.x * this.y);
+	                                };
+
+	                                Coords.prototype.dotProduct = function (other) {
+
+	                                        return this.x * other.x + this.y * other.y + this.z * other.z;
+	                                };
+
+	                                Coords.prototype.magnitude = function () {
+
+	                                        return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+	                                };
+
+	                                Coords.prototype.normalize = function () {
+
+	                                        return this.divideScalar(this.magnitude());
+	                                };
+
+	                                Coords.prototype.overwriteWith = function (other) {
+
+	                                        this.x = other.x;
+
+	                                        this.y = other.y;
+
+	                                        this.z = other.z;
+
+	                                        this.u = other.u;
+
+	                                        this.v = other.v;
+
+	                                        this.nx = other.nx;
+
+	                                        this.ny = other.ny;
+
+	                                        this.nz = other.nz;
+
+	                                        return this;
+	                                };
+
+	                                Coords.prototype.overwriteWithXYZ = function (x, y, z) {
+
+	                                        this.x = x;
+
+	                                        this.y = y;
+
+	                                        this.z = z;
+
 	                                        return this;
 	                                };
 	                        }; // end of Coords
 
 	                        // Adapt to our flattened vec3.
 
-	                        function Vertex(vec) {
+	                        function Vertex(vec, texCoord, normal) {
 
 	                                this.pos = new Coords(vec[0], vec[1], vec[2]);
+
+	                                if (texCoord) {
+
+	                                        this.pos.u = texCoord[0];
+
+	                                        this.pos.v = texCoord[1];
+	                                }
+
+	                                if (normal) {
+
+	                                        this.pos.nx = normal[0];
+
+	                                        this.pos.ny = normal[1];
+
+	                                        this.pos.nz = normal[2];
+	                                }
 
 	                                this.edgeIndices = [];
 
@@ -6064,8 +6264,11 @@
 	                                var returnValues = [];
 
 	                                for (var i = 0; i < positions.length; i++) {
+
 	                                        var position = positions[i];
-	                                        var vertex = new Vertex([position.x, position.y, position.z]); ///CHANGED!!!!!!!!!
+
+	                                        var vertex = new Vertex([position.x, position.y, position.z], [position.u, position.v], [position.nx, position.ny, position.nz]); ///CHANGED!!!!!!!!!
+
 	                                        returnValues.push(vertex);
 	                                }
 
@@ -6073,6 +6276,31 @@
 	                        };
 
 	                        // handle both flattened and unflattened vertices.
+
+
+	                        if (!util.canFlatten(indices)) {
+
+	                                tris = util.unFlatten(indices, 3);
+	                        } else {
+
+	                                tris = indices;
+	                        }
+
+	                        if (!util.canFlatten(texCoords)) {
+
+	                                tCoords = util.unFlatten(texCoords, 2);
+	                        } else {
+
+	                                tCoords = texCoords;
+	                        }
+
+	                        if (!util.canFlatten(normals)) {
+
+	                                tNorms = util.unFlatten(normals, 3);
+	                        } else {
+
+	                                tNorms = normals;
+	                        }
 
 	                        if (!util.canFlatten(vertices)) {
 
@@ -6086,19 +6314,11 @@
 
 	                                        // NOTE: this is our array, so it is OK
 
-	                                        vtx[i] = new Vertex(_v[i]);
+	                                        vtx[i] = new Vertex(_v[i], tCoords[i], tNorms[i]);
 	                                }
 	                        } else {
 
 	                                vtx = vertices;
-	                        }
-
-	                        if (!util.canFlatten(indices)) {
-
-	                                tris = util.unFlatten(indices, 3);
-	                        } else {
-
-	                                tris = indices;
 	                        }
 
 	                        // requires unflattened indices, in triangles
@@ -6109,7 +6329,7 @@
 	                        // TEST CUBE DATA
 	                        // NOTE: we define Vertex differently from the original code.
 
-	                        vtx = [new Vertex([-1, -1, -1]), new Vertex([1, -1, -1]), new Vertex([1, 1, -1]), new Vertex([-1, 1, -1]), new Vertex([-1, -1, 1]), new Vertex([1, -1, 1]), new Vertex([1, 1, 1]), new Vertex([-1, 1, 1])];
+	                        vtx = [new Vertex([-1, -1, -1], [0.0, 0.0], [-1, -1, -1]), new Vertex([1, -1, -1], [1.0, 0.0], [1, -1, -1]), new Vertex([1, 1, -1], [1.0, 1.0], [1, 1, -1]), new Vertex([-1, 1, -1], [0.0, 1.0], [-1, 1, -1]), new Vertex([-1, -1, 1], [0.0, 0.0], [-1, -1, 1]), new Vertex([1, -1, 1], [1.0, 0.0], [1, -1, 1]), new Vertex([1, 1, 1], [1.0, 1.0], [1, 1, 1]), new Vertex([-1, 1, 1], [0.0, 1.0], [-1, 1, 1])];
 
 	                        // Cube quads
 	                        quads = [[0, 1, 2, 3], [0, 1, 5, 4], [1, 2, 6, 5], [2, 3, 7, 6], [3, 0, 4, 7], [4, 5, 6, 7]];
@@ -6541,11 +6761,7 @@
 
 	                        // NOTE: each kind of Prim will have to deal with texture Coordinates
 	                        // convert indices to triangles and vertices to standard vertices.
-	                        indices = this.computeTrisFromQuads(vertexIndicesForFacesNew);
-
-	                        // TODO: MOVED THIS TO UNFLATTENED
-
-	                        this.computeWinding(verticesNew, indices, [0, 0, 0]);
+	                        indices = this.computeTrisFromQuads(vertexIndicesForFacesNew, verticesNew);
 
 	                        indices = util.flatten(indices);
 

@@ -1074,8 +1074,10 @@ class Prim {
      * @param {[...GLMatrix.vec3]} vertices the current 3d position coordinates.
      * @param {Array} current indices into the vertices.
      * @param {[...GLMatrix.vec3]} normals the normals array to recalculate.
+     * @param {Boolean} justFace if true, return the face normal for all three vertices in a triangle, 
+     *        otherwise, compute each vertex normal separately.
      */
-    computeNormals ( vertices, indices, normals ) {
+    computeNormals ( vertices, indices, normals, justFace ) {
 
         let idx = 0;
 
@@ -1139,23 +1141,23 @@ class Prim {
 
             // Accumulate all the normals defined for the face.
 
-            normals[i1 * 3] += faceNormalx;
+            normals[ i1 * 3     ] += faceNormalx;
 
-            normals[i1 * 3 + 1] += faceNormaly;
+            normals[ i1 * 3 + 1 ] += faceNormaly;
 
-            normals[i1 * 3 + 2] += faceNormalz;
+            normals[ i1 * 3 + 2 ] += faceNormalz;
 
-            normals[i2 * 3] += faceNormalx;
+            normals[ i2 * 3     ] += faceNormalx;
 
-            normals[i2 * 3 + 1] += faceNormaly;
+            normals[ i2 * 3 + 1 ] += faceNormaly;
 
-            normals[i2 * 3 + 2] += faceNormalz;
+            normals[ i2 * 3 + 2 ] += faceNormalz;
 
-            normals[i3 * 3] += faceNormalx;
+            normals[ i3 * 3     ] += faceNormalx;
 
-            normals[i3 * 3 + 1] += faceNormaly;
+            normals[ i3 * 3 + 1 ] += faceNormaly;
 
-            normals[i3 * 3 + 2] += faceNormalz;
+            normals[ i3 * 3 + 2 ] += faceNormalz;
 
         }
 
@@ -1339,7 +1341,7 @@ class Prim {
      */
     computeMove ( vertices, pos ) {
 
-        let center = this.getCentroid( vertices );
+        let center = this.computeCentroid( vertices );
 
         let delta = [
 
@@ -2412,7 +2414,9 @@ class Prim {
         if ( prim.name === 'colored cube' ) {
 
             console.log("DISPLAYING COLORED CUBE")
-            let divided = this.morph.computeSubdivide( vertices, indices, texCoords );
+            // Sending in texture coords and normals speeds subdivision calculation.
+
+            let divided = this.morph.computeSubdivide( vertices, indices, texCoords, normals );
             vertices = divided.vertices;
             indices = divided.indices;
             normals = this.computeNormals( vertices, indices, normals );

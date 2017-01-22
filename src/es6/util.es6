@@ -107,6 +107,18 @@ class Util {
 
     }
 
+    /** 
+     * return the fractional (non-integer) portion 
+     * of a number.
+     * @param {Number} n the float number
+     * @returns {Number} the fractional part of the number;
+     */
+    frac( n ) {
+
+        return n % 1;
+
+    }
+
     containsAll ( arr1, arr2 ) {
 
         arr2.every( arr2Item => arr1.includes( arr2Item ) );
