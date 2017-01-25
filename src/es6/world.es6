@@ -143,10 +143,11 @@ class World {
 
         this.colorObjList = [];
 
-         this.colorObjList.push( this.prim.createPrim(
+         //this.colorObjList.push( this.prim.createPrim(
+         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.CUBE,
             'colored cube',
-            vec5( 3, 3, 3, 0 ),            // dimensions
+            vec5( 1, 1, 1, 0 ),            // dimensions
             vec5( 3, 3, 3 ),            // divisions
             vec3.fromValues( 0.2, 0.5, 3 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z

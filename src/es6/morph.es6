@@ -304,15 +304,27 @@ class Morph {
 
         let vertices = [];
 
+        let normals = [];
+
+        let texCoords = [];
+
         for ( let i = 0; i < vtx.length; i++ ) {
 
             let pos = vtx[ i ].pos;
 
-            vertices.push( pos.x, pos.y, pos.z )
+            vertices.push( pos.x, pos.y, pos.z );
+
+            texCoords.push( pos.u, pos.v );
+
+            normals.push( pos.nx, pos.ny, pos.nz );
 
         }
 
-        return vertices;
+        return {
+            vertices: vertices,
+            texCoords: texCoords,
+            normals: normals
+        };
 
     }
 
@@ -835,7 +847,7 @@ class Morph {
         /////////////////////////////////////////////////////
         // TEST CUBE DATA
         // NOTE: we define Vertex differently from the original code.
-
+/*
         vtx = [
 
                 new Vertex( [-1, -1, -1], [ 0.0, 0.0 ], [-1, -1, -1] ),
@@ -851,6 +863,8 @@ class Morph {
 
         // Cube quads
         quads = [ [0,1,2,3], [0,1,5,4], [1,2,6,5], [2,3,7,6], [3,0,4,7], [4,5,6,7] ];
+
+*/
 
         window.faces = faces;
         window.edges = edges;
@@ -1314,17 +1328,13 @@ class Morph {
         indices = util.flatten( indices );
 
         // Convert Vertex to flattened coordinate data
-        vertices = this.flattenVertexList( verticesNew );
+        let result = this.flattenVertexList( verticesNew );
 
+        // Add our new indices to the flattened object
 
+        result.indices = indices;
 
-        return {
-            vertices: vertices,
-            subindices: vertexIndicesForFacesNew,
-            indices: indices
-        };
-
-  
+        return result;
 
         // END OF SUBDIVIDE
         ///////////////////////////////////////////////////////////////////////////////////////

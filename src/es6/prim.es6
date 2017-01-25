@@ -2411,17 +2411,24 @@ class Prim {
         ///////////////////////////
         ///////////////////////////
         ///////////////////////////
+        /*
         if ( prim.name === 'colored cube' ) {
 
             console.log("DISPLAYING COLORED CUBE")
             // Sending in texture coords and normals speeds subdivision calculation.
 
             let divided = this.morph.computeSubdivide( vertices, indices, texCoords, normals );
+
             vertices = divided.vertices;
             indices = divided.indices;
+            texCoords = divided.texCoords;
+            window.divc = texCoords;
             normals = this.computeNormals( vertices, indices, normals );
 
+            // TODO: TEST COORDS
+
         }
+        */
         //////////////////////////
         //////////////////////////
         //////////////////////////

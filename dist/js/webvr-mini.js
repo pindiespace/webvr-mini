@@ -4314,8 +4314,24 @@
 	///////////////////////////
 	///////////////////////////
 	///////////////////////////
-	if(prim.name==='colored cube'){console.log("DISPLAYING COLORED CUBE");// Sending in texture coords and normals speeds subdivision calculation.
-	var divided=this.morph.computeSubdivide(vertices,indices,texCoords,normals);vertices=divided.vertices;indices=divided.indices;normals=this.computeNormals(vertices,indices,normals);}//////////////////////////
+	/*
+	        if ( prim.name === 'colored cube' ) {
+
+	            console.log("DISPLAYING COLORED CUBE")
+	            // Sending in texture coords and normals speeds subdivision calculation.
+
+	            let divided = this.morph.computeSubdivide( vertices, indices, texCoords, normals );
+
+	            vertices = divided.vertices;
+	            indices = divided.indices;
+	            texCoords = divided.texCoords;
+	            window.divc = texCoords;
+	            normals = this.computeNormals( vertices, indices, normals );
+
+	            // TODO: TEST COORDS
+
+	        }
+	        *///////////////////////////
 	//////////////////////////
 	//////////////////////////
 	/////////////////////////
@@ -5835,14 +5851,26 @@
 
 	                        var vertices = [];
 
+	                        var normals = [];
+
+	                        var texCoords = [];
+
 	                        for (var i = 0; i < vtx.length; i++) {
 
 	                                var pos = vtx[i].pos;
 
 	                                vertices.push(pos.x, pos.y, pos.z);
+
+	                                texCoords.push(pos.u, pos.v);
+
+	                                normals.push(pos.nx, pos.ny, pos.nz);
 	                        }
 
-	                        return vertices;
+	                        return {
+	                                vertices: vertices,
+	                                texCoords: texCoords,
+	                                normals: normals
+	                        };
 	                }
 
 	                /** 
@@ -6328,11 +6356,24 @@
 	                        /////////////////////////////////////////////////////
 	                        // TEST CUBE DATA
 	                        // NOTE: we define Vertex differently from the original code.
-
-	                        vtx = [new Vertex([-1, -1, -1], [0.0, 0.0], [-1, -1, -1]), new Vertex([1, -1, -1], [1.0, 0.0], [1, -1, -1]), new Vertex([1, 1, -1], [1.0, 1.0], [1, 1, -1]), new Vertex([-1, 1, -1], [0.0, 1.0], [-1, 1, -1]), new Vertex([-1, -1, 1], [0.0, 0.0], [-1, -1, 1]), new Vertex([1, -1, 1], [1.0, 0.0], [1, -1, 1]), new Vertex([1, 1, 1], [1.0, 1.0], [1, 1, 1]), new Vertex([-1, 1, 1], [0.0, 1.0], [-1, 1, 1])];
-
-	                        // Cube quads
-	                        quads = [[0, 1, 2, 3], [0, 1, 5, 4], [1, 2, 6, 5], [2, 3, 7, 6], [3, 0, 4, 7], [4, 5, 6, 7]];
+	                        /*
+	                                vtx = [
+	                        
+	                                        new Vertex( [-1, -1, -1], [ 0.0, 0.0 ], [-1, -1, -1] ),
+	                                        new Vertex( [ 1, -1, -1], [ 1.0, 0.0 ], [ 1, -1, -1] ),
+	                                        new Vertex( [ 1,  1, -1], [ 1.0, 1.0 ], [ 1,  1, -1] ),
+	                                        new Vertex( [-1,  1, -1], [ 0.0, 1.0 ], [-1,  1, -1] ),
+	                        
+	                                        new Vertex( [-1, -1,  1], [ 0.0, 0.0 ], [-1, -1,  1] ),
+	                                        new Vertex( [ 1, -1,  1], [ 1.0, 0.0 ], [ 1, -1,  1] ),
+	                                        new Vertex( [ 1,  1,  1], [ 1.0, 1.0 ], [ 1,  1,  1] ),
+	                                        new Vertex( [-1,  1,  1], [ 0.0, 1.0 ], [-1,  1,  1] ),
+	                                ];
+	                        
+	                                // Cube quads
+	                                quads = [ [0,1,2,3], [0,1,5,4], [1,2,6,5], [2,3,7,6], [3,0,4,7], [4,5,6,7] ];
+	                        
+	                        */
 
 	                        window.faces = faces;
 	                        window.edges = edges;
@@ -6766,13 +6807,13 @@
 	                        indices = util.flatten(indices);
 
 	                        // Convert Vertex to flattened coordinate data
-	                        vertices = this.flattenVertexList(verticesNew);
+	                        var result = this.flattenVertexList(verticesNew);
 
-	                        return {
-	                                vertices: vertices,
-	                                subindices: vertexIndicesForFacesNew,
-	                                indices: indices
-	                        };
+	                        // Add our new indices to the flattened object
+
+	                        result.indices = indices;
+
+	                        return result;
 
 	                        // END OF SUBDIVIDE
 	                        ///////////////////////////////////////////////////////////////////////////////////////
@@ -6947,7 +6988,8 @@
 
 	                        this.colorObjList = [];
 
-	                        this.colorObjList.push(this.prim.createPrim(this.prim.typeList.CUBE, 'colored cube', vec5(3, 3, 3, 0), // dimensions
+	                        //this.colorObjList.push( this.prim.createPrim(
+	                        this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CUBE, 'colored cube', vec5(1, 1, 1, 0), // dimensions
 	                        vec5(3, 3, 3), // divisions
 	                        vec3.fromValues(0.2, 0.5, 3), // position (absolute)
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
