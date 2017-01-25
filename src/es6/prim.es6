@@ -48,7 +48,26 @@ class Prim {
      *    b. resultPt = vec3.sub( resultPt, a, b );
      *    c. resultPt = vec3.sub( [ 0, 0, 0 ], a, b );
      * ---------------------------------------------------------------
+     * Geometry - flattened arrays with the following datatypes
      *
+     *  { 
+     *    vertices:  [],   // float32
+     *    indices:   [],   // unsigned int16
+     *    texCoords: [],   // float32
+     *    normals:   [],   // float32
+     *    tangents:  [],   // float32
+     *    colors:    []    // float32
+     *  }
+     *
+     * ---------------------------------------------------------------
+     * WebGL Buffer == duplicates Geometry, but with geometry data copied to sub-object
+     *  {
+     *    data:     [],   // the geometry data
+     *    buffer:   null, // the buffer created by WebGL
+     *    itemSize: 0,    // size of object, or stride through data array
+     *    numItems: 0     // number of objects
+     *  }
+     * ---------------------------------------------------------------
      * Array optimization
      * https://gamealchemist.wordpress.com/2013/05/01/lets-get-those-javascript-arrays-to-work-fast/
      * 
@@ -101,7 +120,7 @@ class Prim {
 
         // If we need distortion and smoothing for the Prims
 
-        this.morph = new Morph( true, util, glMatrix, webgl );
+        this.morph = new Morph( true, util, glMatrix );
 
         this.objs = [];
 
@@ -2411,24 +2430,23 @@ class Prim {
         ///////////////////////////
         ///////////////////////////
         ///////////////////////////
-        /*
+
         if ( prim.name === 'colored cube' ) {
 
             console.log("DISPLAYING COLORED CUBE")
             // Sending in texture coords and normals speeds subdivision calculation.
 
-            let divided = this.morph.computeSubdivide( vertices, indices, texCoords, normals );
+            let divided = this.morph.computeSubdivide( vertices, indices, texCoords, true );
 
-            vertices = divided.vertices;
-            indices = divided.indices;
-            texCoords = divided.texCoords;
-            window.divc = texCoords;
-            normals = this.computeNormals( vertices, indices, normals );
+            //vertices = divided.vertices;
+            //indices = divided.indices;
+            //texCoords = divided.texCoords;
+            //normals = this.computeNormals( vertices, indices, normals );
 
             // TODO: TEST COORDS
 
         }
-        */
+
         //////////////////////////
         //////////////////////////
         //////////////////////////
