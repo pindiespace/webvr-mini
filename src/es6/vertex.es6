@@ -7,44 +7,106 @@ import Coords from './coords';
 
 class Vertex {
 
-    constructor ( x, y, z, idx, u, v ) {
+    /** 
+     * @constructor
+     * @param {Number} x the x, or 0 coordinate
+     * @param {Number} y the y, or 1 coordinate
+     * @param {Number} z the z, or 2 coordinate
+     * @param {Number} u the u, or 0 texture coordinate
+     * @param {Number} v the v, or 1 texture coordinate
+     * @param {Array[Vertex]} the parent Vertex array
+     */
+    constructor ( x = 0, y = 0, z = 0, u = 0, v = 0, vtx ) {
+
+        //console.log("x:" + x + " y:" + y + " z:" + z)
 
         this.coords = new Coords( x, y, z );
 
-        this.idx = idx;
+        this.texCoords = { u: u, v: v };
 
-        this.texCoords = [ u, v ];
+        // Save the parent array with all vertices.
+
+        this.vtx = vtx;
+
+        // Hash
+
+        this.edges = [];
+
+        this.tris = [];
+
+        this.quads = [];
 
     }
 
+    valid () {
+
+        if ( this.coords.isValid() ) {
+
+            return true;
+
+        }
+
+        return false;
+    }
+
+    /** 
+     * Set the position coordinates of the Vertex.
+     * @param {Number} x the x, or 0 coordinate
+     * @param {Number} y the y, or 1 coordinate
+     * @param {Number} z the z, or 2 coordinate
+     */
+    setCoords ( x = 0, y = 0, z = 0 ) {
+
+        this.coords.set( x, y, z );
+
+        return this;
+
+    }
 
     /**
-     * Flatten vertex data, and append to a flattened array.
+     * Set the texture coordinates of the Vertex.
+     * @param {Number} u the u, or 0 texture coordinate
+     * @param {Number} v the v, or 1 texture coordinate
      */
-    flattenAndAppend ( vertices, indices, texCoords ) {
+    setTexCoords( u = 0, v = 0 ) {
 
-        vertices.push( this.x, this.y, this.z );
+        this.u = u;
 
-        indices.push( idx );
+        this. v = v; 
 
-        texCoords.push( this.u, this.v );
+        return this;
 
     }
 
     /** 
-     * give a list of Vertex objects, find the midpoint. This includes 
-     * a texture coordinate calculation.
+     * Return a new Vertex which have averaged position and 
+     * texture coordinate
+     * @param {Vertex} other the Vertex to average with
      */
-    midpoint ( vertexArr ) {
+    average ( other ) {
 
-        for ( let i = 0; i < vertexArr.length; i++ ) {
+        let v = this.clone();
 
-            // compute average
+        v.coords = v.coords.average( other.coords );
 
-        }
+        v.texCoords =  { 
+            u: v1.texCoords.u + v2.texCoords.u / 2,
+            v: v1.texCoords.v + v2.texCoords.v / 2
+        };
+
+        return v;
 
     }
 
+    /**
+     * Return a new copy of this Vertex
+     * @returns {Vertex} a copy of the current vertex
+     */
+    clone () {
+
+        return new Vertex( this.x, this.y, this.z, this.u, this.v, this.vtx );
+
+    }
 
 }
 

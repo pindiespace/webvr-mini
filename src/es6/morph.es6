@@ -5,7 +5,9 @@
 import Coords from './coords';
 import Vertex from './vertex';
 import Edge from './edge';
-import Face from './face';
+import Tri from './tri';
+import Quad from './quad';
+import Mesh from './mesh';
 
 class Morph {
 
@@ -29,7 +31,7 @@ class Morph {
      * Convert our native flatted geometric data (see Prim) to a Vertex object 
      * data representation suitable for subdivision and morphing.
      */
-    geometryToVertex( vertices, indices, texCoords ) {
+    geometryToVertex ( vertices, indices, texCoords ) {
 
         let i = 0;
 
@@ -41,37 +43,101 @@ class Morph {
 
         let vertexArr = new Array( numVertices );
 
-        let numIndices = indices.length / 3;
+        let indexArr = indices.slice(0);
 
-        let indexArr = new Array( numIndices );
+        let numIndices = indexArr.length;
 
-        let vi, ti = 0;
+        let edgeArr = new Array( numVertices - 1 );
+
+        let triArr  = new Array( numVertices - 2 );
+
+        let quadArr = new Array( numVertices - 3 );
+
+        let vi = 0, ti = 0;
+
+        // Convert flattend coordinates to Vertex objects.
 
         for ( i = 0; i < numVertices; i++ ) {
 
-            vertexArr[ i ] = new Vertex( vertices[ vi++ ], vertices[ vi++ ], vertices[ vi++ ], texCoords[ ti++ ], texCoords[ ti++ ] );
+            vertexArr[ i ] = new Vertex( vertices[ vi++ ], vertices[ vi++ ], vertices[ vi++ ], texCoords[ ti++ ], texCoords[ ti++ ], vertexArr );
+
+        }
+
+        // Compute Edges, Triangles, Quads from the index array
+        /*  
+            Mk   = refined mesh
+            Mk-1 = coarse mesh
+            one simple solution is to store the edges vertices in Mk in a hash table. To look up the index for a given 
+            "edge" vertex in Mk-1, we query the hash table with the indices of the endpoints of the edge
+            in Mk-1, containing the "edge" vertex. If the table entry is uninitialized, the vertex is assigned a new 
+            index and that index is stored in the hash table. Otherwise, the hash table returns the previously stored 
+            index for the edge vertex. A global counter can be used to assigned new indices and keep track of the 
+            total number of vertices.
+        */
+
+        let er = 0;
+
+        for ( let i = 0; i < numIndices; i += 2 ) {
+
+            edgeArr[ er ] = new Edge( indexArr[ i ], indexArr[ i + 1 ], vertexArr );
+
+            er++;
+
+        }
+
+        // Define previous and next Edges
+
+        for ( let i = 0; i < edgeArr.length; i++ ) {
+
+            if ( i === 0 ) {
+
+                edgeArr[ i ].prev = edgeArr[ edgeArr.length - 1 ];
+                edgeArr[ i ].next = edgeArr[ 1 ]
+
+            } else if ( i == edgeArr.length - 1) {
+
+                edgeArr[ i ].prev = edgeArr[ i - 1 ];
+                edgeArr[ i ].next = edgeArr[ 0 ];
+
+            } else {
+
+                edgeArr[ i ].prev = edgeArr[ i - 1 ];
+                edgeArr[ i ].next = edgeArr[ i + 1 ];
+
+            }
+
+        }
+
+        // Build an Edge hash
+
+        for ( let i = 0; i < edgeArr.length; i++ ) {
+
+            for ( let j = 0; j < edgeArr.length; j++ ) {
+
+
+
+            }
+
+        }
+
+        // Define Tris
+
+        let tr = 0;
+
+        for ( let i = 0; i < numIndices; i += 3 ) {
+
+            edgeArr[ tr ] = new Tri( indexArr[ i ], indexArr[ i + 1 ], indexArr[ i + 2 ], vertexArr );
+
+            tr++;
 
         }
 
 
-        indexArr = indices.slice(0);
+        // Give each Vertex a list of Edge, Face, and Quad indices (hash table)
 
-        for ( i = 0; i < indexArr.length; i+= 3 ) {
+        // Return a Mesh object (not all properties present yet).
 
-            console.log(" index:" + i + " indexArr:" + indexArr[ i ] + " Vertex:" + vertexArr[ indexArr[ i ] ] );
-
-
-        }
-
-        // Return an object (actually a basic Mesh )
-
-        return {
-
-            vertexArr: vertexArr,
-
-            indexArr: indexArr
-
-        };
+        return new Mesh( vertexArr, indexArr, edgeArr, triArr, quadArr );
 
     }
 
@@ -82,6 +148,8 @@ class Morph {
     vertexToGeometry( vertexArr, indexArr ) {
 
         let vertices = new Array( vertexArr.length * 3 );
+
+        let indices = new Array( indexArr.length * 3 );
 
         let texCoords = new Array( vertexArr.length * 2 );
 
@@ -111,13 +179,23 @@ class Morph {
 
         }
 
-        // flatten index array.
+        // flatten index array, taking Vertex Position, multiply by 3, add extra coordinates
+
+        let idx = 0;
 
         for ( let i = 0; i < indexArr.length; i++ ) {
 
-            indexArr[ i ] *= 3;
+            let iStart = i * 3; 
+
+            indices[ idx++ ] = indexArr[ iStart++ ];
+
+            indices[ idx++ ] = indexArr[ iStart++ ];
+
+            indices[ idx++ ] = indexArr[ iStart ];
 
         }
+
+        // We aren't exporting a true Geometry, just some of its arrays
 
         return {
 
@@ -131,21 +209,35 @@ class Morph {
 
     }
 
-    /**
-     * Compute the midpoint between any number of vertices in 3D space.
-     * @param {Array[Vertex]} vertices
-     */ 
-    computeMidPoint( vertexArr ) {
+    /** 
+     * Subdivide a mesh, optionally adding data structures for 
+     * smoothing after the subdivision. 
+     * @link https://graphics.stanford.edu/~mdfisher/Code/Engine/BaseMeshIndexing.cpp.html
+     * 
+     * a) the mesh is converted to a 
+     * a) the mesh is converted to a set of quads, with appropriate indices. 
+     * b) the set of quads had ned points added
+     * c) indices are re-computed.
+     * @param{Array[Vertex]} a Vertex Array
+     */
+    subdivideMesh ( mesh ) {
 
+        // Mesh object
+
+        let dm = new Mesh();
+
+        return mesh;
 
     }
 
     /** 
-     * Subdivide a mesh, optionally adding data structures for 
-     * smoothing after the subdivision.
-     * @param{Array[Vertex]} a Vertex Array
+     * Given a mesh, compute a power of two subdivision using the loop algorithm.
      */
-    subdivideMesh ( vertexArr ) {
+    smoothLoop ( mesh ) {
+
+        let submesh = {};
+
+        return mesh;
 
     }
 
@@ -159,9 +251,38 @@ class Morph {
         window.vtx = mesh.vertexArr;
         window.idx = mesh.indexArr;
 
+        mesh = this.subdivideMesh( mesh );
+
+        if ( smooth ) {
+
+            mesh = this.smoothLoop( mesh );
+
+        }
+
         let divided = this.vertexToGeometry ( mesh.vertexArr, mesh.indexArr );
 
-        window.divided = divided;
+        window.vertices = vertices;
+        window.indices = indices;
+        window.vertices2 = divided.vertices;
+        window.indices2 = divided.indices;
+        window.texCoords = texCoords;
+        window.texCoords2 = divided.texCoords;
+
+        // Test vertices
+
+        for ( let i = 0; i < vertices.length; i++ ) {
+            if(vertices[i] !== vertices2[i]) {
+                console.error("invalid vertices subdivide");
+            }
+        }
+
+        // test texture coords
+
+        for ( let i = 0; i < texCoords.length; i++ ) {
+            if(texCoords[i] !== texCoords2[i]) {
+                console.error("invalid texcoord subdivide"); 
+            }
+        }
 
         return divided;
 

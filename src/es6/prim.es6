@@ -2438,9 +2438,9 @@ class Prim {
 
             let divided = this.morph.computeSubdivide( vertices, indices, texCoords, true );
 
-            //vertices = divided.vertices;
-            //indices = divided.indices;
-            //texCoords = divided.texCoords;
+            vertices = divided.vertices;
+            indices = divided.indices;
+            texCoords = divided.texCoords;
             //normals = this.computeNormals( vertices, indices, normals );
 
             // TODO: TEST COORDS
