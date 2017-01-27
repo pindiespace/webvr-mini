@@ -47,24 +47,20 @@ class Morph {
 
         let numIndices = indexArr.length;
 
-        let edgeArr = new Array( numVertices - 1 );
-
-        let triArr  = new Array( numVertices - 2 );
-
-        let quadArr = new Array( numVertices - 3 );
-
         let vi = 0, ti = 0;
 
         // Convert flattend coordinates to Vertex objects.
 
         for ( i = 0; i < numVertices; i++ ) {
 
-            vertexArr[ i ] = new Vertex( vertices[ vi++ ], vertices[ vi++ ], vertices[ vi++ ], texCoords[ ti++ ], texCoords[ ti++ ], vertexArr );
+            vertexArr[ i ] = new Vertex( vertices[ vi++ ], vertices[ vi++ ], vertices[ vi++ ], texCoords[ ti++ ], texCoords[ ti++ ], vertexArr, i );
 
         }
 
         // Compute Edges, Triangles, Quads from the index array
         /*  
+         * create Edges, referring to vertices.
+         *
             Mk   = refined mesh
             Mk-1 = coarse mesh
             one simple solution is to store the edges vertices in Mk in a hash table. To look up the index for a given 
@@ -75,46 +71,47 @@ class Morph {
             total number of vertices.
         */
 
-        let er = 0;
+        // Edge hash
 
-        for ( let i = 0; i < numIndices; i += 2 ) {
+        // Diagram: https://fgiesen.wordpress.com/2012/02/21/half-edge-based-mesh-representations-theory/
 
-            edgeArr[ er ] = new Edge( indexArr[ i ], indexArr[ i + 1 ], vertexArr );
+        let edgeArr = [];
 
-            er++;
+        window.edgeArr = edgeArr;
 
-        }
+        let k1, k2, k3, key, revKey, pKey, nKey, spacer = '-';
 
-        // Define previous and next Edges
+        for ( let i = 0; i < numIndices - 1; i++ ) {
 
-        for ( let i = 0; i < edgeArr.length; i++ ) {
+            k1 = i;
 
-            if ( i === 0 ) {
+            k2 = i + 1;
 
-                edgeArr[ i ].prev = edgeArr[ edgeArr.length - 1 ];
-                edgeArr[ i ].next = edgeArr[ 1 ]
+            key = k1 + spacer + k2;
 
-            } else if ( i == edgeArr.length - 1) {
+            revKey = k2 + spacer + k1;
 
-                edgeArr[ i ].prev = edgeArr[ i - 1 ];
-                edgeArr[ i ].next = edgeArr[ 0 ];
+            let e = new Edge( indexArr[ k1 ], indexArr[ k2 ], vertexArr );
 
-            } else {
+            // Define Edges in both directions (10->11 and 11->10) but point to same Edge object.
 
-                edgeArr[ i ].prev = edgeArr[ i - 1 ];
-                edgeArr[ i ].next = edgeArr[ i + 1 ];
+            edgeArr[ key ] = e;
 
-            }
+            edgeArr[ revKey ] = e;
 
-        }
+            // Define next in last Edge, prev in this Edge
 
-        // Build an Edge hash
+            if ( i > 0 ) {
 
-        for ( let i = 0; i < edgeArr.length; i++ ) {
+                k1 = i - 1;
 
-            for ( let j = 0; j < edgeArr.length; j++ ) {
+                k2 = i;
 
+                pKey = k1 + spacer + k2;
 
+                edgeArr[ pKey ].next = edgeArr[ key ];
+
+                edgeArr[ key ].prev = edgeArr[ pKey ];
 
             }
 
@@ -122,15 +119,76 @@ class Morph {
 
         // Define Tris
 
-        let tr = 0;
+        let triArr = [];
 
-        for ( let i = 0; i < numIndices; i += 3 ) {
+        window.triArr = triArr;
 
-            edgeArr[ tr ] = new Tri( indexArr[ i ], indexArr[ i + 1 ], indexArr[ i + 2 ], vertexArr );
+        for ( let i = 0; i < numIndices - 2; i += 2 ) {
 
-            tr++;
+            k1 = i;
+
+            k2 = i + 1;
+
+            k3 = i + 2;
+
+            key = k1 + spacer + k2 + spacer + k3;
+
+            console.log("tri key:" + key)
+
+            let t = new Tri( indexArr[ i ], indexArr[ i + 1 ], indexArr[ i + 2 ], vertexArr );
+
+            triArr[ key ] = t;
+
+            // define Edges (only in one direction)
+
+            t.edge1 = edgeArr[ k1 + spacer + k2 ];
+
+            t.edge2 = edgeArr[ k2 + spacer + k3 ];
+
+            t.edge3 = edgeArr[ k3 + spacer + k1 ]; // THIS IS UNDEFINED, WHY?
 
         }
+
+        // Define prev and next Tris
+
+        console.log( "beginning prev and next Tris..." );
+
+        for ( let i = 0; i < numIndices - 2; i += 2 ) {
+
+            if ( i > 0 ) {
+
+                k1 = i;
+
+                k2 = i + 1;
+
+                k3 = i + 2;
+
+                key = k1 + spacer + k2 + spacer + k3;
+
+                k1 = i - 2;
+
+                k2 = i - 1;
+
+                k3 = i;
+
+                pKey = k1 + spacer + k2 + spacer + k3;
+
+                console.log("tri key:" + key )
+                console.log("tri pKey:" + pKey)
+
+                triArr[ pKey ].next = triArr[ key ];
+
+                triArr[ key ].prev = triArr[ pKey ];
+
+            }
+
+        }
+
+
+        // Define quads
+
+        let quadArr = [];
+
 
 
         // Give each Vertex a list of Edge, Face, and Quad indices (hash table)

@@ -2430,7 +2430,7 @@ class Prim {
         ///////////////////////////
         ///////////////////////////
         ///////////////////////////
-
+/*
         if ( prim.name === 'colored cube' ) {
 
             console.log("DISPLAYING COLORED CUBE")
@@ -2446,7 +2446,7 @@ class Prim {
             // TODO: TEST COORDS
 
         }
-
+*/
         //////////////////////////
         //////////////////////////
         //////////////////////////
@@ -3390,6 +3390,33 @@ class Prim {
             }
 
         }
+
+        ///////////////////////////
+        ///////////////////////////
+        ///////////////////////////
+        ///////////////////////////
+
+        if ( prim.name === 'torus2' ) {
+
+            console.log("DISPLAYING COLORED CUBE")
+            // Sending in texture coords and normals speeds subdivision calculation.
+
+            let divided = this.morph.computeSubdivide( vertices, indices, texCoords, true );
+
+            vertices = divided.vertices;
+            indices = divided.indices;
+            texCoords = divided.texCoords;
+            //normals = this.computeNormals( vertices, indices, normals );
+
+            // TODO: TEST COORDS
+
+        }
+
+        //////////////////////////
+        //////////////////////////
+        //////////////////////////
+        /////////////////////////
+
 
         // Color array is pre-created, or gets a default when WebGL buffers are created.
 

@@ -16,7 +16,7 @@ class Vertex {
      * @param {Number} v the v, or 1 texture coordinate
      * @param {Array[Vertex]} the parent Vertex array
      */
-    constructor ( x = 0, y = 0, z = 0, u = 0, v = 0, vtx ) {
+    constructor ( x = 0, y = 0, z = 0, u = 0, v = 0, vtx, i1 ) {
 
         //console.log("x:" + x + " y:" + y + " z:" + z)
 
@@ -29,12 +29,23 @@ class Vertex {
         this.vtx = vtx;
 
         // Hash
+        // forward with our drawing (counter-clockwise), we are the first Vertex in the Edge.
 
-        this.edges = [];
+        this.fEdges = [];
+
+        // backwards, we are the second Vertex in the Edge.
+
+        this.oEdges = []; 
+
+        this.prevEdge = null;
+
+        this.nextEdge = null;
 
         this.tris = [];
 
         this.quads = [];
+
+        this.idx = i1;
 
     }
 
@@ -75,6 +86,40 @@ class Vertex {
         this. v = v; 
 
         return this;
+
+    }
+
+    /** 
+     * Set the Edges this Vertex is associated with.
+     * @param {Edge} edge a 'parent' Edge containing this Vertex
+     * @param {Number} pos the position in the Edge (assuming we always 
+     * move counterclockwise).
+     */
+    setEdge ( edge, pos ) {
+
+        switch ( pos ) {
+
+            case 0:
+                this.fEdges.push( edge );
+                break;
+            case 1:
+                this.oEdges.push( edge );
+                break;
+            default:
+                console.error( 'error when setting Edge in Vertex, ' + pos );
+        }
+
+    }
+
+    /** 
+     * Set the Tris this Vertex is associated with.
+     * @param {Tri} tri a 'parent' Triangle containing this Vertex
+     * @param {Number} pos the position in the Triangle (assuming we always 
+     * move counterclockwise).
+     */
+    setTri ( tri, pos ) {
+
+        this.tris.push( { tri: tri, pos: pos } );
 
     }
 

@@ -21,15 +21,27 @@ class Edge {
 
         }
 
+        // Let the vertices know they START this edge
+
+        this.v1.setEdge( this, 0 );
+
+        // NOTE: setting the second point = 12 connections (degenerate)
+        // NOTE: max of 6 connections, sometimes less.
+        this.v2.setEdge( this, 1 );
+
+        // Save a reference to the overall Vertex array
+
         this.vtx = vtx;
 
-        this.ccw = ccw; // by default, counterclockwise, reverse if we go clockwise.
-
-        // Store a linked list
+        // Previous and next Edges
 
         this.prev = null;
 
         this.next = null;
+
+        this.ccw = ccw; // by default, counterclockwise, reverse if we go clockwise.
+
+        this.idx = i1 + '-' + i2;
 
     }
 

@@ -14,6 +14,10 @@ class Util {
 
     }
 
+    /* 
+     * ======= DATE, TIME, PERFORMANCE OPERATIONS =======
+     */
+
     /** 
      * Performance polyfill for timing.
      */
@@ -51,28 +55,30 @@ class Util {
 
     }
 
+    /* 
+     * =============== STRING OPERATIONS ====================
+     */
+
     isString( str ) {
 
         return typeof str == 'string' || ( isObjectLike( str ) && objToString.call( str ) == stringTag) || false;
 
     }
 
-    // See if we're running in an iframe.
-    isIFrame () {
 
-        try {
+    /** 
+     * Reverse string (used in hash keys)
+     */
+    reverseString( str ) {
 
-            return window.self !== window.top;
-
-        } catch (e) {
-
-            return true;
-
-        }
-
-        return false;
+        return str.split('').reverse().join('');
 
     }
+
+
+    /* 
+     * =============== NUMBER OPERATIONS ====================
+     */
 
     /** 
      * Check if a variable can be coerced to a number.
@@ -118,6 +124,10 @@ class Util {
         return n % 1;
 
     }
+
+    /* 
+     * =============== ARRAY OPERATIONS ====================
+     */
 
     containsAll ( arr1, arr2 ) {
 
@@ -420,9 +430,33 @@ class Util {
 
     }
 
+
+    /* 
+     * ============ SYSTEM AND Ui OPERATIONS =================
+     */
+
+    // Get the file extension of a file.
     getFileExtension ( fname ) {
 
         return fname.slice( ( ( fname.lastIndexOf( '.' ) - 1 >>> 0 ) + 2 ) ).toLowerCase();
+
+    }
+
+
+    // See if we're running in an iframe.
+    isIFrame () {
+
+        try {
+
+            return window.self !== window.top;
+
+        } catch (e) {
+
+            return true;
+
+        }
+
+        return false;
 
     }
 

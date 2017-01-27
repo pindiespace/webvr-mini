@@ -16,19 +16,16 @@ class Tri {
 
         this.i3 = i3;
 
+        // Store Vertex
+
         this.v1 = vtx[ i1 ];
 
         this.v2 = vtx[ i2 ];
 
         this.v3 = vtx[ i3 ];
 
-        // NOTE: THIS IS WRONG. LOOK UP EDGES IN EDGE ARRAY instead of 'new'
+        // Store Edges
 
-        this.e1 = new Edge( i1, i2, vtx );
-
-        this.e2 = new Edge( i2, i3, vtx );
-
-        this.e3 = new Edge( i3, i1, vtx );
 
         // NOTE: Edges are implicity defined as v1-v2, v2-v3, v3-v1
 
