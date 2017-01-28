@@ -27,6 +27,80 @@ class Morph {
 
     }
 
+    /**
+     * If a Vertex isn't defined in the index list, find 
+     * a close one in the entire array. use for edges when the 
+     * mesh isn't smoothly connected.
+     * @param {Vertex} the Vertex we are trying to find neighbors for.
+     * @param {Array[Vertex]} vertexArr the set of possible vertices.
+     * @param {Array[Vertex]} rejectList vertices which should not be considered in the search.
+     * @returns Vertex the closest Vertex not in the rejectList.
+     */
+    getNeighborVertex ( vtx, vertexArr, rejectList ) {
+
+        // Scan each vertex against all others, looking for very close positioning.
+
+    }
+
+    /** 
+     * Given Vertex lists with partial neighbors, scan for a nearest-neighbor
+     */
+    computeMesEdges( edgeMeshArr ) {
+
+
+    }
+
+    /** 
+     * Find Vertex objects with undefined nearest neighbors. If we have a mesh with 
+     * Edges that wraps into an object, some of these are probably very near each 
+     * other. Need to run after geometryToVertex.
+     * Assume:
+     * Each Vertex should have 6 nearest neighbors
+     * Each Vertex should have a previous and next Vertex.
+     * @param {Array[Vertex]} vertexArr the array of Vertices
+     * @returns {Object} a list of Vertex objects, sorted by the number of neighbors they are missing.
+     */
+    getMeshEdges ( vertexArr ) {
+
+        let edgeList = {
+
+            fEdges: [ [], [], [], [], [], [], [] ],
+
+            oEdges: [ [], [], [], [], [], [], [] ]
+
+        };
+
+        // Check for prev and next
+
+        for ( let i = 0; i < vertexArr.length; i++ ) {
+
+            let v = vertexArr[ i ];
+
+             // fEdges (forward edges)
+
+            //console.log('fEdges length:'+ v.fEdges.length)
+
+            //console.log( typeof edgeList.fEdges[ v.fEdges.length - 1 ] )
+
+            //console.log( typeof edgeList.fEdges[ v.fEdges.length - 1 ].push )
+
+            let pos = parseInt( v.fEdges.length )
+
+            edgeList.fEdges[ pos ].push( v );
+
+
+            // oEdges (reverse edges)
+
+            pos = parseInt( v.oEdges.length );
+
+            edgeList.oEdges[ v.oEdges.length - 1 ].push( v );
+
+        }
+
+        return edgeList;
+
+    }
+
     /** 
      * Convert our native flatted geometric data (see Prim) to a Vertex object 
      * data representation suitable for subdivision and morphing.
@@ -95,9 +169,9 @@ class Morph {
 
             // Define Edges in both directions (10->11 and 11->10) but point to same Edge object.
 
-            edgeArr[ key ] = e;
+            edgeArr[ key ] = e;      // clockwise
 
-            edgeArr[ revKey ] = e;
+            edgeArr[ revKey ] = e;   // counter-clockwise
 
             // Define next in last Edge, prev in this Edge
 
@@ -109,9 +183,9 @@ class Morph {
 
                 pKey = k1 + spacer + k2;
 
-                edgeArr[ pKey ].next = edgeArr[ key ];
+                edgeArr[ pKey ].nextEdge = edgeArr[ key ]; // last Vertex of this Edge shared with first Vertex of next Edge
 
-                edgeArr[ key ].prev = edgeArr[ pKey ];
+                edgeArr[ key ].prevEdge = edgeArr[ pKey ]; // first Vertex of this Edge shared with last Vertex of previous Edge
 
             }
 
@@ -139,13 +213,21 @@ class Morph {
 
             triArr[ key ] = t;
 
-            // define Edges (only in one direction)
+            // set edges, clockwise read
 
-            t.edge1 = edgeArr[ k1 + spacer + k2 ];
+            t.setEdge( edgeArr[ k1 + spacer + k2 ], 0 );
 
-            t.edge2 = edgeArr[ k2 + spacer + k3 ];
+            t.setEdge( edgeArr[ k2 + spacer + k3 ], 0 );
 
-            t.edge3 = edgeArr[ k3 + spacer + k1 ]; // THIS IS UNDEFINED, WHY?
+            t.setEdge( edgeArr[ k3 + spacer + k1 ], 0 );
+
+            // counter-clockwise read
+
+            t.setEdge( edgeArr[ k2 + spacer + k1 ], 1 );
+
+            t.setEdge( edgeArr[ k1 + spacer + k2 ], 1 );
+
+            t.setEdge( edgeArr[ k1 + spacer + k3 ], 1 );
 
         }
 
@@ -173,9 +255,6 @@ class Morph {
 
                 pKey = k1 + spacer + k2 + spacer + k3;
 
-                console.log("tri key:" + key )
-                console.log("tri pKey:" + pKey)
-
                 triArr[ pKey ].next = triArr[ key ];
 
                 triArr[ key ].prev = triArr[ pKey ];
@@ -184,18 +263,22 @@ class Morph {
 
         }
 
-
         // Define quads
 
         let quadArr = [];
 
+        // Find Vertex objects missing neighbors.
 
+       let edgeMeshArr = this.getMeshEdges( vertexArr );
+
+
+       window.edgeMeshArr = edgeMeshArr;
 
         // Give each Vertex a list of Edge, Face, and Quad indices (hash table)
 
         // Return a Mesh object (not all properties present yet).
 
-        return new Mesh( vertexArr, indexArr, edgeArr, triArr, quadArr );
+        return new Mesh( vertexArr, indexArr, edgeArr, triArr, quadArr, edgeMeshArr );
 
     }
 
@@ -280,9 +363,9 @@ class Morph {
      */
     subdivideMesh ( mesh ) {
 
-        // Mesh object
+        // Find all the triangles
 
-        let dm = new Mesh();
+
 
         return mesh;
 

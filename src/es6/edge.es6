@@ -21,12 +21,13 @@ class Edge {
 
         }
 
-        // Let the vertices know they START this edge
+        // Let the vertices know they START this edge (forward, clockwise)
 
         this.v1.setEdge( this, 0 );
 
         // NOTE: setting the second point = 12 connections (degenerate)
         // NOTE: max of 6 connections, sometimes less.
+        // NOTE: backward, counter-clockwise
         this.v2.setEdge( this, 1 );
 
         // Save a reference to the overall Vertex array

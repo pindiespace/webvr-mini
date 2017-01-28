@@ -100,10 +100,10 @@ class Vertex {
         switch ( pos ) {
 
             case 0:
-                this.fEdges.push( edge );
+                this.fEdges.push( edge ); // counter-clockwise
                 break;
             case 1:
-                this.oEdges.push( edge );
+                this.oEdges.push( edge ); // clockwise
                 break;
             default:
                 console.error( 'error when setting Edge in Vertex, ' + pos );
@@ -117,9 +117,9 @@ class Vertex {
      * @param {Number} pos the position in the Triangle (assuming we always 
      * move counterclockwise).
      */
-    setTri ( tri, pos ) {
+    setTri ( tri ) {
 
-        this.tris.push( { tri: tri, pos: pos } );
+        this.tris.push( tri );
 
     }
 

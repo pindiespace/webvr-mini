@@ -24,12 +24,25 @@ class Tri {
 
         this.v3 = vtx[ i3 ];
 
+        // Let the Vertex objects know they are part of this Tri.
+
+        this.v1.setTri( this );
+
+        this.v2.setTri( this );
+
+        this.v3.setTri( this );
+
         // Store Edges
 
+        this.fEdges = [];
+
+        this.oEdges = [];
 
         // NOTE: Edges are implicity defined as v1-v2, v2-v3, v3-v1
 
         this.ccw = ccw; // by default, counterclockwise, reverse if we go clockwise.
+
+        this.idx = i1 + '-' + i2 + '-' + i3;
 
         // Store previous and next triangle
 
@@ -68,6 +81,28 @@ class Tri {
 
     hasEdge ( otherEdge, sameWind = false ) {
 
+
+    }
+
+    /** 
+     * Set the Edges this Vertex is associated with.
+     * @param {Edge} edge a 'parent' Edge containing this Vertex
+     * @param {Number} pos the position in the Edge (assuming we always 
+     * move counterclockwise).
+     */
+    setEdge ( edge, pos ) {
+
+        switch ( pos ) {
+
+            case 0:
+                this.fEdges.push( edge );  // clockwise
+                break;
+            case 1:
+                this.oEdges.push( edge );  // counter-cockwise
+                break;
+            default:
+                console.error( 'error when setting Edge in Vertex, ' + pos );
+        }
 
     }
 
