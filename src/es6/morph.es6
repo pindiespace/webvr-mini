@@ -46,15 +46,28 @@ class Morph {
 
         for ( let i = 0; i < vertexArr.length; i++ ) {
 
+            // Get the second Vertex
+
             let vtx2 = vertexArr[ i ];
 
             if ( vtx2 === vtx ) {
 
-                continue; // we found ourself
+                console.log( 'getNeighborVertex - I found myself!' );
+
+                continue; // vtx === vtx2, we found ourself
 
             }
 
+            /////////console.log( 'checking reject list, length:' + rejectList.length )
+
+            // See if our second Vertex is in the reject list.
+
             for ( let j = 0; j < rejectList.length; j++ ) {
+
+                // THE REJECTLIST IS A LIST OF VERTICES NOT TO CONSIDER. WE PASSED EDGES.
+
+                //////////console.log( 'comparing vtx2 to rejectlist[j]' )
+
 
                 if ( vtx2 === rejectList[ j ] ) {
 
@@ -62,19 +75,26 @@ class Morph {
 
                     break; // already in our neighbor list
 
+                } else {
+
+                    let d = vtx.coords.distance( vtx2.coords )
+
+                    if(  d < dist ) {
+
+                        closest = vtx2;
+
+                        dist = d;
+
+                    }
+
                 }
 
                 // vtx2 is not in rejectList, so test it.
 
                 //////////////////console.log("DIST:" + vtx.coords.distance( vtx2.coords ) );
 
-                if( vtx.coords.distance( vtx2.coords ) < dist ) {
-
-                    closest = vtx2;
-
-                }
-
             }
+
 
         }
 
@@ -82,32 +102,132 @@ class Morph {
 
     }
 
+
     /** 
-     * Given Vertex lists with partial neighbors, scan for a nearest-neighbor
+     * Given Vertex lists with partial neighbors, scan for a nearest-neighbor. 
+     * Look at forward edges, and reversed (clockwise) Edges.
      */
     computeMeshEdges( edgeMeshArr, vertexArr ) {
+
+
+        // A list of Edges with Vertex objects that don't have enough neighboring Edges.
 
         let fEdges = edgeMeshArr.fEdges;
 
         let oEdges = edgeMeshArr.oEdges;
 
-        // everyone will have at least one connect (no i = 0), and i = 6 is ok.
+        const MAX_EDGES = 6;
+
+        // Everyone will have at least one connect (no i = 0), and i = 6 is ok.
 
         for ( let i = 1; i < fEdges.length - 1; i++ ) {
 
-            // TODO: THIS LOOP ISN"T FINDING ALL THE ONES WE HAVE TO FILL IN 
+            // Get the next Edge Vertex list.
 
-            for ( let j = 0; j < fEdges[ i ].length; j++ ) {
+            let vtxList = fEdges[ i ];
 
-                console.log( "CHECKING EDGE SET:" + i + " AT:" + j)
+            // Scan through the Vertex objects in the Edge.
 
-                let closest = this.getNeighborVertex( fEdges[ i ][ j ], vertexArr, fEdges[ i ][ j ].fEdges );
+            for ( let j = 0; j < vtxList.length; j++ ) {
 
-                console.log("FOR " + fEdges[ i ][ j ].idx + ", CLOSEST:" + closest.idx )
+                let vtx = vtxList[ j ];
+
+                let rejectList = [];
+
+                // Put the current list of Vertex attached to this object, in the fEdges as second Vertex
+
+                for ( let l = 0; l < vtx.fEdges.length; l++ ) {
+
+                    rejectList.push( vtx.fEdges[ l ].vtx2 ); // we are using fEdges, so use the 2nd Vertex
+
+                }
+
+                let flag = true;
+
+                // If a Vertex doesn't have enough edges, find a neighbor to substitute for missind Edge
+
+                while ( vtx.fEdges.length < MAX_EDGES ) {
+
+                    console.log( 'vtx ' + vtx.idx + ' only has ' + vtx.fEdges.length + ' edges, checking closest for more...')
+
+                    // THE THIRD PARAM SHOULD BE A LIST OF VERTICES WHICH ARE LISTED in ALL THE fEdges
+                    // EXTRACT VERTICES FROM fEDGES
+
+                    let closest = this.getNeighborVertex( vtx, vertexArr, rejectList );
+
+                    console.log( 'closest Vertex to ' + vtx.idx + ' is:' + closest.idx );
+
+                    // Grab all availabe Edges from the neighboring Vertex
+
+                    for ( let k = 0; k < closest.fEdges.length; k++ ) {
+
+                        console.log("pushing another Edge from closest Vertex:" + closest.idx + ", which supplies Edge number:" + k + " to vtx " + vtx.idx + " in vtxList:" + i )
+
+                        // Get an Edge from the closest Vertex
+
+                        let closestEdge = closest.fEdges[ k ];
+
+                        flag = true;
+
+                        // See if the Edge we found is already in the Edges this Vertex has.
+
+                        for ( let m = 0; m < closestEdge.length; m++ ) {
+
+                            if ( closestEdge === vtx.fEdges[ m ] ) {
+
+                                flag = false;
+
+                            }
+
+                        }
+
+                        // Push the Edge if it isn't already in the Vertex .fEdges.
+
+                        if ( flag ) {
+
+                            vtx.fEdges.push( closest.fEdges[ k ] );
+
+                            // Add the second Vertex in this Edge (.v2) to the Vertex reject list
+
+                            console.log( 'rejectList gets new vertex:' + closest.fEdges[ k ].idx )
+
+                            let newReject = closest.fEdges[ k ].v2;
+
+                            flag = true;
+
+                            // See if the Vertex we pushed is already in the rejectList for the next .getNeighborhoodVertex call.
+
+                            for ( let l = 0; l < rejectList.length; l++ ) {
+
+                                if ( newReject === rejectList[ l ] ) {
+
+                                    flag = false;
+
+                                }
+
+                            }
+
+                            // Add the new Vertex only if it isn't already in the rejectList.
+
+                            if ( flag ) {
+
+                                rejectList.push( newReject );
+
+                            }
+
+                        }
+
+                    }
+
+                    console.log( 'vtx ' + vtx.idx + ' now has ' + vtx.fEdges.length + ' edges!')
+
+
+                }
 
             }
 
-        }
+
+        } // end of fEdge forward array
 
         return edgeMeshArr;
 
