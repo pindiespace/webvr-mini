@@ -4,8 +4,8 @@
   "main": "./src/js/app.js",
   "scripts": {
     "esdoc": "esdoc -c ./esdoc.json",
-    "build": "cross-env BUILD_RELEASE=true BUILD_DEV=false webpack --config webpack-production.config.js -p",
-    "dev": "cross-env BUILD_RELEASE=false BUILD_DEV=true webpack",
+    "build": "cross-env __RELEASE__=true __DEV__=false webpack --config webpack-production.config.js -p",
+    "dev": "cross-env __RELEASE__=false __DEV__=true webpack",
     "start": "webpack-dev-server --inline --devtool eval --progress --colors --content-base dist"
   },
   "author": "pete markiewicz",
@@ -33,7 +33,8 @@
     "strip-loader": "^0.1.2",
     "webgl-debug": "^1.0.2",
     "webpack": "^1.13.2",
-    "webpack-dev-server": "^1.16.1"
+    "webpack-dev-server": "^1.16.1",
+    "webpack-module-replacement": "github:denisizmaylov/webpack-module-replacement"
   },
   "dependencies": {
     "es6-promise": "^3.3.1",

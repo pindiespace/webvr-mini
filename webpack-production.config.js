@@ -4,16 +4,16 @@ var devConfig = require('./webpack.config.js');
 
 // remove console.log statements from production
 
-var stripLoader = {
+var stripLoaderSettings = {
 
-        test: [ /\.js$/, /\.es6$/ ],
+        test: [ /(\.js$|\.es6$)/ ],
 
         exclude: /node_modules/,
 
-        loader: WebpackStripLoader.loader( 'console.log ')
+        loader: WebpackStripLoader.loader( 'console.log', 'console.error', 'console.warn', 'debugger' )
 
 }
 
-devConfig.module.loaders.push( stripLoader );
+devConfig.module.loaders.push( stripLoaderSettings );
 
 module.exports = devConfig;

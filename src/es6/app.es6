@@ -83,6 +83,7 @@ let util = new Util();
 
 let webgl = null;
 
+
 if ( __DEV__ === 'true' ) {
 
     console.log( 'app.es6: in development mode' );

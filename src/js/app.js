@@ -19,13 +19,13 @@ var vrmini = require( '../es6/app.es6' );
 for (var i in vrmini ) {
 
     console.log( i + ":" + vrmini[i] );
+
 }
 
 /* 
- * these variables are defined by webpack inputs in package.json, 
- * and processed to __DEV__ and __RELEASE__ here.
- * "build": "cross-env BUILD_RELEASE=true BUILD_DEV=false webpack --config webpack-production.config.js -p -p",
- * "dev": "cross-env BUILD_RELEASE=false BUILD_DEV=true webpack",
+ * these variables are defined by webpack inputs in package.json.
+ * "build": "cross-env __RELEASE__=true __DEV__=false webpack --config webpack-production.config.js -p -p",
+ * "dev": "cross-env __RELEASE__=false __DEV__=true webpack",
  */
 
 if ( __DEV__ === 'true' ) {

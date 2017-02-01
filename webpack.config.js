@@ -3,6 +3,8 @@
 
 var webpack = require( 'webpack' );
 
+var NormalModuleReplace = require( 'webpack-module-replacement' );
+
 /* 
  * if there are problems with updates in windows, try
  * http://stackoverflow.com/questions/37552861/webpack-dev-server-not-updating-file-which-is-out-of-context
@@ -111,7 +113,7 @@ module.exports = {
 
             }
 
-        ] ),
+        ] )
 
     ],
 

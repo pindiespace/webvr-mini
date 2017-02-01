@@ -40,13 +40,76 @@ class Morph {
 
         // Scan each vertex against all others, looking for very close positioning.
 
+        let dist = 100000; // huge distance to start
+
+        let closest = null;
+
+        for ( let i = 0; i < vertexArr.length; i++ ) {
+
+            let vtx2 = vertexArr[ i ];
+
+            if ( vtx2 === vtx ) {
+
+                continue; // we found ourself
+
+            }
+
+            for ( let j = 0; j < rejectList.length; j++ ) {
+
+                if ( vtx2 === rejectList[ j ] ) {
+
+                    console.log(" breaking on:" + vtx2.idx + " since it is in our rejectList at " + j )
+
+                    break; // already in our neighbor list
+
+                }
+
+                // vtx2 is not in rejectList, so test it.
+
+                //////////////////console.log("DIST:" + vtx.coords.distance( vtx2.coords ) );
+
+                if( vtx.coords.distance( vtx2.coords ) < dist ) {
+
+                    closest = vtx2;
+
+                }
+
+            }
+
+        }
+
+        return closest;
+
     }
 
     /** 
      * Given Vertex lists with partial neighbors, scan for a nearest-neighbor
      */
-    computeMesEdges( edgeMeshArr ) {
+    computeMeshEdges( edgeMeshArr, vertexArr ) {
 
+        let fEdges = edgeMeshArr.fEdges;
+
+        let oEdges = edgeMeshArr.oEdges;
+
+        // everyone will have at least one connect (no i = 0), and i = 6 is ok.
+
+        for ( let i = 1; i < fEdges.length - 1; i++ ) {
+
+            // TODO: THIS LOOP ISN"T FINDING ALL THE ONES WE HAVE TO FILL IN 
+
+            for ( let j = 0; j < fEdges[ i ].length; j++ ) {
+
+                console.log( "CHECKING EDGE SET:" + i + " AT:" + j)
+
+                let closest = this.getNeighborVertex( fEdges[ i ][ j ], vertexArr, fEdges[ i ][ j ].fEdges );
+
+                console.log("FOR " + fEdges[ i ][ j ].idx + ", CLOSEST:" + closest.idx )
+
+            }
+
+        }
+
+        return edgeMeshArr;
 
     }
 
@@ -207,7 +270,7 @@ class Morph {
 
             key = k1 + spacer + k2 + spacer + k3;
 
-            console.log("tri key:" + key)
+            /////////////////////console.log("tri key:" + key)
 
             let t = new Tri( indexArr[ i ], indexArr[ i + 1 ], indexArr[ i + 2 ], vertexArr );
 
@@ -270,6 +333,8 @@ class Morph {
         // Find Vertex objects missing neighbors.
 
        let edgeMeshArr = this.getMeshEdges( vertexArr );
+
+       edgeMeshArr = this.computeMeshEdges( edgeMeshArr, vertexArr );
 
 
        window.edgeMeshArr = edgeMeshArr;

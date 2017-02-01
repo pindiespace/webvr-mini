@@ -140,6 +140,18 @@
 
     }
 
+    distance( other ) {
+
+        let dx = this.x - other.x;
+
+        let dy = this.y - other.y;
+
+        var dz = this.z - other.z;
+
+        return Math.sqrt( dx * dx + dy * dy + dz * dz );
+
+    }
+
     /** 
      * Return the length of this Coord.
      * @returns {Number} the length of this Coord.

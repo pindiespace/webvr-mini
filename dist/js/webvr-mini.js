@@ -73,13 +73,13 @@
 	for (var i in vrmini ) {
 
 	    console.log( i + ":" + vrmini[i] );
+
 	}
 
 	/* 
-	 * these variables are defined by webpack inputs in package.json, 
-	 * and processed to __DEV__ and __RELEASE__ here.
-	 * "build": "cross-env BUILD_RELEASE=true BUILD_DEV=false webpack --config webpack-production.config.js -p -p",
-	 * "dev": "cross-env BUILD_RELEASE=false BUILD_DEV=true webpack",
+	 * these variables are defined by webpack inputs in package.json.
+	 * "build": "cross-env __RELEASE__=true __DEV__=false webpack --config webpack-production.config.js -p -p",
+	 * "dev": "cross-env __RELEASE__=false __DEV__=true webpack",
 	 */
 
 	if ( true ) {
@@ -360,7 +360,7 @@
 
 	var _prim2 = _interopRequireDefault(_prim);
 
-	var _world = __webpack_require__(25);
+	var _world = __webpack_require__(31);
 
 	var _world2 = _interopRequireDefault(_world);
 
@@ -381,7 +381,7 @@
 
 	// WebGL math library.
 
-	var glMatrix = __webpack_require__(26);
+	var glMatrix = __webpack_require__(32);
 
 	if (!glMatrix) {
 
@@ -424,7 +424,7 @@
 	    // require kronos webgl debug from node_modules
 	    // https://github.com/vorg/webgl-debug
 
-	    var debug = __webpack_require__(36);
+	    var debug = __webpack_require__(42);
 
 	    exports.webgl = webgl = new _webgl2.default(false, glMatrix, util, debug);
 
@@ -5643,27 +5643,27 @@
 	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      */
 
 
-	var _coords = __webpack_require__(37);
+	var _coords = __webpack_require__(25);
 
 	var _coords2 = _interopRequireDefault(_coords);
 
-	var _vertex = __webpack_require__(38);
+	var _vertex = __webpack_require__(26);
 
 	var _vertex2 = _interopRequireDefault(_vertex);
 
-	var _edge = __webpack_require__(39);
+	var _edge = __webpack_require__(27);
 
 	var _edge2 = _interopRequireDefault(_edge);
 
-	var _tri = __webpack_require__(41);
+	var _tri = __webpack_require__(28);
 
 	var _tri2 = _interopRequireDefault(_tri);
 
-	var _quad = __webpack_require__(43);
+	var _quad = __webpack_require__(29);
 
 	var _quad2 = _interopRequireDefault(_quad);
 
-	var _mesh = __webpack_require__(44);
+	var _mesh = __webpack_require__(30);
 
 	var _mesh2 = _interopRequireDefault(_mesh);
 
@@ -5701,17 +5701,76 @@
 
 	        _createClass(Morph, [{
 	                key: 'getNeighborVertex',
-	                value: function getNeighborVertex(vtx, vertexArr, rejectList) {}
+	                value: function getNeighborVertex(vtx, vertexArr, rejectList) {
 
-	                // Scan each vertex against all others, looking for very close positioning.
+	                        // Scan each vertex against all others, looking for very close positioning.
+
+	                        var dist = 100000; // huge distance to start
+
+	                        var closest = null;
+
+	                        for (var i = 0; i < vertexArr.length; i++) {
+
+	                                var vtx2 = vertexArr[i];
+
+	                                if (vtx2 === vtx) {
+
+	                                        continue; // we found ourself
+	                                }
+
+	                                for (var j = 0; j < rejectList.length; j++) {
+
+	                                        if (vtx2 === rejectList[j]) {
+
+	                                                console.log(" breaking on:" + vtx2.idx + " since it is in our rejectList at " + j);
+
+	                                                break; // already in our neighbor list
+	                                        }
+
+	                                        // vtx2 is not in rejectList, so test it.
+
+	                                        //////////////////console.log("DIST:" + vtx.coords.distance( vtx2.coords ) );
+
+	                                        if (vtx.coords.distance(vtx2.coords) < dist) {
+
+	                                                closest = vtx2;
+	                                        }
+	                                }
+	                        }
+
+	                        return closest;
+	                }
 
 	                /** 
 	                 * Given Vertex lists with partial neighbors, scan for a nearest-neighbor
 	                 */
 
 	        }, {
-	                key: 'computeMesEdges',
-	                value: function computeMesEdges(edgeMeshArr) {}
+	                key: 'computeMeshEdges',
+	                value: function computeMeshEdges(edgeMeshArr, vertexArr) {
+
+	                        var fEdges = edgeMeshArr.fEdges;
+
+	                        var oEdges = edgeMeshArr.oEdges;
+
+	                        // everyone will have at least one connect (no i = 0), and i = 6 is ok.
+
+	                        for (var i = 1; i < fEdges.length - 1; i++) {
+
+	                                // TODO: THIS LOOP ISN"T FINDING ALL THE ONES WE HAVE TO FILL IN 
+
+	                                for (var j = 0; j < fEdges[i].length; j++) {
+
+	                                        console.log("CHECKING EDGE SET:" + i + " AT:" + j);
+
+	                                        var closest = this.getNeighborVertex(fEdges[i][j], vertexArr, fEdges[i][j].fEdges);
+
+	                                        console.log("FOR " + fEdges[i][j].idx + ", CLOSEST:" + closest.idx);
+	                                }
+	                        }
+
+	                        return edgeMeshArr;
+	                }
 
 	                /** 
 	                 * Find Vertex objects with undefined nearest neighbors. If we have a mesh with 
@@ -5878,7 +5937,7 @@
 
 	                                key = k1 + spacer + k2 + spacer + k3;
 
-	                                console.log("tri key:" + key);
+	                                /////////////////////console.log("tri key:" + key)
 
 	                                var t = new _tri2.default(indexArr[_i2], indexArr[_i2 + 1], indexArr[_i2 + 2], vertexArr);
 
@@ -5938,6 +5997,8 @@
 	                        // Find Vertex objects missing neighbors.
 
 	                        var edgeMeshArr = this.getMeshEdges(vertexArr);
+
+	                        edgeMeshArr = this.computeMeshEdges(edgeMeshArr, vertexArr);
 
 	                        window.edgeMeshArr = edgeMeshArr;
 
@@ -6129,6 +6190,998 @@
 
 /***/ },
 /* 25 */
+/***/ function(module, exports) {
+
+	"use strict";
+
+	Object.defineProperty(exports, "__esModule", {
+	        value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	/** 
+	 * Create a class for manipulating 3d data, including texture 
+	 * coordinates and normals. We don't use glMatrix since the 
+	 * calculations here are faster if done locally.
+	 */
+	var Coords = function () {
+
+	        /**
+	         * @constructor
+	         * @param {Number} x the initializing x or 0 coordinate
+	         * @param {Number} y the initializing y or 1 coordinate
+	         * @param {Number} z the initializing z or 2 coordinate
+	         */
+	        function Coords() {
+	                var x = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
+	                var y = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+	                var z = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
+
+	                _classCallCheck(this, Coords);
+
+	                this.x = x;
+
+	                this.y = y;
+
+	                this.z = z;
+	        }
+
+	        /**
+	         * Check for null or undefined values.
+	         * @returns {Boolen} all all 3 coordinates are defined, return true, else false
+	         */
+
+
+	        _createClass(Coords, [{
+	                key: "isValid",
+	                value: function isValid() {
+
+	                        return Number.isFinite(parseFloat(this.x)) && Number.isFinte(parseFloat(this.y)) && Number.isFinite(parseFloat(this.z));
+	                }
+
+	                /** 
+	                 * Overwrite coordinate values.
+	                 * @param {Number} x the x or 0 coordinate
+	                 * @param {Number} y the y or 1 coordinate
+	                 * @param {Number} z the z or 2 coordinate
+	                 */
+
+	        }, {
+	                key: "set",
+	                value: function set(x, y, z) {
+
+	                        if (x !== undefined) this.x = x;
+
+	                        if (y !== undefined) this.y = y;
+
+	                        if (z !== undefined) this.z = z;
+	                }
+
+	                /**
+	                 * Return a new copy of this Coords
+	                 * @returns {Coords} a copy of the current coordinates.
+	                 */
+
+	        }, {
+	                key: "clone",
+	                value: function clone() {
+
+	                        return new Coords(this.x, this.y, this.z);
+	                }
+
+	                /** 
+	                 * Determine if two Coords are the same object (not same values)
+	                 */
+
+	        }, {
+	                key: "isEqual",
+	                value: function isEqual(other) {
+
+	                        if (other === this) {
+
+	                                return true;
+	                        }
+
+	                        return false;
+	                }
+
+	                /** 
+	                 * Add a Coordinate position to this coordinate (vector addition)
+	                 * @param {Coord} other the coordinate position to add.
+	                 * @returns {Coord} this Coord, added.
+	                 */
+
+	        }, {
+	                key: "add",
+	                value: function add(other) {
+
+	                        this.x += other.x;
+
+	                        this.y += other.y;
+
+	                        this.z += other.z;
+
+	                        return this;
+	                }
+
+	                /** 
+	                 * Subtract a Coordinate position from this coordinate (vector addition)
+	                 * @param {Coord} other the coordinate position to subtract.
+	                 * @returns {Coord} this Coord, subtracted.
+	                 */
+
+	        }, {
+	                key: "subtract",
+	                value: function subtract(other) {
+
+	                        this.x -= other.x;
+
+	                        this.y -= other.y;
+
+	                        this.z -= other.z;
+
+	                        return this;
+	                }
+
+	                /** 
+	                 * Multiply the value of this Coordinate by a number
+	                 * @param {Number} scalar the number to multiply by.
+	                 * @returns {Coords} this Coords, scaled.
+	                 */
+
+	        }, {
+	                key: "multiplyScalar",
+	                value: function multiplyScalar(scalar) {
+
+	                        this.x *= scalar;
+
+	                        this.y *= scalar;
+
+	                        this.z *= scalar;
+
+	                        return this;
+	                }
+
+	                /** 
+	                 * Divice the value of this Coordinate by a number
+	                 * @param {Number} scalar the number to divide by.
+	                 * @returns {Coords} this Coords, scaled.
+	                 */
+
+	        }, {
+	                key: "divideScalar",
+	                value: function divideScalar(scalar) {
+
+	                        this.x /= scalar;
+
+	                        this.y /= scalar;
+
+	                        this.z /= scalar;
+
+	                        return this;
+	                }
+	        }, {
+	                key: "distance",
+	                value: function distance(other) {
+
+	                        var dx = this.x - other.x;
+
+	                        var dy = this.y - other.y;
+
+	                        var dz = this.z - other.z;
+
+	                        return Math.sqrt(dx * dx + dy * dy + dz * dz);
+	                }
+
+	                /** 
+	                 * Return the length of this Coord.
+	                 * @returns {Number} the length of this Coord.
+	                 */
+
+	        }, {
+	                key: "magnitude",
+	                value: function magnitude() {
+
+	                        return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+	                }
+
+	                /** 
+	                 * Convert this Coords to its normalized form.
+	                 * @returns {Coords} this Coords, normalized.
+	                 */
+
+	        }, {
+	                key: "normalize",
+	                value: function normalize() {
+
+	                        return this.divideScalar(this.magnitude());
+	                }
+
+	                /** 
+	                 * Return a new Coords with averaged value of this and another Coords.
+	                 * @param {Coords} other the Coords to average with.
+	                 * @returns {Coords} a new Coords which is the average for this and the other Coords
+	                 */
+
+	        }, {
+	                key: "average",
+	                value: function average(other) {
+
+	                        return this.clone().this.add(other).this.divideScalar(0.5);
+	                }
+
+	                /** 
+	                 * Return a new Coords which is the cross product of this and another Coords.
+	                 * @param {Coords} other the other Coords to average with.
+	                 * @returns {Coords} a new Coords which is the dot product for this and the other Coords.
+	                 */
+
+	        }, {
+	                key: "crossProduct",
+	                value: function crossProduct(other) {
+
+	                        return new Coords(this.y * other.z - other.y * this.z, other.x * this.z - this.x * other.z, this.x * other.y - other.x * this.y);
+	                }
+
+	                /** 
+	                 * Return the cross product of this Coord and another Coords.
+	                 * @param {Coords} other the Coords to compute the dot product with.
+	                 * @returns {Number} the dot product.
+	                 */
+
+	        }, {
+	                key: "dotProduct",
+	                value: function dotProduct(other) {
+
+	                        return this.x * other.x + this.y * other.y + this.z * other.z;
+	                }
+	        }]);
+
+	        return Coords;
+	}();
+
+	exports.default = Coords;
+
+/***/ },
+/* 26 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	        value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); /** 
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      * Create a Vertex class suitable for complex manipulatio of mesh objects, 
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      * e.g. subdivision or morphing
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      */
+
+
+	var _util = __webpack_require__(4);
+
+	var _util2 = _interopRequireDefault(_util);
+
+	var _coords = __webpack_require__(25);
+
+	var _coords2 = _interopRequireDefault(_coords);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var Vertex = function () {
+
+	        /** 
+	         * @constructor
+	         * @param {Number} x the x, or 0 coordinate
+	         * @param {Number} y the y, or 1 coordinate
+	         * @param {Number} z the z, or 2 coordinate
+	         * @param {Number} u the u, or 0 texture coordinate
+	         * @param {Number} v the v, or 1 texture coordinate
+	         * @param {Array[Vertex]} the parent Vertex array
+	         */
+	        function Vertex() {
+	                var x = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
+	                var y = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+	                var z = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
+	                var u = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0;
+	                var v = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : 0;
+	                var vtx = arguments[5];
+	                var i1 = arguments[6];
+
+	                _classCallCheck(this, Vertex);
+
+	                //console.log("x:" + x + " y:" + y + " z:" + z)
+
+	                this.coords = new _coords2.default(x, y, z);
+
+	                this.texCoords = { u: u, v: v };
+
+	                // Save the parent array with all vertices.
+
+	                this.vtx = vtx;
+
+	                // Hash
+	                // forward with our drawing (counter-clockwise), we are the first Vertex in the Edge.
+
+	                this.fEdges = [];
+
+	                // backwards, we are the second Vertex in the Edge.
+
+	                this.oEdges = [];
+
+	                this.prevEdge = null;
+
+	                this.nextEdge = null;
+
+	                this.tris = [];
+
+	                this.quads = [];
+
+	                this.idx = i1;
+	        }
+
+	        _createClass(Vertex, [{
+	                key: 'valid',
+	                value: function valid() {
+
+	                        if (this.coords.isValid()) {
+
+	                                return true;
+	                        }
+
+	                        return false;
+	                }
+
+	                /** 
+	                 * Set the position coordinates of the Vertex.
+	                 * @param {Number} x the x, or 0 coordinate
+	                 * @param {Number} y the y, or 1 coordinate
+	                 * @param {Number} z the z, or 2 coordinate
+	                 */
+
+	        }, {
+	                key: 'setCoords',
+	                value: function setCoords() {
+	                        var x = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
+	                        var y = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+	                        var z = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
+
+
+	                        this.coords.set(x, y, z);
+
+	                        return this;
+	                }
+
+	                /**
+	                 * Set the texture coordinates of the Vertex.
+	                 * @param {Number} u the u, or 0 texture coordinate
+	                 * @param {Number} v the v, or 1 texture coordinate
+	                 */
+
+	        }, {
+	                key: 'setTexCoords',
+	                value: function setTexCoords() {
+	                        var u = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
+	                        var v = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+
+
+	                        this.u = u;
+
+	                        this.v = v;
+
+	                        return this;
+	                }
+
+	                /** 
+	                 * Set the Edges this Vertex is associated with.
+	                 * @param {Edge} edge a 'parent' Edge containing this Vertex
+	                 * @param {Number} pos the position in the Edge (assuming we always 
+	                 * move counterclockwise).
+	                 */
+
+	        }, {
+	                key: 'setEdge',
+	                value: function setEdge(edge, pos) {
+
+	                        switch (pos) {
+
+	                                case 0:
+	                                        this.fEdges.push(edge); // counter-clockwise
+	                                        break;
+	                                case 1:
+	                                        this.oEdges.push(edge); // clockwise
+	                                        break;
+	                                default:
+	                                        console.error('error when setting Edge in Vertex, ' + pos);
+	                        }
+	                }
+
+	                /** 
+	                 * Set the Tris this Vertex is associated with.
+	                 * @param {Tri} tri a 'parent' Triangle containing this Vertex
+	                 * @param {Number} pos the position in the Triangle (assuming we always 
+	                 * move counterclockwise).
+	                 */
+
+	        }, {
+	                key: 'setTri',
+	                value: function setTri(tri) {
+
+	                        this.tris.push(tri);
+	                }
+
+	                /** 
+	                 * Return a new Vertex which have averaged position and 
+	                 * texture coordinate
+	                 * @param {Vertex} other the Vertex to average with
+	                 */
+
+	        }, {
+	                key: 'average',
+	                value: function average(other) {
+
+	                        var v = this.clone();
+
+	                        v.coords = v.coords.average(other.coords);
+
+	                        v.texCoords = {
+	                                u: v1.texCoords.u + v2.texCoords.u / 2,
+	                                v: v1.texCoords.v + v2.texCoords.v / 2
+	                        };
+
+	                        return v;
+	                }
+
+	                /**
+	                 * Return a new copy of this Vertex
+	                 * @returns {Vertex} a copy of the current vertex
+	                 */
+
+	        }, {
+	                key: 'clone',
+	                value: function clone() {
+
+	                        return new Vertex(this.x, this.y, this.z, this.u, this.v, this.vtx);
+	                }
+	        }]);
+
+	        return Vertex;
+	}();
+
+	exports.default = Vertex;
+
+/***/ },
+/* 27 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	        value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); /**
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      * Edge of a face in a mesh.
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      */
+
+
+	var _vertex = __webpack_require__(26);
+
+	var _vertex2 = _interopRequireDefault(_vertex);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var Edge = function () {
+	        function Edge(i1, i2, vtx) {
+	                var ccw = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : true;
+
+	                _classCallCheck(this, Edge);
+
+	                this.i1 = i1;
+
+	                this.i2 = i2;
+
+	                this.v1 = vtx[i1];
+
+	                this.v2 = vtx[i2];
+
+	                if (!this.valid()) {
+
+	                        console.error('Edge error: i1=' + i1 + ' i2:' + i2 + ' v1:' + v1 + ' v2:' + v2);
+	                }
+
+	                // Let the vertices know they START this edge (forward, clockwise)
+
+	                this.v1.setEdge(this, 0);
+
+	                // NOTE: setting the second point = 12 connections (degenerate)
+	                // NOTE: max of 6 connections, sometimes less.
+	                // NOTE: backward, counter-clockwise
+	                this.v2.setEdge(this, 1);
+
+	                // Save a reference to the overall Vertex array
+
+	                this.vtx = vtx;
+
+	                // Previous and next Edges
+
+	                this.prev = null;
+
+	                this.next = null;
+
+	                this.ccw = ccw; // by default, counterclockwise, reverse if we go clockwise.
+
+	                this.idx = i1 + '-' + i2;
+	        }
+
+	        _createClass(Edge, [{
+	                key: 'valid',
+	                value: function valid() {
+
+	                        if (this.v1 && this.v2) {
+
+	                                return true;
+	                        }
+
+	                        return false;
+	                }
+
+	                /** 
+	                 * Determine if a Vertex is part of this Edge.
+	                 */
+
+	        }, {
+	                key: 'hasVertex',
+	                value: function hasVertex(otherVertex) {
+
+	                        if (this.v1 === otherVertex.v1 || this.v2 === otherVertex.v2) {
+
+	                                return true;
+	                        }
+
+	                        return false;
+	                }
+
+	                /** 
+	                 * Determine if two Edges share the same Coords (object reference, not value).
+	                 * @param {Edge} other another Edge object
+	                 * @param {Boolen} sameWind if set to true, objects have to have the same Coords 
+	                 * in the same order. Otherwise, a--b is equivalent to b--a, which is common in 
+	                 * indices referencing a set of Vertex objects.
+	                 * @returns {Boolean} if shared Coords, return True, else false
+	                 */
+
+	        }, {
+	                key: 'isEqual',
+	                value: function isEqual(other) {
+	                        var sameWind = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
+
+	                        // Equal, and in same order 
+	                        if (this.v1 === other.v1 && this.v2 === other.v2) {
+
+	                                return true;
+	                        } else if (sameWind === false) {
+
+	                                if (this.hasVertex(other.v1) && this.hasVertex(other.v2)) {
+
+	                                        return true;
+	                                }
+	                        }
+
+	                        return false;
+	                }
+
+	                /**
+	                 * Compute midpoint of the two Vertex objects
+	                 * @returns{Vertex} this midpoint for position AND texture coordiantes.
+	                 */
+
+	        }, {
+	                key: 'midPoint',
+	                value: function midPoint() {
+
+	                        // compute average texture coordinate
+
+	                        return this.v1.clone().average(this.v2);
+	                }
+
+	                /** 
+	                 * Reverses the order of this Face between clockwise or counter-clockwise (default) 
+	                 * winding.
+	                 * @returns {Boolean} the winding, true = counter-clockwise, false = clockwise.
+	                 */
+
+	        }, {
+	                key: 'flip',
+	                value: function flip() {
+
+	                        var p = this.a;
+
+	                        this.a = this.b;
+
+	                        this.b = p;
+
+	                        if (this.ccw === true) this.ccw = false;else this.ccw = true;
+	                }
+	        }]);
+
+	        return Edge;
+	}();
+
+	exports.default = Edge;
+
+/***/ },
+/* 28 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	        value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); /** 
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      * A face (typically a triangle) in a Vertex mesh
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      */
+
+
+	var _vertex = __webpack_require__(26);
+
+	var _vertex2 = _interopRequireDefault(_vertex);
+
+	var _edge = __webpack_require__(27);
+
+	var _edge2 = _interopRequireDefault(_edge);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var Tri = function () {
+	        function Tri(i1, i2, i3, vtx) {
+	                var ccw = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : true;
+
+	                _classCallCheck(this, Tri);
+
+	                // Reading order i1, i2, i3 for counter-clockwise
+
+	                this.i1 = i1;
+
+	                this.i2 = i2;
+
+	                this.i3 = i3;
+
+	                // Store Vertex
+
+	                this.v1 = vtx[i1];
+
+	                this.v2 = vtx[i2];
+
+	                this.v3 = vtx[i3];
+
+	                // Let the Vertex objects know they are part of this Tri.
+
+	                this.v1.setTri(this);
+
+	                this.v2.setTri(this);
+
+	                this.v3.setTri(this);
+
+	                // Store Edges
+
+	                this.fEdges = [];
+
+	                this.oEdges = [];
+
+	                // NOTE: Edges are implicity defined as v1-v2, v2-v3, v3-v1
+
+	                this.ccw = ccw; // by default, counterclockwise, reverse if we go clockwise.
+
+	                this.idx = i1 + '-' + i2 + '-' + i3;
+
+	                // Store previous and next triangle
+
+	                this.prev = null;
+
+	                this.next = null;
+
+	                this.ccw = ccw;
+	        }
+
+	        _createClass(Tri, [{
+	                key: 'valid',
+	                value: function valid() {
+
+	                        if (this.v1 && this.v2 && this.v3) {
+
+	                                return true;
+	                        }
+
+	                        return false;
+	                }
+	        }, {
+	                key: 'hasVertex',
+	                value: function hasVertex(otherVertex) {
+
+	                        if (this.v1 === otherVertex || this.v2 === otherVertex || this.v3 === otherVertex) {
+
+	                                return true;
+	                        }
+
+	                        return false;
+	                }
+	        }, {
+	                key: 'hasEdge',
+	                value: function hasEdge(otherEdge) {
+	                        var sameWind = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+	                }
+
+	                /** 
+	                 * Set the Edges this Vertex is associated with.
+	                 * @param {Edge} edge a 'parent' Edge containing this Vertex
+	                 * @param {Number} pos the position in the Edge (assuming we always 
+	                 * move counterclockwise).
+	                 */
+
+	        }, {
+	                key: 'setEdge',
+	                value: function setEdge(edge, pos) {
+
+	                        switch (pos) {
+
+	                                case 0:
+	                                        this.fEdges.push(edge); // clockwise
+	                                        break;
+	                                case 1:
+	                                        this.oEdges.push(edge); // counter-cockwise
+	                                        break;
+	                                default:
+	                                        console.error('error when setting Edge in Vertex, ' + pos);
+	                        }
+	                }
+
+	                /** 
+	                 * Determine if two Tris have the same vertices.
+	                 */
+
+	        }, {
+	                key: 'isEqual',
+	                value: function isEqual(other) {
+	                        var sameWind = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
+
+	                        if (this.v1 === other.v1 && this.v2 === other.v2 && this.v3 === other.v3) {
+
+	                                return true;
+	                        } else if (sameWind === false) {}
+	                }
+
+	                /** 
+	                 * Returns a new Vertex, the averaged point (centroid) for a triangle = Face
+	                 * @returns {Vertex} the averaged, or centroid point of the 3 points in this Face.
+	                 */
+
+	        }, {
+	                key: 'midPoint',
+	                value: function midPoint() {
+
+	                        return this.v1.clone().average(this.v2).average(this.v3);
+	                }
+
+	                /** 
+	                 * Reverses the order of this Face between clockwise or counter-clockwise (default) 
+	                 * winding.
+	                 * @returns {Boolean} the winding, true = counter-clockwise, false = clockwise.
+	                 */
+
+	        }, {
+	                key: 'flip',
+	                value: function flip() {
+
+	                        var p = this.v3;
+
+	                        this.v3 = this.v1;
+
+	                        this.v1 = p;
+
+	                        if (this.ccw === true) this.ccw = false;else this.ccw = true;
+
+	                        return this.ccw;
+	                }
+	        }]);
+
+	        return Tri;
+	}();
+
+	exports.default = Tri;
+
+/***/ },
+/* 29 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	        value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); /** 
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      * A face (typically a triangle) in a Vertex mesh
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      */
+
+
+	var _vertex = __webpack_require__(26);
+
+	var _vertex2 = _interopRequireDefault(_vertex);
+
+	var _tri = __webpack_require__(28);
+
+	var _tri2 = _interopRequireDefault(_tri);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var Quad = function () {
+	        function Quad(i1, i2, i3, i4, vtx) {
+	                var ccw = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : true;
+
+	                _classCallCheck(this, Quad);
+
+	                // Reading order: i1, i2, i3, i1, i3, i4 for counter-clockwise.
+
+	                this.i1 = i1;
+
+	                this.i2 = i2;
+
+	                this.i3 = i3;
+
+	                this.i4 = i4;
+
+	                this.v1 = vtx[i1];
+
+	                this.v2 = vtx[i2];
+
+	                this.v3 = vtx[i3];
+
+	                this.v4 = vtx[i4];
+
+	                // NOTE: THIS IS WRONG. LOOK UP TRIS IN TRI ARRAY
+
+	                this.t1 = new _tri2.default(i1, i2, i3, vtx);
+
+	                this.t2 = new _tri2.default(i1, i2, i4, vtx);
+
+	                this.ccw = ccw; // by default, counterclockwise, reverse if we go clockwise.
+	        }
+
+	        _createClass(Quad, [{
+	                key: 'hasVertex',
+	                value: function hasVertex(otherVertex) {}
+	        }, {
+	                key: 'hasEdge',
+	                value: function hasEdge(otherEdge) {
+	                        var sameWind = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+	                }
+	        }, {
+	                key: 'hasTri',
+	                value: function hasTri(otherTri) {
+	                        var sameWind = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+	                }
+
+	                /** 
+	                 * Determine if two quads have the same vertices.
+	                 */
+
+	        }, {
+	                key: 'isEqual',
+	                value: function isEqual(other, sameWind) {}
+
+	                /** 
+	                 * Returns a new Vertex, the averaged point (centroid) for a triangle = Face
+	                 * @returns {Vertex} the averaged, or centroid point of the 3 points in this Face.
+	                 */
+
+	        }, {
+	                key: 'midPoint',
+	                value: function midPoint() {
+
+	                        return this.v1.clone().average(this.v2).average(this.v3).average(this.v4);
+	                }
+
+	                /** 
+	                 * Reverses the order of this Face between clockwise or counter-clockwise (default) 
+	                 * winding.
+	                 * @returns {Boolean} the winding, true = counter-clockwise, false = clockwise.
+	                 */
+
+	        }, {
+	                key: 'flip',
+	                value: function flip() {
+
+	                        var p = this.v1;
+
+	                        this.v3 = this.v1;
+
+	                        this.v1 = p;
+
+	                        if (this.ccw === true) this.ccw = false;else this.ccw = true;
+
+	                        return this.ccw;
+	                }
+	        }]);
+
+	        return Quad;
+	}();
+
+	exports.default = Quad;
+
+/***/ },
+/* 30 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	        value: true
+	});
+
+	var _vertex = __webpack_require__(26);
+
+	var _vertex2 = _interopRequireDefault(_vertex);
+
+	var _edge = __webpack_require__(27);
+
+	var _edge2 = _interopRequireDefault(_edge);
+
+	var _tri = __webpack_require__(28);
+
+	var _tri2 = _interopRequireDefault(_tri);
+
+	var _quad = __webpack_require__(29);
+
+	var _quad2 = _interopRequireDefault(_quad);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } } /** 
+	                                                                                                                                                           * A mesh object containing un-flattened references to vertices, indices, and 
+	                                                                                                                                                           * texture coordinates, suitable for subdivision and other complex manipulations.
+	                                                                                                                                                           */
+
+
+	var Mesh = function Mesh() {
+	        var vertexArr = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+	        var indexArr = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
+	        var edgeArr = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [];
+	        var triArr = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
+	        var quadArr = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : [];
+
+	        _classCallCheck(this, Mesh);
+
+	        // reading order: i1, i2, i3, i1, i3, i4
+
+	        this.vertexArr = vertexArr;
+
+	        this.indexArr = indexArr;
+
+	        this.triArr = triArr;
+
+	        this.quadArr = quadArr;
+	};
+
+	exports.default = Mesh;
+
+/***/ },
+/* 31 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -6569,7 +7622,7 @@
 	exports.default = World;
 
 /***/ },
-/* 26 */
+/* 32 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -6600,18 +7653,18 @@
 	THE SOFTWARE. */
 	// END HEADER
 
-	exports.glMatrix = __webpack_require__(27);
-	exports.mat2 = __webpack_require__(28);
-	exports.mat2d = __webpack_require__(29);
-	exports.mat3 = __webpack_require__(30);
-	exports.mat4 = __webpack_require__(31);
-	exports.quat = __webpack_require__(32);
-	exports.vec2 = __webpack_require__(35);
-	exports.vec3 = __webpack_require__(33);
-	exports.vec4 = __webpack_require__(34);
+	exports.glMatrix = __webpack_require__(33);
+	exports.mat2 = __webpack_require__(34);
+	exports.mat2d = __webpack_require__(35);
+	exports.mat3 = __webpack_require__(36);
+	exports.mat4 = __webpack_require__(37);
+	exports.quat = __webpack_require__(38);
+	exports.vec2 = __webpack_require__(41);
+	exports.vec3 = __webpack_require__(39);
+	exports.vec4 = __webpack_require__(40);
 
 /***/ },
-/* 27 */
+/* 33 */
 /***/ function(module, exports) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -6687,7 +7740,7 @@
 
 
 /***/ },
-/* 28 */
+/* 34 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -6710,7 +7763,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(27);
+	var glMatrix = __webpack_require__(33);
 
 	/**
 	 * @class 2x2 Matrix
@@ -7129,7 +8182,7 @@
 
 
 /***/ },
-/* 29 */
+/* 35 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -7152,7 +8205,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(27);
+	var glMatrix = __webpack_require__(33);
 
 	/**
 	 * @class 2x3 Matrix
@@ -7604,7 +8657,7 @@
 
 
 /***/ },
-/* 30 */
+/* 36 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -7627,7 +8680,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(27);
+	var glMatrix = __webpack_require__(33);
 
 	/**
 	 * @class 3x3 Matrix
@@ -8356,7 +9409,7 @@
 
 
 /***/ },
-/* 31 */
+/* 37 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -8379,7 +9432,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(27);
+	var glMatrix = __webpack_require__(33);
 
 	/**
 	 * @class 4x4 Matrix
@@ -10498,7 +11551,7 @@
 
 
 /***/ },
-/* 32 */
+/* 38 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -10521,10 +11574,10 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(27);
-	var mat3 = __webpack_require__(30);
-	var vec3 = __webpack_require__(33);
-	var vec4 = __webpack_require__(34);
+	var glMatrix = __webpack_require__(33);
+	var mat3 = __webpack_require__(36);
+	var vec3 = __webpack_require__(39);
+	var vec4 = __webpack_require__(40);
 
 	/**
 	 * @class Quaternion
@@ -11104,7 +12157,7 @@
 
 
 /***/ },
-/* 33 */
+/* 39 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -11127,7 +12180,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(27);
+	var glMatrix = __webpack_require__(33);
 
 	/**
 	 * @class 3 Dimensional Vector
@@ -11887,7 +12940,7 @@
 
 
 /***/ },
-/* 34 */
+/* 40 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -11910,7 +12963,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(27);
+	var glMatrix = __webpack_require__(33);
 
 	/**
 	 * @class 4 Dimensional Vector
@@ -12502,7 +13555,7 @@
 
 
 /***/ },
-/* 35 */
+/* 41 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -12525,7 +13578,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(27);
+	var glMatrix = __webpack_require__(33);
 
 	/**
 	 * @class 2 Dimensional Vector
@@ -13095,7 +14148,7 @@
 
 
 /***/ },
-/* 36 */
+/* 42 */
 /***/ function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {/*
@@ -14054,988 +15107,6 @@
 	module.exports = WebGLDebugUtils;
 
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
-
-/***/ },
-/* 37 */
-/***/ function(module, exports) {
-
-	"use strict";
-
-	Object.defineProperty(exports, "__esModule", {
-	        value: true
-	});
-
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	/** 
-	 * Create a class for manipulating 3d data, including texture 
-	 * coordinates and normals. We don't use glMatrix since the 
-	 * calculations here are faster if done locally.
-	 */
-	var Coords = function () {
-
-	        /**
-	         * @constructor
-	         * @param {Number} x the initializing x or 0 coordinate
-	         * @param {Number} y the initializing y or 1 coordinate
-	         * @param {Number} z the initializing z or 2 coordinate
-	         */
-	        function Coords() {
-	                var x = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
-	                var y = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
-	                var z = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
-
-	                _classCallCheck(this, Coords);
-
-	                this.x = x;
-
-	                this.y = y;
-
-	                this.z = z;
-	        }
-
-	        /**
-	         * Check for null or undefined values.
-	         * @returns {Boolen} all all 3 coordinates are defined, return true, else false
-	         */
-
-
-	        _createClass(Coords, [{
-	                key: "isValid",
-	                value: function isValid() {
-
-	                        return Number.isFinite(parseFloat(this.x)) && Number.isFinte(parseFloat(this.y)) && Number.isFinite(parseFloat(this.z));
-	                }
-
-	                /** 
-	                 * Overwrite coordinate values.
-	                 * @param {Number} x the x or 0 coordinate
-	                 * @param {Number} y the y or 1 coordinate
-	                 * @param {Number} z the z or 2 coordinate
-	                 */
-
-	        }, {
-	                key: "set",
-	                value: function set(x, y, z) {
-
-	                        if (x !== undefined) this.x = x;
-
-	                        if (y !== undefined) this.y = y;
-
-	                        if (z !== undefined) this.z = z;
-	                }
-
-	                /**
-	                 * Return a new copy of this Coords
-	                 * @returns {Coords} a copy of the current coordinates.
-	                 */
-
-	        }, {
-	                key: "clone",
-	                value: function clone() {
-
-	                        return new Coords(this.x, this.y, this.z);
-	                }
-
-	                /** 
-	                 * Determine if two Coords are the same object (not same values)
-	                 */
-
-	        }, {
-	                key: "isEqual",
-	                value: function isEqual(other) {
-
-	                        if (other === this) {
-
-	                                return true;
-	                        }
-
-	                        return false;
-	                }
-
-	                /** 
-	                 * Add a Coordinate position to this coordinate (vector addition)
-	                 * @param {Coord} other the coordinate position to add.
-	                 * @returns {Coord} this Coord, added.
-	                 */
-
-	        }, {
-	                key: "add",
-	                value: function add(other) {
-
-	                        this.x += other.x;
-
-	                        this.y += other.y;
-
-	                        this.z += other.z;
-
-	                        return this;
-	                }
-
-	                /** 
-	                 * Subtract a Coordinate position from this coordinate (vector addition)
-	                 * @param {Coord} other the coordinate position to subtract.
-	                 * @returns {Coord} this Coord, subtracted.
-	                 */
-
-	        }, {
-	                key: "subtract",
-	                value: function subtract(other) {
-
-	                        this.x -= other.x;
-
-	                        this.y -= other.y;
-
-	                        this.z -= other.z;
-
-	                        return this;
-	                }
-
-	                /** 
-	                 * Multiply the value of this Coordinate by a number
-	                 * @param {Number} scalar the number to multiply by.
-	                 * @returns {Coords} this Coords, scaled.
-	                 */
-
-	        }, {
-	                key: "multiplyScalar",
-	                value: function multiplyScalar(scalar) {
-
-	                        this.x *= scalar;
-
-	                        this.y *= scalar;
-
-	                        this.z *= scalar;
-
-	                        return this;
-	                }
-
-	                /** 
-	                 * Divice the value of this Coordinate by a number
-	                 * @param {Number} scalar the number to divide by.
-	                 * @returns {Coords} this Coords, scaled.
-	                 */
-
-	        }, {
-	                key: "divideScalar",
-	                value: function divideScalar(scalar) {
-
-	                        this.x /= scalar;
-
-	                        this.y /= scalar;
-
-	                        this.z /= scalar;
-
-	                        return this;
-	                }
-
-	                /** 
-	                 * Return the length of this Coord.
-	                 * @returns {Number} the length of this Coord.
-	                 */
-
-	        }, {
-	                key: "magnitude",
-	                value: function magnitude() {
-
-	                        return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
-	                }
-
-	                /** 
-	                 * Convert this Coords to its normalized form.
-	                 * @returns {Coords} this Coords, normalized.
-	                 */
-
-	        }, {
-	                key: "normalize",
-	                value: function normalize() {
-
-	                        return this.divideScalar(this.magnitude());
-	                }
-
-	                /** 
-	                 * Return a new Coords with averaged value of this and another Coords.
-	                 * @param {Coords} other the Coords to average with.
-	                 * @returns {Coords} a new Coords which is the average for this and the other Coords
-	                 */
-
-	        }, {
-	                key: "average",
-	                value: function average(other) {
-
-	                        return this.clone().this.add(other).this.divideScalar(0.5);
-	                }
-
-	                /** 
-	                 * Return a new Coords which is the cross product of this and another Coords.
-	                 * @param {Coords} other the other Coords to average with.
-	                 * @returns {Coords} a new Coords which is the dot product for this and the other Coords.
-	                 */
-
-	        }, {
-	                key: "crossProduct",
-	                value: function crossProduct(other) {
-
-	                        return new Coords(this.y * other.z - other.y * this.z, other.x * this.z - this.x * other.z, this.x * other.y - other.x * this.y);
-	                }
-
-	                /** 
-	                 * Return the cross product of this Coord and another Coords.
-	                 * @param {Coords} other the Coords to compute the dot product with.
-	                 * @returns {Number} the dot product.
-	                 */
-
-	        }, {
-	                key: "dotProduct",
-	                value: function dotProduct(other) {
-
-	                        return this.x * other.x + this.y * other.y + this.z * other.z;
-	                }
-	        }]);
-
-	        return Coords;
-	}();
-
-	exports.default = Coords;
-
-/***/ },
-/* 38 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	        value: true
-	});
-
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); /** 
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      * Create a Vertex class suitable for complex manipulatio of mesh objects, 
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      * e.g. subdivision or morphing
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      */
-
-
-	var _util = __webpack_require__(4);
-
-	var _util2 = _interopRequireDefault(_util);
-
-	var _coords = __webpack_require__(37);
-
-	var _coords2 = _interopRequireDefault(_coords);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	var Vertex = function () {
-
-	        /** 
-	         * @constructor
-	         * @param {Number} x the x, or 0 coordinate
-	         * @param {Number} y the y, or 1 coordinate
-	         * @param {Number} z the z, or 2 coordinate
-	         * @param {Number} u the u, or 0 texture coordinate
-	         * @param {Number} v the v, or 1 texture coordinate
-	         * @param {Array[Vertex]} the parent Vertex array
-	         */
-	        function Vertex() {
-	                var x = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
-	                var y = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
-	                var z = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
-	                var u = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0;
-	                var v = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : 0;
-	                var vtx = arguments[5];
-	                var i1 = arguments[6];
-
-	                _classCallCheck(this, Vertex);
-
-	                //console.log("x:" + x + " y:" + y + " z:" + z)
-
-	                this.coords = new _coords2.default(x, y, z);
-
-	                this.texCoords = { u: u, v: v };
-
-	                // Save the parent array with all vertices.
-
-	                this.vtx = vtx;
-
-	                // Hash
-	                // forward with our drawing (counter-clockwise), we are the first Vertex in the Edge.
-
-	                this.fEdges = [];
-
-	                // backwards, we are the second Vertex in the Edge.
-
-	                this.oEdges = [];
-
-	                this.prevEdge = null;
-
-	                this.nextEdge = null;
-
-	                this.tris = [];
-
-	                this.quads = [];
-
-	                this.idx = i1;
-	        }
-
-	        _createClass(Vertex, [{
-	                key: 'valid',
-	                value: function valid() {
-
-	                        if (this.coords.isValid()) {
-
-	                                return true;
-	                        }
-
-	                        return false;
-	                }
-
-	                /** 
-	                 * Set the position coordinates of the Vertex.
-	                 * @param {Number} x the x, or 0 coordinate
-	                 * @param {Number} y the y, or 1 coordinate
-	                 * @param {Number} z the z, or 2 coordinate
-	                 */
-
-	        }, {
-	                key: 'setCoords',
-	                value: function setCoords() {
-	                        var x = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
-	                        var y = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
-	                        var z = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
-
-
-	                        this.coords.set(x, y, z);
-
-	                        return this;
-	                }
-
-	                /**
-	                 * Set the texture coordinates of the Vertex.
-	                 * @param {Number} u the u, or 0 texture coordinate
-	                 * @param {Number} v the v, or 1 texture coordinate
-	                 */
-
-	        }, {
-	                key: 'setTexCoords',
-	                value: function setTexCoords() {
-	                        var u = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
-	                        var v = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
-
-
-	                        this.u = u;
-
-	                        this.v = v;
-
-	                        return this;
-	                }
-
-	                /** 
-	                 * Set the Edges this Vertex is associated with.
-	                 * @param {Edge} edge a 'parent' Edge containing this Vertex
-	                 * @param {Number} pos the position in the Edge (assuming we always 
-	                 * move counterclockwise).
-	                 */
-
-	        }, {
-	                key: 'setEdge',
-	                value: function setEdge(edge, pos) {
-
-	                        switch (pos) {
-
-	                                case 0:
-	                                        this.fEdges.push(edge); // counter-clockwise
-	                                        break;
-	                                case 1:
-	                                        this.oEdges.push(edge); // clockwise
-	                                        break;
-	                                default:
-	                                        console.error('error when setting Edge in Vertex, ' + pos);
-	                        }
-	                }
-
-	                /** 
-	                 * Set the Tris this Vertex is associated with.
-	                 * @param {Tri} tri a 'parent' Triangle containing this Vertex
-	                 * @param {Number} pos the position in the Triangle (assuming we always 
-	                 * move counterclockwise).
-	                 */
-
-	        }, {
-	                key: 'setTri',
-	                value: function setTri(tri) {
-
-	                        this.tris.push(tri);
-	                }
-
-	                /** 
-	                 * Return a new Vertex which have averaged position and 
-	                 * texture coordinate
-	                 * @param {Vertex} other the Vertex to average with
-	                 */
-
-	        }, {
-	                key: 'average',
-	                value: function average(other) {
-
-	                        var v = this.clone();
-
-	                        v.coords = v.coords.average(other.coords);
-
-	                        v.texCoords = {
-	                                u: v1.texCoords.u + v2.texCoords.u / 2,
-	                                v: v1.texCoords.v + v2.texCoords.v / 2
-	                        };
-
-	                        return v;
-	                }
-
-	                /**
-	                 * Return a new copy of this Vertex
-	                 * @returns {Vertex} a copy of the current vertex
-	                 */
-
-	        }, {
-	                key: 'clone',
-	                value: function clone() {
-
-	                        return new Vertex(this.x, this.y, this.z, this.u, this.v, this.vtx);
-	                }
-	        }]);
-
-	        return Vertex;
-	}();
-
-	exports.default = Vertex;
-
-/***/ },
-/* 39 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	        value: true
-	});
-
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); /**
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      * Edge of a face in a mesh.
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      */
-
-
-	var _vertex = __webpack_require__(38);
-
-	var _vertex2 = _interopRequireDefault(_vertex);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	var Edge = function () {
-	        function Edge(i1, i2, vtx) {
-	                var ccw = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : true;
-
-	                _classCallCheck(this, Edge);
-
-	                this.i1 = i1;
-
-	                this.i2 = i2;
-
-	                this.v1 = vtx[i1];
-
-	                this.v2 = vtx[i2];
-
-	                if (!this.valid()) {
-
-	                        console.error('Edge error: i1=' + i1 + ' i2:' + i2 + ' v1:' + v1 + ' v2:' + v2);
-	                }
-
-	                // Let the vertices know they START this edge (forward, clockwise)
-
-	                this.v1.setEdge(this, 0);
-
-	                // NOTE: setting the second point = 12 connections (degenerate)
-	                // NOTE: max of 6 connections, sometimes less.
-	                // NOTE: backward, counter-clockwise
-	                this.v2.setEdge(this, 1);
-
-	                // Save a reference to the overall Vertex array
-
-	                this.vtx = vtx;
-
-	                // Previous and next Edges
-
-	                this.prev = null;
-
-	                this.next = null;
-
-	                this.ccw = ccw; // by default, counterclockwise, reverse if we go clockwise.
-
-	                this.idx = i1 + '-' + i2;
-	        }
-
-	        _createClass(Edge, [{
-	                key: 'valid',
-	                value: function valid() {
-
-	                        if (this.v1 && this.v2) {
-
-	                                return true;
-	                        }
-
-	                        return false;
-	                }
-
-	                /** 
-	                 * Determine if a Vertex is part of this Edge.
-	                 */
-
-	        }, {
-	                key: 'hasVertex',
-	                value: function hasVertex(otherVertex) {
-
-	                        if (this.v1 === otherVertex.v1 || this.v2 === otherVertex.v2) {
-
-	                                return true;
-	                        }
-
-	                        return false;
-	                }
-
-	                /** 
-	                 * Determine if two Edges share the same Coords (object reference, not value).
-	                 * @param {Edge} other another Edge object
-	                 * @param {Boolen} sameWind if set to true, objects have to have the same Coords 
-	                 * in the same order. Otherwise, a--b is equivalent to b--a, which is common in 
-	                 * indices referencing a set of Vertex objects.
-	                 * @returns {Boolean} if shared Coords, return True, else false
-	                 */
-
-	        }, {
-	                key: 'isEqual',
-	                value: function isEqual(other) {
-	                        var sameWind = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-
-
-	                        // Equal, and in same order 
-	                        if (this.v1 === other.v1 && this.v2 === other.v2) {
-
-	                                return true;
-	                        } else if (sameWind === false) {
-
-	                                if (this.hasVertex(other.v1) && this.hasVertex(other.v2)) {
-
-	                                        return true;
-	                                }
-	                        }
-
-	                        return false;
-	                }
-
-	                /**
-	                 * Compute midpoint of the two Vertex objects
-	                 * @returns{Vertex} this midpoint for position AND texture coordiantes.
-	                 */
-
-	        }, {
-	                key: 'midPoint',
-	                value: function midPoint() {
-
-	                        // compute average texture coordinate
-
-	                        return this.v1.clone().average(this.v2);
-	                }
-
-	                /** 
-	                 * Reverses the order of this Face between clockwise or counter-clockwise (default) 
-	                 * winding.
-	                 * @returns {Boolean} the winding, true = counter-clockwise, false = clockwise.
-	                 */
-
-	        }, {
-	                key: 'flip',
-	                value: function flip() {
-
-	                        var p = this.a;
-
-	                        this.a = this.b;
-
-	                        this.b = p;
-
-	                        if (this.ccw === true) this.ccw = false;else this.ccw = true;
-	                }
-	        }]);
-
-	        return Edge;
-	}();
-
-	exports.default = Edge;
-
-/***/ },
-/* 40 */,
-/* 41 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	        value: true
-	});
-
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); /** 
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      * A face (typically a triangle) in a Vertex mesh
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      */
-
-
-	var _vertex = __webpack_require__(38);
-
-	var _vertex2 = _interopRequireDefault(_vertex);
-
-	var _edge = __webpack_require__(39);
-
-	var _edge2 = _interopRequireDefault(_edge);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	var Tri = function () {
-	        function Tri(i1, i2, i3, vtx) {
-	                var ccw = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : true;
-
-	                _classCallCheck(this, Tri);
-
-	                // Reading order i1, i2, i3 for counter-clockwise
-
-	                this.i1 = i1;
-
-	                this.i2 = i2;
-
-	                this.i3 = i3;
-
-	                // Store Vertex
-
-	                this.v1 = vtx[i1];
-
-	                this.v2 = vtx[i2];
-
-	                this.v3 = vtx[i3];
-
-	                // Let the Vertex objects know they are part of this Tri.
-
-	                this.v1.setTri(this);
-
-	                this.v2.setTri(this);
-
-	                this.v3.setTri(this);
-
-	                // Store Edges
-
-	                this.fEdges = [];
-
-	                this.oEdges = [];
-
-	                // NOTE: Edges are implicity defined as v1-v2, v2-v3, v3-v1
-
-	                this.ccw = ccw; // by default, counterclockwise, reverse if we go clockwise.
-
-	                this.idx = i1 + '-' + i2 + '-' + i3;
-
-	                // Store previous and next triangle
-
-	                this.prev = null;
-
-	                this.next = null;
-
-	                this.ccw = ccw;
-	        }
-
-	        _createClass(Tri, [{
-	                key: 'valid',
-	                value: function valid() {
-
-	                        if (this.v1 && this.v2 && this.v3) {
-
-	                                return true;
-	                        }
-
-	                        return false;
-	                }
-	        }, {
-	                key: 'hasVertex',
-	                value: function hasVertex(otherVertex) {
-
-	                        if (this.v1 === otherVertex || this.v2 === otherVertex || this.v3 === otherVertex) {
-
-	                                return true;
-	                        }
-
-	                        return false;
-	                }
-	        }, {
-	                key: 'hasEdge',
-	                value: function hasEdge(otherEdge) {
-	                        var sameWind = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-	                }
-
-	                /** 
-	                 * Set the Edges this Vertex is associated with.
-	                 * @param {Edge} edge a 'parent' Edge containing this Vertex
-	                 * @param {Number} pos the position in the Edge (assuming we always 
-	                 * move counterclockwise).
-	                 */
-
-	        }, {
-	                key: 'setEdge',
-	                value: function setEdge(edge, pos) {
-
-	                        switch (pos) {
-
-	                                case 0:
-	                                        this.fEdges.push(edge); // clockwise
-	                                        break;
-	                                case 1:
-	                                        this.oEdges.push(edge); // counter-cockwise
-	                                        break;
-	                                default:
-	                                        console.error('error when setting Edge in Vertex, ' + pos);
-	                        }
-	                }
-
-	                /** 
-	                 * Determine if two Tris have the same vertices.
-	                 */
-
-	        }, {
-	                key: 'isEqual',
-	                value: function isEqual(other) {
-	                        var sameWind = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-
-
-	                        if (this.v1 === other.v1 && this.v2 === other.v2 && this.v3 === other.v3) {
-
-	                                return true;
-	                        } else if (sameWind === false) {}
-	                }
-
-	                /** 
-	                 * Returns a new Vertex, the averaged point (centroid) for a triangle = Face
-	                 * @returns {Vertex} the averaged, or centroid point of the 3 points in this Face.
-	                 */
-
-	        }, {
-	                key: 'midPoint',
-	                value: function midPoint() {
-
-	                        return this.v1.clone().average(this.v2).average(this.v3);
-	                }
-
-	                /** 
-	                 * Reverses the order of this Face between clockwise or counter-clockwise (default) 
-	                 * winding.
-	                 * @returns {Boolean} the winding, true = counter-clockwise, false = clockwise.
-	                 */
-
-	        }, {
-	                key: 'flip',
-	                value: function flip() {
-
-	                        var p = this.v3;
-
-	                        this.v3 = this.v1;
-
-	                        this.v1 = p;
-
-	                        if (this.ccw === true) this.ccw = false;else this.ccw = true;
-
-	                        return this.ccw;
-	                }
-	        }]);
-
-	        return Tri;
-	}();
-
-	exports.default = Tri;
-
-/***/ },
-/* 42 */,
-/* 43 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	        value: true
-	});
-
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); /** 
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      * A face (typically a triangle) in a Vertex mesh
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      */
-
-
-	var _vertex = __webpack_require__(38);
-
-	var _vertex2 = _interopRequireDefault(_vertex);
-
-	var _tri = __webpack_require__(41);
-
-	var _tri2 = _interopRequireDefault(_tri);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	var Quad = function () {
-	        function Quad(i1, i2, i3, i4, vtx) {
-	                var ccw = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : true;
-
-	                _classCallCheck(this, Quad);
-
-	                // Reading order: i1, i2, i3, i1, i3, i4 for counter-clockwise.
-
-	                this.i1 = i1;
-
-	                this.i2 = i2;
-
-	                this.i3 = i3;
-
-	                this.i4 = i4;
-
-	                this.v1 = vtx[i1];
-
-	                this.v2 = vtx[i2];
-
-	                this.v3 = vtx[i3];
-
-	                this.v4 = vtx[i4];
-
-	                // NOTE: THIS IS WRONG. LOOK UP TRIS IN TRI ARRAY
-
-	                this.t1 = new _tri2.default(i1, i2, i3, vtx);
-
-	                this.t2 = new _tri2.default(i1, i2, i4, vtx);
-
-	                this.ccw = ccw; // by default, counterclockwise, reverse if we go clockwise.
-	        }
-
-	        _createClass(Quad, [{
-	                key: 'hasVertex',
-	                value: function hasVertex(otherVertex) {}
-	        }, {
-	                key: 'hasEdge',
-	                value: function hasEdge(otherEdge) {
-	                        var sameWind = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-	                }
-	        }, {
-	                key: 'hasTri',
-	                value: function hasTri(otherTri) {
-	                        var sameWind = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-	                }
-
-	                /** 
-	                 * Determine if two quads have the same vertices.
-	                 */
-
-	        }, {
-	                key: 'isEqual',
-	                value: function isEqual(other, sameWind) {}
-
-	                /** 
-	                 * Returns a new Vertex, the averaged point (centroid) for a triangle = Face
-	                 * @returns {Vertex} the averaged, or centroid point of the 3 points in this Face.
-	                 */
-
-	        }, {
-	                key: 'midPoint',
-	                value: function midPoint() {
-
-	                        return this.v1.clone().average(this.v2).average(this.v3).average(this.v4);
-	                }
-
-	                /** 
-	                 * Reverses the order of this Face between clockwise or counter-clockwise (default) 
-	                 * winding.
-	                 * @returns {Boolean} the winding, true = counter-clockwise, false = clockwise.
-	                 */
-
-	        }, {
-	                key: 'flip',
-	                value: function flip() {
-
-	                        var p = this.v1;
-
-	                        this.v3 = this.v1;
-
-	                        this.v1 = p;
-
-	                        if (this.ccw === true) this.ccw = false;else this.ccw = true;
-
-	                        return this.ccw;
-	                }
-	        }]);
-
-	        return Quad;
-	}();
-
-	exports.default = Quad;
-
-/***/ },
-/* 44 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	        value: true
-	});
-
-	var _vertex = __webpack_require__(38);
-
-	var _vertex2 = _interopRequireDefault(_vertex);
-
-	var _edge = __webpack_require__(39);
-
-	var _edge2 = _interopRequireDefault(_edge);
-
-	var _tri = __webpack_require__(41);
-
-	var _tri2 = _interopRequireDefault(_tri);
-
-	var _quad = __webpack_require__(43);
-
-	var _quad2 = _interopRequireDefault(_quad);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } } /** 
-	                                                                                                                                                           * A mesh object containing un-flattened references to vertices, indices, and 
-	                                                                                                                                                           * texture coordinates, suitable for subdivision and other complex manipulations.
-	                                                                                                                                                           */
-
-
-	var Mesh = function Mesh() {
-	        var vertexArr = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
-	        var indexArr = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
-	        var edgeArr = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [];
-	        var triArr = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
-	        var quadArr = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : [];
-
-	        _classCallCheck(this, Mesh);
-
-	        // reading order: i1, i2, i3, i1, i3, i4
-
-	        this.vertexArr = vertexArr;
-
-	        this.indexArr = indexArr;
-
-	        this.triArr = triArr;
-
-	        this.quadArr = quadArr;
-	};
-
-	exports.default = Mesh;
 
 /***/ }
 /******/ ]);
