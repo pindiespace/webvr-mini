@@ -291,15 +291,41 @@ class World {
         ) );
 
         this.dirlightTextureObjList.push( this.prim.createPrim(
-            this.prim.typeList.ICOSOHEDRON,
-            'icophere',
+            this.prim.typeList.REGULARTETRAHEDRON,
+            'regulartetrahedron',
             vec5( 3, 3, 3, 0 ),            // dimensions
-            vec5( 8, 8, 8 ),         // divisions
+            vec5( 18, 18, 18 ),               // divisions
+            vec3.fromValues(6.7, 1.5, -4 ),       // position (absolute)
+            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+            ['img/mozvr-logo2.png'],               // texture present, NOT USED
+            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
+        ) );
+
+        this.dirlightTextureObjList.push( this.prim.createPrim(
+            this.prim.typeList.ICOSOHEDRON,
+            'icosohedron',
+            vec5( 3, 3, 3, 0 ),            // dimensions
+            vec5( 18, 18, 18 ),               // divisions
             vec3.fromValues(0.5, 3.5, -2 ),       // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
             ['img/mozvr-logo2.png'],               // texture present, NOT USED
+            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
+        ) );
+
+        this.textureObjList.push( this.prim.createPrim(
+            this.prim.typeList.ICOSPHERE,
+            'icosphere',
+            vec5( 3, 3, 3, 0 ),            // dimensions
+            vec5( 12, 12, 12 ),            // 1 for icosohedron, 16 for good sphere
+            vec3.fromValues(4.5, 3.5, -2 ),        // position (absolute)
+            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+            ['img/uv-test.png'],               // texture present, NOT USED
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
@@ -313,19 +339,6 @@ class World {
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
             ['img/mozvr-logo2.png'],               // texture present
-            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
-        ) );
-
-        this.textureObjList.push( this.prim.createPrim(
-            this.prim.typeList.ICOSPHERE,
-            'icoUnity',
-            vec5( 3, 3, 3, 0 ),            // dimensions
-            vec5( 16, 16, 16 ),            // 1 for icosohedron, 16 for good sphere
-            vec3.fromValues(4.5, 3.5, -2 ),        // position (absolute)
-            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-            ['img/uv-test.png'],               // texture present, NOT USED
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 

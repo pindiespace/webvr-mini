@@ -23,7 +23,7 @@ class Edge {
 
         if ( ! this.valid() ) {
 
-            console.error( 'Edge error: i1=' + i1 + ' i2:' + i2 + ' v1:' + v1 + ' v2:' + v2 );
+            console.error( 'Edge error: i1=' + i1 + ' i2:' + i2 + ' v1:' + this.v1 + ' v2:' + this.v2 );
 
         }
 

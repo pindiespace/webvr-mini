@@ -28,7 +28,7 @@
     isValid () {
 
         return ( Number.isFinite( parseFloat( this.x ) ) && 
-            Number.isFinte( parseFloat( this.y ) ) && 
+            Number.isFinite( parseFloat( this.y ) ) && 
             Number.isFinite( parseFloat( this.z ) ) );
 
     }

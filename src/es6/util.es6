@@ -12,11 +12,27 @@ class Util {
 
         this.setPerformance();
 
+        this.setFinite();
+
     }
+
 
     /* 
      * ======= DATE, TIME, PERFORMANCE OPERATIONS =======
      */
+
+    /** 
+     * Polyfill for isFinite()
+     */
+    setFinite () {
+
+        Number.isFinite = Number.isFinite || function(value) {
+
+            return typeof value === 'number' && isFinite(value);
+
+        }
+        
+    }
 
     /** 
      * Performance polyfill for timing.
@@ -74,7 +90,6 @@ class Util {
         return str.split('').reverse().join('');
 
     }
-
 
     /* 
      * =============== NUMBER OPERATIONS ====================

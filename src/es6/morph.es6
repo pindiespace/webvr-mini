@@ -31,7 +31,10 @@ class Morph {
 
 
     /** 
-     * G.
+     * If a mesh is not closed (meaning that it has Vertex objects without Edges on 
+     * one side) approximate the missing Edges by looking for nearest neighbors which 
+     * are not in the immediate Edge list.
+     * @param {Array[Vertex]} vertexArr the array of Vertex objects.
      */
     computeMeshEdges( vertexArr ) {
 
@@ -51,7 +54,7 @@ class Morph {
 
             let loopNum = 0;
 
-            // Set up an array that stores found close Vertex - so we don't keep grabbing the same one
+            // Set up an array that stores already found close Vertex objects - so we don't keep grabbing the same one
 
             let ignore = [];
 
@@ -67,7 +70,7 @@ class Morph {
 
             if ( edgeNum < MAX_EDGES ) {
 
-                // Find the closest Vertex, ignoring ones we already have in our Edge list.
+                // Find the closest Vertex, ignoring ones we already have in our ignore list.
 
                 let closest = vtx.getNeighborVertex( vertexArr, ignore );
 
@@ -76,6 +79,9 @@ class Morph {
                 // Set the Vertex we found so we ignore it on the next loop
 
                 ignore.push( closest );
+
+                ///////////////////////
+                if ( vtx.idx == '88') window.vtx88 = vtx;
 
                 // Apply any non-duplicate Edges to our Vertex
 
@@ -153,7 +159,7 @@ class Morph {
 
             pos = parseInt( v.oEdges.length );
 
-            edgeList.oEdges[ v.oEdges.length - 1 ].push( v );
+            edgeList.oEdges[ v.oEdges.length ].push( v );
 
         }
 
@@ -280,6 +286,12 @@ class Morph {
         let edgeArr = [];
 
         window.edgeArr = edgeArr;
+        window.indexArr = indexArr;
+        window.indices = indices;
+        window.vertices = vertices;
+
+        //TODO: REMOVE!!!!!!!!!!!!!!!!!!!
+        for ( let i = 0; i < indices.length; i++ ) console.log("ICOINDICES:" + i + "=" + indices[i])
 
         let k1, k2, k3, key, revKey, pKey, nKey, spacer = '-';
 
@@ -399,7 +411,8 @@ class Morph {
 
        let edgeMeshArr = this.getMeshEdges( vertexArr );
 
-       //edgeMeshArr = this.computeMeshEdges( edgeMeshArr, vertexArr );
+       //Create Edges for Vertex objects on the Edge of a non-closed mesh
+
        edgeMeshArr = this.computeMeshEdges( vertexArr )
 
        window.edgeMeshArr = edgeMeshArr;

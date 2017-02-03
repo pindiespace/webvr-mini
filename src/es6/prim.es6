@@ -180,11 +180,13 @@ class Prim {
 
             CAPSULE: 'geometryCapsule',
 
-            PRISM: 'geometryPrism',
+            PRISM: 'geometryPrism',              // 3 sides
 
-            ICOSOHEDRON: 'geometryIcosohedron',
+            ICOSOHEDRON: 'geometryIcosohedron',  // 8 sides
 
             PYRAMID: 'geometryPyramid',
+
+            REGULARTETRAHEDRON: 'geometryRegularTetrahedron', // 2 joined 4-sided pyramids
 
             ICOSPHERE: 'geometryIcoSphere',
 
@@ -2638,13 +2640,17 @@ class Prim {
 
         const side = this.directions;
 
-        // Size and divisions.
+        // Size and divisions. After making the object, subdivide further to match divisions.
 
         let subdivisions;
 
         subdivisions = prim.divisions[ 0 ];
 
-        if ( prim.type === list.ICOSOHEDRON ) {
+        if ( prim.type === list.REGULARTETRAHEDRON ) {
+
+            subdivisions = 1;
+
+        } else if ( prim.type === list.ICOSOHEDRON ) {
 
             subdivisions = 2;
 
@@ -2669,14 +2675,17 @@ class Prim {
             side.FORWARD,
         ];
 
-        // Allocate memory, since we may have to access out-of-range vertices, indices.
+        /* 
+         * The original algorithm tried to pre-define the size of the index array, since out-of-range 
+         * indices may be accessed. However, for some sizes this leads to a blob of undefineds, which 
+         * would cause problems elsewhere. So, use the dynamic feature of JS arrays - slower, but 
+         * more compatible. The browser needs to support adding a new cell with aVar[num++] constructs
+         */
 
         let geo = prim.geometry;
 
-        // TODO: halve index length if making a dome.
-
         let vertices = new Array ( ( resolution + 1 ) * ( resolution + 1 ) * 4 - (resolution * 2 - 1) * 3 ),
-        indices  = new Array( (1 << ( subdivisions * 2 + 3) ) * 3 ),
+        indices = new Array( vertices.length), // will get bigger!
         texCoords = new Array( vertices.length ),
         normals = new Array( vertices.length ),
         tangents = new Array( vertices.length );
@@ -2804,6 +2813,25 @@ class Prim {
         normals = flatten(normals, false );
 
         tangents = flatten(tangents, false );
+
+
+//////////////////////////////////////////////////////////////////////////////
+        if ( prim.name === 'icosphere' ) {
+
+            console.log("SUBDIVIDING ICOSPHERE")
+            // Sending in texture coords and normals speeds subdivision calculation.
+
+            let divided = this.morph.computeSubdivide( vertices, indices, texCoords, true );
+
+            vertices = divided.vertices;
+            indices = divided.indices;
+            texCoords = divided.texCoords;
+            //normals = this.computeNormals( vertices, indices, normals );
+
+            // TODO: TEST COORDS
+
+        }
+////////////////////////////////////////////////////////////////////////////////
 
         // Helper functions.
 
@@ -2980,6 +3008,12 @@ class Prim {
 
     }
 
+    geometryRegularTetrahedron ( prim ) {
+
+        return this.geometryIcoSphere ( prim );
+
+    }
+
     /** 
      * type ICOSOHEDRON.
      * create a icosohedron.
@@ -2990,7 +3024,7 @@ class Prim {
      */
     geometryIcosohedron ( prim ) {
 
-        return this.geometryIcoSphere( prim, false );
+        return this.geometryIcoSphere( prim );
 
     }
 
@@ -3395,7 +3429,7 @@ class Prim {
         ///////////////////////////
         ///////////////////////////
         ///////////////////////////
-
+/*
         if ( prim.name === 'torus2' ) {
 
             console.log("DISPLAYING COLORED CUBE")
@@ -3411,7 +3445,7 @@ class Prim {
             // TODO: TEST COORDS
 
         }
-
+*/
         //////////////////////////
         //////////////////////////
         //////////////////////////
@@ -3435,7 +3469,9 @@ class Prim {
     }
 
     /** 
-     * Generic 3d shape (e.g. Collada model).
+     * Generic 3d shape (e.g. Collada model). Note that this is NOT the same as the Mesh object 
+     * internally defined in mesh.es6.
+     *
      * @link https://dannywoodz.wordpress.com/2014/12/16/webgl-from-scratch-loading-a-mesh/
      * @link https://github.com/jagenjo/litegl.js/blob/master/src/mesh.js
      * 

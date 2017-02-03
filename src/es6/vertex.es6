@@ -50,6 +50,12 @@ class Vertex {
 
         this.idx = i1;
 
+        if ( ! this.valid() ) {
+
+            console.error( 'Vertex error: x=' + x + ' y:' + y + ' z:' + z + ' idx:' + i1 );
+
+        }
+
     }
 
     valid () {
@@ -255,6 +261,8 @@ class Vertex {
 
         let duplicates = [];
 
+        if ( this.idx == '88') console.log('setEdges: WARN - adding up to ' + edgeArr.length + ' more edges to ' + this.idx)
+
         for ( let i = 0; i < edgeArr.length; i++ ) {
 
             let duplicate = this.setEdge( edgeArr[ i ], direction );
@@ -284,6 +292,14 @@ class Vertex {
         switch ( direction ) {
 
             case 0:
+
+                if ( this.idx == '88') {
+                    console.log("setEdge: WARN - adding Edge number " + this.fEdges.length + " to:" + this.idx )
+                }
+
+                if ( this.fEdges.length > 6 ) {
+                    console.log("setEdge: WARN - adding extra Edge (" + ( this.fEdges.length + 1 ) + ") to " + this.idx );
+                }
 
                 if ( edge.inList( this.fEdges ) ) {
 
