@@ -27,209 +27,86 @@ class Morph {
 
     }
 
-    /**
-     * If a Vertex isn't defined in the index list, find 
-     * a close one in the entire array. use for edges when the 
-     * mesh isn't smoothly connected.
-     * @param {Vertex} the Vertex we are trying to find neighbors for.
-     * @param {Array[Vertex]} vertexArr the set of possible vertices.
-     * @param {Array[Vertex]} rejectList vertices which should not be considered in the search.
-     * @returns Vertex the closest Vertex not in the rejectList.
-     */
-    getNeighborVertex ( vtx, vertexArr, rejectList ) {
 
-        // Scan each vertex against all others, looking for very close positioning.
-
-        let dist = 100000; // huge distance to start
-
-        let closest = null;
-
-        for ( let i = 0; i < vertexArr.length; i++ ) {
-
-            // Get the second Vertex
-
-            let vtx2 = vertexArr[ i ];
-
-            if ( vtx2 === vtx ) {
-
-                console.log( 'getNeighborVertex - I found myself!' );
-
-                continue; // vtx === vtx2, we found ourself
-
-            }
-
-            /////////console.log( 'checking reject list, length:' + rejectList.length )
-
-            // See if our second Vertex is in the reject list.
-
-            for ( let j = 0; j < rejectList.length; j++ ) {
-
-                // THE REJECTLIST IS A LIST OF VERTICES NOT TO CONSIDER. WE PASSED EDGES.
-
-                //////////console.log( 'comparing vtx2 to rejectlist[j]' )
-
-
-                if ( vtx2 === rejectList[ j ] ) {
-
-                    console.log(" breaking on:" + vtx2.idx + " since it is in our rejectList at " + j )
-
-                    break; // already in our neighbor list
-
-                } else {
-
-                    let d = vtx.coords.distance( vtx2.coords )
-
-                    if(  d < dist ) {
-
-                        closest = vtx2;
-
-                        dist = d;
-
-                    }
-
-                }
-
-                // vtx2 is not in rejectList, so test it.
-
-                //////////////////console.log("DIST:" + vtx.coords.distance( vtx2.coords ) );
-
-            }
-
-
-        }
-
-        return closest;
-
-    }
 
 
     /** 
-     * Given Vertex lists with partial neighbors, scan for a nearest-neighbor. 
-     * Look at forward edges, and reversed (clockwise) Edges.
+     * G.
      */
-    computeMeshEdges( edgeMeshArr, vertexArr ) {
-
+    computeMeshEdges( vertexArr ) {
 
         // A list of Edges with Vertex objects that don't have enough neighboring Edges.
 
-        let fEdges = edgeMeshArr.fEdges;
+        console.log( '--------------- COMPUTE MESH EDGES -----------------')
 
-        let oEdges = edgeMeshArr.oEdges;
+        const MAX_EDGES = 6; // a Max of 6 in most cases
 
-        const MAX_EDGES = 6;
+        const MAX_LOOPS = MAX_EDGES;
 
-        // Everyone will have at least one connect (no i = 0), and i = 6 is ok.
+        for ( let i = 0; i < vertexArr.length; i++ ) {
 
-        for ( let i = 1; i < fEdges.length - 1; i++ ) {
+            let vtx = vertexArr[ i ];
 
-            // Get the next Edge Vertex list.
+            let edgeNum = vtx.fEdges.length;
 
-            let vtxList = fEdges[ i ];
+            let loopNum = 0;
 
-            // Scan through the Vertex objects in the Edge.
+            // Set up an array that stores found close Vertex - so we don't keep grabbing the same one
 
-            for ( let j = 0; j < vtxList.length; j++ ) {
+            let ignore = [];
 
-                let vtx = vtxList[ j ];
+            while ( edgeNum <= MAX_EDGES && loopNum < MAX_LOOPS ) {
 
-                let rejectList = [];
+                if (loopNum >= MAX_LOOPS ) {
 
-                // Put the current list of Vertex attached to this object, in the fEdges as second Vertex
+                    console.error( 'computeMeshEdges: too many loops trying to find close neighbors for:' + vtx.idx + ' at position:' + i );
 
-                for ( let l = 0; l < vtx.fEdges.length; l++ ) {
-
-                    rejectList.push( vtx.fEdges[ l ].vtx2 ); // we are using fEdges, so use the 2nd Vertex
+                    break;
 
                 }
 
-                let flag = true;
+            if ( edgeNum < MAX_EDGES ) {
 
-                // If a Vertex doesn't have enough edges, find a neighbor to substitute for missind Edge
+                // Find the closest Vertex, ignoring ones we already have in our Edge list.
 
-                while ( vtx.fEdges.length < MAX_EDGES ) {
+                let closest = vtx.getNeighborVertex( vertexArr, ignore );
 
-                    console.log( 'vtx ' + vtx.idx + ' only has ' + vtx.fEdges.length + ' edges, checking closest for more...')
+                console.log( 'computeMeshEdges: for vtx:' + vtx.idx + ' the closest vertex is:' + closest.idx )
 
-                    // THE THIRD PARAM SHOULD BE A LIST OF VERTICES WHICH ARE LISTED in ALL THE fEdges
-                    // EXTRACT VERTICES FROM fEDGES
+                // Set the Vertex we found so we ignore it on the next loop
 
-                    let closest = this.getNeighborVertex( vtx, vertexArr, rejectList );
+                ignore.push( closest );
 
-                    console.log( 'closest Vertex to ' + vtx.idx + ' is:' + closest.idx );
+                // Apply any non-duplicate Edges to our Vertex
 
-                    // Grab all availabe Edges from the neighboring Vertex
+                vtx.setEdges( closest.fEdges, 0 ); // TODO: ignore edges that come too close to an Edge vertex of this vtx
 
-                    for ( let k = 0; k < closest.fEdges.length; k++ ) {
+                vtx.setEdges( closest.oEdges, 1 ); // TODO: ignore Edges that come too close to an Edge vertex of this vtx.
 
-                        console.log("pushing another Edge from closest Vertex:" + closest.idx + ", which supplies Edge number:" + k + " to vtx " + vtx.idx + " in vtxList:" + i )
+            } else {
 
-                        // Get an Edge from the closest Vertex
+                break;
 
-                        let closestEdge = closest.fEdges[ k ];
+            }
 
-                        flag = true;
-
-                        // See if the Edge we found is already in the Edges this Vertex has.
-
-                        for ( let m = 0; m < closestEdge.length; m++ ) {
-
-                            if ( closestEdge === vtx.fEdges[ m ] ) {
-
-                                flag = false;
-
-                            }
-
-                        }
-
-                        // Push the Edge if it isn't already in the Vertex .fEdges.
-
-                        if ( flag ) {
-
-                            vtx.fEdges.push( closest.fEdges[ k ] );
-
-                            // Add the second Vertex in this Edge (.v2) to the Vertex reject list
-
-                            console.log( 'rejectList gets new vertex:' + closest.fEdges[ k ].idx )
-
-                            let newReject = closest.fEdges[ k ].v2;
-
-                            flag = true;
-
-                            // See if the Vertex we pushed is already in the rejectList for the next .getNeighborhoodVertex call.
-
-                            for ( let l = 0; l < rejectList.length; l++ ) {
-
-                                if ( newReject === rejectList[ l ] ) {
-
-                                    flag = false;
-
-                                }
-
-                            }
-
-                            // Add the new Vertex only if it isn't already in the rejectList.
-
-                            if ( flag ) {
-
-                                rejectList.push( newReject );
-
-                            }
-
-                        }
-
-                    }
-
-                    console.log( 'vtx ' + vtx.idx + ' now has ' + vtx.fEdges.length + ' edges!')
+            if ( vtx.oEdges.length < MAX_EDGES ) {
 
 
-                }
+            }
+
+                edgeNum = vtx.fEdges.length;
+
+                loopNum++;
+
+                console.log( 'computeMeshEdges: for vtx:' + vtx.idx + ' fEdge num:' + edgeNum)
 
             }
 
 
-        } // end of fEdge forward array
+        } // end of loop through entire Vertex array
 
-        return edgeMeshArr;
+
+        console.log( '-------------- COMPLETE-----------------')
 
     }
 
@@ -281,6 +158,74 @@ class Morph {
         }
 
         return edgeList;
+
+    }
+
+    /** 
+     * Recalculate indices on a mesh
+     */
+    reIndexMesh( mesh ) {
+
+
+
+    }
+
+    /** 
+     * Validate a mesh structure
+     */
+    validateMesh ( mesh ) {
+
+        let vertexArr = mesh.vertexArr;
+
+        // confirm that each vertex has 6 edges, and not redundant.
+
+        for ( let i = 0; i < vertexArr.length; i++ ) {
+
+            let vtx = vertexArr[ i ];
+
+            // number test
+
+            if ( vtx.fEdges.length !== 6 ) {
+
+                console.error( 'validateMesh: vtx:' + vtx.idx + ', fEdges ' + vtx.idx + ' has ' + vtx.fEdges.length + ' edges');
+
+            }
+
+            if ( vtx.oEdges.length !== 6 ) {
+
+                console.error( 'validateMesh: vtx:' + vtx.idx + ', oEdges ' + vtx.idx + ' has ' + vtx.oEdges.length + ' edges');
+
+            }
+
+            // identical test, forward edges ( our Vertex is 1st going counter-clockwise )
+
+            for ( let j = 0; j < vtx.fEdges.length; j++ ) {
+
+                let f1 = vtx.fEdges[ j ];
+
+                for ( let k = 0; k < vtx.fEdges.length; k++ ) {
+
+                    let f2 = vtx.fEdges[ k ];
+
+                    if ( j !== k && f1 === f2 ) { // avoid self-compare
+
+                        console.error( 'validateMesh: duplicate Edge entry for vtx:' + vtx.idx + ', ' + f1.idx + ' at:' + j + ' compared to ' + f2.idx + ' at ' + k );
+
+                    }
+
+                }
+
+
+            }
+
+        }
+
+        let indexArr = mesh.indexArr;
+
+        let triArr = mesh.triArr;
+
+        let quadArr = mesh.quadArr;
+
 
     }
 
@@ -454,8 +399,8 @@ class Morph {
 
        let edgeMeshArr = this.getMeshEdges( vertexArr );
 
-       edgeMeshArr = this.computeMeshEdges( edgeMeshArr, vertexArr );
-
+       //edgeMeshArr = this.computeMeshEdges( edgeMeshArr, vertexArr );
+       edgeMeshArr = this.computeMeshEdges( vertexArr )
 
        window.edgeMeshArr = edgeMeshArr;
 
@@ -574,8 +519,14 @@ class Morph {
 
         let mesh = this.geometryToVertex( vertices, indices, texCoords );
 
+        window.mesh = mesh;
+
         window.vtx = mesh.vertexArr;
         window.idx = mesh.indexArr;
+
+        console.log( "+++++++++++++++ VALIDATING +++++++++++++++++++++" )
+        this.validateMesh( mesh );
+        console.log(" ++++++++++++++++ COMPLETE ++++++++++++++++++++++" )
 
         mesh = this.subdivideMesh( mesh );
 

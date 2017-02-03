@@ -5,15 +5,21 @@ import Vertex from './vertex';
 
 class Edge {
 
-    constructor ( i1, i2, vtx, ccw = true ) {
+    /** 
+     * @constructor
+     * @param {Number} i1 the first Vertex (counter-clockwise) in the Edge.
+     * @param {Number} i2 the second Vertex (counter-clockwise) in the Edge.
+     * @param {Array[Vertex]} vertexArr the parent Vertex array.
+     */
+    constructor ( i1, i2, vertexArr ) {
 
         this.i1 = i1;
 
         this.i2 = i2;
 
-        this.v1 = vtx[ i1 ];
+        this.v1 = vertexArr[ i1 ];  // first Vertex encountered, moving clockwise
 
-        this.v2 = vtx[ i2 ];
+        this.v2 = vertexArr[ i2 ];  // second Vertex encountered, moving clockwise
 
         if ( ! this.valid() ) {
 
@@ -28,19 +34,18 @@ class Edge {
         // NOTE: setting the second point = 12 connections (degenerate)
         // NOTE: max of 6 connections, sometimes less.
         // NOTE: backward, counter-clockwise
+
         this.v2.setEdge( this, 1 );
 
         // Save a reference to the overall Vertex array
 
-        this.vtx = vtx;
+        this.vertexArr = vertexArr;
 
         // Previous and next Edges
 
         this.prev = null;
 
         this.next = null;
-
-        this.ccw = ccw; // by default, counterclockwise, reverse if we go clockwise.
 
         this.idx = i1 + '-' + i2;
 
@@ -55,6 +60,23 @@ class Edge {
         }
 
         return false;
+    }
+
+    /** 
+     * check if this Edge is in a supplied array.
+     * @param {Array[Edge]} edgeArr an array of Vertex objects.
+     * @returns {Boolean} if we are in the supplied array, return true, else false.
+     */
+    inList ( edgeArr ) {
+
+        if ( edgeArr.indexOf( this ) === -1 ) {
+
+            return false;
+
+        }
+
+        return true;
+
     }
 
     /** 
@@ -114,19 +136,20 @@ class Edge {
     }
 
     /** 
-     * Reverses the order of this Face between clockwise or counter-clockwise (default) 
-     * winding.
-     * @returns {Boolean} the winding, true = counter-clockwise, false = clockwise.
+     * Clone the Edge, optionally reversing the vertex order
+     * @param {Boolean} flip if true, reverse Vertex order.
      */
-    flip () {
+    clone ( flip ) {
 
-        let p = this.a;
+        if ( flip ) {
 
-        this.a = this.b;
+            return new Edge( this.vertexArr[ this.i2 ], this.vertexArr[ this.i1 ], this.vertexArr );
 
-        this.b = p;
+        } else {
 
-        if ( this.ccw === true ) this.ccw = false; else this.ccw = true;
+            return new Edge( this.vertexArr[ this.i1 ], this.vertexArr[ this.i2], this.vertexArr );
+
+        }
 
     }
 

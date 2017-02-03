@@ -6,9 +6,17 @@ import Tri from './tri';
 
 class Quad {
 
-    constructor ( i1, i2, i3, i4, vtx, ccw = true ) {
+    /** 
+     * @constructor
+     * @param {Number} i1 the first index for a Vertex (counter-clockwise) in the Vertex array.
+     * @param {Number} i2 the second index for a Vertex (counter-clockwise) in the Vertex array.
+     * @param {Number} i3 the third index for a Vertex (counter-clockwise) in the Vertex array.
+     * @param {Number} i4 the fourth index for a Vertex (counter-clockwise) in the Vertex array.
+     * @param {Array[Vertex]} vertexArr the parent Vertex array.
+     */
+    constructor ( i1, i2, i3, i4, vertexArr ) {
 
-        // Reading order: i1, i2, i3, i1, i3, i4 for counter-clockwise.
+        // Reading order: i1-i2,-i3, i1-i3-i4, counter-clockwise.
 
         this.i1 = i1;
 
@@ -18,21 +26,19 @@ class Quad {
 
         this.i4 = i4;
 
-        this.v1 = vtx[ i1 ];
+        this.v1 = vertexArr[ i1 ];
 
-        this.v2 = vtx[ i2 ];
+        this.v2 = vertexArr[ i2 ];
 
-        this.v3 = vtx[ i3 ];
+        this.v3 = vertexArr[ i3 ];
 
-        this.v4 = vtx[ i4 ];
+        this.v4 = vertexArr[ i4 ];
 
         // NOTE: THIS IS WRONG. LOOK UP TRIS IN TRI ARRAY
 
-        this.t1 = new Tri( i1, i2, i3, vtx );
+        this.t1 = new Tri( i1, i2, i3, vertexArr );
 
-        this.t2 = new Tri( i1, i2, i4, vtx );
-
-        this.ccw = ccw; // by default, counterclockwise, reverse if we go clockwise.
+        this.t2 = new Tri( i1, i2, i4, vertexArr );
 
     }
 

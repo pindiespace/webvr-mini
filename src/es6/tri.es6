@@ -1,14 +1,22 @@
 /** 
- * A face (typically a triangle) in a Vertex mesh
+ * A face (typically a triangle) in a Vertex mesh.
+
  */
 import Vertex from './vertex';
 import Edge from './edge';
 
 class Tri {
 
-    constructor ( i1, i2, i3, vtx, ccw = true ) {
+    /** 
+     * @constructor
+     * @param {Number} i1 the first index for a Vertex (counter-clockwise) in the Vertex array.
+     * @param {Number} i2 the second index for a Vertex (counter-clockwise) in the Vertex array.
+     * @param {Number} i3 the third index for a Vertex (counter-clockwise) in the Vertex array.
+     * @param {Array[Vertex]} vertexArr the parent Vertex array.
+     */
+    constructor ( i1, i2, i3, vertexArr ) {
 
-        // Reading order i1, i2, i3 for counter-clockwise
+        // Reading order i1, i2, i3, counter-clockwise
 
         this.i1 = i1;
 
@@ -18,11 +26,11 @@ class Tri {
 
         // Store Vertex
 
-        this.v1 = vtx[ i1 ];
+        this.v1 = vertexArr[ i1 ];
 
-        this.v2 = vtx[ i2 ];
+        this.v2 = vertexArr[ i2 ];
 
-        this.v3 = vtx[ i3 ];
+        this.v3 = vertexArr[ i3 ];
 
         // Let the Vertex objects know they are part of this Tri.
 
@@ -40,8 +48,6 @@ class Tri {
 
         // NOTE: Edges are implicity defined as v1-v2, v2-v3, v3-v1
 
-        this.ccw = ccw; // by default, counterclockwise, reverse if we go clockwise.
-
         this.idx = i1 + '-' + i2 + '-' + i3;
 
         // Store previous and next triangle
@@ -49,8 +55,6 @@ class Tri {
         this.prev = null;
 
         this.next = null;
-
-        this.ccw = ccw;
 
     }
 
@@ -66,6 +70,26 @@ class Tri {
 
     }
 
+    /** 
+     * check if this Tri is in a supplied array.
+     * @param {Array[Tri]} triArr an array of Tri objects.
+     * @returns {Boolean} if we are in the supplied array, return true, else false.
+     */
+    inList ( triArr ) {
+
+        if ( triArr.indexOf( this ) === -1 ) {
+
+            return false;
+
+        }
+
+        return true;
+
+    }
+
+    /** 
+     * Check if this tri contains a specific Vertex
+     */
     hasVertex ( otherVertex ) {
 
         if( this.v1 === otherVertex || this.v2 === otherVertex || 
@@ -79,30 +103,86 @@ class Tri {
 
     }
 
-    hasEdge ( otherEdge, sameWind = false ) {
+    /**
+     * Check if this tri contains a specific Edge
+     */
+    hasEdge ( otherEdge, direction = 0 ) {
 
+        switch ( direction ) {
+
+            case 0:
+
+                if ( this.fEdges.indexOf( otherEdge ) === -1 ) {
+
+                    return false;
+
+                }
+
+                break;
+
+            case 1:
+
+                if ( this.oEdges.indexOf( otherEdge ) === -1 ) {
+
+                    return false;
+
+                }
+
+                break;
+
+            default:
+
+                break;
+
+        }
+
+        return true;
 
     }
 
     /** 
-     * Set the Edges this Vertex is associated with.
+     * Set the Edges this Tri is associated with.
      * @param {Edge} edge a 'parent' Edge containing this Vertex
-     * @param {Number} pos the position in the Edge (assuming we always 
+     * @param {Number} direction the position in the Edge (assuming we always 
      * move counterclockwise).
      */
-    setEdge ( edge, pos ) {
+    setEdge ( edge, direction = 0 ) {
 
-        switch ( pos ) {
+        switch ( direction ) {
 
             case 0:
-                this.fEdges.push( edge );  // clockwise
+
+                if ( this.fEdges.indexOf( edge ) === -1 ) {
+
+                    this.fEdges.push( edge );  // counter-clockwise
+
+                    return true;
+
+                }
+
                 break;
+
             case 1:
-                this.oEdges.push( edge );  // counter-cockwise
+
+                if ( this.oEdges.indexOf( edge ) === -1 ) {
+
+                    this.oEdges.push( edge );  // clockwise
+
+                    return true;
+
+                }
+
                 break;
+
             default:
-                console.error( 'error when setting Edge in Vertex, ' + pos );
+
+                console.error( 'error when setting Edge in Vertex, ' + direction );
+
+                break;
+
         }
+
+        return false;
 
     }
 
