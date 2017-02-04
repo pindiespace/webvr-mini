@@ -27,219 +27,10 @@ class Morph {
 
     }
 
-
-
-
     /** 
-     * If a mesh is not closed (meaning that it has Vertex objects without Edges on 
-     * one side) approximate the missing Edges by looking for nearest neighbors which 
-     * are not in the immediate Edge list.
-     * @param {Array[Vertex]} vertexArr the array of Vertex objects.
+     * Recalculate indices on a mesh for a flattened array.
      */
-    computeMeshEdges( vertexArr ) {
-
-        // A list of Edges with Vertex objects that don't have enough neighboring Edges.
-
-        console.log( '--------------- COMPUTE MESH EDGES -----------------')
-
-        // Get maximum number of Edges expected for this Vertex set
-
-        const MAX_EDGES = vertexArr[ 0 ].MAX_EDGES; // a Max of 6 in most cases
-
-        const MAX_LOOPS = MAX_EDGES;
-
-        for ( let i = 0; i < vertexArr.length; i++ ) {
-
-            let vtx = vertexArr[ i ];
-
-            let edgeNum = vtx.fEdges.length;
-
-            let loopNum = 0;
-
-            // Set up an array that stores already found close Vertex objects - so we don't keep grabbing the same one
-
-            let ignore = [], closest = null;
-
-            while ( edgeNum <= MAX_EDGES && loopNum < MAX_LOOPS ) {
-
-                if (loopNum >= MAX_LOOPS ) {
-
-                    console.error( 'computeMeshEdges: too many loops trying to find close neighbors for:' + vtx.idx + ' at position:' + i );
-
-                    break;
-
-                }
-
-                if ( edgeNum < MAX_EDGES ) {
-
-                    // Find the closest Vertex, ignoring ones we already have in our ignore list.
-
-                    closest = vtx.getNeighbor( vertexArr, ignore );
-
-                    /////////////console.log( 'computeMeshEdges: for vtx:' + vtx.idx + ' the closest vertex is:' + closest.idx )
-
-                    // Set the Vertex we found so we ignore it on the next loop
-
-                    ignore.push( closest );
-
-                    // Apply any non-duplicate Edges to our Vertex
-
-                    vtx.setEdges( closest.fEdges, 0 ); // TODO: ignore edges that come too close to an Edge vertex of this vtx
-
-
-                } 
-
-                if ( vtx.oEdges.length < MAX_EDGES ) {
-
-                    closest = vtx.getNeighbor( vertexArr, ignore );
-
-                    /////////////console.log( 'computeMeshEdges: for vtx:' + vtx.idx + ' the closest vertex is:' + closest.idx )
-
-                    // Set the Vertex we found so we ignore it on the next loop
-
-                    ignore.push( closest );
-
-                    // Apply any non-duplicate Edges to our Vertex
-
-                    vtx.setEdges( closest.oEdges, 1 ); // TODO: ignore Edges that come too close to an Edge vertex of this vtx.
-
-                }
-
-                edgeNum = vtx.fEdges.length;
-
-                loopNum++;
-
-            } // end of while loop
-
-
-        } // end of loop through entire Vertex array
-
-
-        console.log( '-------------- COMPLETE-----------------')
-
-    }
-
-    /** 
-     * Find Vertex objects with undefined nearest neighbors. If we have a mesh with 
-     * Edges that wraps into an object, some of these are probably very near each 
-     * other. Need to run after geometryToVertex.
-     * Assume:
-     * Each Vertex should have 6 nearest neighbors
-     * Each Vertex should have a previous and next Vertex.
-     * @param {Array[Vertex]} vertexArr the array of Vertices
-     * @returns {Object} a list of Vertex objects, sorted by the number of neighbors they are missing.
-     */
-    getMeshEdges ( vertexArr ) {
-
-        let edgeList = {
-
-            fEdges: [ [], [], [], [], [], [], [] ],
-
-            oEdges: [ [], [], [], [], [], [], [] ]
-
-        };
-
-        // Check for prev and next
-
-        for ( let i = 0; i < vertexArr.length; i++ ) {
-
-            let v = vertexArr[ i ];
-
-             // fEdges (forward edges)
-
-            let pos = parseInt( v.fEdges.length );
-
-            edgeList.fEdges[ pos ].push( v );
-
-
-            // oEdges (reverse edges)
-
-            pos = parseInt( v.oEdges.length );
-
-            edgeList.oEdges[ v.oEdges.length ].push( v );
-
-        }
-
-        return edgeList;
-
-    }
-
-    /** 
-     * Recalculate indices on a mesh
-     */
-    reIndexMesh( mesh ) {
-
-
-
-    }
-
-    /** 
-     * Validate a mesh structure
-     */
-    validateMesh ( mesh ) {
-
-        let vertexArr = mesh.vertexArr;
-
-        // confirm that each vertex has 6 edges, and not redundant.
-
-        for ( let i = 0; i < vertexArr.length; i++ ) {
-
-            let vtx = vertexArr[ i ];
-
-            // number test
-
-            if ( vtx.fEdges.length !== vtx.MAX_EDGES ) {
-
-                console.error( 'validateMesh: vtx:' + vtx.idx + ', fEdges ' + vtx.idx + ' has ' + vtx.fEdges.length + ' edges');
-
-            }
-
-            if ( vtx.oEdges.length !== vtx.MAX_EDGES ) {
-
-                console.error( 'validateMesh: vtx:' + vtx.idx + ', oEdges ' + vtx.idx + ' has ' + vtx.oEdges.length + ' edges');
-
-            }
-
-            // identical test, forward edges ( our Vertex is 1st going counter-clockwise )
-
-            for ( let j = 0; j < vtx.fEdges.length; j++ ) {
-
-                let f1 = vtx.fEdges[ j ];
-
-                for ( let k = 0; k < vtx.fEdges.length; k++ ) {
-
-                    let f2 = vtx.fEdges[ k ];
-
-                    if ( j !== k && f1 === f2 ) { // avoid self-compare
-
-                        console.error( 'validateMesh: duplicate Edge entry for vtx:' + vtx.idx + ', ' + f1.idx + ' at:' + j + ' compared to ' + f2.idx + ' at ' + k );
-
-                    }
-
-                }
-
-            }
-
-        }
-
-        let indexArr = mesh.indexArr;
-
-        for ( let i = 0; i < indexArr; i++ ) {
-
-            if ( ! vertexArr[ indexArr[ i ] ] ) {
-
-                console.error( 'validateMesh: index value ' + indexArr[ i ] + ' at:' + i + ' in indexArr points to non-existent Vertex ')
-
-            }
-
-        }
-
-        let triArr = mesh.triArr;
-
-
-
-        let quadArr = mesh.quadArr;
-
+    reIndex( mesh ) {
 
     }
 
@@ -416,21 +207,20 @@ class Morph {
 
         let quadArr = [];
 
+        let mesh = new Mesh( vertexArr, indexArr, edgeArr, triArr, quadArr, edgeMeshArr );
+
         // Find Vertex objects missing neighbors.
 
-       let edgeMeshArr = this.getMeshEdges( vertexArr );
+       /////////////////let edgeMeshArr = this.getMeshEdges( vertexArr );
+       let edgeMeshArr = mesh.getEdges();
+
+        window.edgeMeshArr = edgeMeshArr;
 
        //Create Edges for Vertex objects on the Edge of a non-closed mesh
 
-       edgeMeshArr = this.computeMeshEdges( vertexArr )
+        mesh.computeEdgeNeighbors();
 
-       window.edgeMeshArr = edgeMeshArr;
-
-        // Give each Vertex a list of Edge, Face, and Quad indices (hash table)
-
-        // Return a Mesh object (not all properties present yet).
-
-        return new Mesh( vertexArr, indexArr, edgeArr, triArr, quadArr, edgeMeshArr );
+        return mesh;
 
     }
 
@@ -503,38 +293,6 @@ class Morph {
     }
 
     /** 
-     * Subdivide a mesh, optionally adding data structures for 
-     * smoothing after the subdivision. 
-     * @link https://graphics.stanford.edu/~mdfisher/Code/Engine/BaseMeshIndexing.cpp.html
-     * 
-     * a) the mesh is converted to a 
-     * a) the mesh is converted to a set of quads, with appropriate indices. 
-     * b) the set of quads had ned points added
-     * c) indices are re-computed.
-     * @param{Array[Vertex]} a Vertex Array
-     */
-    subdivideMesh ( mesh ) {
-
-        // Find all the triangles
-
-
-
-        return mesh;
-
-    }
-
-    /** 
-     * Given a mesh, compute a power of two subdivision using the loop algorithm.
-     */
-    smoothLoop ( mesh ) {
-
-        let submesh = {};
-
-        return mesh;
-
-    }
-
-    /** 
      * Compute a loop subdivision of a mesh
      */
     computeSubdivide ( vertices, indices, texCoords, smooth ) {
@@ -547,14 +305,15 @@ class Morph {
         window.idx = mesh.indexArr;
 
         console.log( "+++++++++++++++ VALIDATING +++++++++++++++++++++" )
-        this.validateMesh( mesh );
+
+        mesh.validate();
         console.log(" ++++++++++++++++ COMPLETE ++++++++++++++++++++++" )
 
-        mesh = this.subdivideMesh( mesh );
+        mesh = mesh.subdivide();
 
         if ( smooth ) {
 
-            mesh = this.smoothLoop( mesh );
+            mesh = mesh.smooth();
 
         }
 
