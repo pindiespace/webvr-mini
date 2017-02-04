@@ -17,9 +17,12 @@ class Mesh {
 
         this.indexArr = indexArr;
 
+        this.edgeArr = edgeArr;
+
         this.triArr = triArr;
 
         this.quadArr = quadArr;
+
 
     }
 

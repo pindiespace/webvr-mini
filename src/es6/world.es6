@@ -320,7 +320,7 @@ class World {
             this.prim.typeList.ICOSPHERE,
             'icosphere',
             vec5( 3, 3, 3, 0 ),            // dimensions
-            vec5( 12, 12, 12 ),            // 1 for icosohedron, 16 for good sphere
+            vec5( 32, 32, 32 ),            // 1 for icosohedron, 16 for good sphere
             vec3.fromValues(4.5, 3.5, -2 ),        // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)

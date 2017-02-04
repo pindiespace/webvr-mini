@@ -42,7 +42,9 @@ class Morph {
 
         console.log( '--------------- COMPUTE MESH EDGES -----------------')
 
-        const MAX_EDGES = 6; // a Max of 6 in most cases
+        // Get maximum number of Edges expected for this Vertex set
+
+        const MAX_EDGES = vertexArr[ 0 ].MAX_EDGES; // a Max of 6 in most cases
 
         const MAX_LOOPS = MAX_EDGES;
 
@@ -56,7 +58,7 @@ class Morph {
 
             // Set up an array that stores already found close Vertex objects - so we don't keep grabbing the same one
 
-            let ignore = [];
+            let ignore = [], closest = null;
 
             while ( edgeNum <= MAX_EDGES && loopNum < MAX_LOOPS ) {
 
@@ -68,45 +70,46 @@ class Morph {
 
                 }
 
-            if ( edgeNum < MAX_EDGES ) {
+                if ( edgeNum < MAX_EDGES ) {
 
-                // Find the closest Vertex, ignoring ones we already have in our ignore list.
+                    // Find the closest Vertex, ignoring ones we already have in our ignore list.
 
-                let closest = vtx.getNeighborVertex( vertexArr, ignore );
+                    closest = vtx.getNeighbor( vertexArr, ignore );
 
-                console.log( 'computeMeshEdges: for vtx:' + vtx.idx + ' the closest vertex is:' + closest.idx )
+                    /////////////console.log( 'computeMeshEdges: for vtx:' + vtx.idx + ' the closest vertex is:' + closest.idx )
 
-                // Set the Vertex we found so we ignore it on the next loop
+                    // Set the Vertex we found so we ignore it on the next loop
 
-                ignore.push( closest );
+                    ignore.push( closest );
 
-                ///////////////////////
-                if ( vtx.idx == '88') window.vtx88 = vtx;
+                    // Apply any non-duplicate Edges to our Vertex
 
-                // Apply any non-duplicate Edges to our Vertex
-
-                vtx.setEdges( closest.fEdges, 0 ); // TODO: ignore edges that come too close to an Edge vertex of this vtx
-
-                vtx.setEdges( closest.oEdges, 1 ); // TODO: ignore Edges that come too close to an Edge vertex of this vtx.
-
-            } else {
-
-                break;
-
-            }
-
-            if ( vtx.oEdges.length < MAX_EDGES ) {
+                    vtx.setEdges( closest.fEdges, 0 ); // TODO: ignore edges that come too close to an Edge vertex of this vtx
 
 
-            }
+                } 
+
+                if ( vtx.oEdges.length < MAX_EDGES ) {
+
+                    closest = vtx.getNeighbor( vertexArr, ignore );
+
+                    /////////////console.log( 'computeMeshEdges: for vtx:' + vtx.idx + ' the closest vertex is:' + closest.idx )
+
+                    // Set the Vertex we found so we ignore it on the next loop
+
+                    ignore.push( closest );
+
+                    // Apply any non-duplicate Edges to our Vertex
+
+                    vtx.setEdges( closest.oEdges, 1 ); // TODO: ignore Edges that come too close to an Edge vertex of this vtx.
+
+                }
 
                 edgeNum = vtx.fEdges.length;
 
                 loopNum++;
 
-                console.log( 'computeMeshEdges: for vtx:' + vtx.idx + ' fEdge num:' + edgeNum)
-
-            }
+            } // end of while loop
 
 
         } // end of loop through entire Vertex array
@@ -144,13 +147,7 @@ class Morph {
 
              // fEdges (forward edges)
 
-            //console.log('fEdges length:'+ v.fEdges.length)
-
-            //console.log( typeof edgeList.fEdges[ v.fEdges.length - 1 ] )
-
-            //console.log( typeof edgeList.fEdges[ v.fEdges.length - 1 ].push )
-
-            let pos = parseInt( v.fEdges.length )
+            let pos = parseInt( v.fEdges.length );
 
             edgeList.fEdges[ pos ].push( v );
 
@@ -191,13 +188,13 @@ class Morph {
 
             // number test
 
-            if ( vtx.fEdges.length !== 6 ) {
+            if ( vtx.fEdges.length !== vtx.MAX_EDGES ) {
 
                 console.error( 'validateMesh: vtx:' + vtx.idx + ', fEdges ' + vtx.idx + ' has ' + vtx.fEdges.length + ' edges');
 
             }
 
-            if ( vtx.oEdges.length !== 6 ) {
+            if ( vtx.oEdges.length !== vtx.MAX_EDGES ) {
 
                 console.error( 'validateMesh: vtx:' + vtx.idx + ', oEdges ' + vtx.idx + ' has ' + vtx.oEdges.length + ' edges');
 
@@ -221,14 +218,25 @@ class Morph {
 
                 }
 
-
             }
 
         }
 
         let indexArr = mesh.indexArr;
 
+        for ( let i = 0; i < indexArr; i++ ) {
+
+            if ( ! vertexArr[ indexArr[ i ] ] ) {
+
+                console.error( 'validateMesh: index value ' + indexArr[ i ] + ' at:' + i + ' in indexArr points to non-existent Vertex ')
+
+            }
+
+        }
+
         let triArr = mesh.triArr;
+
+
 
         let quadArr = mesh.quadArr;
 
@@ -257,7 +265,9 @@ class Morph {
 
         let vi = 0, ti = 0;
 
-        // Convert flattend coordinates to Vertex objects.
+        let density = 0;
+
+        // Convert flattend coordinates to Vertex objects, and compute average distance between mesh points.
 
         for ( i = 0; i < numVertices; i++ ) {
 
@@ -285,13 +295,12 @@ class Morph {
 
         let edgeArr = [];
 
+        let averageLength = 0;
+
         window.edgeArr = edgeArr;
         window.indexArr = indexArr;
         window.indices = indices;
         window.vertices = vertices;
-
-        //TODO: REMOVE!!!!!!!!!!!!!!!!!!!
-        for ( let i = 0; i < indices.length; i++ ) console.log("ICOINDICES:" + i + "=" + indices[i])
 
         let k1, k2, k3, key, revKey, pKey, nKey, spacer = '-';
 

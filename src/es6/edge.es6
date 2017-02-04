@@ -27,6 +27,12 @@ class Edge {
 
         }
 
+        // Define BEFORE setEdge, since we may need the .clone() method
+
+       // Save a reference to the overall Vertex array
+
+        this.vertexArr = vertexArr;
+
         // Let the vertices know they START this edge (forward, clockwise)
 
         this.v1.setEdge( this, 0 );
@@ -36,10 +42,6 @@ class Edge {
         // NOTE: backward, counter-clockwise
 
         this.v2.setEdge( this, 1 );
-
-        // Save a reference to the overall Vertex array
-
-        this.vertexArr = vertexArr;
 
         // Previous and next Edges
 
@@ -124,32 +126,73 @@ class Edge {
     }
 
     /**
+     * Compute the length of the edge
+     * @returns {Number} the Edge length
+     */
+    length () {
+
+        return this.v1.coords.distance( this.v2.coords );
+
+    }
+
+    /**
      * Compute midpoint of the two Vertex objects
-     * @returns{Vertex} this midpoint for position AND texture coordiantes.
+     * @returns {Vertex} this midpoint for position AND texture coordiantes.
      */
     midPoint () {
-
-        // compute average texture coordinate
 
         return this.v1.clone().average( this.v2 );
 
     }
 
     /** 
-     * Clone the Edge, optionally reversing the vertex order
-     * @param {Boolean} flip if true, reverse Vertex order.
+     * Average the position of an Edge. Both Vertex objects
+     * are averaged.
+     * @param {Edge} other the Edge to average.
+     * @returns {Edge} a new Edge, which is the average of this and the other Edge.
      */
-    clone ( flip ) {
+    average ( other ) {
 
-        if ( flip ) {
+        let e = this.clone();
 
-            return new Edge( this.vertexArr[ this.i2 ], this.vertexArr[ this.i1 ], this.vertexArr );
+        e.v1.average( other.v1 );
 
-        } else {
+        e.v2.average( other.v2 );
 
-            return new Edge( this.vertexArr[ this.i1 ], this.vertexArr[ this.i2], this.vertexArr );
+        return e;
 
-        }
+    }
+
+/** 
+ * Do an in-place flipping of the Vertex Objects
+ */
+    flip () {
+
+        let v = this.v2;
+
+        let i = this.i2;
+
+        this.v2 = this.v1;
+
+        this.i2 = this.i1;
+
+        this.v1 = v;
+
+        this.i1 = i;
+
+    }
+
+    /** 
+     * Clone the Edge NOTE: 
+     * Cloning operation DIFFERENT than Vertex.
+     * @param {Number} i1 the index of the first Vertex.
+     * @param {Number} i2 the index of the second Vertex.
+     * @param {Array[Vertex]} array of all Vertex objects.
+     * @returns {Edge} a new copy of this Edge.
+     */
+    clone () {
+
+        return new Edge( this.i1, this.i2, this.vertexArr );
 
     }
 

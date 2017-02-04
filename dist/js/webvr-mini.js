@@ -8588,7 +8588,9 @@
 
 	            console.log('--------------- COMPUTE MESH EDGES -----------------');
 
-	            var MAX_EDGES = 6; // a Max of 6 in most cases
+	            // Get maximum number of Edges expected for this Vertex set
+
+	            var MAX_EDGES = vertexArr[0].MAX_EDGES; // a Max of 6 in most cases
 
 	            var MAX_LOOPS = MAX_EDGES;
 
@@ -8602,7 +8604,8 @@
 
 	                // Set up an array that stores already found close Vertex objects - so we don't keep grabbing the same one
 
-	                var ignore = [];
+	                var ignore = [],
+	                    closest = null;
 
 	                while (edgeNum <= MAX_EDGES && loopNum < MAX_LOOPS) {
 
@@ -8617,35 +8620,40 @@
 
 	                        // Find the closest Vertex, ignoring ones we already have in our ignore list.
 
-	                        var closest = vtx.getNeighborVertex(vertexArr, ignore);
+	                        closest = vtx.getNeighbor(vertexArr, ignore);
 
-	                        console.log('computeMeshEdges: for vtx:' + vtx.idx + ' the closest vertex is:' + closest.idx);
+	                        /////////////console.log( 'computeMeshEdges: for vtx:' + vtx.idx + ' the closest vertex is:' + closest.idx )
 
 	                        // Set the Vertex we found so we ignore it on the next loop
 
 	                        ignore.push(closest);
 
-	                        ///////////////////////
-	                        if (vtx.idx == '88') window.vtx88 = vtx;
-
 	                        // Apply any non-duplicate Edges to our Vertex
 
 	                        vtx.setEdges(closest.fEdges, 0); // TODO: ignore edges that come too close to an Edge vertex of this vtx
 
-	                        vtx.setEdges(closest.oEdges, 1); // TODO: ignore Edges that come too close to an Edge vertex of this vtx.
-	                    } else {
-
-	                        break;
 	                    }
 
-	                    if (vtx.oEdges.length < MAX_EDGES) {}
+	                    if (vtx.oEdges.length < MAX_EDGES) {
+
+	                        closest = vtx.getNeighbor(vertexArr, ignore);
+
+	                        /////////////console.log( 'computeMeshEdges: for vtx:' + vtx.idx + ' the closest vertex is:' + closest.idx )
+
+	                        // Set the Vertex we found so we ignore it on the next loop
+
+	                        ignore.push(closest);
+
+	                        // Apply any non-duplicate Edges to our Vertex
+
+	                        vtx.setEdges(closest.oEdges, 1); // TODO: ignore Edges that come too close to an Edge vertex of this vtx.
+	                    }
 
 	                    edgeNum = vtx.fEdges.length;
 
 	                    loopNum++;
+	                } // end of while loop
 
-	                    console.log('computeMeshEdges: for vtx:' + vtx.idx + ' fEdge num:' + edgeNum);
-	                }
 	            } // end of loop through entire Vertex array
 
 
@@ -8682,12 +8690,6 @@
 	                var v = vertexArr[i];
 
 	                // fEdges (forward edges)
-
-	                //console.log('fEdges length:'+ v.fEdges.length)
-
-	                //console.log( typeof edgeList.fEdges[ v.fEdges.length - 1 ] )
-
-	                //console.log( typeof edgeList.fEdges[ v.fEdges.length - 1 ].push )
 
 	                var pos = parseInt(v.fEdges.length);
 
@@ -8729,12 +8731,12 @@
 
 	                // number test
 
-	                if (vtx.fEdges.length !== 6) {
+	                if (vtx.fEdges.length !== vtx.MAX_EDGES) {
 
 	                    console.error('validateMesh: vtx:' + vtx.idx + ', fEdges ' + vtx.idx + ' has ' + vtx.fEdges.length + ' edges');
 	                }
 
-	                if (vtx.oEdges.length !== 6) {
+	                if (vtx.oEdges.length !== vtx.MAX_EDGES) {
 
 	                    console.error('validateMesh: vtx:' + vtx.idx + ', oEdges ' + vtx.idx + ' has ' + vtx.oEdges.length + ' edges');
 	                }
@@ -8759,6 +8761,14 @@
 	            }
 
 	            var indexArr = mesh.indexArr;
+
+	            for (var _i = 0; _i < indexArr; _i++) {
+
+	                if (!vertexArr[indexArr[_i]]) {
+
+	                    console.error('validateMesh: index value ' + indexArr[_i] + ' at:' + _i + ' in indexArr points to non-existent Vertex ');
+	                }
+	            }
 
 	            var triArr = mesh.triArr;
 
@@ -8791,7 +8801,9 @@
 	            var vi = 0,
 	                ti = 0;
 
-	            // Convert flattend coordinates to Vertex objects.
+	            var density = 0;
+
+	            // Convert flattend coordinates to Vertex objects, and compute average distance between mesh points.
 
 	            for (i = 0; i < numVertices; i++) {
 
@@ -8818,15 +8830,14 @@
 
 	            var edgeArr = [];
 
+	            var averageLength = 0;
+
 	            window.edgeArr = edgeArr;
 	            window.indexArr = indexArr;
 	            window.indices = indices;
 	            window.vertices = vertices;
 
-	            //TODO: REMOVE!!!!!!!!!!!!!!!!!!!
-	            for (var _i = 0; _i < indices.length; _i++) {
-	                console.log("ICOINDICES:" + _i + "=" + indices[_i]);
-	            }var k1 = void 0,
+	            var k1 = void 0,
 	                k2 = void 0,
 	                k3 = void 0,
 	                key = void 0,
@@ -9359,14 +9370,29 @@
 	        /** 
 	         * Return a new Coords with averaged value of this and another Coords.
 	         * @param {Coords} other the Coords to average with.
+	         * @param (Number) weighting the weighting of the coordinate position, 
+	         * somewhere between:
+	         * - 0: average returned is our position
+	         * - 0.5: average returned is at in the middle of this Vertex and the other Vertex
+	         * - 1.0: average returned is the other Vertex
 	         * @returns {Coords} a new Coords which is the average for this and the other Coords
 	         */
 
 	    }, {
 	        key: "average",
 	        value: function average(other) {
+	            var weighting = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0.5;
 
-	            return this.clone().this.add(other).this.divideScalar(0.5);
+
+	            var mw = 1 - weighting;
+
+	            var av1 = new Coords(mw * this.x, mw * this.y, mw * this.z);
+
+	            var av2 = new Coords(weighting * other.x, weighting * other.y, weighting * other.z);
+
+	            return av1.add(av2);
+
+	            ////////return this.clone().this.add( other ).this.divideScalar( 0.5 );
 	        }
 
 	        /** 
@@ -9482,6 +9508,8 @@
 	        this.quads = [];
 
 	        this.idx = i1;
+
+	        this.averageDistance = 0; // average distance to next Vertex
 
 	        if (!this.valid()) {
 
@@ -9615,6 +9643,28 @@
 	        }
 
 	        /** 
+	         * average length of the Edges we are connected to...
+	         */
+
+	    }, {
+	        key: 'getAverageDistance',
+	        value: function getAverageDistance() {
+
+	            var d = 0;
+
+	            var len = this.fEdges.length;
+
+	            // We only do the forward, since reverse are redundant.
+
+	            for (var i = 0; i < len; i++) {
+
+	                d += this.fEdges[i].length();
+	            }
+
+	            this.averageDistance = d / len;
+	        }
+
+	        /** 
 	         * Given an array of Vertex objects, return the closest Vertex 
 	         * which is NOT already in our attached Edge array.
 	         * @param {Array[Vertex]} vertexArray the list of Vertex objects to scan
@@ -9624,8 +9674,9 @@
 	         */
 
 	    }, {
-	        key: 'getNeighborVertex',
-	        value: function getNeighborVertex(vertexArr, ignoreArr) {
+	        key: 'getNeighbor',
+	        value: function getNeighbor(vertexArr) {
+	            var ignoreArr = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
 	            var direction = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
 
 
@@ -9711,8 +9762,6 @@
 
 	            var duplicates = [];
 
-	            if (this.idx == '88') console.log('setEdges: WARN - adding up to ' + edgeArr.length + ' more edges to ' + this.idx);
-
 	            for (var i = 0; i < edgeArr.length; i++) {
 
 	                var duplicate = this.setEdge(edgeArr[i], direction);
@@ -9730,7 +9779,8 @@
 	         * Set the Edges this Vertex is associated with.
 	         * @param {Edge} edge a 'parent' Edge containing this Vertex
 	         * @param {Number} the Edges array to use (assuming we always 
-	         * move counterclockwise).
+	         * move counterclockwise). We are finding Edges where the 
+	         * first Vertex nearly matches our own position.
 	         *  - direction = 0; push to fEdges
 	         *  - direction = 1; push to oEdges
 	         */
@@ -9745,17 +9795,19 @@
 
 	                case 0:
 
-	                    if (this.idx == '88') {
-	                        console.log("setEdge: WARN - adding Edge number " + this.fEdges.length + " to:" + this.idx);
-	                    }
+	                    if (this.fEdges.length >= this.MAX_EDGES) {
 
-	                    if (this.fEdges.length > 6) {
-	                        console.log("setEdge: WARN - adding extra Edge (" + (this.fEdges.length + 1) + ") to " + this.idx);
+	                        // Only need MAX_EDGES for subdivision, but will use more if present.
+
+	                        // TODO: use this.getAverageDistance() to see if we should include a Vertex.
+	                        // TODO: needed for "open" shapes.
+
+	                        return edge; // add to ignored list
 	                    }
 
 	                    if (edge.inList(this.fEdges)) {
 
-	                        return edge;
+	                        return edge; // Edge already in list
 	                    } else {
 
 	                        this.fEdges.push(edge);
@@ -9767,9 +9819,14 @@
 
 	                case 1:
 
+	                    if (this.oEdges.length >= this.MAX_EDGES) {
+
+	                        return edge; // Add to ignored list
+	                    }
+
 	                    if (edge.inList(this.oEdges)) {
 
-	                        return edge; // NOT rejected, NOT a duplicate
+	                        return edge; // Edge already in list
 	                    } else {
 
 	                        this.oEdges.push(edge);
@@ -9788,6 +9845,8 @@
 	                    break;
 
 	            }
+
+	            return true;
 	        }
 
 	        /** 
@@ -9803,6 +9862,8 @@
 
 	            if (!tri.inList(this.tris)) {
 
+	                // TODO: note position in triangle - 1st, second, third
+
 	                this.tris.push(tri);
 	            }
 	        }
@@ -9811,21 +9872,29 @@
 	         * Return a new Vertex which have averaged position and 
 	         * averaged texture coordinate
 	         * @param {Vertex} other the Vertex to average with
+	         * @param {Number} weighting the weighting of the coordinate position, 
+	         * somewhere between:
+	         * - 0: average returned is our position
+	         * - 0.5: average returned is at in the middle of this Vertex and the other Vertex
+	         * - 1.0: average returned is the other Vertex
+	         * @returns {Vertex} a new Vertex in an averaged position.
 	         */
 
 	    }, {
 	        key: 'average',
 	        value: function average(other) {
+	            var weighting = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0.5;
+
 
 	            var v = this.clone();
 
-	            v.coords = v.coords.average(other.coords);
+	            v.coords = v.coords.average(other.coords, weighting);
 
 	            v.texCoords = {
 
-	                u: this.texCoords.u + other.texCoords.u / 2,
+	                u: weighting * this.texCoords.u + other.texCoords.u,
 
-	                v: this.texCoords.v + other.texCoords.v / 2
+	                v: weighting * this.texCoords.v + other.texCoords.v
 
 	            };
 
@@ -9897,6 +9966,12 @@
 	            console.error('Edge error: i1=' + i1 + ' i2:' + i2 + ' v1:' + this.v1 + ' v2:' + this.v2);
 	        }
 
+	        // Define BEFORE setEdge, since we may need the .clone() method
+
+	        // Save a reference to the overall Vertex array
+
+	        this.vertexArr = vertexArr;
+
 	        // Let the vertices know they START this edge (forward, clockwise)
 
 	        this.v1.setEdge(this, 0);
@@ -9906,10 +9981,6 @@
 	        // NOTE: backward, counter-clockwise
 
 	        this.v2.setEdge(this, 1);
-
-	        // Save a reference to the overall Vertex array
-
-	        this.vertexArr = vertexArr;
 
 	        // Previous and next Edges
 
@@ -9997,35 +10068,84 @@
 	        }
 
 	        /**
+	         * Compute the length of the edge
+	         * @returns {Number} the Edge length
+	         */
+
+	    }, {
+	        key: 'length',
+	        value: function length() {
+
+	            return this.v1.coords.distance(this.v2.coords);
+	        }
+
+	        /**
 	         * Compute midpoint of the two Vertex objects
-	         * @returns{Vertex} this midpoint for position AND texture coordiantes.
+	         * @returns {Vertex} this midpoint for position AND texture coordiantes.
 	         */
 
 	    }, {
 	        key: 'midPoint',
 	        value: function midPoint() {
 
-	            // compute average texture coordinate
-
 	            return this.v1.clone().average(this.v2);
 	        }
 
 	        /** 
-	         * Clone the Edge, optionally reversing the vertex order
-	         * @param {Boolean} flip if true, reverse Vertex order.
+	         * Average the position of an Edge. Both Vertex objects
+	         * are averaged.
+	         * @param {Edge} other the Edge to average.
+	         * @returns {Edge} a new Edge, which is the average of this and the other Edge.
+	         */
+
+	    }, {
+	        key: 'average',
+	        value: function average(other) {
+
+	            var e = this.clone();
+
+	            e.v1.average(other.v1);
+
+	            e.v2.average(other.v2);
+
+	            return e;
+	        }
+
+	        /** 
+	         * Do an in-place flipping of the Vertex Objects
+	         */
+
+	    }, {
+	        key: 'flip',
+	        value: function flip() {
+
+	            var v = this.v2;
+
+	            var i = this.i2;
+
+	            this.v2 = this.v1;
+
+	            this.i2 = this.i1;
+
+	            this.v1 = v;
+
+	            this.i1 = i;
+	        }
+
+	        /** 
+	         * Clone the Edge NOTE: 
+	         * Cloning operation DIFFERENT than Vertex.
+	         * @param {Number} i1 the index of the first Vertex.
+	         * @param {Number} i2 the index of the second Vertex.
+	         * @param {Array[Vertex]} array of all Vertex objects.
+	         * @returns {Edge} a new copy of this Edge.
 	         */
 
 	    }, {
 	        key: 'clone',
-	        value: function clone(flip) {
+	        value: function clone() {
 
-	            if (flip) {
-
-	                return new Edge(this.vertexArr[this.i2], this.vertexArr[this.i1], this.vertexArr);
-	            } else {
-
-	                return new Edge(this.vertexArr[this.i1], this.vertexArr[this.i2], this.vertexArr);
-	            }
+	            return new Edge(this.i1, this.i2, this.vertexArr);
 	        }
 	    }]);
 
@@ -10478,6 +10598,8 @@
 
 	    this.indexArr = indexArr;
 
+	    this.edgeArr = edgeArr;
+
 	    this.triArr = triArr;
 
 	    this.quadArr = quadArr;
@@ -10772,7 +10894,7 @@
 	            ));
 
 	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.ICOSPHERE, 'icosphere', vec5(3, 3, 3, 0), // dimensions
-	            vec5(12, 12, 12), // 1 for icosohedron, 16 for good sphere
+	            vec5(32, 32, 32), // 1 for icosohedron, 16 for good sphere
 	            vec3.fromValues(4.5, 3.5, -2), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)

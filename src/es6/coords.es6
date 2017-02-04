@@ -28,7 +28,9 @@
     isValid () {
 
         return ( Number.isFinite( parseFloat( this.x ) ) && 
+
             Number.isFinite( parseFloat( this.y ) ) && 
+
             Number.isFinite( parseFloat( this.z ) ) );
 
     }
@@ -175,11 +177,24 @@
     /** 
      * Return a new Coords with averaged value of this and another Coords.
      * @param {Coords} other the Coords to average with.
+     * @param (Number) weighting the weighting of the coordinate position, 
+     * somewhere between:
+     * - 0: average returned is our position
+     * - 0.5: average returned is at in the middle of this Vertex and the other Vertex
+     * - 1.0: average returned is the other Vertex
      * @returns {Coords} a new Coords which is the average for this and the other Coords
      */
-    average ( other ) {
+    average ( other, weighting = 0.5 ) {
 
-        return this.clone().this.add( other ).this.divideScalar( 0.5 );
+        let mw = 1 - weighting;
+
+        let av1 = new Coords( mw * this.x, mw * this.y, mw * this.z );
+
+        let av2 = new Coords( weighting * other.x, weighting * other.y, weighting * other.z );
+
+        return av1.add( av2 );
+
+        ////////return this.clone().this.add( other ).this.divideScalar( 0.5 );
 
     }
 

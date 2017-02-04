@@ -50,6 +50,8 @@ class Vertex {
 
         this.idx = i1;
 
+        this.averageDistance = 0; // average distance to next Vertex
+
         if ( ! this.valid() ) {
 
             console.error( 'Vertex error: x=' + x + ' y:' + y + ' z:' + z + ' idx:' + i1 );
@@ -181,6 +183,27 @@ class Vertex {
     }
 
     /** 
+     * average length of the Edges we are connected to...
+     */
+    getAverageDistance () {
+
+        let d = 0;
+
+        let len = this.fEdges.length;
+
+        // We only do the forward, since reverse are redundant.
+
+        for ( let i = 0; i < len; i++ ) {
+
+            d += this.fEdges[ i ].length();
+
+        }
+
+        this.averageDistance = d / len;
+
+    }
+
+    /** 
      * Given an array of Vertex objects, return the closest Vertex 
      * which is NOT already in our attached Edge array.
      * @param {Array[Vertex]} vertexArray the list of Vertex objects to scan
@@ -188,7 +211,7 @@ class Vertex {
      * we have already found them in the past.
      * @param {Number} direction if 0, search vtx.fEdges, else search vtx.oEdges
      */
-    getNeighborVertex( vertexArr, ignoreArr, direction = 0 ) {
+    getNeighbor( vertexArr, ignoreArr = [], direction = 0 ) {
 
         let dist = 100000; // huge distance to start
 
@@ -261,8 +284,6 @@ class Vertex {
 
         let duplicates = [];
 
-        if ( this.idx == '88') console.log('setEdges: WARN - adding up to ' + edgeArr.length + ' more edges to ' + this.idx)
-
         for ( let i = 0; i < edgeArr.length; i++ ) {
 
             let duplicate = this.setEdge( edgeArr[ i ], direction );
@@ -283,7 +304,8 @@ class Vertex {
      * Set the Edges this Vertex is associated with.
      * @param {Edge} edge a 'parent' Edge containing this Vertex
      * @param {Number} the Edges array to use (assuming we always 
-     * move counterclockwise).
+     * move counterclockwise). We are finding Edges where the 
+     * first Vertex nearly matches our own position.
      *  - direction = 0; push to fEdges
      *  - direction = 1; push to oEdges
      */
@@ -293,17 +315,20 @@ class Vertex {
 
             case 0:
 
-                if ( this.idx == '88') {
-                    console.log("setEdge: WARN - adding Edge number " + this.fEdges.length + " to:" + this.idx )
-                }
+                if ( this.fEdges.length >= this.MAX_EDGES ) {
 
-                if ( this.fEdges.length > 6 ) {
-                    console.log("setEdge: WARN - adding extra Edge (" + ( this.fEdges.length + 1 ) + ") to " + this.idx );
+                   // Only need MAX_EDGES for subdivision, but will use more if present.
+
+                   // TODO: use this.getAverageDistance() to see if we should include a Vertex.
+                   // TODO: needed for "open" shapes.
+
+                   return edge; // add to ignored list
+
                 }
 
                 if ( edge.inList( this.fEdges ) ) {
 
-                    return edge;
+                    return edge; // Edge already in list
 
                 } else {
 
@@ -316,9 +341,15 @@ class Vertex {
 
             case 1:
 
-               if ( edge.inList( this.oEdges ) ) {
+                if ( this.oEdges.length >= this.MAX_EDGES ) {
 
-                    return edge; // NOT rejected, NOT a duplicate
+                    return edge; // Add to ignored list
+
+                }
+
+                if ( edge.inList( this.oEdges ) ) {
+
+                    return edge; // Edge already in list
 
                 } else {
 
@@ -340,6 +371,8 @@ class Vertex {
 
         }
 
+        return true;
+
     }
 
     /** 
@@ -352,6 +385,8 @@ class Vertex {
 
         if ( ! tri.inList( this.tris ) ) {
 
+            // TODO: note position in triangle - 1st, second, third
+
             this.tris.push( tri );
 
         }
@@ -362,18 +397,24 @@ class Vertex {
      * Return a new Vertex which have averaged position and 
      * averaged texture coordinate
      * @param {Vertex} other the Vertex to average with
+     * @param {Number} weighting the weighting of the coordinate position, 
+     * somewhere between:
+     * - 0: average returned is our position
+     * - 0.5: average returned is at in the middle of this Vertex and the other Vertex
+     * - 1.0: average returned is the other Vertex
+     * @returns {Vertex} a new Vertex in an averaged position.
      */
-    average ( other ) {
+    average ( other, weighting = 0.5 ) {
 
         let v = this.clone();
 
-        v.coords = v.coords.average( other.coords );
+        v.coords = v.coords.average( other.coords, weighting );
 
         v.texCoords =  {
 
-            u: this.texCoords.u + other.texCoords.u / 2,
+            u: weighting * this.texCoords.u + other.texCoords.u,
 
-            v: this.texCoords.v + other.texCoords.v / 2
+            v: weighting * this.texCoords.v + other.texCoords.v
 
         };
 
