@@ -7299,6 +7299,25 @@
 	                }
 
 	                /** 
+	                 * Find Edges in an Edge array, instead of making our own.
+	                 */
+
+	        }, {
+	                key: 'updateEdgeArr',
+	                value: function updateEdgeArr(edgeArr) {
+
+	                        this.fEdges = [], this.oEdges = [];
+
+	                        var idx1 = this.v1.idx + '-' + this.v2.idx;
+
+	                        var idx2 = this.v2.idx + '-' + this.v3.idx;
+
+	                        var idx3 = this.v3.idx + '-' + this.v1.idx;
+
+	                        if (edgeArr) {}
+	                }
+
+	                /** 
 	                 * Determine if two Tris have the same vertices.
 	                 */
 
@@ -7695,7 +7714,19 @@
 
 	                        var newTri = [];
 
-	                        for (var i = 0; i < triArr.length; i++) {}
+	                        for (var i = 0; i < triArr.length; i++) {
+
+	                                var tri = triArr[i];
+
+	                                var mid1 = tri.fEdges[0];
+
+	                                var mid2 = tri.fEdges[1];
+
+	                                var mid3 = tri.fEdges[3];
+	                        }
+
+	                        // Re-compute Edges, Triangles, Index array
+
 
 	                        return this;
 	                }

@@ -23,7 +23,7 @@ class Tri {
         this.i2 = i2;
 
         this.i3 = i3;
-
+ 
         // Store Vertex
 
         this.v1 = vertexArr[ i1 ];
@@ -183,6 +183,25 @@ class Tri {
         }
 
         return false;
+
+    }
+
+    /** 
+     * Find Edges in an Edge array, instead of making our own.
+     */
+    updateEdgeArr ( edgeArr ) {
+
+        this.fEdges = [], this.oEdges = [];
+
+        let idx1 = this.v1.idx + '-' + this.v2.idx;
+
+        let idx2 = this.v2.idx + '-' + this.v3.idx;
+
+        let idx3 = this.v3.idx + '-' + this.v1.idx;
+
+        if ( edgeArr ) {
+
+        }
 
     }
 

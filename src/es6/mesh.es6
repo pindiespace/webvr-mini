@@ -181,11 +181,23 @@ class Mesh {
 
         for ( let i = 0; i < triArr.length; i++ ) {
 
-            
+            let tri = triArr[ i ];
+
+            let mid1 = tri.fEdges[ 0 ];
+
+            let mid2 = tri.fEdges[ 1 ];
+
+            let mid3 = tri.fEdges[ 3 ];
+
+
 
         }
 
+        // Re-compute Edges, Triangles, Index array
+
+
         return this;
+
     }
 
     /** 
