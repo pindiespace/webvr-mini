@@ -172,29 +172,70 @@ class Mesh {
      */
     subdivide () {
 
-        // To manage indices, we create a 2D array with the current 
-        // index as the key.
+        let vtx = [];
 
-        let newIndex = []; 
+        let idx = [];
 
-        let newTri = [];
+        let v = this.vertexArr;
 
-        for ( let i = 0; i < triArr.length; i++ ) {
+        // Re-compute Edges, Triangles, Index array
 
-            let tri = triArr[ i ];
+        for ( let i = 0; i < indexArr.length - 6; i += 6 ) {
 
-            let mid1 = tri.fEdges[ 0 ];
+            //console.log( 'subdivide i:' + i)
 
-            let mid2 = tri.fEdges[ 1 ];
+            let v0 = v[ indexArr[ i ] ];
 
-            let mid3 = tri.fEdges[ 3 ];
+            let m0 = v[ indexArr[ i ] ].midPoint( v[ indexArr[ i + 1 ] ] );
 
+            let v1 = v[ indexArr[ i + 1 ] ];
+
+            let m1 = v[ indexArr[ i + 1 ] ].midPoint( v[ indexArr[ i + 2 ] ] );
+
+            let v2 = v[ indexArr[ i + 2 ] ];
+
+            let m2 = v[ indexArr[ i + 2 ] ].midPoint( v[ indexArr[ i ] ] );
+
+            let v3 = v[ indexArr[ i + 5 ] ];
+
+            let m3 = v[ indexArr[ i + 3 ] ].midPoint( v[ indexArr[ i + 4 ] ] );
+
+            let m4 = v[ indexArr[ i + 4 ] ].midPoint( v[ indexArr[ i + 5 ] ] );
+
+            let c = vtx.length;
+
+            // TODO: Make it work
+
+            // TODO: wrap texture correctly
+
+            // TODO: eliminate redundant vtx
+
+
+            vtx.push(
+
+                v0, m0, m2, m3, m4, v3, m0, v1, m1, v2, m2, m3
+                
+            );
+
+            idx.push (
+
+                0 + c, 1 + c, 2 + c,   
+                0 + c, 2 + c, 4 + c,  
+                4 + c, 2 + c, 3 + c,   
+                4 + c, 3 + c, 5 + c,  
+                6 + c, 7 + c, 8 + c,  
+                6 + c, 8 + c, 10 + c,  
+                10 + c, 8 + c, 9 + c,  
+                10 + c, 9 + c, 11 + c  
+
+            );
 
 
         }
 
-        // Re-compute Edges, Triangles, Index array
+        this.vtx = vtx;
 
+        this.idx = idx;
 
         return this;
 

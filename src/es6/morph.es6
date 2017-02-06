@@ -207,6 +207,7 @@ class Morph {
 
         let quadArr = [];
 
+
         let mesh = new Mesh( vertexArr, indexArr, edgeArr, triArr, quadArr, edgeMeshArr );
 
         // Find Vertex objects missing neighbors.
@@ -304,12 +305,19 @@ class Morph {
         window.vtx = mesh.vertexArr;
         window.idx = mesh.indexArr;
 
-        console.log( "+++++++++++++++ VALIDATING +++++++++++++++++++++" )
+        console.log( "+++++++++++++++ VALIDATING +++++++++++++++++++++" );
 
         mesh.validate();
-        console.log(" ++++++++++++++++ COMPLETE ++++++++++++++++++++++" )
+
+        console.log(" ++++++++++++++++ COMPLETE ++++++++++++++++++++++" );
+
+        console.log(" +++++++++++++++ SUBDIVIDING ++++++++++++++++++++" );
 
         mesh = mesh.subdivide();
+
+        console.log(" ++++++++++++++++ COMPLETE ++++++++++++++++++++++" );
+      
+        console.log(" +++++++++++++++ SMOOTHING ++++++++++++++++++++" );
 
         if ( smooth ) {
 
@@ -317,12 +325,22 @@ class Morph {
 
         }
 
-        let divided = this.vertexToGeometry ( mesh.vertexArr, mesh.indexArr );
+        console.log(" ++++++++++++++++ COMPLETE ++++++++++++++++++++++" );
+
+        window.vertices3 = mesh.subv;
+        window.indices3 = mesh.subi;
+
+        let divided = this.vertexToGeometry ( mesh.vtx, mesh.idx )
+
+        //let divided = this.vertexToGeometry ( mesh.vertexArr, mesh.indexArr );
 
         window.vertices = vertices;
         window.indices = indices;
         window.vertices2 = divided.vertices;
         window.indices2 = divided.indices;
+
+
+
         window.texCoords = texCoords;
         window.texCoords2 = divided.texCoords;
 

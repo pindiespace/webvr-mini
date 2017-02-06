@@ -188,13 +188,15 @@
 
         let mw = 1 - weighting;
 
-        let av1 = new Coords( mw * this.x, mw * this.y, mw * this.z );
+        return new Coords( 
 
-        let av2 = new Coords( weighting * other.x, weighting * other.y, weighting * other.z );
+            2 * ( (weighting * this.x) + (mw * other.x) ),
 
-        return av1.add( av2 );
+            2 * ( (weighting * this.y) + (mw * other.y) ), 
 
-        ////////return this.clone().this.add( other ).this.divideScalar( 0.5 );
+            2 * ( (weighting * this.z) + (mw * other.z) )
+
+         );
 
     }
 

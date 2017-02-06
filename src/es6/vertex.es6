@@ -16,8 +16,9 @@ class Vertex {
      * @param {Number} v the v, or 1 texture coordinate
      * @param {Array[Vertex]} vertexArr the parent Vertex array
      * @param {Number} i1 the name/index of this Vertex
+     * @param {Boolean} isEven if true, is an even vertex in Loop algorithm, otherwise odd.
      */
-    constructor ( x = 0, y = 0, z = 0, u = 0, v = 0, vertexArr, i1 ) {
+    constructor ( x = 0, y = 0, z = 0, u = 0, v = 0, vertexArr, i1, isEven = true ) {
 
         //console.log("x:" + x + " y:" + y + " z:" + z)
 
@@ -49,6 +50,8 @@ class Vertex {
         this.quads = [];
 
         this.idx = i1;
+
+        this.isEven = isEven;
 
         this.averageDistance = 0; // average distance to next Vertex
 
@@ -393,6 +396,13 @@ class Vertex {
 
     }
 
+    midPoint( other ) {
+
+
+        return this.average( other );
+
+    }
+
     /** 
      * Return a new Vertex which have averaged position and 
      * averaged texture coordinate
@@ -408,13 +418,15 @@ class Vertex {
 
         let v = this.clone();
 
+        let mw = 1 - weighting;
+
         v.coords = v.coords.average( other.coords, weighting );
 
         v.texCoords =  {
 
-            u: weighting * this.texCoords.u + other.texCoords.u,
+            u: ( weighting * this.texCoords.u ) + ( mw * other.texCoords.u ),
 
-            v: weighting * this.texCoords.v + other.texCoords.v
+            v: ( weighting * this.texCoords.v ) + ( mw * other.texCoords.v )
 
         };
 

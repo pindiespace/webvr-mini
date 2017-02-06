@@ -187,25 +187,6 @@ class Tri {
     }
 
     /** 
-     * Find Edges in an Edge array, instead of making our own.
-     */
-    updateEdgeArr ( edgeArr ) {
-
-        this.fEdges = [], this.oEdges = [];
-
-        let idx1 = this.v1.idx + '-' + this.v2.idx;
-
-        let idx2 = this.v2.idx + '-' + this.v3.idx;
-
-        let idx3 = this.v3.idx + '-' + this.v1.idx;
-
-        if ( edgeArr ) {
-
-        }
-
-    }
-
-    /** 
      * Determine if two Tris have the same vertices.
      */
     isEqual ( other, sameWind = false ) {
@@ -214,11 +195,14 @@ class Tri {
 
             return true;
 
-        } else if ( sameWind === false ) {
+        } else if ( sameWind === false && this.v1 === other.v3 && this.v2 === other.v2 && 
+            this.v3 === other.v1 ) {
 
-
+            return true;
 
         }
+
+        return false;
 
     }
 
@@ -228,7 +212,11 @@ class Tri {
      */
     midPoint () {
 
-        return this.v1.clone().average( this.v2 ).average( this.v3 );
+        let mid = this.v1.clone().average( this.v2 ).average( this.v3 );
+
+        mid.isEven = false; // Odd Vertex
+
+        return mid;
 
     }
 
