@@ -346,6 +346,8 @@ class Morph {
 
         // Test vertices
 
+        /*
+
         for ( let i = 0; i < vertices.length; i++ ) {
             if(vertices[i] !== vertices2[i]) {
                 console.error("invalid vertices subdivide");
@@ -356,9 +358,11 @@ class Morph {
 
         for ( let i = 0; i < texCoords.length; i++ ) {
             if(texCoords[i] !== texCoords2[i]) {
-                console.error("invalid texcoord subdivide"); 
+                console.error("invalid texcoord subdivide:" + texCoords2[ i ]); 
             }
         }
+
+        */
 
         return divided;
 

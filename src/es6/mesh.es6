@@ -180,53 +180,43 @@ class Mesh {
 
         // Re-compute Edges, Triangles, Index array
 
-        for ( let i = 0; i < indexArr.length - 6; i += 6 ) {
-
-            //console.log( 'subdivide i:' + i)
+        for ( let i = 0; i < indexArr.length - 3; i += 3 ) {
 
             let v0 = v[ indexArr[ i ] ];
 
-            let m0 = v[ indexArr[ i ] ].midPoint( v[ indexArr[ i + 1 ] ] );
-
             let v1 = v[ indexArr[ i + 1 ] ];
-
-            let m1 = v[ indexArr[ i + 1 ] ].midPoint( v[ indexArr[ i + 2 ] ] );
 
             let v2 = v[ indexArr[ i + 2 ] ];
 
-            let m2 = v[ indexArr[ i + 2 ] ].midPoint( v[ indexArr[ i ] ] );
+            let m0 = v0.midPoint( v1 );
 
-            let v3 = v[ indexArr[ i + 5 ] ];
+            let m1 = v1.midPoint( v2 );
 
-            let m3 = v[ indexArr[ i + 3 ] ].midPoint( v[ indexArr[ i + 4 ] ] );
-
-            let m4 = v[ indexArr[ i + 4 ] ].midPoint( v[ indexArr[ i + 5 ] ] );
+            let m2 = v0.midPoint( v2 );
 
             let c = vtx.length;
 
-            // TODO: Make it work
+            // TODO: the midpoints aren't being added to the Vertex
+            // Array correctly!
 
-            // TODO: wrap texture correctly
+            window.ms = [ v0.coords, m0.coords, v1.coords, m1.coords, v2.coords, m2.coords]
 
-            // TODO: eliminate redundant vtx
-
+            // TODO: just draw the triangles within a triangle!!!!!!!
 
             vtx.push(
 
-                v0, m0, m2, m3, m4, v3, m0, v1, m1, v2, m2, m3
+                //v0, v1, v2 // THIS WORKS
+                m0, m1, m2 // INVISIBLE!!! CHECK VALUES
                 
             );
 
             idx.push (
 
-                0 + c, 1 + c, 2 + c,   
-                0 + c, 2 + c, 4 + c,  
-                4 + c, 2 + c, 3 + c,   
-                4 + c, 3 + c, 5 + c,  
-                6 + c, 7 + c, 8 + c,  
-                6 + c, 8 + c, 10 + c,  
-                10 + c, 8 + c, 9 + c,  
-                10 + c, 9 + c, 11 + c  
+                c + 0,
+
+                c + 1,
+
+                c + 2
 
             );
 
