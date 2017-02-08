@@ -88,11 +88,6 @@ class Morph {
 
         let averageLength = 0;
 
-        window.edgeArr = edgeArr;
-        window.indexArr = indexArr;
-        window.indices = indices;
-        window.vertices = vertices;
-
         let k1, k2, k3, key, revKey, pKey, nKey, spacer = '-';
 
         for ( let i = 0; i < numIndices - 1; i++ ) {
@@ -134,8 +129,6 @@ class Morph {
         // Define Tris
 
         let triArr = [];
-
-        window.triArr = triArr;
 
         for ( let i = 0; i < numIndices - 2; i += 2 ) {
 
@@ -215,8 +208,6 @@ class Morph {
        /////////////////let edgeMeshArr = this.getMeshEdges( vertexArr );
        let edgeMeshArr = mesh.getEdges();
 
-        window.edgeMeshArr = edgeMeshArr;
-
        //Create Edges for Vertex objects on the Edge of a non-closed mesh
 
         mesh.computeEdgeNeighbors();
@@ -229,7 +220,11 @@ class Morph {
      * Convert an array of Vertex objects back to our native 
      * flattened data representation.
      */
-    vertexToGeometry( vertexArr, indexArr ) {
+    vertexToGeometry( mesh ) {
+
+        let vertexArr = mesh.vertexArr;
+
+        let indexArr = mesh.indexArr;
 
         let vertices = new Array( vertexArr.length * 3 );
 
@@ -302,9 +297,6 @@ class Morph {
 
         window.mesh = mesh;
 
-        window.vtx = mesh.vertexArr;
-        window.idx = mesh.indexArr;
-
         console.log( "+++++++++++++++ VALIDATING +++++++++++++++++++++" );
 
         mesh.validate();
@@ -327,24 +319,11 @@ class Morph {
 
         console.log(" ++++++++++++++++ COMPLETE ++++++++++++++++++++++" );
 
-        window.vertices3 = mesh.subv;
-        window.indices3 = mesh.subi;
 
-        let divided = this.vertexToGeometry ( mesh.vtx, mesh.idx )
+        let divided = this.vertexToGeometry ( mesh )
 
-        //let divided = this.vertexToGeometry ( mesh.vertexArr, mesh.indexArr );
-
-        window.vertices = vertices;
-        window.indices = indices;
-        window.vertices2 = divided.vertices;
-        window.indices2 = divided.indices;
-
-
-
-        window.texCoords = texCoords;
-        window.texCoords2 = divided.texCoords;
-
-        // Test vertices
+ 
+        // Test vertices when no subdivision
 
         /*
 

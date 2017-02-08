@@ -8638,11 +8638,6 @@
 
 	            var averageLength = 0;
 
-	            window.edgeArr = edgeArr;
-	            window.indexArr = indexArr;
-	            window.indices = indices;
-	            window.vertices = vertices;
-
 	            var k1 = void 0,
 	                k2 = void 0,
 	                k3 = void 0,
@@ -8689,8 +8684,6 @@
 	            // Define Tris
 
 	            var triArr = [];
-
-	            window.triArr = triArr;
 
 	            for (var _i2 = 0; _i2 < numIndices - 2; _i2 += 2) {
 
@@ -8766,8 +8759,6 @@
 	            /////////////////let edgeMeshArr = this.getMeshEdges( vertexArr );
 	            var edgeMeshArr = mesh.getEdges();
 
-	            window.edgeMeshArr = edgeMeshArr;
-
 	            //Create Edges for Vertex objects on the Edge of a non-closed mesh
 
 	            mesh.computeEdgeNeighbors();
@@ -8782,7 +8773,11 @@
 
 	    }, {
 	        key: 'vertexToGeometry',
-	        value: function vertexToGeometry(vertexArr, indexArr) {
+	        value: function vertexToGeometry(mesh) {
+
+	            var vertexArr = mesh.vertexArr;
+
+	            var indexArr = mesh.indexArr;
 
 	            var vertices = new Array(vertexArr.length * 3);
 
@@ -8855,9 +8850,6 @@
 
 	            window.mesh = mesh;
 
-	            window.vtx = mesh.vertexArr;
-	            window.idx = mesh.indexArr;
-
 	            console.log("+++++++++++++++ VALIDATING +++++++++++++++++++++");
 
 	            mesh.validate();
@@ -8879,22 +8871,9 @@
 
 	            console.log(" ++++++++++++++++ COMPLETE ++++++++++++++++++++++");
 
-	            window.vertices3 = mesh.subv;
-	            window.indices3 = mesh.subi;
+	            var divided = this.vertexToGeometry(mesh);
 
-	            var divided = this.vertexToGeometry(mesh.vtx, mesh.idx);
-
-	            //let divided = this.vertexToGeometry ( mesh.vertexArr, mesh.indexArr );
-
-	            window.vertices = vertices;
-	            window.indices = indices;
-	            window.vertices2 = divided.vertices;
-	            window.indices2 = divided.indices;
-
-	            window.texCoords = texCoords;
-	            window.texCoords2 = divided.texCoords;
-
-	            // Test vertices
+	            // Test vertices when no subdivision
 
 	            /*
 	             for ( let i = 0; i < vertices.length; i++ ) {
@@ -9004,7 +8983,17 @@
 
 	    }, {
 	        key: "set",
-	        value: function set(x, y, z) {
+	        value: function set(other) {
+
+	            this.x = other.x;
+
+	            this.y = other.y;
+
+	            this.z = other.z;
+	        }
+	    }, {
+	        key: "setByValues",
+	        value: function setByValues(x, y, z) {
 
 	            if (x !== undefined) this.x = x;
 
@@ -9677,6 +9666,8 @@
 
 
 	            var v = this.clone();
+
+	            v.idx = this.idx + '-' + other.idx;
 
 	            var mw = 1 - weighting;
 
@@ -10552,57 +10543,133 @@
 	        }
 
 	        /** 
-	         * Subdivide a mesh, setting up for smoothing via Loop algorithm.
+	         * given a Vertex and index array, scan for the Vertex. If 
+	         * present, just add to the index array. Otherwise, push the 
+	         * midpoint to the Vertex array, and push its position to 
+	         * the Index array.
 	         */
 
+	    }, {
+	        key: 'addMidPoint',
+	        value: function addMidPoint(idx0, idx1, vertexArr) {
+
+	            var spacer = '-';
+
+	            var len = vertexArr.length;
+
+	            var m0 = vertexArr[idx0 + spacer + idx1];
+
+	            var idx = -1;
+
+	            if (m0) {
+
+	                idx = mVertexArr.indexOf(m0) + len;
+	            } else {
+
+	                m0 = vertexArr[idx1 + spacer + idx0];
+
+	                if (m0) {
+
+	                    idx = mVertexArr.indexOf(m0) + len;
+	                } else {
+
+	                    var v0 = vertexArr[idx0];
+
+	                    var v1 = vertexArr[idx1];
+
+	                    m0 = v0.midPoint(v1);
+
+	                    m0.isEven = false; // an 'odd' Vertex
+
+	                    vertexArr.push(m0);
+
+	                    // return the index of the added Vertex
+
+	                    idx = vertexArr.length - 1 + len;
+	                }
+	            }
+
+	            return idx;
+	        }
 	    }, {
 	        key: 'subdivide',
 	        value: function subdivide() {
 
-	            var vtx = [];
+	            var vertexArr = this.vertexArr;
 
-	            var idx = [];
+	            var indexArr = this.indexArr;
 
-	            var v = this.vertexArr;
+	            console.log("VERTEX ARR:" + vertexArr.length + " INDEX ARR:" + indexArr.length);
 
-	            // Re-compute Edges, Triangles, Index array
+	            // save the originals
 
-	            for (var i = 0; i < indexArr.length - 3; i += 3) {
+	            this.oldVertexArr = vertexArr.slice(0);
 
-	                var v0 = v[indexArr[i]];
+	            this.oldIndexArr = indexArr.slice(0);
 
-	                var v1 = v[indexArr[i + 1]];
+	            console.log("VERTEX ARR:" + vertexArr.length + " INDEX ARR:" + indexArr.length);
 
-	                var v2 = v[indexArr[i + 2]];
+	            // Create a new array of Midpoint objects, with starting position in Vertex labeled
 
-	                var m0 = v0.midPoint(v1);
+	            var mIndexArr = [];
 
-	                var m1 = v1.midPoint(v2);
+	            var spacer = '-';
 
-	                var m2 = v0.midPoint(v2);
+	            var m0 = void 0,
+	                m1 = void 0;
 
-	                var c = vtx.length;
+	            var vLen = vertexArr.length;
 
-	                // TODO: the midpoints aren't being added to the Vertex
-	                // Array correctly!
+	            for (var i = 0; i < indexArr.length - 2; i += 3) {
 
-	                window.ms = [v0.coords, m0.coords, v1.coords, m1.coords, v2.coords, m2.coords];
+	                var i0 = i + 0;
 
-	                // TODO: just draw the triangles within a triangle!!!!!!!
+	                var i1 = i + 1;
 
-	                vtx.push(
+	                var i2 = i + 2;
 
-	                //v0, v1, v2 // THIS WORKS
-	                m0, m1, m2 // INVISIBLE!!! CHECK VALUES
+	                var v0 = vertexArr[indexArr[i0]];
 
-	                );
+	                var v1 = vertexArr[indexArr[i1]];
 
-	                idx.push(c + 0, c + 1, c + 2);
+	                var v2 = vertexArr[indexArr[i2]];
+
+	                // add Midpoint (if needed) and return index of midpoint
+
+	                var mi0 = this.addMidPoint(v1.idx, v2.idx, vertexArr, mIndexArr);
+
+	                var mi1 = this.addMidPoint(v1.idx, v2.idx, vertexArr, mIndexArr);
+
+	                var mi2 = this.addMidPoint(v2.idx, v0.idx, vertexArr, mIndexArr);
+
+	                // now, push the updated indexlist ot mIndexArr, even and odd Vertex objects.
+
+	                mIndexArr.push(i0, i1, i2);
+
+	                /*
+	                            mIndexArr.push(
+	                
+	                                i0, mi0, mi2,    // A
+	                
+	                                mi0, i1, mi1,    // B  
+	                
+	                                mi1, mi2, mi0,   // C
+	                
+	                                mi2, mi1, i2     // D
+	                
+	                            );
+	                */
 	            }
 
-	            this.vtx = vtx;
+	            console.log("indexArr:" + indexArr.length + ' and mIndexArr:' + mIndexArr.length);
 
-	            this.idx = idx;
+	            // NOTE: have to reset with 'this', not the local indexArr
+
+	            this.indexArr = mIndexArr;
+
+	            console.log("indexArr:" + indexArr.length + ' and mIndexArr:' + mIndexArr.length);
+
+	            console.log("indexArr:" + this.indexArr.length + ' and mIndexArr:' + mIndexArr.length);
 
 	            return this;
 	        }

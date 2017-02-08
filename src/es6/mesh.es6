@@ -168,68 +168,142 @@ class Mesh {
     }
 
     /** 
-     * Subdivide a mesh, setting up for smoothing via Loop algorithm.
+     * given a Vertex and index array, scan for the Vertex. If 
+     * present, just add to the index array. Otherwise, push the 
+     * midpoint to the Vertex array, and push its position to 
+     * the Index array.
      */
-    subdivide () {
+    addMidPoint ( idx0, idx1, vertexArr ) {
 
-        let vtx = [];
+        let spacer = '-';
 
-        let idx = [];
+        let len = vertexArr.length;
 
-        let v = this.vertexArr;
+        let m0 = vertexArr[ idx0 + spacer + idx1 ];
 
-        // Re-compute Edges, Triangles, Index array
+        let idx = -1;
+            
+        if( m0 ) {
 
-        for ( let i = 0; i < indexArr.length - 3; i += 3 ) {
+            idx = mVertexArr.indexOf( m0 ) + len;
 
-            let v0 = v[ indexArr[ i ] ];
+        } else {
 
-            let v1 = v[ indexArr[ i + 1 ] ];
+            m0 = vertexArr[ idx1 + spacer + idx0 ];
 
-            let v2 = v[ indexArr[ i + 2 ] ];
+            if ( m0 ) {
 
-            let m0 = v0.midPoint( v1 );
 
-            let m1 = v1.midPoint( v2 );
+            idx = mVertexArr.indexOf( m0 ) + len;
 
-            let m2 = v0.midPoint( v2 );
+            } else {
 
-            let c = vtx.length;
+                let v0 = vertexArr[ idx0 ];
 
-            // TODO: the midpoints aren't being added to the Vertex
-            // Array correctly!
+                let v1 = vertexArr[ idx1 ];
 
-            window.ms = [ v0.coords, m0.coords, v1.coords, m1.coords, v2.coords, m2.coords]
+                m0 = v0.midPoint( v1 );
 
-            // TODO: just draw the triangles within a triangle!!!!!!!
+                m0.isEven = false; // an 'odd' Vertex
 
-            vtx.push(
+                vertexArr.push( m0 );
 
-                //v0, v1, v2 // THIS WORKS
-                m0, m1, m2 // INVISIBLE!!! CHECK VALUES
-                
-            );
+                // return the index of the added Vertex
 
-            idx.push (
+                idx = vertexArr.length - 1 + len;
 
-                c + 0,
-
-                c + 1,
-
-                c + 2
-
-            );
-
+            }
 
         }
 
-        this.vtx = vtx;
+        return idx;
 
-        this.idx = idx;
+    }
+
+    subdivide () {
+
+        let vertexArr = this.vertexArr;
+
+        let indexArr = this.indexArr;
+
+        console.log("VERTEX ARR:" + vertexArr.length + " INDEX ARR:" + indexArr.length)
+
+        // save the originals
+
+        this.oldVertexArr = vertexArr.slice( 0 );
+
+        this.oldIndexArr = indexArr.slice( 0 );
+
+        console.log("VERTEX ARR:" + vertexArr.length + " INDEX ARR:" + indexArr.length)
+
+         // Create a new array of Midpoint objects, with starting position in Vertex labeled
+
+        let mIndexArr = [];
+
+        let spacer = '-';
+
+        let m0, m1;
+
+        let vLen = vertexArr.length;
+
+        for ( let i = 0; i < indexArr.length - 2; i += 3 ) {
+
+            let i0 = i + 0;
+
+            let i1 = i + 1;
+
+            let i2 = i + 2;
+
+            let v0 = vertexArr[ indexArr[ i0 ] ];
+
+            let v1 = vertexArr[ indexArr[ i1 ] ];
+
+            let v2 = vertexArr[ indexArr[ i2 ] ];
+
+            // add Midpoint (if needed) and return index of midpoint
+
+            let mi0 = this.addMidPoint( v1.idx, v2.idx, vertexArr, mIndexArr );
+
+            let mi1 = this.addMidPoint( v1.idx, v2.idx, vertexArr, mIndexArr );
+
+            let mi2 = this.addMidPoint( v2.idx, v0.idx, vertexArr, mIndexArr );
+
+            // now, push the updated indexlist ot mIndexArr, even and odd Vertex objects.
+
+            mIndexArr.push(
+                i0, i1, i2 );
+
+/*
+            mIndexArr.push(
+
+                i0, mi0, mi2,    // A
+
+                mi0, i1, mi1,    // B  
+
+                mi1, mi2, mi0,   // C
+
+                mi2, mi1, i2     // D
+
+            );
+*/
+
+        }
+
+        console.log("indexArr:" + indexArr.length + ' and mIndexArr:' + mIndexArr.length)
+
+        // NOTE: have to reset with 'this', not the local indexArr
+
+        this.indexArr = mIndexArr;
+
+        console.log("indexArr:" + indexArr.length + ' and mIndexArr:' + mIndexArr.length)
+
+        console.log("indexArr:" + this.indexArr.length + ' and mIndexArr:' + mIndexArr.length)
+
 
         return this;
 
     }
+
 
     /** 
      * smooth a Mesh, when new Vertex objects have been added. 

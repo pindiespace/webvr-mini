@@ -398,7 +398,6 @@ class Vertex {
 
     midPoint( other ) {
 
-
         return this.average( other );
 
     }
@@ -417,6 +416,8 @@ class Vertex {
     average ( other, weighting = 0.5 ) {
 
         let v = this.clone();
+
+        v.idx = this.idx + '-' + other.idx;
 
         let mw = 1 - weighting;
 

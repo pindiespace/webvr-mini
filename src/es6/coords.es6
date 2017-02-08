@@ -41,7 +41,17 @@
      * @param {Number} y the y or 1 coordinate
      * @param {Number} z the z or 2 coordinate
      */
-    set ( x, y, z ) {
+    set ( other ) {
+
+        this.x = other.x;
+
+        this.y = other.y;
+
+        this.z = other.z;
+
+    }
+
+    setByValues ( x, y, z ) {
 
         if ( x !== undefined ) this.x = x;
 
