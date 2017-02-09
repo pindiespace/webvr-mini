@@ -177,24 +177,28 @@ class Mesh {
 
         let spacer = '-';
 
-        let len = vertexArr.length;
+        let key = idx0 + spacer + idx1;
 
-        let m0 = vertexArr[ idx0 + spacer + idx1 ];
+        let m0 = vertexArr[ key ];
 
         let idx = -1;
             
         if( m0 ) {
 
-            idx = mVertexArr.indexOf( m0 ) + len;
+            console.log("FOUND FORWARD")
+            idx = mVertexArr.indexOf( m0 );
 
         } else {
 
-            m0 = vertexArr[ idx1 + spacer + idx0 ];
+            key = idx1 + spacer + idx0;
+
+            m0 = vertexArr[ key ];
 
             if ( m0 ) {
 
+                console.log("FOUND REVERSE")
 
-            idx = mVertexArr.indexOf( m0 ) + len;
+            idx = mVertexArr.indexOf( m0 );
 
             } else {
 
@@ -204,13 +208,15 @@ class Mesh {
 
                 m0 = v0.midPoint( v1 );
 
+                m0.idx = key;
+
                 m0.isEven = false; // an 'odd' Vertex
 
                 vertexArr.push( m0 );
 
                 // return the index of the added Vertex
 
-                idx = vertexArr.length - 1 + len;
+                idx = vertexArr.length - 1;
 
             }
 
@@ -246,38 +252,47 @@ class Mesh {
 
         let vLen = vertexArr.length;
 
-        for ( let i = 0; i < indexArr.length - 2; i += 3 ) {
+        for ( let i = 0; i < indexArr.length - 3; i += 3 ) {
 
-            let i0 = i + 0;
+            let i0 = indexArr[ i + 0 ];
 
-            let i1 = i + 1;
+            let i1 = indexArr[ i + 1 ];
 
-            let i2 = i + 2;
+            let i2 = indexArr[ i + 2 ];
 
-            let v0 = vertexArr[ indexArr[ i0 ] ];
+            let v0 = vertexArr[ i0 ];
 
-            let v1 = vertexArr[ indexArr[ i1 ] ];
+            let v1 = vertexArr[ i1 ];
 
-            let v2 = vertexArr[ indexArr[ i2 ] ];
+            let v2 = vertexArr[ i2 ];
 
             // add Midpoint (if needed) and return index of midpoint
 
-            let mi0 = this.addMidPoint( v1.idx, v2.idx, vertexArr, mIndexArr );
+            let mi0 = this.addMidPoint( v1.idx, v2.idx, vertexArr ); // THIS IS WRONG
 
-            let mi1 = this.addMidPoint( v1.idx, v2.idx, vertexArr, mIndexArr );
+            let mi1 = this.addMidPoint( v1.idx, v2.idx, vertexArr );
 
-            let mi2 = this.addMidPoint( v2.idx, v0.idx, vertexArr, mIndexArr );
+            let mi2 = this.addMidPoint( v2.idx, v0.idx, vertexArr );
 
             // now, push the updated indexlist ot mIndexArr, even and odd Vertex objects.
 
-            mIndexArr.push(
-                i0, i1, i2 );
+            // THIS WORKS
+            //mIndexArr.push(
+            //    i0, i1, i2 );
+
+            //mIndexArr.push(
+            //  mi2, mi1, mi0 );
+
+            console.log( vertexArr[ i0 ].coords.x + ',' + 
+                vertexArr[ mi0 ].coords.x + ',' + 
+                vertexArr[ i1 ].coords.x )
+
+            mIndexArr.push( i0, mi0, i1, mi1, i2, mi2 )
 
 /*
             mIndexArr.push(
 
-                i0, mi0, mi2,    // A
-
+ 
                 mi0, i1, mi1,    // B  
 
                 mi1, mi2, mi0,   // C
@@ -299,6 +314,27 @@ class Mesh {
 
         console.log("indexArr:" + this.indexArr.length + ' and mIndexArr:' + mIndexArr.length)
 
+        // RUN A TEST
+////////////////////////////////////////
+        vLen = vertexArr.length;
+
+        for ( let i = 0; i < indexArr.length; i++ ) {
+
+            let idx = indexArr[ i ];
+
+            if ( idx > vLen || idx < 0  ) {
+                console.error( 'subdivision indexing error at pos:' + i );
+
+            } 
+
+            if ( ! vertexArr[ idx ] ) {
+
+                console.error( 'subdivision no vertex error at pos:' + i );
+
+            }
+
+        }
+////////////////////////////////////////
 
         return this;
 
