@@ -6174,6 +6174,17 @@
 	                }
 
 	                /** 
+	                 * return a flattened coordinate array.
+	                 */
+
+	        }, {
+	                key: "flatten",
+	                value: function flatten() {
+
+	                        return [this.x, this.y, this.z];
+	                }
+
+	                /** 
 	                 * Determine if two Coords are the same object (not same values)
 	                 */
 
@@ -6300,6 +6311,12 @@
 
 	                        return this.divideScalar(this.magnitude());
 	                }
+	        }, {
+	                key: "midPoint",
+	                value: function midPoint(other) {
+
+	                        return this.average(other);
+	                }
 
 	                /** 
 	                 * Return a new Coords with averaged value of this and another Coords.
@@ -6318,9 +6335,9 @@
 	                        var weighting = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0.5;
 
 
-	                        var mw = 1 - weighting;
+	                        var mw = 1.0 - weighting;
 
-	                        return new Coords(2 * (weighting * this.x + mw * other.x), 2 * (weighting * this.y + mw * other.y), 2 * (weighting * this.z + mw * other.z));
+	                        return new Coords(weighting * this.x + mw * other.x, weighting * this.y + mw * other.y, weighting * this.z + mw * other.z);
 	                }
 
 	                /** 
@@ -6830,7 +6847,7 @@
 
 	                        var mw = 1 - weighting;
 
-	                        v.coords = v.coords.average(other.coords, weighting);
+	                        v.coords = v.coords.midPoint(other.coords, weighting);
 
 	                        v.texCoords = {
 
@@ -6844,15 +6861,27 @@
 	                }
 
 	                /**
-	                 * Return a new copy of this Vertex
+	                 * Return a new Copy of this Vertex
 	                 * @returns {Vertex} a copy of the current vertex
 	                 */
 
 	        }, {
 	                key: 'clone',
-	                value: function clone() {
+	                value: function clone(idx, isEven) {
 
-	                        return new Vertex(this.x, this.y, this.z, this.u, this.v, this.vertexArr);
+	                        var v = new Vertex(this.coords.x, this.coords.y, this.coords.z, this.texCoords.u, this.texCoords.v, this.vertexArr);
+
+	                        if (idx) {
+
+	                                v.idx = idx;
+	                        }
+
+	                        if (isEven) {
+
+	                                v.isEven = isEven;
+	                        }
+
+	                        return v;
 	                }
 	        }]);
 
@@ -7802,7 +7831,9 @@
 
 	                                // add Midpoint (if needed) and return index of midpoint
 
-	                                var mi0 = this.addMidPoint(v1.idx, v2.idx, vertexArr); // THIS IS WRONG
+	                                // TODO: ADDMIDPOINT IS NOT WORKING CORRECTLY - ARRAY TOO LARGE!
+
+	                                var mi0 = this.addMidPoint(v0.idx, v1.idx, vertexArr);
 
 	                                var mi1 = this.addMidPoint(v1.idx, v2.idx, vertexArr);
 
@@ -7817,7 +7848,7 @@
 	                                //mIndexArr.push(
 	                                //  mi2, mi1, mi0 );
 
-	                                console.log(vertexArr[i0].coords.x + ',' + vertexArr[mi0].coords.x + ',' + vertexArr[i1].coords.x);
+	                                // console.log( vertexArr[ i0 ].coords.x + ',' + vertexArr[ mi0 ].coords.x + ',' + vertexArr[ i1 ].coords.x )
 
 	                                mIndexArr.push(i0, mi0, i1, mi1, i2, mi2);
 
@@ -7835,7 +7866,7 @@
 	                                */
 	                        }
 
-	                        console.log("indexArr:" + indexArr.length + ' and mIndexArr:' + mIndexArr.length);
+	                        //console.log("indexArr:" + indexArr.length + ' and mIndexArr:' + mIndexArr.length)
 
 	                        // NOTE: have to reset with 'this', not the local indexArr
 

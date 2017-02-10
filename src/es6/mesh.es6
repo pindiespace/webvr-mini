@@ -265,10 +265,12 @@ class Mesh {
             let v1 = vertexArr[ i1 ];
 
             let v2 = vertexArr[ i2 ];
-
+ 
             // add Midpoint (if needed) and return index of midpoint
 
-            let mi0 = this.addMidPoint( v1.idx, v2.idx, vertexArr ); // THIS IS WRONG
+            // TODO: ADDMIDPOINT IS NOT WORKING CORRECTLY - ARRAY TOO LARGE!
+
+            let mi0 = this.addMidPoint( v0.idx, v1.idx, vertexArr );
 
             let mi1 = this.addMidPoint( v1.idx, v2.idx, vertexArr );
 
@@ -283,11 +285,9 @@ class Mesh {
             //mIndexArr.push(
             //  mi2, mi1, mi0 );
 
-            console.log( vertexArr[ i0 ].coords.x + ',' + 
-                vertexArr[ mi0 ].coords.x + ',' + 
-                vertexArr[ i1 ].coords.x )
+           // console.log( vertexArr[ i0 ].coords.x + ',' + vertexArr[ mi0 ].coords.x + ',' + vertexArr[ i1 ].coords.x )
 
-            mIndexArr.push( i0, mi0, i1, mi1, i2, mi2 )
+           mIndexArr.push( i0, mi0, i1, mi1, i2, mi2 )
 
 /*
             mIndexArr.push(
@@ -304,7 +304,7 @@ class Mesh {
 
         }
 
-        console.log("indexArr:" + indexArr.length + ' and mIndexArr:' + mIndexArr.length)
+        //console.log("indexArr:" + indexArr.length + ' and mIndexArr:' + mIndexArr.length)
 
         // NOTE: have to reset with 'this', not the local indexArr
 

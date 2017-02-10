@@ -421,7 +421,7 @@ class Vertex {
 
         let mw = 1 - weighting;
 
-        v.coords = v.coords.average( other.coords, weighting );
+        v.coords = v.coords.midPoint( other.coords, weighting );
 
         v.texCoords =  {
 
@@ -436,12 +436,26 @@ class Vertex {
     }
 
     /**
-     * Return a new copy of this Vertex
+     * Return a new Copy of this Vertex
      * @returns {Vertex} a copy of the current vertex
      */
-    clone () {
+    clone ( idx, isEven ) {
 
-        return new Vertex( this.x, this.y, this.z, this.u, this.v, this.vertexArr );
+        let v = new Vertex( this.coords.x, this.coords.y, this.coords.z, this.texCoords.u, this.texCoords.v, this.vertexArr );
+
+        if ( idx ) {
+
+            v.idx = idx;
+
+        }
+
+        if ( isEven ) {
+
+            v.isEven = isEven;
+
+        }
+
+        return v;
 
     }
 

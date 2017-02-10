@@ -72,6 +72,15 @@
     }
 
     /** 
+     * return a flattened coordinate array.
+     */
+    flatten () {
+
+        return [ this.x, this.y, this.z ];
+
+    }
+
+    /** 
      * Determine if two Coords are the same object (not same values)
      */
     isEqual ( other ) {
@@ -184,6 +193,12 @@
 
     }
 
+    midPoint ( other ) {
+
+      return this.average( other );
+
+    }
+
     /** 
      * Return a new Coords with averaged value of this and another Coords.
      * @param {Coords} other the Coords to average with.
@@ -196,15 +211,15 @@
      */
     average ( other, weighting = 0.5 ) {
 
-        let mw = 1 - weighting;
+        let mw = 1.0 - weighting;
 
         return new Coords( 
 
-            2 * ( (weighting * this.x) + (mw * other.x) ),
+            ( ( weighting * this.x ) + ( mw * other.x ) ),
 
-            2 * ( (weighting * this.y) + (mw * other.y) ), 
+            ( ( weighting * this.y ) + ( mw * other.y ) ), 
 
-            2 * ( (weighting * this.z) + (mw * other.z) )
+            ( ( weighting * this.z ) + ( mw * other.z ) )
 
          );
 
