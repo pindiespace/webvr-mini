@@ -177,7 +177,7 @@
      * Return the length of this Coord.
      * @returns {Number} the length of this Coord.
      */
-    magnitude () {
+    length () {
 
         return Math.sqrt( this.x * this.x + this.y * this.y + this.z * this.z );
 

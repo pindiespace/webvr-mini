@@ -2821,7 +2821,10 @@ class Prim {
             console.log("SUBDIVIDING ICOSPHERE")
             // Sending in texture coords and normals speeds subdivision calculation.
 
-            let divided = this.morph.computeSubdivide( vertices, indices, texCoords, true );
+            let divided = this.morph.computeSubdivide( vertices, indices, texCoords, true, true );
+
+            // OK
+            /////////divided = this.morph.computeSubdivide( divided.vertices, divided.indices, divided.texCoords, true )
 
             vertices = divided.vertices;
             indices = divided.indices;

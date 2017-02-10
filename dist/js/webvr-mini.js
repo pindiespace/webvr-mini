@@ -6685,7 +6685,10 @@
 	                console.log("SUBDIVIDING ICOSPHERE");
 	                // Sending in texture coords and normals speeds subdivision calculation.
 
-	                var divided = this.morph.computeSubdivide(vertices, indices, texCoords, true);
+	                var divided = this.morph.computeSubdivide(vertices, indices, texCoords, true, true);
+
+	                // OK
+	                /////////divided = this.morph.computeSubdivide( divided.vertices, divided.indices, divided.texCoords, true )
 
 	                vertices = divided.vertices;
 	                indices = divided.indices;
@@ -8616,9 +8619,8 @@
 	                vertexArr[i] = new _vertex2.default(vertices[vi++], vertices[vi++], vertices[vi++], texCoords[ti++], texCoords[ti++], vertexArr, i);
 	            }
 
-	            // Compute Edges, Triangles, Quads from the index array
 	            /*  
-	             * create Edges, referring to vertices.
+	             * create Edges, referring to vertices by their index.
 	             *
 	                Mk   = refined mesh
 	                Mk-1 = coarse mesh
@@ -8756,10 +8758,9 @@
 
 	            // Find Vertex objects missing neighbors.
 
-	            /////////////////let edgeMeshArr = this.getMeshEdges( vertexArr );
 	            var edgeMeshArr = mesh.getEdges();
 
-	            //Create Edges for Vertex objects on the Edge of a non-closed mesh
+	            //Create Edge points for Vertex objects on the Edge of a non-closed mesh
 
 	            mesh.computeEdgeNeighbors();
 
@@ -8810,7 +8811,7 @@
 	                texCoords[ti + 1] = t.v;
 	            }
 
-	            // flatten index array, taking Vertex Position, multiply by 3, add extra coordinates
+	            // Flatten index array, taking Vertex Position, multiply by 3, add extra coordinates.
 
 	            var idx = 0;
 
@@ -8825,7 +8826,7 @@
 	                indices[idx++] = indexArr[iStart];
 	            }
 
-	            // We aren't exporting a true Geometry, just some of its arrays
+	            // We aren't exporting a true Geometry, just some of its arrays.
 
 	            return {
 
@@ -8844,7 +8845,7 @@
 
 	    }, {
 	        key: 'computeSubdivide',
-	        value: function computeSubdivide(vertices, indices, texCoords, smooth) {
+	        value: function computeSubdivide(vertices, indices, texCoords, uniqueify, smooth) {
 
 	            var mesh = this.geometryToVertex(vertices, indices, texCoords);
 
@@ -8860,47 +8861,31 @@
 
 	            mesh = mesh.subdivide();
 
-	            console.log(" ++++++++++++++++ COMPLETE ++++++++++++++++++++++");
+	            console.log(" ++++++++++++++++ SUBDIVIDE COMPLETE ++++++++++++++++++++++");
 
-	            console.log(" +++++++++++++++ SMOOTHING ++++++++++++++++++++");
+	            if (uniqueify) {
+
+	                console.log(" ++++++++++++ UNIQUEIFY +++++++++++++++++");
+
+	                //mesh = mesh.uniqueify();
+
+	                console.log(" ++++++++++++++++ UNIQUEIFY COMPLETE ++++++++++++++++++++++");
+	            }
 
 	            if (smooth) {
 
+	                console.log(" +++++++++++++++ SMOOTHING ++++++++++++++++++++");
+
 	                mesh = mesh.smooth();
+
+	                console.log(" ++++++++++++++++ SMOOTHING COMPLETE ++++++++++++++++++++++");
 	            }
 
-	            console.log(" ++++++++++++++++ COMPLETE ++++++++++++++++++++++");
+	            console.log(" ++++++++++++++++ ALL COMPLETE ++++++++++++++++++++++");
 
 	            var divided = this.vertexToGeometry(mesh);
 
-	            // Test vertices when no subdivision
-
-	            /*
-	             for ( let i = 0; i < vertices.length; i++ ) {
-	                if(vertices[i] !== vertices2[i]) {
-	                    console.error("invalid vertices subdivide");
-	                }
-	            }
-	             // test texture coords
-	             for ( let i = 0; i < texCoords.length; i++ ) {
-	                if(texCoords[i] !== texCoords2[i]) {
-	                    console.error("invalid texcoord subdivide:" + texCoords2[ i ]); 
-	                }
-	            }
-	             */
-
 	            return divided;
-	        }
-
-	        /** 
-	         * Compute a simplification of a loop mesh.
-	         */
-
-	    }, {
-	        key: 'computeUndivide',
-	        value: function computeUndivide(vertices, indices, texCoords, smooth) {
-
-	            console.error('computeUndivide not implemented');
 	        }
 
 	        /** 
@@ -9135,8 +9120,8 @@
 	         */
 
 	    }, {
-	        key: "magnitude",
-	        value: function magnitude() {
+	        key: "length",
+	        value: function length() {
 
 	            return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
 	        }
@@ -10580,49 +10565,44 @@
 
 	    }, {
 	        key: 'addMidPoint',
-	        value: function addMidPoint(idx0, idx1, vertexArr) {
+	        value: function addMidPoint(idx0, idx1, vertexArr, midArr) {
 
 	            var spacer = '-';
 
 	            var key = idx0 + spacer + idx1;
 
-	            var m0 = vertexArr[key];
+	            var revKey = idx1 + spacer + idx0;
 
 	            var idx = -1;
 
-	            if (m0) {
+	            var m0 = vertexArr[key];
 
-	                console.log("FOUND FORWARD");
-	                idx = mVertexArr.indexOf(m0);
+	            var m1 = vertexArr[revKey];
+
+	            if (midArr[revKey]) {
+
+	                idx = midArr[revKey];
 	            } else {
 
-	                key = idx1 + spacer + idx0;
+	                var v0 = vertexArr[idx0];
 
-	                m0 = vertexArr[key];
+	                var v1 = vertexArr[idx1];
 
-	                if (m0) {
+	                m0 = v0.midPoint(v1);
 
-	                    console.log("FOUND REVERSE");
+	                m0.idx = key; // original i0-i1
 
-	                    idx = mVertexArr.indexOf(m0);
-	                } else {
+	                m0.isEven = false; // an 'odd' Vertex
 
-	                    var v0 = vertexArr[idx0];
+	                vertexArr.push(m0);
 
-	                    var v1 = vertexArr[idx1];
+	                // return the index of the added Vertex
 
-	                    m0 = v0.midPoint(v1);
+	                idx = vertexArr.length - 1;
 
-	                    m0.idx = key;
+	                // Map the idx of the midpoint to its position in vertexArr
 
-	                    m0.isEven = false; // an 'odd' Vertex
-
-	                    vertexArr.push(m0);
-
-	                    // return the index of the added Vertex
-
-	                    idx = vertexArr.length - 1;
-	                }
+	                midArr[key] = idx;
 	            }
 
 	            return idx;
@@ -10643,6 +10623,8 @@
 
 	            this.oldIndexArr = indexArr.slice(0);
 
+	            this.midArr = [];
+
 	            console.log("VERTEX ARR:" + vertexArr.length + " INDEX ARR:" + indexArr.length);
 
 	            // Create a new array of Midpoint objects, with starting position in Vertex labeled
@@ -10655,6 +10637,8 @@
 	                m1 = void 0;
 
 	            var vLen = vertexArr.length;
+
+	            var oldLen = vLen;
 
 	            for (var i = 0; i < indexArr.length - 3; i += 3) {
 
@@ -10672,14 +10656,17 @@
 
 	                /* 
 	                 * compute a midpoint, check if it is present, add if not to 
-	                 * the end of the existing Vertex array.
+	                 * the end of the existing Vertex array. Return the position 
+	                 * (old or newly added) in the Vertex array. Midpoints have 
+	                 * hybrid .idx values ( e.g. 100-292 ) which are different 
+	                 * from their position in the Vertex array.
 	                 */
 
-	                var mi0 = this.addMidPoint(v0.idx, v1.idx, vertexArr);
+	                var mi0 = this.addMidPoint(v0.idx, v1.idx, vertexArr, this.midArr);
 
-	                var mi1 = this.addMidPoint(v1.idx, v2.idx, vertexArr);
+	                var mi1 = this.addMidPoint(v1.idx, v2.idx, vertexArr, this.midArr);
 
-	                var mi2 = this.addMidPoint(v2.idx, v0.idx, vertexArr);
+	                var mi2 = this.addMidPoint(v2.idx, v0.idx, vertexArr, this.midArr);
 
 	                // now, push the updated indexlist ot mIndexArr, even and odd Vertex objects.
 
@@ -10721,24 +10708,79 @@
 
 	            console.log("indexArr:" + this.indexArr.length + ' and mIndexArr:' + mIndexArr.length);
 
-	            // RUN A TEST
-	            ////////////////////////////////////////
-	            vLen = vertexArr.length;
+	            return this;
+	        }
 
-	            for (var _i = 0; _i < indexArr.length; _i++) {
+	        /** 
+	         * If a mesh has identical Vertex objects, remove them.
+	         */
 
-	                var idx = indexArr[_i];
+	    }, {
+	        key: 'uniqueify',
+	        value: function uniqueify() {
 
-	                if (idx > vLen || idx < 0) {
-	                    console.error('subdivision indexing error at pos:' + _i);
-	                }
+	            var vertexArr = this.vertexArr;
 
-	                if (!vertexArr[idx]) {
+	            var indexArr = this.indexArr;
 
-	                    console.error('subdivision no vertex error at pos:' + _i);
+	            var remove = []; // Store redundant Vertex
+
+	            var len = vertexArr.length;
+
+	            for (var i = 0; i < len; i++) {
+
+	                var vtx1 = vertexArr[i];
+
+	                if (i !== j) {
+
+	                    for (var _j = 0; _j < len; _j++) {
+
+	                        var vtx2 = vertexArr[_j];
+
+	                        if (vtx1 === vtx2) {
+
+	                            // found a duplicate, find all cases where indexArr points to vtx2
+
+	                            dups[i] = [];
+
+	                            for (var k = 0; k < indexArr.length; k++) {
+
+	                                if (indexArr[k] === _j) {
+	                                    // index points to 2nd Vertex
+
+	                                    indexArr[k] == i; //set to original vertex
+	                                }
+	                            }
+
+	                            // flag the position of vtx2 for removal
+
+	                            remove[_j] = _j; // redundant Vertex
+	                        } // found identical Vertex
+	                    } // cross-compare
+	                } // i !== j
+	            } // end of outer loop
+
+	            // Now, rebuild the Vertex Array.
+
+	            this.oldVertexArr = vertexArr.slice(0);
+
+	            oldVertexArr = this.oldVertexArr;
+
+	            this.vertexArr = [];
+
+	            vertexArr = this.vertexArr;
+
+	            for (var _i = 0; _i < oldVertexArr.length; _i++) {
+
+	                if (!remove.indexOf(_i)) {
+
+	                    vertexArr.push(oldVertexArr[_i]);
 	                }
 	            }
-	            ////////////////////////////////////////
+
+	            console.log("MESH REDUCED FROM:" + oldVertexArr.length + " to:" + vertexArr.length);
+
+	            this.vertexArr = vertexArr;
 
 	            return this;
 	        }
@@ -10772,7 +10814,7 @@
 
 	                var vtx = vertexArr[i];
 
-	                // number test
+	                // Test the number of Edges attached to a Vertex
 
 	                if (vtx.fEdges.length !== vtx.MAX_EDGES) {
 
@@ -10784,24 +10826,48 @@
 	                    console.error('validateMesh: vtx:' + vtx.idx + ', oEdges ' + vtx.idx + ' has ' + vtx.oEdges.length + ' edges');
 	                }
 
-	                // identical test, forward edges ( our Vertex is 1st going counter-clockwise )
+	                // Super-close values for Vertex coordinates.
+	                /*
+	                            for ( let j = 0; j < len; j++ ) {
+	                
+	                                if ( i !== j ) {
+	                
+	                                    let vtx2 = vertexArr[ j ];
+	                
+	                                    let length = vtx2.clone().coords.subtract( vtx.coords ).length();
+	                
+	                                    if ( length < 0.00001 ) {
+	                
+	                                        // TODO: we could scan for all references to vtx2, in index array, and assign to vtx
+	                
+	                                        console.log( 'validateMesh: super-close Vertex coords at:' + i + ', ' + j + ' dist:' + length );
+	                
+	                                    }
+	                                }
+	                
+	                            }
+	                */
 
-	                for (var j = 0; j < vtx.fEdges.length; j++) {
+	                // Self-similarity test, forward Edges ( our Vertex is 1st going counter-clockwise )
 
-	                    var f1 = vtx.fEdges[j];
+	                for (var _j2 = 0; _j2 < vtx.fEdges.length; _j2++) {
+
+	                    var f1 = vtx.fEdges[_j2];
 
 	                    for (var k = 0; k < vtx.fEdges.length; k++) {
 
 	                        var f2 = vtx.fEdges[k];
 
-	                        if (j !== k && f1 === f2) {
+	                        if (_j2 !== k && f1 === f2) {
 	                            // avoid self-compare
 
-	                            console.error('validateMesh: duplicate Edge entry for vtx:' + vtx.idx + ', ' + f1.idx + ' at:' + j + ' compared to ' + f2.idx + ' at ' + k);
+	                            console.error('validateMesh: duplicate Edge entry for vtx:' + vtx.idx + ', ' + f1.idx + ' at:' + _j2 + ' compared to ' + f2.idx + ' at ' + k);
 	                        }
 	                    }
 	                }
 	            }
+
+	            // Confirm all indices are valid.
 
 	            var indexArr = mesh.indexArr;
 

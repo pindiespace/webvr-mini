@@ -173,34 +173,25 @@ class Mesh {
      * midpoint to the Vertex array, and push its position to 
      * the Index array.
      */
-    addMidPoint ( idx0, idx1, vertexArr ) {
+    addMidPoint ( idx0, idx1, vertexArr, midArr ) {
 
         let spacer = '-';
 
         let key = idx0 + spacer + idx1;
 
-        let m0 = vertexArr[ key ];
+        let revKey = idx1 + spacer + idx0;
 
         let idx = -1;
-            
-        if( m0 ) {
 
-            console.log("FOUND FORWARD")
-            idx = mVertexArr.indexOf( m0 );
+        let m0 = vertexArr[ key ];
+            
+        let m1 = vertexArr[ revKey ];
+
+        if ( midArr[ revKey ] ) {
+
+            idx = midArr[ revKey ];
 
         } else {
-
-            key = idx1 + spacer + idx0;
-
-            m0 = vertexArr[ key ];
-
-            if ( m0 ) {
-
-                console.log("FOUND REVERSE")
-
-            idx = mVertexArr.indexOf( m0 );
-
-            } else {
 
                 let v0 = vertexArr[ idx0 ];
 
@@ -208,7 +199,7 @@ class Mesh {
 
                 m0 = v0.midPoint( v1 );
 
-                m0.idx = key;
+                m0.idx = key;      // original i0-i1
 
                 m0.isEven = false; // an 'odd' Vertex
 
@@ -218,9 +209,12 @@ class Mesh {
 
                 idx = vertexArr.length - 1;
 
+                // Map the idx of the midpoint to its position in vertexArr
+
+                midArr[ key ] = idx;
+
             }
 
-        }
 
         return idx;
 
@@ -240,6 +234,8 @@ class Mesh {
 
         this.oldIndexArr = indexArr.slice( 0 );
 
+        this.midArr = [];
+
         console.log("VERTEX ARR:" + vertexArr.length + " INDEX ARR:" + indexArr.length)
 
          // Create a new array of Midpoint objects, with starting position in Vertex labeled
@@ -251,6 +247,8 @@ class Mesh {
         let m0, m1;
 
         let vLen = vertexArr.length;
+
+        let oldLen = vLen;
 
         for ( let i = 0; i < indexArr.length - 3; i += 3 ) {
 
@@ -268,14 +266,18 @@ class Mesh {
 
             /* 
              * compute a midpoint, check if it is present, add if not to 
-             * the end of the existing Vertex array.
+             * the end of the existing Vertex array. Return the position 
+             * (old or newly added) in the Vertex array. Midpoints have 
+             * hybrid .idx values ( e.g. 100-292 ) which are different 
+             * from their position in the Vertex array.
              */
  
-            let mi0 = this.addMidPoint( v0.idx, v1.idx, vertexArr );
+            let mi0 = this.addMidPoint( v0.idx, v1.idx, vertexArr, this.midArr );
 
-            let mi1 = this.addMidPoint( v1.idx, v2.idx, vertexArr );
+            let mi1 = this.addMidPoint( v1.idx, v2.idx, vertexArr, this.midArr );
 
-            let mi2 = this.addMidPoint( v2.idx, v0.idx, vertexArr );
+            let mi2 = this.addMidPoint( v2.idx, v0.idx, vertexArr, this.midArr );
+
 
             // now, push the updated indexlist ot mIndexArr, even and odd Vertex objects.
 
@@ -322,32 +324,88 @@ class Mesh {
 
         console.log("indexArr:" + this.indexArr.length + ' and mIndexArr:' + mIndexArr.length)
 
-        // RUN A TEST
-////////////////////////////////////////
-        vLen = vertexArr.length;
-
-        for ( let i = 0; i < indexArr.length; i++ ) {
-
-            let idx = indexArr[ i ];
-
-            if ( idx > vLen || idx < 0  ) {
-                console.error( 'subdivision indexing error at pos:' + i );
-
-            } 
-
-            if ( ! vertexArr[ idx ] ) {
-
-                console.error( 'subdivision no vertex error at pos:' + i );
-
-            }
-
-        }
-////////////////////////////////////////
-
         return this;
 
     }
 
+    /** 
+     * If a mesh has identical Vertex objects, remove them.
+     */
+    uniqueify () {
+
+        let vertexArr = this.vertexArr;
+
+        let indexArr = this.indexArr;
+
+        let remove = []; // Store redundant Vertex
+
+        let len = vertexArr.length;
+
+        for ( let i = 0; i < len; i++ ) {
+
+            let vtx1 = vertexArr[ i ];
+
+            if ( i !== j ) {
+
+                for ( let j = 0; j < len; j++ ) {
+
+                    let vtx2 = vertexArr[ j ];
+
+                    if ( vtx1 === vtx2 ) {
+
+                        // found a duplicate, find all cases where indexArr points to vtx2
+
+                        dups[ i ] = [];
+
+                        for ( let k = 0; k < indexArr.length; k++ ) {
+
+                            if ( indexArr[ k ] === j ) { // index points to 2nd Vertex
+
+                                indexArr[ k ] == i; //set to original vertex
+
+                            }
+
+                        }
+
+                        // flag the position of vtx2 for removal
+
+                        remove[ j ] = j; // redundant Vertex
+
+                    } // found identical Vertex
+
+                } // cross-compare
+
+            } // i !== j
+ 
+        } // end of outer loop
+
+        // Now, rebuild the Vertex Array.
+
+        this.oldVertexArr = vertexArr.slice( 0 );
+
+        oldVertexArr = this.oldVertexArr;
+
+        this.vertexArr = []; 
+
+        vertexArr = this.vertexArr;
+
+        for ( let i = 0; i < oldVertexArr.length; i++  ) {
+
+            if ( ! remove.indexOf( i ) ) {
+
+                vertexArr.push( oldVertexArr[ i ] );
+
+            }
+
+        }
+
+        console.log("MESH REDUCED FROM:" + oldVertexArr.length + " to:" + vertexArr.length)
+
+        this.vertexArr = vertexArr;
+
+        return this;
+
+    }
 
     /** 
      * smooth a Mesh, when new Vertex objects have been added. 
@@ -373,7 +431,7 @@ class Mesh {
 
             let vtx = vertexArr[ i ];
 
-            // number test
+            // Test the number of Edges attached to a Vertex
 
             if ( vtx.fEdges.length !== vtx.MAX_EDGES ) {
 
@@ -387,7 +445,29 @@ class Mesh {
 
             }
 
-            // identical test, forward edges ( our Vertex is 1st going counter-clockwise )
+            // Super-close values for Vertex coordinates.
+/*
+            for ( let j = 0; j < len; j++ ) {
+
+                if ( i !== j ) {
+
+                    let vtx2 = vertexArr[ j ];
+
+                    let length = vtx2.clone().coords.subtract( vtx.coords ).length();
+
+                    if ( length < 0.00001 ) {
+
+                        // TODO: we could scan for all references to vtx2, in index array, and assign to vtx
+
+                        console.log( 'validateMesh: super-close Vertex coords at:' + i + ', ' + j + ' dist:' + length );
+
+                    }
+                }
+
+            }
+*/
+
+            // Self-similarity test, forward Edges ( our Vertex is 1st going counter-clockwise )
 
             for ( let j = 0; j < vtx.fEdges.length; j++ ) {
 
@@ -409,6 +489,8 @@ class Mesh {
 
         }
 
+        // Confirm all indices are valid.
+
         let indexArr = mesh.indexArr;
 
         for ( let i = 0; i < indexArr; i++ ) {
@@ -420,6 +502,7 @@ class Mesh {
             }
 
         }
+
 
         let triArr = mesh.triArr;
 

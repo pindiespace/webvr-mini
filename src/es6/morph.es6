@@ -66,9 +66,8 @@ class Morph {
 
         }
 
-        // Compute Edges, Triangles, Quads from the index array
         /*  
-         * create Edges, referring to vertices.
+         * create Edges, referring to vertices by their index.
          *
             Mk   = refined mesh
             Mk-1 = coarse mesh
@@ -205,10 +204,9 @@ class Morph {
 
         // Find Vertex objects missing neighbors.
 
-       /////////////////let edgeMeshArr = this.getMeshEdges( vertexArr );
        let edgeMeshArr = mesh.getEdges();
 
-       //Create Edges for Vertex objects on the Edge of a non-closed mesh
+       //Create Edge points for Vertex objects on the Edge of a non-closed mesh
 
         mesh.computeEdgeNeighbors();
 
@@ -258,7 +256,7 @@ class Morph {
 
         }
 
-        // flatten index array, taking Vertex Position, multiply by 3, add extra coordinates
+        // Flatten index array, taking Vertex Position, multiply by 3, add extra coordinates.
 
         let idx = 0;
 
@@ -274,7 +272,7 @@ class Morph {
 
         }
 
-        // We aren't exporting a true Geometry, just some of its arrays
+        // We aren't exporting a true Geometry, just some of its arrays.
 
         return {
 
@@ -291,7 +289,7 @@ class Morph {
     /** 
      * Compute a loop subdivision of a mesh
      */
-    computeSubdivide ( vertices, indices, texCoords, smooth ) {
+    computeSubdivide ( vertices, indices, texCoords, uniqueify, smooth ) {
 
         let mesh = this.geometryToVertex( vertices, indices, texCoords );
 
@@ -307,55 +305,35 @@ class Morph {
 
         mesh = mesh.subdivide();
 
-        console.log(" ++++++++++++++++ COMPLETE ++++++++++++++++++++++" );
-      
-        console.log(" +++++++++++++++ SMOOTHING ++++++++++++++++++++" );
+        console.log(" ++++++++++++++++ SUBDIVIDE COMPLETE ++++++++++++++++++++++" );
+
+        if ( uniqueify ) {
+
+            console.log(" ++++++++++++ UNIQUEIFY +++++++++++++++++" );
+
+            //mesh = mesh.uniqueify();
+
+            console.log(" ++++++++++++++++ UNIQUEIFY COMPLETE ++++++++++++++++++++++" );
+
+        }
 
         if ( smooth ) {
 
+            console.log(" +++++++++++++++ SMOOTHING ++++++++++++++++++++" );
+
             mesh = mesh.smooth();
 
+            console.log(" ++++++++++++++++ SMOOTHING COMPLETE ++++++++++++++++++++++" );
+
         }
 
-        console.log(" ++++++++++++++++ COMPLETE ++++++++++++++++++++++" );
-
+        console.log(" ++++++++++++++++ ALL COMPLETE ++++++++++++++++++++++" );
 
         let divided = this.vertexToGeometry ( mesh )
-
- 
-        // Test vertices when no subdivision
-
-        /*
-
-        for ( let i = 0; i < vertices.length; i++ ) {
-            if(vertices[i] !== vertices2[i]) {
-                console.error("invalid vertices subdivide");
-            }
-        }
-
-        // test texture coords
-
-        for ( let i = 0; i < texCoords.length; i++ ) {
-            if(texCoords[i] !== texCoords2[i]) {
-                console.error("invalid texcoord subdivide:" + texCoords2[ i ]); 
-            }
-        }
-
-        */
 
         return divided;
 
     }
-
-    /** 
-     * Compute a simplification of a loop mesh.
-     */
-    computeUndivide ( vertices, indices, texCoords, smooth ) {
-
-        console.error( 'computeUndivide not implemented' );
-
-    }
-
 
     /** 
      * Convert from one Prim geometry to another, alters geometry.
