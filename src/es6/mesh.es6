@@ -265,11 +265,12 @@ class Mesh {
             let v1 = vertexArr[ i1 ];
 
             let v2 = vertexArr[ i2 ];
+
+            /* 
+             * compute a midpoint, check if it is present, add if not to 
+             * the end of the existing Vertex array.
+             */
  
-            // add Midpoint (if needed) and return index of midpoint
-
-            // TODO: ADDMIDPOINT IS NOT WORKING CORRECTLY - ARRAY TOO LARGE!
-
             let mi0 = this.addMidPoint( v0.idx, v1.idx, vertexArr );
 
             let mi1 = this.addMidPoint( v1.idx, v2.idx, vertexArr );
@@ -278,35 +279,42 @@ class Mesh {
 
             // now, push the updated indexlist ot mIndexArr, even and odd Vertex objects.
 
-            // THIS WORKS
-            //mIndexArr.push(
-            //    i0, i1, i2 );
+            // Pure midpoints, makes holes surrounded by stars - works!
+            // mIndexArr.push( mi0, mi1, mi2 );
 
-            //mIndexArr.push(
-            //  mi2, mi1, mi0 );
+           /*
+            * i1, v1       mi1         i2, v2
+            * +__________+__________ +
+            * |         /|           /
+            * |  (B)  /  |   (D)   /
+            * |     /    |       /
+            * |   /  (C) |     /
+            * | /        |   /
+            * |/ mi0     | / mi2
+            * |_________ /__________
+            * |        / |
+            * |  (A) /   |
+            * |    /     |
+            * |  /       |
+            * |/_________|_________ +
+            * i0, v0
+            */
 
-           // console.log( vertexArr[ i0 ].coords.x + ',' + vertexArr[ mi0 ].coords.x + ',' + vertexArr[ i1 ].coords.x )
-
-           mIndexArr.push( i0, mi0, i1, mi1, i2, mi2 )
-
-/*
             mIndexArr.push(
 
  
-                mi0, i1, mi1,    // B  
+                mi0, i1, mi1,   // B  
 
-                mi1, mi2, mi0,   // C
+                mi1, mi2, mi0,  // C
 
-                mi2, mi1, i2     // D
+                mi2, mi1, i2,   // D
+
+                mi2, i0, mi0    // A
 
             );
-*/
+
 
         }
-
-        //console.log("indexArr:" + indexArr.length + ' and mIndexArr:' + mIndexArr.length)
-
-        // NOTE: have to reset with 'this', not the local indexArr
 
         this.indexArr = mIndexArr;
 
