@@ -226,9 +226,7 @@ class Mesh {
 
         let indexArr = this.indexArr;
 
-        console.log("VERTEX ARR:" + vertexArr.length + " INDEX ARR:" + indexArr.length)
-
-        // save the originals
+        // Save the originals.
 
         this.oldVertexArr = vertexArr.slice( 0 );
 
@@ -236,9 +234,7 @@ class Mesh {
 
         this.midArr = [];
 
-        console.log("VERTEX ARR:" + vertexArr.length + " INDEX ARR:" + indexArr.length)
-
-         // Create a new array of Midpoint objects, with starting position in Vertex labeled
+         // Create a new array of Midpoint objects, with starting position in Vertex labeled.
 
         let mIndexArr = [];
 
@@ -304,7 +300,6 @@ class Mesh {
 
             mIndexArr.push(
 
- 
                 mi0, i1, mi1,   // B  
 
                 mi1, mi2, mi0,  // C
@@ -315,14 +310,11 @@ class Mesh {
 
             );
 
-
         }
 
         this.indexArr = mIndexArr;
 
-        console.log("indexArr:" + indexArr.length + ' and mIndexArr:' + mIndexArr.length)
-
-        console.log("indexArr:" + this.indexArr.length + ' and mIndexArr:' + mIndexArr.length)
+        console.log( 'mesh::subdivde: subdivided from ' + this.oldVertexArr.length + ' to:' + this.vertexArr.length );
 
         return this;
 
@@ -345,9 +337,9 @@ class Mesh {
 
             let vtx1 = vertexArr[ i ];
 
-            if ( i !== j ) {
+            for ( let j = 0; j < len; j++ ) {
 
-                for ( let j = 0; j < len; j++ ) {
+                if ( i !== j ) {
 
                     let vtx2 = vertexArr[ j ];
 
@@ -355,13 +347,15 @@ class Mesh {
 
                         // found a duplicate, find all cases where indexArr points to vtx2
 
+                        console.log( 'mesh::uniqueify: found a dup for ' + vtx1.idx + ' at:' + i + ', ' + vtx2.idx + ' at:' + j );
+
                         dups[ i ] = [];
 
                         for ( let k = 0; k < indexArr.length; k++ ) {
 
-                            if ( indexArr[ k ] === j ) { // index points to 2nd Vertex
+                            if ( indexArr[ k ] === j ) { // index points to Vertex in 2nd loop
 
-                                indexArr[ k ] == i; //set to original vertex
+                                indexArr[ k ] == i; // set all indices to first Vertex found
 
                             }
 
@@ -383,7 +377,7 @@ class Mesh {
 
         this.oldVertexArr = vertexArr.slice( 0 );
 
-        oldVertexArr = this.oldVertexArr;
+        let oldVertexArr = this.oldVertexArr;
 
         this.vertexArr = []; 
 
@@ -391,7 +385,7 @@ class Mesh {
 
         for ( let i = 0; i < oldVertexArr.length; i++  ) {
 
-            if ( ! remove.indexOf( i ) ) {
+            if ( remove.indexOf( i ) === -1 ) {
 
                 vertexArr.push( oldVertexArr[ i ] );
 
@@ -408,9 +402,18 @@ class Mesh {
     }
 
     /** 
+     * Simplify the Mesh, inverse of subdivide routine.
+     */
+    simplify () {
+
+    }
+
+    /** 
      * smooth a Mesh, when new Vertex objects have been added. 
      */
     smooth () {
+
+
 
         return this;
 

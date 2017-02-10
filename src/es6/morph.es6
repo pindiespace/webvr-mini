@@ -42,10 +42,6 @@ class Morph {
 
         let i = 0;
 
-        console.log("ORIGINAL VERTICES LENGTH:" + vertices.length + " reduced:" + vertices.length / 3 )
-
-        console.log("ORIGINAL INDICES LENGTH:" + indices.length)
-
         let numVertices = vertices.length / 3;
 
         let vertexArr = new Array( numVertices );
@@ -63,6 +59,8 @@ class Morph {
         for ( i = 0; i < numVertices; i++ ) {
 
             vertexArr[ i ] = new Vertex( vertices[ vi++ ], vertices[ vi++ ], vertices[ vi++ ], texCoords[ ti++ ], texCoords[ ti++ ], vertexArr, i );
+
+            // default, Vertex.isEven === true
 
         }
 
@@ -299,7 +297,17 @@ class Morph {
 
         mesh.validate();
 
-        console.log(" ++++++++++++++++ COMPLETE ++++++++++++++++++++++" );
+        console.log( "+++++++++++++++ VALIDATION COMPLETE ++++++++++++" );
+
+        if ( uniqueify ) {
+
+            console.log(" ++++++++++++ UNIQUEIFY +++++++++++++++++" );
+
+            mesh = mesh.uniqueify();
+
+            console.log(" ++++++++++++++++ UNIQUEIFY COMPLETE ++++++++++++++++++++++" );
+
+        }
 
         console.log(" +++++++++++++++ SUBDIVIDING ++++++++++++++++++++" );
 
@@ -307,15 +315,6 @@ class Morph {
 
         console.log(" ++++++++++++++++ SUBDIVIDE COMPLETE ++++++++++++++++++++++" );
 
-        if ( uniqueify ) {
-
-            console.log(" ++++++++++++ UNIQUEIFY +++++++++++++++++" );
-
-            //mesh = mesh.uniqueify();
-
-            console.log(" ++++++++++++++++ UNIQUEIFY COMPLETE ++++++++++++++++++++++" );
-
-        }
 
         if ( smooth ) {
 

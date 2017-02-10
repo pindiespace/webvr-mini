@@ -6286,33 +6286,27 @@
 
 	            normals = this.computeNormals(vertices, indices, normals);
 
-	            console.log(" IN CUBE NORMALS NOW ARE>...." + normals.length);
+	            console.log(" IN CUBE NORMALS NOW ARE...." + normals.length);
 
-	            ///////////////////////////
-	            ///////////////////////////
-	            ///////////////////////////
-	            ///////////////////////////
-	            /*
-	                    if ( prim.name === 'colored cube' ) {
-	            
-	                        console.log("DISPLAYING COLORED CUBE")
-	                        // Sending in texture coords and normals speeds subdivision calculation.
-	            
-	                        let divided = this.morph.computeSubdivide( vertices, indices, texCoords, true );
-	            
-	                        vertices = divided.vertices;
-	                        indices = divided.indices;
-	                        texCoords = divided.texCoords;
-	                        //normals = this.computeNormals( vertices, indices, normals );
-	            
-	                        // TODO: TEST COORDS
-	            
-	                    }
-	            */
-	            //////////////////////////
-	            //////////////////////////
-	            //////////////////////////
-	            /////////////////////////
+	            ////////////////////////////////////////////////////////////////////////////////
+	            if (prim.name === 'colored cube') {
+
+	                console.log("SUBDIVIDING CUBE");
+	                // Sending in texture coords and normals speeds subdivision calculation.
+
+	                var divided = this.morph.computeSubdivide(vertices, indices, texCoords, true, true);
+
+	                // OK
+	                /////////divided = this.morph.computeSubdivide( divided.vertices, divided.indices, divided.texCoords, true )
+
+	                vertices = divided.vertices;
+	                indices = divided.indices;
+	                texCoords = divided.texCoords;
+	                //normals = this.computeNormals( vertices, indices, normals );
+
+	                // TODO: TEST COORDS
+	            }
+	            ////////////////////////////////////////////////////////////////////////////////
 
 	            // Return the buffer.
 
@@ -8595,10 +8589,6 @@
 
 	            var i = 0;
 
-	            console.log("ORIGINAL VERTICES LENGTH:" + vertices.length + " reduced:" + vertices.length / 3);
-
-	            console.log("ORIGINAL INDICES LENGTH:" + indices.length);
-
 	            var numVertices = vertices.length / 3;
 
 	            var vertexArr = new Array(numVertices);
@@ -8617,6 +8607,8 @@
 	            for (i = 0; i < numVertices; i++) {
 
 	                vertexArr[i] = new _vertex2.default(vertices[vi++], vertices[vi++], vertices[vi++], texCoords[ti++], texCoords[ti++], vertexArr, i);
+
+	                // default, Vertex.isEven === true
 	            }
 
 	            /*  
@@ -8855,22 +8847,22 @@
 
 	            mesh.validate();
 
-	            console.log(" ++++++++++++++++ COMPLETE ++++++++++++++++++++++");
+	            console.log("+++++++++++++++ VALIDATION COMPLETE ++++++++++++");
+
+	            if (uniqueify) {
+
+	                console.log(" ++++++++++++ UNIQUEIFY +++++++++++++++++");
+
+	                mesh = mesh.uniqueify();
+
+	                console.log(" ++++++++++++++++ UNIQUEIFY COMPLETE ++++++++++++++++++++++");
+	            }
 
 	            console.log(" +++++++++++++++ SUBDIVIDING ++++++++++++++++++++");
 
 	            mesh = mesh.subdivide();
 
 	            console.log(" ++++++++++++++++ SUBDIVIDE COMPLETE ++++++++++++++++++++++");
-
-	            if (uniqueify) {
-
-	                console.log(" ++++++++++++ UNIQUEIFY +++++++++++++++++");
-
-	                //mesh = mesh.uniqueify();
-
-	                console.log(" ++++++++++++++++ UNIQUEIFY COMPLETE ++++++++++++++++++++++");
-	            }
 
 	            if (smooth) {
 
@@ -10615,9 +10607,7 @@
 
 	            var indexArr = this.indexArr;
 
-	            console.log("VERTEX ARR:" + vertexArr.length + " INDEX ARR:" + indexArr.length);
-
-	            // save the originals
+	            // Save the originals.
 
 	            this.oldVertexArr = vertexArr.slice(0);
 
@@ -10625,9 +10615,7 @@
 
 	            this.midArr = [];
 
-	            console.log("VERTEX ARR:" + vertexArr.length + " INDEX ARR:" + indexArr.length);
-
-	            // Create a new array of Midpoint objects, with starting position in Vertex labeled
+	            // Create a new array of Midpoint objects, with starting position in Vertex labeled.
 
 	            var mIndexArr = [];
 
@@ -10704,9 +10692,7 @@
 
 	            this.indexArr = mIndexArr;
 
-	            console.log("indexArr:" + indexArr.length + ' and mIndexArr:' + mIndexArr.length);
-
-	            console.log("indexArr:" + this.indexArr.length + ' and mIndexArr:' + mIndexArr.length);
+	            console.log('mesh::subdivde: subdivided from ' + this.oldVertexArr.length + ' to:' + this.vertexArr.length);
 
 	            return this;
 	        }
@@ -10731,30 +10717,32 @@
 
 	                var vtx1 = vertexArr[i];
 
-	                if (i !== j) {
+	                for (var j = 0; j < len; j++) {
 
-	                    for (var _j = 0; _j < len; _j++) {
+	                    if (i !== j) {
 
-	                        var vtx2 = vertexArr[_j];
+	                        var vtx2 = vertexArr[j];
 
 	                        if (vtx1 === vtx2) {
 
 	                            // found a duplicate, find all cases where indexArr points to vtx2
 
+	                            console.log('mesh::uniqueify: found a dup for ' + vtx1.idx + ' at:' + i + ', ' + vtx2.idx + ' at:' + j);
+
 	                            dups[i] = [];
 
 	                            for (var k = 0; k < indexArr.length; k++) {
 
-	                                if (indexArr[k] === _j) {
-	                                    // index points to 2nd Vertex
+	                                if (indexArr[k] === j) {
+	                                    // index points to Vertex in 2nd loop
 
-	                                    indexArr[k] == i; //set to original vertex
+	                                    indexArr[k] == i; // set all indices to first Vertex found
 	                                }
 	                            }
 
 	                            // flag the position of vtx2 for removal
 
-	                            remove[_j] = _j; // redundant Vertex
+	                            remove[j] = j; // redundant Vertex
 	                        } // found identical Vertex
 	                    } // cross-compare
 	                } // i !== j
@@ -10764,7 +10752,7 @@
 
 	            this.oldVertexArr = vertexArr.slice(0);
 
-	            oldVertexArr = this.oldVertexArr;
+	            var oldVertexArr = this.oldVertexArr;
 
 	            this.vertexArr = [];
 
@@ -10772,7 +10760,7 @@
 
 	            for (var _i = 0; _i < oldVertexArr.length; _i++) {
 
-	                if (!remove.indexOf(_i)) {
+	                if (remove.indexOf(_i) === -1) {
 
 	                    vertexArr.push(oldVertexArr[_i]);
 	                }
@@ -10784,6 +10772,14 @@
 
 	            return this;
 	        }
+
+	        /** 
+	         * Simplify the Mesh, inverse of subdivide routine.
+	         */
+
+	    }, {
+	        key: 'simplify',
+	        value: function simplify() {}
 
 	        /** 
 	         * smooth a Mesh, when new Vertex objects have been added. 
@@ -10850,18 +10846,18 @@
 
 	                // Self-similarity test, forward Edges ( our Vertex is 1st going counter-clockwise )
 
-	                for (var _j2 = 0; _j2 < vtx.fEdges.length; _j2++) {
+	                for (var j = 0; j < vtx.fEdges.length; j++) {
 
-	                    var f1 = vtx.fEdges[_j2];
+	                    var f1 = vtx.fEdges[j];
 
 	                    for (var k = 0; k < vtx.fEdges.length; k++) {
 
 	                        var f2 = vtx.fEdges[k];
 
-	                        if (_j2 !== k && f1 === f2) {
+	                        if (j !== k && f1 === f2) {
 	                            // avoid self-compare
 
-	                            console.error('validateMesh: duplicate Edge entry for vtx:' + vtx.idx + ', ' + f1.idx + ' at:' + _j2 + ' compared to ' + f2.idx + ' at ' + k);
+	                            console.error('validateMesh: duplicate Edge entry for vtx:' + vtx.idx + ', ' + f1.idx + ' at:' + j + ' compared to ' + f2.idx + ' at ' + k);
 	                        }
 	                    }
 	                }

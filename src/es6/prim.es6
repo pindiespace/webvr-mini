@@ -2426,19 +2426,18 @@ class Prim {
 
         normals = this.computeNormals( vertices, indices, normals );
 
-        console.log(" IN CUBE NORMALS NOW ARE>...." + normals.length)
+        console.log(" IN CUBE NORMALS NOW ARE...." + normals.length)
 
-        ///////////////////////////
-        ///////////////////////////
-        ///////////////////////////
-        ///////////////////////////
-/*
+////////////////////////////////////////////////////////////////////////////////
         if ( prim.name === 'colored cube' ) {
 
-            console.log("DISPLAYING COLORED CUBE")
+            console.log("SUBDIVIDING CUBE")
             // Sending in texture coords and normals speeds subdivision calculation.
 
-            let divided = this.morph.computeSubdivide( vertices, indices, texCoords, true );
+            let divided = this.morph.computeSubdivide( vertices, indices, texCoords, true, true );
+
+            // OK
+            /////////divided = this.morph.computeSubdivide( divided.vertices, divided.indices, divided.texCoords, true )
 
             vertices = divided.vertices;
             indices = divided.indices;
@@ -2448,11 +2447,7 @@ class Prim {
             // TODO: TEST COORDS
 
         }
-*/
-        //////////////////////////
-        //////////////////////////
-        //////////////////////////
-        /////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
         // Return the buffer.
 
