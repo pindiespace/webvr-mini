@@ -186,6 +186,49 @@ class Vertex {
     }
 
     /** 
+     * Given another Vertex, common Vertices they  
+     * share via an Edge.
+     */
+    getCommonVertex( other ) {
+
+        let vtxArr = [];
+
+        let commonArr = [];
+
+        // Get the Vertices in the Edges that don't match us (this) or other
+
+        for ( let i = 0; i < this.fEdges.length; i++ ) {
+
+            let v = this.fEdges[ i ].getOtherVertex( this );
+
+            if ( v  && v !== other ) {
+
+                vtxArr.push( v );
+
+            }
+
+        }
+
+        // We now have a list of Vertex objects connected by Edges to 
+        // this Vertex. Find out if other shares any of these Vertices.
+
+        for ( let i = 0; i < other.fEdges.length; i++ ) {
+
+            let v = other.fEdges[ i ].getOtherVertex( other );
+
+            if( v && vtxArr.indexOf( v ) !== -1 ) {
+
+                commonArr.push( v );
+
+            }
+
+        }
+
+        return commonArr;
+
+    }
+
+    /** 
      * average length of the Edges we are connected to...
      */
     getAverageDistance () {
@@ -375,6 +418,53 @@ class Vertex {
         }
 
         return true;
+
+    }
+
+    /** 
+     * Remove any Edge in our list which shares
+     * the two supplied Vertex objects, and swap in a new Edge.
+     * @param {Vertex} v1 the first Vertex.
+     * @param {Vertex} v2 the second Vertex.
+     * @returns {Boolean} of Edge found and removed, return true, else false.
+     */
+    swapEdge ( v1, v2, edge ) {
+
+        let swapFlag = false;
+
+        for ( let i = 0; i < this.fEdges.length; i++ ) {
+
+            let edge = this.fEdges[ i ];
+
+            if (edge.v1 === v1 && edge.v2 === v2 || 
+
+                edge.v2 === v1 && edge.v1 === v2 ) {
+
+                this.fEdges[ i ] = edge;
+
+                swapFlag = true;
+
+            }
+
+        }
+
+        for ( let i = 0; i < this.oEdges.length; i++ ) {
+
+            let edge = this.oEdges[ i ];
+
+            if ( edge.v1 === v1 && edge.v2 === v2 || 
+
+                edge.v2 === v1 && edge.v1 === v2 ) {
+
+                this.fEdges[ i ] = edge;
+
+                swapFlag = true;
+
+            }
+
+        }
+
+        return swapFlag;
 
     }
 

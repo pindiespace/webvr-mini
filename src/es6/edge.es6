@@ -97,6 +97,42 @@ class Edge {
     }
 
     /** 
+     * Given a test Vertex, return the other Vertex of the Edge.
+     * @param {Vertex} vtx the test Vertex.
+     * @returns {Vertex|false} if we find the supplied Vertex, return the 
+     * other Vertex, otherwise return false.
+     */
+    getOtherVertex( vtx ) {
+
+        if ( this.v1 === vtx ) return this.v2;
+
+        if ( this.v2 === vtx ) return this.v1;
+
+        return false;
+
+    }
+
+    /** 
+     * Given another Edge, find if a common Vertex is shared, either 
+     * first (forward) or second (backward) winding.
+     * @param {Edge} other another Edge
+     * @returns {Vertex|false} if a common Vertex is found, return it, else false
+     */
+    commonVertex( other ) {
+
+        if ( other.v1 === this.v1 ) return this.v1;
+
+        if ( other.v2 === this.v1 ) return this.v1;
+
+        if ( other.v2 === this.v2 ) return this.v2;
+
+        if ( other.v1 === this.v2 ) return this.v2;
+
+        return false;
+
+    }
+
+    /** 
      * Determine if two Edges share the same Coords (object reference, not value).
      * @param {Edge} other another Edge object
      * @param {Boolen} sameWind if set to true, objects have to have the same Coords 
@@ -136,7 +172,7 @@ class Edge {
     }
 
     /**
-     * Compute midpoint of the two Vertex objects
+     * Compute midpoint of the two Vertex objects creating the Edge.
      * @returns {Vertex} this midpoint for position AND texture coordiantes.
      */
     midPoint () {

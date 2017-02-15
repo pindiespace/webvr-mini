@@ -9410,6 +9410,47 @@
 	        }
 
 	        /** 
+	         * Given another Vertex, common Vertices they  
+	         * share via an Edge.
+	         */
+
+	    }, {
+	        key: 'getCommonVertex',
+	        value: function getCommonVertex(other) {
+
+	            var vtxArr = [];
+
+	            var commonArr = [];
+
+	            // Get the Vertices in the Edges that don't match us (this) or other
+
+	            for (var i = 0; i < this.fEdges.length; i++) {
+
+	                var v = this.fEdges[i].getOtherVertex(this);
+
+	                if (v && v !== other) {
+
+	                    vtxArr.push(v);
+	                }
+	            }
+
+	            // We now have a list of Vertex objects connected by Edges to 
+	            // this Vertex. Find out if other shares any of these Vertices.
+
+	            for (var _i2 = 0; _i2 < other.fEdges.length; _i2++) {
+
+	                var _v = other.fEdges[_i2].getOtherVertex(other);
+
+	                if (_v && vtxArr.indexOf(_v) !== -1) {
+
+	                    commonArr.push(_v);
+	                }
+	            }
+
+	            return commonArr;
+	        }
+
+	        /** 
 	         * average length of the Edges we are connected to...
 	         */
 
@@ -9614,6 +9655,47 @@
 	            }
 
 	            return true;
+	        }
+
+	        /** 
+	         * Remove any Edge in our list which shares
+	         * the two supplied Vertex objects, and swap in a new Edge.
+	         * @param {Vertex} v1 the first Vertex.
+	         * @param {Vertex} v2 the second Vertex.
+	         * @returns {Boolean} of Edge found and removed, return true, else false.
+	         */
+
+	    }, {
+	        key: 'swapEdge',
+	        value: function swapEdge(v1, v2, edge) {
+
+	            var swapFlag = false;
+
+	            for (var i = 0; i < this.fEdges.length; i++) {
+
+	                var _edge = this.fEdges[i];
+
+	                if (_edge.v1 === v1 && _edge.v2 === v2 || _edge.v2 === v1 && _edge.v1 === v2) {
+
+	                    this.fEdges[i] = _edge;
+
+	                    swapFlag = true;
+	                }
+	            }
+
+	            for (var _i3 = 0; _i3 < this.oEdges.length; _i3++) {
+
+	                var _edge2 = this.oEdges[_i3];
+
+	                if (_edge2.v1 === v1 && _edge2.v2 === v2 || _edge2.v2 === v1 && _edge2.v1 === v2) {
+
+	                    this.fEdges[_i3] = _edge2;
+
+	                    swapFlag = true;
+	                }
+	            }
+
+	            return swapFlag;
 	        }
 
 	        /** 
@@ -9827,6 +9909,46 @@
 	        }
 
 	        /** 
+	         * Given a test Vertex, return the other Vertex of the Edge.
+	         * @param {Vertex} vtx the test Vertex.
+	         * @returns {Vertex|false} if we find the supplied Vertex, return the 
+	         * other Vertex, otherwise return false.
+	         */
+
+	    }, {
+	        key: 'getOtherVertex',
+	        value: function getOtherVertex(vtx) {
+
+	            if (this.v1 === vtx) return this.v2;
+
+	            if (this.v2 === vtx) return this.v1;
+
+	            return false;
+	        }
+
+	        /** 
+	         * Given another Edge, find if a common Vertex is shared, either 
+	         * first (forward) or second (backward) winding.
+	         * @param {Edge} other another Edge
+	         * @returns {Vertex|false} if a common Vertex is found, return it, else false
+	         */
+
+	    }, {
+	        key: 'commonVertex',
+	        value: function commonVertex(other) {
+
+	            if (other.v1 === this.v1) return this.v1;
+
+	            if (other.v2 === this.v1) return this.v1;
+
+	            if (other.v2 === this.v2) return this.v2;
+
+	            if (other.v1 === this.v2) return this.v2;
+
+	            return false;
+	        }
+
+	        /** 
 	         * Determine if two Edges share the same Coords (object reference, not value).
 	         * @param {Edge} other another Edge object
 	         * @param {Boolen} sameWind if set to true, objects have to have the same Coords 
@@ -9869,7 +9991,7 @@
 	        }
 
 	        /**
-	         * Compute midpoint of the two Vertex objects
+	         * Compute midpoint of the two Vertex objects creating the Edge.
 	         * @returns {Vertex} this midpoint for position AND texture coordiantes.
 	         */
 
@@ -10553,6 +10675,7 @@
 	         * present, just add to the index array. Otherwise, push the 
 	         * midpoint to the Vertex array, and push its position to 
 	         * the Index array.
+	         * 
 	         */
 
 	    }, {
@@ -10582,11 +10705,32 @@
 
 	                m0 = v0.midPoint(v1);
 
-	                m0.idx = key; // original i0-i1
+	                m0.idx = vertexArr.length - 1;
 
 	                m0.isEven = false; // an 'odd' Vertex
 
+	                // Push the new Vertex
+
 	                vertexArr.push(m0);
+
+	                // get the 4 Vertex objects associated with an 'odd' Vertex
+
+	                // Edges
+
+	                m0.setEdge(new _edge2.default(idx0, m0.idx, vertexArr));
+	                m0.setEdge(new _edge2.default(m0.idx, idx1, vertexArr));
+
+	                var common = v0.getCommonVertex(v1);
+
+	                //m0.setEdge( new Edge( common[ 0 ], m0, vertexArr ) );
+	                //m0.setEdge( new Edge( m0, common[ 1 ], vertexArr ) );
+
+
+	                // Reset the Even Vertex objects to use the new midpoint as an Edge.
+	                /*
+	                    v0.swapEdge( v0, v1, new Edge( v0, m0 ) );
+	                    v1.swapEdge( v0, v1, new Edge( m0, v1 ) );
+	                */
 
 	                // return the index of the added Vertex
 
@@ -10656,7 +10800,7 @@
 
 	                var mi2 = this.addMidPoint(v2.idx, v0.idx, vertexArr, this.midArr);
 
-	                // now, push the updated indexlist ot mIndexArr, even and odd Vertex objects.
+	                // now, push the updated indexlist to mIndexArr, even and odd Vertex objects.
 
 	                // Pure midpoints, makes holes surrounded by stars - works!
 	                // mIndexArr.push( mi0, mi1, mi2 );
@@ -10788,6 +10932,11 @@
 	    }, {
 	        key: 'smooth',
 	        value: function smooth() {
+
+	            // Loop through the odd Vertex objects
+
+	            // Loop through the even Vertex objects
+
 
 	            return this;
 	        }

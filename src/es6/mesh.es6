@@ -172,6 +172,7 @@ class Mesh {
      * present, just add to the index array. Otherwise, push the 
      * midpoint to the Vertex array, and push its position to 
      * the Index array.
+     * 
      */
     addMidPoint ( idx0, idx1, vertexArr, midArr ) {
 
@@ -199,11 +200,35 @@ class Mesh {
 
                 m0 = v0.midPoint( v1 );
 
-                m0.idx = key;      // original i0-i1
+                m0.idx = vertexArr.length - 1;
 
                 m0.isEven = false; // an 'odd' Vertex
 
+                // Push the new Vertex
+
                 vertexArr.push( m0 );
+
+                // get the 4 Vertex objects associated with an 'odd' Vertex
+
+                // Edges
+
+                m0.setEdge( new Edge( idx0, m0.idx, vertexArr ) );
+                m0.setEdge( new Edge( m0.idx, idx1, vertexArr ) );
+
+                let common = v0.getCommonVertex( v1 );
+
+                //m0.setEdge( new Edge( common[ 0 ], m0, vertexArr ) );
+                //m0.setEdge( new Edge( m0, common[ 1 ], vertexArr ) );
+
+
+
+
+                // Reset the Even Vertex objects to use the new midpoint as an Edge.
+                /*
+                    v0.swapEdge( v0, v1, new Edge( v0, m0 ) );
+                    v1.swapEdge( v0, v1, new Edge( m0, v1 ) );
+                */
+
 
                 // return the index of the added Vertex
 
@@ -254,6 +279,7 @@ class Mesh {
 
             let i2 = indexArr[ i + 2 ];
 
+
             let v0 = vertexArr[ i0 ];
 
             let v1 = vertexArr[ i1 ];
@@ -274,8 +300,7 @@ class Mesh {
 
             let mi2 = this.addMidPoint( v2.idx, v0.idx, vertexArr, this.midArr );
 
-
-            // now, push the updated indexlist ot mIndexArr, even and odd Vertex objects.
+            // now, push the updated indexlist to mIndexArr, even and odd Vertex objects.
 
             // Pure midpoints, makes holes surrounded by stars - works!
             // mIndexArr.push( mi0, mi1, mi2 );
@@ -412,6 +437,12 @@ class Mesh {
      * smooth a Mesh, when new Vertex objects have been added. 
      */
     smooth () {
+
+
+        // Loop through the odd Vertex objects
+
+        // Loop through the even Vertex objects
+
 
 
 
