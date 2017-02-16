@@ -11,11 +11,13 @@ class Mesh {
 
     constructor ( vertexArr = [], indexArr = [], edgeArr = [], triArr = [], quadArr = [] ) {
 
-        // reading order: i1, i2, i3, i1, i3, i4
+        // Index reading order: i1, i2, i3, i1, i3, i4
 
         this.vertexArr = vertexArr;
 
         this.indexArr = indexArr;
+
+        this.tempMidArr = [];
 
         this.edgeArr = edgeArr;
 
@@ -23,7 +25,56 @@ class Mesh {
 
         this.quadArr = quadArr;
 
+        // Add the initial, computable Edge Vertices and Control Vertices
+
+        this.initVertexEdges();
+
+        this.notSmoothed = false; // by default
+
     }
+
+    /** 
+     * Initialize 3 arrays for vertex neighbors
+     * Vertex.prev = array of previous Vertex objects, as defined by indexArr
+     * Vertex.next = array of next Vertex objects, as defined by indexArr
+     * Vertex.control = unique-ified combo of .prev and .next arrays
+     */
+    initVertexEdges () {
+
+        let indexArr = this.indexArr;
+
+        let vertexArr = this.vertexArr;
+
+        // Set previous and next Vertex 
+
+        let len = indexArr.length;
+
+        for ( let i = 0; i < len; i++ ) {
+
+            let v = vertexArr[ indexArr[ i ] ];
+
+            // Create a linked list of Vertices in triangle drawing order.
+
+           if ( i - 1 > 0 ) {
+
+                let prev = vertexArr[ indexArr[ i - 1 ] ];
+
+                v.addPrevVertex ( prev );
+
+           }
+
+           if ( i + 1 < len ) {
+
+                let next = vertexArr[ indexArr[ i + 1 ] ];
+
+                v.addNextVertex( next );
+
+           }
+
+        }
+
+    }
+
 
     /** 
      * Find the edges of a Mesh which is not closed (e.g., some Vertex objects 
@@ -185,12 +236,14 @@ class Mesh {
         let idx = -1;
 
         let m0 = vertexArr[ key ];
-            
-        let m1 = vertexArr[ revKey ];
 
-        if ( midArr[ revKey ] ) {
+        if ( midArr[ revKey ] ) { // only the revKey shows up as previously present
 
             idx = midArr[ revKey ];
+
+        } else if ( midArr[ key ] ) { // key never exists!
+
+            idx = midArr[ key ];
 
         } else {
 
@@ -204,37 +257,63 @@ class Mesh {
 
                 m0.isEven = false; // an 'odd' Vertex
 
-                // Push the new Vertex
+                m0.isOdd = true;
+
+                // Add .prev and .next to the new midpoint, also .control.
+
+                m0.addPrevVertex( v0 );
+
+                m0.addNextVertex( v1 );
+
+                // Get the third Vertex between v0 and v1 (forming a triangle)
+
+                let c1 = v0.getCommonControlVertex( v1 );
+
+                let c2 = v1.getCommonControlVertex( v0 );
+
+                //  Uniqueify the discovered triangle Vertex lists
+
+                for ( let i = 0; i < c1.length; i++  ) {
+
+                    let cc = c1[ i ];
+
+                    if ( c2.indexOf( cc ) === -1 ) {
+
+                        c2.push( cc );
+
+                    }
+
+                }
+
+                // Add the third and fourth control point for the midpoint (opposite triangle Vertices)
+
+                m0.addControlVertex( c2[ 0 ] );
+
+                m0.addControlVertex( c2[ 1 ] );
+
+                // Adjust Prev, Next, Vertices in original Vertices, so they use the midpoint.
+                // IN THEORY everything attached should be a midpont after this runs.
+                // NOTE
+                // NOTE
+                // NOTE CHECK IF THIS IS TRUE!!!!
+
+                v0.swapNextVertex( v1, m0 );
+
+                v1.swapPrevVertex( v0, m0 );
+
+                // Clone the midpoint into the tempMidpointArr (needed for smoothing)
+
+                this.tempMidArr.push( m0.clone() );
+
+                // Push the new Vertex.
 
                 vertexArr.push( m0 );
 
-                // get the 4 Vertex objects associated with an 'odd' Vertex
-
-                // Edges
-
-                m0.setEdge( new Edge( idx0, m0.idx, vertexArr ) );
-                m0.setEdge( new Edge( m0.idx, idx1, vertexArr ) );
-
-                let common = v0.getCommonVertex( v1 );
-
-                //m0.setEdge( new Edge( common[ 0 ], m0, vertexArr ) );
-                //m0.setEdge( new Edge( m0, common[ 1 ], vertexArr ) );
-
-
-
-
-                // Reset the Even Vertex objects to use the new midpoint as an Edge.
-                /*
-                    v0.swapEdge( v0, v1, new Edge( v0, m0 ) );
-                    v1.swapEdge( v0, v1, new Edge( m0, v1 ) );
-                */
-
-
-                // return the index of the added Vertex
+                // Return the index of the added Vertex.
 
                 idx = vertexArr.length - 1;
 
-                // Map the idx of the midpoint to its position in vertexArr
+                // Map the index of the midpoint to its position in vertexArr (added to the end).
 
                 midArr[ key ] = idx;
 
@@ -257,6 +336,8 @@ class Mesh {
 
         this.oldIndexArr = indexArr.slice( 0 );
 
+        // Holds the index value for each new midpoint in the vertexArr (used to recompute index array)
+
         this.midArr = [];
 
          // Create a new array of Midpoint objects, with starting position in Vertex labeled.
@@ -273,12 +354,15 @@ class Mesh {
 
         for ( let i = 0; i < indexArr.length - 3; i += 3 ) {
 
+            // Indices from index array (define the triangles)
+
             let i0 = indexArr[ i + 0 ];
 
             let i1 = indexArr[ i + 1 ];
 
             let i2 = indexArr[ i + 2 ];
 
+            // Get the Vertices from the index array
 
             let v0 = vertexArr[ i0 ];
 
@@ -336,6 +420,8 @@ class Mesh {
             );
 
         }
+
+        this.notSmoothed = true;
 
         this.indexArr = mIndexArr;
 
@@ -438,13 +524,23 @@ class Mesh {
      */
     smooth () {
 
+        if ( this.notSmoothed ) {
 
-        // Loop through the odd Vertex objects
+        // TODO:
 
-        // Loop through the even Vertex objects
+        // this.tempMidArr has clones of the midpoints for the second adjustment step
 
+        // Use control points to adjust (odd) midpoint Vertices
 
+        // Use original midpoint values to adjust even Vertices
 
+        // Reset mesh to smoothed, remove temporary arrays
+
+        } else {
+
+            console.error( 'mesh::smooth() already smoothed' );
+
+        }
 
         return this;
 

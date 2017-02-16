@@ -64,6 +64,9 @@ class Morph {
 
         }
 
+        let mesh = new Mesh( vertexArr, indexArr, edgeArr, triArr, quadArr, edgeMeshArr );
+
+
         /*  
          * create Edges, referring to vertices by their index.
          *
@@ -198,7 +201,7 @@ class Morph {
         let quadArr = [];
 
 
-        let mesh = new Mesh( vertexArr, indexArr, edgeArr, triArr, quadArr, edgeMeshArr );
+        // mesh = new Mesh( vertexArr, indexArr, edgeArr, triArr, quadArr, edgeMeshArr );
 
         // Find Vertex objects missing neighbors.
 

@@ -32,6 +32,15 @@ class Vertex {
 
         this.vertexArr = vertexArr;
 
+        // Previous and next Vertex in index array.
+
+        this.prev = [];
+
+        this.next = [];
+
+        this.control = [];
+
+        // OLD
         // Hash
         // forward with our drawing (counter-clockwise), we are the first Vertex in the Edge.
 
@@ -39,7 +48,7 @@ class Vertex {
 
         // backwards, we are the second Vertex in the Edge.
 
-        this.oEdges = []; 
+        this.oEdges = [];
 
         this.prevEdge = null;
 
@@ -51,7 +60,13 @@ class Vertex {
 
         this.idx = i1;
 
-        this.isEven = isEven;
+        // Assign even (original Vertex) or midpoint in subdivide (odd Vertex)
+
+        this.isEven = isEven;  // Standard Vertex
+
+        this.isOdd = ! isEven; // A Vertex just created as a midpoint in a subdivision
+
+        this.isBogus = false; // temporary Vertices created for Mesh calculations
 
         this.averageDistance = 0; // average distance to next Vertex
 
@@ -72,6 +87,159 @@ class Vertex {
         }
 
         return false;
+    }
+
+    /** 
+     * Add a Vertex point that can be used to adjust this Vertex position during 
+     * a subdivision. After subdivision, edgeVertices = controlVertices. But 
+     * when a midpoint is created, they differ.
+     * NOTE: when a .prev or .next Vertex is added, they are added to 
+     * the .control Vertex list if they are new.
+     * @param {Vertex} vtx the Vertex to add.
+     * @returns {Boolean} if added, return true, else false.
+     */
+    addControlVertex( vtx ) {
+
+        if ( vtx !== this && this.control.indexOf( vtx ) === -1 ) {
+
+            this.control.push( vtx );
+
+            return true;
+
+        }
+
+        return false;
+    }
+
+    /** 
+     * Add a Vertex which is previous (in drawing order) to this Vertex.
+     * Updates .prev and .control Vertex arrays.
+     * @param {Vertex} vtx the Vertex to add.
+     * @param {Boolean} if added, return true, else false.
+     */
+    addPrevVertex ( vtx ) {
+
+        if ( vtx !== this && this.prev.indexOf( vtx ) === -1 ) {
+
+            this.prev.push( vtx );
+
+            this.addControlVertex( vtx );
+
+            return true;
+
+        }
+
+        return false;
+
+    }
+
+    /** 
+     * Add a Vertex which is next (in drawing order) to this Vertex
+     * Updates .next and .control Vertex arrays.
+     * @param {Vertex} vtx the Vertex to add.
+     */
+    addNextVertex ( vtx ) {
+
+        if ( vtx !== this && this.next.indexOf( vtx ) === -1 ) {
+
+            this.next.push( vtx );
+
+            this.addControlVertex( vtx );
+
+            return true;
+
+        }
+
+        return false;
+
+    }
+
+    /** 
+     * Given an old and new Vertex, swap them in the .prev list.
+     * DOES NOT change .control Vertex list
+     * @param {Vertex} vtxOld the Vertex to find.
+     * @param {Vertex} vtxNew the Vertex to swap.
+     * @param {Boolean} if swapped, return true, else false.
+     */
+    swapPrevVertex( vtxOld, vtxNew ) {
+
+        let prev = this.prev;
+
+        for ( let i = 0; i < prev.length; i++ ) {
+
+            if ( prev[ i ] === vtxOld ) {
+
+                prev[ i ] = vtxNew;
+
+                return true;
+
+            }
+
+        }
+
+        return false;
+
+    }
+
+    /**
+     * Given an old and new Vertex, swap them in the .next list.
+     * DOES NOT change .control Vertex list.
+     * @param {Vertex} vtxOld the Vertex to find.
+     * @param {Vertex} vtxNew the Vertex to swap.
+     * @param {Boolean} if swapped, return true, else false.
+     */
+    swapNextVertex( vtxOld, vtxNew ) {
+
+        let next = this.next;
+
+        for ( let i = 0; i < next.length; i++ ) {
+
+            if ( next[ i ] === vtxOld ) {
+
+                next[ i ] = vtxNew;
+
+                return true;
+
+            }
+
+        }
+
+        return false;
+
+    }
+
+    /** 
+     * given two Vertex objects, get a common Vertex they both 
+     * are linked to in their Control Vertex array.
+     * @param {Vertex} vtx an additional Vertex forming an edge.
+     * @returns {Array} list of common vertices connected to this and the other vtx
+     */
+    getCommonControlVertex ( vtx ) {
+
+        let common = [];
+
+        for ( let i = 0; i < this.control.length; i++ ) {
+
+            for ( let j = 0; j < vtx.control.length; j++ ) {
+
+                if ( this.control [ i ] === vtx.control[ j ] ) {
+
+                    // Return the added Control Vertex
+
+                    if ( common.indexOf( this.control[ i ] === -1 ) ) {
+
+                        common.push( this.control[ i ] );
+
+                    }
+
+                }
+
+            }
+
+        }
+
+        return common;
+
     }
 
     /** 

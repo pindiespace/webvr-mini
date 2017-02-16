@@ -382,10 +382,34 @@ class Util {
 
     }
 
+    concatUniqueArr ( ...arrs ) {
+
+        let unique = [];
+
+        for ( let i = 0; i < arrs.length; i++ ) {
+
+            let arr = arrs[ i ];
+
+            for ( let j = 0; j < arr.length; j++ ) {
+
+                if ( unique.indexOf( arr[ j ] === -1 ) ) {
+
+                    unique.push( arr[ j ] );
+
+                }
+
+            }
+
+        }
+
+        return unique;
+
+    };
+
     /** 
      * Random seed.
      */
-    getSeed() {
+    getSeed () {
 
         let number;
 
