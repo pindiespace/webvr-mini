@@ -1,6 +1,6 @@
 import Map2d from './map2d';
 import Map3d from './map3d';
-import Morph from './morph';
+import Mesh from  './mesh';
 
 class Prim {
 
@@ -117,10 +117,6 @@ class Prim {
         this.loadAudio = loadAudio;
 
         this.loadVideo = loadVideo;
-
-        // If we need distortion and smoothing for the Prims
-
-        this.morph = new Morph( true, util, glMatrix );
 
         this.objs = [];
 
@@ -2434,14 +2430,16 @@ class Prim {
             console.log("SUBDIVIDING CUBE")
             // Sending in texture coords and normals speeds subdivision calculation.
 
-            let divided = this.morph.computeSubdivide( vertices, indices, texCoords, true, true );
+            let divided = new Mesh( vertices, indices, texCoords );
+
+            //////////let divided = this.morph.computeSubdivide( vertices, indices, texCoords, true, true );
 
             // OK
             /////////divided = this.morph.computeSubdivide( divided.vertices, divided.indices, divided.texCoords, true )
 
-            vertices = divided.vertices;
-            indices = divided.indices;
-            texCoords = divided.texCoords;
+            //////vertices = divided.vertices;
+            //////indices = divided.indices;
+            //////texCoords = divided.texCoords;
             //normals = this.computeNormals( vertices, indices, normals );
 
             // TODO: TEST COORDS
@@ -2816,14 +2814,14 @@ class Prim {
             console.log("SUBDIVIDING ICOSPHERE")
             // Sending in texture coords and normals speeds subdivision calculation.
 
-            let divided = this.morph.computeSubdivide( vertices, indices, texCoords, true, true );
+            ///////let divided = this.morph.computeSubdivide( vertices, indices, texCoords, true, true );
 
             // OK
             /////////divided = this.morph.computeSubdivide( divided.vertices, divided.indices, divided.texCoords, true )
 
-            vertices = divided.vertices;
-            indices = divided.indices;
-            texCoords = divided.texCoords;
+            ///////vertices = divided.vertices;
+            //////indices = divided.indices;
+            /////texCoords = divided.texCoords;
             //normals = this.computeNormals( vertices, indices, normals );
 
             // TODO: TEST COORDS
@@ -3680,7 +3678,7 @@ class Prim {
 
         prim.moveVertices = ( pos ) => { this.computeMove( scale, prim.geometry.vertices ); };
 
-        prim.morphVertices = ( newGeometry, easing ) => { this.morph( newGeometry, easing, prim.geometry ); };
+        //prim.morphVertices = ( newGeometry, easing ) => { this.morph( newGeometry, easing, prim.geometry ); };
 
         // Waypoints for scripted motion or timelines.
 
