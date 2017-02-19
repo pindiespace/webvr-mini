@@ -677,27 +677,27 @@
 	                 * Get a succession of values from a flat array
 	                 * @param {Array} arr a flat array.
 	                 * @param {Number} idx index into the array.
-	                 * @param {Number} size number of elements to get. This is 
+	                 * @param {Number} stride number of elements to get. This is 
 	                 * also assumed to be the 'stride' through the array.
 	                 * @returns {Array} requested elements in an Array.
 	                 */
 
 	        }, {
 	                key: 'getArr',
-	                value: function getArr(arr, idx, size) {
+	                value: function getArr(arr, idx, stride) {
 
-	                        if (!arr || idx < 0 || size < 1) {
+	                        if (!arr || idx < 0 || stride < 1) {
 
-	                                console.error('getArr() invalid params, arr:' + arr + ', index:' + idx + ' size:' + size);
+	                                console.error('getArr() invalid params, arr:' + arr + ', index:' + idx + ' stride:' + stride);
 
 	                                return -1;
 	                        }
 
 	                        var o = [];
 
-	                        for (var i = 2; i < size; i++) {
+	                        for (var i = 2; i < stride; i++) {
 
-	                                o.push(arr[idx * size + i]);
+	                                o.push(arr[idx * stride + i]);
 	                        }
 
 	                        return o;
@@ -705,7 +705,7 @@
 
 	                /** 
 	                 * Get an object from a 2d array. Supply a variable list of 
-	                 * values. The number of values is assumed to be the 'walk' size 
+	                 * values. The number of values is assumed to be the 'walk' stride 
 	                 * for the array.
 	                 * @param {Array} arr a flat array.
 	                 * @param {Number} index the stride into 2d array.
@@ -726,11 +726,11 @@
 	                                return -1;
 	                        }
 
-	                        var size = alen - 2;
+	                        var stride = alen - 2;
 
 	                        for (var i = 2; i < alen; i++) {
 
-	                                arr[idx * size + i] - arguments[i];
+	                                arr[idx * stride + i] - arguments[i];
 	                        }
 
 	                        return idx; // ending position 
@@ -790,26 +790,26 @@
 	                /** 
 	                 * Given a flat array, convert to multi-dimensional.
 	                 * @param {Array} original (flattened) array.
-	                 * @param {Number} subSize the 'chunk' of the array being put into a sub-array.
-	                 * @returns{Array} a 2-dimensional array with each element in the second dimension of subSize length.
+	                 * @param {Number} stride the 'chunk' of the array being put into a sub-array.
+	                 * @returns{Array} a 2-dimensional array with each element in the second dimension of stride length.
 	                 */
 
 	        }, {
 	                key: 'unFlatten',
-	                value: function unFlatten(arr, subSize) {
+	                value: function unFlatten(arr, stride) {
 
 	                        var ct = 0,
 	                            ct2 = 0;
 
 	                        var nodes = []; // multi-dimensional
 
-	                        var sub = new Array(arr.length / subSize);
+	                        var sub = new Array(arr.length / stride);
 
-	                        for (var i = 0; i < arr.length; i += subSize) {
+	                        for (var i = 0; i < arr.length; i += stride) {
 
-	                                var a = new Array(subSize);
+	                                var a = new Array(stride);
 
-	                                for (var j = 0; j < subSize; j++) {
+	                                for (var j = 0; j < stride; j++) {
 
 	                                        a[j] = arr[ct2++];
 	                                }
@@ -905,7 +905,9 @@
 
 	                                for (var j = 0; j < arr.length; j++) {
 
-	                                        if (unique.indexOf(arr[j] === -1)) {
+	                                        if (!arr[j] in unique) {
+
+	                                                ////////if ( unique.indexOf( arr[ j ] === -1 ) ) {
 
 	                                                unique.push(arr[j]);
 	                                        }
@@ -4411,7 +4413,7 @@
 	normals=this.computeNormals(vertices,indices,normals);console.log(" IN CUBE NORMALS NOW ARE...."+normals.length);////////////////////////////////////////////////////////////////////////////////
 	if(prim.name==='colored cube'){console.log("SUBDIVIDING CUBE");// Sending in texture coords and normals speeds subdivision calculation.
 	var mesh=new _mesh2.default(vertices,indices,texCoords);//for ( let i = 0; i < indices.length; i++ ) console.log("orig indices " + i + ' :' + indices[i])
-	var divided=mesh.vertexToGeometry();window.mesh=mesh;vertices=divided.vertices;indices=divided.indices;texCoords=divided.texCoords;//normals = this.computeNormals( vertices, indices, normals );
+	mesh.subdivide();var divided=mesh.vertexToGeometry();vertices=divided.vertices;indices=divided.indices;texCoords=divided.texCoords;//normals = this.computeNormals( vertices, indices, normals );
 	// TODO: TEST COORDS
 	}////////////////////////////////////////////////////////////////////////////////
 	// Return the buffer.
@@ -4529,17 +4531,30 @@
 	createTangents(vertices,tangents);if(radius!=1){for(i=0;i<vertices.length;i++){vertices[i][0]*=radius;vertices[i][1]*=prim.dimensions[1]/2;//radius;
 	vertices[i][2]*=prim.dimensions[2]/2;//radius;
 	}}// Flatten the data arrays.
-	vertices=flatten(vertices,false);texCoords=flatten(texCoords,false);normals=flatten(normals,false);tangents=flatten(tangents,false);//////////////////////////////////////////////////////////////////////////////
-	if(prim.name==='icosphere'){console.log("SUBDIVIDING ICOSPHERE");// Sending in texture coords and normals speeds subdivision calculation.
-	///////let divided = this.morph.computeSubdivide( vertices, indices, texCoords, true, true );
-	// OK
-	/////////divided = this.morph.computeSubdivide( divided.vertices, divided.indices, divided.texCoords, true )
-	///////vertices = divided.vertices;
-	//////indices = divided.indices;
-	/////texCoords = divided.texCoords;
-	//normals = this.computeNormals( vertices, indices, normals );
-	// TODO: TEST COORDS
-	}////////////////////////////////////////////////////////////////////////////////
+	vertices=flatten(vertices,false);texCoords=flatten(texCoords,false);normals=flatten(normals,false);tangents=flatten(tangents,false);////////////////////////////////////////////////////////////////////////////////
+	/*
+	        if ( prim.name === 'icosphere' ) {
+
+	            console.log("SUBDIVIDING CUBE")
+	            // Sending in texture coords and normals speeds subdivision calculation.
+
+	            let mesh = new Mesh( vertices, indices, texCoords );
+
+	            //for ( let i = 0; i < indices.length; i++ ) console.log("orig indices " + i + ' :' + indices[i])
+
+	            let divided = mesh.vertexToGeometry();
+
+	            window.mesh = mesh;
+
+	            vertices = divided.vertices;
+	            indices = divided.indices;
+	            texCoords = divided.texCoords;
+	            //normals = this.computeNormals( vertices, indices, normals );
+
+	            // TODO: TEST COORDS
+
+	        }
+	*/////////////////////////////////////////////////////////////////////////////////
 	// Helper functions.
 	// Create UV texCoords.
 	function createUV(vertices,uv){var previousX=1;for(i=0;i<vertices.length;i++){v=vertices[i];if(v[0]==previousX){// was v.x
@@ -5796,6 +5811,8 @@
 
 	                this.idx = idx;
 
+	                this.e = []; // Edge array
+
 	                this.vertexArr = vertexArr;
 	        }
 
@@ -5827,22 +5844,71 @@
 	        return Vertex;
 	}(); // End of class.
 
-	var Edge =
+	var Edge = function () {
 
-	/** 
-	 * Edge, storing two consecutive Vertex objects
-	 */
-	function Edge() {
-	        _classCallCheck(this, Edge);
-	};
+	        /** 
+	         * Edge, storing two consecutive Vertex objects
+	         * @param {Number} i0 index of first consecutive Vertex
+	         * @param {Number} i0 index of second consecutive Vertex
+	         */
+	        function Edge(i0, i1, i2, fi, idx) {
+	                _classCallCheck(this, Edge);
+
+	                // Index of first and second Vertex.
+
+	                this.v = new Uint32Array(2);
+
+	                this.v[0] = i0;
+
+	                this.v[1] = i1;
+
+	                // Index of first and second Face connected to this edge (only know first one at this point).
+
+	                this.f = new Uint32Array(2);
+
+	                this.f[0] = fi;
+
+	                this.f[1] = 4294967295;
+
+	                // Index of the opposite Vertex (forming triangle) connected to this Edge (only know first one at this point).
+
+	                this.ov = new Uint32Array(2);
+
+	                this.ov[0] = i2;
+
+	                this.ov[1] = i2;
+
+	                this.idx = idx; // key in edgeMap hash
+	        }
+
+	        _createClass(Edge, [{
+	                key: 'getOpposite',
+	                value: function getOpposite(vi) {
+
+	                        return this.v[0] == vi ? this.v[1] : this.v[0];
+	                }
+	        }]);
+
+	        return Edge;
+	}();
 
 	var Face =
 
 	/** 
-	 * Face, storing three consecttive Vertex objects
+	 * Face, storing three consecutive Vertex objects
 	 */
-	function Face() {
+	function Face(e0, e1, e2, idx) {
 	        _classCallCheck(this, Face);
+
+	        this.e = new Uint32Array(3);
+
+	        this.e[0] = e0;
+
+	        this.e[1] = e1;
+
+	        this.e[2] = e2;
+
+	        this.idx = idx;
 	};
 
 	var Mesh = function () {
@@ -5856,7 +5922,15 @@
 	        function Mesh(vertices, indices, texCoords) {
 	                _classCallCheck(this, Mesh);
 
-	                // Index reading order: i1, i2, i3, i1, i3, i4
+	                // Original flattened arrays.
+
+	                this.vertices = vertices;
+
+	                this.indices = indices;
+
+	                this.texCoords = texCoords;
+
+	                // Mesh arrays
 
 	                this.vertexArr = [];
 
@@ -5868,15 +5942,21 @@
 
 	                this.faceArr = [];
 
+	                this.vWeights = [];
+
+	                // Keep the original Vertex data when transforming mesh.
+
+	                this.oldVertexArr = [];
+
+	                // Control flags.
+
 	                this.notSmoothed = false; // by default
 
-	                // Keep these to test validity
+	                this.badIndex32 = 4294967294;
 
-	                this.vertices = vertices;
+	                // Convert flattened arrays
 
-	                this.indices = indices;
-
-	                this.texCoords = texCoords;
+	                this.computeValencyWeights(12);
 
 	                this.geometryToVertex(vertices, indices, texCoords);
 
@@ -5884,71 +5964,202 @@
 	        }
 
 	        /** 
-	         * Validate a mesh structure
+	         * Given a valency of surround Edges (neighboring Vertices) for a given 
+	         * Vertex, compute weights. Similar to:
+	         * @link https://github.com/deyan-hadzhiev/loop_subdivision/blob/master/loop_subdivision.js
+	         * @param {Number} max the maximum valency to compute.
 	         */
 
 
 	        _createClass(Mesh, [{
-	                key: 'isValid',
-	                value: function isValid() {
+	                key: 'computeValencyWeights',
+	                value: function computeValencyWeights(max) {
 
-	                        console.log('>>>>>>>>>isValid Vertices');
+	                        this.vWeight = new Float32Array(max);
 
-	                        var geo = this.vertexToGeometry();
+	                        this.vWeight[0] = 0.0, this.vWeight[1] = 0.0, this.vWeight[2] = 1.0 / 8.0, this.vWeight[3] = 3.0 / 16.0;
 
-	                        var vertices = this.vertices;
+	                        for (var i = 4; i < max + 1; i++) {
+
+	                                this.vWeight[i] = 1.0 / i * (5.0 / 8.0 - Math.pow(3.0 / 8.0 + 1.0 / 4.0 * Math.cos(2.0 * Math.PI / i), 2.0));
+
+	                                // Warren's modified formula: this.vWeight[i] = 3.0 / (8.0 * i);
+	                        }
+	                }
+
+	                /** 
+	                 * Compute the bounding box of the Mesh.
+	                 */
+
+	        }, {
+	                key: 'computeBoundingBox',
+	                value: function computeBoundingBox() {
 
 	                        var vertexArr = this.vertexArr;
 
-	                        var indexArr = this.indexArr;
-
-	                        var newVertices = geo.vertices;
-
-	                        if (vertices.length !== newVertices.length) {
-
-	                                console.error('Mesh::isValid(): vertices (' + newVertices.length + ') != oldVertices (' + vertices.length + ')');
-	                        }
-
-	                        for (var i = 0; i < vertices.length; i++) {
-
-	                                if (vertices[i] !== newVertices[i]) {
-
-	                                        console.error('Mesh::isValid(): at pos i:' + i + ' old (' + vertices[i] + ') and new (' + newVertices[i] + ') coordinates do not match');
-	                                }
-	                        }
-
-	                        console.log('>>>>>>>isvalid indices');
-
-	                        var indices = this.indices;
-
-	                        var newIndices = geo.indices;
-
-	                        // check indexing
-
-	                        if (indices.length !== newIndices.length) {
-
-	                                console.error('Mesh::isValid: indices (' + newIndices.length + ') != oldIndices (' + indices.length + ')');
-	                        }
-
-	                        // compare vertex values with flattened and unflattened
-
-	                        for (var _i = 0; _i < indices.length; _i++) {
-
-	                                var idx = indices[_i];
-
-	                                if (vertices[idx * 3] != vertexArr[idx].coords.x) {
-
-	                                        console.error('flattened x at indices:' + idx + ' in vertices is:' + vertices[idx * 3] + ' in newVertices:' + newVertices[idx * 3] + ' and in Vertex it is:' + vertexArr[idx].coords.x);
-	                                }
-	                        }
-
-	                        var texCoords = this.texCoords;
-
-	                        var newTexCoords = geo.texCoords;
+	                        for (var i = 0; len = vertexArr.length; i++) {}
 	                }
+
+	                /** 
+	                 * Compute the average distance beween Vertices in the Mesh.
+	                 */
+
+	        }, {
+	                key: 'computeAverageDistance',
+	                value: function computeAverageDistance() {
+
+	                        var vertexArr = this.vertexArr;
+
+	                        var edgeArr = this.edgeArr;
+	                }
+
+	                /** 
+	                 * Compute the nearest neighbor to a Vertex that is not 
+	                 * in its face
+	                 */
+
+	        }, {
+	                key: 'computeNeighbor',
+	                value: function computeNeighbor() {}
+
+	                /** 
+	                 * Create the Vertices, assigning texture coordinates.
+	                 */
+
+	        }, {
+	                key: 'computeVertices',
+	                value: function computeVertices(vertices, texCoords) {
+
+	                        var i = 0,
+	                            vi = 0,
+	                            ti = 0;
+
+	                        var numVertices = vertices.length / 3;
+
+	                        var vertexArr = new Array(numVertices);
+
+	                        for (i = 0; i < numVertices; i++) {
+
+	                                vertexArr[i] = new Vertex(vertices[vi++], vertices[vi++], vertices[vi++], texCoords[ti++], texCoords[ti++], i, vertexArr);
+	                        }
+
+	                        return vertexArr;
+	                }
+
+	                /** 
+	                 * Set values for an Edge
+	                 */
+
 	        }, {
 	                key: 'computeEdge',
-	                value: function computeEdge(i0, i1) {}
+	                value: function computeEdge(i0, i1, i2, fi) {
+
+	                        var vertexArr = this.vertexArr;
+
+	                        var edgeArr = this.edgeArr;
+
+	                        var idx = -1;
+
+	                        // Order edge Vertices in the Edge by their drawing order (defined by index array).
+
+	                        var mini = Math.min(i0, i1);
+
+	                        var maxi = Math.max(i0, i1);
+
+	                        // Check hash lookup for Edge already existing.
+
+	                        var key = mini + '-' + maxi;
+
+	                        if (key in this.edgeMap) {
+
+	                                idx = this.edgeMap[key]; // use existing Edge
+
+	                                var edge = edgeArr[idx];
+
+	                                ///////////////////////console.log( 'key:' + key + ' edge:' + edge )
+
+	                                edge.f[1] = fi; // Add the second Face to the Edge
+
+	                                edge.ov[1] = i2; // Add the second opposite Vertex to the Edge
+	                        } else {
+
+	                                idx = edgeArr.length;
+
+	                                this.edgeMap[key] = idx; // add new key to hash
+
+	                                // Create Edge with Vertices, first opposite Face, first opposite Vertex
+	                                // NOTE: second Face and opposite Vertex NOT PRESENT YET
+
+	                                var _edge = new Edge(i0, i1, i2, fi, key);
+
+	                                edgeArr.push(_edge);
+
+	                                // Let Vertices know they are part of this Edge (most get 6).
+
+	                                ///////console.log('trying to update MINI Vertex:' + mini + ' with Edge index at:' + idx + ' key:' + key )
+
+	                                vertexArr[mini].e.push(idx);
+
+	                                ////////console.log('trying to update MAXI Vertex:' + maxi + ' with Edge index at:' + idx + ' key:' + key )
+
+	                                vertexArr[maxi].e.push(idx);
+	                        }
+
+	                        return idx;
+	                }
+	        }, {
+	                key: 'computeEdges',
+	                value: function computeEdges(vertexArr, indexArr) {
+
+	                        console.log(">>>>>>computeEdges");
+
+	                        var nv = vertexArr.length;
+
+	                        if (!nv) {
+
+	                                console.error('Mesh::computeEdges(): missing Vertex array ');
+
+	                                return -1;
+	                        }
+
+	                        var ni = indexArr.length;
+
+	                        if (!ni) {
+
+	                                console.error('Mesh::computeEdges(): missing Index array ');
+
+	                                return -1;
+	                        }
+
+	                        // Create the Edge and Face (triangle) arrays
+
+	                        var faceArr = [];
+
+	                        // Loop through the indexArr, defining Edges and Faces, hashing back to Vertices.
+
+	                        for (var i = 0; i < ni; i += 3) {
+
+	                                var i0 = indexArr[i];
+
+	                                var i1 = indexArr[i + 1];
+
+	                                var i2 = indexArr[i + 2];
+
+	                                var fi = i / 3;
+
+	                                // Add 3 computed Edges to a Face, with Edges adding themselves to component Vertices
+
+	                                var face = new Face(this.computeEdge(i0, i1, i2, fi), this.computeEdge(i1, i2, i0, fi), this.computeEdge(i2, i0, i1, fi), fi);
+
+	                                faceArr.push(face);
+
+	                                ////////////////////////////////console.log("TRIANGLE:" + fi + '(' + i + ')')
+	                        }
+
+	                        // Faces for this Mesh.
+
+	                        this.faceArr = faceArr;
+	                }
 
 	                /** 
 	                 * Convert our native flattened geometric data (from Prim) to a Vertex object 
@@ -5962,12 +6173,9 @@
 
 	                        console.log('>>>>>>>>geometryToVertex()');
 
-	                        var i = 0,
-	                            vi = 0,
-	                            ti = 0,
-	                            ii = 0;
+	                        // Convert flattened coordinates to Vertex objects. IndexArr still points to the right places.
 
-	                        var numVertices = vertices.length / 3;
+	                        this.vertexArr = this.computeVertices(vertices, texCoords);
 
 	                        /* 
 	                         * The incoming flattened index array has stride = 3, so 
@@ -5975,51 +6183,46 @@
 	                         * the equivalen x coord in flattened vertices = index * 3 
 	                         */
 
-	                        var indexArr = indices.slice(0);
+	                        this.indexArr = indices.slice(0);
 
-	                        var numIndices = indexArr.length;
+	                        // Compute Edge and Face arrays for the Vertices.
 
-	                        var numTexCoords = texCoords.length;
-
-	                        // Create the Vertex array
-
-	                        var vertexArr = new Array(numVertices);
-
-	                        // Convert flattened coordinates to Vertex objects. IndexArr still points to the right places.
-
-	                        for (i = 0; i < numVertices; i++) {
-
-	                                vertexArr[i] = new Vertex(vertices[vi++], vertices[vi++], vertices[vi++], texCoords[ti++], texCoords[ti++], i, vertexArr);
-	                        }
-
-	                        // Compute Edge and Mesh arrays.
-
-	                        var edgeArr = new Array(numVertices);
-
-	                        var faceArr = new Array(numVertices / 3);
-
-	                        for (var _i2 = 0; _i2 < numIndices; _i2 += 3) {
-
-	                                var i0 = _i2;
-
-	                                var i1 = _i2 + 1;
-
-	                                var i2 = _i2 + 2;
-
-	                                var fi = _i2 / 3;
-
-	                                // push an edge
-	                                // call computeEdges 3 times
-	                                // add 3 edges to face index 'fi'
-	                        }
-
-	                        // Assigned computed arrays.
-
-	                        this.vertexArr = vertexArr;
-
-	                        this.indexArr = indexArr;
+	                        this.computeEdges(this.vertexArr, this.indexArr);
 
 	                        return this;
+	                }
+
+	                /**
+	                 * Subdivide and optionally smooth a Mesh, similar to 
+	                 * @link https://github.com/deyan-hadzhiev/loop_subdivision/blob/master/loop_subdivision.js
+	                 * compute the Euler characteristic, based on effect of subdivision:
+	                 * 1. Number of faces = 4x larger
+	                 * 2. Each subdivided Face creates 3 new Edges, subdivided Edge creates 2 new Edges.
+	                 * Chi = Vertices - Edges + Faces
+	                 * V = E - F + Chi (Vertices in subdivided Mesh)
+	                 */
+
+	        }, {
+	                key: 'subdivide',
+	                value: function subdivide() {
+
+	                        this.oldVertexArr = this.vertexArr.slice(0);
+
+	                        var oldVertCount = this.vertexArr.length;
+
+	                        var oldEdgeCount = this.edgeArr.length;
+
+	                        var oldFaceCount = this.faceArr.length;
+
+	                        // Compute new number of Vertices
+
+	                        var Chi = oldVertCount - oldEdgeCount + oldFaceCount;
+
+	                        var newEdgeCount = oldEdgeCount * 2 + oldFaceCount * 3;
+
+	                        var newFaceCount = oldFaceCount * 4;
+
+	                        var newVertCount = newEdgeCount - newFaceCount + Chi;
 	                }
 
 	                /** 
@@ -6035,6 +6238,8 @@
 
 	                        var vertexArr = this.vertexArr;
 
+	                        var numVertices = vertexArr.length;
+
 	                        var indexArr = this.indexArr;
 
 	                        var indices = new Array(indexArr.length);
@@ -6045,7 +6250,7 @@
 
 	                        console.log('vertexToGeometry: index length:' + indexArr.length + ' flattened length:' + indices.length);
 
-	                        for (var i = 0; i < vertexArr.length; i++) {
+	                        for (var i = 0; i < numVertices; i++) {
 
 	                                var vi = i * 3;
 
@@ -6085,6 +6290,149 @@
 	                                texCoords: texCoords
 
 	                        };
+	                }
+
+	                /** 
+	                 * Validate a mesh structure
+	                 */
+
+	        }, {
+	                key: 'isValid',
+	                value: function isValid() {
+
+	                        console.log('>>>>>>>>>isValid Vertices');
+
+	                        var geo = this.vertexToGeometry();
+
+	                        var vertices = this.vertices;
+
+	                        var vertexArr = this.vertexArr;
+
+	                        var numVertices = this.vertexArr.length;
+
+	                        var indexArr = this.indexArr;
+
+	                        var numIndices = this.indexArr.length;
+
+	                        var edgeArr = this.edgeArr;
+
+	                        var numEdges = this.edgeArr.length;
+
+	                        var faceArr = this.faceArr;
+
+	                        var numFaces = this.faceArr.length;
+
+	                        var newVertices = geo.vertices;
+
+	                        console.log('make sure vertex length matches');
+
+	                        if (vertices.length !== newVertices.length) {
+
+	                                console.error('Mesh::isValid(): vertices (' + newVertices.length + ') != oldVertices (' + vertices.length + ')');
+	                        }
+
+	                        console.log('make sure Vertex xyz coords are identical');
+
+	                        for (var i = 0; i < numVertices; i++) {
+
+	                                if (vertices[i] !== newVertices[i]) {
+
+	                                        console.error('Mesh::isValid(): at pos i:' + i + ' old (' + vertices[i] + ') and new (' + newVertices[i] + ') coordinates do not match');
+	                                }
+	                        }
+
+	                        console.log('>>>>>>>isvalid indices');
+
+	                        var indices = this.indices;
+
+	                        var newIndices = geo.indices;
+
+	                        console.log('make sure index length matches');
+
+	                        // check indexing
+
+	                        if (indices.length !== newIndices.length) {
+
+	                                console.error('Mesh::isValid(): indices (' + newIndices.length + ') != oldIndices (' + indices.length + ')');
+	                        }
+
+	                        // compare vertex values with flattened and unflattened
+
+	                        console.log('make sure index values are identical');
+
+	                        for (var _i = 0; _i < numIndices; _i++) {
+
+	                                var idx = indices[_i];
+
+	                                if (vertices[idx * 3] != vertexArr[idx].coords.x) {
+
+	                                        console.error('Mesh::isValid(): flattened x at indices:' + idx + ' in vertices is:' + vertices[idx * 3] + ' in newVertices:' + newVertices[idx * 3] + ' and in Vertex it is:' + vertexArr[idx].coords.x);
+	                                }
+	                        }
+
+	                        var texCoords = this.texCoords;
+
+	                        var newTexCoords = geo.texCoords;
+
+	                        // Check Edges for validity.
+
+	                        for (var _i2 = 0; _i2 < numEdges; _i2++) {
+
+	                                // See if Edge points to valid Vertex
+
+	                                var edge = edgeArr[_i2];
+
+	                                if (!vertexArr[edge.v[0]]) console.error('Mesh::isValid(): nonexistent first Vertex at edge ' + edge.idx);
+	                                if (!vertexArr[edge.v[1]]) console.error('Mesh::isValid(): nonexistent first Vertex at edge ' + edge.idx);
+
+	                                // See if Edge points to valid Face
+
+	                                if (!faceArr[edge.f[0]]) console.error('Mesh::isValid(): nonexistent first Face at edge ' + edge.idx);
+
+	                                // Face not set at Mesh edge
+
+	                                // if ( edge.f[ 1 ] >= this.badIndex32 ) console.warn( 'Mesh::isValid(): warn: no second Face for edge ' + edge.idx )
+
+	                                // See if Edge points to valid opposite Vertex
+
+	                                if (!vertexArr[edge.ov[0]]) console.error('Mesh::isValid(): nonexistent first Opposite Vertex at edge ' + edge.idx);
+	                                if (!vertexArr[edge.ov[1]]) console.error('Mesh::isValid(): nonexistent first Opposite Vertex at edge ' + edge.idx);
+	                        }
+
+	                        // Check valency
+
+	                        var valencyArr = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+	                        var valNum = 0;
+
+	                        var valMax = -1;
+
+	                        for (var _i3 = 0; _i3 < numVertices; _i3++) {
+
+	                                var v = vertexArr[_i3];
+
+	                                console.log("VERTEX " + _i3 + " IS A: " + v);
+
+	                                var _len = v.e.length;
+
+	                                valencyArr[_len] += 1;
+
+	                                valMax = Math.max(valMax, _len);
+	                        }
+
+	                        console.log('checking valency of Vertex objects...');
+
+	                        if (valMax < 3) {
+
+	                                console.error('Mesh::isValid(): Vertex valencies are too small to be a valid mesh:' + valMax);
+	                        }
+
+	                        for (var _i4 = 0; _i4 < valencyArr.length; _i4++) {
+
+	                                console.log('valency ' + _i4 + ' has ' + valencyArr[_i4] + ' members');
+	                        }
+
+	                        // Check Faces for validity.
 	                }
 	        }]);
 

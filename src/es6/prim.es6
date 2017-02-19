@@ -2434,9 +2434,9 @@ class Prim {
 
             //for ( let i = 0; i < indices.length; i++ ) console.log("orig indices " + i + ' :' + indices[i])
 
-            let divided = mesh.vertexToGeometry();
+            mesh.subdivide();
 
-            window.mesh = mesh;
+            let divided = mesh.vertexToGeometry();
 
             vertices = divided.vertices;
             indices = divided.indices;
@@ -2809,25 +2809,30 @@ class Prim {
         tangents = flatten(tangents, false );
 
 
-//////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+/*
         if ( prim.name === 'icosphere' ) {
 
-            console.log("SUBDIVIDING ICOSPHERE")
+            console.log("SUBDIVIDING CUBE")
             // Sending in texture coords and normals speeds subdivision calculation.
 
-            ///////let divided = this.morph.computeSubdivide( vertices, indices, texCoords, true, true );
+            let mesh = new Mesh( vertices, indices, texCoords );
 
-            // OK
-            /////////divided = this.morph.computeSubdivide( divided.vertices, divided.indices, divided.texCoords, true )
+            //for ( let i = 0; i < indices.length; i++ ) console.log("orig indices " + i + ' :' + indices[i])
 
-            ///////vertices = divided.vertices;
-            //////indices = divided.indices;
-            /////texCoords = divided.texCoords;
+            let divided = mesh.vertexToGeometry();
+
+            window.mesh = mesh;
+
+            vertices = divided.vertices;
+            indices = divided.indices;
+            texCoords = divided.texCoords;
             //normals = this.computeNormals( vertices, indices, normals );
 
             // TODO: TEST COORDS
 
         }
+*/
 ////////////////////////////////////////////////////////////////////////////////
 
         // Helper functions.

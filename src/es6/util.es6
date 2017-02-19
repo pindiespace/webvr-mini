@@ -164,15 +164,15 @@ class Util {
      * Get a succession of values from a flat array
      * @param {Array} arr a flat array.
      * @param {Number} idx index into the array.
-     * @param {Number} size number of elements to get. This is 
+     * @param {Number} stride number of elements to get. This is 
      * also assumed to be the 'stride' through the array.
      * @returns {Array} requested elements in an Array.
      */
-    getArr ( arr, idx, size ) {
+    getArr ( arr, idx, stride ) {
 
-        if ( ! arr || idx < 0 || size < 1 ) {
+        if ( ! arr || idx < 0 || stride < 1 ) {
 
-            console.error( 'getArr() invalid params, arr:' + arr + ', index:' + idx + ' size:' + size );
+            console.error( 'getArr() invalid params, arr:' + arr + ', index:' + idx + ' stride:' + stride );
 
             return -1;
 
@@ -180,9 +180,9 @@ class Util {
         
         let o = [];
 
-        for ( let i = 2; i < size; i++ ) {
+        for ( let i = 2; i < stride; i++ ) {
 
-                o.push( arr[ ( idx * size ) + i ] );
+                o.push( arr[ ( idx * stride ) + i ] );
 
         }
 
@@ -192,7 +192,7 @@ class Util {
 
     /** 
      * Get an object from a 2d array. Supply a variable list of 
-     * values. The number of values is assumed to be the 'walk' size 
+     * values. The number of values is assumed to be the 'walk' stride 
      * for the array.
      * @param {Array} arr a flat array.
      * @param {Number} index the stride into 2d array.
@@ -211,11 +211,11 @@ class Util {
 
         }
 
-        const size = alen - 2;
+        const stride = alen - 2;
 
         for ( let i = 2; i < alen; i++ ) {
 
-            arr[ ( idx * size ) + i ] - arguments[i];
+            arr[ ( idx * stride ) + i ] - arguments[i];
 
         }
 
@@ -278,22 +278,22 @@ class Util {
     /** 
      * Given a flat array, convert to multi-dimensional.
      * @param {Array} original (flattened) array.
-     * @param {Number} subSize the 'chunk' of the array being put into a sub-array.
-     * @returns{Array} a 2-dimensional array with each element in the second dimension of subSize length.
+     * @param {Number} stride the 'chunk' of the array being put into a sub-array.
+     * @returns{Array} a 2-dimensional array with each element in the second dimension of stride length.
      */
-    unFlatten( arr, subSize ) {
+    unFlatten( arr, stride ) {
 
         let ct = 0, ct2 = 0;
 
         let nodes = []; // multi-dimensional
 
-        let sub = new Array( arr.length / subSize );
+        let sub = new Array( arr.length / stride );
 
-        for ( let i = 0; i < arr.length; i += subSize ) {
+        for ( let i = 0; i < arr.length; i += stride ) {
 
-            let a = new Array( subSize );
+            let a = new Array( stride );
 
-            for ( let j = 0; j < subSize; j++ ) {
+            for ( let j = 0; j < stride; j++ ) {
 
                 a[ j ] =  arr[ ct2++ ];
 
@@ -392,7 +392,9 @@ class Util {
 
             for ( let j = 0; j < arr.length; j++ ) {
 
-                if ( unique.indexOf( arr[ j ] === -1 ) ) {
+                if ( ! arr[ j ] in unique ) {
+
+                ////////if ( unique.indexOf( arr[ j ] === -1 ) ) {
 
                     unique.push( arr[ j ] );
 
