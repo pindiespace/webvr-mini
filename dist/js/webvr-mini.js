@@ -4412,7 +4412,7 @@
 	vertices=flatten(positions,false);normals=flatten(norms,false);// Re-compute normals, which may have changed.
 	normals=this.computeNormals(vertices,indices,normals);console.log(" IN CUBE NORMALS NOW ARE...."+normals.length);////////////////////////////////////////////////////////////////////////////////
 	if(prim.name==='colored cube'){console.log("SUBDIVIDING CUBE");// Sending in texture coords and normals speeds subdivision calculation.
-	var mesh=new _mesh2.default(vertices,indices,texCoords);//for ( let i = 0; i < indices.length; i++ ) console.log("orig indices " + i + ' :' + indices[i])
+	var mesh=new _mesh2.default(vertices,indices,texCoords);window.mesh=mesh;//for ( let i = 0; i < indices.length; i++ ) console.log("orig indices " + i + ' :' + indices[i])
 	mesh.subdivide();var divided=mesh.vertexToGeometry();vertices=divided.vertices;indices=divided.indices;texCoords=divided.texCoords;//normals = this.computeNormals( vertices, indices, normals );
 	// TODO: TEST COORDS
 	}////////////////////////////////////////////////////////////////////////////////
@@ -5942,7 +5942,7 @@
 
 	                this.faceArr = [];
 
-	                this.vWeights = [];
+	                this.valenceArr = [];
 
 	                // Keep the original Vertex data when transforming mesh.
 
@@ -5975,15 +5975,15 @@
 	                key: 'computeValencyWeights',
 	                value: function computeValencyWeights(max) {
 
-	                        this.vWeight = new Float32Array(max);
+	                        this.valenceArr = new Float32Array(max);
 
-	                        this.vWeight[0] = 0.0, this.vWeight[1] = 0.0, this.vWeight[2] = 1.0 / 8.0, this.vWeight[3] = 3.0 / 16.0;
+	                        this.valenceArr[0] = 0.0, this.valenceArr[1] = 0.0, this.valenceArr[2] = 1.0 / 8.0, this.valenceArr[3] = 3.0 / 16.0;
 
 	                        for (var i = 4; i < max + 1; i++) {
 
-	                                this.vWeight[i] = 1.0 / i * (5.0 / 8.0 - Math.pow(3.0 / 8.0 + 1.0 / 4.0 * Math.cos(2.0 * Math.PI / i), 2.0));
+	                                this.valenceArr[i] = 1.0 / i * (5.0 / 8.0 - Math.pow(3.0 / 8.0 + 1.0 / 4.0 * Math.cos(2.0 * Math.PI / i), 2.0));
 
-	                                // Warren's modified formula: this.vWeight[i] = 3.0 / (8.0 * i);
+	                                // Warren's modified formula: this.valenceArr[i] = 3.0 / (8.0 * i);
 	                        }
 	                }
 
@@ -6206,23 +6206,101 @@
 	                key: 'subdivide',
 	                value: function subdivide() {
 
-	                        this.oldVertexArr = this.vertexArr.slice(0);
+	                        var vertexArr = this.vertexArr;
 
-	                        var oldVertCount = this.vertexArr.length;
+	                        this.oldVertexArr = vertexArr.slice(0);
 
-	                        var oldEdgeCount = this.edgeArr.length;
+	                        var oldVertexArr = this.oldVertexArr;
 
-	                        var oldFaceCount = this.faceArr.length;
+	                        var oldVertexCount = this.vertexArr.length;
+
+	                        var edgeArr = this.edgeArr;
+
+	                        var oldEdgeCount = edgeArr.length;
+
+	                        var faceArr = this.faceArr;
+
+	                        var oldFaceCount = faceArr.length;
 
 	                        // Compute new number of Vertices
 
-	                        var Chi = oldVertCount - oldEdgeCount + oldFaceCount;
+	                        var chi = oldVertexCount - oldEdgeCount + oldFaceCount;
 
 	                        var newEdgeCount = oldEdgeCount * 2 + oldFaceCount * 3;
 
 	                        var newFaceCount = oldFaceCount * 4;
 
-	                        var newVertCount = newEdgeCount - newFaceCount + Chi;
+	                        var newVertexCount = newEdgeCount - newFaceCount + chi;
+
+	                        var newVertexArr = new Array(newVertexCount * 3); // note: larger than original!
+
+	                        // Compute old Vertices, and copy to vertexArray.
+
+	                        console.log("LOOP TO OLDVERTEXCOUNT:" + oldVertexCount);
+
+	                        for (var i = 0; i < oldVertexCount; ++i) {
+
+	                                var vertexValency = oldVertexArr[i].e.length;
+
+	                                // Beta for surround Vertices.
+
+	                                var beta = this.valenceArr[vertexValency];
+
+	                                // Beta for the original Vertex.
+
+	                                var vertexWeightBeta = 1.0 - vertexValency * beta;
+
+	                                var c = oldVertexArr[i].coords;
+
+	                                var tc = oldVertexArr[i].texCoords;
+
+	                                var x = vertexWeightBeta * c.x;
+
+	                                var y = vertexWeightBeta * c.y;
+
+	                                var z = vertexWeightBeta * c.z;
+
+	                                var u = vertexWeightBeta * tc.u;
+
+	                                var v = vertexWeightBeta * tc.v;
+
+	                                // Apply weighting.
+
+	                                for (var j = 0; j < vertexValency; ++j) {
+
+	                                        // TODO: is edgeMesh.vertices different from edgeArr?????????
+
+	                                        var oppositeIndex = edgeArr[oldVertexArr[i].e[j]].getOpposite(i);
+
+	                                        c = oldVertexArr[oppositeIndex].coords;
+
+	                                        tc = oldVertexArr[oppositeIndex].texCoords;
+
+	                                        x += beta * c.x;
+
+	                                        y += beta * c.y;
+
+	                                        z += beta * c.z;
+
+	                                        u += beta * tc.u;
+
+	                                        v += beta * tc.v;
+	                                }
+
+	                                // Calculate the position of midpoint Vertices, using old Vertices
+
+	                                // Re-compute our indices
+
+
+	                                // Note: we made a new Vertex here WITHOUT its edges set!!!
+
+	                                newVertexArr[i] = new Vertex(x, y, z, u, v, oldVertexArr.idx, newVertexArr);
+	                        } // end of oldVertexCount
+
+
+	                        // Save the new Vertex Array.
+
+	                        this.newVertexArr = newVertexArr;
 	                }
 
 	                /** 
@@ -6410,8 +6488,6 @@
 	                        for (var _i3 = 0; _i3 < numVertices; _i3++) {
 
 	                                var v = vertexArr[_i3];
-
-	                                console.log("VERTEX " + _i3 + " IS A: " + v);
 
 	                                var _len = v.e.length;
 

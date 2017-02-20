@@ -2432,6 +2432,8 @@ class Prim {
 
             let mesh = new Mesh( vertices, indices, texCoords );
 
+            window.mesh = mesh;
+
             //for ( let i = 0; i < indices.length; i++ ) console.log("orig indices " + i + ' :' + indices[i])
 
             mesh.subdivide();
