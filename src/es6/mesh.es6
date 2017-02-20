@@ -40,6 +40,23 @@ import Util   from './util';
 
     }
 
+    /** 
+     * return the difference between two Coords 
+     */ 
+    diff( coord ) {
+
+        return new Coords(
+
+            this.x - coord.x,
+
+            this.y - coord.y,
+
+            this.z - coord.z
+
+        );
+
+    }
+
     /**
      * Return a new copy of this Coords
      * @returns {Coords} a copy of the current coordinates.
@@ -456,10 +473,6 @@ class Mesh {
 
         console.log('>>>>>>>>geometryToVertex()')
 
-        // Convert flattened coordinates to Vertex objects. IndexArr still points to the right places.
-
-        this.vertexArr = this.computeVertices( vertices, texCoords );
-
         /* 
          * The incoming flattened index array has stride = 3, so 
          * an x coord in the vertexArr is just the index value
@@ -467,6 +480,10 @@ class Mesh {
          */
 
         this.indexArr = indices.slice( 0 );
+
+        // Convert flattened coordinates to Vertex objects. IndexArr is unchanged, and still points to the right places.
+
+        this.vertexArr = this.computeVertices( vertices, texCoords );
 
         // Compute Edge and Face arrays for the Vertices.
 
@@ -484,16 +501,20 @@ class Mesh {
      * 2. Each subdivided Face creates 3 new Edges, subdivided Edge creates 2 new Edges.
      * Chi = Vertices - Edges + Faces
      * V = E - F + Chi (Vertices in subdivided Mesh)
+     * 
+     * our original Vertex array become a backup after subdivision.
+     * 
+      * @param {Boolean} flatten if true, return flattened rather than Vertex array.
      */
-    subdivide () {
+    subdivide ( flatten ) {
 
         let vertexArr = this.vertexArr;
 
-        this.oldVertexArr = vertexArr.slice( 0 );
-
-        let oldVertexArr = this.oldVertexArr;
+        let oldVertexArr = vertexArr.slice(0)
 
         const oldVertexCount = this.vertexArr.length;
+
+        let indexArr = this.indexArr;
 
         let edgeArr = this.edgeArr;
 
@@ -502,6 +523,10 @@ class Mesh {
         let faceArr = this.faceArr;
 
         const oldFaceCount = faceArr.length;
+
+        const fw = 3 / 8;
+
+        const ow = 1 / 8;
 
         // Compute new number of Vertices
 
@@ -513,49 +538,55 @@ class Mesh {
 
         const newVertexCount = newEdgeCount - newFaceCount + chi;
 
-        let newVertexArr = new Array( newVertexCount * 3 ); // note: larger than original!
+        let newVertexArr = new Array( newVertexCount ); // note: larger than original!
 
-        // Compute old Vertices, and copy to vertexArray.
+        // Step 1: Compute old Vertices, and copy to newVertexArray.
 
-        console.log("LOOP TO OLDVERTEXCOUNT:" + oldVertexCount)
+        let c, tc, x, y, z, u, v;
 
         for ( let i = 0; i < oldVertexCount; ++i ) {
 
-            const vertexValency =  oldVertexArr[ i ].e.length;
+            // get ith Vertex.
 
-            // Beta for surround Vertices.
+            let vtx = vertexArr[ i ];
+
+            // Number of attached Edges.
+
+            const vertexValency =  vtx.e.length;
+
+            // Beta weighting for surround Vertices.
 
             const beta = this.valenceArr[ vertexValency ];
 
-            // Beta for the original Vertex.
+            // Beta weighting for the original ith Vertex.
 
             const vertexWeightBeta = 1.0 - vertexValency * beta;
 
-            let c = oldVertexArr[ i ].coords;
+            c = vertexArr[ i ].coords;
 
-            let tc = oldVertexArr[ i ].texCoords;
+            tc = vertexArr[ i ].texCoords;
 
-            let x = vertexWeightBeta * c.x;
+            x = vertexWeightBeta * c.x;
 
-            let y = vertexWeightBeta * c.y;
+            y = vertexWeightBeta * c.y;
 
-            let z = vertexWeightBeta * c.z;
+            z = vertexWeightBeta * c.z;
 
-            let u = vertexWeightBeta * tc.u;
+            u = vertexWeightBeta * tc.u;
 
-            let v = vertexWeightBeta * tc.v;
+            v = vertexWeightBeta * tc.v;
 
-            // Apply weighting.
+            // Beta weighting for surround Vertices.
 
             for ( let j = 0; j < vertexValency; ++j ) {
 
-                // TODO: is edgeMesh.vertices different from edgeArr?????????
+                // Get the surround Vertices for ith Vertex
 
-                const oppositeIndex = edgeArr[ oldVertexArr[ i ].e[ j ] ].getOpposite( i );
+                const oppositeIndex = edgeArr[ vtx.e[ j ] ].getOpposite( i );
 
-                c = oldVertexArr[ oppositeIndex ].coords;
+                c = vertexArr[ oppositeIndex ].coords;
 
-                tc = oldVertexArr[ oppositeIndex ].texCoords;
+                tc = vertexArr[ oppositeIndex ].texCoords;
 
                 x += beta * c.x;
 
@@ -569,23 +600,134 @@ class Mesh {
 
             }
 
-            // Calculate the position of midpoint Vertices, using old Vertices
+            // Set the new Vertex values.
 
-            // Re-compute our indices
+            newVertexArr[ i ] = new Vertex(  x, y, z, u, v, i, newVertexArr );
 
+            newVertexArr[ i ].oldIdx = vtx.idx; // DEBUGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
 
-            // Note: we made a new Vertex here WITHOUT its edges set!!!
+        } // end of vertexCount
 
-            newVertexArr[ i ] = new Vertex(  x, y, z, u, v, oldVertexArr.idx, newVertexArr );
+        // Step 2: calculate the position of midpoint Vertices, using old Vertices
 
-        } // end of oldVertexCount
+        for (var i = 0; i < oldEdgeCount; ++i ) {
 
+            // Vertices on each side of Edge.
 
+            const ev0 = edgeArr[ i ].v[ 0 ];
 
+            const ev1 = edgeArr[ i ].v[ 1 ];
+
+            const e0 = vertexArr[ ev0 ];
+
+            const e1 = vertexArr[ ev1 ];
+
+            // create midpoint between Edges.
+
+            x = fw * ( e0.coords.x + e1.coords.x );
+            y = fw * ( e0.coords.y + e1.coords.y );
+            z = fw * ( e0.coords.z + e1.coords.z );
+            u = fw * ( e0.texCoords.u + e1.texCoords.u );
+            v = fw * ( e0.texCoords.v + e1.texCoords.v );
+
+            // Opposite Vertices to Edge.
+
+            const fv0 = edgeArr[ i ].ov[ 0 ];
+
+            const fv1 = edgeArr[ i ].ov[ 1 ];
+
+            const f0 = vertexArr[ fv0 ];
+
+            const f1 = vertexArr[ fv1 ];
+
+            // Adjust midpoint by opposite Vertices.
+
+            x += ow * ( f0.coords.x + f1.coords.x );
+            y += ow * ( f0.coords.y + f1.coords.y );
+            z += ow * ( f0.coords.z + f1.coords.z );
+            u += ow * ( f0.texCoords.u + f1.texCoords.u );
+            v += ow * ( f0.texCoords.u + f1.texCoords.u );
+
+            // new vertex index
+
+            const nvi = oldVertexCount + i;
+
+            // Add new midponts to the newVertexArr.
+
+            newVertexArr[ nvi ] = new Vertex( x, y, z, u, v, nvi, newVertexArr );
+
+        }
+
+        // Re-compute our indices
+
+        let newIndexArr = new Uint32Array( newFaceCount );
+
+        for ( let i = 0; i < oldFaceCount; ++i ) {
+
+            // Original Vertex points.
+
+            const ov0 = indexArr[ i * 3    ];
+            const ov1 = indexArr[ i * 3 + 1 ];
+            const ov2 = indexArr[ i * 3 + 2 ];
+
+            /* 
+             * the new Vertex indices are obtained by the edge mesh's faces
+             * since they hold indices to edges - that is the same order in
+             * which the new vertices are constructed in the new vertex buffer
+             * so we need only the index and add the offset of the old vertices count
+             */
+            const nv0 = oldVertexCount + faceArr[ i ].e[ 0 ];
+            const nv1 = oldVertexCount + faceArr[ i ].e[ 1 ];
+            const nv2 = oldVertexCount + faceArr[ i ].e[ 2 ];
+
+            // Now add the new vertices to the buffer.
+
+            const offset = i * 12; // 4 * 3
+
+            newIndexArr[ offset      ] = ov0;
+            newIndexArr[ offset +  1 ] = nv0;
+            newIndexArr[ offset +  2 ] = nv2;
+
+            newIndexArr[ offset +  3 ] = nv0;
+            newIndexArr[ offset +  4 ] = ov1;
+            newIndexArr[ offset +  5 ] = nv1;
+
+            newIndexArr[ offset +  6 ] = nv1;
+            newIndexArr[ offset +  7 ] = ov2;
+            newIndexArr[ offset +  8 ] = nv2;
+
+            newIndexArr[ offset +  9 ] = nv0;
+            newIndexArr[ offset + 10 ] = nv1;
+            newIndexArr[ offset + 11 ] = nv2;
+
+        }
 
         // Save the new Vertex Array.
 
+        // TEMP DEBUG BEFORE MIDPOINTS
+
+        //newVertexArr = newVertexArr.slice( 0, oldVertexCount ); // DEBUG!!!!!!!!!!!!!!
+
         this.newVertexArr = newVertexArr;
+
+        this.newIndexArr = newIndexArr;
+
+        // TEMPORARY TEST
+/*
+        for ( let i = 0; i < this.newVertexArr.length; i++ ) {
+
+            console.log("POS:" + i + " vertexArr:" + this.vertexArr[i] + ' newVertexArr:' + this.newVertexArr[i])
+
+            let c = this.vertexArr[ i ].coords.diff( this.newVertexArr[ i ].coords );
+
+            console.log("at pos:" + i + " betaed vertex diff:" + c.x + ',' + c.y + ',' + c.z)
+
+        }
+*/
+
+        this.indexArr = newIndexArr; ////////////////////////////////
+
+        this.vertexArr = newVertexArr; ////////////////////////////////////
 
     }
 
@@ -603,7 +745,11 @@ class Mesh {
 
         let indexArr = this.indexArr;
 
-        let indices = new Array( indexArr.length );
+        // index array doesn't need to be flattened, just clone it.
+
+        let indices = this.indexArr.slice( 0 );
+
+        // flattened vertices and texCoords array need to be generated from Vertex array.
 
         let vertices = new Array( vertexArr.length * 3 );
 
@@ -617,31 +763,41 @@ class Mesh {
 
             let ti = i * 2;
 
-            let c = vertexArr[ i ].coords;
+            let vtx = vertexArr[ i ];
 
-            let t = vertexArr[ i ].texCoords;
+            if ( vtx ) {
 
-            // Recover and flatten coordinate values
+                let c = vtx.coords;
 
-            vertices[ vi     ] = c.x;
+                let t = vtx.texCoords;
 
-            vertices[ vi + 1 ] = c.y;
+                // Recover and flatten coordinate values
 
-            vertices[ vi + 2 ] = c.z;
+                vertices[ vi     ] = c.x;
 
-            // Recover and flatten texture coordinate values
+                vertices[ vi + 1 ] = c.y;
 
-            texCoords[ ti ]     = t.u;
+                vertices[ vi + 2 ] = c.z;
 
-            texCoords[ ti + 1 ] = t.v;
+                // Recover and flatten texture coordinate values
+
+                texCoords[ ti ]     = t.u;
+
+                texCoords[ ti + 1 ] = t.v;
+
+            } else {
+
+                console.warn( 'Mesh::vertexToGeometry(): no vertex in vertexArr at pos:' + i );
+
+                vertices = vertices.slice( i ); // TRUNCATE!
+
+                break;
+
+            }
 
         }
 
-        // index array doesn't need to be flattened, just clone it.
-
-        indices = this.indexArr.slice( 0 );
-
-        // We aren't exporting a true Geometry, just some of its arrays.
+        // We aren't exporting a true Prim geometry, just some of its arrays.
 
         return {
 
@@ -800,9 +956,7 @@ class Mesh {
 
         }
 
-        // Check Faces for validity.
-
-    }
+    } // end of isValid
 
  } // End of class.
 

@@ -4410,13 +4410,7 @@
 	pos=[inner[0],inner[1],inner[2]];tmp=[normal[0],normal[1],normal[2]];vec3.scale(tmp,tmp,radius);vec3.add(pos,pos,tmp);positions[_i15]=pos;}}else if((prim.type===list.CURVEDOUTERPLANE||prim.type===list.CURVEDINNERPLANE)&&prim.dimensions[4]&&prim.dimensions[4]!==0){var dSide=1;switch(prim.dimensions[3]){case side.FRONT:if(prim.type===list.CURVEDINNERPLANE||prim.type==list.INNERPLANE)dSide=-1;break;case side.BACK:if(prim.type===list.CURVEDOUTERPLANE||prim.type===list.OUTERPLANE)dSide=-1;break;case side.LEFT:if(prim.type===list.CURVEDOUTERPLANE||prim.type===list.OUTERPLANE)dSide=-1;break;case side.RIGHT:if(prim.type===list.CURVEDINNERPLANE||prim.type===list.INNERPLANE)dSide=-1;break;case side.TOP:if(prim.type===list.CURVEDOUTERPLANE||prim.type===list.OUTERPLANE)dSide=-1;break;case side.BOTTOM:if(prim.type===list.CURVEDINNERPLANE||prim.type===list.INNERPLANE)dSide=-1;break;}for(var _i16=0;_i16<positions.length;_i16++){switch(prim.dimensions[3]){case side.FRONT:positions[_i16][2]=dSide*Math.cos(positions[_i16][0])*prim.dimensions[4];break;case side.BACK:positions[_i16][2]=dSide*Math.cos(positions[_i16][0])*prim.dimensions[4];break;case side.LEFT:positions[_i16][0]=dSide*Math.cos(positions[_i16][2])*prim.dimensions[4];break;case side.RIGHT:positions[_i16][0]=dSide*Math.cos(positions[_i16][2])*prim.dimensions[4];break;case side.TOP:positions[_i16][1]=dSide*Math.cos(positions[_i16][0])*prim.dimensions[4];break;case side.BOTTOM:positions[_i16][1]=-Math.cos(positions[_i16][0])*prim.dimensions[4];// SEEN FROM INSIDE< CORRECT
 	break;}}}// Flatten arrays, since we created using 2 dimensions.
 	vertices=flatten(positions,false);normals=flatten(norms,false);// Re-compute normals, which may have changed.
-	normals=this.computeNormals(vertices,indices,normals);console.log(" IN CUBE NORMALS NOW ARE...."+normals.length);////////////////////////////////////////////////////////////////////////////////
-	if(prim.name==='colored cube'){console.log("SUBDIVIDING CUBE");// Sending in texture coords and normals speeds subdivision calculation.
-	var mesh=new _mesh2.default(vertices,indices,texCoords);window.mesh=mesh;//for ( let i = 0; i < indices.length; i++ ) console.log("orig indices " + i + ' :' + indices[i])
-	mesh.subdivide();var divided=mesh.vertexToGeometry();vertices=divided.vertices;indices=divided.indices;texCoords=divided.texCoords;//normals = this.computeNormals( vertices, indices, normals );
-	// TODO: TEST COORDS
-	}////////////////////////////////////////////////////////////////////////////////
-	// Return the buffer.
+	normals=this.computeNormals(vertices,indices,normals);console.log(" IN CUBE NORMALS NOW ARE...."+normals.length);// Return the buffer.
 	return this.addBufferData(prim.geometry,vertices,indices,normals,texCoords,tangents);}/** 
 	     * type PLANE, OUTERPLANE
 	     * rendered as WebGL TRIANGLES.
@@ -4531,31 +4525,7 @@
 	createTangents(vertices,tangents);if(radius!=1){for(i=0;i<vertices.length;i++){vertices[i][0]*=radius;vertices[i][1]*=prim.dimensions[1]/2;//radius;
 	vertices[i][2]*=prim.dimensions[2]/2;//radius;
 	}}// Flatten the data arrays.
-	vertices=flatten(vertices,false);texCoords=flatten(texCoords,false);normals=flatten(normals,false);tangents=flatten(tangents,false);////////////////////////////////////////////////////////////////////////////////
-	/*
-	        if ( prim.name === 'icosphere' ) {
-
-	            console.log("SUBDIVIDING CUBE")
-	            // Sending in texture coords and normals speeds subdivision calculation.
-
-	            let mesh = new Mesh( vertices, indices, texCoords );
-
-	            //for ( let i = 0; i < indices.length; i++ ) console.log("orig indices " + i + ' :' + indices[i])
-
-	            let divided = mesh.vertexToGeometry();
-
-	            window.mesh = mesh;
-
-	            vertices = divided.vertices;
-	            indices = divided.indices;
-	            texCoords = divided.texCoords;
-	            //normals = this.computeNormals( vertices, indices, normals );
-
-	            // TODO: TEST COORDS
-
-	        }
-	*/////////////////////////////////////////////////////////////////////////////////
-	// Helper functions.
+	vertices=flatten(vertices,false);texCoords=flatten(texCoords,false);normals=flatten(normals,false);tangents=flatten(tangents,false);// Helper functions.
 	// Create UV texCoords.
 	function createUV(vertices,uv){var previousX=1;for(i=0;i<vertices.length;i++){v=vertices[i];if(v[0]==previousX){// was v.x
 	uv[i-1][0]=1;// was v.x
@@ -4695,31 +4665,7 @@
 	x=Math.cos(theta)*(radius+ringRadius*Math.cos(phi));y=Math.sin(theta)*(radius+ringRadius*Math.cos(phi));z=ringRadius*Math.sin(phi);vertices.push(x,y,z);// NOTE: x, z, y gives a horizontal torus
 	var norm=vec3.normalize([0,0,0],[x,y,z]);normals.push(norm[0],norm[1],norm[2]);var _u3=horizRow/vertsPerRow;var _v4=vertColumn/vertsPerColumn;texCoords.push(_u3,_v4);}}// let numIndices = sides * rings * 6;
 	for(var _vertColumn=0;_vertColumn<rings;_vertColumn++){for(var _horizRow=0;_horizRow<sides;_horizRow++){var lt=_horizRow+_vertColumn*vertsPerRow;var rt=_horizRow+1+_vertColumn*vertsPerRow;var lb=_horizRow+(_vertColumn+1)*vertsPerRow;var rb=_horizRow+1+(_vertColumn+1)*vertsPerRow;indices.push(lb,rb,rt,lb,rt,lt);// NOTE: wrap backwards to see inside of torus (tunnel?).
-	}}///////////////////////////
-	///////////////////////////
-	///////////////////////////
-	///////////////////////////
-	/*
-	        if ( prim.name === 'torus2' ) {
-
-	            console.log("DISPLAYING COLORED CUBE")
-	            // Sending in texture coords and normals speeds subdivision calculation.
-
-	            let divided = this.morph.computeSubdivide( vertices, indices, texCoords, true );
-
-	            vertices = divided.vertices;
-	            indices = divided.indices;
-	            texCoords = divided.texCoords;
-	            //normals = this.computeNormals( vertices, indices, normals );
-
-	            // TODO: TEST COORDS
-
-	        }
-	*///////////////////////////
-	//////////////////////////
-	//////////////////////////
-	/////////////////////////
-	// Color array is pre-created, or gets a default when WebGL buffers are created.
+	}}// Color array is pre-created, or gets a default when WebGL buffers are created.
 	// Return the buffer.
 	return this.addBufferData(prim.geometry,vertices,indices,normals,texCoords,tangents);}/** 
 	     * a Torus that doesn't close
@@ -4761,7 +4707,11 @@
 	prim.orbitRadius=0.0;prim.orbitAngular=0.0;// Lighting and materials.
 	prim.material={};prim.light={};// Visible from outside (counterclockwise) or inside (clockwise).
 	prim.visibleFrom=this.OUTSIDE;prim.applyTexToFace=applyTexToFace;// Geometry factory function.
-	prim.geometry=this.createGeoObj();prim.geometry.type=type;prim.geometry=this.createGeoObj();prim.geometry=this[type](prim,color);prim.geometry=this.createGLBuffers(prim.geometry);// Compute the bounding box.
+	prim.geometry=this.createGeoObj();prim.geometry.type=type;// NOTE: has to come after createGeoObj
+	prim.geometry=this[type](prim,color);////////////////////////////////////////////////////////////////////////////////
+	// SUBDIVIDE TEST
+	if(prim.name==='colored cube'){var mesh=new _mesh2.default(prim.geometry.vertices.data,prim.geometry.indices.data,prim.geometry.texCoords.data);window.mesh=mesh;mesh.subdivide();var divided=mesh.vertexToGeometry();prim.geometry.vertices.data=divided.vertices;prim.geometry.indices.data=divided.indices;prim.geometry.texCoords.data=divided.texCoords;prim.geometry.normals.data=this.computeNormals(divided.vertices,divided.indices,divided.normals);}////////////////////////////////////////////////////////////////////////////////
+	prim.geometry=this.createGLBuffers(prim.geometry);// Compute the bounding box.
 	prim.boundingBox=this.computeBoundingBox(prim.geometry.vertices.data);// Internal functions.
 	/** 
 	         * Set the model-view matrix
@@ -5761,6 +5711,17 @@
 	                        return Number.isFinite(parseFloat(this.x)) && Number.isFinite(parseFloat(this.y)) && Number.isFinite(parseFloat(this.z));
 	                }
 
+	                /** 
+	                 * return the difference between two Coords 
+	                 */
+
+	        }, {
+	                key: 'diff',
+	                value: function diff(coord) {
+
+	                        return new Coords(this.x - coord.x, this.y - coord.y, this.z - coord.z);
+	                }
+
 	                /**
 	                 * Return a new copy of this Coords
 	                 * @returns {Coords} a copy of the current coordinates.
@@ -6173,10 +6134,6 @@
 
 	                        console.log('>>>>>>>>geometryToVertex()');
 
-	                        // Convert flattened coordinates to Vertex objects. IndexArr still points to the right places.
-
-	                        this.vertexArr = this.computeVertices(vertices, texCoords);
-
 	                        /* 
 	                         * The incoming flattened index array has stride = 3, so 
 	                         * an x coord in the vertexArr is just the index value
@@ -6184,6 +6141,10 @@
 	                         */
 
 	                        this.indexArr = indices.slice(0);
+
+	                        // Convert flattened coordinates to Vertex objects. IndexArr is unchanged, and still points to the right places.
+
+	                        this.vertexArr = this.computeVertices(vertices, texCoords);
 
 	                        // Compute Edge and Face arrays for the Vertices.
 
@@ -6200,19 +6161,23 @@
 	                 * 2. Each subdivided Face creates 3 new Edges, subdivided Edge creates 2 new Edges.
 	                 * Chi = Vertices - Edges + Faces
 	                 * V = E - F + Chi (Vertices in subdivided Mesh)
+	                 * 
+	                 * our original Vertex array become a backup after subdivision.
+	                 * 
+	                  * @param {Boolean} flatten if true, return flattened rather than Vertex array.
 	                 */
 
 	        }, {
 	                key: 'subdivide',
-	                value: function subdivide() {
+	                value: function subdivide(flatten) {
 
 	                        var vertexArr = this.vertexArr;
 
-	                        this.oldVertexArr = vertexArr.slice(0);
-
-	                        var oldVertexArr = this.oldVertexArr;
+	                        var oldVertexArr = vertexArr.slice(0);
 
 	                        var oldVertexCount = this.vertexArr.length;
+
+	                        var indexArr = this.indexArr;
 
 	                        var edgeArr = this.edgeArr;
 
@@ -6221,6 +6186,10 @@
 	                        var faceArr = this.faceArr;
 
 	                        var oldFaceCount = faceArr.length;
+
+	                        var fw = 3 / 8;
+
+	                        var ow = 1 / 8;
 
 	                        // Compute new number of Vertices
 
@@ -6232,49 +6201,61 @@
 
 	                        var newVertexCount = newEdgeCount - newFaceCount + chi;
 
-	                        var newVertexArr = new Array(newVertexCount * 3); // note: larger than original!
+	                        var newVertexArr = new Array(newVertexCount); // note: larger than original!
 
-	                        // Compute old Vertices, and copy to vertexArray.
+	                        // Step 1: Compute old Vertices, and copy to newVertexArray.
 
-	                        console.log("LOOP TO OLDVERTEXCOUNT:" + oldVertexCount);
+	                        var c = void 0,
+	                            tc = void 0,
+	                            x = void 0,
+	                            y = void 0,
+	                            z = void 0,
+	                            u = void 0,
+	                            v = void 0;
 
-	                        for (var i = 0; i < oldVertexCount; ++i) {
+	                        for (var _i = 0; _i < oldVertexCount; ++_i) {
 
-	                                var vertexValency = oldVertexArr[i].e.length;
+	                                // get ith Vertex.
 
-	                                // Beta for surround Vertices.
+	                                var vtx = vertexArr[_i];
+
+	                                // Number of attached Edges.
+
+	                                var vertexValency = vtx.e.length;
+
+	                                // Beta weighting for surround Vertices.
 
 	                                var beta = this.valenceArr[vertexValency];
 
-	                                // Beta for the original Vertex.
+	                                // Beta weighting for the original ith Vertex.
 
 	                                var vertexWeightBeta = 1.0 - vertexValency * beta;
 
-	                                var c = oldVertexArr[i].coords;
+	                                c = vertexArr[_i].coords;
 
-	                                var tc = oldVertexArr[i].texCoords;
+	                                tc = vertexArr[_i].texCoords;
 
-	                                var x = vertexWeightBeta * c.x;
+	                                x = vertexWeightBeta * c.x;
 
-	                                var y = vertexWeightBeta * c.y;
+	                                y = vertexWeightBeta * c.y;
 
-	                                var z = vertexWeightBeta * c.z;
+	                                z = vertexWeightBeta * c.z;
 
-	                                var u = vertexWeightBeta * tc.u;
+	                                u = vertexWeightBeta * tc.u;
 
-	                                var v = vertexWeightBeta * tc.v;
+	                                v = vertexWeightBeta * tc.v;
 
-	                                // Apply weighting.
+	                                // Beta weighting for surround Vertices.
 
 	                                for (var j = 0; j < vertexValency; ++j) {
 
-	                                        // TODO: is edgeMesh.vertices different from edgeArr?????????
+	                                        // Get the surround Vertices for ith Vertex
 
-	                                        var oppositeIndex = edgeArr[oldVertexArr[i].e[j]].getOpposite(i);
+	                                        var oppositeIndex = edgeArr[vtx.e[j]].getOpposite(_i);
 
-	                                        c = oldVertexArr[oppositeIndex].coords;
+	                                        c = vertexArr[oppositeIndex].coords;
 
-	                                        tc = oldVertexArr[oppositeIndex].texCoords;
+	                                        tc = vertexArr[oppositeIndex].texCoords;
 
 	                                        x += beta * c.x;
 
@@ -6287,20 +6268,131 @@
 	                                        v += beta * tc.v;
 	                                }
 
-	                                // Calculate the position of midpoint Vertices, using old Vertices
+	                                // Set the new Vertex values.
 
-	                                // Re-compute our indices
+	                                newVertexArr[_i] = new Vertex(x, y, z, u, v, _i, newVertexArr);
 
+	                                newVertexArr[_i].oldIdx = vtx.idx; // DEBUGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+	                        } // end of vertexCount
 
-	                                // Note: we made a new Vertex here WITHOUT its edges set!!!
+	                        // Step 2: calculate the position of midpoint Vertices, using old Vertices
 
-	                                newVertexArr[i] = new Vertex(x, y, z, u, v, oldVertexArr.idx, newVertexArr);
-	                        } // end of oldVertexCount
+	                        for (var i = 0; i < oldEdgeCount; ++i) {
 
+	                                // Vertices on each side of Edge.
+
+	                                var ev0 = edgeArr[i].v[0];
+
+	                                var ev1 = edgeArr[i].v[1];
+
+	                                var e0 = vertexArr[ev0];
+
+	                                var e1 = vertexArr[ev1];
+
+	                                // create midpoint between Edges.
+
+	                                x = fw * (e0.coords.x + e1.coords.x);
+	                                y = fw * (e0.coords.y + e1.coords.y);
+	                                z = fw * (e0.coords.z + e1.coords.z);
+	                                u = fw * (e0.texCoords.u + e1.texCoords.u);
+	                                v = fw * (e0.texCoords.v + e1.texCoords.v);
+
+	                                // Opposite Vertices to Edge.
+
+	                                var fv0 = edgeArr[i].ov[0];
+
+	                                var fv1 = edgeArr[i].ov[1];
+
+	                                var f0 = vertexArr[fv0];
+
+	                                var f1 = vertexArr[fv1];
+
+	                                // Adjust midpoint by opposite Vertices.
+
+	                                x += ow * (f0.coords.x + f1.coords.x);
+	                                y += ow * (f0.coords.y + f1.coords.y);
+	                                z += ow * (f0.coords.z + f1.coords.z);
+	                                u += ow * (f0.texCoords.u + f1.texCoords.u);
+	                                v += ow * (f0.texCoords.u + f1.texCoords.u);
+
+	                                // new vertex index
+
+	                                var nvi = oldVertexCount + i;
+
+	                                // Add new midponts to the newVertexArr.
+
+	                                newVertexArr[nvi] = new Vertex(x, y, z, u, v, nvi, newVertexArr);
+	                        }
+
+	                        // Re-compute our indices
+
+	                        var newIndexArr = new Uint32Array(newFaceCount);
+
+	                        for (var _i2 = 0; _i2 < oldFaceCount; ++_i2) {
+
+	                                // Original Vertex points.
+
+	                                var ov0 = indexArr[_i2 * 3];
+	                                var ov1 = indexArr[_i2 * 3 + 1];
+	                                var ov2 = indexArr[_i2 * 3 + 2];
+
+	                                /* 
+	                                 * the new Vertex indices are obtained by the edge mesh's faces
+	                                 * since they hold indices to edges - that is the same order in
+	                                 * which the new vertices are constructed in the new vertex buffer
+	                                 * so we need only the index and add the offset of the old vertices count
+	                                 */
+	                                var nv0 = oldVertexCount + faceArr[_i2].e[0];
+	                                var nv1 = oldVertexCount + faceArr[_i2].e[1];
+	                                var nv2 = oldVertexCount + faceArr[_i2].e[2];
+
+	                                // Now add the new vertices to the buffer.
+
+	                                var offset = _i2 * 12; // 4 * 3
+
+	                                newIndexArr[offset] = ov0;
+	                                newIndexArr[offset + 1] = nv0;
+	                                newIndexArr[offset + 2] = nv2;
+
+	                                newIndexArr[offset + 3] = nv0;
+	                                newIndexArr[offset + 4] = ov1;
+	                                newIndexArr[offset + 5] = nv1;
+
+	                                newIndexArr[offset + 6] = nv1;
+	                                newIndexArr[offset + 7] = ov2;
+	                                newIndexArr[offset + 8] = nv2;
+
+	                                newIndexArr[offset + 9] = nv0;
+	                                newIndexArr[offset + 10] = nv1;
+	                                newIndexArr[offset + 11] = nv2;
+	                        }
 
 	                        // Save the new Vertex Array.
 
+	                        // TEMP DEBUG BEFORE MIDPOINTS
+
+	                        //newVertexArr = newVertexArr.slice( 0, oldVertexCount ); // DEBUG!!!!!!!!!!!!!!
+
 	                        this.newVertexArr = newVertexArr;
+
+	                        this.newIndexArr = newIndexArr;
+
+	                        // TEMPORARY TEST
+	                        /*
+	                                for ( let i = 0; i < this.newVertexArr.length; i++ ) {
+	                        
+	                                    console.log("POS:" + i + " vertexArr:" + this.vertexArr[i] + ' newVertexArr:' + this.newVertexArr[i])
+	                        
+	                                    let c = this.vertexArr[ i ].coords.diff( this.newVertexArr[ i ].coords );
+	                        
+	                                    console.log("at pos:" + i + " betaed vertex diff:" + c.x + ',' + c.y + ',' + c.z)
+	                        
+	                                }
+	                        */
+
+	                        this.indexArr = newIndexArr; ////////////////////////////////
+
+	                        this.vertexArr = newVertexArr; ////////////////////////////////////
 	                }
 
 	                /** 
@@ -6320,7 +6412,11 @@
 
 	                        var indexArr = this.indexArr;
 
-	                        var indices = new Array(indexArr.length);
+	                        // index array doesn't need to be flattened, just clone it.
+
+	                        var indices = this.indexArr.slice(0);
+
+	                        // flattened vertices and texCoords array need to be generated from Vertex array.
 
 	                        var vertices = new Array(vertexArr.length * 3);
 
@@ -6334,30 +6430,38 @@
 
 	                                var ti = i * 2;
 
-	                                var c = vertexArr[i].coords;
+	                                var vtx = vertexArr[i];
 
-	                                var t = vertexArr[i].texCoords;
+	                                if (vtx) {
 
-	                                // Recover and flatten coordinate values
+	                                        var c = vtx.coords;
 
-	                                vertices[vi] = c.x;
+	                                        var t = vtx.texCoords;
 
-	                                vertices[vi + 1] = c.y;
+	                                        // Recover and flatten coordinate values
 
-	                                vertices[vi + 2] = c.z;
+	                                        vertices[vi] = c.x;
 
-	                                // Recover and flatten texture coordinate values
+	                                        vertices[vi + 1] = c.y;
 
-	                                texCoords[ti] = t.u;
+	                                        vertices[vi + 2] = c.z;
 
-	                                texCoords[ti + 1] = t.v;
+	                                        // Recover and flatten texture coordinate values
+
+	                                        texCoords[ti] = t.u;
+
+	                                        texCoords[ti + 1] = t.v;
+	                                } else {
+
+	                                        console.warn('Mesh::vertexToGeometry(): no vertex in vertexArr at pos:' + i);
+
+	                                        vertices = vertices.slice(i); // TRUNCATE!
+
+	                                        break;
+	                                }
 	                        }
 
-	                        // index array doesn't need to be flattened, just clone it.
-
-	                        indices = this.indexArr.slice(0);
-
-	                        // We aren't exporting a true Geometry, just some of its arrays.
+	                        // We aren't exporting a true Prim geometry, just some of its arrays.
 
 	                        return {
 
@@ -6438,9 +6542,9 @@
 
 	                        console.log('make sure index values are identical');
 
-	                        for (var _i = 0; _i < numIndices; _i++) {
+	                        for (var _i3 = 0; _i3 < numIndices; _i3++) {
 
-	                                var idx = indices[_i];
+	                                var idx = indices[_i3];
 
 	                                if (vertices[idx * 3] != vertexArr[idx].coords.x) {
 
@@ -6454,11 +6558,11 @@
 
 	                        // Check Edges for validity.
 
-	                        for (var _i2 = 0; _i2 < numEdges; _i2++) {
+	                        for (var _i4 = 0; _i4 < numEdges; _i4++) {
 
 	                                // See if Edge points to valid Vertex
 
-	                                var edge = edgeArr[_i2];
+	                                var edge = edgeArr[_i4];
 
 	                                if (!vertexArr[edge.v[0]]) console.error('Mesh::isValid(): nonexistent first Vertex at edge ' + edge.idx);
 	                                if (!vertexArr[edge.v[1]]) console.error('Mesh::isValid(): nonexistent first Vertex at edge ' + edge.idx);
@@ -6485,9 +6589,9 @@
 
 	                        var valMax = -1;
 
-	                        for (var _i3 = 0; _i3 < numVertices; _i3++) {
+	                        for (var _i5 = 0; _i5 < numVertices; _i5++) {
 
-	                                var v = vertexArr[_i3];
+	                                var v = vertexArr[_i5];
 
 	                                var _len = v.e.length;
 
@@ -6503,13 +6607,12 @@
 	                                console.error('Mesh::isValid(): Vertex valencies are too small to be a valid mesh:' + valMax);
 	                        }
 
-	                        for (var _i4 = 0; _i4 < valencyArr.length; _i4++) {
+	                        for (var _i6 = 0; _i6 < valencyArr.length; _i6++) {
 
-	                                console.log('valency ' + _i4 + ' has ' + valencyArr[_i4] + ' members');
+	                                console.log('valency ' + _i6 + ' has ' + valencyArr[_i6] + ' members');
 	                        }
+	                } // end of isValid
 
-	                        // Check Faces for validity.
-	                }
 	        }]);
 
 	        return Mesh;

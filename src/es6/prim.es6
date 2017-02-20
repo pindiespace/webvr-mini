@@ -2424,32 +2424,6 @@ class Prim {
 
         console.log(" IN CUBE NORMALS NOW ARE...." + normals.length)
 
-////////////////////////////////////////////////////////////////////////////////
-        if ( prim.name === 'colored cube' ) {
-
-            console.log("SUBDIVIDING CUBE")
-            // Sending in texture coords and normals speeds subdivision calculation.
-
-            let mesh = new Mesh( vertices, indices, texCoords );
-
-            window.mesh = mesh;
-
-            //for ( let i = 0; i < indices.length; i++ ) console.log("orig indices " + i + ' :' + indices[i])
-
-            mesh.subdivide();
-
-            let divided = mesh.vertexToGeometry();
-
-            vertices = divided.vertices;
-            indices = divided.indices;
-            texCoords = divided.texCoords;
-            //normals = this.computeNormals( vertices, indices, normals );
-
-            // TODO: TEST COORDS
-
-        }
-////////////////////////////////////////////////////////////////////////////////
-
         // Return the buffer.
 
         return this.addBufferData( prim.geometry, vertices, indices, normals, texCoords, tangents );
@@ -2809,33 +2783,6 @@ class Prim {
         normals = flatten(normals, false );
 
         tangents = flatten(tangents, false );
-
-
-////////////////////////////////////////////////////////////////////////////////
-/*
-        if ( prim.name === 'icosphere' ) {
-
-            console.log("SUBDIVIDING CUBE")
-            // Sending in texture coords and normals speeds subdivision calculation.
-
-            let mesh = new Mesh( vertices, indices, texCoords );
-
-            //for ( let i = 0; i < indices.length; i++ ) console.log("orig indices " + i + ' :' + indices[i])
-
-            let divided = mesh.vertexToGeometry();
-
-            window.mesh = mesh;
-
-            vertices = divided.vertices;
-            indices = divided.indices;
-            texCoords = divided.texCoords;
-            //normals = this.computeNormals( vertices, indices, normals );
-
-            // TODO: TEST COORDS
-
-        }
-*/
-////////////////////////////////////////////////////////////////////////////////
 
         // Helper functions.
 
@@ -3429,33 +3376,6 @@ class Prim {
 
         }
 
-        ///////////////////////////
-        ///////////////////////////
-        ///////////////////////////
-        ///////////////////////////
-/*
-        if ( prim.name === 'torus2' ) {
-
-            console.log("DISPLAYING COLORED CUBE")
-            // Sending in texture coords and normals speeds subdivision calculation.
-
-            let divided = this.morph.computeSubdivide( vertices, indices, texCoords, true );
-
-            vertices = divided.vertices;
-            indices = divided.indices;
-            texCoords = divided.texCoords;
-            //normals = this.computeNormals( vertices, indices, normals );
-
-            // TODO: TEST COORDS
-
-        }
-*/
-        //////////////////////////
-        //////////////////////////
-        //////////////////////////
-        /////////////////////////
-
-
         // Color array is pre-created, or gets a default when WebGL buffers are created.
 
         // Return the buffer.
@@ -3530,10 +3450,15 @@ class Prim {
      * the entire object.
      */
     createPrim ( type, name = 'unknown', 
+
         dimensions = this.vec7( 1, 1, 1, 0, 0, 0, 0 ), 
+
         divisions = this.vec6( 1, 1, 1, 0, 0, 0 ), 
+
         position = this.glMatrix.vec3.create(), acceleration = this.glMatrix.vec3.create(), 
+
         rotation = this.glMatrix.vec3.create(), angular = this.glMatrix.vec3.create(), 
+
         textureImages, color, applyTexToFace = false ) {
 
         const vec3 = this.glMatrix.vec3;
@@ -3589,15 +3514,28 @@ class Prim {
 
         prim.applyTexToFace = applyTexToFace;
 
+
         // Geometry factory function.
 
         prim.geometry = this.createGeoObj();
 
-        prim.geometry.type = type;
-
-        prim.geometry = this.createGeoObj();
+        prim.geometry.type = type; // NOTE: has to come after createGeoObj
 
         prim.geometry = this[ type ]( prim, color );
+
+////////////////////////////////////////////////////////////////////////////////
+        // SUBDIVIDE TEST
+        if ( prim.name === 'colored cube' ) {
+        let mesh = new Mesh( prim.geometry.vertices.data, prim.geometry.indices.data, prim.geometry.texCoords.data );
+        window.mesh = mesh;
+        mesh.subdivide();
+        let divided = mesh.vertexToGeometry();
+        prim.geometry.vertices.data = divided.vertices;
+        prim.geometry.indices.data = divided.indices;
+        prim.geometry.texCoords.data = divided.texCoords;
+        prim.geometry.normals.data = this.computeNormals( divided.vertices, divided.indices, divided.normals );
+        }
+////////////////////////////////////////////////////////////////////////////////
 
         prim.geometry = this.createGLBuffers( prim.geometry );
 
