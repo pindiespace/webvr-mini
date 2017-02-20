@@ -181,6 +181,10 @@ class Face {
 
     /** 
      * Face, storing three consecutive Vertex objects
+     * @param {Number} e0 the first Edge index
+     * @param {Number} e1 the second Edge index
+     * @param {Number} e2 the third Edge index
+     * @param {Number} idx the index in the Face array
      */
     constructor ( e0, e1, e2, idx ) {
 
@@ -664,11 +668,26 @@ class Mesh {
 
         for ( let i = 0; i < oldFaceCount; ++i ) {
 
-            // Original Vertex points.
+            // Original Vertex points, 3x larger than Face count.
 
             const ov0 = indexArr[ i * 3    ];
             const ov1 = indexArr[ i * 3 + 1 ];
             const ov2 = indexArr[ i * 3 + 2 ];
+
+            // This should be in the faceArray at first Edge
+            console.log("faceCount:" + i)
+            const ov00 = this.edgeArr[ this.faceArr[ i ].e[ 0 ] ];
+            console.log("OV00:" + vertexArr[ ov00.v[ 0 ] ].idx + ' compare:' + vertexArr[ ov0].idx )
+ 
+            const ov01 = this.edgeArr[ this.faceArr[ i ].e[ 1 ] ];
+            console.log("OV01:" + vertexArr[ ov01.v[ 0 ] ].idx + ' compare:' + vertexArr[ ov1].idx )
+
+            const ov02 = this.edgeArr[ this.faceArr[ i ].e[ 2 ] ];
+            console.log("OV02:" + vertexArr[ ov02.v[ 0 ] ].idx + ' compare:' + vertexArr[ ov2].idx )
+
+            // NOTE: DEBUG SHOWS THAT 2nd and THIRD EDGE ARE WRONG!!!!!!!
+            
+            console.log( '========================')
 
             /* 
              * the new Vertex indices are obtained by the edge mesh's faces
