@@ -96,6 +96,8 @@ class Vertex {
 
         this.vertexArr = vertexArr;
 
+        this.even = true; // by default, not a midpoint
+
     }
 
     isValid () {
@@ -139,11 +141,17 @@ class Edge {
      * @param {Number} i0 index of first consecutive Vertex
      * @param {Number} i0 index of second consecutive Vertex
      */
-    constructor ( i0, i1, i2, fi, idx ) {
+    constructor ( i0, i1, i2, fi, idx, key ) {
 
         // Index of first and second Vertex.
 
-        this.v = new Uint32Array( 2 );
+        this.v = new Uint32Array( 2 );  // index the two Vertex objects forming the Edge
+
+        this.f = new Uint32Array( 2 );  // index the two Faces this Edge is part of
+
+        this.ov = new Uint32Array( 2 ); // index the opposite vertices in first and second Face
+
+        this.mp = new Uint32Array( 1 ); // midpoint (only computed in subdivide)
 
         this.v[ 0 ] = i0;
 
@@ -151,24 +159,25 @@ class Edge {
 
         // Index of first and second Face connected to this edge (only know first one at this point).
 
-        this.f = new Uint32Array( 2 );
+        this.f[ 0 ] = fi;         // The Face this Edge is initially part up during creation
 
-        this.f[ 0 ] = fi;
-
-        this.f[ 1 ] = 4294967295;
+        this.f[ 1 ] = 4294967295; // The other Face, initially invalid value
 
         // Index of the opposite Vertex (forming triangle) connected to this Edge (only know first one at this point).
 
-        this.ov = new Uint32Array( 2 );
-
         this.ov[ 0 ] = i2;
 
-        this.ov[ 1 ] = i2;
+        this.ov[ 1 ] = i2; // This should change during computation
 
-        this.idx = idx; // key in edgeMap hash
+        this.idx = idx; // index in the edgeArr
+
+        this.key = key // hash lookup in edgeMap
 
     }
 
+    /** 
+     * Given one point, return the other point in the Edge.
+     */
     getOpposite ( vi ) {
 
         return ( this.v[ 0 ] == vi ? this.v[ 1 ] : this.v[ 0 ] );
@@ -195,6 +204,10 @@ class Face {
         this.e[ 1 ] = e1;
 
         this.e[ 2 ] = e2;
+
+        // Store midpoints here.
+
+        this.m = new Uint32Array( 3 );
 
         this.idx = idx;
 
@@ -228,7 +241,9 @@ class Mesh {
 
         this.edgeArr = [];
 
-        this.edgeMap = []; // lookup table
+        this.edgeMap = []; // lookup table for Edges (even Vertices)
+
+        this.midMap = []; // lookup hash for midpoints (odd Vertices)
 
         this.faceArr = [];
 
@@ -299,7 +314,8 @@ class Mesh {
 
     /** 
      * Compute the nearest neighbor to a Vertex that is not 
-     * in its face
+     * in any of its Edges. This helps smooth meshes that are 
+     * not continous.
      */
     computeNeighbor () {
 
@@ -328,6 +344,9 @@ class Mesh {
 
     /** 
      * Set values for an Edge
+     * @param {Number} i0 index of first Vertex in Edge.
+     * @param {Number} i1 index of second Vertex in Edge.
+     * @Param {Number} i2 index of opposite Vertex, forming a Face with the Edge.
      */
     computeEdge ( i0, i1, i2, fi ) {
 
@@ -342,6 +361,12 @@ class Mesh {
         const mini = Math.min( i0, i1 );
 
         const maxi = Math.max( i0, i1 );
+
+        ///// DEBUG!!!!!!!!!!!!!!!!
+        // THIS RESULTS IN ONLY THE CORNERS DRAWING
+        //const mini = i0;
+
+        //const maxi = i1;
 
         // Check hash lookup for Edge already existing.
 
@@ -368,7 +393,7 @@ class Mesh {
             // Create Edge with Vertices, first opposite Face, first opposite Vertex
             // NOTE: second Face and opposite Vertex NOT PRESENT YET
 
-            let edge = new Edge( mini, maxi, i2, fi, key );
+            let edge = new Edge( mini, maxi, i2, fi, idx, key );
 
             edgeArr.push( edge );
 
@@ -534,11 +559,14 @@ class Mesh {
 
         // Re-compute our indices
 
-        let newIndexArr = new Uint32Array( newFaceCount );
+        let newIndexArr = new Uint32Array( newFaceCount * 3 );
 
+        //////////
         // Step 1: Compute old Vertices, and copy to newVertexArray.
 
         let c, tc, x, y, z, u, v;
+
+        let diff = [];
 
         for ( let i = 0; i < oldVertexCount; ++i ) {
 
@@ -580,6 +608,8 @@ class Mesh {
 
                 const oppositeIndex = edgeArr[ vtx.e[ j ] ].getOpposite( i );
 
+                ////////console.log ( 'AT:' + vtx.idx + ', surround ' + j + ' is:' + vertexArr[ oppositeIndex ].idx )
+
                 c = vertexArr[ oppositeIndex ].coords;
 
                 tc = vertexArr[ oppositeIndex ].texCoords;
@@ -604,68 +634,128 @@ class Mesh {
 
         } // end of vertexCount
 
-        // Now compute midpoints and new indices.
+        ///////////
+        // Step 2: compute midpoints and new indices.
 
-        let midMap = [];
+        // READOUT FACE, COMPARE TO INDEX ARR.
 
-        let ol = vertexArr.length;
+        this.midMap = [];
 
-        let ix = 0;
+        let mPos = vertexArr.length; // add after original Vertices
 
-        for ( let i = 0; i < indexArr.length; i += 2 ) {
+        for (let i = 0; i < this.faceArr.length; i++ ) {
 
-            // Indices from index array (define the triangles)
+            let face = faceArr[ i ];
+ 
+            let e0 = edgeArr[ face.e[ 0 ] ]; // first Edge
 
-            let i0 = indexArr[ i + 0 ];
+            let e1 = edgeArr[ face.e[ 1 ] ]; // second Edge
 
-            let i1 = indexArr[ i + 1 ];
-
-            let key =  i0 + '-' + i1;
-
-            let revKey = i1 + '-' + i0;
-
-            let idx;
-
-            let edgeIndex = this.edgeMap[ key ];
-
-            console.log( "edgeIndex for " + key + " = " + edgeIndex)
-
-            if ( key in midMap ) {
-
-                idx = midMap[ key ];
-
-            } else if( revKey in midMap ) {
-
-                idx = midMap[ key ];
-
-            }
-
-            else {
-
-                 idx = midMap[ key ] = ol;
-
-                vertexArr[ idx ] = new Vertex( 0, 0, 0, 0, 0, vertexArr, idx );
-
-                ol++;
-
-            }
-
-            newIndexArr[ ix++ ] = i0;
-
-            newIndexArr[ ix++ ] = idx;
-
-            newIndexArr[ ix++ ] = i1
-
-            // need another hash calc. If undefined, check reverse key to see if it already 
-            // exists. Otherwise, create a new point and add it to the end of VertexArr.
+            let e2 = edgeArr[ face.e[ 2 ] ]; // third Edge
 
 
-        } // end of indexArr loop
+            //console.log( "FACEREAD " + i + 
+            //" edge0: " + e0.v + ' ov:' + e0.ov + 
+            //" edge1: " +  e1.v + ' ov:' + e1.ov + 
+            //" edge2: " + e2.v + ' ov:' + e2.ov ); // gives 1st and 2nd index of vertices forming Face
+
+            console.log( "FACEREAD " + i + 
+            " edge0: " + e0.v +  
+            " edge1: " +  e1.v +  
+            " edge2: " + e2.v ); // gives 1st and 2nd index of vertices forming Face
 
 
-        newVertexArr = newVertexArr.slice( 0, oldVertexCount );
+            // Each Edge object contains the 4 Vertex objects we need for the midpoint.
 
-        this.vertexArr = newVertexArr;
+           
+            // Compute midpoint for e0 
+
+            let ew = 3.0 / 8.0;
+
+            let ow = 1.0 / 8.0;
+
+            for ( let i = 0; i < 3; i++  ) {
+
+                let e = edgeArr[ face.e[ i ] ];
+
+                let key = e.key;
+
+                // TODO: conditional check, only add midpoint if needed.
+                /*
+
+                let mIdx = 0;
+
+                if ( key in midMap ) {
+                    mIdx = midMap[ key ];  
+                } else if ( revKey in midMap ) {
+                    mIdx = midMap[ key ];
+                } else {
+                    mIdx = mPos;
+                }
+
+                */
+
+                console.log("Edge key:" + key)
+
+                const ev0 = vertexArr[ e.v[ 0 ] ].coords;
+                const ev1 = vertexArr[ e.v[ 1 ] ].coords;
+                const fv0 = vertexArr[ e.ov[ 0 ] ].coords;
+                const fv1 = vertexArr[ e.ov[ 1 ] ].coords;
+
+                let x = ew * ( ev0.x + ev1.x );
+                let y = ew * ( ev0.y + ev1.y );
+                let z = ew * ( ev0.z + ev1.z );
+                let u = ew * ( ev0.u + ev1.u );
+                let v = ew * ( ev0.v + ev1.v );
+
+                x += ow * ( fv0.x + fv1.x );
+                y += ow * ( fv0.y + fv1.y );
+                z += ow * ( fv0.z + fv1.z );
+                u += ow * ( fv0.u + fv1.u );
+                v += ow * ( fv0.v + fv1.v );
+
+                let vtx = new Vertex( x, y, z, u, v, mPos, vertexArr );
+
+                vtx.isEven = false;
+
+                e.mp[ i ] = mPos; // add the Midpoint index to the Face
+
+                newVertexArr[ mPos ] = vtx;
+
+            } // end loop through individual Face Edges
+
+
+        } // end loop through all Faces
+
+        // Step 3: Re-compute indices
+
+        // TODO: loop through faceArr.
+
+        // TODO: test if we recover indexArr correctly.
+
+        for ( let i = 0; i < faceArr.length; i++ ) {
+
+            let face = faceArr[ i ];
+
+                let e0 = edgeArr[ face.e[ 0 ] ];
+
+                let e1 = edgeArr[ face.e[ 1 ] ];
+
+                let e2 = edgeArr[ face.e[ 2 ] ];
+
+                //NOTE: this proves edges can't be read out directly
+
+
+        }
+ 
+ 
+        // DEBUG
+        this.newVertexArr = newVertexArr;
+
+        // Keeps it working without midpoint;
+        this.vertexArr = newVertexArr.slice( 0, oldVertexCount );
+
+        //this.vertexArr = newVertexArr;
         
 
     }
