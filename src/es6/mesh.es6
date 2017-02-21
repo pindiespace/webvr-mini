@@ -345,7 +345,7 @@ class Mesh {
 
         // Check hash lookup for Edge already existing.
 
-        const key = mini + '-' + maxi;
+        let key = mini + '-' + maxi;
 
         if ( key in this.edgeMap ) {
 
@@ -606,7 +606,62 @@ class Mesh {
 
         // Now compute midpoints and new indices.
 
-        
+        let midMap = [];
+
+        let ol = vertexArr.length;
+
+        let ix = 0;
+
+        for ( let i = 0; i < indexArr.length; i += 2 ) {
+
+            // Indices from index array (define the triangles)
+
+            let i0 = indexArr[ i + 0 ];
+
+            let i1 = indexArr[ i + 1 ];
+
+            let key =  i0 + '-' + i1;
+
+            let revKey = i1 + '-' + i0;
+
+            let idx;
+
+            let edgeIndex = this.edgeMap[ key ];
+
+            console.log( "edgeIndex for " + key + " = " + edgeIndex)
+
+            if ( key in midMap ) {
+
+                idx = midMap[ key ];
+
+            } else if( revKey in midMap ) {
+
+                idx = midMap[ key ];
+
+            }
+
+            else {
+
+                 idx = midMap[ key ] = ol;
+
+                vertexArr[ idx ] = new Vertex( 0, 0, 0, 0, 0, vertexArr, idx );
+
+                ol++;
+
+            }
+
+            newIndexArr[ ix++ ] = i0;
+
+            newIndexArr[ ix++ ] = idx;
+
+            newIndexArr[ ix++ ] = i1
+
+            // need another hash calc. If undefined, check reverse key to see if it already 
+            // exists. Otherwise, create a new point and add it to the end of VertexArr.
+
+
+        } // end of indexArr loop
+
 
         newVertexArr = newVertexArr.slice( 0, oldVertexCount );
 

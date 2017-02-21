@@ -9098,6 +9098,56 @@
 
 	                        // Now compute midpoints and new indices.
 
+	                        var midMap = [];
+
+	                        var ol = vertexArr.length;
+
+	                        var ix = 0;
+
+	                        for (var _i = 0; _i < indexArr.length; _i += 2) {
+
+	                                // Indices from index array (define the triangles)
+
+	                                var i0 = indexArr[_i + 0];
+
+	                                var i1 = indexArr[_i + 1];
+
+	                                var key = i0 + '-' + i1;
+
+	                                var revKey = i1 + '-' + i0;
+
+	                                var idx = void 0;
+
+	                                var edgeIndex = this.edgeMap[key];
+
+	                                console.log("edgeIndex for " + key + " = " + edgeIndex);
+
+	                                if (key in midMap) {
+
+	                                        idx = midMap[key];
+	                                } else if (revKey in midMap) {
+
+	                                        idx = midMap[key];
+	                                } else {
+
+	                                        idx = midMap[key] = ol;
+
+	                                        vertexArr[idx] = new Vertex(0, 0, 0, 0, 0, vertexArr, idx);
+
+	                                        ol++;
+	                                }
+
+	                                newIndexArr[ix++] = i0;
+
+	                                newIndexArr[ix++] = idx;
+
+	                                newIndexArr[ix++] = i1;
+
+	                                // need another hash calc. If undefined, check reverse key to see if it already 
+	                                // exists. Otherwise, create a new point and add it to the end of VertexArr.
+
+	                        } // end of indexArr loop
+
 
 	                        newVertexArr = newVertexArr.slice(0, oldVertexCount);
 
@@ -9251,9 +9301,9 @@
 
 	                        console.log('make sure index values are identical');
 
-	                        for (var _i = 0; _i < numIndices; _i++) {
+	                        for (var _i2 = 0; _i2 < numIndices; _i2++) {
 
-	                                var idx = indices[_i];
+	                                var idx = indices[_i2];
 
 	                                if (vertices[idx * 3] != vertexArr[idx].coords.x) {
 
@@ -9267,11 +9317,11 @@
 
 	                        // Check Edges for validity.
 
-	                        for (var _i2 = 0; _i2 < numEdges; _i2++) {
+	                        for (var _i3 = 0; _i3 < numEdges; _i3++) {
 
 	                                // See if Edge points to valid Vertex
 
-	                                var edge = edgeArr[_i2];
+	                                var edge = edgeArr[_i3];
 
 	                                if (!vertexArr[edge.v[0]]) console.error('Mesh::isValid(): nonexistent first Vertex at edge ' + edge.idx);
 	                                if (!vertexArr[edge.v[1]]) console.error('Mesh::isValid(): nonexistent first Vertex at edge ' + edge.idx);
@@ -9298,9 +9348,9 @@
 
 	                        var valMax = -1;
 
-	                        for (var _i3 = 0; _i3 < numVertices; _i3++) {
+	                        for (var _i4 = 0; _i4 < numVertices; _i4++) {
 
-	                                var v = vertexArr[_i3];
+	                                var v = vertexArr[_i4];
 
 	                                var len = v.e.length;
 
@@ -9316,9 +9366,9 @@
 	                                console.error('Mesh::isValid(): Vertex valencies are too small to be a valid mesh:' + valMax);
 	                        }
 
-	                        for (var _i4 = 0; _i4 < valencyArr.length; _i4++) {
+	                        for (var _i5 = 0; _i5 < valencyArr.length; _i5++) {
 
-	                                console.log('valency ' + _i4 + ' has ' + valencyArr[_i4] + ' members');
+	                                console.log('valency ' + _i5 + ' has ' + valencyArr[_i5] + ' members');
 	                        }
 	                } // end of isValid
 
