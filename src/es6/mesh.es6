@@ -287,20 +287,6 @@ class Mesh {
     }
 
     /** 
-     * Compute the bounding box of the Mesh.
-     */
-    computeBoundingBox () {
-
-        let vertexArr = this.vertexArr;
-
-        for ( let i = 0; len = vertexArr.length; i++ ) {
-
-        }
-
-
-    }
-
-    /** 
      * Compute the average distance beween Vertices in the Mesh.
      */
     computeAverageDistance () {
@@ -382,7 +368,7 @@ class Mesh {
             // Create Edge with Vertices, first opposite Face, first opposite Vertex
             // NOTE: second Face and opposite Vertex NOT PRESENT YET
 
-            let edge = new Edge( i0, i1, i2, fi, key );
+            let edge = new Edge( mini, maxi, i2, fi, key );
 
             edgeArr.push( edge );
 
@@ -514,7 +500,9 @@ class Mesh {
 
         let vertexArr = this.vertexArr;
 
-        let oldVertexArr = vertexArr.slice(0)
+        this.oldVertexArr = vertexArr.slice(0);
+
+        let overtexArr = this.oldVertexArr;
 
         const oldVertexCount = this.vertexArr.length;
 
@@ -543,6 +531,10 @@ class Mesh {
         const newVertexCount = newEdgeCount - newFaceCount + chi;
 
         let newVertexArr = new Array( newVertexCount ); // note: larger than original!
+
+        // Re-compute our indices
+
+        let newIndexArr = new Uint32Array( newFaceCount );
 
         // Step 1: Compute old Vertices, and copy to newVertexArray.
 
@@ -612,141 +604,14 @@ class Mesh {
 
         } // end of vertexCount
 
-        // Step 2: calculate the position of midpoint Vertices, using old Vertices
+        // Now compute midpoints and new indices.
 
-        for (var i = 0; i < oldEdgeCount; ++i ) {
+        
 
-            // Vertices on each side of Edge.
+        newVertexArr = newVertexArr.slice( 0, oldVertexCount );
 
-            const ev0 = edgeArr[ i ].v[ 0 ];
-
-            const ev1 = edgeArr[ i ].v[ 1 ];
-
-            const e0 = vertexArr[ ev0 ];
-
-            const e1 = vertexArr[ ev1 ];
-
-            // create midpoint between Edges.
-
-            x = fw * ( e0.coords.x + e1.coords.x );
-            y = fw * ( e0.coords.y + e1.coords.y );
-            z = fw * ( e0.coords.z + e1.coords.z );
-            u = fw * ( e0.texCoords.u + e1.texCoords.u );
-            v = fw * ( e0.texCoords.v + e1.texCoords.v );
-
-            // Opposite Vertices to Edge.
-
-            const fv0 = edgeArr[ i ].ov[ 0 ];
-
-            const fv1 = edgeArr[ i ].ov[ 1 ];
-
-            const f0 = vertexArr[ fv0 ];
-
-            const f1 = vertexArr[ fv1 ];
-
-            // Adjust midpoint by opposite Vertices.
-
-            x += ow * ( f0.coords.x + f1.coords.x );
-            y += ow * ( f0.coords.y + f1.coords.y );
-            z += ow * ( f0.coords.z + f1.coords.z );
-            u += ow * ( f0.texCoords.u + f1.texCoords.u );
-            v += ow * ( f0.texCoords.u + f1.texCoords.u );
-
-            // new vertex index
-
-            const nvi = oldVertexCount + i;
-
-            // Add new midponts to the newVertexArr.
-
-            newVertexArr[ nvi ] = new Vertex( x, y, z, u, v, nvi, newVertexArr );
-
-        }
-
-        // Re-compute our indices
-
-        let newIndexArr = new Uint32Array( newFaceCount );
-
-        for ( let i = 0; i < oldFaceCount; ++i ) {
-
-            // Original Vertex points, 3x larger than Face count.
-
-            const ov0 = indexArr[ i * 3    ];
-            const ov1 = indexArr[ i * 3 + 1 ];
-            const ov2 = indexArr[ i * 3 + 2 ];
-
-            // This should be in the faceArray at first Edge
-            console.log("faceCount:" + i)
-            const ov00 = this.edgeArr[ this.faceArr[ i ].e[ 0 ] ];
-            console.log("OV00:" + vertexArr[ ov00.v[ 0 ] ].idx + ' compare:' + vertexArr[ ov0].idx )
- 
-            const ov01 = this.edgeArr[ this.faceArr[ i ].e[ 1 ] ];
-            console.log("OV01:" + vertexArr[ ov01.v[ 0 ] ].idx + ' compare:' + vertexArr[ ov1].idx )
-
-            const ov02 = this.edgeArr[ this.faceArr[ i ].e[ 2 ] ];
-            console.log("OV02:" + vertexArr[ ov02.v[ 0 ] ].idx + ' compare:' + vertexArr[ ov2].idx )
-
-            // NOTE: DEBUG SHOWS THAT 2nd and THIRD EDGE ARE WRONG!!!!!!!
-            
-            console.log( '========================')
-
-            /* 
-             * the new Vertex indices are obtained by the edge mesh's faces
-             * since they hold indices to edges - that is the same order in
-             * which the new vertices are constructed in the new vertex buffer
-             * so we need only the index and add the offset of the old vertices count
-             */
-            const nv0 = oldVertexCount + faceArr[ i ].e[ 0 ];
-            const nv1 = oldVertexCount + faceArr[ i ].e[ 1 ];
-            const nv2 = oldVertexCount + faceArr[ i ].e[ 2 ];
-
-            // Now add the new vertices to the buffer.
-
-            const offset = i * 12; // 4 * 3
-
-            newIndexArr[ offset      ] = ov0;
-            newIndexArr[ offset +  1 ] = nv0;
-            newIndexArr[ offset +  2 ] = nv2;
-
-            newIndexArr[ offset +  3 ] = nv0;
-            newIndexArr[ offset +  4 ] = ov1;
-            newIndexArr[ offset +  5 ] = nv1;
-
-            newIndexArr[ offset +  6 ] = nv1;
-            newIndexArr[ offset +  7 ] = ov2;
-            newIndexArr[ offset +  8 ] = nv2;
-
-            newIndexArr[ offset +  9 ] = nv0;
-            newIndexArr[ offset + 10 ] = nv1;
-            newIndexArr[ offset + 11 ] = nv2;
-
-        }
-
-        // Save the new Vertex Array.
-
-        // TEMP DEBUG BEFORE MIDPOINTS
-
-        //newVertexArr = newVertexArr.slice( 0, oldVertexCount ); // DEBUG!!!!!!!!!!!!!!
-
-        this.newVertexArr = newVertexArr;
-
-        this.newIndexArr = newIndexArr;
-
-        // TEMPORARY TEST
-/*
-        for ( let i = 0; i < this.newVertexArr.length; i++ ) {
-
-            console.log("POS:" + i + " vertexArr:" + this.vertexArr[i] + ' newVertexArr:' + this.newVertexArr[i])
-
-            let c = this.vertexArr[ i ].coords.diff( this.newVertexArr[ i ].coords );
-
-            console.log("at pos:" + i + " betaed vertex diff:" + c.x + ',' + c.y + ',' + c.z)
-
-        }
-*/
-
-        this.indexArr = newIndexArr; ////////////////////////////////
-
-        this.vertexArr = newVertexArr; ////////////////////////////////////
+        this.vertexArr = newVertexArr;
+        
 
     }
 
