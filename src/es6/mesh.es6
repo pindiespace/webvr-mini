@@ -733,18 +733,19 @@ class Mesh {
 
         // TODO: test if we recover indexArr correctly.
 
-        for ( let i = 0; i < faceArr.length; i++ ) {
+        this.edgeTest = [];
 
-            let face = faceArr[ i ];
+        for ( let i = 0; i < edgeArr.length; i++ ) {
 
-                let e0 = edgeArr[ face.e[ 0 ] ];
+            let edge = edgeArr[ i ];
 
-                let e1 = edgeArr[ face.e[ 1 ] ];
+                let e0 = edge.v[ 0 ];
 
-                let e2 = edgeArr[ face.e[ 2 ] ];
+                let e1 = edge.v[ 1 ];
 
-                //NOTE: this proves edges can't be read out directly
+                //console.log( 'edge' + i + ' : ' + e0 + ',' + e1);
 
+                this.edgeTest.push( e0 + ',' + e1 )
 
         }
  
