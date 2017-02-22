@@ -3525,21 +3525,23 @@ class Prim {
 
 ////////////////////////////////////////////////////////////////////////////////
         // SUBDIVIDE TEST
-        if ( prim.name === 'colored cube' ) {
-        let mesh = new Mesh( prim.geometry.vertices.data, prim.geometry.indices.data, prim.geometry.texCoords.data );
-        window.mesh = mesh;
-        mesh.subdivide();
-        let divided = mesh.vertexToGeometry();
-        prim.geometry.vertices.data = divided.vertices;
-        prim.geometry.indices.data = divided.indices;
-        prim.geometry.texCoords.data = divided.texCoords;
-        prim.geometry.normals.data = this.computeNormals( divided.vertices, divided.indices, divided.normals );
-        }
+        //if ( prim.name === 'colored cube' ) {
+            let mesh = new Mesh( prim.geometry.vertices.data, prim.geometry.indices.data, prim.geometry.texCoords.data );
+            window.mesh = mesh;
+            mesh.subdivide();
+            let divided = mesh.vertexToGeometry();
+            prim.geometry.vertices.data = divided.vertices;
+            prim.geometry.indices.data = divided.indices;
+            prim.geometry.texCoords.data = divided.texCoords;
+            prim.geometry.normals.data = this.computeNormals( divided.vertices, divided.indices, divided.normals );
+        //}
 ////////////////////////////////////////////////////////////////////////////////
 
         prim.geometry = this.createGLBuffers( prim.geometry );
 
         // Compute the bounding box.
+
+
 
         prim.boundingBox = this.computeBoundingBox( prim.geometry.vertices.data );
 
