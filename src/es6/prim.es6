@@ -737,17 +737,7 @@ class Prim {
 
         let vec3 = this.glMatrix.vec3;
 
-        let box = {
-
-            vertices: [],
-
-            indices: [],
-
-            normals: [],
-
-            texCoords: []
-
-        }; 
+        let box = {}; 
 
         let tx = 0, ty = 0, tz = 0, bx = 0, by = 0, bz = 0;
 
@@ -766,21 +756,49 @@ class Prim {
 
         // Two quads, vary by z values only, clockwise.
 
-        box.vertices.push( 
-            [ tx, ty, tz ],  // topLeft
-            [ bx, ty, tz ],   // r
-            [ bx, by, tz ],  // b
-            [ tx, by, tz ],  // l
+        box.vertices = [
 
-            [ tx, ty, bz ],  // t
-            [ bx, ty, bz ],  // r
-            [ bx, by, bz ],  // bottomRight
-            [ tx, by, bz ]   // l
-        );
+            // Front face
+            tx, ty, bz, bx, ty, bz,
+            bx, by, bz, tx, by, bz,
+  
+            // Back face
+            tx, ty, tz, tx, by, tz,
+            bx, by, tz, bx, ty, tz,
 
-        box.topLeft = box.vertices[ 0 ];
+            // Top face
+            tx, by, tz, tx, by, bz,
+            bx, by, bz, bx, by, tz,
+  
+            // Bottom face
+            tx, ty, tz, bx, ty, tz,
+            bx, ty, bz, tx, ty, bz,
 
-        box.bottomRight = box.vertices[ 6 ];
+             // Right face
+            bx, ty, tz, bx, by, tz,
+            bx, by, bz, bx, ty, bz,
+
+            // Left face
+            tx, ty, tz, tx, ty, bz,
+            tx, by, bz, tx, by, tz
+
+        ];
+
+        box.indices = [ 
+
+            0,  1,  2,      0,  2,  3,    // front
+            4,  5,  6,      4,  6,  7,    // back
+            8,  9,  10,     8,  10, 11,   // top
+            12, 13, 14,     12, 14, 15,   // bottom
+            16, 17, 18,     16, 18, 19,   // right
+            20, 21, 22,     20, 22, 23    // left
+
+        ];
+
+
+        box.topLeft = [ tx, ty, tz ];
+
+        box.bottomRight = [ bx, by, bz ];
 
         box.dimensions = vec3.subtract( [ 0, 0, 0 ], box.bottomRight, box.topLeft );
 
@@ -3525,7 +3543,7 @@ class Prim {
 
 ////////////////////////////////////////////////////////////////////////////////
         // SUBDIVIDE TEST
-        if ( prim.name === 'colored cube' ) {
+        //if ( prim.name === 'colored cube' ) {
             let mesh = new Mesh( prim.geometry.vertices.data, prim.geometry.indices.data, prim.geometry.texCoords.data );
             window.mesh = mesh;
             mesh.subdivide();
@@ -3534,23 +3552,23 @@ class Prim {
             let divided = mesh.vertexToGeometry();
             prim.geometry.vertices.data = divided.vertices;
             prim.geometry.indices.data = divided.indices;
-               prim.geometry.texCoords.data = divided.texCoords;
+            prim.geometry.texCoords.data = divided.texCoords;
             prim.geometry.normals.data = this.computeNormals( divided.vertices, divided.indices, [prim.geometry.normals.data] );
-        }
+        //}
 ////////////////////////////////////////////////////////////////////////////////
+
+        // Create WebGL data buffers from geometry.
 
         prim.geometry = this.createGLBuffers( prim.geometry );
 
         // Compute the bounding box.
-
-
 
         prim.boundingBox = this.computeBoundingBox( prim.geometry.vertices.data );
 
         // Internal functions.
 
         /** 
-         * Set the model-view matrix
+         * Set the model-view matrix.
          */
         prim.setMV = ( mvMatrix ) => {
 

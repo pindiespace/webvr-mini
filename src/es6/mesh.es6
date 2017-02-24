@@ -491,12 +491,11 @@ class Mesh {
 
             this.edgeMap[ key ] = idx;
 
-            // Create Edge with Vertices, first opposite Face, first opposite Vertex
-            // NOTE: second Face and opposite Vertex NOT PRESENT YET
-
             let edge = new Edge( mini, maxi, i2, fi );
 
             edgeArr.push( edge );
+
+            //console.log('setting Edge key:' + key)
 
             // Let Vertices know they are part of this Edge (most get 6).
 
@@ -568,37 +567,6 @@ class Mesh {
     }
 
     /** 
-     * Adjust Odd Vertices, 4 control points.
-     */
-    computeOdd ( vtx ) {
-
-/*
-
-let edge = edgeArr[ i ];
-
-            const ev0 = vertexArr[ edge.v[ 0 ] ];
-            const ev1 = vertexArr[ edge.v[ 1 ] ];
-            const fv0 = vertexArr[ edge.ov[ 0 ] ];
-            const fv1 = vertexArr[ edge.ov[ 1 ] ];
-
-            let x = fw * ( ev0.coords.x + ev1.coords.x );
-            let y = fw * ( ev0.coords.y + ev1.coords.y );
-            let z = fw * ( ev0.coords.z + ev1.coords.z );
-            let u = fw * ( ev0.texCoords.u + ev1.texCoords.u );
-            let v = fw * ( ev0.texCoords.v + ev1.texCoords.v );
-
-            x += ow * ( fv0.coords.x + fv1.coords.x );
-            y += ow * ( fv0.coords.y + fv1.coords.y );
-            z += ow * ( fv0.coords.z + fv1.coords.z );
-            u += ow * ( fv0.texCoords.u + fv1.texCoords.u );
-            v += ow * ( fv0.texCoords.v + fv1.texCoords.v );
-
-            let vtx = new Vertex( x, y, z, u, v, mPos++, vertexArr );
-*/
-
-    }
-
-    /** 
      * Adjust Even Vertices, up to 6 control points.
      * @param {Vertex} vtx the Vertex to compute.
      * @param {Array[Vertex]} the array containing surround Vertices.
@@ -659,9 +627,81 @@ let edge = edgeArr[ i ];
 
         // Save the recomputed Vertex
 
-        vtx.set(  x, y, z, u, v );
+        vtx.set( x*1.01, y*1.01, z*1.01, u, v );
 
-    } 
+    }
+
+    /** 
+     * Adjust Odd Vertices, 4 control points.
+     */
+    computeOdd ( vertexArr, key, revKey ) {
+
+        let edge = this.edgeArr[ this.edgeMap[ key ] ];
+
+        if ( ! edge ) { 
+            //console.log('no forward edge for ' + key + ', trying reverse'); 
+            edge = this.edgeArr[ this.edgeMap[ revKey ] ]; 
+        }
+
+        if ( edge ) {
+
+            //console.log( 'computing for edge:' + key + ',' + revKey)
+
+            const fw = 3 / 8;
+
+            const ow = 1 / 8;
+
+            const ev0 = vertexArr[ edge.v[ 0 ] ];
+            const ev1 = vertexArr[ edge.v[ 1 ] ];
+            const fv0 = vertexArr[ edge.ov[ 0 ] ];
+            const fv1 = vertexArr[ edge.ov[ 1 ] ];
+
+            if ( ! ev0 ) console.error( 'no ev0  for Edge vertex ' + edge.v[ 0 ] );
+            if ( ! ev1 ) console.error( 'no ev0  for Edge vertex ' + edge.v[ 1 ] );
+            if ( ! fv0 ) console.error( 'no ev0  for Edge vertex ' + edge.ov[ 0 ] );
+            if ( ! fv1 ) console.error( 'no ev0  for Edge vertex ' + edge.ov[ 1 ] );
+
+            let x = fw * ( ev0.coords.x + ev1.coords.x );
+            let y = fw * ( ev0.coords.y + ev1.coords.y );
+            let z = fw * ( ev0.coords.z + ev1.coords.z );
+            let u = fw * ( ev0.texCoords.u + ev1.texCoords.u );
+            let v = fw * ( ev0.texCoords.v + ev1.texCoords.v );
+
+            x += ow * ( fv0.coords.x + fv1.coords.x );
+            y += ow * ( fv0.coords.y + fv1.coords.y );
+            z += ow * ( fv0.coords.z + fv1.coords.z );
+            u += ow * ( fv0.texCoords.u + fv1.texCoords.u );
+            v += ow * ( fv0.texCoords.v + fv1.texCoords.v );
+
+
+        } else {
+            console.log( 'edge is undefined for:' + key + ',' + revKey)
+        }
+/*
+
+let edge = edgeArr[ i ];
+
+            const ev0 = vertexArr[ edge.v[ 0 ] ];
+            const ev1 = vertexArr[ edge.v[ 1 ] ];
+            const fv0 = vertexArr[ edge.ov[ 0 ] ];
+            const fv1 = vertexArr[ edge.ov[ 1 ] ];
+
+            let x = fw * ( ev0.coords.x + ev1.coords.x );
+            let y = fw * ( ev0.coords.y + ev1.coords.y );
+            let z = fw * ( ev0.coords.z + ev1.coords.z );
+            let u = fw * ( ev0.texCoords.u + ev1.texCoords.u );
+            let v = fw * ( ev0.texCoords.v + ev1.texCoords.v );
+
+            x += ow * ( fv0.coords.x + fv1.coords.x );
+            y += ow * ( fv0.coords.y + fv1.coords.y );
+            z += ow * ( fv0.coords.z + fv1.coords.z );
+            u += ow * ( fv0.texCoords.u + fv1.texCoords.u );
+            v += ow * ( fv0.texCoords.v + fv1.texCoords.v );
+
+            let vtx = new Vertex( x, y, z, u, v, mPos++, vertexArr );
+*/
+
+    }
 
     /**
      * Subdivide and optionally smooth a Mesh, similar to 
@@ -702,6 +742,12 @@ let edge = edgeArr[ i ];
         // Rebuild the Vertex and Index array.
 
         let v0, v1, v2;
+
+
+        // Compute Faces and Edges (hash back to Vertices).
+
+        this.computeFaces();
+        //console.log("THIS edgeArr:" + this.edgeArr)
 
         for ( let i = 0; i < indexArr.length; i += 3 ) {
 
@@ -771,7 +817,7 @@ let edge = edgeArr[ i ];
 
             // Compute Faces and Edges (hash back to Vertices).
 
-            this.computeFaces();
+            //this.computeFaces();
 
             // Compute change for old Vertices
 
@@ -821,42 +867,67 @@ let edge = edgeArr[ i ];
 
             // if we add three midpoints
 
-            m0 = this.computeCentroid( v0, v1 );
-            m1 = this.computeCentroid( v1, v2 );
-            m2 = this.computeCentroid( v2, v0 );
+            // First midpoint.
+
+            //m0 = this.computeCentroid( v0, v1 );
 
             let key = ii0 + '-' + ii1;
             let revKey = ii1 + '-' + ii0;
 
-            if( midHash[ key ] ) mi0 = midHash[ key ];
-            else if ( midHash[ revKey] ) mi0 = midhash[ revKey ];
+            if( midHash[ key ] ) { 
+                mi0 = midHash[ key ];
+            }
+            else if ( midHash[ revKey] ) {
+                mi0 = midhash[ revKey ];
+            }
             else { 
+                m0 = this.computeCentroid( v0, v1 );
+                this.computeOdd( vertexArr, i0 + '-' + i1, i1 + '-' + i0 ); // OLD INDEXES
                 newVertexArr.push( m0 ); 
                 mi0 = newVertexArr.length - 1; 
                 midHash[ key ] = mi0;
                 midHash[ revKey ] = mi0;
             }
 
+            // Second midpoint.
+
+            //m1 = this.computeCentroid( v1, v2 );
+
             key = ii1 + '-' + ii2;
             revKey = ii2 + '-' + ii1;
 
-            if( midHash[ key ] ) mi1 = midHash[ key ];
-            else if ( midHash[ revKey] ) mi1 = midhash[ revKey ];
+            if( midHash[ key ] ) {
+                mi1 = midHash[ key ];
+            }
+            else if ( midHash[ revKey] ) {
+
+            mi1 = midhash[ revKey ];
+            }
             else { 
+                m1 = this.computeCentroid( v1, v2 );
+                this.computeOdd( vertexArr, i1 + '-' + i2, i2 + '-' + i1 ); // OLD INDEXES
                 newVertexArr.push( m1 ); 
                 mi1 = newVertexArr.length - 1; 
                 midHash[ key ] = mi1;
                 midHash[ revKey ] = mi1;
             }
-            //newVertexArr.push( m1 );
-            // mi1 = newVertexArr.length - 1;
+
+            // Third midpoint.
+
+            //m2 = this.computeCentroid( v2, v0 );
 
             key = ii2 + '-' + ii0;
             revKey = ii0 + '-' + ii2;
 
-            if( midHash[ key ] ) mi2 = midHash[ key ];
-            else if ( midHash[ revKey] ) mi2 = midhash[ revKey ];
+            if( midHash[ key ] ) {
+                mi2 = midHash[ key ];
+            }
+            else if ( midHash[ revKey] ) {
+                mi2 = midhash[ revKey ];
+            }
             else { 
+                m2 = this.computeCentroid( v2, v0 );
+                this.computeOdd( vertexArr, i2 + '-' + i0, i0 + '-' + i2 );
                 newVertexArr.push( m2 ); 
                 mi2 = newVertexArr.length - 1; 
                 midHash[ key ] = mi2;
