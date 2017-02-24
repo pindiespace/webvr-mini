@@ -40,23 +40,6 @@ import Util   from './util';
 
     }
 
-    /** 
-     * return the difference between two Coords 
-     */ 
-    diff( coord ) {
-
-        return new Coords(
-
-            this.x - coord.x,
-
-            this.y - coord.y,
-
-            this.z - coord.z
-
-        );
-
-    }
-
     /**
      * Return a new copy of this Coords
      * @returns {Coords} a copy of the current coordinates.
@@ -142,6 +125,20 @@ class Vertex {
 
     }
 
+    set ( x, y, z, u, v ) {
+
+        this.coords.x = x;
+
+        this.coords.y = y;
+
+        this.coords.z = z;
+
+        this.texCoords.u = u;
+
+        this.texCoords.v = v;
+
+    }
+
     clone () {
 
         return new Vertex( this.coords.x, this.coords.y, this.coords.z, 
@@ -183,6 +180,24 @@ class Edge {
         this.ov[ 0 ] = i2;
 
         this.ov[ 1 ] = i2; // This should change during computation
+
+    }
+
+    getOpposite( vtx ) {
+
+        if ( vtx === this.v[ 0 ] ) {
+
+            return this.v[ 1 ];
+
+        } else if ( vtx === this.v[ 1 ] ) {
+
+            return this.v[ 0 ];
+
+        } else {
+
+            console.error( 'Edge::getOpposite: invalid Vertex' + vtx + ' supplied' );
+
+        }
 
     }
 
@@ -393,9 +408,9 @@ class Mesh {
     }
 
     /**
-     * Add a midpoint between two Vertices.
+     * Add a midpoint between several Vertices.
      */
-    addCentroid () {
+    computeCentroid () {
 
         let len = arguments.length, x = 0, y = 0, z = 0, u = 0, v = 0;
 
@@ -495,6 +510,10 @@ class Mesh {
 
     }
 
+    /** 
+     * Compute the Faces and Edges of the mesh from 
+     * the index array.
+     */
     computeFaces () {
 
         let vertexArr = this.vertexArr;
@@ -581,10 +600,10 @@ let edge = edgeArr[ i ];
 
     /** 
      * Adjust Even Vertices, up to 6 control points.
+     * @param {Vertex} vtx the Vertex to compute.
+     * @param {Array[Vertex]} the array containing surround Vertices.
      */
-    computeEven ( vtx ) {
-
-        let edgeArr = this.edgeArr;
+    computeEven ( vtx, vertexArr ) {
 
         const vertexValency =  vtx.e.length;
 
@@ -598,19 +617,19 @@ let edge = edgeArr[ i ];
         // this looks more correct!!!
         //const vertexWeightBeta = 1.0 - (beta);
 
-        c = vertexArr[ i ].coords;
+        let c = vtx.coords;
 
-        tc = vertexArr[ i ].texCoords;
+        let tc = vtx.texCoords;
 
-        x = vertexWeightBeta * c.x;
+        let x = vertexWeightBeta * c.x;
 
-        y = vertexWeightBeta * c.y;
+        let y = vertexWeightBeta * c.y;
 
-        z = vertexWeightBeta * c.z;
+        let z = vertexWeightBeta * c.z;
 
-        u = vertexWeightBeta * tc.u;
+        let u = vertexWeightBeta * tc.u;
 
-        v = vertexWeightBeta * tc.v;
+        let v = vertexWeightBeta * tc.v;
 
         // Beta weighting for surround Vertices, using Edge vertices.
 
@@ -640,7 +659,7 @@ let edge = edgeArr[ i ];
 
         // Save the recomputed Vertex
 
-        return new Vertex(  x, y, z, u, v, i, newVertexArr );
+        vtx.set(  x, y, z, u, v );
 
     } 
 
@@ -757,7 +776,11 @@ let edge = edgeArr[ i ];
             // Compute change for old Vertices
 
             // computeEven()
+            // v0, v1, v2
 
+            this.computeEven( v0 );
+            this.computeEven( v1 );
+            this.computeEven( v2 );
 
             // Compute change for new Vertices
 
@@ -798,9 +821,9 @@ let edge = edgeArr[ i ];
 
             // if we add three midpoints
 
-            m0 = this.addCentroid( v0, v1 );
-            m1 = this.addCentroid( v1, v2 );
-            m2 = this.addCentroid( v2, v0 );
+            m0 = this.computeCentroid( v0, v1 );
+            m1 = this.computeCentroid( v1, v2 );
+            m2 = this.computeCentroid( v2, v0 );
 
             let key = ii0 + '-' + ii1;
             let revKey = ii1 + '-' + ii0;
