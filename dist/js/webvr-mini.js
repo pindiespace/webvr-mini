@@ -6011,16 +6011,6 @@
 	                }
 
 	                /** 
-	                 * Compute the nearest neighbor to a Vertex that is not 
-	                 * in any of its Edges. This helps smooth meshes that are 
-	                 * not continous.
-	                 */
-
-	        }, {
-	                key: 'computeNeighbor',
-	                value: function computeNeighbor() {}
-
-	                /** 
 	                 * Given a valency of surround Edges (neighboring Vertices) for a given 
 	                 * Vertex, compute weights. Similar to:
 	                 * @link https://github.com/deyan-hadzhiev/loop_subdivision/blob/master/loop_subdivision.js
@@ -6066,41 +6056,6 @@
 	                        }
 
 	                        return vertexArr;
-	                }
-
-	                /**
-	                 * Add a midpoint between several Vertices.
-	                 */
-
-	        }, {
-	                key: 'computeCentroid',
-	                value: function computeCentroid() {
-
-	                        var len = arguments.length,
-	                            x = 0,
-	                            y = 0,
-	                            z = 0,
-	                            u = 0,
-	                            v = 0;
-
-	                        for (var i in arguments) {
-
-	                                var vtx = arguments[i];
-
-	                                x += vtx.coords.x, y += vtx.coords.y, z += vtx.coords.z;
-
-	                                u += vtx.texCoords.u;
-
-	                                v += vtx.texCoords.v;
-	                        }
-
-	                        x /= len, y /= len, z /= len;
-
-	                        u /= len;
-
-	                        v /= len;
-
-	                        return new Vertex(x, y, z, u, v, 0, null);
 	                }
 
 	                /** 
@@ -6215,6 +6170,41 @@
 	                        this.faceArr = faceArr;
 	                }
 
+	                /**
+	                 * Add a midpoint between several Vertices.
+	                 */
+
+	        }, {
+	                key: 'computeCentroid',
+	                value: function computeCentroid() {
+
+	                        var len = arguments.length,
+	                            x = 0,
+	                            y = 0,
+	                            z = 0,
+	                            u = 0,
+	                            v = 0;
+
+	                        for (var i in arguments) {
+
+	                                var vtx = arguments[i];
+
+	                                x += vtx.coords.x, y += vtx.coords.y, z += vtx.coords.z;
+
+	                                u += vtx.texCoords.u;
+
+	                                v += vtx.texCoords.v;
+	                        }
+
+	                        x /= len, y /= len, z /= len;
+
+	                        u /= len;
+
+	                        v /= len;
+
+	                        return new Vertex(x, y, z, u, v, 0, null);
+	                }
+
 	                /** 
 	                 * Adjust Even Vertices, up to 6 control points.
 	                 * @param {Vertex} vtx the Vertex to compute.
@@ -6234,8 +6224,6 @@
 	                        // Beta weighting for the original ith Vertex.
 
 	                        var vertexWeightBeta = 1.0 - vertexValency * beta;
-	                        // this looks more correct!!!
-	                        //const vertexWeightBeta = 1.0 - (beta);
 
 	                        var c = vtx.coords;
 
@@ -6277,6 +6265,7 @@
 	                        }
 
 	                        // Save the recomputed Vertex
+	                        // TODO: remove weighting after done!!!
 
 	                        vtx.set(x * 1.01, y * 1.01, z * 1.01, u, v);
 	                }
@@ -6287,13 +6276,17 @@
 
 	        }, {
 	                key: 'computeOdd',
-	                value: function computeOdd(vertexArr, key, revKey) {
+	                value: function computeOdd(vtx, vertexArr, key, revKey) {
 
 	                        var edge = this.edgeArr[this.edgeMap[key]];
 
 	                        if (!edge) {
 	                                //console.log('no forward edge for ' + key + ', trying reverse'); 
 	                                edge = this.edgeArr[this.edgeMap[revKey]];
+	                        } else {
+
+	                                //console.log('using forward edge')
+
 	                        }
 
 	                        if (edge) {
@@ -6314,44 +6307,63 @@
 	                                if (!fv0) console.error('no ev0  for Edge vertex ' + edge.ov[0]);
 	                                if (!fv1) console.error('no ev0  for Edge vertex ' + edge.ov[1]);
 
-	                                var x = fw * (ev0.coords.x + ev1.coords.x);
-	                                var y = fw * (ev0.coords.y + ev1.coords.y);
-	                                var z = fw * (ev0.coords.z + ev1.coords.z);
-	                                var u = fw * (ev0.texCoords.u + ev1.texCoords.u);
-	                                var v = fw * (ev0.texCoords.v + ev1.texCoords.v);
+	                                // NEVER IDENTICAL if ( edge.v[ 0 ] == edge.v[ 1 ] ) console.log("IDENTICAL SIDE VERTICES")
+	                                // SOMETIMES IDENTICAL if ( edge.ov[ 0 ] == edge.ov[ 1 ] ) console.log("IDENTICAL OPPOSITE VERTICES")
+
+
+	                                var x = fw * (ev0.coords.x + ev1.coords.x),
+	                                    y = fw * (ev0.coords.y + ev1.coords.y),
+	                                    z = fw * (ev0.coords.z + ev1.coords.z),
+	                                    u = fw * (ev0.texCoords.u + ev1.texCoords.u),
+	                                    v = fw * (ev0.texCoords.v + ev1.texCoords.v);
 
 	                                x += ow * (fv0.coords.x + fv1.coords.x);
 	                                y += ow * (fv0.coords.y + fv1.coords.y);
 	                                z += ow * (fv0.coords.z + fv1.coords.z);
 	                                u += ow * (fv0.texCoords.u + fv1.texCoords.u);
 	                                v += ow * (fv0.texCoords.v + fv1.texCoords.v);
+
+	                                vtx.set(x, y, z, u, v);
+
+	                                //return new Vertex( x , y, z, u, v, key, vertexArr );
 	                        } else {
+
 	                                console.log('edge is undefined for:' + key + ',' + revKey);
 	                        }
-	                        /*
-	                        
-	                        let edge = edgeArr[ i ];
-	                        
-	                                    const ev0 = vertexArr[ edge.v[ 0 ] ];
-	                                    const ev1 = vertexArr[ edge.v[ 1 ] ];
-	                                    const fv0 = vertexArr[ edge.ov[ 0 ] ];
-	                                    const fv1 = vertexArr[ edge.ov[ 1 ] ];
-	                        
-	                                    let x = fw * ( ev0.coords.x + ev1.coords.x );
-	                                    let y = fw * ( ev0.coords.y + ev1.coords.y );
-	                                    let z = fw * ( ev0.coords.z + ev1.coords.z );
-	                                    let u = fw * ( ev0.texCoords.u + ev1.texCoords.u );
-	                                    let v = fw * ( ev0.texCoords.v + ev1.texCoords.v );
-	                        
-	                                    x += ow * ( fv0.coords.x + fv1.coords.x );
-	                                    y += ow * ( fv0.coords.y + fv1.coords.y );
-	                                    z += ow * ( fv0.coords.z + fv1.coords.z );
-	                                    u += ow * ( fv0.texCoords.u + fv1.texCoords.u );
-	                                    v += ow * ( fv0.texCoords.v + fv1.texCoords.v );
-	                        
-	                                    let vtx = new Vertex( x, y, z, u, v, mPos++, vertexArr );
-	                        */
 	                }
+
+	                /** 
+	                 * for meshes with seams, find Vertices with only a few Edges attached, and 
+	                 * see if they lie next to each other. If they do, have them use each other's 
+	                 * Edges. This is needed to correctly position Even Vertices where the seams 
+	                 * in the mesh form a spike.
+	                 */
+
+	        }, {
+	                key: 'computeSpikes',
+	                value: function computeSpikes() {}
+
+	                // find vertices with < 6 edges, but > 3 edges (4, 5)
+
+	                /** 
+	                 * For meshes with seams, find the seams, and find a nearby Edge that 
+	                 * can provide an 'opposite' Vertex. This is needed to correctly 
+	                 * position Odd vertices at seams.
+	                 */
+
+	        }, {
+	                key: 'computeSeams',
+	                value: function computeSeams() {}
+
+	                // find Vertices with < 6 edges attached
+
+	                // 4 edges attached mean we are at a seam
+
+	                // 3 edges attached is a spike
+
+	                // sort by number of edges missing
+
+	                // scan for equivalent vertices that are quite close
 
 	                /**
 	                 * Subdivide and optionally smooth a Mesh, similar to 
@@ -6403,13 +6415,23 @@
 	                        this.computeFaces();
 	                        //console.log("THIS edgeArr:" + this.edgeArr)
 
-	                        for (var _i4 = 0; _i4 < indexArr.length; _i4 += 3) {
+	                        // SEE THE % OF VERTICES WITH EACH KIND OF VALENCY
+	                        ////////////////////////////////////////////////////
+	                        var valenceArr = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+	                        for (var _i4 = 0; _i4 < vertexArr.length; _i4++) {
+	                                var vtx = vertexArr[_i4];
+	                                valenceArr[vtx.e.length]++;
+	                        }
+	                        console.log("VALENCE ARRAY IS:" + valenceArr);
+	                        ////////////////////////////////////////////////////
 
-	                                var i0 = indexArr[_i4 + 0];
+	                        for (var _i5 = 0; _i5 < indexArr.length; _i5 += 3) {
 
-	                                var i1 = indexArr[_i4 + 1];
+	                                var i0 = indexArr[_i5 + 0];
 
-	                                var i2 = indexArr[_i4 + 2];
+	                                var i1 = indexArr[_i5 + 1];
+
+	                                var i2 = indexArr[_i5 + 2];
 
 	                                if (indexHash[i0]) v0 = newVertexArr[indexHash[i0]];else v0 = vertexArr[i0].clone();
 
@@ -6522,18 +6544,20 @@
 	                                var key = ii0 + '-' + ii1;
 	                                var revKey = ii1 + '-' + ii0;
 
-	                                if (midHash[key]) {
-	                                        mi0 = midHash[key];
-	                                } else if (midHash[revKey]) {
-	                                        mi0 = midhash[revKey];
-	                                } else {
-	                                        m0 = this.computeCentroid(v0, v1);
-	                                        this.computeOdd(vertexArr, i0 + '-' + i1, i1 + '-' + i0); // OLD INDEXES
-	                                        newVertexArr.push(m0);
-	                                        mi0 = newVertexArr.length - 1;
-	                                        midHash[key] = mi0;
-	                                        midHash[revKey] = mi0;
-	                                }
+	                                /// if( midHash[ key ] ) { 
+	                                ///     mi0 = midHash[ key ];
+	                                /// }
+	                                //// else if ( midHash[ revKey] ) {
+	                                ///     mi0 = midhash[ revKey ];
+	                                //// }
+	                                /// else { 
+	                                m0 = this.computeCentroid(v0, v1);
+	                                this.computeOdd(m0, vertexArr, i0 + '-' + i1, i1 + '-' + i0); // OLD INDEXES
+	                                newVertexArr.push(m0);
+	                                mi0 = newVertexArr.length - 1;
+	                                midHash[key] = mi0;
+	                                midHash[revKey] = mi0;
+	                                /// }
 
 	                                // Second midpoint.
 
@@ -6542,19 +6566,21 @@
 	                                key = ii1 + '-' + ii2;
 	                                revKey = ii2 + '-' + ii1;
 
-	                                if (midHash[key]) {
-	                                        mi1 = midHash[key];
-	                                } else if (midHash[revKey]) {
+	                                ///if( midHash[ key ] ) {
+	                                ///    mi1 = midHash[ key ];
+	                                ///}
+	                                ///else if ( midHash[ revKey] ) {
 
-	                                        mi1 = midhash[revKey];
-	                                } else {
-	                                        m1 = this.computeCentroid(v1, v2);
-	                                        this.computeOdd(vertexArr, i1 + '-' + i2, i2 + '-' + i1); // OLD INDEXES
-	                                        newVertexArr.push(m1);
-	                                        mi1 = newVertexArr.length - 1;
-	                                        midHash[key] = mi1;
-	                                        midHash[revKey] = mi1;
-	                                }
+	                                ///mi1 = midhash[ revKey ];
+	                                ///}
+	                                /// else { 
+	                                m1 = this.computeCentroid(v1, v2);
+	                                this.computeOdd(m1, vertexArr, i1 + '-' + i2, i2 + '-' + i1); // OLD INDEXES
+	                                newVertexArr.push(m1);
+	                                mi1 = newVertexArr.length - 1;
+	                                midHash[key] = mi1;
+	                                midHash[revKey] = mi1;
+	                                ///}
 
 	                                // Third midpoint.
 
@@ -6563,18 +6589,20 @@
 	                                key = ii2 + '-' + ii0;
 	                                revKey = ii0 + '-' + ii2;
 
-	                                if (midHash[key]) {
-	                                        mi2 = midHash[key];
-	                                } else if (midHash[revKey]) {
-	                                        mi2 = midhash[revKey];
-	                                } else {
-	                                        m2 = this.computeCentroid(v2, v0);
-	                                        this.computeOdd(vertexArr, i2 + '-' + i0, i0 + '-' + i2);
-	                                        newVertexArr.push(m2);
-	                                        mi2 = newVertexArr.length - 1;
-	                                        midHash[key] = mi2;
-	                                        midHash[revKey] = mi2;
-	                                }
+	                                ///if( midHash[ key ] ) {
+	                                ///    mi2 = midHash[ key ];
+	                                ///}
+	                                ///else if ( midHash[ revKey] ) {
+	                                ///    mi2 = midhash[ revKey ];
+	                                ///}
+	                                ///else { 
+	                                m2 = this.computeCentroid(v2, v0);
+	                                this.computeOdd(m2, vertexArr, i2 + '-' + i0, i0 + '-' + i2);
+	                                newVertexArr.push(m2);
+	                                mi2 = newVertexArr.length - 1;
+	                                midHash[key] = mi2;
+	                                midHash[revKey] = mi2;
+	                                ///}
 
 	                                // hash would be an edge
 
@@ -6655,13 +6683,13 @@
 
 	                        console.log('vertexToGeometry: index length:' + indexArr.length + ' flattened length:' + indices.length);
 
-	                        for (var _i5 = 0; _i5 < numVertices; _i5++) {
+	                        for (var _i6 = 0; _i6 < numVertices; _i6++) {
 
-	                                var vi = _i5 * 3;
+	                                var vi = _i6 * 3;
 
-	                                var ti = _i5 * 2;
+	                                var ti = _i6 * 2;
 
-	                                var vtx = vertexArr[_i5];
+	                                var vtx = vertexArr[_i6];
 
 	                                if (vtx) {
 
@@ -6684,9 +6712,9 @@
 	                                        texCoords[ti + 1] = t.v;
 	                                } else {
 
-	                                        console.warn('Mesh::vertexToGeometry(): no vertex in vertexArr at pos:' + _i5);
+	                                        console.warn('Mesh::vertexToGeometry(): no vertex in vertexArr at pos:' + _i6);
 
-	                                        vertices = vertices.slice(_i5); // TRUNCATE!
+	                                        vertices = vertices.slice(_i6); // TRUNCATE!
 
 	                                        break;
 	                                }
