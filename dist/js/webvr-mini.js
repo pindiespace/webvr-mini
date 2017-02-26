@@ -6011,6 +6011,25 @@
 	                }
 
 	                /** 
+	                 * find the closest Vertex NOT in the immediate 'index' neighborhood 
+	                 * for a given Vertex. Useful in adding more Edge points for  even 
+	                 * vertex calculations.
+	                 */
+
+	        }, {
+	                key: 'computeClosestVertex',
+	                value: function computeClosestVertex() {}
+
+	                /** 
+	                 * find the closest Edge for a given Edge. Useful for 
+	                 * adding the opposite Vertex for odd (midpoint) calculations
+	                 */
+
+	        }, {
+	                key: 'computeClosestEdge',
+	                value: function computeClosestEdge() {}
+
+	                /** 
 	                 * Given a valency of surround Edges (neighboring Vertices) for a given 
 	                 * Vertex, compute weights. Similar to:
 	                 * @link https://github.com/deyan-hadzhiev/loop_subdivision/blob/master/loop_subdivision.js
@@ -6161,8 +6180,6 @@
 	                                // Need to connect Face specifically to surrounds
 
 	                                faceArr.push(face);
-
-	                                ////////////////////////////////console.log("TRIANGLE:" + fi + '(' + i + ')')
 	                        }
 
 	                        // Faces for this Mesh.
@@ -6215,15 +6232,15 @@
 	                key: 'computeEven',
 	                value: function computeEven(vtx, vertexArr) {
 
-	                        var vertexValency = vtx.e.length;
+	                        var valency = vtx.e.length;
 
 	                        // Beta weighting for surround Vertices.
 
-	                        var beta = this.valenceArr[vertexValency];
+	                        var beta = this.valenceArr[valency];
 
 	                        // Beta weighting for the original ith Vertex.
 
-	                        var vertexWeightBeta = 1.0 - vertexValency * beta;
+	                        var vertexWeightBeta = 1.0 - valency * beta;
 
 	                        var c = vtx.coords;
 
@@ -6241,7 +6258,7 @@
 
 	                        // Beta weighting for surround Vertices, using Edge vertices.
 
-	                        for (var j = 0; j < vertexValency; j++) {
+	                        for (var j = 0; j < valency; j++) {
 
 	                                // Get the surround Vertices for ith Vertex
 
@@ -6291,8 +6308,6 @@
 
 	                        if (edge) {
 
-	                                //console.log( 'computing for edge:' + key + ',' + revKey)
-
 	                                var fw = 3 / 8;
 
 	                                var ow = 1 / 8;
@@ -6324,26 +6339,11 @@
 	                                v += ow * (fv0.texCoords.v + fv1.texCoords.v);
 
 	                                vtx.set(x, y, z, u, v);
-
-	                                //return new Vertex( x , y, z, u, v, key, vertexArr );
 	                        } else {
 
 	                                console.log('edge is undefined for:' + key + ',' + revKey);
 	                        }
 	                }
-
-	                /** 
-	                 * for meshes with seams, find Vertices with only a few Edges attached, and 
-	                 * see if they lie next to each other. If they do, have them use each other's 
-	                 * Edges. This is needed to correctly position Even Vertices where the seams 
-	                 * in the mesh form a spike.
-	                 */
-
-	        }, {
-	                key: 'computeSpikes',
-	                value: function computeSpikes() {}
-
-	                // find vertices with < 6 edges, but > 3 edges (4, 5)
 
 	                /** 
 	                 * For meshes with seams, find the seams, and find a nearby Edge that 
@@ -6353,17 +6353,75 @@
 
 	        }, {
 	                key: 'computeSeams',
-	                value: function computeSeams() {}
+	                value: function computeSeams(vertexArr) {
 
-	                // find Vertices with < 6 edges attached
+	                        // loop through all the vertices. 
 
-	                // 4 edges attached mean we are at a seam
+	                        for (var _i4 = 0; _i4 < vertexArr.length; _i4++) {
 
-	                // 3 edges attached is a spike
+	                                var vtx = vertexArr[_i4];
 
-	                // sort by number of edges missing
+	                                var valency = vtx.e.length;
 
-	                // scan for equivalent vertices that are quite close
+	                                switch (valency) {
+
+	                                        case 0:
+	                                                // should never happen
+
+	                                                break;
+
+	                                        case 1:
+	                                                // should never happen
+
+	                                                break;
+
+	                                        case 2:
+	                                                // edge of square panel, e.g. forming a cube, tetrahedron, icosohedron
+
+	                                                break;
+
+	                                        case 3:
+	                                                // cube, terrain, dodecahedron (all)
+
+	                                                break;
+
+	                                        case 4:
+	                                                // a flat continous edge, terrain, spherical objects
+
+	                                                break;
+
+	                                        case 5:
+	                                                // dodecahedron
+
+	                                                break;
+
+	                                        case 6:
+
+	                                                break;
+
+	                                        case 7:
+	                                                // icosohedron and icosphere
+
+	                                                break;
+
+	                                        default:
+	                                                // lots of points, e.g. north and south pole of a sphere.
+
+	                                                break;
+
+	                                }
+	                        }
+
+	                        // find Vertices with < 6 edges attached
+
+	                        // 4 edges attached mean we are at a seam
+
+	                        // 3 edges attached is a spike
+
+	                        // sort by number of edges missing
+
+	                        // scan for equivalent vertices that are quite close
+	                }
 
 	                /**
 	                 * Subdivide and optionally smooth a Mesh, similar to 
@@ -6418,20 +6476,20 @@
 	                        // SEE THE % OF VERTICES WITH EACH KIND OF VALENCY
 	                        ////////////////////////////////////////////////////
 	                        var valenceArr = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-	                        for (var _i4 = 0; _i4 < vertexArr.length; _i4++) {
-	                                var vtx = vertexArr[_i4];
+	                        for (var _i5 = 0; _i5 < vertexArr.length; _i5++) {
+	                                var vtx = vertexArr[_i5];
 	                                valenceArr[vtx.e.length]++;
 	                        }
 	                        console.log("VALENCE ARRAY IS:" + valenceArr);
 	                        ////////////////////////////////////////////////////
 
-	                        for (var _i5 = 0; _i5 < indexArr.length; _i5 += 3) {
+	                        for (var _i6 = 0; _i6 < indexArr.length; _i6 += 3) {
 
-	                                var i0 = indexArr[_i5 + 0];
+	                                var i0 = indexArr[_i6 + 0];
 
-	                                var i1 = indexArr[_i5 + 1];
+	                                var i1 = indexArr[_i6 + 1];
 
-	                                var i2 = indexArr[_i5 + 2];
+	                                var i2 = indexArr[_i6 + 2];
 
 	                                if (indexHash[i0]) v0 = newVertexArr[indexHash[i0]];else v0 = vertexArr[i0].clone();
 
@@ -6683,13 +6741,13 @@
 
 	                        console.log('vertexToGeometry: index length:' + indexArr.length + ' flattened length:' + indices.length);
 
-	                        for (var _i6 = 0; _i6 < numVertices; _i6++) {
+	                        for (var _i7 = 0; _i7 < numVertices; _i7++) {
 
-	                                var vi = _i6 * 3;
+	                                var vi = _i7 * 3;
 
-	                                var ti = _i6 * 2;
+	                                var ti = _i7 * 2;
 
-	                                var vtx = vertexArr[_i6];
+	                                var vtx = vertexArr[_i7];
 
 	                                if (vtx) {
 
@@ -6712,9 +6770,9 @@
 	                                        texCoords[ti + 1] = t.v;
 	                                } else {
 
-	                                        console.warn('Mesh::vertexToGeometry(): no vertex in vertexArr at pos:' + _i6);
+	                                        console.warn('Mesh::vertexToGeometry(): no vertex in vertexArr at pos:' + _i7);
 
-	                                        vertices = vertices.slice(_i6); // TRUNCATE!
+	                                        vertices = vertices.slice(_i7); // TRUNCATE!
 
 	                                        break;
 	                                }

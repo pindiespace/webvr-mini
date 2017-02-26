@@ -344,6 +344,25 @@ class Mesh {
     }
 
     /** 
+     * find the closest Vertex NOT in the immediate 'index' neighborhood 
+     * for a given Vertex. Useful in adding more Edge points for  even 
+     * vertex calculations.
+     */
+    computeClosestVertex () {
+
+
+    }
+
+    /** 
+     * find the closest Edge for a given Edge. Useful for 
+     * adding the opposite Vertex for odd (midpoint) calculations
+     */
+    computeClosestEdge () {
+
+
+    }
+
+    /** 
      * Given a valency of surround Edges (neighboring Vertices) for a given 
      * Vertex, compute weights. Similar to:
      * @link https://github.com/deyan-hadzhiev/loop_subdivision/blob/master/loop_subdivision.js
@@ -506,9 +525,7 @@ class Mesh {
             // NOTE TO SELF - computeEdge returns the index of the edge in the Edge array
             // Need to connect Face specifically to surrounds
 
-           faceArr.push( face );
-
-           ////////////////////////////////console.log("TRIANGLE:" + fi + '(' + i + ')')
+           faceArr.push( face ); 
 
         }
 
@@ -564,15 +581,15 @@ class Mesh {
      */
     computeEven ( vtx, vertexArr ) {
 
-        const vertexValency =  vtx.e.length;
+        const valency =  vtx.e.length;
 
         // Beta weighting for surround Vertices.
 
-        const beta = this.valenceArr[ vertexValency ];
+        const beta = this.valenceArr[ valency ];
 
         // Beta weighting for the original ith Vertex.
 
-        const vertexWeightBeta = 1.0 - (vertexValency * beta);
+        const vertexWeightBeta = 1.0 - (valency * beta);
 
         let c = vtx.coords;
 
@@ -590,7 +607,7 @@ class Mesh {
 
         // Beta weighting for surround Vertices, using Edge vertices.
 
-        for ( let j = 0; j < vertexValency; j++ ) {
+        for ( let j = 0; j < valency; j++ ) {
 
             // Get the surround Vertices for ith Vertex
 
@@ -639,8 +656,6 @@ class Mesh {
 
         if ( edge ) {
 
-            //console.log( 'computing for edge:' + key + ',' + revKey)
-
             const fw = 3 / 8;
 
             const ow = 1 / 8;
@@ -673,8 +688,6 @@ class Mesh {
 
             vtx.set( x, y, z, u, v );
 
-            //return new Vertex( x , y, z, u, v, key, vertexArr );
-
         } else {
 
             console.log( 'edge is undefined for:' + key + ',' + revKey);
@@ -684,23 +697,62 @@ class Mesh {
     }
 
     /** 
-     * for meshes with seams, find Vertices with only a few Edges attached, and 
-     * see if they lie next to each other. If they do, have them use each other's 
-     * Edges. This is needed to correctly position Even Vertices where the seams 
-     * in the mesh form a spike.
-     */
-    computeSpikes () {
-
-        // find vertices with < 6 edges, but > 3 edges (4, 5)
-
-    }
-
-    /** 
      * For meshes with seams, find the seams, and find a nearby Edge that 
      * can provide an 'opposite' Vertex. This is needed to correctly 
      * position Odd vertices at seams.
      */
-    computeSeams () {
+    computeSeams ( vertexArr ) {
+
+        // loop through all the vertices. 
+
+        for ( let i = 0; i < vertexArr.length; i++ ) {
+
+            let vtx = vertexArr[ i ];
+
+            const valency =  vtx.e.length;
+
+            switch ( valency ) {
+
+                case 0: // should never happen
+
+                    break;
+
+                case 1: // should never happen
+
+                    break;
+
+                case 2: // edge of square panel, e.g. forming a cube, tetrahedron, icosohedron
+
+                    break;
+
+                case 3: // cube, terrain, dodecahedron (all)
+
+                    break;
+
+                case 4: // a flat continous edge, terrain, spherical objects
+
+                    break;
+
+                case 5: // dodecahedron
+
+                    break;
+
+                case 6:
+
+                    break;
+
+                case 7: // icosohedron and icosphere
+
+                    break;
+
+                default: // lots of points, e.g. north and south pole of a sphere.
+
+                    break;
+
+            }
+
+
+        }
 
         // find Vertices with < 6 edges attached
 
