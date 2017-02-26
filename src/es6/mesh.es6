@@ -258,13 +258,7 @@ class Mesh {
 
         this.valenceArr = [];
 
-        // Keep the original Vertex data when transforming mesh.
-
-        this.oldVertexArr = [];
-
-        // Control flags.
-
-        this.notSmoothed = false; // by default
+        this.oldVertexArr = []; // Keep the original Vertex data when transforming mesh.
 
         this.badIndex32 = 4294967294;
 
@@ -279,6 +273,8 @@ class Mesh {
         // Check converted Vertices for validity.
 
         this.isValid();
+
+        this.totNeedIgnore = 0;
 
     }
 
@@ -347,9 +343,44 @@ class Mesh {
      * find the closest Vertex NOT in the immediate 'index' neighborhood 
      * for a given Vertex. Useful in adding more Edge points for  even 
      * vertex calculations.
+     * 
+     * Note filters use actual Vertex objects rather than indices
      */
-    computeClosestVertex () {
+    computeClosestVertex ( x, y, z, ignore ) {
 
+        const vertexArr = this.vertexArr;
+
+        const len = this.vertexArr.length;
+
+        let min = 1000000;
+
+        let idx = -1;
+
+        for ( let i = 0; i < vertexArr.length; i++ ) {
+
+            let vtx = vertexArr[ i ];
+
+            //if( ignore.indexOf( vtx.idx ) !== -1 ) console.log( 'in computeClosestVertex, ignore found at:' + ignore.indexOf( vtx.idx ) )
+
+            //if ( ignore.indexOf( vtx.idx ) === -1 ) console.log('no ignore at:' + ignore.indexOf( vtx.idx ) )
+
+            if ( ignore.indexOf( vtx.idx ) === -1 ) {
+
+                let cMin = Math.abs( x - vtx.coords.x) + Math.abs( y - vtx.coords.y ) + Math.abs( z - vtx.coords.z )
+
+                if ( cMin < min ) {
+
+                    idx = i;
+
+                    min = cMin;
+
+                }
+
+            }
+
+        }
+
+        return idx;
 
     }
 
@@ -357,7 +388,7 @@ class Mesh {
      * find the closest Edge for a given Edge. Useful for 
      * adding the opposite Vertex for odd (midpoint) calculations
      */
-    computeClosestEdge () {
+    computeClosestEdge ( edge ) {
 
 
     }
@@ -413,6 +444,14 @@ class Mesh {
         }
 
         return vertexArr;
+
+    }
+
+    /** 
+     * Find seams in the Mesh (process differently)
+     */
+    computeSeams () {
+
 
     }
 
@@ -647,7 +686,8 @@ class Mesh {
 
         if ( ! edge ) { 
             //console.log('no forward edge for ' + key + ', trying reverse'); 
-            edge = this.edgeArr[ this.edgeMap[ revKey ] ]; 
+            edge = this.edgeArr[ this.edgeMap[ revKey ] ];
+
         } else {
 
             //console.log('using forward edge')
@@ -662,109 +702,64 @@ class Mesh {
 
             const ev0 = vertexArr[ edge.v[ 0 ] ];
             const ev1 = vertexArr[ edge.v[ 1 ] ];
-            const fv0 = vertexArr[ edge.ov[ 0 ] ];
-            const fv1 = vertexArr[ edge.ov[ 1 ] ];
+
+            let fv0 = vertexArr[ edge.ov[ 0 ] ];
+            let fv1 = vertexArr[ edge.ov[ 1 ] ];
 
             if ( ! ev0 ) console.error( 'no ev0  for Edge vertex ' + edge.v[ 0 ] );
             if ( ! ev1 ) console.error( 'no ev0  for Edge vertex ' + edge.v[ 1 ] );
             if ( ! fv0 ) console.error( 'no ev0  for Edge vertex ' + edge.ov[ 0 ] );
             if ( ! fv1 ) console.error( 'no ev0  for Edge vertex ' + edge.ov[ 1 ] );
 
-            // NEVER IDENTICAL if ( edge.v[ 0 ] == edge.v[ 1 ] ) console.log("IDENTICAL SIDE VERTICES")
-            // SOMETIMES IDENTICAL if ( edge.ov[ 0 ] == edge.ov[ 1 ] ) console.log("IDENTICAL OPPOSITE VERTICES")
+            // Only process if we are not on a mesh seam.
+            // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            // TODO: THIS IS AN IMPERFECT WAY TO FIND MESH SEAMS. FAILS 
+            // TODO: ON MULTIPLE SEAM CALCULATIONS.
+            // TODO: COMPUTE MESH SEAMS IN ARRAY
+            // TODO:
+            // TODO: CONFIRM CONVERSION BACK TO FLATTENED WORKS CORRECTLY
+            // TODO: FOR MULTIPLE VERTICES - MULTIPLE SUBDIVIDE LEAVING HOLES
+            // TODO: ICOSPHERE PUTTING SOUTH POLE AT NORTH POLE IMPLES A PROBLEM
+            // TODO: REDO TERRAIN SO IT DOESN'T JOIN ITSELF! IMPLIES BEING 
+            // TODO: SLIGHTLY DIFFERENTLY, LEADING TO ERRORS IN SECOND SUBDIVIDE
+            //
+            // SUBDIVIDE WITH NO SMOOTHING CAUSES ERRORS ONLY IN SPHERE AND 
+            // ICOSPHERE (go to zero point from triangles?)
+            //
+            // SUBDIVIDE WITH ONE SMOOTH CAUSES SMALL ERRORS ONLY IN POSITIONING.
+            // SO THERE ARE TWO PROBLEMS HERE!!
+            // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+            if ( fv0 !== fv1 ) {
 
-            let x = fw * ( ev0.coords.x + ev1.coords.x ),
-            y = fw * ( ev0.coords.y + ev1.coords.y ),
-            z = fw * ( ev0.coords.z + ev1.coords.z ),
-            u = fw * ( ev0.texCoords.u + ev1.texCoords.u ),
-            v = fw * ( ev0.texCoords.v + ev1.texCoords.v );
+                let x, y, z, u, v;
 
-            x += ow * ( fv0.coords.x + fv1.coords.x );
-            y += ow * ( fv0.coords.y + fv1.coords.y );
-            z += ow * ( fv0.coords.z + fv1.coords.z );
-            u += ow * ( fv0.texCoords.u + fv1.texCoords.u );
-            v += ow * ( fv0.texCoords.v + fv1.texCoords.v );
+                x = fw * ( ev0.coords.x + ev1.coords.x ),
+                y = fw * ( ev0.coords.y + ev1.coords.y ),
+                z = fw * ( ev0.coords.z + ev1.coords.z ),
+                u = fw * ( ev0.texCoords.u + ev1.texCoords.u ),
+                v = fw * ( ev0.texCoords.v + ev1.texCoords.v );
+
+                x += ow * ( fv0.coords.x + fv1.coords.x );
+                y += ow * ( fv0.coords.y + fv1.coords.y );
+                z += ow * ( fv0.coords.z + fv1.coords.z );
+                u += ow * ( fv0.texCoords.u + fv1.texCoords.u );
+                v += ow * ( fv0.texCoords.v + fv1.texCoords.v );
 
             vtx.set( x, y, z, u, v );
+
+            return true;
+
+            } 
 
         } else {
 
             console.log( 'edge is undefined for:' + key + ',' + revKey);
 
         }
-
+        return false;
     }
 
-    /** 
-     * For meshes with seams, find the seams, and find a nearby Edge that 
-     * can provide an 'opposite' Vertex. This is needed to correctly 
-     * position Odd vertices at seams.
-     */
-    computeSeams ( vertexArr ) {
-
-        // loop through all the vertices. 
-
-        for ( let i = 0; i < vertexArr.length; i++ ) {
-
-            let vtx = vertexArr[ i ];
-
-            const valency =  vtx.e.length;
-
-            switch ( valency ) {
-
-                case 0: // should never happen
-
-                    break;
-
-                case 1: // should never happen
-
-                    break;
-
-                case 2: // edge of square panel, e.g. forming a cube, tetrahedron, icosohedron
-
-                    break;
-
-                case 3: // cube, terrain, dodecahedron (all)
-
-                    break;
-
-                case 4: // a flat continous edge, terrain, spherical objects
-
-                    break;
-
-                case 5: // dodecahedron
-
-                    break;
-
-                case 6:
-
-                    break;
-
-                case 7: // icosohedron and icosphere
-
-                    break;
-
-                default: // lots of points, e.g. north and south pole of a sphere.
-
-                    break;
-
-            }
-
-
-        }
-
-        // find Vertices with < 6 edges attached
-
-        // 4 edges attached mean we are at a seam
-
-        // 3 edges attached is a spike
-
-        // sort by number of edges missing
-
-        // scan for equivalent vertices that are quite close
-
-    }
 
     /**
      * Subdivide and optionally smooth a Mesh, similar to 
@@ -778,7 +773,7 @@ class Mesh {
      * our original Vertex array become a backup after subdivision.
      * 
      */
-    subdivide ( flatten ) {
+    subdivide ( smooth ) {
 
         // Save the originals.
 
@@ -799,30 +794,22 @@ class Mesh {
         let midHash = []; // for new points, position in newVertexArray
 
 
-        console.log("VERTEXARRAY LENGTH:" + vertexArr.length )
-        console.log("INDEXARRAY LENGTH:" + indexArr.length )
+       // console.log("VERTEXARRAY LENGTH:" + vertexArr.length )
+       // console.log("INDEXARRAY LENGTH:" + indexArr.length )
 
         // Rebuild the Vertex and Index array.
 
         let v0, v1, v2;
 
-
         // Compute Faces and Edges (hash back to Vertices).
 
         this.computeFaces();
-        //console.log("THIS edgeArr:" + this.edgeArr)
 
-        // SEE THE % OF VERTICES WITH EACH KIND OF VALENCY
-        ////////////////////////////////////////////////////
-        let valenceArr = [0,0,0,0,0,0,0,0,0,0,0,0];
-        for ( let i = 0; i < vertexArr.length; i++ ) {
-            let vtx = vertexArr[ i ];
-            valenceArr[ vtx.e.length ]++;
+        // Find Seams
 
+        this.computeSeams();
 
-        }
-        console.log("VALENCE ARRAY IS:" + valenceArr)
-        ////////////////////////////////////////////////////
+        // Loop through the Vertices, creating new midpoints & smoothing Vertex positions.
 
         for ( let i = 0; i < indexArr.length; i += 3 ) {
 
@@ -890,26 +877,6 @@ class Mesh {
 
             }
 
-            // Compute Faces and Edges (hash back to Vertices).
-
-            //this.computeFaces();
-
-            // Compute change for old Vertices
-
-            // computeEven()
-            // v0, v1, v2
-
-            this.computeEven( v0 );
-            this.computeEven( v1 );
-            this.computeEven( v2 );
-
-            // Compute change for new Vertices
-
-            // computeOdd()
-
-
-            // no change
-
             let m0, m1, m2, mi0, mi1, mi2;
 
             /*
@@ -944,9 +911,8 @@ class Mesh {
 
             // First midpoint.
 
-            //m0 = this.computeCentroid( v0, v1 );
-
             let key = ii0 + '-' + ii1;
+
             let revKey = ii1 + '-' + ii0;
 
            /// if( midHash[ key ] ) { 
@@ -957,7 +923,9 @@ class Mesh {
            //// }
            /// else { 
                 m0 = this.computeCentroid( v0, v1 );
-                this.computeOdd( m0, vertexArr, i0 + '-' + i1, i1 + '-' + i0 ); // OLD INDEXES
+
+                if ( smooth ) this.computeOdd( m0, vertexArr, i0 + '-' + i1, i1 + '-' + i0 ); // OLD INDEXES
+
                 newVertexArr.push( m0 ); 
                 mi0 = newVertexArr.length - 1; 
                 midHash[ key ] = mi0;
@@ -980,7 +948,9 @@ class Mesh {
             ///}
            /// else { 
                 m1 = this.computeCentroid( v1, v2 );
-                this.computeOdd( m1, vertexArr, i1 + '-' + i2, i2 + '-' + i1 ); // OLD INDEXES
+
+                if ( smooth ) this.computeOdd( m1, vertexArr, i1 + '-' + i2, i2 + '-' + i1 ); // OLD INDEXES
+
                 newVertexArr.push( m1 ); 
                 mi1 = newVertexArr.length - 1; 
                 midHash[ key ] = mi1;
@@ -1002,17 +972,31 @@ class Mesh {
             ///}
             ///else { 
                 m2 = this.computeCentroid( v2, v0 );
-                this.computeOdd( m2, vertexArr, i2 + '-' + i0, i0 + '-' + i2 );
+
+                if ( smooth ) this.computeOdd( m2, vertexArr, i2 + '-' + i0, i0 + '-' + i2 ); // OLD INDICES
+
                 newVertexArr.push( m2 ); 
                 mi2 = newVertexArr.length - 1; 
                 midHash[ key ] = mi2;
                 midHash[ revKey ] = mi2;
             ///}
 
-            // hash would be an edge
+            // Run computeEven here since what we do with odd may determine what to do with even
+
+            if (smooth) {
+
+                this.computeEven( v0 );
+
+                this.computeEven( v1 );
+
+                this.computeEven( v2 );
+
+            }
+
+            // Push new indices
 
             newIndexArr.push(
-                
+
                 mi0, ii1, mi1,   // B  
 
                 mi1, mi2, mi0,   // C
@@ -1026,6 +1010,7 @@ class Mesh {
 
         } // end of index loop
 
+        console.log("$$$$PARTIAL %:" + this.totNeedIgnore + '/' + this.oldVertexArr.length) //////////////////////////
 
         this.vertexArr = newVertexArr;
 

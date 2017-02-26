@@ -3530,8 +3530,9 @@ class Prim {
 
         prim.visibleFrom = this.OUTSIDE;
 
-        prim.applyTexToFace = applyTexToFace;
+        // Repeatedly apply the texture to each Face of the Prim (instead of wrapping around the Mesh).
 
+        prim.applyTexToFace = applyTexToFace;
 
         // Geometry factory function.
 
@@ -3546,9 +3547,9 @@ class Prim {
         //if ( prim.name === 'colored cube' ) {
             let mesh = new Mesh( prim.geometry.vertices.data, prim.geometry.indices.data, prim.geometry.texCoords.data );
             window.mesh = mesh;
-            mesh.subdivide();
-            //mesh.subdivide();
+            mesh.subdivide( true );
             //mesh.subdivide(); // icosphere and some other shapes blow up
+            //mesh.subdivide();
             let divided = mesh.vertexToGeometry();
             prim.geometry.vertices.data = divided.vertices;
             prim.geometry.indices.data = divided.indices;
