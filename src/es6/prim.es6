@@ -3544,18 +3544,21 @@ class Prim {
 
 ////////////////////////////////////////////////////////////////////////////////
         // SUBDIVIDE TEST
-        //if ( prim.name === 'colored cube' ) {
+        if ( prim.name === 'colored cube' ) {
             let mesh = new Mesh( prim.geometry.vertices.data, prim.geometry.indices.data, prim.geometry.texCoords.data );
             window.mesh = mesh;
             mesh.subdivide( true );
-            //mesh.subdivide(); // icosphere and some other shapes blow up
-            //mesh.subdivide();
+            //mesh.subdivide( true ); // icosphere and some other shapes blow up
+            //mesh.subdivide( true );
+            //mesh.subdivide( true );
+            //mesh.subdivide( true );
+            //mesh.subdivide( true );
             let divided = mesh.vertexToGeometry();
             prim.geometry.vertices.data = divided.vertices;
             prim.geometry.indices.data = divided.indices;
             prim.geometry.texCoords.data = divided.texCoords;
             prim.geometry.normals.data = this.computeNormals( divided.vertices, divided.indices, [prim.geometry.normals.data] );
-        //}
+        }
 ////////////////////////////////////////////////////////////////////////////////
 
         // Create WebGL data buffers from geometry.

@@ -77,6 +77,8 @@ class Vertex {
 
         this.e = []; // Edge array
 
+        this.s = []; // Seam array, indicates other Vertex objects that are < epsilon apart
+
         this.vertexArr = vertexArr;
 
         this.even = true; // by default, not a midpoint
@@ -100,28 +102,30 @@ class Vertex {
     }
 
     /** 
-     * return a new Vertex which is a clone of this one 
-     * weighted by a weighting factor.
+     * Return a vector distance between two Coords, optionally 
+     * leaving out the square root calculation.
+     * @param {Vertex} vtx another Vertex object
+     * @param {Boolean} fast if true, don't do square root, just absolute 
+     * sum of x, y, z, distances.
+     * @returns {Number} a vector distance, or approximation.
      */
-    weighted ( weight ) {
+    distance ( vtx, fast = false ) {
 
-        return new Vertex(
+        let x = vtx.coords.x - this.coords.x;
 
-            weight * this.coords.x,
+        let y = vtx.coords.y - this.coords.y;
 
-            weight * this.coords.y,
+        let z = vtx.coords.z - this.coords.z;
 
-            weight * this.coords.z,
+        if ( fast ) {
 
-            weight * this.texCoords.u,
+            return ( Math.abs( x ) + Math.abs( y ) + Math.abs( z ) );
 
-            weight * this.texCoords.v,
+        } else {
 
-            idx,
+            return Math.sqrt( x * x + y * y + z * z );
 
-            this.vertexArr
-
-        );
+        }
 
     }
 
@@ -159,13 +163,24 @@ class Vertex {
 
 class Edge {
 
+    /** 
+     * @constructor
+     * create an Edge, make from two consecutive Vertices in the index for 
+     * drawing the Mesh.
+     * @param {Number} i0 index of the first Vertex in the Vertex array.
+     * @param {Number} i1 index of the second Vertex in the Vertex array.
+     * @param {Number} i2 index of the third Vertex (forming a triangle) in the Vertex Array.
+     * @param {Number} fi index of the Face created by the three Vertices.
+     */
     constructor ( i0, i1, i2, fi ) {
 
         this.v = new Uint32Array( 2 );  // index the two Vertex objects forming the Edge
 
-        this.ov = new Uint32Array( 2 ); // index the opposite vertices in first and second Face
+        this.ov = new Uint32Array( 2 ); // index the opposite Vertices in first and second Face
 
-        this.f = new Uint32Array( 1 );
+        this.f = new Uint32Array( 2 );  // index the opposite Faces
+
+        this.s = []; // index Edges that overlap position.
 
         this.v[ 0 ] = i0;
 
@@ -246,23 +261,25 @@ class Mesh {
 
         // Mesh arrays
 
-        this.vertexArr = [];
+        this.vertexArr = [];    // holds Vertex objects
 
-        this.indexArr = [];
+        this.indexArr = [];     // holds drawing path through Vertex objects
 
-        this.edgeArr = [];
+        this.edgeArr = [];      // holds Edge objects
 
-        this.edgeMap = []; // lookup table for Edges (even Vertices)
+        this.edgeMap = [];      // lookup table for Edges (even Vertices)
 
-        this.faceArr = [];
+        this.faceArr = [];      // holds the triangle list (derived from indexArr)
 
-        this.valenceArr = [];
+        this.valenceArr = [];   // holds computed valency constants for Edge and opposite Vertices
 
         this.oldVertexArr = []; // Keep the original Vertex data when transforming mesh.
 
         this.badIndex32 = 4294967294;
 
-        // Pre-compute valency values
+        this.epsilon = 0.000001; // DEBUG!!!!!!!!!!!! change value as appropriate
+
+        // Pre-compute valency values.
 
         this.computeValencyWeights( 12 );
 
@@ -274,7 +291,7 @@ class Mesh {
 
         this.isValid();
 
-        this.totNeedIgnore = 0;
+        this.totNeedIgnore = 0;  // DEBUG !!!!!!!!!!!!!!!!!!!!!!!!!
 
     }
 
@@ -448,10 +465,43 @@ class Mesh {
     }
 
     /** 
-     * Find seams in the Mesh (process differently)
+     * Find seams in the Mesh (process differently). Also flag
+     * edges that overlap so that midpoint calculations don't
+     * cause a tear in the mesh.
      */
     computeSeams () {
 
+        let vertexArr = this.vertexArr;
+
+        let edgeArr = this.edgeArr;
+
+        let c0, c1, c2, c3;
+
+        let s0, s1, s2, s3;
+
+        // Find any Edges with both Vertex objects overlapping.
+
+        for ( let i = 0; i < edgeArr.length; i++ ) {
+
+            let c0 = vertexArr[ edgeArr[ i ].v[ 0 ] ];
+
+            let c1 = vertexArr[ edgeArr[ i ].v[ 1 ] ];
+
+            for ( let j = 0; j < edgeArr.length; j++ ) {
+
+                let c2 = vertexArr[ edgeArr[ j ].v[ 0 ] ];
+
+                let c3 = vertexArr[ edgeArr[ j ].v[ 1 ] ];
+
+                if ( c0.distance( c2 ) < this.epsilon ) s0 = true; else s0 = false;
+
+            }
+
+        }
+
+        // If there is only one overlap, add to Vertex seam array (no midpoint)
+
+        // if there is an Edge overlap, add to Edge seam array.
 
     }
 
