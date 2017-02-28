@@ -85,6 +85,9 @@ class Vertex {
 
     }
 
+    /** 
+     * Confirm Vertex has valid values for position and texture.
+     */
     isValid () {
 
         if ( this.coords.isValid() && 
@@ -129,6 +132,9 @@ class Vertex {
 
     }
 
+    /** 
+     * In-place setting values
+     */
     set ( x, y, z, u, v ) {
 
         this.coords.x = x;
@@ -143,6 +149,22 @@ class Vertex {
 
     }
 
+    /** 
+     * Scale coordinates in or out.
+     */
+    scale ( scalar ) {
+
+        this.coords.x *= scalar;
+
+        this.coords.y *= scalar;
+
+        this.coords.z *= scalar;
+
+    }
+
+    /** 
+     * Return a copy
+     */
     clone () {
 
         return new Vertex( this.coords.x, this.coords.y, this.coords.z, 
@@ -153,6 +175,9 @@ class Vertex {
 
     }
 
+    /** 
+     * return a flattened array.
+     */
     flatten () {
 
         return this.coords.flatten().concat( [ this.texCoords.u, this.texCoords.v ] );
@@ -269,11 +294,14 @@ class Mesh {
 
         this.edgeMap = [];      // lookup table for Edges (even Vertices)
 
+        this.seamMap = [];      // find overlapping Vertices
+
         this.faceArr = [];      // holds the triangle list (derived from indexArr)
 
         this.valenceArr = [];   // holds computed valency constants for Edge and opposite Vertices
 
         this.oldVertexArr = []; // Keep the original Vertex data when transforming mesh.
+
 
         this.badIndex32 = 4294967294;
 
@@ -357,60 +385,6 @@ class Mesh {
     }
 
     /** 
-     * find the closest Vertex NOT in the immediate 'index' neighborhood 
-     * for a given Vertex. Useful in adding more Edge points for  even 
-     * vertex calculations.
-     * 
-     * Note filters use actual Vertex objects rather than indices
-     */
-    computeClosestVertex ( x, y, z, ignore ) {
-
-        const vertexArr = this.vertexArr;
-
-        const len = this.vertexArr.length;
-
-        let min = 1000000;
-
-        let idx = -1;
-
-        for ( let i = 0; i < vertexArr.length; i++ ) {
-
-            let vtx = vertexArr[ i ];
-
-            //if( ignore.indexOf( vtx.idx ) !== -1 ) console.log( 'in computeClosestVertex, ignore found at:' + ignore.indexOf( vtx.idx ) )
-
-            //if ( ignore.indexOf( vtx.idx ) === -1 ) console.log('no ignore at:' + ignore.indexOf( vtx.idx ) )
-
-            if ( ignore.indexOf( vtx.idx ) === -1 ) {
-
-                let cMin = Math.abs( x - vtx.coords.x) + Math.abs( y - vtx.coords.y ) + Math.abs( z - vtx.coords.z )
-
-                if ( cMin < min ) {
-
-                    idx = i;
-
-                    min = cMin;
-
-                }
-
-            }
-
-        }
-
-        return idx;
-
-    }
-
-    /** 
-     * find the closest Edge for a given Edge. Useful for 
-     * adding the opposite Vertex for odd (midpoint) calculations
-     */
-    computeClosestEdge ( edge ) {
-
-
-    }
-
-    /** 
      * Given a valency of surround Edges (neighboring Vertices) for a given 
      * Vertex, compute weights. Similar to:
      * @link https://github.com/deyan-hadzhiev/loop_subdivision/blob/master/loop_subdivision.js
@@ -473,35 +447,70 @@ class Mesh {
 
         let vertexArr = this.vertexArr;
 
+        let len = vertexArr.length;
+
         let edgeArr = this.edgeArr;
 
-        let c0, c1, c2, c3;
+        let epsilon = this.epsilon;
 
-        let s0, s1, s2, s3;
+        let seamMap = this.seamMap;
 
-        // Find any Edges with both Vertex objects overlapping.
+        for ( let i = 0; i < len; i++ ) {
 
-        for ( let i = 0; i < edgeArr.length; i++ ) {
+            for ( let j = 0; j < len; j++ ) {
 
-            let c0 = vertexArr[ edgeArr[ i ].v[ 0 ] ];
+                let v0 = vertexArr[ i ];
 
-            let c1 = vertexArr[ edgeArr[ i ].v[ 1 ] ];
+                let v1 = vertexArr[ j ];
 
-            for ( let j = 0; j < edgeArr.length; j++ ) {
+                let key;
 
-                let c2 = vertexArr[ edgeArr[ j ].v[ 0 ] ];
+                if ( v0.distance( v1 ) < epsilon ) {
 
-                let c3 = vertexArr[ edgeArr[ j ].v[ 1 ] ];
+                    key = 's-' + v0.idx
 
-                if ( c0.distance( c2 ) < this.epsilon ) s0 = true; else s0 = false;
+                    if ( ! seamMap[ key ] ) {
+
+                        seamMap[ key ] = [ v1 ];
+
+                    } else {
+
+                        if ( seamMap[ key ].indexOf( v1 ) === -1 ) {
+
+                            seamMap[ key ].push[ v1 ];
+
+                        }
+                    }
+
+                    key = 's-' + v1.idx;
+
+                    if ( ! seamMap[ key ] ) {
+
+                        seamMap[ key ] = [ v0 ];
+
+                    } else {
+
+                        if ( seamMap[ key ].indexOf( v0 ) === -1 ) {
+
+                            seamMap[ key ].push[ v0 ];
+
+                        }
+
+                    }
+
+                }
 
             }
 
         }
 
-        // If there is only one overlap, add to Vertex seam array (no midpoint)
+        for ( let i in seamMap ) {
 
-        // if there is an Edge overlap, add to Edge seam array.
+            let sum = seamMap[ i ].reduce( (previous, current ) => current += previous);
+
+            seamMap[ i ] = sum / seamMap[ i ].length;
+
+        }
 
     }
 
@@ -723,7 +732,7 @@ class Mesh {
         // Save the recomputed Vertex
         // TODO: remove weighting after done!!!
 
-        vtx.set( x*1.01, y*1.01, z*1.01, u, v );
+        vtx.set( x, y, z, u, v );
 
     }
 
@@ -732,11 +741,13 @@ class Mesh {
      */
     computeOdd ( vtx, vertexArr, key, revKey ) {
 
-        let edge = this.edgeArr[ this.edgeMap[ key ] ];
+        let edgeArr = this.edgeArr;
+
+        let edge = edgeArr[ this.edgeMap[ key ] ];
 
         if ( ! edge ) { 
             //console.log('no forward edge for ' + key + ', trying reverse'); 
-            edge = this.edgeArr[ this.edgeMap[ revKey ] ];
+            edge = edgeArr[ this.edgeMap[ revKey ] ];
 
         } else {
 
@@ -756,10 +767,10 @@ class Mesh {
             let fv0 = vertexArr[ edge.ov[ 0 ] ];
             let fv1 = vertexArr[ edge.ov[ 1 ] ];
 
-            if ( ! ev0 ) console.error( 'no ev0  for Edge vertex ' + edge.v[ 0 ] );
-            if ( ! ev1 ) console.error( 'no ev0  for Edge vertex ' + edge.v[ 1 ] );
-            if ( ! fv0 ) console.error( 'no ev0  for Edge vertex ' + edge.ov[ 0 ] );
-            if ( ! fv1 ) console.error( 'no ev0  for Edge vertex ' + edge.ov[ 1 ] );
+            //if ( ! ev0 ) console.error( 'no ev0  for Edge vertex ' + edge.v[ 0 ] );
+            //if ( ! ev1 ) console.error( 'no ev0  for Edge vertex ' + edge.v[ 1 ] );
+            //if ( ! fv0 ) console.error( 'no ev0  for Edge vertex ' + edge.ov[ 0 ] );
+            //if ( ! fv1 ) console.error( 'no ev0  for Edge vertex ' + edge.ov[ 1 ] );
 
             // Only process if we are not on a mesh seam.
             // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -796,11 +807,13 @@ class Mesh {
                 u += ow * ( fv0.texCoords.u + fv1.texCoords.u );
                 v += ow * ( fv0.texCoords.v + fv1.texCoords.v );
 
-            vtx.set( x, y, z, u, v );
+                vtx.set( x, y, z, u, v );
 
-            return true;
+                return true;
 
-            } 
+            } else {
+
+            }
 
         } else {
 
@@ -937,14 +950,27 @@ class Mesh {
             );
             */
 
-/*
+
             // if we just add a central point
 
-            m0 = this.addCentroid( v0, v1, v2 );
+            m0 = this.computeCentroid( v0, v1, v2 );
 
             //m0.coords.x *= 1.01;
             //m0.coords.y *= 1.01;
             //m0.coords.z *= 1.01;
+
+            // adjust by the three surrounding triangles
+            /*
+            let ve1 = vertexArr( edgeArr( ii0 + '-' + ii1 ).ov[ 0 ] );
+            let ve2 = vertexArr( edgeArr( ii1 + '-' +  ii2 ).ov[ 0 ] );
+            let ve3 = vertexArr( edgeArr( ii2 + '-' +  ii0 ).ov[ 0 ] );
+
+            ve0 = this.computeCentroid( ve0, ve1, ve2 );
+
+            // use opposite vertices on each face forming the triangle to 
+            // adjust position of new midpoint, and original triangle
+
+            */
 
             newVertexArr.push( m0 );
 
@@ -955,9 +981,10 @@ class Mesh {
                 mi0, ii1, ii2,
                 mi0, ii2, ii0
             );
-*/
+
 
             // if we add three midpoints
+        /*
 
             // First midpoint.
 
@@ -965,75 +992,109 @@ class Mesh {
 
             let revKey = ii1 + '-' + ii0;
 
-           /// if( midHash[ key ] ) { 
-           ///     mi0 = midHash[ key ];
-           /// }
-           //// else if ( midHash[ revKey] ) {
-           ///     mi0 = midhash[ revKey ];
-           //// }
-           /// else { 
+            if( midHash[ key ] ) { 
+
+                mi0 = midHash[ key ];
+
+            } else if ( midHash[ revKey] ) {
+
+                mi0 = midhash[ revKey ];
+
+            } else { 
+
                 m0 = this.computeCentroid( v0, v1 );
 
-                if ( smooth ) this.computeOdd( m0, vertexArr, i0 + '-' + i1, i1 + '-' + i0 ); // OLD INDEXES
+                if ( smooth ) { 
+
+                    this.computeOdd( m0, vertexArr, i0 + '-' + i1, i1 + '-' + i0 ); // OLD INDEXES
+
+                    /////////////////this.computeEven( v0 ); // adjust v0 only if we are smoothing
+
+                }
 
                 newVertexArr.push( m0 ); 
+
                 mi0 = newVertexArr.length - 1; 
+
                 midHash[ key ] = mi0;
+
                 midHash[ revKey ] = mi0;
-           /// }
+
+            }
 
             // Second midpoint.
 
-            //m1 = this.computeCentroid( v1, v2 );
-
             key = ii1 + '-' + ii2;
+
             revKey = ii2 + '-' + ii1;
 
-            ///if( midHash[ key ] ) {
-            ///    mi1 = midHash[ key ];
-           ///}
-            ///else if ( midHash[ revKey] ) {
+            if( midHash[ key ] ) {
 
-            ///mi1 = midhash[ revKey ];
-            ///}
-           /// else { 
+                mi1 = midHash[ key ];
+
+            } else if ( midHash[ revKey] ) {
+
+                mi1 = midhash[ revKey ];
+
+            } else { 
+
                 m1 = this.computeCentroid( v1, v2 );
 
-                if ( smooth ) this.computeOdd( m1, vertexArr, i1 + '-' + i2, i2 + '-' + i1 ); // OLD INDEXES
+                if ( smooth ) {
+
+                    this.computeOdd( m1, vertexArr, i1 + '-' + i2, i2 + '-' + i1 ); // OLD INDEXES
+
+                    /////////////this.computeEven( v1 ); ///////////////////////
+
+                }
 
                 newVertexArr.push( m1 ); 
+
                 mi1 = newVertexArr.length - 1; 
+
                 midHash[ key ] = mi1;
+
                 midHash[ revKey ] = mi1;
-            ///}
+
+            }
 
             // Third midpoint.
 
-            //m2 = this.computeCentroid( v2, v0 );
-
             key = ii2 + '-' + ii0;
+
             revKey = ii0 + '-' + ii2;
 
-            ///if( midHash[ key ] ) {
-            ///    mi2 = midHash[ key ];
-            ///}
-            ///else if ( midHash[ revKey] ) {
-            ///    mi2 = midhash[ revKey ];
-            ///}
-            ///else { 
+            if( midHash[ key ] ) {
+
+                mi2 = midHash[ key ];
+
+            } else if ( midHash[ revKey] ) {
+
+                mi2 = midhash[ revKey ];
+
+            } else { 
+
                 m2 = this.computeCentroid( v2, v0 );
 
-                if ( smooth ) this.computeOdd( m2, vertexArr, i2 + '-' + i0, i0 + '-' + i2 ); // OLD INDICES
+                if ( smooth ) {
+
+                    this.computeOdd( m2, vertexArr, i2 + '-' + i0, i0 + '-' + i2 ); // OLD INDICES
+
+                    ///////////this.computeEven( v2 );
+
+                }
 
                 newVertexArr.push( m2 ); 
+
                 mi2 = newVertexArr.length - 1; 
+
                 midHash[ key ] = mi2;
+
                 midHash[ revKey ] = mi2;
-            ///}
 
-            // Run computeEven here since what we do with odd may determine what to do with even
+            }
 
-            if (smooth) {
+            if ( smooth ) {
 
                 this.computeEven( v0 );
 
@@ -1057,6 +1118,7 @@ class Mesh {
 
             );
 
+        */
 
         } // end of index loop
 

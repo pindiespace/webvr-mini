@@ -556,20 +556,18 @@
 	            };
 
 	            if (!'now' in window.performance) {
-	                (function () {
 
-	                    var nowOffset = Date.now();
+	                var nowOffset = Date.now();
 
-	                    if (performance.timing && performance.timing.navigationStart) {
+	                if (performance.timing && performance.timing.navigationStart) {
 
-	                        nowOffset = performance.timing.navigationStart;
-	                    }
+	                    nowOffset = performance.timing.navigationStart;
+	                }
 
-	                    window.performance.now = function () {
+	                window.performance.now = function () {
 
-	                        return Date.now() - nowOffset;
-	                    };
-	                })();
+	                    return Date.now() - nowOffset;
+	                };
 	            }
 	        }
 
@@ -7412,21 +7410,21 @@
 
 	            ////////////////////////////////////////////////////////////////////////////////
 	            // SUBDIVIDE TEST
-	            if (prim.name === 'colored cube') {
-	                var mesh = new _mesh2.default(prim.geometry.vertices.data, prim.geometry.indices.data, prim.geometry.texCoords.data);
-	                window.mesh = mesh;
-	                mesh.subdivide(true);
-	                //mesh.subdivide( true ); // icosphere and some other shapes blow up
-	                //mesh.subdivide( true );
-	                //mesh.subdivide( true );
-	                //mesh.subdivide( true );
-	                //mesh.subdivide( true );
-	                var divided = mesh.vertexToGeometry();
-	                prim.geometry.vertices.data = divided.vertices;
-	                prim.geometry.indices.data = divided.indices;
-	                prim.geometry.texCoords.data = divided.texCoords;
-	                prim.geometry.normals.data = this.computeNormals(divided.vertices, divided.indices, [prim.geometry.normals.data]);
-	            }
+	            //if ( prim.name === 'colored cube' ) {
+	            var mesh = new _mesh2.default(prim.geometry.vertices.data, prim.geometry.indices.data, prim.geometry.texCoords.data);
+	            window.mesh = mesh;
+	            mesh.subdivide(true);
+	            //mesh.subdivide( true ); // icosphere and some other shapes blow up
+	            //mesh.subdivide( true );
+	            //mesh.subdivide( true );
+	            //mesh.subdivide( true );
+	            //mesh.subdivide( true ); // topright connects to bottomleft 
+	            var divided = mesh.vertexToGeometry();
+	            prim.geometry.vertices.data = divided.vertices;
+	            prim.geometry.indices.data = divided.indices;
+	            prim.geometry.texCoords.data = divided.texCoords;
+	            prim.geometry.normals.data = this.computeNormals(divided.vertices, divided.indices, [prim.geometry.normals.data]);
+	            //}
 	            ////////////////////////////////////////////////////////////////////////////////
 
 	            // Create WebGL data buffers from geometry.
@@ -8613,6 +8611,11 @@
 	        this.even = true; // by default, not a midpoint
 	    }
 
+	    /** 
+	     * Confirm Vertex has valid values for position and texture.
+	     */
+
+
 	    _createClass(Vertex, [{
 	        key: 'isValid',
 	        value: function isValid() {
@@ -8654,6 +8657,11 @@
 	                return Math.sqrt(x * x + y * y + z * z);
 	            }
 	        }
+
+	        /** 
+	         * In-place setting values
+	         */
+
 	    }, {
 	        key: 'set',
 	        value: function set(x, y, z, u, v) {
@@ -8668,12 +8676,37 @@
 
 	            this.texCoords.v = v;
 	        }
+
+	        /** 
+	         * Scale coordinates in or out.
+	         */
+
+	    }, {
+	        key: 'scale',
+	        value: function scale(scalar) {
+
+	            this.coords.x *= scalar;
+
+	            this.coords.y *= scalar;
+
+	            this.coords.z *= scalar;
+	        }
+
+	        /** 
+	         * Return a copy
+	         */
+
 	    }, {
 	        key: 'clone',
 	        value: function clone() {
 
 	            return new Vertex(this.coords.x, this.coords.y, this.coords.z, this.texCoords.u, this.texCoords.v, this.idx, this.vertexArr);
 	        }
+
+	        /** 
+	         * return a flattened array.
+	         */
+
 	    }, {
 	        key: 'flatten',
 	        value: function flatten() {
@@ -8792,11 +8825,14 @@
 
 	        this.edgeMap = []; // lookup table for Edges (even Vertices)
 
+	        this.seamMap = []; // find overlapping Vertices
+
 	        this.faceArr = []; // holds the triangle list (derived from indexArr)
 
 	        this.valenceArr = []; // holds computed valency constants for Edge and opposite Vertices
 
 	        this.oldVertexArr = []; // Keep the original Vertex data when transforming mesh.
+
 
 	        this.badIndex32 = 4294967294;
 
@@ -8875,59 +8911,6 @@
 	        }
 
 	        /** 
-	         * find the closest Vertex NOT in the immediate 'index' neighborhood 
-	         * for a given Vertex. Useful in adding more Edge points for  even 
-	         * vertex calculations.
-	         * 
-	         * Note filters use actual Vertex objects rather than indices
-	         */
-
-	    }, {
-	        key: 'computeClosestVertex',
-	        value: function computeClosestVertex(x, y, z, ignore) {
-
-	            var vertexArr = this.vertexArr;
-
-	            var len = this.vertexArr.length;
-
-	            var min = 1000000;
-
-	            var idx = -1;
-
-	            for (var _i2 = 0; _i2 < vertexArr.length; _i2++) {
-
-	                var vtx = vertexArr[_i2];
-
-	                //if( ignore.indexOf( vtx.idx ) !== -1 ) console.log( 'in computeClosestVertex, ignore found at:' + ignore.indexOf( vtx.idx ) )
-
-	                //if ( ignore.indexOf( vtx.idx ) === -1 ) console.log('no ignore at:' + ignore.indexOf( vtx.idx ) )
-
-	                if (ignore.indexOf(vtx.idx) === -1) {
-
-	                    var cMin = Math.abs(x - vtx.coords.x) + Math.abs(y - vtx.coords.y) + Math.abs(z - vtx.coords.z);
-
-	                    if (cMin < min) {
-
-	                        idx = _i2;
-
-	                        min = cMin;
-	                    }
-	                }
-	            }
-
-	            return idx;
-	        }
-
-	        /** 
-	         * find the closest Edge for a given Edge. Useful for 
-	         * adding the opposite Vertex for odd (midpoint) calculations
-	         */
-
-	    }, {
-	        key: 'computeClosestEdge',
-	        value: function computeClosestEdge(edge) {}
-
-	        /** 
 	         * Given a valency of surround Edges (neighboring Vertices) for a given 
 	         * Vertex, compute weights. Similar to:
 	         * @link https://github.com/deyan-hadzhiev/loop_subdivision/blob/master/loop_subdivision.js
@@ -8942,9 +8925,9 @@
 
 	            this.valenceArr[0] = 0.0, this.valenceArr[1] = 0.0, this.valenceArr[2] = 1.0 / 8.0, this.valenceArr[3] = 3.0 / 16.0;
 
-	            for (var _i3 = 4; _i3 < max; _i3++) {
+	            for (var _i2 = 4; _i2 < max; _i2++) {
 
-	                this.valenceArr[_i3] = 1.0 / _i3 * (5.0 / 8.0 - Math.pow(3.0 / 8.0 + 1.0 / 4.0 * Math.cos(2.0 * Math.PI / _i3), 2.0));
+	                this.valenceArr[_i2] = 1.0 / _i2 * (5.0 / 8.0 - Math.pow(3.0 / 8.0 + 1.0 / 4.0 * Math.cos(2.0 * Math.PI / _i2), 2.0));
 
 	                // Warren's modified formula: 
 	                //this.valenceArr[i] = 3.0 / (8.0 * i);
@@ -8987,39 +8970,63 @@
 
 	            var vertexArr = this.vertexArr;
 
+	            var len = vertexArr.length;
+
 	            var edgeArr = this.edgeArr;
 
-	            var c0 = void 0,
-	                c1 = void 0,
-	                c2 = void 0,
-	                c3 = void 0;
+	            var epsilon = this.epsilon;
 
-	            var s0 = void 0,
-	                s1 = void 0,
-	                s2 = void 0,
-	                s3 = void 0;
+	            var seamMap = this.seamMap;
 
-	            // Find any Edges with both Vertex objects overlapping.
+	            for (var _i3 = 0; _i3 < len; _i3++) {
 
-	            for (var _i4 = 0; _i4 < edgeArr.length; _i4++) {
+	                for (var j = 0; j < len; j++) {
 
-	                var _c = vertexArr[edgeArr[_i4].v[0]];
+	                    var v0 = vertexArr[_i3];
 
-	                var _c2 = vertexArr[edgeArr[_i4].v[1]];
+	                    var v1 = vertexArr[j];
 
-	                for (var j = 0; j < edgeArr.length; j++) {
+	                    var key = void 0;
 
-	                    var _c3 = vertexArr[edgeArr[j].v[0]];
+	                    if (v0.distance(v1) < epsilon) {
 
-	                    var _c4 = vertexArr[edgeArr[j].v[1]];
+	                        key = 's-' + v0.idx;
 
-	                    if (_c.distance(_c3) < this.epsilon) s0 = true;else s0 = false;
+	                        if (!seamMap[key]) {
+
+	                            seamMap[key] = [v1];
+	                        } else {
+
+	                            if (seamMap[key].indexOf(v1) === -1) {
+
+	                                seamMap[key].push[v1];
+	                            }
+	                        }
+
+	                        key = 's-' + v1.idx;
+
+	                        if (!seamMap[key]) {
+
+	                            seamMap[key] = [v0];
+	                        } else {
+
+	                            if (seamMap[key].indexOf(v0) === -1) {
+
+	                                seamMap[key].push[v0];
+	                            }
+	                        }
+	                    }
 	                }
 	            }
 
-	            // If there is only one overlap, add to Vertex seam array (no midpoint)
+	            for (var _i4 in seamMap) {
 
-	            // if there is an Edge overlap, add to Edge seam array.
+	                var sum = seamMap[_i4].reduce(function (previous, current) {
+	                    return current += previous;
+	                });
+
+	                seamMap[_i4] = sum / seamMap[_i4].length;
+	            }
 	        }
 
 	        /** 
@@ -9229,7 +9236,7 @@
 	            // Save the recomputed Vertex
 	            // TODO: remove weighting after done!!!
 
-	            vtx.set(x * 1.01, y * 1.01, z * 1.01, u, v);
+	            vtx.set(x, y, z, u, v);
 	        }
 
 	        /** 
@@ -9240,11 +9247,13 @@
 	        key: 'computeOdd',
 	        value: function computeOdd(vtx, vertexArr, key, revKey) {
 
-	            var edge = this.edgeArr[this.edgeMap[key]];
+	            var edgeArr = this.edgeArr;
+
+	            var edge = edgeArr[this.edgeMap[key]];
 
 	            if (!edge) {
 	                //console.log('no forward edge for ' + key + ', trying reverse'); 
-	                edge = this.edgeArr[this.edgeMap[revKey]];
+	                edge = edgeArr[this.edgeMap[revKey]];
 	            } else {
 
 	                //console.log('using forward edge')
@@ -9263,10 +9272,10 @@
 	                var fv0 = vertexArr[edge.ov[0]];
 	                var fv1 = vertexArr[edge.ov[1]];
 
-	                if (!ev0) console.error('no ev0  for Edge vertex ' + edge.v[0]);
-	                if (!ev1) console.error('no ev0  for Edge vertex ' + edge.v[1]);
-	                if (!fv0) console.error('no ev0  for Edge vertex ' + edge.ov[0]);
-	                if (!fv1) console.error('no ev0  for Edge vertex ' + edge.ov[1]);
+	                //if ( ! ev0 ) console.error( 'no ev0  for Edge vertex ' + edge.v[ 0 ] );
+	                //if ( ! ev1 ) console.error( 'no ev0  for Edge vertex ' + edge.v[ 1 ] );
+	                //if ( ! fv0 ) console.error( 'no ev0  for Edge vertex ' + edge.ov[ 0 ] );
+	                //if ( ! fv1 ) console.error( 'no ev0  for Edge vertex ' + edge.ov[ 1 ] );
 
 	                // Only process if we are not on a mesh seam.
 	                // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -9306,7 +9315,7 @@
 	                    vtx.set(x, y, z, u, v);
 
 	                    return true;
-	                }
+	                } else {}
 	            } else {
 
 	                console.log('edge is undefined for:' + key + ',' + revKey);
@@ -9441,122 +9450,99 @@
 	                 );
 	                */
 
+	                // if we just add a central point
+
+	                m0 = this.computeCentroid(v0, v1, v2);
+
+	                //m0.coords.x *= 1.01;
+	                //m0.coords.y *= 1.01;
+	                //m0.coords.z *= 1.01;
+
+	                // adjust by the three surrounding triangles
 	                /*
-	                            // if we just add a central point
-	                
-	                            m0 = this.addCentroid( v0, v1, v2 );
-	                
-	                            //m0.coords.x *= 1.01;
-	                            //m0.coords.y *= 1.01;
-	                            //m0.coords.z *= 1.01;
-	                
-	                            newVertexArr.push( m0 );
-	                
-	                            mi0 = newVertexArr.length - 1;
-	                
-	                            newIndexArr.push(
-	                                mi0, ii0, ii1,
-	                                mi0, ii1, ii2,
-	                                mi0, ii2, ii0
-	                            );
-	                */
-
-	                // if we add three midpoints
-
-	                // First midpoint.
-
-	                var key = ii0 + '-' + ii1;
-
-	                var revKey = ii1 + '-' + ii0;
-
-	                /// if( midHash[ key ] ) { 
-	                ///     mi0 = midHash[ key ];
-	                /// }
-	                //// else if ( midHash[ revKey] ) {
-	                ///     mi0 = midhash[ revKey ];
-	                //// }
-	                /// else { 
-	                m0 = this.computeCentroid(v0, v1);
-
-	                if (smooth) this.computeOdd(m0, vertexArr, i0 + '-' + i1, i1 + '-' + i0); // OLD INDEXES
+	                let ve1 = vertexArr( edgeArr( ii0 + '-' + ii1 ).ov[ 0 ] );
+	                let ve2 = vertexArr( edgeArr( ii1 + '-' +  ii2 ).ov[ 0 ] );
+	                let ve3 = vertexArr( edgeArr( ii2 + '-' +  ii0 ).ov[ 0 ] );
+	                 ve0 = this.computeCentroid( ve0, ve1, ve2 );
+	                 // use opposite vertices on each face forming the triangle to 
+	                // adjust position of new midpoint, and original triangle
+	                 */
 
 	                newVertexArr.push(m0);
+
 	                mi0 = newVertexArr.length - 1;
-	                midHash[key] = mi0;
-	                midHash[revKey] = mi0;
-	                /// }
 
-	                // Second midpoint.
+	                newIndexArr.push(mi0, ii0, ii1, mi0, ii1, ii2, mi0, ii2, ii0);
 
-	                //m1 = this.computeCentroid( v1, v2 );
-
-	                key = ii1 + '-' + ii2;
-	                revKey = ii2 + '-' + ii1;
-
-	                ///if( midHash[ key ] ) {
-	                ///    mi1 = midHash[ key ];
-	                ///}
-	                ///else if ( midHash[ revKey] ) {
-
-	                ///mi1 = midhash[ revKey ];
-	                ///}
-	                /// else { 
-	                m1 = this.computeCentroid(v1, v2);
-
-	                if (smooth) this.computeOdd(m1, vertexArr, i1 + '-' + i2, i2 + '-' + i1); // OLD INDEXES
-
-	                newVertexArr.push(m1);
-	                mi1 = newVertexArr.length - 1;
-	                midHash[key] = mi1;
-	                midHash[revKey] = mi1;
-	                ///}
-
-	                // Third midpoint.
-
-	                //m2 = this.computeCentroid( v2, v0 );
-
-	                key = ii2 + '-' + ii0;
-	                revKey = ii0 + '-' + ii2;
-
-	                ///if( midHash[ key ] ) {
-	                ///    mi2 = midHash[ key ];
-	                ///}
-	                ///else if ( midHash[ revKey] ) {
-	                ///    mi2 = midhash[ revKey ];
-	                ///}
-	                ///else { 
-	                m2 = this.computeCentroid(v2, v0);
-
-	                if (smooth) this.computeOdd(m2, vertexArr, i2 + '-' + i0, i0 + '-' + i2); // OLD INDICES
-
-	                newVertexArr.push(m2);
-	                mi2 = newVertexArr.length - 1;
-	                midHash[key] = mi2;
-	                midHash[revKey] = mi2;
-	                ///}
-
-	                // Run computeEven here since what we do with odd may determine what to do with even
-
-	                if (smooth) {
-
-	                    this.computeEven(v0);
-
-	                    this.computeEven(v1);
-
-	                    this.computeEven(v2);
-	                }
-
-	                // Push new indices
-
-	                newIndexArr.push(mi0, ii1, mi1, // B  
-
-	                mi1, mi2, mi0, // C
-
-	                mi2, mi1, ii2, // D
-
-	                mi2, ii0, mi0 // A
-
-	                );
+	                // if we add three midpoints
+	                /*
+	                     // First midpoint.
+	                     let key = ii0 + '-' + ii1;
+	                     let revKey = ii1 + '-' + ii0;
+	                     if( midHash[ key ] ) { 
+	                         mi0 = midHash[ key ];
+	                     } else if ( midHash[ revKey] ) {
+	                         mi0 = midhash[ revKey ];
+	                     } else { 
+	                         m0 = this.computeCentroid( v0, v1 );
+	                         if ( smooth ) { 
+	                             this.computeOdd( m0, vertexArr, i0 + '-' + i1, i1 + '-' + i0 ); // OLD INDEXES
+	                             /////////////////this.computeEven( v0 ); // adjust v0 only if we are smoothing
+	                         }
+	                         newVertexArr.push( m0 ); 
+	                         mi0 = newVertexArr.length - 1; 
+	                         midHash[ key ] = mi0;
+	                         midHash[ revKey ] = mi0;
+	                     }
+	                     // Second midpoint.
+	                     key = ii1 + '-' + ii2;
+	                     revKey = ii2 + '-' + ii1;
+	                     if( midHash[ key ] ) {
+	                         mi1 = midHash[ key ];
+	                     } else if ( midHash[ revKey] ) {
+	                         mi1 = midhash[ revKey ];
+	                     } else { 
+	                         m1 = this.computeCentroid( v1, v2 );
+	                         if ( smooth ) {
+	                             this.computeOdd( m1, vertexArr, i1 + '-' + i2, i2 + '-' + i1 ); // OLD INDEXES
+	                             /////////////this.computeEven( v1 ); ///////////////////////
+	                         }
+	                         newVertexArr.push( m1 ); 
+	                         mi1 = newVertexArr.length - 1; 
+	                         midHash[ key ] = mi1;
+	                         midHash[ revKey ] = mi1;
+	                     }
+	                     // Third midpoint.
+	                     key = ii2 + '-' + ii0;
+	                     revKey = ii0 + '-' + ii2;
+	                     if( midHash[ key ] ) {
+	                         mi2 = midHash[ key ];
+	                     } else if ( midHash[ revKey] ) {
+	                         mi2 = midhash[ revKey ];
+	                     } else { 
+	                         m2 = this.computeCentroid( v2, v0 );
+	                         if ( smooth ) {
+	                             this.computeOdd( m2, vertexArr, i2 + '-' + i0, i0 + '-' + i2 ); // OLD INDICES
+	                             ///////////this.computeEven( v2 );
+	                         }
+	                         newVertexArr.push( m2 ); 
+	                         mi2 = newVertexArr.length - 1; 
+	                         midHash[ key ] = mi2;
+	                         midHash[ revKey ] = mi2;
+	                     }
+	                     if ( smooth ) {
+	                         this.computeEven( v0 );
+	                         this.computeEven( v1 );
+	                         this.computeEven( v2 );
+	                     }
+	                     // Push new indices
+	                     newIndexArr.push(
+	                         mi0, ii1, mi1,   // B  
+	                         mi1, mi2, mi0,   // C
+	                         mi2, mi1, ii2,   // D
+	                         mi2, ii0, mi0    // A
+	                     );
+	                 */
 	            } // end of index loop
 
 	            console.log("$$$$PARTIAL %:" + this.totNeedIgnore + '/' + this.oldVertexArr.length); //////////////////////////
