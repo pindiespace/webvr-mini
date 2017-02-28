@@ -40,6 +40,50 @@ import Util   from './util';
 
     }
 
+    add ( coords ) {
+
+        this.x += coords.x;
+
+        this.y += coords.y;
+
+        this.z += coords.z;
+
+        return this;
+
+    }
+
+    scale ( scalar ) {
+
+        this.x *= scalar;
+
+        this.y *= scalar;
+
+        this.z *= scalar;
+
+        return this;
+
+    }
+
+    distance ( coords, fast ) {
+
+        let x = this.x - coords.x;
+
+        let y = this.y - coords.y;
+
+        let z = this.z - coords.z;
+
+        if ( fast ) {
+
+            return ( Math.abs( x ) + Math.abs( y ) + Math.abs( z ) ) / 3;
+
+        } else {
+
+            return Math.sqrt( x * x + y * y + z * z );
+
+        }
+
+    }
+
     /**
      * Return a new copy of this Coords
      * @returns {Coords} a copy of the current coordinates.
@@ -114,21 +158,7 @@ class Vertex {
      */
     distance ( vtx, fast = false ) {
 
-        let x = vtx.coords.x - this.coords.x;
-
-        let y = vtx.coords.y - this.coords.y;
-
-        let z = vtx.coords.z - this.coords.z;
-
-        if ( fast ) {
-
-            return ( Math.abs( x ) + Math.abs( y ) + Math.abs( z ) );
-
-        } else {
-
-            return Math.sqrt( x * x + y * y + z * z );
-
-        }
+        return this.coords.distance( vtx.coords, fast );
 
     }
 
@@ -147,6 +177,16 @@ class Vertex {
 
         this.texCoords.v = v;
 
+        return this;
+
+    }
+
+    add ( vtx ) {
+
+        this.coords.add( vtx.coords );
+
+        return this;
+
     }
 
     /** 
@@ -154,11 +194,9 @@ class Vertex {
      */
     scale ( scalar ) {
 
-        this.coords.x *= scalar;
+        this.coords.scale( scalar );
 
-        this.coords.y *= scalar;
-
-        this.coords.z *= scalar;
+        return this;
 
     }
 
@@ -274,7 +312,7 @@ class Mesh {
      * @param {Uint32Array} indices indices for drawing the array
      * @param {Float32Array} texCoords texture coordinates for each position
      */
-    constructor ( vertices, indices, texCoords ) {
+    constructor ( type, vertices, indices, texCoords ) {
 
         // Original flattened arrays.
 
@@ -283,6 +321,10 @@ class Mesh {
         this.indices = indices;
 
         this.texCoords = texCoords;
+
+        // information about the flattened data
+
+        this.type = type; // Prim.geometry.type
 
         // Mesh arrays
 
@@ -300,8 +342,19 @@ class Mesh {
 
         this.valenceArr = [];   // holds computed valency constants for Edge and opposite Vertices
 
-        this.oldVertexArr = []; // Keep the original Vertex data when transforming mesh.
+        this.oldVertexArr = []; // keep the original Vertex data when transforming mesh
 
+        this.avDistance = 0;    // average distance between Vertices
+
+        this.width = 0;
+
+        this.height = 0;
+
+        this.depth = 0;
+
+        this.farPoint2 = 0;
+        this.farPoint3 = 0;
+        this.farPoint4 = 0;
 
         this.badIndex32 = 4294967294;
 
@@ -333,54 +386,6 @@ class Mesh {
         let keyArr = key.split( '-' );
 
         return keyArr[ 1 ] + '-' + keyArr[ 0 ];
-
-    }
-
-
-    /** 
-     * Compute the average (xyz) distance beween Vertices in the Mesh.
-     */
-    computeAverageDistance () {
-
-        let vertexArr = this.vertexArr;
-
-        let edgeArr = this.edgeArr;
-
-        let len = edgeArr.length;
-
-        let edgeHash = [];
-
-        let dx = 0, dy = 0, dz = 0;
-
-        for ( let i = 0; i < len; i++ ) {
-
-            let edge = edgeArr[ i ];
-
-            if ( ! edge.key in edgeHash ) {
-
-                let v0 = vertexArr[ edge.v[ 0 ] ];
-
-                let v1 = vertexArr[ edge.v[ 1 ] ];
-
-                dx += Math.abs( v0.coords.x  - v1.coords.x ) ;
-
-                dy += Math.abs( v0.coords.y - v1.coords.y );
-
-                dz += Math.abs( v0.coords.z - v1.coords.z );
-
-            }
-
-        }
-
-        return new Coords( 
-  
-            dx / len,
-
-            dy / len,
-
-            dz / len
-
-        );
 
     }
 
@@ -424,6 +429,18 @@ class Mesh {
 
         let i = 0, vi = 0, ti = 0;
 
+        // Average spacing between vertices
+
+        let avDist = 0;
+
+        // Bounding Box (get width, height, and depth)
+
+        let width = 0, height = 0, depth = 0;
+
+        let min = new Coords();
+
+        let max = new Coords();
+
         let numVertices = vertices.length / 3;
 
         let vertexArr = new Array( numVertices );
@@ -432,85 +449,44 @@ class Mesh {
 
             vertexArr[ i ] = new Vertex( vertices[ vi++ ], vertices[ vi++ ], vertices[ vi++ ], texCoords[ ti++ ], texCoords[ ti++ ], i, vertexArr );
 
-        }
+            if ( i > 0 ) {
 
-        return vertexArr;
+                avDist += vertexArr[ i ].distance( vertexArr[ i - 1 ], true ); // fast calc
 
-    }
+                let c = vertexArr[ i ].coords;
 
-    /** 
-     * Find seams in the Mesh (process differently). Also flag
-     * edges that overlap so that midpoint calculations don't
-     * cause a tear in the mesh.
-     */
-    computeSeams () {
+                min.x = Math.min( min.x, c.x );
 
-        let vertexArr = this.vertexArr;
+                max.x = Math.max( max.x, c.x );
 
-        let len = vertexArr.length;
+                min.y = Math.min( min.y, c.y );
 
-        let edgeArr = this.edgeArr;
+                max.y = Math.min( min.y, c.y );
 
-        let epsilon = this.epsilon;
+                min.z = Math.min( min.z, c.z );
 
-        let seamMap = this.seamMap;
-
-        for ( let i = 0; i < len; i++ ) {
-
-            for ( let j = 0; j < len; j++ ) {
-
-                let v0 = vertexArr[ i ];
-
-                let v1 = vertexArr[ j ];
-
-                let key;
-
-                if ( v0.distance( v1 ) < epsilon ) {
-
-                    key = 's-' + v0.idx
-
-                    if ( ! seamMap[ key ] ) {
-
-                        seamMap[ key ] = [ v1 ];
-
-                    } else {
-
-                        if ( seamMap[ key ].indexOf( v1 ) === -1 ) {
-
-                            seamMap[ key ].push[ v1 ];
-
-                        }
-                    }
-
-                    key = 's-' + v1.idx;
-
-                    if ( ! seamMap[ key ] ) {
-
-                        seamMap[ key ] = [ v0 ];
-
-                    } else {
-
-                        if ( seamMap[ key ].indexOf( v0 ) === -1 ) {
-
-                            seamMap[ key ].push[ v0 ];
-
-                        }
-
-                    }
-
-                }
+                max.z = Math.min( max.z, c.z );
 
             }
 
         }
 
-        for ( let i in seamMap ) {
+        this.width = max.x - min.x;
 
-            let sum = seamMap[ i ].reduce( (previous, current ) => current += previous);
+        this.height = max.y - min.y;
 
-            seamMap[ i ] = sum / seamMap[ i ].length;
+        this.depth = max.z - min.z;
 
-        }
+        // Estimate average spacing among Vertices
+
+        this.avDistance = avDist / numVertices;
+
+        return vertexArr;
+
+    }
+
+    computeSeams () {
+
 
     }
 
@@ -767,39 +743,29 @@ class Mesh {
             let fv0 = vertexArr[ edge.ov[ 0 ] ];
             let fv1 = vertexArr[ edge.ov[ 1 ] ];
 
-            //if ( ! ev0 ) console.error( 'no ev0  for Edge vertex ' + edge.v[ 0 ] );
-            //if ( ! ev1 ) console.error( 'no ev0  for Edge vertex ' + edge.v[ 1 ] );
-            //if ( ! fv0 ) console.error( 'no ev0  for Edge vertex ' + edge.ov[ 0 ] );
-            //if ( ! fv1 ) console.error( 'no ev0  for Edge vertex ' + edge.ov[ 1 ] );
-
-            // Only process if we are not on a mesh seam.
-            // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            // TODO: THIS IS AN IMPERFECT WAY TO FIND MESH SEAMS. FAILS 
-            // TODO: ON MULTIPLE SEAM CALCULATIONS.
-            // TODO: COMPUTE MESH SEAMS IN ARRAY
-            // TODO:
-            // TODO: CONFIRM CONVERSION BACK TO FLATTENED WORKS CORRECTLY
-            // TODO: FOR MULTIPLE VERTICES - MULTIPLE SUBDIVIDE LEAVING HOLES
-            // TODO: ICOSPHERE PUTTING SOUTH POLE AT NORTH POLE IMPLES A PROBLEM
-            // TODO: REDO TERRAIN SO IT DOESN'T JOIN ITSELF! IMPLIES BEING 
-            // TODO: SLIGHTLY DIFFERENTLY, LEADING TO ERRORS IN SECOND SUBDIVIDE
-            //
-            // SUBDIVIDE WITH NO SMOOTHING CAUSES ERRORS ONLY IN SPHERE AND 
-            // ICOSPHERE (go to zero point from triangles?)
-            //
-            // SUBDIVIDE WITH ONE SMOOTH CAUSES SMALL ERRORS ONLY IN POSITIONING.
-            // SO THERE ARE TWO PROBLEMS HERE!!
-            // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            // adjust only if the facing Vertices are different.
 
             if ( fv0 !== fv1 ) {
 
                 let x, y, z, u, v;
+
+                // Vertices forming the Edge the midpoint is in 
 
                 x = fw * ( ev0.coords.x + ev1.coords.x ),
                 y = fw * ( ev0.coords.y + ev1.coords.y ),
                 z = fw * ( ev0.coords.z + ev1.coords.z ),
                 u = fw * ( ev0.texCoords.u + ev1.texCoords.u ),
                 v = fw * ( ev0.texCoords.v + ev1.texCoords.v );
+
+                // Opposite vertices to that Edge
+
+                // Don't use an 'opposite' Vertex if it lies too far away.
+
+                let od = fv0.distance( fv1 ); // distance
+
+                if ( od > this.avDistance * 2 ) this.farPoint2++; ////////DEBUG
+                if ( od > this.avDistance * 3 ) this.farPoint3++; ////////DEBUG
+                if ( od > this.width / 2 ) this.farPoint4++; ///////DEBUG
 
                 x += ow * ( fv0.coords.x + fv1.coords.x );
                 y += ow * ( fv0.coords.y + fv1.coords.y );
@@ -822,7 +788,6 @@ class Mesh {
         }
         return false;
     }
-
 
     /**
      * Subdivide and optionally smooth a Mesh, similar to 
@@ -855,6 +820,8 @@ class Mesh {
         let indexHash = []; // for old indices = position in oldVertexArray
 
         let midHash = []; // for new points, position in newVertexArray
+
+        let edgeArr = this.edgeArr;
 
 
        // console.log("VERTEXARRAY LENGTH:" + vertexArr.length )
@@ -951,30 +918,49 @@ class Mesh {
             */
 
 
+/*
             // if we just add a central point
 
             m0 = this.computeCentroid( v0, v1, v2 );
 
-            //m0.coords.x *= 1.01;
-            //m0.coords.y *= 1.01;
-            //m0.coords.z *= 1.01;
-
-            // adjust by the three surrounding triangles
-            /*
-            let ve1 = vertexArr( edgeArr( ii0 + '-' + ii1 ).ov[ 0 ] );
-            let ve2 = vertexArr( edgeArr( ii1 + '-' +  ii2 ).ov[ 0 ] );
-            let ve3 = vertexArr( edgeArr( ii2 + '-' +  ii0 ).ov[ 0 ] );
-
-            ve0 = this.computeCentroid( ve0, ve1, ve2 );
-
-            // use opposite vertices on each face forming the triangle to 
-            // adjust position of new midpoint, and original triangle
-
-            */
+            m0.scale( 1.02 ); //@@@@@@@@@@@@@@@@@@@@@@@@@@@DEBUG REMOVE
 
             newVertexArr.push( m0 );
 
             mi0 = newVertexArr.length - 1;
+
+            // get the surround points
+
+            let key = i0 + '-' + i1;
+            let revKey = i1 + '-' + i0;
+            let edg0 = edgeArr[ this.edgeMap[ key ] ];
+            if ( ! edg0 ) edg0 = edgeArr[ this.edgeMap[ revKey ] ];
+
+            key = i1 + '-' + i2;
+            revKey = i2 + '-' + i1;
+            let edg1 = edgeArr[ this.edgeMap[ key ] ];
+            if ( ! edg1 ) edg1 = edgeArr[ this.edgeMap[ revKey ] ];
+
+            key = i2+ '-' + i0;
+            revKey = i0 + '-' + i2;
+            let edg2 = edgeArr[ this.edgeMap[ key ] ];
+            if ( ! edg2 ) edg2 = edgeArr[ this.edgeMap[ revKey ] ];
+
+            let wt = 0.85;
+            let awt = 1 - wt;
+
+            let me0 = this.computeCentroid( 
+                vertexArr[ edg0.ov[ 0 ] ],
+                vertexArr[ edg1.ov[ 0 ] ],
+                vertexArr[ edg2.ov[ 0 ] ]
+            ).scale( 0.15 );
+
+            v0.scale( 0.85 ).add( me0 );
+            v1.scale( 0.85 ).add( me0 );
+            v2.scale( 0.85 ).add( me0 );
+
+
+            // push the new index
 
             newIndexArr.push(
                 mi0, ii0, ii1,
@@ -982,9 +968,9 @@ class Mesh {
                 mi0, ii2, ii0
             );
 
+*/
 
             // if we add three midpoints
-        /*
 
             // First midpoint.
 
@@ -1021,6 +1007,7 @@ class Mesh {
                 midHash[ revKey ] = mi0;
 
             }
+
 
             // Second midpoint.
 
@@ -1118,11 +1105,12 @@ class Mesh {
 
             );
 
-        */
-
         } // end of index loop
 
         console.log("$$$$PARTIAL %:" + this.totNeedIgnore + '/' + this.oldVertexArr.length) //////////////////////////
+        console.log("$$$$FARPOINT2:" + this.farPoint2 / newVertexArr.length)
+        console.log("$$$$FARPOINT3:" + this.farPoint3 / newVertexArr.length)
+        console.log("$$$$FARPOINT4:" + this.farPoint4 / newVertexArr.length)
 
         this.vertexArr = newVertexArr;
 

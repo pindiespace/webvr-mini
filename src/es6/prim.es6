@@ -1,6 +1,7 @@
 import Map2d from './map2d';
 import Map3d from './map3d';
 import Mesh from  './mesh';
+import GeoObj from './geo-obj';
 
 class Prim {
 
@@ -3545,7 +3546,7 @@ class Prim {
 ////////////////////////////////////////////////////////////////////////////////
         // SUBDIVIDE TEST
         //if ( prim.name === 'colored cube' ) {
-            let mesh = new Mesh( prim.geometry.vertices.data, prim.geometry.indices.data, prim.geometry.texCoords.data );
+            let mesh = new Mesh( prim.geometry.type, prim.geometry.vertices.data, prim.geometry.indices.data, prim.geometry.texCoords.data );
             window.mesh = mesh;
             mesh.subdivide( true );
             //mesh.subdivide( true ); // icosphere and some other shapes blow up
