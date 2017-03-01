@@ -3286,7 +3286,7 @@ class Prim {
 ////////////////////////////////////////////////////////////////////////////////
         // SUBDIVIDE TEST
         //if ( prim.name === 'colored cube' ) {
-            let mesh = new Mesh( prim.geometry.type, prim.geometry.vertices.data, prim.geometry.indices.data, prim.geometry.texCoords.data );
+            let mesh = new Mesh( prim.geometry );
             window.mesh = mesh;
             mesh.subdivide( true );
             //mesh.subdivide( true ); // icosphere and some other shapes blow up

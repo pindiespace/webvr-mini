@@ -121,8 +121,6 @@ class Vertex {
 
         this.e = []; // Edge array
 
-        this.s = []; // Seam array, indicates other Vertex objects that are < epsilon apart
-
         this.vertexArr = vertexArr;
 
         this.even = true; // by default, not a midpoint
@@ -205,11 +203,19 @@ class Vertex {
      */
     clone () {
 
-        return new Vertex( this.coords.x, this.coords.y, this.coords.z, 
+        let vtx = new Vertex( this.coords.x, this.coords.y, this.coords.z, 
 
             this.texCoords.u, this.texCoords.v, 
 
             this.idx, this.vertexArr );
+
+        for ( let i = 0; i < this.e.length; i++ ) {
+
+            vtx.e.push( this.e[ i ] );
+
+        }
+
+        return vtx;
 
     }
 
@@ -261,19 +267,24 @@ class Edge {
 
     }
 
+    /** 
+     * Given a Vertex, return the opposite Vertex in this Edge.
+     * @param {Vertex} vtx the Vertex to test.
+     * @returns {Number} the index of the opposite Vertex in the Vertex array.
+     */
     getOpposite( vtx ) {
 
-        if ( vtx === this.v[ 0 ] ) {
+        if ( vtx.idx === this.v[ 0 ] ) {
 
             return this.v[ 1 ];
 
-        } else if ( vtx === this.v[ 1 ] ) {
+        } else if ( vtx.idx === this.v[ 1 ] ) {
 
             return this.v[ 0 ];
 
         } else {
 
-            console.error( 'Edge::getOpposite: invalid Vertex' + vtx + ' supplied' );
+            console.error( 'Edge::getOpposite: invalid Vertex:' + vtx.idx + ' supplied, our Edge:' + this.v[ 0 ] + ', ' + this.v[ 1 ] );
 
         }
 
@@ -313,19 +324,30 @@ class Mesh {
      * @param {Uint32Array} indices indices for drawing the array
      * @param {Float32Array} texCoords texture coordinates for each position
      */
-    constructor ( type, vertices, indices, texCoords ) {
+    //constructor ( type, vertices, indices, texCoords ) {
+
+    constructor ( geo ) {
+
+
+        this.type = geo.type, 
+
+        this.vertices = geo.vertices.data, 
+
+        this.indices = geo.indices.data, 
+
+        this.texCoords = geo.texCoords.data;
 
         // Original flattened arrays.
 
-        this.vertices = vertices;
+        //this.vertices = vertices;
 
-        this.indices = indices;
+        //this.indices = indices;
 
-        this.texCoords = texCoords;
+        //this.texCoords = texCoords;
 
         // information about the flattened data
 
-        this.type = type; // Prim.geometry.type
+        //this.type = type; // Prim.geometry.type
 
         // Mesh arrays
 
@@ -353,9 +375,13 @@ class Mesh {
 
         this.depth = 0;
 
-        this.farPoint2 = 0;
-        this.farPoint3 = 0;
-        this.farPoint4 = 0;
+        // Scaling factors for smoothing.
+
+        this.fw  = 3 / 8; // Edge Vertices a midpoint is created in.
+
+        this.ow  = 1 / 8; // Opposite Vertices from the Edge the midpoint is in.
+
+        this.f0w = 4 / 8; // Use when there is only one 'opposite' Vertex (e.g. Mesh 'seam') - change this to 4.5 to see the seams
 
         this.badIndex32 = 4294967294;
 
@@ -367,7 +393,7 @@ class Mesh {
 
         // Convert flattened arrays to Vertex data structure.
 
-        this.geometryToVertex( vertices, indices, texCoords );
+        this.geometryToVertex( this.vertices, this.indices, this.texCoords );
 
         // Check converted Vertices for validity.
 
@@ -583,6 +609,8 @@ class Mesh {
 
             // Let Vertices know they are part of this Edge (most get 6).
 
+            //////////////console.log("PUSHING IDX TO vertexArr:" + vertexArr[mini].idx + ',' + vertexArr[maxi].idx)
+
             vertexArr[ mini ].e.push( idx );
 
             vertexArr[ maxi ].e.push( idx );
@@ -655,7 +683,29 @@ class Mesh {
      */
     computeEven ( vtx, vertexArr ) {
 
+        let edgeArr = this.edgeArr;
+
         const valency =  vtx.e.length;
+
+        /* 
+         * IMPORTANT!!!!!
+         * For 'seamless' Meshes, every Vertex has at least 6 other Vertices connected 
+         * to it. However for meshes are wrapped plane objects (e.g. a Sphere which is 
+         * a quad with its points projected into a Sphere, or corners 
+         * (e.g. a Cube) ends of a mesh form a 'seam' with 4 or fewer surround 
+         * Vertices. These seams should remain stationary when subdividing.
+         * 
+         * Running computeEven on a Vertex on a seam or corner results in a jagged edge.
+         * 
+         * Note: in the 'odd' computation, the 'seam' Vertices are recognized by having 
+         * online one 'opposite' vertex from the Edge they are inside. 
+         */
+
+        if ( valency < 5 ) {
+
+            return false;
+
+        }
 
         // Beta weighting for surround Vertices.
 
@@ -685,9 +735,11 @@ class Mesh {
 
             // Get the surround Vertices for ith Vertex
 
-            const oppositeIndex = edgeArr[ vtx.e[ j ] ].getOpposite( i );
+            ///////////window.edge = edgeArr[ vtx.e[ j ] ];
 
-            ///////const oppositeIndex = edgeArr[ vtx.e[ j ] ].v[ 0 ];
+            const oppositeIndex = edgeArr[ vtx.e[ j ] ].getOpposite( vtx );
+
+            let dist = vtx.distance( vertexArr[ oppositeIndex ] );
 
             c = vertexArr[ oppositeIndex ].coords;
 
@@ -710,12 +762,20 @@ class Mesh {
 
         vtx.set( x, y, z, u, v );
 
+        return true;
+
     }
 
     /** 
      * Adjust Odd Vertices, 4 control points.
      */
     computeOdd ( vtx, vertexArr, key, revKey ) {
+
+        const fw = this.fw;   //3 / 8;
+
+        const ow = this.ow;   //1 / 8;
+
+        const f0w = this.f0w; //4 / 8; // 4/8 change this to 4.5 to see seams
 
         let edgeArr = this.edgeArr;
 
@@ -733,9 +793,19 @@ class Mesh {
 
         if ( edge ) {
 
-            const fw = 3 / 8;
-
-            const ow = 1 / 8;
+            /* 
+             * IMPORTANT
+             * If a Vertex has only one 'opposite' Vertex (meaning 
+             * that fv0 === fv1) we are at a 'seam' or a 'corner'. 
+             * Vertices with no second control Vertex. They should 
+             * not be computed.
+             * 
+             * You can see the 'seams by changing f02 to 4.5 / 8 and 
+             * you will get a jagged vertical seam'.
+             *
+             * In computeEven(), seams are Vertices with < 6 surround 
+             * vertices (Vertex.e.length < 6). These aren't changed either.
+             */
 
             const ev0 = vertexArr[ edge.v[ 0 ] ];
             const ev1 = vertexArr[ edge.v[ 1 ] ];
@@ -745,9 +815,9 @@ class Mesh {
 
             // adjust only if the facing Vertices are different.
 
-            if ( fv0 !== fv1 ) {
+            let x, y, z, u, v;
 
-                let x, y, z, u, v;
+            if ( fv0 !== fv1 ) {
 
                 // Vertices forming the Edge the midpoint is in 
 
@@ -756,16 +826,6 @@ class Mesh {
                 z = fw * ( ev0.coords.z + ev1.coords.z ),
                 u = fw * ( ev0.texCoords.u + ev1.texCoords.u ),
                 v = fw * ( ev0.texCoords.v + ev1.texCoords.v );
-
-                // Opposite vertices to that Edge
-
-                // Don't use an 'opposite' Vertex if it lies too far away.
-
-                let od = fv0.distance( fv1 ); // distance
-
-                if ( od > this.avDistance * 2 ) this.farPoint2++; //////////////////////DEBUG
-                if ( od > this.avDistance * 3 ) this.farPoint3++; //////////////////////DEBUG
-                if ( od > this.width / 2 ) this.farPoint4++;      //////////////////////DEBUG
 
                 x += ow * ( fv0.coords.x + fv1.coords.x );
                 y += ow * ( fv0.coords.y + fv1.coords.y );
@@ -778,6 +838,18 @@ class Mesh {
                 return true;
 
             } else {
+
+                // we need to pull up by a neighboring vertex at the edge.
+
+                x = f0w * ( ev0.coords.x + ev1.coords.x ),
+                y = f0w * ( ev0.coords.y + ev1.coords.y ),
+                z = f0w * ( ev0.coords.z + ev1.coords.z ),
+                u = f0w * ( ev0.texCoords.u + ev1.texCoords.u ),
+                v = f0w * ( ev0.texCoords.v + ev1.texCoords.v );
+
+                  vtx.set( x, y, z, u, v );
+
+                return true;              
 
             }
 
@@ -849,15 +921,38 @@ class Mesh {
 
             let i2 = indexArr[ i + 2 ];
 
-            if ( indexHash[ i0 ] ) v0 = newVertexArr[ indexHash[ i0 ] ]; 
-            else v0 = vertexArr[ i0 ].clone();
 
-            if ( indexHash[ i1 ] ) v1 = newVertexArr[ indexHash[ i1 ] ]; 
-            else v1 = vertexArr[ i1 ].clone();
+            if ( indexHash[ i0 ] ) {
 
-            if ( indexHash[ i2 ] ) v2 = newVertexArr[ indexHash[ i2 ] ]; 
-            else v2 = vertexArr[ i2 ].clone();
+                v0 = newVertexArr[ indexHash[ i0 ] ];
 
+            } else {
+
+                v0 = vertexArr[ i0 ].clone();
+
+            }
+
+            if ( indexHash[ i1 ] ) {
+
+                v1 = newVertexArr[ indexHash[ i1 ] ];
+
+            } else {
+
+                v1 = vertexArr[ i1 ].clone();
+
+            }
+
+            if ( indexHash[ i2 ] ) {
+
+                v2 = newVertexArr[ indexHash[ i2 ] ];
+
+            } else {
+
+                v2 = vertexArr[ i2 ].clone();
+
+            }
+
+            // Compute new indices in the subdivided Vertex array
 
             let ii0 = newVertexArr.indexOf( v0 );
 
@@ -907,7 +1002,7 @@ class Mesh {
 
             }
 
-            let m0, m1, m2, mi0, mi1, mi2;
+            let m0, m1, m2, mi0, mi1, mi2, odd0, odd1, odd2;
 
             /*
             newIndexArr.push(
@@ -970,6 +1065,16 @@ class Mesh {
 
 */
 
+            if ( smooth ) {
+
+                this.computeEven( v0, vertexArr );
+
+                this.computeEven( v1, vertexArr );
+
+                this.computeEven( v2, vertexArr );
+
+            }
+
             // if we add three midpoints
 
             // First midpoint.
@@ -992,9 +1097,9 @@ class Mesh {
 
                 if ( smooth ) { 
 
-                    this.computeOdd( m0, vertexArr, i0 + '-' + i1, i1 + '-' + i0 ); // OLD INDEXES
+                    odd0 = this.computeOdd( m0, vertexArr, i0 + '-' + i1, i1 + '-' + i0 ); // OLD INDEXES
 
-                    /////////////////this.computeEven( v0 ); // adjust v0 only if we are smoothing
+                    ///////this.computeEven( v0, vertexArr ); // adjust v0 only if we are smoothing
 
                 }
 
@@ -1029,9 +1134,9 @@ class Mesh {
 
                 if ( smooth ) {
 
-                    this.computeOdd( m1, vertexArr, i1 + '-' + i2, i2 + '-' + i1 ); // OLD INDEXES
+                    odd1 = this.computeOdd( m1, vertexArr, i1 + '-' + i2, i2 + '-' + i1 ); // OLD INDEXES
 
-                    /////////////this.computeEven( v1 ); ///////////////////////
+                    /////////////this.computeEven( v1, vertexArr ); ///////////////////////
 
                 }
 
@@ -1065,9 +1170,9 @@ class Mesh {
 
                 if ( smooth ) {
 
-                    this.computeOdd( m2, vertexArr, i2 + '-' + i0, i0 + '-' + i2 ); // OLD INDICES
+                    odd2 = this.computeOdd( m2, vertexArr, i2 + '-' + i0, i0 + '-' + i2 ); // OLD INDICES
 
-                    ///////////this.computeEven( v2 );
+                    ///////////this.computeEven( v2, vertexArr );
 
                 }
 
@@ -1081,15 +1186,7 @@ class Mesh {
 
             }
 
-            if ( smooth ) {
 
-                this.computeEven( v0 );
-
-                this.computeEven( v1 );
-
-                this.computeEven( v2 );
-
-            }
 
             // Push new indices
 
@@ -1106,11 +1203,6 @@ class Mesh {
             );
 
         } // end of index loop
-
-        console.log("$$$$PARTIAL %:" + this.totNeedIgnore + '/' + this.oldVertexArr.length) //////////////////////////
-        console.log("$$$$FARPOINT2:" + this.farPoint2 / newVertexArr.length)
-        console.log("$$$$FARPOINT3:" + this.farPoint3 / newVertexArr.length)
-        console.log("$$$$FARPOINT4:" + this.farPoint4 / newVertexArr.length)
 
         this.vertexArr = newVertexArr;
 
