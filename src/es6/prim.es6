@@ -99,7 +99,15 @@ class Prim {
      * 
      * https://gamedevdaily.io/four-ways-to-create-a-mesh-for-a-sphere-d7956b825db4#.lkbq2omq5
      *
-     * 
+     * @constructor
+     * @param {Boolean} init if true, initialize immediately.
+     * @param {Util} util shared utility methods, patches, polyfills.
+     * @param {GLMatrix} glMatrix fast array manipulation object.
+     * @param {WebGL} webgl object holding the WebGLRenderingContext.
+     * @param {LoadModel} model loading class
+     * @param {LoadTexture} texture loading class
+     * @param {LoadAudio} audio loading class
+     * @param {LoadVideo} video loading class
      */
     constructor ( init, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo ) {
 
@@ -119,7 +127,7 @@ class Prim {
 
         this.loadVideo = loadVideo;
 
-        this.objs = [];
+        this.objs = []; // Keep a reference to all created Prims here.
 
         this.typeList = {
 
@@ -229,12 +237,10 @@ class Prim {
 
         };
 
-        this.FLOAT32 = 'float32',
-        this.UINT32 = 'uint32';
-
         // Visible from inside or outside.
 
         this.OUTSIDE = 100,
+
         this.INSIDE = 101;
 
         // Shorthand.
@@ -324,299 +330,6 @@ class Prim {
         }
 
         return indices;
-
-    }
-
-    /** 
-     * Return an empty buffer object.
-     */
-    createGeoObj () {
-
-        return {
-
-            makeBuffers: true,
-
-            vertices: {
-
-                data: [],
-
-                buffer: null,
-
-                itemSize: 3,
-
-                numItems: 0
-
-            },
-
-            indices: { // where to start drawing GL_TRIANGLES.
-
-                data: [],
-
-                buffer: null,
-
-                itemSize: 1,
-
-                numItems: 0
-
-            },
-
-            sides: { // a collection of triangles creating a side on the shape.
-
-                data: [],
-
-                buffer: null,
-
-                itemSize: 3,
-
-                numItems: 0
-
-            },
-
-            normals: {
-
-                data: [],
-
-                buffer: null,
-
-                itemSize: 3,
-
-                numItems: 0
-
-            },
-
-            tangents: {
-
-                data: [],
-
-                buffer: null,
-
-                itemSize: 4,
-
-                numItems: 0
-
-            },
-
-            texCoords: {
-
-                data: [],
-
-                buffer: null,
-
-                itemSize: 2,
-
-                numItems: 0
-
-            },
-
-            colors: {
-
-                data: [],
-
-                buffer: null,
-
-                itemSize: 4,
-
-                numItems: 0
-
-            }
-
-        }
-
-    }
-
-    /** 
-     * Add data to create buffers, works if existing data is present. However, 
-     * indices must be consistent!
-     */
-    addBufferData( bufferObj, vertices, indices, normals, texCoords, tangents = [], colors = [] ) {
-
-        const concat = this.util.concatArr;
-
-        bufferObj.vertices.data = concat( bufferObj.vertices.data, vertices ),
-
-        bufferObj.indices.data = concat( bufferObj.indices.data, indices ),
-
-        bufferObj.normals.data = concat( bufferObj.normals.data, normals ),
-
-        bufferObj.texCoords.data = concat( bufferObj.texCoords.data, texCoords ),
-
-        bufferObj.tangents.data = concat( bufferObj.tangents.data, tangents ),
-
-        bufferObj.colors.data = concat( bufferObj.colors.data, colors );
-
-        return bufferObj;
-
-    }
-
-    /** 
-     * Bind a WebGL buffer
-     * @param {Object} o the bufferObj for for particular array (e.g. vertex, tangent).
-     * @param {String} type the typed-array type.
-     */
-    bindGLBuffer( o, type ) {
-
-        const gl = this.webgl.getContext();
-
-        o.buffer = gl.createBuffer();
-
-        gl.bindBuffer( gl.ARRAY_BUFFER, o.buffer );
-
-        switch( type ) {
-
-            case this.FLOAT32:
-
-                if (  o.data instanceof Float32Array ) {
-
-                        gl.bufferData( gl.ARRAY_BUFFER, o.data, gl.STATIC_DRAW );
-
-                    } else {
-
-                        gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( o.data ), gl.STATIC_DRAW );
-
-                    }
-
-                break;
-
-            case this.UINT16:
-
-                o.buffer = gl.createBuffer();
-
-                gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, o.buffer );
-
-                gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( o.data ), gl.STATIC_DRAW );
-
-                o.numItems = o.data.length / o.itemSize;
-
-                break;
-
-            default:
-
-                console.error( 'GL buffer type ' + type );
-
-                break;
-
-        }
-
-    }
-
-    /** 
-     * Create WebGL buffers using geometry data. Note that the 
-     * size is for flattened arrays.
-     * @param {Object} bufferObj custom object holding the following:
-     * an array of vertices, in glMatrix.vec3 objects.
-     * an array of indices for the vertices.
-     * an array of texture coordinates, in glMatrix.vec2 format.
-     * an array of normals, in glMatrix.vec3 format.
-     * an array of tangents, in glMatrix.vec3 format.
-     * an array of colors, in glMatrix.vec4 format.
-     */
-    createGLBuffers( bufferObj ) {
-
-            const gl = this.webgl.getContext();
-
-            // Vertex Buffer Object.
-
-            let o = bufferObj.vertices;
-
-            if ( ! o.data.length ) {
-
-                console.log( 'no vertices present, creating default' );
-
-                o.data = new Float32Array( [ 0, 0, 0 ] );
-
-            }
-
-            this.bindGLBuffer( o, this.FLOAT32 );
-
-            // Create the Index buffer.
-
-            o = bufferObj.indices;
-
-            if ( ! o.data.length ) {
-
-                console.log( 'no indices present, creating default' );
-
-                o.data = new Uint16Array( [ 1 ] );
-
-            }
-
-            this.bindGLBuffer( o, this.UINT16 );
-
-            // Create the Sides buffer, a kind of indices buffer.
-
-            o = bufferObj.sides;
-
-            if ( ! o.data.length ) {
-
-                console.warn( 'no sides present, creating default' );
-
-                o.data = new Uint16Array( [ 1 ] );
-
-            }
-
-            this.bindGLBuffer( o, this.UINT16 );
-
-            // create the Normals buffer.
-
-            o = bufferObj.normals;
-
-            if ( ! o.data.length ) {
-
-                console.log( 'no normals, present, creating default' );
-
-                o.data = new Float32Array( [ 0, 1, 0 ] );
-
-            }
-
-            this.bindGLBuffer( o, this.FLOAT32 );
-
-            // Create the primary Texture buffer.
-
-            o = bufferObj.texCoords;
-
-            if ( ! o.data.length ) {
-
-                console.warn( 'no texture present, creating default' );
-
-                o.data = new Float32Array( [ 0, 0 ] );
-
-            }
-
-            this.bindGLBuffer( o, this.FLOAT32 );
-
-            // create the Tangents Buffer.
-
-            o = bufferObj.tangents;
-
-            if ( ! o.data.length ) {
-
-                console.warn( 'no tangents present, creating default' );
-
-                o.data = new Float32Array( [ 0, 0, 0, 0 ] );
-
-            }
-
-            this.bindGLBuffer( o, this.FLOAT32 );
-
-            // Create the Colors buffer.
-
-            o = bufferObj.colors;
-
-            if ( ! o.data.length ) {
-
-                console.warn( 'no colors present, creating default color' );
-
-                o.data = new Float32Array( this.computeColors( bufferObj.normals.data, o.data ) );
-
-            }
-
-            this.bindGLBuffer( o, this.FLOAT32 );
-
-            // Set the flag.
-
-            bufferObj.makeBuffers = false;
-
-        return bufferObj;
 
     }
 
@@ -1471,7 +1184,9 @@ class Prim {
 
         // Colors already present, or computed in this.createGLBuffers.
 
-        return this.addBufferData( bufferObj, vertices, indices, texCoords, normals, tangents, colors );
+        return geo.addBufferData( vertices, indices, normals, texCoords, tangents );
+
+        //return this.addBufferData( bufferObj, vertices, indices, texCoords, normals, tangents, colors );
 
     }
 
@@ -1517,7 +1232,9 @@ class Prim {
 
         // Return data to build WebGL buffers.
 
-        return this.addBufferData( prim.geometry, vertices, indices, normals, texCoords, tangents );
+        return geo.addBufferData( vertices, indices, normals, texCoords, tangents );
+
+        //return this.addBufferData( prim.geometry, vertices, indices, normals, texCoords, tangents );
 
     }
 
@@ -1770,7 +1487,9 @@ class Prim {
 
         // Return the buffer.
 
-        return this.addBufferData( prim.geometry, vertices, indices, normals, texCoords, tangents );
+        return geo.addBufferData( vertices, indices, normals, texCoords, tangents );
+
+        //return this.addBufferData( prim.geometry, vertices, indices, normals, texCoords, tangents );
 
     }
 
@@ -2090,7 +1809,9 @@ class Prim {
 
         // Return the buffer.
 
-        return this.addBufferData( prim.geometry, vertices, indices, normals, texCoords, tangents );
+        return geo.addBufferData( vertices, indices, normals, texCoords, tangents );
+
+        //return this.addBufferData( prim.geometry, vertices, indices, normals, texCoords, tangents );
 
     }
 
@@ -2445,7 +2166,9 @@ class Prim {
 
         // Return the buffer.
 
-        return this.addBufferData( prim.geometry, vertices, indices, normals, texCoords, tangents );
+        return geo.addBufferData( vertices, indices, normals, texCoords, tangents );
+
+        //return this.addBufferData( prim.geometry, vertices, indices, normals, texCoords, tangents );
 
     }
 
@@ -2972,7 +2695,9 @@ class Prim {
 
         // Return the buffer.
 
-        return this.addBufferData( prim.geometry, vertices, indices, normals, texCoords, tangents );
+        return geo.addBufferData( vertices, indices, normals, texCoords, tangents );
+
+        //return this.addBufferData( prim.geometry, vertices, indices, normals, texCoords, tangents );
 
         //return this.createGLBuffers( prim.geometry );
 
@@ -3033,6 +2758,8 @@ class Prim {
      */
     geometryIcoDome( prim ) {
 
+        // TODO: half icosphere
+
     }
 
     /** 
@@ -3044,6 +2771,8 @@ class Prim {
      * Creating WebGL buffers is turned on or off conditionally in the method.
      */
     geometryTopIcoDome ( prim ) {
+
+        // TODO: half icosphere
 
     }
 
@@ -3059,6 +2788,8 @@ class Prim {
 
         prim.visibleFrom = this.INSIDE;
 
+        // TODO: half icosphere
+
     }
 
     /** 
@@ -3070,6 +2801,8 @@ class Prim {
      * Creating WebGL buffers is turned on or off conditionally in the method.
      */
     geometryBottomIcoDome ( prim ) {
+
+        // TODO: half icosphere
 
     }
 
@@ -3290,7 +3023,9 @@ class Prim {
 
         // Return the buffer.
 
-        return this.addBufferData( prim.geometry, vertices, indices, normals, texCoords, tangents );
+        return geo.addBufferData( vertices, indices, normals, texCoords, tangents );
+
+        // return this.addBufferData( prim.geometry, vertices, indices, normals, texCoords, tangents );
 
     }
 
@@ -3399,7 +3134,9 @@ class Prim {
 
         // Return the buffer.
 
-        return this.addBufferData( prim.geometry, vertices, indices, normals, texCoords, tangents );
+        return geo.addBufferData( vertices, indices, normals, texCoords, tangents );
+
+        //return this.addBufferData( prim.geometry, vertices, indices, normals, texCoords, tangents );
 
     }
 
@@ -3446,7 +3183,9 @@ class Prim {
 
         // Return the buffer.
 
-        return this.createGLBuffers( prim.geometry );
+        //return this.createGLBuffers( prim.geometry );
+
+        return geo.addBufferData( vertices, indices, normals, texCoords, tangents );
 
     }
 
@@ -3537,7 +3276,8 @@ class Prim {
 
         // Geometry factory function.
 
-        prim.geometry = this.createGeoObj();
+        //prim.geometry = this.createGeoObj();
+        prim.geometry = new GeoObj( this.util, this.webgl );
 
         prim.geometry.type = type; // NOTE: has to come after createGeoObj
 
@@ -3564,7 +3304,12 @@ class Prim {
 
         // Create WebGL data buffers from geometry.
 
-        prim.geometry = this.createGLBuffers( prim.geometry );
+        //prim.geometry = this.createGLBuffers( prim.geometry );
+        prim.geometry = prim.geometry.createGLBuffers();
+
+        // TODO:
+        // NOTE: individual methods are running createGLBuffers right now!
+        ///////////////prim.geometry = new GeoObj().createGLBuffers( prim.geometry );
 
         // Compute the bounding box.
 

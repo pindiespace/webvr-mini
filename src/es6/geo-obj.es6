@@ -1,7 +1,22 @@
 class GeoObj {
 
-    constructor () {
+    /** 
+     * @class
+     * Create WebGL buffers from flattened vertex, index, texture 
+     * and other coordinate data.
+     * @constructor
+     * @param {Util} util shared utility methods, patches, polyfills.
+     * @param {WebGL} webgl object holding the WebGLRenderingContext.
+     */
+    constructor ( util, webgl ) {
 
+        this.webgl = webgl;
+
+        this.util = util;
+
+        this.FLOAT32 = 'float32',
+
+        this.UINT32 = 'uint32';
 
         this.makeBuffers = true,
 

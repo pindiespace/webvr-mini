@@ -2,7 +2,6 @@
  * A mesh object containing un-flattened references to vertices, indices, and 
  * texture coordinates, suitable for subdivision and other complex manipulations.
  */
-import Util   from './util';
 
 /** 
  * Create a class for manipulating 3d data, We don't use glMatrix since the 
@@ -11,6 +10,7 @@ import Util   from './util';
  class Coords {
 
     /**
+     * @class
      * @constructor
      * @param {Number} x the initializing x or 0 coordinate
      * @param {Number} y the initializing y or 1 coordinate
@@ -308,6 +308,7 @@ class Mesh {
 
     /** 
      * Class for subdivision and other complex coordinate manipulation
+     * @param {String} type the type of Prim being processed as a Mesh.
      * @param {Float32Array} vertices a flat array of xyz position coordinates
      * @param {Uint32Array} indices indices for drawing the array
      * @param {Float32Array} texCoords texture coordinates for each position
@@ -419,6 +420,44 @@ class Mesh {
             //this.valenceArr[i] = 3.0 / (8.0 * i);
 
         }
+
+    }
+
+
+    /**
+     * Add a midpoint between several Vertices.
+     */
+    computeCentroid () {
+
+        let len = arguments.length, x = 0, y = 0, z = 0, u = 0, v = 0;
+
+        for( var i in arguments ) {
+
+            let vtx = arguments[ i ];
+
+            x += vtx.coords.x,
+
+            y += vtx.coords.y,
+
+            z += vtx.coords.z;
+
+            u += vtx.texCoords.u;
+
+            v += vtx.texCoords.v;
+
+        }
+
+        x /= len,
+
+        y /= len,
+
+        z /= len;
+
+        u /= len;
+
+        v /= len;
+
+        return new Vertex ( x, y, z, u, v, 0, null );
 
     }
 
@@ -609,45 +648,6 @@ class Mesh {
 
     }
 
-
-    /**
-     * Add a midpoint between several Vertices.
-     */
-    computeCentroid () {
-
-        let len = arguments.length, x = 0, y = 0, z = 0, u = 0, v = 0;
-
-        for( var i in arguments ) {
-
-            let vtx = arguments[ i ];
-
-            x += vtx.coords.x,
-
-            y += vtx.coords.y,
-
-            z += vtx.coords.z;
-
-            u += vtx.texCoords.u;
-
-            v += vtx.texCoords.v;
-
-        }
-
-        x /= len,
-
-        y /= len,
-
-        z /= len;
-
-        u /= len;
-
-        v /= len;
-
-        return new Vertex ( x, y, z, u, v, 0, null );
-
-    }
-
-
     /** 
      * Adjust Even Vertices, up to 6 control points.
      * @param {Vertex} vtx the Vertex to compute.
@@ -763,9 +763,9 @@ class Mesh {
 
                 let od = fv0.distance( fv1 ); // distance
 
-                if ( od > this.avDistance * 2 ) this.farPoint2++; ////////DEBUG
-                if ( od > this.avDistance * 3 ) this.farPoint3++; ////////DEBUG
-                if ( od > this.width / 2 ) this.farPoint4++; ///////DEBUG
+                if ( od > this.avDistance * 2 ) this.farPoint2++; //////////////////////DEBUG
+                if ( od > this.avDistance * 3 ) this.farPoint3++; //////////////////////DEBUG
+                if ( od > this.width / 2 ) this.farPoint4++;      //////////////////////DEBUG
 
                 x += ow * ( fv0.coords.x + fv1.coords.x );
                 y += ow * ( fv0.coords.y + fv1.coords.y );
