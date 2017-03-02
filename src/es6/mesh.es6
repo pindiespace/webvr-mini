@@ -32,11 +32,11 @@
      */
     isValid () {
 
-        return ( Number.isFinite( parseFloat( this.x ) ) && 
+        return ( Number.isFinite( this.x ) && 
 
-            Number.isFinite( parseFloat( this.y ) ) && 
+            Number.isFinite(  this.y ) && 
 
-            Number.isFinite( parseFloat( this.z ) ) );
+            Number.isFinite( this.z ) );
 
     }
 
@@ -94,20 +94,13 @@
 
     }
 
-    /** 
-     * return a flattened coordinate array.
-     */
-    flatten () {
-
-        return [ this.x, this.y, this.z ];
-
-    }
-
 } // End of class.
 
 class Vertex {
 
     /** 
+     * @class
+     * @constructor
      * Create a class containing position, texture coordinate, and mesh
      * connectivity information.
      */
@@ -117,13 +110,11 @@ class Vertex {
 
         this.texCoords = { u: u, v: v };
 
-        this.idx = idx;
+        this.idx = idx; // locally store our index in the vertexArr
 
         this.e = []; // Edge array
 
         this.vertexArr = vertexArr;
-
-        this.even = true; // by default, not a midpoint
 
     }
 
@@ -132,11 +123,13 @@ class Vertex {
      */
     isValid () {
 
+        let texCoords = this.texCoords;
+
         if ( this.coords.isValid() && 
 
-            Number.isFinite( parseFloat( this.u ) ) && this.u >= 0 && 
+            Number.isFinite( parseFloat( texCoords.u ) ) && texCoords.u >= 0 && 
 
-            Number.isFinite( parseFloat( this.v ) ) && this.v >= 0 ) {
+            Number.isFinite( parseFloat( texCoords.v ) ) && texCoords.v >= 0 ) {
 
             return true;
 
@@ -209,6 +202,8 @@ class Vertex {
 
             this.idx, this.vertexArr );
 
+        // Copy the surround Edges.
+
         for ( let i = 0; i < this.e.length; i++ ) {
 
             vtx.e.push( this.e[ i ] );
@@ -219,23 +214,15 @@ class Vertex {
 
     }
 
-    /** 
-     * return a flattened array.
-     */
-    flatten () {
-
-        return this.coords.flatten().concat( [ this.texCoords.u, this.texCoords.v ] );
-
-    }
-
 } // End of class.
 
 class Edge {
 
     /** 
+     * @class
      * @constructor
      * create an Edge, make from two consecutive Vertices in the index for 
-     * drawing the Mesh.
+     * drawing the Mesh. The Vertex objects used are defined by the index array.
      * @param {Number} i0 index of the first Vertex in the Vertex array.
      * @param {Number} i1 index of the second Vertex in the Vertex array.
      * @param {Number} i2 index of the third Vertex (forming a triangle) in the Vertex Array.
@@ -249,21 +236,31 @@ class Edge {
 
         this.f = new Uint32Array( 2 );  // index the opposite Faces
 
-        this.s = []; // index Edges that overlap position.
-
         this.v[ 0 ] = i0;
 
         this.v[ 1 ] = i1;
 
         this.f[ 0 ] = fi;         // The Face this Edge is initially part up during creation
 
-        this.f[ 1 ] = 4294967295; // The other Face, initially invalid value
+        this.f[ 1 ] = 4294967295; // The other Face, initially invalid index value
 
         // Index of the opposite Vertex (forming triangle) connected to this Edge (only know first one at this point).
 
         this.ov[ 0 ] = i2;
 
         this.ov[ 1 ] = i2; // This should change during computation
+
+    }
+
+    isValid () {
+
+        if ( this.v[ 0 ].isValid() && this.v[ 1 ].isValid ) {
+
+            return true;
+
+        }
+
+        return false;
 
     }
 
@@ -295,7 +292,9 @@ class Edge {
 class Face {
 
     /** 
-     * Face, storing three consecutive Vertex objects
+     * @class
+     * @constructor
+     * Face, storing three consecutive Vertex objects, a.k.a. drawing triangle.
      * @param {Number} e0 the first Edge index
      * @param {Number} e1 the second Edge index
      * @param {Number} e2 the third Edge index
@@ -318,18 +317,18 @@ class Face {
 class Mesh {
 
     /** 
-     * Class for subdivision and other complex coordinate manipulation
-     * @param {String} type the type of Prim being processed as a Mesh.
-     * @param {Float32Array} vertices a flat array of xyz position coordinates
-     * @param {Uint32Array} indices indices for drawing the array
-     * @param {Float32Array} texCoords texture coordinates for each position
+     * @class
+     * @constructor
+     * Our class for subdivision and other complex coordinate manipulation.
+     * @param {GeoObj} An object with flattened vertices, indices, and texture 
+     * coordinates, as well as the Prim type.
      */
-    //constructor ( type, vertices, indices, texCoords ) {
 
     constructor ( geo ) {
 
-
         this.type = geo.type, 
+
+        // Flattened arrays.
 
         this.vertices = geo.vertices.data, 
 
@@ -337,19 +336,7 @@ class Mesh {
 
         this.texCoords = geo.texCoords.data;
 
-        // Original flattened arrays.
-
-        //this.vertices = vertices;
-
-        //this.indices = indices;
-
-        //this.texCoords = texCoords;
-
-        // information about the flattened data
-
-        //this.type = type; // Prim.geometry.type
-
-        // Mesh arrays
+        // Mesh arrays.
 
         this.vertexArr = [];    // holds Vertex objects
 
@@ -358,8 +345,6 @@ class Mesh {
         this.edgeArr = [];      // holds Edge objects
 
         this.edgeMap = [];      // lookup table for Edges (even Vertices)
-
-        this.seamMap = [];      // find overlapping Vertices
 
         this.faceArr = [];      // holds the triangle list (derived from indexArr)
 
@@ -383,15 +368,13 @@ class Mesh {
 
         this.f0w = 4 / 8; // Use when there is only one 'opposite' Vertex (e.g. Mesh 'seam') - change this to 4.5 to see the seams
 
-        this.badIndex32 = 4294967294;
+        this.badIndex32 = 4294967294; // invalid index in Vertex array.
 
-        this.epsilon = 0.000001; // DEBUG!!!!!!!!!!!! change value as appropriate
-
-        // Pre-compute valency values.
+        // Pre-compute valency weighting values.
 
         this.computeValencyWeights( 12 );
 
-        // Convert flattened arrays to Vertex data structure.
+        // Convert flattened arrays to Vertex data structure (Index array remains the same).
 
         this.geometryToVertex( this.vertices, this.indices, this.texCoords );
 
@@ -449,9 +432,8 @@ class Mesh {
 
     }
 
-
     /**
-     * Add a midpoint between several Vertices.
+     * Find and return the midpoint between several Vertices.
      */
     computeCentroid () {
 
@@ -489,6 +471,8 @@ class Mesh {
 
     /** 
      * Create the Vertices, assigning texture coordinates.
+     * @param {Array[Float32]} vertices a flattened array of xyz positions
+     * @param {Array[Float32]} texCoords a flattened array of uv positions
      */
     computeVertices ( vertices, texCoords ) {
 
@@ -550,11 +534,6 @@ class Mesh {
 
     }
 
-    computeSeams () {
-
-
-    }
-
     /** 
      * Set values for an Edge
      * @param {Number} i0 index of first Vertex in Edge.
@@ -574,12 +553,6 @@ class Mesh {
         const mini = Math.min( i0, i1 );
 
         const maxi = Math.max( i0, i1 );
-
-        ///// DEBUG!!!!!!!!!!!!!!!!
-        // THIS RESULTS IN ONLY THE CORNERS DRAWING
-        //const mini = i0;
-
-        //const maxi = i1;
 
         // Check hash lookup for Edge already existing.
 
@@ -605,11 +578,7 @@ class Mesh {
 
             edgeArr.push( edge );
 
-            //console.log('setting Edge key:' + key)
-
-            // Let Vertices know they are part of this Edge (most get 6).
-
-            //////////////console.log("PUSHING IDX TO vertexArr:" + vertexArr[mini].idx + ',' + vertexArr[maxi].idx)
+            // Let Vertices know they are part of this Edge (non-seam Vertices get 6+).
 
             vertexArr[ mini ].e.push( idx );
 
@@ -689,19 +658,24 @@ class Mesh {
 
         /* 
          * IMPORTANT!!!!!
+         * 
          * For 'seamless' Meshes, every Vertex has at least 6 other Vertices connected 
-         * to it. However for meshes are wrapped plane objects (e.g. a Sphere which is 
-         * a quad with its points projected into a Sphere, or corners 
-         * (e.g. a Cube) ends of a mesh form a 'seam' with 4 or fewer surround 
-         * Vertices. These seams should remain stationary when subdividing.
+         * to it. However for meshes are wrapped plane-type objects (e.g. a Sphere which is 
+         * a flat sheet with its points projected into a Sphere), or corners 
+         * (e.g. a Cube's ends) the Vertices of the Mesh form a 'seam' with 4 or fewer surround 
+         * Vertices in the Vertex.e[] array. These seams should remain stationary when subdividing.
          * 
          * Running computeEven on a Vertex on a seam or corner results in a jagged edge.
+         * So, exit this function if valency is low enough to be a seam.
          * 
-         * Note: in the 'odd' computation, the 'seam' Vertices are recognized by having 
-         * online one 'opposite' vertex from the Edge they are inside. 
+         * Note: for this to work, the 'odd' vertices must also be correctly ignored. 
+         * In the 'odd' computation, the 'seam' Vertices are recognized by missing 
+         * the second Edge.ov[1] 'opposite' Vertex from the Edge they are inside. 
          */
 
         if ( valency < 5 ) {
+
+            // if no return, the Vertices will be pulled away from the Mesh 'seam'.
 
             return false;
 
@@ -733,9 +707,7 @@ class Mesh {
 
         for ( let j = 0; j < valency; j++ ) {
 
-            // Get the surround Vertices for ith Vertex
-
-            ///////////window.edge = edgeArr[ vtx.e[ j ] ];
+            // Get the surround Vertices for vtx.
 
             const oppositeIndex = edgeArr[ vtx.e[ j ] ].getOpposite( vtx );
 
@@ -758,7 +730,6 @@ class Mesh {
         }
 
         // Save the recomputed Vertex
-        // TODO: remove weighting after done!!!
 
         vtx.set( x, y, z, u, v );
 
@@ -771,18 +742,20 @@ class Mesh {
      */
     computeOdd ( vtx, vertexArr, key, revKey ) {
 
-        const fw = this.fw;   //3 / 8;
+        const fw = this.fw;   // 3 / 8;
 
-        const ow = this.ow;   //1 / 8;
+        const ow = this.ow;   // 1 / 8;
 
-        const f0w = this.f0w; //4 / 8; // 4/8 change this to 4.5 to see seams
+        const f0w = this.f0w; // 4 / 8; // 4/8 change this to 4.5 to see seams
 
         let edgeArr = this.edgeArr;
 
         let edge = edgeArr[ this.edgeMap[ key ] ];
 
         if ( ! edge ) { 
-            //console.log('no forward edge for ' + key + ', trying reverse'); 
+
+             // vtx1-vtx2 key not found, find vtx2-vtx1 key.
+
             edge = edgeArr[ this.edgeMap[ revKey ] ];
 
         } else {
@@ -794,7 +767,8 @@ class Mesh {
         if ( edge ) {
 
             /* 
-             * IMPORTANT
+             * IMPORTANT!
+             * 
              * If a Vertex has only one 'opposite' Vertex (meaning 
              * that fv0 === fv1) we are at a 'seam' or a 'corner'. 
              * Vertices with no second control Vertex. They should 
@@ -803,8 +777,9 @@ class Mesh {
              * You can see the 'seams by changing f02 to 4.5 / 8 and 
              * you will get a jagged vertical seam'.
              *
+             * For this to work, the 'even' Vertices must also be ignored.
              * In computeEven(), seams are Vertices with < 6 surround 
-             * vertices (Vertex.e.length < 6). These aren't changed either.
+             * vertices (Vertex.e.length < 6) and aren't processed.
              */
 
             const ev0 = vertexArr[ edge.v[ 0 ] ];
@@ -849,13 +824,13 @@ class Mesh {
 
                   vtx.set( x, y, z, u, v );
 
-                return true;              
+                return true;
 
             }
 
         } else {
 
-            console.log( 'edge is undefined for:' + key + ',' + revKey);
+            console.error( 'Mesh::computeEven(): invalid keys:' + key + ',' + revKey + ' edge is undefined' );
 
         }
         return false;
@@ -867,23 +842,19 @@ class Mesh {
      * compute the Euler characteristic, based on effect of subdivision:
      * 1. Number of faces = 4x larger
      * 2. Each subdivided Face creates 3 new Edges, subdivided Edge creates 2 new Edges.
-     * Chi = Vertices - Edges + Faces
-     * V = E - F + Chi (Vertices in subdivided Mesh)
-     * 
-     * our original Vertex array become a backup after subdivision.
-     * 
+     * @param {Boolean} smooth if true, smooth the subdivided object, else just insert subdivions Vertices.
      */
     subdivide ( smooth ) {
 
         // Save the originals.
 
-        this.oldVertexArr = this.vertexArr.slice( 0 ); // DEBUG!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        this.oldVertexArr = this.vertexArr.slice( 0 );
 
         let vertexArr = this.oldVertexArr;
 
         let newVertexArr = [];
 
-        this.oldIndexArr = this.indexArr.slice( 0 ); // DEBUG!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        this.oldIndexArr = this.indexArr.slice( 0 );
 
         let indexArr = this.oldIndexArr;
 
@@ -895,10 +866,6 @@ class Mesh {
 
         let edgeArr = this.edgeArr;
 
-
-       // console.log("VERTEXARRAY LENGTH:" + vertexArr.length )
-       // console.log("INDEXARRAY LENGTH:" + indexArr.length )
-
         // Rebuild the Vertex and Index array.
 
         let v0, v1, v2;
@@ -907,11 +874,7 @@ class Mesh {
 
         this.computeFaces();
 
-        // Find Seams
-
-        this.computeSeams();
-
-        // Loop through the Vertices, creating new midpoints & smoothing Vertex positions.
+        // Loop through the Vertices, creating new midpoints & smoothing Vertex positions only when needed.
 
         for ( let i = 0; i < indexArr.length; i += 3 ) {
 
@@ -1002,7 +965,7 @@ class Mesh {
 
             }
 
-            let m0, m1, m2, mi0, mi1, mi2, odd0, odd1, odd2;
+            let m0, m1, m2, mi0, mi1, mi2;
 
             /*
             newIndexArr.push(
@@ -1097,9 +1060,7 @@ class Mesh {
 
                 if ( smooth ) { 
 
-                    odd0 = this.computeOdd( m0, vertexArr, i0 + '-' + i1, i1 + '-' + i0 ); // OLD INDEXES
-
-                    ///////this.computeEven( v0, vertexArr ); // adjust v0 only if we are smoothing
+                    this.computeOdd( m0, vertexArr, i0 + '-' + i1, i1 + '-' + i0 ); // OLD INDEXES
 
                 }
 
@@ -1134,9 +1095,7 @@ class Mesh {
 
                 if ( smooth ) {
 
-                    odd1 = this.computeOdd( m1, vertexArr, i1 + '-' + i2, i2 + '-' + i1 ); // OLD INDEXES
-
-                    /////////////this.computeEven( v1, vertexArr ); ///////////////////////
+                    this.computeOdd( m1, vertexArr, i1 + '-' + i2, i2 + '-' + i1 ); // OLD INDEXES
 
                 }
 
@@ -1170,9 +1129,7 @@ class Mesh {
 
                 if ( smooth ) {
 
-                    odd2 = this.computeOdd( m2, vertexArr, i2 + '-' + i0, i0 + '-' + i2 ); // OLD INDICES
-
-                    ///////////this.computeEven( v2, vertexArr );
+                    this.computeOdd( m2, vertexArr, i2 + '-' + i0, i0 + '-' + i2 ); // OLD INDICES
 
                 }
 
@@ -1208,7 +1165,15 @@ class Mesh {
 
         this.indexArr = newIndexArr;
 
-        console.log( 'mesh::subdivde: subdivided from ' + this.oldVertexArr.length + ' to:' + this.vertexArr.length );
+        //this.edgeArr = [];
+
+        this.edgeMap = [];
+
+        this.midMap = [];
+
+        this.faceArr = [];
+
+        console.log( 'Mesh::subdivde(): subdivided from ' + this.oldVertexArr.length + ' to:' + this.vertexArr.length );
 
         return this;
 
@@ -1218,11 +1183,13 @@ class Mesh {
     /** 
      * Convert our native flattened geometric data (from Prim) to a Vertex object 
      * data representation suitable for subdivision and morphing.
-     * @param {}
+     * @param {Array[Float32]} vertices a flattened array of positions.
+     * @param {Array[Uint32]} indices drawing order for vertices.
+     * @param {Array[Float32]} texCoords texture coordinates for each position.
      */
     geometryToVertex ( vertices, indices, texCoords ) {
 
-        console.log('>>>>>>>>geometryToVertex()')
+        console.log('Mesh::geometryToVertex()')
 
         /* 
          * The incoming flattened index array has stride = 3, so 
@@ -1246,7 +1213,7 @@ class Mesh {
      */
     vertexToGeometry () {
 
-        console.log( '>>>>>>>>>>>vertexToGeometry()' );
+        console.log( 'Mesh::vertexToGeometry()' );
 
         let vertexArr = this.vertexArr;
 
@@ -1264,7 +1231,7 @@ class Mesh {
 
         let texCoords = new Array( vertexArr.length * 2 );
 
-        console.log( 'vertexToGeometry: index length:' + indexArr.length + ' flattened length:' + indices.length)
+        console.log( 'Mesh::vertexToGeometry(): index length:' + indexArr.length );
 
         for ( let i = 0; i < numVertices; i++ ) {
 
@@ -1321,10 +1288,21 @@ class Mesh {
     }
 
     /** 
-     * Validate a mesh structure
+     * Validate a Mesh structure
      */
     isValid () {
 
+        let vertexArr = this.vertexArr;
+
+        for ( let i = 0; i < vertexArr.length; i++ ) {
+
+            if ( ! vertexArr[ i ].isValid() ) {
+
+                console.error( 'Mesh::isValid(): invalid supplied vertex at:' + i );
+
+            }
+
+        }
 
     } // end of isValid
 

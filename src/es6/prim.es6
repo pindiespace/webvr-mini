@@ -17,7 +17,6 @@ class Prim {
      * - arrays created first in prim creation, then routine, then WebGL buffers added
      * 2. Texture indexing
      * - create startpoints in indices for swapping textures for complex objects
-     * - create methods getting just the partial vertices, indices, etc. for manipulation.
      * 3. Update routines
      * - update when Prim modified (re-compute normals, tangents, smooth, optimize)
      * 
@@ -52,22 +51,16 @@ class Prim {
      * Geometry - flattened arrays with the following datatypes
      *
      *  { 
-     *    vertices:  [],   // float32
-     *    indices:   [],   // unsigned int16
-     *    texCoords: [],   // float32
-     *    normals:   [],   // float32
-     *    tangents:  [],   // float32
-     *    colors:    []    // float32
+     *    vertices:  [],   // Float32
+     *    indices:   [],   // Uint16
+     *    texCoords: [],   // Float32
+     *    normals:   [],   // Float32
+     *    tangents:  [],   // Float32
+     *    colors:    []    // Float32
      *  }
      *
      * ---------------------------------------------------------------
-     * WebGL Buffer == duplicates Geometry, but with geometry data copied to sub-object
-     *  {
-     *    data:     [],   // the geometry data
-     *    buffer:   null, // the buffer created by WebGL
-     *    itemSize: 0,    // size of object, or stride through data array
-     *    numItems: 0     // number of objects
-     *  }
+     * WebGL Buffer == GeoObj, duplicates Geometry, but with geometry data copied to sub-object
      * ---------------------------------------------------------------
      * Array optimization
      * https://gamealchemist.wordpress.com/2013/05/01/lets-get-those-javascript-arrays-to-work-fast/
@@ -339,7 +332,7 @@ class Prim {
      */
     primReadout ( prim ) {
 
-        console.log( 'prim:' + prim.name + ' type:' + prim.type + 
+        console.log( 'Prim::primReadout():' + prim.name + ' type:' + prim.type + 
 
             ' vertex:(' + prim.geometry.vertices.itemSize + 
 
@@ -349,7 +342,7 @@ class Prim {
 
             '), ' + prim.geometry.texCoords.numItems + 
 
-            ', index:(' + prim.geometry.indices.itemSize, 
+            ', index:(' + prim.geometry.indices.itemSize + 
 
             '), ' + prim.geometry.indices.numItems + 
 
@@ -1156,7 +1149,7 @@ class Prim {
 
         if ( ! prim.spaceMap ) {
 
-            console.log( 'adding spaceMap for:' + prim.name );
+            console.log( 'Prim::geometryPointCloud(): adding spaceMap for:' + prim.name );
 
             prim.sphereMap = new Map3d( this.util );
 
@@ -1935,8 +1928,6 @@ class Prim {
 
             let vertShift = vertexIndex;
 
-            if( prim.name === 'testPlane') console.log( 'i:' + i + ' j:' + j)
-
             for( let j = 0; j <= nv; j++ ) {
 
                 for( let i = 0; i <= nu; i++ ) {
@@ -2162,8 +2153,6 @@ class Prim {
 
         normals = this.computeNormals( vertices, indices, normals );
 
-        console.log(" IN CUBE NORMALS NOW ARE...." + normals.length)
-
         // Return the buffer.
 
         return geo.addBufferData( vertices, indices, normals, texCoords, tangents );
@@ -2258,7 +2247,7 @@ class Prim {
 
         if ( ! prim.heightMap ) {
 
-            console.log( 'adding heightmap for:' + prim.name );
+            console.log( 'Prim::geometryTerrain(): adding heightmap for:' + prim.name );
 
             prim.heightMap = new Map2d( this.util );
 
@@ -3225,7 +3214,7 @@ class Prim {
 
         if ( ! this.checkType( type ) ) {
 
-            console.error( 'unsupported Prim type:' + type );
+            console.error( 'Prim::createPrim(): unsupported Prim type:' + type );
 
             return null;
         }

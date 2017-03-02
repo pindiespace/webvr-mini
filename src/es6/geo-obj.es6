@@ -157,6 +157,8 @@ class GeoObj {
 
                     }
 
+                o.numItems = o.data.length / o.itemSize;
+
                 break;
 
             case this.UINT16:
@@ -173,7 +175,7 @@ class GeoObj {
 
             default:
 
-                console.error( 'GL buffer type ' + type );
+                console.error( 'GeoObj::bindGLBuffer(): invalid WebGL buffer type ' + type );
 
                 break;
 
@@ -201,7 +203,7 @@ class GeoObj {
 
             if ( ! o.data.length ) {
 
-                console.log( 'no vertices present, creating default' );
+                console.log( 'GeoObj::createGLBuffers(): no vertices present, creating default' );
 
                 o.data = new Float32Array( [ 0, 0, 0 ] );
 
@@ -215,7 +217,7 @@ class GeoObj {
 
             if ( ! o.data.length ) {
 
-                console.log( 'no indices present, creating default' );
+                console.log( 'GeoObj::createGLBuffers(): no indices present, creating default' );
 
                 o.data = new Uint16Array( [ 1 ] );
 
@@ -229,7 +231,7 @@ class GeoObj {
 
             if ( ! o.data.length ) {
 
-                console.warn( 'no sides present, creating default' );
+                console.warn( 'GeoObj::createGLBuffers(): no sides present, creating default' );
 
                 o.data = new Uint16Array( [ 1 ] );
 
@@ -243,7 +245,7 @@ class GeoObj {
 
             if ( ! o.data.length ) {
 
-                console.log( 'no normals, present, creating default' );
+                console.log( 'GeoObj::createGLBuffers(): no normals, present, creating default' );
 
                 o.data = new Float32Array( [ 0, 1, 0 ] );
 
@@ -257,7 +259,7 @@ class GeoObj {
 
             if ( ! o.data.length ) {
 
-                console.warn( 'no texture present, creating default' );
+                console.warn( 'GeoObj::createGLBuffers(): no texture present, creating default' );
 
                 o.data = new Float32Array( [ 0, 0 ] );
 
@@ -271,7 +273,7 @@ class GeoObj {
 
             if ( ! o.data.length ) {
 
-                console.warn( 'no tangents present, creating default' );
+                console.warn( 'GeoObj::createGLBuffers(): no tangents present, creating default' );
 
                 o.data = new Float32Array( [ 0, 0, 0, 0 ] );
 
@@ -285,7 +287,7 @@ class GeoObj {
 
             if ( ! o.data.length ) {
 
-                console.warn( 'no colors present, creating default color' );
+                console.warn( 'GeoObj::createGLBuffers(): no colors present, creating default color' );
 
                 o.data = new Float32Array( this.computeColors( this.normals.data, o.data ) );
 
