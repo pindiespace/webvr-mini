@@ -328,14 +328,6 @@ class Mesh {
 
         this.type = geo.type, 
 
-        // Flattened arrays.
-
-        this.vertices = geo.vertices.data, 
-
-        this.indices = geo.indices.data, 
-
-        this.texCoords = geo.texCoords.data;
-
         // Mesh arrays.
 
         this.vertexArr = [];    // holds Vertex objects
@@ -376,7 +368,7 @@ class Mesh {
 
         // Convert flattened arrays to Vertex data structure (Index array remains the same).
 
-        this.geometryToVertex( this.vertices, this.indices, this.texCoords );
+        this.geometryToVertex( geo.vertices.data, geo.indices.data, geo.texCoords.data );
 
         // Check converted Vertices for validity.
 
@@ -471,8 +463,8 @@ class Mesh {
 
     /** 
      * Create the Vertices, assigning texture coordinates.
-     * @param {Array[Float32]} vertices a flattened array of xyz positions
-     * @param {Array[Float32]} texCoords a flattened array of uv positions
+     * @param {Float32Array} vertices a flattened array of xyz positions
+     * @param {Float32Array} texCoords a flattened array of uv positions
      */
     computeVertices ( vertices, texCoords ) {
 
@@ -500,7 +492,7 @@ class Mesh {
 
             if ( i > 0 ) {
 
-                avDist += vertexArr[ i ].distance( vertexArr[ i - 1 ], true ); // fast calc
+                avDist += vertexArr[ i ].distance( vertexArr[ i - 1 ], true ); // fast approx calc
 
                 let c = vertexArr[ i ].coords;
 
@@ -520,13 +512,15 @@ class Mesh {
 
         }
 
+        // Compute Mesh dimensions.
+
         this.width = max.x - min.x;
 
         this.height = max.y - min.y;
 
         this.depth = max.z - min.z;
 
-        // Estimate average spacing among Vertices
+        // Estimate average spacing among Vertices.
 
         this.avDistance = avDist / numVertices;
 
@@ -1165,6 +1159,9 @@ class Mesh {
 
         this.indexArr = newIndexArr;
 
+        ///TODO: ??????????????????????? WHY NOT MULTIPLE RUNS??????????????????????????????
+        // TODO: ?????????????????? SHIFT TO UNIT32???????????????????????????????????????
+
         //this.edgeArr = [];
 
         this.edgeMap = [];
@@ -1183,9 +1180,9 @@ class Mesh {
     /** 
      * Convert our native flattened geometric data (from Prim) to a Vertex object 
      * data representation suitable for subdivision and morphing.
-     * @param {Array[Float32]} vertices a flattened array of positions.
-     * @param {Array[Uint32]} indices drawing order for vertices.
-     * @param {Array[Float32]} texCoords texture coordinates for each position.
+     * @param {Float32Array} vertices a flattened array of positions.
+     * @param {Uint16Array} indices drawing order for vertices.
+     * @param {Float32Array} texCoords texture coordinates for each position.
      */
     geometryToVertex ( vertices, indices, texCoords ) {
 
@@ -1194,7 +1191,8 @@ class Mesh {
         /* 
          * The incoming flattened index array has stride = 3, so 
          * an x coord in the vertexArr is just the index value
-         * the equivalen x coord in flattened vertices = index * 3 
+         * of the starting x coordinate in flattened vertices * 3, 
+         * ...so we don't have to change the index array at all.
          */
 
         this.indexArr = indices.slice( 0 );
@@ -1210,6 +1208,7 @@ class Mesh {
     /** 
      * Convert an array of Vertex objects back to our native 
      * flattened data representation.
+     * @returns{ Object{vertices, indices, texCoords}} an object with the flattened arrays.
      */
     vertexToGeometry () {
 
@@ -1247,7 +1246,7 @@ class Mesh {
 
                 let t = vtx.texCoords;
 
-                // Recover and flatten coordinate values
+                // Recover and flatten coordinate values.
 
                 vertices[ vi     ] = c.x;
 
@@ -1255,7 +1254,7 @@ class Mesh {
 
                 vertices[ vi + 2 ] = c.z;
 
-                // Recover and flatten texture coordinate values
+                // Recover and flatten texture coordinate values.
 
                 texCoords[ ti ]     = t.u;
 
@@ -1265,7 +1264,7 @@ class Mesh {
 
                 console.warn( 'Mesh::vertexToGeometry(): no vertex in vertexArr at pos:' + i );
 
-                vertices = vertices.slice( i ); // TRUNCATE!
+                vertices = vertices.slice( i ); // truncate to keep the vertices valid for debugging
 
                 break;
 
@@ -1288,19 +1287,46 @@ class Mesh {
     }
 
     /** 
+     * Completely clear the internal Mesh structure.
+     */
+    clear () {
+
+        this.vertexArr = [];    // holds Vertex objects
+
+        this.indexArr = [];     // holds drawing path through Vertex objects
+
+        this.edgeArr = [];      // holds Edge objects
+
+        this.edgeMap = [];      // lookup table for Edges (even Vertices)
+
+        this.faceArr = [];      // holds the triangle list (derived from indexArr)
+
+        this.oldVertexArr = []; // keep the original Vertex data when transforming mesh
+
+    }
+
+    /** 
      * Validate a Mesh structure
      */
     isValid () {
 
         let vertexArr = this.vertexArr;
 
-        for ( let i = 0; i < vertexArr.length; i++ ) {
+        if ( vertexArr.length > 0 && this.indexArr.length > 0 ) {
 
-            if ( ! vertexArr[ i ].isValid() ) {
+            for ( let i = 0; i < vertexArr.length; i++ ) {
 
-                console.error( 'Mesh::isValid(): invalid supplied vertex at:' + i );
+                if ( ! vertexArr[ i ].isValid() ) {
+
+                    console.error( 'Mesh::isValid(): invalid supplied vertex at:' + i );
+
+                }
 
             }
+
+        } else {
+
+            console.error( 'Mesh::isValid(): no vertex and/or index array defined' );
 
         }
 

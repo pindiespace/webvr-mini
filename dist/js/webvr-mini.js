@@ -3893,12 +3893,12 @@
 	     * Geometry - flattened arrays with the following datatypes
 	     *
 	     *  { 
-	     *    vertices:  [],   // Float32
-	     *    indices:   [],   // Uint16
-	     *    texCoords: [],   // Float32
-	     *    normals:   [],   // Float32
-	     *    tangents:  [],   // Float32
-	     *    colors:    []    // Float32
+	     *    vertices:  [],   // Float32Array
+	     *    indices:   [],   // Uint16Array
+	     *    texCoords: [],   // Float32Array
+	     *    normals:   [],   // Float32Array
+	     *    tangents:  [],   // Float32Array
+	     *    colors:    []    // Float32Array
 	     *  }
 	     *
 	     * ---------------------------------------------------------------
@@ -4733,7 +4733,7 @@
 	         */prim.setMaterial=function(){var colorMult=arguments.length>0&&arguments[0]!==undefined?arguments[0]:1;var diffuse=arguments.length>1&&arguments[1]!==undefined?arguments[1]:[0,0,0];var specular=arguments.length>2&&arguments[2]!==undefined?arguments[2]:[1,1,1,1];var shininess=arguments.length>3&&arguments[3]!==undefined?arguments[3]:250;var specularFactor=arguments.length>4&&arguments[4]!==undefined?arguments[4]:1;var p=prim;p.material.colorMult=colorMult;p.diffuse=diffuse;p.specular=specular;p.shininess=shininess;p.specularFactor=specularFactor;};/** 
 	         * Set the Prim as a glowing object. Global lights 
 	         * are handled by the World.
-	         */prim.setLight=function(){var direction=arguments.length>0&&arguments[0]!==undefined?arguments[0]:[1,1,1];var color=arguments.length>1&&arguments[1]!==undefined?arguments[1]:[255,255,255];var prim=arguments.length>2&&arguments[2]!==undefined?arguments[2]:_this;var p=prim;p.light.direction=direction;p.light.color=color;};// Shared with factory functions. Normally, we used matrix transforms to accomplish this.
+	         */prim.setLight=function(){var direction=arguments.length>0&&arguments[0]!==undefined?arguments[0]:[1,1,1];var color=arguments.length>1&&arguments[1]!==undefined?arguments[1]:[255,255,255];var prim=arguments.length>2&&arguments[2]!==undefined?arguments[2]:_this;var p=prim;p.light.direction=direction;p.light.color=color;};// Shared with factory functions. Normally, we use matrix transforms to accomplish this.
 	prim.scaleVertices=function(scale){_this.scale(scale,prim.geometry.vertices);};prim.moveVertices=function(pos){_this.computeMove(scale,prim.geometry.vertices);};//prim.morphVertices = ( newGeometry, easing ) => { this.morph( newGeometry, easing, prim.geometry ); };
 	// Waypoints for scripted motion or timelines.
 	prim.waypoints=[];// Store multiple textures for one Prim.
@@ -6014,10 +6014,6 @@
 
 	                this.type = geo.type,
 
-	                // Flattened arrays.
-
-	                this.vertices = geo.vertices.data, this.indices = geo.indices.data, this.texCoords = geo.texCoords.data;
-
 	                // Mesh arrays.
 
 	                this.vertexArr = []; // holds Vertex objects
@@ -6058,7 +6054,7 @@
 
 	                // Convert flattened arrays to Vertex data structure (Index array remains the same).
 
-	                this.geometryToVertex(this.vertices, this.indices, this.texCoords);
+	                this.geometryToVertex(geo.vertices.data, geo.indices.data, geo.texCoords.data);
 
 	                // Check converted Vertices for validity.
 
@@ -6144,8 +6140,8 @@
 
 	                /** 
 	                 * Create the Vertices, assigning texture coordinates.
-	                 * @param {Array[Float32]} vertices a flattened array of xyz positions
-	                 * @param {Array[Float32]} texCoords a flattened array of uv positions
+	                 * @param {Float32Array} vertices a flattened array of xyz positions
+	                 * @param {Float32Array} texCoords a flattened array of uv positions
 	                 */
 
 	        }, {
@@ -6180,7 +6176,7 @@
 
 	                                if (i > 0) {
 
-	                                        avDist += vertexArr[i].distance(vertexArr[i - 1], true); // fast calc
+	                                        avDist += vertexArr[i].distance(vertexArr[i - 1], true); // fast approx calc
 
 	                                        var c = vertexArr[i].coords;
 
@@ -6198,13 +6194,15 @@
 	                                }
 	                        }
 
+	                        // Compute Mesh dimensions.
+
 	                        this.width = max.x - min.x;
 
 	                        this.height = max.y - min.y;
 
 	                        this.depth = max.z - min.z;
 
-	                        // Estimate average spacing among Vertices
+	                        // Estimate average spacing among Vertices.
 
 	                        this.avDistance = avDist / numVertices;
 
@@ -6805,6 +6803,9 @@
 
 	                        this.indexArr = newIndexArr;
 
+	                        ///TODO: ??????????????????????? WHY NOT MULTIPLE RUNS??????????????????????????????
+	                        // TODO: ?????????????????? SHIFT TO UNIT32???????????????????????????????????????
+
 	                        //this.edgeArr = [];
 
 	                        this.edgeMap = [];
@@ -6821,9 +6822,9 @@
 	                /** 
 	                 * Convert our native flattened geometric data (from Prim) to a Vertex object 
 	                 * data representation suitable for subdivision and morphing.
-	                 * @param {Array[Float32]} vertices a flattened array of positions.
-	                 * @param {Array[Uint32]} indices drawing order for vertices.
-	                 * @param {Array[Float32]} texCoords texture coordinates for each position.
+	                 * @param {Float32Array} vertices a flattened array of positions.
+	                 * @param {Uint16Array} indices drawing order for vertices.
+	                 * @param {Float32Array} texCoords texture coordinates for each position.
 	                 */
 
 	        }, {
@@ -6835,7 +6836,8 @@
 	                        /* 
 	                         * The incoming flattened index array has stride = 3, so 
 	                         * an x coord in the vertexArr is just the index value
-	                         * the equivalen x coord in flattened vertices = index * 3 
+	                         * of the starting x coordinate in flattened vertices * 3, 
+	                         * ...so we don't have to change the index array at all.
 	                         */
 
 	                        this.indexArr = indices.slice(0);
@@ -6850,6 +6852,7 @@
 	                /** 
 	                 * Convert an array of Vertex objects back to our native 
 	                 * flattened data representation.
+	                 * @returns{ Object{vertices, indices, texCoords}} an object with the flattened arrays.
 	                 */
 
 	        }, {
@@ -6890,7 +6893,7 @@
 
 	                                        var t = vtx.texCoords;
 
-	                                        // Recover and flatten coordinate values
+	                                        // Recover and flatten coordinate values.
 
 	                                        vertices[vi] = c.x;
 
@@ -6898,7 +6901,7 @@
 
 	                                        vertices[vi + 2] = c.z;
 
-	                                        // Recover and flatten texture coordinate values
+	                                        // Recover and flatten texture coordinate values.
 
 	                                        texCoords[ti] = t.u;
 
@@ -6907,7 +6910,7 @@
 
 	                                        console.warn('Mesh::vertexToGeometry(): no vertex in vertexArr at pos:' + i);
 
-	                                        vertices = vertices.slice(i); // TRUNCATE!
+	                                        vertices = vertices.slice(i); // truncate to keep the vertices valid for debugging
 
 	                                        break;
 	                                }
@@ -6927,6 +6930,27 @@
 	                }
 
 	                /** 
+	                 * Completely clear the internal Mesh structure.
+	                 */
+
+	        }, {
+	                key: 'clear',
+	                value: function clear() {
+
+	                        this.vertexArr = []; // holds Vertex objects
+
+	                        this.indexArr = []; // holds drawing path through Vertex objects
+
+	                        this.edgeArr = []; // holds Edge objects
+
+	                        this.edgeMap = []; // lookup table for Edges (even Vertices)
+
+	                        this.faceArr = []; // holds the triangle list (derived from indexArr)
+
+	                        this.oldVertexArr = []; // keep the original Vertex data when transforming mesh
+	                }
+
+	                /** 
 	                 * Validate a Mesh structure
 	                 */
 
@@ -6936,12 +6960,18 @@
 
 	                        var vertexArr = this.vertexArr;
 
-	                        for (var i = 0; i < vertexArr.length; i++) {
+	                        if (vertexArr.length > 0 && this.indexArr.length > 0) {
 
-	                                if (!vertexArr[i].isValid()) {
+	                                for (var i = 0; i < vertexArr.length; i++) {
 
-	                                        console.error('Mesh::isValid(): invalid supplied vertex at:' + i);
+	                                        if (!vertexArr[i].isValid()) {
+
+	                                                console.error('Mesh::isValid(): invalid supplied vertex at:' + i);
+	                                        }
 	                                }
+	                        } else {
+
+	                                console.error('Mesh::isValid(): no vertex and/or index array defined');
 	                        }
 	                } // end of isValid
 

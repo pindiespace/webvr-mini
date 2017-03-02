@@ -51,12 +51,12 @@ class Prim {
      * Geometry - flattened arrays with the following datatypes
      *
      *  { 
-     *    vertices:  [],   // Float32
-     *    indices:   [],   // Uint16
-     *    texCoords: [],   // Float32
-     *    normals:   [],   // Float32
-     *    tangents:  [],   // Float32
-     *    colors:    []    // Float32
+     *    vertices:  [],   // Float32Array
+     *    indices:   [],   // Uint16Array
+     *    texCoords: [],   // Float32Array
+     *    normals:   [],   // Float32Array
+     *    tangents:  [],   // Float32Array
+     *    colors:    []    // Float32Array
      *  }
      *
      * ---------------------------------------------------------------
@@ -3379,7 +3379,7 @@ class Prim {
 
         };
 
-        // Shared with factory functions. Normally, we used matrix transforms to accomplish this.
+        // Shared with factory functions. Normally, we use matrix transforms to accomplish this.
 
         prim.scaleVertices = ( scale ) => { this.scale ( scale, prim.geometry.vertices ); };
 
