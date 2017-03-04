@@ -3,14 +3,11 @@
  * texture coordinates, suitable for subdivision and other complex manipulations.
  */
 
-/** 
- * Create a class for manipulating 3d data, We don't use glMatrix since the 
- * calculations here are faster if done locally.
- */
  class Coords {
 
     /**
      * @class
+     * Handle 3d coordinate locations on an object basis.
      * @constructor
      * @param {Number} x the initializing x or 0 coordinate
      * @param {Number} y the initializing y or 1 coordinate
@@ -28,7 +25,7 @@
 
     /**
      * Check for null or undefined values.
-     * @returns {Boolen} all all 3 coordinates are defined, return true, else false
+     * @returns {Boolean} all all 3 coordinates are defined, return true, else false
      */
     isValid () {
 
@@ -40,6 +37,11 @@
 
     }
 
+    /** 
+     * Add two Coords objects together.
+     * @param {Coords} the other Coords object.
+     * @returns {Coords} this Coords object.
+     */
     add ( coords ) {
 
         this.x += coords.x;
@@ -52,6 +54,11 @@
 
     }
 
+    /** 
+     * Scale a Coords position outward.
+     * @param {Number} scalar the value to scale this Coords by.
+     * @returns {Coords} this Coords object.
+     */
     scale ( scalar ) {
 
         this.x *= scalar;
@@ -64,6 +71,14 @@
 
     }
 
+    /** 
+     * Compute an approximate or exact distance between two Coord 
+     * positions.
+     * @param {Coords} coords the Coords to check the distance to.
+     * @param {Boolean} fast if true, return an approximation of the 
+     * distance not involving square root calculations. If false, do 
+     * a regular distance calc (slow).
+     */
     distance ( coords, fast ) {
 
         let x = this.x - coords.x;
@@ -100,11 +115,18 @@ class Vertex {
 
     /** 
      * @class
-     * @constructor
      * Create a class containing position, texture coordinate, and mesh
      * connectivity information.
+     * @constructor
+     * @param {Number} x the x coordinate of the Vertex.
+     * @param {Number} y the y coordinate of the Vertex.
+     * @param {Number} z the z coordinate of the Vertex.
+     * @param {Number} u the u texture coordinate.
+     * @param {Number} v the v texture coordinate.
+     * @param {Number} idx the index of this Vertex in the larger Vertex array.
+     * @param {Vertex[]]} vertexArr the array holding this (and other) Vertices.
      */
-    constructor( x = 0, y = 0, z = 0, u = 0, v = 0, idx = '', vertexArr = [] ) {
+    constructor( x = 0, y = 0, z = 0, u = 0, v = 0, idx = -1, vertexArr = [] ) {
 
         this.coords = new Coords( x, y, z );
 
@@ -120,10 +142,19 @@ class Vertex {
 
     /** 
      * Confirm Vertex has valid values for position and texture.
+     * @returns {Boolean} if valid, return true, else false.
      */
     isValid () {
 
         let texCoords = this.texCoords;
+
+        if ( this.idx === -1 ) {
+
+            console.error( 'Vertex::isValid(): index never set!' );
+
+            return false;
+
+        }
 
         if ( this.coords.isValid() && 
 
@@ -135,6 +166,8 @@ class Vertex {
 
         }
 
+        console.error( 'Vertex::isValid(): undefined coordinates for:' + this.idx );
+
         return false;
 
     }
@@ -143,8 +176,7 @@ class Vertex {
      * Return a vector distance between two Coords, optionally 
      * leaving out the square root calculation.
      * @param {Vertex} vtx another Vertex object
-     * @param {Boolean} fast if true, don't do square root, just absolute 
-     * sum of x, y, z, distances.
+     * @param {Boolean} fast if true, don't do square root, approx distance.
      * @returns {Number} a vector distance, or approximation.
      */
     distance ( vtx, fast = false ) {
@@ -155,6 +187,12 @@ class Vertex {
 
     /** 
      * In-place setting values
+     * @param {Number} x the x coordinate value.
+     * @param {Number} y the y coordinate value.
+     * @param {Number} z the z coordinate value.
+     * @param {Number} u the u coordinate value.
+     * @param {Number} v the v coordinate value. 
+     * @returns {Vertex} this Vertex.    
      */
     set ( x, y, z, u, v ) {
 
@@ -164,14 +202,21 @@ class Vertex {
 
         this.coords.z = z;
 
-        this.texCoords.u = u;
+        // Texture coordinates optional.
 
-        this.texCoords.v = v;
+        if ( u !== undefined ) this.texCoords.u = u;
+
+        if ( v !== undefined ) this.texCoords.v = v;
 
         return this;
 
     }
 
+    /** 
+     * Add two Vertex objects, ignoring texture coordinates.
+     * @param {Vertex} vtx the Vertex object to add.
+     * @returns {Vertex} this Vertex.
+     */
     add ( vtx ) {
 
         this.coords.add( vtx.coords );
@@ -181,7 +226,9 @@ class Vertex {
     }
 
     /** 
-     * Scale coordinates in or out.
+     * Scale coordinates of the Vertex, ignoring texture coordinates.
+     * @param {Number} scalar the value to scale the Vertex position by.
+     * @returns {Vertex} this Vertex.
      */
     scale ( scalar ) {
 
@@ -192,15 +239,19 @@ class Vertex {
     }
 
     /** 
-     * Return a copy
+     * Return a copy of this Vertex.
+     * @param {Vertex[]} vertexArr if defined, set the clone's Vertex array to the 
+     * supplied array, otherwise use this Vertex's array as vertexArr.
+     * @returns {Vertex} a deep copy of this Vertex. Note that 
+     * the new Vertex has the same index as its parent.
      */
-    clone () {
+    clone ( vertexArr ) {
 
         let vtx = new Vertex( this.coords.x, this.coords.y, this.coords.z, 
 
             this.texCoords.u, this.texCoords.v, 
 
-            this.idx, this.vertexArr );
+            this.idx, vertexArr );
 
         // Copy the surround Edges.
 
@@ -220,9 +271,9 @@ class Edge {
 
     /** 
      * @class
-     * @constructor
      * create an Edge, make from two consecutive Vertices in the index for 
      * drawing the Mesh. The Vertex objects used are defined by the index array.
+     * @constructor
      * @param {Number} i0 index of the first Vertex in the Vertex array.
      * @param {Number} i1 index of the second Vertex in the Vertex array.
      * @param {Number} i2 index of the third Vertex (forming a triangle) in the Vertex Array.
@@ -281,7 +332,7 @@ class Edge {
 
         } else {
 
-            console.error( 'Edge::getOpposite: invalid Vertex:' + vtx.idx + ' supplied, our Edge:' + this.v[ 0 ] + ', ' + this.v[ 1 ] );
+            console.error( 'Edge::getOpposite(): invalid Vertex:' + vtx.idx + ' supplied, our Edge:' + this.v[ 0 ] + ', ' + this.v[ 1 ] );
 
         }
 
@@ -293,8 +344,8 @@ class Face {
 
     /** 
      * @class
+     * Face, storing three consecutive Vertex objects, a.k.a. the drawing triangle.
      * @constructor
-     * Face, storing three consecutive Vertex objects, a.k.a. drawing triangle.
      * @param {Number} e0 the first Edge index
      * @param {Number} e1 the second Edge index
      * @param {Number} e2 the third Edge index
@@ -318,15 +369,18 @@ class Mesh {
 
     /** 
      * @class
-     * @constructor
      * Our class for subdivision and other complex coordinate manipulation.
      * @param {GeoObj} An object with flattened vertices, indices, and texture 
      * coordinates, as well as the Prim type.
+     * @constructor
+     * @param {Geometry} geo a geometry object (defined in Prim.es6)
      */
 
     constructor ( geo ) {
 
-        this.type = geo.type, 
+        this.geo = geo,
+
+        this.type = geo.type;
 
         // Mesh arrays.
 
@@ -352,6 +406,8 @@ class Mesh {
 
         this.depth = 0;
 
+        this.iterations = 0; // number of iterations of the subdivide algorithm
+
         // Scaling factors for smoothing.
 
         this.fw  = 3 / 8; // Edge Vertices a midpoint is created in.
@@ -368,19 +424,18 @@ class Mesh {
 
         // Convert flattened arrays to Vertex data structure (Index array remains the same).
 
-        this.geometryToVertex( geo.vertices.data, geo.indices.data, geo.texCoords.data );
+        //this.geometryToVertex( geo.vertices.data, geo.indices.data, geo.texCoords.data );
 
         // Check converted Vertices for validity.
 
-        this.isValid();
-
-        this.totNeedIgnore = 0;  // DEBUG !!!!!!!!!!!!!!!!!!!!!!!!!
+        //this.isValid();
 
     }
 
     /** 
      * Return the reversed key for this Edge, handling index 
      * traversal 1->2 and 2->1
+     * @param {String} key the reversed key value.
      * @returns {String} the reversed key
      */
     getRevKey ( key ) {
@@ -426,6 +481,9 @@ class Mesh {
 
     /**
      * Find and return the midpoint between several Vertices.
+     * @param{...Vertex} vtx the input Vertex objects.
+     * @returns {Vertex} a new Vertex at the geometric center of the 
+     * input Vertex positions.
      */
     computeCentroid () {
 
@@ -465,6 +523,7 @@ class Mesh {
      * Create the Vertices, assigning texture coordinates.
      * @param {Float32Array} vertices a flattened array of xyz positions
      * @param {Float32Array} texCoords a flattened array of uv positions
+     * @returns {Vertex[]} an array of Vertex objects.
      */
     computeVertices ( vertices, texCoords ) {
 
@@ -532,7 +591,8 @@ class Mesh {
      * Set values for an Edge
      * @param {Number} i0 index of first Vertex in Edge.
      * @param {Number} i1 index of second Vertex in Edge.
-     * @Param {Number} i2 index of opposite Vertex, forming a Face with the Edge.
+     * @param {Number} i2 index of opposite Vertex, forming a Face with the Edge.
+     * @returns {Number} the index (key) of the edge in the Edge array.
      */
     computeEdge ( i0, i1, i2, fi ) {
 
@@ -578,6 +638,8 @@ class Mesh {
 
             vertexArr[ maxi ].e.push( idx );
 
+            ///if ( mini != vertexArr[ mini ].idx ) console.log("vertexArr:" + mini + ' is:' + vertexArr[ mini ].idx)
+
         }
 
         return idx;
@@ -598,7 +660,7 @@ class Mesh {
 
         // Create the Edge and Face (triangle) arrays
 
-        let faceArr = [];
+        let faceArr = this.faceArr;
 
         // Loop through the indexArr, defining Edges and Faces, hashing back to Vertices.
 
@@ -633,16 +695,13 @@ class Mesh {
 
         }
 
-        // Faces for this Mesh.
-
-        this.faceArr = faceArr;
-
     }
 
     /** 
-     * Adjust Even Vertices, up to 6 control points.
+     * Adjust Even Vertices, 6 or more control points.
      * @param {Vertex} vtx the Vertex to compute.
-     * @param {Array[Vertex]} the array containing surround Vertices.
+     * @param {Vertex[]} the array containing surround Vertices.
+     * @returns {Boolean} if the Vertex is changed, return true, else false.
      */
     computeEven ( vtx, vertexArr ) {
 
@@ -702,6 +761,9 @@ class Mesh {
         for ( let j = 0; j < valency; j++ ) {
 
             // Get the surround Vertices for vtx.
+            //////window.vtx = vtx;
+            //////window.edge = edgeArr[ vtx.e[ j ] ];
+            //////console.log("VERTEX OPPOSITE:" + vtx.e[ j ] ); ////////////////////////////////
 
             const oppositeIndex = edgeArr[ vtx.e[ j ] ].getOpposite( vtx );
 
@@ -732,7 +794,13 @@ class Mesh {
     }
 
     /** 
-     * Adjust Odd Vertices, 4 control points.
+     * Adjust Odd Vertices, 4 control Vertices. Don't compute if we don't have the 
+     * second 'opposite' Vertex.
+     * @param {Vertex} vtx the odd Vertex.
+     * @param {Vertex[]} vertexArr the array with all Vertices.
+     * @param {String} key the lookup key for the Edge containing this Vertex.
+     * @param {String} revKey reversed lookup key for the Edge containing this Vertex.
+     * @returns {Boolean} if the Vertex was changed, return true, else false.
      */
     computeOdd ( vtx, vertexArr, key, revKey ) {
 
@@ -837,26 +905,39 @@ class Mesh {
      * 1. Number of faces = 4x larger
      * 2. Each subdivided Face creates 3 new Edges, subdivided Edge creates 2 new Edges.
      * @param {Boolean} smooth if true, smooth the subdivided object, else just insert subdivions Vertices.
+     * @returns {Mesh} this Mesh object (for chaining).
      */
     subdivide ( smooth ) {
 
+        this.geometryToVertex( this.geo.vertices.data, this.geo.indices.data, this.geo.texCoords.data );
+
+        this.isValid();
+
         // Save the originals.
 
-        this.oldVertexArr = this.vertexArr.slice( 0 );
+        this.oldVertexArr = this.vertexArr.slice(); // make a copy
+
+        this.oldIndexArr = this.indexArr.slice(); // make a copy
 
         let vertexArr = this.oldVertexArr;
 
-        let newVertexArr = [];
-
-        this.oldIndexArr = this.indexArr.slice( 0 );
-
         let indexArr = this.oldIndexArr;
+
+        let newVertexArr = [];
 
         let newIndexArr = [];
 
         let indexHash = []; // for old indices = position in oldVertexArray
 
         let midHash = []; // for new points, position in newVertexArray
+
+        this.edgeMap = [];
+
+        this.midMap = [];
+
+        this.faceArr = [];
+
+        this.edgeArr = [];
 
         let edgeArr = this.edgeArr;
 
@@ -865,6 +946,8 @@ class Mesh {
         let v0, v1, v2;
 
         // Compute Faces and Edges (hash back to Vertices).
+
+        console.log( 'Mesh::subdivide(): ' + this.type + ' beginning subdivision, ' + this.iterations + ', starting size:' + this.oldVertexArr.length );
 
         this.computeFaces();
 
@@ -885,7 +968,7 @@ class Mesh {
 
             } else {
 
-                v0 = vertexArr[ i0 ].clone();
+                v0 = vertexArr[ i0 ].clone( newVertexArr );
 
             }
 
@@ -895,7 +978,7 @@ class Mesh {
 
             } else {
 
-                v1 = vertexArr[ i1 ].clone();
+                v1 = vertexArr[ i1 ].clone( newVertexArr );
 
             }
 
@@ -905,7 +988,7 @@ class Mesh {
 
             } else {
 
-                v2 = vertexArr[ i2 ].clone();
+                v2 = vertexArr[ i2 ].clone( newVertexArr );
 
             }
 
@@ -927,6 +1010,8 @@ class Mesh {
 
             }
 
+            //////////v0.idx = ii0; ///////////////////////////////
+
             let ii1 = newVertexArr.indexOf( v1 );
 
             if ( ii1 === -1 ) {
@@ -943,6 +1028,8 @@ class Mesh {
 
             }
 
+            //////////////v1.idx = ii1; ////////////////////////////////
+
             let ii2 = newVertexArr.indexOf( v2 );
 
             if ( ii2 === -1 ) {
@@ -958,6 +1045,8 @@ class Mesh {
                 //ii2 = ii2;
 
             }
+
+            //////////////v2.idx = ii2;
 
             let m0, m1, m2, mi0, mi1, mi2;
 
@@ -1052,6 +1141,10 @@ class Mesh {
 
                 m0 = this.computeCentroid( v0, v1 );
 
+                m0.vertexArr = newVertexArr;   ////////////////////////
+
+                m0.idx = newVertexArr.length; // GETS ALTERED SEVERAL TIMES
+
                 if ( smooth ) { 
 
                     this.computeOdd( m0, vertexArr, i0 + '-' + i1, i1 + '-' + i0 ); // OLD INDEXES
@@ -1060,7 +1153,7 @@ class Mesh {
 
                 newVertexArr.push( m0 ); 
 
-                mi0 = newVertexArr.length - 1; 
+                mi0 = newVertexArr.length - 1;
 
                 midHash[ key ] = mi0;
 
@@ -1087,6 +1180,10 @@ class Mesh {
 
                 m1 = this.computeCentroid( v1, v2 );
 
+                m1.vertexArr = newVertexArr;
+
+                m1.idx = newVertexArr.length;
+
                 if ( smooth ) {
 
                     this.computeOdd( m1, vertexArr, i1 + '-' + i2, i2 + '-' + i1 ); // OLD INDEXES
@@ -1095,7 +1192,7 @@ class Mesh {
 
                 newVertexArr.push( m1 ); 
 
-                mi1 = newVertexArr.length - 1; 
+                mi1 = newVertexArr.length - 1;
 
                 midHash[ key ] = mi1;
 
@@ -1121,6 +1218,10 @@ class Mesh {
 
                 m2 = this.computeCentroid( v2, v0 );
 
+                m2.vertexArr = newVertexArr;
+
+                m2.idx = newVertexArr.length; ////////////
+
                 if ( smooth ) {
 
                     this.computeOdd( m2, vertexArr, i2 + '-' + i0, i0 + '-' + i2 ); // OLD INDICES
@@ -1129,15 +1230,13 @@ class Mesh {
 
                 newVertexArr.push( m2 ); 
 
-                mi2 = newVertexArr.length - 1; 
+                mi2 = newVertexArr.length - 1;
 
                 midHash[ key ] = mi2;
 
                 midHash[ revKey ] = mi2;
 
             }
-
-
 
             // Push new indices
 
@@ -1155,22 +1254,18 @@ class Mesh {
 
         } // end of index loop
 
+        // NOTE: might be missing end of loop here.
+        
+
+        this.iterations++;
+
         this.vertexArr = newVertexArr;
 
         this.indexArr = newIndexArr;
 
-        ///TODO: ??????????????????????? WHY NOT MULTIPLE RUNS??????????????????????????????
-        // TODO: ?????????????????? SHIFT TO UNIT32???????????????????????????????????????
+        this.vertexToGeometry();
 
-        //this.edgeArr = [];
-
-        this.edgeMap = [];
-
-        this.midMap = [];
-
-        this.faceArr = [];
-
-        console.log( 'Mesh::subdivde(): subdivided from ' + this.oldVertexArr.length + ' to:' + this.vertexArr.length );
+        console.log( 'Mesh::subdivde(): ' + this.type + ' subdivided from ' + this.oldVertexArr.length + ' to:' + this.vertexArr.length );
 
         return this;
 
@@ -1183,10 +1278,11 @@ class Mesh {
      * @param {Float32Array} vertices a flattened array of positions.
      * @param {Uint16Array} indices drawing order for vertices.
      * @param {Float32Array} texCoords texture coordinates for each position.
+     * @returns {Mesh} this Mesh object (for chaining).
      */
     geometryToVertex ( vertices, indices, texCoords ) {
 
-        console.log('Mesh::geometryToVertex()')
+        console.log( 'Mesh::geometryToVertex() for:' + this.type );
 
         /* 
          * The incoming flattened index array has stride = 3, so 
@@ -1195,7 +1291,7 @@ class Mesh {
          * ...so we don't have to change the index array at all.
          */
 
-        this.indexArr = indices.slice( 0 );
+        this.indexArr = indices.slice();
 
         // Convert flattened coordinates to Vertex objects. IndexArr is unchanged, and still points to the right places.
 
@@ -1208,9 +1304,11 @@ class Mesh {
     /** 
      * Convert an array of Vertex objects back to our native 
      * flattened data representation.
-     * @returns{ Object{vertices, indices, texCoords}} an object with the flattened arrays.
+     * @returns{ Object{vertices:Array, indices:Array, texCoords:Array}} an object with the flattened arrays.
      */
     vertexToGeometry () {
+
+        let geo = this.geo;
 
         console.log( 'Mesh::vertexToGeometry()' );
 
@@ -1222,13 +1320,19 @@ class Mesh {
 
         // index array doesn't need to be flattened, just clone it.
 
-        let indices = this.indexArr.slice( 0 );
+        let indices = this.indexArr.slice();
 
         // flattened vertices and texCoords array need to be generated from Vertex array.
 
-        let vertices = new Array( vertexArr.length * 3 );
+        geo.vertices.data = new Array( vertexArr.length * 3 );
 
-        let texCoords = new Array( vertexArr.length * 2 );
+        geo.indices.data = indices.slice();
+
+        geo.texCoords.data = new Array( vertexArr.length * 2 );
+
+        let vertices = geo.vertices.data;
+
+        let texCoords = geo.texCoords.data;
 
         console.log( 'Mesh::vertexToGeometry(): index length:' + indexArr.length );
 
@@ -1272,41 +1376,13 @@ class Mesh {
 
         }
 
-        // We aren't exporting a true Prim geometry, just some of its arrays.
-
-        return {
-
-            vertices: vertices,
-
-            indices: indices,
-
-            texCoords: texCoords
-
-        };
-
-    }
-
-    /** 
-     * Completely clear the internal Mesh structure.
-     */
-    clear () {
-
-        this.vertexArr = [];    // holds Vertex objects
-
-        this.indexArr = [];     // holds drawing path through Vertex objects
-
-        this.edgeArr = [];      // holds Edge objects
-
-        this.edgeMap = [];      // lookup table for Edges (even Vertices)
-
-        this.faceArr = [];      // holds the triangle list (derived from indexArr)
-
-        this.oldVertexArr = []; // keep the original Vertex data when transforming mesh
+        return geo;
 
     }
 
     /** 
      * Validate a Mesh structure
+     * @returns {Boolean} if valid, return true, else false.
      */
     isValid () {
 
@@ -1320,6 +1396,8 @@ class Mesh {
 
                     console.error( 'Mesh::isValid(): invalid supplied vertex at:' + i );
 
+                    return false;
+
                 }
 
             }
@@ -1328,9 +1406,15 @@ class Mesh {
 
             console.error( 'Mesh::isValid(): no vertex and/or index array defined' );
 
+            return false;
+
         }
 
+        return true;
+
     } // end of isValid
+
+
 
  } // End of class.
 

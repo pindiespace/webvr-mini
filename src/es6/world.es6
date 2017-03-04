@@ -195,7 +195,7 @@ class World {
 
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.CURVEDINNERPLANE,
-            'CurvedPlane',
+            'CurvedPlaneFront',
             vec5( 2, 1, 1, this.prim.directions.FRONT, 1 ),         // pass orientation ONE UNIT CURVE
             vec5( 10, 10, 10 ),        // divisions
             vec3.fromValues(-1, 0.0, 2.0 ),          // position (absolute)
@@ -208,7 +208,7 @@ class World {
 
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.CURVEDINNERPLANE,
-            'CurvedPlane',
+            'CurvedPlaneBack',
             vec5( 2, 1, 1, this.prim.directions.BACK, 1 ),         // pass orientation ONE UNIT CURVE
             vec5( 10, 10, 10 ),        // divisions
             vec3.fromValues(-1, 0.0, 2.0 ),          // position (absolute)
@@ -221,7 +221,7 @@ class World {
 
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.CURVEDINNERPLANE,
-            'CurvedPlane',
+            'CurvedPlaneLeft',
             vec5( 2, 1, 1, this.prim.directions.LEFT, 1 ),         // pass orientation ONE UNIT CURVE
             vec5( 10, 10, 10 ),        // divisions
             vec3.fromValues(-1, 0.0, 2.0 ),          // position (absolute)
@@ -234,7 +234,7 @@ class World {
 
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.CURVEDINNERPLANE,
-            'CurvedPlane',
+            'CurvedPlaneRight',
             vec5( 2, 1, 1, this.prim.directions.RIGHT, 1 ),         // pass orientation ONE UNIT CURVE
             vec5( 10, 10, 10 ),        // divisions
             vec3.fromValues(-1, 0.0, 2.0 ),          // position (absolute)
@@ -252,7 +252,7 @@ class World {
 
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.CURVEDOUTERPLANE,
-            'CurvedPlane',
+            'CurvedPlaneOut',
             vec5( 2, 1, 1, this.prim.directions.RIGHT, 1 ),         // dimensions NOTE: pass radius for curvature (also creates orbit) 
             vec3.fromValues( 10, 10, 10 ),        // divisions
             vec3.fromValues(-1.2, 0.0, 2.0 ),          // position (absolute)

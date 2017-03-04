@@ -290,8 +290,8 @@ class Prim {
      * array. So, to make one, we just concatenate the 
      * vertices. Use to send multiple prims sharing the same shader to one 
      * Renderer.
-     * @param {Array} vertices
-     * @returns {Array} vertices
+     * @param {GLMatrix.vec3[]} vertices
+     * @returns {GLMatrix.vec3[]} vertices
      */
     setVertexData ( vertices ) {
 
@@ -595,7 +595,7 @@ class Prim {
     /** 
      * Compute an area-weighted centroid point for a Prim.
      * Use this when we want the center of the whole object the polygon is part of.
-     * @param {Array[...GlMatrix.vec3]} vertices a list of 3d vertices.
+     * @param {GlMatrix.vec3[]} vertices a list of 3d vertices.
      * @param {GlMatrix.vec3} the centroid Point.
      */
     computeMassCentroid( vertices ) {
@@ -813,11 +813,12 @@ class Prim {
      * @link https://github.com/BabylonJS/Babylon.js/blob/3fe3372053ac58505dbf7a2a6f3f52e3b92670c8/src/Mesh/babylon.mesh.vertexData.js
      * @link http://gamedev.stackexchange.com/questions/8191/any-reliable-polygon-normal-calculation-code
      * @link https://www.opengl.org/wiki/Calculating_a_Surface_Normal
-     * @param {[...GLMatrix.vec3]} vertices the current 3d position coordinates.
+     * @param {GLMatrix.vec3[]} vertices the current 3d position coordinates.
      * @param {Array} current indices into the vertices.
-     * @param {[...GLMatrix.vec3]} normals the normals array to recalculate.
+     * @param {GLMatrix.vec3[]} normals the normals array to recalculate.
      * @param {Boolean} justFace if true, return the face normal for all three vertices in a triangle, 
      *        otherwise, compute each vertex normal separately.
+     * @returns {GlMatrix.vec3[]} an array of normals.
      */
     computeNormals ( vertices, indices, normals, justFace ) {
 
@@ -1060,6 +1061,8 @@ class Prim {
 
     /** 
      * Scale vertices directly, without changing position.
+     * @param {GlMatrix.vec3[]} vertices the input positions.
+     * @param {Number} scale the value to scale by.
      */
     computeScale ( vertices, scale ) {
 
@@ -3192,7 +3195,7 @@ class Prim {
      * @param {GLMatrix.vec3} acceleration movement vector (acceleration) of object.
      * @param {GLMatrix.vec3} rotation rotation vector (spin) around center of object.
      * @param {String} textureImage the path to an image used to create a texture.
-     * @param {Array|GLMatrix.vec4} color the default color(s) of the object.
+     * @param {GlMatrix.vec4[]|GLMatrix.vec4} color the default color(s) of the object.
      * @param {Boolean} applyTexToFace if true, apply texture to each face, else apply texture to 
      * the entire object.
      */
@@ -3274,21 +3277,20 @@ class Prim {
 
 ////////////////////////////////////////////////////////////////////////////////
         // SUBDIVIDE TEST
-        //if ( prim.name === 'colored cube' ) {
+        if ( prim.name === 'colored cube' ) {
+        //if ( prim.name === 'cubesphere' ) {
+
             let mesh = new Mesh( prim.geometry );
+
             window.mesh = mesh;
-            mesh.subdivide( true );
-            //mesh.subdivide( true ); // icosphere and some other shapes blow up
-            //mesh.subdivide( true );
-            //mesh.subdivide( true );
-            //mesh.subdivide( true );
-            //mesh.subdivide( true ); // topright connects to bottomleft 
-            let divided = mesh.vertexToGeometry();
-            prim.geometry.vertices.data = divided.vertices;
-            prim.geometry.indices.data = divided.indices;
-            prim.geometry.texCoords.data = divided.texCoords;
-            prim.geometry.normals.data = this.computeNormals( divided.vertices, divided.indices, [prim.geometry.normals.data] );
-        //}
+            mesh.subdivide( false );
+            mesh.subdivide( false );
+            mesh.subdivide( false );
+            mesh.subdivide( false );
+            mesh.subdivide( false );
+
+            prim.geometry.normals.data = this.computeNormals( prim.geometry.vertices.data, prim.geometry.indices.data, [prim.geometry.normals.data] );
+        }
 ////////////////////////////////////////////////////////////////////////////////
 
         // Create WebGL data buffers from geometry.
