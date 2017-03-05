@@ -420,7 +420,7 @@ class Mesh {
 
         // Pre-compute valency weighting values.
 
-        this.computeValencyWeights( 12 );
+        this.computeValencyWeights( 200 ); // was 12 DEBUG!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         // Convert flattened arrays to Vertex data structure (Index array remains the same).
 
@@ -429,20 +429,6 @@ class Mesh {
         // Check converted Vertices for validity.
 
         //this.isValid();
-
-    }
-
-    /** 
-     * Return the reversed key for this Edge, handling index 
-     * traversal 1->2 and 2->1
-     * @param {String} key the reversed key value.
-     * @returns {String} the reversed key
-     */
-    getRevKey ( key ) {
-
-        let keyArr = key.split( '-' );
-
-        return keyArr[ 1 ] + '-' + keyArr[ 0 ];
 
     }
 
@@ -516,6 +502,50 @@ class Mesh {
         v /= len;
 
         return new Vertex ( x, y, z, u, v, 0, null );
+
+    }
+
+    /** 
+     * Find Vertex objects which are in the same place and not directly 
+     * connected.
+     */
+    computeSeam () {
+
+        let vertexArr = this.vertexArr;
+
+        this.seamMap = [];
+
+        for ( let i = 0; i < vertexArr.length; i++ ) {
+
+            let vtx1 = vertexArr[ i ];
+
+            for ( let j = 0; j < vertexArr.length; j++ ) {
+
+                let vtx2 = vertexArr[ j ];
+
+                /////////////////console.log( "distance:" + vtx1.distance( vtx2 ) );
+
+                if ( vtx1 !== vtx2 && vtx1.distance( vtx2, true ) < 0.000000001 ) {
+
+                    ////////////////////console.log("seam at:" + i + ', ' + j)
+
+                    if ( ! this.seamMap[ i ] ) this.seamMap[ i ] = [ j ];
+                    else if ( this.seamMap.indexOf( i ) === -1 ) this.seamMap[ i ].push( j );
+
+                   //this.seamMap[ i ] = j;
+
+                    //this.seamMap[ j ] = i; // TODO: array at these positions, with all equivalent points.
+
+                    if ( ! this.seamMap[ j ] ) this.seamMap[ j ] = [ i ];
+                    else if ( this.seamMap.indexOf( j ) === -1 ) this.seamMap[ j ].push( i );
+
+                }
+
+            }
+
+        }
+
+        window.seamMap = this.seamMap;
 
     }
 
@@ -726,11 +756,42 @@ class Mesh {
          * the second Edge.ov[1] 'opposite' Vertex from the Edge they are inside. 
          */
 
+         let valenceArr = vtx.e;
+
         if ( valency < 5 ) {
 
             // if no return, the Vertices will be pulled away from the Mesh 'seam'.
+            /*
 
-            return false;
+            if ( this.seamMap[ vtx.idx ] ) {
+
+                valenceArr = vtx.e.slice();
+
+                //console.log( 'valency for ' + vtx.idx + ' = ' + valency + ', equivalent point at:' + this.seamMap[ vtx.idx ] + ' with valency' + vertexArr[ this.seamMap[ vtx.idx ] ].e.length );
+                // identical Vertices have the same valency?
+                ////////console.log( this.type + ', valency for ' + vtx.idx + ' = ' + valency + ', equivalent points at:' + this.seamMap[ vtx.idx ]);
+
+                for ( let i = 0; i < this.seamMap[ vtx.idx ].length; i++ ) {
+
+                        let ee = vertexArr[ this.seamMap[ vtx.idx ][ i ] ].e;
+
+                    for ( let j = 0; j < ee.length; j++ ) {
+
+                        if( valenceArr.indexOf( ee[ j ] ) === -1 ) {
+                            valenceArr.push(ee[ j ] )
+                        }
+                    }
+
+                }
+                console.log( this.type + ', valency for ' + vtx.idx + ' = ' + valency);
+                console.log( 'supervalency:' + valenceArr )
+
+
+            }
+
+            */
+
+             return false;
 
         }
 
@@ -761,9 +822,6 @@ class Mesh {
         for ( let j = 0; j < valency; j++ ) {
 
             // Get the surround Vertices for vtx.
-            //////window.vtx = vtx;
-            //////window.edge = edgeArr[ vtx.e[ j ] ];
-            //////console.log("VERTEX OPPOSITE:" + vtx.e[ j ] ); ////////////////////////////////
 
             const oppositeIndex = edgeArr[ vtx.e[ j ] ].getOpposite( vtx );
 
@@ -797,7 +855,7 @@ class Mesh {
      * Adjust Odd Vertices, 4 control Vertices. Don't compute if we don't have the 
      * second 'opposite' Vertex.
      * @param {Vertex} vtx the odd Vertex.
-     * @param {Vertex[]} vertexArr the array with all Vertices.
+     * @param {Vertex[]} vertexArr the ORIGINAL Vertex array with all Vertices.
      * @param {String} key the lookup key for the Edge containing this Vertex.
      * @param {String} revKey reversed lookup key for the Edge containing this Vertex.
      * @returns {Boolean} if the Vertex was changed, return true, else false.
@@ -836,7 +894,7 @@ class Mesh {
              * Vertices with no second control Vertex. They should 
              * not be computed.
              * 
-             * You can see the 'seams by changing f02 to 4.5 / 8 and 
+             * You can see the 'seams by changing f0w to 4.5 / 8 and 
              * you will get a jagged vertical seam'.
              *
              * For this to work, the 'even' Vertices must also be ignored.
@@ -849,6 +907,84 @@ class Mesh {
 
             let fv0 = vertexArr[ edge.ov[ 0 ] ];
             let fv1 = vertexArr[ edge.ov[ 1 ] ];
+
+
+            // Check our Seam map.
+            // TODO: CHECK THIS . SHOULD BE SOME
+            // TODO: centroid distance test
+
+            // TODO: generate old and new indices, then compare 
+            // TODO: in algorithm
+
+            // TODO: test for past mesh centroid, don't compute if it is
+
+            if ( fv0 === fv1 ) {
+
+                let oov = this.seamMap[ vtx.idx ];
+
+
+                if ( oov ) {
+
+                    console.log('seamMap:' + this.seamMap[ vtx.idx ] )
+
+                    let edg, ooov, oooov;
+
+                    console.log('have an oov')
+
+                    for ( let i = 0; i < oov.length; i++ ) {
+
+                        ooov = vertexArr[ oov[ i ] ];
+
+                        console.log('have an ooov, ' + ooov.idx + ' look for:' + fv0.idx + '-' + ooov.idx )
+
+                        // TODO: WE NEED TO SCAN THE EDGE ARRAY FOR ANY VERTICES WITH OUR OOV ONLY!!!!!!!!!!!!!!!!!!!
+                        // TODO: ////////////////////////////////////
+
+                        edg = edgeArr[ vtx.idx + '-' + ooov.idx ];
+
+                        console.log('edg:' + edg)
+
+                        console.log('try reverse, ' + ooov.idx + '-' + fv0.idx)
+
+                        console.log('edg:' + edg)
+
+                        if ( edg ) {
+
+                            oooov = vertexArr[ edg.ov[ 0 ] ];
+
+                            console.log('setting fv1 to ' + oov.idx )
+                            if ( ooov && oooov !== fv0 ) fv1 = ooov;
+                            else {
+                                oooov = vertexArr[ edg.ov[ 1 ] ];
+                                if ( ooov && ooov !== fv0 ) fv1 = ooov;
+                            }
+
+                        } else {
+
+                            edg = edgeArr[ ooov.idx + '-' + fv0.idx ];
+
+                            if ( edg ) {
+
+                                oooov = vertexArr[ edg.ov[ 0 ] ];
+
+                                console.log('setting fv1 to ' + ooov.idx )
+                                if ( ooov && ooov !== fv0 ) fv1 = ooov;
+                                else {
+                                    oooov = vertexArr[ edg.ov[ 1 ] ];
+                                    if ( ooov && ooov !== fv0 ) fv1 = ooov;
+                                }
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+
 
             // adjust only if the facing Vertices are different.
 
@@ -948,6 +1084,8 @@ class Mesh {
         // Compute Faces and Edges (hash back to Vertices).
 
         console.log( 'Mesh::subdivide(): ' + this.type + ' beginning subdivision, ' + this.iterations + ', starting size:' + this.oldVertexArr.length );
+
+        this.computeSeam();
 
         this.computeFaces();
 
@@ -1145,7 +1283,7 @@ class Mesh {
 
                 m0.idx = newVertexArr.length; // GETS ALTERED SEVERAL TIMES
 
-                if ( smooth ) { 
+                if ( smooth ) {  // in-place adjustment of m0's position
 
                     this.computeOdd( m0, vertexArr, i0 + '-' + i1, i1 + '-' + i0 ); // OLD INDEXES
 
@@ -1184,7 +1322,7 @@ class Mesh {
 
                 m1.idx = newVertexArr.length;
 
-                if ( smooth ) {
+                if ( smooth ) { // in-place adjustment of m1's position
 
                     this.computeOdd( m1, vertexArr, i1 + '-' + i2, i2 + '-' + i1 ); // OLD INDEXES
 
@@ -1220,9 +1358,9 @@ class Mesh {
 
                 m2.vertexArr = newVertexArr;
 
-                m2.idx = newVertexArr.length; ////////////
+                m2.idx = newVertexArr.length;
 
-                if ( smooth ) {
+                if ( smooth ) { // in-place adjustment of m2's position
 
                     this.computeOdd( m2, vertexArr, i2 + '-' + i0, i0 + '-' + i2 ); // OLD INDICES
 

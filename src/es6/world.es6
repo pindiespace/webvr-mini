@@ -267,8 +267,10 @@ class World {
             this.prim.typeList.SPHERE,
             'texsphere',
             vec5( 1.5, 1.5, 1.5, 0 ),   // dimensions
-            vec5( 30, 30, 30 ),         // divisions
-            vec3.fromValues(-5, -1.3, -2 ),       // position (absolute)
+            //vec5( 30, 30, 30 ),         // divisions
+            vec5( 3, 3, 3 ),
+            //vec3.fromValues(-5, -1.3, -1 ),       // position (absolute)
+            vec3.fromValues( -0, -0.0, 3.5 ),
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x

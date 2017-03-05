@@ -3277,20 +3277,22 @@ class Prim {
 
 ////////////////////////////////////////////////////////////////////////////////
         // SUBDIVIDE TEST
-        if ( prim.name === 'colored cube' ) {
+        //if ( prim.name === 'colored cube' ) {
         //if ( prim.name === 'cubesphere' ) {
+        //if ( prim.name === 'texsphere' ) {
 
             let mesh = new Mesh( prim.geometry );
 
             window.mesh = mesh;
-            mesh.subdivide( false );
-            mesh.subdivide( false );
-            mesh.subdivide( false );
-            mesh.subdivide( false );
-            mesh.subdivide( false );
+            mesh.subdivide( true );
+            //mesh.subdivide( true );
+            //mesh.subdivide( true );
+            //mesh.subdivide( true );
+            //mesh.subdivide( true );
+            //mesh.subdivide( true );
 
             prim.geometry.normals.data = this.computeNormals( prim.geometry.vertices.data, prim.geometry.indices.data, [prim.geometry.normals.data] );
-        }
+        //}
 ////////////////////////////////////////////////////////////////////////////////
 
         // Create WebGL data buffers from geometry.
