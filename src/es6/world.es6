@@ -268,7 +268,7 @@ class World {
             'texsphere',
             vec5( 1.5, 1.5, 1.5, 0 ),   // dimensions
             //vec5( 30, 30, 30 ),         // divisions
-            vec5( 3, 3, 3 ), // at least subdividions to smooth!
+            vec5( 30, 30, 30 ), // at least 8 subdividions to smooth!
             //vec3.fromValues(-5, -1.3, -1 ),       // position (absolute)
             vec3.fromValues( -0, -0.0, 3.5 ),
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z

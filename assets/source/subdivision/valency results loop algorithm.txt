@@ -20,7 +20,7 @@ capsule,             0,   0,   2,   2,  234,  0,  3002,   0,   0,  0,    0,  0
 dodecahedron,        0,   0,   0,  60,    0, 12,     0,   0,   0,  0,    0,  0
 
 -----------------------------
-Closest closest Vertex to a Vertex
+Closest Vertex to a Vertex
 
 0    1      2      3       4      5      6      7
 

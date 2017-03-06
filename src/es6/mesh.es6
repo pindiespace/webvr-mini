@@ -55,6 +55,23 @@
     }
 
     /** 
+     * Subtract two Coords objects.
+     * @param {Coords} the other Coords object.
+     * @returns {Coords} this Coords object.
+     */
+    subtract ( coords ) {
+
+        this.x -= coords.x;
+
+        this.y -= coords.y;
+
+        this.z -= coords.z;
+
+        return this;
+
+    }
+
+    /** 
      * Scale a Coords position outward.
      * @param {Number} scalar the value to scale this Coords by.
      * @returns {Coords} this Coords object.
@@ -220,6 +237,19 @@ class Vertex {
     add ( vtx ) {
 
         this.coords.add( vtx.coords );
+
+        return this;
+
+    }
+
+    /** 
+     * Subtract two Vertex objects, ignoring texture coordinates.
+     * @param {Vertex} vtx the Vertex object to subtract.
+     * @returns {Vertex} this Vertex.
+     */
+    subtract ( vtx ) {
+
+        this.coords.subtract( vtx.coords );
 
         return this;
 
@@ -453,6 +483,8 @@ class Mesh {
         this.valenceArr[ 3 ] = 3.0 / 16.0;
 
         for ( let i = 4; i < max; i++ ) {
+
+            //this.valenceArr[i] = 3.0 / ( 8.0 * i );
 
             this.valenceArr[ i ] = ( 1.0 / i ) * ( 5.0 / 8.0 
 
@@ -727,11 +759,11 @@ class Mesh {
 
         // Beta weighting for surround Vertices.
 
-        const beta = this.valenceArr[ valency ] * 0.4; ///////////////////////////////////////////
+        const beta = this.valenceArr[ valency ];
 
         // Beta weighting for the original ith Vertex.
 
-        const vertexWeightBeta = 1.0 - (valency * beta);
+        const vertexWeightBeta = 1.0 - ( valency * beta );
 
         let c = vtx.coords;
 
@@ -759,14 +791,10 @@ class Mesh {
 
             tc = op.texCoords;
 
-            x += beta * c.x;
-
-            y += beta * c.y;
-
-            z += beta * c.z;
-
-            u += beta * tc.u;
-
+            x += beta * c.x,
+            y += beta * c.y,
+            z += beta * c.z,
+            u += beta * tc.u,
             v += beta * tc.v;
 
         }
@@ -831,19 +859,12 @@ class Mesh {
              */
 
             const ev0 = vertexArr[ edge.v[ 0 ] ];
+
             const ev1 = vertexArr[ edge.v[ 1 ] ];
 
-            let fv0 = vertexArr[ edge.ov[ 0 ] ];
-            let fv1 = vertexArr[ edge.ov[ 1 ] ];
+            const fv0 = vertexArr[ edge.ov[ 0 ] ];
 
-
-            // Check our Seam map.
-            // TODO: CHECK THIS . SHOULD BE SOME
-            // TODO: centroid distance test
-            // TODO: generate old and new indices, then compare 
-            // TODO: in algorithm
-            // TODO: test for past mesh centroid, don't compute if it is
-
+            const fv1 = vertexArr[ edge.ov[ 1 ] ];
 
             // adjust only if the facing Vertices are different.
 
@@ -901,10 +922,6 @@ class Mesh {
      * @returns {Mesh} this Mesh object (for chaining).
      */
     subdivide ( smooth ) {
-
-        this.defVertexArr = this.vertexArr.slice(); ///////////////////////////////// COMPARE TO SEE DIFFS IN VERTEX ARR
-
-        this.defEdgeArr = this.edgeArr.slice(); //////////////////////////////////////
 
         this.geometryToVertex( this.geo.vertices.data, this.geo.indices.data, this.geo.texCoords.data );
 
@@ -1050,12 +1067,10 @@ class Mesh {
             */
 
 
-/*
+
             // if we just add a central point
 
             m0 = this.computeCentroid( v0, v1, v2 );
-
-            m0.scale( 1.02 ); //@@@@@@@@@@@@@@@@@@@@@@@@@@@DEBUG REMOVE
 
             newVertexArr.push( m0 );
 
@@ -1078,19 +1093,42 @@ class Mesh {
             let edg2 = edgeArr[ this.edgeMap[ key ] ];
             if ( ! edg2 ) edg2 = edgeArr[ this.edgeMap[ revKey ] ];
 
-            let wt = 0.85;
+            // TODO: might need to scale edges by distance of remote vertex
+            // TODO: wt = 1 gives a checkerboard
+            // TODO: wt < 1 gives checkerboard with pits.
+
+            // POSSIBLY PUSH UP OR DOWN BY NEIGHBORING CENTROID
+
+            let wt = 1;
             let awt = 1 - wt;
 
             let me0 = this.computeCentroid( 
-                vertexArr[ edg0.ov[ 0 ] ],
-                vertexArr[ edg1.ov[ 0 ] ],
-                vertexArr[ edg2.ov[ 0 ] ]
-            ).scale( 0.15 );
+                vertexArr[ edg0.ov[ 1 ] ],
+                vertexArr[ edg1.ov[ 1 ] ],
+                vertexArr[ edg2.ov[ 1 ] ]
+            ).scale( awt );
 
-            v0.scale( 0.85 ).add( me0 );
-            v1.scale( 0.85 ).add( me0 );
-            v2.scale( 0.85 ).add( me0 );
+            me0.texCoords.u *= awt;
+            me0.texCoords.v *= awt;
 
+            v0.texCoords.u *= wt;
+            v0.texCoords.v *= wt;
+            v0.texCoords.u += me0.texCoords.u;
+            v0.texCoords.v += me0.texCoords.v;
+
+            v1.texCoords.u *= wt;
+            v1.texCoords.v *= wt;
+            v1.texCoords.u += me0.texCoords.u;
+            v1.texCoords.v += me0.texCoords.v;
+
+            v2.texCoords.u *= wt;
+            v2.texCoords.v *= wt;
+            v2.texCoords.u += me0.texCoords.u;
+            v2.texCoords.v += me0.texCoords.v;
+
+            v0.scale( wt ).add( me0 );
+            v1.scale( wt ).add( me0 );
+            v2.scale( wt ).add( me0 );
 
             // push the new index
 
@@ -1100,7 +1138,9 @@ class Mesh {
                 mi0, ii2, ii0
             );
 
-*/
+
+
+/*
 
             if ( smooth ) {
 
@@ -1242,6 +1282,8 @@ class Mesh {
                 mi2, ii0, mi0    // A
 
             );
+
+*/
 
         } // end of index loop
 

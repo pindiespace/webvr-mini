@@ -360,7 +360,7 @@
 
 	var _prim2 = _interopRequireDefault(_prim);
 
-	var _world = __webpack_require__(27);
+	var _world = __webpack_require__(26);
 
 	var _world2 = _interopRequireDefault(_world);
 
@@ -381,7 +381,7 @@
 
 	// WebGL math library.
 
-	var glMatrix = __webpack_require__(28);
+	var glMatrix = __webpack_require__(27);
 
 	if (!glMatrix) {
 
@@ -424,7 +424,7 @@
 	    // require kronos webgl debug from node_modules
 	    // https://github.com/vorg/webgl-debug
 
-	    var debug = __webpack_require__(38);
+	    var debug = __webpack_require__(37);
 
 	    exports.webgl = webgl = new _webgl2.default(false, glMatrix, util, debug);
 
@@ -3847,7 +3847,7 @@
 /* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
-	'use strict';Object.defineProperty(exports,"__esModule",{value:true});var _createClass=function(){function defineProperties(target,props){for(var i=0;i<props.length;i++){var descriptor=props[i];descriptor.enumerable=descriptor.enumerable||false;descriptor.configurable=true;if("value"in descriptor)descriptor.writable=true;Object.defineProperty(target,descriptor.key,descriptor);}}return function(Constructor,protoProps,staticProps){if(protoProps)defineProperties(Constructor.prototype,protoProps);if(staticProps)defineProperties(Constructor,staticProps);return Constructor;};}();var _map2d=__webpack_require__(21);var _map2d2=_interopRequireDefault(_map2d);var _map3d=__webpack_require__(23);var _map3d2=_interopRequireDefault(_map3d);var _mesh=__webpack_require__(24);var _mesh2=_interopRequireDefault(_mesh);var _geoObj=__webpack_require__(39);var _geoObj2=_interopRequireDefault(_geoObj);function _interopRequireDefault(obj){return obj&&obj.__esModule?obj:{default:obj};}function _classCallCheck(instance,Constructor){if(!(instance instanceof Constructor)){throw new TypeError("Cannot call a class as a function");}}var Prim=function(){/** 
+	'use strict';Object.defineProperty(exports,"__esModule",{value:true});var _createClass=function(){function defineProperties(target,props){for(var i=0;i<props.length;i++){var descriptor=props[i];descriptor.enumerable=descriptor.enumerable||false;descriptor.configurable=true;if("value"in descriptor)descriptor.writable=true;Object.defineProperty(target,descriptor.key,descriptor);}}return function(Constructor,protoProps,staticProps){if(protoProps)defineProperties(Constructor.prototype,protoProps);if(staticProps)defineProperties(Constructor,staticProps);return Constructor;};}();var _map2d=__webpack_require__(21);var _map2d2=_interopRequireDefault(_map2d);var _map3d=__webpack_require__(23);var _map3d2=_interopRequireDefault(_map3d);var _mesh=__webpack_require__(24);var _mesh2=_interopRequireDefault(_mesh);var _geoObj=__webpack_require__(25);var _geoObj2=_interopRequireDefault(_geoObj);function _interopRequireDefault(obj){return obj&&obj.__esModule?obj:{default:obj};}function _classCallCheck(instance,Constructor){if(!(instance instanceof Constructor)){throw new TypeError("Cannot call a class as a function");}}var Prim=function(){/** 
 	     * @class
 	     * Create object primitives, and return vertex and index data 
 	     * suitable for creating a VBO and IBO.
@@ -5734,6 +5734,25 @@
 	                }
 
 	                /** 
+	                 * Subtract two Coords objects.
+	                 * @param {Coords} the other Coords object.
+	                 * @returns {Coords} this Coords object.
+	                 */
+
+	        }, {
+	                key: 'subtract',
+	                value: function subtract(coords) {
+
+	                        this.x -= coords.x;
+
+	                        this.y -= coords.y;
+
+	                        this.z -= coords.z;
+
+	                        return this;
+	                }
+
+	                /** 
 	                 * Scale a Coords position outward.
 	                 * @param {Number} scalar the value to scale this Coords by.
 	                 * @returns {Coords} this Coords object.
@@ -5919,6 +5938,21 @@
 	                value: function add(vtx) {
 
 	                        this.coords.add(vtx.coords);
+
+	                        return this;
+	                }
+
+	                /** 
+	                 * Subtract two Vertex objects, ignoring texture coordinates.
+	                 * @param {Vertex} vtx the Vertex object to subtract.
+	                 * @returns {Vertex} this Vertex.
+	                 */
+
+	        }, {
+	                key: 'subtract',
+	                value: function subtract(vtx) {
+
+	                        this.coords.subtract(vtx.coords);
 
 	                        return this;
 	                }
@@ -6147,6 +6181,8 @@
 	                        this.valenceArr[0] = 0.0, this.valenceArr[1] = 0.0, this.valenceArr[2] = 1.0 / 8.0, this.valenceArr[3] = 3.0 / 16.0;
 
 	                        for (var i = 4; i < max; i++) {
+
+	                                //this.valenceArr[i] = 3.0 / ( 8.0 * i );
 
 	                                this.valenceArr[i] = 1.0 / i * (5.0 / 8.0 - Math.pow(3.0 / 8.0 + 1.0 / 4.0 * Math.cos(2.0 * Math.PI / i), 2.0));
 	                        }
@@ -6402,7 +6438,7 @@
 
 	                        // Beta weighting for surround Vertices.
 
-	                        var beta = this.valenceArr[valency] * 0.4; ///////////////////////////////////////////
+	                        var beta = this.valenceArr[valency];
 
 	                        // Beta weighting for the original ith Vertex.
 
@@ -6434,15 +6470,7 @@
 
 	                                tc = op.texCoords;
 
-	                                x += beta * c.x;
-
-	                                y += beta * c.y;
-
-	                                z += beta * c.z;
-
-	                                u += beta * tc.u;
-
-	                                v += beta * tc.v;
+	                                x += beta * c.x, y += beta * c.y, z += beta * c.z, u += beta * tc.u, v += beta * tc.v;
 	                        }
 
 	                        // Save the recomputed Vertex
@@ -6506,18 +6534,12 @@
 	                                 */
 
 	                                var ev0 = vertexArr[edge.v[0]];
+
 	                                var ev1 = vertexArr[edge.v[1]];
 
 	                                var fv0 = vertexArr[edge.ov[0]];
+
 	                                var fv1 = vertexArr[edge.ov[1]];
-
-	                                // Check our Seam map.
-	                                // TODO: CHECK THIS . SHOULD BE SOME
-	                                // TODO: centroid distance test
-	                                // TODO: generate old and new indices, then compare 
-	                                // TODO: in algorithm
-	                                // TODO: test for past mesh centroid, don't compute if it is
-
 
 	                                // adjust only if the facing Vertices are different.
 
@@ -6566,10 +6588,6 @@
 	        }, {
 	                key: 'subdivide',
 	                value: function subdivide(smooth) {
-
-	                        this.defVertexArr = this.vertexArr.slice(); ///////////////////////////////// COMPARE TO SEE DIFFS IN VERTEX ARR
-
-	                        this.defEdgeArr = this.edgeArr.slice(); //////////////////////////////////////
 
 	                        this.geometryToVertex(this.geo.vertices.data, this.geo.indices.data, this.geo.texCoords.data);
 
@@ -6709,185 +6727,212 @@
 	                                  );
 	                                */
 
+	                                // if we just add a central point
+
+	                                m0 = this.computeCentroid(v0, v1, v2);
+
+	                                newVertexArr.push(m0);
+
+	                                mi0 = newVertexArr.length - 1;
+
+	                                // get the surround points
+
+	                                var key = i0 + '-' + i1;
+	                                var revKey = i1 + '-' + i0;
+	                                var edg0 = edgeArr[this.edgeMap[key]];
+	                                if (!edg0) edg0 = edgeArr[this.edgeMap[revKey]];
+
+	                                key = i1 + '-' + i2;
+	                                revKey = i2 + '-' + i1;
+	                                var edg1 = edgeArr[this.edgeMap[key]];
+	                                if (!edg1) edg1 = edgeArr[this.edgeMap[revKey]];
+
+	                                key = i2 + '-' + i0;
+	                                revKey = i0 + '-' + i2;
+	                                var edg2 = edgeArr[this.edgeMap[key]];
+	                                if (!edg2) edg2 = edgeArr[this.edgeMap[revKey]];
+
+	                                // TODO: might need to scale edges by distance of remote vertex
+	                                // TODO: wt = 1 gives a checkerboard
+	                                // TODO: wt < 1 gives checkerboard with pits.
+
+	                                // POSSIBLY PUSH UP OR DOWN BY NEIGHBORING CENTROID
+
+	                                var wt = 1;
+	                                var awt = 1 - wt;
+
+	                                var me0 = this.computeCentroid(vertexArr[edg0.ov[1]], vertexArr[edg1.ov[1]], vertexArr[edg2.ov[1]]).scale(awt);
+
+	                                me0.texCoords.u *= awt;
+	                                me0.texCoords.v *= awt;
+
+	                                v0.texCoords.u *= wt;
+	                                v0.texCoords.v *= wt;
+	                                v0.texCoords.u += me0.texCoords.u;
+	                                v0.texCoords.v += me0.texCoords.v;
+
+	                                v1.texCoords.u *= wt;
+	                                v1.texCoords.v *= wt;
+	                                v1.texCoords.u += me0.texCoords.u;
+	                                v1.texCoords.v += me0.texCoords.v;
+
+	                                v2.texCoords.u *= wt;
+	                                v2.texCoords.v *= wt;
+	                                v2.texCoords.u += me0.texCoords.u;
+	                                v2.texCoords.v += me0.texCoords.v;
+
+	                                v0.scale(wt).add(me0);
+	                                v1.scale(wt).add(me0);
+	                                v2.scale(wt).add(me0);
+
+	                                // push the new index
+
+	                                newIndexArr.push(mi0, ii0, ii1, mi0, ii1, ii2, mi0, ii2, ii0);
+
 	                                /*
-	                                            // if we just add a central point
 	                                
-	                                            m0 = this.computeCentroid( v0, v1, v2 );
+	                                            if ( smooth ) {
 	                                
-	                                            m0.scale( 1.02 ); //@@@@@@@@@@@@@@@@@@@@@@@@@@@DEBUG REMOVE
+	                                                this.computeEven( v0, vertexArr );
 	                                
-	                                            newVertexArr.push( m0 );
+	                                                this.computeEven( v1, vertexArr );
 	                                
-	                                            mi0 = newVertexArr.length - 1;
+	                                                this.computeEven( v2, vertexArr );
 	                                
-	                                            // get the surround points
+	                                            }
 	                                
-	                                            let key = i0 + '-' + i1;
-	                                            let revKey = i1 + '-' + i0;
-	                                            let edg0 = edgeArr[ this.edgeMap[ key ] ];
-	                                            if ( ! edg0 ) edg0 = edgeArr[ this.edgeMap[ revKey ] ];
+	                                            // if we add three midpoints
 	                                
-	                                            key = i1 + '-' + i2;
-	                                            revKey = i2 + '-' + i1;
-	                                            let edg1 = edgeArr[ this.edgeMap[ key ] ];
-	                                            if ( ! edg1 ) edg1 = edgeArr[ this.edgeMap[ revKey ] ];
+	                                            // First midpoint.
 	                                
-	                                            key = i2+ '-' + i0;
-	                                            revKey = i0 + '-' + i2;
-	                                            let edg2 = edgeArr[ this.edgeMap[ key ] ];
-	                                            if ( ! edg2 ) edg2 = edgeArr[ this.edgeMap[ revKey ] ];
+	                                            let key = ii0 + '-' + ii1;
 	                                
-	                                            let wt = 0.85;
-	                                            let awt = 1 - wt;
+	                                            let revKey = ii1 + '-' + ii0;
 	                                
-	                                            let me0 = this.computeCentroid( 
-	                                                vertexArr[ edg0.ov[ 0 ] ],
-	                                                vertexArr[ edg1.ov[ 0 ] ],
-	                                                vertexArr[ edg2.ov[ 0 ] ]
-	                                            ).scale( 0.15 );
+	                                            if( midHash[ key ] ) { 
 	                                
-	                                            v0.scale( 0.85 ).add( me0 );
-	                                            v1.scale( 0.85 ).add( me0 );
-	                                            v2.scale( 0.85 ).add( me0 );
+	                                                mi0 = midHash[ key ];
+	                                
+	                                            } else if ( midHash[ revKey] ) {
+	                                
+	                                                mi0 = midhash[ revKey ];
+	                                
+	                                            } else { 
+	                                
+	                                                m0 = this.computeCentroid( v0, v1 );
+	                                
+	                                                m0.vertexArr = newVertexArr;   ////////////////////////
+	                                
+	                                                m0.idx = newVertexArr.length; // GETS ALTERED SEVERAL TIMES
+	                                
+	                                                if ( smooth ) {  // in-place adjustment of m0's position
+	                                
+	                                                    this.computeOdd( m0, vertexArr, i0 + '-' + i1, i1 + '-' + i0 ); // OLD INDEXES
+	                                
+	                                                }
+	                                
+	                                                newVertexArr.push( m0 ); 
+	                                
+	                                                mi0 = newVertexArr.length - 1;
+	                                
+	                                                midHash[ key ] = mi0;
+	                                
+	                                                midHash[ revKey ] = mi0;
+	                                
+	                                            }
 	                                
 	                                
-	                                            // push the new index
+	                                            // Second midpoint.
+	                                
+	                                            key = ii1 + '-' + ii2;
+	                                
+	                                            revKey = ii2 + '-' + ii1;
+	                                
+	                                            if( midHash[ key ] ) {
+	                                
+	                                                mi1 = midHash[ key ];
+	                                
+	                                            } else if ( midHash[ revKey] ) {
+	                                
+	                                                mi1 = midhash[ revKey ];
+	                                
+	                                            } else { 
+	                                
+	                                                m1 = this.computeCentroid( v1, v2 );
+	                                
+	                                                m1.vertexArr = newVertexArr;
+	                                
+	                                                m1.idx = newVertexArr.length;
+	                                
+	                                                if ( smooth ) { // in-place adjustment of m1's position
+	                                
+	                                                    this.computeOdd( m1, vertexArr, i1 + '-' + i2, i2 + '-' + i1 ); // OLD INDEXES
+	                                
+	                                                }
+	                                
+	                                                newVertexArr.push( m1 ); 
+	                                
+	                                                mi1 = newVertexArr.length - 1;
+	                                
+	                                                midHash[ key ] = mi1;
+	                                
+	                                                midHash[ revKey ] = mi1;
+	                                
+	                                            }
+	                                
+	                                            // Third midpoint.
+	                                
+	                                            key = ii2 + '-' + ii0;
+	                                
+	                                            revKey = ii0 + '-' + ii2;
+	                                
+	                                            if( midHash[ key ] ) {
+	                                
+	                                                mi2 = midHash[ key ];
+	                                
+	                                            } else if ( midHash[ revKey] ) {
+	                                
+	                                                mi2 = midhash[ revKey ];
+	                                
+	                                            } else { 
+	                                
+	                                                m2 = this.computeCentroid( v2, v0 );
+	                                
+	                                                m2.vertexArr = newVertexArr;
+	                                
+	                                                m2.idx = newVertexArr.length;
+	                                
+	                                                if ( smooth ) { // in-place adjustment of m2's position
+	                                
+	                                                    this.computeOdd( m2, vertexArr, i2 + '-' + i0, i0 + '-' + i2 ); // OLD INDICES
+	                                
+	                                                }
+	                                
+	                                                newVertexArr.push( m2 ); 
+	                                
+	                                                mi2 = newVertexArr.length - 1;
+	                                
+	                                                midHash[ key ] = mi2;
+	                                
+	                                                midHash[ revKey ] = mi2;
+	                                
+	                                            }
+	                                
+	                                            // Push new indices
 	                                
 	                                            newIndexArr.push(
-	                                                mi0, ii0, ii1,
-	                                                mi0, ii1, ii2,
-	                                                mi0, ii2, ii0
+	                                
+	                                                mi0, ii1, mi1,   // B  
+	                                
+	                                                mi1, mi2, mi0,   // C
+	                                
+	                                                mi2, mi1, ii2,   // D
+	                                
+	                                                mi2, ii0, mi0    // A
+	                                
 	                                            );
 	                                
 	                                */
-
-	                                if (smooth) {
-
-	                                        this.computeEven(v0, vertexArr);
-
-	                                        this.computeEven(v1, vertexArr);
-
-	                                        this.computeEven(v2, vertexArr);
-	                                }
-
-	                                // if we add three midpoints
-
-	                                // First midpoint.
-
-	                                var key = ii0 + '-' + ii1;
-
-	                                var revKey = ii1 + '-' + ii0;
-
-	                                if (midHash[key]) {
-
-	                                        mi0 = midHash[key];
-	                                } else if (midHash[revKey]) {
-
-	                                        mi0 = midhash[revKey];
-	                                } else {
-
-	                                        m0 = this.computeCentroid(v0, v1);
-
-	                                        m0.vertexArr = newVertexArr; ////////////////////////
-
-	                                        m0.idx = newVertexArr.length; // GETS ALTERED SEVERAL TIMES
-
-	                                        if (smooth) {
-	                                                // in-place adjustment of m0's position
-
-	                                                this.computeOdd(m0, vertexArr, i0 + '-' + i1, i1 + '-' + i0); // OLD INDEXES
-	                                        }
-
-	                                        newVertexArr.push(m0);
-
-	                                        mi0 = newVertexArr.length - 1;
-
-	                                        midHash[key] = mi0;
-
-	                                        midHash[revKey] = mi0;
-	                                }
-
-	                                // Second midpoint.
-
-	                                key = ii1 + '-' + ii2;
-
-	                                revKey = ii2 + '-' + ii1;
-
-	                                if (midHash[key]) {
-
-	                                        mi1 = midHash[key];
-	                                } else if (midHash[revKey]) {
-
-	                                        mi1 = midhash[revKey];
-	                                } else {
-
-	                                        m1 = this.computeCentroid(v1, v2);
-
-	                                        m1.vertexArr = newVertexArr;
-
-	                                        m1.idx = newVertexArr.length;
-
-	                                        if (smooth) {
-	                                                // in-place adjustment of m1's position
-
-	                                                this.computeOdd(m1, vertexArr, i1 + '-' + i2, i2 + '-' + i1); // OLD INDEXES
-	                                        }
-
-	                                        newVertexArr.push(m1);
-
-	                                        mi1 = newVertexArr.length - 1;
-
-	                                        midHash[key] = mi1;
-
-	                                        midHash[revKey] = mi1;
-	                                }
-
-	                                // Third midpoint.
-
-	                                key = ii2 + '-' + ii0;
-
-	                                revKey = ii0 + '-' + ii2;
-
-	                                if (midHash[key]) {
-
-	                                        mi2 = midHash[key];
-	                                } else if (midHash[revKey]) {
-
-	                                        mi2 = midhash[revKey];
-	                                } else {
-
-	                                        m2 = this.computeCentroid(v2, v0);
-
-	                                        m2.vertexArr = newVertexArr;
-
-	                                        m2.idx = newVertexArr.length;
-
-	                                        if (smooth) {
-	                                                // in-place adjustment of m2's position
-
-	                                                this.computeOdd(m2, vertexArr, i2 + '-' + i0, i0 + '-' + i2); // OLD INDICES
-	                                        }
-
-	                                        newVertexArr.push(m2);
-
-	                                        mi2 = newVertexArr.length - 1;
-
-	                                        midHash[key] = mi2;
-
-	                                        midHash[revKey] = mi2;
-	                                }
-
-	                                // Push new indices
-
-	                                newIndexArr.push(mi0, ii1, mi1, // B  
-
-	                                mi1, mi2, mi0, // C
-
-	                                mi2, mi1, ii2, // D
-
-	                                mi2, ii0, mi0 // A
-
-	                                );
 	                        } // end of index loop
 
 	                        // NOTE: might be missing end of loop here.
@@ -7058,9 +7103,323 @@
 	exports.default = Mesh;
 
 /***/ },
-/* 25 */,
-/* 26 */,
-/* 27 */
+/* 25 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	                value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var GeoObj = function () {
+
+	                /** 
+	                 * @class
+	                 * Create WebGL buffers from flattened vertex, index, texture 
+	                 * and other coordinate data.
+	                 * @constructor
+	                 * @param {Util} util shared utility methods, patches, polyfills.
+	                 * @param {WebGL} webgl object holding the WebGLRenderingContext.
+	                 */
+	                function GeoObj(util, webgl) {
+	                                _classCallCheck(this, GeoObj);
+
+	                                this.webgl = webgl;
+
+	                                this.util = util;
+
+	                                this.FLOAT32 = 'float32', this.UINT32 = 'uint32';
+
+	                                this.makeBuffers = true, this.vertices = {
+
+	                                                data: [],
+
+	                                                buffer: null,
+
+	                                                itemSize: 3,
+
+	                                                numItems: 0
+
+	                                }, this.indices = { // where to start drawing GL_TRIANGLES.
+
+	                                                data: [],
+
+	                                                buffer: null,
+
+	                                                itemSize: 1,
+
+	                                                numItems: 0
+
+	                                }, this.sides = { // a collection of triangles creating a side on the shape.
+
+	                                                data: [],
+
+	                                                buffer: null,
+
+	                                                itemSize: 3,
+
+	                                                numItems: 0
+
+	                                }, this.normals = {
+
+	                                                data: [],
+
+	                                                buffer: null,
+
+	                                                itemSize: 3,
+
+	                                                numItems: 0
+
+	                                }, this.tangents = {
+
+	                                                data: [],
+
+	                                                buffer: null,
+
+	                                                itemSize: 4,
+
+	                                                numItems: 0
+
+	                                }, this.texCoords = {
+
+	                                                data: [],
+
+	                                                buffer: null,
+
+	                                                itemSize: 2,
+
+	                                                numItems: 0
+
+	                                }, this.colors = {
+
+	                                                data: [],
+
+	                                                buffer: null,
+
+	                                                itemSize: 4,
+
+	                                                numItems: 0
+
+	                                };
+	                } // end of constructor
+
+	                /** 
+	                 * Add data to create buffers, works if existing data is present. However, 
+	                 * indices must be consistent!
+	                 */
+
+
+	                _createClass(GeoObj, [{
+	                                key: 'addBufferData',
+	                                value: function addBufferData(vertices, indices, normals, texCoords) {
+	                                                var tangents = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : [];
+	                                                var colors = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : [];
+
+
+	                                                var concat = this.util.concatArr;
+
+	                                                this.vertices.data = concat(this.vertices.data, vertices), this.indices.data = concat(this.indices.data, indices), this.normals.data = concat(this.normals.data, normals), this.texCoords.data = concat(this.texCoords.data, texCoords), this.tangents.data = concat(this.tangents.data, tangents), this.colors.data = concat(this.colors.data, colors);
+
+	                                                return this;
+	                                }
+
+	                                /** 
+	                                 * Bind a WebGL buffer
+	                                 * @param {Object} o the bufferObj for for particular array (e.g. vertex, tangent).
+	                                 * @param {String} type the typed-array type.
+	                                 */
+
+	                }, {
+	                                key: 'bindGLBuffer',
+	                                value: function bindGLBuffer(o, type) {
+
+	                                                var gl = this.webgl.getContext();
+
+	                                                o.buffer = gl.createBuffer();
+
+	                                                gl.bindBuffer(gl.ARRAY_BUFFER, o.buffer);
+
+	                                                switch (type) {
+
+	                                                                case this.FLOAT32:
+
+	                                                                                if (o.data instanceof Float32Array) {
+
+	                                                                                                gl.bufferData(gl.ARRAY_BUFFER, o.data, gl.STATIC_DRAW);
+	                                                                                } else {
+
+	                                                                                                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(o.data), gl.STATIC_DRAW);
+	                                                                                }
+
+	                                                                                o.numItems = o.data.length / o.itemSize;
+
+	                                                                                break;
+
+	                                                                case this.UINT16:
+
+	                                                                                o.buffer = gl.createBuffer();
+
+	                                                                                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, o.buffer);
+
+	                                                                                gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(o.data), gl.STATIC_DRAW);
+
+	                                                                                o.numItems = o.data.length / o.itemSize;
+
+	                                                                                break;
+
+	                                                                default:
+
+	                                                                                console.error('GeoObj::bindGLBuffer(): invalid WebGL buffer type ' + type);
+
+	                                                                                break;
+
+	                                                }
+	                                }
+
+	                                /** 
+	                                 * Create WebGL buffers using geometry data. Note that the 
+	                                 * size is for flattened arrays.
+	                                 * an array of vertices, in glMatrix.vec3 objects.
+	                                 * an array of indices for the vertices.
+	                                 * an array of texture coordinates, in glMatrix.vec2 format.
+	                                 * an array of normals, in glMatrix.vec3 format.
+	                                 * an array of tangents, in glMatrix.vec3 format.
+	                                 * an array of colors, in glMatrix.vec4 format.
+	                                 */
+
+	                }, {
+	                                key: 'createGLBuffers',
+	                                value: function createGLBuffers() {
+
+	                                                var gl = this.webgl.getContext();
+
+	                                                // Vertex Buffer Object.
+
+	                                                var o = this.vertices;
+
+	                                                if (!o.data.length) {
+
+	                                                                console.log('GeoObj::createGLBuffers(): no vertices present, creating default');
+
+	                                                                o.data = new Float32Array([0, 0, 0]);
+	                                                }
+
+	                                                this.bindGLBuffer(o, this.FLOAT32);
+
+	                                                // Create the Index buffer.
+
+	                                                o = this.indices;
+
+	                                                if (!o.data.length) {
+
+	                                                                console.log('GeoObj::createGLBuffers(): no indices present, creating default');
+
+	                                                                o.data = new Uint16Array([1]);
+	                                                }
+
+	                                                this.bindGLBuffer(o, this.UINT16);
+
+	                                                // Create the Sides buffer, a kind of indices buffer.
+
+	                                                o = this.sides;
+
+	                                                if (!o.data.length) {
+
+	                                                                console.warn('GeoObj::createGLBuffers(): no sides present, creating default');
+
+	                                                                o.data = new Uint16Array([1]);
+	                                                }
+
+	                                                this.bindGLBuffer(o, this.UINT16);
+
+	                                                // create the Normals buffer.
+
+	                                                o = this.normals;
+
+	                                                if (!o.data.length) {
+
+	                                                                console.log('GeoObj::createGLBuffers(): no normals, present, creating default');
+
+	                                                                o.data = new Float32Array([0, 1, 0]);
+	                                                }
+
+	                                                this.bindGLBuffer(o, this.FLOAT32);
+
+	                                                // Create the primary Texture buffer.
+
+	                                                o = this.texCoords;
+
+	                                                if (!o.data.length) {
+
+	                                                                console.warn('GeoObj::createGLBuffers(): no texture present, creating default');
+
+	                                                                o.data = new Float32Array([0, 0]);
+	                                                }
+
+	                                                this.bindGLBuffer(o, this.FLOAT32);
+
+	                                                // create the Tangents Buffer.
+
+	                                                o = this.tangents;
+
+	                                                if (!o.data.length) {
+
+	                                                                console.warn('GeoObj::createGLBuffers(): no tangents present, creating default');
+
+	                                                                o.data = new Float32Array([0, 0, 0, 0]);
+	                                                }
+
+	                                                this.bindGLBuffer(o, this.FLOAT32);
+
+	                                                // Create the Colors buffer.
+
+	                                                o = this.colors;
+
+	                                                if (!o.data.length) {
+
+	                                                                console.warn('GeoObj::createGLBuffers(): no colors present, creating default color');
+
+	                                                                o.data = new Float32Array(this.computeColors(this.normals.data, o.data));
+	                                                }
+
+	                                                this.bindGLBuffer(o, this.FLOAT32);
+
+	                                                // Set the flag.
+
+	                                                this.makeBuffers = false;
+
+	                                                return this;
+	                                }
+
+	                                /** 
+	                                * Create default colors for Prim color array.
+	                                */
+
+	                }, {
+	                                key: 'computeColors',
+	                                value: function computeColors(normals, colors) {
+
+	                                                for (var i = 0; i < normals.length; i += 3) {
+
+	                                                                colors.push(normals[i], normals[i + 1], normals[i + 2], 1.0);
+	                                                }
+
+	                                                return colors;
+	                                }
+	                }]);
+
+	                return GeoObj;
+	}();
+
+	exports.default = GeoObj;
+
+/***/ },
+/* 26 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -7307,7 +7666,7 @@
 
 	                        this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.SPHERE, 'texsphere', vec5(1.5, 1.5, 1.5, 0), // dimensions
 	                        //vec5( 30, 30, 30 ),         // divisions
-	                        vec5(3, 3, 3), // at least subdividions to smooth!
+	                        vec5(30, 30, 30), // at least 8 subdividions to smooth!
 	                        //vec3.fromValues(-5, -1.3, -1 ),       // position (absolute)
 	                        vec3.fromValues(-0, -0.0, 3.5), vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
@@ -7512,7 +7871,7 @@
 	exports.default = World;
 
 /***/ },
-/* 28 */
+/* 27 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -7543,18 +7902,18 @@
 	THE SOFTWARE. */
 	// END HEADER
 
-	exports.glMatrix = __webpack_require__(29);
-	exports.mat2 = __webpack_require__(30);
-	exports.mat2d = __webpack_require__(31);
-	exports.mat3 = __webpack_require__(32);
-	exports.mat4 = __webpack_require__(33);
-	exports.quat = __webpack_require__(34);
-	exports.vec2 = __webpack_require__(37);
-	exports.vec3 = __webpack_require__(35);
-	exports.vec4 = __webpack_require__(36);
+	exports.glMatrix = __webpack_require__(28);
+	exports.mat2 = __webpack_require__(29);
+	exports.mat2d = __webpack_require__(30);
+	exports.mat3 = __webpack_require__(31);
+	exports.mat4 = __webpack_require__(32);
+	exports.quat = __webpack_require__(33);
+	exports.vec2 = __webpack_require__(36);
+	exports.vec3 = __webpack_require__(34);
+	exports.vec4 = __webpack_require__(35);
 
 /***/ },
-/* 29 */
+/* 28 */
 /***/ function(module, exports) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -7630,7 +7989,7 @@
 
 
 /***/ },
-/* 30 */
+/* 29 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -7653,7 +8012,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(29);
+	var glMatrix = __webpack_require__(28);
 
 	/**
 	 * @class 2x2 Matrix
@@ -8072,7 +8431,7 @@
 
 
 /***/ },
-/* 31 */
+/* 30 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -8095,7 +8454,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(29);
+	var glMatrix = __webpack_require__(28);
 
 	/**
 	 * @class 2x3 Matrix
@@ -8547,7 +8906,7 @@
 
 
 /***/ },
-/* 32 */
+/* 31 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -8570,7 +8929,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(29);
+	var glMatrix = __webpack_require__(28);
 
 	/**
 	 * @class 3x3 Matrix
@@ -9299,7 +9658,7 @@
 
 
 /***/ },
-/* 33 */
+/* 32 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -9322,7 +9681,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(29);
+	var glMatrix = __webpack_require__(28);
 
 	/**
 	 * @class 4x4 Matrix
@@ -11441,7 +11800,7 @@
 
 
 /***/ },
-/* 34 */
+/* 33 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -11464,10 +11823,10 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(29);
-	var mat3 = __webpack_require__(32);
-	var vec3 = __webpack_require__(35);
-	var vec4 = __webpack_require__(36);
+	var glMatrix = __webpack_require__(28);
+	var mat3 = __webpack_require__(31);
+	var vec3 = __webpack_require__(34);
+	var vec4 = __webpack_require__(35);
 
 	/**
 	 * @class Quaternion
@@ -12047,7 +12406,7 @@
 
 
 /***/ },
-/* 35 */
+/* 34 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -12070,7 +12429,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(29);
+	var glMatrix = __webpack_require__(28);
 
 	/**
 	 * @class 3 Dimensional Vector
@@ -12830,7 +13189,7 @@
 
 
 /***/ },
-/* 36 */
+/* 35 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -12853,7 +13212,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(29);
+	var glMatrix = __webpack_require__(28);
 
 	/**
 	 * @class 4 Dimensional Vector
@@ -13445,7 +13804,7 @@
 
 
 /***/ },
-/* 37 */
+/* 36 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -13468,7 +13827,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(29);
+	var glMatrix = __webpack_require__(28);
 
 	/**
 	 * @class 2 Dimensional Vector
@@ -14038,7 +14397,7 @@
 
 
 /***/ },
-/* 38 */
+/* 37 */
 /***/ function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {/*
@@ -14997,322 +15356,6 @@
 	module.exports = WebGLDebugUtils;
 
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
-
-/***/ },
-/* 39 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	                value: true
-	});
-
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	var GeoObj = function () {
-
-	                /** 
-	                 * @class
-	                 * Create WebGL buffers from flattened vertex, index, texture 
-	                 * and other coordinate data.
-	                 * @constructor
-	                 * @param {Util} util shared utility methods, patches, polyfills.
-	                 * @param {WebGL} webgl object holding the WebGLRenderingContext.
-	                 */
-	                function GeoObj(util, webgl) {
-	                                _classCallCheck(this, GeoObj);
-
-	                                this.webgl = webgl;
-
-	                                this.util = util;
-
-	                                this.FLOAT32 = 'float32', this.UINT32 = 'uint32';
-
-	                                this.makeBuffers = true, this.vertices = {
-
-	                                                data: [],
-
-	                                                buffer: null,
-
-	                                                itemSize: 3,
-
-	                                                numItems: 0
-
-	                                }, this.indices = { // where to start drawing GL_TRIANGLES.
-
-	                                                data: [],
-
-	                                                buffer: null,
-
-	                                                itemSize: 1,
-
-	                                                numItems: 0
-
-	                                }, this.sides = { // a collection of triangles creating a side on the shape.
-
-	                                                data: [],
-
-	                                                buffer: null,
-
-	                                                itemSize: 3,
-
-	                                                numItems: 0
-
-	                                }, this.normals = {
-
-	                                                data: [],
-
-	                                                buffer: null,
-
-	                                                itemSize: 3,
-
-	                                                numItems: 0
-
-	                                }, this.tangents = {
-
-	                                                data: [],
-
-	                                                buffer: null,
-
-	                                                itemSize: 4,
-
-	                                                numItems: 0
-
-	                                }, this.texCoords = {
-
-	                                                data: [],
-
-	                                                buffer: null,
-
-	                                                itemSize: 2,
-
-	                                                numItems: 0
-
-	                                }, this.colors = {
-
-	                                                data: [],
-
-	                                                buffer: null,
-
-	                                                itemSize: 4,
-
-	                                                numItems: 0
-
-	                                };
-	                } // end of constructor
-
-	                /** 
-	                 * Add data to create buffers, works if existing data is present. However, 
-	                 * indices must be consistent!
-	                 */
-
-
-	                _createClass(GeoObj, [{
-	                                key: 'addBufferData',
-	                                value: function addBufferData(vertices, indices, normals, texCoords) {
-	                                                var tangents = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : [];
-	                                                var colors = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : [];
-
-
-	                                                var concat = this.util.concatArr;
-
-	                                                this.vertices.data = concat(this.vertices.data, vertices), this.indices.data = concat(this.indices.data, indices), this.normals.data = concat(this.normals.data, normals), this.texCoords.data = concat(this.texCoords.data, texCoords), this.tangents.data = concat(this.tangents.data, tangents), this.colors.data = concat(this.colors.data, colors);
-
-	                                                return this;
-	                                }
-
-	                                /** 
-	                                 * Bind a WebGL buffer
-	                                 * @param {Object} o the bufferObj for for particular array (e.g. vertex, tangent).
-	                                 * @param {String} type the typed-array type.
-	                                 */
-
-	                }, {
-	                                key: 'bindGLBuffer',
-	                                value: function bindGLBuffer(o, type) {
-
-	                                                var gl = this.webgl.getContext();
-
-	                                                o.buffer = gl.createBuffer();
-
-	                                                gl.bindBuffer(gl.ARRAY_BUFFER, o.buffer);
-
-	                                                switch (type) {
-
-	                                                                case this.FLOAT32:
-
-	                                                                                if (o.data instanceof Float32Array) {
-
-	                                                                                                gl.bufferData(gl.ARRAY_BUFFER, o.data, gl.STATIC_DRAW);
-	                                                                                } else {
-
-	                                                                                                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(o.data), gl.STATIC_DRAW);
-	                                                                                }
-
-	                                                                                o.numItems = o.data.length / o.itemSize;
-
-	                                                                                break;
-
-	                                                                case this.UINT16:
-
-	                                                                                o.buffer = gl.createBuffer();
-
-	                                                                                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, o.buffer);
-
-	                                                                                gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(o.data), gl.STATIC_DRAW);
-
-	                                                                                o.numItems = o.data.length / o.itemSize;
-
-	                                                                                break;
-
-	                                                                default:
-
-	                                                                                console.error('GeoObj::bindGLBuffer(): invalid WebGL buffer type ' + type);
-
-	                                                                                break;
-
-	                                                }
-	                                }
-
-	                                /** 
-	                                 * Create WebGL buffers using geometry data. Note that the 
-	                                 * size is for flattened arrays.
-	                                 * an array of vertices, in glMatrix.vec3 objects.
-	                                 * an array of indices for the vertices.
-	                                 * an array of texture coordinates, in glMatrix.vec2 format.
-	                                 * an array of normals, in glMatrix.vec3 format.
-	                                 * an array of tangents, in glMatrix.vec3 format.
-	                                 * an array of colors, in glMatrix.vec4 format.
-	                                 */
-
-	                }, {
-	                                key: 'createGLBuffers',
-	                                value: function createGLBuffers() {
-
-	                                                var gl = this.webgl.getContext();
-
-	                                                // Vertex Buffer Object.
-
-	                                                var o = this.vertices;
-
-	                                                if (!o.data.length) {
-
-	                                                                console.log('GeoObj::createGLBuffers(): no vertices present, creating default');
-
-	                                                                o.data = new Float32Array([0, 0, 0]);
-	                                                }
-
-	                                                this.bindGLBuffer(o, this.FLOAT32);
-
-	                                                // Create the Index buffer.
-
-	                                                o = this.indices;
-
-	                                                if (!o.data.length) {
-
-	                                                                console.log('GeoObj::createGLBuffers(): no indices present, creating default');
-
-	                                                                o.data = new Uint16Array([1]);
-	                                                }
-
-	                                                this.bindGLBuffer(o, this.UINT16);
-
-	                                                // Create the Sides buffer, a kind of indices buffer.
-
-	                                                o = this.sides;
-
-	                                                if (!o.data.length) {
-
-	                                                                console.warn('GeoObj::createGLBuffers(): no sides present, creating default');
-
-	                                                                o.data = new Uint16Array([1]);
-	                                                }
-
-	                                                this.bindGLBuffer(o, this.UINT16);
-
-	                                                // create the Normals buffer.
-
-	                                                o = this.normals;
-
-	                                                if (!o.data.length) {
-
-	                                                                console.log('GeoObj::createGLBuffers(): no normals, present, creating default');
-
-	                                                                o.data = new Float32Array([0, 1, 0]);
-	                                                }
-
-	                                                this.bindGLBuffer(o, this.FLOAT32);
-
-	                                                // Create the primary Texture buffer.
-
-	                                                o = this.texCoords;
-
-	                                                if (!o.data.length) {
-
-	                                                                console.warn('GeoObj::createGLBuffers(): no texture present, creating default');
-
-	                                                                o.data = new Float32Array([0, 0]);
-	                                                }
-
-	                                                this.bindGLBuffer(o, this.FLOAT32);
-
-	                                                // create the Tangents Buffer.
-
-	                                                o = this.tangents;
-
-	                                                if (!o.data.length) {
-
-	                                                                console.warn('GeoObj::createGLBuffers(): no tangents present, creating default');
-
-	                                                                o.data = new Float32Array([0, 0, 0, 0]);
-	                                                }
-
-	                                                this.bindGLBuffer(o, this.FLOAT32);
-
-	                                                // Create the Colors buffer.
-
-	                                                o = this.colors;
-
-	                                                if (!o.data.length) {
-
-	                                                                console.warn('GeoObj::createGLBuffers(): no colors present, creating default color');
-
-	                                                                o.data = new Float32Array(this.computeColors(this.normals.data, o.data));
-	                                                }
-
-	                                                this.bindGLBuffer(o, this.FLOAT32);
-
-	                                                // Set the flag.
-
-	                                                this.makeBuffers = false;
-
-	                                                return this;
-	                                }
-
-	                                /** 
-	                                * Create default colors for Prim color array.
-	                                */
-
-	                }, {
-	                                key: 'computeColors',
-	                                value: function computeColors(normals, colors) {
-
-	                                                for (var i = 0; i < normals.length; i += 3) {
-
-	                                                                colors.push(normals[i], normals[i + 1], normals[i + 2], 1.0);
-	                                                }
-
-	                                                return colors;
-	                                }
-	                }]);
-
-	                return GeoObj;
-	}();
-
-	exports.default = GeoObj;
 
 /***/ }
 /******/ ]);
