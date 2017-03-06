@@ -3285,14 +3285,17 @@ class Prim {
 
             window.mesh = mesh;
             mesh.subdivide( true );
+            mesh.subdivide( true )
+            mesh.subdivide( true );
             //mesh.subdivide( true );
             //mesh.subdivide( true );
             //mesh.subdivide( true );
             //mesh.subdivide( true );
             //mesh.subdivide( true );
+            //mesh.subdivide( true ); // this one zaps from low-vertex < 10 prim
 
             prim.geometry.normals.data = this.computeNormals( prim.geometry.vertices.data, prim.geometry.indices.data, [prim.geometry.normals.data] );
-        //}
+       //}
 ////////////////////////////////////////////////////////////////////////////////
 
         // Create WebGL data buffers from geometry.

@@ -4708,11 +4708,12 @@
 	//if ( prim.name === 'colored cube' ) {
 	//if ( prim.name === 'cubesphere' ) {
 	//if ( prim.name === 'texsphere' ) {
-	var mesh=new _mesh2.default(prim.geometry);window.mesh=mesh;mesh.subdivide(true);//mesh.subdivide( true );
+	var mesh=new _mesh2.default(prim.geometry);window.mesh=mesh;mesh.subdivide(true);mesh.subdivide(true);mesh.subdivide(true);//mesh.subdivide( true );
 	//mesh.subdivide( true );
 	//mesh.subdivide( true );
 	//mesh.subdivide( true );
 	//mesh.subdivide( true );
+	//mesh.subdivide( true ); // this one zaps from low-vertex < 10 prim
 	prim.geometry.normals.data=this.computeNormals(prim.geometry.vertices.data,prim.geometry.indices.data,[prim.geometry.normals.data]);//}
 	////////////////////////////////////////////////////////////////////////////////
 	// Create WebGL data buffers from geometry.
@@ -6102,6 +6103,8 @@
 
 	                this.depth = 0;
 
+	                this.centroid = null;
+
 	                this.iterations = 0; // number of iterations of the subdivide algorithm
 
 	                // Scaling factors for smoothing.
@@ -6116,7 +6119,7 @@
 
 	                // Pre-compute valency weighting values.
 
-	                this.computeValencyWeights(200); // was 12 DEBUG!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	                this.computeValencyWeights(12); // was 12 DEBUG!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 	                // Convert flattened arrays to Vertex data structure (Index array remains the same).
 
@@ -6146,9 +6149,6 @@
 	                        for (var i = 4; i < max; i++) {
 
 	                                this.valenceArr[i] = 1.0 / i * (5.0 / 8.0 - Math.pow(3.0 / 8.0 + 1.0 / 4.0 * Math.cos(2.0 * Math.PI / i), 2.0));
-
-	                                // Warren's modified formula: 
-	                                //this.valenceArr[i] = 3.0 / (8.0 * i);
 	                        }
 	                }
 
@@ -6174,61 +6174,12 @@
 
 	                                var vtx = arguments[i];
 
-	                                x += vtx.coords.x, y += vtx.coords.y, z += vtx.coords.z;
-
-	                                u += vtx.texCoords.u;
-
-	                                v += vtx.texCoords.v;
+	                                x += vtx.coords.x, y += vtx.coords.y, z += vtx.coords.z, u += vtx.texCoords.u, v += vtx.texCoords.v;
 	                        }
 
-	                        x /= len, y /= len, z /= len;
-
-	                        u /= len;
-
-	                        v /= len;
+	                        x /= len, y /= len, z /= len, u /= len, v /= len;
 
 	                        return new Vertex(x, y, z, u, v, 0, null);
-	                }
-
-	                /** 
-	                 * Find Vertex objects which are in the same place and not directly 
-	                 * connected.
-	                 */
-
-	        }, {
-	                key: 'computeSeam',
-	                value: function computeSeam() {
-
-	                        var vertexArr = this.vertexArr;
-
-	                        this.seamMap = [];
-
-	                        for (var i = 0; i < vertexArr.length; i++) {
-
-	                                var vtx1 = vertexArr[i];
-
-	                                for (var j = 0; j < vertexArr.length; j++) {
-
-	                                        var vtx2 = vertexArr[j];
-
-	                                        /////////////////console.log( "distance:" + vtx1.distance( vtx2 ) );
-
-	                                        if (vtx1 !== vtx2 && vtx1.distance(vtx2, true) < 0.000000001) {
-
-	                                                ////////////////////console.log("seam at:" + i + ', ' + j)
-
-	                                                if (!this.seamMap[i]) this.seamMap[i] = [j];else if (this.seamMap.indexOf(i) === -1) this.seamMap[i].push(j);
-
-	                                                //this.seamMap[ i ] = j;
-
-	                                                //this.seamMap[ j ] = i; // TODO: array at these positions, with all equivalent points.
-
-	                                                if (!this.seamMap[j]) this.seamMap[j] = [i];else if (this.seamMap.indexOf(j) === -1) this.seamMap[j].push(i);
-	                                        }
-	                                }
-	                        }
-
-	                        window.seamMap = this.seamMap;
 	                }
 
 	                /** 
@@ -6260,6 +6211,8 @@
 
 	                        var max = new Coords();
 
+	                        var centroid = new Coords();
+
 	                        var numVertices = vertices.length / 3;
 
 	                        var vertexArr = new Array(numVertices);
@@ -6285,6 +6238,8 @@
 	                                        min.z = Math.min(min.z, c.z);
 
 	                                        max.z = Math.min(max.z, c.z);
+
+	                                        centroid.add(c);
 	                                }
 	                        }
 
@@ -6295,6 +6250,8 @@
 	                        this.height = max.y - min.y;
 
 	                        this.depth = max.z - min.z;
+
+	                        this.centroid = centroid.scale(1 / numVertices);
 
 	                        // Estimate average spacing among Vertices.
 
@@ -6440,32 +6397,12 @@
 
 	                        if (valency < 5) {
 
-	                                // if no return, the Vertices will be pulled away from the Mesh 'seam'.
-	                                /*
-	                                  if ( this.seamMap[ vtx.idx ] ) {
-	                                      valenceArr = vtx.e.slice();
-	                                      //console.log( 'valency for ' + vtx.idx + ' = ' + valency + ', equivalent point at:' + this.seamMap[ vtx.idx ] + ' with valency' + vertexArr[ this.seamMap[ vtx.idx ] ].e.length );
-	                                    // identical Vertices have the same valency?
-	                                    ////////console.log( this.type + ', valency for ' + vtx.idx + ' = ' + valency + ', equivalent points at:' + this.seamMap[ vtx.idx ]);
-	                                      for ( let i = 0; i < this.seamMap[ vtx.idx ].length; i++ ) {
-	                                              let ee = vertexArr[ this.seamMap[ vtx.idx ][ i ] ].e;
-	                                          for ( let j = 0; j < ee.length; j++ ) {
-	                                              if( valenceArr.indexOf( ee[ j ] ) === -1 ) {
-	                                                valenceArr.push(ee[ j ] )
-	                                            }
-	                                        }
-	                                      }
-	                                    console.log( this.type + ', valency for ' + vtx.idx + ' = ' + valency);
-	                                    console.log( 'supervalency:' + valenceArr )
-	                                    }
-	                                  */
-
 	                                return false;
 	                        }
 
 	                        // Beta weighting for surround Vertices.
 
-	                        var beta = this.valenceArr[valency];
+	                        var beta = this.valenceArr[valency] * 0.4; ///////////////////////////////////////////
 
 	                        // Beta weighting for the original ith Vertex.
 
@@ -6489,15 +6426,13 @@
 
 	                        for (var j = 0; j < valency; j++) {
 
-	                                // Get the surround Vertices for vtx.
+	                                // Get the surround Vertices for vtx, the opposite Vertex for each Edge in the Vertex.
 
-	                                var oppositeIndex = edgeArr[vtx.e[j]].getOpposite(vtx);
+	                                var op = vertexArr[edgeArr[vtx.e[j]].getOpposite(vtx)];
 
-	                                var dist = vtx.distance(vertexArr[oppositeIndex]);
+	                                c = op.coords;
 
-	                                c = vertexArr[oppositeIndex].coords;
-
-	                                tc = vertexArr[oppositeIndex].texCoords;
+	                                tc = op.texCoords;
 
 	                                x += beta * c.x;
 
@@ -6579,70 +6514,10 @@
 	                                // Check our Seam map.
 	                                // TODO: CHECK THIS . SHOULD BE SOME
 	                                // TODO: centroid distance test
-
 	                                // TODO: generate old and new indices, then compare 
 	                                // TODO: in algorithm
-
 	                                // TODO: test for past mesh centroid, don't compute if it is
 
-	                                if (fv0 === fv1) {
-
-	                                        var oov = this.seamMap[vtx.idx];
-
-	                                        if (oov) {
-
-	                                                console.log('seamMap:' + this.seamMap[vtx.idx]);
-
-	                                                var edg = void 0,
-	                                                    ooov = void 0,
-	                                                    oooov = void 0;
-
-	                                                console.log('have an oov');
-
-	                                                for (var i = 0; i < oov.length; i++) {
-
-	                                                        ooov = vertexArr[oov[i]];
-
-	                                                        console.log('have an ooov, ' + ooov.idx + ' look for:' + fv0.idx + '-' + ooov.idx);
-
-	                                                        // TODO: WE NEED TO SCAN THE EDGE ARRAY FOR ANY VERTICES WITH OUR OOV ONLY!!!!!!!!!!!!!!!!!!!
-	                                                        // TODO: ////////////////////////////////////
-
-	                                                        edg = edgeArr[vtx.idx + '-' + ooov.idx];
-
-	                                                        console.log('edg:' + edg);
-
-	                                                        console.log('try reverse, ' + ooov.idx + '-' + fv0.idx);
-
-	                                                        console.log('edg:' + edg);
-
-	                                                        if (edg) {
-
-	                                                                oooov = vertexArr[edg.ov[0]];
-
-	                                                                console.log('setting fv1 to ' + oov.idx);
-	                                                                if (ooov && oooov !== fv0) fv1 = ooov;else {
-	                                                                        oooov = vertexArr[edg.ov[1]];
-	                                                                        if (ooov && ooov !== fv0) fv1 = ooov;
-	                                                                }
-	                                                        } else {
-
-	                                                                edg = edgeArr[ooov.idx + '-' + fv0.idx];
-
-	                                                                if (edg) {
-
-	                                                                        oooov = vertexArr[edg.ov[0]];
-
-	                                                                        console.log('setting fv1 to ' + ooov.idx);
-	                                                                        if (ooov && ooov !== fv0) fv1 = ooov;else {
-	                                                                                oooov = vertexArr[edg.ov[1]];
-	                                                                                if (ooov && ooov !== fv0) fv1 = ooov;
-	                                                                        }
-	                                                                }
-	                                                        }
-	                                                }
-	                                        }
-	                                }
 
 	                                // adjust only if the facing Vertices are different.
 
@@ -6658,18 +6533,12 @@
 
 	                                        x = fw * (ev0.coords.x + ev1.coords.x), y = fw * (ev0.coords.y + ev1.coords.y), z = fw * (ev0.coords.z + ev1.coords.z), u = fw * (ev0.texCoords.u + ev1.texCoords.u), v = fw * (ev0.texCoords.v + ev1.texCoords.v);
 
-	                                        x += ow * (fv0.coords.x + fv1.coords.x);
-	                                        y += ow * (fv0.coords.y + fv1.coords.y);
-	                                        z += ow * (fv0.coords.z + fv1.coords.z);
-	                                        u += ow * (fv0.texCoords.u + fv1.texCoords.u);
-	                                        v += ow * (fv0.texCoords.v + fv1.texCoords.v);
+	                                        x += ow * (fv0.coords.x + fv1.coords.x), y += ow * (fv0.coords.y + fv1.coords.y), z += ow * (fv0.coords.z + fv1.coords.z), u += ow * (fv0.texCoords.u + fv1.texCoords.u), v += ow * (fv0.texCoords.v + fv1.texCoords.v);
 
 	                                        vtx.set(x, y, z, u, v);
 
 	                                        return true;
 	                                } else {
-
-	                                        // we need to pull up by a neighboring vertex at the edge.
 
 	                                        x = f0w * (ev0.coords.x + ev1.coords.x), y = f0w * (ev0.coords.y + ev1.coords.y), z = f0w * (ev0.coords.z + ev1.coords.z), u = f0w * (ev0.texCoords.u + ev1.texCoords.u), v = f0w * (ev0.texCoords.v + ev1.texCoords.v);
 
@@ -6698,19 +6567,23 @@
 	                key: 'subdivide',
 	                value: function subdivide(smooth) {
 
+	                        this.defVertexArr = this.vertexArr.slice(); ///////////////////////////////// COMPARE TO SEE DIFFS IN VERTEX ARR
+
+	                        this.defEdgeArr = this.edgeArr.slice(); //////////////////////////////////////
+
 	                        this.geometryToVertex(this.geo.vertices.data, this.geo.indices.data, this.geo.texCoords.data);
 
 	                        this.isValid();
 
-	                        // Save the originals.
+	                        var vertexArr = this.vertexArr;
+
+	                        var indexArr = this.indexArr;
+
+	                        // Save a copy DEBUG
 
 	                        this.oldVertexArr = this.vertexArr.slice(); // make a copy
 
 	                        this.oldIndexArr = this.indexArr.slice(); // make a copy
-
-	                        var vertexArr = this.oldVertexArr;
-
-	                        var indexArr = this.oldIndexArr;
 
 	                        var newVertexArr = [];
 
@@ -6739,8 +6612,6 @@
 	                        // Compute Faces and Edges (hash back to Vertices).
 
 	                        console.log('Mesh::subdivide(): ' + this.type + ' beginning subdivision, ' + this.iterations + ', starting size:' + this.oldVertexArr.length);
-
-	                        this.computeSeam();
 
 	                        this.computeFaces();
 
@@ -6789,11 +6660,11 @@
 	                                        ii0 = newVertexArr.length - 1;
 
 	                                        indexHash[i0] = ii0;
-	                                } else {}
+	                                } else {
 
-	                                //ii0 = ii0;
+	                                        //ii0 = ii0;
 
-	                                //////////v0.idx = ii0; ///////////////////////////////
+	                                }
 
 	                                var ii1 = newVertexArr.indexOf(v1);
 
@@ -6804,11 +6675,11 @@
 	                                        ii1 = newVertexArr.length - 1;
 
 	                                        indexHash[i1] = ii1;
-	                                } else {}
+	                                } else {
 
-	                                //ii1 = ii1;
+	                                        //ii1 = ii1;
 
-	                                //////////////v1.idx = ii1; ////////////////////////////////
+	                                }
 
 	                                var ii2 = newVertexArr.indexOf(v2);
 
@@ -6819,11 +6690,11 @@
 	                                        ii2 = newVertexArr.length - 1;
 
 	                                        indexHash[i2] = ii2;
-	                                } else {}
+	                                } else {
 
-	                                //ii2 = ii2;
+	                                        //ii2 = ii2;
 
-	                                //////////////v2.idx = ii2;
+	                                }
 
 	                                var m0 = void 0,
 	                                    m1 = void 0,
@@ -7436,7 +7307,7 @@
 
 	                        this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.SPHERE, 'texsphere', vec5(1.5, 1.5, 1.5, 0), // dimensions
 	                        //vec5( 30, 30, 30 ),         // divisions
-	                        vec5(3, 3, 3),
+	                        vec5(3, 3, 3), // at least subdividions to smooth!
 	                        //vec3.fromValues(-5, -1.3, -1 ),       // position (absolute)
 	                        vec3.fromValues(-0, -0.0, 3.5), vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
