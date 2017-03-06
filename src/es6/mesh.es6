@@ -1067,81 +1067,6 @@ class Mesh {
             */
 
 
-
-            // if we just add a central point
-
-            m0 = this.computeCentroid( v0, v1, v2 );
-
-            newVertexArr.push( m0 );
-
-            mi0 = newVertexArr.length - 1;
-
-            // get the surround points
-
-            let key = i0 + '-' + i1;
-            let revKey = i1 + '-' + i0;
-            let edg0 = edgeArr[ this.edgeMap[ key ] ];
-            if ( ! edg0 ) edg0 = edgeArr[ this.edgeMap[ revKey ] ];
-
-            key = i1 + '-' + i2;
-            revKey = i2 + '-' + i1;
-            let edg1 = edgeArr[ this.edgeMap[ key ] ];
-            if ( ! edg1 ) edg1 = edgeArr[ this.edgeMap[ revKey ] ];
-
-            key = i2+ '-' + i0;
-            revKey = i0 + '-' + i2;
-            let edg2 = edgeArr[ this.edgeMap[ key ] ];
-            if ( ! edg2 ) edg2 = edgeArr[ this.edgeMap[ revKey ] ];
-
-            // TODO: might need to scale edges by distance of remote vertex
-            // TODO: wt = 1 gives a checkerboard
-            // TODO: wt < 1 gives checkerboard with pits.
-
-            // POSSIBLY PUSH UP OR DOWN BY NEIGHBORING CENTROID
-
-            let wt = 1;
-            let awt = 1 - wt;
-
-            let me0 = this.computeCentroid( 
-                vertexArr[ edg0.ov[ 1 ] ],
-                vertexArr[ edg1.ov[ 1 ] ],
-                vertexArr[ edg2.ov[ 1 ] ]
-            ).scale( awt );
-
-            me0.texCoords.u *= awt;
-            me0.texCoords.v *= awt;
-
-            v0.texCoords.u *= wt;
-            v0.texCoords.v *= wt;
-            v0.texCoords.u += me0.texCoords.u;
-            v0.texCoords.v += me0.texCoords.v;
-
-            v1.texCoords.u *= wt;
-            v1.texCoords.v *= wt;
-            v1.texCoords.u += me0.texCoords.u;
-            v1.texCoords.v += me0.texCoords.v;
-
-            v2.texCoords.u *= wt;
-            v2.texCoords.v *= wt;
-            v2.texCoords.u += me0.texCoords.u;
-            v2.texCoords.v += me0.texCoords.v;
-
-            v0.scale( wt ).add( me0 );
-            v1.scale( wt ).add( me0 );
-            v2.scale( wt ).add( me0 );
-
-            // push the new index
-
-            newIndexArr.push(
-                mi0, ii0, ii1,
-                mi0, ii1, ii2,
-                mi0, ii2, ii0
-            );
-
-
-
-/*
-
             if ( smooth ) {
 
                 this.computeEven( v0, vertexArr );
@@ -1282,8 +1207,6 @@ class Mesh {
                 mi2, ii0, mi0    // A
 
             );
-
-*/
 
         } // end of index loop
 

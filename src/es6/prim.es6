@@ -2160,8 +2160,6 @@ class Prim {
 
         return geo.addBufferData( vertices, indices, normals, texCoords, tangents );
 
-        //return this.addBufferData( prim.geometry, vertices, indices, normals, texCoords, tangents );
-
     }
 
     /** 
@@ -2330,9 +2328,9 @@ class Prim {
      * 
      * divisions max: ~60
      * @param {Object} prim the primitive needing geometry.
-     * @param {Boolean} noSphere if false, make an icosohedron.
+     * @param {Boolean} domeFlag if 0, do nothing, if 1, do top, if 2, do bottom.
      */
-    geometryIcoSphere ( prim ) {
+    geometryIcoSphere ( prim, domeFlag, visibleFrom ) {
 
         let TWO_PI = this.TWO_PI; // connect scope to internal functions.
 
@@ -2419,7 +2417,13 @@ class Prim {
 
                 to = vec3.lerp( [ 0, 0, 0 ], getStdVecs( side.DOWN ), getStdVecs( directions[ d ] ), progress );
 
-                t = createLowerStrip( i, v, vBottom, t, indices );
+                // Conditionally draw the bottom of the icosphere.
+
+                if ( domeFlag !== this.directions.TOP ) {
+
+                    t = createLowerStrip( i, v, vBottom, t, indices );
+
+                }
 
                 v = createVertexLine( from, to, i, v, vertices );
 
@@ -2445,7 +2449,23 @@ class Prim {
 
                     to = vec3.lerp( [ 0, 0, 0 ], getStdVecs( side.UP ), getStdVecs( directions[ d ] ), progress );
 
-                    t = createUpperStrip( i, v, vBottom, t, indices );
+                    // Conditionally draw the top of the icosphere.
+
+                    if ( domeFlag !== this.directions.BOTTOM )  {
+
+                        // Reverse the winding order for a SkyDome (viewed from inside).
+
+                        if ( visibleFrom === this.INSIDE ) {
+
+                            t = createUpperSkyStrip( i, v, vBottom, t, indices );
+
+                        } else {
+
+                            t = createUpperStrip( i, v, vBottom, t, indices );
+
+                        }
+
+                    }
 
                     v = createVertexLine( from, to, i, v, vertices );
 
@@ -2664,7 +2684,8 @@ class Prim {
         }
 
         function createUpperStrip ( steps, vTop, vBottom, t, triangles ) {
-               triangles[t++] = vBottom;
+
+            triangles[t++] = vBottom;
             triangles[t++] = vTop - 1;   
             triangles[t++] = ++vBottom;
 
@@ -2677,21 +2698,39 @@ class Prim {
                 triangles[t++] = vBottom;
                 triangles[t++] = vTop++;
                 triangles[t++] = ++vBottom;
-            }
+            }     
 
             return t;
 
         }
+
+        function createUpperSkyStrip ( steps, vTop, vBottom, t, triangles ) {
+
+            triangles[t++] = vBottom;
+            triangles[t++] = ++vBottom;
+            triangles[t++] = vTop - 1;   
+
+            for ( let i = 1; i <= steps; i++ ) {
+                triangles[t++] = vTop;
+                triangles[t++] = vTop - 1;
+                triangles[t++] = vBottom;
+
+
+                triangles[t++] = vBottom;
+                triangles[t++] = ++vBottom;
+                triangles[t++] = vTop++;
+
+            }
+
+            return t;
+        }        
+
 
         // Color array is pre-created, or gets a default when WebGL buffers are created.
 
         // Return the buffer.
 
         return geo.addBufferData( vertices, indices, normals, texCoords, tangents );
-
-        //return this.addBufferData( prim.geometry, vertices, indices, normals, texCoords, tangents );
-
-        //return this.createGLBuffers( prim.geometry );
 
     }
 
@@ -2750,7 +2789,7 @@ class Prim {
      */
     geometryIcoDome( prim ) {
 
-        // TODO: half icosphere
+        return this.geometryTopIcoDome( prim );
 
     }
 
@@ -2764,7 +2803,7 @@ class Prim {
      */
     geometryTopIcoDome ( prim ) {
 
-        // TODO: half icosphere
+        return this.geometryIcoSphere( prim, this.directions.TOP );
 
     }
 
@@ -2780,7 +2819,9 @@ class Prim {
 
         prim.visibleFrom = this.INSIDE;
 
-        // TODO: half icosphere
+        // TODO: reverse winding order!!!!!!!!!!!!!!!!!!
+
+        return this.geometryIcoSphere( prim, this.directions.TOP, prim.visibleFrom );
 
     }
 
@@ -2794,7 +2835,7 @@ class Prim {
      */
     geometryBottomIcoDome ( prim ) {
 
-        // TODO: half icosphere
+        return this.geometryIcoSphere( prim, this.directions.BOTTOM );
 
     }
 
@@ -3285,8 +3326,8 @@ class Prim {
 
             window.mesh = mesh;
             mesh.subdivide( true );
-            mesh.subdivide( true )
-            mesh.subdivide( true );
+            //mesh.subdivide( true )
+            //mesh.subdivide( true );
             //mesh.subdivide( true );
             //mesh.subdivide( true );
             //mesh.subdivide( true );
