@@ -41,6 +41,8 @@ class WebGL {
 
         this.util = util;
 
+        this.MAX_DRAWELEMENTS = 65534; // limit for number of vertices indexed in gl.drawElements()
+
         if ( init === true ) {
 
             this.init( canvas );

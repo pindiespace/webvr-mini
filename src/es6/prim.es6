@@ -230,6 +230,12 @@ class Prim {
 
         };
 
+        // WebGL currently limits the number of vertices referenced by gl.drawElements.
+
+        // For larger Prims, split into several drawing operations, or use gl.drawArrays without an index.
+
+        // NOTE: for gl.drawArrays there will be replication of positions not found with gl.drawElements.
+
         // Visible from inside or outside.
 
         this.OUTSIDE = 100,
@@ -3309,35 +3315,48 @@ class Prim {
 
         // Geometry factory function.
 
-        //prim.geometry = this.createGeoObj();
         prim.geometry = new GeoObj( this.util, this.webgl );
 
         prim.geometry.type = type; // NOTE: has to come after createGeoObj
 
         prim.geometry = this[ type ]( prim, color );
 
+
 ////////////////////////////////////////////////////////////////////////////////
         // SUBDIVIDE TEST
         //if ( prim.name === 'colored cube' ) {
         //if ( prim.name === 'cubesphere' ) {
-        //if ( prim.name === 'texsphere' ) {
+        if ( prim.name === 'texsphere' ) {
 
             let mesh = new Mesh( prim.geometry );
 
             window.mesh = mesh;
             mesh.subdivide( true );
-            //mesh.subdivide( true )
-            //mesh.subdivide( true );
-            //mesh.subdivide( true );
-            //mesh.subdivide( true );
-            //mesh.subdivide( true );
+            mesh.subdivide( true )
+            mesh.subdivide( true );
+            mesh.subdivide( true );
+            mesh.subdivide( true );
+            mesh.subdivide( true );
             //mesh.subdivide( true );
             //mesh.subdivide( true );
             //mesh.subdivide( true ); // this one zaps from low-vertex < 10 prim
 
             prim.geometry.normals.data = this.computeNormals( prim.geometry.vertices.data, prim.geometry.indices.data, [prim.geometry.normals.data] );
-       //}
+       }
+
 ////////////////////////////////////////////////////////////////////////////////
+
+        // If the Prim has > 65k vertices, don't use an index buffer (set flag for shader).
+
+        if ( prim.geometry.vertices.data.length > this.webgl.MAX_DRAWELEMENTS ) {
+
+            console.log(">>>>>>>>>>>SUPER_SIZED MESH:" + prim.type + " size:" + prim.geometry.vertices.data.length + ">>>>>>>>>>>>>>>")
+
+            let mesh = new Mesh( prim.geometry );
+
+            mesh.vertexToDrawArrays();
+
+        }
 
         // Create WebGL data buffers from geometry.
 

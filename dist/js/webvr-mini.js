@@ -1089,6 +1089,8 @@
 
 	        this.util = util;
 
+	        this.MAX_DRAWELEMENTS = 65534; // limit for number of vertices indexed in gl.drawElements()
+
 	        if (init === true) {
 
 	            this.init(canvas);
@@ -3579,7 +3581,7 @@
 	            // TODO: https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/TechniquesforWorkingwithVertexData/TechniquesforWorkingwithVertexData.html
 	            // TODO: http://max-limper.de/tech/batchedrendering.html
 
-	            // Update object position, motion.
+	            // Update object position, motion - given to World object.
 
 	            program.update = function (obj) {
 
@@ -3641,7 +3643,7 @@
 	                    gl.enableVertexAttribArray(vsVars.attribute.vec3.aVertexNormal);
 	                    gl.vertexAttribPointer(vsVars.attribute.vec3.aVertexNormal, obj.geometry.normals.itemSize, gl.FLOAT, false, 0, 0);
 
-	                    // Bind Textures buffer (could have multiple bindings here).
+	                    // Bind textures buffer (could have multiple bindings here).
 
 	                    gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.texCoords.buffer);
 	                    gl.enableVertexAttribArray(vsVars.attribute.vec2.aTextureCoord);
@@ -3677,13 +3679,23 @@
 	                    gl.uniformMatrix4fv(vsVars.uniform.mat4.uPMatrix, false, pMatrix);
 	                    gl.uniformMatrix4fv(vsVars.uniform.mat4.uMVMatrix, false, mvMatrix);
 
-	                    // Bind index buffer.
+	                    if (obj.geometry.ssz) {
 
-	                    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer);
+	                        // Draw array directly, without index
 
-	                    // Draw elements.
+	                        console.log('ssz:' + obj.geometry.ssz + " size:" + obj.geometry.vertices.numItems);
 
-	                    gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
+	                        gl.drawArrays(gl.TRIANGLES, 0, 140000); /// DEBUG SHOULD BE BIGGER
+	                    } else {
+
+	                        // Bind index buffer.
+
+	                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer);
+
+	                        // Draw elements.
+
+	                        gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
+	                    }
 	                }
 	            };
 
@@ -3861,9 +3873,9 @@
 
 	var _map3d2 = _interopRequireDefault(_map3d);
 
-	var _mesh = __webpack_require__(24);
+	var _mesh2 = __webpack_require__(24);
 
-	var _mesh2 = _interopRequireDefault(_mesh);
+	var _mesh3 = _interopRequireDefault(_mesh2);
 
 	var _geoObj = __webpack_require__(25);
 
@@ -4100,6 +4112,12 @@
 	            BOTTOM: 'down'
 
 	        };
+
+	        // WebGL currently limits the number of vertices referenced by gl.drawElements.
+
+	        // For larger Prims, split into several drawing operations, or use gl.drawArrays without an index.
+
+	        // NOTE: for gl.drawArrays there will be replication of positions not found with gl.drawElements.
 
 	        // Visible from inside or outside.
 
@@ -7182,7 +7200,6 @@
 
 	            // Geometry factory function.
 
-	            //prim.geometry = this.createGeoObj();
 	            prim.geometry = new _geoObj2.default(this.util, this.webgl);
 
 	            prim.geometry.type = type; // NOTE: has to come after createGeoObj
@@ -7193,24 +7210,36 @@
 	            // SUBDIVIDE TEST
 	            //if ( prim.name === 'colored cube' ) {
 	            //if ( prim.name === 'cubesphere' ) {
-	            //if ( prim.name === 'texsphere' ) {
+	            if (prim.name === 'texsphere') {
 
-	            var mesh = new _mesh2.default(prim.geometry);
+	                var mesh = new _mesh3.default(prim.geometry);
 
-	            window.mesh = mesh;
-	            mesh.subdivide(true);
-	            //mesh.subdivide( true )
-	            //mesh.subdivide( true );
-	            //mesh.subdivide( true );
-	            //mesh.subdivide( true );
-	            //mesh.subdivide( true );
-	            //mesh.subdivide( true );
-	            //mesh.subdivide( true );
-	            //mesh.subdivide( true ); // this one zaps from low-vertex < 10 prim
+	                window.mesh = mesh;
+	                mesh.subdivide(true);
+	                mesh.subdivide(true);
+	                mesh.subdivide(true);
+	                mesh.subdivide(true);
+	                mesh.subdivide(true);
+	                mesh.subdivide(true);
+	                //mesh.subdivide( true );
+	                //mesh.subdivide( true );
+	                //mesh.subdivide( true ); // this one zaps from low-vertex < 10 prim
 
-	            prim.geometry.normals.data = this.computeNormals(prim.geometry.vertices.data, prim.geometry.indices.data, [prim.geometry.normals.data]);
-	            //}
+	                prim.geometry.normals.data = this.computeNormals(prim.geometry.vertices.data, prim.geometry.indices.data, [prim.geometry.normals.data]);
+	            }
+
 	            ////////////////////////////////////////////////////////////////////////////////
+
+	            // If the Prim has > 65k vertices, don't use an index buffer (set flag for shader).
+
+	            if (prim.geometry.vertices.data.length > this.webgl.MAX_DRAWELEMENTS) {
+
+	                console.log(">>>>>>>>>>>SUPER_SIZED MESH:" + prim.type + " size:" + prim.geometry.vertices.data.length + ">>>>>>>>>>>>>>>");
+
+	                var _mesh = new _mesh3.default(prim.geometry);
+
+	                _mesh.vertexToDrawArrays();
+	            }
 
 	            // Create WebGL data buffers from geometry.
 
@@ -9603,6 +9632,61 @@
 	        }
 
 	        /** 
+	         * WebGL can only draw indexed arrays (gl.drawElements) that are 65k or less. If 
+	         * a larger mesh is needed, it needs to be done without an index. This routine creates
+	         * flattened vertex arrays without indexes. 
+	         * The local indexArr here is a JavaScript Array(), not a UINT16 array, so it can be > 65, so 
+	         * it is used to generate subdivides and generated flattened, non-indexed arrays.
+	         */
+
+	    }, {
+	        key: 'vertexToDrawArrays',
+	        value: function vertexToDrawArrays() {
+
+	            var geo = this.geo;
+
+	            // Don't run if the number of Vertices < 65k
+
+	            if (geo.vertices.data.length < 65534) {
+
+	                console.warn('Mesh::vertexToDrawArrays(): vertices < 65k, not converted');
+
+	                return geo;
+	            }
+
+	            this.geometryToVertex(geo.vertices.data, geo.indices.data, geo.texCoords.data);
+
+	            var vertexArr = this.vertexArr;
+
+	            var indexArr = this.indexArr;
+
+	            geo.vertices.data = [];
+
+	            geo.indices.data = [0]; // minimal defined
+
+	            geo.texCoords.data = [];
+
+	            var vertices = geo.vertices.data;
+
+	            var texCoords = geo.texCoords.data;
+
+	            for (var i = 0; i < indexArr.length; i++) {
+
+	                var vtx = vertexArr[indexArr[i]];
+
+	                var c = vtx.coords;
+
+	                var t = vtx.texCoords;
+
+	                vertices.push(c.x, c.y, c.z);
+
+	                texCoords.push(t.u, t.v);
+	            }
+
+	            return geo;
+	        }
+
+	        /** 
 	         * Validate a Mesh structure
 	         * @returns {Boolean} if valid, return true, else false.
 	         */
@@ -9677,7 +9761,9 @@
 
 	        this.FLOAT32 = 'float32', this.UINT32 = 'uint32';
 
-	        this.makeBuffers = true, this.vertices = {
+	        this.makeBuffers = true, this.ssz = false, // super-sized, > 65k vertices
+
+	        this.vertices = {
 
 	            data: [],
 
@@ -9767,6 +9853,14 @@
 
 	            this.vertices.data = concat(this.vertices.data, vertices), this.indices.data = concat(this.indices.data, indices), this.normals.data = concat(this.normals.data, normals), this.texCoords.data = concat(this.texCoords.data, texCoords), this.tangents.data = concat(this.tangents.data, tangents), this.colors.data = concat(this.colors.data, colors);
 
+	            if (this.vertices.data.length > webgl.MAX_DRAWELEMENTS) {
+
+	                this.ssz = true;
+	            } else {
+
+	                this.ssz = false;
+	            }
+
 	            return this;
 	        }
 
@@ -9849,6 +9943,13 @@
 	                console.log('GeoObj::createGLBuffers(): no vertices present, creating default');
 
 	                o.data = new Float32Array([0, 0, 0]);
+	            }
+
+	            // Flag buffers that are too big to use with gl.drawElements()
+
+	            if (o.data.length > this.webgl.MAX_DRAWELEMENTS) {
+
+	                this.ssz = true;
 	            }
 
 	            this.bindGLBuffer(o, this.FLOAT32);
@@ -10113,7 +10214,7 @@
 	            //this.colorObjList.push( this.prim.createPrim(
 	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CUBE, 'colored cube', vec5(1, 1, 1, 0), // dimensions
 	            vec5(3, 3, 3), // divisions
-	            vec3.fromValues(0.2, 0.5, 3), // position (absolute)
+	            vec3.fromValues(0.2, 0.5, 1), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	            vec3.fromValues(util.degToRad(20), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
 	            vec3.fromValues(util.degToRad(0), util.degToRad(1), util.degToRad(0)), // angular velocity in x, y, x
@@ -10210,7 +10311,7 @@
 	            //vec5( 30, 30, 30 ),         // divisions
 	            vec5(6, 6, 6), // at least 8 subdividions to smooth!
 	            //vec3.fromValues(-5, -1.3, -1 ),       // position (absolute)
-	            vec3.fromValues(-0, -0.0, 3.5), vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	            vec3.fromValues(-0, -1.0, 3.5), vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
 	            vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
 	            ['img/mozvr-logo1.png'], // texture present, NOT USED
@@ -10257,6 +10358,7 @@
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	            ));
 
+	            //////////////////////////
 	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.SKYICODOME, 'icoSkyDome', vec5(3, 3, 3, 0), // dimensions
 	            vec5(32, 32, 32), // 1 for icosohedron, 16 for good sphere
 	            vec3.fromValues(-4.5, 0.5, -2), // position (absolute)

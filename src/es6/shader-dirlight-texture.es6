@@ -177,7 +177,7 @@ class ShaderDirlightTexture extends Shader {
         // TODO: https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/TechniquesforWorkingwithVertexData/TechniquesforWorkingwithVertexData.html
         // TODO: http://max-limper.de/tech/batchedrendering.html
 
-        // Update object position, motion.
+        // Update object position, motion - given to World object.
 
         program.update = ( obj ) => {
 
@@ -240,7 +240,7 @@ class ShaderDirlightTexture extends Shader {
                 gl.enableVertexAttribArray( vsVars.attribute.vec3.aVertexNormal );
                 gl.vertexAttribPointer( vsVars.attribute.vec3.aVertexNormal, obj.geometry.normals.itemSize, gl.FLOAT, false, 0, 0);
 
-                // Bind Textures buffer (could have multiple bindings here).
+                // Bind textures buffer (could have multiple bindings here).
 
                 gl.bindBuffer( gl.ARRAY_BUFFER, obj.geometry.texCoords.buffer );
                 gl.enableVertexAttribArray( vsVars.attribute.vec2.aTextureCoord );
@@ -290,13 +290,25 @@ class ShaderDirlightTexture extends Shader {
                 gl.uniformMatrix4fv( vsVars.uniform.mat4.uPMatrix, false, pMatrix );
                 gl.uniformMatrix4fv( vsVars.uniform.mat4.uMVMatrix, false, mvMatrix );
 
-                // Bind index buffer.
+                if ( obj.geometry.ssz ) {
 
-                gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer );
+                    // Draw array directly, without index
 
-                // Draw elements.
+                    console.log('ssz:' + obj.geometry.ssz + " size:" + obj.geometry.vertices.numItems )
 
-                gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
+                    gl.drawArrays( gl.TRIANGLES, 0, 140000 ); /// DEBUG SHOULD BE BIGGER
+
+                } else {
+
+                    // Bind index buffer.
+
+                    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer );
+
+                    // Draw elements.
+
+                    gl.drawElements( gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0 );
+
+                }
 
             }
 

@@ -149,7 +149,7 @@ class World {
             'colored cube',
             vec5( 1, 1, 1, 0 ),            // dimensions
             vec5( 3, 3, 3 ),            // divisions
-            vec3.fromValues( 0.2, 0.5, 3 ),          // position (absolute)
+            vec3.fromValues( 0.2, 0.5, 1 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 20 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 1 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
@@ -270,7 +270,7 @@ class World {
             //vec5( 30, 30, 30 ),         // divisions
             vec5( 6, 6, 6 ), // at least 8 subdividions to smooth!
             //vec3.fromValues(-5, -1.3, -1 ),       // position (absolute)
-            vec3.fromValues( -0, -0.0, 3.5 ),
+            vec3.fromValues( -0, -1.0, 3.5 ),
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
@@ -331,6 +331,7 @@ class World {
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
+//////////////////////////
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.SKYICODOME,
             'icoSkyDome',

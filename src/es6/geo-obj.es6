@@ -20,6 +20,8 @@ class GeoObj {
 
         this.makeBuffers = true,
 
+        this.ssz = false, // super-sized, > 65k vertices
+
         this.vertices = {
 
                 data: [],
@@ -126,6 +128,15 @@ class GeoObj {
 
         this.colors.data = concat( this.colors.data, colors );
 
+        if ( this.vertices.data.length > webgl.MAX_DRAWELEMENTS ) {
+
+            this.ssz = true;
+
+        } else {
+
+            this.ssz = false;
+        }
+
         return this;
 
     }
@@ -206,6 +217,14 @@ class GeoObj {
                 console.log( 'GeoObj::createGLBuffers(): no vertices present, creating default' );
 
                 o.data = new Float32Array( [ 0, 0, 0 ] );
+
+            }
+
+            // Flag buffers that are too big to use with gl.drawElements()
+
+            if ( o.data.length > this.webgl.MAX_DRAWELEMENTS ) {
+
+                this.ssz = true;
 
             }
 

@@ -1337,6 +1337,61 @@ class Mesh {
     }
 
     /** 
+     * WebGL can only draw indexed arrays (gl.drawElements) that are 65k or less. If 
+     * a larger mesh is needed, it needs to be done without an index. This routine creates
+     * flattened vertex arrays without indexes. 
+     * The local indexArr here is a JavaScript Array(), not a UINT16 array, so it can be > 65, so 
+     * it is used to generate subdivides and generated flattened, non-indexed arrays.
+     */
+    vertexToDrawArrays () {
+
+        let geo = this.geo;
+
+        // Don't run if the number of Vertices < 65k
+
+        if ( geo.vertices.data.length < 65534 ) {
+
+            console.warn( 'Mesh::vertexToDrawArrays(): vertices < 65k, not converted' );
+
+            return geo;
+
+        }
+
+        this.geometryToVertex( geo.vertices.data, geo.indices.data, geo.texCoords.data );
+
+        let vertexArr = this.vertexArr;
+
+        let indexArr = this.indexArr;
+
+        geo.vertices.data = [];
+
+        geo.indices.data = [ 0 ]; // minimal defined
+
+        geo.texCoords.data = [];
+
+        let vertices = geo.vertices.data;
+
+        let texCoords = geo.texCoords.data;
+
+        for ( let i = 0; i < indexArr.length; i++ ) {
+
+            let vtx = vertexArr[ indexArr[ i ] ];
+
+            let c = vtx.coords;
+
+            let t = vtx.texCoords;
+
+            vertices.push( c.x, c.y, c.z );
+
+            texCoords.push( t.u, t.v );
+
+        }
+
+        return geo;
+
+    }
+
+    /** 
      * Validate a Mesh structure
      * @returns {Boolean} if valid, return true, else false.
      */
