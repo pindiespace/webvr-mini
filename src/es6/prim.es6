@@ -3332,8 +3332,8 @@ class Prim {
 
             window.mesh = mesh;
             mesh.subdivide( true );
-            mesh.subdivide( true )
-            mesh.subdivide( true );
+            //mesh.subdivide( true )
+            //mesh.subdivide( true );
             //mesh.subdivide( true );
             //mesh.subdivide( true );
             //mesh.subdivide( true );

@@ -153,6 +153,8 @@ class Vertex {
 
         this.e = []; // Edge array
 
+        this.s = []; // Seam array (other Vertex objects with the same coordinates)
+
         this.vertexArr = vertexArr;
 
     }
@@ -548,7 +550,7 @@ class Mesh {
 
         // Average spacing between vertices
 
-        let avDist = 0;
+        let dist = 0, avDist = 0;
 
         // Bounding Box (get width, height, and depth)
 
@@ -568,11 +570,13 @@ class Mesh {
 
             vertexArr[ i ] = new Vertex( vertices[ vi++ ], vertices[ vi++ ], vertices[ vi++ ], texCoords[ ti++ ], texCoords[ ti++ ], i, vertexArr );
 
+            let vtx = vertexArr[ i ];
+
             if ( i > 0 ) {
 
-                avDist += vertexArr[ i ].distance( vertexArr[ i - 1 ], true ); // fast approx calc
+                avDist += vtx.distance( vertexArr[ i - 1 ], true ); // fast approx calc
 
-                let c = vertexArr[ i ].coords;
+                let c = vtx.coords;
 
                 min.x = Math.min( min.x, c.x );
 
@@ -587,6 +591,30 @@ class Mesh {
                 max.z = Math.min( max.z, c.z );
 
                 centroid.add( c );
+
+            }
+
+            // Find overlapping Vertices (seams).
+
+            for ( let j = 0; j < i; j++ ) {
+
+                let vtx2 = vertexArr[ j ];
+
+                if ( vtx.distance( vtx2 ) < 0.00001 ) {
+
+                    if ( vtx.s.indexOf( vtx2 ) === -1 ) {
+
+                        vtx.s.push( vtx2 );
+
+                    }
+
+                    if ( vtx2.s.indexOf( vtx ) === -1 ) {
+
+                        vtx2.s.push( vtx );
+
+                    }
+
+                }
 
             }
 

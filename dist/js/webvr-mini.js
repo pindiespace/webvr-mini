@@ -7246,8 +7246,8 @@
 
 	            window.mesh = mesh;
 	            mesh.subdivide(true);
-	            mesh.subdivide(true);
-	            mesh.subdivide(true);
+	            //mesh.subdivide( true )
+	            //mesh.subdivide( true );
 	            //mesh.subdivide( true );
 	            //mesh.subdivide( true );
 	            //mesh.subdivide( true );
@@ -8519,6 +8519,8 @@
 
 	        this.e = []; // Edge array
 
+	        this.s = []; // Seam array (other Vertex objects with the same coordinates)
+
 	        this.vertexArr = vertexArr;
 	    }
 
@@ -8905,7 +8907,8 @@
 
 	            // Average spacing between vertices
 
-	            var avDist = 0;
+	            var dist = 0,
+	                avDist = 0;
 
 	            // Bounding Box (get width, height, and depth)
 
@@ -8927,11 +8930,13 @@
 
 	                vertexArr[i] = new Vertex(vertices[vi++], vertices[vi++], vertices[vi++], texCoords[ti++], texCoords[ti++], i, vertexArr);
 
+	                var vtx = vertexArr[i];
+
 	                if (i > 0) {
 
-	                    avDist += vertexArr[i].distance(vertexArr[i - 1], true); // fast approx calc
+	                    avDist += vtx.distance(vertexArr[i - 1], true); // fast approx calc
 
-	                    var c = vertexArr[i].coords;
+	                    var c = vtx.coords;
 
 	                    min.x = Math.min(min.x, c.x);
 
@@ -8946,6 +8951,26 @@
 	                    max.z = Math.min(max.z, c.z);
 
 	                    centroid.add(c);
+	                }
+
+	                // Find overlapping Vertices (seams).
+
+	                for (var j = 0; j < i; j++) {
+
+	                    var vtx2 = vertexArr[j];
+
+	                    if (vtx.distance(vtx2) < 0.00001) {
+
+	                        if (vtx.s.indexOf(vtx2) === -1) {
+
+	                            vtx.s.push(vtx2);
+	                        }
+
+	                        if (vtx2.s.indexOf(vtx) === -1) {
+
+	                            vtx2.s.push(vtx);
+	                        }
+	                    }
 	                }
 	            }
 
