@@ -1491,12 +1491,14 @@
 	                        //    console.log("TRANSFORM FEEDBACK NOT SUPPORTED")
 	                        //}
 	                        this.glVers = 2.0;
+	                        this.elemIndexUint = true; // can handle 32-bit indexes
 	                        break;
 
 	                    case 2:
 	                    case 3:
 	                        this.glVers = 1.0;
-	                        this.addVertexBufferSupport(gl);
+	                        this.addVertexBufferSupport(gl); // vertex buffers
+	                        this.addIndex32Support(gl); // vertices > 64k
 	                        break;
 
 	                    default:
@@ -1612,6 +1614,19 @@
 
 	                gl.VERTEX_ARRAY_BINDING = ext.VERTEX_ARRAY_BINDING_OES;
 	            }
+	        }
+
+	        /** 
+	         * Support indexed vertex drawing when there are more than 
+	         * 64k vertices in WebGL 1.0. Enabled by default in WebGL 2.0.
+	         * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only)l
+	         */
+
+	    }, {
+	        key: 'addIndex32Support',
+	        value: function addIndex32Support(gl) {
+
+	            this.elemIndexUint = gl.getExtension('OES_element_index_uint');
 	        }
 
 	        /** 
@@ -3089,7 +3104,17 @@
 
 	                    // Draw elements.
 
-	                    gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
+	                    if (webgl.elemIndexUint) {
+
+	                        // Draw elements, 0 -> 2e9
+
+	                        gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_INT, 0);
+	                    } else {
+
+	                        // Draw elements, 0 -> 65k (old platforms).
+
+	                        gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
+	                    }
 	                }
 	            };
 
@@ -3406,18 +3431,27 @@
 	                    gl.vertexAttribPointer(vsVars.attribute.vec4.aVertexColor, obj.geometry.colors.itemSize, gl.FLOAT, false, 0, 0);
 	                    //gl.disableVertexAttribArray( vsVars.attribute.vec4.aVertexColor );
 
-	                    // Bind indices buffer.
-
-	                    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer);
 
 	                    // Set perspective and model-view matrix uniforms.
 
 	                    gl.uniformMatrix4fv(vsVars.uniform.mat4.uPMatrix, false, pMatrix);
 	                    gl.uniformMatrix4fv(vsVars.uniform.mat4.uMVMatrix, false, mvMatrix);
 
-	                    // Draw elements.
+	                    // Bind indices buffer.
 
-	                    gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
+	                    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer);
+
+	                    if (webgl.elemIndexUint) {
+
+	                        // Draw elements, 0 -> 2e9
+
+	                        gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_INT, 0);
+	                    } else {
+
+	                        // Draw elements, 0 -> 65k (old platforms).
+
+	                        gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
+	                    }
 	                }
 	            };
 
@@ -3679,20 +3713,16 @@
 	                    gl.uniformMatrix4fv(vsVars.uniform.mat4.uPMatrix, false, pMatrix);
 	                    gl.uniformMatrix4fv(vsVars.uniform.mat4.uMVMatrix, false, mvMatrix);
 
-	                    if (obj.geometry.ssz) {
+	                    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer);
 
-	                        // Draw array directly, without index
+	                    if (webgl.elemIndexUint) {
 
-	                        console.log('ssz:' + obj.geometry.ssz + " size:" + obj.geometry.vertices.numItems);
+	                        // Draw elements, 0 -> 2e9
 
-	                        gl.drawArrays(gl.TRIANGLES, 0, 140000); /// DEBUG SHOULD BE BIGGER
+	                        gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_INT, 0);
 	                    } else {
 
-	                        // Bind index buffer.
-
-	                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer);
-
-	                        // Draw elements.
+	                        // Draw elements, 0 -> 65k (old platforms).
 
 	                        gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
 	                    }
@@ -3873,9 +3903,9 @@
 
 	var _map3d2 = _interopRequireDefault(_map3d);
 
-	var _mesh2 = __webpack_require__(24);
+	var _mesh = __webpack_require__(24);
 
-	var _mesh3 = _interopRequireDefault(_mesh2);
+	var _mesh2 = _interopRequireDefault(_mesh);
 
 	var _geoObj = __webpack_require__(25);
 
@@ -7210,36 +7240,26 @@
 	            // SUBDIVIDE TEST
 	            //if ( prim.name === 'colored cube' ) {
 	            //if ( prim.name === 'cubesphere' ) {
-	            if (prim.name === 'texsphere') {
+	            //if ( prim.name === 'texsphere' ) {
 
-	                var mesh = new _mesh3.default(prim.geometry);
+	            var mesh = new _mesh2.default(prim.geometry);
 
-	                window.mesh = mesh;
-	                mesh.subdivide(true);
-	                mesh.subdivide(true);
-	                mesh.subdivide(true);
-	                mesh.subdivide(true);
-	                mesh.subdivide(true);
-	                mesh.subdivide(true);
-	                //mesh.subdivide( true );
-	                //mesh.subdivide( true );
-	                //mesh.subdivide( true ); // this one zaps from low-vertex < 10 prim
+	            window.mesh = mesh;
+	            mesh.subdivide(true);
+	            mesh.subdivide(true);
+	            mesh.subdivide(true);
+	            //mesh.subdivide( true );
+	            //mesh.subdivide( true );
+	            //mesh.subdivide( true );
+	            //mesh.subdivide( true );
+	            //mesh.subdivide( true );
+	            //mesh.subdivide( true ); // this one zaps from low-vertex < 10 prim
 
-	                prim.geometry.normals.data = this.computeNormals(prim.geometry.vertices.data, prim.geometry.indices.data, [prim.geometry.normals.data]);
-	            }
+	            prim.geometry.normals.data = this.computeNormals(prim.geometry.vertices.data, prim.geometry.indices.data, [prim.geometry.normals.data]);
+	            //}
 
 	            ////////////////////////////////////////////////////////////////////////////////
 
-	            // If the Prim has > 65k vertices, don't use an index buffer (set flag for shader).
-
-	            if (prim.geometry.vertices.data.length > this.webgl.MAX_DRAWELEMENTS) {
-
-	                console.log(">>>>>>>>>>>SUPER_SIZED MESH:" + prim.type + " size:" + prim.geometry.vertices.data.length + ">>>>>>>>>>>>>>>");
-
-	                var _mesh = new _mesh3.default(prim.geometry);
-
-	                _mesh.vertexToDrawArrays();
-	            }
 
 	            // Create WebGL data buffers from geometry.
 
@@ -9517,7 +9537,7 @@
 
 	            this.vertexToGeometry();
 
-	            console.log('Mesh::subdivde(): ' + this.type + ' subdivided from ' + this.oldVertexArr.length + ' to:' + this.vertexArr.length);
+	            console.log('Mesh::subdivde(): ' + this.type + ' subdivided from ' + this.oldVertexArr.length + ' to:' + this.vertexArr.length + ' index length:' + this.indexArr.length);
 
 	            return this;
 	        }
@@ -9585,11 +9605,21 @@
 
 	            geo.texCoords.data = new Array(vertexArr.length * 2);
 
+	            // Flag any meshes that are > 64k (some hardware can't draw them with indexed arrays)
+
+	            if (vertexArr.length > 65535) {
+
+	                geo.ssz = true;
+	            } else {
+
+	                geo.ssz = false;
+	            }
+
+	            // Set the flattened vertices.
+
 	            var vertices = geo.vertices.data;
 
 	            var texCoords = geo.texCoords.data;
-
-	            console.log('Mesh::vertexToGeometry(): index length:' + indexArr.length);
 
 	            for (var i = 0; i < numVertices; i++) {
 
@@ -9626,61 +9656,6 @@
 
 	                    break;
 	                }
-	            }
-
-	            return geo;
-	        }
-
-	        /** 
-	         * WebGL can only draw indexed arrays (gl.drawElements) that are 65k or less. If 
-	         * a larger mesh is needed, it needs to be done without an index. This routine creates
-	         * flattened vertex arrays without indexes. 
-	         * The local indexArr here is a JavaScript Array(), not a UINT16 array, so it can be > 65, so 
-	         * it is used to generate subdivides and generated flattened, non-indexed arrays.
-	         */
-
-	    }, {
-	        key: 'vertexToDrawArrays',
-	        value: function vertexToDrawArrays() {
-
-	            var geo = this.geo;
-
-	            // Don't run if the number of Vertices < 65k
-
-	            if (geo.vertices.data.length < 65534) {
-
-	                console.warn('Mesh::vertexToDrawArrays(): vertices < 65k, not converted');
-
-	                return geo;
-	            }
-
-	            this.geometryToVertex(geo.vertices.data, geo.indices.data, geo.texCoords.data);
-
-	            var vertexArr = this.vertexArr;
-
-	            var indexArr = this.indexArr;
-
-	            geo.vertices.data = [];
-
-	            geo.indices.data = [0]; // minimal defined
-
-	            geo.texCoords.data = [];
-
-	            var vertices = geo.vertices.data;
-
-	            var texCoords = geo.texCoords.data;
-
-	            for (var i = 0; i < indexArr.length; i++) {
-
-	                var vtx = vertexArr[indexArr[i]];
-
-	                var c = vtx.coords;
-
-	                var t = vtx.texCoords;
-
-	                vertices.push(c.x, c.y, c.z);
-
-	                texCoords.push(t.u, t.v);
 	            }
 
 	            return geo;
@@ -9760,6 +9735,8 @@
 	        this.util = util;
 
 	        this.FLOAT32 = 'float32', this.UINT32 = 'uint32';
+
+	        this.UINT16 = 'uint16';
 
 	        this.makeBuffers = true, this.ssz = false, // super-sized, > 65k vertices
 
@@ -9896,6 +9873,18 @@
 
 	                    break;
 
+	                case this.UINT32:
+
+	                    o.buffer = gl.createBuffer();
+
+	                    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, o.buffer);
+
+	                    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(o.data), gl.STATIC_DRAW);
+
+	                    o.numItems = o.data.length / o.itemSize;
+
+	                    break;
+
 	                case this.UINT16:
 
 	                    o.buffer = gl.createBuffer();
@@ -9958,14 +9947,31 @@
 
 	            o = this.indices;
 
-	            if (!o.data.length) {
+	            /* 
+	             * Conditionally create a UINT16 or UINT32 buffer for the index values, based 
+	             * on whether this is WebGL 2.0, or the WebGL extension is available
+	             */
+	            if (this.webgl.elemIndexUint) {
 
-	                console.log('GeoObj::createGLBuffers(): no indices present, creating default');
+	                if (!o.data.length) {
 
-	                o.data = new Uint16Array([1]);
+	                    console.log('GeoObj::createGLBuffers(): no indices present, creating default');
+
+	                    o.data = new Uint32Array([1]);
+	                }
+
+	                this.bindGLBuffer(o, this.UINT32);
+	            } else {
+
+	                if (!o.data.length) {
+
+	                    console.log('GeoObj::createGLBuffers(): no indices present, creating default');
+
+	                    o.data = new Uint16Array([1]);
+	                }
+
+	                this.bindGLBuffer(o, this.UINT16);
 	            }
-
-	            this.bindGLBuffer(o, this.UINT16);
 
 	            // Create the Sides buffer, a kind of indices buffer.
 

@@ -18,6 +18,8 @@ class GeoObj {
 
         this.UINT32 = 'uint32';
 
+        this.UINT16 = 'uint16';
+
         this.makeBuffers = true,
 
         this.ssz = false, // super-sized, > 65k vertices
@@ -172,6 +174,18 @@ class GeoObj {
 
                 break;
 
+            case this.UINT32:
+
+                o.buffer = gl.createBuffer();
+
+                gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, o.buffer );
+
+                gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint32Array( o.data ), gl.STATIC_DRAW );
+
+                o.numItems = o.data.length / o.itemSize;
+
+                break;
+
             case this.UINT16:
 
                 o.buffer = gl.createBuffer();
@@ -234,15 +248,38 @@ class GeoObj {
 
             o = this.indices;
 
-            if ( ! o.data.length ) {
+            /* 
+             * Conditionally create a UINT16 or UINT32 buffer for the index values, based 
+             * on whether this is WebGL 2.0, or the WebGL extension is available
+             */
+            if ( this.webgl.elemIndexUint ) {
 
-                console.log( 'GeoObj::createGLBuffers(): no indices present, creating default' );
+                if ( ! o.data.length ) {
 
-                o.data = new Uint16Array( [ 1 ] );
+                    console.log( 'GeoObj::createGLBuffers(): no indices present, creating default' );
+
+                    o.data = new Uint32Array( [ 1 ] );
+
+                }
+
+                this.bindGLBuffer( o, this.UINT32 );
+
+            } else {
+
+
+                if ( ! o.data.length ) {
+
+                    console.log( 'GeoObj::createGLBuffers(): no indices present, creating default' );
+
+                    o.data = new Uint16Array( [ 1 ] );
+
+                }
+
+                this.bindGLBuffer( o, this.UINT16 );
 
             }
 
-            this.bindGLBuffer( o, this.UINT16 );
+
 
             // Create the Sides buffer, a kind of indices buffer.
 

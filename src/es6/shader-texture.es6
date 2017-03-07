@@ -190,7 +190,20 @@ class ShaderTexture extends Shader {
 
                 // Draw elements.
 
-                gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
+                if ( webgl.elemIndexUint ) {
+
+                    // Draw elements, 0 -> 2e9
+
+                    gl.drawElements( gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_INT, 0 );
+
+
+                } else {
+
+                    // Draw elements, 0 -> 65k (old platforms).
+
+                    gl.drawElements( gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0 );
+
+                }
 
             }
 

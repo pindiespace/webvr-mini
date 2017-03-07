@@ -3326,7 +3326,7 @@ class Prim {
         // SUBDIVIDE TEST
         //if ( prim.name === 'colored cube' ) {
         //if ( prim.name === 'cubesphere' ) {
-        if ( prim.name === 'texsphere' ) {
+        //if ( prim.name === 'texsphere' ) {
 
             let mesh = new Mesh( prim.geometry );
 
@@ -3334,29 +3334,18 @@ class Prim {
             mesh.subdivide( true );
             mesh.subdivide( true )
             mesh.subdivide( true );
-            mesh.subdivide( true );
-            mesh.subdivide( true );
-            mesh.subdivide( true );
+            //mesh.subdivide( true );
+            //mesh.subdivide( true );
+            //mesh.subdivide( true );
             //mesh.subdivide( true );
             //mesh.subdivide( true );
             //mesh.subdivide( true ); // this one zaps from low-vertex < 10 prim
 
             prim.geometry.normals.data = this.computeNormals( prim.geometry.vertices.data, prim.geometry.indices.data, [prim.geometry.normals.data] );
-       }
+       //}
 
 ////////////////////////////////////////////////////////////////////////////////
 
-        // If the Prim has > 65k vertices, don't use an index buffer (set flag for shader).
-
-        if ( prim.geometry.vertices.data.length > this.webgl.MAX_DRAWELEMENTS ) {
-
-            console.log(">>>>>>>>>>>SUPER_SIZED MESH:" + prim.type + " size:" + prim.geometry.vertices.data.length + ">>>>>>>>>>>>>>>")
-
-            let mesh = new Mesh( prim.geometry );
-
-            mesh.vertexToDrawArrays();
-
-        }
 
         // Create WebGL data buffers from geometry.
 

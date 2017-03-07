@@ -290,21 +290,18 @@ class ShaderDirlightTexture extends Shader {
                 gl.uniformMatrix4fv( vsVars.uniform.mat4.uPMatrix, false, pMatrix );
                 gl.uniformMatrix4fv( vsVars.uniform.mat4.uMVMatrix, false, mvMatrix );
 
-                if ( obj.geometry.ssz ) {
+                gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer );
 
-                    // Draw array directly, without index
+                if ( webgl.elemIndexUint ) { 
 
-                    console.log('ssz:' + obj.geometry.ssz + " size:" + obj.geometry.vertices.numItems )
+                    // Draw elements, 0 -> 2e9
 
-                    gl.drawArrays( gl.TRIANGLES, 0, 140000 ); /// DEBUG SHOULD BE BIGGER
+                    gl.drawElements( gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_INT, 0 );
+
 
                 } else {
 
-                    // Bind index buffer.
-
-                    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer );
-
-                    // Draw elements.
+                    // Draw elements, 0 -> 65k (old platforms).
 
                     gl.drawElements( gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0 );
 

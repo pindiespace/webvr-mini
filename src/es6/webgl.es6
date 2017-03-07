@@ -463,12 +463,14 @@ class WebGL {
                     //    console.log("TRANSFORM FEEDBACK NOT SUPPORTED")
                     //}
                     this.glVers = 2.0;
+                    this.elemIndexUint = true; // can handle 32-bit indexes
                     break;
 
                     case 2:
                     case 3:
                         this.glVers = 1.0;
-                        this.addVertexBufferSupport( gl );
+                        this.addVertexBufferSupport( gl ); // vertex buffers
+                        this.addIndex32Support( gl );      // vertices > 64k
                         break;
 
                     default:
@@ -582,6 +584,17 @@ class WebGL {
             gl.VERTEX_ARRAY_BINDING = ext.VERTEX_ARRAY_BINDING_OES;
 
          }
+
+    }
+
+    /** 
+     * Support indexed vertex drawing when there are more than 
+     * 64k vertices in WebGL 1.0. Enabled by default in WebGL 2.0.
+     * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only)l
+     */
+    addIndex32Support( gl ) {
+
+        this.elemIndexUint = gl.getExtension( 'OES_element_index_uint' );
 
     }
 

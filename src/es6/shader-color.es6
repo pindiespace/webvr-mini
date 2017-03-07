@@ -147,18 +147,31 @@ class ShaderColor extends Shader {
                 gl.vertexAttribPointer(vsVars.attribute.vec4.aVertexColor, obj.geometry.colors.itemSize, gl.FLOAT, false, 0, 0);
                 //gl.disableVertexAttribArray( vsVars.attribute.vec4.aVertexColor );
 
-                // Bind indices buffer.
-
-                gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer );
 
                 // Set perspective and model-view matrix uniforms.
 
                 gl.uniformMatrix4fv( vsVars.uniform.mat4.uPMatrix, false, pMatrix );
                 gl.uniformMatrix4fv( vsVars.uniform.mat4.uMVMatrix, false, mvMatrix );
 
-                // Draw elements.
+                // Bind indices buffer.
 
-                gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
+                gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer );
+
+
+                if ( webgl.elemIndexUint ) {
+
+                    // Draw elements, 0 -> 2e9
+
+                    gl.drawElements( gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_INT, 0 );
+
+
+                } else {
+
+                    // Draw elements, 0 -> 65k (old platforms).
+
+                    gl.drawElements( gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0 );
+
+                }
 
             }
 
