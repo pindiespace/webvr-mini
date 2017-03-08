@@ -3346,15 +3346,9 @@ class Prim {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-
         // Create WebGL data buffers from geometry.
 
-        //prim.geometry = this.createGLBuffers( prim.geometry );
         prim.geometry = prim.geometry.createGLBuffers();
-
-        // TODO:
-        // NOTE: individual methods are running createGLBuffers right now!
-        ///////////////prim.geometry = new GeoObj().createGLBuffers( prim.geometry );
 
         // Compute the bounding box.
 

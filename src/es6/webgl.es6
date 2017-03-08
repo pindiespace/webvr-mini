@@ -41,8 +41,6 @@ class WebGL {
 
         this.util = util;
 
-        this.MAX_DRAWELEMENTS = 65534; // limit for number of vertices indexed in gl.drawElements()
-
         if ( init === true ) {
 
             this.init( canvas );
@@ -458,19 +456,19 @@ class WebGL {
 
                 case 0:
                 case 1:
-                    //if ( ! gl.TRANSFORM_FEEDBACK ) {
-                    // revert to 1.0
-                    //    console.log("TRANSFORM FEEDBACK NOT SUPPORTED")
-                    //}
-                    this.glVers = 2.0;
-                    this.elemIndexUint = true; // can handle 32-bit indexes
+                        //if ( ! gl.TRANSFORM_FEEDBACK ) {
+                        // revert to 1.0
+                        //    console.log("TRANSFORM FEEDBACK NOT SUPPORTED")
+                        //}
+                        this.glVers = 2.0;
+                        this.elemIndexUint = true; // WebGL2 automatically handles 32-bit indexes
                     break;
 
                     case 2:
                     case 3:
                         this.glVers = 1.0;
                         this.addVertexBufferSupport( gl ); // vertex buffers
-                        this.addIndex32Support( gl );      // vertices > 64k
+                        this.elemIndexUint = this.addIndex32Support( gl );      // vertices > 64k
                         break;
 
                     default:
@@ -479,6 +477,16 @@ class WebGL {
                 }
 
             }
+
+        if ( ! this.elemIndexUint) { 
+
+            this.MAX_DRAWELEMENTS = 65534;
+
+        } else {
+
+            this.MAX_DRAWELEMENTS = 2e9;
+
+        }
 
         return this.gl;
 
@@ -585,6 +593,8 @@ class WebGL {
 
          }
 
+         return ext;
+
     }
 
     /** 
@@ -594,7 +604,9 @@ class WebGL {
      */
     addIndex32Support( gl ) {
 
-        this.elemIndexUint = gl.getExtension( 'OES_element_index_uint' );
+        const ext = gl.getExtension( 'OES_element_index_uint' );
+
+        return ext;
 
     }
 

@@ -1089,8 +1089,6 @@
 
 	        this.util = util;
 
-	        this.MAX_DRAWELEMENTS = 65534; // limit for number of vertices indexed in gl.drawElements()
-
 	        if (init === true) {
 
 	            this.init(canvas);
@@ -1491,20 +1489,28 @@
 	                        //    console.log("TRANSFORM FEEDBACK NOT SUPPORTED")
 	                        //}
 	                        this.glVers = 2.0;
-	                        this.elemIndexUint = true; // can handle 32-bit indexes
+	                        this.elemIndexUint = true; // WebGL2 automatically handles 32-bit indexes
 	                        break;
 
 	                    case 2:
 	                    case 3:
 	                        this.glVers = 1.0;
 	                        this.addVertexBufferSupport(gl); // vertex buffers
-	                        this.addIndex32Support(gl); // vertices > 64k
+	                        this.elemIndexUint = this.addIndex32Support(gl); // vertices > 64k
 	                        break;
 
 	                    default:
 	                        break;
 
 	                }
+	            }
+
+	            if (!this.elemIndexUint) {
+
+	                this.MAX_DRAWELEMENTS = 65534;
+	            } else {
+
+	                this.MAX_DRAWELEMENTS = 2e9;
 	            }
 
 	            return this.gl;
@@ -1614,6 +1620,8 @@
 
 	                gl.VERTEX_ARRAY_BINDING = ext.VERTEX_ARRAY_BINDING_OES;
 	            }
+
+	            return ext;
 	        }
 
 	        /** 
@@ -1626,7 +1634,9 @@
 	        key: 'addIndex32Support',
 	        value: function addIndex32Support(gl) {
 
-	            this.elemIndexUint = gl.getExtension('OES_element_index_uint');
+	            var ext = gl.getExtension('OES_element_index_uint');
+
+	            return ext;
 	        }
 
 	        /** 
@@ -7260,15 +7270,9 @@
 
 	            ////////////////////////////////////////////////////////////////////////////////
 
-
 	            // Create WebGL data buffers from geometry.
 
-	            //prim.geometry = this.createGLBuffers( prim.geometry );
 	            prim.geometry = prim.geometry.createGLBuffers();
-
-	            // TODO:
-	            // NOTE: individual methods are running createGLBuffers right now!
-	            ///////////////prim.geometry = new GeoObj().createGLBuffers( prim.geometry );
 
 	            // Compute the bounding box.
 
@@ -8665,6 +8669,11 @@
 	                vtx.e.push(this.e[i]);
 	            }
 
+	            for (var _i = 0; _i < this.s.length; _i++) {
+
+	                vtx.s.push(this.s[_i]);
+	            }
+
 	            return vtx;
 	        }
 	    }]);
@@ -8787,45 +8796,39 @@
 
 	        // Mesh arrays.
 
-	        this.vertexArr = []; // holds Vertex objects
+	        this.vertexArr = [], // holds Vertex objects
 
-	        this.indexArr = []; // holds drawing path through Vertex objects
+	        this.indexArr = [], // holds drawing path through Vertex objects
 
-	        this.edgeArr = []; // holds Edge objects
+	        this.edgeArr = [], // holds Edge objects
 
-	        this.edgeMap = []; // lookup table for Edges (even Vertices)
+	        this.edgeMap = [], // lookup table for Edges (even Vertices)
 
-	        this.faceArr = []; // holds the triangle list (derived from indexArr)
+	        this.faceArr = [], // holds the triangle list (derived from indexArr)
 
-	        this.valenceArr = []; // holds computed valency constants for Edge and opposite Vertices
+	        this.valenceArr = [], // holds computed valency constants for Edge and opposite Vertices
 
 	        this.oldVertexArr = []; // keep the original Vertex data when transforming mesh
 
-	        this.avDistance = 0; // average distance between Vertices
+	        // Mesh statistics.
 
-	        this.width = 0;
+	        this.avDistance = 0, // average distance between Vertices
 
-	        this.height = 0;
-
-	        this.depth = 0;
-
-	        this.centroid = null;
-
-	        this.iterations = 0; // number of iterations of the subdivide algorithm
+	        this.width = 0, this.height = 0, this.depth = 0, this.centroid = null, this.iterations = 0; // number of iterations of the subdivide algorithm
 
 	        // Scaling factors for smoothing.
 
-	        this.fw = 3 / 8; // Edge Vertices a midpoint is created in.
+	        this.epsilon = 1e-9, this.fw = 3 / 8, // Edge Vertices a midpoint is created in.
 
-	        this.ow = 1 / 8; // Opposite Vertices from the Edge the midpoint is in.
+	        this.ow = 1 / 8, // Opposite Vertices from the Edge the midpoint is in.
 
-	        this.f0w = 4 / 8; // Use when there is only one 'opposite' Vertex (e.g. Mesh 'seam') - change this to 4.5 to see the seams
+	        this.f0w = 4 / 8, // Use when there is only one 'opposite' Vertex (e.g. Mesh 'seam') - change this to 4.5 to see the seams
 
 	        this.badIndex32 = 4294967294; // invalid index in Vertex array.
 
 	        // Pre-compute valency weighting values.
 
-	        this.computeValencyWeights(12); // was 12 DEBUG!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	        this.computeValencyWeights(100); // was 12, 6 is normal
 
 	        // Convert flattened arrays to Vertex data structure (Index array remains the same).
 
@@ -8905,11 +8908,6 @@
 	                vi = 0,
 	                ti = 0;
 
-	            // Average spacing between vertices
-
-	            var dist = 0,
-	                avDist = 0;
-
 	            // Bounding Box (get width, height, and depth)
 
 	            var width = 0,
@@ -8934,8 +8932,6 @@
 
 	                if (i > 0) {
 
-	                    avDist += vtx.distance(vertexArr[i - 1], true); // fast approx calc
-
 	                    var c = vtx.coords;
 
 	                    min.x = Math.min(min.x, c.x);
@@ -8953,25 +8949,9 @@
 	                    centroid.add(c);
 	                }
 
-	                // Find overlapping Vertices (seams).
+	                // Centroid position
 
-	                for (var j = 0; j < i; j++) {
-
-	                    var vtx2 = vertexArr[j];
-
-	                    if (vtx.distance(vtx2) < 0.00001) {
-
-	                        if (vtx.s.indexOf(vtx2) === -1) {
-
-	                            vtx.s.push(vtx2);
-	                        }
-
-	                        if (vtx2.s.indexOf(vtx) === -1) {
-
-	                            vtx2.s.push(vtx);
-	                        }
-	                    }
-	                }
+	                this.centroid = centroid.scale(1 / numVertices);
 	            }
 
 	            // Compute Mesh dimensions.
@@ -8981,12 +8961,6 @@
 	            this.height = max.y - min.y;
 
 	            this.depth = max.z - min.z;
-
-	            this.centroid = centroid.scale(1 / numVertices);
-
-	            // Estimate average spacing among Vertices.
-
-	            this.avDistance = avDist / numVertices;
 
 	            return vertexArr;
 	        }
@@ -9043,8 +9017,6 @@
 	                vertexArr[mini].e.push(idx);
 
 	                vertexArr[maxi].e.push(idx);
-
-	                ///if ( mini != vertexArr[ mini ].idx ) console.log("vertexArr:" + mini + ' is:' + vertexArr[ mini ].idx)
 	            }
 
 	            return idx;
@@ -9107,15 +9079,14 @@
 
 	            var valency = vtx.e.length;
 
+	            var valenceArr = vtx.e;
+
 	            /* 
 	             * IMPORTANT!!!!!
 	             * 
 	             * For 'seamless' Meshes, every Vertex has at least 6 other Vertices connected 
-	             * to it. However for meshes are wrapped plane-type objects (e.g. a Sphere which is 
-	             * a flat sheet with its points projected into a Sphere), or corners 
-	             * (e.g. a Cube's ends) the Vertices of the Mesh form a 'seam' with 4 or fewer surround 
-	             * Vertices in the Vertex.e[] array. These seams should remain stationary when subdividing.
-	             * 
+	             * to it. However if the mesh is not continuous, some will have lower valency.
+	             *
 	             * Running computeEven on a Vertex on a seam or corner results in a jagged edge.
 	             * So, exit this function if valency is low enough to be a seam.
 	             * 
@@ -9124,7 +9095,9 @@
 	             * the second Edge.ov[1] 'opposite' Vertex from the Edge they are inside. 
 	             */
 
-	            var valenceArr = vtx.e;
+	            var seamVtx = void 0,
+	                seamVtxWeight = void 0,
+	                seamVtxBaseWeight = void 0;
 
 	            if (valency < 5) {
 
@@ -9139,19 +9112,13 @@
 
 	            var vertexWeightBeta = 1.0 - valency * beta;
 
-	            var c = vtx.coords;
-
-	            var tc = vtx.texCoords;
-
-	            var x = vertexWeightBeta * c.x;
-
-	            var y = vertexWeightBeta * c.y;
-
-	            var z = vertexWeightBeta * c.z;
-
-	            var u = vertexWeightBeta * tc.u;
-
-	            var v = vertexWeightBeta * tc.v;
+	            var c = vtx.coords,
+	                tc = vtx.texCoords,
+	                x = vertexWeightBeta * c.x,
+	                y = vertexWeightBeta * c.y,
+	                z = vertexWeightBeta * c.z,
+	                u = vertexWeightBeta * tc.u,
+	                v = vertexWeightBeta * tc.v;
 
 	            // Beta weighting for surround Vertices, using Edge vertices.
 
@@ -9284,6 +9251,17 @@
 	        key: 'subdivide',
 	        value: function subdivide(smooth) {
 
+	            // Test is our system can handle the subdivision.
+
+	            if (this.geo.vertices.data.length / 3 > this.geo.MAX_DRAWELEMENTS) {
+
+	                console.warn('subdivision of ' + geo.type + ' would exceed ability of device to render indexed meshes, aborting...');
+
+	                return this;
+	            }
+
+	            // Convert flattened arrays to Vertex, Edge objects.
+
 	            this.geometryToVertex(this.geo.vertices.data, this.geo.indices.data, this.geo.texCoords.data);
 
 	            this.isValid();
@@ -9292,7 +9270,7 @@
 
 	            var indexArr = this.indexArr;
 
-	            // Save a copy DEBUG
+	            // Save a copy DEBUG !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 	            this.oldVertexArr = this.vertexArr.slice(); // make a copy
 
@@ -9568,6 +9546,83 @@
 	        }
 
 	        /** 
+	         * Find vertices in identical positions, and merge them.
+	         */
+
+	    }, {
+	        key: 'simplify',
+	        value: function simplify() {
+
+	            // Convert flattened arrays to Vertex, Edge objects.
+
+	            this.geometryToVertex(this.geo.vertices.data, this.geo.indices.data, this.geo.texCoords.data);
+
+	            var vertexArr = this.vertexArr;
+
+	            var indexArr = this.indexArr;
+
+	            // Find overlapping Vertices (seams).
+
+	            var newVertexArr = [];
+
+	            for (var i = 0; i < vertexArr.length; i++) {
+
+	                for (var j = 0; j < vertexArr.length; j++) {
+
+	                    var vtx1 = vertexArr[i];
+
+	                    var vtx2 = vertexArr[j];
+
+	                    if (vtx1 !== vtx2) {
+
+	                        if (vtx1.distance(vtx2) < this.epsilon) {
+
+	                            var newIdx = void 0;
+
+	                            var max = Math.max(vtx1.idx, vtx2.idx);
+
+	                            var min = Math.min(vtx1.idx, vtx2.idx);
+
+	                            if (vtx1.idx < vtx2.idx) {
+
+	                                var pos = indexArr.indexOf(max);
+
+	                                while (pos !== -1) {
+
+	                                    indexArr[pos] = min;
+
+	                                    pos = indexArr.indexOf(max);
+	                                }
+	                            }
+	                        }
+	                    }
+	                }
+	            }
+
+	            // burn out a new VertexArr
+
+	            for (var _i2 = 0; _i2 < indexArr.length; _i2++) {
+
+	                var vtx = vertexArr[indexArr];
+
+	                if (newVertexArr.indexOf(vtx) === -1) {
+
+	                    newVertexArr.push(vtx);
+	                }
+	            }
+
+	            console.log(' oldVertexArr:' + vertexArr.length + ', newVertexArr:' + newVertexArr.length);
+
+	            // copy over old Vertex arr
+
+	            vertexArr = newVertexArr;
+	        }
+
+	        /** 
+	         * distort a shape into a shallow bowl
+	         */
+
+	        /** 
 	         * Convert our native flattened geometric data (from Prim) to a Vertex object 
 	         * data representation suitable for subdivision and morphing.
 	         * @param {Float32Array} vertices a flattened array of positions.
@@ -9701,6 +9756,8 @@
 
 	                for (var i = 0; i < vertexArr.length; i++) {
 
+	                    ////////////////////console.log( vertexArr[ i ].s ) ////////////////////////////////////////////////////////////////
+
 	                    if (!vertexArr[i].isValid()) {
 
 	                        console.error('Mesh::isValid(): invalid supplied vertex at:' + i);
@@ -9763,9 +9820,7 @@
 
 	        this.UINT16 = 'uint16';
 
-	        this.makeBuffers = true, this.ssz = false, // super-sized, > 65k vertices
-
-	        this.vertices = {
+	        this.makeBuffers = true, this.vertices = {
 
 	            data: [],
 
@@ -9836,6 +9891,10 @@
 	            numItems: 0
 
 	        };
+
+	        // Save the max allowed drawing size. For WebGL 1.0 with extension, vertices must be < 65k.
+
+	        this.MAX_DRAWELEMENTS = this.webgl.MAX_DRAWELEMENTS;
 	    } // end of constructor
 
 	    /** 
@@ -9957,13 +10016,6 @@
 	                console.log('GeoObj::createGLBuffers(): no vertices present, creating default');
 
 	                o.data = new Float32Array([0, 0, 0]);
-	            }
-
-	            // Flag buffers that are too big to use with gl.drawElements()
-
-	            if (o.data.length > this.webgl.MAX_DRAWELEMENTS) {
-
-	                this.ssz = true;
 	            }
 
 	            this.bindGLBuffer(o, this.FLOAT32);

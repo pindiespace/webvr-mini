@@ -293,6 +293,12 @@ class Vertex {
 
         }
 
+        for ( let i = 0; i < this.s.length; i++ ) {
+
+            vtx.s.push ( this.s[ i ] );
+
+        }
+
         return vtx;
 
     }
@@ -416,45 +422,49 @@ class Mesh {
 
         // Mesh arrays.
 
-        this.vertexArr = [];    // holds Vertex objects
+        this.vertexArr = [],    // holds Vertex objects
 
-        this.indexArr = [];     // holds drawing path through Vertex objects
+        this.indexArr = [],     // holds drawing path through Vertex objects
 
-        this.edgeArr = [];      // holds Edge objects
+        this.edgeArr = [],      // holds Edge objects
 
-        this.edgeMap = [];      // lookup table for Edges (even Vertices)
+        this.edgeMap = [],      // lookup table for Edges (even Vertices)
 
-        this.faceArr = [];      // holds the triangle list (derived from indexArr)
+        this.faceArr = [],      // holds the triangle list (derived from indexArr)
 
-        this.valenceArr = [];   // holds computed valency constants for Edge and opposite Vertices
+        this.valenceArr = [],   // holds computed valency constants for Edge and opposite Vertices
 
         this.oldVertexArr = []; // keep the original Vertex data when transforming mesh
 
-        this.avDistance = 0;    // average distance between Vertices
+        // Mesh statistics.
 
-        this.width = 0;
+        this.avDistance = 0,    // average distance between Vertices
 
-        this.height = 0;
+        this.width = 0,
 
-        this.depth = 0;
+        this.height = 0,
 
-        this.centroid = null;
+        this.depth = 0,
+
+        this.centroid = null,
 
         this.iterations = 0; // number of iterations of the subdivide algorithm
 
         // Scaling factors for smoothing.
 
-        this.fw  = 3 / 8; // Edge Vertices a midpoint is created in.
+        this.epsilon = 1e-9,
 
-        this.ow  = 1 / 8; // Opposite Vertices from the Edge the midpoint is in.
+        this.fw  = 3 / 8, // Edge Vertices a midpoint is created in.
 
-        this.f0w = 4 / 8; // Use when there is only one 'opposite' Vertex (e.g. Mesh 'seam') - change this to 4.5 to see the seams
+        this.ow  = 1 / 8, // Opposite Vertices from the Edge the midpoint is in.
+
+        this.f0w = 4 / 8, // Use when there is only one 'opposite' Vertex (e.g. Mesh 'seam') - change this to 4.5 to see the seams
 
         this.badIndex32 = 4294967294; // invalid index in Vertex array.
 
         // Pre-compute valency weighting values.
 
-        this.computeValencyWeights( 12 ); // was 12 DEBUG!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        this.computeValencyWeights( 100 ); // was 12, 6 is normal
 
         // Convert flattened arrays to Vertex data structure (Index array remains the same).
 
@@ -548,10 +558,6 @@ class Mesh {
 
         let i = 0, vi = 0, ti = 0;
 
-        // Average spacing between vertices
-
-        let dist = 0, avDist = 0;
-
         // Bounding Box (get width, height, and depth)
 
         let width = 0, height = 0, depth = 0;
@@ -574,8 +580,6 @@ class Mesh {
 
             if ( i > 0 ) {
 
-                avDist += vtx.distance( vertexArr[ i - 1 ], true ); // fast approx calc
-
                 let c = vtx.coords;
 
                 min.x = Math.min( min.x, c.x );
@@ -594,29 +598,9 @@ class Mesh {
 
             }
 
-            // Find overlapping Vertices (seams).
+            // Centroid position
 
-            for ( let j = 0; j < i; j++ ) {
-
-                let vtx2 = vertexArr[ j ];
-
-                if ( vtx.distance( vtx2 ) < 0.00001 ) {
-
-                    if ( vtx.s.indexOf( vtx2 ) === -1 ) {
-
-                        vtx.s.push( vtx2 );
-
-                    }
-
-                    if ( vtx2.s.indexOf( vtx ) === -1 ) {
-
-                        vtx2.s.push( vtx );
-
-                    }
-
-                }
-
-            }
+            this.centroid = centroid.scale( 1 / numVertices );
 
         }
 
@@ -627,12 +611,6 @@ class Mesh {
         this.height = max.y - min.y;
 
         this.depth = max.z - min.z;
-
-        this.centroid = centroid.scale( 1 / numVertices );
-
-        // Estimate average spacing among Vertices.
-
-        this.avDistance = avDist / numVertices;
 
         return vertexArr;
 
@@ -688,8 +666,6 @@ class Mesh {
             vertexArr[ mini ].e.push( idx );
 
             vertexArr[ maxi ].e.push( idx );
-
-            ///if ( mini != vertexArr[ mini ].idx ) console.log("vertexArr:" + mini + ' is:' + vertexArr[ mini ].idx)
 
         }
 
@@ -760,15 +736,14 @@ class Mesh {
 
         const valency =  vtx.e.length;
 
+        let valenceArr = vtx.e;
+
         /* 
          * IMPORTANT!!!!!
          * 
          * For 'seamless' Meshes, every Vertex has at least 6 other Vertices connected 
-         * to it. However for meshes are wrapped plane-type objects (e.g. a Sphere which is 
-         * a flat sheet with its points projected into a Sphere), or corners 
-         * (e.g. a Cube's ends) the Vertices of the Mesh form a 'seam' with 4 or fewer surround 
-         * Vertices in the Vertex.e[] array. These seams should remain stationary when subdividing.
-         * 
+         * to it. However if the mesh is not continuous, some will have lower valency.
+         *
          * Running computeEven on a Vertex on a seam or corner results in a jagged edge.
          * So, exit this function if valency is low enough to be a seam.
          * 
@@ -777,11 +752,12 @@ class Mesh {
          * the second Edge.ov[1] 'opposite' Vertex from the Edge they are inside. 
          */
 
-         let valenceArr = vtx.e;
+        let seamVtx, seamVtxWeight, seamVtxBaseWeight;
 
         if ( valency < 5 ) {
 
-             return false;
+           
+            return false;
 
         }
 
@@ -793,19 +769,19 @@ class Mesh {
 
         const vertexWeightBeta = 1.0 - ( valency * beta );
 
-        let c = vtx.coords;
+        let c = vtx.coords,
 
-        let tc = vtx.texCoords;
+        tc = vtx.texCoords,
 
-        let x = vertexWeightBeta * c.x;
+        x = vertexWeightBeta * c.x,
 
-        let y = vertexWeightBeta * c.y;
+        y = vertexWeightBeta * c.y,
 
-        let z = vertexWeightBeta * c.z;
+        z = vertexWeightBeta * c.z,
 
-        let u = vertexWeightBeta * tc.u;
+        u = vertexWeightBeta * tc.u,
 
-        let v = vertexWeightBeta * tc.v;
+        v = vertexWeightBeta * tc.v;
 
         // Beta weighting for surround Vertices, using Edge vertices.
 
@@ -951,6 +927,18 @@ class Mesh {
      */
     subdivide ( smooth ) {
 
+        // Test is our system can handle the subdivision.
+
+        if ( this.geo.vertices.data.length / 3 > this.geo.MAX_DRAWELEMENTS ) {
+
+            console.warn( 'subdivision of ' + geo.type + ' would exceed ability of device to render indexed meshes, aborting...' );
+
+            return this;
+
+        }
+
+        // Convert flattened arrays to Vertex, Edge objects.
+
         this.geometryToVertex( this.geo.vertices.data, this.geo.indices.data, this.geo.texCoords.data );
 
         this.isValid();
@@ -959,7 +947,7 @@ class Mesh {
 
         let indexArr = this.indexArr;
 
-        // Save a copy DEBUG
+        // Save a copy DEBUG !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         this.oldVertexArr = this.vertexArr.slice(); // make a copy
 
@@ -1255,6 +1243,92 @@ class Mesh {
 
     }
 
+    /** 
+     * Find vertices in identical positions, and merge them.
+     */
+    simplify () {
+
+        // Convert flattened arrays to Vertex, Edge objects.
+
+        this.geometryToVertex( this.geo.vertices.data, this.geo.indices.data, this.geo.texCoords.data );
+
+        let vertexArr = this.vertexArr;
+
+        let indexArr = this.indexArr;
+
+        // Find overlapping Vertices (seams).
+
+        let newVertexArr = [];
+
+        for ( let i = 0; i < vertexArr.length; i++ ) {
+
+            for ( let j = 0; j < vertexArr.length; j++ ) {
+
+                let vtx1 = vertexArr[ i ];
+
+                let vtx2 = vertexArr[ j ];
+
+                if ( vtx1 !== vtx2 ) {
+
+                    if ( vtx1.distance( vtx2 ) < this.epsilon ) {
+
+                        let newIdx;
+
+                        let max = Math.max( vtx1.idx, vtx2.idx );
+
+                        let min = Math.min( vtx1.idx, vtx2.idx );
+
+                        if ( vtx1.idx < vtx2.idx ) {
+
+                            let pos = indexArr.indexOf( max );
+
+                            while ( pos !== -1 ) {
+
+                                indexArr[ pos ] = min;
+
+                                pos = indexArr.indexOf( max );
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        }
+
+        // burn out a new VertexArr
+
+        for ( let i = 0; i < indexArr.length; i++ ) {
+
+            let vtx = vertexArr[ indexArr ];
+
+            if ( newVertexArr.indexOf( vtx ) === -1 ) {
+
+                newVertexArr.push ( vtx );
+
+            }
+
+        }
+
+        console.log(' oldVertexArr:' + vertexArr.length + ', newVertexArr:' + newVertexArr.length );
+
+        // copy over old Vertex arr
+
+        vertexArr = newVertexArr;
+
+
+
+
+    }
+
+    /** 
+     * distort a shape into a shallow bowl
+     */
+
 
     /** 
      * Convert our native flattened geometric data (from Prim) to a Vertex object 
@@ -1387,6 +1461,8 @@ class Mesh {
         if ( vertexArr.length > 0 && this.indexArr.length > 0 ) {
 
             for ( let i = 0; i < vertexArr.length; i++ ) {
+
+                ////////////////////console.log( vertexArr[ i ].s ) ////////////////////////////////////////////////////////////////
 
                 if ( ! vertexArr[ i ].isValid() ) {
 

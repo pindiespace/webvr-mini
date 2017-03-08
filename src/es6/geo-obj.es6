@@ -22,8 +22,6 @@ class GeoObj {
 
         this.makeBuffers = true,
 
-        this.ssz = false, // super-sized, > 65k vertices
-
         this.vertices = {
 
                 data: [],
@@ -107,6 +105,10 @@ class GeoObj {
                 numItems: 0
 
         }
+
+        // Save the max allowed drawing size. For WebGL 1.0 with extension, vertices must be < 65k.
+
+        this.MAX_DRAWELEMENTS = this.webgl.MAX_DRAWELEMENTS;
 
     } // end of constructor
 
@@ -231,14 +233,6 @@ class GeoObj {
                 console.log( 'GeoObj::createGLBuffers(): no vertices present, creating default' );
 
                 o.data = new Float32Array( [ 0, 0, 0 ] );
-
-            }
-
-            // Flag buffers that are too big to use with gl.drawElements()
-
-            if ( o.data.length > this.webgl.MAX_DRAWELEMENTS ) {
-
-                this.ssz = true;
 
             }
 
