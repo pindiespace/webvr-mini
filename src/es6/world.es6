@@ -105,8 +105,8 @@ class World {
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 40 ), util.degToRad( 0  ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 1 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-            ['img/webvr-logo2.png'],
-            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
+            [ 'img/webvr-logo2.png' ],
+            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color
         ) );
 
         // PRIMARY (BIG) SKYDOME
@@ -120,7 +120,7 @@ class World {
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.1 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-            ['img/panorama_01.png'],               // texture present
+            [ 'img/panorama_01.png' ],               // texture present
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0)  // color
         ) );
 
@@ -133,8 +133,8 @@ class World {
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 20 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 1 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-            ['img/uv-test.png'],               // texture present, NOT USED
-            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
+            [ 'img/uv-test.png' ],               // texture present, NOT USED
+            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color
         ) );
 
         this.vs1 = this.renderer.shaderTexture.init( this.textureObjList );
@@ -153,8 +153,8 @@ class World {
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 20 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 1 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-            ['img/webvr-logo3.png'],               // texture present, NOT USED
-            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
+            [ 'img/webvr-logo3.png' ],               // texture present, NOT USED
+            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color
         ) );
 
         this.vs2 = this.renderer.shaderColor.init( this.colorObjList );
@@ -172,8 +172,8 @@ class World {
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 20 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 1 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-            ['img/webvr-logo4.png'],               // texture present, NOT USED
-            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
+            [ 'img/webvr-logo4.png' ],               // texture present, NOT USED
+            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color
         ) );
 
         this.dirlightTextureObjList.push( this.prim.createPrim(
@@ -185,9 +185,10 @@ class World {
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 1 ), util.degToRad( 0 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-            ['img/mozvr-logo1.png'],               // texture present
+            [ 'img/mozvr-logo1.png' ],               // texture present
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0),  // color
             null //heightMap                       // heightmap
+
         ) );
 
 ///////////////////////////
@@ -202,7 +203,7 @@ class World {
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0.0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-            ['img/webvr-logo1.png'],               // texture present
+            [ 'img/webvr-logo1.png' ],               // texture present
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
@@ -215,7 +216,7 @@ class World {
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0.0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-            ['img/webvr-logo2.png'],               // texture present
+            [ 'img/webvr-logo2.png' ],               // texture present
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
@@ -228,7 +229,7 @@ class World {
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0.0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-            ['img/webvr-logo3.png'],               // texture present
+            [ 'img/webvr-logo3.png' ],               // texture present
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
@@ -241,7 +242,7 @@ class World {
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0.0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-            ['img/webvr-logo4.png'],               // texture present
+            [ 'img/webvr-logo4.png' ],               // texture present
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
@@ -259,7 +260,7 @@ class World {
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-            ['img/mozvr-logo2.png'],               // texture present
+            [ 'img/mozvr-logo2.png' ],               // texture present
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
@@ -274,7 +275,7 @@ class World {
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-            ['img/mozvr-logo1.png'],               // texture present, NOT USED
+            [ 'img/mozvr-logo1.png' ],               // texture present, NOT USED
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
@@ -288,7 +289,7 @@ class World {
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 10 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-            ['img/mozvr-logo1.png'],               // texture present, NOT USED
+            [ 'img/mozvr-logo1.png' ],               // texture present, NOT USED
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
@@ -301,7 +302,7 @@ class World {
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-            ['img/mozvr-logo2.png'],               // texture present, NOT USED
+            [ 'img/mozvr-logo2.png' ],               // texture present, NOT USED
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
@@ -314,7 +315,7 @@ class World {
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-            ['img/mozvr-logo2.png'],               // texture present, NOT USED
+            [ 'img/mozvr-logo2.png' ],               // texture present, NOT USED
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
@@ -327,7 +328,7 @@ class World {
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-            ['img/uv-test.png'],               // texture present, NOT USED
+            [ 'img/uv-test.png' ],               // texture present, NOT USED
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
@@ -341,7 +342,7 @@ class World {
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-            ['img/uv-test.png'],               // texture present, NOT USED
+            [ 'img/uv-test.png' ],               // texture present, NOT USED
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
@@ -354,7 +355,7 @@ class World {
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-            ['img/uv-test.png'],               // texture present, NOT USED
+            [ 'img/uv-test.png' ],               // texture present, NOT USED
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 //////////////////////////
@@ -369,7 +370,7 @@ class World {
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-            ['img/mozvr-logo2.png'],               // texture present
+            [ 'img/mozvr-logo2.png' ],               // texture present
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
@@ -383,7 +384,7 @@ class World {
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-            ['img/mozvr-logo1.png'],               // texture present
+            [ 'img/mozvr-logo1.png' ],               // texture present
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
@@ -397,7 +398,7 @@ class World {
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-            ['img/mozvr-logo1.png'],               // texture present
+            [ 'img/mozvr-logo1.png' ],               // texture present
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
@@ -410,7 +411,7 @@ class World {
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-            ['img/uv-test.png'],               // texture present
+            [ 'img/uv-test.png' ],               // texture present
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
@@ -423,7 +424,7 @@ class World {
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-            ['img/uv-test.png'],               // texture present
+            [ 'img/uv-test.png' ],               // texture present
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
@@ -437,21 +438,21 @@ class World {
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-            ['img/uv-test.png'],               // texture present
+            [ 'img/uv-test.png' ],               // texture present
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
 
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.TEARDROP,
-            'TestCapsule',
+            'TestTearDrop',
             vec5( 1, 2, 1 ),       // dimensions (4th dimension doesn't exist for cylinder)
             vec5( 40, 40, 0  ),        // divisions MAKE SMALLER
             vec3.fromValues(-2.0, 1.5, 2.0 ),          // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-            ['img/uv-test.png'],               // texture present
+            [ 'img/uv-test.png' ],               // texture present
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         ) );
 
@@ -465,13 +466,34 @@ class World {
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-            ['img/crate.png'],               // texture present
+            [ 'img/crate.png' ],               // texture present
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color,
             true                                    // if true, apply texture to each face
         ) );
 
 
         this.vs3 = this.renderer.shaderDirlightTexture.init( this.dirlightTextureObjList );
+
+        ///////////////
+
+        this.prim.createPrim(
+            this.prim.typeList.MESH,
+            'teapot',
+            vec5( 1, 1, 1 ),       // dimensions (4th dimension doesn't exist for cylinder)
+            vec5( 40, 40, 0  ),        // divisions MAKE SMALLER
+            vec3.fromValues(0.0, 1.0, 0.0 ),      // position (absolute)
+            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+            vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+            [ 'obj/capsule/capsule.png' ],               // texture present
+            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color,
+            true,                                   // if true, apply texture to each face,
+            [ 'obj/capsule/capsule.obj', 'obj/capsule/capsule.mtl' ] // object files (.obj, .mtl)
+        )
+
+        //this.prim.loadModel.load( 'obj/teapot.obj', this.prim );
+
+        ///////////////
 
         // Finished object creation, start rendering...
 

@@ -598,7 +598,7 @@ class Mesh {
 
             }
 
-            // Centroid position
+            // Centroid position.
 
             this.centroid = centroid.scale( 1 / numVertices );
 
@@ -754,9 +754,8 @@ class Mesh {
 
         let seamVtx, seamVtxWeight, seamVtxBaseWeight;
 
-        if ( valency < 5 ) {
+        if ( valency < 6 ) { // TODO: had 5, affects joins on CubeSphere
 
-           
             return false;
 
         }
@@ -1250,15 +1249,19 @@ class Mesh {
 
         // Convert flattened arrays to Vertex, Edge objects.
 
+        console.log('Simplifying mesh...' + this.type)
+
         this.geometryToVertex( this.geo.vertices.data, this.geo.indices.data, this.geo.texCoords.data );
 
         let vertexArr = this.vertexArr;
 
         let indexArr = this.indexArr;
 
-        // Find overlapping Vertices (seams).
+        // Find overlapping Vertices (seams) and reduce complexity.
 
         let newVertexArr = [];
+
+        let newIndexArr = indexArr.slice();
 
         for ( let i = 0; i < vertexArr.length; i++ ) {
 
@@ -1278,17 +1281,13 @@ class Mesh {
 
                         let min = Math.min( vtx1.idx, vtx2.idx );
 
-                        if ( vtx1.idx < vtx2.idx ) {
+                        let pos = newIndexArr.indexOf( max );
 
-                            let pos = indexArr.indexOf( max );
+                        while ( pos !== -1 ) {
 
-                            while ( pos !== -1 ) {
+                            newIndexArr[ pos ] = min;
 
-                                indexArr[ pos ] = min;
-
-                                pos = indexArr.indexOf( max );
-
-                            }
+                            pos = newIndexArr.indexOf( max );
 
                         }
 
@@ -1300,11 +1299,11 @@ class Mesh {
 
         }
 
-        // burn out a new VertexArr
+        // burn out a new VertexArr.
 
-        for ( let i = 0; i < indexArr.length; i++ ) {
+        for ( let i = 0; i < newIndexArr.length; i++ ) {
 
-            let vtx = vertexArr[ indexArr ];
+            let vtx = vertexArr[ newIndexArr[ i ] ];
 
             if ( newVertexArr.indexOf( vtx ) === -1 ) {
 
@@ -1316,12 +1315,17 @@ class Mesh {
 
         console.log(' oldVertexArr:' + vertexArr.length + ', newVertexArr:' + newVertexArr.length );
 
-        // copy over old Vertex arr
+        // Copy over old Vertex and Index array.
 
-        vertexArr = newVertexArr;
+        this.oldIndexArr = indexArr;
 
+        this.oldVertexArr = vertexArr;
 
+        // Index array remains the same.
 
+        this.vertexArr = newVertexArr;
+
+        this.indexArr = newIndexArr;
 
     }
 

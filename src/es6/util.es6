@@ -326,7 +326,7 @@ class Util {
         if ( ArrayBuffer.isView( arr1 ) ) { // typed array
 
 
-            // Convert both to array type of first array.
+            // Convert both sets of array values to the array type of the first array.
 
             if ( arr1 instanceof Float32Array ) {
 
@@ -335,6 +335,16 @@ class Util {
                 if( ! arr2 instanceof Float32Array ) {
 
                         arr2 = Float32Array.from( arr2 );
+
+                }
+
+            } else if ( arr1 instanceof Uint32Array ) {
+
+                result = new Uint32Array( len1 + len2 );
+
+                if( ! arr2 instanceof Uint32Array ) {
+
+                    arr2 = Uint32Array.from( arr2 );
 
                 }
 

@@ -2,7 +2,7 @@ class LoadPool {
 
     /**
      * Base loader class. We don't use promise.all since we want to keep a 
-     * limited pool of loaders, which accept a larger number of waitObjs. As 
+     * limited pool of loaders, which accept a large number of waitObjs. As 
      * each loadObj completes a load, it checks the queue to see if there is 
      * another loadObj neededing a load.
      */
@@ -64,8 +64,6 @@ class LoadPool {
      */
     update ( loadObj ) {
 
-        /////////////console.log( 'in loadTexture.update()' );
-
         let waitCache = this.waitCache;
 
         let wLen = waitCache.length;
@@ -73,6 +71,8 @@ class LoadPool {
         if ( wLen < 1 ) {
 
             console.log( 'all assets loaded for:' + loadObj.prim.name );
+
+            this.finalCallback( loadObj.prim );
 
             this.ready = true;
 
@@ -88,7 +88,7 @@ class LoadPool {
 
         let loadCache = this.loadCache;
 
-        let waitObj = waitCache[0];
+        let waitObj = waitCache[ 0 ];
 
         /////////console.log( 'in update(), have a waitObj waiting...' + waitObj.attach.name + ' src:' + waitObj.source );
 
@@ -98,7 +98,17 @@ class LoadPool {
 
             loadObj.prim = waitObj.attach;
 
-            loadObj.image.src = waitObj.source;
+            // The loadObj next() function should start loading of the next object.
+
+            if ( ! loadObj.next ) {
+
+                console.error( 'load-pool::update(): error .next() function not defined in loadObj, file type: .' + loadObj.fType );
+
+            } else {
+
+                loadObj.next( waitObj.source );
+
+            }
 
             waitCache.shift();
 
@@ -129,11 +139,24 @@ class LoadPool {
      * images are queue for loading, with callback for each load, and 
      * final callback. We use custom code here instead of a Promise for 
      * brevity and flexibility.
-     * @param {String} source the path to the image file
-     * @param {Function} callback each time an image is loaded.
+     * @param {String} source the path to the asset file
+     * @param {Object} what to attach the loaded object to.
+     * @param {Function} callback each time an asset is loaded.
      * @param {Function} finalCallback (optional) the callback executed when all objects are loaded.
      */
     load ( source, attach, callback, finalCallback ) {
+
+        // if we need a final callback, apply
+
+        if ( finalCallback ) {
+
+            this.finalCallback = finalCallback;
+
+        } else {
+
+            this.finalCallback = () => {};
+
+        }
 
         // Push a load request onto the queue.
 

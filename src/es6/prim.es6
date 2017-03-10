@@ -32,27 +32,26 @@ class Prim {
      * prim.acceleration  = (vec3) [ x, y, z ]
      * prim.rotation      = (vec3) [ x, y, z ]
      * prim.angular       = (vec3) [ x, y, z ]
-     * prim.color         = [ red1, green1, blue1, alpha1, red2, blue2... ]
-     * prim.texure1Arr    = [ texture1, texture2, texture3 ]
-     * prim.audioArr      = [ AudioObj1, AudioObj2, AudioObj3...]
+     * prim.color         = (vec4) [ red, green, blue, alpha... ]
+     * prim.texure1Arr    = (vec2) [ u, v, t... ]
      * 
      * ---------------------------------------------------------------
-     * Code rules
-     * 1. vertices = final vertex data for computation or rendering
-     * 2. vtx = any initialization vertices (e.g. for complex polyhedra)
+     * Code Rules
+     * 1. vertices = flattened array, final vertex data for computation or rendering
+     * 2. vtx = any initialization Vertex object (e.g. for complex polyhedra)
      * 3. v, vv = local vertex or vertex array.
-     * 4. when using GlMatrix functions, do 'in place' conversion first. 
+     * 4. when using glMatrix functions, do 'in place' conversion first. 
      *    If not practical, return the result. If not practical, use an 
      *    object literal:
-     *    a. vec3.sub( resultPt, a, b );
-     *    b. resultPt = vec3.sub( resultPt, a, b );
-     *    c. resultPt = vec3.sub( [ 0, 0, 0 ], a, b );
+     *    - vec3.sub( resultPt, a, b );
+     *    - resultPt = vec3.sub( resultPt, a, b );
+     *    - resultPt = vec3.sub( [ 0, 0, 0 ], a, b );
      * ---------------------------------------------------------------
      * Geometry - flattened arrays with the following datatypes
      *
      *  { 
      *    vertices:  [],   // Float32Array
-     *    indices:   [],   // Uint16Array
+     *    indices:   [],   // Uint32Array (Uint16Array if 32-bit indices not supported)
      *    texCoords: [],   // Float32Array
      *    normals:   [],   // Float32Array
      *    tangents:  [],   // Float32Array
@@ -95,7 +94,7 @@ class Prim {
      * @constructor
      * @param {Boolean} init if true, initialize immediately.
      * @param {Util} util shared utility methods, patches, polyfills.
-     * @param {GLMatrix} glMatrix fast array manipulation object.
+     * @param {glMatrix} glMatrix fast array manipulation object.
      * @param {WebGL} webgl object holding the WebGLRenderingContext.
      * @param {LoadModel} model loading class
      * @param {LoadTexture} texture loading class
@@ -271,6 +270,7 @@ class Prim {
     /** 
      * Unique object id
      * @link https://jsfiddle.net/briguy37/2MVFd/
+     * @returns {String} a unique UUID format id.
      */
     setId () {
 
@@ -296,8 +296,8 @@ class Prim {
      * array. So, to make one, we just concatenate the 
      * vertices. Use to send multiple prims sharing the same shader to one 
      * Renderer.
-     * @param {GLMatrix.vec3[]} vertices
-     * @returns {GLMatrix.vec3[]} vertices
+     * @param {glMatrix.vec3[]} vertices
+     * @returns {glMatrix.vec3[]} vertices
      */
     setVertexData ( vertices ) {
 
@@ -317,6 +317,8 @@ class Prim {
      * get the big array with all index data. Use to 
      * send multiple prims sharing the same shader to one 
      * Renderer.
+     * @param {Array} indices the indices to add to the larger array.
+     * @returns {Array} the indices.
      */
     setIndexData ( indices ) {
 
@@ -334,7 +336,7 @@ class Prim {
 
     /** 
      * Check the values of a Prim.
-     * TODO: why is itemsize of indices = 1
+     * @param {Prim} prim the object primitive.
      */
     primReadout ( prim ) {
 
@@ -370,6 +372,8 @@ class Prim {
      * Note you may need to go "let getStdVecs = this.getStdVecs.bind( this)" 
      * in your calling function.
      * @link https://docs.unity3d.com/ScriptReference/Vector3.html
+     * @param {String} type the (flattened) vector type.
+     * @returns {Array} a directional array.
     */
     getStdVecs ( type ) {
 
@@ -400,22 +404,30 @@ class Prim {
     /** 
      * Larger configuration vectors for Prims. additional values control slicing 
      * or flattening of part of a prim.
-     * For CONE, the fourth value is truncation of the cone point.
-     * For other Prims, the fourth and fifth values control the start and 
-     * end of a cap on open prims (CYLINDER, CONE) and flattening of the 
-     * top and bottom of SPHERE prims. This stretches the texture across the 
-     * ends of the Prim. 
+     * @param {Number} a the x value of the vector.
+     * @param {Number} b the y value of the vector.
+     * @param {Number} c the z value of the vector.
+     * @param {Number} d for CONE, truncation of the CONE point, otherwise controls 
+     * the start and end of a Caps on CYLINDER and CONE Prims, or flattening of the 
+     * top and bottom of SPHERE Prims. This ensures the texture stretchs across a Prim 
+     * made up of CYLINER or CONE with Caps at the end.
      */
     vec5 ( a, b, c, d = 0, e = 0 ) {
 
-        return [ a, b, c, d, e ]; // dimensions, start slice (cone)
+        return [ a, b, c, d, e ];
 
     }
+
 
     vec6 ( a, b, c, d = 0, e = 0, f = 0 ) {
 
         return [ a, b, c, d, e, f ];
 
+    }
+
+    vec7 ( a, b, c, d = 0, e = 0, f = 0, g = 0 ) {
+
+        return [ a, b, c, d, e, f, g ];
     }
 
     /* 
@@ -426,6 +438,9 @@ class Prim {
 
     /** 
      * Create default colors for Prim color array.
+     * @param {glMatrix.vec3[]} normals the flatten normals array.
+     * @param {glMatrix.vec4[]} color the flattened color array.
+     * @returns {glMatrix.vec4[]} the color array, with default colors.
      */
     computeColors( normals, colors ) {
 
@@ -443,7 +458,7 @@ class Prim {
      * Bounding box for a set of 3d points. This object is NO the same 
      * as a standard Cube, since each side is a quad without 
      * further divisions.
-     * @param {[...vec3]} vertices a list of points to be enclosed in the bounding box.
+     * @param {glMatrix.vec3[]} vertices a list of points to be enclosed in the bounding box.
      * @returns{Box} a BoundingBox object.
      */
     computeBoundingBox( vertices ) {
@@ -523,6 +538,8 @@ class Prim {
 
     /** 
      * Get spherical coordinates (u, v) for normalized unit vector.
+     * @param {glMatrix.vec3} vtx the [x, y, z] unit vector
+     * @returns {glMatrix.vec2} the texture coordinate [ u, v ].
      */
     computeSphereCoords ( vtx ) {
 
@@ -542,9 +559,9 @@ class Prim {
 
     /** 
      * Computed the angle between three 3d points defining a Plane.
-     * @param {GlMatrix.vec3} a first Point in angle.
-     * @param {GlMatrix.vec3} b second axis point in angle.
-     * @param {GlMatrix.vec3} c third point defining angle.
+     * @param {glMatrix.vec3} a first Point in angle.
+     * @param {glMatrix.vec3} b second axis point in angle.
+     * @param {glMatrix.vec3} c third point defining angle.
      * @returns {Number} the angle between the points.
      */
     computeAngle3d ( a, b, c ) {
@@ -567,8 +584,8 @@ class Prim {
 
     /**
      * Find the center between any set of 3d points
-     * @param {[...vec3]} vertices an array of xyz points.
-     * @returns {vec3} the center point.
+     * @param {glMatrix.vec3[]} vertices an array of xyz points.
+     * @returns {glMatrix.vec3} the center point.
      */ 
     computeCentroid ( vertices ) {
 
@@ -601,8 +618,8 @@ class Prim {
     /** 
      * Compute an area-weighted centroid point for a Prim.
      * Use this when we want the center of the whole object the polygon is part of.
-     * @param {GlMatrix.vec3[]} vertices a list of 3d vertices.
-     * @param {GlMatrix.vec3} the centroid Point.
+     * @param {glMatrix.vec3[]} vertices a list of 3d vertices.
+     * @param {glMatrix.vec3} the centroid Point.
      */
     computeMassCentroid( vertices ) {
 
@@ -655,11 +672,11 @@ class Prim {
     /** 
      * Compute barycentric coordinates of a Point relative 
      * to a triangle defined by three Points.
-     * @param {vec3} p the point to test.
-     * @param {vec3} p0 first clockwise vertex of triangle.
-     * @param {vec3} p1 second clockwise vertex of triangle.
-     * @param {vec3} p2 third clockwise vertex of triangle.
-     * @returns {GlMatrix.vec2} uv coordinates of Point relative to triangle.
+     * @param {glMatrix.vec3} p the point to test.
+     * @param {glMatrix.vec3} p0 first clockwise vertex of triangle.
+     * @param {glMatrix.vec3} p1 second clockwise vertex of triangle.
+     * @param {glMatrix.vec3} p2 third clockwise vertex of triangle.
+     * @returns {glMatrix.vec2} uv coordinates of Point relative to triangle.
      */
     computeBarycentric( p, p0, p1, p2 ) {
 
@@ -704,10 +721,10 @@ class Prim {
      * Compute whether point is in a triangle, wrapped 
      * clockwise (begin with a, end with c)
      * @link http://blackpawn.com/texts/pointinpoly/
-     * @param {vec3} p the point to test.
-     * @param {vec3} p0 first clockwise vertex of triangle.
-     * @param {vec3} p1 second clockwise vertex of triangle.
-     * @param {vec3} p2 third clockwise vertex of triangle.
+     * @param {glMatrix.vec3} p the point to test.
+     * @param {glMatrix.vec3} p0 first clockwise vertex of triangle.
+     * @param {glMatrix.vec3} p1 second clockwise vertex of triangle.
+     * @param {glMatrix.vec3} p2 third clockwise vertex of triangle.
      * @returns {Boolean} if point in triangle, return true, else false.
      */
     computePointInTriangle ( p, p0, p1, p2 ) {
@@ -722,8 +739,8 @@ class Prim {
 
     /** 
      * Given a set of Points, compute a triangle fan around the Centroid for those points.
-     * @param {[...vec3]} vertices an array of UN-FLATTENED xyz points.
-     * @param {[uint16]} indices the sequence to read triangles.
+     * @param {glMatrix.vec3[]} vertices an array of UN-FLATTENED xyz points.
+     * @param {Array} indices the sequence to read triangles.
      * @returns {Object} UN-FLATTENED vertices, indices, texCoords nomals, tangents.
      */
     computeFan ( vertices, indices ) {
@@ -819,12 +836,12 @@ class Prim {
      * @link https://github.com/BabylonJS/Babylon.js/blob/3fe3372053ac58505dbf7a2a6f3f52e3b92670c8/src/Mesh/babylon.mesh.vertexData.js
      * @link http://gamedev.stackexchange.com/questions/8191/any-reliable-polygon-normal-calculation-code
      * @link https://www.opengl.org/wiki/Calculating_a_Surface_Normal
-     * @param {GLMatrix.vec3[]} vertices the current 3d position coordinates.
+     * @param {glMatrix.vec3[]} vertices the current 3d position coordinates.
      * @param {Array} current indices into the vertices.
-     * @param {GLMatrix.vec3[]} normals the normals array to recalculate.
+     * @param {glMatrix.vec3[]} normals the normals array to recalculate.
      * @param {Boolean} justFace if true, return the face normal for all three vertices in a triangle, 
      *        otherwise, compute each vertex normal separately.
-     * @returns {GlMatrix.vec3[]} an array of normals.
+     * @returns {glMatrix.vec3[]} an array of normals.
      */
     computeNormals ( vertices, indices, normals, justFace ) {
 
@@ -949,7 +966,6 @@ class Prim {
      * Compute tangents. NOTE: some routines compute their own tangents.
      * CodePen - http://codepen.io/ktmpower/pen/ZbGRpW
      * adapted from the C++ code from this link: http://www.terathon.com/code/tangent.html
-     * TODO: CONVERT TO GLMATRIX
      * "The code below generates a four-component tangent T in which the handedness of the local coordinate system
      * is stored as ±1 in the w-coordinate. The bitangent vector B is then given by B = (N × T) · Tw."
      */
@@ -1067,7 +1083,7 @@ class Prim {
 
     /** 
      * Scale vertices directly, without changing position.
-     * @param {GlMatrix.vec3[]} vertices the input positions.
+     * @param {glMatrix.vec3[]} vertices the input positions.
      * @param {Number} scale the value to scale by.
      */
     computeScale ( vertices, scale ) {
@@ -1088,7 +1104,8 @@ class Prim {
      * Move vertices directly in geometry, i.e. for something 
      * that always orbits a central point.
      * NOTE: normally, you will want to use a matrix transform to position objects.
-     * @param {GLMatrix.vec3} pos - the new position.
+     * @param {glMatrix.vec3[]} vertices flattened vertex array.
+     * @param {glMatrix.vec3} pos - the new position.
      */
     computeMove ( vertices, pos ) {
 
@@ -3188,33 +3205,39 @@ class Prim {
     }
 
     /** 
-     * Generic 3d shape (e.g. Collada model). Note that this is NOT the same as the Mesh object 
-     * internally defined in mesh.es6.
-     *
-     * @link https://dannywoodz.wordpress.com/2014/12/16/webgl-from-scratch-loading-a-mesh/
-     * @link https://github.com/jagenjo/litegl.js/blob/master/src/mesh.js
-     * 
-     * @param {Prim} the Prim needing geometry. 
-     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
-     * Creating WebGL buffers is turned on or off conditionally in the method.
+     * Callback for assembling Mesh, after OBJ or other files are loaded
      */
-    geometryMesh ( prim ) {
+    meshCallback( prim ) {
 
-       let geo = prim.geometry;
+        let geo = prim.geometry;
 
-        // Shortcuts to Prim data arrays
+        console.log( '++++++++++++in mesh callback, all model files loaded...' );
 
-        let vertices = [], indices  = [], normals = [], texCoords = [], tangents = [];
+        //TODO: add model vertices
+
+        //TODO: add model materials
 
         // Vertices.
 
+        let vertices = [];
+
         // Indices.
 
+        let indices = [];
+
+        // Texture coordinates.
+
+        let texCoords = [];
+
         // Normals.
+
+        let normals = [];
 
         this.computeNormals( vertices, indices, normals );
 
         // Tangents.
+
+        let tangents = [];
 
         this.computeTangents( vertices, indices, normals, texCoords, tangents );
 
@@ -3228,6 +3251,36 @@ class Prim {
 
     }
 
+    /** 
+     * Generic 3d shape (e.g. Collada model). Note that this is NOT the same as the Mesh object 
+     * internally defined in mesh.es6.
+     *
+     * @link https://dannywoodz.wordpress.com/2014/12/16/webgl-from-scratch-loading-a-mesh/
+     * @link https://github.com/jagenjo/litegl.js/blob/master/src/mesh.js
+     * 
+     * @param {Prim} the Prim needing geometry. 
+     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
+     * Creating WebGL buffers is turned on or off conditionally in the method.
+     */
+    geometryMesh ( prim ) {
+
+        let geo = prim.geometry;
+
+        for ( let i = 0; i < prim.models.length; i++ ) {
+
+            //this.loadModel.load( 'obj/capsule/capsule.obj', prim, this.meshCallback.bind( this ) );
+            console.log(">>>>>>>>>>>>>>geometryMesh():" + prim.models[ i ] );
+
+            this.loadModel.load( prim.models[ i ], prim, function() {}, this.meshCallback.bind( this ) );
+
+        }
+
+        //this.loadModel.load( 'obj/capsule/capsule.obj', prim, this.meshCallback.bind( this ) );
+
+        return geo.addBufferData( [], [], [], [], [] );
+
+    }
+
     /*
      * ---------------------------------------
      * PRIMS
@@ -3238,11 +3291,11 @@ class Prim {
      * Create an standard 3d object.
      * @param {String} name assigned name of object (not necessarily unique).
      * @param {Number} scale size relative to unit vector (1,1,1).
-     * @param {GLMatrix.vec3} position location of center of object.
-     * @param {GLMatrix.vec3} acceleration movement vector (acceleration) of object.
-     * @param {GLMatrix.vec3} rotation rotation vector (spin) around center of object.
+     * @param {glMatrix.vec3} position location of center of object.
+     * @param {glMatrix.vec3} acceleration movement vector (acceleration) of object.
+     * @param {glMatrix.vec3} rotation rotation vector (spin) around center of object.
      * @param {String} textureImage the path to an image used to create a texture.
-     * @param {GlMatrix.vec4[]|GLMatrix.vec4} color the default color(s) of the object.
+     * @param {glMatrix.vec4[]|glMatrix.vec4} color the default color(s) of the object.
      * @param {Boolean} applyTexToFace if true, apply texture to each face, else apply texture to 
      * the entire object.
      */
@@ -3256,7 +3309,13 @@ class Prim {
 
         rotation = this.glMatrix.vec3.create(), angular = this.glMatrix.vec3.create(), 
 
-        textureImages, color, applyTexToFace = false ) {
+        textureImages, 
+
+        color, 
+
+        applyTexToFace = false,
+
+        modelFiles ) { // heightMap file (HEIGHTMAP) or array of material files (MESH)
 
         const vec3 = this.glMatrix.vec3;
 
@@ -3313,6 +3372,10 @@ class Prim {
 
         prim.applyTexToFace = applyTexToFace;
 
+        // Store model files for one Prim.
+
+        prim.models = modelFiles;
+
         // Geometry factory function.
 
         prim.geometry = new GeoObj( this.util, this.webgl );
@@ -3321,18 +3384,33 @@ class Prim {
 
         prim.geometry = this[ type ]( prim, color );
 
+////////////////////////////////////////////////////////////////////////////////
+        let mesh = new Mesh( prim.geometry );        
+
+        // SIMPLIFY TEST
+
+        //if ( prim.name === 'TestCapsule' ) {
+
+            window.mesh = mesh;
+            window.prim = prim;
+
+            mesh.simplify();
+
+        //}
 
 ////////////////////////////////////////////////////////////////////////////////
         // SUBDIVIDE TEST
+
         //if ( prim.name === 'colored cube' ) {
         //if ( prim.name === 'cubesphere' ) {
         //if ( prim.name === 'texsphere' ) {
 
-            let mesh = new Mesh( prim.geometry );
+            //let mesh = new Mesh( prim.geometry );
 
-            window.mesh = mesh;
+            //window.mesh = mesh;
+
             mesh.subdivide( true );
-            //mesh.subdivide( true )
+            ///mesh.subdivide( true );
             //mesh.subdivide( true );
             //mesh.subdivide( true );
             //mesh.subdivide( true );
@@ -3365,7 +3443,7 @@ class Prim {
 
             mat4.identity( mvMatrix );
 
-            let z = -5;
+            let z = -5; // TODO: default position relative to camera!
 
             // Translate.
 

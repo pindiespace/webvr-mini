@@ -31,10 +31,6 @@ class LoadTexture extends LoadPool {
 
     }
 
-    init () {
-
-    }
-
   /**
    * Sets a texture to a 1x1 pixel color. 
    * @param {WebGLRenderingContext} gl the WebGLRenderingContext.
@@ -86,6 +82,8 @@ class LoadTexture extends LoadPool {
 
         loadObj.prim = waitObj.attach; ///////////////////////////
 
+
+
         loadObj.busy = true;
 
         // https://www.nczonline.net/blog/2013/09/10/understanding-ecmascript-6-arrow-functions/
@@ -96,7 +94,17 @@ class LoadTexture extends LoadPool {
 
         // Start the loading.
 
-        loadObj.image.src = waitObj.source;
+        loadObj.next = ( source ) => {
+
+            loadObj.fType = this.util.getFileExtension( source );
+
+            loadObj.image.src = source;
+
+        };
+
+        //loadObj.image.src = waitObj.source;
+
+        loadObj.next( waitObj.source );
 
         this.cacheCt++; // TODO: NOT NEEDED?
 
@@ -178,7 +186,7 @@ class LoadTexture extends LoadPool {
 
         loadObj.busy = false;
 
-        // Send this to update for re-use .
+        // Send this loadObj to update for re-use .
 
         this.update( loadObj );
 

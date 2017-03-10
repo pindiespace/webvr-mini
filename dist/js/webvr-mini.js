@@ -841,7 +841,7 @@
 	                // typed array
 
 
-	                // Convert both to array type of first array.
+	                // Convert both sets of array values to the array type of the first array.
 
 	                if (arr1 instanceof Float32Array) {
 
@@ -850,6 +850,14 @@
 	                    if (!arr2 instanceof Float32Array) {
 
 	                        arr2 = Float32Array.from(arr2);
+	                    }
+	                } else if (arr1 instanceof Uint32Array) {
+
+	                    result = new Uint32Array(len1 + len2);
+
+	                    if (!arr2 instanceof Uint32Array) {
+
+	                        arr2 = Uint32Array.from(arr2);
 	                    }
 	                } else if (arr1 instanceof Uint16Array) {
 
@@ -2256,19 +2264,16 @@
 	        return _this;
 	    }
 
+	    /**
+	     * Sets a texture to a 1x1 pixel color. 
+	     * @param {WebGLRenderingContext} gl the WebGLRenderingContext.
+	     * @param {WebGLTexture} texture the WebGLTexture to set parameters for.
+	     * @param {WebGLParameter} target.
+	     * @memberOf module: webvr-mini/LoadTexture
+	     */
+
+
 	    _createClass(LoadTexture, [{
-	        key: 'init',
-	        value: function init() {}
-
-	        /**
-	         * Sets a texture to a 1x1 pixel color. 
-	         * @param {WebGLRenderingContext} gl the WebGLRenderingContext.
-	         * @param {WebGLTexture} texture the WebGLTexture to set parameters for.
-	         * @param {WebGLParameter} target.
-	         * @memberOf module: webvr-mini/LoadTexture
-	         */
-
-	    }, {
 	        key: 'setDefaultTexturePixel',
 	        value: function setDefaultTexturePixel(gl, texture, target) {
 
@@ -2313,6 +2318,7 @@
 
 	            loadObj.prim = waitObj.attach; ///////////////////////////
 
+
 	            loadObj.busy = true;
 
 	            // https://www.nczonline.net/blog/2013/09/10/understanding-ecmascript-6-arrow-functions/
@@ -2327,7 +2333,16 @@
 
 	            // Start the loading.
 
-	            loadObj.image.src = waitObj.source;
+	            loadObj.next = function (source) {
+
+	                loadObj.fType = _this2.util.getFileExtension(source);
+
+	                loadObj.image.src = source;
+	            };
+
+	            //loadObj.image.src = waitObj.source;
+
+	            loadObj.next(waitObj.source);
 
 	            this.cacheCt++; // TODO: NOT NEEDED?
 
@@ -2407,7 +2422,7 @@
 
 	            loadObj.busy = false;
 
-	            // Send this to update for re-use .
+	            // Send this loadObj to update for re-use .
 
 	            this.update(loadObj);
 	        }
@@ -2457,7 +2472,7 @@
 
 	    /**
 	     * Base loader class. We don't use promise.all since we want to keep a 
-	     * limited pool of loaders, which accept a larger number of waitObjs. As 
+	     * limited pool of loaders, which accept a large number of waitObjs. As 
 	     * each loadObj completes a load, it checks the queue to see if there is 
 	     * another loadObj neededing a load.
 	     */
@@ -2525,8 +2540,6 @@
 	        key: 'update',
 	        value: function update(loadObj) {
 
-	            /////////////console.log( 'in loadTexture.update()' );
-
 	            var waitCache = this.waitCache;
 
 	            var wLen = waitCache.length;
@@ -2534,6 +2547,8 @@
 	            if (wLen < 1) {
 
 	                console.log('all assets loaded for:' + loadObj.prim.name);
+
+	                this.finalCallback(loadObj.prim);
 
 	                this.ready = true;
 
@@ -2558,7 +2573,15 @@
 
 	                loadObj.prim = waitObj.attach;
 
-	                loadObj.image.src = waitObj.source;
+	                // The loadObj next() function should start loading of the next object.
+
+	                if (!loadObj.next) {
+
+	                    console.error('load-pool::update(): error .next() function not defined in loadObj, file type: .' + loadObj.fType);
+	                } else {
+
+	                    loadObj.next(waitObj.source);
+	                }
 
 	                waitCache.shift();
 	            } else {
@@ -2584,14 +2607,25 @@
 	         * images are queue for loading, with callback for each load, and 
 	         * final callback. We use custom code here instead of a Promise for 
 	         * brevity and flexibility.
-	         * @param {String} source the path to the image file
-	         * @param {Function} callback each time an image is loaded.
+	         * @param {String} source the path to the asset file
+	         * @param {Object} what to attach the loaded object to.
+	         * @param {Function} callback each time an asset is loaded.
 	         * @param {Function} finalCallback (optional) the callback executed when all objects are loaded.
 	         */
 
 	    }, {
 	        key: 'load',
 	        value: function load(source, attach, callback, finalCallback) {
+
+	            // if we need a final callback, apply
+
+	            if (finalCallback) {
+
+	                this.finalCallback = finalCallback;
+	            } else {
+
+	                this.finalCallback = function () {};
+	            }
 
 	            // Push a load request onto the queue.
 
@@ -2648,30 +2682,89 @@
 	    }
 
 	    _createClass(LoadModel, [{
-	        key: 'init',
-	        value: function init() {}
+	        key: 'computeVertices',
+	        value: function computeVertices(data) {
+
+	            console.log("LOADING MODEL COMPUTEVERTICES");
+	        }
+	    }, {
+	        key: 'computeMaterials',
+	        value: function computeMaterials(data) {
+
+	            console.log("LOADING MODEL MATERIALS");
+	        }
 	    }, {
 	        key: 'uploadModel',
 	        value: function uploadModel(loadObj, callback) {
 
-	            var lines = loadObj;
+	            var data = loadObj.data;
 
-	            return {
-	                vertices: vertices,
-	                indices: indices,
-	                normals: normals
-	            };
+	            var models = loadObj.prim.models;
+
+	            //window.lines = lines;
+
+	            // Parse XML to load data.
+
+	            // Adapted from https://github.com/m0ppers/babylon-objloader/blob/master/src/babylon.objloader.js
+
+	            console.log("PRIM IS:" + loadObj.prim);
+
+	            // Fire the mesh creation routine.
+
+	            console.log(">>>>>>>LOADOBJ fType:" + loadObj.fType);
+
+	            // Since we may have different file types for object loads, switch on the file extension
+
+	            switch (loadObj.fType) {
+
+	                case 'obj':
+	                    console.log("OBJ file loaded, now parse it....");
+	                    this.computeVertices(data);
+	                    break;
+
+	                case 'mtl':
+	                    console.log("MTL file loaded, not parse it....");
+	                    this.computeMaterials(data);
+	                    break;
+
+	                default:
+	                    console.warn('uploadModel() unknown file type:' + loadObj.fType);
+	                    break;
+
+	            }
+
+	            // Clear the object for re-use.
+
+	            loadObj.busy = false;
+
+	            // Send this loadObj to update for re-use .
+
+	            this.update(loadObj);
+
+	            //let vertices = [];
+
+	            //let indices = [];
+
+	            //let normals = [];
+
+	            //return {
+	            //	vertices: vertices,
+	            //	indices: indices,
+	            //	normals: normals
+	            //};
 	        }
 	    }, {
 	        key: 'createLoadObj',
 	        value: function createLoadObj(waitObj) {
+	            var _this2 = this;
+
+	            console.log(">>>>>>>>>>>>>>>>createLoadObj Loading " + waitObj.source);
 
 	            var loadObj = {};
 
 	            loadObj.model = {};
 
-	            //loadObj.model.crossOrigin = 'anonymous';
-	            // TODO: set headers and crossorigin here
+	            loadObj.model.crossOrigin = 'anonymous';
 
 	            loadObj.callback = waitObj.callback;
 
@@ -2679,13 +2772,30 @@
 
 	            loadObj.busy = true;
 
-	            fetch(waitObj.source).then(function (response) {
-	                return response.text();
-	            }).then(function (xmlString) {
-	                return uploadModel(loadObj, waitObj.callback);
-	            }).then(function (data) {
-	                return console.log(data);
-	            });
+	            // Callback from load-poll for next object to load.
+
+	            loadObj.next = function (source) {
+
+	                console.log(">>>>>>>>>>>>>MODEL NEXT SOURCE:" + source);
+
+	                loadObj.fType = _this2.util.getFileExtension(source);
+
+	                fetch(source).then(function (response) {
+	                    return response.text();
+	                }).then(function (xmlString) {
+	                    loadObj.data = xmlString;_this2.uploadModel(loadObj, loadObj.callback);
+	                });
+	            };
+
+	            //loadObj.image.src = waitObj.source;
+
+	            loadObj.next(waitObj.source);
+
+	            //fetch( waitObj.source )
+	            //	.then( response => { return response.text() } )
+	            //	.then( xmlString => { loadObj.xml = xmlString; this.uploadModel( loadObj, waitObj.callback ) } )
+	            //.then( data => console.log( "data:" + data ) );
+
 
 	            // Start the loading.
 
@@ -3954,27 +4064,26 @@
 	     * prim.acceleration  = (vec3) [ x, y, z ]
 	     * prim.rotation      = (vec3) [ x, y, z ]
 	     * prim.angular       = (vec3) [ x, y, z ]
-	     * prim.color         = [ red1, green1, blue1, alpha1, red2, blue2... ]
-	     * prim.texure1Arr    = [ texture1, texture2, texture3 ]
-	     * prim.audioArr      = [ AudioObj1, AudioObj2, AudioObj3...]
+	     * prim.color         = (vec4) [ red, green, blue, alpha... ]
+	     * prim.texure1Arr    = (vec2) [ u, v, t... ]
 	     * 
 	     * ---------------------------------------------------------------
-	     * Code rules
-	     * 1. vertices = final vertex data for computation or rendering
-	     * 2. vtx = any initialization vertices (e.g. for complex polyhedra)
+	     * Code Rules
+	     * 1. vertices = flattened array, final vertex data for computation or rendering
+	     * 2. vtx = any initialization Vertex object (e.g. for complex polyhedra)
 	     * 3. v, vv = local vertex or vertex array.
-	     * 4. when using GlMatrix functions, do 'in place' conversion first. 
+	     * 4. when using glMatrix functions, do 'in place' conversion first. 
 	     *    If not practical, return the result. If not practical, use an 
 	     *    object literal:
-	     *    a. vec3.sub( resultPt, a, b );
-	     *    b. resultPt = vec3.sub( resultPt, a, b );
-	     *    c. resultPt = vec3.sub( [ 0, 0, 0 ], a, b );
+	     *    - vec3.sub( resultPt, a, b );
+	     *    - resultPt = vec3.sub( resultPt, a, b );
+	     *    - resultPt = vec3.sub( [ 0, 0, 0 ], a, b );
 	     * ---------------------------------------------------------------
 	     * Geometry - flattened arrays with the following datatypes
 	     *
 	     *  { 
 	     *    vertices:  [],   // Float32Array
-	     *    indices:   [],   // Uint16Array
+	     *    indices:   [],   // Uint32Array (Uint16Array if 32-bit indices not supported)
 	     *    texCoords: [],   // Float32Array
 	     *    normals:   [],   // Float32Array
 	     *    tangents:  [],   // Float32Array
@@ -4017,7 +4126,7 @@
 	     * @constructor
 	     * @param {Boolean} init if true, initialize immediately.
 	     * @param {Util} util shared utility methods, patches, polyfills.
-	     * @param {GLMatrix} glMatrix fast array manipulation object.
+	     * @param {glMatrix} glMatrix fast array manipulation object.
 	     * @param {WebGL} webgl object holding the WebGLRenderingContext.
 	     * @param {LoadModel} model loading class
 	     * @param {LoadTexture} texture loading class
@@ -4193,6 +4302,7 @@
 	        /** 
 	         * Unique object id
 	         * @link https://jsfiddle.net/briguy37/2MVFd/
+	         * @returns {String} a unique UUID format id.
 	         */
 
 	    }, {
@@ -4219,8 +4329,8 @@
 	         * array. So, to make one, we just concatenate the 
 	         * vertices. Use to send multiple prims sharing the same shader to one 
 	         * Renderer.
-	         * @param {GLMatrix.vec3[]} vertices
-	         * @returns {GLMatrix.vec3[]} vertices
+	         * @param {glMatrix.vec3[]} vertices
+	         * @returns {glMatrix.vec3[]} vertices
 	         */
 
 	    }, {
@@ -4241,6 +4351,8 @@
 	         * get the big array with all index data. Use to 
 	         * send multiple prims sharing the same shader to one 
 	         * Renderer.
+	         * @param {Array} indices the indices to add to the larger array.
+	         * @returns {Array} the indices.
 	         */
 
 	    }, {
@@ -4259,7 +4371,7 @@
 
 	        /** 
 	         * Check the values of a Prim.
-	         * TODO: why is itemsize of indices = 1
+	         * @param {Prim} prim the object primitive.
 	         */
 
 	    }, {
@@ -4281,6 +4393,8 @@
 	         * Note you may need to go "let getStdVecs = this.getStdVecs.bind( this)" 
 	         * in your calling function.
 	         * @link https://docs.unity3d.com/ScriptReference/Vector3.html
+	         * @param {String} type the (flattened) vector type.
+	         * @returns {Array} a directional array.
 	        */
 
 	    }, {
@@ -4321,11 +4435,13 @@
 	        /** 
 	         * Larger configuration vectors for Prims. additional values control slicing 
 	         * or flattening of part of a prim.
-	         * For CONE, the fourth value is truncation of the cone point.
-	         * For other Prims, the fourth and fifth values control the start and 
-	         * end of a cap on open prims (CYLINDER, CONE) and flattening of the 
-	         * top and bottom of SPHERE prims. This stretches the texture across the 
-	         * ends of the Prim. 
+	         * @param {Number} a the x value of the vector.
+	         * @param {Number} b the y value of the vector.
+	         * @param {Number} c the z value of the vector.
+	         * @param {Number} d for CONE, truncation of the CONE point, otherwise controls 
+	         * the start and end of a Caps on CYLINDER and CONE Prims, or flattening of the 
+	         * top and bottom of SPHERE Prims. This ensures the texture stretchs across a Prim 
+	         * made up of CYLINER or CONE with Caps at the end.
 	         */
 
 	    }, {
@@ -4335,7 +4451,7 @@
 	            var e = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : 0;
 
 
-	            return [a, b, c, d, e]; // dimensions, start slice (cone)
+	            return [a, b, c, d, e];
 	        }
 	    }, {
 	        key: 'vec6',
@@ -4347,6 +4463,17 @@
 
 	            return [a, b, c, d, e, f];
 	        }
+	    }, {
+	        key: 'vec7',
+	        value: function vec7(a, b, c) {
+	            var d = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0;
+	            var e = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : 0;
+	            var f = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : 0;
+	            var g = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : 0;
+
+
+	            return [a, b, c, d, e, f, g];
+	        }
 
 	        /* 
 	         * ---------------------------------------
@@ -4356,6 +4483,9 @@
 
 	        /** 
 	         * Create default colors for Prim color array.
+	         * @param {glMatrix.vec3[]} normals the flatten normals array.
+	         * @param {glMatrix.vec4[]} color the flattened color array.
+	         * @returns {glMatrix.vec4[]} the color array, with default colors.
 	         */
 
 	    }, {
@@ -4374,7 +4504,7 @@
 	         * Bounding box for a set of 3d points. This object is NO the same 
 	         * as a standard Cube, since each side is a quad without 
 	         * further divisions.
-	         * @param {[...vec3]} vertices a list of points to be enclosed in the bounding box.
+	         * @param {glMatrix.vec3[]} vertices a list of points to be enclosed in the bounding box.
 	         * @returns{Box} a BoundingBox object.
 	         */
 
@@ -4444,6 +4574,8 @@
 
 	        /** 
 	         * Get spherical coordinates (u, v) for normalized unit vector.
+	         * @param {glMatrix.vec3} vtx the [x, y, z] unit vector
+	         * @returns {glMatrix.vec2} the texture coordinate [ u, v ].
 	         */
 
 	    }, {
@@ -4464,9 +4596,9 @@
 
 	        /** 
 	         * Computed the angle between three 3d points defining a Plane.
-	         * @param {GlMatrix.vec3} a first Point in angle.
-	         * @param {GlMatrix.vec3} b second axis point in angle.
-	         * @param {GlMatrix.vec3} c third point defining angle.
+	         * @param {glMatrix.vec3} a first Point in angle.
+	         * @param {glMatrix.vec3} b second axis point in angle.
+	         * @param {glMatrix.vec3} c third point defining angle.
 	         * @returns {Number} the angle between the points.
 	         */
 
@@ -4491,8 +4623,8 @@
 
 	        /**
 	         * Find the center between any set of 3d points
-	         * @param {[...vec3]} vertices an array of xyz points.
-	         * @returns {vec3} the center point.
+	         * @param {glMatrix.vec3[]} vertices an array of xyz points.
+	         * @returns {glMatrix.vec3} the center point.
 	         */
 
 	    }, {
@@ -4518,8 +4650,8 @@
 	        /** 
 	         * Compute an area-weighted centroid point for a Prim.
 	         * Use this when we want the center of the whole object the polygon is part of.
-	         * @param {GlMatrix.vec3[]} vertices a list of 3d vertices.
-	         * @param {GlMatrix.vec3} the centroid Point.
+	         * @param {glMatrix.vec3[]} vertices a list of 3d vertices.
+	         * @param {glMatrix.vec3} the centroid Point.
 	         */
 
 	    }, {
@@ -4561,11 +4693,11 @@
 	        /** 
 	         * Compute barycentric coordinates of a Point relative 
 	         * to a triangle defined by three Points.
-	         * @param {vec3} p the point to test.
-	         * @param {vec3} p0 first clockwise vertex of triangle.
-	         * @param {vec3} p1 second clockwise vertex of triangle.
-	         * @param {vec3} p2 third clockwise vertex of triangle.
-	         * @returns {GlMatrix.vec2} uv coordinates of Point relative to triangle.
+	         * @param {glMatrix.vec3} p the point to test.
+	         * @param {glMatrix.vec3} p0 first clockwise vertex of triangle.
+	         * @param {glMatrix.vec3} p1 second clockwise vertex of triangle.
+	         * @param {glMatrix.vec3} p2 third clockwise vertex of triangle.
+	         * @returns {glMatrix.vec2} uv coordinates of Point relative to triangle.
 	         */
 
 	    }, {
@@ -4618,10 +4750,10 @@
 	         * Compute whether point is in a triangle, wrapped 
 	         * clockwise (begin with a, end with c)
 	         * @link http://blackpawn.com/texts/pointinpoly/
-	         * @param {vec3} p the point to test.
-	         * @param {vec3} p0 first clockwise vertex of triangle.
-	         * @param {vec3} p1 second clockwise vertex of triangle.
-	         * @param {vec3} p2 third clockwise vertex of triangle.
+	         * @param {glMatrix.vec3} p the point to test.
+	         * @param {glMatrix.vec3} p0 first clockwise vertex of triangle.
+	         * @param {glMatrix.vec3} p1 second clockwise vertex of triangle.
+	         * @param {glMatrix.vec3} p2 third clockwise vertex of triangle.
 	         * @returns {Boolean} if point in triangle, return true, else false.
 	         */
 
@@ -4638,8 +4770,8 @@
 
 	        /** 
 	         * Given a set of Points, compute a triangle fan around the Centroid for those points.
-	         * @param {[...vec3]} vertices an array of UN-FLATTENED xyz points.
-	         * @param {[uint16]} indices the sequence to read triangles.
+	         * @param {glMatrix.vec3[]} vertices an array of UN-FLATTENED xyz points.
+	         * @param {Array} indices the sequence to read triangles.
 	         * @returns {Object} UN-FLATTENED vertices, indices, texCoords nomals, tangents.
 	         */
 
@@ -4731,12 +4863,12 @@
 	         * @link https://github.com/BabylonJS/Babylon.js/blob/3fe3372053ac58505dbf7a2a6f3f52e3b92670c8/src/Mesh/babylon.mesh.vertexData.js
 	         * @link http://gamedev.stackexchange.com/questions/8191/any-reliable-polygon-normal-calculation-code
 	         * @link https://www.opengl.org/wiki/Calculating_a_Surface_Normal
-	         * @param {GLMatrix.vec3[]} vertices the current 3d position coordinates.
+	         * @param {glMatrix.vec3[]} vertices the current 3d position coordinates.
 	         * @param {Array} current indices into the vertices.
-	         * @param {GLMatrix.vec3[]} normals the normals array to recalculate.
+	         * @param {glMatrix.vec3[]} normals the normals array to recalculate.
 	         * @param {Boolean} justFace if true, return the face normal for all three vertices in a triangle, 
 	         *        otherwise, compute each vertex normal separately.
-	         * @returns {GlMatrix.vec3[]} an array of normals.
+	         * @returns {glMatrix.vec3[]} an array of normals.
 	         */
 
 	    }, {
@@ -4868,7 +5000,6 @@
 	         * Compute tangents. NOTE: some routines compute their own tangents.
 	         * CodePen - http://codepen.io/ktmpower/pen/ZbGRpW
 	         * adapted from the C++ code from this link: http://www.terathon.com/code/tangent.html
-	         * TODO: CONVERT TO GLMATRIX
 	         * "The code below generates a four-component tangent T in which the handedness of the local coordinate system
 	         * is stored as ±1 in the w-coordinate. The bitangent vector B is then given by B = (N × T) · Tw."
 	         */
@@ -5006,7 +5137,7 @@
 
 	        /** 
 	         * Scale vertices directly, without changing position.
-	         * @param {GlMatrix.vec3[]} vertices the input positions.
+	         * @param {glMatrix.vec3[]} vertices the input positions.
 	         * @param {Number} scale the value to scale by.
 	         */
 
@@ -5028,7 +5159,8 @@
 	         * Move vertices directly in geometry, i.e. for something 
 	         * that always orbits a central point.
 	         * NOTE: normally, you will want to use a matrix transform to position objects.
-	         * @param {GLMatrix.vec3} pos - the new position.
+	         * @param {glMatrix.vec3[]} vertices flattened vertex array.
+	         * @param {glMatrix.vec3} pos - the new position.
 	         */
 
 	    }, {
@@ -7100,6 +7232,55 @@
 	        value: function geometrySpring(prim) {}
 
 	        /** 
+	         * Callback for assembling Mesh, after OBJ or other files are loaded
+	         */
+
+	    }, {
+	        key: 'meshCallback',
+	        value: function meshCallback(prim) {
+
+	            var geo = prim.geometry;
+
+	            console.log('++++++++++++in mesh callback, all model files loaded...');
+
+	            //TODO: add model vertices
+
+	            //TODO: add model materials
+
+	            // Vertices.
+
+	            var vertices = [];
+
+	            // Indices.
+
+	            var indices = [];
+
+	            // Texture coordinates.
+
+	            var texCoords = [];
+
+	            // Normals.
+
+	            var normals = [];
+
+	            this.computeNormals(vertices, indices, normals);
+
+	            // Tangents.
+
+	            var tangents = [];
+
+	            this.computeTangents(vertices, indices, normals, texCoords, tangents);
+
+	            // Color array is pre-created, or gets a default when WebGL buffers are created.
+
+	            // Return the buffer.
+
+	            //return this.createGLBuffers( prim.geometry );
+
+	            return geo.addBufferData(vertices, indices, normals, texCoords, tangents);
+	        }
+
+	        /** 
 	         * Generic 3d shape (e.g. Collada model). Note that this is NOT the same as the Mesh object 
 	         * internally defined in mesh.es6.
 	         *
@@ -7117,33 +7298,17 @@
 
 	            var geo = prim.geometry;
 
-	            // Shortcuts to Prim data arrays
+	            for (var i = 0; i < prim.models.length; i++) {
 
-	            var vertices = [],
-	                indices = [],
-	                normals = [],
-	                texCoords = [],
-	                tangents = [];
+	                //this.loadModel.load( 'obj/capsule/capsule.obj', prim, this.meshCallback.bind( this ) );
+	                console.log(">>>>>>>>>>>>>>geometryMesh():" + prim.models[i]);
 
-	            // Vertices.
+	                this.loadModel.load(prim.models[i], prim, function () {}, this.meshCallback.bind(this));
+	            }
 
-	            // Indices.
+	            //this.loadModel.load( 'obj/capsule/capsule.obj', prim, this.meshCallback.bind( this ) );
 
-	            // Normals.
-
-	            this.computeNormals(vertices, indices, normals);
-
-	            // Tangents.
-
-	            this.computeTangents(vertices, indices, normals, texCoords, tangents);
-
-	            // Color array is pre-created, or gets a default when WebGL buffers are created.
-
-	            // Return the buffer.
-
-	            //return this.createGLBuffers( prim.geometry );
-
-	            return geo.addBufferData(vertices, indices, normals, texCoords, tangents);
+	            return geo.addBufferData([], [], [], [], []);
 	        }
 
 	        /*
@@ -7156,11 +7321,11 @@
 	         * Create an standard 3d object.
 	         * @param {String} name assigned name of object (not necessarily unique).
 	         * @param {Number} scale size relative to unit vector (1,1,1).
-	         * @param {GLMatrix.vec3} position location of center of object.
-	         * @param {GLMatrix.vec3} acceleration movement vector (acceleration) of object.
-	         * @param {GLMatrix.vec3} rotation rotation vector (spin) around center of object.
+	         * @param {glMatrix.vec3} position location of center of object.
+	         * @param {glMatrix.vec3} acceleration movement vector (acceleration) of object.
+	         * @param {glMatrix.vec3} rotation rotation vector (spin) around center of object.
 	         * @param {String} textureImage the path to an image used to create a texture.
-	         * @param {GlMatrix.vec4[]|GLMatrix.vec4} color the default color(s) of the object.
+	         * @param {glMatrix.vec4[]|glMatrix.vec4} color the default color(s) of the object.
 	         * @param {Boolean} applyTexToFace if true, apply texture to each face, else apply texture to 
 	         * the entire object.
 	         */
@@ -7176,12 +7341,13 @@
 	            var rotation = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : this.glMatrix.vec3.create();
 	            var angular = arguments.length > 7 && arguments[7] !== undefined ? arguments[7] : this.glMatrix.vec3.create();
 	            var textureImages = arguments[8];
+	            var color = arguments[9];
 
 	            var _this = this;
 
-	            var color = arguments[9];
 	            var applyTexToFace = arguments.length > 10 && arguments[10] !== undefined ? arguments[10] : false;
-
+	            var modelFiles = arguments[11];
+	            // heightMap file (HEIGHTMAP) or array of material files (MESH)
 
 	            var vec3 = this.glMatrix.vec3;
 
@@ -7238,6 +7404,10 @@
 
 	            prim.applyTexToFace = applyTexToFace;
 
+	            // Store model files for one Prim.
+
+	            prim.models = modelFiles;
+
 	            // Geometry factory function.
 
 	            prim.geometry = new _geoObj2.default(this.util, this.webgl);
@@ -7247,16 +7417,32 @@
 	            prim.geometry = this[type](prim, color);
 
 	            ////////////////////////////////////////////////////////////////////////////////
+	            var mesh = new _mesh2.default(prim.geometry);
+
+	            // SIMPLIFY TEST
+
+	            //if ( prim.name === 'TestCapsule' ) {
+
+	            window.mesh = mesh;
+	            window.prim = prim;
+
+	            mesh.simplify();
+
+	            //}
+
+	            ////////////////////////////////////////////////////////////////////////////////
 	            // SUBDIVIDE TEST
+
 	            //if ( prim.name === 'colored cube' ) {
 	            //if ( prim.name === 'cubesphere' ) {
 	            //if ( prim.name === 'texsphere' ) {
 
-	            var mesh = new _mesh2.default(prim.geometry);
+	            //let mesh = new Mesh( prim.geometry );
 
-	            window.mesh = mesh;
+	            //window.mesh = mesh;
+
 	            mesh.subdivide(true);
-	            //mesh.subdivide( true )
+	            ///mesh.subdivide( true );
 	            //mesh.subdivide( true );
 	            //mesh.subdivide( true );
 	            //mesh.subdivide( true );
@@ -7289,7 +7475,7 @@
 
 	                mat4.identity(mvMatrix);
 
-	                var z = -5;
+	                var z = -5; // TODO: default position relative to camera!
 
 	                // Translate.
 
@@ -8949,7 +9135,7 @@
 	                    centroid.add(c);
 	                }
 
-	                // Centroid position
+	                // Centroid position.
 
 	                this.centroid = centroid.scale(1 / numVertices);
 	            }
@@ -9099,7 +9285,8 @@
 	                seamVtxWeight = void 0,
 	                seamVtxBaseWeight = void 0;
 
-	            if (valency < 5) {
+	            if (valency < 6) {
+	                // TODO: had 5, affects joins on CubeSphere
 
 	                return false;
 	            }
@@ -9555,15 +9742,19 @@
 
 	            // Convert flattened arrays to Vertex, Edge objects.
 
+	            console.log('Simplifying mesh...' + this.type);
+
 	            this.geometryToVertex(this.geo.vertices.data, this.geo.indices.data, this.geo.texCoords.data);
 
 	            var vertexArr = this.vertexArr;
 
 	            var indexArr = this.indexArr;
 
-	            // Find overlapping Vertices (seams).
+	            // Find overlapping Vertices (seams) and reduce complexity.
 
 	            var newVertexArr = [];
+
+	            var newIndexArr = indexArr.slice();
 
 	            for (var i = 0; i < vertexArr.length; i++) {
 
@@ -9583,27 +9774,24 @@
 
 	                            var min = Math.min(vtx1.idx, vtx2.idx);
 
-	                            if (vtx1.idx < vtx2.idx) {
+	                            var pos = newIndexArr.indexOf(max);
 
-	                                var pos = indexArr.indexOf(max);
+	                            while (pos !== -1) {
 
-	                                while (pos !== -1) {
+	                                newIndexArr[pos] = min;
 
-	                                    indexArr[pos] = min;
-
-	                                    pos = indexArr.indexOf(max);
-	                                }
+	                                pos = newIndexArr.indexOf(max);
 	                            }
 	                        }
 	                    }
 	                }
 	            }
 
-	            // burn out a new VertexArr
+	            // burn out a new VertexArr.
 
-	            for (var _i2 = 0; _i2 < indexArr.length; _i2++) {
+	            for (var _i2 = 0; _i2 < newIndexArr.length; _i2++) {
 
-	                var vtx = vertexArr[indexArr];
+	                var vtx = vertexArr[newIndexArr[_i2]];
 
 	                if (newVertexArr.indexOf(vtx) === -1) {
 
@@ -9613,9 +9801,17 @@
 
 	            console.log(' oldVertexArr:' + vertexArr.length + ', newVertexArr:' + newVertexArr.length);
 
-	            // copy over old Vertex arr
+	            // Copy over old Vertex and Index array.
 
-	            vertexArr = newVertexArr;
+	            this.oldIndexArr = indexArr;
+
+	            this.oldVertexArr = vertexArr;
+
+	            // Index array remains the same.
+
+	            this.vertexArr = newVertexArr;
+
+	            this.indexArr = newIndexArr;
 	        }
 
 	        /** 
@@ -10263,8 +10459,7 @@
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	            vec3.fromValues(util.degToRad(40), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
 	            vec3.fromValues(util.degToRad(0), util.degToRad(1), util.degToRad(0)), // angular velocity in x, y, x
-	            ['img/webvr-logo2.png'], vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-	            ));
+	            ['img/webvr-logo2.png'], vec4.fromValues(0.5, 1.0, 0.2, 1.0)));
 
 	            // PRIMARY (BIG) SKYDOME
 
@@ -10285,8 +10480,7 @@
 	            vec3.fromValues(util.degToRad(20), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
 	            vec3.fromValues(util.degToRad(0), util.degToRad(1), util.degToRad(0)), // angular velocity in x, y, x
 	            ['img/uv-test.png'], // texture present, NOT USED
-	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-	            ));
+	            vec4.fromValues(0.5, 1.0, 0.2, 1.0)));
 
 	            this.vs1 = this.renderer.shaderTexture.init(this.textureObjList);
 
@@ -10302,8 +10496,7 @@
 	            vec3.fromValues(util.degToRad(20), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
 	            vec3.fromValues(util.degToRad(0), util.degToRad(1), util.degToRad(0)), // angular velocity in x, y, x
 	            ['img/webvr-logo3.png'], // texture present, NOT USED
-	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-	            ));
+	            vec4.fromValues(0.5, 1.0, 0.2, 1.0)));
 
 	            this.vs2 = this.renderer.shaderColor.init(this.colorObjList);
 
@@ -10318,8 +10511,7 @@
 	            vec3.fromValues(util.degToRad(20), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
 	            vec3.fromValues(util.degToRad(0), util.degToRad(1), util.degToRad(0)), // angular velocity in x, y, x
 	            ['img/webvr-logo4.png'], // texture present, NOT USED
-	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-	            ));
+	            vec4.fromValues(0.5, 1.0, 0.2, 1.0)));
 
 	            this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.TERRAIN, 'terrain', vec5(2, 2, 44, this.prim.directions.TOP, 0.1), // NOTE: ORIENTATION DESIRED vec5[3], waterline = vec5[4]
 	            vec5(100, 100, 100), // divisions
@@ -10330,6 +10522,7 @@
 	            ['img/mozvr-logo1.png'], // texture present
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0), // color
 	            null //heightMap                       // heightmap
+
 	            ));
 
 	            ///////////////////////////
@@ -10526,7 +10719,7 @@
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	            ));
 
-	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.TEARDROP, 'TestCapsule', vec5(1, 2, 1), // dimensions (4th dimension doesn't exist for cylinder)
+	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.TEARDROP, 'TestTearDrop', vec5(1, 2, 1), // dimensions (4th dimension doesn't exist for cylinder)
 	            vec5(40, 40, 0), // divisions MAKE SMALLER
 	            vec3.fromValues(-2.0, 1.5, 2.0), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -10548,6 +10741,24 @@
 	            ));
 
 	            this.vs3 = this.renderer.shaderDirlightTexture.init(this.dirlightTextureObjList);
+
+	            ///////////////
+
+	            this.prim.createPrim(this.prim.typeList.MESH, 'teapot', vec5(1, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
+	            vec5(40, 40, 0), // divisions MAKE SMALLER
+	            vec3.fromValues(0.0, 1.0, 0.0), // position (absolute)
+	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	            vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	            ['obj/capsule/capsule.png'], // texture present
+	            vec4.fromValues(0.5, 1.0, 0.2, 1.0), // color,
+	            true, // if true, apply texture to each face,
+	            ['obj/capsule/capsule.obj', 'obj/capsule/capsule.mtl'] // object files (.obj, .mtl)
+	            );
+
+	            //this.prim.loadModel.load( 'obj/teapot.obj', this.prim );
+
+	            ///////////////
 
 	            // Finished object creation, start rendering...
 
