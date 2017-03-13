@@ -2761,6 +2761,12 @@
 
 	                // TODO: can we use with most obj files?
 	                // TODO: what if texture coords don't match order of vertices (convert???)
+	                // https://github.com/AndrewRayCode/three-collada-loader
+	                // TODO: write adapter for THREE Collada loader.
+	                // TODO: write adapter for glTF loader
+	                // https://github.com/KhronosGroup/glTF
+	                // https://github.com/mrdoob/three.js/blob/dev/examples/js/loaders/GLTFLoader.js
+	                // https://github.com/AnalyticalGraphicsInc/obj2gltf
 
 	                indices.push(idx);
 
