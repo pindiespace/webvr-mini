@@ -2682,10 +2682,153 @@
 	    }
 
 	    _createClass(LoadModel, [{
-	        key: 'computeVertices',
-	        value: function computeVertices(data) {
+	        key: 'compute3d',
+	        value: function compute3d(data, arr) {
+
+	            var vs = data.match(/^(-?\d+(\.\d+)?)\s*(-?\d+(\.\d+)?)\s*(-?\d+(\.\d+)?)/);
+
+	            /////////console.log('>>>>>>>>>>>>>V IS:' + vs)
+
+	            arr.push(vs[1], vs[3], vs[5]);
+	        }
+	    }, {
+	        key: 'compute2d',
+	        value: function compute2d(data, arr) {
+
+	            var uvs = data.match(/^(-?\d+(\.\d+)?)\s+(-?\d+(\.\d+)?)$/);
+
+	            arr.push(parseFloat(uvs[1]), parseFloat(uvs[3]));
+	        }
+
+	        /** 
+	         * Pare the .obj file
+	         * @link http://paulbourke.net/dataformats/obj/
+	         */
+
+	    }, {
+	        key: 'computeMesh',
+	        value: function computeMesh(data) {
+	            var _this2 = this;
 
 	            console.log("LOADING MODEL COMPUTEVERTICES");
+
+	            var vertices = [];
+
+	            var indices = [];
+
+	            var texCoords = [];
+
+	            var normals = [];
+
+	            // Get the lines of the file.
+
+	            var lines = data.split('\n');
+
+	            lines.forEach(function (line) {
+
+	                ///////////console.debug( line );
+
+	                line = line.trim();
+
+	                var type = line.split(' ')[0];
+
+	                var data = line.substr(type.length).trim();
+
+	                //////////console.log("DATA IS:" + data)
+	                /////////console.log('TYPE:' + type)
+
+	                switch (type) {
+
+	                    case 'o':
+	                        // object name
+
+	                        break;
+
+	                    case 'g':
+	                        // group name
+
+	                        break;
+
+	                    case 'v':
+	                        // vertices
+	                        _this2.compute3d(data, vertices);
+	                        break;
+
+	                    case 'f':
+	                        // face, indices
+
+	                        break;
+
+	                    case 'vn':
+	                        // normals
+	                        _this2.compute3d(data, normals);
+	                        break;
+
+	                    case 'vp':
+	                        // parameter vertices
+
+	                        break;
+
+	                    case 'vt':
+	                        // texture uvs
+	                        _this2.compute2d(data, texCoords);
+	                        break;
+
+	                    case 's':
+	                        // smoothing
+
+	                        break;
+
+	                    case '#': // comment
+	                    case 'p': // point
+	                    case 'l': // line
+	                    case 'curv': // 2d curve
+	                    case 'surf': //surface
+	                    case 'parm': // parameter values
+	                    case 'trim': // outer trimming loop
+	                    case 'hole': // inner trimming loop
+	                    case 'scrv': //special curve
+	                    case 'sp': // special point
+	                    case 'end': // end statment
+	                    case 'con': // connectivity between free-form surfaces
+	                    case 'g': // group name
+	                    case 's': // smoothing group
+	                    case 'mg': // merging group
+	                    case 'bevel': // bevel interpolation
+	                    case 'c_interp': // color interpolation
+	                    case 'd_interp': // dissolve interpolation
+	                    case 'lod': // level of detail
+	                    case 'shadow_obj': // shadow casting
+	                    case 'trace_obj': // ray tracing
+	                    case 'ctech': // curve approximation
+	                    case 'stech': // surface approximation
+	                    case 'mtllib': // materials
+	                    case 'usemtl':
+
+	                        console.warn('loadModel::computeMesh(): type ' + type + ' in .obj file not supported');
+
+	                        break;
+
+	                    default:
+
+	                        console.error('loadModel::computeMesh(): unknown type ' + type + ' in .obj file');
+
+	                        break;
+
+	                }
+	            });
+
+	            return {
+
+	                vertices: vertices,
+
+	                indices: indices,
+
+	                texCoords: texCoords,
+
+	                normals: normals
+
+	            };
 	        }
 	    }, {
 	        key: 'computeMaterials',
@@ -2700,6 +2843,9 @@
 	            var data = loadObj.data;
 
 	            var models = loadObj.prim.models;
+
+	            var meshData = void 0,
+	                mtlData = void 0;
 
 	            //window.lines = lines;
 
@@ -2719,12 +2865,12 @@
 
 	                case 'obj':
 	                    console.log("OBJ file loaded, now parse it....");
-	                    this.computeVertices(data);
+	                    meshData = this.computeMesh(data);
 	                    break;
 
 	                case 'mtl':
 	                    console.log("MTL file loaded, not parse it....");
-	                    this.computeMaterials(data);
+	                    mtlData = this.computeMaterials(data);
 	                    break;
 
 	                default:
@@ -2756,7 +2902,7 @@
 	    }, {
 	        key: 'createLoadObj',
 	        value: function createLoadObj(waitObj) {
-	            var _this2 = this;
+	            var _this3 = this;
 
 	            console.log(">>>>>>>>>>>>>>>>createLoadObj Loading " + waitObj.source);
 
@@ -2778,12 +2924,12 @@
 
 	                console.log(">>>>>>>>>>>>>MODEL NEXT SOURCE:" + source);
 
-	                loadObj.fType = _this2.util.getFileExtension(source);
+	                loadObj.fType = _this3.util.getFileExtension(source);
 
 	                fetch(source).then(function (response) {
 	                    return response.text();
 	                }).then(function (xmlString) {
-	                    loadObj.data = xmlString;_this2.uploadModel(loadObj, loadObj.callback);
+	                    loadObj.data = xmlString;_this3.uploadModel(loadObj, loadObj.callback);
 	                });
 	            };
 

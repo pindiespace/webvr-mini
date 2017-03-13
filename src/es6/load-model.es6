@@ -14,9 +14,144 @@ class LoadModel extends LoadPool {
 
     }
 
-    computeVertices ( data ) {
+    compute3d ( data, arr ) {
+
+        let vs = data.match( /^(-?\d+(\.\d+)?)\s*(-?\d+(\.\d+)?)\s*(-?\d+(\.\d+)?)/ );
+
+        /////////console.log('>>>>>>>>>>>>>V IS:' + vs)
+
+        arr.push( vs[ 1 ], vs[ 3 ], vs[ 5 ] );
+
+    }
+
+    compute2d ( data, arr ) {
+
+        let uvs = data.match(/^(-?\d+(\.\d+)?)\s+(-?\d+(\.\d+)?)$/);
+        
+        arr.push( parseFloat( uvs[ 1 ] ), parseFloat( uvs[ 3 ] ) );
+
+    }
+
+    /** 
+     * Pare the .obj file
+     * @link http://paulbourke.net/dataformats/obj/
+     */
+    computeMesh ( data ) {
 
         console.log("LOADING MODEL COMPUTEVERTICES")
+
+        let vertices = [];
+
+        let indices = [];
+
+        let texCoords = [];
+
+        let normals = [];
+
+        // Get the lines of the file.
+
+        let lines = data.split( '\n' );
+
+        lines.forEach( ( line ) => {
+
+            ///////////console.debug( line );
+
+            line = line.trim();
+
+            let type = line.split( ' ' )[ 0 ];
+
+            let data = line.substr( type.length ).trim();
+
+            //////////console.log("DATA IS:" + data)
+            /////////console.log('TYPE:' + type)
+
+            switch ( type ) {
+
+                case 'o': // object name
+
+                    break;
+
+                case 'g': // group name
+
+                    break;
+
+                case 'v': // vertices
+                    this.compute3d( data, vertices );
+                    break;
+
+                case 'f': // face, indices
+
+                    break;
+
+                case 'vn': // normals
+                    this.compute3d( data, normals);
+                    break;
+
+                case 'vp': // parameter vertices
+
+                    break;
+
+                case 'vt': // texture uvs
+                    this.compute2d( data, texCoords );
+                    break;
+
+                case 's': // smoothing
+
+                    break;
+
+
+                case '#': // comment
+                case 'p': // point
+                case 'l': // line
+                case 'curv': // 2d curve
+                case 'surf': //surface
+                case 'parm': // parameter values
+                case 'trim': // outer trimming loop
+                case 'hole': // inner trimming loop
+                case 'scrv': //special curve
+                case 'sp': // special point
+                case 'end': // end statment
+                case 'con': // connectivity between free-form surfaces
+                case 'g': // group name
+                case 's': // smoothing group
+                case 'mg': // merging group
+                case 'bevel': // bevel interpolation
+                case 'c_interp': // color interpolation
+                case 'd_interp': // dissolve interpolation
+                case 'lod': // level of detail
+                case 'shadow_obj': // shadow casting
+                case 'trace_obj': // ray tracing
+                case 'ctech': // curve approximation
+                case 'stech': // surface approximation
+                case 'mtllib': // materials
+                case 'usemtl':
+
+                    console.warn( 'loadModel::computeMesh(): type ' + type + ' in .obj file not supported' );
+
+                    break;
+
+                default:
+
+                    console.error( 'loadModel::computeMesh(): unknown type ' + type + ' in .obj file' );
+
+                    break;
+
+            }
+
+
+        } );
+
+        return {
+
+            vertices: vertices,
+
+            indices: indices,
+
+            texCoords: texCoords,
+
+            normals: normals
+
+        };
 
     }
 
@@ -31,6 +166,8 @@ class LoadModel extends LoadPool {
         let data = loadObj.data;
 
         let models = loadObj.prim.models;
+
+        let meshData, mtlData;
 
         //window.lines = lines;
 
@@ -50,12 +187,12 @@ class LoadModel extends LoadPool {
 
             case 'obj':
                 console.log("OBJ file loaded, now parse it....")
-                this.computeVertices( data );
+                meshData = this.computeMesh( data );
                 break;
 
             case 'mtl':
                 console.log("MTL file loaded, not parse it....")
-                this.computeMaterials( data );
+                mtlData = this.computeMaterials( data );
                 break;
 
             default:
