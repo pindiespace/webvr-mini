@@ -2670,7 +2670,11 @@
 	    _inherits(LoadModel, _LoadPool);
 
 	    /**
-	     * Base loader class.
+	     * Model .obj file format loader.
+	     * @param {Boolean} init if true, run immediately.
+	     * @param {Util} util local reference to utility functions object.
+	     * @param {glMatrix} glMatrix reference to glMatrix library.
+	     * @param {WebGL} webgl reference to webgl object.
 	     */
 
 	    function LoadModel(init, util, glMatrix, webgl) {
@@ -2681,9 +2685,16 @@
 	        return _possibleConstructorReturn(this, (LoadModel.__proto__ || Object.getPrototypeOf(LoadModel)).call(this, init, util, glMatrix, webgl));
 	    }
 
+	    /** 
+	     * Extract 3d vertex data (vertices, normals) from a string.
+	     * @param {String} data string to be parsed for 3d coordinate values.
+	     * @param {Array} arr the array to add the coordinate values to.
+	     */
+
+
 	    _createClass(LoadModel, [{
-	        key: 'compute3d',
-	        value: function compute3d(data, arr) {
+	        key: 'computeObj3d',
+	        value: function computeObj3d(data, arr) {
 
 	            var vs = data.match(/^(-?\d+(\.\d+)?)\s*(-?\d+(\.\d+)?)\s*(-?\d+(\.\d+)?)/);
 
@@ -2691,9 +2702,16 @@
 
 	            arr.push(vs[1], vs[3], vs[5]);
 	        }
+
+	        /** 
+	         * Extract 2 vertex data (texture coordinates) from a string.
+	         * @param {String} data string to be parsed for 3d coordinate values.
+	         * @param {Array} arr the array to add the coordinate values to.
+	         */
+
 	    }, {
-	        key: 'compute2d',
-	        value: function compute2d(data, arr) {
+	        key: 'computeObj2d',
+	        value: function computeObj2d(data, arr) {
 
 	            var uvs = data.match(/^(-?\d+(\.\d+)?)\s+(-?\d+(\.\d+)?)$/);
 
@@ -2701,13 +2719,65 @@
 	        }
 
 	        /** 
-	         * Pare the .obj file
+	         * Extract index data from a string. At present, indexing of vertices, 
+	         * texture coordinates, normals is assumed to be the same, so only one 
+	         * index array is constructed.
+	         * @param {String} data string to be parsed for indices (integer).
+	         * @param {Array} indexArr array for indices into vertex array.
+	         * @param {Array} vtxArr array for vertices (optional).
+	         * @param {Array} texCoordArr array for texture coordinates (optional).
+	         */
+
+	    }, {
+	        key: 'computeObjIndices',
+	        value: function computeObjIndices(data, indices) {
+	            var texCoords = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [];
+	            var normals = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
+
+
+	            var parts = data.match(/[^\s]+/g);
+
+	            var face = parts.map(function (fs) {
+
+	                var indices = fs.split('/'); // could be 10/20/20 10/10/10 20/20/10
+
+	                var idx = parseInt(indices[0], 10);
+
+	                var normal = void 0,
+	                    texCoord = void 0;
+
+	                if (indices.length > 1) {
+
+	                    if (indices[1].length > 0) {
+
+	                        texCoord = parseInt(indices[1], 10);
+	                    }
+	                }
+
+	                if (indices.length > 2) {
+
+	                    normal = parseInt(indices[2], 10);
+	                }
+
+	                // TODO: can we use with most obj files?
+	                // TODO: what if texture coords don't match order of vertices (convert???)
+
+	                indices.push(idx);
+
+	                texCoords.push(texCoord);
+
+	                normals.push(normal);
+	            });
+	        }
+
+	        /** 
+	         * Parse the .obj file into flattened object data
 	         * @link http://paulbourke.net/dataformats/obj/
 	         */
 
 	    }, {
-	        key: 'computeMesh',
-	        value: function computeMesh(data) {
+	        key: 'computeObjMesh',
+	        value: function computeObjMesh(data, prim) {
 	            var _this2 = this;
 
 	            console.log("LOADING MODEL COMPUTEVERTICES");
@@ -2719,6 +2789,12 @@
 	            var texCoords = [];
 
 	            var normals = [];
+
+	            var tangents = [];
+
+	            var colors = [];
+
+	            console.log("PRIM:" + prim);
 
 	            // Get the lines of the file.
 
@@ -2751,17 +2827,17 @@
 
 	                    case 'v':
 	                        // vertices
-	                        _this2.compute3d(data, vertices);
+	                        _this2.computeObj3d(data, vertices);
 	                        break;
 
 	                    case 'f':
 	                        // face, indices
-
+	                        _this2.computeObjIndices(data, indices);
 	                        break;
 
 	                    case 'vn':
 	                        // normals
-	                        _this2.compute3d(data, normals);
+	                        _this2.computeObj3d(data, normals);
 	                        break;
 
 	                    case 'vp':
@@ -2771,7 +2847,7 @@
 
 	                    case 'vt':
 	                        // texture uvs
-	                        _this2.compute2d(data, texCoords);
+	                        _this2.computeObj2d(data, texCoords);
 	                        break;
 
 	                    case 's':
@@ -2811,28 +2887,25 @@
 
 	                    default:
 
-	                        console.error('loadModel::computeMesh(): unknown type ' + type + ' in .obj file');
+	                        console.error('loadModel::computeMesh(): unknown type ' + type.charCodeAt(0) + ' in .obj file');
 
 	                        break;
 
 	                }
 	            });
 
-	            return {
+	            // Colors and tangents are not part of the Wavefront .obj format
 
-	                vertices: vertices,
-
-	                indices: indices,
-
-	                texCoords: texCoords,
-
-	                normals: normals
-
-	            };
+	            prim.geometry.addBufferData(vertices, indices, normals, texCoords);
 	        }
+
+	        /** 
+	         * Compute material properties for a model.
+	         */
+
 	    }, {
-	        key: 'computeMaterials',
-	        value: function computeMaterials(data) {
+	        key: 'computeObjMaterials',
+	        value: function computeObjMaterials(data, prim) {
 
 	            console.log("LOADING MODEL MATERIALS");
 	        }
@@ -2843,9 +2916,6 @@
 	            var data = loadObj.data;
 
 	            var models = loadObj.prim.models;
-
-	            var meshData = void 0,
-	                mtlData = void 0;
 
 	            //window.lines = lines;
 
@@ -2865,12 +2935,12 @@
 
 	                case 'obj':
 	                    console.log("OBJ file loaded, now parse it....");
-	                    meshData = this.computeMesh(data);
+	                    this.computeObjMesh(data, loadObj.prim);
 	                    break;
 
 	                case 'mtl':
 	                    console.log("MTL file loaded, not parse it....");
-	                    mtlData = this.computeMaterials(data);
+	                    this.computeObjMaterials(data, loadObj.prim);
 	                    break;
 
 	                default:

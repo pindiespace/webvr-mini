@@ -3,7 +3,11 @@ import LoadPool from  './load-pool';
 class LoadModel extends LoadPool {
 
     /**
-     * Base loader class.
+     * Model .obj file format loader.
+     * @param {Boolean} init if true, run immediately.
+     * @param {Util} util local reference to utility functions object.
+     * @param {glMatrix} glMatrix reference to glMatrix library.
+     * @param {WebGL} webgl reference to webgl object.
      */
 
     constructor ( init, util, glMatrix, webgl ) {
@@ -14,7 +18,12 @@ class LoadModel extends LoadPool {
 
     }
 
-    compute3d ( data, arr ) {
+    /** 
+     * Extract 3d vertex data (vertices, normals) from a string.
+     * @param {String} data string to be parsed for 3d coordinate values.
+     * @param {Array} arr the array to add the coordinate values to.
+     */
+    computeObj3d ( data, arr ) {
 
         let vs = data.match( /^(-?\d+(\.\d+)?)\s*(-?\d+(\.\d+)?)\s*(-?\d+(\.\d+)?)/ );
 
@@ -24,7 +33,12 @@ class LoadModel extends LoadPool {
 
     }
 
-    compute2d ( data, arr ) {
+    /** 
+     * Extract 2 vertex data (texture coordinates) from a string.
+     * @param {String} data string to be parsed for 3d coordinate values.
+     * @param {Array} arr the array to add the coordinate values to.
+     */
+    computeObj2d ( data, arr ) {
 
         let uvs = data.match(/^(-?\d+(\.\d+)?)\s+(-?\d+(\.\d+)?)$/);
         
@@ -33,10 +47,59 @@ class LoadModel extends LoadPool {
     }
 
     /** 
-     * Pare the .obj file
+     * Extract index data from a string. At present, indexing of vertices, 
+     * texture coordinates, normals is assumed to be the same, so only one 
+     * index array is constructed.
+     * @param {String} data string to be parsed for indices (integer).
+     * @param {Array} indexArr array for indices into vertex array.
+     * @param {Array} vtxArr array for vertices (optional).
+     * @param {Array} texCoordArr array for texture coordinates (optional).
+     */
+    computeObjIndices ( data, indices, texCoords = [], normals = [] ) {
+
+        let parts = data.match( /[^\s]+/g );
+
+        let face = parts.map( ( fs ) => {
+
+            let indices = fs.split( '/' ); // could be 10/20/20 10/10/10 20/20/10
+                    
+            let idx = parseInt( indices[ 0 ],  10 );
+
+            let normal, texCoord;
+
+            if ( indices.length > 1) {
+
+                if ( indices[ 1 ].length > 0 ) {
+
+                    texCoord = parseInt( indices[ 1 ], 10 );
+
+                }
+            }
+                    
+            if ( indices.length > 2 ) {
+
+                normal = parseInt( indices[ 2 ], 10 );
+
+            }
+
+            // TODO: can we use with most obj files?
+            // TODO: what if texture coords don't match order of vertices (convert???)
+
+            indices.push( idx );
+
+            texCoords.push ( texCoord );
+
+            normals.push( normal );
+
+        } );
+
+    }
+
+    /** 
+     * Parse the .obj file into flattened object data
      * @link http://paulbourke.net/dataformats/obj/
      */
-    computeMesh ( data ) {
+    computeObjMesh ( data, prim ) {
 
         console.log("LOADING MODEL COMPUTEVERTICES")
 
@@ -47,6 +110,12 @@ class LoadModel extends LoadPool {
         let texCoords = [];
 
         let normals = [];
+
+        let tangents = [];
+
+        let colors = [];
+
+        console.log("PRIM:" + prim)
 
         // Get the lines of the file.
 
@@ -76,15 +145,15 @@ class LoadModel extends LoadPool {
                     break;
 
                 case 'v': // vertices
-                    this.compute3d( data, vertices );
+                    this.computeObj3d( data, vertices );
                     break;
 
                 case 'f': // face, indices
-
+                    this.computeObjIndices( data, indices );
                     break;
 
                 case 'vn': // normals
-                    this.compute3d( data, normals);
+                    this.computeObj3d( data, normals);
                     break;
 
                 case 'vp': // parameter vertices
@@ -92,13 +161,12 @@ class LoadModel extends LoadPool {
                     break;
 
                 case 'vt': // texture uvs
-                    this.compute2d( data, texCoords );
+                    this.computeObj2d( data, texCoords );
                     break;
 
                 case 's': // smoothing
 
                     break;
-
 
                 case '#': // comment
                 case 'p': // point
@@ -132,30 +200,24 @@ class LoadModel extends LoadPool {
 
                 default:
 
-                    console.error( 'loadModel::computeMesh(): unknown type ' + type + ' in .obj file' );
+                    console.error( 'loadModel::computeMesh(): unknown type ' + type.charCodeAt( 0 ) + ' in .obj file' );
 
                     break;
 
             }
 
-
         } );
 
-        return {
+        // Colors and tangents are not part of the Wavefront .obj format
 
-            vertices: vertices,
-
-            indices: indices,
-
-            texCoords: texCoords,
-
-            normals: normals
-
-        };
+        prim.geometry.addBufferData( vertices, indices, normals, texCoords );
 
     }
 
-    computeMaterials ( data ) {
+    /** 
+     * Compute material properties for a model.
+     */
+    computeObjMaterials ( data, prim ) {
 
         console.log("LOADING MODEL MATERIALS")
 
@@ -166,8 +228,6 @@ class LoadModel extends LoadPool {
         let data = loadObj.data;
 
         let models = loadObj.prim.models;
-
-        let meshData, mtlData;
 
         //window.lines = lines;
 
@@ -187,12 +247,12 @@ class LoadModel extends LoadPool {
 
             case 'obj':
                 console.log("OBJ file loaded, now parse it....")
-                meshData = this.computeMesh( data );
+                this.computeObjMesh( data, loadObj.prim );
                 break;
 
             case 'mtl':
                 console.log("MTL file loaded, not parse it....")
-                mtlData = this.computeMaterials( data );
+                this.computeObjMaterials( data, loadObj.prim );
                 break;
 
             default:
