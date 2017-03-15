@@ -41,6 +41,13 @@ __DEV__ means we are in a development environment
 
 __RELEASE__ means we are in a production environment
 
+## Sources
+
+Royalty-free 3d models for testing from:
+
+https://www.cgtrader.com
+
+
 ## References
 
 WebGL Fundamentals (from twgl)

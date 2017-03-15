@@ -143,8 +143,8 @@ class World {
 
         this.colorObjList = [];
 
-         //this.colorObjList.push( this.prim.createPrim(
-         this.textureObjList.push( this.prim.createPrim(
+         this.colorObjList.push( this.prim.createPrim(
+         //this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.CUBE,
             'colored cube',
             vec5( 1, 1, 1, 0 ),            // dimensions
@@ -155,6 +155,22 @@ class World {
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 1 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
             [ 'img/webvr-logo3.png' ],               // texture present, NOT USED
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color
+        ) );
+
+///OBJ MESH
+        this.colorObjList.push( window.prim = this.prim.createPrim(
+            this.prim.typeList.MESH,
+            'obj people',
+            vec5( 1, 1, 1 ),       // dimensions (4th dimension doesn't exist for cylinder)
+            vec5( 40, 40, 0  ),        // divisions MAKE SMALLER
+            vec3.fromValues(0.0, 1.0, 2.0 ),      // position (absolute)
+            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+            vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+            [],               // no texture present
+            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color,
+            false,                                   // if true, apply texture to each face,
+            [ 'obj/people.obj' ] // object files (.obj, .mtl)
         ) );
 
         this.vs2 = this.renderer.shaderColor.init( this.colorObjList );
@@ -476,12 +492,12 @@ class World {
 
         ///////////////
 
-        this.prim.createPrim(
+        this.textureObjList.push( window.prim = this.prim.createPrim(
             this.prim.typeList.MESH,
-            'teapot',
+            'obj capsule',
             vec5( 1, 1, 1 ),       // dimensions (4th dimension doesn't exist for cylinder)
             vec5( 40, 40, 0  ),        // divisions MAKE SMALLER
-            vec3.fromValues(0.0, 1.0, 0.0 ),      // position (absolute)
+            vec3.fromValues(0.0, 1.0, 2.0 ),      // position (absolute)
             vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
             vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
             vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
@@ -489,9 +505,8 @@ class World {
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color,
             true,                                   // if true, apply texture to each face,
             [ 'obj/capsule/capsule.obj', 'obj/capsule/capsule.mtl' ] // object files (.obj, .mtl)
-        )
+        ) );
 
-        //this.prim.loadModel.load( 'obj/teapot.obj', this.prim );
 
         ///////////////
 

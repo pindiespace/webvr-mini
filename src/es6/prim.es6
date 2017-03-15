@@ -334,32 +334,6 @@ class Prim {
 
     }
 
-    /** 
-     * Check the values of a Prim.
-     * @param {Prim} prim the object primitive.
-     */
-    primReadout ( prim ) {
-
-        console.log( 'Prim::primReadout():' + prim.name + ' type:' + prim.type + 
-
-            ' vertex:(' + prim.geometry.vertices.itemSize + 
-
-            '), ' + prim.geometry.vertices.numItems + 
-
-            ', texture:(' + prim.geometry.texCoords.itemSize + 
-
-            '), ' + prim.geometry.texCoords.numItems + 
-
-            ', index:(' + prim.geometry.indices.itemSize + 
-
-            '), ' + prim.geometry.indices.numItems + 
-
-            ', normals:(' + prim.geometry.normals.itemSize + 
-
-            '), ' + prim.geometry.normals.numItems );
-
-    }
-
     /* 
      * ---------------------------------------
      * DEFAULT VECTORS AND OBJECTS
@@ -1207,6 +1181,8 @@ class Prim {
 
         //return this.addBufferData( bufferObj, vertices, indices, texCoords, normals, tangents, colors );
 
+        geo.ready = true; // flag for mesh loading
+
     }
 
     /** 
@@ -1250,6 +1226,8 @@ class Prim {
         // Return the buffer, or add array data to the existing Prim data.
 
         // Return data to build WebGL buffers.
+
+        geo.ready = true; // flag for mesh loading
 
         return geo.addBufferData( vertices, indices, normals, texCoords, tangents );
 
@@ -1503,6 +1481,8 @@ class Prim {
         this.computeTangents( vertices, indices, normals, texCoords, tangents );
 
         // Color array is pre-created, or gets a default when WebGL buffers are created.
+
+        geo.ready = true; // flag for mesh loading
 
         // Return the buffer.
 
@@ -1825,6 +1805,8 @@ class Prim {
         this.computeTangents( vertices, indices, normals, texCoords, tangents );
 
         // Color array is pre-created, or gets a default when WebGL buffers are created.
+
+        geo.ready = true; // flag for mesh loading
 
         // Return the buffer.
 
@@ -2178,6 +2160,8 @@ class Prim {
         // Re-compute normals, which may have changed.
 
         normals = this.computeNormals( vertices, indices, normals );
+
+        geo.ready = true; // flag for mesh loading
 
         // Return the buffer.
 
@@ -2751,6 +2735,8 @@ class Prim {
 
         // Color array is pre-created, or gets a default when WebGL buffers are created.
 
+        geo.ready = true; // flag for mesh loading
+
         // Return the buffer.
 
         return geo.addBufferData( vertices, indices, normals, texCoords, tangents );
@@ -3077,6 +3063,8 @@ class Prim {
 
         // Color array is pre-created, or gets a default when WebGL buffers are created.
 
+        geo.ready = true; // flag for mesh loading
+
         // Return the buffer.
 
         return geo.addBufferData( vertices, indices, normals, texCoords, tangents );
@@ -3188,6 +3176,8 @@ class Prim {
 
         // Color array is pre-created, or gets a default when WebGL buffers are created.
 
+        geo.ready = true; // flag for mesh loading
+
         // Return the buffer.
 
         return geo.addBufferData( vertices, indices, normals, texCoords, tangents );
@@ -3211,27 +3201,17 @@ class Prim {
 
         let geo = prim.geometry;
 
-        console.log( '++++++++++++in mesh callback, all model files loaded...' );
+        let vertices = geo.vertices.data;
 
-        //TODO: add model vertices
+        let indices = geo.indices.data;
+
+        let normals = geo.normals.data;
+
+        let texCoords = geo.texCoords.data;
+
+        console.log( '++++++++++++++++++++++++++++in mesh callback, all model files loaded...' );
 
         //TODO: add model materials
-
-        // Vertices.
-
-        let vertices = [];
-
-        // Indices.
-
-        let indices = [];
-
-        // Texture coordinates.
-
-        let texCoords = [];
-
-        // Normals.
-
-        let normals = [];
 
         this.computeNormals( vertices, indices, normals );
 
@@ -3243,17 +3223,27 @@ class Prim {
 
         // Color array is pre-created, or gets a default when WebGL buffers are created.
 
-        // Return the buffer.
+        geo.ready = true; // flag for mesh loading
 
-        //return this.createGLBuffers( prim.geometry );
+        // Since this callback may be delayed, re-create GLBuffers after assigning data
 
-        return geo.addBufferData( vertices, indices, normals, texCoords, tangents );
+        geo.addBufferData( vertices, indices, normals, texCoords, tangents );
+
+        let mesh = new Mesh( geo );        
+
+        mesh.simplify();
+
+        //mesh.subdivide();
+
+        geo.createGLBuffers();
 
     }
 
     /** 
-     * Generic 3d shape (e.g. Collada model). Note that this is NOT the same as the Mesh object 
-     * internally defined in mesh.es6.
+     * Generic 3d shape defined from files (e.g. OBJ model).
+     * calls load-model, then executes final callback. Final callback creates WebGL buffers 
+     * for the Prim. Other model files (e.g. material) are loaded by load-model and values 
+     * assigned to the Prim before final loading.
      *
      * @link https://dannywoodz.wordpress.com/2014/12/16/webgl-from-scratch-loading-a-mesh/
      * @link https://github.com/jagenjo/litegl.js/blob/master/src/mesh.js
@@ -3268,16 +3258,17 @@ class Prim {
 
         for ( let i = 0; i < prim.models.length; i++ ) {
 
-            //this.loadModel.load( 'obj/capsule/capsule.obj', prim, this.meshCallback.bind( this ) );
             console.log(">>>>>>>>>>>>>>geometryMesh():" + prim.models[ i ] );
+
+            // We only execute a final callback for model loading.
 
             this.loadModel.load( prim.models[ i ], prim, function() {}, this.meshCallback.bind( this ) );
 
         }
 
-        //this.loadModel.load( 'obj/capsule/capsule.obj', prim, this.meshCallback.bind( this ) );
+        // The prim gets a default (zero-sized) set of GLBuffers until the mesh loading is complete in the callback.
 
-        return geo.addBufferData( [], [], [], [], [] );
+        return geo;
 
     }
 
@@ -3330,6 +3321,61 @@ class Prim {
 
         let prim = {};
 
+        // Define internal methods for the Prim.
+
+        /** 
+         * Set the model-view matrix.
+         */
+        prim.setMV = ( mvMatrix ) => {
+
+            let p = prim;
+
+            mat4.identity( mvMatrix );
+
+            let z = -5; // TODO: default position relative to camera!
+
+            // Translate.
+
+            vec3.add( p.position, p.position, p.acceleration );
+
+            mat4.translate( mvMatrix, mvMatrix, [ p.position[ 0 ], p.position[ 1 ], z + p.position[ 2 ] ] );
+
+            // If orbiting, set orbit.
+
+            // Rotate.
+
+            // TODO: rotate first for rotation.
+            // TODO: rotate second for orbiting.
+            // TODO: rotate (internal), translate, rotate (orbit)
+
+            vec3.add( p.rotation, p.rotation, p.angular );
+
+            mat4.rotate( mvMatrix, mvMatrix, p.rotation[ 0 ], [ 1, 0, 0 ] );
+
+            mat4.rotate( mvMatrix, mvMatrix, p.rotation[ 1 ], [ 0, 1, 0 ] );
+
+            mat4.rotate( mvMatrix, mvMatrix, p.rotation[ 2 ], [ 0, 0, 1 ] );
+
+            return mvMatrix;
+
+        };
+
+        /** 
+         * Set the Prim as a glowing object. Global lights 
+         * are handled by the World.
+         */
+        prim.setLight = ( direction = [ 1, 1, 1 ], color = [ 255, 255, 255 ], prim = this ) => {
+
+            let p = prim;
+
+            p.light.direction = direction,
+
+            p.light.color = color;
+
+        };
+
+        // BEGIN SETTING PRIM VALUES
+
         prim.id = this.setId();
 
         prim.name = name;
@@ -3358,9 +3404,32 @@ class Prim {
 
         prim.orbitAngular = 0.0;
 
-        // Lighting and materials.
+        // Set default material (can be altered by .mtl file).
 
-        prim.material = {};
+        prim.material = {
+
+            colorMult: 1, 
+
+            ambient: [ 0.1, 0.1, 0.1 ],  // ambient reflectivity
+
+            diffuse: [ 0, 0, 0 ],        // diffuse reflectivity
+
+            specular: [ 1, 1, 1, 1 ],    // specular reflectivity
+
+            shininess: 250,              // surface shininess
+
+            specularFactor: 1,           // specular factor
+
+            transparency: 1.0,   // transparency, 0.0 - 1.0
+
+            illum: 1,            // Illumination model 0-10, color on and Ambient on
+
+            name: 'default'
+
+        };
+
+        // Set prim lighting.
+        // TODO:::::::::::::::::::::::::::::::::::::::
 
         prim.light = {};
 
@@ -3381,6 +3450,8 @@ class Prim {
         prim.geometry = new GeoObj( this.util, this.webgl );
 
         prim.geometry.type = type; // NOTE: has to come after createGeoObj
+
+        // Create geometry (may alter some of the above default properties).
 
         prim.geometry = this[ type ]( prim, color );
 
@@ -3432,80 +3503,6 @@ class Prim {
 
         prim.boundingBox = this.computeBoundingBox( prim.geometry.vertices.data );
 
-        // Internal functions.
-
-        /** 
-         * Set the model-view matrix.
-         */
-        prim.setMV = ( mvMatrix ) => {
-
-            let p = prim;
-
-            mat4.identity( mvMatrix );
-
-            let z = -5; // TODO: default position relative to camera!
-
-            // Translate.
-
-            vec3.add( p.position, p.position, p.acceleration );
-
-            mat4.translate( mvMatrix, mvMatrix, [ p.position[ 0 ], p.position[ 1 ], z + p.position[ 2 ] ] );
-
-            // If orbiting, set orbit.
-
-            // Rotate.
-
-            // TODO: rotate first for rotation.
-            // TODO: rotate second for orbiting.
-            // TODO: rotate (internal), translate, rotate (orbit)
-
-            vec3.add( p.rotation, p.rotation, p.angular );
-
-            mat4.rotate( mvMatrix, mvMatrix, p.rotation[ 0 ], [ 1, 0, 0 ] );
-
-            mat4.rotate( mvMatrix, mvMatrix, p.rotation[ 1 ], [ 0, 1, 0 ] );
-
-            mat4.rotate( mvMatrix, mvMatrix, p.rotation[ 2 ], [ 0, 0, 1 ] );
-
-            return mvMatrix;
-
-        };
-
-        /** 
-         * Set a material for a prim.
-         * @link http://webglfundamentals.org/webgl/lessons/webgl-less-code-more-fun.html
-         * didn't use chroma (but could)
-         * @link https://github.com/gka/chroma.js/blob/gh-pages/src/index.md
-         */
-        prim.setMaterial = ( colorMult = 1, diffuse = [ 0, 0, 0 ], specular = [ 1, 1, 1, 1 ], shininess = 250, specularFactor = 1 ) => {
-
-            let p = prim;
-
-            p.material.colorMult = colorMult;
-
-            p.diffuse = diffuse;
-
-            p.specular = specular;
-
-            p.shininess = shininess;
-
-            p.specularFactor = specularFactor;
-
-        };
-
-        /** 
-         * Set the Prim as a glowing object. Global lights 
-         * are handled by the World.
-         */
-        prim.setLight = ( direction = [ 1, 1, 1 ], color = [ 255, 255, 255 ], prim = this ) => {
-
-            let p = prim;
-
-            p.light.direction = direction;
-
-            p.light.color = color;
-
-        };
 
         // Shared with factory functions. Normally, we use matrix transforms to accomplish this.
 
@@ -3541,10 +3538,7 @@ class Prim {
 
         prim.scale = 1.0;
 
-        // Define Prim material (only one material type at a time per Prim ).
-
-        prim.setMaterial();
-
+        // TODO: use this!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         //prim.setLight();
 
         // Parent Node.
@@ -3560,10 +3554,6 @@ class Prim {
         // Push into our list of all Prims.
 
         this.objs.push( prim );
-
-        // TODO: Prim readout to console.
-
-        this.primReadout( prim ); // TODO: DEBUG!!!!!!!!!!!!!!!!!!!!!!
 
         return prim;
 
