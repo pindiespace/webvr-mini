@@ -3209,9 +3209,17 @@ class Prim {
 
         let texCoords = geo.texCoords.data;
 
-        console.log( '++++++++++++++++++++++++++++in mesh callback, all model files loaded...' );
+        if ( prim.name == 'obj people') {
 
-        //TODO: add model materials
+            window.prim = prim;
+
+        }
+
+        console.log( '++++++++++++++++++++++++++++in mesh callback for prim:' + prim.name + ', all model files loaded...' );
+
+        // TODO: add model materials
+
+        // TODO: don't compute if we were supplied with normals
 
         this.computeNormals( vertices, indices, normals );
 
@@ -3300,9 +3308,9 @@ class Prim {
 
         rotation = this.glMatrix.vec3.create(), angular = this.glMatrix.vec3.create(), 
 
-        textureImages, 
+        textureImages, // textures (may be blank)
 
-        color, 
+        color,  // color array (may be blank)
 
         applyTexToFace = false,
 
@@ -3322,6 +3330,12 @@ class Prim {
         let prim = {};
 
         // Define internal methods for the Prim.
+
+        prim.setRenderer ( renderer ) {
+
+            prim.renderer = renderer;
+
+        }
 
         /** 
          * Set the model-view matrix.
@@ -3453,21 +3467,31 @@ class Prim {
 
         // Create geometry (may alter some of the above default properties).
 
+        // Set ready flag for slow loads.
+
+        prim.ready = false;
+
         prim.geometry = this[ type ]( prim, color );
 
 ////////////////////////////////////////////////////////////////////////////////
-        let mesh = new Mesh( prim.geometry );        
+        let mesh = new Mesh( prim.geometry );
 
         // SIMPLIFY TEST
 
         //if ( prim.name === 'TestCapsule' ) {
 
             window.mesh = mesh;
-            window.prim = prim;
 
             mesh.simplify();
 
         //}
+
+               if ( prim.name == 'colored cube' ) {
+
+            window.prim2 = prim;
+
+        }
+
 
 ////////////////////////////////////////////////////////////////////////////////
         // SUBDIVIDE TEST

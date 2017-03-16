@@ -141,6 +141,10 @@ class World {
 
 // COLORED SHADER.
 
+// TODO: add shaders to Renderer
+
+// TODO: add Prims to renderer, using a specific shader renderer[shaderName].list.push( prim )
+
         this.colorObjList = [];
 
          this.colorObjList.push( this.prim.createPrim(
@@ -158,7 +162,7 @@ class World {
         ) );
 
 ///OBJ MESH
-        this.colorObjList.push( window.prim = this.prim.createPrim(
+        this.colorObjList.push( this.prim.createPrim(
             this.prim.typeList.MESH,
             'obj people',
             vec5( 1, 1, 1 ),       // dimensions (4th dimension doesn't exist for cylinder)
@@ -491,8 +495,8 @@ class World {
         this.vs3 = this.renderer.shaderDirlightTexture.init( this.dirlightTextureObjList );
 
         ///////////////
-
-        this.textureObjList.push( window.prim = this.prim.createPrim(
+/*
+        this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.MESH,
             'obj capsule',
             vec5( 1, 1, 1 ),       // dimensions (4th dimension doesn't exist for cylinder)
@@ -506,7 +510,7 @@ class World {
             true,                                   // if true, apply texture to each face,
             [ 'obj/capsule/capsule.obj', 'obj/capsule/capsule.mtl' ] // object files (.obj, .mtl)
         ) );
-
+*/
 
         ///////////////
 
@@ -558,6 +562,8 @@ class World {
         this.update();
 
         this.webgl.clear();
+
+        // Render Prims attached to each renderer object.
 
         // TODO: Don't render until we update in the correct order.
 

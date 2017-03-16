@@ -1,8 +1,6 @@
 # 3ds Max Wavefront OBJ Exporter v0.97b - (c)2007 guruware
 # File Created: 02.03.2017 23:02:23
 
-mtllib 04.mtl
-
 #
 # object Line001
 #
@@ -1913,8 +1911,6 @@ vn 0.0000 -0.9869 -0.1615
 vn -0.0000 -0.9869 -0.1615
 # 1164 vertex normals
 
-g Line001
-usemtl 01___Default
 s off
 f 1//1 2//1 3//1 
 f 4//2 5//2 6//2 7//2 

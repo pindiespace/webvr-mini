@@ -142,7 +142,7 @@ let renderer = new Renderer ( true, util, glMatrix, webgl, shaderTexture, shader
 
 // Create the world, which needs WebGL, WebVR, and Prim.
 
-let world = new World( webgl, prim, renderer, shaderTexture, shaderColor );
+let world = new World( webgl, prim, renderer );
 
 // Export our classes to app.js.
 

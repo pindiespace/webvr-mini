@@ -220,7 +220,7 @@ class GeoObj {
      * an array of tangents, in glMatrix.vec3 format.
      * an array of colors, in glMatrix.vec4 format.
      */
-    createGLBuffers() {
+    createGLBuffers () {
 
             const gl = this.webgl.getContext();
 
@@ -272,8 +272,6 @@ class GeoObj {
                 this.bindGLBuffer( o, this.UINT16 );
 
             }
-
-
 
             // Create the Sides buffer, a kind of indices buffer.
 

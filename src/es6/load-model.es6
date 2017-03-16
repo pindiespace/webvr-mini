@@ -130,6 +130,8 @@ class LoadModel extends LoadPool {
 
         console.log("LOADING MODEL COMPUTEVERTICES")
 
+        let isWhitespace = this.util.isWhitespace;
+
         let vertices = [];
 
         let indices = [];
@@ -138,7 +140,7 @@ class LoadModel extends LoadPool {
 
         let normals = [];
 
-        console.log("PRIM:" + prim)
+        console.log("--------------------------PRIM:" + prim.name)
 
         // Get the lines of the file.
 
@@ -152,9 +154,9 @@ class LoadModel extends LoadPool {
 
         lines.forEach( ( line ) => {
 
-            line = line.trim();
+            //line = line.trim();
 
-            let type = line.split( ' ' )[ 0 ];
+            let type = line.split( ' ' )[ 0 ].trim();
 
             let data = line.substr( type.length ).trim();
 
@@ -170,13 +172,15 @@ class LoadModel extends LoadPool {
 
                     break;
 
-                case 'g': // group name
+                case 'g': // group name, store hierarchy
 
                     if ( ! prim.group ) {
 
-                        prim.group = data;
+                        prim.group = [];
 
                     }
+
+                    prim.group[ data ] = lineNum;
 
                     break;
 
@@ -204,7 +208,15 @@ class LoadModel extends LoadPool {
 
                     break;
 
-                case 's': // smoothing
+                case 's': // smoothing group (related to 'g')
+
+                    if ( ! prim.smoothingGroup ) {
+
+                        prim.smoothingGroup = [];
+
+                    }
+
+                    if ( data )
 
                     break;
 
@@ -235,16 +247,22 @@ class LoadModel extends LoadPool {
                 case 'trace_obj': // ray tracing
                 case 'ctech': // curve approximation
                 case 'stech': // surface approximation
-                case 'mtllib': // materials
+                case 'mtllib': // materials library data
                 case 'usemtl':
 
-                    console.warn( 'loadModel::computeMesh(): type ' + type + ' in .obj file not supported' );
+                    console.warn( 'loadModel::computeObjMesh(): OBJ data type: ' + type + ' in .obj file not supported' );
 
                     break;
 
                 default:
 
-                    console.error( 'loadModel::computeMesh(): unknown type ' + type.charCodeAt( 0 ) + ' data:' + data + ' in .obj file at line:' + lineNum );
+                    // If it's not a pure whitespace line, report.
+
+                    if( ! isWhitespace( data ) ) {
+
+                        console.error( 'loadModel::computeObjMesh(): unknown line data: ' + line + ' in .obj file at line:' + lineNum );
+
+                    }
 
                     break;
 

@@ -24,6 +24,7 @@ class Renderer {
 
     // Specialized render manipulations go below.
 
+    // TODO: write function for adding shaders.
 
 }
 

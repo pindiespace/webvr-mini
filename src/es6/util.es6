@@ -8,30 +8,44 @@ class Util {
 
         console.log( 'in Util' );
 
+        // String polyfills.
+
+        this.setTrim();
+
         // Performance polyfill.
 
         this.setPerformance();
+
 
         this.setFinite();
 
     }
 
-
-    /* 
-     * ======= DATE, TIME, PERFORMANCE OPERATIONS =======
+    /** 
+     * Polyfill for .trim
+     * @link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/Trim
      */
+    setTrim () {
+
+        String.trim = String.trim || function ( value ) {
+
+             return this.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
+
+        } 
+
+    }
 
     /** 
      * Polyfill for isFinite()
      */
     setFinite () {
 
-        Number.isFinite = Number.isFinite || function(value) {
+        Number.isFinite = Number.isFinite || function( value ) {
 
-            return typeof value === 'number' && isFinite(value);
+            return typeof value === 'number' && isFinite( value );
 
         }
-        
+
     }
 
     /** 
@@ -88,6 +102,14 @@ class Util {
     reverseString( str ) {
 
         return str.split('').reverse().join('');
+
+    }
+
+    isWhitespace ( str ) {
+
+        if ( ! str.match ) return false;
+
+        return str.match( /^\s*$/ );
 
     }
 
