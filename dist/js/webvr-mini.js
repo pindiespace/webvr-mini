@@ -2720,7 +2720,7 @@
 
 	            var vs = data.match(/^(-?\d+(\.\d+)?)\s*(-?\d+(\.\d+)?)\s*(-?\d+(\.\d+)?)/);
 
-	            arr.push(vs[1], vs[3], vs[5]);
+	            arr.push(parseFloat(vs[1]), parseFloat(vs[3]), parseFloat(vs[5]));
 	        }
 
 	        /** 
@@ -2773,22 +2773,22 @@
 
 	                    idxs = fs.split('//');
 
-	                    idx = parseInt(idxs[0]);
+	                    idx = parseInt(idxs[0]) - 1; // NOTE: OBJ first index = 1, our arrays index = 0
 
 	                    texCoord = 0.0; // NO TEXTURE COORDINATES PROVIDED
 
-	                    normal = parseInt(idxs[1]);
+	                    normal = parseInt(idxs[1]) - 1;
 
 	                    ///console.log( '//:' + idx, texCoord, normal );
 	                } else if (fs.indexOf('/') !== -1) {
 
 	                    idxs = fs.split('/');
 
-	                    idx = parseInt(idxs[0]);
+	                    idx = parseInt(idxs[0]) - 1;
 
-	                    texCoord = parseFloat(idx[1]);
+	                    texCoord = parseFloat(idx[1]) - 1;
 
-	                    normal = parseFloat(idx[2]);
+	                    normal = parseFloat(idx[2]) - 1;
 
 	                    ////console.log( '/:', idx, texCoord, normal );
 	                } else {
@@ -2967,7 +2967,7 @@
 
 	            // Colors and tangents are not part of the Wavefront .obj format
 
-	            ///console.log("v:" + vertices.length + " i:" + indices.length + " t:" + texCoords.length + " n:" + normals.length)
+	            console.log("v:" + vertices.length + " i:" + indices.length + " t:" + texCoords.length + " n:" + normals.length);
 
 	            return {
 
@@ -4541,7 +4541,7 @@
 	     * prim.acceleration  = (vec3) [ x, y, z ]
 	     * prim.rotation      = (vec3) [ x, y, z ]
 	     * prim.angular       = (vec3) [ x, y, z ]
-	     * prim.color         = (vec4) [ red, green, blue, alpha... ]
+	     * prim.colors        = (vec4) [ red, green, blue, alpha... ]
 	     * prim.texure1Arr    = (vec2) [ u, v, t... ]
 	     * 
 	     * ---------------------------------------------------------------
@@ -4945,25 +4945,6 @@
 	         * NORMAL, INDEX, VERTEX, TRIANGLE, QUAD CALCULATIONS
 	         * ---------------------------------------
 	         */
-
-	        /** 
-	         * Create default colors for Prim color array.
-	         * @param {glMatrix.vec3[]} normals the flatten normals array.
-	         * @param {glMatrix.vec4[]} color the flattened color array.
-	         * @returns {glMatrix.vec4[]} the color array, with default colors.
-	         */
-
-	    }, {
-	        key: 'computeColors',
-	        value: function computeColors(normals, colors) {
-
-	            for (var i = 0; i < normals.length; i += 3) {
-
-	                colors.push(normals[i], normals[i + 1], normals[i + 2], 1.0);
-	            }
-
-	            return colors;
-	        }
 
 	        /** 
 	         * Bounding box for a set of 3d points. This object is NO the same 
@@ -5715,6 +5696,9 @@
 	            this.computeNormals(vertices, indices, normals);
 
 	            // Texture coordinates.
+
+	            // Colors.
+
 
 	            // Tangents (not used).
 
@@ -7722,6 +7706,32 @@
 
 	            var geo = prim.geometry;
 
+	            if (prim.name == 'teapot') {
+
+	                window.prim = prim;
+	            }
+
+	            console.log('++++++++++++++++++++++++++++in mesh callback for prim:' + prim.name + ', all model files loaded...');
+
+	            // TODO: add model materials
+
+	            //console.log('Prim::meshCallback(): normals length:' + normals.length + ' vertices.length:' + vertices.length)
+
+	            var mesh = new _mesh2.default(geo);
+
+	            mesh.subdivide();
+
+	            // NOTE:::::: simplify() works here ONLY because we don't have any redundant vertices!
+
+	            //mesh.simplify();
+
+	            //mesh.subdivide();
+
+	            // NOTE::::::
+	            // NOTE:::::: Make these local references AFTER the subdivision, or you don't get 
+	            // NOTE:::::: the right size for normals and colors
+
+
 	            var vertices = geo.vertices.data;
 
 	            var indices = geo.indices.data;
@@ -7734,35 +7744,20 @@
 
 	            var colors = geo.colors.data;
 
-	            if (prim.name == 'teapot') {
-
-	                window.prim = prim;
-	            }
-
-	            console.log('++++++++++++++++++++++++++++in mesh callback for prim:' + prim.name + ', all model files loaded...');
-
-	            // TODO: add model materials
-
-
 	            // TODO: don't compute if we were supplied with normals
 
-	            if (normals.length < vertices.length) {
+	            console.log('Prim::meshCallback(): normals length:' + normals.length + ' vertices.length:' + vertices.length);
 
-	                normals = new Float32Array(this.computeNormals(vertices, indices, []));
+	            if (geo.normals.data.length < geo.vertices.data.length) {
+
+	                console.log('computing mesh ' + prim.name + ' normals...');
+
+	                geo.normals.data = new Float32Array(this.computeNormals(vertices, indices, []));
 	            }
-
-	            // If color array is too short, make it.
-
-	            if (colors.length < 4 * vertices.length / 3) {
-
-	                colors = new Float32Array(this.computeColors(normals, [])); // takes standard JS array
-	            }
-
-	            console.log("COLORS LENGTH:" + colors.length);
 
 	            // Tangents.
 
-	            tangents = new Float32Array(this.computeTangents(vertices, indices, normals, texCoords, tangents));
+	            geo.tangents.data = new Float32Array(this.computeTangents(vertices, indices, geo.normals.data, texCoords, tangents));
 
 	            // Color array is pre-created, or gets a default when WebGL buffers are created.
 
@@ -7770,13 +7765,7 @@
 
 	            // Since this callback may be delayed, re-create GLBuffers after assigning data
 
-	            geo.addBufferData(vertices, indices, normals, texCoords, tangents, colors);
-
-	            var mesh = new _mesh2.default(geo);
-
-	            mesh.simplify();
-
-	            //mesh.subdivide();
+	            geo.addBufferData(vertices, indices, geo.normals.data, texCoords, geo.tangents.data);
 
 	            // Create WebGL buffer from our coordinate data.
 
@@ -7847,9 +7836,7 @@
 	            var rotation = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : this.glMatrix.vec3.create();
 	            var angular = arguments.length > 7 && arguments[7] !== undefined ? arguments[7] : this.glMatrix.vec3.create();
 	            var textureImages = arguments[8];
-	            var // textures (may be blank)
-
-	            color = arguments[9];
+	            var colors = arguments.length > 9 && arguments[9] !== undefined ? arguments[9] : null;
 
 	            var _this = this;
 
@@ -7936,9 +7923,15 @@
 
 	            prim.type = type;
 
+	            // Size in world coordinates.
+
 	            prim.dimensions = dimensions || this.vec7(1, 1, 1, 0, 0, 0, 0);
 
+	            // Amount of division of the shape along each axis.
+
 	            prim.divisions = divisions || this.vec6(1, 1, 1, 0, 0, 0);
+
+	            // Position in world coordinates.
 
 	            prim.position = position || vec3.create();
 
@@ -8011,7 +8004,7 @@
 
 	            prim.ready = false;
 
-	            prim.geometry = this[type](prim, color);
+	            prim.geometry = this[type](prim);
 
 	            ////////////////////////////////////////////////////////////////////////////////
 	            var mesh = new _mesh2.default(prim.geometry);
@@ -8022,7 +8015,7 @@
 
 	            window.mesh = mesh;
 
-	            mesh.simplify();
+	            //mesh.simplify();
 
 	            //}
 
@@ -8038,10 +8031,6 @@
 	            //if ( prim.name === 'cubesphere' ) {
 	            //if ( prim.name === 'texsphere' ) {
 
-	            //let mesh = new Mesh( prim.geometry );
-
-	            //window.mesh = mesh;
-
 	            mesh.subdivide(true);
 	            ///mesh.subdivide( true );
 	            //mesh.subdivide( true );
@@ -8055,9 +8044,10 @@
 	            prim.geometry.normals.data = new Float32Array(this.computeNormals(prim.geometry.vertices.data, prim.geometry.indices.data, prim.geometry.normals.data));
 	            //}
 
+
 	            ////////////////////////////////////////////////////////////////////////////////
 
-	            // Create WebGL data buffers from geometry.
+	            // Create WebGL data buffers from geometry. Default color array added if not present.
 
 	            prim.geometry = prim.geometry.createGLBuffers();
 
@@ -8068,14 +8058,14 @@
 	            // Shared with factory functions. Normally, we use matrix transforms to accomplish this.
 
 	            prim.scaleVertices = function (scale) {
+
 	                _this.scale(scale, prim.geometry.vertices);
 	            };
 
 	            prim.moveVertices = function (pos) {
+
 	                _this.computeMove(scale, prim.geometry.vertices);
 	            };
-
-	            //prim.morphVertices = ( newGeometry, easing ) => { this.morph( newGeometry, easing, prim.geometry ); };
 
 	            // Waypoints for scripted motion or timelines.
 
@@ -17960,7 +17950,7 @@
 
 	            // Convert flattened arrays to Vertex, Edge objects.
 
-	            this.geometryToVertex(this.geo.vertices.data, this.geo.indices.data, this.geo.texCoords.data);
+	            this.geometryToVertex(this.geo.vertices.data, this.geo.indices.data, this.geo.texCoords.data, this.geo.colors.data);
 
 	            this.isValid();
 
@@ -18255,7 +18245,7 @@
 
 	            console.log('Simplifying mesh... type:' + this.geo.type);
 
-	            this.geometryToVertex(this.geo.vertices.data, this.geo.indices.data, this.geo.texCoords.data);
+	            this.geometryToVertex(this.geo.vertices.data, this.geo.indices.data, this.geo.texCoords.data, this.geo.colors.data);
 
 	            var vertexArr = this.vertexArr;
 
@@ -18265,44 +18255,52 @@
 
 	            var newVertexArr = [];
 
-	            var newIndexArr = indexArr.slice();
+	            var newIndexArr = [];
 
 	            for (var i = 0; i < vertexArr.length; i++) {
 
-	                for (var j = 0; j < vertexArr.length; j++) {
+	                var vtx1 = vertexArr[i];
 
-	                    var vtx1 = vertexArr[i];
+	                if (vtx1.idx !== i) console.error('idxes do not match for ' + vtx1.idx);
+
+	                var max = i;
+
+	                var min = max;
+
+	                for (var j = 0; j < vertexArr.length; j++) {
 
 	                    var vtx2 = vertexArr[j];
 
-	                    if (vtx1 !== vtx2) {
+	                    if (i !== j) {
+
+	                        // look for a position match that is the lowest idx
 
 	                        if (vtx1.distance(vtx2) < this.epsilon) {
 
-	                            var newIdx = void 0;
-
-	                            var max = Math.max(vtx1.idx, vtx2.idx);
-
-	                            var min = Math.min(vtx1.idx, vtx2.idx);
-
-	                            var pos = newIndexArr.indexOf(max);
-
-	                            while (pos !== -1) {
-
-	                                newIndexArr[pos] = min;
-
-	                                pos = newIndexArr.indexOf(max);
-	                            }
+	                            min = Math.min(j, min);
 	                        }
 	                    }
-	                }
-	            }
+	                } // end of inner jth loop
 
-	            // burn out a new VertexArr.
+	                // store the min
 
-	            for (var _i2 = 0; _i2 < newIndexArr.length; _i2++) {
+	                vtx1.lowIdx = min;
 
-	                var vtx = vertexArr[newIndexArr[_i2]];
+	                ///if ( vtx1.idx !== vtx1.lowIdx ) {
+
+	                ///    console.log( 'for identical vtx1 ' + vtx1.idx + ' and vtx2 ' + vtx1.lowIdx + ', texCoords.u:' + vtx1.texCoords.u + ',' + vertexArr[ vtx1.lowIdx ].texCoords.u)
+
+	                ///}
+
+	            } // end of outer ith loop
+
+	            // Burn out a new indexArr
+
+	            for (var _i2 = 0; _i2 < indexArr.length; _i2++) {
+
+	                var vtx = vertexArr[indexArr[_i2]];
+
+	                newIndexArr.push(vtx.lowIdx);
 
 	                if (newVertexArr.indexOf(vtx) === -1) {
 
@@ -18326,7 +18324,7 @@
 
 	            // TODO: MAKE SIMPLIFY WORK PROPERLY!!!!!!!!!!!!!!!!
 
-	            /////////////this.vertexToGeometry();
+	            this.vertexToGeometry();
 	        }
 
 	        /** 
@@ -18345,6 +18343,8 @@
 	    }, {
 	        key: 'geometryToVertex',
 	        value: function geometryToVertex(vertices, indices, texCoords) {
+	            var colors = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
+
 
 	            console.log('Mesh::geometryToVertex() for:' + this.type);
 
@@ -18359,7 +18359,7 @@
 
 	            // Convert flattened coordinates to Vertex objects. IndexArr is unchanged, and still points to the right places.
 
-	            this.vertexArr = this.computeVertices(vertices, texCoords);
+	            this.vertexArr = this.computeVertices(vertices, texCoords, colors);
 
 	            return this;
 	        }
@@ -18388,17 +18388,25 @@
 
 	            var indices = this.indexArr.slice();
 
-	            // flattened vertices and texCoords array need to be generated from Vertex array.
+	            // flattened vertices and texCoords array need to be generated from the Vertex array.
 
-	            geo.vertices.data = new Array(vertexArr.length * 3);
+	            geo.vertices.data = new Float32Array(vertexArr.length * 3);
 
-	            geo.indices.data = indices.slice();
-
-	            geo.texCoords.data = new Array(vertexArr.length * 2);
+	            geo.texCoords.data = new Float32Array(vertexArr.length * 2);
 
 	            var vertices = geo.vertices.data;
 
 	            var texCoords = geo.texCoords.data;
+
+	            // Indices vary based on support for 32-bit index values.
+
+	            if (geo.MAX_DRAWELEMENTS > 65534) {
+
+	                geo.indices.data = new Uint32Array(indices.slice());
+	            } else {
+
+	                geo.indices.data = new Uint16Array(indices.slice());
+	            }
 
 	            // Flag any meshes that are > 64k (some hardware can't draw them with indexed arrays)
 
@@ -18727,7 +18735,7 @@
 
 	                console.log('GeoObj::createGLBuffers(): no vertices present, creating default');
 
-	                o.data = new Float32Array([0, 0, 0]);
+	                o.data = new Float32Array();
 	            }
 
 	            this.bindGLBuffer(o, this.FLOAT32);
@@ -18818,7 +18826,7 @@
 
 	            o = this.colors;
 
-	            if (!o.data.length) {
+	            if (!o.data.length || o.data.length < 4 * this.vertices.length / 3) {
 
 	                console.warn('GeoObj::createGLBuffers(): no colors present, creating default color');
 
@@ -18835,19 +18843,35 @@
 	        }
 
 	        /** 
-	        * Create default colors for Prim color array.
-	        */
+	         * Create default colors for Prim color array.
+	         * @param {glMatrix.vec3} normals the normals array.
+	         * @param {glmatrix.vec4} colors the colors array.
+	         */
 
 	    }, {
 	        key: 'computeColors',
 	        value: function computeColors(normals, colors) {
 
-	            for (var i = 0; i < normals.length; i += 3) {
+	            var c = [];
 
-	                colors.push(normals[i], normals[i + 1], normals[i + 2], 1.0);
+	            // Catch the case where we want a single color.
+
+	            if (colors.length === 4) {
+
+	                for (var i = 0; i < normals.length; i += 3) {
+
+	                    c.push(colors[0], colors[1], colors[2], colors[3]);
+	                }
 	            }
 
-	            return colors;
+	            // Otherwise, create colors as a normals map.
+
+	            for (var _i = 0; _i < normals.length; _i += 3) {
+
+	                c.push(normals[_i], normals[_i + 1], normals[_i + 2], 1.0);
+	            }
+
+	            return new Float32Array(c);
 	        }
 	    }]);
 

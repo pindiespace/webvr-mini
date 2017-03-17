@@ -32,7 +32,7 @@ class Prim {
      * prim.acceleration  = (vec3) [ x, y, z ]
      * prim.rotation      = (vec3) [ x, y, z ]
      * prim.angular       = (vec3) [ x, y, z ]
-     * prim.color         = (vec4) [ red, green, blue, alpha... ]
+     * prim.colors        = (vec4) [ red, green, blue, alpha... ]
      * prim.texure1Arr    = (vec2) [ u, v, t... ]
      * 
      * ---------------------------------------------------------------
@@ -410,23 +410,6 @@ class Prim {
      * ---------------------------------------
      */
 
-    /** 
-     * Create default colors for Prim color array.
-     * @param {glMatrix.vec3[]} normals the flatten normals array.
-     * @param {glMatrix.vec4[]} color the flattened color array.
-     * @returns {glMatrix.vec4[]} the color array, with default colors.
-     */
-    computeColors( normals, colors ) {
-
-        for ( let i = 0; i < normals.length; i += 3 ) {
-
-            colors.push( normals[ i ], normals[ i + 1 ], normals[ i + 2 ], 1.0 );
-
-        }
-
-        return colors;
-
-    }
 
     /** 
      * Bounding box for a set of 3d points. This object is NO the same 
@@ -1170,6 +1153,10 @@ class Prim {
         this.computeNormals( vertices, indices, normals );
 
         // Texture coordinates.
+
+        // Colors.
+
+
 
         // Tangents (not used).
 
@@ -3201,6 +3188,33 @@ class Prim {
 
         let geo = prim.geometry;
 
+        if ( prim.name == 'teapot') {
+
+            window.prim = prim;
+
+        }
+
+        console.log( '++++++++++++++++++++++++++++in mesh callback for prim:' + prim.name + ', all model files loaded...' );
+
+        // TODO: add model materials
+
+        //console.log('Prim::meshCallback(): normals length:' + normals.length + ' vertices.length:' + vertices.length)
+
+        let mesh = new Mesh( geo );
+
+        mesh.subdivide();
+
+        // NOTE:::::: simplify() works here ONLY because we don't have any redundant vertices!
+
+        //mesh.simplify();
+
+        //mesh.subdivide();
+
+        // NOTE::::::
+        // NOTE:::::: Make these local references AFTER the subdivision, or you don't get 
+        // NOTE:::::: the right size for normals and colors
+
+
         let vertices = geo.vertices.data;
 
         let indices = geo.indices.data;
@@ -3213,38 +3227,22 @@ class Prim {
 
         let colors = geo.colors.data;
 
-        if ( prim.name == 'teapot') {
-
-            window.prim = prim;
-
-        }
-
-        console.log( '++++++++++++++++++++++++++++in mesh callback for prim:' + prim.name + ', all model files loaded...' );
-
-        // TODO: add model materials
-
 
         // TODO: don't compute if we were supplied with normals
 
-        if ( normals.length < vertices.length ) {
+        console.log('Prim::meshCallback(): normals length:' + normals.length + ' vertices.length:' + vertices.length)
 
-            normals = new Float32Array( this.computeNormals( vertices, indices, [] ) );
+        if ( geo.normals.data.length < geo.vertices.data.length ) {
 
-        }
+            console.log( 'computing mesh ' + prim.name + ' normals...' );
 
-        // If color array is too short, make it.
-
-        if ( colors.length < 4 * vertices.length / 3 ) {
-
-            colors = new Float32Array( this.computeColors( normals, [] ) ); // takes standard JS array
+            geo.normals.data = new Float32Array( this.computeNormals( vertices, indices, [] ) );
 
         }
-
-        console.log("COLORS LENGTH:" + colors.length)
 
         // Tangents.
 
-        tangents = new Float32Array( this.computeTangents( vertices, indices, normals, texCoords, tangents ) );
+        geo.tangents.data = new Float32Array( this.computeTangents( vertices, indices, geo.normals.data, texCoords, tangents ) );
 
         // Color array is pre-created, or gets a default when WebGL buffers are created.
 
@@ -3252,13 +3250,7 @@ class Prim {
 
         // Since this callback may be delayed, re-create GLBuffers after assigning data
 
-        geo.addBufferData( vertices, indices, normals, texCoords, tangents, colors );
-
-        let mesh = new Mesh( geo );        
-
-        mesh.simplify();
-
-        //mesh.subdivide();
+        geo.addBufferData( vertices, indices, geo.normals.data, texCoords, geo.tangents.data );
 
         // Create WebGL buffer from our coordinate data.
 
@@ -3329,7 +3321,7 @@ class Prim {
 
         textureImages, // textures (may be blank)
 
-        color,  // color array (may be blank)
+        colors = null,  // color array (may be blank)
 
         applyTexToFace = false,
 
@@ -3415,9 +3407,15 @@ class Prim {
 
         prim.type = type;
 
+        // Size in world coordinates.
+
         prim.dimensions = dimensions || this.vec7( 1, 1, 1, 0, 0, 0, 0 );
 
+        // Amount of division of the shape along each axis.
+
         prim.divisions = divisions || this.vec6( 1, 1, 1, 0, 0, 0 );
+
+        // Position in world coordinates.
 
         prim.position = position || vec3.create();
 
@@ -3490,7 +3488,7 @@ class Prim {
 
         prim.ready = false;
 
-        prim.geometry = this[ type ]( prim, color );
+        prim.geometry = this[ type ]( prim );
 
 ////////////////////////////////////////////////////////////////////////////////
         let mesh = new Mesh( prim.geometry );
@@ -3501,7 +3499,7 @@ class Prim {
 
             window.mesh = mesh;
 
-            mesh.simplify();
+            //mesh.simplify();
 
         //}
 
@@ -3519,10 +3517,6 @@ class Prim {
         //if ( prim.name === 'cubesphere' ) {
         //if ( prim.name === 'texsphere' ) {
 
-            //let mesh = new Mesh( prim.geometry );
-
-            //window.mesh = mesh;
-
             mesh.subdivide( true );
             ///mesh.subdivide( true );
             //mesh.subdivide( true );
@@ -3536,9 +3530,11 @@ class Prim {
             prim.geometry.normals.data = new Float32Array( this.computeNormals( prim.geometry.vertices.data, prim.geometry.indices.data, prim.geometry.normals.data ) );
        //}
 
+
+
 ////////////////////////////////////////////////////////////////////////////////
 
-        // Create WebGL data buffers from geometry.
+        // Create WebGL data buffers from geometry. Default color array added if not present.
 
         prim.geometry = prim.geometry.createGLBuffers();
 
@@ -3549,11 +3545,17 @@ class Prim {
 
         // Shared with factory functions. Normally, we use matrix transforms to accomplish this.
 
-        prim.scaleVertices = ( scale ) => { this.scale ( scale, prim.geometry.vertices ); };
+        prim.scaleVertices = ( scale ) => { 
 
-        prim.moveVertices = ( pos ) => { this.computeMove( scale, prim.geometry.vertices ); };
+            this.scale ( scale, prim.geometry.vertices );
 
-        //prim.morphVertices = ( newGeometry, easing ) => { this.morph( newGeometry, easing, prim.geometry ); };
+        };
+
+        prim.moveVertices = ( pos ) => { 
+
+            this.computeMove( scale, prim.geometry.vertices );
+
+        };
 
         // Waypoints for scripted motion or timelines.
 

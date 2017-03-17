@@ -27,7 +27,7 @@ class LoadModel extends LoadPool {
 
         let vs = data.match( /^(-?\d+(\.\d+)?)\s*(-?\d+(\.\d+)?)\s*(-?\d+(\.\d+)?)/ );
 
-        arr.push( vs[ 1 ], vs[ 3 ], vs[ 5 ] );
+        arr.push( parseFloat( vs[ 1 ] ), parseFloat( vs[ 3 ] ), parseFloat( vs[ 5 ] ) );
 
     }
 
@@ -70,11 +70,11 @@ class LoadModel extends LoadPool {
 
                 idxs = fs.split( '//' );
 
-                idx = parseInt( idxs[ 0 ] );
+                idx = parseInt( idxs[ 0 ] ) - 1; // NOTE: OBJ first index = 1, our arrays index = 0
 
                 texCoord = 0.0; // NO TEXTURE COORDINATES PROVIDED
 
-                normal = parseInt( idxs[ 1 ] );
+                normal = parseInt( idxs[ 1 ] ) - 1;
 
                 ///console.log( '//:' + idx, texCoord, normal );
 
@@ -82,11 +82,11 @@ class LoadModel extends LoadPool {
 
                 idxs = fs.split( '/')
 
-                idx = parseInt( idxs[ 0 ] );
+                idx = parseInt( idxs[ 0 ] ) - 1;
 
-                texCoord = parseFloat( idx[ 1 ] );
+                texCoord = parseFloat( idx[ 1 ] ) - 1;
 
-                normal = parseFloat( idx[ 2 ] );
+                normal = parseFloat( idx[ 2 ] ) - 1;
 
                 ////console.log( '/:', idx, texCoord, normal );
 
@@ -264,7 +264,7 @@ class LoadModel extends LoadPool {
         
         // Colors and tangents are not part of the Wavefront .obj format
 
-        ///console.log("v:" + vertices.length + " i:" + indices.length + " t:" + texCoords.length + " n:" + normals.length)
+        console.log("v:" + vertices.length + " i:" + indices.length + " t:" + texCoords.length + " n:" + normals.length)
 
         return {
 

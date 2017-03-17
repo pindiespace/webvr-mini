@@ -938,7 +938,7 @@ class Mesh {
 
         // Convert flattened arrays to Vertex, Edge objects.
 
-        this.geometryToVertex( this.geo.vertices.data, this.geo.indices.data, this.geo.texCoords.data );
+        this.geometryToVertex( this.geo.vertices.data, this.geo.indices.data, this.geo.texCoords.data, this.geo.colors.data );
 
         this.isValid();
 
@@ -1251,7 +1251,7 @@ class Mesh {
 
         console.log('Simplifying mesh... type:' + this.geo.type )
 
-        this.geometryToVertex( this.geo.vertices.data, this.geo.indices.data, this.geo.texCoords.data );
+        this.geometryToVertex( this.geo.vertices.data, this.geo.indices.data, this.geo.texCoords.data, this.geo.colors.data );
 
         let vertexArr = this.vertexArr;
 
@@ -1261,49 +1261,56 @@ class Mesh {
 
         let newVertexArr = [];
 
-        let newIndexArr = indexArr.slice();
+        let newIndexArr = [];
 
         for ( let i = 0; i < vertexArr.length; i++ ) {
 
-            for ( let j = 0; j < vertexArr.length; j++ ) {
+            let vtx1 = vertexArr[ i ];
 
-                let vtx1 = vertexArr[ i ];
+            if ( vtx1.idx !== i ) console.error( 'idxes do not match for ' + vtx1.idx );
+
+            let max = i;
+
+            let min = max;
+
+            for ( let j = 0; j < vertexArr.length; j++ ) {
 
                 let vtx2 = vertexArr[ j ];
 
-                if ( vtx1 !== vtx2 ) {
+                if ( i !== j ) {
+
+                    // look for a position match that is the lowest idx
 
                     if ( vtx1.distance( vtx2 ) < this.epsilon ) {
 
-                        let newIdx;
-
-                        let max = Math.max( vtx1.idx, vtx2.idx );
-
-                        let min = Math.min( vtx1.idx, vtx2.idx );
-
-                        let pos = newIndexArr.indexOf( max );
-
-                        while ( pos !== -1 ) {
-
-                            newIndexArr[ pos ] = min;
-
-                            pos = newIndexArr.indexOf( max );
-
-                        }
+                        min = Math.min( j, min );
 
                     }
 
                 }
 
-            }
+            } // end of inner jth loop
 
-        }
+            // store the min
 
-        // burn out a new VertexArr.
+            vtx1.lowIdx = min;
 
-        for ( let i = 0; i < newIndexArr.length; i++ ) {
+            ///if ( vtx1.idx !== vtx1.lowIdx ) {
+            
+            ///    console.log( 'for identical vtx1 ' + vtx1.idx + ' and vtx2 ' + vtx1.lowIdx + ', texCoords.u:' + vtx1.texCoords.u + ',' + vertexArr[ vtx1.lowIdx ].texCoords.u)
 
-            let vtx = vertexArr[ newIndexArr[ i ] ];
+            ///}
+
+
+        } // end of outer ith loop
+
+        // Burn out a new indexArr
+
+        for ( let i = 0; i < indexArr.length; i++ ) {
+
+            let vtx = vertexArr[ indexArr[ i ] ];
+
+            newIndexArr.push( vtx.lowIdx );
 
             if ( newVertexArr.indexOf( vtx ) === -1 ) {
 
@@ -1329,7 +1336,7 @@ class Mesh {
 
         // TODO: MAKE SIMPLIFY WORK PROPERLY!!!!!!!!!!!!!!!!
 
-        /////////////this.vertexToGeometry();
+        this.vertexToGeometry();
 
     }
 
@@ -1346,7 +1353,7 @@ class Mesh {
      * @param {Float32Array} texCoords texture coordinates for each position.
      * @returns {Mesh} this Mesh object (for chaining).
      */
-    geometryToVertex ( vertices, indices, texCoords ) {
+    geometryToVertex ( vertices, indices, texCoords, colors = [] ) {
 
         console.log( 'Mesh::geometryToVertex() for:' + this.type );
 
@@ -1361,7 +1368,7 @@ class Mesh {
 
         // Convert flattened coordinates to Vertex objects. IndexArr is unchanged, and still points to the right places.
 
-        this.vertexArr = this.computeVertices( vertices, texCoords );
+        this.vertexArr = this.computeVertices( vertices, texCoords, colors );
 
         return this;
 
@@ -1388,17 +1395,28 @@ class Mesh {
 
         let indices = this.indexArr.slice();
 
-        // flattened vertices and texCoords array need to be generated from Vertex array.
+        // flattened vertices and texCoords array need to be generated from the Vertex array.
 
-        geo.vertices.data = new Array( vertexArr.length * 3 );
+        geo.vertices.data = new Float32Array( vertexArr.length * 3 );
 
-        geo.indices.data = indices.slice();
-
-        geo.texCoords.data = new Array( vertexArr.length * 2 );
+        geo.texCoords.data = new Float32Array( vertexArr.length * 2 );
 
         let vertices = geo.vertices.data;
 
         let texCoords = geo.texCoords.data;
+
+        // Indices vary based on support for 32-bit index values.
+
+        if ( geo.MAX_DRAWELEMENTS > 65534 ) {
+
+            geo.indices.data = new Uint32Array( indices.slice() );
+
+
+        } else {
+
+            geo.indices.data = new Uint16Array( indices.slice() );
+
+        }
 
         // Flag any meshes that are > 64k (some hardware can't draw them with indexed arrays)
 

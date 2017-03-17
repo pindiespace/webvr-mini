@@ -233,7 +233,7 @@ class GeoObj {
 
                 console.log( 'GeoObj::createGLBuffers(): no vertices present, creating default' );
 
-                o.data = new Float32Array( [ 0, 0, 0 ] );
+                o.data = new Float32Array();
 
             }
 
@@ -334,7 +334,7 @@ class GeoObj {
 
             o = this.colors;
 
-            if ( ! o.data.length ) {
+            if ( ! o.data.length || ( o.data.length < ( 4 * this.vertices.length / 3 ) ) ) {
 
                 console.warn( 'GeoObj::createGLBuffers(): no colors present, creating default color' );
 
@@ -352,18 +352,36 @@ class GeoObj {
 
     }
 
-        /** 
+    /** 
      * Create default colors for Prim color array.
+     * @param {glMatrix.vec3} normals the normals array.
+     * @param {glmatrix.vec4} colors the colors array.
      */
     computeColors( normals, colors ) {
 
-        for ( let i = 0; i < normals.length; i += 3 ) {
+        let c = [];
 
-            colors.push( normals[ i ], normals[ i + 1 ], normals[ i + 2 ], 1.0 );
+        // Catch the case where we want a single color.
+
+        if ( colors.length === 4 ) {
+
+            for ( let i = 0; i < normals.length; i += 3 ) {
+
+                c.push( colors[ 0 ], colors[ 1 ], colors[ 2 ], colors[ 3 ] );
+
+            }
 
         }
 
-        return colors;
+        // Otherwise, create colors as a normals map.
+
+        for ( let i = 0; i < normals.length; i += 3 ) {
+
+            c.push( normals[ i ], normals[ i + 1 ], normals[ i + 2 ], 1.0 );
+
+        }
+
+        return new Float32Array( c );
 
     }
 
