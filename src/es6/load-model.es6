@@ -38,7 +38,7 @@ class LoadModel extends LoadPool {
      */
     computeObj2d ( data, arr, lineNum ) {
 
-        let uvs = data.match(/^(-?\d+(\.\d+)?)\s+(-?\d+(\.\d+)?)$/);
+        let uvs = data.match( /^(-?\d+(\.\d+)?)\s+(-?\d+(\.\d+)?)$/ );
         
         arr.push( parseFloat( uvs[ 1 ] ), parseFloat( uvs[ 3 ] ) );
 
@@ -58,17 +58,37 @@ class LoadModel extends LoadPool {
 
         let parts = data.match( /[^\s]+/g );
 
-        let idxs;
+        let idxs, idx, texCoord, normal;
 
         let face = parts.map( ( fs ) => {
 
-            if ( fs.indexOf( '//') !== -1 ) {
+            ///console.log("fs:" + fs)
 
-                idxs = fs.split( '//' )
+            // Split indices with and without normals and texture coordinates.
+
+            if ( fs.indexOf( '//' ) !== -1 ) {
+
+                idxs = fs.split( '//' );
+
+                idx = parseInt( idxs[ 0 ] );
+
+                texCoord = 0.0; // NO TEXTURE COORDINATES PROVIDED
+
+                normal = parseInt( idxs[ 1 ] );
+
+                ///console.log( '//:' + idx, texCoord, normal );
 
             } else if ( fs.indexOf ( '/' ) !== -1 ) {
 
                 idxs = fs.split( '/')
+
+                idx = parseInt( idxs[ 0 ] );
+
+                texCoord = parseFloat( idx[ 1 ] );
+
+                normal = parseFloat( idx[ 2 ] );
+
+                ////console.log( '/:', idx, texCoord, normal );
 
             } else {
 
@@ -77,40 +97,6 @@ class LoadModel extends LoadPool {
                 return false;
 
             }
-
-            // TODO: process // differently from /
-
-            // TODO: remap index listings to straight-on listing
-
-            //let idxs = fs.split( '/' ); // could be 10/20/20 10/10/10 20/20/10
-
-            let idx = parseInt( idxs[ 0 ],  10 );
-
-            let normal, texCoord;
-
-            if ( indices.length > 1) {
-
-                if ( idxs[ 1 ].length > 0 ) {
-
-                    texCoord = parseInt( idxs[ 1 ], 10 );
-
-                }
-            }
-                    
-            if ( indices.length > 2 ) {
-
-                normal = parseInt( idxs[ 2 ], 10 );
-
-            }
-
-            // TODO: can we use with most obj files?
-            // TODO: what if texture coords don't match order of vertices (convert???)
-            // https://github.com/AndrewRayCode/three-collada-loader
-            // TODO: write adapter for THREE Collada loader.
-            // TODO: write adapter for glTF loader
-            // https://github.com/KhronosGroup/glTF
-            // https://github.com/mrdoob/three.js/blob/dev/examples/js/loaders/GLTFLoader.js
-            // https://github.com/AnalyticalGraphicsInc/obj2gltf
 
             indices.push( idx );
 
@@ -272,8 +258,13 @@ class LoadModel extends LoadPool {
 
         } );
 
+        // Indices in .obj format wind a bit differently, so change.
+
+        // TODO: Make indices work
+        
         // Colors and tangents are not part of the Wavefront .obj format
 
+        ///console.log("v:" + vertices.length + " i:" + indices.length + " t:" + texCoords.length + " n:" + normals.length)
 
         return {
 
@@ -410,6 +401,7 @@ class LoadModel extends LoadPool {
                     break;
 
                 case 'Ns': // specular exponent
+
                     if ( data.length < 1 ) {
 
                         console.error( 'loadModel::computeObjMaterials(): error in ambient material array at line:' + lineNum );
@@ -530,7 +522,6 @@ class LoadModel extends LoadPool {
             case 'obj':
                 console.log("OBJ file loaded, now parse it....")
                 let d = this.computeObjMesh( data, loadObj.prim );
-                loadObj.prim.geometry.createGLBuffers();
                 loadObj.prim.geometry.addBufferData( d.vertices, d.indices, d.normals, d.texCoords, [] );
                 break;
 

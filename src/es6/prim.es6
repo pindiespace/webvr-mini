@@ -3209,7 +3209,11 @@ class Prim {
 
         let texCoords = geo.texCoords.data;
 
-        if ( prim.name == 'obj people') {
+        let tangents = geo.tangents.data;
+
+        let colors = geo.colors.data;
+
+        if ( prim.name == 'teapot') {
 
             window.prim = prim;
 
@@ -3219,15 +3223,28 @@ class Prim {
 
         // TODO: add model materials
 
+
         // TODO: don't compute if we were supplied with normals
 
-        this.computeNormals( vertices, indices, normals );
+        if ( normals.length < vertices.length ) {
+
+            normals = new Float32Array( this.computeNormals( vertices, indices, [] ) );
+
+        }
+
+        // If color array is too short, make it.
+
+        if ( colors.length < 4 * vertices.length / 3 ) {
+
+            colors = new Float32Array( this.computeColors( normals, [] ) ); // takes standard JS array
+
+        }
+
+        console.log("COLORS LENGTH:" + colors.length)
 
         // Tangents.
 
-        let tangents = [];
-
-        this.computeTangents( vertices, indices, normals, texCoords, tangents );
+        tangents = new Float32Array( this.computeTangents( vertices, indices, normals, texCoords, tangents ) );
 
         // Color array is pre-created, or gets a default when WebGL buffers are created.
 
@@ -3235,13 +3252,15 @@ class Prim {
 
         // Since this callback may be delayed, re-create GLBuffers after assigning data
 
-        geo.addBufferData( vertices, indices, normals, texCoords, tangents );
+        geo.addBufferData( vertices, indices, normals, texCoords, tangents, colors );
 
         let mesh = new Mesh( geo );        
 
         mesh.simplify();
 
         //mesh.subdivide();
+
+        // Create WebGL buffer from our coordinate data.
 
         geo.createGLBuffers();
 
@@ -3331,7 +3350,7 @@ class Prim {
 
         // Define internal methods for the Prim.
 
-        prim.setRenderer ( renderer ) {
+        prim.setRenderer  = ( renderer ) => {
 
             prim.renderer = renderer;
 
@@ -3514,7 +3533,7 @@ class Prim {
             //mesh.subdivide( true );
             //mesh.subdivide( true ); // this one zaps from low-vertex < 10 prim
 
-            prim.geometry.normals.data = this.computeNormals( prim.geometry.vertices.data, prim.geometry.indices.data, [prim.geometry.normals.data] );
+            prim.geometry.normals.data = new Float32Array( this.computeNormals( prim.geometry.vertices.data, prim.geometry.indices.data, prim.geometry.normals.data ) );
        //}
 
 ////////////////////////////////////////////////////////////////////////////////

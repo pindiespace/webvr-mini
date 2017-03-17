@@ -1249,7 +1249,7 @@ class Mesh {
 
         // Convert flattened arrays to Vertex, Edge objects.
 
-        console.log('Simplifying mesh...' + this.type)
+        console.log('Simplifying mesh... type:' + this.geo.type )
 
         this.geometryToVertex( this.geo.vertices.data, this.geo.indices.data, this.geo.texCoords.data );
 
@@ -1327,6 +1327,10 @@ class Mesh {
 
         this.indexArr = newIndexArr;
 
+        // TODO: MAKE SIMPLIFY WORK PROPERLY!!!!!!!!!!!!!!!!
+
+        /////////////this.vertexToGeometry();
+
     }
 
     /** 
@@ -1392,6 +1396,10 @@ class Mesh {
 
         geo.texCoords.data = new Array( vertexArr.length * 2 );
 
+        let vertices = geo.vertices.data;
+
+        let texCoords = geo.texCoords.data;
+
         // Flag any meshes that are > 64k (some hardware can't draw them with indexed arrays)
 
         if ( vertexArr.length > 65535 ) {
@@ -1404,11 +1412,7 @@ class Mesh {
 
         }
 
-        // Set the flattened vertices.
-
-        let vertices = geo.vertices.data;
-
-        let texCoords = geo.texCoords.data;
+        // Write the flattened coordinate data.
 
         for ( let i = 0; i < numVertices; i++ ) {
 

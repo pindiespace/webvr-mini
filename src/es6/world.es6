@@ -162,9 +162,10 @@ class World {
         ) );
 
 ///OBJ MESH
+
         this.colorObjList.push( this.prim.createPrim(
             this.prim.typeList.MESH,
-            'obj people',
+            'teapot',
             vec5( 1, 1, 1 ),       // dimensions (4th dimension doesn't exist for cylinder)
             vec5( 40, 40, 0  ),        // divisions MAKE SMALLER
             vec3.fromValues(0.0, 1.0, 2.0 ),      // position (absolute)
@@ -174,7 +175,7 @@ class World {
             [],               // no texture present
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color,
             false,                                   // if true, apply texture to each face,
-            [ 'obj/people.obj' ] // object files (.obj, .mtl)
+            [ 'obj/teapot/teapot.obj' ] // object files (.obj, .mtl)
         ) );
 
         this.vs2 = this.renderer.shaderColor.init( this.colorObjList );
@@ -511,7 +512,6 @@ class World {
             [ 'obj/capsule/capsule.obj', 'obj/capsule/capsule.mtl' ] // object files (.obj, .mtl)
         ) );
 */
-
         ///////////////
 
         // Finished object creation, start rendering...

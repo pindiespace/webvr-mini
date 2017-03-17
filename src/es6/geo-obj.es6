@@ -112,6 +112,7 @@ class GeoObj {
 
     } // end of constructor
 
+  
     /** 
      * Add data to create buffers, works if existing data is present. However, 
      * indices must be consistent!
@@ -252,7 +253,7 @@ class GeoObj {
 
                     console.log( 'GeoObj::createGLBuffers(): no indices present, creating default' );
 
-                    o.data = new Uint32Array( [ 1 ] );
+                    o.data = new Uint32Array();
 
                 }
 
@@ -265,7 +266,7 @@ class GeoObj {
 
                     console.log( 'GeoObj::createGLBuffers(): no indices present, creating default' );
 
-                    o.data = new Uint16Array( [ 1 ] );
+                    o.data = new Uint16Array();
 
                 }
 
@@ -281,7 +282,7 @@ class GeoObj {
 
                 console.warn( 'GeoObj::createGLBuffers(): no sides present, creating default' );
 
-                o.data = new Uint16Array( [ 1 ] );
+                o.data = new Uint16Array();
 
             }
 
@@ -295,7 +296,7 @@ class GeoObj {
 
                 console.log( 'GeoObj::createGLBuffers(): no normals, present, creating default' );
 
-                o.data = new Float32Array( [ 0, 1, 0 ] );
+                o.data = new Float32Array();
 
             }
 
@@ -309,7 +310,7 @@ class GeoObj {
 
                 console.warn( 'GeoObj::createGLBuffers(): no texture present, creating default' );
 
-                o.data = new Float32Array( [ 0, 0 ] );
+                o.data = new Float32Array();
 
             }
 
@@ -323,7 +324,7 @@ class GeoObj {
 
                 console.warn( 'GeoObj::createGLBuffers(): no tangents present, creating default' );
 
-                o.data = new Float32Array( [ 0, 0, 0, 0 ] );
+                o.data = new Float32Array();
 
             }
 
