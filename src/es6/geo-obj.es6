@@ -8,13 +8,17 @@ class GeoObj {
      * @param {Util} util shared utility methods, patches, polyfills.
      * @param {WebGL} webgl object holding the WebGLRenderingContext.
      */
-    constructor ( util, webgl ) {
+    constructor ( name, util, webgl ) {
 
-        this.webgl = webgl;
+        this.primName = name,
 
-        this.util = util;
+        this.webgl = webgl,
+
+        this.util = util,
 
         this.FLOAT32 = 'float32',
+
+        this.UINT   = 'uint';
 
         this.UINT32 = 'uint32';
 
@@ -104,20 +108,306 @@ class GeoObj {
 
                 numItems: 0
 
-        }
+        };
 
         // Save the max allowed drawing size. For WebGL 1.0 with extension, vertices must be < 65k.
 
         this.MAX_DRAWELEMENTS = this.webgl.MAX_DRAWELEMENTS;
 
+        this.mName = 'geo-obj for ' + this.primName + '::';
+
     } // end of constructor
 
-  
     /** 
-     * Add data to create buffers, works if existing data is present. However, 
-     * indices must be consistent!
+     * Confirm that data is a number.
      */
-    addBufferData( vertices, indices, normals, texCoords, tangents = [], colors = [] ) {
+    confirmNumericalData ( data, dataType, arrName ) {
+
+        for ( let i = 0; i < len; i++ ) {
+
+            let d = this.data[ i ];
+
+
+            switch( dataType ) {
+
+                case this.FLOAT32:
+
+                    if ( ! this.util.isFinite( parseFloat( d ) ) ) {
+
+                        console.error( mName +  'confirmNumericalData(): invalid float32 at pos:' + i );
+
+                        return false;
+
+                    }
+
+                    break;
+
+                case this.UINT16:
+                case this.UINT32:
+                case this.UINT:
+
+                    if ( ! this.util.isFinite( parseInt( d ) ) ) {
+
+                        console.error( mName +  'confirmNumericalData(): invalid Uint at pos:' + i );
+
+                        return false;
+
+                    }
+
+                    break;
+
+                default:
+
+                    console.error( mName +  ' confirmNumericalData(): unknown data type ' + dataType );
+
+                    return false;
+
+                    break;
+
+            }
+
+        }
+
+        return true;
+
+    }
+
+    /** 
+     * Check validity of buffer data.
+     * @param {Boolean} complete if true, do extra checks.
+     * @returns {Boolean} if buffers ok to use, return true, else false.
+     */
+    checkBufferData ( complete ) {
+
+        let valid = true;
+
+        let fnName = this.mName + ' checkBufferData():'; // so many error messages we use this.
+
+        // Vertex check.
+
+        let len = this.vertices.data.length;
+
+        let vLen = len;
+
+        let numVertices = len / this.vertices.itemSize;
+
+        if ( len < this.vertices.itemSize || this.util.frac( numVertices ) !== 0 ) {
+
+            console.error( fnName + ' invalid vertex size, ' + this.vertices.data.length );
+
+            valid = false;
+
+        } else if ( len > this.MAX_DRAWELEMENTS ) {
+
+            console.error( fnName + ' vertex size exceeds 64k on hardware not supporting it' );
+
+            valid = false;
+        }
+
+        if ( complete ) {
+
+            if ( ! this.confirmNumericalData( this.vertices.data, this.FLOAT32, 'vertices' ) ) {
+
+                valid = false;
+
+            }
+
+        }
+
+        // Index check. 
+
+        len = this.indices.data.length;
+
+        if ( len < this.indices.itemSize ) { // can be fractional
+
+            console.error( fnName + ' invalid index size, ' + this.indices.data.length );
+
+            valid = false;
+
+        }
+
+        if ( complete ) {
+
+            // Make sure we have a valid number
+
+              if ( ! this.confirmNumericalData( this.indices.data, this.UINT, 'indices' ) ) {
+
+                valid = false;
+
+            }
+
+            // Make sure indices point to valid vertex.
+
+            let d = this.indices.data;
+
+
+            for ( let i = 0; i < len; i++ ) {
+
+                let di = d[ i ];
+
+                if ( di <= 0 || di > vLen ) {
+
+                    console.error ( fnName + ' index at ' + i + ' points to invalid postion in vertices ' + di + ', max:' + vLen );
+
+                    valid = false;
+
+                }
+
+            }
+
+        }
+
+        // Normals check (should always be present).
+
+        len = this.normals.data.length;
+
+        if ( len < this.normals.itemSize || this.util.frac( len / this.normals.itemSize ) !== 0 ) {
+
+            console.error( fnName + ' invalid normals size, ' + this.normals.data.length );
+
+            valid = false;
+
+        } else if ( len !== this.vertices.data.length ) {
+
+            console.error( fnName + ' normals length: ' + len + ' does not match vertices length: ' + vLen );
+
+            valid = false;
+
+        }
+
+        if ( complete ) {
+
+          if ( ! this.confirmNumericalData( this.normals.data, this.FLOAT32, 'normals' ) ) {
+
+                valid = false;
+
+            }
+
+        }
+
+        // Texture coords check.
+
+        len = this.texCoords.data.length;
+
+        if ( len > 0 ) {
+
+            let aLen = len / this.texCoords.itemSize;
+
+            if ( len < ( this.texCoords.itemSize ) ||  this.util.frac( aLen ) !== 0 ) {
+
+                console.error( fnName + ' invalid texCoords size, ' + this.texCoords.data.length );
+
+                valid = false;
+
+            } else if ( aLen !== numVertices ) {
+
+                console.error( fnName + ' texCoords length: ' + len + ' does not match vertices length: ' + vLen );
+
+                valid = false;
+
+            }
+
+        } else {
+
+            console.warn( fnName + ' no texCoords data defined.' );
+
+        }
+
+        if ( complete ) {
+
+            if ( ! this.confirmNumericalData( this.texCoords.data, this.FLOAT32, 'texCoords' ) ) {
+
+                valid = false;
+
+            }
+
+        }
+
+        // Tangents check.
+
+        len = this.tangents.data.length;
+
+        if ( len > 0 ) {
+
+            if ( len < ( this.tangents.itemSize ) || this.util.frac( len / this.tangents.itemSize  !== 0 ) ) {
+
+                console.error(fnName + ' invalid tangents size, ' + this.tangents.data.length );
+
+                valid = false;
+
+            } else if ( len !== this.vertices.data.length ) {
+
+                console.error( fnName + ' tangents length ' + len + ' does not match vertices length: ' + vLen );
+
+                valid = false;
+
+            }
+
+        } else {
+
+            console.warn( fnName + ' no tangents data defined.' );
+
+        }
+
+        if ( complete ) {
+
+            if ( ! this.confirmNumericalData( this.tangents.data, this.FLOAT32, 'tangents' ) ) {
+
+                valid = false;
+
+            }
+
+        }
+
+        // Texture coords check.
+
+        len = this.colors.data.length;
+
+        if ( len > 0 ) {
+
+            let aLen = len / this.colors.itemSize;
+
+            if ( len < ( this.colors.itemSize ) || this.util.frac( aLen ) !== 0 ) {
+
+                console.error( fnName + ' invalid texCoords size, ' + this.texCoords.data.length );
+
+                valid = false;
+
+            } else if ( aLen !== numVertices ) {
+
+                console.error( fnName + ' colors length: ' + len + ' does not match vertices length:' + vLen );
+
+                valid = false;
+
+            }
+
+        } else {
+
+            console.warn( fnName + ' no colors data defined.' );
+
+        }
+
+        if ( complete ) {
+
+            if ( ! this.confirmNumericalData( this.colors.data, this.FLOAT32, 'colors' ) ) {
+
+                valid = false;
+
+            }
+
+        }
+
+
+        // All ok?
+
+        return valid;
+
+    }
+
+    /** 
+     * Add data to existing data (e.g. combine two Prims into one)
+     */
+    addBufferData ( vertices, indices, normals, texCoords, tangents = [], colors = [] ) {
 
         const concat = this.util.concatArr;
 
@@ -203,7 +493,7 @@ class GeoObj {
 
             default:
 
-                console.error( 'GeoObj::bindGLBuffer(): invalid WebGL buffer type ' + type );
+                console.error( this.mName + 'bindGLBuffer(): invalid WebGL buffer type ' + type );
 
                 break;
 
@@ -211,8 +501,121 @@ class GeoObj {
 
     }
 
+    setVertices ( vertices ) {
+
+        let o = this.vertices;
+
+        if ( this.util.isArray( vertices ) ) {
+
+            o.data = new Float32Array( vertices );
+
+            o.numItems = vertices.length / o.itemSize;
+
+        } else {
+
+            console.error( this.mName +'setVertices() invalid input, not Array' );
+        }
+
+    }
+
+    setIndices ( indices ) {
+
+        let o = this.indices;
+
+        if( this.util.isArray( indices ) ) {
+
+            if ( this.webgl.elemIndexUint ) {
+
+                o.data = new Uint32Array( indices );
+
+            } else {
+
+                o.data = new Uint16Array( indices );
+
+            }
+
+        } else {
+
+            console.error( this.mName + 'setIndices() invalid input, not Array' );
+
+        }
+
+    }
+
+    setNormals ( normals ) {
+
+        let o = this.normals;
+
+        if ( this.util.isArray( normals ) ) {
+
+            o.data = new Float32Array( normals );
+
+            o.numItems = normals.length / o.itemSize;
+
+        } else {
+
+            console.error( this.mName + 'setNormals() invalid input, not Array' );
+        }
+
+
+    }
+
+    setTexCoords ( texCoords ) {
+
+        let o = this.texCoords;
+
+        if ( this.util.isArray( texCoords ) ) {
+
+            o.data = new Float32Array( texCoords );
+
+            o.numItems = texCoords.length / o.itemSize;
+
+        } else {
+
+            console.error( this.mName + 'setTexCoords() invalid input, not Array' );
+        }
+
+
+    }
+
+    setColors ( colors ) {
+
+        let o = this.colors;
+
+        if ( this.util.isArray( colors ) ) {
+
+            o.data = new Float32Array( vertices );
+
+            o.numItems = colors.length / o.itemSize;
+
+        } else {
+
+            console.error( this.mName + 'setTangents() invalid input, not Array' );
+
+        }
+
+    }
+
+    setTangents ( tangents ) {
+
+        let o = this.tangents;
+
+        if ( this.util.isArray( tangents ) ) {
+
+            o.data = new Float32Array( tangents );
+
+            o.numItems = tangents.length / o.itemSize;
+
+        } else {
+
+            console.error( this.mName + 'setTangents() invalid input, not Array' );
+
+        }
+
+    }
+
     /** 
-     * Create WebGL buffers using geometry data. Note that the 
+     * Create (empty) WebGL buffers using geometry data. Note that the 
      * size is for flattened arrays.
      * an array of vertices, in glMatrix.vec3 objects.
      * an array of indices for the vertices.
@@ -225,13 +628,15 @@ class GeoObj {
 
             const gl = this.webgl.getContext();
 
+            let fnName = this.mName + 'createGLBuffers():';
+
             // Vertex Buffer Object.
 
             let o = this.vertices;
 
             if ( ! o.data.length ) {
 
-                console.log( 'GeoObj::createGLBuffers(): no vertices present, creating default' );
+                console.log( fnName + ' no vertices present, creating default' );
 
                 o.data = new Float32Array();
 
@@ -251,7 +656,7 @@ class GeoObj {
 
                 if ( ! o.data.length ) {
 
-                    console.log( 'GeoObj::createGLBuffers(): no indices present, creating default' );
+                    console.log( fnName + ' no indices present, creating default' );
 
                     o.data = new Uint32Array();
 
@@ -264,7 +669,7 @@ class GeoObj {
 
                 if ( ! o.data.length ) {
 
-                    console.log( 'GeoObj::createGLBuffers(): no indices present, creating default' );
+                    console.log( fnName + ' no indices present, creating default' );
 
                     o.data = new Uint16Array();
 
@@ -280,7 +685,7 @@ class GeoObj {
 
             if ( ! o.data.length ) {
 
-                console.warn( 'GeoObj::createGLBuffers(): no sides present, creating default' );
+                console.warn( fnName + ' no sides present, creating default' );
 
                 o.data = new Uint16Array();
 
@@ -294,7 +699,7 @@ class GeoObj {
 
             if ( ! o.data.length ) {
 
-                console.log( 'GeoObj::createGLBuffers(): no normals, present, creating default' );
+                console.log( fnName + ': no normals, present, creating default' );
 
                 o.data = new Float32Array();
 
@@ -308,7 +713,7 @@ class GeoObj {
 
             if ( ! o.data.length ) {
 
-                console.warn( 'GeoObj::createGLBuffers(): no texture present, creating default' );
+                console.warn( fnName + ' no texture present, creating default' );
 
                 o.data = new Float32Array();
 
@@ -322,7 +727,7 @@ class GeoObj {
 
             if ( ! o.data.length ) {
 
-                console.warn( 'GeoObj::createGLBuffers(): no tangents present, creating default' );
+                console.warn( fnName + ' no tangents present, creating default' );
 
                 o.data = new Float32Array();
 
@@ -336,7 +741,7 @@ class GeoObj {
 
             if ( ! o.data.length || ( o.data.length < ( 4 * this.vertices.length / 3 ) ) ) {
 
-                console.warn( 'GeoObj::createGLBuffers(): no colors present, creating default color' );
+                console.warn( fnName + ' no colors present, creating default color' );
 
                 o.data = new Float32Array( this.computeColors( this.normals.data, o.data ) );
 

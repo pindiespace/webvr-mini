@@ -31,7 +31,7 @@ class Util {
 
              return this.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
 
-        } 
+        }
 
     }
 
@@ -144,9 +144,9 @@ class Util {
 
     }
 
-    degToRad( degrees ) {
+    degToRad( deg ) {
 
-        return degrees * Math.PI / 180;
+        return deg * Math.PI / 180;
 
     }
 
@@ -162,9 +162,51 @@ class Util {
 
     }
 
+    getRand ( min, max ) {
+
+        if ( min === undefined || max === undefined ) {
+
+            max = 1;
+
+            min = 0;
+
+        }
+
+        return min + ( ( Math.random() + ( 1 / ( 1 + this.getSeed() ) ) ) %1 ) * ( max - min );
+
+    }
+
+    /* 
+     * =============== RANDOMIZERS ====================
+     */
+
+    getRandInt ( range ) {
+
+        return Math.floor( Math.random() * range );
+
+    }
+
+    randomColor () {
+
+        return [ Math.abs( Math.random() ) , Math.abs( Math.random() ) , Math.abs( Math.random() ) ];
+
+    }
+
+
     /* 
      * =============== ARRAY OPERATIONS ====================
      */
+
+    /** 
+     * check if object is an Array (not fastest, but maximally compatible)
+     * @param {Object} o the object to test.
+     * @returns {Boolean} if an Array, return true, else false.
+     */
+    isArray( o ) {
+
+        return Object.prototype.toString.call(o) === '[object Array]';
+
+    }
 
     containsAll ( arr1, arr2 ) {
 
@@ -175,10 +217,13 @@ class Util {
     /** 
      * compare two arrays, return true if identical number of elements, 
      * and all values are the same.
+     * @param {Array} arr1 the first array.
+     * @param {Array} arr2 the second array.
+     * @returns {Boolean} if arrays are value-identical, return true, else false.
      */
     compArr ( arr1, arr2 ) {
 
-        return this.containsAll(arr1, arr2) && this.containsAll(arr2, arr1);
+        return this.containsAll( arr1, arr2 ) && this.containsAll( arr2, arr1 );
 
     }
 
@@ -237,7 +282,7 @@ class Util {
 
         for ( let i = 2; i < alen; i++ ) {
 
-            arr[ ( idx * stride ) + i ] - arguments[i];
+            arr[ ( idx * stride ) + i ] - arguments[ i ];
 
         }
 
@@ -440,6 +485,8 @@ class Util {
 
     };
 
+
+
     /** 
      * Random seed.
      */
@@ -477,46 +524,20 @@ class Util {
 
     }
 
-    getRand ( min, max ) {
-
-        if ( min === undefined || max === undefined ) {
-
-            max = 1;
-
-            min = 0;
-
-        }
-
-        return min + ( ( Math.random() + ( 1 / ( 1 + this.getSeed() ) ) ) %1 ) * ( max - min );
-
-    }
-
-    getRandInt ( range ) {
-
-        return Math.floor( Math.random() * range );
-
-    }
-
-    randomColor () {
-
-        return [ Math.abs( Math.random() ) , Math.abs( Math.random() ) , Math.abs( Math.random() ) ];
-
-    }
-
-
     /* 
      * ============ SYSTEM AND Ui OPERATIONS =================
      */
 
     // Get the file extension of a file.
+
     getFileExtension ( fname ) {
 
         return fname.slice( ( ( fname.lastIndexOf( '.' ) - 1 >>> 0 ) + 2 ) ).toLowerCase();
 
     }
 
-
     // See if we're running in an iframe.
+
     isIFrame () {
 
         try {

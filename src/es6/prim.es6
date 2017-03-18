@@ -3214,7 +3214,6 @@ class Prim {
         // NOTE:::::: Make these local references AFTER the subdivision, or you don't get 
         // NOTE:::::: the right size for normals and colors
 
-
         let vertices = geo.vertices.data;
 
         let indices = geo.indices.data;
@@ -3232,7 +3231,7 @@ class Prim {
 
         console.log('Prim::meshCallback(): normals length:' + normals.length + ' vertices.length:' + vertices.length)
 
-        if ( geo.normals.data.length < geo.vertices.data.length ) {
+        if ( normals.length < vertices.length ) {
 
             console.log( 'computing mesh ' + prim.name + ' normals...' );
 
@@ -3242,7 +3241,7 @@ class Prim {
 
         // Tangents.
 
-        geo.tangents.data = new Float32Array( this.computeTangents( vertices, indices, geo.normals.data, texCoords, tangents ) );
+        geo.tangents.data = new Float32Array( this.computeTangents( vertices, indices, geo.normals.data, texCoords, [] ) );
 
         // Color array is pre-created, or gets a default when WebGL buffers are created.
 
@@ -3341,6 +3340,7 @@ class Prim {
         let prim = {};
 
         // Define internal methods for the Prim.
+        // TODO: define renderers for object and store in renderer class.
 
         prim.setRenderer  = ( renderer ) => {
 
@@ -3398,6 +3398,14 @@ class Prim {
             p.light.color = color;
 
         };
+
+        prim.reCalc = () => {
+
+            prim.geometry.normals.data = new Float32Array( this.computeNormals( prim.geometry.vertices.data, prim.geometry.indices.data, prim.geometry.normals.data ) );
+
+            prim.geometry.tangents.data = new Float32Array( this.computeTangents( prim.geometry.vertices.data, prim.geometry.indices.data, prim.geometry.normals.data, prim.geometry.texCoords.data ) );
+
+        }
 
         // BEGIN SETTING PRIM VALUES
 
@@ -3478,15 +3486,15 @@ class Prim {
 
         // Geometry factory function.
 
-        prim.geometry = new GeoObj( this.util, this.webgl );
+        prim.geometry = new GeoObj( prim.name, this.util, this.webgl );
 
         prim.geometry.type = type; // NOTE: has to come after createGeoObj
-
-        // Create geometry (may alter some of the above default properties).
 
         // Set ready flag for slow loads.
 
         prim.ready = false;
+
+        // Create geometry (may alter some of the above default properties).
 
         prim.geometry = this[ type ]( prim );
 
@@ -3497,24 +3505,23 @@ class Prim {
 
         //if ( prim.name === 'TestCapsule' ) {
 
-            window.mesh = mesh;
+        //    window.mesh = mesh;
 
             //mesh.simplify();
 
         //}
 
-               if ( prim.name == 'colored cube' ) {
+        //if ( prim.name == 'colored cube' ) {
 
-            window.prim2 = prim;
+        //    window.prim2 = prim;
 
-        }
-
+        //}
 
 ////////////////////////////////////////////////////////////////////////////////
         // SUBDIVIDE TEST
 
         //if ( prim.name === 'colored cube' ) {
-        //if ( prim.name === 'cubesphere' ) {
+        if ( prim.name === 'cubesphere' ) {
         //if ( prim.name === 'texsphere' ) {
 
             mesh.subdivide( true );
@@ -3527,10 +3534,14 @@ class Prim {
             //mesh.subdivide( true );
             //mesh.subdivide( true ); // this one zaps from low-vertex < 10 prim
 
-            prim.geometry.normals.data = new Float32Array( this.computeNormals( prim.geometry.vertices.data, prim.geometry.indices.data, prim.geometry.normals.data ) );
-       //}
+            prim.reCalc();
 
+       }
 
+       // Validate our data.
+       console.log("PRIM:" + prim.name + '(' + prim.type + ')' );
+
+       prim.geometry.checkBufferData();
 
 ////////////////////////////////////////////////////////////////////////////////
 
