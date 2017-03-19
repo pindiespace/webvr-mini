@@ -132,17 +132,27 @@ let loadFont = new LoadFont( true, util, glMatrix, webgl );
 
 let prim = new Prim ( true, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo );
 
-let shaderTexture = new ShaderTexture ( true, util, glMatrix, webgl, prim );
+let shaderTexture = new ShaderTexture ( true, util, glMatrix, webgl, 'shaderTexture' );
 
-let shaderColor = new ShaderColor ( true, util, glMatrix, webgl, prim );
+let shaderColor = new ShaderColor ( true, util, glMatrix, webgl, 'shaderColor' );
 
-let shaderDirlightTexture = new ShaderDirlightTexture( true, util, glMatrix, webgl, prim );
+let shaderDirlightTexture = new ShaderDirlightTexture( true, util, glMatrix, webgl, 'shaderDirlightTexture' );
 
 let renderer = new Renderer ( true, util, glMatrix, webgl, shaderTexture, shaderColor, shaderDirlightTexture );
+
+renderer.addShader( shaderTexture );
+
+renderer.addShader( shaderColor );
+
+renderer.addShader( shaderDirlightTexture );
 
 // Create the world, which needs WebGL, WebVR, and Prim.
 
 let world = new World( webgl, prim, renderer );
+
+// TODO: don't automatically update webgl
+// TODO: enclose in a promise, then update renderer and shaders.
+// TODO: then call world
 
 // Export our classes to app.js.
 

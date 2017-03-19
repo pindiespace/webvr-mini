@@ -2,9 +2,9 @@ import Shader from './shader'
 
 class ShaderDirlightTexture extends Shader {
 
-    constructor ( init, util, glMatrix, webgl, prim ) {
+    constructor ( init, util, glMatrix, webgl, shaderName ) {
 
-        super( init, util, glMatrix, webgl, prim );
+        super( init, util, glMatrix, webgl, shaderName );
 
         console.log( 'In ShaderTexture class' );
 
@@ -147,10 +147,6 @@ class ShaderDirlightTexture extends Shader {
 
         let shaderProgram = program.shaderProgram;
 
-
-        window.vs3Vars = vsVars; /////////////////////////////////////////////////////////
-
-
         // TODO: TEMPORARY ADD LIGHTING CONTROL
 
         let lighting = true;
@@ -171,7 +167,7 @@ class ShaderDirlightTexture extends Shader {
 
         // Attach objects.
 
-        program.renderList = objList || [];
+        program.renderList = program.renderList || objList || [];
 
         // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
         // TODO: https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/TechniquesforWorkingwithVertexData/TechniquesforWorkingwithVertexData.html
@@ -292,7 +288,7 @@ class ShaderDirlightTexture extends Shader {
 
                 gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer );
 
-                if ( webgl.elemIndexUint ) { 
+                if ( webgl.stats.uint32 ) { 
 
                     // Draw elements, 0 -> 2e9
 

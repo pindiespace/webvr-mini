@@ -23,15 +23,15 @@ class Shader {
      * Basic MVC
      * https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_model_view_projection
      */
-    constructor ( init, util, glMatrix, webgl, prim ) {
+    constructor ( init, util, glMatrix, webgl, shaderName ) {
 
         console.log( 'In Shader class' );
+
+        this.name = shaderName;
 
         this.webgl = webgl;
 
         this.util = util;
-
-        this.prim = prim;
 
         this.glMatrix = glMatrix;
 
@@ -61,9 +61,53 @@ class Shader {
 
     }
 
-   /* 
-     * MATRIX OPERATIONS
-     * Mostly with glMatrix
+    /* 
+     * ============ PRIM OPERATIONS ============
+     */
+
+    /**
+     * prims are added to the webgl program.
+     */
+    addObj( obj ) {
+
+        let renderList = this.program.renderList;
+
+        if ( renderList.indexOf( obj ) === -1 ) {
+
+            renderList.push( obj );
+
+        } else {
+
+            console.error( obj.name + ' already added to shader::' + this.name );
+
+        }
+
+    }
+
+    /** 
+     * prims are removed from the webgl program. 
+     * NOTE: removing from the array messes up JIT optimization, so slows things down!
+     */
+    removeObj( obj ) {
+
+        let renderList = this.program.renderList;
+
+        let pos = renderList.indexOf( obj );
+
+        if ( pos > -1 ) {
+
+            array.splice( pos, 1 );
+
+        } else {
+
+            console.warn( obj.name + ' not found in shader::' + this.name );
+
+        }
+
+    }
+
+    /* 
+     * ============ MATRIX OPERATIONS ============
      */
 
     mvPushMatrix() {
@@ -87,6 +131,17 @@ class Shader {
         }
 
         mvMatrix = this.mvMatrixStack.pop();
+
+    }
+
+    /** 
+     * Add a list of Prim objects to be rendered. They can also be 
+     * added in Shader init( objList ).
+     */
+    addObjList ( objList ) {
+
+        // TODO: THIS DOES NOT WORK!
+        //this.program.renderList = objList;
 
     }
 
@@ -116,6 +171,10 @@ class Shader {
             program = this.webgl.createProgram( this.vsSrc(), this.fsSrc() );
 
         }
+
+        // Rendering uses a more direct program reference. we save a reference here for manipulating objects.
+
+        this.program = program;
 
         // Return references to our properties, and assign uniform and attribute locations using webgl object.
 

@@ -2,9 +2,9 @@ import Shader from './shader'
 
 class ShaderTexture extends Shader {
 
-    constructor ( init, util, glMatrix, webgl, prim ) {
+    constructor ( init, util, glMatrix, webgl, shaderName ) {
 
-        super( init, util, glMatrix, webgl, prim );
+        super( init, util, glMatrix, webgl, shaderName );
 
         console.log( 'In ShaderTexture class' );
 
@@ -115,7 +115,7 @@ class ShaderTexture extends Shader {
 
         window.vs1Vars = vsVars; /////////////////////////////////////////////////////////
 
-        program.renderList = objList || [];
+        program.renderList = program.renderList || objList || [];
 
         // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
         // TODO: https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/TechniquesforWorkingwithVertexData/TechniquesforWorkingwithVertexData.html
@@ -190,7 +190,7 @@ class ShaderTexture extends Shader {
 
                 // Draw elements.
 
-                if ( webgl.elemIndexUint ) {
+                if ( webgl.stats.uint32 ) {
 
                     // Draw elements, 0 -> 2e9
 

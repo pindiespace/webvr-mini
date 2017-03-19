@@ -493,6 +493,88 @@ class Prim {
 
     }
 
+    computeBoundingSphere( boundingBox ) {
+
+        let sphere = {};
+
+        let topLeft = boundingBox.topLeft;
+
+        let bottomRight = boundingBox.bottomRight;
+
+        let xSpan = Math.abs( bottomRight[ 0 ] - topLeft[ 0 ] );
+
+        let ySpan = Math.abs( bottomRight[ 1 ] - topLeft[ 1 ] );
+
+        let zSpan = Math.abs( bottomRight[ 2 ] - topLeft[ 2 ] );
+
+        var radius = Math.max( xSpan, ySpan, zSpan ) / 2;
+
+        sphere.radius = radius;
+
+        let center = this.computeCentroid( vertices );
+
+        sphere.center = center;
+
+        return sphere;
+
+    }
+
+    /** 
+     * Compute the bounding sphere for a Prim, with all its points projected to the 
+     * surface of the sphere. Use to make non-uv sphere. Also use to supply texture coordinates 
+     * when they are missing.
+     * @param {glMatrix.vec3[]} vertices the vertex coordinates.
+     * @param {Object} boundingBox a pre-computed bounding box for the coordinates.
+     */
+     computeInflateToSphere ( vertices, boundingBox ) {
+
+        let sphere = this.computeSphere( boundingBox );
+
+        let sVertices = [];
+
+        let sTexCoords = [];
+
+        // Compute distances between extremes
+
+        let cx = sphere.center[ 0 ];
+
+        let cy = sphere.center[ 1 ];
+
+        let cz = sphere.center[ 2 ];
+
+        let radius = sphere.radius;
+
+        for ( let i = 0; i < vertices.length; i += 3 ) {
+
+            let x = vertices[ i ];
+
+            let y = vertices[ i + 1 ];
+
+            let z = vertices[ i + 2 ];
+
+            let dist = Math.sqrt( cx * x + cy * y + cz * z );
+
+            let scale = dist / radius;
+
+            sVertices.push( x * scale, y * scale, z * scale );
+
+            let texCoord = this.computeSphereCoords( [ x, y, z ] );
+
+            sTexCoords.push( texCoord.u, texCoord.v );
+
+        }
+
+        return {
+
+            vertices: vertices,
+
+            texCoords: texCoords
+
+        };
+
+     }
+
+
     /** 
      * Get spherical coordinates (u, v) for normalized unit vector.
      * @param {glMatrix.vec3} vtx the [x, y, z] unit vector
@@ -1035,6 +1117,24 @@ class Prim {
         }
 
         return tangents;
+
+    }
+
+    /** 
+     * If texture coordinates aren't defined, compute them by 2d flattening
+     * @param {glMatrix.vec3[]} vertices. The input positions.
+     */
+    computeTexCoords ( vertices ) {
+
+        let texCoords = [];
+
+        // For each vertex, compute a u anv v coordinate based on their spherical projection.
+
+        // Make spherical
+
+        // compute coordinates.
+
+        return texCoords; 
 
     }
 
@@ -3499,30 +3599,24 @@ class Prim {
         prim.geometry = this[ type ]( prim );
 
 ////////////////////////////////////////////////////////////////////////////////
-        let mesh = new Mesh( prim.geometry );
 
-        // SIMPLIFY TEST
 
-        //if ( prim.name === 'TestCapsule' ) {
 
-        //    window.mesh = mesh;
 
-            //mesh.simplify();
-
-        //}
-
-        //if ( prim.name == 'colored cube' ) {
-
-        //    window.prim2 = prim;
-
-        //}
-
-////////////////////////////////////////////////////////////////////////////////
-        // SUBDIVIDE TEST
-
-        //if ( prim.name === 'colored cube' ) {
         if ( prim.name === 'cubesphere' ) {
+        //if ( prim.name === 'TestCapsule' ) {
+        //if ( prim.name === 'colored cube' ) {
         //if ( prim.name === 'texsphere' ) {
+
+            let mesh = new Mesh( prim.geometry );
+
+            window.mesh = mesh;
+
+            // SIMPLIFY TEST
+
+            mesh.simplify();
+
+            // SUBDIVIDE TEST
 
             mesh.subdivide( true );
             ///mesh.subdivide( true );

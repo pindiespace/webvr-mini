@@ -461,14 +461,14 @@ class WebGL {
                         //    console.log("TRANSFORM FEEDBACK NOT SUPPORTED")
                         //}
                         this.glVers = 2.0;
-                        this.elemIndexUint = true; // WebGL2 automatically handles 32-bit indexes
+                        this.stats.uint32 = true;
                     break;
 
                     case 2:
                     case 3:
                         this.glVers = 1.0;
                         this.addVertexBufferSupport( gl ); // vertex buffers
-                        this.elemIndexUint = this.addIndex32Support( gl );      // vertices > 64k
+                        this.stats.uint32 = this.addIndex32Support( gl ); // vertices > 64k
                         break;
 
                     default:
@@ -478,7 +478,7 @@ class WebGL {
 
             }
 
-        if ( ! this.elemIndexUint) { 
+        if ( ! this.stats.uint32) { 
 
             this.MAX_DRAWELEMENTS = 65534;
 

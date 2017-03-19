@@ -2,9 +2,9 @@ import Shader from './shader'
 
 class ShaderColor extends Shader {
 
-    constructor ( init, util, glMatrix, webgl, prim ) {
+    constructor ( init, util, glMatrix, webgl, shaderName ) {
 
-        super( init, util, glMatrix, webgl, prim );
+        super( init, util, glMatrix, webgl, shaderName );
 
         console.log( 'In ShaderColor class' );
 
@@ -96,7 +96,7 @@ class ShaderColor extends Shader {
 
         window.vs2Vars = vsVars; /////////////////////////////////////////////////////////
 
-        program.renderList = objList || [];
+        program.renderList = program.renderList || objList || [];
 
         // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
 
@@ -158,7 +158,7 @@ class ShaderColor extends Shader {
                 gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer );
 
 
-                if ( webgl.elemIndexUint ) {
+                if ( webgl.stats.uint32 ) {
 
                     // Draw elements, 0 -> 2e9
 

@@ -137,7 +137,7 @@ class World {
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color
         ) );
 
-        this.vs1 = this.renderer.shaderTexture.init( this.textureObjList );
+        ///////this.vs1 = this.renderer.shaderTexture.init( this.textureObjList );
 
 // COLORED SHADER.
 
@@ -178,7 +178,7 @@ class World {
             [ 'obj/teapot/teapot.obj' ] // object files (.obj, .mtl)
         ) );
 
-        this.vs2 = this.renderer.shaderColor.init( this.colorObjList );
+        /////////this.vs2 = this.renderer.shaderColor.init( this.colorObjList );
 
 // LIT TEXTURE SHADER.
 
@@ -493,9 +493,11 @@ class World {
         ) );
 
 
-        this.vs3 = this.renderer.shaderDirlightTexture.init( this.dirlightTextureObjList );
+        //this.vs3 = this.renderer.shaderDirlightTexture.init( this.dirlightTextureObjList );
 
-        ///////////////
+
+
+        /////////////// 
 /*
         this.textureObjList.push( this.prim.createPrim(
             this.prim.typeList.MESH,
@@ -516,6 +518,12 @@ class World {
 
         // Finished object creation, start rendering...
 
+        this.vs1 = this.renderer.getShader( 'shaderTexture' ).init( this.textureObjList );
+
+        this.vs2 = this.renderer.getShader( 'shaderColor' ).init( this.colorObjList );
+
+        this.vs3 = this.renderer.getShader( 'shaderDirlightTexture' ).init( this.dirlightTextureObjList );
+
         this.render();
 
     }
@@ -528,7 +536,7 @@ class World {
     }
 
     /** 
-     * Update world.related properties, e.g. a HUD or framrate readout.
+     * Update world.related properties, e.g. a HUD or framrate reado ut.
      */
     update () {
 
@@ -566,6 +574,8 @@ class World {
         // Render Prims attached to each renderer object.
 
         // TODO: Don't render until we update in the correct order.
+
+        //this.renderer.render();
 
         this.vs3.render();
 

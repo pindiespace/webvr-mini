@@ -2,9 +2,9 @@ import Shader from './shader'
 
 class ShaderTerrain extends Shader {
 
-    constructor ( init, util, glMatrix, webgl, prim ) {
+    constructor ( init, util, glMatrix, webgl, shaderName ) {
 
-        super( init, util, glMatrix, webgl, prim );
+        super( init, util, glMatrix, webgl, shaderName );
 
         console.log( 'In ShaderTerrain class' );
 

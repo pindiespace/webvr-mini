@@ -509,29 +509,32 @@ class LoadModel extends LoadPool {
 
         let models = loadObj.prim.models;
 
-        console.log("PRIM IS:" + loadObj.prim)
-
-        // Fire the mesh creation routine.
-
-        console.log(">>>>>>>LOADOBJ fType:" + loadObj.fType );
-
         // Since we may have different file types for object loads, switch on the file extension
 
         switch ( loadObj.fType ) {
 
             case 'obj':
+
                 console.log("OBJ file loaded, now parse it....")
+
                 let d = this.computeObjMesh( data, loadObj.prim );
+
                 loadObj.prim.geometry.addBufferData( d.vertices, d.indices, d.normals, d.texCoords, [] );
+
                 break;
 
             case 'mtl':
+
                 console.log("MTL file loaded, parsing....")
+
                 this.computeObjMaterials( data, loadObj.prim );
+
                 break;
 
             default:
+
                 console.warn( 'uploadModel() unknown file type:' + loadObj.fType );
+
                 break;
 
         }

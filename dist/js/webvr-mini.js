@@ -460,17 +460,27 @@
 
 	var prim = new _prim2.default(true, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo);
 
-	var shaderTexture = new _shaderTexture2.default(true, util, glMatrix, webgl, prim);
+	var shaderTexture = new _shaderTexture2.default(true, util, glMatrix, webgl, 'shaderTexture');
 
-	var shaderColor = new _shaderColor2.default(true, util, glMatrix, webgl, prim);
+	var shaderColor = new _shaderColor2.default(true, util, glMatrix, webgl, 'shaderColor');
 
-	var shaderDirlightTexture = new _shaderDirlightTexture2.default(true, util, glMatrix, webgl, prim);
+	var shaderDirlightTexture = new _shaderDirlightTexture2.default(true, util, glMatrix, webgl, 'shaderDirlightTexture');
 
 	var renderer = new _renderer2.default(true, util, glMatrix, webgl, shaderTexture, shaderColor, shaderDirlightTexture);
+
+	renderer.addShader(shaderTexture);
+
+	renderer.addShader(shaderColor);
+
+	renderer.addShader(shaderDirlightTexture);
 
 	// Create the world, which needs WebGL, WebVR, and Prim.
 
 	var world = new _world2.default(webgl, prim, renderer);
+
+	// TODO: don't automatically update webgl
+	// TODO: enclose in a promise, then update renderer and shaders.
+	// TODO: then call world
 
 	// Export our classes to app.js.
 
@@ -1540,14 +1550,14 @@
 	                                                //    console.log("TRANSFORM FEEDBACK NOT SUPPORTED")
 	                                                //}
 	                                                this.glVers = 2.0;
-	                                                this.elemIndexUint = true; // WebGL2 automatically handles 32-bit indexes
+	                                                this.stats.uint32 = true;
 	                                                break;
 
 	                                        case 2:
 	                                        case 3:
 	                                                this.glVers = 1.0;
 	                                                this.addVertexBufferSupport(gl); // vertex buffers
-	                                                this.elemIndexUint = this.addIndex32Support(gl); // vertices > 64k
+	                                                this.stats.uint32 = this.addIndex32Support(gl); // vertices > 64k
 	                                                break;
 
 	                                        default:
@@ -1556,7 +1566,7 @@
 	                                }
 	                        }
 
-	                        if (!this.elemIndexUint) {
+	                        if (!this.stats.uint32) {
 
 	                                this.MAX_DRAWELEMENTS = 65534;
 	                        } else {
@@ -3205,29 +3215,32 @@
 
 	                        var models = loadObj.prim.models;
 
-	                        console.log("PRIM IS:" + loadObj.prim);
-
-	                        // Fire the mesh creation routine.
-
-	                        console.log(">>>>>>>LOADOBJ fType:" + loadObj.fType);
-
 	                        // Since we may have different file types for object loads, switch on the file extension
 
 	                        switch (loadObj.fType) {
 
 	                                case 'obj':
+
 	                                        console.log("OBJ file loaded, now parse it....");
+
 	                                        var d = this.computeObjMesh(data, loadObj.prim);
+
 	                                        loadObj.prim.geometry.addBufferData(d.vertices, d.indices, d.normals, d.texCoords, []);
+
 	                                        break;
 
 	                                case 'mtl':
+
 	                                        console.log("MTL file loaded, parsing....");
+
 	                                        this.computeObjMaterials(data, loadObj.prim);
+
 	                                        break;
 
 	                                default:
+
 	                                        console.warn('uploadModel() unknown file type:' + loadObj.fType);
+
 	                                        break;
 
 	                        }
@@ -3553,10 +3566,10 @@
 	var ShaderTexture = function (_Shader) {
 	            _inherits(ShaderTexture, _Shader);
 
-	            function ShaderTexture(init, util, glMatrix, webgl, prim) {
+	            function ShaderTexture(init, util, glMatrix, webgl, shaderName) {
 	                        _classCallCheck(this, ShaderTexture);
 
-	                        var _this = _possibleConstructorReturn(this, (ShaderTexture.__proto__ || Object.getPrototypeOf(ShaderTexture)).call(this, init, util, glMatrix, webgl, prim));
+	                        var _this = _possibleConstructorReturn(this, (ShaderTexture.__proto__ || Object.getPrototypeOf(ShaderTexture)).call(this, init, util, glMatrix, webgl, shaderName));
 
 	                        console.log('In ShaderTexture class');
 
@@ -3646,7 +3659,7 @@
 
 	                                    window.vs1Vars = vsVars; /////////////////////////////////////////////////////////
 
-	                                    program.renderList = objList || [];
+	                                    program.renderList = program.renderList || objList || [];
 
 	                                    // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
 	                                    // TODO: https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/TechniquesforWorkingwithVertexData/TechniquesforWorkingwithVertexData.html
@@ -3720,7 +3733,7 @@
 
 	                                                            // Draw elements.
 
-	                                                            if (webgl.elemIndexUint) {
+	                                                            if (webgl.stats.uint32) {
 
 	                                                                        // Draw elements, 0 -> 2e9
 
@@ -3782,16 +3795,16 @@
 	         * Basic MVC
 	         * https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_model_view_projection
 	         */
-	        function Shader(init, util, glMatrix, webgl, prim) {
+	        function Shader(init, util, glMatrix, webgl, shaderName) {
 	                _classCallCheck(this, Shader);
 
 	                console.log('In Shader class');
 
+	                this.name = shaderName;
+
 	                this.webgl = webgl;
 
 	                this.util = util;
-
-	                this.prim = prim;
 
 	                this.glMatrix = glMatrix;
 
@@ -3819,11 +3832,56 @@
 	        }
 
 	        /* 
-	          * MATRIX OPERATIONS
-	          * Mostly with glMatrix
-	          */
+	         * ============ PRIM OPERATIONS ============
+	         */
+
+	        /**
+	         * prims are added to the webgl program.
+	         */
+
 
 	        _createClass(Shader, [{
+	                key: 'addObj',
+	                value: function addObj(obj) {
+
+	                        var renderList = this.program.renderList;
+
+	                        if (renderList.indexOf(obj) === -1) {
+
+	                                renderList.push(obj);
+	                        } else {
+
+	                                console.error(obj.name + ' already added to shader::' + this.name);
+	                        }
+	                }
+
+	                /** 
+	                 * prims are removed from the webgl program. 
+	                 * NOTE: removing from the array messes up JIT optimization, so slows things down!
+	                 */
+
+	        }, {
+	                key: 'removeObj',
+	                value: function removeObj(obj) {
+
+	                        var renderList = this.program.renderList;
+
+	                        var pos = renderList.indexOf(obj);
+
+	                        if (pos > -1) {
+
+	                                array.splice(pos, 1);
+	                        } else {
+
+	                                console.warn(obj.name + ' not found in shader::' + this.name);
+	                        }
+	                }
+
+	                /* 
+	                 * ============ MATRIX OPERATIONS ============
+	                 */
+
+	        }, {
 	                key: 'mvPushMatrix',
 	                value: function mvPushMatrix() {
 
@@ -3846,6 +3904,18 @@
 
 	                        mvMatrix = this.mvMatrixStack.pop();
 	                }
+
+	                /** 
+	                 * Add a list of Prim objects to be rendered. They can also be 
+	                 * added in Shader init( objList ).
+	                 */
+
+	        }, {
+	                key: 'addObjList',
+	                value: function addObjList(objList) {}
+
+	                // TODO: THIS DOES NOT WORK!
+	                //this.program.renderList = objList;
 
 	                /** 
 	                 * set up our program object, using WebGL. We wrap the 'naked' WebGL 
@@ -3871,6 +3941,10 @@
 
 	                                program = this.webgl.createProgram(this.vsSrc(), this.fsSrc());
 	                        }
+
+	                        // Rendering uses a more direct program reference. we save a reference here for manipulating objects.
+
+	                        this.program = program;
 
 	                        // Return references to our properties, and assign uniform and attribute locations using webgl object.
 
@@ -3923,10 +3997,10 @@
 	var ShaderColor = function (_Shader) {
 	        _inherits(ShaderColor, _Shader);
 
-	        function ShaderColor(init, util, glMatrix, webgl, prim) {
+	        function ShaderColor(init, util, glMatrix, webgl, shaderName) {
 	                _classCallCheck(this, ShaderColor);
 
-	                var _this = _possibleConstructorReturn(this, (ShaderColor.__proto__ || Object.getPrototypeOf(ShaderColor)).call(this, init, util, glMatrix, webgl, prim));
+	                var _this = _possibleConstructorReturn(this, (ShaderColor.__proto__ || Object.getPrototypeOf(ShaderColor)).call(this, init, util, glMatrix, webgl, shaderName));
 
 	                console.log('In ShaderColor class');
 
@@ -3997,7 +4071,7 @@
 
 	                        window.vs2Vars = vsVars; /////////////////////////////////////////////////////////
 
-	                        program.renderList = objList || [];
+	                        program.renderList = program.renderList || objList || [];
 
 	                        // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
 
@@ -4057,7 +4131,7 @@
 
 	                                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer);
 
-	                                        if (webgl.elemIndexUint) {
+	                                        if (webgl.stats.uint32) {
 
 	                                                // Draw elements, 0 -> 2e9
 
@@ -4107,10 +4181,10 @@
 	var ShaderDirlightTexture = function (_Shader) {
 	            _inherits(ShaderDirlightTexture, _Shader);
 
-	            function ShaderDirlightTexture(init, util, glMatrix, webgl, prim) {
+	            function ShaderDirlightTexture(init, util, glMatrix, webgl, shaderName) {
 	                        _classCallCheck(this, ShaderDirlightTexture);
 
-	                        var _this = _possibleConstructorReturn(this, (ShaderDirlightTexture.__proto__ || Object.getPrototypeOf(ShaderDirlightTexture)).call(this, init, util, glMatrix, webgl, prim));
+	                        var _this = _possibleConstructorReturn(this, (ShaderDirlightTexture.__proto__ || Object.getPrototypeOf(ShaderDirlightTexture)).call(this, init, util, glMatrix, webgl, shaderName));
 
 	                        console.log('In ShaderTexture class');
 
@@ -4205,9 +4279,6 @@
 
 	                                    var shaderProgram = program.shaderProgram;
 
-	                                    window.vs3Vars = vsVars; /////////////////////////////////////////////////////////
-
-
 	                                    // TODO: TEMPORARY ADD LIGHTING CONTROL
 
 	                                    var lighting = true;
@@ -4225,7 +4296,7 @@
 
 	                                    // Attach objects.
 
-	                                    program.renderList = objList || [];
+	                                    program.renderList = program.renderList || objList || [];
 
 	                                    // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
 	                                    // TODO: https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/TechniquesforWorkingwithVertexData/TechniquesforWorkingwithVertexData.html
@@ -4331,7 +4402,7 @@
 
 	                                                            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer);
 
-	                                                            if (webgl.elemIndexUint) {
+	                                                            if (webgl.stats.uint32) {
 
 	                                                                        // Draw elements, 0 -> 2e9
 
@@ -4379,10 +4450,10 @@
 	var ShaderWater = function (_Shader) {
 	    _inherits(ShaderWater, _Shader);
 
-	    function ShaderWater(init, util, glMatrix, webgl, prim) {
+	    function ShaderWater(init, util, glMatrix, webgl, shaderName) {
 	        _classCallCheck(this, ShaderWater);
 
-	        var _this = _possibleConstructorReturn(this, (ShaderWater.__proto__ || Object.getPrototypeOf(ShaderWater)).call(this, init, util, glMatrix, webgl, prim));
+	        var _this = _possibleConstructorReturn(this, (ShaderWater.__proto__ || Object.getPrototypeOf(ShaderWater)).call(this, init, util, glMatrix, webgl, prim, shaderName));
 
 	        console.log('In ShaderWater class');
 
@@ -4433,10 +4504,10 @@
 	var ShaderMetal = function (_Shader) {
 	    _inherits(ShaderMetal, _Shader);
 
-	    function ShaderMetal(init, util, glMatrix, webgl, prim) {
+	    function ShaderMetal(init, util, glMatrix, webgl, shaderName) {
 	        _classCallCheck(this, ShaderMetal);
 
-	        var _this = _possibleConstructorReturn(this, (ShaderMetal.__proto__ || Object.getPrototypeOf(ShaderMetal)).call(this, init, util, glMatrix, webgl, prim));
+	        var _this = _possibleConstructorReturn(this, (ShaderMetal.__proto__ || Object.getPrototypeOf(ShaderMetal)).call(this, init, util, glMatrix, webgl, shaderName));
 
 	        console.log('In ShaderMetal class');
 
@@ -4470,33 +4541,105 @@
 	        value: true
 	});
 
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	var Renderer = function Renderer(init, util, glMatrix, webgl, shaderTexture, shaderColor, shaderDirlightTexture) {
-	        _classCallCheck(this, Renderer);
+	var Renderer = function () {
+	        function Renderer(init, util, glMatrix, webgl, shaderTexture, shaderColor, shaderDirlightTexture) {
+	                _classCallCheck(this, Renderer);
 
-	        console.log('In Renderer class');
+	                console.log('In Renderer class');
 
-	        this.webgl = webgl;
+	                this.webgl = webgl;
 
-	        this.util = webgl.util;
+	                this.util = webgl.util;
 
-	        this.glmatrix = glMatrix;
+	                this.glmatrix = glMatrix;
 
-	        this.shaderTexture = shaderTexture;
+	                this.shaderTexture = shaderTexture;
 
-	        this.shaderColor = shaderColor;
+	                this.shaderColor = shaderColor;
 
-	        this.shaderDirlightTexture = shaderDirlightTexture;
+	                this.shaderDirlightTexture = shaderDirlightTexture;
 
-	        if (this.init) {}
-	}
+	                this.shaderList = [];
 
-	// Specialized render manipulations go below.
+	                this.renderList = [];
 
-	// TODO: write function for adding shaders.
+	                if (this.init) {}
+	        }
 
-	;
+	        /** 
+	         * Get a shader, error, if it isn't present.
+	         * @param {String} shaderName the assigned name of the Shader.
+	         */
+
+
+	        _createClass(Renderer, [{
+	                key: 'getShader',
+	                value: function getShader(shaderName) {
+
+	                        if (this.shaderList[shaderName]) {
+
+	                                return this.shaderList[shaderName];
+	                        } else {
+
+	                                console.error('Renderer::getShader(): shader ' + shaderName + ' not found');
+	                        }
+
+	                        return false;
+	                }
+
+	                /**
+	                 * Setter for adding shaders, possibly BEFORE webgl context is defined.
+	                 * NOTE: TYPICALLY INVOKED IN 'app.es6'.
+	                 * @param {String} shaderName the assigned name of the Shader.
+	                 * @param {Shader} shader the shader object.
+	                 */
+
+	        }, {
+	                key: 'addShader',
+	                value: function addShader(shader, objList) {
+
+	                        if (this.shaderList.indexOf(shader.name) === -1) {
+
+	                                this.shaderList[shader.name] = shader;
+
+	                                shader.addObjList(objList);
+
+	                                // TODO: have to initialize the shader earlier.
+
+	                                // this.renderList.push( shader.program );
+
+	                                return true;
+	                        } else {
+
+	                                console.error('Renderer::addShader(): already added shader:' + shader.name + ' to Renderer');
+	                        }
+
+	                        return false;
+	                }
+
+	                /** 
+	                 * Render everything.
+	                 */
+
+	        }, {
+	                key: 'render',
+	                value: function render() {
+
+	                        for (var i = 0; i < this.renderList.length; i++) {
+
+	                                console.log('RENDERLIST I:' + this.renderList[i]);
+
+	                                this.renderList[i].render();
+	                        }
+	                }
+	        }]);
+
+	        return Renderer;
+	}();
 
 	exports.default = Renderer;
 
@@ -5036,6 +5179,88 @@
 	                        // if we draw it, add more here.
 
 	                        return box;
+	                }
+	        }, {
+	                key: 'computeBoundingSphere',
+	                value: function computeBoundingSphere(boundingBox) {
+
+	                        var sphere = {};
+
+	                        var topLeft = boundingBox.topLeft;
+
+	                        var bottomRight = boundingBox.bottomRight;
+
+	                        var xSpan = Math.abs(bottomRight[0] - topLeft[0]);
+
+	                        var ySpan = Math.abs(bottomRight[1] - topLeft[1]);
+
+	                        var zSpan = Math.abs(bottomRight[2] - topLeft[2]);
+
+	                        var radius = Math.max(xSpan, ySpan, zSpan) / 2;
+
+	                        sphere.radius = radius;
+
+	                        var center = this.computeCentroid(vertices);
+
+	                        sphere.center = center;
+
+	                        return sphere;
+	                }
+
+	                /** 
+	                 * Compute the bounding sphere for a Prim, with all its points projected to the 
+	                 * surface of the sphere. Use to make non-uv sphere. Also use to supply texture coordinates 
+	                 * when they are missing.
+	                 * @param {glMatrix.vec3[]} vertices the vertex coordinates.
+	                 * @param {Object} boundingBox a pre-computed bounding box for the coordinates.
+	                 */
+
+	        }, {
+	                key: 'computeInflateToSphere',
+	                value: function computeInflateToSphere(vertices, boundingBox) {
+
+	                        var sphere = this.computeSphere(boundingBox);
+
+	                        var sVertices = [];
+
+	                        var sTexCoords = [];
+
+	                        // Compute distances between extremes
+
+	                        var cx = sphere.center[0];
+
+	                        var cy = sphere.center[1];
+
+	                        var cz = sphere.center[2];
+
+	                        var radius = sphere.radius;
+
+	                        for (var i = 0; i < vertices.length; i += 3) {
+
+	                                var x = vertices[i];
+
+	                                var y = vertices[i + 1];
+
+	                                var z = vertices[i + 2];
+
+	                                var dist = Math.sqrt(cx * x + cy * y + cz * z);
+
+	                                var _scale = dist / radius;
+
+	                                sVertices.push(x * _scale, y * _scale, z * _scale);
+
+	                                var texCoord = this.computeSphereCoords([x, y, z]);
+
+	                                sTexCoords.push(texCoord.u, texCoord.v);
+	                        }
+
+	                        return {
+
+	                                vertices: vertices,
+
+	                                texCoords: texCoords
+
+	                        };
 	                }
 
 	                /** 
@@ -5599,6 +5824,26 @@
 	                        }
 
 	                        return tangents;
+	                }
+
+	                /** 
+	                 * If texture coordinates aren't defined, compute them by 2d flattening
+	                 * @param {glMatrix.vec3[]} vertices. The input positions.
+	                 */
+
+	        }, {
+	                key: 'computeTexCoords',
+	                value: function computeTexCoords(vertices) {
+
+	                        var texCoords = [];
+
+	                        // For each vertex, compute a u anv v coordinate based on their spherical projection.
+
+	                        // Make spherical
+
+	                        // compute coordinates.
+
+	                        return texCoords;
 	                }
 
 	                /** 
@@ -8034,30 +8279,22 @@
 	                        prim.geometry = this[type](prim);
 
 	                        ////////////////////////////////////////////////////////////////////////////////
-	                        var mesh = new _mesh2.default(prim.geometry);
 
-	                        // SIMPLIFY TEST
 
-	                        //if ( prim.name === 'TestCapsule' ) {
-
-	                        //    window.mesh = mesh;
-
-	                        //mesh.simplify();
-
-	                        //}
-
-	                        //if ( prim.name == 'colored cube' ) {
-
-	                        //    window.prim2 = prim;
-
-	                        //}
-
-	                        ////////////////////////////////////////////////////////////////////////////////
-	                        // SUBDIVIDE TEST
-
-	                        //if ( prim.name === 'colored cube' ) {
 	                        if (prim.name === 'cubesphere') {
+	                                //if ( prim.name === 'TestCapsule' ) {
+	                                //if ( prim.name === 'colored cube' ) {
 	                                //if ( prim.name === 'texsphere' ) {
+
+	                                var mesh = new _mesh2.default(prim.geometry);
+
+	                                window.mesh = mesh;
+
+	                                // SIMPLIFY TEST
+
+	                                mesh.simplify();
+
+	                                // SUBDIVIDE TEST
 
 	                                mesh.subdivide(true);
 	                                ///mesh.subdivide( true );
@@ -11019,7 +11256,7 @@
 
 	                        if (this.util.isArray(indices)) {
 
-	                                if (this.webgl.elemIndexUint) {
+	                                if (this.webgl.stats.uint32) {
 
 	                                        o.data = new Uint32Array(indices);
 	                                } else {
@@ -11136,7 +11373,7 @@
 	                         * Conditionally create a UINT16 or UINT32 buffer for the index values, based 
 	                         * on whether this is WebGL 2.0, or the WebGL extension is available
 	                         */
-	                        if (this.webgl.elemIndexUint) {
+	                        if (this.webgl.stats.uint32) {
 
 	                                if (!o.data.length) {
 
@@ -11410,7 +11647,7 @@
 	                        ['img/uv-test.png'], // texture present, NOT USED
 	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0)));
 
-	                        this.vs1 = this.renderer.shaderTexture.init(this.textureObjList);
+	                        ///////this.vs1 = this.renderer.shaderTexture.init( this.textureObjList );
 
 	                        // COLORED SHADER.
 
@@ -11445,7 +11682,7 @@
 	                        ['obj/teapot/teapot.obj'] // object files (.obj, .mtl)
 	                        ));
 
-	                        this.vs2 = this.renderer.shaderColor.init(this.colorObjList);
+	                        /////////this.vs2 = this.renderer.shaderColor.init( this.colorObjList );
 
 	                        // LIT TEXTURE SHADER.
 
@@ -11687,9 +11924,10 @@
 	                        true // if true, apply texture to each face
 	                        ));
 
-	                        this.vs3 = this.renderer.shaderDirlightTexture.init(this.dirlightTextureObjList);
+	                        //this.vs3 = this.renderer.shaderDirlightTexture.init( this.dirlightTextureObjList );
 
-	                        ///////////////
+
+	                        /////////////// 
 	                        /*
 	                                this.textureObjList.push( this.prim.createPrim(
 	                                    this.prim.typeList.MESH,
@@ -11710,6 +11948,12 @@
 
 	                        // Finished object creation, start rendering...
 
+	                        this.vs1 = this.renderer.getShader('shaderTexture').init(this.textureObjList);
+
+	                        this.vs2 = this.renderer.getShader('shaderColor').init(this.colorObjList);
+
+	                        this.vs3 = this.renderer.getShader('shaderDirlightTexture').init(this.dirlightTextureObjList);
+
 	                        this.render();
 	                }
 
@@ -11722,7 +11966,7 @@
 	                value: function create() {}
 
 	                /** 
-	                 * Update world.related properties, e.g. a HUD or framrate readout.
+	                 * Update world.related properties, e.g. a HUD or framrate reado ut.
 	                 */
 
 	        }, {
@@ -11764,6 +12008,8 @@
 	                        // Render Prims attached to each renderer object.
 
 	                        // TODO: Don't render until we update in the correct order.
+
+	                        //this.renderer.render();
 
 	                        this.vs3.render();
 

@@ -524,7 +524,7 @@ class GeoObj {
 
         if( this.util.isArray( indices ) ) {
 
-            if ( this.webgl.elemIndexUint ) {
+            if ( this.webgl.stats.uint32 ) {
 
                 o.data = new Uint32Array( indices );
 
@@ -652,7 +652,7 @@ class GeoObj {
              * Conditionally create a UINT16 or UINT32 buffer for the index values, based 
              * on whether this is WebGL 2.0, or the WebGL extension is available
              */
-            if ( this.webgl.elemIndexUint ) {
+            if ( this.webgl.stats.uint32 ) {
 
                 if ( ! o.data.length ) {
 

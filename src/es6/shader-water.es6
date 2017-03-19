@@ -2,9 +2,9 @@ import Shader from './shader'
 
 class ShaderWater extends Shader {
 
-    constructor ( init, util, glMatrix, webgl, prim ) {
+    constructor ( init, util, glMatrix, webgl, shaderName ) {
 
-        super( init, util, glMatrix, webgl, prim );
+        super( init, util, glMatrix, webgl, prim, shaderName );
 
         console.log( 'In ShaderWater class' );
 
