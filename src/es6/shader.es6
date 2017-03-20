@@ -59,6 +59,8 @@ class Shader {
 
         this.fragmentShaderFile = null;
 
+        this.getProgram();
+
     }
 
     /* 
@@ -110,7 +112,7 @@ class Shader {
      * ============ MATRIX OPERATIONS ============
      */
 
-    mvPushMatrix() {
+    mvPushMatrix () {
 
         let mat4 = this.glMatrix.mat4;
 
@@ -122,7 +124,7 @@ class Shader {
 
     }
 
-    mvPopMatrix() {
+    mvPopMatrix () {
 
         if ( this.mvMatrixStack.length == 0 ) {
 
@@ -145,7 +147,7 @@ class Shader {
 
     }
 
-    getProgram() {
+    getProgram () {
 
         let program = null;
 
@@ -158,7 +160,7 @@ class Shader {
 
         } else {
 
-            // vsSrc() and fsSrc are defined in derived Shader objects.
+            // vsSrc() and fsSrc() are defined in derived Shader objects.
 
             program = this.webgl.createProgram( this.vsSrc(), this.fsSrc() );
 

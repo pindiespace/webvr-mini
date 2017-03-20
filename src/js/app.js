@@ -18,8 +18,6 @@ var env = process.env.WEBPACK_ENV;
 
 // Check ES6 module structure.
 
-console.log( 'INSPECTING VRMINI')
-
 for (var i in vrmini ) {
 
     console.log( i + ":" + vrmini[i] );

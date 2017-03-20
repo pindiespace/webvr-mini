@@ -6,8 +6,6 @@ class ShaderDirlightTexture extends Shader {
 
         super( init, util, glMatrix, webgl, shaderName );
 
-        this.getProgram(); //////////////////////////////////////
-
         console.log( 'In ShaderTexture class' );
 
     }

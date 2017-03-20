@@ -163,6 +163,8 @@ class World {
 
 ///OBJ MESH
 
+//TODO: TEAPOT DOES NOT LOAD AND RENDER!!!!!!!!!!!!!!!!!!!!!!!!!!
+
         this.colorObjList.push( this.prim.createPrim(
             this.prim.typeList.MESH,
             'teapot',

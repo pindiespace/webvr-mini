@@ -6,10 +6,6 @@ class ShaderColor extends Shader {
 
         super( init, util, glMatrix, webgl, shaderName );
 
-        this.getProgram(); ////////////////////////////
-
-        console.log(')))))))))))))))))))))))))))))))this.program.vsvars' + this.program.vsVars )
-
         console.log( 'In ShaderColor class' );
 
     }
@@ -108,6 +104,9 @@ class ShaderColor extends Shader {
 
         // We received webgl in the constructor, and gl above is referenced from it.
 
+        // Make additional locals references.
+
+        // TODO: MAKE THEM, AND CHECK IF PERFORMANCE IS IMPROVED....
 
         // Attach objects.
 

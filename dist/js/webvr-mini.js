@@ -72,8 +72,6 @@
 
 	// Check ES6 module structure.
 
-	console.log( 'INSPECTING VRMINI')
-
 	for (var i in vrmini ) {
 
 	    console.log( i + ":" + vrmini[i] );
@@ -3661,8 +3659,6 @@
 
 	                var _this = _possibleConstructorReturn(this, (ShaderTexture.__proto__ || Object.getPrototypeOf(ShaderTexture)).call(this, init, util, glMatrix, webgl, shaderName));
 
-	                _this.getProgram(); //////////////////////////////////
-
 	                console.log('In ShaderTexture class');
 
 	                return _this;
@@ -3919,6 +3915,8 @@
 	                this.vertexShaderFile = null;
 
 	                this.fragmentShaderFile = null;
+
+	                this.getProgram();
 	        }
 
 	        /* 
@@ -4019,7 +4017,7 @@
 	                                program = this.webgl.createProgram(this.webgl.fetchVertexShader(this.vertexShaderFile), this.webgl.fetchFragmentShader(this.fragmentShaderFile));
 	                        } else {
 
-	                                // vsSrc() and fsSrc are defined in derived Shader objects.
+	                                // vsSrc() and fsSrc() are defined in derived Shader objects.
 
 	                                program = this.webgl.createProgram(this.vsSrc(), this.fsSrc());
 	                        }
@@ -4106,10 +4104,6 @@
 
 	                var _this = _possibleConstructorReturn(this, (ShaderColor.__proto__ || Object.getPrototypeOf(ShaderColor)).call(this, init, util, glMatrix, webgl, shaderName));
 
-	                _this.getProgram(); ////////////////////////////
-
-	                console.log(')))))))))))))))))))))))))))))))this.program.vsvars' + _this.program.vsVars);
-
 	                console.log('In ShaderColor class');
 
 	                return _this;
@@ -4176,6 +4170,9 @@
 
 	                        // We received webgl in the constructor, and gl above is referenced from it.
 
+	                        // Make additional locals references.
+
+	                        // TODO: MAKE THEM, AND CHECK IF PERFORMANCE IS IMPROVED....
 
 	                        // Attach objects.
 
@@ -4295,8 +4292,6 @@
 	                        _classCallCheck(this, ShaderDirlightTexture);
 
 	                        var _this = _possibleConstructorReturn(this, (ShaderDirlightTexture.__proto__ || Object.getPrototypeOf(ShaderDirlightTexture)).call(this, init, util, glMatrix, webgl, shaderName));
-
-	                        _this.getProgram(); //////////////////////////////////////
 
 	                        console.log('In ShaderTexture class');
 
@@ -11792,6 +11787,8 @@
 	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0)));
 
 	                        ///OBJ MESH
+
+	                        //TODO: TEAPOT DOES NOT LOAD AND RENDER!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 	                        this.colorObjList.push(this.prim.createPrim(this.prim.typeList.MESH, 'teapot', vec5(1, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
 	                        vec5(40, 40, 0), // divisions MAKE SMALLER
