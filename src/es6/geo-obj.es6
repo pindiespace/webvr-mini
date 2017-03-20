@@ -423,7 +423,7 @@ class GeoObj {
 
         this.colors.data = concat( this.colors.data, colors );
 
-        if ( this.vertices.data.length > webgl.MAX_DRAWELEMENTS ) {
+        if ( this.vertices.data.length > this.webgl.MAX_DRAWELEMENTS ) {
 
             this.ssz = true;
 

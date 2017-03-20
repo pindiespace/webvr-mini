@@ -39,7 +39,7 @@
 
         <section>
 
-            <canvas id="webvr-canvas" width="640" height="480"></canvas>
+            <canvas id="webvr-mini-canvas" width="640" height="480"></canvas>
 
         </section>
 
@@ -59,23 +59,23 @@
 
         <script>
 
-            console.log("vrmini" + vrmini );
+            //console.log("vrmini" + vrmini );
 
-            console.log("iFrame:" + vrmini.util.isIFrame()); // if true, we're in the webpack server iframe
+            //console.log("iFrame:" + vrmini.util.isIFrame()); // if true, we're in the webpack server iframe
 
             // Set up a display.
 
-            var webgl = window.webgl = vrmini.webgl;
+            //var webgl = window.webgl = vrmini.webgl;
 
-            webgl.init( 'webvr-canvas' );
+            //webgl.init( 'webvr-mini-canvas' );
 
-            window.addEventListener( 'DOMContentLoaded', function () {
+            //window.addEventListener( 'DOMContentLoaded', function () {
 
-                console.log( 'loading the world...' );
+            //    console.log( 'loading the world...' );
 
-                vrmini.world.init();
+                //vrmini.world.init();
 
-            }, false );
+            //}, false );
 
 
         </script>

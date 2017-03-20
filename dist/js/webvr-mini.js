@@ -66,9 +66,13 @@
 
 	// REQUIRE ALL .es6 files.
 
-	var vrmini = __webpack_require__( 3 );
+	    var vrmini = __webpack_require__( 3 );
+
+	    vrmini.world.init();
 
 	// Check ES6 module structure.
+
+	console.log( 'INSPECTING VRMINI')
 
 	for (var i in vrmini ) {
 
@@ -296,7 +300,7 @@
 	/* WEBPACK VAR INJECTION */(function(process) {'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
-	    value: true
+	        value: true
 	});
 	exports.world = exports.webvr = exports.prim = exports.loadVideo = exports.loadAudio = exports.loadTexture = exports.loadModel = exports.webgl = exports.util = undefined;
 
@@ -385,10 +389,10 @@
 
 	if (!glMatrix) {
 
-	    console.error('gl-matrix could\'nt be loaded...');
+	        console.error('gl-matrix could\'nt be loaded...');
 	} else {
 
-	    console.log('loaded gl-matrix');
+	        console.log('loaded gl-matrix');
 	}
 
 	// Import WebVR-Mini libraries. Note: if you don't use super() imports will fail!
@@ -419,64 +423,138 @@
 
 	if (true) {
 
-	    console.log('app.es6: in development mode');
+	        console.log('app.es6: in development mode');
 
-	    // require kronos webgl debug from node_modules
-	    // https://github.com/vorg/webgl-debug
+	        // require kronos webgl debug from node_modules
+	        // https://github.com/vorg/webgl-debug
 
-	    var debug = __webpack_require__(37);
+	        var debug = __webpack_require__(37);
 
-	    exports.webgl = webgl = new _webgl2.default(false, glMatrix, util, debug);
+	        exports.webgl = webgl = new _webgl2.default(false, glMatrix, util, debug);
 
-	    if (debug) {
+	        if (debug) {
 
-	        console.log('Loading webgl-debug');
-	    } else {
+	                console.log('Loading webgl-debug');
+	        } else {
 
-	        console.log('Error loading webgl-debug');
-	    }
+	                console.log('Error loading webgl-debug');
+	        }
 	} else if (__RELEASE__ === 'true') {
 
-	    // Code only added to release.
+	        // Code only added to release.
 
-	    exports.webgl = webgl = new _webgl2.default(false, glMatrix, util);
+	        exports.webgl = webgl = new _webgl2.default(false, glMatrix, util);
 	}
+
+	var webvr = void 0,
+	    loadModel = void 0,
+	    loadTexture = void 0,
+	    loadAudio = void 0,
+	    loadVideo = void 0,
+	    loadFont = void 0,
+	    prim = void 0,
+	    shaderTexture = void 0,
+	    shaderColor = void 0,
+	    shaderDirlightTexture = void 0,
+	    renderer = void 0,
+	    world = void 0;
+
+	// WebGL can take some time to init.
+	///////////////////////////////////////////////////////
+	var promise = new Promise(function (resolve, reject) {
+
+	        // do a thing, possibly async, then…
+
+	        if (webgl.init('webvr-mini-canvas')) {
+
+	                exports.webvr = webvr = new _webvr2.default(false, util, glMatrix, webgl);
+
+	                // The Prim object needs Loaders.
+
+	                exports.loadModel = loadModel = new _loadModel2.default(true, util, glMatrix, webgl);
+
+	                exports.loadTexture = loadTexture = new _loadTexture2.default(true, util, glMatrix, webgl);
+
+	                exports.loadAudio = loadAudio = new _loadAudio2.default(true, util, glMatrix, webgl);
+
+	                exports.loadVideo = loadVideo = new _loadVideo2.default(true, util, glMatrix, webgl);
+
+	                loadFont = new _loadFont2.default(true, util, glMatrix, webgl);
+
+	                exports.prim = prim = new _prim2.default(true, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo);
+
+	                shaderTexture = new _shaderTexture2.default(true, util, glMatrix, webgl, 'shaderTexture');
+
+	                shaderColor = new _shaderColor2.default(true, util, glMatrix, webgl, 'shaderColor');
+
+	                shaderDirlightTexture = new _shaderDirlightTexture2.default(true, util, glMatrix, webgl, 'shaderDirlightTexture');
+
+	                renderer = new _renderer2.default(true, util, glMatrix, webgl, shaderTexture, shaderColor, shaderDirlightTexture);
+
+	                renderer.addShader(shaderTexture);
+
+	                renderer.addShader(shaderColor);
+
+	                renderer.addShader(shaderDirlightTexture);
+
+	                // Create the world, which needs WebGL, WebVR, and Prim.
+
+	                exports.world = world = new _world2.default(webgl, prim, renderer);
+
+	                resolve("Stuff worked!");
+	        } else {
+
+	                reject(Error("It broke"));
+	        }
+	}).then(function (result) {
+
+	        world.init();
+	}).catch(function (err) {
+
+	        // error
+
+	});
+
+	///////////////////////////////////////////////////////
 
 	// WebVR needs WebGL.
 
-	var webvr = new _webvr2.default(false, util, glMatrix, webgl);
+	/*
+	let webvr = new WebVR( false, util, glMatrix, webgl );
 
 	// The Prim object needs Loaders.
 
-	var loadModel = new _loadModel2.default(true, util, glMatrix, webgl);
+	let loadModel = new LoadModel( true, util, glMatrix, webgl );
 
-	var loadTexture = new _loadTexture2.default(true, util, glMatrix, webgl);
+	let loadTexture = new LoadTexture( true, util, glMatrix, webgl );
 
-	var loadAudio = new _loadAudio2.default(true, util, glMatrix, webgl);
+	let loadAudio = new LoadAudio( true, util, glMatrix, webgl );
 
-	var loadVideo = new _loadVideo2.default(true, util, glMatrix, webgl);
+	let loadVideo = new LoadVideo( true, util, glMatrix, webgl );
 
-	var loadFont = new _loadFont2.default(true, util, glMatrix, webgl);
+	let loadFont = new LoadFont( true, util, glMatrix, webgl );
 
-	var prim = new _prim2.default(true, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo);
+	let prim = new Prim ( true, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo );
 
-	var shaderTexture = new _shaderTexture2.default(true, util, glMatrix, webgl, 'shaderTexture');
+	let shaderTexture = new ShaderTexture ( true, util, glMatrix, webgl, 'shaderTexture' );
 
-	var shaderColor = new _shaderColor2.default(true, util, glMatrix, webgl, 'shaderColor');
+	let shaderColor = new ShaderColor ( true, util, glMatrix, webgl, 'shaderColor' );
 
-	var shaderDirlightTexture = new _shaderDirlightTexture2.default(true, util, glMatrix, webgl, 'shaderDirlightTexture');
+	let shaderDirlightTexture = new ShaderDirlightTexture( true, util, glMatrix, webgl, 'shaderDirlightTexture' );
 
-	var renderer = new _renderer2.default(true, util, glMatrix, webgl, shaderTexture, shaderColor, shaderDirlightTexture);
+	let renderer = new Renderer ( true, util, glMatrix, webgl, shaderTexture, shaderColor, shaderDirlightTexture );
 
-	renderer.addShader(shaderTexture);
+	renderer.addShader( shaderTexture );
 
-	renderer.addShader(shaderColor);
+	renderer.addShader( shaderColor );
 
-	renderer.addShader(shaderDirlightTexture);
+	renderer.addShader( shaderDirlightTexture );
 
 	// Create the world, which needs WebGL, WebVR, and Prim.
 
-	var world = new _world2.default(webgl, prim, renderer);
+	let world = new World( webgl, prim, renderer );
+
+	*/
 
 	// TODO: don't automatically update webgl
 	// TODO: enclose in a promise, then update renderer and shaders.
@@ -1150,9 +1228,11 @@
 
 	                this.util = util;
 
+	                this.stats = {};
+
 	                if (init === true) {
 
-	                        this.init(canvas);
+	                        this.init(document.getElementById('webvr-mini-canvas')); // Normally not called this way
 	                }
 
 	                // If we are running in debug mode, save the debug utils into this object.
@@ -1244,6 +1324,48 @@
 
 	                                        var gl = this.gl;
 
+	                                        // Default WebGL initializtion and stats, can be over-ridden in your world file.
+
+	                                        if (gl.getParameter && gl.getShaderPrecisionFormat) {
+
+	                                                var stats = this.stats;
+
+	                                                // Check if high precision supported in fragment shader.
+
+	                                                stats.highp = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT).precision;
+
+	                                                // Max texture size, for gl.texImage2D.                
+
+	                                                stats.maxTexSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+
+	                                                // Max cubemap size, for gl.texImage2D.
+
+	                                                stats.maxCubeSize = gl.getParameter(gl.MAX_CUBE_MAP_TEXTURE_SIZE);
+
+	                                                // Max texture size, for gl.renderbufferStorage and canvas width/height.
+
+	                                                stats.maxRenderbufferSize = gl.getParameter(gl.MAX_RENDERBUFFER_SIZE);
+
+	                                                // Max texture units.
+
+	                                                stats.combinedUnits = gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS);
+
+	                                                // Max vertex buffers.
+
+	                                                stats.maxVSattribs = gl.getParameter(gl.MAX_VERTEX_ATTRIBS);
+
+	                                                // Max 4-byte uniforms.
+
+	                                                stats.maxVertexShader = gl.getParameter(gl.MAX_VERTEX_UNIFORM_VECTORS);
+
+	                                                // Max 4-byte uniforms.
+
+	                                                stats.maxFragmentShader = gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS);
+	                                        } else {
+
+	                                                this.stats = false;
+	                                        }
+
 	                                        /* 
 	                                         * Set up listeners for context lost and regained.
 	                                         * @link https://www.khronos.org/webgl/wiki/HandlingContextLost
@@ -1294,50 +1416,6 @@
 	                                                e.preventDefault();
 	                                        }, false);
 
-	                                        // Default WebGL initializtion and stats, can be over-ridden in your world file.
-
-	                                        if (gl.getParameter && gl.getShaderPrecisionFormat) {
-
-	                                                this.stats = {};
-
-	                                                var stats = this.stats;
-
-	                                                // Check if high precision supported in fragment shader.
-
-	                                                stats.highp = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT).precision;
-
-	                                                // Max texture size, for gl.texImage2D.                
-
-	                                                stats.maxTexSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
-
-	                                                // Max cubemap size, for gl.texImage2D.
-
-	                                                stats.maxCubeSize = gl.getParameter(gl.MAX_CUBE_MAP_TEXTURE_SIZE);
-
-	                                                // Max texture size, for gl.renderbufferStorage and canvas width/height.
-
-	                                                stats.maxRenderbufferSize = gl.getParameter(gl.MAX_RENDERBUFFER_SIZE);
-
-	                                                // Max texture units.
-
-	                                                stats.combinedUnits = gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS);
-
-	                                                // Max vertex buffers.
-
-	                                                stats.maxVSattribs = gl.getParameter(gl.MAX_VERTEX_ATTRIBS);
-
-	                                                // Max 4-byte uniforms.
-
-	                                                stats.maxVertexShader = gl.getParameter(gl.MAX_VERTEX_UNIFORM_VECTORS);
-
-	                                                // Max 4-byte uniforms.
-
-	                                                stats.maxFragmentShader = gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS);
-	                                        } else {
-
-	                                                this.stats = false;
-	                                        }
-
 	                                        // If we're reloading, clear all current textures in the texture buffers.
 
 	                                        this.clearTextures();
@@ -1373,8 +1451,14 @@
 	                                        gl.clearColor(0.1, 0.1, 0.1, 1.0);
 
 	                                        return this.gl;
+	                                } else {
+
+	                                        console.error('no WebGL context');
 	                                } // end of have a gl context
 
+	                        } else {
+
+	                                console.error(' no WebGL canvas');
 	                        } // end of if have a <canvas>
 
 	                        return null;
@@ -1773,6 +1857,7 @@
 	        }, {
 	                key: 'fetchShader',
 	                value: function fetchShader(type, sourceURL) {
+	                        var _this2 = this;
 
 	                        var self = this;
 
@@ -1804,7 +1889,7 @@
 
 	                                if (source) {
 
-	                                        return self.createShader(type, source);
+	                                        return _this2.createShader(type, source);
 	                                }
 	                        });
 
@@ -1927,6 +2012,8 @@
 	                                }
 	                        }
 
+	                        console.log('))))))))))))program.shaderProgram:' + prg.shaderProgram + ' vsVars:' + prg.vsVars + ' fsVars:' + prg.fsVars + ' READY:' + this.ready());
+
 	                        return prg;
 	                }
 
@@ -1934,6 +2021,9 @@
 	                 * Read shader code, and organize the variables in the shader 
 	                 * into an object. Abstracts some of the tedious work in setting 
 	                 * up shader variables.
+	                 *
+	                 * Called by individual Shader objects in vsSrc() and fsSrc().
+	                 * 
 	                 * @param {Array} sourceArr array of lines in the shader.
 	                 * @returns {Object} an object organizing attribute, uniform, and 
 	                 * varying variable names and datatypes.
@@ -3546,7 +3636,7 @@
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
-	            value: true
+	        value: true
 	});
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3564,194 +3654,194 @@
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 	var ShaderTexture = function (_Shader) {
-	            _inherits(ShaderTexture, _Shader);
+	        _inherits(ShaderTexture, _Shader);
 
-	            function ShaderTexture(init, util, glMatrix, webgl, shaderName) {
-	                        _classCallCheck(this, ShaderTexture);
+	        function ShaderTexture(init, util, glMatrix, webgl, shaderName) {
+	                _classCallCheck(this, ShaderTexture);
 
-	                        var _this = _possibleConstructorReturn(this, (ShaderTexture.__proto__ || Object.getPrototypeOf(ShaderTexture)).call(this, init, util, glMatrix, webgl, shaderName));
+	                var _this = _possibleConstructorReturn(this, (ShaderTexture.__proto__ || Object.getPrototypeOf(ShaderTexture)).call(this, init, util, glMatrix, webgl, shaderName));
 
-	                        console.log('In ShaderTexture class');
+	                _this.getProgram(); //////////////////////////////////
 
-	                        return _this;
-	            }
+	                console.log('In ShaderTexture class');
 
-	            /** 
-	             * --------------------------------------------------------------------
-	             * VERTEX SHADER 1
-	             * a default-lighting textured object vertex shader.
-	             * - vertex position
-	             * - texture coordinate
-	             * - model-view matrix
-	             * - projection matrix
-	             * --------------------------------------------------------------------
-	             */
+	                return _this;
+	        }
 
+	        /** 
+	         * --------------------------------------------------------------------
+	         * VERTEX SHADER 1
+	         * a default-lighting textured object vertex shader.
+	         * - vertex position
+	         * - texture coordinate
+	         * - model-view matrix
+	         * - projection matrix
+	         * --------------------------------------------------------------------
+	         */
 
-	            _createClass(ShaderTexture, [{
-	                        key: 'vsSrc',
-	                        value: function vsSrc() {
 
-	                                    var s = ['attribute vec3 aVertexPosition;', 'attribute vec2 aTextureCoord;', 'uniform mat4 uMVMatrix;', 'uniform mat4 uPMatrix;', 'varying vec2 vTextureCoord;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vTextureCoord = aTextureCoord;', '}'];
+	        _createClass(ShaderTexture, [{
+	                key: 'vsSrc',
+	                value: function vsSrc() {
 
-	                                    return {
+	                        var s = ['attribute vec3 aVertexPosition;', 'attribute vec2 aTextureCoord;', 'uniform mat4 uMVMatrix;', 'uniform mat4 uPMatrix;', 'varying vec2 vTextureCoord;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vTextureCoord = aTextureCoord;', '}'];
 
-	                                                code: s.join('\n'),
+	                        return {
 
-	                                                varList: this.webgl.createVarList(s)
+	                                code: s.join('\n'),
 
-	                                    };
-	                        }
+	                                varList: this.webgl.createVarList(s)
 
-	                        /** 
-	                         * a default-lighting textured object fragment shader.
-	                         * - varying texture coordinate
-	                         * - texture 2D sampler
-	                         */
+	                        };
+	                }
 
-	            }, {
-	                        key: 'fsSrc',
-	                        value: function fsSrc() {
+	                /** 
+	                 * a default-lighting textured object fragment shader.
+	                 * - varying texture coordinate
+	                 * - texture 2D sampler
+	                 */
 
-	                                    var s = [
+	        }, {
+	                key: 'fsSrc',
+	                value: function fsSrc() {
 
-	                                    // 'precision mediump float;',
+	                        var s = [
 
-	                                    this.floatp, 'varying vec2 vTextureCoord;', 'uniform sampler2D uSampler;', 'void main(void) {', '    gl_FragColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));', '}'];
+	                        // 'precision mediump float;',
 
-	                                    return {
+	                        this.floatp, 'varying vec2 vTextureCoord;', 'uniform sampler2D uSampler;', 'void main(void) {', '    gl_FragColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));', '}'];
 
-	                                                code: s.join('\n'),
+	                        return {
 
-	                                                varList: this.webgl.createVarList(s)
+	                                code: s.join('\n'),
 
-	                                    };
-	                        }
+	                                varList: this.webgl.createVarList(s)
 
-	                        /** 
-	                         * --------------------------------------------------------------------
-	                         * Vertex Shader 1, using texture buffer.
-	                         * --------------------------------------------------------------------
-	                         */
+	                        };
+	                }
 
-	            }, {
-	                        key: 'init',
-	                        value: function init(objList) {
+	                /** 
+	                 * --------------------------------------------------------------------
+	                 * Vertex Shader 1, using texture buffer.
+	                 * --------------------------------------------------------------------
+	                 */
 
-	                                    // DESTRUCTING DID NOT WORK!
-	                                    //[gl, canvas, mat4, vec3, pMatrix, mvMatrix, program ] = this.setup();
+	        }, {
+	                key: 'init',
+	                value: function init(objList) {
 
-	                                    var arr = this.setup();
-	                                    var gl = arr[0];
-	                                    var canvas = arr[1];
-	                                    var mat4 = arr[2];
-	                                    var mat3 = arr[3];
-	                                    var vec3 = arr[4];
-	                                    var pMatrix = arr[5];
-	                                    var mvMatrix = arr[6];
-	                                    var program = arr[7];
-	                                    var vsVars = arr[8];
-	                                    var fsVars = arr[9];
+	                        // DESTRUCTING DID NOT WORK!
+	                        //[gl, canvas, mat4, vec3, pMatrix, mvMatrix, program ] = this.setup();
 
-	                                    // Attach objects.
+	                        var arr = this.setup(),
+	                            gl = arr[0],
+	                            canvas = arr[1],
+	                            mat4 = arr[2],
+	                            mat3 = arr[3],
+	                            vec3 = arr[4],
+	                            pMatrix = arr[5],
+	                            mvMatrix = arr[6],
+	                            program = arr[7],
+	                            vsVars = arr[8],
+	                            fsVars = arr[9],
+	                            stats = arr[10];
 
-	                                    var shaderProgram = program.shaderProgram;
+	                        // Attach objects.
 
-	                                    window.vs1Vars = vsVars; /////////////////////////////////////////////////////////
+	                        var shaderProgram = program.shaderProgram;
 
-	                                    program.renderList = program.renderList || objList || [];
+	                        program.renderList = program.renderList || objList || [];
 
-	                                    // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
-	                                    // TODO: https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/TechniquesforWorkingwithVertexData/TechniquesforWorkingwithVertexData.html
-	                                    // TODO: http://max-limper.de/tech/batchedrendering.html
+	                        // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
+	                        // TODO: https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/TechniquesforWorkingwithVertexData/TechniquesforWorkingwithVertexData.html
+	                        // TODO: http://max-limper.de/tech/batchedrendering.html
 
-	                                    // Update object position, motion.
+	                        // Update object position, motion.
 
-	                                    program.update = function (obj) {
+	                        program.update = function (obj) {
 
-	                                                // Standard Model-View (mvMatrix) updates, per Prim.
+	                                // Standard Model-View (mvMatrix) updates, per Prim.
 
-	                                                obj.setMV(mvMatrix);
+	                                obj.setMV(mvMatrix);
 
-	                                                // Custom updates go here.
-	                                    };
+	                                // Custom updates go here.
+	                        };
 
-	                                    // Rendering.
+	                        // Rendering.
 
-	                                    program.render = function () {
+	                        program.render = function () {
 
-	                                                //console.log( 'gl:' + gl + ' canvas:' + canvas + ' mat4:' + mat4 + ' vec3:' + vec3 + ' pMatrix:' + pMatrix + ' mvMatrix:' + mvMatrix + ' program:' + program );
+	                                //console.log( 'gl:' + gl + ' canvas:' + canvas + ' mat4:' + mat4 + ' vec3:' + vec3 + ' pMatrix:' + pMatrix + ' mvMatrix:' + mvMatrix + ' program:' + program );
 
-	                                                gl.useProgram(shaderProgram);
+	                                gl.useProgram(shaderProgram);
 
-	                                                // Reset perspective matrix.
+	                                // Reset perspective matrix.
 
-	                                                mat4.perspective(pMatrix, Math.PI * 0.4, canvas.width / canvas.height, 0.1, 100.0); // right
+	                                mat4.perspective(pMatrix, Math.PI * 0.4, canvas.width / canvas.height, 0.1, 100.0); // right
 
-	                                                // Begin program loop
+	                                // Begin program loop
 
-	                                                for (var i = 0, len = program.renderList.length; i < len; i++) {
+	                                for (var i = 0, len = program.renderList.length; i < len; i++) {
 
-	                                                            var obj = program.renderList[i];
+	                                        var obj = program.renderList[i];
 
-	                                                            // Only render if we have at least one texture loaded.
+	                                        // Only render if we have at least one texture loaded.
+	                                        if (!obj.textures[0] || !obj.textures[0].texture) continue;
 
-	                                                            if (!obj.textures[0] || !obj.textures[0].texture) continue;
+	                                        // Update Model-View matrix with standard Prim values.
 
-	                                                            // Update Model-View matrix with standard Prim values.
+	                                        program.update(obj, mvMatrix);
 
-	                                                            program.update(obj, mvMatrix);
+	                                        // Bind vertex buffer.
 
-	                                                            // Bind vertex buffer.
+	                                        gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.vertices.buffer);
+	                                        gl.enableVertexAttribArray(vsVars.attribute.vec3.aVertexPosition);
+	                                        gl.vertexAttribPointer(vsVars.attribute.vec3.aVertexPosition, obj.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0);
 
-	                                                            gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.vertices.buffer);
-	                                                            gl.enableVertexAttribArray(vsVars.attribute.vec3.aVertexPosition);
-	                                                            gl.vertexAttribPointer(vsVars.attribute.vec3.aVertexPosition, obj.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0);
+	                                        // Bind Textures buffer (could have multiple bindings here).
 
-	                                                            // Bind Textures buffer (could have multiple bindings here).
+	                                        gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.texCoords.buffer);
+	                                        gl.enableVertexAttribArray(vsVars.attribute.vec2.aTextureCoord);
+	                                        gl.vertexAttribPointer(vsVars.attribute.vec2.aTextureCoord, obj.geometry.texCoords.itemSize, gl.FLOAT, false, 0, 0);
 
-	                                                            gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.texCoords.buffer);
-	                                                            gl.enableVertexAttribArray(vsVars.attribute.vec2.aTextureCoord);
-	                                                            gl.vertexAttribPointer(vsVars.attribute.vec2.aTextureCoord, obj.geometry.texCoords.itemSize, gl.FLOAT, false, 0, 0);
+	                                        gl.activeTexture(gl.TEXTURE0);
+	                                        gl.bindTexture(gl.TEXTURE_2D, null);
+	                                        gl.bindTexture(gl.TEXTURE_2D, obj.textures[0].texture);
 
-	                                                            gl.activeTexture(gl.TEXTURE0);
-	                                                            gl.bindTexture(gl.TEXTURE_2D, null);
-	                                                            gl.bindTexture(gl.TEXTURE_2D, obj.textures[0].texture);
+	                                        // Set fragment shader sampler uniform.
 
-	                                                            // Set fragment shader sampler uniform.
+	                                        gl.uniform1i(fsVars.uniform.sampler2D.uSampler, 0); //STRANGE
 
-	                                                            gl.uniform1i(fsVars.uniform.sampler2D.uSampler, 0); //STRANGE
+	                                        // Set perspective and model-view matrix uniforms.
 
-	                                                            // Set perspective and model-view matrix uniforms.
+	                                        gl.uniformMatrix4fv(vsVars.uniform.mat4.uPMatrix, false, pMatrix);
+	                                        gl.uniformMatrix4fv(vsVars.uniform.mat4.uMVMatrix, false, mvMatrix);
 
-	                                                            gl.uniformMatrix4fv(vsVars.uniform.mat4.uPMatrix, false, pMatrix);
-	                                                            gl.uniformMatrix4fv(vsVars.uniform.mat4.uMVMatrix, false, mvMatrix);
+	                                        // Bind index buffer.
 
-	                                                            // Bind index buffer.
+	                                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer);
 
-	                                                            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer);
+	                                        // Draw elements.
 
-	                                                            // Draw elements.
+	                                        if (stats.uint32) {
 
-	                                                            if (webgl.stats.uint32) {
+	                                                // Draw elements, 0 -> 2e9
 
-	                                                                        // Draw elements, 0 -> 2e9
+	                                                gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_INT, 0);
+	                                        } else {
 
-	                                                                        gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_INT, 0);
-	                                                            } else {
+	                                                // Draw elements, 0 -> 65k (old platforms).
 
-	                                                                        // Draw elements, 0 -> 65k (old platforms).
+	                                                gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
+	                                        }
+	                                }
+	                        };
 
-	                                                                        gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
-	                                                            }
-	                                                }
-	                                    };
+	                        return program;
+	                }
+	        }]);
 
-	                                    return program;
-	                        }
-	            }]);
-
-	            return ShaderTexture;
+	        return ShaderTexture;
 	}(_shader2.default);
 
 	exports.default = ShaderTexture;
@@ -3824,7 +3914,7 @@
 	                        this.floatp = 'precision mediump float;';
 	                }
 
-	                // If we need to load a vertext and fragment shader files (in text format), put their paths in derived classes.
+	                // If we need to load a vertex and fragment shader files (in text format), put their paths in derived classes.
 
 	                this.vertexShaderFile = null;
 
@@ -3911,11 +4001,35 @@
 	                 */
 
 	        }, {
-	                key: 'addObjList',
-	                value: function addObjList(objList) {}
+	                key: 'setObjList',
+	                value: function setObjList(objList) {
 
-	                // TODO: THIS DOES NOT WORK!
-	                //this.program.renderList = objList;
+	                        // TODO: THIS DOES NOT WORK!
+	                        //this.program.renderList = objList;
+
+	                }
+	        }, {
+	                key: 'getProgram',
+	                value: function getProgram() {
+
+	                        var program = null;
+
+	                        if (this.vertexShaderFile && this.this.fragmentShaderFile) {
+
+	                                program = this.webgl.createProgram(this.webgl.fetchVertexShader(this.vertexShaderFile), this.webgl.fetchFragmentShader(this.fragmentShaderFile));
+	                        } else {
+
+	                                // vsSrc() and fsSrc are defined in derived Shader objects.
+
+	                                program = this.webgl.createProgram(this.vsSrc(), this.fsSrc());
+	                        }
+
+	                        // Rendering uses a more direct program reference. we save a reference here for manipulating objects.
+
+	                        this.program = program;
+
+	                        return program;
+	                }
 
 	                /** 
 	                 * set up our program object, using WebGL. We wrap the 'naked' WebGL 
@@ -3932,19 +4046,9 @@
 
 	                        // Compile shaders and create WebGL program using webgl object.
 
-	                        var program = null;
+	                        //////////////////////this.getProgram();
 
-	                        if (this.vertexShaderFile && this.this.fragmentShaderFile) {
-
-	                                program = this.webgl.createProgram(this.webgl.fetchVertexShader(this.vertexShaderFile), this.webgl.fetchFragmentShader(this.fragmentShaderFile));
-	                        } else {
-
-	                                program = this.webgl.createProgram(this.vsSrc(), this.fsSrc());
-	                        }
-
-	                        // Rendering uses a more direct program reference. we save a reference here for manipulating objects.
-
-	                        this.program = program;
+	                        var program = this.program;
 
 	                        // Return references to our properties, and assign uniform and attribute locations using webgl object.
 
@@ -3961,7 +4065,7 @@
 
 	                                uniform: this.webgl.setUniformLocations(program.shaderProgram, program.fsVars.uniform)
 
-	                        }];
+	                        }, this.webgl.stats];
 	                }
 	        }]);
 
@@ -4001,6 +4105,10 @@
 	                _classCallCheck(this, ShaderColor);
 
 	                var _this = _possibleConstructorReturn(this, (ShaderColor.__proto__ || Object.getPrototypeOf(ShaderColor)).call(this, init, util, glMatrix, webgl, shaderName));
+
+	                _this.getProgram(); ////////////////////////////
+
+	                console.log(')))))))))))))))))))))))))))))))this.program.vsvars' + _this.program.vsVars);
 
 	                console.log('In ShaderColor class');
 
@@ -4053,23 +4161,25 @@
 	                        // DESTRUCTING DID NOT WORK!
 	                        //[gl, canvas, mat4, vec3, pMatrix, mvMatrix, program ] = this.setup();
 
-	                        var arr = this.setup();
-	                        var gl = arr[0];
-	                        var canvas = arr[1];
-	                        var mat4 = arr[2];
-	                        var mat3 = arr[3];
-	                        var vec3 = arr[4];
-	                        var pMatrix = arr[5];
-	                        var mvMatrix = arr[6];
-	                        var program = arr[7];
-	                        var vsVars = arr[8];
-	                        var fsVars = arr[9];
+	                        var arr = this.setup(),
+	                            gl = arr[0],
+	                            canvas = arr[1],
+	                            mat4 = arr[2],
+	                            mat3 = arr[3],
+	                            vec3 = arr[4],
+	                            pMatrix = arr[5],
+	                            mvMatrix = arr[6],
+	                            program = arr[7],
+	                            vsVars = arr[8],
+	                            fsVars = arr[9],
+	                            stats = arr[10];
+
+	                        // We received webgl in the constructor, and gl above is referenced from it.
+
 
 	                        // Attach objects.
 
 	                        var shaderProgram = program.shaderProgram;
-
-	                        window.vs2Vars = vsVars; /////////////////////////////////////////////////////////
 
 	                        program.renderList = program.renderList || objList || [];
 
@@ -4131,7 +4241,7 @@
 
 	                                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer);
 
-	                                        if (webgl.stats.uint32) {
+	                                        if (stats.uint32) {
 
 	                                                // Draw elements, 0 -> 2e9
 
@@ -4185,6 +4295,8 @@
 	                        _classCallCheck(this, ShaderDirlightTexture);
 
 	                        var _this = _possibleConstructorReturn(this, (ShaderDirlightTexture.__proto__ || Object.getPrototypeOf(ShaderDirlightTexture)).call(this, init, util, glMatrix, webgl, shaderName));
+
+	                        _this.getProgram(); //////////////////////////////////////
 
 	                        console.log('In ShaderTexture class');
 
@@ -4263,17 +4375,18 @@
 	                                    // DESTRUCTING DID NOT WORK!
 	                                    //[gl, canvas, mat4, vec3, pMatrix, mvMatrix, program ] = this.setup();
 
-	                                    var arr = this.setup();
-	                                    var gl = arr[0];
-	                                    var canvas = arr[1];
-	                                    var mat4 = arr[2];
-	                                    var mat3 = arr[3];
-	                                    var vec3 = arr[4];
-	                                    var pMatrix = arr[5];
-	                                    var mvMatrix = arr[6];
-	                                    var program = arr[7];
-	                                    var vsVars = arr[8];
-	                                    var fsVars = arr[9];
+	                                    var arr = this.setup(),
+	                                        gl = arr[0],
+	                                        canvas = arr[1],
+	                                        mat4 = arr[2],
+	                                        mat3 = arr[3],
+	                                        vec3 = arr[4],
+	                                        pMatrix = arr[5],
+	                                        mvMatrix = arr[6],
+	                                        program = arr[7],
+	                                        vsVars = arr[8],
+	                                        fsVars = arr[9],
+	                                        stats = arr[10];
 
 	                                    // Shorter reference.
 
@@ -4402,7 +4515,7 @@
 
 	                                                            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer);
 
-	                                                            if (webgl.stats.uint32) {
+	                                                            if (stats.uint32) {
 
 	                                                                        // Draw elements, 0 -> 2e9
 
@@ -4600,17 +4713,13 @@
 
 	        }, {
 	                key: 'addShader',
-	                value: function addShader(shader, objList) {
+	                value: function addShader(shader) {
 
 	                        if (this.shaderList.indexOf(shader.name) === -1) {
 
 	                                this.shaderList[shader.name] = shader;
 
-	                                shader.addObjList(objList);
-
-	                                // TODO: have to initialize the shader earlier.
-
-	                                // this.renderList.push( shader.program );
+	                                this.renderList.push(shader);
 
 	                                return true;
 	                        } else {
@@ -4619,6 +4728,20 @@
 	                        }
 
 	                        return false;
+	                }
+
+	                /** 
+	                 * Initialize shaders AFTER webgl context is defined.
+	                 */
+
+	        }, {
+	                key: 'initShaders',
+	                value: function initShaders() {
+
+	                        for (var i = 0; i < this.shaderList.length; i++) {
+
+	                                this.shaderList[i].init();
+	                        }
 	                }
 
 	                /** 
@@ -11157,7 +11280,7 @@
 
 	                        this.vertices.data = concat(this.vertices.data, vertices), this.indices.data = concat(this.indices.data, indices), this.normals.data = concat(this.normals.data, normals), this.texCoords.data = concat(this.texCoords.data, texCoords), this.tangents.data = concat(this.tangents.data, tangents), this.colors.data = concat(this.colors.data, colors);
 
-	                        if (this.vertices.data.length > webgl.MAX_DRAWELEMENTS) {
+	                        if (this.vertices.data.length > this.webgl.MAX_DRAWELEMENTS) {
 
 	                                this.ssz = true;
 	                        } else {

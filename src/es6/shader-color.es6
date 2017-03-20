@@ -6,6 +6,10 @@ class ShaderColor extends Shader {
 
         super( init, util, glMatrix, webgl, shaderName );
 
+        this.getProgram(); ////////////////////////////
+
+        console.log(')))))))))))))))))))))))))))))))this.program.vsvars' + this.program.vsVars )
+
         console.log( 'In ShaderColor class' );
 
     }
@@ -78,23 +82,36 @@ class ShaderColor extends Shader {
         // DESTRUCTING DID NOT WORK!
         //[gl, canvas, mat4, vec3, pMatrix, mvMatrix, program ] = this.setup();
 
-        let arr = this.setup();
-        let gl = arr[0];
-        let canvas = arr[1];
-        let mat4 = arr[2];
-        let mat3 = arr[3];
-        let vec3 = arr[4];
-        let pMatrix = arr[5];
-        let mvMatrix = arr[6];
-        let program = arr[7];
-        let vsVars = arr[8];
-        let fsVars = arr[9];
+        let arr = this.setup(),
+
+        gl = arr[ 0 ],
+
+        canvas = arr[ 1 ],
+
+        mat4 = arr[ 2 ],
+
+        mat3 = arr[ 3 ],
+
+        vec3 = arr[ 4 ],
+
+        pMatrix = arr[ 5 ],
+
+        mvMatrix = arr[ 6 ],
+
+        program = arr[ 7 ],
+
+        vsVars = arr[ 8 ],
+
+        fsVars = arr[ 9 ],
+
+        stats = arr[ 10 ];
+
+        // We received webgl in the constructor, and gl above is referenced from it.
+
 
         // Attach objects.
 
         let shaderProgram = program.shaderProgram;
-
-        window.vs2Vars = vsVars; /////////////////////////////////////////////////////////
 
         program.renderList = program.renderList || objList || [];
 
@@ -158,7 +175,7 @@ class ShaderColor extends Shader {
                 gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer );
 
 
-                if ( webgl.stats.uint32 ) {
+                if ( stats.uint32 ) {
 
                     // Draw elements, 0 -> 2e9
 

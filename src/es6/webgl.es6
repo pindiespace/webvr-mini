@@ -41,9 +41,11 @@ class WebGL {
 
         this.util = util;
 
+        this.stats = {};
+
         if ( init === true ) {
 
-            this.init( canvas );
+            this.init( document.getElementById( 'webvr-mini-canvas' ) ); // Normally not called this way
 
         }
 
@@ -135,6 +137,50 @@ class WebGL {
 
                 const gl = this.gl;
 
+                // Default WebGL initializtion and stats, can be over-ridden in your world file.
+
+                if( gl.getParameter && gl.getShaderPrecisionFormat ) {
+
+                    let stats = this.stats;
+
+                    // Check if high precision supported in fragment shader.
+
+                    stats.highp = ( gl.getShaderPrecisionFormat( gl.FRAGMENT_SHADER, gl.HIGH_FLOAT ).precision );
+
+                    // Max texture size, for gl.texImage2D.                
+
+                    stats.maxTexSize = gl.getParameter( gl.MAX_TEXTURE_SIZE );
+
+                    // Max cubemap size, for gl.texImage2D.
+
+                    stats.maxCubeSize = gl.getParameter( gl.MAX_CUBE_MAP_TEXTURE_SIZE );
+
+                    // Max texture size, for gl.renderbufferStorage and canvas width/height.
+
+                    stats.maxRenderbufferSize = gl.getParameter( gl.MAX_RENDERBUFFER_SIZE );
+
+                    // Max texture units.
+
+                    stats.combinedUnits = gl.getParameter( gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS );
+
+                    // Max vertex buffers.
+
+                    stats.maxVSattribs = gl.getParameter( gl.MAX_VERTEX_ATTRIBS );
+
+                    // Max 4-byte uniforms.
+
+                    stats.maxVertexShader = gl.getParameter( gl.MAX_VERTEX_UNIFORM_VECTORS );
+
+                    // Max 4-byte uniforms.
+
+                    stats.maxFragmentShader = gl.getParameter( gl.MAX_FRAGMENT_UNIFORM_VECTORS );
+
+                } else {
+
+                    this.stats = false;
+
+                }
+
                 /* 
                  * Set up listeners for context lost and regained.
                  * @link https://www.khronos.org/webgl/wiki/HandlingContextLost
@@ -190,52 +236,6 @@ class WebGL {
 
                 }, false );
 
-                // Default WebGL initializtion and stats, can be over-ridden in your world file.
-
-                if( gl.getParameter && gl.getShaderPrecisionFormat ) {
-
-                    this.stats = {};
-
-                    let stats = this.stats;
-
-                    // Check if high precision supported in fragment shader.
-
-                    stats.highp = (gl.getShaderPrecisionFormat( gl.FRAGMENT_SHADER, gl.HIGH_FLOAT ).precision );
-
-                    // Max texture size, for gl.texImage2D.                
-
-                    stats.maxTexSize = gl.getParameter( gl.MAX_TEXTURE_SIZE );
-
-                    // Max cubemap size, for gl.texImage2D.
-
-                    stats.maxCubeSize = gl.getParameter( gl.MAX_CUBE_MAP_TEXTURE_SIZE );
-
-                    // Max texture size, for gl.renderbufferStorage and canvas width/height.
-
-                    stats.maxRenderbufferSize = gl.getParameter( gl.MAX_RENDERBUFFER_SIZE );
-
-                    // Max texture units.
-
-                    stats.combinedUnits = gl.getParameter( gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS );
-
-                    // Max vertex buffers.
-
-                    stats.maxVSattribs = gl.getParameter( gl.MAX_VERTEX_ATTRIBS );
-
-                    // Max 4-byte uniforms.
-
-                    stats.maxVertexShader = gl.getParameter( gl.MAX_VERTEX_UNIFORM_VECTORS );
-
-                    // Max 4-byte uniforms.
-
-                    stats.maxFragmentShader = gl.getParameter( gl.MAX_FRAGMENT_UNIFORM_VECTORS );
-
-                } else {
-
-                    this.stats = false;
-
-                }
-
                 // If we're reloading, clear all current textures in the texture buffers.
 
                 this.clearTextures();
@@ -275,8 +275,16 @@ class WebGL {
 
                 return this.gl;
 
+            } else {
+
+                console.error( 'no WebGL context' );
+
             } // end of have a gl context
 
+
+        } else {
+
+            console.error( ' no WebGL canvas' );
 
         } // end of if have a <canvas>
 
@@ -565,27 +573,27 @@ class WebGL {
 
         if ( ext ) {
 
-            gl.createVertexArray = function() {
+            gl.createVertexArray = () => {
 
                 return ext.createVertexArrayOES();
 
             };
 
-            gl.deleteVertexArray = function(v) {
+            gl.deleteVertexArray = ( v ) => {
 
-                ext.deleteVertexArrayOES(v);
-
-            };
-
-            gl.isVertexArray = function(v) {
-
-                return ext.isVertexArrayOES(v);
+                ext.deleteVertexArrayOES( v );
 
             };
 
-            gl.bindVertexArray = function(v) {
+            gl.isVertexArray = ( v ) => {
 
-                ext.bindVertexArrayOES(v);
+                return ext.isVertexArrayOES( v );
+
+            };
+
+            gl.bindVertexArray = (v) => {
+
+                ext.bindVertexArrayOES( v );
 
             };
 
@@ -700,7 +708,7 @@ class WebGL {
 
             } )
 
-        } ).then( function( response ) { 
+        } ).then( ( response ) => { 
 
             console.log(text);
 
@@ -712,11 +720,11 @@ class WebGL {
 
             return false;
 
-        } ).then( function( source ) { 
+        } ).then( ( source ) => { 
 
             if ( source ) {
 
-                return self.createShader( type, source );
+                return this.createShader( type, source );
 
             }
 
@@ -850,6 +858,8 @@ class WebGL {
 
         }
 
+        console.log('))))))))))))program.shaderProgram:' + prg.shaderProgram + ' vsVars:' + prg.vsVars + ' fsVars:' + prg.fsVars + ' READY:' + this.ready())
+
         return prg;
 
     }
@@ -859,6 +869,9 @@ class WebGL {
       * Read shader code, and organize the variables in the shader 
       * into an object. Abstracts some of the tedious work in setting 
       * up shader variables.
+      *
+      * Called by individual Shader objects in vsSrc() and fsSrc().
+      * 
       * @param {Array} sourceArr array of lines in the shader.
       * @returns {Object} an object organizing attribute, uniform, and 
       * varying variable names and datatypes.

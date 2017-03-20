@@ -12,9 +12,13 @@ var env = process.env.WEBPACK_ENV;
 
 // REQUIRE ALL .es6 files.
 
-var vrmini = require( '../es6/app.es6' );
+    var vrmini = require( '../es6/app.es6' );
+
+    vrmini.world.init();
 
 // Check ES6 module structure.
+
+console.log( 'INSPECTING VRMINI')
 
 for (var i in vrmini ) {
 

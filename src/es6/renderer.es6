@@ -52,17 +52,13 @@ class Renderer {
      * @param {String} shaderName the assigned name of the Shader.
      * @param {Shader} shader the shader object.
      */
-    addShader( shader, objList ) {
+    addShader( shader ) {
 
         if ( this.shaderList.indexOf( shader.name ) === -1 ) {
 
             this.shaderList[ shader.name ] = shader;
 
-            shader.addObjList( objList );
-
-            // TODO: have to initialize the shader earlier.
-
-            // this.renderList.push( shader.program );
+            this.renderList.push( shader );
 
             return true;
 
@@ -76,6 +72,18 @@ class Renderer {
 
     }
 
+    /** 
+     * Initialize shaders AFTER webgl context is defined.
+     */
+    initShaders () {
+
+        for ( let i = 0; i < this.shaderList.length; i++ ) {
+
+            this.shaderList[ i ].init();
+
+        }
+
+    }
 
     /** 
      * Render everything.

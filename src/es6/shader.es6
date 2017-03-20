@@ -53,7 +53,7 @@ class Shader {
 
         }
 
-        // If we need to load a vertext and fragment shader files (in text format), put their paths in derived classes.
+        // If we need to load a vertex and fragment shader files (in text format), put their paths in derived classes.
 
         this.vertexShaderFile = null;
 
@@ -138,10 +138,37 @@ class Shader {
      * Add a list of Prim objects to be rendered. They can also be 
      * added in Shader init( objList ).
      */
-    addObjList ( objList ) {
+    setObjList ( objList ) {
 
         // TODO: THIS DOES NOT WORK!
         //this.program.renderList = objList;
+
+    }
+
+    getProgram() {
+
+        let program = null;
+
+        if ( this.vertexShaderFile && this.this.fragmentShaderFile ) {
+
+            program = this.webgl.createProgram( 
+                this.webgl.fetchVertexShader( this.vertexShaderFile ), 
+                this.webgl.fetchFragmentShader( this.fragmentShaderFile ) 
+            );
+
+        } else {
+
+            // vsSrc() and fsSrc are defined in derived Shader objects.
+
+            program = this.webgl.createProgram( this.vsSrc(), this.fsSrc() );
+
+        }
+
+        // Rendering uses a more direct program reference. we save a reference here for manipulating objects.
+
+        this.program = program;
+
+        return program;
 
     }
 
@@ -157,24 +184,9 @@ class Shader {
 
         // Compile shaders and create WebGL program using webgl object.
 
-        let program = null;
+        //////////////////////this.getProgram();
 
-        if ( this.vertexShaderFile && this.this.fragmentShaderFile ) {
-
-            program = this.webgl.createProgram( 
-                this.webgl.fetchVertexShader( this.vertexShaderFile ), 
-                this.webgl.fetchFragmentShader( this.fragmentShaderFile ) 
-            );
-
-        } else {
-
-            program = this.webgl.createProgram( this.vsSrc(), this.fsSrc() );
-
-        }
-
-        // Rendering uses a more direct program reference. we save a reference here for manipulating objects.
-
-        this.program = program;
+        let program = this.program;
 
         // Return references to our properties, and assign uniform and attribute locations using webgl object.
 
@@ -207,7 +219,9 @@ class Shader {
 
                 uniform: this.webgl.setUniformLocations( program.shaderProgram, program.fsVars.uniform )
 
-            }
+            },
+
+            this.webgl.stats
 
         ];
 

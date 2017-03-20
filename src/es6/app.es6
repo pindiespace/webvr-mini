@@ -84,6 +84,8 @@ let util = new Util();
 let webgl = null;
 
 
+
+
 if ( __DEV__ === 'true' ) {
 
     console.log( 'app.es6: in development mode' );
@@ -94,7 +96,6 @@ if ( __DEV__ === 'true' ) {
     let debug = require( 'webgl-debug' );
 
     webgl = new WebGL( false, glMatrix, util, debug );
-
 
     if( debug ) {
 
@@ -114,8 +115,75 @@ if ( __DEV__ === 'true' ) {
 
 }
 
+let webvr, loadModel, loadTexture, loadAudio, loadVideo, loadFont, prim, shaderTexture, shaderColor, shaderDirlightTexture, renderer, world;
+
+// WebGL can take some time to init.
+///////////////////////////////////////////////////////
+var promise = new Promise( ( resolve, reject ) => {
+
+  // do a thing, possibly async, then…
+
+    if ( webgl.init( 'webvr-mini-canvas' ) ) {
+
+        webvr = new WebVR( false, util, glMatrix, webgl );
+
+        // The Prim object needs Loaders.
+
+        loadModel = new LoadModel( true, util, glMatrix, webgl );
+
+        loadTexture = new LoadTexture( true, util, glMatrix, webgl );
+
+        loadAudio = new LoadAudio( true, util, glMatrix, webgl );
+
+        loadVideo = new LoadVideo( true, util, glMatrix, webgl );
+
+        loadFont = new LoadFont( true, util, glMatrix, webgl );
+
+        prim = new Prim ( true, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo );
+
+        shaderTexture = new ShaderTexture ( true, util, glMatrix, webgl, 'shaderTexture' );
+
+        shaderColor = new ShaderColor ( true, util, glMatrix, webgl, 'shaderColor' );
+
+        shaderDirlightTexture = new ShaderDirlightTexture( true, util, glMatrix, webgl, 'shaderDirlightTexture' );
+
+        renderer = new Renderer ( true, util, glMatrix, webgl, shaderTexture, shaderColor, shaderDirlightTexture );
+
+        renderer.addShader( shaderTexture );
+
+        renderer.addShader( shaderColor );
+
+        renderer.addShader( shaderDirlightTexture );
+
+        // Create the world, which needs WebGL, WebVR, and Prim.
+
+        world = new World( webgl, prim, renderer );
+
+        resolve("Stuff worked!");
+
+    }
+
+    else {
+
+        reject( Error("It broke") );
+
+    }
+
+}).then( ( result ) => {
+
+        world.init();
+
+}).catch( ( err ) => {
+
+    // error
+
+} );
+
+///////////////////////////////////////////////////////
+
 // WebVR needs WebGL.
 
+/*
 let webvr = new WebVR( false, util, glMatrix, webgl );
 
 // The Prim object needs Loaders.
@@ -149,6 +217,8 @@ renderer.addShader( shaderDirlightTexture );
 // Create the world, which needs WebGL, WebVR, and Prim.
 
 let world = new World( webgl, prim, renderer );
+
+*/
 
 // TODO: don't automatically update webgl
 // TODO: enclose in a promise, then update renderer and shaders.

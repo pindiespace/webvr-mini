@@ -6,6 +6,8 @@ class ShaderTexture extends Shader {
 
         super( init, util, glMatrix, webgl, shaderName );
 
+        this.getProgram(); //////////////////////////////////
+
         console.log( 'In ShaderTexture class' );
 
     }
@@ -97,23 +99,33 @@ class ShaderTexture extends Shader {
         // DESTRUCTING DID NOT WORK!
         //[gl, canvas, mat4, vec3, pMatrix, mvMatrix, program ] = this.setup();
 
-        let arr = this.setup();
-        let gl = arr[0];
-        let canvas = arr[1];
-        let mat4 = arr[2];
-        let mat3 = arr[3];
-        let vec3 = arr[4];
-        let pMatrix = arr[5];
-        let mvMatrix = arr[6];
-        let program = arr[7];
-        let vsVars = arr[8];
-        let fsVars = arr[9];
+        let arr = this.setup(),
+
+        gl = arr[0],
+
+        canvas = arr[1],
+
+        mat4 = arr[2],
+
+        mat3 = arr[3],
+
+        vec3 = arr[4],
+
+        pMatrix = arr[5],
+
+        mvMatrix = arr[6],
+
+        program = arr[7],
+
+        vsVars = arr[8],
+
+        fsVars = arr[9], 
+
+        stats = arr[ 10 ];
 
         // Attach objects.
 
         let shaderProgram = program.shaderProgram;
-
-        window.vs1Vars = vsVars; /////////////////////////////////////////////////////////
 
         program.renderList = program.renderList || objList || [];
 
@@ -152,8 +164,7 @@ class ShaderTexture extends Shader {
                 let obj = program.renderList[ i ];
 
                 // Only render if we have at least one texture loaded.
-
-                if ( ! obj.textures[0] || ! obj.textures[0].texture ) continue;
+                  if ( ! obj.textures[0] || ! obj.textures[0].texture ) continue;
 
                 // Update Model-View matrix with standard Prim values.
 
@@ -190,7 +201,7 @@ class ShaderTexture extends Shader {
 
                 // Draw elements.
 
-                if ( webgl.stats.uint32 ) {
+                if ( stats.uint32 ) {
 
                     // Draw elements, 0 -> 2e9
 
