@@ -501,6 +501,10 @@ class GeoObj {
 
     }
 
+    /** 
+     * Set or reset the vertices.
+     * @param {glMatrix.vec3[]} vertices a flattened vertex array.
+     */
     setVertices ( vertices ) {
 
         let o = this.vertices;
@@ -518,6 +522,10 @@ class GeoObj {
 
     }
 
+    /** 
+     * Set or reset the indices.
+     * @param {Array} indices a flattened index array.
+     */
     setIndices ( indices ) {
 
         let o = this.indices;
@@ -528,9 +536,13 @@ class GeoObj {
 
                 o.data = new Uint32Array( indices );
 
+                this.bindGLBuffer( o, this.UINT32 );
+
             } else {
 
                 o.data = new Uint16Array( indices );
+
+                this.bindGLBuffer( o, this.UINT16 );
 
             }
 
@@ -542,6 +554,10 @@ class GeoObj {
 
     }
 
+    /** 
+     * Set or reset the normals.
+     * @param {glMatrix.vec3[]} normals a flattened normals array.
+     */
     setNormals ( normals ) {
 
         let o = this.normals;
@@ -552,6 +568,8 @@ class GeoObj {
 
             o.numItems = normals.length / o.itemSize;
 
+            this.bindGLBuffer( o, this.FLOAT32 );
+
         } else {
 
             console.error( this.mName + 'setNormals() invalid input, not Array' );
@@ -560,6 +578,10 @@ class GeoObj {
 
     }
 
+    /** 
+     * Set or reset the texture coordinates.
+     * @param {glMatrix.vec3[]} texCoords a flattened texture coordinate array.
+     */
     setTexCoords ( texCoords ) {
 
         let o = this.texCoords;
@@ -570,6 +592,8 @@ class GeoObj {
 
             o.numItems = texCoords.length / o.itemSize;
 
+            this.bindGLBuffer( o, this.FLOAT32 );
+
         } else {
 
             console.error( this.mName + 'setTexCoords() invalid input, not Array' );
@@ -578,6 +602,10 @@ class GeoObj {
 
     }
 
+    /** 
+     * Set or reset the colors.
+     * @param {glMatrix.vec4[]} vertices a flattened color array.
+     */
     setColors ( colors ) {
 
         let o = this.colors;
@@ -588,6 +616,8 @@ class GeoObj {
 
             o.numItems = colors.length / o.itemSize;
 
+            this.bindGLBuffer( o, this.FLOAT32 );
+
         } else {
 
             console.error( this.mName + 'setTangents() invalid input, not Array' );
@@ -596,6 +626,10 @@ class GeoObj {
 
     }
 
+    /** 
+     * Set or reset the tangents.
+     * @param {glMatrix.vec3[]} vertices a flattened tangent array.
+     */
     setTangents ( tangents ) {
 
         let o = this.tangents;
@@ -605,6 +639,8 @@ class GeoObj {
             o.data = new Float32Array( tangents );
 
             o.numItems = tangents.length / o.itemSize;
+
+            this.bindGLBuffer( o, this.FLOAT32 );
 
         } else {
 
@@ -624,11 +660,13 @@ class GeoObj {
      * an array of tangents, in glMatrix.vec3 format.
      * an array of colors, in glMatrix.vec4 format.
      */
-    createGLBuffers () {
+    createGLBuffers ( teapot ) {
 
             const gl = this.webgl.getContext();
 
             let fnName = this.mName + 'createGLBuffers():';
+
+            if (teapot) console.log( '++++++++++++++++++++++++TEAPOT vertices length:' + this.vertices.data.length)
 
             // Vertex Buffer Object.
 
@@ -643,6 +681,8 @@ class GeoObj {
             }
 
             this.bindGLBuffer( o, this.FLOAT32 );
+
+            if (teapot) console.log('++++++++++++++++++++TEAPOT BUFFER:' + o.buffer)
 
             // Create the Index buffer.
 

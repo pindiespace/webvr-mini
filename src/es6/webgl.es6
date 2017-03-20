@@ -858,8 +858,6 @@ class WebGL {
 
         }
 
-        console.log('))))))))))))program.shaderProgram:' + prg.shaderProgram + ' vsVars:' + prg.vsVars + ' fsVars:' + prg.fsVars + ' READY:' + this.ready())
-
         return prg;
 
     }

@@ -186,8 +186,6 @@ class Shader {
 
         // Compile shaders and create WebGL program using webgl object.
 
-        //////////////////////this.getProgram();
-
         let program = this.program;
 
         // Return references to our properties, and assign uniform and attribute locations using webgl object.

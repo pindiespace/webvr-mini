@@ -96,6 +96,8 @@ class LoadTexture extends LoadPool {
 
             loadObj.fType = this.util.getFileExtension( source );
 
+            // Force generation of image.
+
             loadObj.image.src = source;
 
         };

@@ -521,6 +521,10 @@ class LoadModel extends LoadPool {
 
                 loadObj.prim.geometry.addBufferData( d.vertices, d.indices, d.normals, d.texCoords, [] );
 
+                console.log("IN UPLOAD MODEL, VERTICES DATA:" + loadObj.prim.geometry.vertices.data.length )
+
+                loadObj.prim.geometry.createGLBuffers();
+
                 break;
 
             case 'mtl':
@@ -558,7 +562,7 @@ class LoadModel extends LoadPool {
      */
     createLoadObj ( waitObj ) {
 
-        console.log(">>>>>>>>>>>>>>>>createLoadObj Loading " + waitObj.source )
+        console.log(">>>>>>>>>>>>>>>>MODEL createLoadObj Loading " + waitObj.source )
 
         let loadObj = {};
 
@@ -581,12 +585,16 @@ class LoadModel extends LoadPool {
             loadObj.fType = this.util.getFileExtension( source );
             
             fetch( source )
+
                 .then( response => { return response.text() } )
+
                 .then( xmlString => { loadObj.data = xmlString; this.uploadModel( loadObj, loadObj.callback ) } )
 
         };
 
         // Equivalent of a 'next' method for load-pool queue.
+
+        //TODO: CACHE RUNS TWICE
 
         loadObj.next( waitObj.source );
 

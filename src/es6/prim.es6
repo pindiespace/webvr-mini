@@ -3302,17 +3302,20 @@ class Prim {
 
         let mesh = new Mesh( geo );
 
-        mesh.subdivide();
+        //mesh.subdivide();
 
         // NOTE:::::: simplify() works here ONLY because we don't have any redundant vertices!
 
         //mesh.simplify();
 
-        //mesh.subdivide();
+        mesh.subdivide();
 
         // NOTE::::::
         // NOTE:::::: Make these local references AFTER the subdivision, or you don't get 
         // NOTE:::::: the right size for normals and colors
+
+        // NOTE:::::: rewrite prim load as a Promise queue.
+        // http://www.datchley.name/promise-patterns-anti-patterns/
 
         let vertices = geo.vertices.data;
 
@@ -3326,8 +3329,7 @@ class Prim {
 
         let colors = geo.colors.data;
 
-
-        // TODO: don't compute if we were supplied with normals
+        // Don't compute if we were supplied with normals
 
         console.log('Prim::meshCallback(): normals length:' + normals.length + ' vertices.length:' + vertices.length)
 
@@ -3343,17 +3345,8 @@ class Prim {
 
         geo.tangents.data = new Float32Array( this.computeTangents( vertices, indices, geo.normals.data, texCoords, [] ) );
 
-        // Color array is pre-created, or gets a default when WebGL buffers are created.
 
         geo.ready = true; // flag for mesh loading
-
-        // Since this callback may be delayed, re-create GLBuffers after assigning data
-
-        geo.addBufferData( vertices, indices, geo.normals.data, texCoords, geo.tangents.data );
-
-        // Create WebGL buffer from our coordinate data.
-
-        geo.createGLBuffers();
 
     }
 
@@ -3499,6 +3492,9 @@ class Prim {
 
         };
 
+        /** 
+         * recalculate normals and tangents.
+         */
         prim.reCalc = () => {
 
             prim.geometry.normals.data = new Float32Array( this.computeNormals( prim.geometry.vertices.data, prim.geometry.indices.data, prim.geometry.normals.data ) );
@@ -3635,17 +3631,27 @@ class Prim {
        // Validate our data.
        console.log("PRIM:" + prim.name + '(' + prim.type + ')' );
 
-       prim.geometry.checkBufferData();
 
 ////////////////////////////////////////////////////////////////////////////////
 
         // Create WebGL data buffers from geometry. Default color array added if not present.
+        // TODO:
 
-        prim.geometry = prim.geometry.createGLBuffers();
+        if ( prim.name !== 'teapot') {
+
+            prim.geometry = prim.geometry.createGLBuffers();
+
+            prim.geometry.checkBufferData();
+
+            prim.boundingBox = this.computeBoundingBox( prim.geometry.vertices.data );
+
+        }
+
+
 
         // Compute the bounding box.
 
-        prim.boundingBox = this.computeBoundingBox( prim.geometry.vertices.data );
+
 
 
         // Shared with factory functions. Normally, we use matrix transforms to accomplish this.

@@ -58,8 +58,6 @@ class Renderer {
 
             this.shaderList[ shader.name ] = shader;
 
-            this.renderList.push( shader );
-
             return true;
 
         } else {
@@ -90,11 +88,11 @@ class Renderer {
      */
     render () {
 
-        for ( let i = 0; i < this.renderList.length; i++ ) {
+        for ( let i = 0; i < this.shaderList.length; i++ ) {
 
-            console.log('RENDERLIST I:' + this.renderList[i])
+            console.log('SHADERLIST I:' + this.shaderList[i])
 
-            this.renderList[ i ].render();
+            this.shaderList[ i ].program.render();
 
         }
 

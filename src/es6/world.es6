@@ -161,6 +161,8 @@ class World {
             vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color
         ) );
 
+        window.teapot = this.colorObjList[ this.colorObjList.length - 1 ];
+
 ///OBJ MESH
 
 //TODO: TEAPOT DOES NOT LOAD AND RENDER!!!!!!!!!!!!!!!!!!!!!!!!!!
