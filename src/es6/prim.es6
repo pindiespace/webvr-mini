@@ -3610,7 +3610,7 @@ class Prim {
 
             // SIMPLIFY TEST
 
-            mesh.simplify();
+            ////////////mesh.simplify();
 
             // SUBDIVIDE TEST
 

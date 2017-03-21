@@ -68,7 +68,8 @@
 
 	    var vrmini = __webpack_require__( 3 );
 
-	    vrmini.world.init();
+	    // Done in app.es6
+	    ///////////////////////////vrmini.world.init();
 
 	// Check ES6 module structure.
 
@@ -451,9 +452,6 @@
 	    loadVideo = void 0,
 	    loadFont = void 0,
 	    prim = void 0,
-	    shaderTexture = void 0,
-	    shaderColor = void 0,
-	    shaderDirlightTexture = void 0,
 	    renderer = void 0,
 	    world = void 0;
 
@@ -481,19 +479,15 @@
 
 	        exports.prim = prim = new _prim2.default(true, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo);
 
-	        shaderTexture = new _shaderTexture2.default(true, util, glMatrix, webgl, 'shaderTexture');
+	        // Add shaders to Renderer
 
-	        shaderColor = new _shaderColor2.default(true, util, glMatrix, webgl, 'shaderColor');
+	        renderer = new _renderer2.default(true, util, glMatrix, webgl);
 
-	        shaderDirlightTexture = new _shaderDirlightTexture2.default(true, util, glMatrix, webgl, 'shaderDirlightTexture');
+	        renderer.addShader(new _shaderTexture2.default(true, util, glMatrix, webgl, 'shaderTexture'));
 
-	        renderer = new _renderer2.default(true, util, glMatrix, webgl, shaderTexture, shaderColor, shaderDirlightTexture);
+	        renderer.addShader(new _shaderColor2.default(true, util, glMatrix, webgl, 'shaderColor'));
 
-	        renderer.addShader(shaderTexture);
-
-	        renderer.addShader(shaderColor);
-
-	        renderer.addShader(shaderDirlightTexture);
+	        renderer.addShader(new _shaderDirlightTexture2.default(true, util, glMatrix, webgl, 'shaderDirLightTexture'));
 
 	        // Create the world, which needs WebGL, WebVR, and Prim.
 
@@ -511,6 +505,7 @@
 
 	    // error
 
+	    console.error('app.es6 load error:' + err);
 	});
 
 	///////////////////////////////////////////////////////
@@ -538,15 +533,15 @@
 
 	let shaderColor = new ShaderColor ( true, util, glMatrix, webgl, 'shaderColor' );
 
-	let shaderDirlightTexture = new ShaderDirlightTexture( true, util, glMatrix, webgl, 'shaderDirlightTexture' );
+	let shaderDirLightTexture = new shaderDirLightTexture( true, util, glMatrix, webgl, 'shaderDirLightTexture' );
 
-	let renderer = new Renderer ( true, util, glMatrix, webgl, shaderTexture, shaderColor, shaderDirlightTexture );
+	let renderer = new Renderer ( true, util, glMatrix, webgl, shaderTexture, shaderColor, shaderDirLightTexture );
 
 	renderer.addShader( shaderTexture );
 
 	renderer.addShader( shaderColor );
 
-	renderer.addShader( shaderDirlightTexture );
+	renderer.addShader( shaderDirLightTexture );
 
 	// Create the world, which needs WebGL, WebVR, and Prim.
 
@@ -1964,6 +1959,14 @@
 	         * we apply gl.useProgram(program).
 	         * @param {gl.VERTEX_SHADER} vShader the vertex shader.
 	         * @param {gl.FRAGMENT_SHADER} fShader the fragment shader.
+	         * @returns {Object} an object containing the compiled shaders, the 
+	         * WebGL program, and a parsed list of all the varying and uniforms in 
+	         * the shader source code.
+	         * 
+	         * prg.shaderProgram = program; // the WebGL program
+	         * prg.vsVars = vs.varList,     // varying and uniform names in vertex shader.
+	         * prg.fsVars = fs.varList      // varying and uniform names in fragment shader.
+	         *
 	         */
 
 	    }, {
@@ -2006,7 +2009,7 @@
 
 	                    prg.shaderProgram = program;
 
-	                    prg.vsVars = vs.varList, prg.fsVars = fs.varList;
+	                    prg.vsVars = vs.varList, prg.fsVars = fs.varList, prg.renderList = [];
 	                }
 	            }
 
@@ -3752,13 +3755,22 @@
 
 	            var shaderProgram = program.shaderProgram;
 
-	            program.renderList = program.renderList || objList || [];
+	            // If we init with object, add them here.
+
+	            if (objList) {
+
+	                program.renderList = this.util.concatArr(program.renderList, objList);
+	            }
 
 	            // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
 	            // TODO: https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/TechniquesforWorkingwithVertexData/TechniquesforWorkingwithVertexData.html
 	            // TODO: http://max-limper.de/tech/batchedrendering.html
 
-	            // Update object position, motion.
+	            /** 
+	             * POLYMORPHIC METHODS
+	             */
+
+	            // Update object position, motion - given to World object.
 
 	            program.update = function (obj) {
 
@@ -3894,6 +3906,8 @@
 
 	        this.name = shaderName;
 
+	        // class name = this.constructor.name
+
 	        this.webgl = webgl;
 
 	        this.util = util;
@@ -3922,7 +3936,9 @@
 
 	        this.fragmentShaderFile = null;
 
-	        this.getProgram();
+	        // Get the WebGL program we will use to render.
+
+	        this.createProgram();
 	    }
 
 	    /* 
@@ -3937,6 +3953,8 @@
 	    _createClass(Shader, [{
 	        key: 'addObj',
 	        value: function addObj(obj) {
+
+	            console.log("IN THIS PROGRAM, PROGRAM:" + this.program + " RENDERLIST:" + this.program.renderList);
 
 	            var renderList = this.program.renderList;
 
@@ -3971,6 +3989,106 @@
 	            }
 	        }
 
+	        /** 
+	         * Create the rendering program that will use our Shaders. Initially created 
+	         * by WebGL module, then each Shader adds update() and render() methods specific to 
+	         * the shader program.
+	         */
+
+	    }, {
+	        key: 'createProgram',
+	        value: function createProgram() {
+
+	            var program = null;
+
+	            if (this.vertexShaderFile && this.this.fragmentShaderFile) {
+
+	                program = this.webgl.createProgram(this.webgl.fetchVertexShader(this.vertexShaderFile), this.webgl.fetchFragmentShader(this.fragmentShaderFile));
+	            } else {
+
+	                // vsSrc() and fsSrc() are defined in derived Shader objects.
+
+	                program = this.webgl.createProgram(this.vsSrc(), this.fsSrc());
+	            }
+
+	            if (!program) {
+
+	                console.error('error creating WebGL program using Shader ' + this.constructor.name);
+	            } else {}
+
+	            /* 
+	             * Add stuff that all Shaders share (non-polymorphic properties and methods).
+	             * Individual Shader derivatives define an init() method, which in turn attaches 
+	             * 
+	             * program.update()
+	             * program.render() 
+	             * 
+	             * To the program object. The Renderer grabs the Shader.program.update() and Shader.program.render()
+	             * methods when rendering.
+	             *
+	             */
+
+	            //program.renderList = [];
+
+	            // Rendering uses a more direct program reference. we save a reference here for manipulating objects.
+
+	            return this.program = program;
+	        }
+
+	        /** 
+	         * get the WebGL Program (which contains the indivdiual update() and render() 
+	         * methods for this particular shader).
+	         * @returns {Object} returns the WebGL program from WebGL module, decorated with additional 
+	         * update() and render() methods by the specific shader.
+	         */
+
+	    }, {
+	        key: 'getProgram',
+	        value: function getProgram() {
+
+	            return this.program;
+	        }
+
+	        /** 
+	         * set up our program object, using WebGL. We wrap the 'naked' WebGL 
+	         * program object, and add additional properties to the wrapper. 
+	         * 
+	         * Individual shaders use these variables to construct a program wrapper 
+	         * object containing the GLProgram, plus properties, plus update() and 
+	         * render() functions.
+	         */
+
+	    }, {
+	        key: 'setup',
+	        value: function setup() {
+
+	            // The program is created by decorating an object provided by the WebGL object 
+	            // with additional methods.
+
+	            var program = this.program;
+
+	            /* Return references to our properties, and assign uniform and attribute locations using webgl object.
+	             * We do this return to provide local references for all the Shader and other objects
+	             * used by the WebGL program update() and render(). It could be provided in each init, but saves 
+	             * code to have each custom Shader init() method grab the local references from a common method. 
+	             */
+
+	            return [this.webgl.getContext(), this.webgl.getCanvas(), this.glMatrix.mat4, this.glMatrix.mat3, this.glMatrix.vec3, this.glMatrix.mat4.create(), // perspective
+
+	            this.glMatrix.mat4.create(), // model-view
+
+	            program, {
+	                attribute: this.webgl.setAttributeArrays(program.shaderProgram, program.vsVars.attribute),
+
+	                uniform: this.webgl.setUniformLocations(program.shaderProgram, program.vsVars.uniform)
+
+	            }, {
+
+	                uniform: this.webgl.setUniformLocations(program.shaderProgram, program.fsVars.uniform)
+
+	            }, this.webgl.stats];
+	        }
+
 	        /* 
 	         * ============ MATRIX OPERATIONS ============
 	         */
@@ -3997,77 +4115,6 @@
 	            }
 
 	            mvMatrix = this.mvMatrixStack.pop();
-	        }
-
-	        /** 
-	         * Add a list of Prim objects to be rendered. They can also be 
-	         * added in Shader init( objList ).
-	         */
-
-	    }, {
-	        key: 'setObjList',
-	        value: function setObjList(objList) {
-
-	            // TODO: THIS DOES NOT WORK!
-	            //this.program.renderList = objList;
-
-	        }
-	    }, {
-	        key: 'getProgram',
-	        value: function getProgram() {
-
-	            var program = null;
-
-	            if (this.vertexShaderFile && this.this.fragmentShaderFile) {
-
-	                program = this.webgl.createProgram(this.webgl.fetchVertexShader(this.vertexShaderFile), this.webgl.fetchFragmentShader(this.fragmentShaderFile));
-	            } else {
-
-	                // vsSrc() and fsSrc() are defined in derived Shader objects.
-
-	                program = this.webgl.createProgram(this.vsSrc(), this.fsSrc());
-	            }
-
-	            // Rendering uses a more direct program reference. we save a reference here for manipulating objects.
-
-	            this.program = program;
-
-	            return program;
-	        }
-
-	        /** 
-	         * set up our program object, using WebGL. We wrap the 'naked' WebGL 
-	         * program object, and add additional properties to the wrapper. 
-	         * 
-	         * Individual shaders use these variables to construct a program wrapper 
-	         * object containing the GLProgram, plus properties, plus update() and 
-	         * render() functions.
-	         */
-
-	    }, {
-	        key: 'setup',
-	        value: function setup() {
-
-	            // Compile shaders and create WebGL program using webgl object.
-
-	            var program = this.program;
-
-	            // Return references to our properties, and assign uniform and attribute locations using webgl object.
-
-	            return [this.webgl.getContext(), this.webgl.getCanvas(), this.glMatrix.mat4, this.glMatrix.mat3, this.glMatrix.vec3, this.glMatrix.mat4.create(), // perspective
-
-	            this.glMatrix.mat4.create(), // model-view
-
-	            program, {
-	                attribute: this.webgl.setAttributeArrays(program.shaderProgram, program.vsVars.attribute),
-
-	                uniform: this.webgl.setUniformLocations(program.shaderProgram, program.vsVars.uniform)
-
-	            }, {
-
-	                uniform: this.webgl.setUniformLocations(program.shaderProgram, program.fsVars.uniform)
-
-	            }, this.webgl.stats];
 	        }
 	    }]);
 
@@ -4112,6 +4159,15 @@
 
 	        return _this;
 	    }
+
+	    /* 
+	     * Vertex and Fragment Shaders. We use the internal 'program' object to compile these. Alternatively,
+	     * They may be defined to load from HTML or and external file.
+	     * @return {Object} an object, with
+	     * code: The shader code.
+	     * varList: A scanned list of all the variables in the shader code.
+	     */
+
 
 	    _createClass(ShaderColor, [{
 	        key: 'vsSrc',
@@ -4182,11 +4238,22 @@
 
 	            var shaderProgram = program.shaderProgram;
 
-	            program.renderList = program.renderList || objList || [];
+	            // If we init with object, add them here.
+
+	            if (objList) {
+
+	                program.renderList = this.util.concatArr(program.renderList, objList);
+	            }
+
+	            // TODO: ADD CHECK ROUTINE TO ENSURE THAT PRIM IS VALID HERE!!!!!!!!!!!!!!!!
 
 	            // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
 
-	            // Update object position, motion.
+	            /** 
+	             * POLYMORPHIC METHODS
+	             */
+
+	            // Update object position, motion - given to World object.
 
 	            program.update = function (obj) {
 
@@ -4289,13 +4356,13 @@
 
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-	var ShaderDirlightTexture = function (_Shader) {
-	    _inherits(ShaderDirlightTexture, _Shader);
+	var shaderDirLightTexture = function (_Shader) {
+	    _inherits(shaderDirLightTexture, _Shader);
 
-	    function ShaderDirlightTexture(init, util, glMatrix, webgl, shaderName) {
-	        _classCallCheck(this, ShaderDirlightTexture);
+	    function shaderDirLightTexture(init, util, glMatrix, webgl, shaderName) {
+	        _classCallCheck(this, shaderDirLightTexture);
 
-	        var _this = _possibleConstructorReturn(this, (ShaderDirlightTexture.__proto__ || Object.getPrototypeOf(ShaderDirlightTexture)).call(this, init, util, glMatrix, webgl, shaderName));
+	        var _this = _possibleConstructorReturn(this, (shaderDirLightTexture.__proto__ || Object.getPrototypeOf(shaderDirLightTexture)).call(this, init, util, glMatrix, webgl, shaderName));
 
 	        console.log('In ShaderTexture class');
 
@@ -4319,7 +4386,7 @@
 	     */
 
 
-	    _createClass(ShaderDirlightTexture, [{
+	    _createClass(shaderDirLightTexture, [{
 	        key: 'vsSrc',
 	        value: function vsSrc() {
 
@@ -4391,6 +4458,13 @@
 
 	            var shaderProgram = program.shaderProgram;
 
+	            // If we init with object, add them here.
+
+	            if (objList) {
+
+	                program.renderList = this.util.concatArr(program.renderList, objList);
+	            }
+
 	            // TODO: TEMPORARY ADD LIGHTING CONTROL
 
 	            var lighting = true;
@@ -4406,13 +4480,13 @@
 
 	            var adjustedLD = vec3.create(); // TODO: redo
 
-	            // Attach objects.
-
-	            program.renderList = program.renderList || objList || [];
-
 	            // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
 	            // TODO: https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/TechniquesforWorkingwithVertexData/TechniquesforWorkingwithVertexData.html
 	            // TODO: http://max-limper.de/tech/batchedrendering.html
+
+	            /** 
+	             * POLYMORPHIC METHODS
+	             */
 
 	            // Update object position, motion - given to World object.
 
@@ -4438,7 +4512,7 @@
 	                // Custom updates go here, make local references to vsVars and fsVars.
 	            };
 
-	            // Rendering.
+	            // Rendering - given to Renderer object, executed by World.
 
 	            program.render = function () {
 
@@ -4532,10 +4606,10 @@
 	        }
 	    }]);
 
-	    return ShaderDirlightTexture;
+	    return shaderDirLightTexture;
 	}(_shader2.default);
 
-	exports.default = ShaderDirlightTexture;
+	exports.default = shaderDirLightTexture;
 
 /***/ },
 /* 17 */
@@ -4658,7 +4732,7 @@
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 	var Renderer = function () {
-	    function Renderer(init, util, glMatrix, webgl, shaderTexture, shaderColor, shaderDirlightTexture) {
+	    function Renderer(init, util, glMatrix, webgl) {
 	        _classCallCheck(this, Renderer);
 
 	        console.log('In Renderer class');
@@ -4669,15 +4743,7 @@
 
 	        this.glmatrix = glMatrix;
 
-	        this.shaderTexture = shaderTexture;
-
-	        this.shaderColor = shaderColor;
-
-	        this.shaderDirlightTexture = shaderDirlightTexture;
-
 	        this.shaderList = [];
-
-	        this.renderList = [];
 
 	        if (this.init) {}
 	    }
@@ -4715,6 +4781,8 @@
 	        value: function addShader(shader) {
 
 	            if (this.shaderList.indexOf(shader.name) === -1) {
+
+	                console.log('adding Shader ' + shader.name + ' to rendering list');
 
 	                this.shaderList[shader.name] = shader;
 
@@ -8408,7 +8476,7 @@
 
 	                // SIMPLIFY TEST
 
-	                mesh.simplify();
+	                ////////////mesh.simplify();
 
 	                // SUBDIVIDE TEST
 
@@ -11777,31 +11845,23 @@
 
 	            var util = this.util;
 
+	            // Get the shaders (not initialized with update() and render() yet!).
+
+	            this.s1 = this.renderer.getShader('shaderTexture');
+
+	            this.s2 = this.renderer.getShader('shaderColor');
+
+	            this.s3 = this.renderer.getShader('shaderDirLightTexture');
+
+	            //////////////////////////////////
 	            // TEXTURED SHADER.
+	            //////////////////////////////////
 
 	            this.textureObjList = [];
 
-	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CUBE, 'first cube', // name
-	            vec5(1, 1, 1), // dimensions
-	            vec5(10, 10, 10, 0), // divisions, pass curving of edges as 4th parameter
-	            vec3.fromValues(1, 0, 2), // position (absolute)
-	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	            vec3.fromValues(util.degToRad(1), util.degToRad(1), util.degToRad(1)), // angular velocity in x, y, x
-	            ['img/crate.png', 'img/webvr-logo1.png'], // texture image
-	            vec4.fromValues(0.5, 1.0, 0.2, 1.0)));
+	            // Create a UV skydome.
 
-	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CUBE, 'toji cube', vec5(1, 1, 1, 0), // dimensions
-	            vec5(1, 1, 1, 0), // divisions, pass curving of edges as 4th parameter
-	            vec3.fromValues(5, 1, -3), // position (absolute)
-	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	            vec3.fromValues(util.degToRad(40), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	            vec3.fromValues(util.degToRad(0), util.degToRad(1), util.degToRad(0)), // angular velocity in x, y, x
-	            ['img/webvr-logo2.png'], vec4.fromValues(0.5, 1.0, 0.2, 1.0)));
-
-	            // PRIMARY (BIG) SKYDOME
-
-	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.SKYDOME, 'SkyDome', vec5(18, 18, 18, 0), // dimensions
+	            this.s1.addObj(this.prim.createPrim(this.prim.typeList.SKYDOME, 'skydome', vec5(18, 18, 18, 0), // dimensions
 	            vec5(10, 10, 10), // divisions MAKE SMALLER
 	            vec3.fromValues(0, 0, 0), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -11811,7 +11871,25 @@
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	            ));
 
-	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.TORUS, 'torus2', vec5(1, 1, 0.5, 0), // dimensions (first is width along x, second  width along y, diameter of torus tube)
+	            this.s1.addObj(this.prim.createPrim(this.prim.typeList.CUBE, 'first cube', // name
+	            vec5(1, 1, 1), // dimensions
+	            vec5(10, 10, 10, 0), // divisions, pass curving of edges as 4th parameter
+	            vec3.fromValues(1, 0, 2), // position (absolute)
+	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	            vec3.fromValues(util.degToRad(1), util.degToRad(1), util.degToRad(1)), // angular velocity in x, y, x
+	            ['img/crate.png', 'img/webvr-logo1.png'], // texture image
+	            vec4.fromValues(0.5, 1.0, 0.2, 1.0)));
+
+	            this.s1.addObj(this.prim.createPrim(this.prim.typeList.CUBE, 'toji cube', vec5(1, 1, 1, 0), // dimensions
+	            vec5(1, 1, 1, 0), // divisions, pass curving of edges as 4th parameter
+	            vec3.fromValues(5.5, 1.5, -3), // position (absolute)
+	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	            vec3.fromValues(util.degToRad(40), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	            vec3.fromValues(util.degToRad(0), util.degToRad(1), util.degToRad(0)), // angular velocity in x, y, x
+	            ['img/webvr-logo2.png'], vec4.fromValues(0.5, 1.0, 0.2, 1.0)));
+
+	            this.s1.addObj(this.prim.createPrim(this.prim.typeList.TORUS, 'torus2', vec5(1, 1, 0.5, 0), // dimensions (first is width along x, second  width along y, diameter of torus tube)
 	            vec5(9, 9, 9, 1), // divisions (first is number of rings, second is number of sides)
 	            vec3.fromValues(-1.8, 3, -3.5), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -11820,19 +11898,187 @@
 	            ['img/uv-test.png'], // texture present, NOT USED
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0)));
 
-	            ///////this.vs1 = this.renderer.shaderTexture.init( this.textureObjList );
+	            // DIMENSIONS INDICATE ANY X or Y CURVATURE.
+	            // DIVISIONS FOR CUBED AND CURVED PLANE INDICATE SIDE TO DRAW
 
+	            this.s1.addObj(this.prim.createPrim(this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlaneBack', vec5(2, 1, 1, this.prim.directions.BACK, 1), // pass orientation ONE UNIT CURVE
+	            vec5(10, 10, 10), // divisions
+	            vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
+	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	            vec3.fromValues(util.degToRad(0.0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	            ['img/webvr-logo2.png'], // texture present
+	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	            ));
+
+	            this.s1.addObj(this.prim.createPrim(this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlaneLeft', vec5(2, 1, 1, this.prim.directions.LEFT, 1), // pass orientation ONE UNIT CURVE
+	            vec5(10, 10, 10), // divisions
+	            vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
+	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	            vec3.fromValues(util.degToRad(0.0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	            ['img/webvr-logo3.png'], // texture present
+	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	            ));
+
+	            this.s1.addObj(this.prim.createPrim(this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlaneRight', vec5(2, 1, 1, this.prim.directions.RIGHT, 1), // pass orientation ONE UNIT CURVE
+	            vec5(10, 10, 10), // divisions
+	            vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
+	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	            vec3.fromValues(util.degToRad(0.0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	            ['img/webvr-logo4.png'], // texture present
+	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	            ));
+
+	            this.s1.addObj(this.prim.createPrim(this.prim.typeList.CURVEDOUTERPLANE, 'CurvedPlaneOut', vec5(2, 1, 1, this.prim.directions.RIGHT, 1), // dimensions NOTE: pass radius for curvature (also creates orbit) 
+	            vec3.fromValues(10, 10, 10), // divisions
+	            vec3.fromValues(-1.2, 0.0, 2.0), // position (absolute)
+	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	            vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	            ['img/mozvr-logo2.png'], // texture present
+	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	            ));
+
+	            this.s1.addObj(this.prim.createPrim(this.prim.typeList.ICOSPHERE, 'icosphere', vec5(3, 3, 3, 0), // dimensions
+	            vec5(32, 32, 32), // 1 for icosohedron, 16 for good sphere
+	            vec3.fromValues(4.5, 3.5, -2), // position (absolute)
+	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	            vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	            ['img/uv-test.png'], // texture present, NOT USED
+	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	            ));
+
+	            this.s1.addObj(this.prim.createPrim(this.prim.typeList.SKYICODOME, 'icoSkyDome', vec5(3, 3, 3, 0), // dimensions
+	            vec5(32, 32, 32), // 1 for icosohedron, 16 for good sphere
+	            vec3.fromValues(-4.5, 0.5, -2), // position (absolute)
+	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	            vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	            ['img/uv-test.png'], // texture present, NOT USED
+	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	            ));
+
+	            this.s1.addObj(this.prim.createPrim(this.prim.typeList.BOTTOMICODOME, 'bottomicodome', vec5(3, 3, 3, 0), // dimensions
+	            vec5(32, 32, 32), // 1 for icosohedron, 16 for good sphere
+	            vec3.fromValues(4.5, 0.5, -2), // position (absolute)
+	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	            vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	            ['img/uv-test.png'], // texture present, NOT USED
+	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	            ));
+
+	            this.s1.addObj(this.prim.createPrim(this.prim.typeList.CAP, // CAP DEFAULT, AT WORLD CENTER (also a UV polygon)
+	            'CAP', vec5(3, 3, 3, 0), // dimensions INCLUDING start radius or torus radius(last value)
+	            vec5(15, 15, 15), // divisions MUST BE CONTROLLED TO < 5
+	            //vec3.fromValues(-3.5, -3.5, -1 ),    // position (absolute)
+	            vec3.fromValues(-0.0, 0, 2.0), vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	            vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	            ['img/mozvr-logo1.png'], // texture present
+	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	            ));
+
+	            this.s1.addObj(this.prim.createPrim(this.prim.typeList.CONE, 'TestCone', vec5(1, 1, 1, 0.0, 0.0), // dimensions (4th dimension is truncation of cone, none = 0, flat circle = 1.0)
+	            vec5(10, 10, 10), // divisions MAKE SMALLER
+	            vec3.fromValues(-0, -1.5, 2.0), // position (absolute)
+	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	            vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	            ['img/uv-test.png'], // texture present
+	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	            ));
+
+	            this.s1.addObj(this.prim.createPrim(this.prim.typeList.CYLINDER, 'TestCylinder', vec5(1, 1, 1, 0.3, 0.7), // dimensions (4th dimension doesn't exist for cylinder)
+	            vec5(40, 40, 40), // divisions MAKE SMALLER
+	            vec3.fromValues(-1.5, -1.5, 2.0), // position (absolute)
+	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	            vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	            ['img/uv-test.png'], // texture present
+	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	            ));
+
+	            this.s1.addObj(this.prim.createPrim(this.prim.typeList.CAPSULE, 'TestCapsule', vec5(0.5, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
+	            vec5(40, 40, 0), // divisions MAKE SMALLER
+	            vec3.fromValues(-2.0, -1.5, 2.0), // position (absolute)
+	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	            vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	            ['img/uv-test.png'], // texture present
+	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	            ));
+
+	            this.s1.addObj(this.prim.createPrim(this.prim.typeList.TEARDROP, 'TestTearDrop', vec5(1, 2, 1), // dimensions (4th dimension doesn't exist for cylinder)
+	            vec5(40, 40, 0), // divisions MAKE SMALLER
+	            vec3.fromValues(-2.0, 1.5, 2.0), // position (absolute)
+	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	            vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	            ['img/uv-test.png'], // texture present
+	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	            ));
+
+	            this.s1.addObj(this.prim.createPrim(this.prim.typeList.DODECAHEDRON, 'Dodecahedron', vec5(1, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
+	            vec5(40, 40, 0), // divisions MAKE SMALLER
+	            vec3.fromValues(-1.0, 0.5, 3.0), // position (absolute)
+	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	            vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	            ['img/crate.png'], // texture present
+	            vec4.fromValues(0.5, 1.0, 0.2, 1.0), // color,
+	            true // if true, apply texture to each face
+
+	            ));
+
+	            /*
+	            
+	            // NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
+	            
+	                    this.s1.push( 
+	            
+	                        this.prim.createPrim(
+	            
+	                            this.prim.typeList.MESH,
+	                            'obj capsule',
+	                            vec5( 1, 1, 1 ),       // dimensions (4th dimension doesn't exist for cylinder)
+	                            vec5( 40, 40, 0  ),        // divisions MAKE SMALLER
+	                            vec3.fromValues(0.0, 1.0, 2.0 ),      // position (absolute)
+	                            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+	                            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+	                            vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+	                            [ 'obj/capsule/capsule.png' ],               // texture present
+	                            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color,
+	                            true,                                   // if true, apply texture to each face,
+	                            [ 'obj/capsule/capsule.obj', 'obj/capsule/capsule.mtl' ] // object files (.obj, .mtl)
+	                        
+	                        )
+	            
+	                    );
+	            */
+
+	            //////////////////////////////////
 	            // COLORED SHADER.
-
-	            // TODO: add shaders to Renderer
-
-	            // TODO: add Prims to renderer, using a specific shader renderer[shaderName].list.push( prim )
+	            //////////////////////////////////
 
 	            this.colorObjList = [];
 
-	            this.colorObjList.push(this.prim.createPrim(
-	            //this.textureObjList.push( this.prim.createPrim(
-	            this.prim.typeList.CUBE, 'colored cube', vec5(1, 1, 1, 0), // dimensions
+	            this.s2.addObj(this.prim.createPrim(this.prim.typeList.CUBE, 'colored cube', vec5(1, 1, 1, 0), // dimensions
 	            vec5(3, 3, 3), // divisions
 	            vec3.fromValues(0.2, 0.5, 1), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -11841,13 +12087,9 @@
 	            ['img/webvr-logo3.png'], // texture present, NOT USED
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0)));
 
-	            window.teapot = this.colorObjList[this.colorObjList.length - 1];
+	            // NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
 
-	            ///OBJ MESH
-
-	            //TODO: TEAPOT DOES NOT LOAD AND RENDER!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-	            this.colorObjList.push(this.prim.createPrim(this.prim.typeList.MESH, 'teapot', vec5(1, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
+	            this.s2.addObj(this.prim.createPrim(this.prim.typeList.MESH, 'teapot', vec5(1, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
 	            vec5(40, 40, 0), // divisions MAKE SMALLER
 	            vec3.fromValues(0.0, 1.0, 2.0), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -11857,15 +12099,16 @@
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0), // color,
 	            false, // if true, apply texture to each face,
 	            ['obj/teapot/teapot.obj'] // object files (.obj, .mtl)
+
 	            ));
 
-	            /////////this.vs2 = this.renderer.shaderColor.init( this.colorObjList );
-
+	            //////////////////////////////////
 	            // LIT TEXTURE SHADER.
+	            //////////////////////////////////
 
 	            this.dirlightTextureObjList = [];
 
-	            this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.CUBE, 'lit cube', vec5(1, 1, 1, 0), // dimensions
+	            this.s3.addObj(this.prim.createPrim(this.prim.typeList.CUBE, 'lit cube', vec5(1, 1, 1, 0), // dimensions
 	            vec5(1, 1, 1), // divisions
 	            vec3.fromValues(-3, -2, -3), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -11874,7 +12117,7 @@
 	            ['img/webvr-logo4.png'], // texture present, NOT USED
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0)));
 
-	            this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.TERRAIN, 'terrain', vec5(2, 2, 44, this.prim.directions.TOP, 0.1), // NOTE: ORIENTATION DESIRED vec5[3], waterline = vec5[4]
+	            this.s3.addObj(this.prim.createPrim(this.prim.typeList.TERRAIN, 'terrain', vec5(2, 2, 44, this.prim.directions.TOP, 0.1), // NOTE: ORIENTATION DESIRED vec5[3], waterline = vec5[4]
 	            vec5(100, 100, 100), // divisions
 	            vec3.fromValues(1.5, -1.5, 2), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -11886,10 +12129,7 @@
 
 	            ));
 
-	            ///////////////////////////
-	            // PLANE
-
-	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlaneFront', vec5(2, 1, 1, this.prim.directions.FRONT, 1), // pass orientation ONE UNIT CURVE
+	            this.s3.addObj(this.prim.createPrim(this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlaneFront', vec5(2, 1, 1, this.prim.directions.FRONT, 1), // pass orientation ONE UNIT CURVE
 	            vec5(10, 10, 10), // divisions
 	            vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -11897,54 +12137,10 @@
 	            vec3.fromValues(util.degToRad(0.0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
 	            ['img/webvr-logo1.png'], // texture present
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
 	            ));
 
-	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlaneBack', vec5(2, 1, 1, this.prim.directions.BACK, 1), // pass orientation ONE UNIT CURVE
-	            vec5(10, 10, 10), // divisions
-	            vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
-	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	            vec3.fromValues(util.degToRad(0.0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	            ['img/webvr-logo2.png'], // texture present
-	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-	            ));
-
-	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlaneLeft', vec5(2, 1, 1, this.prim.directions.LEFT, 1), // pass orientation ONE UNIT CURVE
-	            vec5(10, 10, 10), // divisions
-	            vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
-	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	            vec3.fromValues(util.degToRad(0.0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	            ['img/webvr-logo3.png'], // texture present
-	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-	            ));
-
-	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlaneRight', vec5(2, 1, 1, this.prim.directions.RIGHT, 1), // pass orientation ONE UNIT CURVE
-	            vec5(10, 10, 10), // divisions
-	            vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
-	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	            vec3.fromValues(util.degToRad(0.0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	            ['img/webvr-logo4.png'], // texture present
-	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-	            ));
-
-	            //////////////////////////////////////////////////////////////////////
-
-	            // DIMENSIONS INDICATE ANY X or Y CURVATURE.
-	            // DIVISIONS FOR CUBED AND CURVED PLANE INDICATE SIDE TO DRAW
-
-	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CURVEDOUTERPLANE, 'CurvedPlaneOut', vec5(2, 1, 1, this.prim.directions.RIGHT, 1), // dimensions NOTE: pass radius for curvature (also creates orbit) 
-	            vec3.fromValues(10, 10, 10), // divisions
-	            vec3.fromValues(-1.2, 0.0, 2.0), // position (absolute)
-	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	            vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	            ['img/mozvr-logo2.png'], // texture present
-	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-	            ));
-
-	            this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.SPHERE, 'texsphere', vec5(1.5, 1.5, 1.5, 0), // dimensions
+	            this.s3.addObj(this.prim.createPrim(this.prim.typeList.SPHERE, 'texsphere', vec5(1.5, 1.5, 1.5, 0), // dimensions
 	            //vec5( 30, 30, 30 ),         // divisions
 	            vec5(6, 6, 6), // at least 8 subdividions to smooth!
 	            //vec3.fromValues(-5, -1.3, -1 ),       // position (absolute)
@@ -11953,9 +12149,10 @@
 	            vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
 	            ['img/mozvr-logo1.png'], // texture present, NOT USED
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
 	            ));
 
-	            this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.CUBESPHERE, 'cubesphere', vec5(3, 3, 3), // dimensions
+	            this.s3.addObj(this.prim.createPrim(this.prim.typeList.CUBESPHERE, 'cubesphere', vec5(3, 3, 3), // dimensions
 	            vec5(10, 10, 10, 0), // divisions 4th parameter is degree of rounding.
 	            vec3.fromValues(3, -0.7, -1), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -11963,9 +12160,10 @@
 	            vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
 	            ['img/mozvr-logo1.png'], // texture present, NOT USED
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
 	            ));
 
-	            this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.REGULARTETRAHEDRON, 'regulartetrahedron', vec5(3, 3, 3, 0), // dimensions
+	            this.s3.addObj(this.prim.createPrim(this.prim.typeList.REGULARTETRAHEDRON, 'regulartetrahedron', vec5(3, 3, 3, 0), // dimensions
 	            vec5(18, 18, 18), // divisions
 	            vec3.fromValues(6.7, 1.5, -4), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -11973,9 +12171,10 @@
 	            vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
 	            ['img/mozvr-logo2.png'], // texture present, NOT USED
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
 	            ));
 
-	            this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.ICOSOHEDRON, 'icosohedron', vec5(3, 3, 3, 0), // dimensions
+	            this.s3.addObj(this.prim.createPrim(this.prim.typeList.ICOSOHEDRON, 'icosohedron', vec5(3, 3, 3, 0), // dimensions
 	            vec5(18, 18, 18), // divisions
 	            vec3.fromValues(0.5, 3.5, -2), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -11983,42 +12182,10 @@
 	            vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
 	            ['img/mozvr-logo2.png'], // texture present, NOT USED
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
 	            ));
 
-	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.ICOSPHERE, 'icosphere', vec5(3, 3, 3, 0), // dimensions
-	            vec5(32, 32, 32), // 1 for icosohedron, 16 for good sphere
-	            vec3.fromValues(4.5, 3.5, -2), // position (absolute)
-	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	            vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	            ['img/uv-test.png'], // texture present, NOT USED
-	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-	            ));
-
-	            //////////////////////////
-	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.SKYICODOME, 'icoSkyDome', vec5(3, 3, 3, 0), // dimensions
-	            vec5(32, 32, 32), // 1 for icosohedron, 16 for good sphere
-	            vec3.fromValues(-4.5, 0.5, -2), // position (absolute)
-	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	            vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	            ['img/uv-test.png'], // texture present, NOT USED
-	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-	            ));
-
-	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.BOTTOMICODOME, 'bottomicodome', vec5(3, 3, 3, 0), // dimensions
-	            vec5(32, 32, 32), // 1 for icosohedron, 16 for good sphere
-	            vec3.fromValues(4.5, 0.5, -2), // position (absolute)
-	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	            vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	            ['img/uv-test.png'], // texture present, NOT USED
-	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-	            ));
-	            //////////////////////////
-
-
-	            this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.BOTTOMDOME, 'TestDome', vec5(1, 1, 1, 0), // dimensions
+	            this.s3.addObj(this.prim.createPrim(this.prim.typeList.BOTTOMDOME, 'TestDome', vec5(1, 1, 1, 0), // dimensions
 	            vec5(10, 10, 10), // divisions MAKE SMALLER
 	            vec3.fromValues(-4, 0.5, -0.5), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -12026,9 +12193,10 @@
 	            vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
 	            ['img/mozvr-logo2.png'], // texture present
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
 	            ));
 
-	            this.dirlightTextureObjList.push(this.prim.createPrim(this.prim.typeList.TORUS, // TORUS DEFAULT
+	            this.s3.addObj(this.prim.createPrim(this.prim.typeList.TORUS, // TORUS DEFAULT
 	            'TORUS1', vec5(1, 1, 0.5, 0), // dimensions INCLUDING start radius or torus radius(last value)
 	            vec5(15, 15, 15), // divisions MUST BE CONTROLLED TO < 5
 	            //vec3.fromValues(-3.5, -3.5, -1 ),        // position (absolute)
@@ -12039,97 +12207,35 @@
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	            ));
 
-	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CAP, // CAP DEFAULT, AT WORLD CENTER (also a UV polygon)
-	            'CAP', vec5(3, 3, 3, 0), // dimensions INCLUDING start radius or torus radius(last value)
-	            vec5(15, 15, 15), // divisions MUST BE CONTROLLED TO < 5
-	            //vec3.fromValues(-3.5, -3.5, -1 ),    // position (absolute)
-	            vec3.fromValues(-0.0, 0, 2.0), vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	            vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	            ['img/mozvr-logo1.png'], // texture present
-	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-	            ));
+	            // Initialize the update() and render() routines in each shader.
 
-	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CONE, 'TestCone', vec5(1, 1, 1, 0.0, 0.0), // dimensions (4th dimension is truncation of cone, none = 0, flat circle = 1.0)
-	            vec5(10, 10, 10), // divisions MAKE SMALLER
-	            vec3.fromValues(-0, -1.5, 2.0), // position (absolute)
-	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	            vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	            ['img/uv-test.png'], // texture present
-	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-	            ));
+	            // NOTE: the init() method sets up the update() and render() methods for the shader.
 
-	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CYLINDER, 'TestCylinder', vec5(1, 1, 1, 0.3, 0.7), // dimensions (4th dimension doesn't exist for cylinder)
-	            vec5(40, 40, 40), // divisions MAKE SMALLER
-	            vec3.fromValues(-1.5, -1.5, 2.0), // position (absolute)
-	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	            vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	            ['img/uv-test.png'], // texture present
-	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-	            ));
+	            this.r1 = this.s1.init(this.textureObjList);
 
-	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.CAPSULE, 'TestCapsule', vec5(0.5, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
-	            vec5(40, 40, 0), // divisions MAKE SMALLER
-	            vec3.fromValues(-2.0, -1.5, 2.0), // position (absolute)
-	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	            vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	            ['img/uv-test.png'], // texture present
-	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-	            ));
+	            this.r2 = this.s2.init(this.colorObjList);
 
-	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.TEARDROP, 'TestTearDrop', vec5(1, 2, 1), // dimensions (4th dimension doesn't exist for cylinder)
-	            vec5(40, 40, 0), // divisions MAKE SMALLER
-	            vec3.fromValues(-2.0, 1.5, 2.0), // position (absolute)
-	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	            vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	            ['img/uv-test.png'], // texture present
-	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-	            ));
+	            this.r3 = this.s3.init(this.dirlightTextureObjList);
 
-	            this.textureObjList.push(this.prim.createPrim(this.prim.typeList.DODECAHEDRON, 'Dodecahedron', vec5(1, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
-	            vec5(40, 40, 0), // divisions MAKE SMALLER
-	            vec3.fromValues(-1.0, 0.5, 3.0), // position (absolute)
-	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	            vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	            ['img/crate.png'], // texture present
-	            vec4.fromValues(0.5, 1.0, 0.2, 1.0), // color,
-	            true // if true, apply texture to each face
-	            ));
-
-	            //this.vs3 = this.renderer.shaderDirlightTexture.init( this.dirlightTextureObjList );
-
-
-	            /////////////// 
 	            /*
-	                    this.textureObjList.push( this.prim.createPrim(
-	                        this.prim.typeList.MESH,
-	                        'obj capsule',
-	                        vec5( 1, 1, 1 ),       // dimensions (4th dimension doesn't exist for cylinder)
-	                        vec5( 40, 40, 0  ),        // divisions MAKE SMALLER
-	                        vec3.fromValues(0.0, 1.0, 2.0 ),      // position (absolute)
+	                    this.s1.addObj( 
+	            
+	                       this.prim.createPrim(
+	                        this.prim.typeList.SPHERE,
+	                        'texsphere',
+	                        vec5( 1.5, 1.5, 1.5, 0 ),   // dimensions
+	                        //vec5( 30, 30, 30 ),         // divisions
+	                        vec5( 6, 6, 6 ), // at least 8 subdividions to smooth!
+	                        //vec3.fromValues(-5, -1.3, -1 ),       // position (absolute)
+	                        vec3.fromValues( 1, -1.0, 3.5 ),
 	                        vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
 	                        vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-	                        vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-	                        [ 'obj/capsule/capsule.png' ],               // texture present
-	                        vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color,
-	                        true,                                   // if true, apply texture to each face,
-	                        [ 'obj/capsule/capsule.obj', 'obj/capsule/capsule.mtl' ] // object files (.obj, .mtl)
+	                        vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+	                        [ 'img/mozvr-logo1.png' ],               // texture present, NOT USED
+	                        vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
+	            
 	                    ) );
 	            */
-	            ///////////////
-
-	            // Finished object creation, start rendering...
-
-	            this.vs1 = this.renderer.getShader('shaderTexture').init(this.textureObjList);
-
-	            this.vs2 = this.renderer.getShader('shaderColor').init(this.colorObjList);
-
-	            this.vs3 = this.renderer.getShader('shaderDirlightTexture').init(this.dirlightTextureObjList);
 
 	            this.render();
 	        }
@@ -12186,13 +12292,13 @@
 
 	            // TODO: Don't render until we update in the correct order.
 
-	            //this.renderer.render();
+	            // Shader.render();
 
-	            this.vs3.render();
+	            this.r3.render();
 
-	            this.vs2.render();
+	            this.r2.render();
 
-	            this.vs1.render();
+	            this.r1.render();
 
 	            requestAnimationFrame(this.render);
 	        }

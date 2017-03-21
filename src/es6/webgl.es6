@@ -809,6 +809,14 @@ class WebGL {
      * we apply gl.useProgram(program).
      * @param {gl.VERTEX_SHADER} vShader the vertex shader.
      * @param {gl.FRAGMENT_SHADER} fShader the fragment shader.
+     * @returns {Object} an object containing the compiled shaders, the 
+     * WebGL program, and a parsed list of all the varying and uniforms in 
+     * the shader source code.
+     * 
+     * prg.shaderProgram = program; // the WebGL program
+     * prg.vsVars = vs.varList,     // varying and uniform names in vertex shader.
+     * prg.fsVars = fs.varList      // varying and uniform names in fragment shader.
+     *
      */
     createProgram ( vs, fs ) {
 
@@ -852,7 +860,9 @@ class WebGL {
 
                 prg.vsVars = vs.varList,
 
-                prg.fsVars = fs.varList
+                prg.fsVars = fs.varList,
+
+                prg.renderList = [];
 
             }
 

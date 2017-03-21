@@ -14,7 +14,8 @@ var env = process.env.WEBPACK_ENV;
 
     var vrmini = require( '../es6/app.es6' );
 
-    vrmini.world.init();
+    // Done in app.es6
+    ///////////////////////////vrmini.world.init();
 
 // Check ES6 module structure.
 

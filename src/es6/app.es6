@@ -51,7 +51,7 @@ import ShaderTexture from './shader-texture';
 
 import ShaderColor from './shader-color';
 
-import ShaderDirlightTexture from './shader-dirlight-texture';
+import shaderDirLightTexture from './shader-dirlight-texture';
 
 import ShaderWater from './shader-water';
 
@@ -115,7 +115,7 @@ if ( __DEV__ === 'true' ) {
 
 }
 
-let webvr, loadModel, loadTexture, loadAudio, loadVideo, loadFont, prim, shaderTexture, shaderColor, shaderDirlightTexture, renderer, world;
+let webvr, loadModel, loadTexture, loadAudio, loadVideo, loadFont, prim, renderer, world;
 
 // WebGL can take some time to init.
 ///////////////////////////////////////////////////////
@@ -141,19 +141,15 @@ var promise = new Promise( ( resolve, reject ) => {
 
         prim = new Prim ( true, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo );
 
-        shaderTexture = new ShaderTexture ( true, util, glMatrix, webgl, 'shaderTexture' );
+        // Add shaders to Renderer
 
-        shaderColor = new ShaderColor ( true, util, glMatrix, webgl, 'shaderColor' );
+        renderer = new Renderer ( true, util, glMatrix, webgl );
 
-        shaderDirlightTexture = new ShaderDirlightTexture( true, util, glMatrix, webgl, 'shaderDirlightTexture' );
+        renderer.addShader( new ShaderTexture ( true, util, glMatrix, webgl, 'shaderTexture' ) );
 
-        renderer = new Renderer ( true, util, glMatrix, webgl, shaderTexture, shaderColor, shaderDirlightTexture );
+        renderer.addShader( new ShaderColor ( true, util, glMatrix, webgl, 'shaderColor' ) );
 
-        renderer.addShader( shaderTexture );
-
-        renderer.addShader( shaderColor );
-
-        renderer.addShader( shaderDirlightTexture );
+        renderer.addShader( new shaderDirLightTexture( true, util, glMatrix, webgl, 'shaderDirLightTexture' ) );
 
         // Create the world, which needs WebGL, WebVR, and Prim.
 
@@ -176,6 +172,8 @@ var promise = new Promise( ( resolve, reject ) => {
 }).catch( ( err ) => {
 
     // error
+
+    console.error( 'app.es6 load error:' + err );
 
 } );
 
@@ -204,15 +202,15 @@ let shaderTexture = new ShaderTexture ( true, util, glMatrix, webgl, 'shaderText
 
 let shaderColor = new ShaderColor ( true, util, glMatrix, webgl, 'shaderColor' );
 
-let shaderDirlightTexture = new ShaderDirlightTexture( true, util, glMatrix, webgl, 'shaderDirlightTexture' );
+let shaderDirLightTexture = new shaderDirLightTexture( true, util, glMatrix, webgl, 'shaderDirLightTexture' );
 
-let renderer = new Renderer ( true, util, glMatrix, webgl, shaderTexture, shaderColor, shaderDirlightTexture );
+let renderer = new Renderer ( true, util, glMatrix, webgl, shaderTexture, shaderColor, shaderDirLightTexture );
 
 renderer.addShader( shaderTexture );
 
 renderer.addShader( shaderColor );
 
-renderer.addShader( shaderDirlightTexture );
+renderer.addShader( shaderDirLightTexture );
 
 // Create the world, which needs WebGL, WebVR, and Prim.
 

@@ -1,6 +1,6 @@
 import Shader from './shader'
 
-class ShaderDirlightTexture extends Shader {
+class shaderDirLightTexture extends Shader {
 
     constructor ( init, util, glMatrix, webgl, shaderName ) {
 
@@ -133,31 +133,39 @@ class ShaderDirlightTexture extends Shader {
 
         let arr = this.setup(),
 
-        gl = arr[0],
+        gl = arr[ 0 ],
 
-        canvas = arr[1],
+        canvas = arr[ 1 ],
 
-        mat4 = arr[2],
+        mat4 = arr[ 2 ],
 
-        mat3 = arr[3],
+        mat3 = arr[ 3 ],
 
-        vec3 = arr[4],
+        vec3 = arr[ 4 ],
 
-        pMatrix = arr[5],
+        pMatrix = arr[ 5 ],
 
-        mvMatrix = arr[6],
+        mvMatrix = arr[ 6 ],
 
-        program = arr[7],
+        program = arr[ 7 ],
 
-        vsVars = arr[8],
+        vsVars = arr[ 8 ],
 
-        fsVars = arr[9], 
+        fsVars = arr[ 9 ], 
 
         stats = arr[ 10 ];
 
         // Shorter reference.
 
         let shaderProgram = program.shaderProgram;
+
+        // If we init with object, add them here.
+
+        if ( objList ) {
+
+            program.renderList = this.util.concatArr( program.renderList, objList );
+
+        }
 
         // TODO: TEMPORARY ADD LIGHTING CONTROL
 
@@ -177,13 +185,13 @@ class ShaderDirlightTexture extends Shader {
 
         let adjustedLD = vec3.create(); // TODO: redo
 
-        // Attach objects.
-
-        program.renderList = program.renderList || objList || [];
-
         // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
         // TODO: https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/TechniquesforWorkingwithVertexData/TechniquesforWorkingwithVertexData.html
         // TODO: http://max-limper.de/tech/batchedrendering.html
+
+        /** 
+         * POLYMORPHIC METHODS
+         */
 
         // Update object position, motion - given to World object.
 
@@ -210,7 +218,7 @@ class ShaderDirlightTexture extends Shader {
 
         }
 
-        // Rendering.
+        // Rendering - given to Renderer object, executed by World.
 
         program.render = () => {
 
@@ -325,4 +333,4 @@ class ShaderDirlightTexture extends Shader {
 
 }
 
-export default ShaderDirlightTexture;
+export default shaderDirLightTexture;

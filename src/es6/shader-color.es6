@@ -10,6 +10,13 @@ class ShaderColor extends Shader {
 
     }
 
+    /* 
+     * Vertex and Fragment Shaders. We use the internal 'program' object to compile these. Alternatively,
+     * They may be defined to load from HTML or and external file.
+     * @return {Object} an object, with
+     * code: The shader code.
+     * varList: A scanned list of all the variables in the shader code.
+     */
     vsSrc () {
 
         let s = [
@@ -112,11 +119,24 @@ class ShaderColor extends Shader {
 
         let shaderProgram = program.shaderProgram;
 
-        program.renderList = program.renderList || objList || [];
+        // If we init with object, add them here.
+
+        if ( objList ) {
+
+            program.renderList = this.util.concatArr( program.renderList, objList );
+
+        }
+
+
+        // TODO: ADD CHECK ROUTINE TO ENSURE THAT PRIM IS VALID HERE!!!!!!!!!!!!!!!!
 
         // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
 
-        // Update object position, motion.
+        /** 
+         * POLYMORPHIC METHODS
+         */
+
+        // Update object position, motion - given to World object.
 
         program.update = ( obj ) => {
 

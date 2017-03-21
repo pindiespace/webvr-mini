@@ -1,6 +1,6 @@
 class Renderer {
 
-    constructor ( init, util, glMatrix, webgl, shaderTexture, shaderColor, shaderDirlightTexture ) {
+    constructor ( init, util, glMatrix, webgl ) {
 
         console.log( 'In Renderer class' );
  
@@ -10,15 +10,7 @@ class Renderer {
 
         this.glmatrix = glMatrix;
 
-        this.shaderTexture = shaderTexture;
-
-        this.shaderColor = shaderColor;
-
-        this.shaderDirlightTexture = shaderDirlightTexture;
-
         this.shaderList = [];
-
-        this.renderList = [];
 
         if( this.init ) {
 
@@ -55,6 +47,8 @@ class Renderer {
     addShader( shader ) {
 
         if ( this.shaderList.indexOf( shader.name ) === -1 ) {
+
+            console.log( 'adding Shader ' + shader.name + ' to rendering list' );
 
             this.shaderList[ shader.name ] = shader;
 

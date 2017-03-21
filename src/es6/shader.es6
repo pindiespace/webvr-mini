@@ -29,6 +29,8 @@ class Shader {
 
         this.name = shaderName;
 
+        // class name = this.constructor.name
+
         this.webgl = webgl;
 
         this.util = util;
@@ -59,7 +61,9 @@ class Shader {
 
         this.fragmentShaderFile = null;
 
-        this.getProgram();
+        // Get the WebGL program we will use to render.
+
+        this.createProgram();
 
     }
 
@@ -71,6 +75,8 @@ class Shader {
      * prims are added to the webgl program.
      */
     addObj( obj ) {
+
+        console.log("IN THIS PROGRAM, PROGRAM:" + this.program + " RENDERLIST:" + this.program.renderList)
 
         let renderList = this.program.renderList;
 
@@ -108,46 +114,12 @@ class Shader {
 
     }
 
-    /* 
-     * ============ MATRIX OPERATIONS ============
-     */
-
-    mvPushMatrix () {
-
-        let mat4 = this.glMatrix.mat4;
-
-        let copy = mat4.create();
-
-        mat4.set( this.mvMatrix, copy );
-
-        mvMatrixStack.push( copy );
-
-    }
-
-    mvPopMatrix () {
-
-        if ( this.mvMatrixStack.length == 0 ) {
-
-            throw 'Invalid popMatrix!';
-
-        }
-
-        mvMatrix = this.mvMatrixStack.pop();
-
-    }
-
     /** 
-     * Add a list of Prim objects to be rendered. They can also be 
-     * added in Shader init( objList ).
+     * Create the rendering program that will use our Shaders. Initially created 
+     * by WebGL module, then each Shader adds update() and render() methods specific to 
+     * the shader program.
      */
-    setObjList ( objList ) {
-
-        // TODO: THIS DOES NOT WORK!
-        //this.program.renderList = objList;
-
-    }
-
-    getProgram () {
+    createProgram () {
 
         let program = null;
 
@@ -166,11 +138,43 @@ class Shader {
 
         }
 
+        if ( ! program ) {
+
+            console.error( 'error creating WebGL program using Shader ' + this.constructor.name );
+
+        } else {
+
+            /* 
+             * Add stuff that all Shaders share (non-polymorphic properties and methods).
+             * Individual Shader derivatives define an init() method, which in turn attaches 
+             * 
+             * program.update()
+             * program.render() 
+             * 
+             * To the program object. The Renderer grabs the Shader.program.update() and Shader.program.render()
+             * methods when rendering.
+             *
+             */
+
+            //program.renderList = [];
+
+        }
+
         // Rendering uses a more direct program reference. we save a reference here for manipulating objects.
 
-        this.program = program;
+        return ( this.program = program );
 
-        return program;
+    }
+
+    /** 
+     * get the WebGL Program (which contains the indivdiual update() and render() 
+     * methods for this particular shader).
+     * @returns {Object} returns the WebGL program from WebGL module, decorated with additional 
+     * update() and render() methods by the specific shader.
+     */
+    getProgram () {
+
+        return this.program;
 
     }
 
@@ -184,11 +188,16 @@ class Shader {
      */
     setup () {
 
-        // Compile shaders and create WebGL program using webgl object.
+        // The program is created by decorating an object provided by the WebGL object 
+        // with additional methods.
 
         let program = this.program;
 
-        // Return references to our properties, and assign uniform and attribute locations using webgl object.
+        /* Return references to our properties, and assign uniform and attribute locations using webgl object.
+         * We do this return to provide local references for all the Shader and other objects
+         * used by the WebGL program update() and render(). It could be provided in each init, but saves 
+         * code to have each custom Shader init() method grab the local references from a common method. 
+         */
 
         return [ 
 
@@ -224,6 +233,34 @@ class Shader {
             this.webgl.stats
 
         ];
+
+    }
+
+    /* 
+     * ============ MATRIX OPERATIONS ============
+     */
+
+    mvPushMatrix () {
+
+        let mat4 = this.glMatrix.mat4;
+
+        let copy = mat4.create();
+
+        mat4.set( this.mvMatrix, copy );
+
+        mvMatrixStack.push( copy );
+
+    }
+
+    mvPopMatrix () {
+
+        if ( this.mvMatrixStack.length == 0 ) {
+
+            throw 'Invalid popMatrix!';
+
+        }
+
+        mvMatrix = this.mvMatrixStack.pop();
 
     }
 

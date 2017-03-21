@@ -125,13 +125,23 @@ class ShaderTexture extends Shader {
 
         let shaderProgram = program.shaderProgram;
 
-        program.renderList = program.renderList || objList || [];
+        // If we init with object, add them here.
+
+        if ( objList ) {
+
+            program.renderList = this.util.concatArr( program.renderList, objList );
+
+        }
 
         // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
         // TODO: https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/TechniquesforWorkingwithVertexData/TechniquesforWorkingwithVertexData.html
         // TODO: http://max-limper.de/tech/batchedrendering.html
 
-        // Update object position, motion.
+        /** 
+         * POLYMORPHIC METHODS
+         */
+
+        // Update object position, motion - given to World object.
 
         program.update = ( obj ) => {
 
