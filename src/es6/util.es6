@@ -8,6 +8,10 @@ class Util {
 
         console.log( 'in Util' );
 
+        // Shared constants
+
+        this.NOT_IN_LIST = -1; // for .indexOf() checks
+
         // String polyfills.
 
         this.setTrim();
@@ -470,8 +474,6 @@ class Util {
             for ( let j = 0; j < arr.length; j++ ) {
 
                 if ( ! arr[ j ] in unique ) {
-
-                ////////if ( unique.indexOf( arr[ j ] === -1 ) ) {
 
                     unique.push( arr[ j ] );
 

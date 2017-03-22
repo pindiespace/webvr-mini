@@ -591,6 +591,10 @@
 
 	        console.log('in Util');
 
+	        // Shared constants
+
+	        this.NOT_IN_LIST = -1; // for .indexOf() checks
+
 	        // String polyfills.
 
 	        this.setTrim();
@@ -1062,8 +1066,6 @@
 
 	                    if (!arr[j] in unique) {
 
-	                        ////////if ( unique.indexOf( arr[ j ] === -1 ) ) {
-
 	                        unique.push(arr[j]);
 	                    }
 	                }
@@ -1220,6 +1222,8 @@
 	        this.glMatrix = glMatrix;
 
 	        this.util = util;
+
+	        this.NOT_IN_LIST = util.NOT_IN_LIST;
 
 	        this.stats = {};
 
@@ -2034,6 +2038,8 @@
 
 	            var len = source.length;
 
+	            var NOT_IN_LIST = this.NOT_IN_LIST;
+
 	            var sp = ' ';
 
 	            var list = {};
@@ -2046,7 +2052,7 @@
 
 	                    var s = source[i];
 
-	                    if (s.indexOf('void main') !== -1) {
+	                    if (s.indexOf('void main') !== NOT_IN_LIST) {
 
 	                        break;
 	                    } else {
@@ -2057,7 +2063,7 @@
 
 	                            if (!list[type]) list[type] = {};
 
-	                            if (s.indexOf(type) > -1) {
+	                            if (s.indexOf(type) > NOT_IN_LIST) {
 
 	                                //////////////////////////////console.log("SSS1:" + s)
 
@@ -2633,6 +2639,8 @@
 
 	        this.MAX_CACHE = MAX_CACHE; // from subclass
 
+	        this.NOT_IN_LIST = util.NOT_IN_LIST;
+
 	        this.loadCache = new Array(MAX_CACHE);
 
 	        this.waitCache = []; // Could be hundreds
@@ -2884,13 +2892,15 @@
 	                texCoord = void 0,
 	                normal = void 0;
 
+	            var NOT_IN_STRING = this.NOT_IN_LIST;
+
 	            var face = parts.map(function (fs) {
 
 	                ///console.log("fs:" + fs)
 
 	                // Split indices with and without normals and texture coordinates.
 
-	                if (fs.indexOf('//') !== -1) {
+	                if (fs.indexOf('//') !== NOT_IN_STRING) {
 
 	                    idxs = fs.split('//');
 
@@ -2901,7 +2911,7 @@
 	                    normal = parseInt(idxs[1]) - 1;
 
 	                    ///console.log( '//:' + idx, texCoord, normal );
-	                } else if (fs.indexOf('/') !== -1) {
+	                } else if (fs.indexOf('/') !== NOT_IN_STRING) {
 
 	                    idxs = fs.split('/');
 
@@ -3731,6 +3741,11 @@
 	         * --------------------------------------------------------------------
 	         */
 
+	        /** 
+	         * initialize the update() and render() methods for this shader.
+	         * @param{Prim[]} objList a list of initializing Prims (optional).
+	         */
+
 	    }, {
 	        key: 'init',
 	        value: function init(objList) {
@@ -3936,6 +3951,8 @@
 
 	        this.fragmentShaderFile = null;
 
+	        this.NOT_IN_LIST = util.NOT_IN_LIST; // for indexOf tests.
+
 	        // Get the WebGL program we will use to render.
 
 	        this.createProgram();
@@ -3954,13 +3971,9 @@
 	        key: 'addObj',
 	        value: function addObj(obj) {
 
-	            console.log("IN THIS PROGRAM, PROGRAM:" + this.program + " RENDERLIST:" + this.program.renderList);
+	            if (this.objInList(obj) === this.NOT_IN_LIST) {
 
-	            var renderList = this.program.renderList;
-
-	            if (renderList.indexOf(obj) === -1) {
-
-	                renderList.push(obj);
+	                this.program.renderList.push(obj);
 	            } else {
 
 	                console.error(obj.name + ' already added to shader::' + this.name);
@@ -3968,7 +3981,22 @@
 	        }
 
 	        /** 
-	         * prims are removed from the webgl program. 
+	         * Check for Prim in list of drawn objects in webgl program.
+	         */
+
+	    }, {
+	        key: 'objInList',
+	        value: function objInList(obj) {
+
+	            var renderList = this.program.renderList;
+
+	            var pos = renderList.indexOf(obj);
+
+	            return pos;
+	        }
+
+	        /** 
+	         * Prims are removed from the webgl program. 
 	         * NOTE: removing from the array messes up JIT optimization, so slows things down!
 	         */
 
@@ -3976,13 +4004,9 @@
 	        key: 'removeObj',
 	        value: function removeObj(obj) {
 
-	            var renderList = this.program.renderList;
+	            if (this.objInList(obj) !== this.NOT_IN_LIST) {
 
-	            var pos = renderList.indexOf(obj);
-
-	            if (pos > -1) {
-
-	                array.splice(pos, 1);
+	                this.program.renderList.splice(pos, 1);
 	            } else {
 
 	                console.warn(obj.name + ' not found in shader::' + this.name);
@@ -4206,6 +4230,11 @@
 	         * --------------------------------------------------------------------
 	         * Vertex Shader 2, using color buffer but not texture.
 	         * --------------------------------------------------------------------
+	         */
+
+	        /** 
+	         * initialize the update() and render() methods for this shader.
+	         * @param{Prim[]} objList a list of initializing Prims (optional).
 	         */
 
 	    }, {
@@ -4432,6 +4461,11 @@
 	         * --------------------------------------------------------------------
 	         * Vertex Shader 3, using texture buffer and lighting.
 	         * --------------------------------------------------------------------
+	         */
+
+	        /** 
+	         * initialize the update() and render() methods for this shader.
+	         * @param{Prim[]} objList a list of initializing Prims (optional).
 	         */
 
 	    }, {
@@ -4745,6 +4779,8 @@
 
 	        this.shaderList = [];
 
+	        this.NOT_IN_LIST = util.NOT_IN_LIST; // .indexOf comparisons
+
 	        if (this.init) {}
 	    }
 
@@ -4780,7 +4816,7 @@
 	        key: 'addShader',
 	        value: function addShader(shader) {
 
-	            if (this.shaderList.indexOf(shader.name) === -1) {
+	            if (this.shaderList.indexOf(shader.name) === this.NOT_IN_LIST) {
 
 	                console.log('adding Shader ' + shader.name + ' to rendering list');
 
@@ -5268,27 +5304,6 @@
 
 
 	            return [a, b, c, d, e];
-	        }
-	    }, {
-	        key: 'vec6',
-	        value: function vec6(a, b, c) {
-	            var d = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0;
-	            var e = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : 0;
-	            var f = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : 0;
-
-
-	            return [a, b, c, d, e, f];
-	        }
-	    }, {
-	        key: 'vec7',
-	        value: function vec7(a, b, c) {
-	            var d = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0;
-	            var e = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : 0;
-	            var f = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : 0;
-	            var g = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : 0;
-
-
-	            return [a, b, c, d, e, f, g];
 	        }
 
 	        /* 
@@ -6159,11 +6174,9 @@
 
 	            // Colors already present, or computed in this.createGLBuffers.
 
-	            return geo.addBufferData(vertices, indices, normals, texCoords, tangents);
+	            geo.addBufferData(vertices, indices, normals, texCoords, tangents);
 
-	            //return this.addBufferData( bufferObj, vertices, indices, texCoords, normals, tangents, colors );
-
-	            geo.ready = true; // flag for mesh loading
+	            return true;
 	        }
 
 	        /** 
@@ -6214,11 +6227,9 @@
 
 	            // Return data to build WebGL buffers.
 
-	            geo.ready = true; // flag for mesh loading
+	            geo.addBufferData(vertices, indices, normals, texCoords, tangents);
 
-	            return geo.addBufferData(vertices, indices, normals, texCoords, tangents);
-
-	            //return this.addBufferData( prim.geometry, vertices, indices, normals, texCoords, tangents );
+	            return true;
 	        }
 
 	        /** 
@@ -6471,13 +6482,11 @@
 
 	            // Color array is pre-created, or gets a default when WebGL buffers are created.
 
-	            geo.ready = true; // flag for mesh loading
-
 	            // Return the buffer.
 
-	            return geo.addBufferData(vertices, indices, normals, texCoords, tangents);
+	            geo.addBufferData(vertices, indices, normals, texCoords, tangents);
 
-	            //return this.addBufferData( prim.geometry, vertices, indices, normals, texCoords, tangents );
+	            return true;
 	        }
 
 	        /** 
@@ -6798,13 +6807,11 @@
 
 	            // Color array is pre-created, or gets a default when WebGL buffers are created.
 
-	            geo.ready = true; // flag for mesh loading
-
 	            // Return the buffer.
 
-	            return geo.addBufferData(vertices, indices, normals, texCoords, tangents);
+	            geo.addBufferData(vertices, indices, normals, texCoords, tangents);
 
-	            //return this.addBufferData( prim.geometry, vertices, indices, normals, texCoords, tangents );
+	            return true;
 	        }
 
 	        /** 
@@ -7142,11 +7149,11 @@
 
 	            normals = this.computeNormals(vertices, indices, normals);
 
-	            geo.ready = true; // flag for mesh loading
-
 	            // Return the buffer.
 
-	            return geo.addBufferData(vertices, indices, normals, texCoords, tangents);
+	            geo.addBufferData(vertices, indices, normals, texCoords, tangents);
+
+	            return true;
 	        }
 
 	        /** 
@@ -7705,11 +7712,11 @@
 
 	            // Color array is pre-created, or gets a default when WebGL buffers are created.
 
-	            geo.ready = true; // flag for mesh loading
-
 	            // Return the buffer.
 
-	            return geo.addBufferData(vertices, indices, normals, texCoords, tangents);
+	            geo.addBufferData(vertices, indices, normals, texCoords, tangents);
+
+	            return true;
 	        }
 	    }, {
 	        key: 'geometryRegularTetrahedron',
@@ -8013,13 +8020,13 @@
 
 	            // Color array is pre-created, or gets a default when WebGL buffers are created.
 
-	            geo.ready = true; // flag for mesh loading
-
 	            // Return the buffer.
 
-	            return geo.addBufferData(vertices, indices, normals, texCoords, tangents);
+	            //geo.addBufferData( vertices, indices, normals, texCoords, tangents );
 
-	            // return this.addBufferData( prim.geometry, vertices, indices, normals, texCoords, tangents );
+	            this.initPrim(prim, vertices, indices, normals, texCoords, tangents); // CHECK CREATE PRIM - ATTACHES TO SHADER
+
+	            return true;
 	        }
 
 	        /** 
@@ -8132,13 +8139,12 @@
 
 	            // Color array is pre-created, or gets a default when WebGL buffers are created.
 
-	            geo.ready = true; // flag for mesh loading
+	            geo.addBufferData(vertices, indices, normals, texCoords, tangents); // flag for mesh loading
 
-	            // Return the buffer.
+	            // attach to shader object.
+	            // TODO;
 
-	            return geo.addBufferData(vertices, indices, normals, texCoords, tangents);
-
-	            //return this.addBufferData( prim.geometry, vertices, indices, normals, texCoords, tangents );
+	            return true;
 	        }
 
 	        /** 
@@ -8214,7 +8220,9 @@
 
 	            geo.tangents.data = new Float32Array(this.computeTangents(vertices, indices, geo.normals.data, texCoords, []));
 
-	            geo.ready = true; // flag for mesh loading
+	            // Delayed set to true.
+
+	            return true;
 	        }
 
 	        /** 
@@ -8241,14 +8249,19 @@
 
 	                console.log(">>>>>>>>>>>>>>geometryMesh():" + prim.models[i]);
 
-	                // We only execute a final callback for model loading.
+	                // We only execute the final callback for model loading.
+
+	                // TODO: separate load creating Materials.
+	                // TODO: separate load when obj or material files require a texture.
+
+	                // NOTE: the final callback is given prim to manipulate.
 
 	                this.loadModel.load(prim.models[i], prim, function () {}, this.meshCallback.bind(this));
 	            }
 
 	            // The prim gets a default (zero-sized) set of GLBuffers until the mesh loading is complete in the callback.
 
-	            return geo;
+	            return false;
 	        }
 
 	        /*
@@ -8257,37 +8270,78 @@
 	         * ---------------------------------------
 	         */
 
+	    }, {
+	        key: 'initPrim',
+	        value: function initPrim(prim, vertices, indices, normals, texCoords, tangents) {
+
+	            prim.boundingBox = this.computeBoundingBox(prim.geometry.vertices.data);
+
+	            // TODO: recalc() should go here.
+
+	            // If there isn't a color array, define it. Either one color or pre-defined array
+
+	            // If texture coordinates weren't supplied, add default.
+
+	            // Add our data to the geo-obj, and bind to WebGL buffers.
+
+	            prim.geometry.addBufferData(vertices, indices, normals, texCoords, tangents);
+
+	            // Confirm our buffer data will be OK for rendering.
+
+	            var valid = prim.geometry.checkBufferData();
+
+	            /* 
+	             * If we were supplied a shader, add to display list. 
+	             * A reference to individual Prims is kept independently in the Prim object if 
+	             * the Shader is not present.
+	            */
+
+	            if (prim.shader) {
+
+	                prim.shader.addObj(prim);
+	            }
+	        }
+
 	        /** 
 	         * Create an standard 3d object.
+	         * @param {Function} shader Shader-derived object that can add and remove this Prim from rendering list.
+	         * @param {String} type assigned type of object (required for prim generation)
 	         * @param {String} name assigned name of object (not necessarily unique).
-	         * @param {Number} scale size relative to unit vector (1,1,1).
+	         * @param {vec5} dimensions object dimensions (width, height, depth, (plus additional info for some Prims)
+	         * @param {vec5} divisions number of divisions in the x, y, z surface, (plus additional info for some Prims)
 	         * @param {glMatrix.vec3} position location of center of object.
 	         * @param {glMatrix.vec3} acceleration movement vector (acceleration) of object.
 	         * @param {glMatrix.vec3} rotation rotation vector (spin) around center of object.
-	         * @param {String} textureImage the path to an image used to create a texture.
-	         * @param {glMatrix.vec4[]|glMatrix.vec4} color the default color(s) of the object.
+	         * @param {glMatrix.vec3} angular orbital rotation around a defined point ///TODO!!!!! DEFINE########
+	         * @param {String[]} textureImagea array of the paths to images used to create a texture (one Prim can have several).
+	         * @param {glMatrix.vec4[]|glMatrix.vec4} color the default color(s) of the object, either a single color or color array.
 	         * @param {Boolean} applyTexToFace if true, apply texture to each face, else apply texture to 
 	         * the entire object.
+	         * @param {String[]} modelFiles path to model and material files used to define non-geometric Prims.
 	         */
 
 	    }, {
 	        key: 'createPrim',
-	        value: function createPrim(type) {
-	            var name = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'unknown';
-	            var dimensions = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this.vec7(1, 1, 1, 0, 0, 0, 0);
-	            var divisions = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : this.vec6(1, 1, 1, 0, 0, 0);
-	            var position = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : this.glMatrix.vec3.create();
-	            var acceleration = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : this.glMatrix.vec3.create();
-	            var rotation = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : this.glMatrix.vec3.create();
-	            var angular = arguments.length > 7 && arguments[7] !== undefined ? arguments[7] : this.glMatrix.vec3.create();
-	            var textureImages = arguments[8];
-	            var colors = arguments.length > 9 && arguments[9] !== undefined ? arguments[9] : null;
+	        value: function createPrim(shader, // Shader which attaches/detaches this Prim from display list
+
+	        type) // heightMap file (HEIGHTMAP) or array of coordinate and material files (MESH)
+
+	        {
+	            var name = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'unknown';
+	            var dimensions = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : this.vec5(1, 1, 1, 0, 0);
+	            var divisions = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : this.vec5(1, 1, 1, 0, 0);
+	            var position = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : this.glMatrix.vec3.create();
+	            var acceleration = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : this.glMatrix.vec3.create();
+	            var rotation = arguments.length > 7 && arguments[7] !== undefined ? arguments[7] : this.glMatrix.vec3.create();
+	            var angular = arguments.length > 8 && arguments[8] !== undefined ? arguments[8] : this.glMatrix.vec3.create();
+	            var textureImages = arguments.length > 9 && arguments[9] !== undefined ? arguments[9] : [];
+	            var colors = arguments.length > 10 && arguments[10] !== undefined ? arguments[10] : null;
 
 	            var _this = this;
 
-	            var applyTexToFace = arguments.length > 10 && arguments[10] !== undefined ? arguments[10] : false;
-	            var modelFiles = arguments[11];
-	            // heightMap file (HEIGHTMAP) or array of material files (MESH)
+	            var applyTexToFace = arguments.length > 11 && arguments[11] !== undefined ? arguments[11] : false;
+	            var modelFiles = arguments.length > 12 && arguments[12] !== undefined ? arguments[12] : [];
+	            // function to execute when prim is done (e.g. attach to drawing list shader).
 
 	            var vec3 = this.glMatrix.vec3;
 
@@ -8311,7 +8365,9 @@
 	            };
 
 	            /** 
-	             * Set the model-view matrix.
+	             * Set the model-view matrix with position, translation, rotation, and orbital motion.
+	             * @param {glMatrix.mat4} mvMatrix model-view matrix.
+	             * @returns {glMatrix.mat4} the altered model-view matrix.
 	             */
 	            prim.setMV = function (mvMatrix) {
 
@@ -8319,7 +8375,7 @@
 
 	                mat4.identity(mvMatrix);
 
-	                var z = -5; // TODO: default position relative to camera!
+	                var z = -5; // TODO: default position relative to camera! !!! CHANGE??????
 
 	                // Translate.
 
@@ -8327,13 +8383,7 @@
 
 	                mat4.translate(mvMatrix, mvMatrix, [p.position[0], p.position[1], z + p.position[2]]);
 
-	                // If orbiting, set orbit.
-
 	                // Rotate.
-
-	                // TODO: rotate first for rotation.
-	                // TODO: rotate second for orbiting.
-	                // TODO: rotate (internal), translate, rotate (orbit)
 
 	                vec3.add(p.rotation, p.rotation, p.angular);
 
@@ -8342,6 +8392,9 @@
 	                mat4.rotate(mvMatrix, mvMatrix, p.rotation[1], [0, 1, 0]);
 
 	                mat4.rotate(mvMatrix, mvMatrix, p.rotation[2], [0, 0, 1]);
+
+	                // TODO: rotate second for orbiting.
+	                // TODO: rotate (internal), translate, rotate (orbit)
 
 	                return mvMatrix;
 	            };
@@ -8361,53 +8414,114 @@
 	                p.light.direction = direction, p.light.color = color;
 	            };
 
+	            prim.addToScene = function () {
+
+	                prim.reCalc();
+	            };
+
 	            /** 
 	             * recalculate normals and tangents.
+	             * NOTE: tangent settings should be related to shader.
 	             */
 	            prim.reCalc = function () {
 
-	                prim.geometry.normals.data = new Float32Array(_this.computeNormals(prim.geometry.vertices.data, prim.geometry.indices.data, prim.geometry.normals.data));
+	                if (prim.geometry.normals.data.length !== prim.geometry.vertices.data.length) {
 
-	                prim.geometry.tangents.data = new Float32Array(_this.computeTangents(prim.geometry.vertices.data, prim.geometry.indices.data, prim.geometry.normals.data, prim.geometry.texCoords.data));
+	                    prim.geometry.normals.data = new Float32Array(_this.computeNormals(prim.geometry.vertices.data, prim.geometry.indices.data, prim.geometry.normals.data));
+	                }
+
+	                if (prim.useTangents && prim.geometry.tangents.data.length !== prim.geometry.vertices.data.length) {
+
+	                    prim.geometry.tangents.data = new Float32Array(_this.computeTangents(prim.geometry.vertices.data, prim.geometry.indices.data, prim.geometry.normals.data, prim.geometry.texCoords.data));
+	                }
 	            };
 
-	            // BEGIN SETTING PRIM VALUES
+	            // Compute the bounding box.
+
+	            prim.computeBoundingBox = function () {
+
+	                _this.computeBoundingBox(prim.geometry.vertices);
+	            };
+
+	            // Compute the bounding sphere.
+
+	            prim.computeBoundingSphere = function () {
+
+	                _this.computeBoundingSphere(prim.geometry.vertices);
+	            };
+
+	            // Scale. Normally, we use matrix transforms to accomplish this.
+
+	            prim.scaleVertices = function (scale) {
+
+	                _this.scale(scale, prim.geometry.vertices);
+	            };
+
+	            // Move. Normally, we use matrix transforms to accomplish this.
+
+	            prim.moveVertices = function (pos) {
+
+	                _this.computeMove(scale, prim.geometry.vertices);
+	            };
+
+	            // Give the Prim a unique Id.
 
 	            prim.id = this.setId();
 
+	            // Shader object for adding/removing from display list.
+
+	            prim.shader = shader;
+
+	            // Name (arbitrary).
+
 	            prim.name = name;
+
+	            // Type (must match type defined in Prim.typeList).
 
 	            prim.type = type;
 
+	            // If we're a mesh, we need modelFiles
+
+	            if (prim.type === this.typeList.MESH && modelFiles.length < 1) {
+
+	                console.error('invalid Mesh Prim - needs model files');
+
+	                return null;
+	            }
+
 	            // Size in world coordinates.
 
-	            prim.dimensions = dimensions || this.vec7(1, 1, 1, 0, 0, 0, 0);
+	            prim.dimensions = dimensions || this.vec5(1, 1, 1, 0, 0, 0, 0);
 
-	            // Amount of division of the shape along each axis.
+	            // Amount of division of the Prim along each axis.
 
-	            prim.divisions = divisions || this.vec6(1, 1, 1, 0, 0, 0);
+	            prim.divisions = divisions || this.vec5(1, 1, 1, 0, 0, 0);
 
-	            // Position in world coordinates.
+	            // Prim Position in world coordinates.
 
 	            prim.position = position || vec3.create();
 
 	            prim.acceleration = acceleration || vec3.create();
 
-	            // The absolute .rotation object includes rotation on x, y, z axis
+	            // Prim rotation on x, y, z axis
 
 	            prim.rotation = rotation || vec3.create();
 
-	            // The acceleration object indicates velocity on angular motion in x, y, z
+	            // Prim acceleration object indicates velocity on angular motion in x, y, z
 
 	            prim.angular = angular || vec3.create();
 
-	            // The orbit defines a center that the object orbits around, and orbital velocity.
+	            // The Prim orbit defines a center that the object orbits around, and orbital velocity.
 
 	            prim.orbitRadius = 0.0;
 
 	            prim.orbitAngular = 0.0;
 
-	            // Set default material (can be altered by .mtl file).
+	            // Prim scale, in World coordinates.
+
+	            prim.scale = 1.0;
+
+	            // Set default Prim material (can be altered by .mtl file).
 
 	            prim.material = {
 
@@ -8436,94 +8550,26 @@
 
 	            prim.light = {};
 
-	            // Visible from outside (counterclockwise) or inside (clockwise).
+	            // Visible from outside (counterclockwise winding) or inside (clockwise winding).
 
 	            prim.visibleFrom = this.OUTSIDE;
 
 	            // Repeatedly apply the texture to each Face of the Prim (instead of wrapping around the Mesh).
+	            // If we have multiple textures, apply in succession.
 
 	            prim.applyTexToFace = applyTexToFace;
+
+	            // Whether to include tangents 
+
+	            prim.useTangents = true; // TODO:///////CHANGE!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 	            // Store model files for one Prim.
 
 	            prim.models = modelFiles;
 
-	            // Geometry factory function.
-
-	            prim.geometry = new _geoObj2.default(prim.name, this.util, this.webgl);
-
-	            prim.geometry.type = type; // NOTE: has to come after createGeoObj
-
 	            // Set ready flag for slow loads.
 
 	            prim.ready = false;
-
-	            // Create geometry (may alter some of the above default properties).
-
-	            prim.geometry = this[type](prim);
-
-	            ////////////////////////////////////////////////////////////////////////////////
-
-
-	            if (prim.name === 'cubesphere') {
-	                //if ( prim.name === 'TestCapsule' ) {
-	                //if ( prim.name === 'colored cube' ) {
-	                //if ( prim.name === 'texsphere' ) {
-
-	                var mesh = new _mesh2.default(prim.geometry);
-
-	                window.mesh = mesh;
-
-	                // SIMPLIFY TEST
-
-	                ////////////mesh.simplify();
-
-	                // SUBDIVIDE TEST
-
-	                mesh.subdivide(true);
-	                ///mesh.subdivide( true );
-	                //mesh.subdivide( true );
-	                //mesh.subdivide( true );
-	                //mesh.subdivide( true );
-	                //mesh.subdivide( true );
-	                //mesh.subdivide( true );
-	                //mesh.subdivide( true );
-	                //mesh.subdivide( true ); // this one zaps from low-vertex < 10 prim
-
-	                prim.reCalc();
-	            }
-
-	            // Validate our data.
-	            console.log("PRIM:" + prim.name + '(' + prim.type + ')');
-
-	            ////////////////////////////////////////////////////////////////////////////////
-
-	            // Create WebGL data buffers from geometry. Default color array added if not present.
-	            // TODO:
-
-	            if (prim.name !== 'teapot') {
-
-	                prim.geometry = prim.geometry.createGLBuffers();
-
-	                prim.geometry.checkBufferData();
-
-	                prim.boundingBox = this.computeBoundingBox(prim.geometry.vertices.data);
-	            }
-
-	            // Compute the bounding box.
-
-
-	            // Shared with factory functions. Normally, we use matrix transforms to accomplish this.
-
-	            prim.scaleVertices = function (scale) {
-
-	                _this.scale(scale, prim.geometry.vertices);
-	            };
-
-	            prim.moveVertices = function (pos) {
-
-	                _this.computeMove(scale, prim.geometry.vertices);
-	            };
 
 	            // Waypoints for scripted motion or timelines.
 
@@ -8541,18 +8587,6 @@
 
 	            prim.video = [];
 
-	            // Multiple textures per Prim. Rendering defines how textures for each Prim type are used.
-
-	            for (var i = 0; i < textureImages.length; i++) {
-
-	                this.loadTexture.load(textureImages[i], prim);
-	            }
-
-	            prim.scale = 1.0;
-
-	            // TODO: use this!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	            //prim.setLight();
-
 	            // Parent Node.
 
 	            prim.parentNode = null;
@@ -8561,9 +8595,74 @@
 
 	            prim.children = [];
 
-	            prim.renderId = -1; // NOT ASSIGNED. TODO: Assign a renderer to each Prim.
+	            // Geometry factory function, create empty WebGL Buffers.
 
-	            // Push into our list of all Prims.
+	            prim.geometry = new _geoObj2.default(prim.name, this.util, this.webgl);
+
+	            // Create or load Geometry data (may alter some of the above default properties).
+
+	            this[type](prim);
+
+	            ////////////////////////////////////////////////////////////////////////////////
+
+
+	            if (prim.name === 'cubesphere') {
+	                //if ( prim.name === 'TestCapsule' ) {
+	                //if ( prim.name === 'colored cube' ) {
+	                //if ( prim.name === 'texsphere' ) {
+
+	                var mesh = new _mesh2.default(prim.geometry);
+
+	                window.mesh = mesh;
+
+	                // SIMPLIFY TEST
+
+	                mesh.simplify();
+
+	                // SUBDIVIDE TEST
+
+	                mesh.subdivide(true);
+	                ///mesh.subdivide( true );
+	                //mesh.subdivide( true );
+	                //mesh.subdivide( true );
+	                //mesh.subdivide( true );
+	                //mesh.subdivide( true );
+	                //mesh.subdivide( true );
+	                //mesh.subdivide( true );
+	                //mesh.subdivide( true ); // this one zaps from low-vertex < 10 prim
+
+	                prim.reCalc();
+	            }
+
+	            // Validate our data.
+
+	            console.log("PRIM:" + prim.name + '(' + prim.type + ')');
+
+	            ////////////////////////////////////////////////////////////////////////////////
+
+	            // Create WebGL data buffers from geometry. Default color array added if not present.
+	            // TODO: USE CALLBACK TO DELAY TEAPOT RENDERING.
+
+	            if (prim.name !== 'teapot') {
+
+	                prim.boundingBox = this.computeBoundingBox(prim.geometry.vertices.data);
+
+	                prim.geometry = prim.geometry.createGLBuffers();
+
+	                prim.geometry.checkBufferData();
+	            }
+
+	            // Multiple textures per Prim. Rendering defines how textures for each Prim type are used.
+
+	            for (var i = 0; i < textureImages.length; i++) {
+
+	                this.loadTexture.load(textureImages[i], prim);
+	            }
+
+	            // TODO: use this!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	            //prim.setLight();
+
+	            // Push into our list of all Prims. Shaders keep a local list of Prims they are rendering.
 
 	            this.objs.push(prim);
 
@@ -9972,6 +10071,8 @@
 
 	        this.badIndex32 = 4294967294; // invalid index in Vertex array.
 
+	        this.NOT_IN_LIST = -1; // same as util
+
 	        // Pre-compute valency weighting values.
 
 	        this.computeValencyWeights(100); // was 12, 6 is normal
@@ -10441,6 +10542,8 @@
 
 	            var edgeArr = this.edgeArr;
 
+	            var NOT_IN_LIST = this.NOT_IN_LIST;
+
 	            // Rebuild the Vertex and Index array.
 
 	            var v0 = void 0,
@@ -10491,7 +10594,7 @@
 
 	                var ii0 = newVertexArr.indexOf(v0);
 
-	                if (ii0 === -1) {
+	                if (ii0 === NOT_IN_LIST) {
 
 	                    newVertexArr.push(v0);
 
@@ -10506,7 +10609,7 @@
 
 	                var ii1 = newVertexArr.indexOf(v1);
 
-	                if (ii1 === -1) {
+	                if (ii1 === NOT_IN_LIST) {
 
 	                    newVertexArr.push(v1);
 
@@ -10521,7 +10624,7 @@
 
 	                var ii2 = newVertexArr.indexOf(v2);
 
-	                if (ii2 === -1) {
+	                if (ii2 === NOT_IN_LIST) {
 
 	                    newVertexArr.push(v2);
 
@@ -10700,6 +10803,8 @@
 	        key: 'simplify',
 	        value: function simplify() {
 
+	            var NOT_IN_LIST = this.NOT_IN_LIST;
+
 	            // Convert flattened arrays to Vertex, Edge objects.
 
 	            console.log('Simplifying mesh... type:' + this.geo.type);
@@ -10761,7 +10866,7 @@
 
 	                newIndexArr.push(vtx.lowIdx);
 
-	                if (newVertexArr.indexOf(vtx) === -1) {
+	                if (newVertexArr.indexOf(vtx) === NOT_IN_LIST) {
 
 	                    newVertexArr.push(vtx);
 	                }
@@ -10987,7 +11092,7 @@
 	     * @param {Util} util shared utility methods, patches, polyfills.
 	     * @param {WebGL} webgl object holding the WebGLRenderingContext.
 	     */
-	    function GeoObj(name, util, webgl) {
+	    function GeoObj(name, util, webgl, type) {
 	        _classCallCheck(this, GeoObj);
 
 	        this.primName = name, this.webgl = webgl, this.util = util, this.FLOAT32 = 'float32', this.UINT = 'uint';
@@ -11068,6 +11173,8 @@
 
 	        };
 
+	        this.valid = false;
+
 	        // Save the max allowed drawing size. For WebGL 1.0 with extension, vertices must be < 65k.
 
 	        this.MAX_DRAWELEMENTS = this.webgl.MAX_DRAWELEMENTS;
@@ -11138,7 +11245,7 @@
 	        key: 'checkBufferData',
 	        value: function checkBufferData(complete) {
 
-	            var valid = true;
+	            var valid = this.valid = true;
 
 	            var fnName = this.mName + ' checkBufferData():'; // so many error messages we use this.
 
@@ -11354,7 +11461,7 @@
 	                this.ssz = false;
 	            }
 
-	            return this;
+	            return this.checkBufferData();
 	        }
 
 	        /** 
@@ -11861,7 +11968,10 @@
 
 	            // Create a UV skydome.
 
-	            this.s1.addObj(this.prim.createPrim(this.prim.typeList.SKYDOME, 'skydome', vec5(18, 18, 18, 0), // dimensions
+	            this.s1.addObj(this.prim.createPrim(this.s1, // callback function
+	            this.prim.typeList.SKYDOME, // type
+	            'skydome', // name (not Id)
+	            vec5(18, 18, 18, 0), // dimensions
 	            vec5(10, 10, 10), // divisions MAKE SMALLER
 	            vec3.fromValues(0, 0, 0), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -11871,7 +11981,8 @@
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	            ));
 
-	            this.s1.addObj(this.prim.createPrim(this.prim.typeList.CUBE, 'first cube', // name
+	            this.s1.addObj(this.prim.createPrim(this.s1, // callback function
+	            this.prim.typeList.CUBE, 'first cube', // name
 	            vec5(1, 1, 1), // dimensions
 	            vec5(10, 10, 10, 0), // divisions, pass curving of edges as 4th parameter
 	            vec3.fromValues(1, 0, 2), // position (absolute)
@@ -11881,7 +11992,8 @@
 	            ['img/crate.png', 'img/webvr-logo1.png'], // texture image
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0)));
 
-	            this.s1.addObj(this.prim.createPrim(this.prim.typeList.CUBE, 'toji cube', vec5(1, 1, 1, 0), // dimensions
+	            this.s1.addObj(this.prim.createPrim(this.s1, // callback function
+	            this.prim.typeList.CUBE, 'toji cube', vec5(1, 1, 1, 0), // dimensions
 	            vec5(1, 1, 1, 0), // divisions, pass curving of edges as 4th parameter
 	            vec3.fromValues(5.5, 1.5, -3), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -11889,7 +12001,8 @@
 	            vec3.fromValues(util.degToRad(0), util.degToRad(1), util.degToRad(0)), // angular velocity in x, y, x
 	            ['img/webvr-logo2.png'], vec4.fromValues(0.5, 1.0, 0.2, 1.0)));
 
-	            this.s1.addObj(this.prim.createPrim(this.prim.typeList.TORUS, 'torus2', vec5(1, 1, 0.5, 0), // dimensions (first is width along x, second  width along y, diameter of torus tube)
+	            this.s1.addObj(this.prim.createPrim(this.s1, // callback function
+	            this.prim.typeList.TORUS, 'torus2', vec5(1, 1, 0.5, 0), // dimensions (first is width along x, second  width along y, diameter of torus tube)
 	            vec5(9, 9, 9, 1), // divisions (first is number of rings, second is number of sides)
 	            vec3.fromValues(-1.8, 3, -3.5), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -11901,7 +12014,8 @@
 	            // DIMENSIONS INDICATE ANY X or Y CURVATURE.
 	            // DIVISIONS FOR CUBED AND CURVED PLANE INDICATE SIDE TO DRAW
 
-	            this.s1.addObj(this.prim.createPrim(this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlaneBack', vec5(2, 1, 1, this.prim.directions.BACK, 1), // pass orientation ONE UNIT CURVE
+	            this.s1.addObj(this.prim.createPrim(this.s1, // callback function
+	            this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlaneBack', vec5(2, 1, 1, this.prim.directions.BACK, 1), // pass orientation ONE UNIT CURVE
 	            vec5(10, 10, 10), // divisions
 	            vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -11912,7 +12026,8 @@
 
 	            ));
 
-	            this.s1.addObj(this.prim.createPrim(this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlaneLeft', vec5(2, 1, 1, this.prim.directions.LEFT, 1), // pass orientation ONE UNIT CURVE
+	            this.s1.addObj(this.prim.createPrim(this.s1, // callback function
+	            this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlaneLeft', vec5(2, 1, 1, this.prim.directions.LEFT, 1), // pass orientation ONE UNIT CURVE
 	            vec5(10, 10, 10), // divisions
 	            vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -11923,7 +12038,8 @@
 
 	            ));
 
-	            this.s1.addObj(this.prim.createPrim(this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlaneRight', vec5(2, 1, 1, this.prim.directions.RIGHT, 1), // pass orientation ONE UNIT CURVE
+	            this.s1.addObj(this.prim.createPrim(this.s1, // callback function
+	            this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlaneRight', vec5(2, 1, 1, this.prim.directions.RIGHT, 1), // pass orientation ONE UNIT CURVE
 	            vec5(10, 10, 10), // divisions
 	            vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -11934,7 +12050,8 @@
 
 	            ));
 
-	            this.s1.addObj(this.prim.createPrim(this.prim.typeList.CURVEDOUTERPLANE, 'CurvedPlaneOut', vec5(2, 1, 1, this.prim.directions.RIGHT, 1), // dimensions NOTE: pass radius for curvature (also creates orbit) 
+	            this.s1.addObj(this.prim.createPrim(this.s1, // callback function
+	            this.prim.typeList.CURVEDOUTERPLANE, 'CurvedPlaneOut', vec5(2, 1, 1, this.prim.directions.RIGHT, 1), // dimensions NOTE: pass radius for curvature (also creates orbit) 
 	            vec3.fromValues(10, 10, 10), // divisions
 	            vec3.fromValues(-1.2, 0.0, 2.0), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -11945,7 +12062,8 @@
 
 	            ));
 
-	            this.s1.addObj(this.prim.createPrim(this.prim.typeList.ICOSPHERE, 'icosphere', vec5(3, 3, 3, 0), // dimensions
+	            this.s1.addObj(this.prim.createPrim(this.s1, // callback function
+	            this.prim.typeList.ICOSPHERE, 'icosphere', vec5(3, 3, 3, 0), // dimensions
 	            vec5(32, 32, 32), // 1 for icosohedron, 16 for good sphere
 	            vec3.fromValues(4.5, 3.5, -2), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -11956,7 +12074,8 @@
 
 	            ));
 
-	            this.s1.addObj(this.prim.createPrim(this.prim.typeList.SKYICODOME, 'icoSkyDome', vec5(3, 3, 3, 0), // dimensions
+	            this.s1.addObj(this.prim.createPrim(this.s1, // callback function
+	            this.prim.typeList.SKYICODOME, 'icoSkyDome', vec5(3, 3, 3, 0), // dimensions
 	            vec5(32, 32, 32), // 1 for icosohedron, 16 for good sphere
 	            vec3.fromValues(-4.5, 0.5, -2), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -11967,7 +12086,8 @@
 
 	            ));
 
-	            this.s1.addObj(this.prim.createPrim(this.prim.typeList.BOTTOMICODOME, 'bottomicodome', vec5(3, 3, 3, 0), // dimensions
+	            this.s1.addObj(this.prim.createPrim(this.s1, // callback function
+	            this.prim.typeList.BOTTOMICODOME, 'bottomicodome', vec5(3, 3, 3, 0), // dimensions
 	            vec5(32, 32, 32), // 1 for icosohedron, 16 for good sphere
 	            vec3.fromValues(4.5, 0.5, -2), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -11978,7 +12098,8 @@
 
 	            ));
 
-	            this.s1.addObj(this.prim.createPrim(this.prim.typeList.CAP, // CAP DEFAULT, AT WORLD CENTER (also a UV polygon)
+	            this.s1.addObj(this.prim.createPrim(this.s1, // callback function
+	            this.prim.typeList.CAP, // CAP DEFAULT, AT WORLD CENTER (also a UV polygon)
 	            'CAP', vec5(3, 3, 3, 0), // dimensions INCLUDING start radius or torus radius(last value)
 	            vec5(15, 15, 15), // divisions MUST BE CONTROLLED TO < 5
 	            //vec3.fromValues(-3.5, -3.5, -1 ),    // position (absolute)
@@ -11990,7 +12111,8 @@
 
 	            ));
 
-	            this.s1.addObj(this.prim.createPrim(this.prim.typeList.CONE, 'TestCone', vec5(1, 1, 1, 0.0, 0.0), // dimensions (4th dimension is truncation of cone, none = 0, flat circle = 1.0)
+	            this.s1.addObj(this.prim.createPrim(this.s1, // callback function
+	            this.prim.typeList.CONE, 'TestCone', vec5(1, 1, 1, 0.0, 0.0), // dimensions (4th dimension is truncation of cone, none = 0, flat circle = 1.0)
 	            vec5(10, 10, 10), // divisions MAKE SMALLER
 	            vec3.fromValues(-0, -1.5, 2.0), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -12001,7 +12123,8 @@
 
 	            ));
 
-	            this.s1.addObj(this.prim.createPrim(this.prim.typeList.CYLINDER, 'TestCylinder', vec5(1, 1, 1, 0.3, 0.7), // dimensions (4th dimension doesn't exist for cylinder)
+	            this.s1.addObj(this.prim.createPrim(this.s1, // callback function
+	            this.prim.typeList.CYLINDER, 'TestCylinder', vec5(1, 1, 1, 0.3, 0.7), // dimensions (4th dimension doesn't exist for cylinder)
 	            vec5(40, 40, 40), // divisions MAKE SMALLER
 	            vec3.fromValues(-1.5, -1.5, 2.0), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -12012,7 +12135,8 @@
 
 	            ));
 
-	            this.s1.addObj(this.prim.createPrim(this.prim.typeList.CAPSULE, 'TestCapsule', vec5(0.5, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
+	            this.s1.addObj(this.prim.createPrim(this.s1, // callback function
+	            this.prim.typeList.CAPSULE, 'TestCapsule', vec5(0.5, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
 	            vec5(40, 40, 0), // divisions MAKE SMALLER
 	            vec3.fromValues(-2.0, -1.5, 2.0), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -12023,7 +12147,8 @@
 
 	            ));
 
-	            this.s1.addObj(this.prim.createPrim(this.prim.typeList.TEARDROP, 'TestTearDrop', vec5(1, 2, 1), // dimensions (4th dimension doesn't exist for cylinder)
+	            this.s1.addObj(this.prim.createPrim(this.s1, // callback function
+	            this.prim.typeList.TEARDROP, 'TestTearDrop', vec5(1, 2, 1), // dimensions (4th dimension doesn't exist for cylinder)
 	            vec5(40, 40, 0), // divisions MAKE SMALLER
 	            vec3.fromValues(-2.0, 1.5, 2.0), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -12034,7 +12159,10 @@
 
 	            ));
 
-	            this.s1.addObj(this.prim.createPrim(this.prim.typeList.DODECAHEDRON, 'Dodecahedron', vec5(1, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
+	            //this.s1.addObj(
+
+	            this.prim.createPrim(this.s1, // callback function
+	            this.prim.typeList.DODECAHEDRON, 'Dodecahedron', vec5(1, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
 	            vec5(40, 40, 0), // divisions MAKE SMALLER
 	            vec3.fromValues(-1.0, 0.5, 3.0), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -12044,7 +12172,9 @@
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0), // color,
 	            true // if true, apply texture to each face
 
-	            ));
+	            );
+
+	            //);
 
 	            /*
 	            
@@ -12054,6 +12184,7 @@
 	            
 	                        this.prim.createPrim(
 	            
+	                            this.s1,                      // callback function
 	                            this.prim.typeList.MESH,
 	                            'obj capsule',
 	                            vec5( 1, 1, 1 ),       // dimensions (4th dimension doesn't exist for cylinder)
@@ -12078,7 +12209,8 @@
 
 	            this.colorObjList = [];
 
-	            this.s2.addObj(this.prim.createPrim(this.prim.typeList.CUBE, 'colored cube', vec5(1, 1, 1, 0), // dimensions
+	            this.s2.addObj(this.prim.createPrim(this.s2, // callback function
+	            this.prim.typeList.CUBE, 'colored cube', vec5(1, 1, 1, 0), // dimensions
 	            vec5(3, 3, 3), // divisions
 	            vec3.fromValues(0.2, 0.5, 1), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -12088,8 +12220,23 @@
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0)));
 
 	            // NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
+	            // TODO: NEED A WAY TO DO CALLBACK WHEN LOAD IS COMPLETE
+	            // TODO: pass shaders to prims, and have them load
 
-	            this.s2.addObj(this.prim.createPrim(this.prim.typeList.MESH, 'teapot', vec5(1, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
+	            // TODO: MAKE NORMALS AND TANGENTS RECALC AFTER ALL OPERATIONS
+
+	            // TODO: JSON FILE FOR PRIMS (loadable)
+
+	            // TODO: DEFAULT MINI WORLD IF NO JSON FILE
+
+	            // TODO: TEST REMOVING PRIM
+
+	            // TODO: FADEIN/FADEOUT ANIMATION FOR PRIM
+
+	            // TODO: PRIM LIGHTING MODEL IN PRIM
+
+	            this.s2.addObj(this.prim.createPrim(this.s2, // callback function
+	            this.prim.typeList.MESH, 'teapot', vec5(1, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
 	            vec5(40, 40, 0), // divisions MAKE SMALLER
 	            vec3.fromValues(0.0, 1.0, 2.0), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -12108,7 +12255,8 @@
 
 	            this.dirlightTextureObjList = [];
 
-	            this.s3.addObj(this.prim.createPrim(this.prim.typeList.CUBE, 'lit cube', vec5(1, 1, 1, 0), // dimensions
+	            this.s3.addObj(this.prim.createPrim(this.s3, // callback function
+	            this.prim.typeList.CUBE, 'lit cube', vec5(1, 1, 1, 0), // dimensions
 	            vec5(1, 1, 1), // divisions
 	            vec3.fromValues(-3, -2, -3), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -12117,7 +12265,8 @@
 	            ['img/webvr-logo4.png'], // texture present, NOT USED
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0)));
 
-	            this.s3.addObj(this.prim.createPrim(this.prim.typeList.TERRAIN, 'terrain', vec5(2, 2, 44, this.prim.directions.TOP, 0.1), // NOTE: ORIENTATION DESIRED vec5[3], waterline = vec5[4]
+	            this.s3.addObj(this.prim.createPrim(this.s3, // callback function
+	            this.prim.typeList.TERRAIN, 'terrain', vec5(2, 2, 44, this.prim.directions.TOP, 0.1), // NOTE: ORIENTATION DESIRED vec5[3], waterline = vec5[4]
 	            vec5(100, 100, 100), // divisions
 	            vec3.fromValues(1.5, -1.5, 2), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -12129,7 +12278,8 @@
 
 	            ));
 
-	            this.s3.addObj(this.prim.createPrim(this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlaneFront', vec5(2, 1, 1, this.prim.directions.FRONT, 1), // pass orientation ONE UNIT CURVE
+	            this.s3.addObj(this.prim.createPrim(this.s3, // callback function
+	            this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlaneFront', vec5(2, 1, 1, this.prim.directions.FRONT, 1), // pass orientation ONE UNIT CURVE
 	            vec5(10, 10, 10), // divisions
 	            vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -12140,8 +12290,8 @@
 
 	            ));
 
-	            this.s3.addObj(this.prim.createPrim(this.prim.typeList.SPHERE, 'texsphere', vec5(1.5, 1.5, 1.5, 0), // dimensions
-	            //vec5( 30, 30, 30 ),         // divisions
+	            this.s3.addObj(this.prim.createPrim(this.s3, // callback function
+	            this.prim.typeList.SPHERE, 'texsphere', vec5(1.5, 1.5, 1.5, 0), // dimensions
 	            vec5(6, 6, 6), // at least 8 subdividions to smooth!
 	            //vec3.fromValues(-5, -1.3, -1 ),       // position (absolute)
 	            vec3.fromValues(-0, -1.0, 3.5), vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -12152,7 +12302,8 @@
 
 	            ));
 
-	            this.s3.addObj(this.prim.createPrim(this.prim.typeList.CUBESPHERE, 'cubesphere', vec5(3, 3, 3), // dimensions
+	            this.s3.addObj(this.prim.createPrim(this.s3, // callback function
+	            this.prim.typeList.CUBESPHERE, 'cubesphere', vec5(3, 3, 3), // dimensions
 	            vec5(10, 10, 10, 0), // divisions 4th parameter is degree of rounding.
 	            vec3.fromValues(3, -0.7, -1), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -12163,7 +12314,8 @@
 
 	            ));
 
-	            this.s3.addObj(this.prim.createPrim(this.prim.typeList.REGULARTETRAHEDRON, 'regulartetrahedron', vec5(3, 3, 3, 0), // dimensions
+	            this.s3.addObj(this.prim.createPrim(this.s3, // callback function
+	            this.prim.typeList.REGULARTETRAHEDRON, 'regulartetrahedron', vec5(3, 3, 3, 0), // dimensions
 	            vec5(18, 18, 18), // divisions
 	            vec3.fromValues(6.7, 1.5, -4), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -12174,7 +12326,8 @@
 
 	            ));
 
-	            this.s3.addObj(this.prim.createPrim(this.prim.typeList.ICOSOHEDRON, 'icosohedron', vec5(3, 3, 3, 0), // dimensions
+	            this.s3.addObj(this.prim.createPrim(this.s3, // callback function
+	            this.prim.typeList.ICOSOHEDRON, 'icosohedron', vec5(3, 3, 3, 0), // dimensions
 	            vec5(18, 18, 18), // divisions
 	            vec3.fromValues(0.5, 3.5, -2), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -12185,7 +12338,8 @@
 
 	            ));
 
-	            this.s3.addObj(this.prim.createPrim(this.prim.typeList.BOTTOMDOME, 'TestDome', vec5(1, 1, 1, 0), // dimensions
+	            this.s3.addObj(this.prim.createPrim(this.s3, // callback function
+	            this.prim.typeList.BOTTOMDOME, 'TestDome', vec5(1, 1, 1, 0), // dimensions
 	            vec5(10, 10, 10), // divisions MAKE SMALLER
 	            vec3.fromValues(-4, 0.5, -0.5), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -12196,7 +12350,8 @@
 
 	            ));
 
-	            this.s3.addObj(this.prim.createPrim(this.prim.typeList.TORUS, // TORUS DEFAULT
+	            this.s3.addObj(this.prim.createPrim(this.s3, // callback function
+	            this.prim.typeList.TORUS, // TORUS DEFAULT
 	            'TORUS1', vec5(1, 1, 0.5, 0), // dimensions INCLUDING start radius or torus radius(last value)
 	            vec5(15, 15, 15), // divisions MUST BE CONTROLLED TO < 5
 	            //vec3.fromValues(-3.5, -3.5, -1 ),        // position (absolute)
@@ -12207,20 +12362,24 @@
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 	            ));
 
-	            // Initialize the update() and render() routines in each shader.
+	            /* 
+	             * Initialize the update() and render() routines in each shader.
+	             * NOTE: can call with a prim array, e.g. this.s1.init( primList )
+	             */
 
 	            // NOTE: the init() method sets up the update() and render() methods for the shader.
 
-	            this.r1 = this.s1.init(this.textureObjList);
+	            this.r1 = this.s1.init();
 
-	            this.r2 = this.s2.init(this.colorObjList);
+	            this.r2 = this.s2.init();
 
-	            this.r3 = this.s3.init(this.dirlightTextureObjList);
+	            this.r3 = this.s3.init();
 
 	            /*
 	                    this.s1.addObj( 
 	            
 	                       this.prim.createPrim(
+	                        this.s1,
 	                        this.prim.typeList.SPHERE,
 	                        'texsphere',
 	                        vec5( 1.5, 1.5, 1.5, 0 ),   // dimensions

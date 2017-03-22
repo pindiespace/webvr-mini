@@ -61,6 +61,8 @@ class Shader {
 
         this.fragmentShaderFile = null;
 
+        this.NOT_IN_LIST = util.NOT_IN_LIST; // for indexOf tests.
+
         // Get the WebGL program we will use to render.
 
         this.createProgram();
@@ -76,13 +78,9 @@ class Shader {
      */
     addObj( obj ) {
 
-        console.log("IN THIS PROGRAM, PROGRAM:" + this.program + " RENDERLIST:" + this.program.renderList)
+        if ( this.objInList( obj ) === this.NOT_IN_LIST ) {
 
-        let renderList = this.program.renderList;
-
-        if ( renderList.indexOf( obj ) === -1 ) {
-
-            renderList.push( obj );
+            this.program.renderList.push ( obj );
 
         } else {
 
@@ -93,18 +91,27 @@ class Shader {
     }
 
     /** 
-     * prims are removed from the webgl program. 
-     * NOTE: removing from the array messes up JIT optimization, so slows things down!
+     * Check for Prim in list of drawn objects in webgl program.
      */
-    removeObj( obj ) {
+    objInList ( obj ) {
 
         let renderList = this.program.renderList;
 
         let pos = renderList.indexOf( obj );
 
-        if ( pos > -1 ) {
+        return pos;
 
-            array.splice( pos, 1 );
+    }
+
+    /** 
+     * Prims are removed from the webgl program. 
+     * NOTE: removing from the array messes up JIT optimization, so slows things down!
+     */
+    removeObj( obj ) {
+
+        if ( this.objInList( obj ) !== this.NOT_IN_LIST ) {
+
+            this.program.renderList.splice( pos, 1 );
 
         } else {
 

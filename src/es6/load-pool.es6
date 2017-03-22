@@ -19,6 +19,8 @@ class LoadPool {
 
         this.MAX_CACHE = MAX_CACHE; // from subclass
 
+        this.NOT_IN_LIST = util.NOT_IN_LIST;
+
         this.loadCache = new Array( MAX_CACHE );
 
         this.waitCache = []; // Could be hundreds

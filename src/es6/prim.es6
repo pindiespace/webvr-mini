@@ -392,18 +392,6 @@ class Prim {
 
     }
 
-
-    vec6 ( a, b, c, d = 0, e = 0, f = 0 ) {
-
-        return [ a, b, c, d, e, f ];
-
-    }
-
-    vec7 ( a, b, c, d = 0, e = 0, f = 0, g = 0 ) {
-
-        return [ a, b, c, d, e, f, g ];
-    }
-
     /* 
      * ---------------------------------------
      * NORMAL, INDEX, VERTEX, TRIANGLE, QUAD CALCULATIONS
@@ -1264,11 +1252,9 @@ class Prim {
 
         // Colors already present, or computed in this.createGLBuffers.
 
-        return geo.addBufferData( vertices, indices, normals, texCoords, tangents );
+        geo.addBufferData( vertices, indices, normals, texCoords, tangents );
 
-        //return this.addBufferData( bufferObj, vertices, indices, texCoords, normals, tangents, colors );
-
-        geo.ready = true; // flag for mesh loading
+        return true;
 
     }
 
@@ -1314,11 +1300,9 @@ class Prim {
 
         // Return data to build WebGL buffers.
 
-        geo.ready = true; // flag for mesh loading
+        geo.addBufferData( vertices, indices, normals, texCoords, tangents );
 
-        return geo.addBufferData( vertices, indices, normals, texCoords, tangents );
-
-        //return this.addBufferData( prim.geometry, vertices, indices, normals, texCoords, tangents );
+        return true;
 
     }
 
@@ -1569,13 +1553,11 @@ class Prim {
 
         // Color array is pre-created, or gets a default when WebGL buffers are created.
 
-        geo.ready = true; // flag for mesh loading
-
         // Return the buffer.
 
-        return geo.addBufferData( vertices, indices, normals, texCoords, tangents );
+        geo.addBufferData( vertices, indices, normals, texCoords, tangents );
 
-        //return this.addBufferData( prim.geometry, vertices, indices, normals, texCoords, tangents );
+        return true;
 
     }
 
@@ -1893,13 +1875,11 @@ class Prim {
 
         // Color array is pre-created, or gets a default when WebGL buffers are created.
 
-        geo.ready = true; // flag for mesh loading
-
         // Return the buffer.
 
-        return geo.addBufferData( vertices, indices, normals, texCoords, tangents );
+        geo.addBufferData( vertices, indices, normals, texCoords, tangents );
 
-        //return this.addBufferData( prim.geometry, vertices, indices, normals, texCoords, tangents );
+        return true;
 
     }
 
@@ -2248,11 +2228,11 @@ class Prim {
 
         normals = this.computeNormals( vertices, indices, normals );
 
-        geo.ready = true; // flag for mesh loading
-
         // Return the buffer.
 
-        return geo.addBufferData( vertices, indices, normals, texCoords, tangents );
+        geo.addBufferData( vertices, indices, normals, texCoords, tangents );
+
+        return true;
 
     }
 
@@ -2822,11 +2802,11 @@ class Prim {
 
         // Color array is pre-created, or gets a default when WebGL buffers are created.
 
-        geo.ready = true; // flag for mesh loading
-
         // Return the buffer.
 
-        return geo.addBufferData( vertices, indices, normals, texCoords, tangents );
+        geo.addBufferData( vertices, indices, normals, texCoords, tangents );
+
+        return true;
 
     }
 
@@ -3150,13 +3130,13 @@ class Prim {
 
         // Color array is pre-created, or gets a default when WebGL buffers are created.
 
-        geo.ready = true; // flag for mesh loading
-
         // Return the buffer.
 
-        return geo.addBufferData( vertices, indices, normals, texCoords, tangents );
+        //geo.addBufferData( vertices, indices, normals, texCoords, tangents );
 
-        // return this.addBufferData( prim.geometry, vertices, indices, normals, texCoords, tangents );
+        this.initPrim( prim, vertices, indices, normals, texCoords, tangents ); // CHECK CREATE PRIM - ATTACHES TO SHADER
+
+        return true;
 
     }
 
@@ -3263,13 +3243,13 @@ class Prim {
 
         // Color array is pre-created, or gets a default when WebGL buffers are created.
 
-        geo.ready = true; // flag for mesh loading
+        geo.addBufferData( vertices, indices, normals, texCoords, tangents ); // flag for mesh loading
 
-        // Return the buffer.
+        // attach to shader object.
+        // TODO;
 
-        return geo.addBufferData( vertices, indices, normals, texCoords, tangents );
+        return true;
 
-        //return this.addBufferData( prim.geometry, vertices, indices, normals, texCoords, tangents );
 
     }
 
@@ -3345,8 +3325,10 @@ class Prim {
 
         geo.tangents.data = new Float32Array( this.computeTangents( vertices, indices, geo.normals.data, texCoords, [] ) );
 
+        // Delayed set to true.
 
-        geo.ready = true; // flag for mesh loading
+        return true;
+
 
     }
 
@@ -3371,7 +3353,12 @@ class Prim {
 
             console.log(">>>>>>>>>>>>>>geometryMesh():" + prim.models[ i ] );
 
-            // We only execute a final callback for model loading.
+            // We only execute the final callback for model loading.
+
+            // TODO: separate load creating Materials.
+            // TODO: separate load when obj or material files require a texture.
+
+            // NOTE: the final callback is given prim to manipulate.
 
             this.loadModel.load( prim.models[ i ], prim, function() {}, this.meshCallback.bind( this ) );
 
@@ -3379,7 +3366,7 @@ class Prim {
 
         // The prim gets a default (zero-sized) set of GLBuffers until the mesh loading is complete in the callback.
 
-        return geo;
+        return false;
 
     }
 
@@ -3389,35 +3376,84 @@ class Prim {
      * ---------------------------------------
      */
 
+    initPrim ( prim, vertices, indices, normals, texCoords, tangents ) {
+
+        prim.boundingBox = this.computeBoundingBox( prim.geometry.vertices.data );
+
+        // TODO: recalc() should go here.
+
+        // If there isn't a color array, define it. Either one color or pre-defined array
+
+        // If texture coordinates weren't supplied, add default.
+
+        // Add our data to the geo-obj, and bind to WebGL buffers.
+
+        prim.geometry.addBufferData( vertices, indices, normals, texCoords, tangents );
+
+        // Confirm our buffer data will be OK for rendering.
+
+        let valid = prim.geometry.checkBufferData();
+
+        /* 
+         * If we were supplied a shader, add to display list. 
+         * A reference to individual Prims is kept independently in the Prim object if 
+         * the Shader is not present.
+        */
+
+        if ( prim.shader ) {
+
+            prim.shader.addObj( prim );
+
+        }
+
+    }
+
     /** 
      * Create an standard 3d object.
+     * @param {Function} shader Shader-derived object that can add and remove this Prim from rendering list.
+     * @param {String} type assigned type of object (required for prim generation)
      * @param {String} name assigned name of object (not necessarily unique).
-     * @param {Number} scale size relative to unit vector (1,1,1).
+     * @param {vec5} dimensions object dimensions (width, height, depth, (plus additional info for some Prims)
+     * @param {vec5} divisions number of divisions in the x, y, z surface, (plus additional info for some Prims)
      * @param {glMatrix.vec3} position location of center of object.
      * @param {glMatrix.vec3} acceleration movement vector (acceleration) of object.
      * @param {glMatrix.vec3} rotation rotation vector (spin) around center of object.
-     * @param {String} textureImage the path to an image used to create a texture.
-     * @param {glMatrix.vec4[]|glMatrix.vec4} color the default color(s) of the object.
+     * @param {glMatrix.vec3} angular orbital rotation around a defined point ///TODO!!!!! DEFINE########
+     * @param {String[]} textureImagea array of the paths to images used to create a texture (one Prim can have several).
+     * @param {glMatrix.vec4[]|glMatrix.vec4} color the default color(s) of the object, either a single color or color array.
      * @param {Boolean} applyTexToFace if true, apply texture to each face, else apply texture to 
      * the entire object.
+     * @param {String[]} modelFiles path to model and material files used to define non-geometric Prims.
      */
-    createPrim ( type, name = 'unknown', 
+    createPrim ( 
 
-        dimensions = this.vec7( 1, 1, 1, 0, 0, 0, 0 ), 
+        shader, // Shader which attaches/detaches this Prim from display list
 
-        divisions = this.vec6( 1, 1, 1, 0, 0, 0 ), 
+        type, 
 
-        position = this.glMatrix.vec3.create(), acceleration = this.glMatrix.vec3.create(), 
+        name = 'unknown', 
 
-        rotation = this.glMatrix.vec3.create(), angular = this.glMatrix.vec3.create(), 
+        dimensions = this.vec5( 1, 1, 1, 0, 0 ), 
 
-        textureImages, // textures (may be blank)
+        divisions = this.vec5( 1, 1, 1, 0, 0 ), 
+
+        position = this.glMatrix.vec3.create(), 
+
+        acceleration = this.glMatrix.vec3.create(), 
+
+        rotation = this.glMatrix.vec3.create(), 
+
+        angular = this.glMatrix.vec3.create(), // TWO COORDS? ROTATION SPEED AND ORBITED POINT?
+
+        textureImages = [], // textures (may be blank)
 
         colors = null,  // color array (may be blank)
 
         applyTexToFace = false,
 
-        modelFiles ) { // heightMap file (HEIGHTMAP) or array of material files (MESH)
+        modelFiles = [], // heightMap file (HEIGHTMAP) or array of coordinate and material files (MESH)
+
+        ) { // function to execute when prim is done (e.g. attach to drawing list shader).
 
         const vec3 = this.glMatrix.vec3;
 
@@ -3439,10 +3475,12 @@ class Prim {
 
             prim.renderer = renderer;
 
-        }
+        };
 
         /** 
-         * Set the model-view matrix.
+         * Set the model-view matrix with position, translation, rotation, and orbital motion.
+         * @param {glMatrix.mat4} mvMatrix model-view matrix.
+         * @returns {glMatrix.mat4} the altered model-view matrix.
          */
         prim.setMV = ( mvMatrix ) => {
 
@@ -3450,7 +3488,7 @@ class Prim {
 
             mat4.identity( mvMatrix );
 
-            let z = -5; // TODO: default position relative to camera!
+            let z = -5; // TODO: default position relative to camera! !!! CHANGE??????
 
             // Translate.
 
@@ -3458,13 +3496,7 @@ class Prim {
 
             mat4.translate( mvMatrix, mvMatrix, [ p.position[ 0 ], p.position[ 1 ], z + p.position[ 2 ] ] );
 
-            // If orbiting, set orbit.
-
             // Rotate.
-
-            // TODO: rotate first for rotation.
-            // TODO: rotate second for orbiting.
-            // TODO: rotate (internal), translate, rotate (orbit)
 
             vec3.add( p.rotation, p.rotation, p.angular );
 
@@ -3473,6 +3505,9 @@ class Prim {
             mat4.rotate( mvMatrix, mvMatrix, p.rotation[ 1 ], [ 0, 1, 0 ] );
 
             mat4.rotate( mvMatrix, mvMatrix, p.rotation[ 2 ], [ 0, 0, 1 ] );
+
+            // TODO: rotate second for orbiting.
+            // TODO: rotate (internal), translate, rotate (orbit)
 
             return mvMatrix;
 
@@ -3492,54 +3527,125 @@ class Prim {
 
         };
 
+        prim.addToScene = () => {
+
+            prim.reCalc();
+
+        };
+
         /** 
          * recalculate normals and tangents.
+         * NOTE: tangent settings should be related to shader.
          */
         prim.reCalc = () => {
 
-            prim.geometry.normals.data = new Float32Array( this.computeNormals( prim.geometry.vertices.data, prim.geometry.indices.data, prim.geometry.normals.data ) );
+            if ( prim.geometry.normals.data.length !== prim.geometry.vertices.data.length ) {
 
-            prim.geometry.tangents.data = new Float32Array( this.computeTangents( prim.geometry.vertices.data, prim.geometry.indices.data, prim.geometry.normals.data, prim.geometry.texCoords.data ) );
+                prim.geometry.normals.data = new Float32Array( this.computeNormals( prim.geometry.vertices.data, prim.geometry.indices.data, prim.geometry.normals.data ) );
 
-        }
+            }
 
-        // BEGIN SETTING PRIM VALUES
+ 
+            if ( prim.useTangents &&  prim.geometry.tangents.data.length !== prim.geometry.vertices.data.length ) {
+
+                prim.geometry.tangents.data = new Float32Array( this.computeTangents( prim.geometry.vertices.data, prim.geometry.indices.data, prim.geometry.normals.data, prim.geometry.texCoords.data ) );
+
+            }
+
+        };
+
+        // Compute the bounding box.
+
+        prim.computeBoundingBox = () => {
+
+
+            this.computeBoundingBox( prim.geometry.vertices );
+
+        };
+
+        // Compute the bounding sphere.
+
+        prim.computeBoundingSphere = () => {
+
+            this.computeBoundingSphere( prim.geometry.vertices );
+
+        };
+
+        // Scale. Normally, we use matrix transforms to accomplish this.
+
+        prim.scaleVertices = ( scale ) => { 
+
+            this.scale ( scale, prim.geometry.vertices );
+
+        };
+
+        // Move. Normally, we use matrix transforms to accomplish this.
+
+        prim.moveVertices = ( pos ) => { 
+
+            this.computeMove( scale, prim.geometry.vertices );
+
+        };
+
+        // Give the Prim a unique Id.
 
         prim.id = this.setId();
 
+        // Shader object for adding/removing from display list.
+
+        prim.shader = shader;
+
+        // Name (arbitrary).
+
         prim.name = name;
+
+        // Type (must match type defined in Prim.typeList).
 
         prim.type = type;
 
+        // If we're a mesh, we need modelFiles
+
+        if ( prim.type === this.typeList.MESH && modelFiles.length < 1 ) {
+
+            console.error( 'invalid Mesh Prim - needs model files' );
+
+            return null;
+
+        }
+
         // Size in world coordinates.
 
-        prim.dimensions = dimensions || this.vec7( 1, 1, 1, 0, 0, 0, 0 );
+        prim.dimensions = dimensions || this.vec5( 1, 1, 1, 0, 0, 0, 0 );
 
-        // Amount of division of the shape along each axis.
+        // Amount of division of the Prim along each axis.
 
-        prim.divisions = divisions || this.vec6( 1, 1, 1, 0, 0, 0 );
+        prim.divisions = divisions || this.vec5( 1, 1, 1, 0, 0, 0 );
 
-        // Position in world coordinates.
+        // Prim Position in world coordinates.
 
         prim.position = position || vec3.create();
 
         prim.acceleration = acceleration || vec3.create();
 
-        // The absolute .rotation object includes rotation on x, y, z axis
+        // Prim rotation on x, y, z axis
 
         prim.rotation = rotation || vec3.create();
 
-        // The acceleration object indicates velocity on angular motion in x, y, z
+        // Prim acceleration object indicates velocity on angular motion in x, y, z
 
         prim.angular = angular || vec3.create();
 
-        // The orbit defines a center that the object orbits around, and orbital velocity.
+        // The Prim orbit defines a center that the object orbits around, and orbital velocity.
 
         prim.orbitRadius = 0.0;
 
         prim.orbitAngular = 0.0;
 
-        // Set default material (can be altered by .mtl file).
+        // Prim scale, in World coordinates.
+
+        prim.scale = 1.0;
+
+        // Set default Prim material (can be altered by .mtl file).
 
         prim.material = {
 
@@ -3568,35 +3674,61 @@ class Prim {
 
         prim.light = {};
 
-        // Visible from outside (counterclockwise) or inside (clockwise).
+        // Visible from outside (counterclockwise winding) or inside (clockwise winding).
 
         prim.visibleFrom = this.OUTSIDE;
 
         // Repeatedly apply the texture to each Face of the Prim (instead of wrapping around the Mesh).
+        // If we have multiple textures, apply in succession.
 
         prim.applyTexToFace = applyTexToFace;
+
+        // Whether to include tangents 
+
+        prim.useTangents = true; // TODO:///////CHANGE!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         // Store model files for one Prim.
 
         prim.models = modelFiles;
 
-        // Geometry factory function.
-
-        prim.geometry = new GeoObj( prim.name, this.util, this.webgl );
-
-        prim.geometry.type = type; // NOTE: has to come after createGeoObj
 
         // Set ready flag for slow loads.
 
         prim.ready = false;
 
-        // Create geometry (may alter some of the above default properties).
+        // Waypoints for scripted motion or timelines.
 
-        prim.geometry = this[ type ]( prim );
+        prim.waypoints = [];
+
+        // Store multiple textures for one Prim.
+
+        prim.textures = [];
+
+        // Store multiple sounds for one Prim.
+
+        prim.audio = [];
+
+        // Store multiple videos for one Prim.
+
+        prim.video = [];
+
+        // Parent Node.
+
+        prim.parentNode = null;
+
+        // Child Prim array.
+
+        prim.children = [];
+
+        // Geometry factory function, create empty WebGL Buffers.
+
+        prim.geometry = new GeoObj( prim.name, this.util, this.webgl );
+
+        // Create or load Geometry data (may alter some of the above default properties).
+
+        this[ type ]( prim );
 
 ////////////////////////////////////////////////////////////////////////////////
-
-
 
 
         if ( prim.name === 'cubesphere' ) {
@@ -3610,7 +3742,7 @@ class Prim {
 
             // SIMPLIFY TEST
 
-            ////////////mesh.simplify();
+            mesh.simplify();
 
             // SUBDIVIDE TEST
 
@@ -3629,60 +3761,24 @@ class Prim {
        }
 
        // Validate our data.
+
        console.log("PRIM:" + prim.name + '(' + prim.type + ')' );
 
 
 ////////////////////////////////////////////////////////////////////////////////
 
         // Create WebGL data buffers from geometry. Default color array added if not present.
-        // TODO:
+        // TODO: USE CALLBACK TO DELAY TEAPOT RENDERING.
 
-        if ( prim.name !== 'teapot') {
+        if ( prim.name !== 'teapot' ) {
+
+            prim.boundingBox = this.computeBoundingBox( prim.geometry.vertices.data );
 
             prim.geometry = prim.geometry.createGLBuffers();
 
             prim.geometry.checkBufferData();
 
-            prim.boundingBox = this.computeBoundingBox( prim.geometry.vertices.data );
-
         }
-
-
-
-        // Compute the bounding box.
-
-
-
-
-        // Shared with factory functions. Normally, we use matrix transforms to accomplish this.
-
-        prim.scaleVertices = ( scale ) => { 
-
-            this.scale ( scale, prim.geometry.vertices );
-
-        };
-
-        prim.moveVertices = ( pos ) => { 
-
-            this.computeMove( scale, prim.geometry.vertices );
-
-        };
-
-        // Waypoints for scripted motion or timelines.
-
-        prim.waypoints = [];
-
-        // Store multiple textures for one Prim.
-
-        prim.textures = [];
-
-        // Store multiple sounds for one Prim.
-
-        prim.audio = [];
-
-        // Store multiple videos for one Prim.
-
-        prim.video = [];
 
         // Multiple textures per Prim. Rendering defines how textures for each Prim type are used.
 
@@ -3692,22 +3788,10 @@ class Prim {
 
         }
 
-        prim.scale = 1.0;
-
         // TODO: use this!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         //prim.setLight();
 
-        // Parent Node.
-
-        prim.parentNode = null;
-
-        // Child Prim array.
-
-        prim.children = [];
-
-        prim.renderId = -1; // NOT ASSIGNED. TODO: Assign a renderer to each Prim.
-
-        // Push into our list of all Prims.
+        // Push into our list of all Prims. Shaders keep a local list of Prims they are rendering.
 
         this.objs.push( prim );
 

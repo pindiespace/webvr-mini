@@ -92,6 +92,11 @@ class ShaderTexture extends Shader {
      * Vertex Shader 1, using texture buffer.
      * --------------------------------------------------------------------
      */
+
+    /** 
+     * initialize the update() and render() methods for this shader.
+     * @param{Prim[]} objList a list of initializing Prims (optional).
+     */
     init ( objList ) {
 
         // DESTRUCTING DID NOT WORK!

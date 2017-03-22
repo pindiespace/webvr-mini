@@ -12,6 +12,8 @@ class Renderer {
 
         this.shaderList = [];
 
+        this.NOT_IN_LIST = util.NOT_IN_LIST; // .indexOf comparisons
+
         if( this.init ) {
 
         }
@@ -46,7 +48,7 @@ class Renderer {
      */
     addShader( shader ) {
 
-        if ( this.shaderList.indexOf( shader.name ) === -1 ) {
+        if ( this.shaderList.indexOf( shader.name ) === this.NOT_IN_LIST ) {
 
             console.log( 'adding Shader ' + shader.name + ' to rendering list' );
 

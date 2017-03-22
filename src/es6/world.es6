@@ -97,17 +97,20 @@ class World {
         // Create a UV skydome.
 
         this.s1.addObj( 
+
             this.prim.createPrim(
-                this.prim.typeList.SKYDOME,
-                'skydome',
-                vec5( 18, 18, 18, 0 ),            // dimensions
-                vec5( 10, 10, 10 ),            // divisions MAKE SMALLER
-                vec3.fromValues( 0, 0, 0 ),        // position (absolute)
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+
+                this.s1,                      // callback function
+                this.prim.typeList.SKYDOME,          // type
+                'skydome',                           // name (not Id)
+                vec5( 18, 18, 18, 0 ),               // dimensions
+                vec5( 10, 10, 10 ),                  // divisions MAKE SMALLER
+                vec3.fromValues( 0, 0, 0 ),          // position (absolute)
+                vec3.fromValues( 0, 0, 0 ),          // acceleration in x, y, z
                 vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
                 vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.1 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [ 'img/panorama_01.png' ],               // texture present
-                vec4.fromValues( 0.5, 1.0, 0.2, 1.0)  // color
+                [ 'img/panorama_01.png' ],           // texture present
+                vec4.fromValues( 0.5, 1.0, 0.2, 1.0) // color
             ) 
 
         );
@@ -115,6 +118,8 @@ class World {
         this.s1.addObj( 
 
             this.prim.createPrim(
+
+                this.s1,                      // callback function
                 this.prim.typeList.CUBE,
                 'first cube',                                        // name
                 vec5( 1, 1, 1 ),            // dimensions
@@ -133,6 +138,8 @@ class World {
         this.s1.addObj( 
 
             this.prim.createPrim(
+
+                this.s1,                      // callback function
                 this.prim.typeList.CUBE,
                 'toji cube',
                 vec5( 1, 1, 1, 0 ),            // dimensions
@@ -151,6 +158,8 @@ class World {
         this.s1.addObj(
 
             this.prim.createPrim(
+
+                this.s1,                      // callback function
                 this.prim.typeList.TORUS,
                 'torus2',
                 vec5( 1, 1, 0.5, 0 ),         // dimensions (first is width along x, second  width along y, diameter of torus tube)
@@ -173,6 +182,7 @@ class World {
 
             this.prim.createPrim(
 
+                this.s1,                      // callback function
                 this.prim.typeList.CURVEDINNERPLANE,
                 'CurvedPlaneBack',
                 vec5( 2, 1, 1, this.prim.directions.BACK, 1 ),         // pass orientation ONE UNIT CURVE
@@ -192,6 +202,7 @@ class World {
 
             this.prim.createPrim(
 
+                this.s1,                      // callback function
                 this.prim.typeList.CURVEDINNERPLANE,
                 'CurvedPlaneLeft',
                 vec5( 2, 1, 1, this.prim.directions.LEFT, 1 ),         // pass orientation ONE UNIT CURVE
@@ -211,6 +222,7 @@ class World {
 
             this.prim.createPrim(
 
+                this.s1,                      // callback function
                 this.prim.typeList.CURVEDINNERPLANE,
                 'CurvedPlaneRight',
                 vec5( 2, 1, 1, this.prim.directions.RIGHT, 1 ),         // pass orientation ONE UNIT CURVE
@@ -229,7 +241,8 @@ class World {
         this.s1.addObj( 
 
             this.prim.createPrim(
-            
+
+                this.s1,                      // callback function
                 this.prim.typeList.CURVEDOUTERPLANE,
                 'CurvedPlaneOut',
                 vec5( 2, 1, 1, this.prim.directions.RIGHT, 1 ),         // dimensions NOTE: pass radius for curvature (also creates orbit) 
@@ -249,6 +262,7 @@ class World {
 
             this.prim.createPrim(
 
+                this.s1,                      // callback function
                 this.prim.typeList.ICOSPHERE,
                 'icosphere',
                 vec5( 3, 3, 3, 0 ),            // dimensions
@@ -269,6 +283,7 @@ class World {
 
             this.prim.createPrim(
 
+                this.s1,                      // callback function
                 this.prim.typeList.SKYICODOME,
                 'icoSkyDome',
                 vec5( 3, 3, 3, 0 ),            // dimensions
@@ -288,6 +303,7 @@ class World {
 
             this.prim.createPrim(
             
+                this.s1,                      // callback function
                 this.prim.typeList.BOTTOMICODOME,
                 'bottomicodome',
                 vec5( 3, 3, 3, 0 ),            // dimensions
@@ -307,6 +323,7 @@ class World {
 
             this.prim.createPrim(
             
+                this.s1,                      // callback function
                 this.prim.typeList.CAP, // CAP DEFAULT, AT WORLD CENTER (also a UV polygon)
                 'CAP',
                 vec5( 3, 3, 3, 0 ),         // dimensions INCLUDING start radius or torus radius(last value)
@@ -327,6 +344,7 @@ class World {
 
             this.prim.createPrim(
             
+                this.s1,                      // callback function
                 this.prim.typeList.CONE,
                 'TestCone',
                 vec5( 1, 1, 1, 0.0, 0.0 ),         // dimensions (4th dimension is truncation of cone, none = 0, flat circle = 1.0)
@@ -346,6 +364,7 @@ class World {
 
             this.prim.createPrim(
             
+                this.s1,                      // callback function
                 this.prim.typeList.CYLINDER,
                 'TestCylinder',
                 vec5( 1, 1, 1, 0.3, 0.7 ),       // dimensions (4th dimension doesn't exist for cylinder)
@@ -365,6 +384,7 @@ class World {
 
             this.prim.createPrim(
             
+                this.s1,                      // callback function
                 this.prim.typeList.CAPSULE,
                 'TestCapsule',
                 vec5( 0.5, 1, 1 ),       // dimensions (4th dimension doesn't exist for cylinder)
@@ -384,6 +404,7 @@ class World {
 
             this.prim.createPrim(
             
+                this.s1,                      // callback function
                 this.prim.typeList.TEARDROP,
                 'TestTearDrop',
                 vec5( 1, 2, 1 ),       // dimensions (4th dimension doesn't exist for cylinder)
@@ -399,10 +420,11 @@ class World {
 
         );
 
-        this.s1.addObj(
+        //this.s1.addObj(
 
             this.prim.createPrim(
             
+                this.s1,                      // callback function
                 this.prim.typeList.DODECAHEDRON,
                 'Dodecahedron',
                 vec5( 1, 1, 1 ),       // dimensions (4th dimension doesn't exist for cylinder)
@@ -417,7 +439,7 @@ class World {
         
             )
 
-        );
+        //);
 
 /*
 
@@ -427,6 +449,7 @@ class World {
 
             this.prim.createPrim(
 
+                this.s1,                      // callback function
                 this.prim.typeList.MESH,
                 'obj capsule',
                 vec5( 1, 1, 1 ),       // dimensions (4th dimension doesn't exist for cylinder)
@@ -454,6 +477,8 @@ class World {
         this.s2.addObj(
 
             this.prim.createPrim(
+
+                this.s2,                      // callback function
                 this.prim.typeList.CUBE,
                 'colored cube',
                 vec5( 1, 1, 1, 0 ),            // dimensions
@@ -470,15 +495,31 @@ class World {
         );
 
 // NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
+// TODO: NEED A WAY TO DO CALLBACK WHEN LOAD IS COMPLETE
+// TODO: pass shaders to prims, and have them load
+
+// TODO: MAKE NORMALS AND TANGENTS RECALC AFTER ALL OPERATIONS
+
+// TODO: JSON FILE FOR PRIMS (loadable)
+
+// TODO: DEFAULT MINI WORLD IF NO JSON FILE
+
+// TODO: TEST REMOVING PRIM
+
+// TODO: FADEIN/FADEOUT ANIMATION FOR PRIM
+
+// TODO: PRIM LIGHTING MODEL IN PRIM
 
         this.s2.addObj( 
 
             this.prim.createPrim(
+
+                this.s2,                      // callback function
                 this.prim.typeList.MESH,
                 'teapot',
                 vec5( 1, 1, 1 ),       // dimensions (4th dimension doesn't exist for cylinder)
                 vec5( 40, 40, 0  ),        // divisions MAKE SMALLER
-                vec3.fromValues(0.0, 1.0, 2.0 ),      // position (absolute)
+                vec3.fromValues( 0.0, 1.0, 2.0 ),      // position (absolute)
                 vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
                 vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
                 vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
@@ -501,6 +542,7 @@ class World {
 
             this.prim.createPrim(
 
+                this.s3,                      // callback function
                 this.prim.typeList.CUBE,
                 'lit cube',
                 vec5( 1, 1, 1, 0 ),            // dimensions
@@ -520,6 +562,7 @@ class World {
 
             this.prim.createPrim(
 
+                this.s3,                      // callback function
                 this.prim.typeList.TERRAIN,
                 'terrain',
                 vec5( 2, 2, 44, this.prim.directions.TOP, 0.1 ),            // NOTE: ORIENTATION DESIRED vec5[3], waterline = vec5[4]
@@ -540,6 +583,7 @@ class World {
 
             this.prim.createPrim(
 
+                this.s3,                      // callback function
                 this.prim.typeList.CURVEDINNERPLANE,
                 'CurvedPlaneFront',
                 vec5( 2, 1, 1, this.prim.directions.FRONT, 1 ),         // pass orientation ONE UNIT CURVE
@@ -560,10 +604,10 @@ class World {
 
             this.prim.createPrim(
             
+                this.s3,                      // callback function
                 this.prim.typeList.SPHERE,
                 'texsphere',
                 vec5( 1.5, 1.5, 1.5, 0 ),   // dimensions
-                //vec5( 30, 30, 30 ),         // divisions
                 vec5( 6, 6, 6 ), // at least 8 subdividions to smooth!
                 //vec3.fromValues(-5, -1.3, -1 ),       // position (absolute)
                 vec3.fromValues( -0, -1.0, 3.5 ),
@@ -581,6 +625,7 @@ class World {
 
             this.prim.createPrim(
 
+                this.s3,                      // callback function
                 this.prim.typeList.CUBESPHERE,
                 'cubesphere',
                 vec5( 3, 3, 3 ),            // dimensions
@@ -600,6 +645,7 @@ class World {
 
             this.prim.createPrim(
 
+                this.s3,                      // callback function
                 this.prim.typeList.REGULARTETRAHEDRON,
                 'regulartetrahedron',
                 vec5( 3, 3, 3, 0 ),            // dimensions
@@ -619,6 +665,7 @@ class World {
 
             this.prim.createPrim(
 
+                this.s3,                      // callback function
                 this.prim.typeList.ICOSOHEDRON,
                 'icosohedron',
                 vec5( 3, 3, 3, 0 ),            // dimensions
@@ -638,6 +685,7 @@ class World {
 
             this.prim.createPrim(
 
+                this.s3,                      // callback function
                 this.prim.typeList.BOTTOMDOME,
                 'TestDome',
                 vec5( 1, 1, 1, 0 ),            // dimensions
@@ -656,7 +704,8 @@ class World {
         this.s3.addObj(
 
             this.prim.createPrim(
-            
+
+                this.s3,                      // callback function
                 this.prim.typeList.TORUS, // TORUS DEFAULT
                 'TORUS1',
                 vec5( 1, 1, 0.5, 0 ),            // dimensions INCLUDING start radius or torus radius(last value)
@@ -673,20 +722,24 @@ class World {
         );
 
 
-        // Initialize the update() and render() routines in each shader.
+        /* 
+         * Initialize the update() and render() routines in each shader.
+         * NOTE: can call with a prim array, e.g. this.s1.init( primList )
+         */
 
         // NOTE: the init() method sets up the update() and render() methods for the shader.
 
-        this.r1 = this.s1.init( this.textureObjList );
+        this.r1 = this.s1.init();
 
-        this.r2 = this.s2.init( this.colorObjList );
+        this.r2 = this.s2.init();
 
-        this.r3 = this.s3.init( this.dirlightTextureObjList );
+        this.r3 = this.s3.init();
 
 /*
         this.s1.addObj( 
 
            this.prim.createPrim(
+            this.s1,
             this.prim.typeList.SPHERE,
             'texsphere',
             vec5( 1.5, 1.5, 1.5, 0 ),   // dimensions

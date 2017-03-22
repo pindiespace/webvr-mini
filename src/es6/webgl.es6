@@ -41,6 +41,8 @@ class WebGL {
 
         this.util = util;
 
+        this.NOT_IN_LIST = util.NOT_IN_LIST;
+
         this.stats = {};
 
         if ( init === true ) {
@@ -888,6 +890,8 @@ class WebGL {
 
         const len = source.length;
 
+        let NOT_IN_LIST = this.NOT_IN_LIST;
+
         let sp = ' ';
 
         let list = {};
@@ -900,7 +904,7 @@ class WebGL {
 
                 let s = source[ i ];
 
-                if ( s.indexOf( 'void main' ) !== -1 ) {
+                if ( s.indexOf( 'void main' ) !== NOT_IN_LIST ) {
  
                     break;
 
@@ -912,7 +916,7 @@ class WebGL {
 
                         if( ! list[ type ] ) list[ type ] = {};
 
-                        if ( s.indexOf( type ) > -1 ) {
+                        if ( s.indexOf( type ) > NOT_IN_LIST ) {
 
                             //////////////////////////////console.log("SSS1:" + s)
 

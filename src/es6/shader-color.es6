@@ -80,6 +80,11 @@ class ShaderColor extends Shader {
      * Vertex Shader 2, using color buffer but not texture.
      * --------------------------------------------------------------------
      */
+
+    /** 
+     * initialize the update() and render() methods for this shader.
+     * @param{Prim[]} objList a list of initializing Prims (optional).
+     */
     init ( objList ) {
 
         // DESTRUCTING DID NOT WORK!

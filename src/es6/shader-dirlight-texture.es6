@@ -126,6 +126,11 @@ class shaderDirLightTexture extends Shader {
      * Vertex Shader 3, using texture buffer and lighting.
      * --------------------------------------------------------------------
      */
+
+    /** 
+     * initialize the update() and render() methods for this shader.
+     * @param{Prim[]} objList a list of initializing Prims (optional).
+     */
     init ( objList ) {
 
         // DESTRUCTING DID NOT WORK!

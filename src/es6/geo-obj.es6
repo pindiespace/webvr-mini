@@ -8,7 +8,7 @@ class GeoObj {
      * @param {Util} util shared utility methods, patches, polyfills.
      * @param {WebGL} webgl object holding the WebGLRenderingContext.
      */
-    constructor ( name, util, webgl ) {
+    constructor ( name, util, webgl, type ) {
 
         this.primName = name,
 
@@ -110,6 +110,8 @@ class GeoObj {
 
         };
 
+        this.valid = false;
+
         // Save the max allowed drawing size. For WebGL 1.0 with extension, vertices must be < 65k.
 
         this.MAX_DRAWELEMENTS = this.webgl.MAX_DRAWELEMENTS;
@@ -179,7 +181,7 @@ class GeoObj {
      */
     checkBufferData ( complete ) {
 
-        let valid = true;
+        let valid = this.valid = true;
 
         let fnName = this.mName + ' checkBufferData():'; // so many error messages we use this.
 
@@ -432,7 +434,7 @@ class GeoObj {
             this.ssz = false;
         }
 
-        return this;
+        return this.checkBufferData();
 
     }
 

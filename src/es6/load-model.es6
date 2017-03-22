@@ -60,13 +60,15 @@ class LoadModel extends LoadPool {
 
         let idxs, idx, texCoord, normal;
 
+        let NOT_IN_STRING = this.NOT_IN_LIST;
+
         let face = parts.map( ( fs ) => {
 
             ///console.log("fs:" + fs)
 
             // Split indices with and without normals and texture coordinates.
 
-            if ( fs.indexOf( '//' ) !== -1 ) {
+            if ( fs.indexOf( '//' ) !== NOT_IN_STRING ) {
 
                 idxs = fs.split( '//' );
 
@@ -78,7 +80,7 @@ class LoadModel extends LoadPool {
 
                 ///console.log( '//:' + idx, texCoord, normal );
 
-            } else if ( fs.indexOf ( '/' ) !== -1 ) {
+            } else if ( fs.indexOf ( '/' ) !== NOT_IN_STRING ) {
 
                 idxs = fs.split( '/')
 

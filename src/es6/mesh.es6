@@ -462,6 +462,8 @@ class Mesh {
 
         this.badIndex32 = 4294967294; // invalid index in Vertex array.
 
+        this.NOT_IN_LIST = -1; // same as util
+
         // Pre-compute valency weighting values.
 
         this.computeValencyWeights( 100 ); // was 12, 6 is normal
@@ -970,6 +972,8 @@ class Mesh {
 
         let edgeArr = this.edgeArr;
 
+        let NOT_IN_LIST = this.NOT_IN_LIST;
+
         // Rebuild the Vertex and Index array.
 
         let v0, v1, v2;
@@ -1025,7 +1029,7 @@ class Mesh {
 
             let ii0 = newVertexArr.indexOf( v0 );
 
-            if ( ii0 === -1 ) {
+            if ( ii0 === NOT_IN_LIST ) {
 
                 newVertexArr.push( v0 );
 
@@ -1041,7 +1045,7 @@ class Mesh {
 
             let ii1 = newVertexArr.indexOf( v1 );
 
-            if ( ii1 === -1 ) {
+            if ( ii1 === NOT_IN_LIST ) {
 
                 newVertexArr.push( v1 );
 
@@ -1057,7 +1061,7 @@ class Mesh {
 
             let ii2 = newVertexArr.indexOf( v2 );
 
-            if ( ii2 === -1 ) {
+            if ( ii2 === NOT_IN_LIST ) {
 
                 newVertexArr.push( v2 );
 
@@ -1247,6 +1251,8 @@ class Mesh {
      */
     simplify () {
 
+        let NOT_IN_LIST = this.NOT_IN_LIST;
+
         // Convert flattened arrays to Vertex, Edge objects.
 
         console.log('Simplifying mesh... type:' + this.geo.type )
@@ -1312,7 +1318,7 @@ class Mesh {
 
             newIndexArr.push( vtx.lowIdx );
 
-            if ( newVertexArr.indexOf( vtx ) === -1 ) {
+            if ( newVertexArr.indexOf( vtx ) === NOT_IN_LIST ) {
 
                 newVertexArr.push ( vtx );
 
