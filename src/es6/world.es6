@@ -62,6 +62,29 @@ class World {
      */
     resize ( width, height, depth ) {
 
+        console.error( 'world::resize(): not implemented yet!' );
+
+    }
+
+    /** 
+     * load a World from a JSON file description.
+     */
+    load () {
+
+        // TODO: use fetch
+
+        console.error( 'world::load(): not implemented yet!' );
+
+    }
+
+    /** 
+     * save a World to a JSON file description.
+     */
+    save () {
+
+        // TODO: output in editor interface.
+
+        console.error( 'world::save(): not implemented yet!' );
 
     }
 
@@ -91,8 +114,6 @@ class World {
 //////////////////////////////////
 // TEXTURED SHADER.
 //////////////////////////////////
-
-        this.textureObjList = [];
 
         // Create a UV skydome.
 
@@ -426,8 +447,12 @@ class World {
 // COLORED SHADER.
 //////////////////////////////////
 
-        this.colorObjList = [];
 
+/*
+    TODO: SOMETHING ABOUT THIS CAUSES AN ERROR!!!!!!!!!!!
+    TODO: OUT OF RANGE ERROR IN SHADER
+    TODO: renderer might need to disable some arrays when shifting betwee shaders!!!!!!
+    TODO: MIGHT NEED A RESET 
 
             this.prim.createPrim(
 
@@ -444,39 +469,43 @@ class World {
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color
 
             ) 
+*/
 
+// TODO: UPDATE MESH OBJECTS TO USE GEO NEW FUNCTIONS FOR LOADING BUFFERS (in .vertexToGeometry, should automatically update GLBuffers))
 
 // NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
-// TODO: NEED A WAY TO DO CALLBACK WHEN LOAD IS COMPLETE
-// TODO: pass shaders to prims, and have them load
 
-// TODO: MAKE NORMALS AND TANGENTS RECALC AFTER ALL OPERATIONS
+// TODO: READ SHADER VALUES TO DETERMINE IF BUFFERS NEEDED WHEN CREATING THE PRIM!!!!!!!!!!!!!!!!!!!!!
+// TODO: THIS WOULD HAVE TO HAPPEN IN THE PRIM CREATION THEMES
 
-// TODO: JSON FILE FOR PRIMS (loadable)
+// TODO: SUBDIVIDE AND SIMPLIFY INTEGRATION (MAKE THEM ADD DATA AND RECALC SEPARATELY, LIKE MESH)
 
-// TODO: DEFAULT MINI WORLD IF NO JSON FILE
+// TODO: HAVE TO CREATEGLBUFFERS IN MESH ROUTINE!!!!!
 
-// TODO: TEST REMOVING PRIM
+// TODO: JSON FILE FOR PRIMS (loadable) use this.load(), this.save()
+
+// TODO: DEFAULT MINI WORLD IF NO JSON FILE (just a skybox and ground grid)
+
+// TODO: TEST REMOVING PRIM DURING RUNTIME
 
 // TODO: FADEIN/FADEOUT ANIMATION FOR PRIM
 
 // TODO: PRIM LIGHTING MODEL IN PRIM
 
-
             this.prim.createPrim(
 
-                this.s2,                      // callback function
+                this.s2,                               // callback function
                 this.prim.typeList.MESH,
                 'teapot',
-                vec5( 1, 1, 1 ),       // dimensions (4th dimension doesn't exist for cylinder)
-                vec5( 40, 40, 0  ),        // divisions MAKE SMALLER
+                vec5( 1, 1, 1 ),                       // dimensions (4th dimension doesn't exist for cylinder)
+                vec5( 40, 40, 0  ),                    // divisions MAKE SMALLER
                 vec3.fromValues( 0.0, 1.0, 2.0 ),      // position (absolute)
                 vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
                 vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
                 vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
                 [],               // no texture present
-                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color,
-                false,                                   // if true, apply texture to each face,
+                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ), // color,
+                false,                                 // if true, apply texture to each face,
                 [ 'obj/teapot/teapot.obj' ] // object files (.obj, .mtl)
 
             )
@@ -485,9 +514,6 @@ class World {
 //////////////////////////////////
 // LIT TEXTURE SHADER.
 //////////////////////////////////
-
-        this.dirlightTextureObjList = [];
-
 
             this.prim.createPrim(
 
@@ -647,12 +673,8 @@ class World {
 
             );
 
-        /* 
-         * Initialize the update() and render() routines in each shader.
-         * NOTE: can call with a prim array, e.g. this.s1.init( primList )
-         */
 
-        // NOTE: the init() method sets up the update() and render() methods for the shader.
+        // NOTE: the init() method sets up the update() and render() methods for the Shader.
 
         this.r1 = this.s1.init();
 
@@ -661,6 +683,8 @@ class World {
         this.r3 = this.s3.init();
 
 /*
+    // ANOTHER MESH OBJECT
+
         this.s1.addObj( 
 
            this.prim.createPrim(
@@ -681,6 +705,7 @@ class World {
         ) );
 */
 
+        // Fire world update.
 
         this.render();
 

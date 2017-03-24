@@ -195,9 +195,9 @@ class ShaderColor extends Shader {
 
                 // Bind color buffer.
 
-                gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.colors.buffer );
+                gl.bindBuffer( gl.ARRAY_BUFFER, obj.geometry.colors.buffer );
                 gl.enableVertexAttribArray( vsVars.attribute.vec4.aVertexColor );
-                gl.vertexAttribPointer(vsVars.attribute.vec4.aVertexColor, obj.geometry.colors.itemSize, gl.FLOAT, false, 0, 0);
+                gl.vertexAttribPointer( vsVars.attribute.vec4.aVertexColor, obj.geometry.colors.itemSize, gl.FLOAT, false, 0, 0 );
                 //gl.disableVertexAttribArray( vsVars.attribute.vec4.aVertexColor );
 
 

@@ -266,7 +266,7 @@ class LoadModel extends LoadPool {
         
         // Colors and tangents are not part of the Wavefront .obj format
 
-        console.log("v:" + vertices.length + " i:" + indices.length + " t:" + texCoords.length + " n:" + normals.length)
+        console.log("load-model::computeObjMesh(): v:" + (vertices.length /3) + " i:" + (indices.length /3 )+ " t:" + (texCoords.length /2) + " n:" + (normals.length /3))
 
         return {
 
@@ -503,13 +503,15 @@ class LoadModel extends LoadPool {
      * adapted from:
      * @link https://github.com/m0ppers/babylon-objloader/blob/master/src/babylon.objloader.js
      * @param {Object} loadObject custom loader object defined in load-pool.es6
-     * @param {Function} callback the callback function.
+     * @param {Function} callback the intermediate callback function, called for each model file loaded.
      */
     uploadModel ( loadObj, callback ) {
 
         let data = loadObj.data;
 
         let models = loadObj.prim.models;
+
+        console.log("::::::::UPLOADMODEL CALLBACK:" + callback)
 
         // Since we may have different file types for object loads, switch on the file extension
 
@@ -523,9 +525,7 @@ class LoadModel extends LoadPool {
 
                 loadObj.prim.geometry.addBufferData( d.vertices, d.indices, d.normals, d.texCoords, [] );
 
-                console.log("IN UPLOAD MODEL, VERTICES DATA:" + loadObj.prim.geometry.vertices.data.length )
-
-                loadObj.prim.geometry.createGLBuffers(); ///////////////////////////////////?????? WHY NOT IN PRIM CREATION ROUTINE??????????
+                console.log("IN UPLOAD MODEL, VERTICES DATA:" + (loadObj.prim.geometry.vertices.data.length / 3) )
 
                 break;
 

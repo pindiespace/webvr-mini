@@ -3101,7 +3101,7 @@
 
 	            // Colors and tangents are not part of the Wavefront .obj format
 
-	            console.log("v:" + vertices.length + " i:" + indices.length + " t:" + texCoords.length + " n:" + normals.length);
+	            console.log("load-model::computeObjMesh(): v:" + vertices.length / 3 + " i:" + indices.length / 3 + " t:" + texCoords.length / 2 + " n:" + normals.length / 3);
 
 	            return {
 
@@ -3308,7 +3308,7 @@
 	         * adapted from:
 	         * @link https://github.com/m0ppers/babylon-objloader/blob/master/src/babylon.objloader.js
 	         * @param {Object} loadObject custom loader object defined in load-pool.es6
-	         * @param {Function} callback the callback function.
+	         * @param {Function} callback the intermediate callback function, called for each model file loaded.
 	         */
 
 	    }, {
@@ -3318,6 +3318,8 @@
 	            var data = loadObj.data;
 
 	            var models = loadObj.prim.models;
+
+	            console.log("::::::::UPLOADMODEL CALLBACK:" + callback);
 
 	            // Since we may have different file types for object loads, switch on the file extension
 
@@ -3331,9 +3333,7 @@
 
 	                    loadObj.prim.geometry.addBufferData(d.vertices, d.indices, d.normals, d.texCoords, []);
 
-	                    console.log("IN UPLOAD MODEL, VERTICES DATA:" + loadObj.prim.geometry.vertices.data.length);
-
-	                    loadObj.prim.geometry.createGLBuffers(); ///////////////////////////////////?????? WHY NOT IN PRIM CREATION ROUTINE??????????
+	                    console.log("IN UPLOAD MODEL, VERTICES DATA:" + loadObj.prim.geometry.vertices.data.length / 3);
 
 	                    break;
 
@@ -5781,6 +5781,8 @@
 	            console.log("IN COMPUTEFAN, VERTICES:" + vv.length + " NORMALS:" + norms.length);
 
 	            tex.push(0.5, 0.5);
+
+	            norms.push(center[0], center[1], center[2]);
 
 	            return {
 
@@ -8252,43 +8254,23 @@
 
 	            ////////mesh.subdivide();
 
+	            //// mesh.reCalc();
+
 	            // NOTE:::::: simplify() works here ONLY because we don't have any redundant vertices!
 
 	            //mesh.simplify();
 
-	            /////////mesh.subdivide();
+	            //// mesh.reCalc();
 
+	            console.log('Prim::meshCallback(): vertices.length:' + geo.numVertices() + ' normals.length:' + geo.numNormals() + ' tangents.length:' + geo.numTangents() + ' colors.length:' + geo.numColors());
 
-	            // NOTE::::::
-	            // NOTE:::::: Make these local references AFTER the subdivision, or you don't get 
-	            // NOTE:::::: the right size for normals and colors
+	            // Set the ready flag so we don't re-initialize the geometry buffers.
 
-	            // NOTE:::::: rewrite prim load as a Promise queue.
-	            // http://www.datchley.name/promise-patterns-anti-patterns/
+	            prim.ready = true;
 
-	            var vertices = geo.vertices.data;
+	            // Initialize the prim, WITHOUT adding the geo data (already added in load-model).
 
-	            var indices = geo.indices.data;
-
-	            var normals = geo.normals.data;
-
-	            var texCoords = geo.texCoords.data;
-
-	            var tangents = geo.tangents.data;
-
-	            var colors = geo.colors.data;
-
-	            console.log('Prim::meshCallback() #1: normals length:' + normals.length + ' vertices.length:' + vertices.length + ' colors.length:' + colors.length);
-
-	            prim.reCalc();
-
-	            // Don't compute if we were supplied with normals
-
-	            console.log('Prim::meshCallback() #2: normals length:' + normals.length + ' vertices.length:' + vertices.length + ' colors.length:' + colors.length);
-
-	            // Initialize the prim.
-
-	            this.initPrim(prim, vertices, indices, normals, texCoords, tangents); // CHECK CREATE PRIM - ATTACHES TO SHADER
+	            this.initPrim(prim); // CHECK CREATE PRIM - ATTACHES TO SHADER
 
 	            // Delayed set to true.
 
@@ -8346,25 +8328,15 @@
 
 	            prim.boundingBox = this.computeBoundingBox(prim.geometry.vertices.data);
 
-	            // TODO: recalc() should go here.
+	            // Note: Mesh callbacks don't actually add any data here (this.messCallback() passes empty coordinate arrays)
 
-	            // If there isn't a color array, define it. Either one color or pre-defined array
-
-	            // If texture coordinates weren't supplied, add default.
-
-	            // Add our data to the geo-obj, and bind to WebGL buffers.
+	            prim.reCalc();
 
 	            prim.geometry.addBufferData(vertices, indices, normals, texCoords, tangents);
 
 	            console.log("calculating normals and tangents for " + prim.name);
 
-	            prim.reCalc();
-
 	            console.log("checking buffer data for " + prim.name);
-
-	            // Confirm our buffer data will be OK for rendering.
-
-	            var valid = prim.geometry.checkBufferData();
 
 	            /* 
 	             * If we were supplied a shader, add to display list. 
@@ -8503,11 +8475,13 @@
 
 	                var geo = prim.geometry;
 
-	                console.log("in reCalc(), normals:" + geo.normals.data.length + " vertices:" + geo.vertices.data.length + ' tangents:' + geo.tangents.data.length);
+	                var numVertices = geo.numVertices();
+
+	                console.log("in reCalc(), vertices:" + numVertices + ' normals:' + geo.numNormals() + ' tangents:' + geo.numTangents());
 
 	                // If normals are used, re-compute.
 
-	                if (geo.normals.data.length !== geo.vertices.data.length) {
+	                if (geo.numNormals() !== numVertices) {
 
 	                    console.log("PRIM:" + prim.name + ' recalculating normals');
 
@@ -8516,16 +8490,18 @@
 
 	                // If tangents are used, re-compute.
 
-	                if (prim.useTangents && geo.tangents.data.length !== geo.vertices.data.length) {
+	                if (prim.useTangents && geo.numTangents() !== numVertices) {
 
-	                    console.log("PRIM:" + prim.name + ' recalculating tangents, curr length:' + geo.tangents.data.length + ' vertices:' + geo.vertices.data.length);
+	                    console.log("PRIM #1:" + prim.name + ' recalculating tangents, curr length:' + geo.numTangents() + ' vertices:' + numVertices);
 
 	                    geo.setTangents(_this.computeTangents(geo.vertices.data, geo.indices.data, geo.normals.data, geo.texCoords.data));
+
+	                    console.log("PRIM #2:" + prim.name + ' recalculated tangents, curr length:' + geo.numTangents() + ' vertices:' + numVertices);
 	                }
 
 	                // If color array is wrong, re-compute.
 
-	                if (geo.colors.length / geo.colors.itemSize !== geo.vertices.data.length / geo.vertices.itemSize) {
+	                if (geo.numColors() !== numVertices) {
 
 	                    geo.setColors(_this.computeColors(geo.normals.data, geo.colors.data));
 	                }
@@ -8732,7 +8708,9 @@
 	                //mesh.subdivide( true );
 	                //mesh.subdivide( true ); // this one zaps from low-vertex < 10 prim
 
-	                prim.reCalc();
+	                // TODO: THESE ARE NOT BEING ADDED
+
+	                // TODO: FIGURE OUT WHAT NEEDS TO BE DONE WITH A SUBDIVIDE AND SIMPLIFY
 	            }
 
 	            // Validate our data.
@@ -8743,7 +8721,9 @@
 
 	            // Create default WebGL buffers to bind our Prim coordinate data to.
 
-	            prim.geometry = prim.geometry.createGLBuffers(); // ???????????????WHY CAN'T WE MOVE THIS EARLIER????????????????????????????
+	            // TODO: HAVE THIS HAPPEN WHEN WE ADD BUFFER DATA
+
+	            ///////////prim.geometry = prim.geometry.createGLBuffers(); // ???????????????WHY CAN'T WE MOVE THIS EARLIER????????????????????????????
 
 	            // Multiple textures per Prim. Rendering defines how textures for each Prim type are used.
 
@@ -11346,13 +11326,13 @@
 
 	            var len = this.vertices.data.length;
 
-	            var vLen = len;
+	            var vLen = len; // used in indices checks
 
-	            var numVertices = len / this.vertices.itemSize;
+	            var numVertices = this.numVertices();
 
 	            if (len < this.vertices.itemSize || this.util.frac(numVertices) !== 0) {
 
-	                console.error(fnName + ' invalid vertex size, ' + this.vertices.data.length);
+	                console.error(fnName + ' invalid vertex size, ' + numVertices);
 
 	                valid = false;
 	            } else if (len > this.MAX_DRAWELEMENTS) {
@@ -11372,12 +11352,12 @@
 
 	            // Index check. 
 
-	            len = this.indices.data.length;
+	            len = this.numIndices();
 
 	            if (len < this.indices.itemSize) {
 	                // can be fractional
 
-	                console.error(fnName + ' invalid index size, ' + this.indices.data.length);
+	                console.error(fnName + ' invalid index size, ' + len);
 
 	                valid = false;
 	            }
@@ -11419,16 +11399,16 @@
 
 	            // Normals check (should always be present).
 
-	            len = this.normals.data.length;
+	            len = this.numNormals();
 
-	            if (len < this.normals.itemSize || this.util.frac(len / this.normals.itemSize) !== 0) {
+	            if (len < this.normals.itemSize || this.util.frac(len) !== 0) {
 
-	                console.error(fnName + ' invalid normals size, ' + this.normals.data.length);
+	                console.error(fnName + ' invalid normals size, ' + len);
 
 	                valid = false;
-	            } else if (len !== this.vertices.data.length) {
+	            } else if (len !== numVertices) {
 
-	                console.error(fnName + ' normals length: ' + len + ' does not match vertices length: ' + vLen);
+	                console.error(fnName + ' normals length: ' + len + ' does not match vertices length: ' + numVertices);
 
 	                valid = false;
 	            }
@@ -11443,20 +11423,18 @@
 
 	            // Texture coords check.
 
-	            len = this.texCoords.data.length;
+	            len = this.numTexCoords();
 
 	            if (len > 0) {
 
-	                var aLen = len / this.texCoords.itemSize;
-
-	                if (len < this.texCoords.itemSize || this.util.frac(aLen) !== 0) {
+	                if (len < this.texCoords.itemSize || this.util.frac(len) !== 0) {
 
 	                    console.error(fnName + ' invalid texCoords size, ' + this.texCoords.data.length);
 
 	                    valid = false;
-	                } else if (aLen !== numVertices) {
+	                } else if (len !== numVertices) {
 
-	                    console.error(fnName + ' texCoords length: ' + len + ' does not match vertices length: ' + vLen);
+	                    console.error(fnName + ' texCoords length: ' + len + ' does not match vertices length: ' + numVertices);
 
 	                    valid = false;
 	                }
@@ -11475,20 +11453,18 @@
 
 	            // Tangents check.
 
-	            len = this.tangents.data.length;
+	            len = this.numTangents();
 
 	            if (len > 0) {
 
-	                var _aLen = len / this.tangents.itemSize;
+	                if (len < this.tangents.itemSize || this.util.frac(len) !== 0) {
 
-	                if (len < this.tangents.itemSize || this.util.frac(len / this.tangents.itemSize !== 0)) {
-
-	                    console.error(fnName + ' invalid tangents size, ' + this.tangents.data.length);
+	                    console.error(fnName + ' invalid tangents size, ' + len);
 
 	                    valid = false;
-	                } else if (_aLen !== numVertices) {
+	                } else if (len !== numVertices) {
 
-	                    console.error(fnName + ' tangents length ' + len + ' does not match vertices length: ' + vLen);
+	                    console.error(fnName + ' tangents length ' + len + ' does not match vertices length: ' + numVertices);
 
 	                    valid = false;
 	                }
@@ -11507,20 +11483,18 @@
 
 	            // Texture coords check.
 
-	            len = this.colors.data.length;
+	            len = this.numColors();
 
 	            if (len > 0) {
 
-	                var _aLen2 = len / this.colors.itemSize;
+	                if (len < this.colors.itemSize || this.util.frac(len) !== 0) {
 
-	                if (len < this.colors.itemSize || this.util.frac(_aLen2) !== 0) {
-
-	                    console.error(fnName + ' invalid texCoords size, ' + this.texCoords.data.length);
+	                    console.error(fnName + ' invalid colors size, ' + this.colors.data.length);
 
 	                    valid = false;
-	                } else if (_aLen2 !== numVertices) {
+	                } else if (len !== numVertices) {
 
-	                    console.error(fnName + ' colors length: ' + len + ' does not match vertices length:' + vLen);
+	                    console.error(fnName + ' colors length: ' + len + ' does not match vertices length:' + numVertices);
 
 	                    valid = false;
 	                }
@@ -11713,7 +11687,7 @@
 	        key: 'numIndices',
 	        value: function numIndices() {
 
-	            return this.indices.length;
+	            return this.indices.data.length;
 	        }
 
 	        /** 
@@ -11751,6 +11725,12 @@
 
 	            return this.tangents.data.length / this.tangents.itemSize;
 	        }
+	    }, {
+	        key: 'numColors',
+	        value: function numColors() {
+
+	            return this.colors.data.length / this.colors.itemSize;
+	        }
 
 	        /** 
 	         * Returns the number of faces (triangles).
@@ -11786,19 +11766,43 @@
 	        }
 
 	        /** 
-	         * Add data to existing data (e.g. combine two Prims into one)
+	         * Returns the number of coordinates for ALL buffers as a sum.
+	         * use to compute if we are 'dirty' and need to run this.createGLBuffers();
+	         * @returns {Number} total size of ALL buffers.
+	         */
+
+	    }, {
+	        key: 'numCoords',
+	        value: function numCoords() {
+
+	            return this.numVertices() + this.numIndices() + this.numNormals() + this.numTangents() + this.numColors();
+	        }
+
+	        /** 
+	         * Add data to existing data (e.g. combine two Prims into one). Due to callbacks, it is 
+	         * possible this function might be called when data is not ready.
 	         */
 
 	    }, {
 	        key: 'addBufferData',
-	        value: function addBufferData(vertices, indices) {
+	        value: function addBufferData() {
+	            var vertices = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+	            var indices = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
 	            var normals = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [];
 	            var texCoords = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
 	            var tangents = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : [];
 	            var colors = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : [];
 
 
+	            // Local reference to utility function.
+
 	            var concat = this.util.concatArr;
+
+	            // Current buffer size.
+
+	            var currBufferSize = this.numCoords();
+
+	            // Concat data, if present.
 
 	            this.vertices.data = concat(this.vertices.data, vertices), this.indices.data = concat(this.indices.data, indices), this.normals.data = concat(this.normals.data, normals), this.texCoords.data = concat(this.texCoords.data, texCoords), this.tangents.data = concat(this.tangents.data, tangents), this.colors.data = concat(this.colors.data, colors);
 
@@ -11808,6 +11812,13 @@
 	            } else {
 
 	                this.ssz = false;
+	            }
+
+	            // New buffer size (reset WebGL buffers if size has changed)
+
+	            if (currBufferSize !== this.numCoords()) {
+
+	                this.createGLBuffers(); //////////TODO: THIS SHOULD BE AUTOMATIC AFTER EACH ADD. 
 	            }
 
 	            return this.checkBufferData();
@@ -11891,13 +11902,11 @@
 
 	    }, {
 	        key: 'createGLBuffers',
-	        value: function createGLBuffers(teapot) {
+	        value: function createGLBuffers() {
 
 	            var gl = this.webgl.getContext();
 
 	            var fnName = this.mName + 'createGLBuffers():';
-
-	            if (teapot) console.log('++++++++++++++++++++++++TEAPOT vertices length:' + this.vertices.data.length);
 
 	            // Vertex Buffer Object.
 
@@ -11911,8 +11920,6 @@
 	            }
 
 	            this.bindGLBuffer(o, this.FLOAT32);
-
-	            if (teapot) console.log('++++++++++++++++++++TEAPOT BUFFER:' + o.buffer);
 
 	            // Create the Index buffer.
 
@@ -12102,7 +12109,36 @@
 
 	    _createClass(World, [{
 	        key: 'resize',
-	        value: function resize(width, height, depth) {}
+	        value: function resize(width, height, depth) {
+
+	            console.error('world::resize(): not implemented yet!');
+	        }
+
+	        /** 
+	         * load a World from a JSON file description.
+	         */
+
+	    }, {
+	        key: 'load',
+	        value: function load() {
+
+	            // TODO: use fetch
+
+	            console.error('world::load(): not implemented yet!');
+	        }
+
+	        /** 
+	         * save a World to a JSON file description.
+	         */
+
+	    }, {
+	        key: 'save',
+	        value: function save() {
+
+	            // TODO: output in editor interface.
+
+	            console.error('world::save(): not implemented yet!');
+	        }
 
 	        /** 
 	         * Create the world. Load shader/renderer objects, and 
@@ -12132,8 +12168,6 @@
 	            //////////////////////////////////
 	            // TEXTURED SHADER.
 	            //////////////////////////////////
-
-	            this.textureObjList = [];
 
 	            // Create a UV skydome.
 
@@ -12371,34 +12405,50 @@
 	            // COLORED SHADER.
 	            //////////////////////////////////
 
-	            this.colorObjList = [];
 
-	            this.prim.createPrim(this.s2, // callback function
-	            this.prim.typeList.CUBE, 'colored cube', vec5(1, 1, 1, 0), // dimensions
-	            vec5(3, 3, 3), // divisions
-	            vec3.fromValues(0.2, 0.5, 1), // position (absolute)
-	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	            vec3.fromValues(util.degToRad(20), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	            vec3.fromValues(util.degToRad(0), util.degToRad(1), util.degToRad(0)), // angular velocity in x, y, x
-	            ['img/webvr-logo3.png'], // texture present, NOT USED
-	            vec4.fromValues(0.5, 1.0, 0.2, 1.0));
+	            /*
+	                TODO: SOMETHING ABOUT THIS CAUSES AN ERROR!!!!!!!!!!!
+	                TODO: OUT OF RANGE ERROR IN SHADER
+	                TODO: renderer might need to disable some arrays when shifting betwee shaders!!!!!!
+	                TODO: MIGHT NEED A RESET 
+	            
+	                        this.prim.createPrim(
+	            
+	                            this.s2,                      // callback function
+	                            this.prim.typeList.CUBE,
+	                            'colored cube',
+	                            vec5( 1, 1, 1, 0 ),            // dimensions
+	                            vec5( 3, 3, 3 ),            // divisions
+	                            vec3.fromValues( 0.2, 0.5, 1 ),          // position (absolute)
+	                            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+	                            vec3.fromValues( util.degToRad( 20 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+	                            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 1 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+	                            [ 'img/webvr-logo3.png' ],               // texture present, NOT USED
+	                            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color
+	            
+	                        ) 
+	            */
+
+	            // TODO: UPDATE MESH OBJECTS TO USE GEO NEW FUNCTIONS FOR LOADING BUFFERS (in .vertexToGeometry, should automatically update GLBuffers))
 
 	            // NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
-	            // TODO: NEED A WAY TO DO CALLBACK WHEN LOAD IS COMPLETE
-	            // TODO: pass shaders to prims, and have them load
 
-	            // TODO: MAKE NORMALS AND TANGENTS RECALC AFTER ALL OPERATIONS
+	            // TODO: READ SHADER VALUES TO DETERMINE IF BUFFERS NEEDED WHEN CREATING THE PRIM!!!!!!!!!!!!!!!!!!!!!
+	            // TODO: THIS WOULD HAVE TO HAPPEN IN THE PRIM CREATION THEMES
 
-	            // TODO: JSON FILE FOR PRIMS (loadable)
+	            // TODO: SUBDIVIDE AND SIMPLIFY INTEGRATION (MAKE THEM ADD DATA AND RECALC SEPARATELY, LIKE MESH)
 
-	            // TODO: DEFAULT MINI WORLD IF NO JSON FILE
+	            // TODO: HAVE TO CREATEGLBUFFERS IN MESH ROUTINE!!!!!
 
-	            // TODO: TEST REMOVING PRIM
+	            // TODO: JSON FILE FOR PRIMS (loadable) use this.load(), this.save()
+
+	            // TODO: DEFAULT MINI WORLD IF NO JSON FILE (just a skybox and ground grid)
+
+	            // TODO: TEST REMOVING PRIM DURING RUNTIME
 
 	            // TODO: FADEIN/FADEOUT ANIMATION FOR PRIM
 
 	            // TODO: PRIM LIGHTING MODEL IN PRIM
-
 
 	            this.prim.createPrim(this.s2, // callback function
 	            this.prim.typeList.MESH, 'teapot', vec5(1, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
@@ -12417,8 +12467,6 @@
 	            //////////////////////////////////
 	            // LIT TEXTURE SHADER.
 	            //////////////////////////////////
-
-	            this.dirlightTextureObjList = [];
 
 	            this.prim.createPrim(this.s3, // callback function
 	            this.prim.typeList.CUBE, 'lit cube', vec5(1, 1, 1, 0), // dimensions
@@ -12528,12 +12576,7 @@
 
 	            );
 
-	            /* 
-	             * Initialize the update() and render() routines in each shader.
-	             * NOTE: can call with a prim array, e.g. this.s1.init( primList )
-	             */
-
-	            // NOTE: the init() method sets up the update() and render() methods for the shader.
+	            // NOTE: the init() method sets up the update() and render() methods for the Shader.
 
 	            this.r1 = this.s1.init();
 
@@ -12542,6 +12585,8 @@
 	            this.r3 = this.s3.init();
 
 	            /*
+	                // ANOTHER MESH OBJECT
+	            
 	                    this.s1.addObj( 
 	            
 	                       this.prim.createPrim(
@@ -12561,6 +12606,8 @@
 	            
 	                    ) );
 	            */
+
+	            // Fire world update.
 
 	            this.render();
 	        }

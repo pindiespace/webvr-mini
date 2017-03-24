@@ -189,13 +189,13 @@ class GeoObj {
 
         let len = this.vertices.data.length;
 
-        let vLen = len;
+        let vLen = len; // used in indices checks
 
-        let numVertices = len / this.vertices.itemSize;
+        let numVertices = this.numVertices();
 
         if ( len < this.vertices.itemSize || this.util.frac( numVertices ) !== 0 ) {
 
-            console.error( fnName + ' invalid vertex size, ' + this.vertices.data.length );
+            console.error( fnName + ' invalid vertex size, ' + numVertices );
 
             valid = false;
 
@@ -218,11 +218,11 @@ class GeoObj {
 
         // Index check. 
 
-        len = this.indices.data.length;
+        len = this.numIndices();
 
         if ( len < this.indices.itemSize ) { // can be fractional
 
-            console.error( fnName + ' invalid index size, ' + this.indices.data.length );
+            console.error( fnName + ' invalid index size, ' + len );
 
             valid = false;
 
@@ -270,17 +270,17 @@ class GeoObj {
 
         // Normals check (should always be present).
 
-        len = this.normals.data.length;
+        len = this.numNormals();
 
-        if ( len < this.normals.itemSize || this.util.frac( len / this.normals.itemSize ) !== 0 ) {
+        if ( len < this.normals.itemSize || this.util.frac( len ) !== 0 ) {
 
-            console.error( fnName + ' invalid normals size, ' + this.normals.data.length );
+            console.error( fnName + ' invalid normals size, ' + len );
 
             valid = false;
 
-        } else if ( len !== this.vertices.data.length ) {
+        } else if ( len !== numVertices ) {
 
-            console.error( fnName + ' normals length: ' + len + ' does not match vertices length: ' + vLen );
+            console.error( fnName + ' normals length: ' + len + ' does not match vertices length: ' + numVertices );
 
             valid = false;
 
@@ -298,21 +298,19 @@ class GeoObj {
 
         // Texture coords check.
 
-        len = this.texCoords.data.length;
+        len = this.numTexCoords();
 
         if ( len > 0 ) {
 
-            let aLen = len / this.texCoords.itemSize;
-
-            if ( len < ( this.texCoords.itemSize ) ||  this.util.frac( aLen ) !== 0 ) {
+            if ( len < ( this.texCoords.itemSize ) ||  this.util.frac( len ) !== 0 ) {
 
                 console.error( fnName + ' invalid texCoords size, ' + this.texCoords.data.length );
 
                 valid = false;
 
-            } else if ( aLen !== numVertices ) {
+            } else if ( len !== numVertices ) {
 
-                console.error( fnName + ' texCoords length: ' + len + ' does not match vertices length: ' + vLen );
+                console.error( fnName + ' texCoords length: ' + len + ' does not match vertices length: ' + numVertices );
 
                 valid = false;
 
@@ -336,21 +334,19 @@ class GeoObj {
 
         // Tangents check.
 
-        len = this.tangents.data.length;
+        len = this.numTangents();
 
         if ( len > 0 ) {
 
-            let aLen = len / this.tangents.itemSize;
+            if ( len < ( this.tangents.itemSize ) || this.util.frac( len ) !== 0  ) {
 
-            if ( len < ( this.tangents.itemSize ) || this.util.frac( len / this.tangents.itemSize  !== 0 ) ) {
-
-                console.error(fnName + ' invalid tangents size, ' + this.tangents.data.length );
+                console.error(fnName + ' invalid tangents size, ' + len );
 
                 valid = false;
 
-            } else if ( aLen !== numVertices ) {
+            } else if ( len !== numVertices ) {
 
-                console.error( fnName + ' tangents length ' + len + ' does not match vertices length: ' + vLen );
+                console.error( fnName + ' tangents length ' + len + ' does not match vertices length: ' + numVertices );
 
                 valid = false;
 
@@ -374,21 +370,19 @@ class GeoObj {
 
         // Texture coords check.
 
-        len = this.colors.data.length;
+        len = this.numColors();
 
         if ( len > 0 ) {
 
-            let aLen = len / this.colors.itemSize;
+            if ( len < ( this.colors.itemSize ) || this.util.frac( len ) !== 0 ) {
 
-            if ( len < ( this.colors.itemSize ) || this.util.frac( aLen ) !== 0 ) {
-
-                console.error( fnName + ' invalid texCoords size, ' + this.texCoords.data.length );
+                console.error( fnName + ' invalid colors size, ' + this.colors.data.length );
 
                 valid = false;
 
-            } else if ( aLen !== numVertices ) {
+            } else if ( len !== numVertices ) {
 
-                console.error( fnName + ' colors length: ' + len + ' does not match vertices length:' + vLen );
+                console.error( fnName + ' colors length: ' + len + ' does not match vertices length:' + numVertices );
 
                 valid = false;
 
@@ -409,7 +403,6 @@ class GeoObj {
             }
 
         }
-
 
         // All ok?
 
@@ -518,7 +511,6 @@ class GeoObj {
             console.error( this.mName + 'setTexCoords() invalid input, not Array' );
         }
 
-
     }
 
     /** 
@@ -585,7 +577,7 @@ class GeoObj {
      */
     numIndices () {
 
-        return ( this.indices.length );
+        return ( this.indices.data.length );
 
     }
 
@@ -616,6 +608,12 @@ class GeoObj {
     numTangents () { 
 
         return ( this.tangents.data.length / this.tangents.itemSize );
+
+    }
+
+    numColors () {
+
+        return ( this.colors.data.length / this.colors.itemSize );
 
     }
 
@@ -650,11 +648,31 @@ class GeoObj {
     }
 
     /** 
-     * Add data to existing data (e.g. combine two Prims into one)
+     * Returns the number of coordinates for ALL buffers as a sum.
+     * use to compute if we are 'dirty' and need to run this.createGLBuffers();
+     * @returns {Number} total size of ALL buffers.
      */
-    addBufferData ( vertices, indices, normals = [], texCoords = [], tangents = [], colors = [] ) {
+    numCoords () {
+
+        return ( this.numVertices() + this.numIndices() + this.numNormals() + this.numTangents() + this.numColors() );
+
+    }
+
+    /** 
+     * Add data to existing data (e.g. combine two Prims into one). Due to callbacks, it is 
+     * possible this function might be called when data is not ready.
+     */
+    addBufferData ( vertices = [], indices = [], normals = [], texCoords = [], tangents = [], colors = [] ) {
+
+        // Local reference to utility function.
 
         const concat = this.util.concatArr;
+
+        // Current buffer size.
+
+        let currBufferSize = this.numCoords();
+
+        // Concat data, if present.
 
         this.vertices.data = concat( this.vertices.data, vertices ),
 
@@ -675,6 +693,14 @@ class GeoObj {
         } else {
 
             this.ssz = false;
+        }
+
+        // New buffer size (reset WebGL buffers if size has changed)
+
+        if ( currBufferSize !== this.numCoords() ) {
+
+            this.createGLBuffers(); //////////TODO: THIS SHOULD BE AUTOMATIC AFTER EACH ADD. 
+
         }
 
         return this.checkBufferData();
@@ -756,13 +782,11 @@ class GeoObj {
      * an array of tangents, in glMatrix.vec3 format.
      * an array of colors, in glMatrix.vec4 format.
      */
-    createGLBuffers ( teapot ) {
+    createGLBuffers () {
 
             const gl = this.webgl.getContext();
 
             let fnName = this.mName + 'createGLBuffers():';
-
-            if (teapot) console.log( '++++++++++++++++++++++++TEAPOT vertices length:' + this.vertices.data.length)
 
             // Vertex Buffer Object.
 
@@ -777,8 +801,6 @@ class GeoObj {
             }
 
             this.bindGLBuffer( o, this.FLOAT32 );
-
-            if (teapot) console.log('++++++++++++++++++++TEAPOT BUFFER:' + o.buffer)
 
             // Create the Index buffer.
 

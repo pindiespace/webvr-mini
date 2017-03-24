@@ -842,6 +842,8 @@ class Prim {
 
         tex.push( 0.5, 0.5 );
 
+        norms.push( center[ 0 ], center[ 1 ], center[ 2 ] );
+
         return {
 
             vertices: vv,
@@ -3319,43 +3321,23 @@ class Prim {
 
         ////////mesh.subdivide();
 
+        //// mesh.reCalc();
+
         // NOTE:::::: simplify() works here ONLY because we don't have any redundant vertices!
 
         //mesh.simplify();
 
-        /////////mesh.subdivide();
+        //// mesh.reCalc();
 
+        console.log('Prim::meshCallback(): vertices.length:' + geo.numVertices() + ' normals.length:' + geo.numNormals() +  ' tangents.length:' + geo.numTangents() + ' colors.length:' + geo.numColors() )
 
-        // NOTE::::::
-        // NOTE:::::: Make these local references AFTER the subdivision, or you don't get 
-        // NOTE:::::: the right size for normals and colors
+        // Set the ready flag so we don't re-initialize the geometry buffers.
 
-        // NOTE:::::: rewrite prim load as a Promise queue.
-        // http://www.datchley.name/promise-patterns-anti-patterns/
+        prim.ready = true;
 
-        let vertices = geo.vertices.data;
+        // Initialize the prim, WITHOUT adding the geo data (already added in load-model).
 
-        let indices = geo.indices.data;
-
-        let normals = geo.normals.data;
-
-        let texCoords = geo.texCoords.data;
-
-        let tangents = geo.tangents.data;
-
-        let colors = geo.colors.data;
-
-        console.log('Prim::meshCallback() #1: normals length:' + normals.length + ' vertices.length:' + vertices.length + ' colors.length:' + colors.length)
-
-        prim.reCalc();
-
-        // Don't compute if we were supplied with normals
-
-        console.log('Prim::meshCallback() #2: normals length:' + normals.length + ' vertices.length:' + vertices.length + ' colors.length:' + colors.length)
-
-        // Initialize the prim.
-
-        this.initPrim( prim, vertices, indices, normals, texCoords, tangents ); // CHECK CREATE PRIM - ATTACHES TO SHADER
+        this.initPrim( prim ); // CHECK CREATE PRIM - ATTACHES TO SHADER
 
         // Delayed set to true.
 
@@ -3412,26 +3394,18 @@ class Prim {
 
         prim.boundingBox = this.computeBoundingBox( prim.geometry.vertices.data );
 
+        // Note: Mesh callbacks don't actually add any data here (this.messCallback() passes empty coordinate arrays)
 
-        // TODO: recalc() should go here.
-
-        // If there isn't a color array, define it. Either one color or pre-defined array
-
-        // If texture coordinates weren't supplied, add default.
-
-        // Add our data to the geo-obj, and bind to WebGL buffers.
+        prim.reCalc();
 
         prim.geometry.addBufferData( vertices, indices, normals, texCoords, tangents );
 
         console.log("calculating normals and tangents for " + prim.name)
 
-        prim.reCalc();
+
 
         console.log("checking buffer data for " + prim.name )
 
-        // Confirm our buffer data will be OK for rendering.
-
-        let valid = prim.geometry.checkBufferData();
 
         /* 
          * If we were supplied a shader, add to display list. 
@@ -3580,12 +3554,14 @@ class Prim {
 
             let geo = prim.geometry;
 
-            console.log("in reCalc(), normals:" + geo.normals.data.length + " vertices:" + geo.vertices.data.length + ' tangents:' + geo.tangents.data.length)
+            let numVertices = geo.numVertices();
+
+            console.log("in reCalc(), vertices:" + numVertices + ' normals:' + geo.numNormals() + ' tangents:' + geo.numTangents() )
 
 
             // If normals are used, re-compute.
 
-            if ( geo.normals.data.length !== geo.vertices.data.length ) {
+            if ( geo.numNormals() !== numVertices ) {
 
                 console.log("PRIM:" + prim.name + ' recalculating normals' );
 
@@ -3595,17 +3571,20 @@ class Prim {
 
             // If tangents are used, re-compute.
 
-            if ( prim.useTangents &&  ( geo.tangents.data.length !== geo.vertices.data.length ) ) {
+            if ( prim.useTangents &&  ( geo.numTangents() !== numVertices ) ) {
 
-                console.log("PRIM:" + prim.name + ' recalculating tangents, curr length:' + geo.tangents.data.length + ' vertices:' + geo.vertices.data.length );
+                console.log("PRIM #1:" + prim.name + ' recalculating tangents, curr length:' + geo.numTangents() + ' vertices:' + numVertices );
 
-                geo.setTangents( this.computeTangents( geo.vertices.data, geo.indices.data, geo.normals.data, geo.texCoords.data ) )
+                geo.setTangents( this.computeTangents( geo.vertices.data, geo.indices.data, geo.normals.data, geo.texCoords.data ) );
+
+                console.log("PRIM #2:" + prim.name + ' recalculated tangents, curr length:' + geo.numTangents() + ' vertices:' + numVertices );
+
 
             }
 
             // If color array is wrong, re-compute.
 
-            if ( ( geo.colors.length / geo.colors.itemSize ) !== ( geo.vertices.data.length  / geo.vertices.itemSize ) ) {
+            if ( geo.numColors() !== numVertices ) {
 
                 geo.setColors( this.computeColors( geo.normals.data, geo.colors.data ) );
 
@@ -3819,7 +3798,9 @@ class Prim {
             //mesh.subdivide( true );
             //mesh.subdivide( true ); // this one zaps from low-vertex < 10 prim
 
-            prim.reCalc();
+            // TODO: THESE ARE NOT BEING ADDED
+
+            // TODO: FIGURE OUT WHAT NEEDS TO BE DONE WITH A SUBDIVIDE AND SIMPLIFY
 
        }
 
@@ -3832,7 +3813,9 @@ class Prim {
 
         // Create default WebGL buffers to bind our Prim coordinate data to.
 
-        prim.geometry = prim.geometry.createGLBuffers(); // ???????????????WHY CAN'T WE MOVE THIS EARLIER????????????????????????????
+        // TODO: HAVE THIS HAPPEN WHEN WE ADD BUFFER DATA
+
+        ///////////prim.geometry = prim.geometry.createGLBuffers(); // ???????????????WHY CAN'T WE MOVE THIS EARLIER????????????????????????????
 
         // Multiple textures per Prim. Rendering defines how textures for each Prim type are used.
 
