@@ -55,6 +55,22 @@ class Shader {
 
         }
 
+        // Define the arrays needed for shaders to work. Subclasses override these values.
+
+        this.needVertices = true;
+
+        this.needIndices = false;
+
+        this.needTexCoords = false;
+
+        this.needColors = false;
+
+        this.needNormals = false;
+
+        this.needTangents = false;
+
+        this.needLights = false;
+
         // If we need to load a vertex and fragment shader files (in text format), put their paths in derived classes.
 
         this.vertexShaderFile = null;

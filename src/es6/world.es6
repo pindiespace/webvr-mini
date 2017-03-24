@@ -96,8 +96,6 @@ class World {
 
         // Create a UV skydome.
 
-        this.s1.addObj( 
-
             this.prim.createPrim(
 
                 this.s1,                      // callback function
@@ -111,11 +109,8 @@ class World {
                 vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.1 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
                 [ 'img/panorama_01.png' ],           // texture present
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0) // color
-            ) 
+            );
 
-        );
-
-        this.s1.addObj( 
 
             this.prim.createPrim(
 
@@ -133,9 +128,6 @@ class World {
 
             )
 
-        );
-
-        this.s1.addObj( 
 
             this.prim.createPrim(
 
@@ -153,9 +145,6 @@ class World {
 
             ) 
 
-        );
-
-        this.s1.addObj(
 
             this.prim.createPrim(
 
@@ -173,12 +162,10 @@ class World {
 
             ) 
 
-        );
 
         // DIMENSIONS INDICATE ANY X or Y CURVATURE.
         // DIVISIONS FOR CUBED AND CURVED PLANE INDICATE SIDE TO DRAW
 
-        this.s1.addObj( 
 
             this.prim.createPrim(
 
@@ -196,9 +183,6 @@ class World {
 
             )
 
-        );
-
-        this.s1.addObj( 
 
             this.prim.createPrim(
 
@@ -216,9 +200,6 @@ class World {
         
             ) 
 
-        );
-
-        this.s1.addObj( 
 
             this.prim.createPrim(
 
@@ -236,9 +217,6 @@ class World {
         
             )
 
-        );
-
-        this.s1.addObj( 
 
             this.prim.createPrim(
 
@@ -256,9 +234,6 @@ class World {
         
             )
 
-        );
-
-        this.s1.addObj( 
 
             this.prim.createPrim(
 
@@ -276,10 +251,6 @@ class World {
         
             ) 
 
-        );
-
-
-        this.s1.addObj( 
 
             this.prim.createPrim(
 
@@ -297,9 +268,7 @@ class World {
         
             )
 
-        );
 
-        this.s1.addObj( 
 
             this.prim.createPrim(
             
@@ -317,9 +286,7 @@ class World {
 
             )
 
-        );
 
-        this.s1.addObj(
 
             this.prim.createPrim(
             
@@ -338,9 +305,7 @@ class World {
         
             ) 
 
-        );
 
-        this.s1.addObj(
 
             this.prim.createPrim(
             
@@ -358,9 +323,7 @@ class World {
             
             )
 
-        );
 
-        this.s1.addObj( 
 
             this.prim.createPrim(
             
@@ -378,9 +341,7 @@ class World {
             
             )
 
-        );
 
-        this.s1.addObj(
 
             this.prim.createPrim(
             
@@ -398,9 +359,7 @@ class World {
         
             )
 
-        );
 
-        this.s1.addObj( 
 
             this.prim.createPrim(
             
@@ -418,9 +377,7 @@ class World {
         
             )
 
-        );
 
-        //this.s1.addObj(
 
             this.prim.createPrim(
             
@@ -439,13 +396,11 @@ class World {
         
             )
 
-        //);
 
 /*
 
 // NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
 
-        this.s1.push( 
 
             this.prim.createPrim(
 
@@ -465,7 +420,6 @@ class World {
             
             )
 
-        );
 */
 
 //////////////////////////////////
@@ -474,7 +428,6 @@ class World {
 
         this.colorObjList = [];
 
-        this.s2.addObj(
 
             this.prim.createPrim(
 
@@ -492,7 +445,6 @@ class World {
 
             ) 
 
-        );
 
 // NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
 // TODO: NEED A WAY TO DO CALLBACK WHEN LOAD IS COMPLETE
@@ -510,7 +462,6 @@ class World {
 
 // TODO: PRIM LIGHTING MODEL IN PRIM
 
-        this.s2.addObj( 
 
             this.prim.createPrim(
 
@@ -530,7 +481,6 @@ class World {
 
             )
 
-        );
 
 //////////////////////////////////
 // LIT TEXTURE SHADER.
@@ -538,7 +488,6 @@ class World {
 
         this.dirlightTextureObjList = [];
 
-        this.s3.addObj( 
 
             this.prim.createPrim(
 
@@ -556,9 +505,6 @@ class World {
 
             ) 
 
-        );
-
-        this.s3.addObj( 
 
             this.prim.createPrim(
 
@@ -577,9 +523,6 @@ class World {
 
             ) 
 
-        );
-
-        this.s3.addObj( 
 
             this.prim.createPrim(
 
@@ -597,10 +540,6 @@ class World {
         
             ) 
 
-        );
-
-
-        this.s3.addObj( 
 
             this.prim.createPrim(
             
@@ -619,9 +558,7 @@ class World {
         
             )
 
-        );
 
-        this.s3.addObj( 
 
             this.prim.createPrim(
 
@@ -639,9 +576,7 @@ class World {
 
             ) 
 
-        );
 
-        this.s3.addObj( 
 
             this.prim.createPrim(
 
@@ -659,9 +594,7 @@ class World {
 
             )
 
-        );
 
-        this.s3.addObj(
 
             this.prim.createPrim(
 
@@ -679,9 +612,6 @@ class World {
         
             )
 
-        );
-
-        this.s3.addObj(
 
             this.prim.createPrim(
 
@@ -699,13 +629,10 @@ class World {
 
             )
 
-        );
-
-        this.s3.addObj(
 
             this.prim.createPrim(
 
-                this.s3,                      // callback function
+                this.s3,                  // callback function
                 this.prim.typeList.TORUS, // TORUS DEFAULT
                 'TORUS1',
                 vec5( 1, 1, 0.5, 0 ),            // dimensions INCLUDING start radius or torus radius(last value)
@@ -717,10 +644,8 @@ class World {
                 vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
                 [ 'img/mozvr-logo1.png' ],               // texture present
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
-            )
 
-        );
-
+            );
 
         /* 
          * Initialize the update() and render() routines in each shader.

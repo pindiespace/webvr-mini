@@ -202,13 +202,16 @@ class Util {
      */
 
     /** 
-     * check if object is an Array (not fastest, but maximally compatible)
+     * check if object is an Array, including a Typed Array 
+     * (not fastest, but maximally compatible)
      * @param {Object} o the object to test.
      * @returns {Boolean} if an Array, return true, else false.
      */
     isArray( o ) {
 
-        return Object.prototype.toString.call(o) === '[object Array]';
+        let type = Object.prototype.toString.call( o )
+
+        return ( type.indexOf( 'Array' ) > this.NOT_IN_LIST ) ? true : false;
 
     }
 

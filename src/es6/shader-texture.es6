@@ -6,6 +6,16 @@ class ShaderTexture extends Shader {
 
         super( init, util, glMatrix, webgl, shaderName );
 
+        this.needIndices = true;
+
+        this.needTexCoords = true;
+
+        this.needColors = false;
+
+        this.needNormals = false;
+
+        this.needTangents = false;
+
         console.log( 'In ShaderTexture class' );
 
     }

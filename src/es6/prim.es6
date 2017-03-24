@@ -495,7 +495,7 @@ class Prim {
 
         let zSpan = Math.abs( bottomRight[ 2 ] - topLeft[ 2 ] );
 
-        var radius = Math.max( xSpan, ySpan, zSpan ) / 2;
+        let radius = Math.max( xSpan, ySpan, zSpan ) / 2;
 
         sphere.radius = radius;
 
@@ -784,7 +784,7 @@ class Prim {
 
         }
 
-        // Get the topLeft and bottomRight points (bounding rectangle).
+        // Compute the central point of the triangle fan.
 
         let center = this.computeCentroid( vv );
 
@@ -820,7 +820,9 @@ class Prim {
 
             idx.push( p1, p2, centerPos );
 
-            norms.push( v1, v2, center );
+            // NOTE: each vertex gets a face normal = center. For shapes built with triangle fans, re-compute!
+
+            norms.push( center[ 0 ], center[ 1 ], center[ 2 ] ); // center vertex in fan
 
             // Assumes a regular polygon.
 
@@ -835,6 +837,8 @@ class Prim {
         } // end of for loop
 
         // Push the center point texture coordinate.
+
+        console.log("IN COMPUTEFAN, VERTICES:" + vv.length + " NORMALS:" + norms.length)
 
         tex.push( 0.5, 0.5 );
 
@@ -1126,6 +1130,40 @@ class Prim {
 
     }
 
+
+    /** 
+     * Create default colors for Prim color array.
+     * @param {glMatrix.vec3} normals the normals array.
+     * @param {glmatrix.vec4} colors the colors array.
+     */
+    computeColors( normals, colors ) {
+
+        let c = [];
+
+        // Catch the case where we want a single color.
+
+        if ( colors.length === 4 ) {
+
+            for ( let i = 0; i < normals.length; i += 3 ) {
+
+                c.push( colors[ 0 ], colors[ 1 ], colors[ 2 ], colors[ 3 ] );
+
+            }
+
+        }
+
+        // Otherwise, create colors as a normals map.
+
+        for ( let i = 0; i < normals.length; i += 3 ) {
+
+            c.push( normals[ i ], normals[ i + 1 ], normals[ i + 2 ], 1.0 );
+
+        }
+
+        return c;
+
+    }
+
     /** 
      * Scale vertices directly, without changing position.
      * @param {glMatrix.vec3[]} vertices the input positions.
@@ -1236,23 +1274,9 @@ class Prim {
 
         // Indices.
 
-        // Normals.
+        // Initialize the Prim, adding normals, texCoords, colors and tangents as necessary.
 
-        this.computeNormals( vertices, indices, normals );
-
-        // Texture coordinates.
-
-        // Colors.
-
-
-
-        // Tangents (not used).
-
-        this.computeTangents( vertices, indices, normals, texCoords, tangents );
-
-        // Colors already present, or computed in this.createGLBuffers.
-
-        geo.addBufferData( vertices, indices, normals, texCoords, tangents );
+        this.initPrim( prim, vertices, indices, normals, texCoords, tangents ); // CHECK CREATE PRIM - ATTACHES TO SHADER
 
         return true;
 
@@ -1300,7 +1324,9 @@ class Prim {
 
         // Return data to build WebGL buffers.
 
-        geo.addBufferData( vertices, indices, normals, texCoords, tangents );
+        this.initPrim( prim, vertices, indices, normals, texCoords, tangents ); // CHECK CREATE PRIM - ATTACHES TO SHADER
+
+        //geo.addBufferData( vertices, indices, normals, texCoords, tangents );
 
         return true;
 
@@ -1547,15 +1573,11 @@ class Prim {
 
         }
 
-        // Tangents.
-
-        this.computeTangents( vertices, indices, normals, texCoords, tangents );
-
         // Color array is pre-created, or gets a default when WebGL buffers are created.
 
-        // Return the buffer.
+        // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
-        geo.addBufferData( vertices, indices, normals, texCoords, tangents );
+        this.initPrim( prim, vertices, indices, normals, texCoords, tangents ); // CHECK CREATE PRIM - ATTACHES TO SHADER
 
         return true;
 
@@ -1869,15 +1891,9 @@ class Prim {
 
         }
 
-        // Tangents.
+        // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
-        this.computeTangents( vertices, indices, normals, texCoords, tangents );
-
-        // Color array is pre-created, or gets a default when WebGL buffers are created.
-
-        // Return the buffer.
-
-        geo.addBufferData( vertices, indices, normals, texCoords, tangents );
+        this.initPrim( prim, vertices, indices, normals, texCoords, tangents ); // CHECK CREATE PRIM - ATTACHES TO SHADER
 
         return true;
 
@@ -1923,7 +1939,7 @@ class Prim {
         ny = prim.divisions[ 1 ],        // should be y, i 
         nz = prim.divisions[ 2 ]         // should be z
 
-        //var numVertices = ( nx + 1 ) * ( ny + 1 ) * 2 + ( nx + 1 ) * ( nz + 1 ) * 2 + ( nz + 1 ) * ( ny + 1 ) * 2;
+        // numVertices = ( nx + 1 ) * ( ny + 1 ) * 2 + ( nx + 1 ) * ( nz + 1 ) * 2 + ( nz + 1 ) * ( ny + 1 ) * 2;
 
         let positions = [];
 
@@ -2226,11 +2242,11 @@ class Prim {
 
         // Re-compute normals, which may have changed.
 
-        normals = this.computeNormals( vertices, indices, normals );
+        normals = this.computeNormals( vertices, indices, normals, prim.useFaceNormals );
 
-        // Return the buffer.
+        // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
-        geo.addBufferData( vertices, indices, normals, texCoords, tangents );
+        this.initPrim( prim, vertices, indices, normals, texCoords, tangents ); // CHECK CREATE PRIM - ATTACHES TO SHADER
 
         return true;
 
@@ -2472,7 +2488,6 @@ class Prim {
 
         for ( i = 0; i < 4; i++ ) {
 
-            //vertices[ v++ ] = getStdVecs('down');
             vertices[ v++ ] = getStdVecs( side.DOWN );
 
         }
@@ -2584,9 +2599,9 @@ class Prim {
 
         createUV( vertices, texCoords );
 
-        // Tangents.
+        console.log(" ICOSPHERE VERTICES: " + vertices.length + " texCoords:" + texCoords.length)
 
-        createTangents( vertices, tangents );
+
 
         if ( radius != 1 ) {
 
@@ -2602,15 +2617,20 @@ class Prim {
 
         }
 
+
+        // Tangents.
+
+        createTangents( vertices, tangents );
+
         // Flatten the data arrays.
 
         vertices = flatten( vertices, false );
 
         texCoords = flatten( texCoords, false );
 
-        normals = flatten(normals, false );
+        normals = flatten( normals, false );
 
-        tangents = flatten(tangents, false );
+        tangents = flatten( tangents, false );
 
         // Helper functions.
 
@@ -2674,29 +2694,31 @@ class Prim {
 
         }
 
-        function createTangents (vertices, tangents) {
+        // Create tangents.
 
-            for ( i = 0; i < vertices.Length; i++ ) {
+        function createTangents ( vertices, tangents ) {
 
-                v = vertices[ i ];
+            for ( i = 0; i < vertices.length; i++ ) {
 
-                v[ 1 ] = 0;
+                let v = vertices[ i ];
 
-                v = vec3.normalize( [ 0, 0, 0 ], v );
+                let vt = vec3.normalize( [ 0, 0, 0 ], [ v[ 0 ], 0, v[ 2 ] ] );
 
-                tangent = [ 0, 0, 0, 0 ];
+                let tangent = [ 0, 0, 0, 0 ];
 
-                tangent[ 0 ] = -v[ 2 ];
+                tangent[ 0 ] = -vt[ 2 ];
 
                 tangent[ 1 ] = 0;
 
-                tangent[ 2 ] = v[ 0 ];
+                tangent[ 2 ] = vt[ 0 ];
 
                 tangent[ 3 ] = -1;
 
                 tangents[ i ] = tangent;
 
             }
+
+            // Adjust a few specific tangents.
 
             tangents[ vertices.length - 4 ] = [ -1, 0, 1 ];
 
@@ -2721,11 +2743,11 @@ class Prim {
             }
         }
 
+        // Create line of vertices.
+
         function createVertexLine ( from, to, steps, v, vertices ) {
 
             for ( let i = 1; i <= steps; i++ ) {
-
-                //console.log("Vec3 " + v + " IS A:" + vec3.lerp( [ 0, 0, 0 ], from, to, i / steps ))
 
                 vertices[ v++ ] = vec3.lerp( [ 0, 0, 0 ], from, to, i / steps );
 
@@ -2734,6 +2756,8 @@ class Prim {
             return v;
 
         }
+
+        // Create a triangle strip for the lower part of the sphere.
 
         function createLowerStrip ( steps, vTop, vBottom, t, triangles ) {
 
@@ -2757,6 +2781,8 @@ class Prim {
 
         }
 
+        // Create a triangle strip for the upper part of the sphere.
+
         function createUpperStrip ( steps, vTop, vBottom, t, triangles ) {
 
             triangles[t++] = vBottom;
@@ -2778,6 +2804,8 @@ class Prim {
 
         }
 
+        // Create a strip for the upper sphere, but reverse the winding order so it works as a SkyDome.
+
         function createUpperSkyStrip ( steps, vTop, vBottom, t, triangles ) {
 
             triangles[t++] = vBottom;
@@ -2797,14 +2825,16 @@ class Prim {
             }
 
             return t;
-        }        
+        }
+
+        console.log("ICOSPHERE: vertices:" + vertices.length + " TANGENTS:" + tangents.length);
 
 
         // Color array is pre-created, or gets a default when WebGL buffers are created.
 
-        // Return the buffer.
+        // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
-        geo.addBufferData( vertices, indices, normals, texCoords, tangents );
+        this.initPrim( prim, vertices, indices, normals, texCoords, tangents ); // CHECK CREATE PRIM - ATTACHES TO SHADER
 
         return true;
 
@@ -3080,7 +3110,9 @@ class Prim {
                     vertices.push( 
                         vec3.copy( [ 0, 0, 0 ], v1 ), 
                         vec3.copy( [ 0, 0, 0 ], v2 ),
-                        vec3.copy( [ 0, 0, 0 ], center ) );
+                        vec3.copy( [ 0, 0, 0 ], center )
+
+                    );
 
                     let cLen = vertices.length - 1;
 
@@ -3089,7 +3121,9 @@ class Prim {
                     normals.push( 
                         vec3.copy( [ 0, 0, 0 ], v1 ), 
                         vec3.copy( [ 0, 0, 0 ], v2 ),
-                        vec3.copy( [ 0, 0, 0 ], center ) );
+                        vec3.copy( [ 0, 0, 0 ], center )
+
+                    );
 
                     texCoords.push(
 
@@ -3107,6 +3141,8 @@ class Prim {
             } // end of 'faces' loop.
 
         } // end of wrap whole object with one texture.
+
+        // Scale.
 
         for ( let i = 0; i < vertices.length; i++ ) {
 
@@ -3128,11 +3164,11 @@ class Prim {
 
         normals = flatten( normals );
 
+        console.log( "@@@@@@@@@@DODECAHEDRON vertices:" + vertices.length + ' texCoords:' + texCoords.length + ' normals:' + normals.length)
+
         // Color array is pre-created, or gets a default when WebGL buffers are created.
 
-        // Return the buffer.
-
-        //geo.addBufferData( vertices, indices, normals, texCoords, tangents );
+        // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
         this.initPrim( prim, vertices, indices, normals, texCoords, tangents ); // CHECK CREATE PRIM - ATTACHES TO SHADER
 
@@ -3243,10 +3279,9 @@ class Prim {
 
         // Color array is pre-created, or gets a default when WebGL buffers are created.
 
-        geo.addBufferData( vertices, indices, normals, texCoords, tangents ); // flag for mesh loading
+        // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
-        // attach to shader object.
-        // TODO;
+        this.initPrim( prim, vertices, indices, normals, texCoords, tangents ); // CHECK CREATE PRIM - ATTACHES TO SHADER
 
         return true;
 
@@ -3280,15 +3315,16 @@ class Prim {
 
         //console.log('Prim::meshCallback(): normals length:' + normals.length + ' vertices.length:' + vertices.length)
 
-        let mesh = new Mesh( geo );
+        ////////let mesh = new Mesh( geo );
 
-        //mesh.subdivide();
+        ////////mesh.subdivide();
 
         // NOTE:::::: simplify() works here ONLY because we don't have any redundant vertices!
 
         //mesh.simplify();
 
-        mesh.subdivide();
+        /////////mesh.subdivide();
+
 
         // NOTE::::::
         // NOTE:::::: Make these local references AFTER the subdivision, or you don't get 
@@ -3309,21 +3345,17 @@ class Prim {
 
         let colors = geo.colors.data;
 
+        console.log('Prim::meshCallback() #1: normals length:' + normals.length + ' vertices.length:' + vertices.length + ' colors.length:' + colors.length)
+
+        prim.reCalc();
+
         // Don't compute if we were supplied with normals
 
-        console.log('Prim::meshCallback(): normals length:' + normals.length + ' vertices.length:' + vertices.length)
+        console.log('Prim::meshCallback() #2: normals length:' + normals.length + ' vertices.length:' + vertices.length + ' colors.length:' + colors.length)
 
-        if ( normals.length < vertices.length ) {
+        // Initialize the prim.
 
-            console.log( 'computing mesh ' + prim.name + ' normals...' );
-
-            geo.normals.data = new Float32Array( this.computeNormals( vertices, indices, [] ) );
-
-        }
-
-        // Tangents.
-
-        geo.tangents.data = new Float32Array( this.computeTangents( vertices, indices, geo.normals.data, texCoords, [] ) );
+        this.initPrim( prim, vertices, indices, normals, texCoords, tangents ); // CHECK CREATE PRIM - ATTACHES TO SHADER
 
         // Delayed set to true.
 
@@ -3358,13 +3390,11 @@ class Prim {
             // TODO: separate load creating Materials.
             // TODO: separate load when obj or material files require a texture.
 
-            // NOTE: the final callback is given prim to manipulate.
+            // NOTE: the final callback is given prim to manipulate by loadModel.load().
 
             this.loadModel.load( prim.models[ i ], prim, function() {}, this.meshCallback.bind( this ) );
 
         }
-
-        // The prim gets a default (zero-sized) set of GLBuffers until the mesh loading is complete in the callback.
 
         return false;
 
@@ -3378,7 +3408,10 @@ class Prim {
 
     initPrim ( prim, vertices, indices, normals, texCoords, tangents ) {
 
+        console.log("computing bounding box for " + prim.name)
+
         prim.boundingBox = this.computeBoundingBox( prim.geometry.vertices.data );
+
 
         // TODO: recalc() should go here.
 
@@ -3389,6 +3422,12 @@ class Prim {
         // Add our data to the geo-obj, and bind to WebGL buffers.
 
         prim.geometry.addBufferData( vertices, indices, normals, texCoords, tangents );
+
+        console.log("calculating normals and tangents for " + prim.name)
+
+        prim.reCalc();
+
+        console.log("checking buffer data for " + prim.name )
 
         // Confirm our buffer data will be OK for rendering.
 
@@ -3539,16 +3578,36 @@ class Prim {
          */
         prim.reCalc = () => {
 
-            if ( prim.geometry.normals.data.length !== prim.geometry.vertices.data.length ) {
+            let geo = prim.geometry;
 
-                prim.geometry.normals.data = new Float32Array( this.computeNormals( prim.geometry.vertices.data, prim.geometry.indices.data, prim.geometry.normals.data ) );
+            console.log("in reCalc(), normals:" + geo.normals.data.length + " vertices:" + geo.vertices.data.length + ' tangents:' + geo.tangents.data.length)
+
+
+            // If normals are used, re-compute.
+
+            if ( geo.normals.data.length !== geo.vertices.data.length ) {
+
+                console.log("PRIM:" + prim.name + ' recalculating normals' );
+
+                geo.setNormals ( this.computeNormals( geo.vertices.data, geo.indices.data, geo.normals.data, prim.useFaceNormals ) );
 
             }
 
- 
-            if ( prim.useTangents &&  prim.geometry.tangents.data.length !== prim.geometry.vertices.data.length ) {
+            // If tangents are used, re-compute.
 
-                prim.geometry.tangents.data = new Float32Array( this.computeTangents( prim.geometry.vertices.data, prim.geometry.indices.data, prim.geometry.normals.data, prim.geometry.texCoords.data ) );
+            if ( prim.useTangents &&  ( geo.tangents.data.length !== geo.vertices.data.length ) ) {
+
+                console.log("PRIM:" + prim.name + ' recalculating tangents, curr length:' + geo.tangents.data.length + ' vertices:' + geo.vertices.data.length );
+
+                geo.setTangents( this.computeTangents( geo.vertices.data, geo.indices.data, geo.normals.data, geo.texCoords.data ) )
+
+            }
+
+            // If color array is wrong, re-compute.
+
+            if ( ( geo.colors.length / geo.colors.itemSize ) !== ( geo.vertices.data.length  / geo.vertices.itemSize ) ) {
+
+                geo.setColors( this.computeColors( geo.normals.data, geo.colors.data ) );
 
             }
 
@@ -3557,7 +3616,6 @@ class Prim {
         // Compute the bounding box.
 
         prim.computeBoundingBox = () => {
-
 
             this.computeBoundingBox( prim.geometry.vertices );
 
@@ -3674,6 +3732,8 @@ class Prim {
 
         prim.light = {};
 
+        // TODO:::::::::::::::::::::::::::::::::::::::
+
         // Visible from outside (counterclockwise winding) or inside (clockwise winding).
 
         prim.visibleFrom = this.OUTSIDE;
@@ -3683,6 +3743,10 @@ class Prim {
 
         prim.applyTexToFace = applyTexToFace;
 
+        // Whether to use face normals for a Face of the prim.
+
+        prim.useFaceNormals = false; //////////////////CHANGE SHOULD BE SET OPTIONALLY !!!!!!!!!!!!!!!!!!!!!
+
         // Whether to include tangents 
 
         prim.useTangents = true; // TODO:///////CHANGE!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -3690,7 +3754,6 @@ class Prim {
         // Store model files for one Prim.
 
         prim.models = modelFiles;
-
 
         // Set ready flag for slow loads.
 
@@ -3767,18 +3830,9 @@ class Prim {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-        // Create WebGL data buffers from geometry. Default color array added if not present.
-        // TODO: USE CALLBACK TO DELAY TEAPOT RENDERING.
+        // Create default WebGL buffers to bind our Prim coordinate data to.
 
-        if ( prim.name !== 'teapot' ) {
-
-            prim.boundingBox = this.computeBoundingBox( prim.geometry.vertices.data );
-
-            prim.geometry = prim.geometry.createGLBuffers();
-
-            prim.geometry.checkBufferData();
-
-        }
+        prim.geometry = prim.geometry.createGLBuffers(); // ???????????????WHY CAN'T WE MOVE THIS EARLIER????????????????????????????
 
         // Multiple textures per Prim. Rendering defines how textures for each Prim type are used.
 

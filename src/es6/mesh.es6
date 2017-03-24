@@ -520,7 +520,7 @@ class Mesh {
 
         let len = arguments.length, x = 0, y = 0, z = 0, u = 0, v = 0;
 
-        for( var i in arguments ) {
+        for( let i in arguments ) {
 
             let vtx = arguments[ i ];
 

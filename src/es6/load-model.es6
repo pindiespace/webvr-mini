@@ -525,7 +525,7 @@ class LoadModel extends LoadPool {
 
                 console.log("IN UPLOAD MODEL, VERTICES DATA:" + loadObj.prim.geometry.vertices.data.length )
 
-                loadObj.prim.geometry.createGLBuffers();
+                loadObj.prim.geometry.createGLBuffers(); ///////////////////////////////////?????? WHY NOT IN PRIM CREATION ROUTINE??????????
 
                 break;
 
@@ -596,15 +596,7 @@ class LoadModel extends LoadPool {
 
         // Equivalent of a 'next' method for load-pool queue.
 
-        //TODO: CACHE RUNS TWICE
-
         loadObj.next( waitObj.source );
-
-		//fetch( waitObj.source )
-        //	.then( response => { return response.text() } )
-        //	.then( xmlString => { loadObj.xml = xmlString; this.uploadModel( loadObj, waitObj.callback ) } )
-        //  .then( data => console.log( "data:" + data ) );
-
 
         // Start the loading.
 

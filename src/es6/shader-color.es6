@@ -6,6 +6,18 @@ class ShaderColor extends Shader {
 
         super( init, util, glMatrix, webgl, shaderName );
 
+        // Define arrays that are needed for this shader.
+
+        this.needIndices = true;
+
+        this.needTexCoords = false;
+
+        this.needColors = true;
+
+        this.needNormals = false;
+
+        this.needTangents = false;
+
         console.log( 'In ShaderColor class' );
 
     }

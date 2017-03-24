@@ -6,6 +6,18 @@ class shaderDirLightTexture extends Shader {
 
         super( init, util, glMatrix, webgl, shaderName );
 
+        this.needIndices = true;
+
+        this.needTexCoords = true;
+
+        this.needColors = false;
+
+        this.needNormals = true;
+
+        this.needTangents = false;
+
+        this.needLights = true;
+
         console.log( 'In ShaderTexture class' );
 
     }

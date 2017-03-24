@@ -232,7 +232,17 @@ class GeoObj {
 
             // Make sure we have a valid number
 
-              if ( ! this.confirmNumericalData( this.indices.data, this.UINT, 'indices' ) ) {
+            if ( ! this.confirmNumericalData( this.indices.data, this.UINT, 'indices' ) ) {
+
+                valid = false;
+
+            }
+
+            // Make sure we have a valid number of triangles
+
+            if ( ! this.numFaces() ) {
+
+                console.error( fnName + ' number of sides (triangles) is invalid' );
 
                 valid = false;
 
@@ -241,7 +251,6 @@ class GeoObj {
             // Make sure indices point to valid vertex.
 
             let d = this.indices.data;
-
 
             for ( let i = 0; i < len; i++ ) {
 
@@ -331,13 +340,15 @@ class GeoObj {
 
         if ( len > 0 ) {
 
+            let aLen = len / this.tangents.itemSize;
+
             if ( len < ( this.tangents.itemSize ) || this.util.frac( len / this.tangents.itemSize  !== 0 ) ) {
 
                 console.error(fnName + ' invalid tangents size, ' + this.tangents.data.length );
 
                 valid = false;
 
-            } else if ( len !== this.vertices.data.length ) {
+            } else if ( aLen !== numVertices ) {
 
                 console.error( fnName + ' tangents length ' + len + ' does not match vertices length: ' + vLen );
 
@@ -406,10 +417,242 @@ class GeoObj {
 
     }
 
+
+    /** 
+     * Set or reset the vertices.
+     * @param {glMatrix.vec3[]} vertices a flattened vertex array.
+     */
+    setVertices ( vertices ) {
+
+        let o = this.vertices;
+
+        if ( this.util.isArray( vertices ) ) {
+
+            o.data = new Float32Array( vertices );
+
+            o.numItems = vertices.length / o.itemSize;
+
+        } else {
+
+            console.error( this.mName +'setVertices() invalid input, not Array' );
+        }
+
+    }
+
+    /** 
+     * Set or reset the indices.
+     * @param {Array} indices a flattened index array.
+     */
+    setIndices ( indices ) {
+
+        let o = this.indices;
+
+        if( this.util.isArray( indices ) ) {
+
+            if ( this.webgl.stats.uint32 ) {
+
+                o.data = new Uint32Array( indices );
+
+                this.bindGLBuffer( o, this.UINT32 );
+
+            } else {
+
+                o.data = new Uint16Array( indices );
+
+                this.bindGLBuffer( o, this.UINT16 );
+
+            }
+
+        } else {
+
+            console.error( this.mName + 'setIndices() invalid input, not Array' );
+
+        }
+
+    }
+
+    /** 
+     * Set or reset the normals.
+     * @param {glMatrix.vec3[]} normals a flattened normals array.
+     */
+    setNormals ( normals ) {
+
+        console.log("NORMALS ARE:::::" + Object.prototype.toString.call(normals) )
+
+        let o = this.normals;
+
+        if ( this.util.isArray( normals ) ) {
+
+            o.data = new Float32Array( normals );
+
+            o.numItems = normals.length / o.itemSize;
+
+            this.bindGLBuffer( o, this.FLOAT32 );
+
+        } else {
+
+            console.error( this.mName + 'setNormals() invalid input, not Array' );
+        }
+
+
+    }
+
+    /** 
+     * Set or reset the texture coordinates.
+     * @param {glMatrix.vec3[]} texCoords a flattened texture coordinate array.
+     */
+    setTexCoords ( texCoords ) {
+
+        let o = this.texCoords;
+
+        if ( this.util.isArray( texCoords ) ) {
+
+            o.data = new Float32Array( texCoords );
+
+            o.numItems = texCoords.length / o.itemSize;
+
+            this.bindGLBuffer( o, this.FLOAT32 );
+
+        } else {
+
+            console.error( this.mName + 'setTexCoords() invalid input, not Array' );
+        }
+
+
+    }
+
+    /** 
+     * Set or reset the colors.
+     * @param {glMatrix.vec4[]} vertices a flattened color array.
+     */
+    setColors ( colors ) {
+
+        let o = this.colors;
+
+        if ( this.util.isArray( colors ) ) {
+
+            o.data = new Float32Array( colors );
+
+            o.numItems = colors.length / o.itemSize;
+
+            this.bindGLBuffer( o, this.FLOAT32 );
+
+        } else {
+
+            console.error( this.mName + 'setTangents() invalid input, not Array' );
+
+        }
+
+    }
+
+    /** 
+     * Set or reset the tangents.
+     * @param {glMatrix.vec3[]} vertices a flattened tangent array.
+     */
+    setTangents ( tangents ) {
+
+        let o = this.tangents;
+
+        if ( this.util.isArray( tangents ) ) {
+
+            o.data = new Float32Array( tangents );
+
+            o.numItems = tangents.length / o.itemSize;
+
+            this.bindGLBuffer( o, this.FLOAT32 );
+
+        } else {
+
+            console.error( this.mName + 'setTangents() invalid input, not Array' );
+
+        }
+
+    }
+
+    /** 
+     * Returns the number of vertex points.
+     * @returns {Number} the number of vertices.
+     */
+    numVertices () {
+
+        return ( this.vertices.data.length / this.vertices.itemSize );
+
+    }
+
+    /** 
+     * Returns the number of indices.
+     * @returns {Number} the number of indices.
+     */
+    numIndices () {
+
+        return ( this.indices.length );
+
+    }
+
+    /** 
+     * Returns the number of normals.
+     * @returns {Number} the number of normals.
+     */
+    numNormals () {
+
+        return ( this.normals.data.length / this.normals.itemSize );
+
+    }
+
+    /** 
+     * Returns the number of texture coordinates.
+     * @returns {Number} the number of texture coordinates.
+     */
+    numTexCoords () {
+
+        return ( this.texCoords.data.length / this.texCoords.itemSize );
+
+    }
+
+    /** 
+     * Returns the number of tangents.
+     * @returns {Number} the number of texture coordinates.
+     */
+    numTangents () { 
+
+        return ( this.tangents.data.length / this.tangents.itemSize );
+
+    }
+
+    /** 
+     * Returns the number of faces (triangles).
+     * @returns {Number} the number of faces.
+     */
+    numFaces () {
+
+        let len = this.indices.length / 3;
+
+        if ( this.util.frac( len / this.tangents.itemSize  !== 0 ) ) {
+
+            console.error( this.mName + 'numFaces(): fractional number of faces' );
+
+        }
+
+        return len;
+
+    }
+
+    /** 
+     * Returns the number of sides (many Prims have only one).
+     * @returns {Number} the number of sides.
+     */
+    numSides () {
+
+        console.warn( this.mName + 'numSides(): sides not implemented yet' );
+
+        return 0;
+
+    }
+
     /** 
      * Add data to existing data (e.g. combine two Prims into one)
      */
-    addBufferData ( vertices, indices, normals, texCoords, tangents = [], colors = [] ) {
+    addBufferData ( vertices, indices, normals = [], texCoords = [], tangents = [], colors = [] ) {
 
         const concat = this.util.concatArr;
 
@@ -498,155 +741,6 @@ class GeoObj {
                 console.error( this.mName + 'bindGLBuffer(): invalid WebGL buffer type ' + type );
 
                 break;
-
-        }
-
-    }
-
-    /** 
-     * Set or reset the vertices.
-     * @param {glMatrix.vec3[]} vertices a flattened vertex array.
-     */
-    setVertices ( vertices ) {
-
-        let o = this.vertices;
-
-        if ( this.util.isArray( vertices ) ) {
-
-            o.data = new Float32Array( vertices );
-
-            o.numItems = vertices.length / o.itemSize;
-
-        } else {
-
-            console.error( this.mName +'setVertices() invalid input, not Array' );
-        }
-
-    }
-
-    /** 
-     * Set or reset the indices.
-     * @param {Array} indices a flattened index array.
-     */
-    setIndices ( indices ) {
-
-        let o = this.indices;
-
-        if( this.util.isArray( indices ) ) {
-
-            if ( this.webgl.stats.uint32 ) {
-
-                o.data = new Uint32Array( indices );
-
-                this.bindGLBuffer( o, this.UINT32 );
-
-            } else {
-
-                o.data = new Uint16Array( indices );
-
-                this.bindGLBuffer( o, this.UINT16 );
-
-            }
-
-        } else {
-
-            console.error( this.mName + 'setIndices() invalid input, not Array' );
-
-        }
-
-    }
-
-    /** 
-     * Set or reset the normals.
-     * @param {glMatrix.vec3[]} normals a flattened normals array.
-     */
-    setNormals ( normals ) {
-
-        let o = this.normals;
-
-        if ( this.util.isArray( normals ) ) {
-
-            o.data = new Float32Array( normals );
-
-            o.numItems = normals.length / o.itemSize;
-
-            this.bindGLBuffer( o, this.FLOAT32 );
-
-        } else {
-
-            console.error( this.mName + 'setNormals() invalid input, not Array' );
-        }
-
-
-    }
-
-    /** 
-     * Set or reset the texture coordinates.
-     * @param {glMatrix.vec3[]} texCoords a flattened texture coordinate array.
-     */
-    setTexCoords ( texCoords ) {
-
-        let o = this.texCoords;
-
-        if ( this.util.isArray( texCoords ) ) {
-
-            o.data = new Float32Array( texCoords );
-
-            o.numItems = texCoords.length / o.itemSize;
-
-            this.bindGLBuffer( o, this.FLOAT32 );
-
-        } else {
-
-            console.error( this.mName + 'setTexCoords() invalid input, not Array' );
-        }
-
-
-    }
-
-    /** 
-     * Set or reset the colors.
-     * @param {glMatrix.vec4[]} vertices a flattened color array.
-     */
-    setColors ( colors ) {
-
-        let o = this.colors;
-
-        if ( this.util.isArray( colors ) ) {
-
-            o.data = new Float32Array( vertices );
-
-            o.numItems = colors.length / o.itemSize;
-
-            this.bindGLBuffer( o, this.FLOAT32 );
-
-        } else {
-
-            console.error( this.mName + 'setTangents() invalid input, not Array' );
-
-        }
-
-    }
-
-    /** 
-     * Set or reset the tangents.
-     * @param {glMatrix.vec3[]} vertices a flattened tangent array.
-     */
-    setTangents ( tangents ) {
-
-        let o = this.tangents;
-
-        if ( this.util.isArray( tangents ) ) {
-
-            o.data = new Float32Array( tangents );
-
-            o.numItems = tangents.length / o.itemSize;
-
-            this.bindGLBuffer( o, this.FLOAT32 );
-
-        } else {
-
-            console.error( this.mName + 'setTangents() invalid input, not Array' );
 
         }
 
@@ -785,7 +879,7 @@ class GeoObj {
 
                 console.warn( fnName + ' no colors present, creating default color' );
 
-                o.data = new Float32Array( this.computeColors( this.normals.data, o.data ) );
+                o.data = new Float32Array();
 
             }
 
@@ -796,39 +890,6 @@ class GeoObj {
             this.makeBuffers = false;
 
         return this;
-
-    }
-
-    /** 
-     * Create default colors for Prim color array.
-     * @param {glMatrix.vec3} normals the normals array.
-     * @param {glmatrix.vec4} colors the colors array.
-     */
-    computeColors( normals, colors ) {
-
-        let c = [];
-
-        // Catch the case where we want a single color.
-
-        if ( colors.length === 4 ) {
-
-            for ( let i = 0; i < normals.length; i += 3 ) {
-
-                c.push( colors[ 0 ], colors[ 1 ], colors[ 2 ], colors[ 3 ] );
-
-            }
-
-        }
-
-        // Otherwise, create colors as a normals map.
-
-        for ( let i = 0; i < normals.length; i += 3 ) {
-
-            c.push( normals[ i ], normals[ i + 1 ], normals[ i + 2 ], 1.0 );
-
-        }
-
-        return new Float32Array( c );
 
     }
 

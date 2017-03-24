@@ -7,13 +7,13 @@ console.log( 'in es6' );
 
 // DEV ENVIRONMENT
 
-var env = process.env.WEBPACK_ENV;
+let env = process.env.WEBPACK_ENV;
 
 // REQUIRE ALL POLYFILLS
 
 // WebGL math library.
 
-var glMatrix = require( 'gl-matrix' );
+let glMatrix = require( 'gl-matrix' );
 
 if ( ! glMatrix ) {
 
