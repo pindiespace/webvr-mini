@@ -169,13 +169,22 @@ var promise = new Promise( ( resolve, reject ) => {
 
         world.init();
 
-}).catch( ( err ) => {
+}) 
+
+
+/*
+
+.catch( ( err ) => {
 
     // error
 
     console.error( 'app.es6 load error:' + err );
 
 } );
+
+*/
+
+
 
 ///////////////////////////////////////////////////////
 

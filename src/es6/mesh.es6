@@ -414,11 +414,13 @@ class Mesh {
      * @param {Geometry} geo a geometry object (defined in Prim.es6)
      */
 
-    constructor ( geo ) {
+    constructor ( prim ) {
 
-        this.geo = geo,
+        this.prim = prim,
 
-        this.type = geo.type;
+        this.geo = prim.geometry,
+
+        this.type = this.geo.type;
 
         // Mesh arrays.
 
@@ -466,11 +468,11 @@ class Mesh {
 
         // Pre-compute valency weighting values.
 
-        this.computeValencyWeights( 100 ); // was 12, 6 is normal
+        this.computeValencyWeights( 100 ); // 6 is typical
 
         // Convert flattened arrays to Vertex data structure (Index array remains the same).
 
-        //this.geometryToVertex( geo.vertices.data, geo.indices.data, geo.texCoords.data );
+        this.geometryToVertex( this.geo.vertices.data, this.geo.indices.data, this.geo.texCoords.data );
 
         // Check converted Vertices for validity.
 
@@ -980,7 +982,7 @@ class Mesh {
 
         // Compute Faces and Edges (hash back to Vertices).
 
-        console.log( 'Mesh::subdivide(): ' + this.type + ' beginning subdivision, ' + this.iterations + ', starting size:' + this.oldVertexArr.length );
+        console.log( 'Mesh::subdivide(): ' + this.prim.name + ' beginning subdivision, ' + this.iterations + ', starting size:' + this.oldVertexArr.length );
 
         this.computeFaces();
 
@@ -1229,8 +1231,7 @@ class Mesh {
 
         } // end of index loop
 
-        // NOTE: might be missing end of loop here.
-        
+        // Number of iterations of subdivision.
 
         this.iterations++;
 
@@ -1240,7 +1241,7 @@ class Mesh {
 
         this.vertexToGeometry();
 
-        console.log( 'Mesh::subdivde(): ' + this.type + ' subdivided from ' + this.oldVertexArr.length + ' to:' + this.vertexArr.length + ' index length:' + this.indexArr.length );
+        console.log( 'Mesh::subdivde(): ' + this.prim.name + ' subdivided from ' + this.oldVertexArr.length + ' to:' + this.vertexArr.length + ' index length:' + this.indexArr.length );
 
         return this;
 
@@ -1257,7 +1258,7 @@ class Mesh {
 
         console.log('Simplifying mesh... type:' + this.geo.type )
 
-        this.geometryToVertex( this.geo.vertices.data, this.geo.indices.data, this.geo.texCoords.data, this.geo.colors.data );
+        //this.geometryToVertex( this.geo.vertices.data, this.geo.indices.data, this.geo.texCoords.data, this.geo.colors.data );
 
         let vertexArr = this.vertexArr;
 
@@ -1326,21 +1327,19 @@ class Mesh {
 
         }
 
-        console.log(' oldVertexArr:' + vertexArr.length + ', newVertexArr:' + newVertexArr.length );
-
         // Copy over old Vertex and Index array.
 
         this.oldIndexArr = indexArr;
 
         this.oldVertexArr = vertexArr;
 
-        // Index array remains the same.
-
         this.vertexArr = newVertexArr;
+
+        // Index array remains the same.
 
         this.indexArr = newIndexArr;
 
-        // TODO: MAKE SIMPLIFY WORK PROPERLY!!!!!!!!!!!!!!!!
+        console.log('Mesh::simplify(): oldVertexArr:' + vertexArr.length + ', newVertexArr simplified to:' + newVertexArr.length );
 
         this.vertexToGeometry();
 
@@ -1361,7 +1360,7 @@ class Mesh {
      */
     geometryToVertex ( vertices, indices, texCoords, colors = [] ) {
 
-        console.log( 'Mesh::geometryToVertex() for:' + this.type );
+        console.warn( 'Mesh::geometryToVertex() for:' + this.prim.name );
 
         /* 
          * The incoming flattened index array has stride = 3, so 
@@ -1376,6 +1375,8 @@ class Mesh {
 
         this.vertexArr = this.computeVertices( vertices, texCoords, colors );
 
+        console.log( 'Mesh::geometryToVertex(): numVertices:' + this.vertexArr.length + ' numIndices:' + this.indexArr.length );
+
         return this;
 
     }
@@ -1387,7 +1388,9 @@ class Mesh {
      */
     vertexToGeometry () {
 
-        let geo = this.geo;
+        let prim = this.prim;
+
+        let geo = this.geo; 
 
         console.log( 'Mesh::vertexToGeometry()' );
 
@@ -1401,7 +1404,7 @@ class Mesh {
 
         let indices = this.indexArr.slice();
 
-        // flattened vertices and texCoords array need to be generated from the Vertex array.
+        // Initialize vertices and texCoords array need to be generated from the Vertex array.
 
         geo.vertices.data = new Float32Array( vertexArr.length * 3 );
 
@@ -1410,31 +1413,6 @@ class Mesh {
         let vertices = geo.vertices.data;
 
         let texCoords = geo.texCoords.data;
-
-        // Indices vary based on support for 32-bit index values.
-
-        if ( geo.MAX_DRAWELEMENTS > 65534 ) {
-
-            geo.indices.data = new Uint32Array( indices.slice() );
-
-
-        } else {
-
-            geo.indices.data = new Uint16Array( indices.slice() );
-
-        }
-
-        // Flag any meshes that are > 64k (some hardware can't draw them with indexed arrays)
-
-        if ( vertexArr.length > 65535 ) {
-
-            geo.ssz = true;
-
-        } else {
-
-            geo.ssz = false;
-
-        }
 
         // Write the flattened coordinate data.
 
@@ -1478,6 +1456,22 @@ class Mesh {
 
         }
 
+        // Update the normals and tangents arrays.
+
+        console.log( 'Mesh::vertexToGeometry(): vertices:' + vertices.length / 3 + ' indices:' + indices.length + ' texCoords:' + texCoords.length / 2 )
+
+        geo.setVertices( vertices );
+
+        geo.setIndices( indices );
+
+        geo.setTexCoords( texCoords );
+
+        prim.updateNormals();
+
+        prim.updateTangents();
+
+        prim.updateColors();
+
         return geo;
 
     }
@@ -1490,11 +1484,27 @@ class Mesh {
 
         let vertexArr = this.vertexArr;
 
-        if ( vertexArr.length > 0 && this.indexArr.length > 0 ) {
+        if ( ! ( vertexArr.length > 0 ) ) {
+
+            console.error( 'Mesh::isValid(): vertex array empty, vertex:' + vertexArr.length );
+
+            return false;
+
+        }
+
+        let indexArr = this.indexArr;
+
+        if ( ! ( indexArr.length > 0 ) ) {
+
+            console.error( 'Mesh::isValid(): index array empty, vertex:' + vertexArr.length + ' index:' + indexArr.length );
+
+            return false;
+
+        }
+
+        if ( vertexArr.length > 0 ) {
 
             for ( let i = 0; i < vertexArr.length; i++ ) {
-
-                ////////////////////console.log( vertexArr[ i ].s ) ////////////////////////////////////////////////////////////////
 
                 if ( ! vertexArr[ i ].isValid() ) {
 

@@ -523,6 +523,29 @@ class LoadModel extends LoadPool {
 
                 let d = this.computeObjMesh( data, loadObj.prim );
 
+
+                // Re-compute if stuff is missing
+
+                if( d.texCoords.length / loadObj.prim.geometry.texCoords.itemSize  !== d.vertices.length / loadObj.prim.geometry.vertices.itemSize ) {
+
+                    console.log("TEXCOORDS:" + (d.texCoords.length / loadObj.prim.geometry.texCoords.itemSize) + " VERTICES:" + (d.vertices.length / loadObj.prim.geometry.vertices.itemSize))
+
+                    ///////////loadObj.prim.updateTexCoords();
+
+                }
+
+                if( d.normals.length / loadObj.prim.geometry.normals.itemSize  !== d.vertices.length / loadObj.prim.geometry.vertices.itemSize ) {
+
+                    loadObj.prim.updateNormals();
+
+                }
+
+                loadObj.prim.updateTangents();
+
+                loadObj.prim.updateColors();
+
+                // Add buffer data (and create WebGL buffers).
+
                 loadObj.prim.geometry.addBufferData( d.vertices, d.indices, d.normals, d.texCoords, [] );
 
                 console.log("IN UPLOAD MODEL, VERTICES DATA:" + (loadObj.prim.geometry.vertices.data.length / 3) )

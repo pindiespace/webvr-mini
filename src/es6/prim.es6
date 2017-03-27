@@ -508,6 +508,30 @@ class Prim {
     }
 
     /** 
+     * Get spherical coordinates (u, v) for normalized unit vector.
+     * @param {glMatrix.vec3} vtx the [x, y, z] unit vector
+     * @returns {glMatrix.vec2} the texture coordinate [ u, v ].
+     */
+    computeSphereCoords ( vtx ) {
+
+        //console.log( 'computeSphereCoords():' + vtx[0] + ',' + vtx[1] + ',' + ',' + vtx[2])
+
+        let u = Math.atan2( vtx[ 0 ], vtx[ 2 ] ) / ( this.TWO_PI );  // x, z
+
+        let v = Math.asin( vtx[ 1 ] ) / Math.PI + 0.5; // y
+
+        if ( u < 0 ) {
+
+            u += 1;
+
+        }
+
+        return [ u, v ];
+
+    }
+
+
+    /** 
      * Compute the bounding sphere for a Prim, with all its points projected to the 
      * surface of the sphere. Use to make non-uv sphere. Also use to supply texture coordinates 
      * when they are missing.
@@ -562,34 +586,12 @@ class Prim {
 
      }
 
-
     /** 
-     * Get spherical coordinates (u, v) for normalized unit vector.
-     * @param {glMatrix.vec3} vtx the [x, y, z] unit vector
-     * @returns {glMatrix.vec2} the texture coordinate [ u, v ].
-     */
-    computeSphereCoords ( vtx ) {
-
-        let u = Math.atan2( vtx[ 0 ], vtx[ 2 ] ) / ( this.TWO_PI );  // x, z
-
-        let v = Math.asin( vtx[ 1 ] ) / Math.PI + 0.5; // y
-
-        if ( u < 0 ) {
-
-            u += 1;
-
-        }
-
-        return [ u, v ];
-
-    }
-
-    /** 
-     * Computed the angle between three 3d points defining a Plane.
-     * @param {glMatrix.vec3} a first Point in angle.
-     * @param {glMatrix.vec3} b second axis point in angle.
-     * @param {glMatrix.vec3} c third point defining angle.
-     * @returns {Number} the angle between the points.
+     * Compute the angle between three 3d points defining a Plane.
+     * @param {glMatrix.vec3} a first vertex in angle.
+     * @param {glMatrix.vec3} b second axis vertex in angle.
+     * @param {glMatrix.vec3} c third vertex defining the angle.
+     * @returns {Number} the angle between the vertices, in radians.
      */
     computeAngle3d ( a, b, c ) {
 
@@ -606,6 +608,54 @@ class Prim {
         let bcNorm = [ bc[ 0 ] / bcDist, bc[ 1 ] / bcDist, bc[ 2 ] / bcDist ];
 
         return Math.acos( abNorm[ 0 ] * bcNorm[ 0 ] + abNorm[ 1 ] * bcNorm[ 1 ] + abNorm[ 2 ] * bcNorm[ 2 ] );
+
+    }
+
+    /** 
+     * Compute the angle between 2 2d points.
+     * @param {glMatrix.vec3} a the first vertex in the angle.
+     * @param {glMatrix.vec3} b the second vertex in the angle.
+     * @returns {number} the angle between the vertices, in radians.
+     */
+    computeAngle2d ( a, b , whichAngle ) {
+
+        let d1, d2;
+
+        switch ( whichAngle ) {
+
+            case 0: // xz
+
+                d1 = b[ 0 ] - a[ 0 ];
+
+                d2 = b[ 2 ] - a [ 2 ];
+
+                break;
+
+            case 1: // xy
+
+                d1 = b[ 0 ] - a[ 0 ];
+
+                d2 = b[ 1 ] - a[ 1 ];
+
+                break;
+
+            case 2: // yz
+
+                d1 = b[ 1 ] - a[ 1 ];
+
+                d2 = b[ 2 ] - a[ 2 ];
+
+                break;
+
+            default:
+
+                console.error( 'invalid 2d angle choice, ' + whichAngle );
+
+                break;
+
+        }
+
+        return Math.atan2( d2, d1 );
 
     }
 
@@ -761,104 +811,6 @@ class Prim {
         // Check if Point is in triangle.
 
         return ( u >= 0 ) && ( v >= 0 ) && ( u + v < 1 );
-
-    }
-
-    /** 
-     * Given a set of Points, compute a triangle fan around the Centroid for those points.
-     * @param {glMatrix.vec3[]} vertices an array of UN-FLATTENED xyz points.
-     * @param {Array} indices the sequence to read triangles.
-     * @returns {Object} UN-FLATTENED vertices, indices, texCoords nomals, tangents.
-     */
-    computeFan ( vertices, indices ) {
-
-        let vec3 = this.glMatrix.vec3;
-
-        let vv = [];
-
-        // Get the subset of vertices we should take by following indices.
-
-        for ( let i = 0; i < indices.length; i++ ) {
-
-            vv.push( vertices[ indices[ i ] ] );
-
-        }
-
-        // Compute the central point of the triangle fan.
-
-        let center = this.computeCentroid( vv );
-
-        // Add a central point so we can create a triangle fan.
-
-        vv.push( center );
-
-        let centerPos = vv.length - 1;
-
-        let vtx = [], tex = [], norms = [], idx = [];
-
-        // We re-do the indices calculations, since we insert a central point.
-
-        let lenv = vv.length;
-
-        let env = lenv - 1;
-
-        for ( let i = 1; i < lenv; i++ ) {
-
-            let p1 = i - 1;
-
-            let p2 = i;
-
-            if ( i === lenv - 1 ) {
-
-                p2 = 0;
-
-            }
-
-            let v1 = vv[ p1 ];
-
-            let v2 = vv[ p2 ];
-
-            idx.push( p1, p2, centerPos );
-
-            // NOTE: each vertex gets a face normal = center. For shapes built with triangle fans, re-compute!
-
-            norms.push( center[ 0 ], center[ 1 ], center[ 2 ] ); // center vertex in fan
-
-            // Assumes a regular polygon.
-
-            tex.push(
-
-                Math.cos( this.TWO_PI * p2 / ( lenv - 1 ) ) / 2 + .5,
-
-                Math.sin( this.TWO_PI * p2 / ( lenv - 1 ) ) / 2 + .5
-
-            );
-
-        } // end of for loop
-
-        // Push the center point texture coordinate.
-
-        console.log("IN COMPUTEFAN, VERTICES:" + vv.length + " NORMALS:" + norms.length)
-
-        tex.push( 0.5, 0.5 );
-
-        norms.push( center[ 0 ], center[ 1 ], center[ 2 ] );
-
-        return {
-
-            vertices: vv,
-
-            indices: idx,
-
-            texCoords: tex,
-
-            normals: norms,
-
-            tangents: [],
-
-            colors: []
-
-        }
 
     }
 
@@ -1120,13 +1072,17 @@ class Prim {
      */
     computeTexCoords ( vertices ) {
 
+        // Assume y is vertical, x is horizontal.
+
         let texCoords = [];
 
-        // For each vertex, compute a u anv v coordinate based on their spherical projection.
+        for ( let i = 0; i < vertices.length; i += 3 ) {
 
-        // Make spherical
+            let t = this.computeSphereCoords( [ vertices[ i ], vertices[ i + 1 ], vertices[ i + 2 ] ] );
 
-        // compute coordinates.
+            texCoords.push( t[ 0 ], t[ 1 ] );
+
+        }
 
         return texCoords; 
 
@@ -1134,11 +1090,12 @@ class Prim {
 
 
     /** 
-     * Create default colors for Prim color array.
-     * @param {glMatrix.vec3} normals the normals array.
+     * Create default colors for Prim color array. This can also be used 
+     * to generate a normal map or tangent map.
+     * @param {glMatrix.vec3} coords either vertices, normals (normalmap) tangents (tangentmap).
      * @param {glmatrix.vec4} colors the colors array.
      */
-    computeColors( normals, colors ) {
+    computeColors( coords, colors ) {
 
         let c = [];
 
@@ -1146,7 +1103,7 @@ class Prim {
 
         if ( colors.length === 4 ) {
 
-            for ( let i = 0; i < normals.length; i += 3 ) {
+            for ( let i = 0; i < coords.length; i += 3 ) {
 
                 c.push( colors[ 0 ], colors[ 1 ], colors[ 2 ], colors[ 3 ] );
 
@@ -1156,9 +1113,9 @@ class Prim {
 
         // Otherwise, create colors as a normals map.
 
-        for ( let i = 0; i < normals.length; i += 3 ) {
+        for ( let i = 0; i < coords.length; i += 3 ) {
 
-            c.push( normals[ i ], normals[ i + 1 ], normals[ i + 2 ], 1.0 );
+            c.push( coords[ i ], coords[ i + 1 ], coords[ i + 2 ], 1.0 );
 
         }
 
@@ -1223,6 +1180,105 @@ class Prim {
      * GEOMETRY CREATORS
      * ---------------------------------------
      */
+
+
+    /** 
+     * Given a set of Points, compute a triangle fan around the Centroid for those points.
+     * @param {glMatrix.vec3[]} vertices an array of UN-FLATTENED xyz points.
+     * @param {Array} indices the sequence to read triangles.
+     * @returns {Object} UN-FLATTENED vertices, indices, texCoords nomals, tangents.
+     */
+    computeFan ( vertices, indices ) {
+
+        let vec3 = this.glMatrix.vec3;
+
+        let vv = [];
+
+        // Get the subset of vertices we should take by following indices.
+
+        for ( let i = 0; i < indices.length; i++ ) {
+
+            vv.push( vertices[ indices[ i ] ] );
+
+        }
+
+        // Compute the central point of the triangle fan.
+
+        let center = this.computeCentroid( vv );
+
+        // Add a central point so we can create a triangle fan.
+
+        vv.push( center );
+
+        let centerPos = vv.length - 1;
+
+        let vtx = [], tex = [], norms = [], idx = [];
+
+        // We re-do the indices calculations, since we insert a central point.
+
+        let lenv = vv.length;
+
+        let env = lenv - 1;
+
+        for ( let i = 1; i < lenv; i++ ) {
+
+            let p1 = i - 1;
+
+            let p2 = i;
+
+            if ( i === lenv - 1 ) {
+
+                p2 = 0;
+
+            }
+
+            let v1 = vv[ p1 ];
+
+            let v2 = vv[ p2 ];
+
+            idx.push( p1, p2, centerPos );
+
+            // NOTE: each vertex gets a face normal = center. For shapes built with triangle fans, re-compute!
+
+            norms.push( center[ 0 ], center[ 1 ], center[ 2 ] ); // center vertex in fan
+
+            // Assumes a regular polygon.
+
+            tex.push(
+
+                Math.cos( this.TWO_PI * p2 / ( lenv - 1 ) ) / 2 + .5,
+
+                Math.sin( this.TWO_PI * p2 / ( lenv - 1 ) ) / 2 + .5
+
+            );
+
+        } // end of for loop
+
+        // Push the center point texture coordinate.
+
+        tex.push( 0.5, 0.5 );
+
+        // Push the center point normal.
+
+        norms.push( center[ 0 ], center[ 1 ], center[ 2 ] );
+
+        return {
+
+            vertices: vv,
+
+            indices: idx,
+
+            texCoords: tex,
+
+            normals: norms,
+
+            tangents: [],
+
+            colors: []
+
+        }
+
+    }
 
     /** 
      * WebGL point cloud (particle system).
@@ -3299,35 +3355,16 @@ class Prim {
     }
 
     /** 
-     * Callback for assembling Mesh, after OBJ or other files are loaded
+     * Callback for assembling Mesh, after ALL OBJ and material files are loaded.
+     * @param {Prim} prim a Prim object.
      */
     meshCallback( prim ) {
 
         let geo = prim.geometry;
 
-        if ( prim.name == 'teapot') {
-
-            window.prim = prim;
-
-        }
-
         console.log( '++++++++++++++++++++++++++++in mesh callback for prim:' + prim.name + ', all model files loaded...' );
 
-        // TODO: add model materials
-
-        //console.log('Prim::meshCallback(): normals length:' + normals.length + ' vertices.length:' + vertices.length)
-
-        ////////let mesh = new Mesh( geo );
-
-        ////////mesh.subdivide();
-
-        //// mesh.reCalc();
-
-        // NOTE:::::: simplify() works here ONLY because we don't have any redundant vertices!
-
-        //mesh.simplify();
-
-        //// mesh.reCalc();
+        // TODO: add model materials during load to Prim.
 
         console.log('Prim::meshCallback(): vertices.length:' + geo.numVertices() + ' normals.length:' + geo.numNormals() +  ' tangents.length:' + geo.numTangents() + ' colors.length:' + geo.numColors() )
 
@@ -3367,12 +3404,11 @@ class Prim {
 
             console.log(">>>>>>>>>>>>>>geometryMesh():" + prim.models[ i ] );
 
-            // We only execute the final callback for model loading.
-
-            // TODO: separate load creating Materials.
-            // TODO: separate load when obj or material files require a texture.
-
-            // NOTE: the final callback is given prim to manipulate by loadModel.load().
+            /* 
+             * NOTE: the final callback is given prim to manipulate by loadModel.load(). 
+             * Intermediate callbacks between files loaded (e.g. material files) get the 
+             * empty function below.
+             */
 
             this.loadModel.load( prim.models[ i ], prim, function() {}, this.meshCallback.bind( this ) );
 
@@ -3388,24 +3424,89 @@ class Prim {
      * ---------------------------------------
      */
 
-    initPrim ( prim, vertices, indices, normals, texCoords, tangents ) {
+    initPrim ( prim, vertices, indices, normals = [], texCoords = [], tangents = [], colors = [] ) {
 
-        console.log("computing bounding box for " + prim.name)
+        let geo = prim.geometry;
+
+        console.log( '(re)calculating normals and tangents for ' + prim.name)
+
+        /* 
+         * Add buffer data, and re-bind to WebGL.
+         * NOTE: Mesh callbacks don't actually add any data here 
+         * (this.meshCallback() passes empty coordinate arrays)
+         */
+
+        // Vertices must be present.
+
+        geo.setVertices( vertices );
+
+        let numVertices = geo.numVertices();
+
+        console.log( prim.name + ' generation complete, computing bounding box' );
 
         prim.boundingBox = this.computeBoundingBox( prim.geometry.vertices.data );
 
-        // Note: Mesh callbacks don't actually add any data here (this.messCallback() passes empty coordinate arrays)
+        // Indices must be present.
 
-        prim.reCalc();
+        geo.setIndices( indices );
 
-        prim.geometry.addBufferData( vertices, indices, normals, texCoords, tangents );
+        // If normals are used, re-compute.
 
-        console.log("calculating normals and tangents for " + prim.name)
+        prim.updateNormals( normals );
 
+        // If texcoords are used, re-compute.
 
+        prim.updateTexCoords( texCoords );
+
+        // If tangents are used, re-compute.
+        // if ( prim.useTangents ... )
+
+        prim.updateTangents();
+
+        // Update colors, if not defined ( as a normalMap )
+
+        prim.updateColors();
+
+        //prim.geometry.setBufferData( vertices, indices, normals, texCoords, tangents )
+
+        //prim.geometry.addBufferData( vertices, indices, normals, texCoords, tangents );
+
+        if ( prim.name === 'cubesphere' ) {
+        //if ( prim.name === 'TestCapsule' ) {
+        //if ( prim.name === 'colored cube' ) {
+        //if ( prim.name === 'texsphere' ) {
+
+            let mesh = new Mesh( prim );
+
+            window.mesh = mesh;
+
+            window.prim = prim;
+
+            // SIMPLIFY TEST
+
+            //mesh.simplify();
+
+            // SUBDIVIDE TEST
+
+            mesh.subdivide( true );
+            mesh.subdivide( true );
+            //mesh.subdivide( true );
+            //mesh.subdivide( true );
+            //mesh.subdivide( true );
+            //mesh.subdivide( true );
+            //mesh.subdivide( true );
+            //mesh.subdivide( true );
+            //mesh.subdivide( true ); // this one zaps from low-vertex < 10 prim
+
+            // TODO: THESE ARE NOT BEING ADDED
+
+            // TODO: FIGURE OUT WHAT NEEDS TO BE DONE WITH A SUBDIVIDE AND SIMPLIFY
+
+       }
 
         console.log("checking buffer data for " + prim.name )
 
+        prim.geometry.checkBufferData();
 
         /* 
          * If we were supplied a shader, add to display list. 
@@ -3540,57 +3641,73 @@ class Prim {
 
         };
 
-        prim.addToScene = () => {
-
-            prim.reCalc();
-
-        };
-
-        /** 
-         * recalculate normals and tangents.
-         * NOTE: tangent settings should be related to shader.
-         */
-        prim.reCalc = () => {
+        prim.updateNormals = ( normals ) => {
 
             let geo = prim.geometry;
 
-            let numVertices = geo.numVertices();
+            if ( normals && normals.length ) {
 
-            console.log("in reCalc(), vertices:" + numVertices + ' normals:' + geo.numNormals() + ' tangents:' + geo.numTangents() )
+                geo.setNormals( normals );
 
+            } else {
 
-            // If normals are used, re-compute.
-
-            if ( geo.numNormals() !== numVertices ) {
-
-                console.log("PRIM:" + prim.name + ' recalculating normals' );
-
-                geo.setNormals ( this.computeNormals( geo.vertices.data, geo.indices.data, geo.normals.data, prim.useFaceNormals ) );
+                geo.setNormals( this.computeNormals( geo.vertices.data, geo.indices.data, [], prim.useFaceNormals ) );
 
             }
 
-            // If tangents are used, re-compute.
+        }
 
-            if ( prim.useTangents &&  ( geo.numTangents() !== numVertices ) ) {
+        prim.updateTexCoords = ( texCoords ) => {
 
-                console.log("PRIM #1:" + prim.name + ' recalculating tangents, curr length:' + geo.numTangents() + ' vertices:' + numVertices );
+            let geo = prim.geometry;
 
-                geo.setTangents( this.computeTangents( geo.vertices.data, geo.indices.data, geo.normals.data, geo.texCoords.data ) );
+            if ( texCoords.length > 0 ) {
 
-                console.log("PRIM #2:" + prim.name + ' recalculated tangents, curr length:' + geo.numTangents() + ' vertices:' + numVertices );
+                geo.setTexCoords( texCoords );
 
+            } else if ( geo.numTexCoords() !== geo.numVertices() ) {
+
+                console.log("PRIM:" + prim.name + ' recalculating texture coordinates' );
+
+                window.teapot = prim;
+
+                geo.setTexCoords( this.computeTexCoords( geo.vertices.data ) );
 
             }
 
-            // If color array is wrong, re-compute.
+        }
 
-            if ( geo.numColors() !== numVertices ) {
+        prim.updateTangents = ( tangents ) => {
 
-                geo.setColors( this.computeColors( geo.normals.data, geo.colors.data ) );
+            let geo = prim.geometry;
+
+            if ( tangents && tangents.length ) {
+
+                geo.setTangents( tangents );
+
+            } else {
+
+                geo.setTangents( this.computeTangents ( geo.vertices.data, geo.indices.data, geo.normals.data, geo.texCoords.data, [] ) );
 
             }
 
-        };
+        }
+
+        prim.updateColors = ( colors ) => {
+
+            let geo = prim.geometry;
+
+            if ( colors && colors.length ) {
+
+                geo.setColors( colors );
+
+            } else {
+
+                geo.setColors( this.computeColors( geo.normals.data, [] ) );
+
+            }
+
+        }
 
         // Compute the bounding box.
 
@@ -3762,6 +3879,10 @@ class Prim {
 
         prim.children = [];
 
+       // Execute geometry creation routine (which may be a file load).
+
+       console.log("Generating Prim:" + prim.name + '(' + prim.type + ')' );
+
         // Geometry factory function, create empty WebGL Buffers.
 
         prim.geometry = new GeoObj( prim.name, this.util, this.webgl );
@@ -3769,47 +3890,6 @@ class Prim {
         // Create or load Geometry data (may alter some of the above default properties).
 
         this[ type ]( prim );
-
-////////////////////////////////////////////////////////////////////////////////
-
-
-        if ( prim.name === 'cubesphere' ) {
-        //if ( prim.name === 'TestCapsule' ) {
-        //if ( prim.name === 'colored cube' ) {
-        //if ( prim.name === 'texsphere' ) {
-
-            let mesh = new Mesh( prim.geometry );
-
-            window.mesh = mesh;
-
-            // SIMPLIFY TEST
-
-            mesh.simplify();
-
-            // SUBDIVIDE TEST
-
-            mesh.subdivide( true );
-            ///mesh.subdivide( true );
-            //mesh.subdivide( true );
-            //mesh.subdivide( true );
-            //mesh.subdivide( true );
-            //mesh.subdivide( true );
-            //mesh.subdivide( true );
-            //mesh.subdivide( true );
-            //mesh.subdivide( true ); // this one zaps from low-vertex < 10 prim
-
-            // TODO: THESE ARE NOT BEING ADDED
-
-            // TODO: FIGURE OUT WHAT NEEDS TO BE DONE WITH A SUBDIVIDE AND SIMPLIFY
-
-       }
-
-       // Validate our data.
-
-       console.log("PRIM:" + prim.name + '(' + prim.type + ')' );
-
-
-////////////////////////////////////////////////////////////////////////////////
 
         // Create default WebGL buffers to bind our Prim coordinate data to.
 
