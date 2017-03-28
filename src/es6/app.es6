@@ -33,6 +33,8 @@ import WebGL from './webgl';
 
 import WebVR from './webvr';
 
+import Ui from './ui';
+
 //import Loader from './load-pool';
 
 import LoadTexture from './load-texture';
@@ -115,7 +117,7 @@ if ( __DEV__ === 'true' ) {
 
 }
 
-let webvr, loadModel, loadTexture, loadAudio, loadVideo, loadFont, prim, renderer, world;
+let webvr, ui, loadModel, loadTexture, loadAudio, loadVideo, loadFont, prim, renderer, world;
 
 // WebGL can take some time to init.
 ///////////////////////////////////////////////////////
@@ -126,6 +128,10 @@ var promise = new Promise( ( resolve, reject ) => {
     if ( webgl.init( 'webvr-mini-canvas' ) ) {
 
         webvr = new WebVR( false, util, glMatrix, webgl );
+
+        ui = new Ui( false, util, webgl, webvr );
+
+        window.ui = ui;
 
         // The Prim object needs Loaders.
 
@@ -154,6 +160,10 @@ var promise = new Promise( ( resolve, reject ) => {
         // Create the world, which needs WebGL, WebVR, and Prim.
 
         world = new World( webgl, prim, renderer );
+
+        // Initialize our Ui
+
+        ui.init();
 
         resolve("Stuff worked!");
 

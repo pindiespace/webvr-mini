@@ -20,6 +20,7 @@ class Util {
 
         this.setPerformance();
 
+        // Finite number polyfill.
 
         this.setFinite();
 
@@ -563,7 +564,7 @@ class Util {
      * Handle mouse events, in case we aren't in VR. This function
      * adds mouse coordinates to the <canvas> element we are using to draw.
      */
-    getMousePosition( canvas, e ) {
+    getMousePosition ( canvas, e ) {
 
         const r = canvas.getBoundingClientRect();
 
@@ -574,6 +575,46 @@ class Util {
             y: e.clientY - r.top
 
         }
+    }
+
+    /* 
+     * WINDOW AND SCREEN DIMENSIONS
+     * @link http://ryanve.com/lab/dimensions/
+     */
+
+    /** 
+     * Get the width of the entire screen (excluding OS taskbars)
+     */
+    getScreenWidth () {
+
+        return window.screen.width;
+
+    }
+
+    /** 
+     * Get the height of the entire screen (excluding OS taskbars)
+     */
+    getScreenHeight () {
+
+        return window.screen.height;
+
+    }
+
+    /** 
+     * get the width of the content region of the browser window.
+     */
+    getWindowWidth () {
+
+        return window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+    }
+
+    /** 
+     * get the height of the content region of the browser window.
+     */
+    getWindowHeight ()  {
+
+        return window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+
     }
 
 }

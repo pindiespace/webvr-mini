@@ -3484,12 +3484,12 @@ class Prim {
 
             // SIMPLIFY TEST
 
-            //mesh.simplify();
+            ///mesh.simplify();
 
             // SUBDIVIDE TEST
 
-            mesh.subdivide( true );
-            mesh.subdivide( true );
+            //mesh.subdivide( true );
+            //mesh.subdivide( true );
             //mesh.subdivide( true );
             //mesh.subdivide( true );
             //mesh.subdivide( true );
@@ -3519,6 +3519,14 @@ class Prim {
             prim.shader.addObj( prim );
 
         }
+
+    }
+
+    /** 
+     * Convert a Prim to its JSON equivalent
+     */
+    toJSON ( prim ) {
+
 
     }
 
@@ -3740,6 +3748,14 @@ class Prim {
             this.computeMove( scale, prim.geometry.vertices );
 
         };
+
+        // Convert a Prim to its JSON equivalent
+
+        prim.toJSON = () => {
+
+            this.toJSON( prim );
+
+        }
 
         // Give the Prim a unique Id.
 

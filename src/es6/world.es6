@@ -79,6 +79,7 @@ class World {
 
     /** 
      * save a World to a JSON file description.
+     * use Prim.toJSON() for indivdiual prims.
      */
     save () {
 
@@ -471,16 +472,16 @@ class World {
             ) 
 */
 
-// TODO: UPDATE MESH OBJECTS TO USE GEO NEW FUNCTIONS FOR LOADING BUFFERS (in .vertexToGeometry, should automatically update GLBuffers))
+// NOTE: webvr implementation
+
+// RESIZE EVENT HANDLING
+
+// NOTE: fullscreen mode with correct return to localscreen
 
 // NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
 
 // TODO: READ SHADER VALUES TO DETERMINE IF BUFFERS NEEDED WHEN CREATING THE PRIM!!!!!!!!!!!!!!!!!!!!!
 // TODO: THIS WOULD HAVE TO HAPPEN IN THE PRIM CREATION THEMES
-
-// TODO: SUBDIVIDE AND SIMPLIFY INTEGRATION (MAKE THEM ADD DATA AND RECALC SEPARATELY, LIKE MESH)
-
-// TODO: HAVE TO CREATEGLBUFFERS IN MESH ROUTINE!!!!!
 
 // TODO: JSON FILE FOR PRIMS (loadable) use this.load(), this.save()
 

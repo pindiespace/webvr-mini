@@ -315,6 +315,10 @@
 
 	var _webvr2 = _interopRequireDefault(_webvr);
 
+	var _ui = __webpack_require__(38);
+
+	var _ui2 = _interopRequireDefault(_ui);
+
 	var _loadTexture = __webpack_require__(7);
 
 	var _loadTexture2 = _interopRequireDefault(_loadTexture);
@@ -446,6 +450,7 @@
 	}
 
 	var webvr = void 0,
+	    ui = void 0,
 	    loadModel = void 0,
 	    loadTexture = void 0,
 	    loadAudio = void 0,
@@ -464,6 +469,10 @@
 	        if (webgl.init('webvr-mini-canvas')) {
 
 	                exports.webvr = webvr = new _webvr2.default(false, util, glMatrix, webgl);
+
+	                ui = new _ui2.default(false, util, webgl, webvr);
+
+	                window.ui = ui;
 
 	                // The Prim object needs Loaders.
 
@@ -492,6 +501,10 @@
 	                // Create the world, which needs WebGL, WebVR, and Prim.
 
 	                exports.world = world = new _world2.default(webgl, prim, renderer);
+
+	                // Initialize our Ui
+
+	                ui.init();
 
 	                resolve("Stuff worked!");
 	        } else {
@@ -609,6 +622,8 @@
 	                // Performance polyfill.
 
 	                this.setPerformance();
+
+	                // Finite number polyfill.
 
 	                this.setFinite();
 	        }
@@ -1168,6 +1183,55 @@
 
 	                        };
 	                }
+
+	                /* 
+	                 * WINDOW AND SCREEN DIMENSIONS
+	                 * @link http://ryanve.com/lab/dimensions/
+	                 */
+
+	                /** 
+	                 * Get the width of the entire screen (excluding OS taskbars)
+	                 */
+
+	        }, {
+	                key: 'getScreenWidth',
+	                value: function getScreenWidth() {
+
+	                        return window.screen.width;
+	                }
+
+	                /** 
+	                 * Get the height of the entire screen (excluding OS taskbars)
+	                 */
+
+	        }, {
+	                key: 'getScreenHeight',
+	                value: function getScreenHeight() {
+
+	                        return window.screen.height;
+	                }
+
+	                /** 
+	                 * get the width of the content region of the browser window.
+	                 */
+
+	        }, {
+	                key: 'getWindowWidth',
+	                value: function getWindowWidth() {
+
+	                        return window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+	                }
+
+	                /** 
+	                 * get the height of the content region of the browser window.
+	                 */
+
+	        }, {
+	                key: 'getWindowHeight',
+	                value: function getWindowHeight() {
+
+	                        return window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+	                }
 	        }]);
 
 	        return Util;
@@ -1324,6 +1388,14 @@
 	                                canvas.width = r.width;
 
 	                                canvas.height = r.height;
+
+	                                // Save current window width and height (used in window resize).
+
+	                                this.oldWidth = this.util.getWindowWidth();
+
+	                                this.oldHeight = this.util.getWindowHeight();
+
+	                                // Create the WebGL context for the <canvas>, trying to get the most recent version.
 
 	                                this.gl = this.createContext(canvas);
 
@@ -1499,30 +1571,40 @@
 
 	                        if (this.ready()) {
 
-	                                var f = Math.max(window.devicePixelRatio, 1);
+	                                var wWidth = this.util.getWindowWidth();
 
-	                                var gl = this.getContext();
+	                                if (wWidth !== this.oldWidth) {
 
-	                                var c = this.getCanvas();
+	                                        var f = Math.max(window.devicePixelRatio, 1);
 
-	                                var width = c.clientWidth * f | 0;
+	                                        var gl = this.getContext();
 
-	                                var height = c.clientHeight * f | 0;
+	                                        var c = this.getCanvas();
 
-	                                if (c.width !== width || c.height !== height) {
+	                                        // Get the current size
+
+	                                        var width = c.clientWidth * f | 0;
+
+	                                        var height = c.clientHeight * f | 0;
+
+	                                        // Set the canvas width and height property.
 
 	                                        c.width = width;
 
 	                                        c.height = height;
 
-	                                        gl.viewportWidth = c.width;
+	                                        // Set the WebGL viewport.
 
-	                                        gl.viewportHeight = c.height;
+	                                        gl.viewportWidth = width;
+
+	                                        gl.viewportHeight = height;
 
 	                                        gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
-
-	                                        return true;
 	                                }
+
+	                                // Save the values.
+
+	                                this.oldWidth = wWidth;
 	                        }
 
 	                        return false;
@@ -8455,12 +8537,12 @@
 
 	                                // SIMPLIFY TEST
 
-	                                //mesh.simplify();
+	                                ///mesh.simplify();
 
 	                                // SUBDIVIDE TEST
 
-	                                mesh.subdivide(true);
-	                                mesh.subdivide(true);
+	                                //mesh.subdivide( true );
+	                                //mesh.subdivide( true );
 	                                //mesh.subdivide( true );
 	                                //mesh.subdivide( true );
 	                                //mesh.subdivide( true );
@@ -8489,6 +8571,14 @@
 	                                prim.shader.addObj(prim);
 	                        }
 	                }
+
+	                /** 
+	                 * Convert a Prim to its JSON equivalent
+	                 */
+
+	        }, {
+	                key: 'toJSON',
+	                value: function toJSON(prim) {}
 
 	                /** 
 	                 * Create an standard 3d object.
@@ -8684,6 +8774,13 @@
 	                        prim.moveVertices = function (pos) {
 
 	                                _this.computeMove(scale, prim.geometry.vertices);
+	                        };
+
+	                        // Convert a Prim to its JSON equivalent
+
+	                        prim.toJSON = function () {
+
+	                                _this.toJSON(prim);
 	                        };
 
 	                        // Give the Prim a unique Id.
@@ -10984,7 +11081,7 @@
 	                }
 
 	                /** 
-	                 * Find vertices in identical positions, and merge them.
+	                 * Reduce the number of vertices, preserving overall shape.
 	                 */
 
 	        }, {
@@ -11009,56 +11106,8 @@
 
 	                        var newIndexArr = [];
 
-	                        for (var i = 0; i < vertexArr.length; i++) {
+	                        // Generate our Edge array
 
-	                                var vtx1 = vertexArr[i];
-
-	                                if (vtx1.idx !== i) console.error('idxes do not match for ' + vtx1.idx);
-
-	                                var max = i;
-
-	                                var min = max;
-
-	                                for (var j = 0; j < vertexArr.length; j++) {
-
-	                                        var vtx2 = vertexArr[j];
-
-	                                        if (i !== j) {
-
-	                                                // look for a position match that is the lowest idx
-
-	                                                if (vtx1.distance(vtx2) < this.epsilon) {
-
-	                                                        min = Math.min(j, min);
-	                                                }
-	                                        }
-	                                } // end of inner jth loop
-
-	                                // store the min
-
-	                                vtx1.lowIdx = min;
-
-	                                ///if ( vtx1.idx !== vtx1.lowIdx ) {
-
-	                                ///    console.log( 'for identical vtx1 ' + vtx1.idx + ' and vtx2 ' + vtx1.lowIdx + ', texCoords.u:' + vtx1.texCoords.u + ',' + vertexArr[ vtx1.lowIdx ].texCoords.u)
-
-	                                ///}
-
-	                        } // end of outer ith loop
-
-	                        // Burn out a new indexArr
-
-	                        for (var _i2 = 0; _i2 < indexArr.length; _i2++) {
-
-	                                var vtx = vertexArr[indexArr[_i2]];
-
-	                                newIndexArr.push(vtx.lowIdx);
-
-	                                if (newVertexArr.indexOf(vtx) === NOT_IN_LIST) {
-
-	                                        newVertexArr.push(vtx);
-	                                }
-	                        }
 
 	                        // Copy over old Vertex and Index array.
 
@@ -12325,6 +12374,7 @@
 
 	                /** 
 	                 * save a World to a JSON file description.
+	                 * use Prim.toJSON() for indivdiual prims.
 	                 */
 
 	        }, {
@@ -12625,16 +12675,16 @@
 	                                    ) 
 	                        */
 
-	                        // TODO: UPDATE MESH OBJECTS TO USE GEO NEW FUNCTIONS FOR LOADING BUFFERS (in .vertexToGeometry, should automatically update GLBuffers))
+	                        // NOTE: webvr implementation
+
+	                        // RESIZE EVENT HANDLING
+
+	                        // NOTE: fullscreen mode with correct return to localscreen
 
 	                        // NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
 
 	                        // TODO: READ SHADER VALUES TO DETERMINE IF BUFFERS NEEDED WHEN CREATING THE PRIM!!!!!!!!!!!!!!!!!!!!!
 	                        // TODO: THIS WOULD HAVE TO HAPPEN IN THE PRIM CREATION THEMES
-
-	                        // TODO: SUBDIVIDE AND SIMPLIFY INTEGRATION (MAKE THEM ADD DATA AND RECALC SEPARATELY, LIKE MESH)
-
-	                        // TODO: HAVE TO CREATEGLBUFFERS IN MESH ROUTINE!!!!!
 
 	                        // TODO: JSON FILE FOR PRIMS (loadable) use this.load(), this.save()
 
@@ -20363,6 +20413,371 @@
 	module.exports = WebGLDebugUtils;
 
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
+
+/***/ },
+/* 38 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	        value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var Ui = function () {
+
+	        /** 
+	         * DOM, fullscreen, and stereo Ui.
+	         */
+
+	        function Ui() {
+	                var init = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+	                var util = arguments[1];
+	                var webgl = arguments[2];
+	                var webvr = arguments[3];
+
+	                _classCallCheck(this, Ui);
+
+	                console.log('in Ui');
+
+	                this.UI_DOM = 'uidom', this.UI_VR = 'uivr', this.UI_FULLSCREEN = 'fullscreen';
+
+	                this.mode = this.UI_DOM; // by default
+
+	                // TODO: CHECK IF WEBVR IS AVAILABLE. IF SO, ALWAYS GO INTO VR MODE INSTEAD OF FULLSCREEN.
+
+	                /* 
+	                 * icons from the noun project.
+	                 * @link https://thenounproject.com/
+	                 * Conversion of SVG to base64
+	                 * @link http://b64.io/
+	                 */
+	                this.icons = {
+
+	                        // Created by Cyril S.
+
+	                        vr: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2ZXJzaW9uPSIxLjEiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgOTAgMTEyLjUiIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDkwIDkwIiB4bWw6c3BhY2U9InByZXNlcnZlIj48cGF0aCBkPSJNODEuNjcxLDIxLjMyM2MtMi4wODUtMi4wODQtNzIuNTAzLTEuNTUzLTc0LjA1NCwwYy0xLjY3OCwxLjY3OC0xLjY4NCw0Ni4wMzMsMCw0Ny43MTMgIGMwLjU1OCwwLjU1OSwxMi4xNTEsMC44OTYsMjYuMDA3LDEuMDEybDMuMDY4LTguNDg2YzAsMCwxLjk4Ny04LjA0LDcuOTItOC4wNGM2LjI1NywwLDguOTksOS42NzUsOC45OSw5LjY3NWwyLjU1NSw2Ljg0OCAgYzEzLjYzMy0wLjExNiwyNC45NTctMC40NTMsMjUuNTE0LTEuMDA4QzgzLjIyNCw2Ny40ODMsODMuNjcyLDIzLjMyNCw4MS42NzEsMjEuMzIzeiBNMjQuNTcyLDU0LjU4MiAgYy02LjA2MywwLTEwLjk3OC00LjkxNC0xMC45NzgtMTAuOTc5YzAtNi4wNjMsNC45MTUtMTAuOTc4LDEwLjk3OC0xMC45NzhzMTAuOTc5LDQuOTE1LDEwLjk3OSwxMC45NzggIEMzNS41NTEsNDkuNjY4LDMwLjYzNSw1NC41ODIsMjQuNTcyLDU0LjU4MnogTTY0LjMzNCw1NC41ODJjLTYuMDYzLDAtMTAuOTc5LTQuOTE0LTEwLjk3OS0xMC45NzkgIGMwLTYuMDYzLDQuOTE2LTEwLjk3OCwxMC45NzktMTAuOTc4YzYuMDYyLDAsMTAuOTc4LDQuOTE1LDEwLjk3OCwxMC45NzhDNzUuMzEyLDQ5LjY2OCw3MC4zOTYsNTQuNTgyLDY0LjMzNCw1NC41ODJ6Ii8+PC9zdmc+',
+
+	                        // Created by Garrett Knoll.
+
+	                        fullscreen: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2ZXJzaW9uPSIxLjEiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgMTAwIDEyNSIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAwIDAgMTAwIDEwMCIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+PGc+PGc+PHBhdGggZmlsbD0iIzAwMDAwMCIgZD0iTTc3LjE3MSw3OS44ODdINjEuODE0Yy0xLjUsMC0yLjcxNS0xLjIxNi0yLjcxNS0yLjcxNWMwLTEuNSwxLjIxNi0yLjcxNSwyLjcxNS0yLjcxNWgxMi42NDJWNjEuODE1ICAgIGMwLTEuNSwxLjIxNi0yLjcxNSwyLjcxNS0yLjcxNXMyLjcxNSwxLjIxNiwyLjcxNSwyLjcxNXYxNS4zNTdDNzkuODg3LDc4LjY3MSw3OC42NzEsNzkuODg3LDc3LjE3MSw3OS44ODd6Ii8+PC9nPjxnPjxwYXRoIGZpbGw9IiMwMDAwMDAiIGQ9Ik0zOC4yNTQsNzkuODg3SDIyLjg5N2MtMS41LDAtMi43MTUtMS4yMTYtMi43MTUtMi43MTVWNjEuODE1YzAtMS41LDEuMjE2LTIuNzE1LDIuNzE1LTIuNzE1ICAgIHMyLjcxNSwxLjIxNiwyLjcxNSwyLjcxNXYxMi42NDFoMTIuNjQyYzEuNSwwLDIuNzE1LDEuMjE2LDIuNzE1LDIuNzE1QzQwLjk2OSw3OC42NzEsMzkuNzU0LDc5Ljg4NywzOC4yNTQsNzkuODg3eiIvPjwvZz48L2c+PGc+PGc+PHBhdGggZmlsbD0iIzAwMDAwMCIgZD0iTTIyLjg5Nyw0MC45N2MtMS41LDAtMi43MTUtMS4yMTYtMi43MTUtMi43MTVWMjIuODk4YzAtMS41LDEuMjE2LTIuNzE1LDIuNzE1LTIuNzE1aDE1LjM1NyAgICBjMS41LDAsMi43MTUsMS4yMTYsMi43MTUsMi43MTVzLTEuMjE2LDIuNzE1LTIuNzE1LDIuNzE1SDI1LjYxMnYxMi42NDFDMjUuNjEyLDM5Ljc1NSwyNC4zOTcsNDAuOTcsMjIuODk3LDQwLjk3eiIvPjwvZz48Zz48cGF0aCBmaWxsPSIjMDAwMDAwIiBkPSJNNzcuMTcxLDQwLjk3Yy0xLjUsMC0yLjcxNS0xLjIxNi0yLjcxNS0yLjcxNVYyNS42MTNINjEuODE0Yy0xLjUsMC0yLjcxNS0xLjIxNi0yLjcxNS0yLjcxNSAgICBzMS4yMTYtMi43MTUsMi43MTUtMi43MTVoMTUuMzU3YzEuNSwwLDIuNzE1LDEuMjE2LDIuNzE1LDIuNzE1djE1LjM1N0M3OS44ODcsMzkuNzU1LDc4LjY3MSw0MC45Nyw3Ny4xNzEsNDAuOTd6Ii8+PC9nPjwvZz48Zz48cGF0aCBmaWxsPSIjMDAwMDAwIiBkPSJNOTIuMjg1LDk1SDcuNzE1QzYuMjE2LDk1LDUsOTMuNzg1LDUsOTIuMjg1VjcuNzE2QzUsNi4yMTYsNi4yMTYsNSw3LjcxNSw1aDg0LjU2OSAgIEM5My43ODQsNSw5NSw2LjIxNiw5NSw3LjcxNnY4NC41NjlDOTUsOTMuNzg1LDkzLjc4NCw5NSw5Mi4yODUsOTV6IE0xMC40MzEsODkuNTY5aDc5LjEzOFYxMC40MzFIMTAuNDMxVjg5LjU2OXoiLz48L2c+PC9zdmc+',
+
+	                        // Created by Shawn Erdely.
+
+	                        gear: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2ZXJzaW9uPSIxLjEiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgMTAwIDEyNSIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAwIDAgMTAwIDEwMCIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+PHBhdGggZD0iTTU5LjQsNWMwLjQsMy4xLDAuOSw2LjEsMS4zLDkuMWMwLDAuMywwLDAuNSwwLjEsMC44YzAuMywxLDUuMywyLjcsNi4yLDJjMi4yLTEuNiw0LjQtMy4yLDYuNS00LjljMC44LTAuNywxLjQtMC41LDIuMSwwICBjNC44LDMuMyw4LjgsNy40LDEyLjEsMTIuMmMwLjUsMC43LDAuNSwxLjIsMCwxLjljLTEuNywyLjEtMy4zLDQuNC00LjksNi41Yy0wLjUsMC43LTAuNywxLjMtMC4yLDIuMWMwLjMsMC41LDAuNiwxLDAuNywxLjUgIGMwLjQsMi4zLDEuOCwzLDMuOSwzLjFjMi4xLDAuMSw0LjIsMC42LDYuMiwwLjhjMC45LDAuMSwxLjIsMC40LDEuNCwxLjJjMC44LDQuMiwxLDguNSwwLjYsMTIuN2MtMC4xLDEuNi0wLjQsMy4zLTAuNyw0LjkgIGMtMC4xLDAuNC0wLjYsMC45LTEsMWMtMi43LDAuNS01LjUsMC45LTguMiwxLjJjLTAuOSwwLjEtMS40LDAuNC0xLjYsMS4zYy0wLjEsMC41LTAuMywxLjEtMC42LDEuNmMtMS40LDEuOS0wLjgsMy41LDAuNyw1LjEgIGMxLjQsMS42LDIuNiwzLjMsMy44LDVjMC4zLDAuNCwwLjMsMS4zLDAuMSwxLjdjLTMuMyw0LjktNy40LDktMTIuMywxMi40Yy0wLjcsMC41LTEuMiwwLjQtMS45LTAuMWMtMi4xLTEuNy00LjQtMy4zLTYuNS00LjkgIGMtMC42LTAuNS0xLjItMC43LTEuOS0wLjJjLTAuNSwwLjMtMS4xLDAuNi0xLjcsMC43Yy0yLjMsMC40LTIuOSwxLjktMyw0Yy0wLjEsMi4xLTAuNSw0LjMtMC45LDYuNGMtMC4xLDAuNC0wLjYsMS0xLjEsMS4xICBjLTUuOSwxLjItMTEuNywxLjItMTcuNiwwLjFjLTAuOC0wLjEtMS4xLTAuNS0xLjItMS4zYy0wLjMtMi43LTAuOC01LjQtMS4xLTguMWMtMC4xLTAuOS0wLjQtMS40LTEuMy0xLjZjLTAuNC0wLjEtMC45LTAuMy0xLjMtMC41ICBjLTItMS40LTMuNy0xLTUuNSwwLjdjLTEuNCwxLjQtMy4yLDIuNC00LjgsMy43Yy0wLjcsMC42LTEuMiwwLjYtMS45LDAuMWMtNC45LTMuNC05LTcuNS0xMi40LTEyLjRjLTAuNS0wLjctMC40LTEuMiwwLjEtMS45ICBjMS43LTIuMSwzLjMtNC40LDQuOS02LjVjMC41LTAuNiwwLjctMS4yLDAuMi0xLjljLTAuMy0wLjQtMC42LTAuOS0wLjYtMS40Yy0wLjQtMi43LTIuMi0zLjItNC42LTMuNGMtMi0wLjEtNC0wLjUtNS45LTAuOSAgYy0wLjQtMC4xLTEtMC43LTEuMS0xLjFjLTEuMi01LjktMS4yLTExLjcsMC0xNy42YzAuMS0wLjQsMC43LTEsMS4xLTFjMi44LTAuNSw1LjYtMC44LDguNC0xLjNjMC41LTAuMSwwLjktMC42LDEuMy0xICBjMC4xLTAuMSwwLjEtMC40LDAuMi0wLjZjMi0yLjgsMS4yLTUuMi0xLTcuNWMtMS4xLTEuMi0yLjEtMi42LTMtMy45Yy0wLjMtMC40LTAuMy0xLjItMC4xLTEuNmMzLjMtNSw3LjUtOS4xLDEyLjQtMTIuNSAgYzAuNy0wLjUsMS4xLTAuNCwxLjcsMC4xYzIuMSwxLjcsNC40LDMuMyw2LjUsNC45YzAuNywwLjUsMS4zLDAuNywyLDAuMmMwLjUtMC4zLDEuMS0wLjYsMS43LTAuN2MyLjMtMC40LDIuOC0xLjksMi45LTMuOSAgYzAuMS0yLjEsMC42LTQuMiwwLjgtNi4zYzAuMS0xLDAuNS0xLjMsMS40LTEuNEM0Ny4xLDMuNyw1My4yLDMuNyw1OS40LDV6IE0zMi42LDQ5LjZjLTAuMSw5LjMsNy41LDE2LjgsMTYuOCwxNi45ICBjOS4yLDAsMTYuOS03LjYsMTYuOS0xNi44YzAtOS4yLTcuNi0xNi43LTE2LjgtMTYuOEM0MC4yLDMyLjgsMzIuNiw0MC4zLDMyLjYsNDkuNnoiLz48dGV4dCB4PSIwIiB5PSIxMTUiIGZpbGw9IiMwMDAwMDAiIGZvbnQtc2l6ZT0iNXB4IiBmb250LXdlaWdodD0iYm9sZCIgZm9udC1mYW1pbHk9IidIZWx2ZXRpY2EgTmV1ZScsIEhlbHZldGljYSwgQXJpYWwtVW5pY29kZSwgQXJpYWwsIFNhbnMtc2VyaWYiPkNyZWF0ZWQgYnkgU2hhd24gRXJkZWx5IDwvdGV4dD48dGV4dCB4PSIwIiB5PSIxMjAiIGZpbGw9IiMwMDAwMDAiIGZvbnQtc2l6ZT0iNXB4IiBmb250LXdlaWdodD0iYm9sZCIgZm9udC1mYW1pbHk9IidIZWx2ZXRpY2EgTmV1ZScsIEhlbHZldGljYSwgQXJpYWwtVW5pY29kZSwgQXJpYWwsIFNhbnMtc2VyaWYiPmZyb20gdGhlIE5vdW4gUHJvamVjdDwvdGV4dD48L3N2Zz4=',
+
+	                        // Created by Guilhem.
+
+	                        backArrow: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2ZXJzaW9uPSIxLjEiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgMTAwIDEyNSIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAwIDAgMTAwIDEwMCIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+PGc+PGxpbmUgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJiZXZlbCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiB4MT0iOTMuMSIgeTE9IjUwIiB4Mj0iNi45IiB5Mj0iNTAiLz48bGluZSBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49ImJldmVsIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHgxPSI2LjkiIHkxPSI1MCIgeDI9IjMyLjciIHkyPSI3NS45Ii8+PGxpbmUgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJiZXZlbCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiB4MT0iNi45IiB5MT0iNTAiIHgyPSIzMi43IiB5Mj0iMjQuMSIvPjwvZz48dGV4dCB4PSIwIiB5PSIxMTUiIGZpbGw9IiMwMDAwMDAiIGZvbnQtc2l6ZT0iNXB4IiBmb250LXdlaWdodD0iYm9sZCIgZm9udC1mYW1pbHk9IidIZWx2ZXRpY2EgTmV1ZScsIEhlbHZldGljYSwgQXJpYWwtVW5pY29kZSwgQXJpYWwsIFNhbnMtc2VyaWYiPkNyZWF0ZWQgYnkgR3VpbGhlbTwvdGV4dD48dGV4dCB4PSIwIiB5PSIxMjAiIGZpbGw9IiMwMDAwMDAiIGZvbnQtc2l6ZT0iNXB4IiBmb250LXdlaWdodD0iYm9sZCIgZm9udC1mYW1pbHk9IidIZWx2ZXRpY2EgTmV1ZScsIEhlbHZldGljYSwgQXJpYWwtVW5pY29kZSwgQXJpYWwsIFNhbnMtc2VyaWYiPmZyb20gdGhlIE5vdW4gUHJvamVjdDwvdGV4dD48L3N2Zz4='
+
+	                };
+
+	                this.util = util, this.gl = webgl, this.vr = webvr;
+
+	                // save old DOM style
+
+	                if (init) {
+
+	                        this.init(this.UI_DOM);
+	                }
+	        }
+
+	        _createClass(Ui, [{
+	                key: 'init',
+	                value: function init(ui) {
+
+	                        if (!ui) {
+
+	                                console.log('no mode provided, setting default');
+
+	                                ui = this.mode;
+	                        }
+
+	                        console.log('initializing Ui: ' + ui);
+
+	                        // begin listening for fullscreen events.
+
+	                        // Bind to fullscreen events.
+	                        document.addEventListener('webkitfullscreenchange', this.fullscreenChange.bind(this));
+
+	                        document.addEventListener('mozfullscreenchange', this.fullscreenChange.bind(this));
+
+	                        document.addEventListener('msfullscreenchange', this.fullscreenChange.bind(this));
+
+	                        // switch to the correct screen configuration.
+
+	                        switch (ui) {
+
+	                                case this.UI_VR:
+
+	                                        break;
+
+	                                case this.UI_FULLSCREEN:
+
+	                                        break;
+
+	                                case this.UI_DOM:
+
+	                                default:
+
+	                                        this.createDOMUi();
+
+	                                        break;
+
+	                        }
+	                }
+
+	                /** 
+	                 * Create the default DOM ui.
+	                 */
+
+	        }, {
+	                key: 'createDOMUi',
+	                value: function createDOMUi() {
+	                        var _this = this;
+
+	                        console.log('entering DOMUi');
+
+	                        var c = this.gl.getCanvas();
+
+	                        // Check for controls.
+
+	                        var controls = c.parentNode.querySelector('.webvr-mini-controls');
+
+	                        if (!controls) {
+
+	                                controls = document.createElement('nav');
+	                        }
+
+	                        if (c) {
+
+	                                console.log('creating DOM Ui');
+
+	                                // VR button
+
+	                                var vrButton = this.createButton();
+
+	                                vrButton.style.top = '0px';
+
+	                                vrButton.style.left = '0px';
+
+	                                vrButton.zIndex = '9999', vrButton.src = this.icons.vr;
+
+	                                vrButton.style.display = 'inline-block';
+
+	                                vrButton.addEventListener('click', function (evt) {
+
+	                                        console.log('clicked vr button...');
+
+	                                        evt.preventDefault();
+	                                });
+
+	                                controls.appendChild(vrButton);
+
+	                                // Fullscreen
+
+	                                var fullscreenButton = this.createButton();
+
+	                                fullscreenButton.style.top = '4px';
+
+	                                fullscreenButton.style.left = '60px';
+
+	                                fullscreenButton.style.width = '24px';
+
+	                                fullscreenButton.style.height = '24px';
+
+	                                fullscreenButton.src = this.icons.fullscreen;
+
+	                                fullscreenButton.style.display = 'inline-block';
+
+	                                fullscreenButton.addEventListener('click', function (evt) {
+
+	                                        console.log('clicked fullscreen button...');
+
+	                                        var f = Math.max(window.devicePixelRatio, 1);
+
+	                                        // Get the current size of the parent.
+
+	                                        var p = c.parentNode;
+
+	                                        _this.oldWidth = p.clientWidth * f | 0;
+
+	                                        _this.oldHeight = p.clientHeight * f | 0;
+
+	                                        p.style.width = _this.util.getScreenWidth() + 'px';
+
+	                                        p.style.height = _this.util.getScreenHeight() + 'px';
+
+	                                        _this.mode = _this.UI_DOM;
+
+	                                        _this.requestFullscreen();
+
+	                                        evt.preventDefault();
+	                                });
+
+	                                controls.appendChild(fullscreenButton);
+
+	                                // Return button.
+
+	                                var returnButton = this.createButton();
+
+	                                returnButton.style.top = '0px';
+
+	                                returnButton.style.left = '0px';
+
+	                                returnButton.zIndex = '9999', returnButton.src = this.icons.vr;
+
+	                                returnButton.style.display = 'none'; // inline-block';
+
+	                                returnButton.addEventListener('click', function (evt) {
+
+	                                        console.log('clicked return button...');
+
+	                                        evt.preventDefault();
+	                                });
+
+	                                controls.appendChild(vrButton);
+	                        } else {
+
+	                                console.error('Ui::createDOMUi(): canvas not defined');
+	                        }
+	                }
+
+	                /** 
+	                 * Create a Ui button
+	                 */
+
+	        }, {
+	                key: 'createButton',
+	                value: function createButton() {
+
+	                        var button = document.createElement('img');
+
+	                        button.className = 'webvr-mini-button';
+
+	                        var s = button.style;
+
+	                        s.position = 'absolute', s.width = '36px', s.height = '36px', s.backgroundSize = 'cover', s.backgroundColor = 'transparent', s.border = 0, s.userSelect = 'none', s.webkitUserSelect = 'none', s.MozUserSelect = 'none', s.cursor = 'pointer', s.padding = '12px', s.zIndex = 1, s.display = 'none', s.boxSizing = 'content-box';
+
+	                        // Prevent button from being selected and dragged.
+
+	                        button.draggable = false;
+
+	                        button.addEventListener('dragstart', function (evt) {
+
+	                                evt.preventDefault();
+	                        });
+
+	                        // Style it on hover.
+
+	                        button.addEventListener('mouseenter', function (evt) {
+
+	                                s.filter = s.webkitFilter = 'drop-shadow(0 0 6px rgba(255,255,255,1))';
+	                        });
+
+	                        button.addEventListener('mouseleave', function (evt) {
+
+	                                s.filter = s.webkitFilter = '';
+	                        });
+
+	                        return button;
+	                }
+	        }, {
+	                key: 'requestFullscreen',
+	                value: function requestFullscreen() {
+
+	                        var canvas = this.gl.getCanvas();
+
+	                        var parent = canvas.parentNode;
+
+	                        if (parent.requestFullscreen) {
+
+	                                parent.requestFullscreen();
+	                        } else if (parent.mozRequestFullScreen) {
+
+	                                parent.mozRequestFullScreen();
+	                        } else if (parent.webkitRequestFullscreen) {
+
+	                                parent.webkitRequestFullscreen();
+	                        } else if (parent.msRequestFullscreen) {
+
+	                                parent.msRequestFullscreen();
+	                        }
+	                }
+	        }, {
+	                key: 'exitFullscreen',
+	                value: function exitFullscreen() {
+
+	                        if (document.exitFullscreen) {
+
+	                                document.exitFullscreen();
+	                        } else if (document.mozCancelFullScreen) {
+
+	                                document.mozCancelFullScreen();
+	                        } else if (document.webkitExitFullscreen) {
+
+	                                document.webkitExitFullscreen();
+	                        } else if (document.msExitFullscreen) {
+
+	                                document.msExitFullscreen();
+	                        }
+	                }
+
+	                /** 
+	                 * Handle a fullscreen transition.
+	                 * NOTE: used .bind() to bind to this object.s
+	                 */
+
+	        }, {
+	                key: 'fullscreenChange',
+	                value: function fullscreenChange(evt) {
+
+	                        var c = this.gl.getCanvas();
+
+	                        var p = c.parentNode;
+
+	                        switch (this.mode) {
+
+	                                case this.UI_VR:
+
+	                                        break;
+
+	                                case this.UI_FULLSCREEN:
+
+	                                        console.log('from fullscreen to DOM...');
+
+	                                        p.style.width = '';
+
+	                                        p.style.height = '';
+
+	                                        this.mode = this.UI_DOM;
+
+	                                        break;
+
+	                                default:
+
+	                                case this.UI_DOM:
+
+	                                        console.log('from DOM to fullscreen...');
+
+	                                        this.mode = this.UI_FULLSCREEN;
+
+	                                        break;
+
+	                        }
+	                }
+	        }]);
+
+	        return Ui;
+	}();
+
+	// We put this here because of JSDoc(!).
+
+	exports.default = Ui;
 
 /***/ }
 /******/ ]);

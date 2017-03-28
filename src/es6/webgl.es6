@@ -133,6 +133,14 @@ class WebGL {
 
             canvas.height = r.height;
 
+            // Save current window width and height (used in window resize).
+
+            this.oldWidth = this.util.getWindowWidth();
+
+            this.oldHeight = this.util.getWindowHeight();
+
+            // Create the WebGL context for the <canvas>, trying to get the most recent version.
+
             this.gl = this.createContext( canvas );
 
             if ( this.gl ) {
@@ -319,31 +327,41 @@ class WebGL {
 
         if ( this.ready() ) {
 
-            let f = Math.max( window.devicePixelRatio, 1 );
+            let wWidth = this.util.getWindowWidth();
 
-            const gl = this.getContext();
+            if ( wWidth !== this.oldWidth ) {
 
-            let c = this.getCanvas();
+                const f = Math.max( window.devicePixelRatio, 1 );
 
-            let width  = c.clientWidth  * f | 0;
+                const gl = this.getContext();
 
-            let height = c.clientHeight * f | 0;
+                let c = this.getCanvas();
 
-            if (c.width !== width || c.height !== height) {
+                // Get the current size
+
+                const width  = c.clientWidth  * f | 0;
+
+                const height = c.clientHeight * f | 0;
+
+                // Set the canvas width and height property.
 
                 c.width = width;
 
                 c.height = height;
 
-                gl.viewportWidth = c.width;
+                // Set the WebGL viewport.
 
-                gl.viewportHeight = c.height;
+                gl.viewportWidth = width;
+
+                gl.viewportHeight = height;
 
                 gl.viewport( 0, 0, gl.viewportWidth, gl.viewportHeight );
 
-                return true;
-
             }
+
+            // Save the values.
+
+            this.oldWidth = wWidth;
 
         }
 

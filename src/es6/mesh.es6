@@ -1248,7 +1248,7 @@ class Mesh {
     }
 
     /** 
-     * Find vertices in identical positions, and merge them.
+     * Reduce the number of vertices, preserving overall shape.
      */
     simplify () {
 
@@ -1270,62 +1270,9 @@ class Mesh {
 
         let newIndexArr = [];
 
-        for ( let i = 0; i < vertexArr.length; i++ ) {
-
-            let vtx1 = vertexArr[ i ];
-
-            if ( vtx1.idx !== i ) console.error( 'idxes do not match for ' + vtx1.idx );
-
-            let max = i;
-
-            let min = max;
-
-            for ( let j = 0; j < vertexArr.length; j++ ) {
-
-                let vtx2 = vertexArr[ j ];
-
-                if ( i !== j ) {
-
-                    // look for a position match that is the lowest idx
-
-                    if ( vtx1.distance( vtx2 ) < this.epsilon ) {
-
-                        min = Math.min( j, min );
-
-                    }
-
-                }
-
-            } // end of inner jth loop
-
-            // store the min
-
-            vtx1.lowIdx = min;
-
-            ///if ( vtx1.idx !== vtx1.lowIdx ) {
-            
-            ///    console.log( 'for identical vtx1 ' + vtx1.idx + ' and vtx2 ' + vtx1.lowIdx + ', texCoords.u:' + vtx1.texCoords.u + ',' + vertexArr[ vtx1.lowIdx ].texCoords.u)
-
-            ///}
+        // Generate our Edge array
 
 
-        } // end of outer ith loop
-
-        // Burn out a new indexArr
-
-        for ( let i = 0; i < indexArr.length; i++ ) {
-
-            let vtx = vertexArr[ indexArr[ i ] ];
-
-            newIndexArr.push( vtx.lowIdx );
-
-            if ( newVertexArr.indexOf( vtx ) === NOT_IN_LIST ) {
-
-                newVertexArr.push ( vtx );
-
-            }
-
-        }
 
         // Copy over old Vertex and Index array.
 
