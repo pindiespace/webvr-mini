@@ -12,7 +12,7 @@ class GeoObj {
 
         this.primName = name,
 
-        this.webgl = webgl,
+        this.gl = webgl,
 
         this.util = util,
 
@@ -114,7 +114,7 @@ class GeoObj {
 
         // Save the max allowed drawing size. For WebGL 1.0 with extension, vertices must be < 65k.
 
-        this.MAX_DRAWELEMENTS = this.webgl.MAX_DRAWELEMENTS;
+        this.MAX_DRAWELEMENTS = this.gl.MAX_DRAWELEMENTS;
 
         this.mName = 'geo-obj for ' + this.primName + '::';
 
@@ -548,7 +548,7 @@ class GeoObj {
 
         if( this.util.isArray( indices ) ) {
 
-            if ( this.webgl.stats.uint32 ) {
+            if ( this.gl.stats.uint32 ) {
 
                 o.data = new Uint32Array( indices );
 
@@ -715,7 +715,7 @@ class GeoObj {
 
         }
 
-        if ( this.vertices.data.length > this.webgl.MAX_DRAWELEMENTS ) {
+        if ( this.vertices.data.length > this.gl.MAX_DRAWELEMENTS ) {
 
             this.ssz = true;
 
@@ -754,7 +754,7 @@ class GeoObj {
 
         this.colors.data = concat( this.colors.data, colors );
 
-        if ( this.vertices.data.length > this.webgl.MAX_DRAWELEMENTS ) {
+        if ( this.vertices.data.length > this.gl.MAX_DRAWELEMENTS ) {
 
             this.ssz = true;
 
@@ -783,7 +783,7 @@ class GeoObj {
      */
     bindGLBuffer( o, type ) {
 
-        const gl = this.webgl.getContext();
+        const gl = this.gl.getContext();
 
         o.buffer = gl.createBuffer();
 
@@ -853,7 +853,7 @@ class GeoObj {
      */
     createGLBuffers () {
 
-            const gl = this.webgl.getContext();
+            const gl = this.gl.getContext();
 
             let fnName = this.mName + 'createGLBuffers():';
 
@@ -863,7 +863,7 @@ class GeoObj {
 
             if ( ! o.data.length ) {
 
-                console.log( fnName + ' no vertices present, creating default' );
+                // console.log( fnName + ' no vertices present, creating default' );
 
                 o.data = new Float32Array();
 
@@ -879,11 +879,11 @@ class GeoObj {
              * Conditionally create a UINT16 or UINT32 buffer for the index values, based 
              * on whether this is WebGL 2.0, or the WebGL extension is available
              */
-            if ( this.webgl.stats.uint32 ) {
+            if ( this.gl.stats.uint32 ) {
 
                 if ( ! o.data.length ) {
 
-                    console.log( fnName + ' no indices present, creating default' );
+                    // console.log( fnName + ' no indices present, creating default' );
 
                     o.data = new Uint32Array();
 
@@ -896,7 +896,7 @@ class GeoObj {
 
                 if ( ! o.data.length ) {
 
-                    console.log( fnName + ' no indices present, creating default' );
+                    // console.log( fnName + ' no indices present, creating default' );
 
                     o.data = new Uint16Array();
 
@@ -912,7 +912,7 @@ class GeoObj {
 
             if ( ! o.data.length ) {
 
-                console.warn( fnName + ' no sides present, creating default' );
+                // console.warn( fnName + ' no sides present, creating default' );
 
                 o.data = new Uint16Array();
 
@@ -926,7 +926,7 @@ class GeoObj {
 
             if ( ! o.data.length ) {
 
-                console.log( fnName + ': no normals, present, creating default' );
+                // console.log( fnName + ': no normals, present, creating default' );
 
                 o.data = new Float32Array();
 
@@ -940,7 +940,7 @@ class GeoObj {
 
             if ( ! o.data.length ) {
 
-                console.warn( fnName + ' no texture present, creating default' );
+                // console.warn( fnName + ' no texture present, creating default' );
 
                 o.data = new Float32Array();
 
@@ -954,7 +954,7 @@ class GeoObj {
 
             if ( ! o.data.length ) {
 
-                console.warn( fnName + ' no tangents present, creating default' );
+                // console.warn( fnName + ' no tangents present, creating default' );
 
                 o.data = new Float32Array();
 
@@ -968,7 +968,7 @@ class GeoObj {
 
             if ( ! o.data.length || ( o.data.length < ( 4 * this.vertices.length / 3 ) ) ) {
 
-                console.warn( fnName + ' no colors present, creating default color' );
+                // console.warn( fnName + ' no colors present, creating default color' );
 
                 o.data = new Float32Array();
 

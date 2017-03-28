@@ -127,11 +127,11 @@ var promise = new Promise( ( resolve, reject ) => {
 
     if ( webgl.init( 'webvr-mini-canvas' ) ) {
 
-        webvr = new WebVR( false, util, glMatrix, webgl );
+        webvr = new WebVR( true, util, glMatrix, webgl );
+
+        // Load our (minimal) 2d user interface.
 
         ui = new Ui( false, util, webgl, webvr );
-
-        window.ui = ui;
 
         // The Prim object needs Loaders.
 
@@ -147,7 +147,7 @@ var promise = new Promise( ( resolve, reject ) => {
 
         prim = new Prim ( true, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo );
 
-        // Add shaders to Renderer
+        // Add shaders to Renderer.
 
         renderer = new Renderer ( true, util, glMatrix, webgl );
 
@@ -161,7 +161,7 @@ var promise = new Promise( ( resolve, reject ) => {
 
         world = new World( webgl, prim, renderer );
 
-        // Initialize our Ui
+        // Initialize our Ui.
 
         ui.init();
 
@@ -176,6 +176,8 @@ var promise = new Promise( ( resolve, reject ) => {
     }
 
 }).then( ( result ) => {
+
+        // TODO: Call ui to create a wait icon here.
 
         world.init();
 

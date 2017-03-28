@@ -43,6 +43,10 @@ class WebGL {
 
         this.NOT_IN_LIST = util.NOT_IN_LIST;
 
+        this.near = 0.1;
+
+        this.far = 100;
+
         this.stats = {};
 
         if ( init === true ) {
@@ -259,9 +263,9 @@ class WebGL {
 
                 //gl.disable(gl.CULL_FACE);
 
-                gl.clearDepth(1.0);                 // Clear everything
+                gl.clearDepth( 1.0 );                 // Clear everything
 
-                gl.depthFunc(gl.LEQUAL);            // Near things obscure far things
+                gl.depthFunc( gl.LEQUAL );            // Near things obscure far things
 
                 gl.enable( gl.BLEND );              // Allow blending
 
@@ -281,11 +285,15 @@ class WebGL {
 
                 gl.clearColor( 0.1, 0.1, 0.1, 1.0 );
 
-           
+                // Clear the screen to the clearColor by default.
+
+                this.clear();
 
                 return this.gl;
 
             } else {
+
+            // We check prior to loading this module, so we shouldn't go here if not supported.
 
                 console.error( 'no WebGL context' );
 
@@ -329,6 +337,8 @@ class WebGL {
 
             let wWidth = this.util.getWindowWidth();
 
+            let wHeight = this.util.getWindowHeight();
+
             if ( wWidth !== this.oldWidth ) {
 
                 const f = Math.max( window.devicePixelRatio, 1 );
@@ -337,13 +347,13 @@ class WebGL {
 
                 let c = this.getCanvas();
 
-                // Get the current size
+                // Get the current size of the <canvas>
 
                 const width  = c.clientWidth  * f | 0;
 
                 const height = c.clientHeight * f | 0;
 
-                // Set the canvas width and height property.
+                // Set the <canvas> width and height property.
 
                 c.width = width;
 
@@ -362,6 +372,8 @@ class WebGL {
             // Save the values.
 
             this.oldWidth = wWidth;
+
+            this.oldHeight = wHeight;
 
         }
 

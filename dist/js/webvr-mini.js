@@ -468,11 +468,11 @@
 
 	        if (webgl.init('webvr-mini-canvas')) {
 
-	                exports.webvr = webvr = new _webvr2.default(false, util, glMatrix, webgl);
+	                exports.webvr = webvr = new _webvr2.default(true, util, glMatrix, webgl);
+
+	                // Load our (minimal) 2d user interface.
 
 	                ui = new _ui2.default(false, util, webgl, webvr);
-
-	                window.ui = ui;
 
 	                // The Prim object needs Loaders.
 
@@ -488,7 +488,7 @@
 
 	                exports.prim = prim = new _prim2.default(true, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo);
 
-	                // Add shaders to Renderer
+	                // Add shaders to Renderer.
 
 	                renderer = new _renderer2.default(true, util, glMatrix, webgl);
 
@@ -502,7 +502,7 @@
 
 	                exports.world = world = new _world2.default(webgl, prim, renderer);
 
-	                // Initialize our Ui
+	                // Initialize our Ui.
 
 	                ui.init();
 
@@ -512,6 +512,8 @@
 	                reject(Error("It broke"));
 	        }
 	}).then(function (result) {
+
+	        // TODO: Call ui to create a wait icon here.
 
 	        world.init();
 	});
@@ -626,6 +628,10 @@
 	                // Finite number polyfill.
 
 	                this.setFinite();
+
+	                // Add slice to typed arrays, if needed.
+
+	                this.setSlice();
 	        }
 
 	        /** 
@@ -690,6 +696,47 @@
 
 	                                        return Date.now() - nowOffset;
 	                                };
+	                        }
+	                }
+
+	                /** 
+	                 * if typed arrays don't have slice, add it
+	                 */
+
+	        }, {
+	                key: 'setSlice',
+	                value: function setSlice() {
+
+	                        if (!Object.defineProperty) {
+
+	                                return;
+	                        }
+
+	                        if (Uint16Array && !Uint16Array.prototype.slice) {
+
+	                                Object.defineProperty(Uint16Array.prototype, 'slice', {
+
+	                                        value: Array.prototype.slice
+
+	                                });
+	                        }
+
+	                        if (Uint32Array && !Uint32Array.prototype.slice) {
+
+	                                Object.defineProperty(Uint32Array.prototype, 'slice', {
+
+	                                        value: Array.prototype.slice
+
+	                                });
+	                        }
+
+	                        if (Float32Array && !Float32Array.prototype.slice) {
+
+	                                Object.defineProperty(Float32Array.prototype, 'slice', {
+
+	                                        value: Array.prototype.slice
+
+	                                });
 	                        }
 	                }
 
@@ -910,6 +957,30 @@
 	                        }
 
 	                        return idx; // ending position 
+	                }
+
+	                /** 
+	                 * Copy an array. If array.slice is not present, use a direct copy.
+	                 */
+
+	        }, {
+	                key: 'copyArr',
+	                value: function copyArr(arr) {
+
+	                        if (arr.slice) {
+
+	                                return arr.slice();
+	                        } else {
+
+	                                var newArr = new Array(arr.length);
+
+	                                for (var i = 0; i < arr.length; i++) {
+
+	                                        newArr[i] = arr[i];
+	                                }
+
+	                                return newArr;
+	                        }
 	                }
 
 	                /** 
@@ -1299,6 +1370,10 @@
 
 	                this.NOT_IN_LIST = util.NOT_IN_LIST;
 
+	                this.near = 0.1;
+
+	                this.far = 100;
+
 	                this.stats = {};
 
 	                if (init === true) {
@@ -1529,8 +1604,14 @@
 
 	                                        gl.clearColor(0.1, 0.1, 0.1, 1.0);
 
+	                                        // Clear the screen to the clearColor by default.
+
+	                                        this.clear();
+
 	                                        return this.gl;
 	                                } else {
+
+	                                        // We check prior to loading this module, so we shouldn't go here if not supported.
 
 	                                        console.error('no WebGL context');
 	                                } // end of have a gl context
@@ -1573,6 +1654,8 @@
 
 	                                var wWidth = this.util.getWindowWidth();
 
+	                                var wHeight = this.util.getWindowHeight();
+
 	                                if (wWidth !== this.oldWidth) {
 
 	                                        var f = Math.max(window.devicePixelRatio, 1);
@@ -1581,13 +1664,13 @@
 
 	                                        var c = this.getCanvas();
 
-	                                        // Get the current size
+	                                        // Get the current size of the <canvas>
 
 	                                        var width = c.clientWidth * f | 0;
 
 	                                        var height = c.clientHeight * f | 0;
 
-	                                        // Set the canvas width and height property.
+	                                        // Set the <canvas> width and height property.
 
 	                                        c.width = width;
 
@@ -1605,6 +1688,8 @@
 	                                // Save the values.
 
 	                                this.oldWidth = wWidth;
+
+	                                this.oldHeight = wHeight;
 	                        }
 
 	                        return false;
@@ -2427,18 +2512,42 @@
 
 	                this.glMatrix = glMatrix;
 
-	                this.webgl = webgl;
+	                this.gl = webgl;
 
-	                if (this.init === true) {
+	                if (init === true) {
 
-	                        // Do something.
-
+	                        this.init();
 	                }
 	        }
 
+	        /** 
+	         * Adapted from toji's room-scale example.
+	         */
+
+
 	        _createClass(WebVR, [{
 	                key: 'init',
-	                value: function init() {}
+	                value: function init() {
+
+	                        if (navigator.getVRDisplays) {
+
+	                                navigator.getVRDisplays().then(function (displays) {
+
+	                                        console.log('webvr is available');
+
+	                                        if (displays.length > 0) {
+
+	                                                //initWebGL(true);
+
+	                                        }
+	                                });
+	                        } else {
+
+	                                // We check for support prior to loading this module, so we shouldn't go here if not supported.
+
+	                                console.error('webgl not present');
+	                        }
+	                }
 	        }]);
 
 	        return WebVR;
@@ -2487,9 +2596,11 @@
 
 	                var MAX_CACHE_IMAGES = 3;
 
-	                // Specific to texture cache.
-
 	                var _this = _possibleConstructorReturn(this, (LoadTexture.__proto__ || Object.getPrototypeOf(LoadTexture)).call(this, init, util, glMatrix, webgl, MAX_CACHE_IMAGES));
+
+	                _this.gl = webgl;
+
+	                // Specific to texture cache.
 
 	                _this.MAX_TIMEOUT = 10;
 
@@ -2497,7 +2608,7 @@
 
 	                if (init) {
 
-	                        // Do something specific to the sublclass.
+	                        // Do something.
 
 	                }
 
@@ -2605,7 +2716,7 @@
 
 	                        ////////////console.log( 'In uploadTexture() for:' + loadObj.prim.name + ' src:' + loadObj.image.src );
 
-	                        var gl = this.webgl.getContext();
+	                        var gl = this.gl.getContext();
 
 	                        var textures = loadObj.prim.textures;
 
@@ -3572,7 +3683,19 @@
 
 	                var MAX_CACHE_AUDIO = 3;
 
-	                _this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+	                if (window.AudioContext !== 'undefined') {
+
+	                        _this.audioCtx = new window.AudioContext();
+	                } else if (window.webkitAudioContext !== 'undefined') {
+
+	                        _this.audioCtx = new window.webkitAudioContext();
+	                } else if (typeof mozAudioContext !== 'undefined') {
+
+	                        _this.audioCtx = new mozAudioContext();
+	                } else {
+
+	                        console.warn('HTML5 audio not supported (will be silent)');
+	                }
 
 	                _this.sources = {};
 
@@ -3819,7 +3942,7 @@
 
 	                                code: s.join('\n'),
 
-	                                varList: this.webgl.createVarList(s)
+	                                varList: this.gl.createVarList(s)
 
 	                        };
 	                }
@@ -3844,7 +3967,7 @@
 
 	                                code: s.join('\n'),
 
-	                                varList: this.webgl.createVarList(s)
+	                                varList: this.gl.createVarList(s)
 
 	                        };
 	                }
@@ -3878,7 +4001,9 @@
 	                            program = arr[7],
 	                            vsVars = arr[8],
 	                            fsVars = arr[9],
-	                            stats = arr[10];
+	                            stats = arr[10],
+	                            near = arr[11],
+	                            far = arr[12];
 
 	                        // Attach objects.
 
@@ -3920,7 +4045,7 @@
 
 	                                // Reset perspective matrix.
 
-	                                mat4.perspective(pMatrix, Math.PI * 0.4, canvas.width / canvas.height, 0.1, 100.0); // right
+	                                mat4.perspective(pMatrix, Math.PI * 0.4, canvas.width / canvas.height, near, far); // right
 
 	                                // Begin program loop
 
@@ -4037,7 +4162,7 @@
 
 	                // class name = this.constructor.name
 
-	                this.webgl = webgl;
+	                this.gl = webgl;
 
 	                this.util = util;
 
@@ -4051,7 +4176,7 @@
 
 	                this.floatp = '';
 
-	                if (this.webgl.stats.highp) {
+	                if (this.gl.stats.highp) {
 
 	                        this.floatp = 'precision highp float;';
 	                } else {
@@ -4157,12 +4282,12 @@
 
 	                        if (this.vertexShaderFile && this.this.fragmentShaderFile) {
 
-	                                program = this.webgl.createProgram(this.webgl.fetchVertexShader(this.vertexShaderFile), this.webgl.fetchFragmentShader(this.fragmentShaderFile));
+	                                program = this.gl.createProgram(this.gl.fetchVertexShader(this.vertexShaderFile), this.gl.fetchFragmentShader(this.fragmentShaderFile));
 	                        } else {
 
 	                                // vsSrc() and fsSrc() are defined in derived Shader objects.
 
-	                                program = this.webgl.createProgram(this.vsSrc(), this.fsSrc());
+	                                program = this.gl.createProgram(this.vsSrc(), this.fsSrc());
 	                        }
 
 	                        if (!program) {
@@ -4227,20 +4352,20 @@
 	                         * code to have each custom Shader init() method grab the local references from a common method. 
 	                         */
 
-	                        return [this.webgl.getContext(), this.webgl.getCanvas(), this.glMatrix.mat4, this.glMatrix.mat3, this.glMatrix.vec3, this.glMatrix.mat4.create(), // perspective
+	                        return [this.gl.getContext(), this.gl.getCanvas(), this.glMatrix.mat4, this.glMatrix.mat3, this.glMatrix.vec3, this.glMatrix.mat4.create(), // perspective
 
 	                        this.glMatrix.mat4.create(), // model-view
 
 	                        program, {
-	                                attribute: this.webgl.setAttributeArrays(program.shaderProgram, program.vsVars.attribute),
+	                                attribute: this.gl.setAttributeArrays(program.shaderProgram, program.vsVars.attribute),
 
-	                                uniform: this.webgl.setUniformLocations(program.shaderProgram, program.vsVars.uniform)
+	                                uniform: this.gl.setUniformLocations(program.shaderProgram, program.vsVars.uniform)
 
 	                        }, {
 
-	                                uniform: this.webgl.setUniformLocations(program.shaderProgram, program.fsVars.uniform)
+	                                uniform: this.gl.setUniformLocations(program.shaderProgram, program.fsVars.uniform)
 
-	                        }, this.webgl.stats];
+	                        }, this.gl.stats, this.gl.near, this.gl.far];
 	                }
 
 	                /* 
@@ -4345,7 +4470,7 @@
 
 	                                code: s.join('\n'),
 
-	                                varList: this.webgl.createVarList(s)
+	                                varList: this.gl.createVarList(s)
 
 	                        };
 	                }
@@ -4363,7 +4488,7 @@
 
 	                                code: s.join('\n'),
 
-	                                varList: this.webgl.createVarList(s)
+	                                varList: this.gl.createVarList(s)
 
 	                        };
 	                }
@@ -4397,7 +4522,9 @@
 	                            program = arr[7],
 	                            vsVars = arr[8],
 	                            fsVars = arr[9],
-	                            stats = arr[10];
+	                            stats = arr[10],
+	                            near = arr[11],
+	                            far = arr[12];
 
 	                        // We received webgl in the constructor, and gl above is referenced from it.
 
@@ -4445,7 +4572,7 @@
 
 	                                // Reset perspective matrix.
 
-	                                mat4.perspective(pMatrix, Math.PI * 0.4, canvas.width / canvas.height, 0.1, 100.0); // right
+	                                mat4.perspective(pMatrix, Math.PI * 0.4, canvas.width / canvas.height, near, far); // right
 
 	                                // Loop through assigned objects.
 
@@ -4510,7 +4637,7 @@
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
-	            value: true
+	        value: true
 	});
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -4528,273 +4655,275 @@
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 	var shaderDirLightTexture = function (_Shader) {
-	            _inherits(shaderDirLightTexture, _Shader);
+	        _inherits(shaderDirLightTexture, _Shader);
 
-	            function shaderDirLightTexture(init, util, glMatrix, webgl, shaderName) {
-	                        _classCallCheck(this, shaderDirLightTexture);
+	        function shaderDirLightTexture(init, util, glMatrix, webgl, shaderName) {
+	                _classCallCheck(this, shaderDirLightTexture);
 
-	                        var _this = _possibleConstructorReturn(this, (shaderDirLightTexture.__proto__ || Object.getPrototypeOf(shaderDirLightTexture)).call(this, init, util, glMatrix, webgl, shaderName));
+	                var _this = _possibleConstructorReturn(this, (shaderDirLightTexture.__proto__ || Object.getPrototypeOf(shaderDirLightTexture)).call(this, init, util, glMatrix, webgl, shaderName));
 
-	                        _this.needIndices = true;
+	                _this.needIndices = true;
 
-	                        _this.needTexCoords = true;
+	                _this.needTexCoords = true;
 
-	                        _this.needColors = false;
+	                _this.needColors = false;
 
-	                        _this.needNormals = true;
+	                _this.needNormals = true;
 
-	                        _this.needTangents = false;
+	                _this.needTangents = false;
 
-	                        _this.needLights = true;
+	                _this.needLights = true;
 
-	                        console.log('In ShaderTexture class');
+	                console.log('In ShaderTexture class');
 
-	                        return _this;
-	            }
+	                return _this;
+	        }
 
-	            /** 
-	             * --------------------------------------------------------------------
-	             * VERTEX SHADER 3
-	             * a directionally-lit textured object vertex shader.
-	             * @link http://learningwebgl.com/blog/?p=684
-	             * StackGL
-	             * @link https://github.com/stackgl
-	             * phong lighting
-	             * @link https://github.com/stackgl/glsl-lighting-walkthrough
-	             * - vertex position
-	             * - texture coordinate
-	             * - model-view matrix
-	             * - projection matrix
-	             * --------------------------------------------------------------------
-	             */
+	        /** 
+	         * --------------------------------------------------------------------
+	         * VERTEX SHADER 3
+	         * a directionally-lit textured object vertex shader.
+	         * @link http://learningwebgl.com/blog/?p=684
+	         * StackGL
+	         * @link https://github.com/stackgl
+	         * phong lighting
+	         * @link https://github.com/stackgl/glsl-lighting-walkthrough
+	         * - vertex position
+	         * - texture coordinate
+	         * - model-view matrix
+	         * - projection matrix
+	         * --------------------------------------------------------------------
+	         */
 
 
-	            _createClass(shaderDirLightTexture, [{
-	                        key: 'vsSrc',
-	                        value: function vsSrc() {
+	        _createClass(shaderDirLightTexture, [{
+	                key: 'vsSrc',
+	                value: function vsSrc() {
 
-	                                    var s = ['attribute vec3 aVertexPosition;', 'attribute vec3 aVertexNormal;', 'attribute vec2 aTextureCoord;', 'uniform mat4 uMVMatrix;', 'uniform mat4 uPMatrix;', 'uniform mat3 uNMatrix;', 'uniform vec3 uAmbientColor;', 'uniform vec3 uLightingDirection;', 'uniform vec3 uDirectionalColor;', 'uniform bool uUseLighting;', // TODO: remove?
+	                        var s = ['attribute vec3 aVertexPosition;', 'attribute vec3 aVertexNormal;', 'attribute vec2 aTextureCoord;', 'uniform mat4 uMVMatrix;', 'uniform mat4 uPMatrix;', 'uniform mat3 uNMatrix;', 'uniform vec3 uAmbientColor;', 'uniform vec3 uLightingDirection;', 'uniform vec3 uDirectionalColor;', 'uniform bool uUseLighting;', // TODO: remove?
 
-	                                    'varying vec2 vTextureCoord;', 'varying vec3 vLightWeighting;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vTextureCoord = aTextureCoord;', '   if(!uUseLighting) {', '       vLightWeighting = vec3(1.0, 1.0, 1.0);', '   } else {', '       vec3 transformedNormal = uNMatrix * aVertexNormal;', '       float directionalLightWeighting = max(dot(transformedNormal, uLightingDirection), 0.0);', '       vLightWeighting = uAmbientColor + uDirectionalColor * directionalLightWeighting;', '   }', '}'];
+	                        'varying vec2 vTextureCoord;', 'varying vec3 vLightWeighting;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vTextureCoord = aTextureCoord;', '   if(!uUseLighting) {', '       vLightWeighting = vec3(1.0, 1.0, 1.0);', '   } else {', '       vec3 transformedNormal = uNMatrix * aVertexNormal;', '       float directionalLightWeighting = max(dot(transformedNormal, uLightingDirection), 0.0);', '       vLightWeighting = uAmbientColor + uDirectionalColor * directionalLightWeighting;', '   }', '}'];
 
-	                                    return {
+	                        return {
 
-	                                                code: s.join('\n'),
+	                                code: s.join('\n'),
 
-	                                                varList: this.webgl.createVarList(s)
+	                                varList: this.gl.createVarList(s)
 
-	                                    };
+	                        };
+	                }
+
+	                /** 
+	                 * a default-lighting textured object fragment shader.
+	                 * - varying texture coordinate
+	                 * - texture 2D sampler
+	                 */
+
+	        }, {
+	                key: 'fsSrc',
+	                value: function fsSrc() {
+
+	                        var s = [
+
+	                        //'precision mediump float;',
+
+	                        this.floatp, 'varying vec2 vTextureCoord;', 'varying vec3 vLightWeighting;', 'uniform sampler2D uSampler;', 'void main(void) {', '    vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));', '    gl_FragColor = vec4(textureColor.rgb * vLightWeighting, textureColor.a);', '}'];
+
+	                        return {
+
+	                                code: s.join('\n'),
+
+	                                varList: this.gl.createVarList(s)
+
+	                        };
+	                }
+
+	                /** 
+	                 * --------------------------------------------------------------------
+	                 * Vertex Shader 3, using texture buffer and lighting.
+	                 * --------------------------------------------------------------------
+	                 */
+
+	                /** 
+	                 * initialize the update() and render() methods for this shader.
+	                 * @param{Prim[]} objList a list of initializing Prims (optional).
+	                 */
+
+	        }, {
+	                key: 'init',
+	                value: function init(objList) {
+
+	                        // DESTRUCTING DID NOT WORK!
+	                        //[gl, canvas, mat4, vec3, pMatrix, mvMatrix, program ] = this.setup();
+
+	                        var arr = this.setup(),
+	                            gl = arr[0],
+	                            canvas = arr[1],
+	                            mat4 = arr[2],
+	                            mat3 = arr[3],
+	                            vec3 = arr[4],
+	                            pMatrix = arr[5],
+	                            mvMatrix = arr[6],
+	                            program = arr[7],
+	                            vsVars = arr[8],
+	                            fsVars = arr[9],
+	                            stats = arr[10],
+	                            near = arr[11],
+	                            far = arr[12];
+
+	                        // Shorter reference.
+
+	                        var shaderProgram = program.shaderProgram;
+
+	                        // If we init with object, add them here.
+
+	                        if (objList) {
+
+	                                program.renderList = this.util.concatArr(program.renderList, objList);
 	                        }
 
-	                        /** 
-	                         * a default-lighting textured object fragment shader.
-	                         * - varying texture coordinate
-	                         * - texture 2D sampler
-	                         */
+	                        // TODO: TEMPORARY ADD LIGHTING CONTROL
 
-	            }, {
-	                        key: 'fsSrc',
-	                        value: function fsSrc() {
+	                        var lighting = true;
 
-	                                    var s = [
+	                        var ambient = [0.1, 0.1, 0.1]; // ambient colors WORKING
 
-	                                    //'precision mediump float;',
+	                        var lightingDirection = [//TODO: REDO
+	                        -0.25, -0.5, -0.1];
 
-	                                    this.floatp, 'varying vec2 vTextureCoord;', 'varying vec3 vLightWeighting;', 'uniform sampler2D uSampler;', 'void main(void) {', '    vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));', '    gl_FragColor = vec4(textureColor.rgb * vLightWeighting, textureColor.a);', '}'];
+	                        var directionalColor = [0.7, 0.7, 0.7];
 
-	                                    return {
+	                        var nMatrix = mat3.create(); // TODO: ADD MAT3 TO PASSED VARIABLES
 
-	                                                code: s.join('\n'),
+	                        var adjustedLD = vec3.create(); // TODO: redo
 
-	                                                varList: this.webgl.createVarList(s)
-
-	                                    };
-	                        }
+	                        // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
+	                        // TODO: https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/TechniquesforWorkingwithVertexData/TechniquesforWorkingwithVertexData.html
+	                        // TODO: http://max-limper.de/tech/batchedrendering.html
 
 	                        /** 
-	                         * --------------------------------------------------------------------
-	                         * Vertex Shader 3, using texture buffer and lighting.
-	                         * --------------------------------------------------------------------
+	                         * POLYMORPHIC METHODS
 	                         */
 
-	                        /** 
-	                         * initialize the update() and render() methods for this shader.
-	                         * @param{Prim[]} objList a list of initializing Prims (optional).
-	                         */
+	                        // Update object position, motion - given to World object.
 
-	            }, {
-	                        key: 'init',
-	                        value: function init(objList) {
+	                        program.update = function (obj) {
 
-	                                    // DESTRUCTING DID NOT WORK!
-	                                    //[gl, canvas, mat4, vec3, pMatrix, mvMatrix, program ] = this.setup();
+	                                // Standard mvMatrix updates.
 
-	                                    var arr = this.setup(),
-	                                        gl = arr[0],
-	                                        canvas = arr[1],
-	                                        mat4 = arr[2],
-	                                        mat3 = arr[3],
-	                                        vec3 = arr[4],
-	                                        pMatrix = arr[5],
-	                                        mvMatrix = arr[6],
-	                                        program = arr[7],
-	                                        vsVars = arr[8],
-	                                        fsVars = arr[9],
-	                                        stats = arr[10];
+	                                obj.setMV(mvMatrix);
 
-	                                    // Shorter reference.
+	                                // Compute lighting normals.
 
-	                                    var shaderProgram = program.shaderProgram;
+	                                vec3.normalize(adjustedLD, lightingDirection);
 
-	                                    // If we init with object, add them here.
+	                                vec3.scale(adjustedLD, adjustedLD, -1);
 
-	                                    if (objList) {
+	                                // Calculates a 3x3 normal matrix (transpose inverse) from the 4x4 matrix.
 
-	                                                program.renderList = this.util.concatArr(program.renderList, objList);
-	                                    }
+	                                mat3.normalFromMat4(nMatrix, mvMatrix);
 
-	                                    // TODO: TEMPORARY ADD LIGHTING CONTROL
+	                                // glmat3 library
+	                                //mat4.normalFromMat4( nMatrix, mvMatrix );
 
-	                                    var lighting = true;
+	                                // Custom updates go here, make local references to vsVars and fsVars.
+	                        };
 
-	                                    var ambient = [0.1, 0.1, 0.1]; // ambient colors WORKING
+	                        // Rendering - given to Renderer object, executed by World.
 
-	                                    var lightingDirection = [//TODO: REDO
-	                                    -0.25, -0.5, -0.1];
+	                        program.render = function () {
 
-	                                    var directionalColor = [0.7, 0.7, 0.7];
+	                                //console.log( 'gl:' + gl + ' canvas:' + canvas + ' mat4:' + mat4 + ' vec3:' + vec3 + ' pMatrix:' + pMatrix + ' mvMatrix:' + mvMatrix + ' program:' + program );
 
-	                                    var nMatrix = mat3.create(); // TODO: ADD MAT3 TO PASSED VARIABLES
+	                                gl.useProgram(shaderProgram);
 
-	                                    var adjustedLD = vec3.create(); // TODO: redo
+	                                // Reset perspective matrix.
 
-	                                    // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
-	                                    // TODO: https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/TechniquesforWorkingwithVertexData/TechniquesforWorkingwithVertexData.html
-	                                    // TODO: http://max-limper.de/tech/batchedrendering.html
+	                                mat4.perspective(pMatrix, Math.PI * 0.4, canvas.width / canvas.height, near, far); // right
 
-	                                    /** 
-	                                     * POLYMORPHIC METHODS
-	                                     */
+	                                // Begin program loop
 
-	                                    // Update object position, motion - given to World object.
+	                                for (var i = 0, len = program.renderList.length; i < len; i++) {
 
-	                                    program.update = function (obj) {
+	                                        var obj = program.renderList[i];
 
-	                                                // Standard mvMatrix updates.
+	                                        // Only render if we have at least one texture loaded.
 
-	                                                obj.setMV(mvMatrix);
+	                                        if (!obj.textures[0] || !obj.textures[0].texture) continue;
 
-	                                                // Compute lighting normals.
+	                                        // Update Model-View matrix with standard Prim values.
 
-	                                                vec3.normalize(adjustedLD, lightingDirection);
+	                                        program.update(obj, mvMatrix);
 
-	                                                vec3.scale(adjustedLD, adjustedLD, -1);
+	                                        // Bind vertex buffer.
 
-	                                                // Calculates a 3x3 normal matrix (transpose inverse) from the 4x4 matrix.
+	                                        gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.vertices.buffer);
+	                                        gl.enableVertexAttribArray(vsVars.attribute.vec3.aVertexPosition);
+	                                        gl.vertexAttribPointer(vsVars.attribute.vec3.aVertexPosition, obj.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0);
 
-	                                                mat3.normalFromMat4(nMatrix, mvMatrix);
+	                                        // Bind normals buffer.
 
-	                                                // glmat3 library
-	                                                //mat4.normalFromMat4( nMatrix, mvMatrix );
+	                                        gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.normals.buffer);
+	                                        gl.enableVertexAttribArray(vsVars.attribute.vec3.aVertexNormal);
+	                                        gl.vertexAttribPointer(vsVars.attribute.vec3.aVertexNormal, obj.geometry.normals.itemSize, gl.FLOAT, false, 0, 0);
 
-	                                                // Custom updates go here, make local references to vsVars and fsVars.
-	                                    };
+	                                        // Bind textures buffer (could have multiple bindings here).
 
-	                                    // Rendering - given to Renderer object, executed by World.
+	                                        gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.texCoords.buffer);
+	                                        gl.enableVertexAttribArray(vsVars.attribute.vec2.aTextureCoord);
+	                                        gl.vertexAttribPointer(vsVars.attribute.vec2.aTextureCoord, obj.geometry.texCoords.itemSize, gl.FLOAT, false, 0, 0);
 
-	                                    program.render = function () {
+	                                        gl.activeTexture(gl.TEXTURE0);
+	                                        gl.bindTexture(gl.TEXTURE_2D, null);
+	                                        gl.bindTexture(gl.TEXTURE_2D, obj.textures[0].texture);
 
-	                                                //console.log( 'gl:' + gl + ' canvas:' + canvas + ' mat4:' + mat4 + ' vec3:' + vec3 + ' pMatrix:' + pMatrix + ' mvMatrix:' + mvMatrix + ' program:' + program );
+	                                        // Set fragment shader sampler uniform.
 
-	                                                gl.useProgram(shaderProgram);
+	                                        gl.uniform1i(fsVars.uniform.sampler2D.uSampler, 0);
 
-	                                                // Reset perspective matrix.
+	                                        // Lighting flag.
 
-	                                                mat4.perspective(pMatrix, Math.PI * 0.4, canvas.width / canvas.height, 0.1, 100.0); // right
+	                                        gl.uniform1i(vsVars.uniform.bool.uUseLighting, lighting);
 
-	                                                // Begin program loop
+	                                        if (lighting) {
 
-	                                                for (var i = 0, len = program.renderList.length; i < len; i++) {
+	                                                gl.uniform3f(vsVars.uniform.vec3.uAmbientColor, ambient[0], ambient[1], ambient[2]);
 
-	                                                            var obj = program.renderList[i];
+	                                                gl.uniform3fv(vsVars.uniform.vec3.uLightingDirection, adjustedLD);
 
-	                                                            // Only render if we have at least one texture loaded.
+	                                                gl.uniform3f(vsVars.uniform.vec3.uDirectionalColor, directionalColor[0], directionalColor[1], directionalColor[2]);
+	                                        }
 
-	                                                            if (!obj.textures[0] || !obj.textures[0].texture) continue;
+	                                        // Normals matrix uniform
 
-	                                                            // Update Model-View matrix with standard Prim values.
+	                                        gl.uniformMatrix3fv(vsVars.uniform.mat3.uNMatrix, false, nMatrix);
 
-	                                                            program.update(obj, mvMatrix);
+	                                        // Set perspective and model-view matrix uniforms.
 
-	                                                            // Bind vertex buffer.
+	                                        gl.uniformMatrix4fv(vsVars.uniform.mat4.uPMatrix, false, pMatrix);
+	                                        gl.uniformMatrix4fv(vsVars.uniform.mat4.uMVMatrix, false, mvMatrix);
 
-	                                                            gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.vertices.buffer);
-	                                                            gl.enableVertexAttribArray(vsVars.attribute.vec3.aVertexPosition);
-	                                                            gl.vertexAttribPointer(vsVars.attribute.vec3.aVertexPosition, obj.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0);
+	                                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer);
 
-	                                                            // Bind normals buffer.
+	                                        if (stats.uint32) {
 
-	                                                            gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.normals.buffer);
-	                                                            gl.enableVertexAttribArray(vsVars.attribute.vec3.aVertexNormal);
-	                                                            gl.vertexAttribPointer(vsVars.attribute.vec3.aVertexNormal, obj.geometry.normals.itemSize, gl.FLOAT, false, 0, 0);
+	                                                // Draw elements, 0 -> 2e9
 
-	                                                            // Bind textures buffer (could have multiple bindings here).
+	                                                gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_INT, 0);
+	                                        } else {
 
-	                                                            gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.texCoords.buffer);
-	                                                            gl.enableVertexAttribArray(vsVars.attribute.vec2.aTextureCoord);
-	                                                            gl.vertexAttribPointer(vsVars.attribute.vec2.aTextureCoord, obj.geometry.texCoords.itemSize, gl.FLOAT, false, 0, 0);
+	                                                // Draw elements, 0 -> 65k (old platforms).
 
-	                                                            gl.activeTexture(gl.TEXTURE0);
-	                                                            gl.bindTexture(gl.TEXTURE_2D, null);
-	                                                            gl.bindTexture(gl.TEXTURE_2D, obj.textures[0].texture);
+	                                                gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
+	                                        }
+	                                }
+	                        };
 
-	                                                            // Set fragment shader sampler uniform.
+	                        return program;
+	                }
+	        }]);
 
-	                                                            gl.uniform1i(fsVars.uniform.sampler2D.uSampler, 0);
-
-	                                                            // Lighting flag.
-
-	                                                            gl.uniform1i(vsVars.uniform.bool.uUseLighting, lighting);
-
-	                                                            if (lighting) {
-
-	                                                                        gl.uniform3f(vsVars.uniform.vec3.uAmbientColor, ambient[0], ambient[1], ambient[2]);
-
-	                                                                        gl.uniform3fv(vsVars.uniform.vec3.uLightingDirection, adjustedLD);
-
-	                                                                        gl.uniform3f(vsVars.uniform.vec3.uDirectionalColor, directionalColor[0], directionalColor[1], directionalColor[2]);
-	                                                            }
-
-	                                                            // Normals matrix uniform
-
-	                                                            gl.uniformMatrix3fv(vsVars.uniform.mat3.uNMatrix, false, nMatrix);
-
-	                                                            // Set perspective and model-view matrix uniforms.
-
-	                                                            gl.uniformMatrix4fv(vsVars.uniform.mat4.uPMatrix, false, pMatrix);
-	                                                            gl.uniformMatrix4fv(vsVars.uniform.mat4.uMVMatrix, false, mvMatrix);
-
-	                                                            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer);
-
-	                                                            if (stats.uint32) {
-
-	                                                                        // Draw elements, 0 -> 2e9
-
-	                                                                        gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_INT, 0);
-	                                                            } else {
-
-	                                                                        // Draw elements, 0 -> 65k (old platforms).
-
-	                                                                        gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
-	                                                            }
-	                                                }
-	                                    };
-
-	                                    return program;
-	                        }
-	            }]);
-
-	            return shaderDirLightTexture;
+	        return shaderDirLightTexture;
 	}(_shader2.default);
 
 	exports.default = shaderDirLightTexture;
@@ -4925,7 +5054,7 @@
 
 	                console.log('In Renderer class');
 
-	                this.webgl = webgl;
+	                this.gl = webgl;
 
 	                this.util = webgl.util;
 
@@ -5158,7 +5287,7 @@
 
 	                this.util = util;
 
-	                this.webgl = webgl;
+	                this.gl = webgl;
 
 	                this.glMatrix = glMatrix;
 
@@ -8524,37 +8653,38 @@
 
 	                        //prim.geometry.addBufferData( vertices, indices, normals, texCoords, tangents );
 
-	                        if (prim.name === 'cubesphere') {
-	                                //if ( prim.name === 'TestCapsule' ) {
-	                                //if ( prim.name === 'colored cube' ) {
-	                                //if ( prim.name === 'texsphere' ) {
+	                        //if ( prim.name === 'cubesphere' ) {
+	                        //if ( prim.name === 'TestCapsule' ) {
+	                        //if ( prim.name === 'colored cube' ) {
+	                        //if ( prim.name === 'texsphere' ) {
 
-	                                var mesh = new _mesh2.default(prim);
+	                        var mesh = new _mesh2.default(prim);
 
-	                                window.mesh = mesh;
+	                        //window.mesh = mesh;
 
-	                                window.prim = prim;
+	                        //window.prim = prim;
 
-	                                // SIMPLIFY TEST
+	                        // SIMPLIFY TEST
 
-	                                ///mesh.simplify();
+	                        ///mesh.simplify();
 
-	                                // SUBDIVIDE TEST
+	                        // SUBDIVIDE TEST
 
-	                                //mesh.subdivide( true );
-	                                //mesh.subdivide( true );
-	                                //mesh.subdivide( true );
-	                                //mesh.subdivide( true );
-	                                //mesh.subdivide( true );
-	                                //mesh.subdivide( true );
-	                                //mesh.subdivide( true );
-	                                //mesh.subdivide( true );
-	                                //mesh.subdivide( true ); // this one zaps from low-vertex < 10 prim
+	                        //mesh.subdivide( true );
+	                        //mesh.subdivide( true );
+	                        //mesh.subdivide( true );
+	                        //mesh.subdivide( true );
+	                        //mesh.subdivide( true );
+	                        //mesh.subdivide( true );
+	                        //mesh.subdivide( true );
+	                        //mesh.subdivide( true );
+	                        //mesh.subdivide( true ); // this one zaps from low-vertex < 10 prim
 
-	                                // TODO: THESE ARE NOT BEING ADDED
+	                        // TODO: THESE ARE NOT BEING ADDED
 
-	                                // TODO: FIGURE OUT WHAT NEEDS TO BE DONE WITH A SUBDIVIDE AND SIMPLIFY
-	                        }
+	                        // TODO: FIGURE OUT WHAT NEEDS TO BE DONE WITH A SUBDIVIDE AND SIMPLIFY
+
+	                        //}
 
 	                        console.log("checking buffer data for " + prim.name);
 
@@ -8926,7 +9056,7 @@
 
 	                        // Geometry factory function, create empty WebGL Buffers.
 
-	                        prim.geometry = new _geoObj2.default(prim.name, this.util, this.webgl);
+	                        prim.geometry = new _geoObj2.default(prim.name, this.util, this.gl);
 
 	                        // Create or load Geometry data (may alter some of the above default properties).
 
@@ -10227,11 +10357,11 @@
 	        function Edge(i0, i1, i2, fi) {
 	                _classCallCheck(this, Edge);
 
-	                this.v = new Uint32Array(2); // index the two Vertex objects forming the Edge
+	                this.v = new Array(2); // index the two Vertex objects forming the Edge
 
-	                this.ov = new Uint32Array(2); // index the opposite Vertices in first and second Face
+	                this.ov = new Array(2); // index the opposite Vertices in first and second Face
 
-	                this.f = new Uint32Array(2); // index the opposite Faces
+	                this.f = new Array(2); // index the opposite Faces
 
 	                this.v[0] = i0;
 
@@ -10300,7 +10430,7 @@
 	function Face(e0, e1, e2) {
 	        _classCallCheck(this, Face);
 
-	        this.e = new Uint32Array(3);
+	        this.e = new Array(3);
 
 	        this.e[0] = e0;
 
@@ -10384,7 +10514,7 @@
 	                key: 'computeValencyWeights',
 	                value: function computeValencyWeights(max) {
 
-	                        this.valenceArr = new Float32Array(max);
+	                        this.valenceArr = new Array(max);
 
 	                        this.valenceArr[0] = 0.0, this.valenceArr[1] = 0.0, this.valenceArr[2] = 1.0 / 8.0, this.valenceArr[3] = 3.0 / 16.0;
 
@@ -10428,8 +10558,8 @@
 
 	                /** 
 	                 * Create the Vertices, assigning texture coordinates.
-	                 * @param {Float32Array} vertices a flattened array of xyz positions
-	                 * @param {Float32Array} texCoords a flattened array of uv positions
+	                 * @param {Array} vertices a flattened array of xyz positions
+	                 * @param {Array} texCoords a flattened array of uv positions
 	                 * @returns {Vertex[]} an array of Vertex objects.
 	                 */
 
@@ -11133,9 +11263,9 @@
 	                /** 
 	                 * Convert our native flattened geometric data (from Prim) to a Vertex object 
 	                 * data representation suitable for subdivision and morphing.
-	                 * @param {Float32Array} vertices a flattened array of positions.
-	                 * @param {Uint16Array} indices drawing order for vertices.
-	                 * @param {Float32Array} texCoords texture coordinates for each position.
+	                 * @param {Array} vertices a flattened array of positions.
+	                 * @param {Array} indices drawing order for vertices.
+	                 * @param {Array} texCoords texture coordinates for each position.
 	                 * @returns {Mesh} this Mesh object (for chaining).
 	                 */
 
@@ -11193,9 +11323,9 @@
 
 	                        // Initialize vertices and texCoords array need to be generated from the Vertex array.
 
-	                        geo.vertices.data = new Float32Array(vertexArr.length * 3);
+	                        geo.vertices.data = new Array(vertexArr.length * 3);
 
-	                        geo.texCoords.data = new Float32Array(vertexArr.length * 2);
+	                        geo.texCoords.data = new Array(vertexArr.length * 2);
 
 	                        var vertices = geo.vertices.data;
 
@@ -11344,7 +11474,7 @@
 	        function GeoObj(name, util, webgl, type) {
 	                _classCallCheck(this, GeoObj);
 
-	                this.primName = name, this.webgl = webgl, this.util = util, this.FLOAT32 = 'float32', this.UINT = 'uint';
+	                this.primName = name, this.gl = webgl, this.util = util, this.FLOAT32 = 'float32', this.UINT = 'uint';
 
 	                this.UINT32 = 'uint32';
 
@@ -11426,7 +11556,7 @@
 
 	                // Save the max allowed drawing size. For WebGL 1.0 with extension, vertices must be < 65k.
 
-	                this.MAX_DRAWELEMENTS = this.webgl.MAX_DRAWELEMENTS;
+	                this.MAX_DRAWELEMENTS = this.gl.MAX_DRAWELEMENTS;
 
 	                this.mName = 'geo-obj for ' + this.primName + '::';
 	        } // end of constructor
@@ -11848,7 +11978,7 @@
 
 	                        if (this.util.isArray(indices)) {
 
-	                                if (this.webgl.stats.uint32) {
+	                                if (this.gl.stats.uint32) {
 
 	                                        o.data = new Uint32Array(indices);
 
@@ -12013,7 +12143,7 @@
 	                                console.log('numColors is now:' + this.numColors());
 	                        }
 
-	                        if (this.vertices.data.length > this.webgl.MAX_DRAWELEMENTS) {
+	                        if (this.vertices.data.length > this.gl.MAX_DRAWELEMENTS) {
 
 	                                this.ssz = true;
 	                        } else {
@@ -12051,7 +12181,7 @@
 
 	                        this.indices.data = concat(this.indices.data, indices), this.normals.data = concat(this.normals.data, normals), this.texCoords.data = concat(this.texCoords.data, texCoords), this.tangents.data = concat(this.tangents.data, tangents), this.colors.data = concat(this.colors.data, colors);
 
-	                        if (this.vertices.data.length > this.webgl.MAX_DRAWELEMENTS) {
+	                        if (this.vertices.data.length > this.gl.MAX_DRAWELEMENTS) {
 
 	                                this.ssz = true;
 	                        } else {
@@ -12079,7 +12209,7 @@
 	                key: 'bindGLBuffer',
 	                value: function bindGLBuffer(o, type) {
 
-	                        var gl = this.webgl.getContext();
+	                        var gl = this.gl.getContext();
 
 	                        o.buffer = gl.createBuffer();
 
@@ -12149,7 +12279,7 @@
 	                key: 'createGLBuffers',
 	                value: function createGLBuffers() {
 
-	                        var gl = this.webgl.getContext();
+	                        var gl = this.gl.getContext();
 
 	                        var fnName = this.mName + 'createGLBuffers():';
 
@@ -12159,7 +12289,7 @@
 
 	                        if (!o.data.length) {
 
-	                                console.log(fnName + ' no vertices present, creating default');
+	                                // console.log( fnName + ' no vertices present, creating default' );
 
 	                                o.data = new Float32Array();
 	                        }
@@ -12174,11 +12304,11 @@
 	                         * Conditionally create a UINT16 or UINT32 buffer for the index values, based 
 	                         * on whether this is WebGL 2.0, or the WebGL extension is available
 	                         */
-	                        if (this.webgl.stats.uint32) {
+	                        if (this.gl.stats.uint32) {
 
 	                                if (!o.data.length) {
 
-	                                        console.log(fnName + ' no indices present, creating default');
+	                                        // console.log( fnName + ' no indices present, creating default' );
 
 	                                        o.data = new Uint32Array();
 	                                }
@@ -12188,7 +12318,7 @@
 
 	                                if (!o.data.length) {
 
-	                                        console.log(fnName + ' no indices present, creating default');
+	                                        // console.log( fnName + ' no indices present, creating default' );
 
 	                                        o.data = new Uint16Array();
 	                                }
@@ -12202,7 +12332,7 @@
 
 	                        if (!o.data.length) {
 
-	                                console.warn(fnName + ' no sides present, creating default');
+	                                // console.warn( fnName + ' no sides present, creating default' );
 
 	                                o.data = new Uint16Array();
 	                        }
@@ -12215,7 +12345,7 @@
 
 	                        if (!o.data.length) {
 
-	                                console.log(fnName + ': no normals, present, creating default');
+	                                // console.log( fnName + ': no normals, present, creating default' );
 
 	                                o.data = new Float32Array();
 	                        }
@@ -12228,7 +12358,7 @@
 
 	                        if (!o.data.length) {
 
-	                                console.warn(fnName + ' no texture present, creating default');
+	                                // console.warn( fnName + ' no texture present, creating default' );
 
 	                                o.data = new Float32Array();
 	                        }
@@ -12241,7 +12371,7 @@
 
 	                        if (!o.data.length) {
 
-	                                console.warn(fnName + ' no tangents present, creating default');
+	                                // console.warn( fnName + ' no tangents present, creating default' );
 
 	                                o.data = new Float32Array();
 	                        }
@@ -12254,7 +12384,7 @@
 
 	                        if (!o.data.length || o.data.length < 4 * this.vertices.length / 3) {
 
-	                                console.warn(fnName + ' no colors present, creating default color');
+	                                // console.warn( fnName + ' no colors present, creating default color' );
 
 	                                o.data = new Float32Array();
 	                        }
@@ -20750,9 +20880,17 @@
 
 	                                        console.log('from fullscreen to DOM...');
 
+	                                        // Kill local CSS styles ensuring we get a fullscreen view.
+
 	                                        p.style.width = '';
 
 	                                        p.style.height = '';
+
+	                                        // set the HTML5 canvas back to its original size, so it is synced with style in parentNode.
+
+	                                        c.width = this.oldWidth;
+
+	                                        c.height = this.oldHeight;
 
 	                                        this.mode = this.UI_DOM;
 

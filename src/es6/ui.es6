@@ -366,9 +366,17 @@ class Ui {
 
                 console.log( 'from fullscreen to DOM...' );
 
+                // Kill local CSS styles ensuring we get a fullscreen view.
+
                 p.style.width = '';
 
                 p.style.height = '';
+
+                // set the HTML5 canvas back to its original size, so it is synced with style in parentNode.
+
+                c.width = this.oldWidth;
+
+                c.height = this.oldHeight;
 
                 this.mode = this.UI_DOM;
 

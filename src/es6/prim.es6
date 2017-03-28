@@ -107,7 +107,7 @@ class Prim {
 
         this.util = util;
 
-        this.webgl = webgl;
+        this.gl = webgl;
 
         this.glMatrix = glMatrix;
 
@@ -3471,16 +3471,16 @@ class Prim {
 
         //prim.geometry.addBufferData( vertices, indices, normals, texCoords, tangents );
 
-        if ( prim.name === 'cubesphere' ) {
+        //if ( prim.name === 'cubesphere' ) {
         //if ( prim.name === 'TestCapsule' ) {
         //if ( prim.name === 'colored cube' ) {
         //if ( prim.name === 'texsphere' ) {
 
             let mesh = new Mesh( prim );
 
-            window.mesh = mesh;
+            //window.mesh = mesh;
 
-            window.prim = prim;
+            //window.prim = prim;
 
             // SIMPLIFY TEST
 
@@ -3502,7 +3502,7 @@ class Prim {
 
             // TODO: FIGURE OUT WHAT NEEDS TO BE DONE WITH A SUBDIVIDE AND SIMPLIFY
 
-       }
+       //}
 
         console.log("checking buffer data for " + prim.name )
 
@@ -3901,7 +3901,7 @@ class Prim {
 
         // Geometry factory function, create empty WebGL Buffers.
 
-        prim.geometry = new GeoObj( prim.name, this.util, this.webgl );
+        prim.geometry = new GeoObj( prim.name, this.util, this.gl );
 
         // Create or load Geometry data (may alter some of the above default properties).
 

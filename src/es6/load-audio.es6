@@ -16,7 +16,23 @@ class LoadAudio extends LoadPool {
 
         let MAX_CACHE_AUDIO = 3;
 
-        this.audioCtx = new ( window.AudioContext || window.webkitAudioContext )();
+        if ( window.AudioContext !== 'undefined' ) {
+
+            this.audioCtx = new window.AudioContext();
+
+        } else if ( window.webkitAudioContext !== 'undefined' ) {
+
+            this.audioCtx = new window.webkitAudioContext();
+
+        } else if (typeof mozAudioContext !== 'undefined' ) {
+
+            this.audioCtx = new mozAudioContext();
+
+        } else {
+
+            console.warn( 'HTML5 audio not supported (will be silent)' );
+
+        }
 
         this.sources = {};
 

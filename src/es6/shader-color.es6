@@ -55,7 +55,7 @@ class ShaderColor extends Shader {
 
             code: s.join('\n'),
 
-            varList: this.webgl.createVarList( s )
+            varList: this.gl.createVarList( s )
 
         };
 
@@ -81,7 +81,7 @@ class ShaderColor extends Shader {
 
             code: s.join('\n'),
 
-            varList: this.webgl.createVarList( s )
+            varList: this.gl.createVarList( s )
 
         };
 
@@ -124,7 +124,11 @@ class ShaderColor extends Shader {
 
         fsVars = arr[ 9 ],
 
-        stats = arr[ 10 ];
+        stats = arr[ 10 ],
+
+        near = arr[ 11 ],
+
+        far = arr[ 12 ];
 
         // We received webgl in the constructor, and gl above is referenced from it.
 
@@ -175,7 +179,7 @@ class ShaderColor extends Shader {
 
             // Reset perspective matrix.
 
-            mat4.perspective( pMatrix, Math.PI*0.4, canvas.width / canvas.height, 0.1, 100.0 ); // right
+            mat4.perspective( pMatrix, Math.PI*0.4, canvas.width / canvas.height, near, far ); // right
 
             // Loop through assigned objects.
 

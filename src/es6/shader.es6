@@ -31,7 +31,7 @@ class Shader {
 
         // class name = this.constructor.name
 
-        this.webgl = webgl;
+        this.gl = webgl;
 
         this.util = util;
 
@@ -45,7 +45,7 @@ class Shader {
 
         this.floatp = ''
 
-        if ( this.webgl.stats.highp ) {
+        if ( this.gl.stats.highp ) {
 
             this.floatp = 'precision highp float;';
 
@@ -148,16 +148,16 @@ class Shader {
 
         if ( this.vertexShaderFile && this.this.fragmentShaderFile ) {
 
-            program = this.webgl.createProgram( 
-                this.webgl.fetchVertexShader( this.vertexShaderFile ), 
-                this.webgl.fetchFragmentShader( this.fragmentShaderFile ) 
+            program = this.gl.createProgram( 
+                this.gl.fetchVertexShader( this.vertexShaderFile ), 
+                this.gl.fetchFragmentShader( this.fragmentShaderFile ) 
             );
 
         } else {
 
             // vsSrc() and fsSrc() are defined in derived Shader objects.
 
-            program = this.webgl.createProgram( this.vsSrc(), this.fsSrc() );
+            program = this.gl.createProgram( this.vsSrc(), this.fsSrc() );
 
         }
 
@@ -224,9 +224,9 @@ class Shader {
 
         return [ 
 
-            this.webgl.getContext(),
+            this.gl.getContext(),
 
-            this.webgl.getCanvas(),
+            this.gl.getCanvas(),
 
             this.glMatrix.mat4,
 
@@ -241,19 +241,23 @@ class Shader {
             program,
 
             {
-                attribute: this.webgl.setAttributeArrays( program.shaderProgram, program.vsVars.attribute ),
+                attribute: this.gl.setAttributeArrays( program.shaderProgram, program.vsVars.attribute ),
 
-                uniform: this.webgl.setUniformLocations( program.shaderProgram, program.vsVars.uniform )
+                uniform: this.gl.setUniformLocations( program.shaderProgram, program.vsVars.uniform )
 
             },
 
             {
 
-                uniform: this.webgl.setUniformLocations( program.shaderProgram, program.fsVars.uniform )
+                uniform: this.gl.setUniformLocations( program.shaderProgram, program.fsVars.uniform )
 
             },
 
-            this.webgl.stats
+            this.gl.stats,
+
+            this.gl.near,
+
+            this.gl.far
 
         ];
 

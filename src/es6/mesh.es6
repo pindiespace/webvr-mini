@@ -319,11 +319,11 @@ class Edge {
      */
     constructor ( i0, i1, i2, fi ) {
 
-        this.v = new Uint32Array( 2 );  // index the two Vertex objects forming the Edge
+        this.v = new Array( 2 );  // index the two Vertex objects forming the Edge
 
-        this.ov = new Uint32Array( 2 ); // index the opposite Vertices in first and second Face
+        this.ov = new Array( 2 ); // index the opposite Vertices in first and second Face
 
-        this.f = new Uint32Array( 2 );  // index the opposite Faces
+        this.f = new Array( 2 );  // index the opposite Faces
 
         this.v[ 0 ] = i0;
 
@@ -391,7 +391,7 @@ class Face {
      */
     constructor ( e0, e1, e2 ) {
 
-        this.e = new Uint32Array( 3 );
+        this.e = new Array( 3 );
 
         this.e[ 0 ] = e0;
 
@@ -488,7 +488,7 @@ class Mesh {
      */
     computeValencyWeights ( max ) {
 
-        this.valenceArr = new Float32Array( max );
+        this.valenceArr = new Array( max );
 
         this.valenceArr[ 0 ] = 0.0,
 
@@ -554,8 +554,8 @@ class Mesh {
 
     /** 
      * Create the Vertices, assigning texture coordinates.
-     * @param {Float32Array} vertices a flattened array of xyz positions
-     * @param {Float32Array} texCoords a flattened array of uv positions
+     * @param {Array} vertices a flattened array of xyz positions
+     * @param {Array} texCoords a flattened array of uv positions
      * @returns {Vertex[]} an array of Vertex objects.
      */
     computeVertices ( vertices, texCoords ) {
@@ -1300,9 +1300,9 @@ class Mesh {
     /** 
      * Convert our native flattened geometric data (from Prim) to a Vertex object 
      * data representation suitable for subdivision and morphing.
-     * @param {Float32Array} vertices a flattened array of positions.
-     * @param {Uint16Array} indices drawing order for vertices.
-     * @param {Float32Array} texCoords texture coordinates for each position.
+     * @param {Array} vertices a flattened array of positions.
+     * @param {Array} indices drawing order for vertices.
+     * @param {Array} texCoords texture coordinates for each position.
      * @returns {Mesh} this Mesh object (for chaining).
      */
     geometryToVertex ( vertices, indices, texCoords, colors = [] ) {
@@ -1353,9 +1353,9 @@ class Mesh {
 
         // Initialize vertices and texCoords array need to be generated from the Vertex array.
 
-        geo.vertices.data = new Float32Array( vertexArr.length * 3 );
+        geo.vertices.data = new Array( vertexArr.length * 3 );
 
-        geo.texCoords.data = new Float32Array( vertexArr.length * 2 );
+        geo.texCoords.data = new Array( vertexArr.length * 2 );
 
         let vertices = geo.vertices.data;
 

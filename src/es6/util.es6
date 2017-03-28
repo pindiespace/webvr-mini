@@ -24,6 +24,10 @@ class Util {
 
         this.setFinite();
 
+        // Add slice to typed arrays, if needed.
+
+        this.setSlice();
+
     }
 
     /** 
@@ -85,6 +89,49 @@ class Util {
                 return Date.now() - nowOffset;
 
             }
+
+        }
+
+    }
+
+    /** 
+     * if typed arrays don't have slice, add it
+     */
+    setSlice() {
+
+        if ( ! Object.defineProperty ) {
+
+            return;
+
+        }
+
+        if ( Uint16Array && ! Uint16Array.prototype.slice ) {
+
+            Object.defineProperty( Uint16Array.prototype, 'slice', {
+
+                value: Array.prototype.slice
+
+            });
+
+        }
+
+        if ( Uint32Array && ! Uint32Array.prototype.slice ) {
+
+            Object.defineProperty( Uint32Array.prototype, 'slice', {
+
+                value: Array.prototype.slice
+
+            });
+
+        }
+
+        if ( Float32Array && ! Float32Array.prototype.slice ) {
+
+            Object.defineProperty( Float32Array.prototype, 'slice', {
+
+                value: Array.prototype.slice
+
+            });
 
         }
 
@@ -295,6 +342,31 @@ class Util {
         }
 
         return idx; // ending position 
+
+    }
+
+    /** 
+     * Copy an array. If array.slice is not present, use a direct copy.
+     */
+    copyArr ( arr ) {
+
+        if ( arr.slice ) {
+
+            return arr.slice();
+
+        } else {
+
+            let newArr = new Array( arr.length );
+
+            for ( let i = 0; i < arr.length; i++ ) {
+
+                newArr[ i ] = arr[ i ];
+
+            }
+
+            return newArr;
+
+        }
 
     }
 
