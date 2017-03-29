@@ -41,11 +41,15 @@ class WebGL {
 
         this.util = util;
 
-        this.NOT_IN_LIST = util.NOT_IN_LIST;
+        this.NOT_IN_LIST = util.NOT_IN_LIST; // -1 value for .indexOf()
+
+        // Perspective matrix in Shaders.
 
         this.near = 0.1;
 
         this.far = 100;
+
+        // Statistics object.
 
         this.stats = {};
 
@@ -62,35 +66,6 @@ class WebGL {
             this.debug = debug;
 
         }
-
-    }
-
-    /** 
-     * Clear textures from the videocard before starting.
-     */
-    clearTextures () {
-
-        const gl = this.gl;
-
-        let len = gl.getParameter( gl.MAX_TEXTURE_IMAGE_UNITS );
-
-        for ( let i = 0; i < len; i++ ) {
-
-            gl.activeTexture( gl.TEXTURE0 + i);
-
-            gl.bindTexture( gl.TEXTURE_2D, null );
-
-            gl.bindTexture( gl.TEXTURE_CUBE_MAP, null );
-
-        }
-
-        gl.bindBuffer( gl.ARRAY_BUFFER, null );
-
-        gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, null );
-
-        gl.bindRenderbuffer( gl.RENDERBUFFER, null );
-
-        gl.bindFramebuffer( gl.FRAMEBUFFER, null );
 
     }
 
@@ -310,10 +285,68 @@ class WebGL {
 
     }
 
-    stats () {
+    /* 
+     * =============== WEBGL EXTENSIONS ====================
+     */
 
+    /** 
+     * Add vertex buffer support to WebGL 1.0
+     * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only)l
+     */
+    addVertexBufferSupport ( gl ) {
+
+         const ext = gl.getExtension( 'OES_vertex_array_object' );
+
+        if ( ext ) {
+
+            gl.createVertexArray = () => {
+
+                return ext.createVertexArrayOES();
+
+            };
+
+            gl.deleteVertexArray = ( v ) => {
+
+                ext.deleteVertexArrayOES( v );
+
+            };
+
+            gl.isVertexArray = ( v ) => {
+
+                return ext.isVertexArrayOES( v );
+
+            };
+
+            gl.bindVertexArray = (v) => {
+
+                ext.bindVertexArrayOES( v );
+
+            };
+
+            gl.VERTEX_ARRAY_BINDING = ext.VERTEX_ARRAY_BINDING_OES;
+
+         }
+
+         return ext;
 
     }
+
+    /** 
+     * Support indexed vertex drawing when there are more than 
+     * 64k vertices in WebGL 1.0. Enabled by default in WebGL 2.0.
+     * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only)l
+     */
+    addIndex32Support( gl ) {
+
+        const ext = gl.getExtension( 'OES_element_index_uint' );
+
+        return ext;
+
+    }
+
+    /* 
+     * =============== CANVAS OPERATIONS ====================
+     */
 
     /** 
      * Get WebGL canvas only if we've created a gl context.
@@ -380,6 +413,10 @@ class WebGL {
         return false;
 
     }
+
+    /* 
+     * =============== WEBGL CONTEXT OPERATIONS ====================
+     */
 
     /** 
      * get HTML5 canvas, and a WebGL context. We also scan for multiple 
@@ -495,23 +532,34 @@ class WebGL {
             switch ( i ) {
 
                 case 0:
+
                 case 1:
+
                         //if ( ! gl.TRANSFORM_FEEDBACK ) {
                         // revert to 1.0
                         //    console.log("TRANSFORM FEEDBACK NOT SUPPORTED")
                         //}
+
                         this.glVers = 2.0;
+
                         this.stats.uint32 = true;
+
                     break;
 
                     case 2:
+
                     case 3:
+
                         this.glVers = 1.0;
+
                         this.addVertexBufferSupport( gl ); // vertex buffers
+
                         this.stats.uint32 = this.addIndex32Support( gl ); // vertices > 64k
+
                         break;
 
                     default:
+
                         break;
 
                 }
@@ -582,6 +630,10 @@ class WebGL {
 
     }
 
+    /* 
+     * =============== CLEAR/RESET OPERATIONS ====================
+     */
+
     /** 
      * Clear the screen prior to redraw.
      */
@@ -591,64 +643,40 @@ class WebGL {
 
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        /////////////////////gl.viewport( 0, 0, gl.viewportWidth, gl.viewportHeight );
-
     }
 
     /** 
-     * Add vertex buffer support to WebGL 1.0
-     * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only)l
+     * Clear textures from the videocard before the program starts.
      */
-    addVertexBufferSupport ( gl ) {
+    clearTextures () {
 
-         const ext = gl.getExtension( 'OES_vertex_array_object' );
+        const gl = this.gl;
 
-        if ( ext ) {
+        let len = gl.getParameter( gl.MAX_TEXTURE_IMAGE_UNITS );
 
-            gl.createVertexArray = () => {
+        for ( let i = 0; i < len; i++ ) {
 
-                return ext.createVertexArrayOES();
+            gl.activeTexture( gl.TEXTURE0 + i);
 
-            };
+            gl.bindTexture( gl.TEXTURE_2D, null );
 
-            gl.deleteVertexArray = ( v ) => {
+            gl.bindTexture( gl.TEXTURE_CUBE_MAP, null );
 
-                ext.deleteVertexArrayOES( v );
+        }
 
-            };
+        gl.bindBuffer( gl.ARRAY_BUFFER, null );
 
-            gl.isVertexArray = ( v ) => {
+        gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, null );
 
-                return ext.isVertexArrayOES( v );
+        gl.bindRenderbuffer( gl.RENDERBUFFER, null );
 
-            };
-
-            gl.bindVertexArray = (v) => {
-
-                ext.bindVertexArrayOES( v );
-
-            };
-
-            gl.VERTEX_ARRAY_BINDING = ext.VERTEX_ARRAY_BINDING_OES;
-
-         }
-
-         return ext;
+        gl.bindFramebuffer( gl.FRAMEBUFFER, null );
 
     }
 
-    /** 
-     * Support indexed vertex drawing when there are more than 
-     * 64k vertices in WebGL 1.0. Enabled by default in WebGL 2.0.
-     * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only)l
+    /* 
+     * =============== SHADER VARIABLES AND UNIFORMS ====================
      */
-    addIndex32Support( gl ) {
-
-        const ext = gl.getExtension( 'OES_element_index_uint' );
-
-        return ext;
-
-    }
 
     /** 
      * create a WeGL shader object.
@@ -835,6 +863,10 @@ class WebGL {
         return this.createShader( type, source );
 
     }
+
+    /* 
+     * =============== COMPILE WEBGL PROGRAM ====================
+     */
 
     /** 
      * Create WebGL program with shaders. Program not used until 
@@ -1188,13 +1220,23 @@ class WebGL {
     }
 
     /** 
-     * Check if our VBO, IBO are ok.
+     * Check if our VBO or IBO are ok.
      */
     checkBufferObjects ( bo ) {
 
         return ( bo && bo instanceof ArrayBuffer );
 
     }
+
+    /** 
+     * Provide statistics for display as JSON data.
+     */
+    stats () {
+
+        return JSON.stringify( this.stats );
+
+    }
+
 
 }
 

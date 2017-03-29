@@ -307,6 +307,10 @@
 
 	var _util2 = _interopRequireDefault(_util);
 
+	var _gamepad = __webpack_require__(39);
+
+	var _gamepad2 = _interopRequireDefault(_gamepad);
+
 	var _webgl = __webpack_require__(5);
 
 	var _webgl2 = _interopRequireDefault(_webgl);
@@ -1368,11 +1372,15 @@
 
 	                this.util = util;
 
-	                this.NOT_IN_LIST = util.NOT_IN_LIST;
+	                this.NOT_IN_LIST = util.NOT_IN_LIST; // -1 value for .indexOf()
+
+	                // Perspective matrix in Shaders.
 
 	                this.near = 0.1;
 
 	                this.far = 100;
+
+	                // Statistics object.
 
 	                this.stats = {};
 
@@ -1389,48 +1397,18 @@
 	                }
 	        }
 
-	        /** 
-	         * Clear textures from the videocard before starting.
+	        /**
+	         * initialize with a canvas context
+	         * @param {HTMLCanvasElement|String|undefined} canvas a HTML5 <canvas>, id for canvas, or undefined, 
+	         * in which case a <canvas> object is 
+	         * created and added to document.body, an ID value for a tag, or a CanvasDOMobject.
+	         * @param {Function} lostContext callback when WebGL context is lost.
+	         * @param {Function} restoredContext callback when WebGL context is restored.
+	         * @returns {WebGLContext} the WebGL context of the <canvas> object.
 	         */
 
 
 	        _createClass(WebGL, [{
-	                key: 'clearTextures',
-	                value: function clearTextures() {
-
-	                        var gl = this.gl;
-
-	                        var len = gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
-
-	                        for (var i = 0; i < len; i++) {
-
-	                                gl.activeTexture(gl.TEXTURE0 + i);
-
-	                                gl.bindTexture(gl.TEXTURE_2D, null);
-
-	                                gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
-	                        }
-
-	                        gl.bindBuffer(gl.ARRAY_BUFFER, null);
-
-	                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
-
-	                        gl.bindRenderbuffer(gl.RENDERBUFFER, null);
-
-	                        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-	                }
-
-	                /**
-	                 * initialize with a canvas context
-	                 * @param {HTMLCanvasElement|String|undefined} canvas a HTML5 <canvas>, id for canvas, or undefined, 
-	                 * in which case a <canvas> object is 
-	                 * created and added to document.body, an ID value for a tag, or a CanvasDOMobject.
-	                 * @param {Function} lostContext callback when WebGL context is lost.
-	                 * @param {Function} restoredContext callback when WebGL context is restored.
-	                 * @returns {WebGLContext} the WebGL context of the <canvas> object.
-	                 */
-
-	        }, {
 	                key: 'init',
 	                value: function init(canvas, lostContext, restoredContext) {
 	                        var _this = this;
@@ -1623,9 +1601,68 @@
 
 	                        return null;
 	                }
+
+	                /* 
+	                 * =============== WEBGL EXTENSIONS ====================
+	                 */
+
+	                /** 
+	                 * Add vertex buffer support to WebGL 1.0
+	                 * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only)l
+	                 */
+
 	        }, {
-	                key: 'stats',
-	                value: function stats() {}
+	                key: 'addVertexBufferSupport',
+	                value: function addVertexBufferSupport(gl) {
+
+	                        var ext = gl.getExtension('OES_vertex_array_object');
+
+	                        if (ext) {
+
+	                                gl.createVertexArray = function () {
+
+	                                        return ext.createVertexArrayOES();
+	                                };
+
+	                                gl.deleteVertexArray = function (v) {
+
+	                                        ext.deleteVertexArrayOES(v);
+	                                };
+
+	                                gl.isVertexArray = function (v) {
+
+	                                        return ext.isVertexArrayOES(v);
+	                                };
+
+	                                gl.bindVertexArray = function (v) {
+
+	                                        ext.bindVertexArrayOES(v);
+	                                };
+
+	                                gl.VERTEX_ARRAY_BINDING = ext.VERTEX_ARRAY_BINDING_OES;
+	                        }
+
+	                        return ext;
+	                }
+
+	                /** 
+	                 * Support indexed vertex drawing when there are more than 
+	                 * 64k vertices in WebGL 1.0. Enabled by default in WebGL 2.0.
+	                 * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only)l
+	                 */
+
+	        }, {
+	                key: 'addIndex32Support',
+	                value: function addIndex32Support(gl) {
+
+	                        var ext = gl.getExtension('OES_element_index_uint');
+
+	                        return ext;
+	                }
+
+	                /* 
+	                 * =============== CANVAS OPERATIONS ====================
+	                 */
 
 	                /** 
 	                 * Get WebGL canvas only if we've created a gl context.
@@ -1694,6 +1731,10 @@
 
 	                        return false;
 	                }
+
+	                /* 
+	                 * =============== WEBGL CONTEXT OPERATIONS ====================
+	                 */
 
 	                /** 
 	                 * get HTML5 canvas, and a WebGL context. We also scan for multiple 
@@ -1802,23 +1843,34 @@
 	                                switch (i) {
 
 	                                        case 0:
+
 	                                        case 1:
+
 	                                                //if ( ! gl.TRANSFORM_FEEDBACK ) {
 	                                                // revert to 1.0
 	                                                //    console.log("TRANSFORM FEEDBACK NOT SUPPORTED")
 	                                                //}
+
 	                                                this.glVers = 2.0;
+
 	                                                this.stats.uint32 = true;
+
 	                                                break;
 
 	                                        case 2:
+
 	                                        case 3:
+
 	                                                this.glVers = 1.0;
+
 	                                                this.addVertexBufferSupport(gl); // vertex buffers
+
 	                                                this.stats.uint32 = this.addIndex32Support(gl); // vertices > 64k
+
 	                                                break;
 
 	                                        default:
+
 	                                                break;
 
 	                                }
@@ -1889,6 +1941,10 @@
 	                        return !!(this.gl && this.glMatrix);
 	                }
 
+	                /* 
+	                 * =============== CLEAR/RESET OPERATIONS ====================
+	                 */
+
 	                /** 
 	                 * Clear the screen prior to redraw.
 	                 */
@@ -1900,63 +1956,41 @@
 	                        var gl = this.gl;
 
 	                        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-	                        /////////////////////gl.viewport( 0, 0, gl.viewportWidth, gl.viewportHeight );
 	                }
 
 	                /** 
-	                 * Add vertex buffer support to WebGL 1.0
-	                 * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only)l
+	                 * Clear textures from the videocard before the program starts.
 	                 */
 
 	        }, {
-	                key: 'addVertexBufferSupport',
-	                value: function addVertexBufferSupport(gl) {
+	                key: 'clearTextures',
+	                value: function clearTextures() {
 
-	                        var ext = gl.getExtension('OES_vertex_array_object');
+	                        var gl = this.gl;
 
-	                        if (ext) {
+	                        var len = gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
 
-	                                gl.createVertexArray = function () {
+	                        for (var i = 0; i < len; i++) {
 
-	                                        return ext.createVertexArrayOES();
-	                                };
+	                                gl.activeTexture(gl.TEXTURE0 + i);
 
-	                                gl.deleteVertexArray = function (v) {
+	                                gl.bindTexture(gl.TEXTURE_2D, null);
 
-	                                        ext.deleteVertexArrayOES(v);
-	                                };
-
-	                                gl.isVertexArray = function (v) {
-
-	                                        return ext.isVertexArrayOES(v);
-	                                };
-
-	                                gl.bindVertexArray = function (v) {
-
-	                                        ext.bindVertexArrayOES(v);
-	                                };
-
-	                                gl.VERTEX_ARRAY_BINDING = ext.VERTEX_ARRAY_BINDING_OES;
+	                                gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
 	                        }
 
-	                        return ext;
+	                        gl.bindBuffer(gl.ARRAY_BUFFER, null);
+
+	                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+
+	                        gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+
+	                        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 	                }
 
-	                /** 
-	                 * Support indexed vertex drawing when there are more than 
-	                 * 64k vertices in WebGL 1.0. Enabled by default in WebGL 2.0.
-	                 * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only)l
+	                /* 
+	                 * =============== SHADER VARIABLES AND UNIFORMS ====================
 	                 */
-
-	        }, {
-	                key: 'addIndex32Support',
-	                value: function addIndex32Support(gl) {
-
-	                        var ext = gl.getExtension('OES_element_index_uint');
-
-	                        return ext;
-	                }
 
 	                /** 
 	                 * create a WeGL shader object.
@@ -2134,6 +2168,10 @@
 
 	                        return this.createShader(type, source);
 	                }
+
+	                /* 
+	                 * =============== COMPILE WEBGL PROGRAM ====================
+	                 */
 
 	                /** 
 	                 * Create WebGL program with shaders. Program not used until 
@@ -2472,7 +2510,7 @@
 	                }
 
 	                /** 
-	                 * Check if our VBO, IBO are ok.
+	                 * Check if our VBO or IBO are ok.
 	                 */
 
 	        }, {
@@ -2480,6 +2518,17 @@
 	                value: function checkBufferObjects(bo) {
 
 	                        return bo && bo instanceof ArrayBuffer;
+	                }
+
+	                /** 
+	                 * Provide statistics for display as JSON data.
+	                 */
+
+	        }, {
+	                key: 'stats',
+	                value: function stats() {
+
+	                        return JSON.stringify(this.stats);
 	                }
 	        }]);
 
@@ -2508,11 +2557,17 @@
 
 	                console.log('in webVR class');
 
-	                this.util = util;
+	                this.util = util, this.glMatrix = glMatrix, this.gl = webgl;
 
-	                this.glMatrix = glMatrix;
+	                this.vrVers = 1.0, // TODO: is there any way to get this?
 
-	                this.gl = webgl;
+	                this.display = null, // VR display (device or default for mobiles)
+
+	                this.frameData = null; // VR frame data
+
+	                // Statistics object.
+
+	                this.stats = {};
 
 	                if (init === true) {
 
@@ -2522,31 +2577,253 @@
 
 	        /** 
 	         * Adapted from toji's room-scale example.
+	         * Firefox: turn on in http://about:config
+	         * Chrome: turn on in chrome://flags/
+	         * NOTE: in Mar 2017, FF only supported Oculus, 
+	         * needed Chromium WebVR build to support Vive.
 	         */
 
 
 	        _createClass(WebVR, [{
 	                key: 'init',
 	                value: function init() {
+	                        var _this = this;
+
+	                        // Collect stats no matter what...
+
+	                        var stats = this.stats;
 
 	                        if (navigator.getVRDisplays) {
 
 	                                navigator.getVRDisplays().then(function (displays) {
 
+	                                        var display = displays[0];
+
 	                                        console.log('webvr is available');
 
-	                                        if (displays.length > 0) {
+	                                        stats.displayName = display.displayName; // HMD name
 
-	                                                //initWebGL(true);
+	                                        _this.frameData = new VRFrameData(); // Contains our current pose.
 
-	                                        }
-	                                });
+	                                        if (_this.frameData) {
+
+	                                                if (displays.length > 0) {
+
+	                                                        var _vrDisplay = displays[0];
+
+	                                                        _this.display = display;
+
+	                                                        display.depthNear = _this.gl.near; // 0.1
+
+	                                                        display.depthFar = _this.gl.far; // 100, was 1024.0;
+
+	                                                        // Set WebVR display stage parameters.
+
+	                                                        _this.setStageParameters();
+
+	                                                        // Listen for WebVR events.
+
+	                                                        window.addEventListener('vrdisplaypresentchange', _this.presentChange.bind(_this), false);
+
+	                                                        window.addEventListener('vrdisplayactivate', _this.requestPresent.bind(_this), false);
+
+	                                                        window.addEventListener('vrdisplaydeactivate', _this.exitPresent.bind(_this), false);
+	                                                } // displays.length > 0
+	                                        } // valid VRFrameData
+	                                }); // getVRDisplays returned a value
 	                        } else {
 
 	                                // We check for support prior to loading this module, so we shouldn't go here if not supported.
 
-	                                console.error('webgl not present');
+	                                console.error('webgl not present, or obsolete version');
 	                        }
+	                }
+
+	                /** 
+	                 * Set the stage parameters.
+	                 * The check for size > 0 is necessary because some devices, like the
+	                 * Oculus Rift, can give you a standing space coordinate but don't
+	                 * have a configured play area. These devices will return a stage
+	                 * size of 0.
+	                 */
+
+	        }, {
+	                key: 'setStageParameters',
+	                value: function setStageParameters() {
+
+	                        var display = this.display;
+
+	                        if (display.stageParameters) {
+
+	                                var sp = display.stageParameters;
+
+	                                if (sp.sizeX > 0 && sp.sizeY > 0) {
+
+	                                        // TODO: trigger this in world.init();
+	                                        // this.world.resize( vrDisplay.stageParameters.sizeX, vrDisplay.stageParameters.sizeZ );
+
+	                                } else {
+
+	                                                // TODO: test early.
+	                                                // VRSamplesUtil.addInfo("VRDisplay reported stageParameters, but stage size was 0. Using default size.", 3000);
+
+	                                        }
+	                        } else {
+
+	                                        // TODO: test early.
+	                                        // VRSamplesUtil.addInfo("VRDisplay did not report stageParameters", 3000 );
+
+	                                }
+	                }
+
+	                /** 
+	                 * Pose matrix for standing roomscale view (move point of view up)
+	                 * In our version, this needs to be called by shader.
+	                 */
+
+	        }, {
+	                key: 'standingPoseMatrix',
+	                value: function standingPoseMatrix() {
+
+	                        var mat4 = this.glMatrix.mat4,
+	                            display = this.display;
+
+	                        if (display.stageParameters) {
+
+	                                /* 
+	                                 * After toji:
+	                                 * If the headset provides stageParameters use the
+	                                 * sittingToStandingTransform to transform the view matrix into a
+	                                 * space where the floor in the center of the users play space is the
+	                                 * origin.
+	                                 */
+
+	                                mat4.invert(out, display.stageParameters.sittingToStandingTransform);
+
+	                                mat4.multiply(out, view, out);
+	                        } else {
+
+	                                /* 
+	                                 * After toji:
+	                                 * Otherwise you'll want to translate the view to compensate for the
+	                                 * scene floor being at Y=0. Ideally this should match the user's
+	                                 * height (you may want to make it configurable). For this demo we'll
+	                                 * just assume all human beings are 1.65 meters (~5.4ft) tall.
+	                                 */
+
+	                                mat4.identity(out);
+
+	                                mat4.translate(out, out, [0, PLAYER_HEIGHT, 0]);
+
+	                                mat4.invert(out, out);
+
+	                                mat4.multiply(out, view, out);
+	                        }
+
+	                        return out; // TODO: ?????????????????
+	                }
+
+	                /** 
+	                 * Reset user pose in the simulation.
+	                 */
+
+	        }, {
+	                key: 'resetPose',
+	                value: function resetPose() {
+
+	                        this.display.resetPose();
+	                }
+
+	                /* 
+	                 * =============== VR EVENTS ====================
+	                 */
+
+	                /** 
+	                 * User requested VR mode, or display HMD was activated.
+	                 */
+
+	        }, {
+	                key: 'requestPresent',
+	                value: function requestPresent() {
+
+	                        console.log('in requestPresent');
+
+	                        var display = this.display;
+
+	                        if (display && display.capabilities.canPresent) {
+
+	                                display.requestPresent([{ source: this.gl.getCanvas() }]).then(function () {
+
+	                                        // success
+
+	                                        console.log('requestPresent was successful');
+	                                }, function () {
+
+	                                        // ERROR
+	                                        // VRSamplesUtil.addError("requestPresent failed.", 2000);
+
+	                                        console.error('requestPresent failed');
+	                                });
+	                        } else {
+
+	                                console.error('vrdisplay unable to present');
+	                        }
+	                }
+
+	                /** 
+	                 * User requested exiting VR mode, or display HMD was deactivated.
+	                 */
+
+	        }, {
+	                key: 'exitPresent',
+	                value: function exitPresent() {
+
+	                        console.log('in exitPresent');
+
+	                        var display = this.display;
+
+	                        if (display && !display.isPresenting) {
+
+	                                return;
+	                        }
+
+	                        vrDisplay.exitPresent().then(function () {
+
+	                                // success
+
+	                                console.log('exited vrDisplay presentation');
+	                        }, function () {
+
+	                                // ERROR
+
+	                                //VRSamplesUtil.addError("exitPresent failed.", 2000);
+
+	                                console.error('failed to exit vrDisplay presentation');
+	                        });
+	                }
+
+	                /** 
+	                 * VR Presentation has changed.
+	                 */
+
+	        }, {
+	                key: 'presentChange',
+	                value: function presentChange() {
+
+	                        // this.gl.resize();
+
+	                        console.log('in presentChange');
+	                }
+
+	                /** 
+	                 * Provide statistics for display as JSON data.
+	                 */
+
+	        }, {
+	                key: 'stats',
+	                value: function stats() {
+
+	                        return JSON.stringify(this.stats);
 	                }
 	        }]);
 
@@ -20608,6 +20885,8 @@
 
 	                this.util = util, this.gl = webgl, this.vr = webvr;
 
+	                this.vrButton = null, this.fullscreenButton = null, this.poseButton = null, this.returnButton = null;
+
 	                // save old DOM style
 
 	                if (init) {
@@ -20627,16 +20906,13 @@
 	                                ui = this.mode;
 	                        }
 
-	                        console.log('initializing Ui: ' + ui);
+	                        // Listen to fullscreen change events.
 
-	                        // begin listening for fullscreen events.
+	                        document.addEventListener('webkitfullscreenchange', this.fullscreenChange.bind(this), false);
 
-	                        // Bind to fullscreen events.
-	                        document.addEventListener('webkitfullscreenchange', this.fullscreenChange.bind(this));
+	                        document.addEventListener('mozfullscreenchange', this.fullscreenChange.bind(this), false);
 
-	                        document.addEventListener('mozfullscreenchange', this.fullscreenChange.bind(this));
-
-	                        document.addEventListener('msfullscreenchange', this.fullscreenChange.bind(this));
+	                        document.addEventListener('msfullscreenchange', this.fullscreenChange.bind(this), false);
 
 	                        // switch to the correct screen configuration.
 
@@ -20689,6 +20965,8 @@
 
 	                                // VR button
 
+	                                var vr = this.vr; // WebVR object with display
+
 	                                var vrButton = this.createButton();
 
 	                                vrButton.style.top = '0px';
@@ -20699,14 +20977,7 @@
 
 	                                vrButton.style.display = 'inline-block';
 
-	                                vrButton.addEventListener('click', function (evt) {
-
-	                                        console.log('clicked vr button...');
-
-	                                        evt.preventDefault();
-	                                });
-
-	                                controls.appendChild(vrButton);
+	                                this.vrButton = vrButton;
 
 	                                // Fullscreen
 
@@ -20724,9 +20995,46 @@
 
 	                                fullscreenButton.style.display = 'inline-block';
 
+	                                this.fullscreenButton = fullscreenButton;
+
+	                                // Return button.
+
+	                                var returnButton = this.createButton();
+
+	                                returnButton.style.top = '0px';
+
+	                                returnButton.style.left = '0px';
+
+	                                returnButton.zIndex = '9999', returnButton.src = this.icons.backArrow;
+
+	                                returnButton.style.display = 'none'; // inline-block';
+
+	                                this.returnButton = returnButton;
+
+	                                // Add event listeners.
+
+	                                vrButton.addEventListener('click', function (evt) {
+
+	                                        console.log('clicked vr button...');
+
+	                                        evt.preventDefault();
+
+	                                        _this.vrButton.hide();
+
+	                                        _this.fullscreenButton.hide();
+
+	                                        _this.returnButton.show();
+
+	                                        // Request VR presentation.
+
+	                                        vr.requestPresent();
+	                                });
+
 	                                fullscreenButton.addEventListener('click', function (evt) {
 
 	                                        console.log('clicked fullscreen button...');
+
+	                                        evt.preventDefault();
 
 	                                        var f = Math.max(window.devicePixelRatio, 1);
 
@@ -20744,81 +21052,70 @@
 
 	                                        _this.mode = _this.UI_DOM;
 
-	                                        _this.requestFullscreen();
+	                                        // Use global reference.
 
-	                                        evt.preventDefault();
+	                                        _this.vrButton.hide();
+
+	                                        _this.fullscreenButton.hide();
+
+	                                        _this.returnButton.show();
+
+	                                        // Fire the fullscreen command.
+
+	                                        _this.requestFullscreen();
 	                                });
 
-	                                controls.appendChild(fullscreenButton);
-
-	                                // Return button.
-
-	                                var returnButton = this.createButton();
-
-	                                returnButton.style.top = '0px';
-
-	                                returnButton.style.left = '0px';
-
-	                                returnButton.zIndex = '9999', returnButton.src = this.icons.vr;
-
-	                                returnButton.style.display = 'none'; // inline-block';
+	                                // Return button listener.
 
 	                                returnButton.addEventListener('click', function (evt) {
 
 	                                        console.log('clicked return button...');
 
+	                                        // TODO: exit fullscreen and/or VR.
+
 	                                        evt.preventDefault();
+
+	                                        _this.vrButton.show();
+
+	                                        _this.fullscreenButton.show();
+
+	                                        // Fire the exit fullscreen event (also triggered by escape key).
+
+	                                        _this.exitFullscreen();
 	                                });
 
+	                                // Reset pose button
+
+	                                // TODO: reset pose
+
 	                                controls.appendChild(vrButton);
+
+	                                controls.appendChild(fullscreenButton);
+
+	                                controls.appendChild(returnButton);
+
+	                                window.vrButton = vrButton;
+	                                window.fullscreenButton = fullscreenButton;
+	                                window.returnButton = returnButton;
 	                        } else {
 
 	                                console.error('Ui::createDOMUi(): canvas not defined');
 	                        }
 	                }
 
+	                /* 
+	                 * =============== FULLSCREEN EVENTS ====================
+	                 */
+
 	                /** 
-	                 * Create a Ui button
+	                 * Cross-browser enter fullscreen mode. NOTE: this is called by an 
+	                 * anonymous function bound to the fullscreen button in init().
+	                 * @param {Event} fullscreen event.
 	                 */
 
 	        }, {
-	                key: 'createButton',
-	                value: function createButton() {
-
-	                        var button = document.createElement('img');
-
-	                        button.className = 'webvr-mini-button';
-
-	                        var s = button.style;
-
-	                        s.position = 'absolute', s.width = '36px', s.height = '36px', s.backgroundSize = 'cover', s.backgroundColor = 'transparent', s.border = 0, s.userSelect = 'none', s.webkitUserSelect = 'none', s.MozUserSelect = 'none', s.cursor = 'pointer', s.padding = '12px', s.zIndex = 1, s.display = 'none', s.boxSizing = 'content-box';
-
-	                        // Prevent button from being selected and dragged.
-
-	                        button.draggable = false;
-
-	                        button.addEventListener('dragstart', function (evt) {
-
-	                                evt.preventDefault();
-	                        });
-
-	                        // Style it on hover.
-
-	                        button.addEventListener('mouseenter', function (evt) {
-
-	                                s.filter = s.webkitFilter = 'drop-shadow(0 0 6px rgba(255,255,255,1))';
-	                        });
-
-	                        button.addEventListener('mouseleave', function (evt) {
-
-	                                s.filter = s.webkitFilter = '';
-	                        });
-
-	                        return button;
-	                }
-	        }, {
 	                key: 'requestFullscreen',
-	                value: function requestFullscreen() {
+	                value: function requestFullscreen(evt) {
 
 	                        var canvas = this.gl.getCanvas();
 
@@ -20838,9 +21135,15 @@
 	                                parent.msRequestFullscreen();
 	                        }
 	                }
+
+	                /** 
+	                 * Cross-browser exit fullscreen mode.
+	                 * @param {Event} exit event.
+	                 */
+
 	        }, {
 	                key: 'exitFullscreen',
-	                value: function exitFullscreen() {
+	                value: function exitFullscreen(evt) {
 
 	                        if (document.exitFullscreen) {
 
@@ -20894,6 +21197,14 @@
 
 	                                        this.mode = this.UI_DOM;
 
+	                                        // Hide the return button, if it wasn't already.
+
+	                                        this.returnButton.hide();
+
+	                                        this.vrButton.show();
+
+	                                        this.fullscreenButton.show();
+
 	                                        break;
 
 	                                default:
@@ -20908,6 +21219,64 @@
 
 	                        }
 	                }
+
+	                /* 
+	                 * =============== UI FACTORY FUNCTIONS ====================
+	                 */
+
+	                /** 
+	                 * Create a Ui button
+	                 */
+
+	        }, {
+	                key: 'createButton',
+	                value: function createButton() {
+
+	                        var button = document.createElement('img');
+
+	                        button.className = 'webvr-mini-button';
+
+	                        var s = button.style;
+
+	                        s.position = 'absolute', s.width = '36px', s.height = '36px', s.backgroundSize = 'cover', s.backgroundColor = 'transparent', s.border = 0, s.userSelect = 'none', s.webkitUserSelect = 'none', s.MozUserSelect = 'none', s.cursor = 'pointer', s.padding = '12px', s.zIndex = 1, s.display = 'none', s.boxSizing = 'content-box';
+
+	                        // Prevent button from being selected and dragged.
+
+	                        button.draggable = false;
+
+	                        button.addEventListener('dragstart', function (evt) {
+
+	                                evt.preventDefault();
+	                        });
+
+	                        // Style it on hover.
+
+	                        button.addEventListener('mouseenter', function (evt) {
+
+	                                s.filter = s.webkitFilter = 'drop-shadow(0 0 6px rgba(255,255,255,1))';
+	                        });
+
+	                        button.addEventListener('mouseleave', function (evt) {
+
+	                                s.filter = s.webkitFilter = '';
+	                        });
+
+	                        // Show the button onscreen.
+
+	                        button.show = function () {
+
+	                                button.style.display = 'inline-block';
+	                        };
+
+	                        // Hide the button onscreen.
+
+	                        button.hide = function () {
+
+	                                button.style.display = 'none';
+	                        };
+
+	                        return button;
+	                }
 	        }]);
 
 	        return Ui;
@@ -20916,6 +21285,20 @@
 	// We put this here because of JSDoc(!).
 
 	exports.default = Ui;
+
+/***/ },
+/* 39 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var GamePad = function GamePad(init, util, glMatrix, webgl) {
+	    _classCallCheck(this, GamePad);
+
+	    console.log('in gamepad constructor');
+	};
 
 /***/ }
 /******/ ]);

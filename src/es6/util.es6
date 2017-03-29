@@ -147,7 +147,6 @@ class Util {
 
     }
 
-
     /** 
      * Reverse string (used in hash keys)
      */

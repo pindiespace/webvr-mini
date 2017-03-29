@@ -51,6 +51,14 @@ class Ui {
 
         this.vr = webvr;
 
+        this.vrButton = null,
+
+        this.fullscreenButton = null,
+
+        this.poseButton = null,
+
+        this.returnButton = null;
+
         // save old DOM style
 
         if ( init ) {
@@ -71,16 +79,13 @@ class Ui {
 
         }
 
-        console.log( 'initializing Ui: ' + ui );
+        // Listen to fullscreen change events.
 
-        // begin listening for fullscreen events.
+        document.addEventListener( 'webkitfullscreenchange', this.fullscreenChange.bind( this ), false );
 
-        // Bind to fullscreen events.
-        document.addEventListener( 'webkitfullscreenchange', this.fullscreenChange.bind( this ) );
+        document.addEventListener( 'mozfullscreenchange', this.fullscreenChange.bind( this ), false );
 
-        document.addEventListener( 'mozfullscreenchange', this.fullscreenChange.bind( this ) );
-
-        document.addEventListener( 'msfullscreenchange', this.fullscreenChange.bind( this ) );
+        document.addEventListener( 'msfullscreenchange', this.fullscreenChange.bind( this ), false );
 
         // switch to the correct screen configuration.
 
@@ -105,7 +110,6 @@ class Ui {
         }
 
     }
-
 
     /** 
      * Create the default DOM ui.
@@ -132,6 +136,8 @@ class Ui {
 
             // VR button
 
+            let vr = this.vr; // WebVR object with display
+
             let vrButton = this.createButton();
 
             vrButton.style.top = '0px';
@@ -144,15 +150,7 @@ class Ui {
 
             vrButton.style.display = 'inline-block';
 
-            vrButton.addEventListener( 'click' , ( evt ) => {
-
-                console.log( 'clicked vr button...' );
-
-                evt.preventDefault();
-
-            } );
-
-            controls.appendChild( vrButton );
+            this.vrButton = vrButton;
 
             // Fullscreen
 
@@ -170,9 +168,49 @@ class Ui {
 
             fullscreenButton.style.display = 'inline-block';
 
+            this.fullscreenButton = fullscreenButton;
+
+            // Return button.
+
+            let returnButton = this.createButton();
+
+            returnButton.style.top = '0px';
+
+            returnButton.style.left = '0px';
+
+            returnButton.zIndex = '9999',
+
+            returnButton.src = this.icons.backArrow;
+
+            returnButton.style.display = 'none'; // inline-block';
+
+            this.returnButton = returnButton;
+
+            // Add event listeners.
+
+            vrButton.addEventListener( 'click' , ( evt ) => {
+
+                console.log( 'clicked vr button...' );
+
+                evt.preventDefault();
+
+                this.vrButton.hide();
+
+                this.fullscreenButton.hide();
+
+                this.returnButton.show();
+
+                // Request VR presentation.
+
+                vr.requestPresent();
+
+            } );
+
             fullscreenButton.addEventListener( 'click', ( evt ) => {
 
                 console.log( 'clicked fullscreen button...' );
+
+                evt.preventDefault();
 
                 const f = Math.max( window.devicePixelRatio, 1 );
 
@@ -190,38 +228,53 @@ class Ui {
 
                 this.mode = this.UI_DOM;
 
-                this.requestFullscreen();
+                // Use global reference.
 
-                evt.preventDefault();
+                this.vrButton.hide();
+
+                this.fullscreenButton.hide();
+
+                this.returnButton.show();
+
+                // Fire the fullscreen command.
+
+                this.requestFullscreen();
 
             } );
 
-            controls.appendChild( fullscreenButton );
-
-            // Return button.
-
-            let returnButton = this.createButton();
-
-            returnButton.style.top = '0px';
-
-            returnButton.style.left = '0px';
-
-            returnButton.zIndex = '9999',
-
-            returnButton.src = this.icons.vr;
-
-            returnButton.style.display = 'none'; // inline-block';
+            // Return button listener.
 
             returnButton.addEventListener( 'click' , ( evt ) => {
 
                 console.log( 'clicked return button...' );
 
+                // TODO: exit fullscreen and/or VR.
+
                 evt.preventDefault();
+
+                this.vrButton.show();
+
+                this.fullscreenButton.show();
+
+                // Fire the exit fullscreen event (also triggered by escape key).
+
+                this.exitFullscreen();
 
             } );
 
+            // Reset pose button
+
+            // TODO: reset pose
+
             controls.appendChild( vrButton );
 
+            controls.appendChild( fullscreenButton );
+
+            controls.appendChild( returnButton );
+
+            window.vrButton = vrButton;
+            window.fullscreenButton = fullscreenButton;
+            window.returnButton = returnButton;
 
         } else {
 
@@ -230,6 +283,131 @@ class Ui {
         }
 
     }
+
+
+
+    /* 
+     * =============== FULLSCREEN EVENTS ====================
+     */
+
+    /** 
+     * Cross-browser enter fullscreen mode. NOTE: this is called by an 
+     * anonymous function bound to the fullscreen button in init().
+     * @param {Event} fullscreen event.
+     */
+    requestFullscreen ( evt ) {
+
+        let canvas = this.gl.getCanvas();
+
+        const parent = canvas.parentNode;
+
+        if ( parent.requestFullscreen ) {
+
+            parent.requestFullscreen();
+
+        } else if ( parent.mozRequestFullScreen ) {
+
+            parent.mozRequestFullScreen();
+
+        } else if ( parent.webkitRequestFullscreen ) {
+
+            parent.webkitRequestFullscreen();
+
+        } else if ( parent.msRequestFullscreen ) {
+
+            parent.msRequestFullscreen();
+
+        }
+
+    }
+
+    /** 
+     * Cross-browser exit fullscreen mode.
+     * @param {Event} exit event.
+     */
+    exitFullscreen ( evt ) {
+
+        if ( document.exitFullscreen ) {
+
+            document.exitFullscreen();
+
+        } else if ( document.mozCancelFullScreen ) {
+
+            document.mozCancelFullScreen();
+
+        } else if ( document.webkitExitFullscreen ) {
+
+            document.webkitExitFullscreen();
+
+        } else if ( document.msExitFullscreen ) {
+
+            document.msExitFullscreen();
+
+        }
+
+    }
+
+    /** 
+     * Handle a fullscreen transition.
+     * NOTE: used .bind() to bind to this object.s
+     */
+    fullscreenChange ( evt ) {
+
+        let c = this.gl.getCanvas();
+
+        let p = c.parentNode;
+
+        switch ( this.mode ) {
+
+            case this.UI_VR:
+
+                break;
+
+            case this.UI_FULLSCREEN:
+
+                console.log( 'from fullscreen to DOM...' );
+
+                // Kill local CSS styles ensuring we get a fullscreen view.
+
+                p.style.width = '';
+
+                p.style.height = '';
+
+                // set the HTML5 canvas back to its original size, so it is synced with style in parentNode.
+
+                c.width = this.oldWidth;
+
+                c.height = this.oldHeight;
+
+                this.mode = this.UI_DOM;
+
+                // Hide the return button, if it wasn't already.
+
+                this.returnButton.hide();
+
+                this.vrButton.show();
+
+                this.fullscreenButton.show();
+
+                break;
+
+            default:
+
+            case this.UI_DOM:
+
+                console.log( 'from DOM to fullscreen...' );
+
+                this.mode = this.UI_FULLSCREEN;
+
+                break;
+
+        }
+
+    }
+
+    /* 
+     * =============== UI FACTORY FUNCTIONS ====================
+     */
 
     /** 
      * Create a Ui button
@@ -294,106 +472,23 @@ class Ui {
 
         } );
 
+        // Show the button onscreen.
+
+        button.show = () => {
+
+            button.style.display = 'inline-block';
+
+        }
+
+        // Hide the button onscreen.
+
+        button.hide = () => {
+
+            button.style.display = 'none';
+
+        }
+
         return button;
-
-    }
-
-    requestFullscreen () {
-
-        let canvas = this.gl.getCanvas();
-
-        const parent = canvas.parentNode;
-
-        if ( parent.requestFullscreen ) {
-
-            parent.requestFullscreen();
-
-        } else if ( parent.mozRequestFullScreen ) {
-
-            parent.mozRequestFullScreen();
-
-        } else if ( parent.webkitRequestFullscreen ) {
-
-            parent.webkitRequestFullscreen();
-
-        } else if ( parent.msRequestFullscreen ) {
-
-            parent.msRequestFullscreen();
-
-        }
-
-    }
-
-    exitFullscreen () {
-
-        if ( document.exitFullscreen ) {
-
-            document.exitFullscreen();
-
-        } else if ( document.mozCancelFullScreen ) {
-
-            document.mozCancelFullScreen();
-
-        } else if ( document.webkitExitFullscreen ) {
-
-            document.webkitExitFullscreen();
-
-        } else if ( document.msExitFullscreen ) {
-
-            document.msExitFullscreen();
-
-        }
-
-    }
-
-    /** 
-     * Handle a fullscreen transition.
-     * NOTE: used .bind() to bind to this object.s
-     */
-    fullscreenChange ( evt ) {
-
-        let c = this.gl.getCanvas();
-
-        let p = c.parentNode;
-
-        switch ( this.mode ) {
-
-            case this.UI_VR:
-
-                break;
-
-            case this.UI_FULLSCREEN:
-
-                console.log( 'from fullscreen to DOM...' );
-
-                // Kill local CSS styles ensuring we get a fullscreen view.
-
-                p.style.width = '';
-
-                p.style.height = '';
-
-                // set the HTML5 canvas back to its original size, so it is synced with style in parentNode.
-
-                c.width = this.oldWidth;
-
-                c.height = this.oldHeight;
-
-                this.mode = this.UI_DOM;
-
-                break;
-
-            default:
-
-            case this.UI_DOM:
-
-                console.log( 'from DOM to fullscreen...' );
-
-                this.mode = this.UI_FULLSCREEN;
-
-                break;
-
-        }
-
 
     }
 

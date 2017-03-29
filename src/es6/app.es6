@@ -29,6 +29,8 @@ if ( ! glMatrix ) {
 
 import Util from  './util';
 
+import GamePad from './gamepad';
+
 import WebGL from './webgl';
 
 import WebVR from './webvr';
