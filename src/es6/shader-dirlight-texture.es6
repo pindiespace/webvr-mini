@@ -2,9 +2,25 @@ import Shader from './shader'
 
 class shaderDirLightTexture extends Shader {
 
-    constructor ( init, util, glMatrix, webgl, shaderName ) {
 
-        super( init, util, glMatrix, webgl, shaderName );
+    /** 
+     * --------------------------------------------------------------------
+     * VERTEX SHADER 3
+     * a directionally-lit textured object vertex shader.
+     * @link http://learningwebgl.com/blog/?p=684
+     * StackGL
+     * @link https://github.com/stackgl
+     * phong lighting
+     * @link https://github.com/stackgl/glsl-lighting-walkthrough
+     * - vertex position
+     * - texture coordinate
+     * - model-view matrix
+     * - projection matrix
+     * --------------------------------------------------------------------
+     */
+    constructor ( init, util, glMatrix, webgl, webvr, shaderName ) {
+
+        super( init, util, glMatrix, webgl, webvr, shaderName );
 
         this.needIndices = true;
 
@@ -22,20 +38,12 @@ class shaderDirLightTexture extends Shader {
 
     }
 
-    /** 
-     * --------------------------------------------------------------------
-     * VERTEX SHADER 3
-     * a directionally-lit textured object vertex shader.
-     * @link http://learningwebgl.com/blog/?p=684
-     * StackGL
-     * @link https://github.com/stackgl
-     * phong lighting
-     * @link https://github.com/stackgl/glsl-lighting-walkthrough
-     * - vertex position
-     * - texture coordinate
-     * - model-view matrix
-     * - projection matrix
-     * --------------------------------------------------------------------
+    /* 
+     * Vertex and Fragment Shaders. We use the internal 'program' object from the webgl object to compile these. 
+     * Alternatively, They may be defined to load from HTML or and external file.
+     * @return {Object{code, varList}} an object, with internal elements
+     * code: The shader code.
+     * varList: A scanned list of all the variables in the shader code (created by webgl object).
      */
     vsSrc () {
 
@@ -86,7 +94,7 @@ class shaderDirLightTexture extends Shader {
 
             code: s.join( '\n' ),
 
-            varList: this.gl.createVarList( s )
+            varList: this.webgl.createVarList( s )
 
         };
 
@@ -122,12 +130,11 @@ class shaderDirLightTexture extends Shader {
 
             ];
 
-
         return {
-        
+
             code: s.join('\n'),
 
-            varList: this.gl.createVarList( s )
+            varList: this.webgl.createVarList( s )
 
         };
 
@@ -174,7 +181,9 @@ class shaderDirLightTexture extends Shader {
 
         near = arr[ 11 ],
 
-        far = arr[ 12 ];
+        far = arr[ 12 ],
+
+        vr = arr[ 13 ];
 
         // Shorter reference.
 
@@ -209,6 +218,16 @@ class shaderDirLightTexture extends Shader {
         // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
         // TODO: https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/TechniquesforWorkingwithVertexData/TechniquesforWorkingwithVertexData.html
         // TODO: http://max-limper.de/tech/batchedrendering.html
+
+        // Update overall scene with changes (e.g. VR headset or mouse drags on desktop).
+
+        program.sceneUpdate = () => {
+
+            this.vr.setPM( pMatrix );
+
+            this.vr.setMV( mvMatrix );
+
+        }
 
         /** 
          * POLYMORPHIC METHODS
@@ -251,6 +270,10 @@ class shaderDirLightTexture extends Shader {
 
             mat4.perspective( pMatrix, Math.PI*0.4, canvas.width / canvas.height, near, far ); // right
 
+            // Reset perspective and model-view matrix.
+
+            program.sceneUpdate();
+
             // Begin program loop
 
             for ( let i = 0, len = program.renderList.length; i < len; i++ ) {
@@ -259,7 +282,7 @@ class shaderDirLightTexture extends Shader {
 
                 // Only render if we have at least one texture loaded.
 
-                if ( ! obj.textures[0] || ! obj.textures[0].texture ) continue;
+                if ( ! obj.textures[ 0 ] || ! obj.textures[ 0 ].texture ) continue;
 
                 // Update Model-View matrix with standard Prim values.
 
@@ -346,11 +369,11 @@ class shaderDirLightTexture extends Shader {
 
             }
 
-        }
+        } // end of program.render()
 
         return program;
 
-    }
+    } // end if init()
 
 }
 

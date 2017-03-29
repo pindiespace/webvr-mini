@@ -20,21 +20,26 @@ class World {
 
     /** 
      * constructor for World.
-     * @param {WebGL} webgl the webgl module.
+     * @param {WebGL} gl the webgl module.
+     * @param {WebVR} webvr the webvr module.
      * @param {Prim} prim the object/mesh primitives module.
      * @param {Renderer} renderer the GLSL rendering module.
      */
-    constructor ( webgl, prim, renderer ) {
+    constructor ( webgl, webvr, prim, renderer ) {
 
         console.log( 'in World class' );
 
-        this.webgl = webgl;
+        this.webgl = webgl,
 
-        this.util = webgl.util;
+        this.util = webgl.util,
 
-        this.prim = prim;
+        this.vr = webvr,
+
+        this.prim = prim,
 
         this.renderer = renderer;
+
+        // Matrix operations.
 
         this.canvas = webgl.getCanvas();
 
@@ -674,7 +679,6 @@ class World {
 
             );
 
-
         // NOTE: the init() method sets up the update() and render() methods for the Shader.
 
         this.r1 = this.s1.init();
@@ -724,6 +728,8 @@ class World {
      */
     update () {
 
+        // Check for VR mode.
+
         // fps calculation.
 
         let now = performance.now();
@@ -745,8 +751,9 @@ class World {
     }
 
     /** 
-     * render the world. Update Prims locally, then call shader/renderer 
-     * objects to do rendering. this.render was bound (ES5 method) in 
+     * render the World for a mono or a VR display.
+     * Update Prims locally, then call shader/renderer 
+     * objects to do rendering. this.r# was bound (ES5 method) in 
      * the constructor.
      */
     render () {
@@ -759,7 +766,7 @@ class World {
 
         // TODO: Don't render until we update in the correct order.
 
-        // Shader.render();
+        // TODO: add this to renderer so we can loop on defined Shaders.
 
         this.r3.render();
 
@@ -767,7 +774,51 @@ class World {
 
         this.r1.render();
 
-        requestAnimationFrame( this.render );
+        let display = this.vr.getDisplay();
+
+        if ( display && display.isPresenting ) {
+
+            let gl = this.webgl.getContext();
+ 
+            let c = this.webgl.getCanvas();
+
+            let frameData = this.vr.getFrame(); // keep frameData object in webvr...
+
+            let program = this.s2.getProgram();
+
+            // TODO: DO THIS IN THE SHADER.
+
+            /*
+            // Render to left eye.
+
+            gl.viewport (0, 0, c.width * 0.5, c.height );
+
+            vr.getStandingPoseMatrix( mvMatrix, frameData.leftViewMatrix );
+
+            renderSceneView( frameData.leftProjectionMatrix, mvMatrix, frameData.pose );
+
+            // Render to right eye.
+
+            gl.viewport( c.width * 0.5, 0, c.width * 0.5, c.height );
+
+            vr.getStandingPoseMatrix( viewMat, frameData.rightViewMatrix );
+
+            renderSceneView( frameData.rightProjectionMatrix, viewMat, frameData.pose );
+
+
+            vrDisplay.submitFrame();
+
+            */
+
+            display.requestAnimationFrame( this.render );
+
+        } else {
+
+            // Render mono view.
+
+            requestAnimationFrame( this.render );
+
+        }
 
     }
 

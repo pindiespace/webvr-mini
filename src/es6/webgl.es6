@@ -82,15 +82,35 @@ class WebGL {
 
         if ( ! canvas ) { 
 
+            /* 
+             * Create the minimal player wraparound.
+             * <div class="webvr-mini-player">
+             *     <nav class="webvr-mini-controls"></nav>
+             *     <canvas id="webvr-mini-canvas" ></canvas>
+             * </div>
+             */
+
             canvas = document.createElement( 'canvas' );
 
             canvas.width = 480;
 
             canvas.height = 320;
 
+            let player = document.createElement( 'div' );
+
+            player.className = 'webvr-mini-player';
+
+            let controls = document.createElement( 'div' );
+
+            controls.className = 'webvr-mini-controls';
+
+            player.appendChild( controls );
+
+            player.appendChild( canvas );
+
             // This seems to fix a bug in IE 11. TODO: remove extra empty <canvas>.
 
-            document.body.appendChild( canvas );
+            document.body.appendChild( player );
 
         } else if ( this.util.isString( canvas) ) {
 
@@ -367,6 +387,8 @@ class WebGL {
     resizeCanvas () {
 
         if ( this.ready() ) {
+
+            console.log('resize')
 
             let wWidth = this.util.getWindowWidth();
 

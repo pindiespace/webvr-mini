@@ -153,15 +153,15 @@ var promise = new Promise( ( resolve, reject ) => {
 
         renderer = new Renderer ( true, util, glMatrix, webgl );
 
-        renderer.addShader( new ShaderTexture ( true, util, glMatrix, webgl, 'shaderTexture' ) );
+        renderer.addShader( new ShaderTexture ( true, util, glMatrix, webgl, webvr, 'shaderTexture' ) );
 
-        renderer.addShader( new ShaderColor ( true, util, glMatrix, webgl, 'shaderColor' ) );
+        renderer.addShader( new ShaderColor ( true, util, glMatrix, webgl, webvr, 'shaderColor' ) );
 
-        renderer.addShader( new shaderDirLightTexture( true, util, glMatrix, webgl, 'shaderDirLightTexture' ) );
+        renderer.addShader( new shaderDirLightTexture( true, util, glMatrix, webgl, webvr, 'shaderDirLightTexture' ) );
 
         // Create the world, which needs WebGL, WebVR, and Prim.
 
-        world = new World( webgl, prim, renderer );
+        world = new World( webgl, webvr, prim, renderer );
 
         // Initialize our Ui.
 

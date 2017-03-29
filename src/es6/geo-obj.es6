@@ -12,7 +12,7 @@ class GeoObj {
 
         this.primName = name,
 
-        this.gl = webgl,
+        this.webgl = webgl,
 
         this.util = util,
 
@@ -114,7 +114,7 @@ class GeoObj {
 
         // Save the max allowed drawing size. For WebGL 1.0 with extension, vertices must be < 65k.
 
-        this.MAX_DRAWELEMENTS = this.gl.MAX_DRAWELEMENTS;
+        this.MAX_DRAWELEMENTS = this.webgl.MAX_DRAWELEMENTS;
 
         this.mName = 'geo-obj for ' + this.primName + '::';
 
@@ -548,7 +548,7 @@ class GeoObj {
 
         if( this.util.isArray( indices ) ) {
 
-            if ( this.gl.stats.uint32 ) {
+            if ( this.webgl.stats.uint32 ) {
 
                 o.data = new Uint32Array( indices );
 
@@ -715,7 +715,7 @@ class GeoObj {
 
         }
 
-        if ( this.vertices.data.length > this.gl.MAX_DRAWELEMENTS ) {
+        if ( this.vertices.data.length > this.webgl.MAX_DRAWELEMENTS ) {
 
             this.ssz = true;
 
@@ -754,7 +754,7 @@ class GeoObj {
 
         this.colors.data = concat( this.colors.data, colors );
 
-        if ( this.vertices.data.length > this.gl.MAX_DRAWELEMENTS ) {
+        if ( this.vertices.data.length > this.webgl.MAX_DRAWELEMENTS ) {
 
             this.ssz = true;
 
@@ -783,7 +783,7 @@ class GeoObj {
      */
     bindGLBuffer( o, type ) {
 
-        const gl = this.gl.getContext();
+        const gl = this.webgl.getContext();
 
         o.buffer = gl.createBuffer();
 
@@ -853,7 +853,7 @@ class GeoObj {
      */
     createGLBuffers () {
 
-            const gl = this.gl.getContext();
+            const gl = this.webgl.getContext();
 
             let fnName = this.mName + 'createGLBuffers():';
 
@@ -879,7 +879,7 @@ class GeoObj {
              * Conditionally create a UINT16 or UINT32 buffer for the index values, based 
              * on whether this is WebGL 2.0, or the WebGL extension is available
              */
-            if ( this.gl.stats.uint32 ) {
+            if ( this.webgl.stats.uint32 ) {
 
                 if ( ! o.data.length ) {
 

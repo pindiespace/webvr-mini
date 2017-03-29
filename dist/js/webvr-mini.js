@@ -496,15 +496,15 @@
 
 	                renderer = new _renderer2.default(true, util, glMatrix, webgl);
 
-	                renderer.addShader(new _shaderTexture2.default(true, util, glMatrix, webgl, 'shaderTexture'));
+	                renderer.addShader(new _shaderTexture2.default(true, util, glMatrix, webgl, webvr, 'shaderTexture'));
 
-	                renderer.addShader(new _shaderColor2.default(true, util, glMatrix, webgl, 'shaderColor'));
+	                renderer.addShader(new _shaderColor2.default(true, util, glMatrix, webgl, webvr, 'shaderColor'));
 
-	                renderer.addShader(new _shaderDirlightTexture2.default(true, util, glMatrix, webgl, 'shaderDirLightTexture'));
+	                renderer.addShader(new _shaderDirlightTexture2.default(true, util, glMatrix, webgl, webvr, 'shaderDirLightTexture'));
 
 	                // Create the world, which needs WebGL, WebVR, and Prim.
 
-	                exports.world = world = new _world2.default(webgl, prim, renderer);
+	                exports.world = world = new _world2.default(webgl, webvr, prim, renderer);
 
 	                // Initialize our Ui.
 
@@ -1321,7 +1321,7 @@
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
-	        value: true
+	            value: true
 	});
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1330,1209 +1330,1231 @@
 
 	var WebGL = function () {
 
-	        /**
-	         * References:
-	         * LiteGL
-	         * @link https://github.com/jagenjo/litegl.js/tree/master/src
-	         * GL Tutorial: http://webglfundamentals.org
-	         * HTML5 Games code: http://www.wiley.com/WileyCDA/WileyTitle/productCd-1119975085.html
-	         * Best Practices
-	         * @link https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_best_practices
-	         * WebGL tests:
-	         * @link https://www.browserleaks.com/webgl
-	         * WebGL cross-browser:
-	         * @link http://codeflow.org/entries/2013/feb/22/how-to-write-portable-webgl/
-	         * Great WebGL Examples:
-	         * http://alteredqualia.com/
-	         * Toji: https://github.com/toji/webvr-samples
-	         * https://github.com/toji/webvr.info/blob/master/samples/05-room-scale.html
-	         * TWGL: @link http://twgljs.org/
-	         * perspective Matrix
-	         * @link http://www.rozengain.com/blog/2010/02/22/beginning-webgl-step-by-step-tutorial/ 
-	         * 
-	         * Google demos for kronos (including webworkers and particle systems)
-	         * https://www.khronos.org/registry/webgl/sdk/demos/google/
-	         * 
-	         * @constructor
-	         * @param {Object} config a configuration object, set in app.js.
-	         */
+	            /**
+	             * References:
+	             * LiteGL
+	             * @link https://github.com/jagenjo/litegl.js/tree/master/src
+	             * GL Tutorial: http://webglfundamentals.org
+	             * HTML5 Games code: http://www.wiley.com/WileyCDA/WileyTitle/productCd-1119975085.html
+	             * Best Practices
+	             * @link https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_best_practices
+	             * WebGL tests:
+	             * @link https://www.browserleaks.com/webgl
+	             * WebGL cross-browser:
+	             * @link http://codeflow.org/entries/2013/feb/22/how-to-write-portable-webgl/
+	             * Great WebGL Examples:
+	             * http://alteredqualia.com/
+	             * Toji: https://github.com/toji/webvr-samples
+	             * https://github.com/toji/webvr.info/blob/master/samples/05-room-scale.html
+	             * TWGL: @link http://twgljs.org/
+	             * perspective Matrix
+	             * @link http://www.rozengain.com/blog/2010/02/22/beginning-webgl-step-by-step-tutorial/ 
+	             * 
+	             * Google demos for kronos (including webworkers and particle systems)
+	             * https://www.khronos.org/registry/webgl/sdk/demos/google/
+	             * 
+	             * @constructor
+	             * @param {Object} config a configuration object, set in app.js.
+	             */
 
-	        function WebGL(init, glMatrix, util, debug) {
-	                _classCallCheck(this, WebGL);
+	            function WebGL(init, glMatrix, util, debug) {
+	                        _classCallCheck(this, WebGL);
 
-	                console.log('in webGL class');
+	                        console.log('in webGL class');
 
-	                this.gl = null;
+	                        this.gl = null;
 
-	                this.contextCount = 0;
+	                        this.contextCount = 0;
 
-	                this.glVers = 0;
+	                        this.glVers = 0;
 
-	                this.glMatrix = glMatrix;
+	                        this.glMatrix = glMatrix;
 
-	                this.util = util;
+	                        this.util = util;
 
-	                this.NOT_IN_LIST = util.NOT_IN_LIST; // -1 value for .indexOf()
+	                        this.NOT_IN_LIST = util.NOT_IN_LIST; // -1 value for .indexOf()
 
-	                // Perspective matrix in Shaders.
+	                        // Perspective matrix in Shaders.
 
-	                this.near = 0.1;
+	                        this.near = 0.1;
 
-	                this.far = 100;
+	                        this.far = 100;
 
-	                // Statistics object.
+	                        // Statistics object.
 
-	                this.stats = {};
+	                        this.stats = {};
 
-	                if (init === true) {
+	                        if (init === true) {
 
-	                        this.init(document.getElementById('webvr-mini-canvas')); // Normally not called this way
-	                }
-
-	                // If we are running in debug mode, save the debug utils into this object.
-
-	                if (debug) {
-
-	                        this.debug = debug;
-	                }
-	        }
-
-	        /**
-	         * initialize with a canvas context
-	         * @param {HTMLCanvasElement|String|undefined} canvas a HTML5 <canvas>, id for canvas, or undefined, 
-	         * in which case a <canvas> object is 
-	         * created and added to document.body, an ID value for a tag, or a CanvasDOMobject.
-	         * @param {Function} lostContext callback when WebGL context is lost.
-	         * @param {Function} restoredContext callback when WebGL context is restored.
-	         * @returns {WebGLContext} the WebGL context of the <canvas> object.
-	         */
-
-
-	        _createClass(WebGL, [{
-	                key: 'init',
-	                value: function init(canvas, lostContext, restoredContext) {
-	                        var _this = this;
-
-	                        if (!canvas) {
-
-	                                canvas = document.createElement('canvas');
-
-	                                canvas.width = 480;
-
-	                                canvas.height = 320;
-
-	                                // This seems to fix a bug in IE 11. TODO: remove extra empty <canvas>.
-
-	                                document.body.appendChild(canvas);
-	                        } else if (this.util.isString(canvas)) {
-
-	                                canvas = document.getElementById(canvas);
-	                        } else {
-
-	                                canvas = canvas;
+	                                    this.init(document.getElementById('webvr-mini-canvas')); // Normally not called this way
 	                        }
 
-	                        if (canvas) {
+	                        // If we are running in debug mode, save the debug utils into this object.
 
-	                                // NOTE: IE10 needs this bound to DOM for the following command to work.
+	                        if (debug) {
 
-	                                var r = canvas.getBoundingClientRect();
+	                                    this.debug = debug;
+	                        }
+	            }
 
-	                                canvas.width = r.width;
+	            /**
+	             * initialize with a canvas context
+	             * @param {HTMLCanvasElement|String|undefined} canvas a HTML5 <canvas>, id for canvas, or undefined, 
+	             * in which case a <canvas> object is 
+	             * created and added to document.body, an ID value for a tag, or a CanvasDOMobject.
+	             * @param {Function} lostContext callback when WebGL context is lost.
+	             * @param {Function} restoredContext callback when WebGL context is restored.
+	             * @returns {WebGLContext} the WebGL context of the <canvas> object.
+	             */
 
-	                                canvas.height = r.height;
 
-	                                // Save current window width and height (used in window resize).
+	            _createClass(WebGL, [{
+	                        key: 'init',
+	                        value: function init(canvas, lostContext, restoredContext) {
+	                                    var _this = this;
 
-	                                this.oldWidth = this.util.getWindowWidth();
+	                                    if (!canvas) {
 
-	                                this.oldHeight = this.util.getWindowHeight();
+	                                                /* 
+	                                                 * Create the minimal player wraparound.
+	                                                 * <div class="webvr-mini-player">
+	                                                 *     <nav class="webvr-mini-controls"></nav>
+	                                                 *     <canvas id="webvr-mini-canvas" ></canvas>
+	                                                 * </div>
+	                                                 */
 
-	                                // Create the WebGL context for the <canvas>, trying to get the most recent version.
+	                                                canvas = document.createElement('canvas');
 
-	                                this.gl = this.createContext(canvas);
+	                                                canvas.width = 480;
 
-	                                if (this.gl) {
+	                                                canvas.height = 320;
 
-	                                        var gl = this.gl;
+	                                                var player = document.createElement('div');
 
-	                                        // Default WebGL initializtion and stats, can be over-ridden in your world file.
+	                                                player.className = 'webvr-mini-player';
 
-	                                        if (gl.getParameter && gl.getShaderPrecisionFormat) {
+	                                                var controls = document.createElement('div');
 
-	                                                var stats = this.stats;
+	                                                controls.className = 'webvr-mini-controls';
 
-	                                                // Check if high precision supported in fragment shader.
+	                                                player.appendChild(controls);
 
-	                                                stats.highp = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT).precision;
+	                                                player.appendChild(canvas);
 
-	                                                // Max texture size, for gl.texImage2D.                
+	                                                // This seems to fix a bug in IE 11. TODO: remove extra empty <canvas>.
 
-	                                                stats.maxTexSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+	                                                document.body.appendChild(player);
+	                                    } else if (this.util.isString(canvas)) {
 
-	                                                // Max cubemap size, for gl.texImage2D.
+	                                                canvas = document.getElementById(canvas);
+	                                    } else {
 
-	                                                stats.maxCubeSize = gl.getParameter(gl.MAX_CUBE_MAP_TEXTURE_SIZE);
+	                                                canvas = canvas;
+	                                    }
 
-	                                                // Max texture size, for gl.renderbufferStorage and canvas width/height.
+	                                    if (canvas) {
 
-	                                                stats.maxRenderbufferSize = gl.getParameter(gl.MAX_RENDERBUFFER_SIZE);
+	                                                // NOTE: IE10 needs this bound to DOM for the following command to work.
 
-	                                                // Max texture units.
+	                                                var r = canvas.getBoundingClientRect();
 
-	                                                stats.combinedUnits = gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS);
+	                                                canvas.width = r.width;
 
-	                                                // Max vertex buffers.
+	                                                canvas.height = r.height;
 
-	                                                stats.maxVSattribs = gl.getParameter(gl.MAX_VERTEX_ATTRIBS);
+	                                                // Save current window width and height (used in window resize).
 
-	                                                // Max 4-byte uniforms.
+	                                                this.oldWidth = this.util.getWindowWidth();
 
-	                                                stats.maxVertexShader = gl.getParameter(gl.MAX_VERTEX_UNIFORM_VECTORS);
+	                                                this.oldHeight = this.util.getWindowHeight();
 
-	                                                // Max 4-byte uniforms.
+	                                                // Create the WebGL context for the <canvas>, trying to get the most recent version.
 
-	                                                stats.maxFragmentShader = gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS);
-	                                        } else {
+	                                                this.gl = this.createContext(canvas);
 
-	                                                this.stats = false;
-	                                        }
+	                                                if (this.gl) {
 
-	                                        /* 
-	                                         * Set up listeners for context lost and regained.
-	                                         * @link https://www.khronos.org/webgl/wiki/HandlingContextLost
-	                                         * Simulate lost and restored context events with:
-	                                         * @link https://developer.mozilla.org/en-US/docs/Web/API/WEBGL_lose_context/restoreContext
-	                                         * @link http://codeflow.org/entries/2013/feb/22/how-to-write-portable-webgl/
-	                                         * gl.isContextLost() also works to check
-	                                         */
+	                                                            var gl = this.gl;
 
-	                                        canvas.addEventListener('webglcontextlost', function (e) {
+	                                                            // Default WebGL initializtion and stats, can be over-ridden in your world file.
 
-	                                                console.error('error: webglcontextlost event, context count:' + _this.contextCount);
+	                                                            if (gl.getParameter && gl.getShaderPrecisionFormat) {
 
-	                                                if (lostContext) {
+	                                                                        var stats = this.stats;
 
-	                                                        _this.gl = null;
+	                                                                        // Check if high precision supported in fragment shader.
 
-	                                                        lostContext(e);
-	                                                }
+	                                                                        stats.highp = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT).precision;
 
-	                                                e.preventDefault();
-	                                        }, false);
+	                                                                        // Max texture size, for gl.texImage2D.                
 
-	                                        canvas.addEventListener('webglcontextrestored', function (e) {
+	                                                                        stats.maxTexSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
 
-	                                                console.error('error: webglcontextrestored event, context count:' + _this.contextCount);
+	                                                                        // Max cubemap size, for gl.texImage2D.
 
-	                                                if (restoredContext) {
+	                                                                        stats.maxCubeSize = gl.getParameter(gl.MAX_CUBE_MAP_TEXTURE_SIZE);
 
-	                                                        restoredContext(e);
-	                                                }
+	                                                                        // Max texture size, for gl.renderbufferStorage and canvas width/height.
 
-	                                                e.preventDefault();
-	                                        }, false);
+	                                                                        stats.maxRenderbufferSize = gl.getParameter(gl.MAX_RENDERBUFFER_SIZE);
 
-	                                        // Do an initial set of our viewport width and height.
+	                                                                        // Max texture units.
 
-	                                        gl.viewportWidth = canvas.width;
+	                                                                        stats.combinedUnits = gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS);
 
-	                                        gl.viewportHeight = canvas.height;
+	                                                                        // Max vertex buffers.
 
-	                                        // listen for <canvas> resize event.
+	                                                                        stats.maxVSattribs = gl.getParameter(gl.MAX_VERTEX_ATTRIBS);
 
-	                                        window.addEventListener('resize', function (e) {
+	                                                                        // Max 4-byte uniforms.
 
-	                                                _this.resizeCanvas();
+	                                                                        stats.maxVertexShader = gl.getParameter(gl.MAX_VERTEX_UNIFORM_VECTORS);
 
-	                                                e.preventDefault();
-	                                        }, false);
+	                                                                        // Max 4-byte uniforms.
 
-	                                        // If we're reloading, clear all current textures in the texture buffers.
+	                                                                        stats.maxFragmentShader = gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS);
+	                                                            } else {
 
-	                                        this.clearTextures();
+	                                                                        this.stats = false;
+	                                                            }
 
-	                                        // Default 3D enables.
+	                                                            /* 
+	                                                             * Set up listeners for context lost and regained.
+	                                                             * @link https://www.khronos.org/webgl/wiki/HandlingContextLost
+	                                                             * Simulate lost and restored context events with:
+	                                                             * @link https://developer.mozilla.org/en-US/docs/Web/API/WEBGL_lose_context/restoreContext
+	                                                             * @link http://codeflow.org/entries/2013/feb/22/how-to-write-portable-webgl/
+	                                                             * gl.isContextLost() also works to check
+	                                                             */
 
-	                                        gl.enable(gl.DEPTH_TEST);
+	                                                            canvas.addEventListener('webglcontextlost', function (e) {
 
-	                                        gl.enable(gl.CULL_FACE);
+	                                                                        console.error('error: webglcontextlost event, context count:' + _this.contextCount);
 
-	                                        //gl.disable(gl.CULL_FACE);
+	                                                                        if (lostContext) {
 
-	                                        gl.clearDepth(1.0); // Clear everything
+	                                                                                    _this.gl = null;
 
-	                                        gl.depthFunc(gl.LEQUAL); // Near things obscure far things
+	                                                                                    lostContext(e);
+	                                                                        }
 
-	                                        gl.enable(gl.BLEND); // Allow blending
+	                                                                        e.preventDefault();
+	                                                            }, false);
 
-	                                        // Fog NOT in Webgl use shader
-	                                        //http://www.geeks3d.com/20100228/fog-in-glsl-webgl/
-	                                        // http://in2gpu.com/2014/07/22/create-fog-shader/
-	                                        //gl.enable( gl.FOG );
+	                                                            canvas.addEventListener('webglcontextrestored', function (e) {
 
-	                                        // set this for individual objects 
-	                                        //gl.blendFunc( gl.SRC_ALPHA, gl.ONE );
+	                                                                        console.error('error: webglcontextrestored event, context count:' + _this.contextCount);
 
-	                                        /* 
-	                                         * IMPORTANT: tells WebGL to premultiply alphas for <canvas>
-	                                         * @link http://stackoverflow.com/questions/39251254/avoid-cpu-side-conversion-with-teximage2d-in-firefox
-	                                         */
-	                                        gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+	                                                                        if (restoredContext) {
 
-	                                        gl.clearColor(0.1, 0.1, 0.1, 1.0);
+	                                                                                    restoredContext(e);
+	                                                                        }
 
-	                                        // Clear the screen to the clearColor by default.
+	                                                                        e.preventDefault();
+	                                                            }, false);
 
-	                                        this.clear();
+	                                                            // Do an initial set of our viewport width and height.
 
-	                                        return this.gl;
-	                                } else {
+	                                                            gl.viewportWidth = canvas.width;
 
-	                                        // We check prior to loading this module, so we shouldn't go here if not supported.
+	                                                            gl.viewportHeight = canvas.height;
 
-	                                        console.error('no WebGL context');
-	                                } // end of have a gl context
+	                                                            // listen for <canvas> resize event.
 
-	                        } else {
+	                                                            window.addEventListener('resize', function (e) {
 
-	                                console.error(' no WebGL canvas');
-	                        } // end of if have a <canvas>
+	                                                                        _this.resizeCanvas();
 
-	                        return null;
-	                }
+	                                                                        e.preventDefault();
+	                                                            }, false);
 
-	                /* 
-	                 * =============== WEBGL EXTENSIONS ====================
-	                 */
+	                                                            // If we're reloading, clear all current textures in the texture buffers.
 
-	                /** 
-	                 * Add vertex buffer support to WebGL 1.0
-	                 * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only)l
-	                 */
+	                                                            this.clearTextures();
 
-	        }, {
-	                key: 'addVertexBufferSupport',
-	                value: function addVertexBufferSupport(gl) {
+	                                                            // Default 3D enables.
 
-	                        var ext = gl.getExtension('OES_vertex_array_object');
+	                                                            gl.enable(gl.DEPTH_TEST);
 
-	                        if (ext) {
+	                                                            gl.enable(gl.CULL_FACE);
 
-	                                gl.createVertexArray = function () {
+	                                                            //gl.disable(gl.CULL_FACE);
 
-	                                        return ext.createVertexArrayOES();
-	                                };
+	                                                            gl.clearDepth(1.0); // Clear everything
 
-	                                gl.deleteVertexArray = function (v) {
+	                                                            gl.depthFunc(gl.LEQUAL); // Near things obscure far things
 
-	                                        ext.deleteVertexArrayOES(v);
-	                                };
+	                                                            gl.enable(gl.BLEND); // Allow blending
 
-	                                gl.isVertexArray = function (v) {
+	                                                            // Fog NOT in Webgl use shader
+	                                                            //http://www.geeks3d.com/20100228/fog-in-glsl-webgl/
+	                                                            // http://in2gpu.com/2014/07/22/create-fog-shader/
+	                                                            //gl.enable( gl.FOG );
 
-	                                        return ext.isVertexArrayOES(v);
-	                                };
+	                                                            // set this for individual objects 
+	                                                            //gl.blendFunc( gl.SRC_ALPHA, gl.ONE );
 
-	                                gl.bindVertexArray = function (v) {
+	                                                            /* 
+	                                                             * IMPORTANT: tells WebGL to premultiply alphas for <canvas>
+	                                                             * @link http://stackoverflow.com/questions/39251254/avoid-cpu-side-conversion-with-teximage2d-in-firefox
+	                                                             */
+	                                                            gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
 
-	                                        ext.bindVertexArrayOES(v);
-	                                };
+	                                                            gl.clearColor(0.1, 0.1, 0.1, 1.0);
 
-	                                gl.VERTEX_ARRAY_BINDING = ext.VERTEX_ARRAY_BINDING_OES;
+	                                                            // Clear the screen to the clearColor by default.
+
+	                                                            this.clear();
+
+	                                                            return this.gl;
+	                                                } else {
+
+	                                                            // We check prior to loading this module, so we shouldn't go here if not supported.
+
+	                                                            console.error('no WebGL context');
+	                                                } // end of have a gl context
+
+	                                    } else {
+
+	                                                console.error(' no WebGL canvas');
+	                                    } // end of if have a <canvas>
+
+	                                    return null;
 	                        }
 
-	                        return ext;
-	                }
-
-	                /** 
-	                 * Support indexed vertex drawing when there are more than 
-	                 * 64k vertices in WebGL 1.0. Enabled by default in WebGL 2.0.
-	                 * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only)l
-	                 */
-
-	        }, {
-	                key: 'addIndex32Support',
-	                value: function addIndex32Support(gl) {
-
-	                        var ext = gl.getExtension('OES_element_index_uint');
-
-	                        return ext;
-	                }
-
-	                /* 
-	                 * =============== CANVAS OPERATIONS ====================
-	                 */
-
-	                /** 
-	                 * Get WebGL canvas only if we've created a gl context.
-	                 * @returns {HTMLCanvasElement} canvas the rendering <canvas>.
-	                 */
-
-	        }, {
-	                key: 'getCanvas',
-	                value: function getCanvas() {
-
-	                        return this.gl ? this.gl.canvas : null;
-	                }
-
-	                /** 
-	                 * Resize the canvas if the window changes size. 
-	                 * NOTE: affected by CSS styles.
-	                 * TODO: check current CSS style.
-	                 * (TWGL)
-	                 */
-
-	        }, {
-	                key: 'resizeCanvas',
-	                value: function resizeCanvas() {
-
-	                        if (this.ready()) {
-
-	                                var wWidth = this.util.getWindowWidth();
-
-	                                var wHeight = this.util.getWindowHeight();
-
-	                                if (wWidth !== this.oldWidth) {
-
-	                                        var f = Math.max(window.devicePixelRatio, 1);
-
-	                                        var gl = this.getContext();
-
-	                                        var c = this.getCanvas();
-
-	                                        // Get the current size of the <canvas>
-
-	                                        var width = c.clientWidth * f | 0;
-
-	                                        var height = c.clientHeight * f | 0;
-
-	                                        // Set the <canvas> width and height property.
-
-	                                        c.width = width;
-
-	                                        c.height = height;
-
-	                                        // Set the WebGL viewport.
-
-	                                        gl.viewportWidth = width;
-
-	                                        gl.viewportHeight = height;
-
-	                                        gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
-	                                }
-
-	                                // Save the values.
-
-	                                this.oldWidth = wWidth;
-
-	                                this.oldHeight = wHeight;
-	                        }
-
-	                        return false;
-	                }
-
-	                /* 
-	                 * =============== WEBGL CONTEXT OPERATIONS ====================
-	                 */
-
-	                /** 
-	                 * get HTML5 canvas, and a WebGL context. We also scan for multiple 
-	                 * contexts being created ( > 1 ) and delete if one is already present.
-	                 * @param {Canvas} canvas the HTML5 <canvas> DOM element.
-	                 * TODO: PROBLEM IF THERE ARE MULTIPLE CONTEXES ON THE PAGE???????
-	                 * @param {HTMLCanvasElement} canvas the rendering <canvas>.
-	                 * @returns {WebGLRenderingContext} gl a WebGLRenderingContext.
-	                 */
-
-	        }, {
-	                key: 'createContext',
-	                value: function createContext(canvas) {
-
-	                        if (!window.WebGLRenderingContext) {
-
-	                                console.error('this browser does not support webgl');
-
-	                                return null;
-	                        }
-
-	                        var gl = null;
-
-	                        if (gl && this.contextCount > 0) {
-
-	                                // Contexts are normally in garbage, can't be deleted without this!
-
-	                                console.warn('killing context');
-
-	                                this.killContext();
-
-	                                this.contextCount--;
-
-	                                this.gl = null; // just in case
-	                        }
-
-	                        var n = ['webgl2', 'experimental-webgl2', 'webgl', 'experimental-webgl'];
-
-	                        var i = 0;
-
-	                        while (i < n.length) {
-
-	                                try {
-
-	                                        if (this.debug) {
-
-	                                                gl = this.debug.makeDebugContext(canvas.getContext(n[i]));
-
-	                                                if (gl) {
-
-	                                                        console.warn('using debug context');
-
-	                                                        if (gl.getParameter !== 'function') {
-
-	                                                                gl = canvas.getContext(n[i]);
-
-	                                                                console.warn('unable to use debug context, trying release:' + n[i], ' getParameter:' + gl.getParameter);
-	                                                        }
-
-	                                                        break;
-	                                                }
-	                                        } else {
-
-	                                                gl = canvas.getContext(n[i]);
-
-	                                                if (gl) {
-
-	                                                        console.warn('using release context mode:' + n[i]);
-
-	                                                        break;
-	                                                }
-	                                        }
-	                                } catch (e) {
-
-	                                        console.warn('failed to load context:' + n[i]);
-	                                }
-
-	                                i++;
-	                        } // end of while loop
-
-
-	                        /*
-	                         * If we got a context, assign WebGL version. Note that some 
-	                         * experimental versions don't have .getParameter
+	                        /* 
+	                         * =============== WEBGL EXTENSIONS ====================
 	                         */
 
-	                        if (gl && typeof gl.getParameter == 'function') {
+	                        /** 
+	                         * Add vertex buffer support to WebGL 1.0
+	                         * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only)l
+	                         */
 
-	                                this.contextCount++;
+	            }, {
+	                        key: 'addVertexBufferSupport',
+	                        value: function addVertexBufferSupport(gl) {
 
-	                                this.gl = gl;
+	                                    var ext = gl.getExtension('OES_vertex_array_object');
 
-	                                // Check if this is a full WebGL2 stack
+	                                    if (ext) {
 
-	                                this.glVers = gl.getParameter(gl.VERSION).toLowerCase();
+	                                                gl.createVertexArray = function () {
 
-	                                if (i == 1 || i == 3) {
+	                                                            return ext.createVertexArrayOES();
+	                                                };
 
-	                                        console.warn('experimental context, .getParameter() may not work');
-	                                }
+	                                                gl.deleteVertexArray = function (v) {
 
-	                                console.log('version:' + gl.getParameter(gl.VERSION));
+	                                                            ext.deleteVertexArrayOES(v);
+	                                                };
 
-	                                // Take action, depending on version (identified by pos in our test array n).
+	                                                gl.isVertexArray = function (v) {
 
-	                                switch (i) {
+	                                                            return ext.isVertexArrayOES(v);
+	                                                };
 
-	                                        case 0:
+	                                                gl.bindVertexArray = function (v) {
 
-	                                        case 1:
+	                                                            ext.bindVertexArrayOES(v);
+	                                                };
 
-	                                                //if ( ! gl.TRANSFORM_FEEDBACK ) {
-	                                                // revert to 1.0
-	                                                //    console.log("TRANSFORM FEEDBACK NOT SUPPORTED")
-	                                                //}
+	                                                gl.VERTEX_ARRAY_BINDING = ext.VERTEX_ARRAY_BINDING_OES;
+	                                    }
 
-	                                                this.glVers = 2.0;
-
-	                                                this.stats.uint32 = true;
-
-	                                                break;
-
-	                                        case 2:
-
-	                                        case 3:
-
-	                                                this.glVers = 1.0;
-
-	                                                this.addVertexBufferSupport(gl); // vertex buffers
-
-	                                                this.stats.uint32 = this.addIndex32Support(gl); // vertices > 64k
-
-	                                                break;
-
-	                                        default:
-
-	                                                break;
-
-	                                }
+	                                    return ext;
 	                        }
 
-	                        if (!this.stats.uint32) {
+	                        /** 
+	                         * Support indexed vertex drawing when there are more than 
+	                         * 64k vertices in WebGL 1.0. Enabled by default in WebGL 2.0.
+	                         * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only)l
+	                         */
 
-	                                this.MAX_DRAWELEMENTS = 65534;
-	                        } else {
+	            }, {
+	                        key: 'addIndex32Support',
+	                        value: function addIndex32Support(gl) {
 
-	                                this.MAX_DRAWELEMENTS = 2e9;
+	                                    var ext = gl.getExtension('OES_element_index_uint');
+
+	                                    return ext;
 	                        }
 
-	                        return this.gl;
-	                }
+	                        /* 
+	                         * =============== CANVAS OPERATIONS ====================
+	                         */
 
-	                /** 
-	                 * Return the current context. Note that we don't store a 
-	                 * separate reference to the canvas.
-	                 * @returns {WebGLRenderingContext} gl a WebGLRenderingContext.
-	                 */
+	                        /** 
+	                         * Get WebGL canvas only if we've created a gl context.
+	                         * @returns {HTMLCanvasElement} canvas the rendering <canvas>.
+	                         */
 
-	        }, {
-	                key: 'getContext',
-	                value: function getContext() {
+	            }, {
+	                        key: 'getCanvas',
+	                        value: function getCanvas() {
 
-	                        if (!this.gl) {
-
-	                                console.warn('warning webgl context not initialized');
+	                                    return this.gl ? this.gl.canvas : null;
 	                        }
 
-	                        return this.gl;
-	                }
+	                        /** 
+	                         * Resize the canvas if the window changes size. 
+	                         * NOTE: affected by CSS styles.
+	                         * TODO: check current CSS style.
+	                         * (TWGL)
+	                         */
 
-	                /** 
-	                 * Kill the current context (complete reset will be needed). Also use to debug 
-	                 * when context is lost, and has to be rebuilt.
-	                 * @link http://codeflow.org/entries/2013/feb/22/how-to-write-portable-webgl/
-	                 * @link https://developer.mozilla.org/en-US/docs/Web/API/WEBGL_lose_context/loseContext
-	                 */
+	            }, {
+	                        key: 'resizeCanvas',
+	                        value: function resizeCanvas() {
 
-	        }, {
-	                key: 'killContext',
-	                value: function killContext() {
+	                                    if (this.ready()) {
 
-	                        console.log('in killcontext, count:' + this.contextCount);
+	                                                console.log('resize');
 
-	                        if (this.contextCount) {
+	                                                var wWidth = this.util.getWindowWidth();
 
-	                                console.log('killing WebGL context, count before:' + this.contextCount);
+	                                                var wHeight = this.util.getWindowHeight();
 
-	                                this.gl.getExtension('WEBGL_lose_context').loseContext();
+	                                                if (wWidth !== this.oldWidth) {
 
-	                                this.contextCount--;
-	                        }
-	                }
+	                                                            var f = Math.max(window.devicePixelRatio, 1);
 
-	                /** 
-	                 * check if we have a contex and are ready to render.
-	                 */
+	                                                            var gl = this.getContext();
 
-	        }, {
-	                key: 'ready',
-	                value: function ready() {
+	                                                            var c = this.getCanvas();
 
-	                        var gl = this.gl;
+	                                                            // Get the current size of the <canvas>
 
-	                        return !!(this.gl && this.glMatrix);
-	                }
+	                                                            var width = c.clientWidth * f | 0;
 
-	                /* 
-	                 * =============== CLEAR/RESET OPERATIONS ====================
-	                 */
+	                                                            var height = c.clientHeight * f | 0;
 
-	                /** 
-	                 * Clear the screen prior to redraw.
-	                 */
+	                                                            // Set the <canvas> width and height property.
 
-	        }, {
-	                key: 'clear',
-	                value: function clear() {
+	                                                            c.width = width;
 
-	                        var gl = this.gl;
+	                                                            c.height = height;
 
-	                        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-	                }
+	                                                            // Set the WebGL viewport.
 
-	                /** 
-	                 * Clear textures from the videocard before the program starts.
-	                 */
+	                                                            gl.viewportWidth = width;
 
-	        }, {
-	                key: 'clearTextures',
-	                value: function clearTextures() {
+	                                                            gl.viewportHeight = height;
 
-	                        var gl = this.gl;
-
-	                        var len = gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
-
-	                        for (var i = 0; i < len; i++) {
-
-	                                gl.activeTexture(gl.TEXTURE0 + i);
-
-	                                gl.bindTexture(gl.TEXTURE_2D, null);
-
-	                                gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
-	                        }
-
-	                        gl.bindBuffer(gl.ARRAY_BUFFER, null);
-
-	                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
-
-	                        gl.bindRenderbuffer(gl.RENDERBUFFER, null);
-
-	                        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-	                }
-
-	                /* 
-	                 * =============== SHADER VARIABLES AND UNIFORMS ====================
-	                 */
-
-	                /** 
-	                 * create a WeGL shader object.
-	                 * @param {VERTEX_SHADER | FRAGMENT_SHADER} type type WebGL shader type.
-	                 * @param {String} source the shader source, as plain text.
-	                 * @returns {WebGLShader} a compiled WebGL shader object.
-	                 */
-
-	        }, {
-	                key: 'createShader',
-	                value: function createShader(type, source) {
-
-	                        var shader = null;
-
-	                        if (!type || !source) {
-
-	                                console.error('createShader: invalid params, type:' + type + ' source:' + source);
-	                        } else if (this.ready()) {
-
-	                                var gl = this.gl;
-
-	                                /*
-	                                 * remove first EOL, which might come from using <script>...</script> tags,
-	                                 * to handle GLSL ES 3.00 (TWGL)
-	                                 */
-	                                source.replace(/^[ \t]*\n/, '');
-
-	                                if (type === gl.VERTEX_SHADER) {
-
-	                                        shader = gl.createShader(type); // assigned VS
-	                                } else if (type === gl.FRAGMENT_SHADER) {
-
-	                                        shader = gl.createShader(type); // assigned FS
-	                                } else {
-
-	                                        console.error('createShader: type not recognized:' + type);
-	                                }
-
-	                                gl.shaderSource(shader, source);
-
-	                                gl.compileShader(shader);
-
-	                                // Detect shader compile errors.
-
-	                                if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-
-	                                        console.error('createShader:' + gl.getShaderInfoLog(shader));
-
-	                                        shader = null;
-	                                }
-	                        }
-
-	                        return shader;
-	                }
-	        }, {
-	                key: 'createVertexShader',
-	                value: function createVertexShader(source) {
-
-	                        return this.createShader(this.gl.VERTEX_SHADER, source);
-	                }
-	        }, {
-	                key: 'createFragmentShader',
-	                value: function createFragmentShader(source) {
-
-	                        return this.createShader(this.gl.FRAGMENT_SHADER, source);
-	                }
-
-	                /** 
-	                 * Use the Fetch API to get a shader file
-	                 */
-
-	        }, {
-	                key: 'fetchShader',
-	                value: function fetchShader(type, sourceURL) {
-	                        var _this2 = this;
-
-	                        var self = this;
-
-	                        fetch(sourceURL, {
-
-	                                method: 'POST',
-
-	                                mode: 'cors',
-
-	                                redirect: 'follow',
-
-	                                headers: new Headers({
-
-	                                        'Content-Type': 'text/plain'
-
-	                                })
-
-	                        }).then(function (response) {
-
-	                                console.log(text);
-
-	                                if (response.ok) {
-
-	                                        return response.text();
-	                                }
-
-	                                return false;
-	                        }).then(function (source) {
-
-	                                if (source) {
-
-	                                        return _this2.createShader(type, source);
-	                                }
-	                        });
-
-	                        return null;
-	                }
-	        }, {
-	                key: 'fetchVertexShader',
-	                value: function fetchVertexShader(sourceURL) {
-
-	                        return this.fetchShader(this.gl.VERTEX_SHADER, sourceURL);
-	                }
-	        }, {
-	                key: 'fetchFragmentShader',
-	                value: function fetchFragmentShader(sourceURL) {
-
-	                        return this.fetchShader(this.gl.FRAGMENT_SHADER, sourceURL);
-	                }
-
-	                /** 
-	                 * create shader form script element
-	                 * @param {String|DOMElement} tag the script element, or its id
-	                 */
-
-	        }, {
-	                key: 'createShaderFromTag',
-	                value: function createShaderFromTag(tag) {
-
-	                        if (this.util.isString(tag)) {
-
-	                                tag = document.getElementById(tag);
-	                        }
-
-	                        if (!tag) {
-
-	                                console.error('createShaderFromTag: not found (' + tag + ')');
-
-	                                return false;
-	                        }
-
-	                        var type = null;
-
-	                        if (tag.type == 'x-shader/x-vertex') {
-
-	                                type = this.gl.VERTEX_SHADER;
-	                        } else if (tag.type == 'x-shader/x-fragment') {
-
-	                                type = this.gl.FRAGMENT_SHADER;
-	                        } else {
-
-	                                console.error('createShaderFromTag: type not found:(' + tag.type + ')');
-
-	                                return null;
-	                        }
-
-	                        var source = "";
-
-	                        var c = tag.firstChild;
-
-	                        while (c) {
-
-	                                if (c.nodeType == 3) {
-
-	                                        source += c.textContent;
-	                                }
-
-	                                c = c.nextSibling;
-	                        }
-
-	                        return this.createShader(type, source);
-	                }
-
-	                /* 
-	                 * =============== COMPILE WEBGL PROGRAM ====================
-	                 */
-
-	                /** 
-	                 * Create WebGL program with shaders. Program not used until 
-	                 * we apply gl.useProgram(program).
-	                 * @param {gl.VERTEX_SHADER} vShader the vertex shader.
-	                 * @param {gl.FRAGMENT_SHADER} fShader the fragment shader.
-	                 * @returns {Object} an object containing the compiled shaders, the 
-	                 * WebGL program, and a parsed list of all the varying and uniforms in 
-	                 * the shader source code.
-	                 * 
-	                 * prg.shaderProgram = program; // the WebGL program
-	                 * prg.vsVars = vs.varList,     // varying and uniform names in vertex shader.
-	                 * prg.fsVars = fs.varList      // varying and uniform names in fragment shader.
-	                 *
-	                 */
-
-	        }, {
-	                key: 'createProgram',
-	                value: function createProgram(vs, fs) {
-
-	                        if (!vs || !fs) {
-
-	                                console.error('createProgram: parameter error, vs:' + vs + ' fs:' + fs);
-
-	                                return null;
-	                        }
-
-	                        // Wrap the program object to make V8 happy.
-
-	                        var prg = {};
-
-	                        if (this.ready()) {
-
-	                                var gl = this.gl;
-
-	                                var vso = this.createVertexShader(vs.code);
-
-	                                var fso = this.createFragmentShader(fs.code);
-
-	                                var program = gl.createProgram();
-
-	                                gl.attachShader(program, vso);
-
-	                                gl.attachShader(program, fso);
-
-	                                gl.linkProgram(program);
-
-	                                if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-
-	                                        console.error('createProgram:' + gl.getProgramInfoLog(program));
-
-	                                        this.checkShaders(vs, fs, program);
-	                                } else {
-
-	                                        prg.shaderProgram = program;
-
-	                                        prg.vsVars = vs.varList, prg.fsVars = fs.varList, prg.renderList = [];
-	                                }
-	                        }
-
-	                        return prg;
-	                }
-
-	                /** 
-	                 * Read shader code, and organize the variables in the shader 
-	                 * into an object. Abstracts some of the tedious work in setting 
-	                 * up shader variables.
-	                 *
-	                 * Called by individual Shader objects in vsSrc() and fsSrc().
-	                 * 
-	                 * @param {Array} sourceArr array of lines in the shader.
-	                 * @returns {Object} an object organizing attribute, uniform, and 
-	                 * varying variable names and datatypes.
-	                 */
-
-	        }, {
-	                key: 'createVarList',
-	                value: function createVarList(source) {
-
-	                        var len = source.length;
-
-	                        var NOT_IN_LIST = this.NOT_IN_LIST;
-
-	                        var sp = ' ';
-
-	                        var list = {};
-
-	                        var varTypes = ['attribute', 'uniform', 'varying'];
-
-	                        if (len) {
-
-	                                for (var i = 0; i < len; i++) {
-
-	                                        var s = source[i];
-
-	                                        if (s.indexOf('void main') !== NOT_IN_LIST) {
-
-	                                                break;
-	                                        } else {
-
-	                                                for (var j = 0; j < varTypes.length; j++) {
-
-	                                                        var type = varTypes[j];
-
-	                                                        if (!list[type]) list[type] = {};
-
-	                                                        if (s.indexOf(type) > NOT_IN_LIST) {
-
-	                                                                //////////////////////////////console.log("SSS1:" + s)
-
-	                                                                //s = s.slice(0, -1); // remove trailing ';'
-	                                                                s = s.replace(/;\s*$/, "");
-
-	                                                                ///////////////////////////////console.log("SSS:" + s)
-
-	                                                                s = s.split(sp);
-
-	                                                                //////////////////////////////console.log("FIRST: " + s)
-
-	                                                                var vType = s.shift(); // attribute, uniform, or varying
-
-	                                                                if (!list[vType]) {
-
-	                                                                        list[vType] = {};
-	                                                                }
-
-	                                                                /////////////////////////console.log("SECOND AFTER SHIFT:" + vType + " remainder:" + s)
-
-	                                                                var nType = s.shift(); // variable type
-
-	                                                                if (!list[vType][nType]) {
-
-	                                                                        list[vType][nType] = {};
-	                                                                }
-
-	                                                                var nName = s.shift(); // variable name
-
-	                                                                if (!list[vType][nType][nName]) {
-
-	                                                                        list[vType][nType][nName] = 'empty';
-	                                                                }
-
-	                                                                /////////////////////////console.log("THIRD AFTER SHIFT:" + nType + " remainder:" + s)
-	                                                        }
+	                                                            gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
 	                                                }
-	                                        }
-	                                }
+
+	                                                // Save the values.
+
+	                                                this.oldWidth = wWidth;
+
+	                                                this.oldHeight = wHeight;
+	                                    }
+
+	                                    return false;
 	                        }
 
-	                        return list;
-	                }
+	                        /* 
+	                         * =============== WEBGL CONTEXT OPERATIONS ====================
+	                         */
 
-	                /** 
-	                 * assign the attribute arrays.
-	                 */
+	                        /** 
+	                         * get HTML5 canvas, and a WebGL context. We also scan for multiple 
+	                         * contexts being created ( > 1 ) and delete if one is already present.
+	                         * @param {Canvas} canvas the HTML5 <canvas> DOM element.
+	                         * TODO: PROBLEM IF THERE ARE MULTIPLE CONTEXES ON THE PAGE???????
+	                         * @param {HTMLCanvasElement} canvas the rendering <canvas>.
+	                         * @returns {WebGLRenderingContext} gl a WebGLRenderingContext.
+	                         */
 
-	        }, {
-	                key: 'setAttributeArrays',
-	                value: function setAttributeArrays(shaderProgram, attributes) {
+	            }, {
+	                        key: 'createContext',
+	                        value: function createContext(canvas) {
 
-	                        var gl = this.gl;
+	                                    if (!window.WebGLRenderingContext) {
 
-	                        for (var i in attributes) {
+	                                                console.error('this browser does not support webgl');
 
-	                                var attb = attributes[i];
+	                                                return null;
+	                                    }
 
-	                                // Note: we call glEnableAttribArray only when rendering
+	                                    var gl = null;
 
-	                                for (var j in attb) {
+	                                    if (gl && this.contextCount > 0) {
 
-	                                        attb[j] = gl.getAttribLocation(shaderProgram, j);
+	                                                // Contexts are normally in garbage, can't be deleted without this!
 
-	                                        //////////console.log('gl.getAttribLocation( shaderProgram, "' + j + '" ) is:' + attb[ j ] );
-	                                }
+	                                                console.warn('killing context');
+
+	                                                this.killContext();
+
+	                                                this.contextCount--;
+
+	                                                this.gl = null; // just in case
+	                                    }
+
+	                                    var n = ['webgl2', 'experimental-webgl2', 'webgl', 'experimental-webgl'];
+
+	                                    var i = 0;
+
+	                                    while (i < n.length) {
+
+	                                                try {
+
+	                                                            if (this.debug) {
+
+	                                                                        gl = this.debug.makeDebugContext(canvas.getContext(n[i]));
+
+	                                                                        if (gl) {
+
+	                                                                                    console.warn('using debug context');
+
+	                                                                                    if (gl.getParameter !== 'function') {
+
+	                                                                                                gl = canvas.getContext(n[i]);
+
+	                                                                                                console.warn('unable to use debug context, trying release:' + n[i], ' getParameter:' + gl.getParameter);
+	                                                                                    }
+
+	                                                                                    break;
+	                                                                        }
+	                                                            } else {
+
+	                                                                        gl = canvas.getContext(n[i]);
+
+	                                                                        if (gl) {
+
+	                                                                                    console.warn('using release context mode:' + n[i]);
+
+	                                                                                    break;
+	                                                                        }
+	                                                            }
+	                                                } catch (e) {
+
+	                                                            console.warn('failed to load context:' + n[i]);
+	                                                }
+
+	                                                i++;
+	                                    } // end of while loop
+
+
+	                                    /*
+	                                     * If we got a context, assign WebGL version. Note that some 
+	                                     * experimental versions don't have .getParameter
+	                                     */
+
+	                                    if (gl && typeof gl.getParameter == 'function') {
+
+	                                                this.contextCount++;
+
+	                                                this.gl = gl;
+
+	                                                // Check if this is a full WebGL2 stack
+
+	                                                this.glVers = gl.getParameter(gl.VERSION).toLowerCase();
+
+	                                                if (i == 1 || i == 3) {
+
+	                                                            console.warn('experimental context, .getParameter() may not work');
+	                                                }
+
+	                                                console.log('version:' + gl.getParameter(gl.VERSION));
+
+	                                                // Take action, depending on version (identified by pos in our test array n).
+
+	                                                switch (i) {
+
+	                                                            case 0:
+
+	                                                            case 1:
+
+	                                                                        //if ( ! gl.TRANSFORM_FEEDBACK ) {
+	                                                                        // revert to 1.0
+	                                                                        //    console.log("TRANSFORM FEEDBACK NOT SUPPORTED")
+	                                                                        //}
+
+	                                                                        this.glVers = 2.0;
+
+	                                                                        this.stats.uint32 = true;
+
+	                                                                        break;
+
+	                                                            case 2:
+
+	                                                            case 3:
+
+	                                                                        this.glVers = 1.0;
+
+	                                                                        this.addVertexBufferSupport(gl); // vertex buffers
+
+	                                                                        this.stats.uint32 = this.addIndex32Support(gl); // vertices > 64k
+
+	                                                                        break;
+
+	                                                            default:
+
+	                                                                        break;
+
+	                                                }
+	                                    }
+
+	                                    if (!this.stats.uint32) {
+
+	                                                this.MAX_DRAWELEMENTS = 65534;
+	                                    } else {
+
+	                                                this.MAX_DRAWELEMENTS = 2e9;
+	                                    }
+
+	                                    return this.gl;
 	                        }
 
-	                        return attributes;
-	                }
-	        }, {
-	                key: 'setUniformLocations',
-	                value: function setUniformLocations(shaderProgram, uniforms) {
+	                        /** 
+	                         * Return the current context. Note that we don't store a 
+	                         * separate reference to the canvas.
+	                         * @returns {WebGLRenderingContext} gl a WebGLRenderingContext.
+	                         */
 
-	                        var gl = this.gl;
+	            }, {
+	                        key: 'getContext',
+	                        value: function getContext() {
 
-	                        for (var i in uniforms) {
+	                                    if (!this.gl) {
 
-	                                var unif = uniforms[i];
+	                                                console.warn('warning webgl context not initialized');
+	                                    }
 
-	                                for (var j in unif) {
-
-	                                        unif[j] = gl.getUniformLocation(shaderProgram, j);
-
-	                                        ////////console.log("gl.getUniformLocation( shaderProgram," + j + ") is:" + unif[ j ] );
-	                                }
+	                                    return this.gl;
 	                        }
 
-	                        return uniforms;
-	                }
+	                        /** 
+	                         * Kill the current context (complete reset will be needed). Also use to debug 
+	                         * when context is lost, and has to be rebuilt.
+	                         * @link http://codeflow.org/entries/2013/feb/22/how-to-write-portable-webgl/
+	                         * @link https://developer.mozilla.org/en-US/docs/Web/API/WEBGL_lose_context/loseContext
+	                         */
 
-	                /** 
-	                 * Bind attribute locations.
-	                 * @param {WebGLProgram} program a compiled WebGL program.
-	                 * @param {Object} attribLocationmap the attributes.
-	                 */
+	            }, {
+	                        key: 'killContext',
+	                        value: function killContext() {
 
-	        }, {
-	                key: 'bindAttributeLocations',
-	                value: function bindAttributeLocations(program, attribLocationMap) {
+	                                    console.log('in killcontext, count:' + this.contextCount);
 
-	                        var gl = this.gl;
+	                                    if (this.contextCount) {
 
-	                        if (attribLocationMap) {
+	                                                console.log('killing WebGL context, count before:' + this.contextCount);
 
-	                                for (var attribName in attribLocationMap) {
+	                                                this.gl.getExtension('WEBGL_lose_context').loseContext();
 
-	                                        console.log('binding attribute:' + attribName + ' to:' + attribLocationMap[attribName]);
-
-	                                        gl.bindAttribLocation(program, attribLocationMap[attribName], attribName);
-	                                }
-	                        } else {
-
-	                                console.warn('webgl.bindAttributes: no attributes supplied');
-	                        }
-	                }
-
-	                /** 
-	                 * Create associative array with shader attributes.
-	                 * NOTE: Only attributes actually used in the shader show.
-	                 * @param {WebGLProgram} program a compiled WebGL program.
-	                 * @returns {Object} a collection of attributes, with .count = number.
-	                 */
-
-	        }, {
-	                key: 'getAttributes',
-	                value: function getAttributes(program) {
-
-	                        var gl = this.gl;
-
-	                        var attrib = {};
-
-	                        var attribCount = gl.getProgramParameter(program, gl.ACTIVE_ATTRIBUTES);
-
-	                        for (var i = 0; i < attribCount; i++) {
-
-	                                var attribInfo = gl.getActiveAttrib(program, i);
-
-	                                /////////console.log("adding attribute:" + attribInfo.name );
-
-	                                attrib[attribInfo.name] = gl.getAttribLocation(program, attribInfo.name);
+	                                                this.contextCount--;
+	                                    }
 	                        }
 
-	                        // Store the number of attributes.
+	                        /** 
+	                         * check if we have a contex and are ready to render.
+	                         */
 
-	                        attrib.count = attribCount;
+	            }, {
+	                        key: 'ready',
+	                        value: function ready() {
 
-	                        return attrib;
-	                }
+	                                    var gl = this.gl;
 
-	                /** 
-	                 * Create associative array with shader uniforms.
-	                 * NOTE: Only attributes actually used in the shader show.
-	                 * @param {WebGLProgram} program a compiled WebGL program.
-	                 * @returns {Object} a collection of attributes, with .count = number.
-	                 */
-
-	        }, {
-	                key: 'getUniforms',
-	                value: function getUniforms(program) {
-
-	                        var gl = this.gl;
-
-	                        var uniform = {};
-
-	                        var uniformCount = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
-
-	                        var uniformName = '';
-
-	                        for (var i = 0; i < uniformCount; i++) {
-
-	                                var uniformInfo = gl.getActiveUniform(program, i);
-
-	                                uniformName = uniformInfo.name.replace('[0]', '');
-
-	                                console.log("adding uniform:" + uniformName);
-
-	                                uniform[uniformName] = gl.getUniformLocation(program, uniformName);
+	                                    return !!(this.gl && this.glMatrix);
 	                        }
 
-	                        // Store the number of uniforms.
+	                        /* 
+	                         * =============== CLEAR/RESET OPERATIONS ====================
+	                         */
 
-	                        uniform.count = uniformCount;
+	                        /** 
+	                         * Clear the screen prior to redraw.
+	                         */
 
-	                        return uniform;
-	                }
+	            }, {
+	                        key: 'clear',
+	                        value: function clear() {
 
-	                /** 
-	                 * Create associative array with shader varying variables.
-	                 */
+	                                    var gl = this.gl;
 
-	        }, {
-	                key: 'getVarying',
-	                value: function getVarying(program) {}
-
-	                /** 
-	                 * check to see if we're ready to run, after supplying 
-	                 * shaders.
-	                 */
-
-	        }, {
-	                key: 'checkShaders',
-	                value: function checkShaders(vs, fs, program) {
-
-	                        var gl = this.gl;
-
-	                        if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-
-	                                // Test the vertex shader
-
-	                                if (vs && !gl.getShaderParameter(vs, gl.COMPILE_STATUS)) {
-
-	                                        console.error('error creating the vertex shader, ' + gl.getShaderInfoLog(vs));
-	                                } else if (fs && !gl.getShaderParameter(fs, gl.COMPILE_STATUS)) {
-
-	                                        console.error('error creating the fragment shader, ' + gl.getShaderInfoLog(fs));
-	                                } else {
-
-	                                        console.error('error in gl program linking');
-	                                }
-
-	                                gl.deleteProgram(program);
-
-	                                return false;
+	                                    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	                        }
 
-	                        return true;
-	                }
+	                        /** 
+	                         * Clear textures from the videocard before the program starts.
+	                         */
 
-	                /** 
-	                 * Check if our VBO or IBO are ok.
-	                 */
+	            }, {
+	                        key: 'clearTextures',
+	                        value: function clearTextures() {
 
-	        }, {
-	                key: 'checkBufferObjects',
-	                value: function checkBufferObjects(bo) {
+	                                    var gl = this.gl;
 
-	                        return bo && bo instanceof ArrayBuffer;
-	                }
+	                                    var len = gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
 
-	                /** 
-	                 * Provide statistics for display as JSON data.
-	                 */
+	                                    for (var i = 0; i < len; i++) {
 
-	        }, {
-	                key: 'stats',
-	                value: function stats() {
+	                                                gl.activeTexture(gl.TEXTURE0 + i);
 
-	                        return JSON.stringify(this.stats);
-	                }
-	        }]);
+	                                                gl.bindTexture(gl.TEXTURE_2D, null);
 
-	        return WebGL;
+	                                                gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
+	                                    }
+
+	                                    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+
+	                                    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+
+	                                    gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+
+	                                    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+	                        }
+
+	                        /* 
+	                         * =============== SHADER VARIABLES AND UNIFORMS ====================
+	                         */
+
+	                        /** 
+	                         * create a WeGL shader object.
+	                         * @param {VERTEX_SHADER | FRAGMENT_SHADER} type type WebGL shader type.
+	                         * @param {String} source the shader source, as plain text.
+	                         * @returns {WebGLShader} a compiled WebGL shader object.
+	                         */
+
+	            }, {
+	                        key: 'createShader',
+	                        value: function createShader(type, source) {
+
+	                                    var shader = null;
+
+	                                    if (!type || !source) {
+
+	                                                console.error('createShader: invalid params, type:' + type + ' source:' + source);
+	                                    } else if (this.ready()) {
+
+	                                                var gl = this.gl;
+
+	                                                /*
+	                                                 * remove first EOL, which might come from using <script>...</script> tags,
+	                                                 * to handle GLSL ES 3.00 (TWGL)
+	                                                 */
+	                                                source.replace(/^[ \t]*\n/, '');
+
+	                                                if (type === gl.VERTEX_SHADER) {
+
+	                                                            shader = gl.createShader(type); // assigned VS
+	                                                } else if (type === gl.FRAGMENT_SHADER) {
+
+	                                                            shader = gl.createShader(type); // assigned FS
+	                                                } else {
+
+	                                                            console.error('createShader: type not recognized:' + type);
+	                                                }
+
+	                                                gl.shaderSource(shader, source);
+
+	                                                gl.compileShader(shader);
+
+	                                                // Detect shader compile errors.
+
+	                                                if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+
+	                                                            console.error('createShader:' + gl.getShaderInfoLog(shader));
+
+	                                                            shader = null;
+	                                                }
+	                                    }
+
+	                                    return shader;
+	                        }
+	            }, {
+	                        key: 'createVertexShader',
+	                        value: function createVertexShader(source) {
+
+	                                    return this.createShader(this.gl.VERTEX_SHADER, source);
+	                        }
+	            }, {
+	                        key: 'createFragmentShader',
+	                        value: function createFragmentShader(source) {
+
+	                                    return this.createShader(this.gl.FRAGMENT_SHADER, source);
+	                        }
+
+	                        /** 
+	                         * Use the Fetch API to get a shader file
+	                         */
+
+	            }, {
+	                        key: 'fetchShader',
+	                        value: function fetchShader(type, sourceURL) {
+	                                    var _this2 = this;
+
+	                                    var self = this;
+
+	                                    fetch(sourceURL, {
+
+	                                                method: 'POST',
+
+	                                                mode: 'cors',
+
+	                                                redirect: 'follow',
+
+	                                                headers: new Headers({
+
+	                                                            'Content-Type': 'text/plain'
+
+	                                                })
+
+	                                    }).then(function (response) {
+
+	                                                console.log(text);
+
+	                                                if (response.ok) {
+
+	                                                            return response.text();
+	                                                }
+
+	                                                return false;
+	                                    }).then(function (source) {
+
+	                                                if (source) {
+
+	                                                            return _this2.createShader(type, source);
+	                                                }
+	                                    });
+
+	                                    return null;
+	                        }
+	            }, {
+	                        key: 'fetchVertexShader',
+	                        value: function fetchVertexShader(sourceURL) {
+
+	                                    return this.fetchShader(this.gl.VERTEX_SHADER, sourceURL);
+	                        }
+	            }, {
+	                        key: 'fetchFragmentShader',
+	                        value: function fetchFragmentShader(sourceURL) {
+
+	                                    return this.fetchShader(this.gl.FRAGMENT_SHADER, sourceURL);
+	                        }
+
+	                        /** 
+	                         * create shader form script element
+	                         * @param {String|DOMElement} tag the script element, or its id
+	                         */
+
+	            }, {
+	                        key: 'createShaderFromTag',
+	                        value: function createShaderFromTag(tag) {
+
+	                                    if (this.util.isString(tag)) {
+
+	                                                tag = document.getElementById(tag);
+	                                    }
+
+	                                    if (!tag) {
+
+	                                                console.error('createShaderFromTag: not found (' + tag + ')');
+
+	                                                return false;
+	                                    }
+
+	                                    var type = null;
+
+	                                    if (tag.type == 'x-shader/x-vertex') {
+
+	                                                type = this.gl.VERTEX_SHADER;
+	                                    } else if (tag.type == 'x-shader/x-fragment') {
+
+	                                                type = this.gl.FRAGMENT_SHADER;
+	                                    } else {
+
+	                                                console.error('createShaderFromTag: type not found:(' + tag.type + ')');
+
+	                                                return null;
+	                                    }
+
+	                                    var source = "";
+
+	                                    var c = tag.firstChild;
+
+	                                    while (c) {
+
+	                                                if (c.nodeType == 3) {
+
+	                                                            source += c.textContent;
+	                                                }
+
+	                                                c = c.nextSibling;
+	                                    }
+
+	                                    return this.createShader(type, source);
+	                        }
+
+	                        /* 
+	                         * =============== COMPILE WEBGL PROGRAM ====================
+	                         */
+
+	                        /** 
+	                         * Create WebGL program with shaders. Program not used until 
+	                         * we apply gl.useProgram(program).
+	                         * @param {gl.VERTEX_SHADER} vShader the vertex shader.
+	                         * @param {gl.FRAGMENT_SHADER} fShader the fragment shader.
+	                         * @returns {Object} an object containing the compiled shaders, the 
+	                         * WebGL program, and a parsed list of all the varying and uniforms in 
+	                         * the shader source code.
+	                         * 
+	                         * prg.shaderProgram = program; // the WebGL program
+	                         * prg.vsVars = vs.varList,     // varying and uniform names in vertex shader.
+	                         * prg.fsVars = fs.varList      // varying and uniform names in fragment shader.
+	                         *
+	                         */
+
+	            }, {
+	                        key: 'createProgram',
+	                        value: function createProgram(vs, fs) {
+
+	                                    if (!vs || !fs) {
+
+	                                                console.error('createProgram: parameter error, vs:' + vs + ' fs:' + fs);
+
+	                                                return null;
+	                                    }
+
+	                                    // Wrap the program object to make V8 happy.
+
+	                                    var prg = {};
+
+	                                    if (this.ready()) {
+
+	                                                var gl = this.gl;
+
+	                                                var vso = this.createVertexShader(vs.code);
+
+	                                                var fso = this.createFragmentShader(fs.code);
+
+	                                                var program = gl.createProgram();
+
+	                                                gl.attachShader(program, vso);
+
+	                                                gl.attachShader(program, fso);
+
+	                                                gl.linkProgram(program);
+
+	                                                if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+
+	                                                            console.error('createProgram:' + gl.getProgramInfoLog(program));
+
+	                                                            this.checkShaders(vs, fs, program);
+	                                                } else {
+
+	                                                            prg.shaderProgram = program;
+
+	                                                            prg.vsVars = vs.varList, prg.fsVars = fs.varList, prg.renderList = [];
+	                                                }
+	                                    }
+
+	                                    return prg;
+	                        }
+
+	                        /** 
+	                         * Read shader code, and organize the variables in the shader 
+	                         * into an object. Abstracts some of the tedious work in setting 
+	                         * up shader variables.
+	                         *
+	                         * Called by individual Shader objects in vsSrc() and fsSrc().
+	                         * 
+	                         * @param {Array} sourceArr array of lines in the shader.
+	                         * @returns {Object} an object organizing attribute, uniform, and 
+	                         * varying variable names and datatypes.
+	                         */
+
+	            }, {
+	                        key: 'createVarList',
+	                        value: function createVarList(source) {
+
+	                                    var len = source.length;
+
+	                                    var NOT_IN_LIST = this.NOT_IN_LIST;
+
+	                                    var sp = ' ';
+
+	                                    var list = {};
+
+	                                    var varTypes = ['attribute', 'uniform', 'varying'];
+
+	                                    if (len) {
+
+	                                                for (var i = 0; i < len; i++) {
+
+	                                                            var s = source[i];
+
+	                                                            if (s.indexOf('void main') !== NOT_IN_LIST) {
+
+	                                                                        break;
+	                                                            } else {
+
+	                                                                        for (var j = 0; j < varTypes.length; j++) {
+
+	                                                                                    var type = varTypes[j];
+
+	                                                                                    if (!list[type]) list[type] = {};
+
+	                                                                                    if (s.indexOf(type) > NOT_IN_LIST) {
+
+	                                                                                                //////////////////////////////console.log("SSS1:" + s)
+
+	                                                                                                //s = s.slice(0, -1); // remove trailing ';'
+	                                                                                                s = s.replace(/;\s*$/, "");
+
+	                                                                                                ///////////////////////////////console.log("SSS:" + s)
+
+	                                                                                                s = s.split(sp);
+
+	                                                                                                //////////////////////////////console.log("FIRST: " + s)
+
+	                                                                                                var vType = s.shift(); // attribute, uniform, or varying
+
+	                                                                                                if (!list[vType]) {
+
+	                                                                                                            list[vType] = {};
+	                                                                                                }
+
+	                                                                                                /////////////////////////console.log("SECOND AFTER SHIFT:" + vType + " remainder:" + s)
+
+	                                                                                                var nType = s.shift(); // variable type
+
+	                                                                                                if (!list[vType][nType]) {
+
+	                                                                                                            list[vType][nType] = {};
+	                                                                                                }
+
+	                                                                                                var nName = s.shift(); // variable name
+
+	                                                                                                if (!list[vType][nType][nName]) {
+
+	                                                                                                            list[vType][nType][nName] = 'empty';
+	                                                                                                }
+
+	                                                                                                /////////////////////////console.log("THIRD AFTER SHIFT:" + nType + " remainder:" + s)
+	                                                                                    }
+	                                                                        }
+	                                                            }
+	                                                }
+	                                    }
+
+	                                    return list;
+	                        }
+
+	                        /** 
+	                         * assign the attribute arrays.
+	                         */
+
+	            }, {
+	                        key: 'setAttributeArrays',
+	                        value: function setAttributeArrays(shaderProgram, attributes) {
+
+	                                    var gl = this.gl;
+
+	                                    for (var i in attributes) {
+
+	                                                var attb = attributes[i];
+
+	                                                // Note: we call glEnableAttribArray only when rendering
+
+	                                                for (var j in attb) {
+
+	                                                            attb[j] = gl.getAttribLocation(shaderProgram, j);
+
+	                                                            //////////console.log('gl.getAttribLocation( shaderProgram, "' + j + '" ) is:' + attb[ j ] );
+	                                                }
+	                                    }
+
+	                                    return attributes;
+	                        }
+	            }, {
+	                        key: 'setUniformLocations',
+	                        value: function setUniformLocations(shaderProgram, uniforms) {
+
+	                                    var gl = this.gl;
+
+	                                    for (var i in uniforms) {
+
+	                                                var unif = uniforms[i];
+
+	                                                for (var j in unif) {
+
+	                                                            unif[j] = gl.getUniformLocation(shaderProgram, j);
+
+	                                                            ////////console.log("gl.getUniformLocation( shaderProgram," + j + ") is:" + unif[ j ] );
+	                                                }
+	                                    }
+
+	                                    return uniforms;
+	                        }
+
+	                        /** 
+	                         * Bind attribute locations.
+	                         * @param {WebGLProgram} program a compiled WebGL program.
+	                         * @param {Object} attribLocationmap the attributes.
+	                         */
+
+	            }, {
+	                        key: 'bindAttributeLocations',
+	                        value: function bindAttributeLocations(program, attribLocationMap) {
+
+	                                    var gl = this.gl;
+
+	                                    if (attribLocationMap) {
+
+	                                                for (var attribName in attribLocationMap) {
+
+	                                                            console.log('binding attribute:' + attribName + ' to:' + attribLocationMap[attribName]);
+
+	                                                            gl.bindAttribLocation(program, attribLocationMap[attribName], attribName);
+	                                                }
+	                                    } else {
+
+	                                                console.warn('webgl.bindAttributes: no attributes supplied');
+	                                    }
+	                        }
+
+	                        /** 
+	                         * Create associative array with shader attributes.
+	                         * NOTE: Only attributes actually used in the shader show.
+	                         * @param {WebGLProgram} program a compiled WebGL program.
+	                         * @returns {Object} a collection of attributes, with .count = number.
+	                         */
+
+	            }, {
+	                        key: 'getAttributes',
+	                        value: function getAttributes(program) {
+
+	                                    var gl = this.gl;
+
+	                                    var attrib = {};
+
+	                                    var attribCount = gl.getProgramParameter(program, gl.ACTIVE_ATTRIBUTES);
+
+	                                    for (var i = 0; i < attribCount; i++) {
+
+	                                                var attribInfo = gl.getActiveAttrib(program, i);
+
+	                                                /////////console.log("adding attribute:" + attribInfo.name );
+
+	                                                attrib[attribInfo.name] = gl.getAttribLocation(program, attribInfo.name);
+	                                    }
+
+	                                    // Store the number of attributes.
+
+	                                    attrib.count = attribCount;
+
+	                                    return attrib;
+	                        }
+
+	                        /** 
+	                         * Create associative array with shader uniforms.
+	                         * NOTE: Only attributes actually used in the shader show.
+	                         * @param {WebGLProgram} program a compiled WebGL program.
+	                         * @returns {Object} a collection of attributes, with .count = number.
+	                         */
+
+	            }, {
+	                        key: 'getUniforms',
+	                        value: function getUniforms(program) {
+
+	                                    var gl = this.gl;
+
+	                                    var uniform = {};
+
+	                                    var uniformCount = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
+
+	                                    var uniformName = '';
+
+	                                    for (var i = 0; i < uniformCount; i++) {
+
+	                                                var uniformInfo = gl.getActiveUniform(program, i);
+
+	                                                uniformName = uniformInfo.name.replace('[0]', '');
+
+	                                                console.log("adding uniform:" + uniformName);
+
+	                                                uniform[uniformName] = gl.getUniformLocation(program, uniformName);
+	                                    }
+
+	                                    // Store the number of uniforms.
+
+	                                    uniform.count = uniformCount;
+
+	                                    return uniform;
+	                        }
+
+	                        /** 
+	                         * Create associative array with shader varying variables.
+	                         */
+
+	            }, {
+	                        key: 'getVarying',
+	                        value: function getVarying(program) {}
+
+	                        /** 
+	                         * check to see if we're ready to run, after supplying 
+	                         * shaders.
+	                         */
+
+	            }, {
+	                        key: 'checkShaders',
+	                        value: function checkShaders(vs, fs, program) {
+
+	                                    var gl = this.gl;
+
+	                                    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+
+	                                                // Test the vertex shader
+
+	                                                if (vs && !gl.getShaderParameter(vs, gl.COMPILE_STATUS)) {
+
+	                                                            console.error('error creating the vertex shader, ' + gl.getShaderInfoLog(vs));
+	                                                } else if (fs && !gl.getShaderParameter(fs, gl.COMPILE_STATUS)) {
+
+	                                                            console.error('error creating the fragment shader, ' + gl.getShaderInfoLog(fs));
+	                                                } else {
+
+	                                                            console.error('error in gl program linking');
+	                                                }
+
+	                                                gl.deleteProgram(program);
+
+	                                                return false;
+	                                    }
+
+	                                    return true;
+	                        }
+
+	                        /** 
+	                         * Check if our VBO or IBO are ok.
+	                         */
+
+	            }, {
+	                        key: 'checkBufferObjects',
+	                        value: function checkBufferObjects(bo) {
+
+	                                    return bo && bo instanceof ArrayBuffer;
+	                        }
+
+	                        /** 
+	                         * Provide statistics for display as JSON data.
+	                         */
+
+	            }, {
+	                        key: 'stats',
+	                        value: function stats() {
+
+	                                    return JSON.stringify(this.stats);
+	                        }
+	            }]);
+
+	            return WebGL;
 	}();
 
 	exports.default = WebGL;
@@ -2552,6 +2574,12 @@
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 	var WebVR = function () {
+
+	        /** 
+	         * render scenes to webvr devices
+	         * following toji's room-scale example:
+	         * @link https://github.com/toji/webvr.info/blob/master/samples/05-room-scale.html
+	         */
 	        function WebVR(init, util, glMatrix, webgl) {
 	                _classCallCheck(this, WebVR);
 
@@ -2563,7 +2591,9 @@
 
 	                this.display = null, // VR display (device or default for mobiles)
 
-	                this.frameData = null; // VR frame data
+	                this.frameData = null, // VR frame data
+
+	                this.PLAYER_HEIGHT = 1.75; // average player height.
 
 	                // Statistics object.
 
@@ -2576,8 +2606,15 @@
 	        }
 
 	        /** 
+	         * Compatibility Mar 2017
 	         * Adapted from toji's room-scale example.
+	         * 
+	         * ENABLING
+	         *
 	         * Firefox: turn on in http://about:config
+	         * Vive also needs a .dll
+	         * https://webvr.rocks/firefox#download
+	         *
 	         * Chrome: turn on in chrome://flags/
 	         * NOTE: in Mar 2017, FF only supported Oculus, 
 	         * needed Chromium WebVR build to support Vive.
@@ -2597,37 +2634,67 @@
 
 	                                navigator.getVRDisplays().then(function (displays) {
 
-	                                        var display = displays[0];
-
-	                                        console.log('webvr is available');
-
-	                                        stats.displayName = display.displayName; // HMD name
+	                                        console.log('WebVR::init(): webvr is available');
 
 	                                        _this.frameData = new VRFrameData(); // Contains our current pose.
 
 	                                        if (_this.frameData) {
 
+	                                                console.log('WebVR::init(): vr frame data is available');
+
 	                                                if (displays.length > 0) {
 
-	                                                        var _vrDisplay = displays[0];
+	                                                        var display = displays[0];
 
 	                                                        _this.display = display;
 
-	                                                        display.depthNear = _this.gl.near; // 0.1
+	                                                        if (display) {
 
-	                                                        display.depthFar = _this.gl.far; // 100, was 1024.0;
+	                                                                console.log('WebVR::init(): valid vr display present');
 
-	                                                        // Set WebVR display stage parameters.
+	                                                                // Check if somehow already presenting.
 
-	                                                        _this.setStageParameters();
+	                                                                if (display.isPresenting) {
 
-	                                                        // Listen for WebVR events.
+	                                                                        // reload?
 
-	                                                        window.addEventListener('vrdisplaypresentchange', _this.presentChange.bind(_this), false);
+	                                                                        console.warn('WebVR::init(): display was already presenting, exit first');
 
-	                                                        window.addEventListener('vrdisplayactivate', _this.requestPresent.bind(_this), false);
+	                                                                        _this.exitPresent();
+	                                                                }
 
-	                                                        window.addEventListener('vrdisplaydeactivate', _this.exitPresent.bind(_this), false);
+	                                                                // Adjust depthNear and depthFar to device info.
+
+	                                                                if (!display.depthNear) {
+
+	                                                                        display.depthNear = _this.gl.near;
+	                                                                } else {
+
+	                                                                        _this.gl.near = display.depthNear;
+	                                                                }
+
+	                                                                if (!display.depthFar) {
+
+	                                                                        display.depthFar = _this.gl.far;
+	                                                                } else {
+
+	                                                                        _this.gl.far = display.depthFar;
+	                                                                }
+
+	                                                                stats.displayName = display.displayName; // HMD name
+
+	                                                                // Set WebVR display stage parameters.
+
+	                                                                _this.setStageParameters(display);
+
+	                                                                // Listen for WebVR events.
+
+	                                                                window.addEventListener('vrdisplaypresentchange', _this.presentChange.bind(_this), false);
+
+	                                                                window.addEventListener('vrdisplayactivate', _this.requestPresent.bind(_this), false);
+
+	                                                                window.addEventListener('vrdisplaydeactivate', _this.exitPresent.bind(_this), false);
+	                                                        } // display is valid
 	                                                } // displays.length > 0
 	                                        } // valid VRFrameData
 	                                }); // getVRDisplays returned a value
@@ -2635,8 +2702,39 @@
 
 	                                // We check for support prior to loading this module, so we shouldn't go here if not supported.
 
-	                                console.error('webgl not present, or obsolete version');
+	                                console.error('WebVR::init(): webgl not present, or obsolete version');
 	                        }
+	                }
+
+	                /** 
+	                 * Getter for frameData object.
+	                 * @returns {VRFrameData} frame object for submission to the VR display.
+	                 */
+
+	        }, {
+	                key: 'getFrame',
+	                value: function getFrame() {
+
+	                        if (this.display) {
+
+	                                return this.display.getFrameData(this.frameData);
+	                        }
+
+	                        console.error('WebVR::getFrame(): display not available to get frameData');
+
+	                        return null;
+	                }
+
+	                /** 
+	                 * Getter for the display.
+	                 * @returns {VRDisplay} the found vr display.
+	                 */
+
+	        }, {
+	                key: 'getDisplay',
+	                value: function getDisplay() {
+
+	                        return this.display;
 	                }
 
 	                /** 
@@ -2645,35 +2743,34 @@
 	                 * Oculus Rift, can give you a standing space coordinate but don't
 	                 * have a configured play area. These devices will return a stage
 	                 * size of 0.
+	                 * @param {VRDisplay} the current vr display.
 	                 */
 
 	        }, {
 	                key: 'setStageParameters',
-	                value: function setStageParameters() {
+	                value: function setStageParameters(display) {
 
-	                        var display = this.display;
+	                        var sp = display.stageParameters;
 
-	                        if (display.stageParameters) {
+	                        if (sp) {
 
-	                                var sp = display.stageParameters;
+	                                console.log('WebVR::setStageParameters(): vr display stageParameters present');
 
-	                                if (sp.sizeX > 0 && sp.sizeY > 0) {
+	                                if (sp.sizeX > 0 && sp.sizeZ > 0) {
 
+	                                        console.log('WebVR::setStageParameters(): vr device stageParameters sizeX:' + sp.sizeX + ' and sizeZ:' + sp.sizeZ);
 	                                        // TODO: trigger this in world.init();
 	                                        // this.world.resize( vrDisplay.stageParameters.sizeX, vrDisplay.stageParameters.sizeZ );
-
 	                                } else {
 
-	                                                // TODO: test early.
-	                                                // VRSamplesUtil.addInfo("VRDisplay reported stageParameters, but stage size was 0. Using default size.", 3000);
-
-	                                        }
+	                                        console.log('WebVR::setStageParameters(): vr device reported stateParameters without a size, using defaults (3000');
+	                                }
 	                        } else {
 
-	                                        // TODO: test early.
-	                                        // VRSamplesUtil.addInfo("VRDisplay did not report stageParameters", 3000 );
+	                                // TODO: test early.
 
-	                                }
+	                                console.error('vr deviced did not report stage parameters');
+	                        }
 	                }
 
 	                /** 
@@ -2682,8 +2779,8 @@
 	                 */
 
 	        }, {
-	                key: 'standingPoseMatrix',
-	                value: function standingPoseMatrix() {
+	                key: 'getStandingPoseMatrix',
+	                value: function getStandingPoseMatrix() {
 
 	                        var mat4 = this.glMatrix.mat4,
 	                            display = this.display;
@@ -2705,7 +2802,7 @@
 
 	                                /* 
 	                                 * After toji:
-	                                 * Otherwise you'll want to translate the view to compensate for the
+	                                 * You'll want to translate the view to compensate for the
 	                                 * scene floor being at Y=0. Ideally this should match the user's
 	                                 * height (you may want to make it configurable). For this demo we'll
 	                                 * just assume all human beings are 1.65 meters (~5.4ft) tall.
@@ -2720,7 +2817,7 @@
 	                                mat4.multiply(out, view, out);
 	                        }
 
-	                        return out; // TODO: ?????????????????
+	                        return out;
 	                }
 
 	                /** 
@@ -2734,9 +2831,87 @@
 	                        this.display.resetPose();
 	                }
 
+	                /** 
+	                 * Set the perspective matrix.
+	                 */
+
+	        }, {
+	                key: 'setPM',
+	                value: function setPM() {}
+	        }, {
+	                key: 'setMV',
+	                value: function setMV() {}
+
 	                /* 
 	                 * =============== VR EVENTS ====================
 	                 */
+
+	                /** 
+	                 * resize event when in VR mode. Changes canvas 
+	                 * to hold stereo view.
+	                 */
+
+	        }, {
+	                key: 'vrResize',
+	                value: function vrResize() {
+
+	                        console.log('WebVR::vrResize(): in vr resize');
+
+	                        var display = this.display,
+	                            gl = this.gl.getContext(),
+	                            c = this.gl.getCanvas(),
+	                            p = c.parentNode;
+
+	                        // Get the current size of the parent <div> for the <canvas>.
+
+	                        this.oldWidth = p.clientWidth * f | 0;
+
+	                        this.oldHeight = p.clientHeight * f | 0;
+
+	                        var f = Math.max(window.devicePixelRatio, 1);
+
+	                        if (display && display.isPresenting) {
+
+	                                console.log('WebVR::vrResize(): display presenting');
+
+	                                var leftEye = display.getEyeParameters('left');
+
+	                                var rightEye = display.getEyeParameters('right');
+
+	                                // Resize to twice the width of the mono display.
+
+	                                var width = Math.max(leftEye.renderWidth, rightEye.renderWidth) * 2;
+
+	                                var height = Math.max(leftEye.renderHeight, rightEye.renderHeight);
+
+	                                c.width = width;
+
+	                                c.height = height;
+
+	                                p.style.width = c.width + 'px';
+
+	                                p.style.height = c.height + 'px';
+
+	                                gl.viewportWidth = width;
+
+	                                gl.viewportHeight = height;
+
+	                                gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+
+	                                // Force parent to the same size
+
+	                                console.log('WebVR::vrResize(): new width:' + c.width + ' height:' + c.height);
+	                        } else {
+
+	                                // Call the standard webgl object resize event.
+
+	                                p.style.width = '';
+
+	                                p.style.height = '';
+
+	                                this.gl.resizeCanvas();
+	                        }
+	                }
 
 	                /** 
 	                 * User requested VR mode, or display HMD was activated.
@@ -2746,7 +2921,7 @@
 	                key: 'requestPresent',
 	                value: function requestPresent() {
 
-	                        console.log('in requestPresent');
+	                        console.log('WebVR::requestPresent(): ');
 
 	                        var display = this.display;
 
@@ -2756,21 +2931,23 @@
 
 	                                        // success
 
-	                                        console.log('requestPresent was successful');
+	                                        // TOGGLE SHADERS HERE????
+
+	                                        console.log('WebVR::requestPresent(): present was successful');
 	                                }, function () {
 
 	                                        // ERROR
 	                                        // VRSamplesUtil.addError("requestPresent failed.", 2000);
 
-	                                        console.error('requestPresent failed');
+	                                        console.error('WebVR::requestPresent(): present failed');
 	                                });
 	                        } else {
 
-	                                console.error('vrdisplay unable to present');
+	                                console.error('WebVR::requestPresent(): vrdisplay unable to present');
 	                        }
 	                }
 
-	                /** 
+	                /**  
 	                 * User requested exiting VR mode, or display HMD was deactivated.
 	                 */
 
@@ -2778,28 +2955,34 @@
 	                key: 'exitPresent',
 	                value: function exitPresent() {
 
-	                        console.log('in exitPresent');
+	                        console.log('WebVR::exitPresent():');
 
 	                        var display = this.display;
 
-	                        if (display && !display.isPresenting) {
+	                        if (display) {
 
-	                                return;
+	                                if (!display.isPresenting) {
+
+	                                        return;
+	                                }
+
+	                                display.exitPresent().then(function () {
+
+	                                        // success
+
+	                                        console.log('WebVR::exitPresent(): exited vrDisplay presentation');
+	                                }, function () {
+
+	                                        // ERROR
+
+	                                        //VRSamplesUtil.addError("exitPresent failed.", 2000);
+
+	                                        console.error('WebVR::exitPresent(): failed to exit vrDisplay presentation');
+	                                });
+	                        } else {
+
+	                                console.error('WebVR::exitPresent(): no valid vr display found');
 	                        }
-
-	                        vrDisplay.exitPresent().then(function () {
-
-	                                // success
-
-	                                console.log('exited vrDisplay presentation');
-	                        }, function () {
-
-	                                // ERROR
-
-	                                //VRSamplesUtil.addError("exitPresent failed.", 2000);
-
-	                                console.error('failed to exit vrDisplay presentation');
-	                        });
 	                }
 
 	                /** 
@@ -2810,9 +2993,29 @@
 	                key: 'presentChange',
 	                value: function presentChange() {
 
-	                        // this.gl.resize();
+	                        var display = this.display;
 
-	                        console.log('in presentChange');
+	                        // Handle resizes in both directions.
+
+	                        this.vrResize();
+
+	                        console.log('WebVR::presentChange():');
+
+	                        if (display.isPresenting) {
+
+	                                if (display.capabilities.hasExternalDisplay) {
+
+	                                        // trigger exit vr in ui object
+
+	                                }
+	                        } else {
+
+	                                if (display.capabilities.hasExternalDisplay) {
+
+	                                        // trigger enter vr in ui object
+
+	                                }
+	                        }
 	                }
 
 	                /** 
@@ -2875,7 +3078,7 @@
 
 	                var _this = _possibleConstructorReturn(this, (LoadTexture.__proto__ || Object.getPrototypeOf(LoadTexture)).call(this, init, util, glMatrix, webgl, MAX_CACHE_IMAGES));
 
-	                _this.gl = webgl;
+	                _this.webgl = webgl;
 
 	                // Specific to texture cache.
 
@@ -2993,7 +3196,7 @@
 
 	                        ////////////console.log( 'In uploadTexture() for:' + loadObj.prim.name + ' src:' + loadObj.image.src );
 
-	                        var gl = this.gl.getContext();
+	                        var gl = this.webgl.getContext();
 
 	                        var textures = loadObj.prim.textures;
 
@@ -4177,10 +4380,25 @@
 	var ShaderTexture = function (_Shader) {
 	        _inherits(ShaderTexture, _Shader);
 
-	        function ShaderTexture(init, util, glMatrix, webgl, shaderName) {
+	        /** 
+	         * --------------------------------------------------------------------
+	         * VERTEX SHADER 1
+	         * textured, no lighting.
+	         * @link http://learningwebgl.com/blog/?p=684
+	         * StackGL
+	         * @link https://github.com/stackgl
+	         * phong lighting
+	         * @link https://github.com/stackgl/glsl-lighting-walkthrough
+	         * - vertex position
+	         * - texture coordinate
+	         * - model-view matrix
+	         * - projection matrix
+	         * --------------------------------------------------------------------
+	         */
+	        function ShaderTexture(init, util, glMatrix, webgl, webvr, shaderName) {
 	                _classCallCheck(this, ShaderTexture);
 
-	                var _this = _possibleConstructorReturn(this, (ShaderTexture.__proto__ || Object.getPrototypeOf(ShaderTexture)).call(this, init, util, glMatrix, webgl, shaderName));
+	                var _this = _possibleConstructorReturn(this, (ShaderTexture.__proto__ || Object.getPrototypeOf(ShaderTexture)).call(this, init, util, glMatrix, webgl, webvr, shaderName));
 
 	                _this.needIndices = true;
 
@@ -4197,15 +4415,12 @@
 	                return _this;
 	        }
 
-	        /** 
-	         * --------------------------------------------------------------------
-	         * VERTEX SHADER 1
-	         * a default-lighting textured object vertex shader.
-	         * - vertex position
-	         * - texture coordinate
-	         * - model-view matrix
-	         * - projection matrix
-	         * --------------------------------------------------------------------
+	        /* 
+	         * Vertex and Fragment Shaders. We use the internal 'program' object from the webgl object to compile these. 
+	         * Alternatively, They may be defined to load from HTML or and external file.
+	         * @return {Object{code, varList}} an object, with internal elements
+	         * code: The shader code.
+	         * varList: A scanned list of all the variables in the shader code (created by webgl object).
 	         */
 
 
@@ -4219,7 +4434,7 @@
 
 	                                code: s.join('\n'),
 
-	                                varList: this.gl.createVarList(s)
+	                                varList: this.webgl.createVarList(s)
 
 	                        };
 	                }
@@ -4244,7 +4459,7 @@
 
 	                                code: s.join('\n'),
 
-	                                varList: this.gl.createVarList(s)
+	                                varList: this.webgl.createVarList(s)
 
 	                        };
 	                }
@@ -4263,6 +4478,7 @@
 	        }, {
 	                key: 'init',
 	                value: function init(objList) {
+	                        var _this2 = this;
 
 	                        // DESTRUCTING DID NOT WORK!
 	                        //[gl, canvas, mat4, vec3, pMatrix, mvMatrix, program ] = this.setup();
@@ -4280,7 +4496,8 @@
 	                            fsVars = arr[9],
 	                            stats = arr[10],
 	                            near = arr[11],
-	                            far = arr[12];
+	                            far = arr[12],
+	                            vr = arr[13];
 
 	                        // Attach objects.
 
@@ -4296,6 +4513,15 @@
 	                        // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
 	                        // TODO: https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/TechniquesforWorkingwithVertexData/TechniquesforWorkingwithVertexData.html
 	                        // TODO: http://max-limper.de/tech/batchedrendering.html
+
+	                        // Update overall scene with changes (e.g. VR headset or mouse drags on desktop).
+
+	                        program.sceneUpdate = function () {
+
+	                                _this2.vr.setPM(pMatrix);
+
+	                                _this2.vr.setMV(mvMatrix);
+	                        };
 
 	                        /** 
 	                         * POLYMORPHIC METHODS
@@ -4323,6 +4549,10 @@
 	                                // Reset perspective matrix.
 
 	                                mat4.perspective(pMatrix, Math.PI * 0.4, canvas.width / canvas.height, near, far); // right
+
+	                                // Reset perspective and model-view matrix.
+
+	                                program.sceneUpdate();
 
 	                                // Begin program loop
 
@@ -4379,11 +4609,12 @@
 
 	                                                gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
 	                                        }
-	                                }
-	                        };
+	                                } // end of renderList for Prims
+	                        }; // end of program.render()
 
 	                        return program;
-	                }
+	                } // end of init()
+
 	        }]);
 
 	        return ShaderTexture;
@@ -4430,20 +4661,18 @@
 	         * Basic MVC
 	         * https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_model_view_projection
 	         */
-	        function Shader(init, util, glMatrix, webgl, shaderName) {
+	        function Shader(init, util, glMatrix, webgl, webvr, shaderName) {
 	                _classCallCheck(this, Shader);
 
 	                console.log('In Shader class');
 
 	                this.name = shaderName;
 
-	                // class name = this.constructor.name
+	                // class name = this.constructor.name // doesn't work with Babel 3/2017
 
-	                this.gl = webgl;
+	                this.util = util, this.glMatrix = glMatrix, this.webgl = webgl, this.vr = webvr;
 
-	                this.util = util;
-
-	                this.glMatrix = glMatrix;
+	                // Perspective and model-view matrix.
 
 	                this.pMatrix = this.glMatrix.mat4.create();
 
@@ -4451,9 +4680,11 @@
 
 	                this.mvMatrixStack = this.glMatrix.mat4.create();
 
+	                // Floating precision (determined by WebGL object).
+
 	                this.floatp = '';
 
-	                if (this.gl.stats.highp) {
+	                if (this.webgl.stats.highp) {
 
 	                        this.floatp = 'precision highp float;';
 	                } else {
@@ -4495,7 +4726,9 @@
 	         */
 
 	        /**
-	         * prims are added to the webgl program.
+	         * Prim references are added to the webgl program, so each Shader can 
+	         * handle a subset of the total defined prims. Global list in Prim object.
+	         * @param {Prim} obj a Prim object.
 	         */
 
 
@@ -4514,6 +4747,7 @@
 
 	                /** 
 	                 * Check for Prim in list of drawn objects in webgl program.
+	                 * @param {Prim} obj a Prim object.
 	                 */
 
 	        }, {
@@ -4530,6 +4764,7 @@
 	                /** 
 	                 * Prims are removed from the webgl program. 
 	                 * NOTE: removing from the array messes up JIT optimization, so slows things down!
+	                 * @param {Prim} obj a Prim object.
 	                 */
 
 	        }, {
@@ -4545,6 +4780,10 @@
 	                        }
 	                }
 
+	                /* 
+	                 * ============ WEBGL PROGRAM OPERATIONS ============
+	                 */
+
 	                /** 
 	                 * Create the rendering program that will use our Shaders. Initially created 
 	                 * by WebGL module, then each Shader adds update() and render() methods specific to 
@@ -4559,12 +4798,12 @@
 
 	                        if (this.vertexShaderFile && this.this.fragmentShaderFile) {
 
-	                                program = this.gl.createProgram(this.gl.fetchVertexShader(this.vertexShaderFile), this.gl.fetchFragmentShader(this.fragmentShaderFile));
+	                                program = this.webgl.createProgram(this.webgl.fetchVertexShader(this.vertexShaderFile), this.webgl.fetchFragmentShader(this.fragmentShaderFile));
 	                        } else {
 
 	                                // vsSrc() and fsSrc() are defined in derived Shader objects.
 
-	                                program = this.gl.createProgram(this.vsSrc(), this.fsSrc());
+	                                program = this.webgl.createProgram(this.vsSrc(), this.fsSrc());
 	                        }
 
 	                        if (!program) {
@@ -4623,32 +4862,61 @@
 
 	                        var program = this.program;
 
+	                        this.pMatrix = this.glMatrix.mat4.create(); // projection matrix (defaults to mono view)
+
+	                        this.mvMatrix = this.glMatrix.mat4.create(); // model-view matrix
+
 	                        /* Return references to our properties, and assign uniform and attribute locations using webgl object.
 	                         * We do this return to provide local references for all the Shader and other objects
 	                         * used by the WebGL program update() and render(). It could be provided in each init, but saves 
 	                         * code to have each custom Shader init() method grab the local references from a common method. 
 	                         */
 
-	                        return [this.gl.getContext(), this.gl.getCanvas(), this.glMatrix.mat4, this.glMatrix.mat3, this.glMatrix.vec3, this.glMatrix.mat4.create(), // perspective
+	                        return [this.webgl.getContext(), this.webgl.getCanvas(), this.glMatrix.mat4, this.glMatrix.mat3, this.glMatrix.vec3, this.pMatrix, this.mvMatrix,
 
-	                        this.glMatrix.mat4.create(), // model-view
+	                        //this.glMatrix.mat4.create(),  // projection, pMatrix (defaults to mono view)
+
+	                        //this.glMatrix.mat4.create(),  // model-view, mvMatrix
 
 	                        program, {
-	                                attribute: this.gl.setAttributeArrays(program.shaderProgram, program.vsVars.attribute),
+	                                attribute: this.webgl.setAttributeArrays(program.shaderProgram, program.vsVars.attribute),
 
-	                                uniform: this.gl.setUniformLocations(program.shaderProgram, program.vsVars.uniform)
+	                                uniform: this.webgl.setUniformLocations(program.shaderProgram, program.vsVars.uniform)
 
 	                        }, {
 
-	                                uniform: this.gl.setUniformLocations(program.shaderProgram, program.fsVars.uniform)
+	                                uniform: this.webgl.setUniformLocations(program.shaderProgram, program.fsVars.uniform)
 
-	                        }, this.gl.stats, this.gl.near, this.gl.far];
+	                        }, this.webgl.stats, this.webgl.near, this.webgl.far, this.vr];
 	                }
 
 	                /* 
 	                 * ============ MATRIX OPERATIONS ============
 	                 */
 
+	                /** 
+	                 * Get the perspective matrix.
+	                 * @returns {glMatrix.mat4} the perspective matrix used in the Shader.
+	                 */
+
+	        }, {
+	                key: 'getpMatrix',
+	                value: function getpMatrix() {
+
+	                        return this.pMatrix;
+	                }
+
+	                /**
+	                 * Get the model-view matrix.
+	                 * @returns {glMatrix.mat4} the model-view matrix used in the Shader.
+	                 */
+
+	        }, {
+	                key: 'getmvMatrix',
+	                value: function getmvMatrix() {
+
+	                        return this.mvMatrix;
+	                }
 	        }, {
 	                key: 'mvPushMatrix',
 	                value: function mvPushMatrix() {
@@ -4706,12 +4974,28 @@
 	var ShaderColor = function (_Shader) {
 	        _inherits(ShaderColor, _Shader);
 
-	        function ShaderColor(init, util, glMatrix, webgl, shaderName) {
+	        /** 
+	         * --------------------------------------------------------------------
+	         * VERTEX SHADER 2
+	         * colorized, non-lit shader.
+	         * @link http://learningwebgl.com/blog/?p=684
+	         * StackGL
+	         * @link https://github.com/stackgl
+	         * phong lighting
+	         * @link https://github.com/stackgl/glsl-lighting-walkthrough
+	         * - vertex position
+	         * - texture coordinate
+	         * - model-view matrix
+	         * - projection matrix
+	         * --------------------------------------------------------------------
+	         */
+
+	        function ShaderColor(init, util, glMatrix, webgl, webvr, shaderName) {
 	                _classCallCheck(this, ShaderColor);
 
 	                // Define arrays that are needed for this shader.
 
-	                var _this = _possibleConstructorReturn(this, (ShaderColor.__proto__ || Object.getPrototypeOf(ShaderColor)).call(this, init, util, glMatrix, webgl, shaderName));
+	                var _this = _possibleConstructorReturn(this, (ShaderColor.__proto__ || Object.getPrototypeOf(ShaderColor)).call(this, init, util, glMatrix, webgl, webvr, shaderName));
 
 	                _this.needIndices = true;
 
@@ -4729,11 +5013,11 @@
 	        }
 
 	        /* 
-	         * Vertex and Fragment Shaders. We use the internal 'program' object to compile these. Alternatively,
-	         * They may be defined to load from HTML or and external file.
-	         * @return {Object} an object, with
+	         * Vertex and Fragment Shaders. We use the internal 'program' object from the webgl object to compile these. 
+	         * Alternatively, They may be defined to load from HTML or and external file.
+	         * @return {Object{code, varList}} an object, with internal elements
 	         * code: The shader code.
-	         * varList: A scanned list of all the variables in the shader code.
+	         * varList: A scanned list of all the variables in the shader code (created by webgl object).
 	         */
 
 
@@ -4747,7 +5031,7 @@
 
 	                                code: s.join('\n'),
 
-	                                varList: this.gl.createVarList(s)
+	                                varList: this.webgl.createVarList(s)
 
 	                        };
 	                }
@@ -4765,7 +5049,7 @@
 
 	                                code: s.join('\n'),
 
-	                                varList: this.gl.createVarList(s)
+	                                varList: this.webgl.createVarList(s)
 
 	                        };
 	                }
@@ -4784,6 +5068,7 @@
 	        }, {
 	                key: 'init',
 	                value: function init(objList) {
+	                        var _this2 = this;
 
 	                        // DESTRUCTING DID NOT WORK!
 	                        //[gl, canvas, mat4, vec3, pMatrix, mvMatrix, program ] = this.setup();
@@ -4801,7 +5086,8 @@
 	                            fsVars = arr[9],
 	                            stats = arr[10],
 	                            near = arr[11],
-	                            far = arr[12];
+	                            far = arr[12],
+	                            vr = arr[13];
 
 	                        // We received webgl in the constructor, and gl above is referenced from it.
 
@@ -4824,6 +5110,15 @@
 
 	                        // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
 
+	                        // Update overall scene with changes (e.g. VR headset or mouse drags on desktop).
+
+	                        program.sceneUpdate = function () {
+
+	                                _this2.vr.setPM(pMatrix);
+
+	                                _this2.vr.setMV(mvMatrix);
+	                        };
+
 	                        /** 
 	                         * POLYMORPHIC METHODS
 	                         */
@@ -4832,7 +5127,7 @@
 
 	                        program.update = function (obj) {
 
-	                                // Standard mvMatrix updates.
+	                                // Update changes in Prim position, rotation, etc.
 
 	                                obj.setMV(mvMatrix);
 
@@ -4849,7 +5144,15 @@
 
 	                                // Reset perspective matrix.
 
+	                                // TODO: change this!!!!!!!
+
 	                                mat4.perspective(pMatrix, Math.PI * 0.4, canvas.width / canvas.height, near, far); // right
+
+	                                // Reset model-view matrix.
+
+	                                // Reset perspective and model-view matrix.
+
+	                                program.sceneUpdate();
 
 	                                // Loop through assigned objects.
 
@@ -4859,7 +5162,7 @@
 
 	                                        // Update Model-View matrix with standard Prim values.
 
-	                                        program.update(obj, mvMatrix);
+	                                        program.update(obj, mvMatrix); // TODO:::::::::mvMatrix needed here???????????????????????
 
 	                                        // Bind vertex buffer.
 
@@ -4895,11 +5198,12 @@
 
 	                                                gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
 	                                        }
-	                                }
-	                        };
+	                                } // end of renderList for Prims
+	                        }; // end of program.render()
 
 	                        return program;
-	                }
+	                } // end of init()
+
 	        }]);
 
 	        return ShaderColor;
@@ -4934,10 +5238,25 @@
 	var shaderDirLightTexture = function (_Shader) {
 	        _inherits(shaderDirLightTexture, _Shader);
 
-	        function shaderDirLightTexture(init, util, glMatrix, webgl, shaderName) {
+	        /** 
+	         * --------------------------------------------------------------------
+	         * VERTEX SHADER 3
+	         * a directionally-lit textured object vertex shader.
+	         * @link http://learningwebgl.com/blog/?p=684
+	         * StackGL
+	         * @link https://github.com/stackgl
+	         * phong lighting
+	         * @link https://github.com/stackgl/glsl-lighting-walkthrough
+	         * - vertex position
+	         * - texture coordinate
+	         * - model-view matrix
+	         * - projection matrix
+	         * --------------------------------------------------------------------
+	         */
+	        function shaderDirLightTexture(init, util, glMatrix, webgl, webvr, shaderName) {
 	                _classCallCheck(this, shaderDirLightTexture);
 
-	                var _this = _possibleConstructorReturn(this, (shaderDirLightTexture.__proto__ || Object.getPrototypeOf(shaderDirLightTexture)).call(this, init, util, glMatrix, webgl, shaderName));
+	                var _this = _possibleConstructorReturn(this, (shaderDirLightTexture.__proto__ || Object.getPrototypeOf(shaderDirLightTexture)).call(this, init, util, glMatrix, webgl, webvr, shaderName));
 
 	                _this.needIndices = true;
 
@@ -4956,20 +5275,12 @@
 	                return _this;
 	        }
 
-	        /** 
-	         * --------------------------------------------------------------------
-	         * VERTEX SHADER 3
-	         * a directionally-lit textured object vertex shader.
-	         * @link http://learningwebgl.com/blog/?p=684
-	         * StackGL
-	         * @link https://github.com/stackgl
-	         * phong lighting
-	         * @link https://github.com/stackgl/glsl-lighting-walkthrough
-	         * - vertex position
-	         * - texture coordinate
-	         * - model-view matrix
-	         * - projection matrix
-	         * --------------------------------------------------------------------
+	        /* 
+	         * Vertex and Fragment Shaders. We use the internal 'program' object from the webgl object to compile these. 
+	         * Alternatively, They may be defined to load from HTML or and external file.
+	         * @return {Object{code, varList}} an object, with internal elements
+	         * code: The shader code.
+	         * varList: A scanned list of all the variables in the shader code (created by webgl object).
 	         */
 
 
@@ -4985,7 +5296,7 @@
 
 	                                code: s.join('\n'),
 
-	                                varList: this.gl.createVarList(s)
+	                                varList: this.webgl.createVarList(s)
 
 	                        };
 	                }
@@ -5010,7 +5321,7 @@
 
 	                                code: s.join('\n'),
 
-	                                varList: this.gl.createVarList(s)
+	                                varList: this.webgl.createVarList(s)
 
 	                        };
 	                }
@@ -5029,6 +5340,7 @@
 	        }, {
 	                key: 'init',
 	                value: function init(objList) {
+	                        var _this2 = this;
 
 	                        // DESTRUCTING DID NOT WORK!
 	                        //[gl, canvas, mat4, vec3, pMatrix, mvMatrix, program ] = this.setup();
@@ -5046,7 +5358,8 @@
 	                            fsVars = arr[9],
 	                            stats = arr[10],
 	                            near = arr[11],
-	                            far = arr[12];
+	                            far = arr[12],
+	                            vr = arr[13];
 
 	                        // Shorter reference.
 
@@ -5077,6 +5390,15 @@
 	                        // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
 	                        // TODO: https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/TechniquesforWorkingwithVertexData/TechniquesforWorkingwithVertexData.html
 	                        // TODO: http://max-limper.de/tech/batchedrendering.html
+
+	                        // Update overall scene with changes (e.g. VR headset or mouse drags on desktop).
+
+	                        program.sceneUpdate = function () {
+
+	                                _this2.vr.setPM(pMatrix);
+
+	                                _this2.vr.setMV(mvMatrix);
+	                        };
 
 	                        /** 
 	                         * POLYMORPHIC METHODS
@@ -5117,6 +5439,10 @@
 	                                // Reset perspective matrix.
 
 	                                mat4.perspective(pMatrix, Math.PI * 0.4, canvas.width / canvas.height, near, far); // right
+
+	                                // Reset perspective and model-view matrix.
+
+	                                program.sceneUpdate();
 
 	                                // Begin program loop
 
@@ -5194,10 +5520,11 @@
 	                                                gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
 	                                        }
 	                                }
-	                        };
+	                        }; // end of program.render()
 
 	                        return program;
-	                }
+	                } // end if init()
+
 	        }]);
 
 	        return shaderDirLightTexture;
@@ -5212,8 +5539,10 @@
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
-	    value: true
+	        value: true
 	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 	var _shader = __webpack_require__(14);
 
@@ -5228,33 +5557,197 @@
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 	var ShaderWater = function (_Shader) {
-	    _inherits(ShaderWater, _Shader);
+	        _inherits(ShaderWater, _Shader);
 
-	    function ShaderWater(init, util, glMatrix, webgl, shaderName) {
-	        _classCallCheck(this, ShaderWater);
+	        /** 
+	         * --------------------------------------------------------------------
+	         * VERTEX SHADER 5
+	         * a directionally-lit textured water shader.
+	         * @link http://learningwebgl.com/blog/?p=684
+	         * - vertex position
+	         * - texture coordinate
+	         * - model-view matrix
+	         * - projection matrix
+	         * Water example
+	         * @link http://madebyevan.com/webgl-water/
+	         * --------------------------------------------------------------------
+	         */
+	        function ShaderWater(init, util, glMatrix, webgl, webvr, shaderName) {
+	                _classCallCheck(this, ShaderWater);
 
-	        var _this = _possibleConstructorReturn(this, (ShaderWater.__proto__ || Object.getPrototypeOf(ShaderWater)).call(this, init, util, glMatrix, webgl, prim, shaderName));
+	                var _this = _possibleConstructorReturn(this, (ShaderWater.__proto__ || Object.getPrototypeOf(ShaderWater)).call(this, init, util, glMatrix, webgl, webvr, shaderName));
 
-	        console.log('In ShaderWater class');
+	                console.log('In ShaderWater class');
 
-	        return _this;
-	    }
+	                _this.needIndices = true;
 
-	    /** 
-	     * --------------------------------------------------------------------
-	     * VERTEX SHADER 3
-	     * a directionally-lit textured object vertex shader.
-	     * @link http://learningwebgl.com/blog/?p=684
-	     * - vertex position
-	     * - texture coordinate
-	     * - model-view matrix
-	     * - projection matrix
-	     * Water example
-	     * @link http://madebyevan.com/webgl-water/
-	     * --------------------------------------------------------------------
-	     */
+	                _this.needTexCoords = true;
 
-	    return ShaderWater;
+	                _this.needColors = true;
+
+	                _this.needNormals = true;
+
+	                _this.needTangents = true;
+
+	                // TODO: include more for water
+
+	                return _this;
+	        }
+
+	        /* 
+	         * Vertex and Fragment Shaders. We use the internal 'program' object from the webgl object to compile these. 
+	         * Alternatively, They may be defined to load from HTML or and external file.
+	         * @return {Object{code, varList}} an object, with internal elements
+	         * code: The shader code.
+	         * varList: A scanned list of all the variables in the shader code (created by webgl object).
+	         */
+
+
+	        _createClass(ShaderWater, [{
+	                key: 'vsSrc',
+	                value: function vsSrc() {
+
+	                        var s = [];
+
+	                        return {
+
+	                                code: s.join('\n'),
+
+	                                varList: this.webgl.createVarList(s)
+
+	                        };
+	                }
+
+	                /** 
+	                 * water fragment shader.
+	                 * - varying texture coordinate
+	                 * - texture 2D sampler
+	                 */
+
+	        }, {
+	                key: 'fsSrc',
+	                value: function fsSrc() {
+
+	                        var s = [];
+
+	                        return {
+
+	                                code: s.join('\n'),
+
+	                                varList: this.webgl.createVarList(s)
+
+	                        };
+	                }
+
+	                /** 
+	                 * initialize the update() and render() methods for this shader.
+	                 * @param{Prim[]} objList a list of initializing Prims (optional).
+	                 */
+
+	        }, {
+	                key: 'init',
+	                value: function init(objList) {
+	                        var _this2 = this;
+
+	                        var arr = this.setup(),
+	                            gl = arr[0],
+	                            canvas = arr[1],
+	                            mat4 = arr[2],
+	                            mat3 = arr[3],
+	                            vec3 = arr[4],
+	                            pMatrix = arr[5],
+	                            mvMatrix = arr[6],
+	                            program = arr[7],
+	                            vsVars = arr[8],
+	                            fsVars = arr[9],
+	                            stats = arr[10],
+	                            near = arr[11],
+	                            far = arr[12],
+	                            vr = arr[13];
+
+	                        // Shorter reference.
+
+	                        var shaderProgram = program.shaderProgram;
+
+	                        // If we init with object, add them here.
+
+	                        if (objList) {
+
+	                                program.renderList = this.util.concatArr(program.renderList, objList);
+	                        }
+
+	                        // Update overall scene with changes (e.g. VR headset or mouse drags on desktop).
+
+	                        program.sceneUpdate = function () {
+
+	                                _this2.vr.setPM(pMatrix);
+
+	                                _this2.vr.setMV(mvMatrix);
+	                        };
+
+	                        /** 
+	                         * POLYMORPHIC METHODS
+	                         */
+
+	                        // Update object position, motion - given to World object.
+
+	                        program.update = function (obj) {
+
+	                                // Standard mvMatrix updates.
+
+	                                obj.setMV(mvMatrix);
+
+	                                // Compute lighting normals.
+
+	                                vec3.normalize(adjustedLD, lightingDirection);
+
+	                                vec3.scale(adjustedLD, adjustedLD, -1);
+
+	                                // Calculates a 3x3 normal matrix (transpose inverse) from the 4x4 matrix.
+
+	                                mat3.normalFromMat4(nMatrix, mvMatrix);
+	                        };
+
+	                        program.render = function (obj) {
+
+	                                //console.log( 'gl:' + gl + ' canvas:' + canvas + ' mat4:' + mat4 + ' vec3:' + vec3 + ' pMatrix:' + pMatrix + ' mvMatrix:' + mvMatrix + ' program:' + program );
+
+	                                gl.useProgram(shaderProgram);
+
+	                                // Reset perspective matrix.
+
+	                                mat4.perspective(pMatrix, Math.PI * 0.4, canvas.width / canvas.height, near, far); // right
+
+	                                // Reset perspective and model-view matrix.
+
+	                                program.sceneUpdate();
+
+	                                // Begin program loop
+
+	                                for (var i = 0, len = program.renderList.length; i < len; i++) {
+
+	                                        var _obj = program.renderList[i];
+
+	                                        // Only render if we have at least one texture loaded.
+
+	                                        if (!_obj.textures[0] || !_obj.textures[0].texture) continue;
+
+	                                        // Update Model-View matrix with standard Prim values.
+
+	                                        program.update(_obj, mvMatrix);
+
+	                                        // TODO: bind buffers
+
+	                                        // TODO: Set fragment shader sampler uniform.
+
+	                                        // TODO: drawElements()
+	                                } // end of renerList for Prims
+	                        }; // end of program.render()
+	                } // end of init()
+
+	        }]);
+
+	        return ShaderWater;
 	}(_shader2.default);
 
 	exports.default = ShaderWater;
@@ -5266,8 +5759,10 @@
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
-	    value: true
+	        value: true
 	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 	var _shader = __webpack_require__(14);
 
@@ -5282,31 +5777,193 @@
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 	var ShaderMetal = function (_Shader) {
-	    _inherits(ShaderMetal, _Shader);
+	        _inherits(ShaderMetal, _Shader);
 
-	    function ShaderMetal(init, util, glMatrix, webgl, shaderName) {
-	        _classCallCheck(this, ShaderMetal);
+	        /** 
+	         * --------------------------------------------------------------------
+	         * VERTEX SHADER 3
+	         * a directionally-lit textured object vertex shader.
+	         * @link http://learningwebgl.com/blog/?p=684
+	         * - vertex position
+	         * - texture coordinate
+	         * - model-view matrix
+	         * - projection matrix
+	         * --------------------------------------------------------------------
+	         */
+	        function ShaderMetal(init, util, glMatrix, webgl, webvr, shaderName) {
+	                _classCallCheck(this, ShaderMetal);
 
-	        var _this = _possibleConstructorReturn(this, (ShaderMetal.__proto__ || Object.getPrototypeOf(ShaderMetal)).call(this, init, util, glMatrix, webgl, shaderName));
+	                var _this = _possibleConstructorReturn(this, (ShaderMetal.__proto__ || Object.getPrototypeOf(ShaderMetal)).call(this, init, util, glMatrix, webgl, webvr, shaderName));
 
-	        console.log('In ShaderMetal class');
+	                console.log('In ShaderMetal class');
 
-	        return _this;
-	    }
+	                _this.needIndices = true;
 
-	    /** 
-	     * --------------------------------------------------------------------
-	     * VERTEX SHADER 3
-	     * a directionally-lit textured object vertex shader.
-	     * @link http://learningwebgl.com/blog/?p=684
-	     * - vertex position
-	     * - texture coordinate
-	     * - model-view matrix
-	     * - projection matrix
-	     * --------------------------------------------------------------------
-	     */
+	                _this.needTexCoords = true;
 
-	    return ShaderMetal;
+	                _this.needColors = false;
+
+	                _this.needNormals = false;
+
+	                _this.needTangents = false;
+
+	                return _this;
+	        }
+
+	        /* 
+	         * Vertex and Fragment Shaders. We use the internal 'program' object from the webgl object to compile these. 
+	         * Alternatively, They may be defined to load from HTML or and external file.
+	         * @return {Object{code, varList}} an object, with internal elements
+	         * code: The shader code.
+	         * varList: A scanned list of all the variables in the shader code (created by webgl object).
+	         */
+
+
+	        _createClass(ShaderMetal, [{
+	                key: 'vsSrc',
+	                value: function vsSrc() {
+
+	                        var s = [];
+
+	                        return {
+
+	                                code: s.join('\n'),
+
+	                                varList: this.webgl.createVarList(s)
+
+	                        };
+	                }
+
+	                /** 
+	                 * water fragment shader.
+	                 * - varying texture coordinate
+	                 * - texture 2D sampler
+	                 */
+
+	        }, {
+	                key: 'fsSrc',
+	                value: function fsSrc() {
+
+	                        var s = [];
+
+	                        return {
+
+	                                code: s.join('\n'),
+
+	                                varList: this.webgl.createVarList(s)
+
+	                        };
+	                }
+
+	                /** 
+	                 * initialize the update() and render() methods for this shader.
+	                 * @param{Prim[]} objList a list of initializing Prims (optional).
+	                 */
+
+	        }, {
+	                key: 'init',
+	                value: function init(objList) {
+	                        var _this2 = this;
+
+	                        var arr = this.setup(),
+	                            gl = arr[0],
+	                            canvas = arr[1],
+	                            mat4 = arr[2],
+	                            mat3 = arr[3],
+	                            vec3 = arr[4],
+	                            pMatrix = arr[5],
+	                            mvMatrix = arr[6],
+	                            program = arr[7],
+	                            vsVars = arr[8],
+	                            fsVars = arr[9],
+	                            stats = arr[10],
+	                            near = arr[11],
+	                            far = arr[12],
+	                            vr = arr[13];
+
+	                        // Shorter reference.
+
+	                        var shaderProgram = program.shaderProgram;
+
+	                        // If we init with object, add them here.
+
+	                        if (objList) {
+
+	                                program.renderList = this.util.concatArr(program.renderList, objList);
+	                        }
+
+	                        // Update overall scene with changes (e.g. VR headset or mouse drags on desktop).
+
+	                        program.sceneUpdate = function (pMatrix, mvMatrix) {
+
+	                                _this2.vr.setPM(pMatrix);
+
+	                                _this2.vr.setMV(mvMatrix);
+	                        };
+
+	                        /** 
+	                         * POLYMORPHIC METHODS
+	                         */
+
+	                        // Update object position, motion - given to World object.
+
+	                        program.update = function (obj) {
+
+	                                // Standard mvMatrix updates.
+
+	                                obj.setMV(mvMatrix);
+
+	                                // Compute lighting normals.
+
+	                                vec3.normalize(adjustedLD, lightingDirection);
+
+	                                vec3.scale(adjustedLD, adjustedLD, -1);
+
+	                                // Calculates a 3x3 normal matrix (transpose inverse) from the 4x4 matrix.
+
+	                                mat3.normalFromMat4(nMatrix, mvMatrix);
+	                        };
+
+	                        program.render = function (obj) {
+
+	                                //console.log( 'gl:' + gl + ' canvas:' + canvas + ' mat4:' + mat4 + ' vec3:' + vec3 + ' pMatrix:' + pMatrix + ' mvMatrix:' + mvMatrix + ' program:' + program );
+
+	                                gl.useProgram(shaderProgram);
+
+	                                // Reset perspective matrix.
+
+	                                mat4.perspective(pMatrix, Math.PI * 0.4, canvas.width / canvas.height, near, far); // right
+
+	                                // Reset perspective and model-view matrix.
+
+	                                program.sceneUpdate();
+
+	                                // Begin program loop
+
+	                                for (var i = 0, len = program.renderList.length; i < len; i++) {
+
+	                                        var _obj = program.renderList[i];
+
+	                                        // Only render if we have at least one texture loaded.
+
+	                                        if (!_obj.textures[0] || !_obj.textures[0].texture) continue;
+
+	                                        // Update Model-View matrix with standard Prim values.
+
+	                                        program.update(_obj, mvMatrix);
+
+	                                        // TODO: bind buffers
+
+	                                        // TODO: Set fragment shader sampler uniform.
+
+	                                        // TODO: drawElements()
+	                                } // end of renderList for Prims
+	                        }; // end of program.render()
+	                } // end of init()
+
+	        }]);
+
+	        return ShaderMetal;
 	}(_shader2.default);
 
 	exports.default = ShaderMetal;
@@ -5331,7 +5988,7 @@
 
 	                console.log('In Renderer class');
 
-	                this.gl = webgl;
+	                this.webgl = webgl;
 
 	                this.util = webgl.util;
 
@@ -5564,7 +6221,7 @@
 
 	                this.util = util;
 
-	                this.gl = webgl;
+	                this.webgl = webgl;
 
 	                this.glMatrix = glMatrix;
 
@@ -9050,7 +9707,7 @@
 	                        };
 
 	                        /** 
-	                         * Set the model-view matrix with position, translation, rotation, and orbital motion.
+	                         * Update the model-view matrix with position, translation, rotation, and orbital motion for individual Prims.
 	                         * @param {glMatrix.mat4} mvMatrix model-view matrix.
 	                         * @returns {glMatrix.mat4} the altered model-view matrix.
 	                         */
@@ -9333,7 +9990,7 @@
 
 	                        // Geometry factory function, create empty WebGL Buffers.
 
-	                        prim.geometry = new _geoObj2.default(prim.name, this.util, this.gl);
+	                        prim.geometry = new _geoObj2.default(prim.name, this.util, this.webgl);
 
 	                        // Create or load Geometry data (may alter some of the above default properties).
 
@@ -11751,7 +12408,7 @@
 	        function GeoObj(name, util, webgl, type) {
 	                _classCallCheck(this, GeoObj);
 
-	                this.primName = name, this.gl = webgl, this.util = util, this.FLOAT32 = 'float32', this.UINT = 'uint';
+	                this.primName = name, this.webgl = webgl, this.util = util, this.FLOAT32 = 'float32', this.UINT = 'uint';
 
 	                this.UINT32 = 'uint32';
 
@@ -11833,7 +12490,7 @@
 
 	                // Save the max allowed drawing size. For WebGL 1.0 with extension, vertices must be < 65k.
 
-	                this.MAX_DRAWELEMENTS = this.gl.MAX_DRAWELEMENTS;
+	                this.MAX_DRAWELEMENTS = this.webgl.MAX_DRAWELEMENTS;
 
 	                this.mName = 'geo-obj for ' + this.primName + '::';
 	        } // end of constructor
@@ -12255,7 +12912,7 @@
 
 	                        if (this.util.isArray(indices)) {
 
-	                                if (this.gl.stats.uint32) {
+	                                if (this.webgl.stats.uint32) {
 
 	                                        o.data = new Uint32Array(indices);
 
@@ -12420,7 +13077,7 @@
 	                                console.log('numColors is now:' + this.numColors());
 	                        }
 
-	                        if (this.vertices.data.length > this.gl.MAX_DRAWELEMENTS) {
+	                        if (this.vertices.data.length > this.webgl.MAX_DRAWELEMENTS) {
 
 	                                this.ssz = true;
 	                        } else {
@@ -12458,7 +13115,7 @@
 
 	                        this.indices.data = concat(this.indices.data, indices), this.normals.data = concat(this.normals.data, normals), this.texCoords.data = concat(this.texCoords.data, texCoords), this.tangents.data = concat(this.tangents.data, tangents), this.colors.data = concat(this.colors.data, colors);
 
-	                        if (this.vertices.data.length > this.gl.MAX_DRAWELEMENTS) {
+	                        if (this.vertices.data.length > this.webgl.MAX_DRAWELEMENTS) {
 
 	                                this.ssz = true;
 	                        } else {
@@ -12486,7 +13143,7 @@
 	                key: 'bindGLBuffer',
 	                value: function bindGLBuffer(o, type) {
 
-	                        var gl = this.gl.getContext();
+	                        var gl = this.webgl.getContext();
 
 	                        o.buffer = gl.createBuffer();
 
@@ -12556,7 +13213,7 @@
 	                key: 'createGLBuffers',
 	                value: function createGLBuffers() {
 
-	                        var gl = this.gl.getContext();
+	                        var gl = this.webgl.getContext();
 
 	                        var fnName = this.mName + 'createGLBuffers():';
 
@@ -12581,7 +13238,7 @@
 	                         * Conditionally create a UINT16 or UINT32 buffer for the index values, based 
 	                         * on whether this is WebGL 2.0, or the WebGL extension is available
 	                         */
-	                        if (this.gl.stats.uint32) {
+	                        if (this.webgl.stats.uint32) {
 
 	                                if (!o.data.length) {
 
@@ -12688,7 +13345,7 @@
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
-	        value: true
+	            value: true
 	});
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -12700,636 +13357,668 @@
 	 */
 	var World = function () {
 
-	        /** 
-	         * The World class creates the scene, and should be uniquely 
-	         * written for each instance using the WebVR-Mini library.
-	         * Required functions:
-	         * getVS() - the vertex shader.
-	         * getFS() - get the fragment shader.
-	         * rer() - update on rer of <canvas>.
-	         * render() - rendering loop.
-	         * init() - create the world for this first time.
-	         * constructor() - initialize, passing in WebVR-Mini object.
-	         * 
-	         * TODO: add some standard world objects (e.g. 360 video player by default)
-	         * @link https://github.com/flimshaw/Valiant360/blob/master/src/valiant.jquery.js
-	         */
+	            /** 
+	             * The World class creates the scene, and should be uniquely 
+	             * written for each instance using the WebVR-Mini library.
+	             * Required functions:
+	             * getVS() - the vertex shader.
+	             * getFS() - get the fragment shader.
+	             * rer() - update on rer of <canvas>.
+	             * render() - rendering loop.
+	             * init() - create the world for this first time.
+	             * constructor() - initialize, passing in WebVR-Mini object.
+	             * 
+	             * TODO: add some standard world objects (e.g. 360 video player by default)
+	             * @link https://github.com/flimshaw/Valiant360/blob/master/src/valiant.jquery.js
+	             */
 
-	        /** 
-	         * constructor for World.
-	         * @param {WebGL} webgl the webgl module.
-	         * @param {Prim} prim the object/mesh primitives module.
-	         * @param {Renderer} renderer the GLSL rendering module.
-	         */
-	        function World(webgl, prim, renderer) {
-	                _classCallCheck(this, World);
+	            /** 
+	             * constructor for World.
+	             * @param {WebGL} gl the webgl module.
+	             * @param {WebVR} webvr the webvr module.
+	             * @param {Prim} prim the object/mesh primitives module.
+	             * @param {Renderer} renderer the GLSL rendering module.
+	             */
+	            function World(webgl, webvr, prim, renderer) {
+	                        _classCallCheck(this, World);
 
-	                console.log('in World class');
+	                        console.log('in World class');
 
-	                this.webgl = webgl;
+	                        this.webgl = webgl, this.util = webgl.util, this.vr = webvr, this.prim = prim, this.renderer = renderer;
 
-	                this.util = webgl.util;
+	                        // Matrix operations.
 
-	                this.prim = prim;
+	                        this.canvas = webgl.getCanvas();
 
-	                this.renderer = renderer;
+	                        this.glMatrix = webgl.glMatrix;
 
-	                this.canvas = webgl.getCanvas();
+	                        this.pMatrix = this.glMatrix.mat4.create();
 
-	                this.glMatrix = webgl.glMatrix;
+	                        this.mvMatrix = this.glMatrix.mat4.create();
 
-	                this.pMatrix = this.glMatrix.mat4.create();
+	                        this.last = performance.now();
 
-	                this.mvMatrix = this.glMatrix.mat4.create();
+	                        this.counter = 0;
 
-	                this.last = performance.now();
+	                        // Bind the render loop (best current method)
 
-	                this.counter = 0;
+	                        this.render = this.render.bind(this);
+	            }
 
-	                // Bind the render loop (best current method)
+	            /**
+	             * Handle resize event for the World dimensions.
+	             * @param {Number} width world width (x-axis) in units.
+	             * @param {Number} height world height (y-axis) in units.
+	             * @param {Number} depth world depth (z-axis) in units.
+	             */
 
-	                this.render = this.render.bind(this);
-	        }
 
-	        /**
-	         * Handle resize event for the World dimensions.
-	         * @param {Number} width world width (x-axis) in units.
-	         * @param {Number} height world height (y-axis) in units.
-	         * @param {Number} depth world depth (z-axis) in units.
-	         */
+	            _createClass(World, [{
+	                        key: 'resize',
+	                        value: function resize(width, height, depth) {
 
-
-	        _createClass(World, [{
-	                key: 'resize',
-	                value: function resize(width, height, depth) {
-
-	                        console.error('world::resize(): not implemented yet!');
-	                }
-
-	                /** 
-	                 * load a World from a JSON file description.
-	                 */
-
-	        }, {
-	                key: 'load',
-	                value: function load() {
-
-	                        // TODO: use fetch
-
-	                        console.error('world::load(): not implemented yet!');
-	                }
-
-	                /** 
-	                 * save a World to a JSON file description.
-	                 * use Prim.toJSON() for indivdiual prims.
-	                 */
-
-	        }, {
-	                key: 'save',
-	                value: function save() {
-
-	                        // TODO: output in editor interface.
-
-	                        console.error('world::save(): not implemented yet!');
-	                }
-
-	                /** 
-	                 * Create the world. Load shader/renderer objects, and 
-	                 * create objects to render in the world.
-	                 */
-
-	        }, {
-	                key: 'init',
-	                value: function init() {
-
-	                        var vec3 = this.glMatrix.vec3;
-
-	                        var vec4 = this.glMatrix.vec4;
-
-	                        var vec5 = this.prim.vec5;
-
-	                        var util = this.util;
-
-	                        // Get the shaders (not initialized with update() and render() yet!).
-
-	                        this.s1 = this.renderer.getShader('shaderTexture');
-
-	                        this.s2 = this.renderer.getShader('shaderColor');
-
-	                        this.s3 = this.renderer.getShader('shaderDirLightTexture');
-
-	                        //////////////////////////////////
-	                        // TEXTURED SHADER.
-	                        //////////////////////////////////
-
-	                        // Create a UV skydome.
-
-	                        this.prim.createPrim(this.s1, // callback function
-	                        this.prim.typeList.SKYDOME, // type
-	                        'skydome', // name (not Id)
-	                        vec5(18, 18, 18, 0), // dimensions
-	                        vec5(10, 10, 10), // divisions MAKE SMALLER
-	                        vec3.fromValues(0, 0, 0), // position (absolute)
-	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                        vec3.fromValues(util.degToRad(0), util.degToRad(0.1), util.degToRad(0)), // angular velocity in x, y, x
-	                        ['img/panorama_01.png'], // texture present
-	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-	                        );
-
-	                        this.prim.createPrim(this.s1, // callback function
-	                        this.prim.typeList.CUBE, 'first cube', // name
-	                        vec5(1, 1, 1), // dimensions
-	                        vec5(10, 10, 10, 0), // divisions, pass curving of edges as 4th parameter
-	                        vec3.fromValues(1, 0, 2), // position (absolute)
-	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                        vec3.fromValues(util.degToRad(1), util.degToRad(1), util.degToRad(1)), // angular velocity in x, y, x
-	                        ['img/crate.png', 'img/webvr-logo1.png'], // texture image
-	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0));
-
-	                        this.prim.createPrim(this.s1, // callback function
-	                        this.prim.typeList.CUBE, 'toji cube', vec5(1, 1, 1, 0), // dimensions
-	                        vec5(1, 1, 1, 0), // divisions, pass curving of edges as 4th parameter
-	                        vec3.fromValues(5.5, 1.5, -3), // position (absolute)
-	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                        vec3.fromValues(util.degToRad(40), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                        vec3.fromValues(util.degToRad(0), util.degToRad(1), util.degToRad(0)), // angular velocity in x, y, x
-	                        ['img/webvr-logo2.png'], vec4.fromValues(0.5, 1.0, 0.2, 1.0));
-
-	                        this.prim.createPrim(this.s1, // callback function
-	                        this.prim.typeList.TORUS, 'torus2', vec5(1, 1, 0.5, 0), // dimensions (first is width along x, second  width along y, diameter of torus tube)
-	                        vec5(9, 9, 9, 1), // divisions (first is number of rings, second is number of sides)
-	                        vec3.fromValues(-1.8, 3, -3.5), // position (absolute)
-	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                        vec3.fromValues(util.degToRad(20), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                        vec3.fromValues(util.degToRad(0), util.degToRad(1), util.degToRad(0)), // angular velocity in x, y, x
-	                        ['img/uv-test.png'], // texture present, NOT USED
-	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0));
-
-	                        // DIMENSIONS INDICATE ANY X or Y CURVATURE.
-	                        // DIVISIONS FOR CUBED AND CURVED PLANE INDICATE SIDE TO DRAW
-
-
-	                        this.prim.createPrim(this.s1, // callback function
-	                        this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlaneBack', vec5(2, 1, 1, this.prim.directions.BACK, 1), // pass orientation ONE UNIT CURVE
-	                        vec5(10, 10, 10), // divisions
-	                        vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
-	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                        vec3.fromValues(util.degToRad(0.0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                        ['img/webvr-logo2.png'], // texture present
-	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-
-	                        );
-
-	                        this.prim.createPrim(this.s1, // callback function
-	                        this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlaneLeft', vec5(2, 1, 1, this.prim.directions.LEFT, 1), // pass orientation ONE UNIT CURVE
-	                        vec5(10, 10, 10), // divisions
-	                        vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
-	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                        vec3.fromValues(util.degToRad(0.0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                        ['img/webvr-logo3.png'], // texture present
-	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-
-	                        );
-
-	                        this.prim.createPrim(this.s1, // callback function
-	                        this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlaneRight', vec5(2, 1, 1, this.prim.directions.RIGHT, 1), // pass orientation ONE UNIT CURVE
-	                        vec5(10, 10, 10), // divisions
-	                        vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
-	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                        vec3.fromValues(util.degToRad(0.0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                        ['img/webvr-logo4.png'], // texture present
-	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-
-	                        );
-
-	                        this.prim.createPrim(this.s1, // callback function
-	                        this.prim.typeList.CURVEDOUTERPLANE, 'CurvedPlaneOut', vec5(2, 1, 1, this.prim.directions.RIGHT, 1), // dimensions NOTE: pass radius for curvature (also creates orbit) 
-	                        vec3.fromValues(10, 10, 10), // divisions
-	                        vec3.fromValues(-1.2, 0.0, 2.0), // position (absolute)
-	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                        vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                        ['img/mozvr-logo2.png'], // texture present
-	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-
-	                        );
-
-	                        this.prim.createPrim(this.s1, // callback function
-	                        this.prim.typeList.ICOSPHERE, 'icosphere', vec5(3, 3, 3, 0), // dimensions
-	                        vec5(32, 32, 32), // 1 for icosohedron, 16 for good sphere
-	                        vec3.fromValues(4.5, 3.5, -2), // position (absolute)
-	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                        vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                        ['img/uv-test.png'], // texture present, NOT USED
-	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-
-	                        );
-
-	                        this.prim.createPrim(this.s1, // callback function
-	                        this.prim.typeList.SKYICODOME, 'icoSkyDome', vec5(3, 3, 3, 0), // dimensions
-	                        vec5(32, 32, 32), // 1 for icosohedron, 16 for good sphere
-	                        vec3.fromValues(-4.5, 0.5, -2), // position (absolute)
-	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                        vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                        ['img/uv-test.png'], // texture present, NOT USED
-	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-
-	                        );
-
-	                        this.prim.createPrim(this.s1, // callback function
-	                        this.prim.typeList.BOTTOMICODOME, 'bottomicodome', vec5(3, 3, 3, 0), // dimensions
-	                        vec5(32, 32, 32), // 1 for icosohedron, 16 for good sphere
-	                        vec3.fromValues(4.5, 0.5, -2), // position (absolute)
-	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                        vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                        ['img/uv-test.png'], // texture present, NOT USED
-	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-
-	                        );
-
-	                        this.prim.createPrim(this.s1, // callback function
-	                        this.prim.typeList.CAP, // CAP DEFAULT, AT WORLD CENTER (also a UV polygon)
-	                        'CAP', vec5(3, 3, 3, 0), // dimensions INCLUDING start radius or torus radius(last value)
-	                        vec5(15, 15, 15), // divisions MUST BE CONTROLLED TO < 5
-	                        //vec3.fromValues(-3.5, -3.5, -1 ),    // position (absolute)
-	                        vec3.fromValues(-0.0, 0, 2.0), vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                        vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                        ['img/mozvr-logo1.png'], // texture present
-	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-
-	                        );
-
-	                        this.prim.createPrim(this.s1, // callback function
-	                        this.prim.typeList.CONE, 'TestCone', vec5(1, 1, 1, 0.0, 0.0), // dimensions (4th dimension is truncation of cone, none = 0, flat circle = 1.0)
-	                        vec5(10, 10, 10), // divisions MAKE SMALLER
-	                        vec3.fromValues(-0, -1.5, 2.0), // position (absolute)
-	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                        vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                        ['img/uv-test.png'], // texture present
-	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-
-	                        );
-
-	                        this.prim.createPrim(this.s1, // callback function
-	                        this.prim.typeList.CYLINDER, 'TestCylinder', vec5(1, 1, 1, 0.3, 0.7), // dimensions (4th dimension doesn't exist for cylinder)
-	                        vec5(40, 40, 40), // divisions MAKE SMALLER
-	                        vec3.fromValues(-1.5, -1.5, 2.0), // position (absolute)
-	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                        vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                        ['img/uv-test.png'], // texture present
-	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-
-	                        );
-
-	                        this.prim.createPrim(this.s1, // callback function
-	                        this.prim.typeList.CAPSULE, 'TestCapsule', vec5(0.5, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
-	                        vec5(40, 40, 0), // divisions MAKE SMALLER
-	                        vec3.fromValues(-2.0, -1.5, 2.0), // position (absolute)
-	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                        vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                        ['img/uv-test.png'], // texture present
-	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-
-	                        );
-
-	                        this.prim.createPrim(this.s1, // callback function
-	                        this.prim.typeList.TEARDROP, 'TestTearDrop', vec5(1, 2, 1), // dimensions (4th dimension doesn't exist for cylinder)
-	                        vec5(40, 40, 0), // divisions MAKE SMALLER
-	                        vec3.fromValues(-2.0, 1.5, 2.0), // position (absolute)
-	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                        vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                        ['img/uv-test.png'], // texture present
-	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-
-	                        );
-
-	                        this.prim.createPrim(this.s1, // callback function
-	                        this.prim.typeList.DODECAHEDRON, 'Dodecahedron', vec5(1, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
-	                        vec5(40, 40, 0), // divisions MAKE SMALLER
-	                        vec3.fromValues(-1.0, 0.5, 3.0), // position (absolute)
-	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                        vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                        ['img/crate.png'], // texture present
-	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0), // color,
-	                        true // if true, apply texture to each face
-
-	                        );
-
-	                        /*
-	                        
-	                        // NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
-	                        
-	                        
-	                                    this.prim.createPrim(
-	                        
-	                                        this.s1,                      // callback function
-	                                        this.prim.typeList.MESH,
-	                                        'obj capsule',
-	                                        vec5( 1, 1, 1 ),       // dimensions (4th dimension doesn't exist for cylinder)
-	                                        vec5( 40, 40, 0  ),        // divisions MAKE SMALLER
-	                                        vec3.fromValues(0.0, 1.0, 2.0 ),      // position (absolute)
-	                                        vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-	                                        vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-	                                        vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-	                                        [ 'obj/capsule/capsule.png' ],               // texture present
-	                                        vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color,
-	                                        true,                                   // if true, apply texture to each face,
-	                                        [ 'obj/capsule/capsule.obj', 'obj/capsule/capsule.mtl' ] // object files (.obj, .mtl)
-	                                    
-	                                    )
-	                        
-	                        */
-
-	                        //////////////////////////////////
-	                        // COLORED SHADER.
-	                        //////////////////////////////////
-
-
-	                        /*
-	                            TODO: SOMETHING ABOUT THIS CAUSES AN ERROR!!!!!!!!!!!
-	                            TODO: OUT OF RANGE ERROR IN SHADER
-	                            TODO: renderer might need to disable some arrays when shifting betwee shaders!!!!!!
-	                            TODO: MIGHT NEED A RESET 
-	                        
-	                                    this.prim.createPrim(
-	                        
-	                                        this.s2,                      // callback function
-	                                        this.prim.typeList.CUBE,
-	                                        'colored cube',
-	                                        vec5( 1, 1, 1, 0 ),            // dimensions
-	                                        vec5( 3, 3, 3 ),            // divisions
-	                                        vec3.fromValues( 0.2, 0.5, 1 ),          // position (absolute)
-	                                        vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-	                                        vec3.fromValues( util.degToRad( 20 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-	                                        vec3.fromValues( util.degToRad( 0 ), util.degToRad( 1 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-	                                        [ 'img/webvr-logo3.png' ],               // texture present, NOT USED
-	                                        vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color
-	                        
-	                                    ) 
-	                        */
-
-	                        // NOTE: webvr implementation
-
-	                        // RESIZE EVENT HANDLING
-
-	                        // NOTE: fullscreen mode with correct return to localscreen
-
-	                        // NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
-
-	                        // TODO: READ SHADER VALUES TO DETERMINE IF BUFFERS NEEDED WHEN CREATING THE PRIM!!!!!!!!!!!!!!!!!!!!!
-	                        // TODO: THIS WOULD HAVE TO HAPPEN IN THE PRIM CREATION THEMES
-
-	                        // TODO: JSON FILE FOR PRIMS (loadable) use this.load(), this.save()
-
-	                        // TODO: DEFAULT MINI WORLD IF NO JSON FILE (just a skybox and ground grid)
-
-	                        // TODO: TEST REMOVING PRIM DURING RUNTIME
-
-	                        // TODO: FADEIN/FADEOUT ANIMATION FOR PRIM
-
-	                        // TODO: PRIM LIGHTING MODEL IN PRIM
-
-	                        this.prim.createPrim(this.s2, // callback function
-	                        this.prim.typeList.MESH, 'teapot', vec5(1, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
-	                        vec5(40, 40, 0), // divisions MAKE SMALLER
-	                        vec3.fromValues(0.0, 1.0, 2.0), // position (absolute)
-	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                        vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                        [], // no texture present
-	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0), // color,
-	                        false, // if true, apply texture to each face,
-	                        ['obj/teapot/teapot.obj'] // object files (.obj, .mtl)
-
-	                        );
-
-	                        //////////////////////////////////
-	                        // LIT TEXTURE SHADER.
-	                        //////////////////////////////////
-
-	                        this.prim.createPrim(this.s3, // callback function
-	                        this.prim.typeList.CUBE, 'lit cube', vec5(1, 1, 1, 0), // dimensions
-	                        vec5(1, 1, 1), // divisions
-	                        vec3.fromValues(-3, -2, -3), // position (absolute)
-	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                        vec3.fromValues(util.degToRad(20), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                        vec3.fromValues(util.degToRad(0), util.degToRad(1), util.degToRad(0)), // angular velocity in x, y, x
-	                        ['img/webvr-logo4.png'], // texture present, NOT USED
-	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0));
-
-	                        this.prim.createPrim(this.s3, // callback function
-	                        this.prim.typeList.TERRAIN, 'terrain', vec5(2, 2, 44, this.prim.directions.TOP, 0.1), // NOTE: ORIENTATION DESIRED vec5[3], waterline = vec5[4]
-	                        vec5(100, 100, 100), // divisions
-	                        vec3.fromValues(1.5, -1.5, 2), // position (absolute)
-	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                        vec3.fromValues(util.degToRad(1), util.degToRad(0), util.degToRad(0)), // angular velocity in x, y, x
-	                        ['img/mozvr-logo1.png'], // texture present
-	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0), // color
-	                        null //heightMap                       // heightmap
-
-	                        );
-
-	                        this.prim.createPrim(this.s3, // callback function
-	                        this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlaneFront', vec5(2, 1, 1, this.prim.directions.FRONT, 1), // pass orientation ONE UNIT CURVE
-	                        vec5(10, 10, 10), // divisions
-	                        vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
-	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                        vec3.fromValues(util.degToRad(0.0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                        ['img/webvr-logo1.png'], // texture present
-	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-
-	                        );
-
-	                        this.prim.createPrim(this.s3, // callback function
-	                        this.prim.typeList.SPHERE, 'texsphere', vec5(1.5, 1.5, 1.5, 0), // dimensions
-	                        vec5(6, 6, 6), // at least 8 subdividions to smooth!
-	                        //vec3.fromValues(-5, -1.3, -1 ),       // position (absolute)
-	                        vec3.fromValues(-0, -1.0, 3.5), vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                        vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                        ['img/mozvr-logo1.png'], // texture present, NOT USED
-	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-
-	                        );
-
-	                        this.prim.createPrim(this.s3, // callback function
-	                        this.prim.typeList.CUBESPHERE, 'cubesphere', vec5(3, 3, 3), // dimensions
-	                        vec5(10, 10, 10, 0), // divisions 4th parameter is degree of rounding.
-	                        vec3.fromValues(3, -0.7, -1), // position (absolute)
-	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                        vec3.fromValues(util.degToRad(10), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                        vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                        ['img/mozvr-logo1.png'], // texture present, NOT USED
-	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-
-	                        );
-
-	                        this.prim.createPrim(this.s3, // callback function
-	                        this.prim.typeList.REGULARTETRAHEDRON, 'regulartetrahedron', vec5(3, 3, 3, 0), // dimensions
-	                        vec5(18, 18, 18), // divisions
-	                        vec3.fromValues(6.7, 1.5, -4), // position (absolute)
-	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                        vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                        ['img/mozvr-logo2.png'], // texture present, NOT USED
-	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-
-	                        );
-
-	                        this.prim.createPrim(this.s3, // callback function
-	                        this.prim.typeList.ICOSOHEDRON, 'icosohedron', vec5(3, 3, 3, 0), // dimensions
-	                        vec5(18, 18, 18), // divisions
-	                        vec3.fromValues(0.5, 3.5, -2), // position (absolute)
-	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                        vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                        ['img/mozvr-logo2.png'], // texture present, NOT USED
-	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-
-	                        );
-
-	                        this.prim.createPrim(this.s3, // callback function
-	                        this.prim.typeList.BOTTOMDOME, 'TestDome', vec5(1, 1, 1, 0), // dimensions
-	                        vec5(10, 10, 10), // divisions MAKE SMALLER
-	                        vec3.fromValues(-4, 0.5, -0.5), // position (absolute)
-	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                        vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                        ['img/mozvr-logo2.png'], // texture present
-	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-
-	                        );
-
-	                        this.prim.createPrim(this.s3, // callback function
-	                        this.prim.typeList.TORUS, // TORUS DEFAULT
-	                        'TORUS1', vec5(1, 1, 0.5, 0), // dimensions INCLUDING start radius or torus radius(last value)
-	                        vec5(15, 15, 15), // divisions MUST BE CONTROLLED TO < 5
-	                        //vec3.fromValues(-3.5, -3.5, -1 ),        // position (absolute)
-	                        vec3.fromValues(-0.0, 0, 2.0), vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                        vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                        ['img/mozvr-logo1.png'], // texture present
-	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-
-	                        );
-
-	                        // NOTE: the init() method sets up the update() and render() methods for the Shader.
-
-	                        this.r1 = this.s1.init();
-
-	                        this.r2 = this.s2.init();
-
-	                        this.r3 = this.s3.init();
-
-	                        /*
-	                            // ANOTHER MESH OBJECT
-	                        
-	                                this.s1.addObj( 
-	                        
-	                                   this.prim.createPrim(
-	                                    this.s1,
-	                                    this.prim.typeList.SPHERE,
-	                                    'texsphere',
-	                                    vec5( 1.5, 1.5, 1.5, 0 ),   // dimensions
-	                                    //vec5( 30, 30, 30 ),         // divisions
-	                                    vec5( 6, 6, 6 ), // at least 8 subdividions to smooth!
-	                                    //vec3.fromValues(-5, -1.3, -1 ),       // position (absolute)
-	                                    vec3.fromValues( 1, -1.0, 3.5 ),
-	                                    vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-	                                    vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-	                                    vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-	                                    [ 'img/mozvr-logo1.png' ],               // texture present, NOT USED
-	                                    vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
-	                        
-	                                ) );
-	                        */
-
-	                        // Fire world update.
-
-	                        this.render();
-	                }
-
-	                /**
-	                 * Create objects specific to this world.
-	                 */
-
-	        }, {
-	                key: 'create',
-	                value: function create() {}
-
-	                /** 
-	                 * Update world.related properties, e.g. a HUD or framrate reado ut.
-	                 */
-
-	        }, {
-	                key: 'update',
-	                value: function update() {
-
-	                        // fps calculation.
-
-	                        var now = performance.now();
-
-	                        var delta = now - this.last;
-
-	                        this.last = now;
-
-	                        this.counter++;
-
-	                        if (this.counter > 300) {
-
-	                                this.counter = 0;
-
-	                                /////////console.log( 'delta:' + parseInt( 1000 / delta ) + ' fps' );
+	                                    console.error('world::resize(): not implemented yet!');
 	                        }
-	                }
 
-	                /** 
-	                 * render the world. Update Prims locally, then call shader/renderer 
-	                 * objects to do rendering. this.render was bound (ES5 method) in 
-	                 * the constructor.
-	                 */
+	                        /** 
+	                         * load a World from a JSON file description.
+	                         */
 
-	        }, {
-	                key: 'render',
-	                value: function render() {
+	            }, {
+	                        key: 'load',
+	                        value: function load() {
 
-	                        this.update();
+	                                    // TODO: use fetch
 
-	                        this.webgl.clear();
+	                                    console.error('world::load(): not implemented yet!');
+	                        }
 
-	                        // Render Prims attached to each renderer object.
+	                        /** 
+	                         * save a World to a JSON file description.
+	                         * use Prim.toJSON() for indivdiual prims.
+	                         */
 
-	                        // TODO: Don't render until we update in the correct order.
+	            }, {
+	                        key: 'save',
+	                        value: function save() {
 
-	                        // Shader.render();
+	                                    // TODO: output in editor interface.
 
-	                        this.r3.render();
+	                                    console.error('world::save(): not implemented yet!');
+	                        }
 
-	                        this.r2.render();
+	                        /** 
+	                         * Create the world. Load shader/renderer objects, and 
+	                         * create objects to render in the world.
+	                         */
 
-	                        this.r1.render();
+	            }, {
+	                        key: 'init',
+	                        value: function init() {
 
-	                        requestAnimationFrame(this.render);
-	                }
-	        }]);
+	                                    var vec3 = this.glMatrix.vec3;
 
-	        return World;
+	                                    var vec4 = this.glMatrix.vec4;
+
+	                                    var vec5 = this.prim.vec5;
+
+	                                    var util = this.util;
+
+	                                    // Get the shaders (not initialized with update() and render() yet!).
+
+	                                    this.s1 = this.renderer.getShader('shaderTexture');
+
+	                                    this.s2 = this.renderer.getShader('shaderColor');
+
+	                                    this.s3 = this.renderer.getShader('shaderDirLightTexture');
+
+	                                    //////////////////////////////////
+	                                    // TEXTURED SHADER.
+	                                    //////////////////////////////////
+
+	                                    // Create a UV skydome.
+
+	                                    this.prim.createPrim(this.s1, // callback function
+	                                    this.prim.typeList.SKYDOME, // type
+	                                    'skydome', // name (not Id)
+	                                    vec5(18, 18, 18, 0), // dimensions
+	                                    vec5(10, 10, 10), // divisions MAKE SMALLER
+	                                    vec3.fromValues(0, 0, 0), // position (absolute)
+	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0.1), util.degToRad(0)), // angular velocity in x, y, x
+	                                    ['img/panorama_01.png'], // texture present
+	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+	                                    );
+
+	                                    this.prim.createPrim(this.s1, // callback function
+	                                    this.prim.typeList.CUBE, 'first cube', // name
+	                                    vec5(1, 1, 1), // dimensions
+	                                    vec5(10, 10, 10, 0), // divisions, pass curving of edges as 4th parameter
+	                                    vec3.fromValues(1, 0, 2), // position (absolute)
+	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                                    vec3.fromValues(util.degToRad(1), util.degToRad(1), util.degToRad(1)), // angular velocity in x, y, x
+	                                    ['img/crate.png', 'img/webvr-logo1.png'], // texture image
+	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0));
+
+	                                    this.prim.createPrim(this.s1, // callback function
+	                                    this.prim.typeList.CUBE, 'toji cube', vec5(1, 1, 1, 0), // dimensions
+	                                    vec5(1, 1, 1, 0), // divisions, pass curving of edges as 4th parameter
+	                                    vec3.fromValues(5.5, 1.5, -3), // position (absolute)
+	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                                    vec3.fromValues(util.degToRad(40), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                                    vec3.fromValues(util.degToRad(0), util.degToRad(1), util.degToRad(0)), // angular velocity in x, y, x
+	                                    ['img/webvr-logo2.png'], vec4.fromValues(0.5, 1.0, 0.2, 1.0));
+
+	                                    this.prim.createPrim(this.s1, // callback function
+	                                    this.prim.typeList.TORUS, 'torus2', vec5(1, 1, 0.5, 0), // dimensions (first is width along x, second  width along y, diameter of torus tube)
+	                                    vec5(9, 9, 9, 1), // divisions (first is number of rings, second is number of sides)
+	                                    vec3.fromValues(-1.8, 3, -3.5), // position (absolute)
+	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                                    vec3.fromValues(util.degToRad(20), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                                    vec3.fromValues(util.degToRad(0), util.degToRad(1), util.degToRad(0)), // angular velocity in x, y, x
+	                                    ['img/uv-test.png'], // texture present, NOT USED
+	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0));
+
+	                                    // DIMENSIONS INDICATE ANY X or Y CURVATURE.
+	                                    // DIVISIONS FOR CUBED AND CURVED PLANE INDICATE SIDE TO DRAW
+
+
+	                                    this.prim.createPrim(this.s1, // callback function
+	                                    this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlaneBack', vec5(2, 1, 1, this.prim.directions.BACK, 1), // pass orientation ONE UNIT CURVE
+	                                    vec5(10, 10, 10), // divisions
+	                                    vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
+	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                                    vec3.fromValues(util.degToRad(0.0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                                    ['img/webvr-logo2.png'], // texture present
+	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	                                    );
+
+	                                    this.prim.createPrim(this.s1, // callback function
+	                                    this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlaneLeft', vec5(2, 1, 1, this.prim.directions.LEFT, 1), // pass orientation ONE UNIT CURVE
+	                                    vec5(10, 10, 10), // divisions
+	                                    vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
+	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                                    vec3.fromValues(util.degToRad(0.0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                                    ['img/webvr-logo3.png'], // texture present
+	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	                                    );
+
+	                                    this.prim.createPrim(this.s1, // callback function
+	                                    this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlaneRight', vec5(2, 1, 1, this.prim.directions.RIGHT, 1), // pass orientation ONE UNIT CURVE
+	                                    vec5(10, 10, 10), // divisions
+	                                    vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
+	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                                    vec3.fromValues(util.degToRad(0.0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                                    ['img/webvr-logo4.png'], // texture present
+	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	                                    );
+
+	                                    this.prim.createPrim(this.s1, // callback function
+	                                    this.prim.typeList.CURVEDOUTERPLANE, 'CurvedPlaneOut', vec5(2, 1, 1, this.prim.directions.RIGHT, 1), // dimensions NOTE: pass radius for curvature (also creates orbit) 
+	                                    vec3.fromValues(10, 10, 10), // divisions
+	                                    vec3.fromValues(-1.2, 0.0, 2.0), // position (absolute)
+	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                                    vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                                    ['img/mozvr-logo2.png'], // texture present
+	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	                                    );
+
+	                                    this.prim.createPrim(this.s1, // callback function
+	                                    this.prim.typeList.ICOSPHERE, 'icosphere', vec5(3, 3, 3, 0), // dimensions
+	                                    vec5(32, 32, 32), // 1 for icosohedron, 16 for good sphere
+	                                    vec3.fromValues(4.5, 3.5, -2), // position (absolute)
+	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                                    ['img/uv-test.png'], // texture present, NOT USED
+	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	                                    );
+
+	                                    this.prim.createPrim(this.s1, // callback function
+	                                    this.prim.typeList.SKYICODOME, 'icoSkyDome', vec5(3, 3, 3, 0), // dimensions
+	                                    vec5(32, 32, 32), // 1 for icosohedron, 16 for good sphere
+	                                    vec3.fromValues(-4.5, 0.5, -2), // position (absolute)
+	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                                    ['img/uv-test.png'], // texture present, NOT USED
+	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	                                    );
+
+	                                    this.prim.createPrim(this.s1, // callback function
+	                                    this.prim.typeList.BOTTOMICODOME, 'bottomicodome', vec5(3, 3, 3, 0), // dimensions
+	                                    vec5(32, 32, 32), // 1 for icosohedron, 16 for good sphere
+	                                    vec3.fromValues(4.5, 0.5, -2), // position (absolute)
+	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                                    ['img/uv-test.png'], // texture present, NOT USED
+	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	                                    );
+
+	                                    this.prim.createPrim(this.s1, // callback function
+	                                    this.prim.typeList.CAP, // CAP DEFAULT, AT WORLD CENTER (also a UV polygon)
+	                                    'CAP', vec5(3, 3, 3, 0), // dimensions INCLUDING start radius or torus radius(last value)
+	                                    vec5(15, 15, 15), // divisions MUST BE CONTROLLED TO < 5
+	                                    //vec3.fromValues(-3.5, -3.5, -1 ),    // position (absolute)
+	                                    vec3.fromValues(-0.0, 0, 2.0), vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                                    vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                                    ['img/mozvr-logo1.png'], // texture present
+	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	                                    );
+
+	                                    this.prim.createPrim(this.s1, // callback function
+	                                    this.prim.typeList.CONE, 'TestCone', vec5(1, 1, 1, 0.0, 0.0), // dimensions (4th dimension is truncation of cone, none = 0, flat circle = 1.0)
+	                                    vec5(10, 10, 10), // divisions MAKE SMALLER
+	                                    vec3.fromValues(-0, -1.5, 2.0), // position (absolute)
+	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                                    vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                                    ['img/uv-test.png'], // texture present
+	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	                                    );
+
+	                                    this.prim.createPrim(this.s1, // callback function
+	                                    this.prim.typeList.CYLINDER, 'TestCylinder', vec5(1, 1, 1, 0.3, 0.7), // dimensions (4th dimension doesn't exist for cylinder)
+	                                    vec5(40, 40, 40), // divisions MAKE SMALLER
+	                                    vec3.fromValues(-1.5, -1.5, 2.0), // position (absolute)
+	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                                    vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                                    ['img/uv-test.png'], // texture present
+	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	                                    );
+
+	                                    this.prim.createPrim(this.s1, // callback function
+	                                    this.prim.typeList.CAPSULE, 'TestCapsule', vec5(0.5, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
+	                                    vec5(40, 40, 0), // divisions MAKE SMALLER
+	                                    vec3.fromValues(-2.0, -1.5, 2.0), // position (absolute)
+	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                                    vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                                    ['img/uv-test.png'], // texture present
+	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	                                    );
+
+	                                    this.prim.createPrim(this.s1, // callback function
+	                                    this.prim.typeList.TEARDROP, 'TestTearDrop', vec5(1, 2, 1), // dimensions (4th dimension doesn't exist for cylinder)
+	                                    vec5(40, 40, 0), // divisions MAKE SMALLER
+	                                    vec3.fromValues(-2.0, 1.5, 2.0), // position (absolute)
+	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                                    vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                                    ['img/uv-test.png'], // texture present
+	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	                                    );
+
+	                                    this.prim.createPrim(this.s1, // callback function
+	                                    this.prim.typeList.DODECAHEDRON, 'Dodecahedron', vec5(1, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
+	                                    vec5(40, 40, 0), // divisions MAKE SMALLER
+	                                    vec3.fromValues(-1.0, 0.5, 3.0), // position (absolute)
+	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                                    vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                                    ['img/crate.png'], // texture present
+	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0), // color,
+	                                    true // if true, apply texture to each face
+
+	                                    );
+
+	                                    /*
+	                                    
+	                                    // NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
+	                                    
+	                                    
+	                                                this.prim.createPrim(
+	                                    
+	                                                    this.s1,                      // callback function
+	                                                    this.prim.typeList.MESH,
+	                                                    'obj capsule',
+	                                                    vec5( 1, 1, 1 ),       // dimensions (4th dimension doesn't exist for cylinder)
+	                                                    vec5( 40, 40, 0  ),        // divisions MAKE SMALLER
+	                                                    vec3.fromValues(0.0, 1.0, 2.0 ),      // position (absolute)
+	                                                    vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+	                                                    vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+	                                                    vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+	                                                    [ 'obj/capsule/capsule.png' ],               // texture present
+	                                                    vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color,
+	                                                    true,                                   // if true, apply texture to each face,
+	                                                    [ 'obj/capsule/capsule.obj', 'obj/capsule/capsule.mtl' ] // object files (.obj, .mtl)
+	                                                
+	                                                )
+	                                    
+	                                    */
+
+	                                    //////////////////////////////////
+	                                    // COLORED SHADER.
+	                                    //////////////////////////////////
+
+
+	                                    /*
+	                                        TODO: SOMETHING ABOUT THIS CAUSES AN ERROR!!!!!!!!!!!
+	                                        TODO: OUT OF RANGE ERROR IN SHADER
+	                                        TODO: renderer might need to disable some arrays when shifting betwee shaders!!!!!!
+	                                        TODO: MIGHT NEED A RESET 
+	                                    
+	                                                this.prim.createPrim(
+	                                    
+	                                                    this.s2,                      // callback function
+	                                                    this.prim.typeList.CUBE,
+	                                                    'colored cube',
+	                                                    vec5( 1, 1, 1, 0 ),            // dimensions
+	                                                    vec5( 3, 3, 3 ),            // divisions
+	                                                    vec3.fromValues( 0.2, 0.5, 1 ),          // position (absolute)
+	                                                    vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+	                                                    vec3.fromValues( util.degToRad( 20 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+	                                                    vec3.fromValues( util.degToRad( 0 ), util.degToRad( 1 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+	                                                    [ 'img/webvr-logo3.png' ],               // texture present, NOT USED
+	                                                    vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color
+	                                    
+	                                                ) 
+	                                    */
+
+	                                    // NOTE: webvr implementation
+
+	                                    // RESIZE EVENT HANDLING
+
+	                                    // NOTE: fullscreen mode with correct return to localscreen
+
+	                                    // NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
+
+	                                    // TODO: READ SHADER VALUES TO DETERMINE IF BUFFERS NEEDED WHEN CREATING THE PRIM!!!!!!!!!!!!!!!!!!!!!
+	                                    // TODO: THIS WOULD HAVE TO HAPPEN IN THE PRIM CREATION THEMES
+
+	                                    // TODO: JSON FILE FOR PRIMS (loadable) use this.load(), this.save()
+
+	                                    // TODO: DEFAULT MINI WORLD IF NO JSON FILE (just a skybox and ground grid)
+
+	                                    // TODO: TEST REMOVING PRIM DURING RUNTIME
+
+	                                    // TODO: FADEIN/FADEOUT ANIMATION FOR PRIM
+
+	                                    // TODO: PRIM LIGHTING MODEL IN PRIM
+
+	                                    this.prim.createPrim(this.s2, // callback function
+	                                    this.prim.typeList.MESH, 'teapot', vec5(1, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
+	                                    vec5(40, 40, 0), // divisions MAKE SMALLER
+	                                    vec3.fromValues(0.0, 1.0, 2.0), // position (absolute)
+	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                                    vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                                    [], // no texture present
+	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0), // color,
+	                                    false, // if true, apply texture to each face,
+	                                    ['obj/teapot/teapot.obj'] // object files (.obj, .mtl)
+
+	                                    );
+
+	                                    //////////////////////////////////
+	                                    // LIT TEXTURE SHADER.
+	                                    //////////////////////////////////
+
+	                                    this.prim.createPrim(this.s3, // callback function
+	                                    this.prim.typeList.CUBE, 'lit cube', vec5(1, 1, 1, 0), // dimensions
+	                                    vec5(1, 1, 1), // divisions
+	                                    vec3.fromValues(-3, -2, -3), // position (absolute)
+	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                                    vec3.fromValues(util.degToRad(20), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                                    vec3.fromValues(util.degToRad(0), util.degToRad(1), util.degToRad(0)), // angular velocity in x, y, x
+	                                    ['img/webvr-logo4.png'], // texture present, NOT USED
+	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0));
+
+	                                    this.prim.createPrim(this.s3, // callback function
+	                                    this.prim.typeList.TERRAIN, 'terrain', vec5(2, 2, 44, this.prim.directions.TOP, 0.1), // NOTE: ORIENTATION DESIRED vec5[3], waterline = vec5[4]
+	                                    vec5(100, 100, 100), // divisions
+	                                    vec3.fromValues(1.5, -1.5, 2), // position (absolute)
+	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                                    vec3.fromValues(util.degToRad(1), util.degToRad(0), util.degToRad(0)), // angular velocity in x, y, x
+	                                    ['img/mozvr-logo1.png'], // texture present
+	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0), // color
+	                                    null //heightMap                       // heightmap
+
+	                                    );
+
+	                                    this.prim.createPrim(this.s3, // callback function
+	                                    this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlaneFront', vec5(2, 1, 1, this.prim.directions.FRONT, 1), // pass orientation ONE UNIT CURVE
+	                                    vec5(10, 10, 10), // divisions
+	                                    vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
+	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                                    vec3.fromValues(util.degToRad(0.0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                                    ['img/webvr-logo1.png'], // texture present
+	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	                                    );
+
+	                                    this.prim.createPrim(this.s3, // callback function
+	                                    this.prim.typeList.SPHERE, 'texsphere', vec5(1.5, 1.5, 1.5, 0), // dimensions
+	                                    vec5(6, 6, 6), // at least 8 subdividions to smooth!
+	                                    //vec3.fromValues(-5, -1.3, -1 ),       // position (absolute)
+	                                    vec3.fromValues(-0, -1.0, 3.5), vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                                    ['img/mozvr-logo1.png'], // texture present, NOT USED
+	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	                                    );
+
+	                                    this.prim.createPrim(this.s3, // callback function
+	                                    this.prim.typeList.CUBESPHERE, 'cubesphere', vec5(3, 3, 3), // dimensions
+	                                    vec5(10, 10, 10, 0), // divisions 4th parameter is degree of rounding.
+	                                    vec3.fromValues(3, -0.7, -1), // position (absolute)
+	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                                    vec3.fromValues(util.degToRad(10), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                                    ['img/mozvr-logo1.png'], // texture present, NOT USED
+	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	                                    );
+
+	                                    this.prim.createPrim(this.s3, // callback function
+	                                    this.prim.typeList.REGULARTETRAHEDRON, 'regulartetrahedron', vec5(3, 3, 3, 0), // dimensions
+	                                    vec5(18, 18, 18), // divisions
+	                                    vec3.fromValues(6.7, 1.5, -4), // position (absolute)
+	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                                    ['img/mozvr-logo2.png'], // texture present, NOT USED
+	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	                                    );
+
+	                                    this.prim.createPrim(this.s3, // callback function
+	                                    this.prim.typeList.ICOSOHEDRON, 'icosohedron', vec5(3, 3, 3, 0), // dimensions
+	                                    vec5(18, 18, 18), // divisions
+	                                    vec3.fromValues(0.5, 3.5, -2), // position (absolute)
+	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                                    ['img/mozvr-logo2.png'], // texture present, NOT USED
+	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	                                    );
+
+	                                    this.prim.createPrim(this.s3, // callback function
+	                                    this.prim.typeList.BOTTOMDOME, 'TestDome', vec5(1, 1, 1, 0), // dimensions
+	                                    vec5(10, 10, 10), // divisions MAKE SMALLER
+	                                    vec3.fromValues(-4, 0.5, -0.5), // position (absolute)
+	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                                    vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                                    ['img/mozvr-logo2.png'], // texture present
+	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	                                    );
+
+	                                    this.prim.createPrim(this.s3, // callback function
+	                                    this.prim.typeList.TORUS, // TORUS DEFAULT
+	                                    'TORUS1', vec5(1, 1, 0.5, 0), // dimensions INCLUDING start radius or torus radius(last value)
+	                                    vec5(15, 15, 15), // divisions MUST BE CONTROLLED TO < 5
+	                                    //vec3.fromValues(-3.5, -3.5, -1 ),        // position (absolute)
+	                                    vec3.fromValues(-0.0, 0, 2.0), vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                                    vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                                    ['img/mozvr-logo1.png'], // texture present
+	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	                                    );
+
+	                                    // NOTE: the init() method sets up the update() and render() methods for the Shader.
+
+	                                    this.r1 = this.s1.init();
+
+	                                    this.r2 = this.s2.init();
+
+	                                    this.r3 = this.s3.init();
+
+	                                    /*
+	                                        // ANOTHER MESH OBJECT
+	                                    
+	                                            this.s1.addObj( 
+	                                    
+	                                               this.prim.createPrim(
+	                                                this.s1,
+	                                                this.prim.typeList.SPHERE,
+	                                                'texsphere',
+	                                                vec5( 1.5, 1.5, 1.5, 0 ),   // dimensions
+	                                                //vec5( 30, 30, 30 ),         // divisions
+	                                                vec5( 6, 6, 6 ), // at least 8 subdividions to smooth!
+	                                                //vec3.fromValues(-5, -1.3, -1 ),       // position (absolute)
+	                                                vec3.fromValues( 1, -1.0, 3.5 ),
+	                                                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+	                                                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+	                                                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+	                                                [ 'img/mozvr-logo1.png' ],               // texture present, NOT USED
+	                                                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
+	                                    
+	                                            ) );
+	                                    */
+
+	                                    // Fire world update.
+
+	                                    this.render();
+	                        }
+
+	                        /**
+	                         * Create objects specific to this world.
+	                         */
+
+	            }, {
+	                        key: 'create',
+	                        value: function create() {}
+
+	                        /** 
+	                         * Update world.related properties, e.g. a HUD or framrate reado ut.
+	                         */
+
+	            }, {
+	                        key: 'update',
+	                        value: function update() {
+
+	                                    // Check for VR mode.
+
+	                                    // fps calculation.
+
+	                                    var now = performance.now();
+
+	                                    var delta = now - this.last;
+
+	                                    this.last = now;
+
+	                                    this.counter++;
+
+	                                    if (this.counter > 300) {
+
+	                                                this.counter = 0;
+
+	                                                /////////console.log( 'delta:' + parseInt( 1000 / delta ) + ' fps' );
+	                                    }
+	                        }
+
+	                        /** 
+	                         * render the World for a mono or a VR display.
+	                         * Update Prims locally, then call shader/renderer 
+	                         * objects to do rendering. this.r# was bound (ES5 method) in 
+	                         * the constructor.
+	                         */
+
+	            }, {
+	                        key: 'render',
+	                        value: function render() {
+
+	                                    this.update();
+
+	                                    this.webgl.clear();
+
+	                                    // Render Prims attached to each renderer object.
+
+	                                    // TODO: Don't render until we update in the correct order.
+
+	                                    // TODO: add this to renderer so we can loop on defined Shaders.
+
+	                                    this.r3.render();
+
+	                                    this.r2.render();
+
+	                                    this.r1.render();
+
+	                                    var display = this.vr.getDisplay();
+
+	                                    if (display && display.isPresenting) {
+
+	                                                var gl = this.webgl.getContext();
+
+	                                                var c = this.webgl.getCanvas();
+
+	                                                var frameData = this.vr.getFrame(); // keep frameData object in webvr...
+
+	                                                var program = this.s2.getProgram();
+
+	                                                // TODO: DO THIS IN THE SHADER.
+
+	                                                /*
+	                                                // Render to left eye.
+	                                                  gl.viewport (0, 0, c.width * 0.5, c.height );
+	                                                  vr.getStandingPoseMatrix( mvMatrix, frameData.leftViewMatrix );
+	                                                  renderSceneView( frameData.leftProjectionMatrix, mvMatrix, frameData.pose );
+	                                                  // Render to right eye.
+	                                                  gl.viewport( c.width * 0.5, 0, c.width * 0.5, c.height );
+	                                                  vr.getStandingPoseMatrix( viewMat, frameData.rightViewMatrix );
+	                                                  renderSceneView( frameData.rightProjectionMatrix, viewMat, frameData.pose );
+	                                                    vrDisplay.submitFrame();
+	                                                  */
+
+	                                                display.requestAnimationFrame(this.render);
+	                                    } else {
+
+	                                                // Render mono view.
+
+	                                                requestAnimationFrame(this.render);
+	                                    }
+	                        }
+	            }]);
+
+	            return World;
 	}();
 
 	exports.default = World;
@@ -20879,13 +21568,13 @@
 
 	                        // Created by Guilhem.
 
-	                        backArrow: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2ZXJzaW9uPSIxLjEiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgMTAwIDEyNSIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAwIDAgMTAwIDEwMCIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+PGc+PGxpbmUgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJiZXZlbCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiB4MT0iOTMuMSIgeTE9IjUwIiB4Mj0iNi45IiB5Mj0iNTAiLz48bGluZSBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49ImJldmVsIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHgxPSI2LjkiIHkxPSI1MCIgeDI9IjMyLjciIHkyPSI3NS45Ii8+PGxpbmUgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJiZXZlbCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiB4MT0iNi45IiB5MT0iNTAiIHgyPSIzMi43IiB5Mj0iMjQuMSIvPjwvZz48dGV4dCB4PSIwIiB5PSIxMTUiIGZpbGw9IiMwMDAwMDAiIGZvbnQtc2l6ZT0iNXB4IiBmb250LXdlaWdodD0iYm9sZCIgZm9udC1mYW1pbHk9IidIZWx2ZXRpY2EgTmV1ZScsIEhlbHZldGljYSwgQXJpYWwtVW5pY29kZSwgQXJpYWwsIFNhbnMtc2VyaWYiPkNyZWF0ZWQgYnkgR3VpbGhlbTwvdGV4dD48dGV4dCB4PSIwIiB5PSIxMjAiIGZpbGw9IiMwMDAwMDAiIGZvbnQtc2l6ZT0iNXB4IiBmb250LXdlaWdodD0iYm9sZCIgZm9udC1mYW1pbHk9IidIZWx2ZXRpY2EgTmV1ZScsIEhlbHZldGljYSwgQXJpYWwtVW5pY29kZSwgQXJpYWwsIFNhbnMtc2VyaWYiPmZyb20gdGhlIE5vdW4gUHJvamVjdDwvdGV4dD48L3N2Zz4='
+	                        backArrow: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2ZXJzaW9uPSIxLjEiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgMTAwIDEyNSIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAwIDAgMTAwIDEwMCIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+PGc+PGxpbmUgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJiZXZlbCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiB4MT0iOTMuMSIgeTE9IjUwIiB4Mj0iNi45IiB5Mj0iNTAiLz48bGluZSBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49ImJldmVsIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHgxPSI2LjkiIHkxPSI1MCIgeDI9IjMyLjciIHkyPSI3NS45Ii8+PGxpbmUgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJiZXZlbCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiB4MT0iNi45IiB5MT0iNTAiIHgyPSIzMi43IiB5Mj0iMjQuMSIvPjwvZz48L3N2Zz4='
 
 	                };
 
-	                this.util = util, this.gl = webgl, this.vr = webvr;
+	                this.controls = [], this.util = util, this.gl = webgl, this.vr = webvr;
 
-	                this.vrButton = null, this.fullscreenButton = null, this.poseButton = null, this.returnButton = null;
+	                this.vrButton = null, this.fullscreenButton = null, this.poseButton = null, this.exitFullscreenButton = null, this.exitVRButton = null;
 
 	                // save old DOM style
 
@@ -20897,14 +21586,17 @@
 
 	        _createClass(Ui, [{
 	                key: 'init',
-	                value: function init(ui) {
+	                value: function init(uiMode) {
 
-	                        if (!ui) {
+	                        if (!uiMode) {
 
 	                                console.log('no mode provided, setting default');
 
-	                                ui = this.mode;
+	                                uiMode = this.mode;
 	                        }
+
+	                        // Give the webvr object a callback for changing ui for 'onvrpresentchange' event.
+
 
 	                        // Listen to fullscreen change events.
 
@@ -20914,27 +21606,7 @@
 
 	                        document.addEventListener('msfullscreenchange', this.fullscreenChange.bind(this), false);
 
-	                        // switch to the correct screen configuration.
-
-	                        switch (ui) {
-
-	                                case this.UI_VR:
-
-	                                        break;
-
-	                                case this.UI_FULLSCREEN:
-
-	                                        break;
-
-	                                case this.UI_DOM:
-
-	                                default:
-
-	                                        this.createDOMUi();
-
-	                                        break;
-
-	                        }
+	                        this.createUi(); // starting configuration
 	                }
 
 	                /** 
@@ -20942,13 +21614,22 @@
 	                 */
 
 	        }, {
-	                key: 'createDOMUi',
-	                value: function createDOMUi() {
+	                key: 'createUi',
+	                value: function createUi() {
 	                        var _this = this;
 
 	                        console.log('entering DOMUi');
 
-	                        var c = this.gl.getCanvas();
+	                        var c = this.gl.getCanvas(),
+	                            p = c.parentNode;
+
+	                        // Set some local styles overriding any conflicting styles for parentNode.
+
+	                        p.style.margin = '0';
+
+	                        p.style.border = '0';
+
+	                        p.style.padding = '0';
 
 	                        // Check for controls.
 
@@ -20997,19 +21678,33 @@
 
 	                                this.fullscreenButton = fullscreenButton;
 
-	                                // Return button.
+	                                // Fullscreen return button.
 
-	                                var returnButton = this.createButton();
+	                                var exitFullscreenButton = this.createButton();
 
-	                                returnButton.style.top = '0px';
+	                                exitFullscreenButton.style.top = '0px';
 
-	                                returnButton.style.left = '0px';
+	                                exitFullscreenButton.style.left = '0px';
 
-	                                returnButton.zIndex = '9999', returnButton.src = this.icons.backArrow;
+	                                exitFullscreenButton.zIndex = '9999', exitFullscreenButton.src = this.icons.backArrow;
 
-	                                returnButton.style.display = 'none'; // inline-block';
+	                                exitFullscreenButton.style.display = 'none'; // inline-block';
 
-	                                this.returnButton = returnButton;
+	                                this.exitFullscreenButton = exitFullscreenButton;
+
+	                                // VR return button.
+
+	                                var exitVRButton = this.createButton();
+
+	                                exitVRButton.style.top = '0px';
+
+	                                exitVRButton.style.left = '0px';
+
+	                                exitVRButton.zIndex = '9999', exitVRButton.src = this.icons.backArrow;
+
+	                                exitVRButton.style.display = 'none'; // inline-block';
+
+	                                this.exitVRButton = exitVRButton;
 
 	                                // Add event listeners.
 
@@ -21023,7 +21718,13 @@
 
 	                                        _this.fullscreenButton.hide();
 
-	                                        _this.returnButton.show();
+	                                        _this.exitVRButton.show();
+
+	                                        // MANUALLY run fullscreen toggle.
+
+	                                        _this.mode = _this.UI_VR;
+
+	                                        _this.fullscreenChange(evt);
 
 	                                        // Request VR presentation.
 
@@ -21039,8 +21740,6 @@
 	                                        var f = Math.max(window.devicePixelRatio, 1);
 
 	                                        // Get the current size of the parent.
-
-	                                        var p = c.parentNode;
 
 	                                        _this.oldWidth = p.clientWidth * f | 0;
 
@@ -21058,22 +21757,24 @@
 
 	                                        _this.fullscreenButton.hide();
 
-	                                        _this.returnButton.show();
+	                                        _this.exitFullscreenButton.show();
 
 	                                        // Fire the fullscreen command.
 
 	                                        _this.requestFullscreen();
 	                                });
 
-	                                // Return button listener.
+	                                // Return from fullscreen button listener.
 
-	                                returnButton.addEventListener('click', function (evt) {
+	                                exitFullscreenButton.addEventListener('click', function (evt) {
 
-	                                        console.log('clicked return button...');
+	                                        console.log('clicked exit fullscreen button...');
 
 	                                        // TODO: exit fullscreen and/or VR.
 
 	                                        evt.preventDefault();
+
+	                                        _this.exitFullscreenButton.hide();
 
 	                                        _this.vrButton.show();
 
@@ -21084,6 +21785,25 @@
 	                                        _this.exitFullscreen();
 	                                });
 
+	                                // Return from vr button listener.
+
+	                                exitVRButton.addEventListener('click', function (evt) {
+
+	                                        console.log('clicked exit vr button');
+
+	                                        evt.preventDefault();
+
+	                                        _this.exitVRButton.hide();
+
+	                                        _this.vrButton.show();
+
+	                                        _this.fullscreenButton.show();
+
+	                                        // exit VR to DOM (not in fullscreen, but does similar CSS changes to this.exitFullscreen()).
+
+	                                        vr.exitPresent();
+	                                });
+
 	                                // Reset pose button
 
 	                                // TODO: reset pose
@@ -21092,11 +21812,9 @@
 
 	                                controls.appendChild(fullscreenButton);
 
-	                                controls.appendChild(returnButton);
+	                                controls.appendChild(exitFullscreenButton);
 
-	                                window.vrButton = vrButton;
-	                                window.fullscreenButton = fullscreenButton;
-	                                window.returnButton = returnButton;
+	                                controls.appendChild(exitVRButton);
 	                        } else {
 
 	                                console.error('Ui::createDOMUi(): canvas not defined');
@@ -21169,17 +21887,35 @@
 	                key: 'fullscreenChange',
 	                value: function fullscreenChange(evt) {
 
-	                        var c = this.gl.getCanvas();
-
-	                        var p = c.parentNode;
+	                        var c = this.gl.getCanvas(),
+	                            p = c.parentNode,
+	                            gl = this.gl.getContext();
 
 	                        switch (this.mode) {
 
 	                                case this.UI_VR:
 
+	                                        console.log('from vr to dom...');
+
+	                                        this.exitVRButton.show();
+
+	                                        this.vrButton.hide();
+
+	                                        this.fullscreenButton.hide();
+
 	                                        break;
 
 	                                case this.UI_FULLSCREEN:
+
+	                                        /* 
+	                                         * Due to fullscreen API nastiness, you can't just call your standard resize() method
+	                                         * and support the canvas jumping back to a DOM mode with CSS styles defined by an external 
+	                                         * stylesheet. Additional resizing specific to exiting fullscreen has to be done here. 
+	                                         * Removing the .style properties is particularly important.
+	                                         *
+	                                         * NOTE: UI_FULLSCREEN mode is actually from fullscreen to DOM.
+	                                         * NOTE: UI_VR mode is from DOM to VR
+	                                         */
 
 	                                        console.log('from fullscreen to DOM...');
 
@@ -21191,15 +21927,29 @@
 
 	                                        // set the HTML5 canvas back to its original size, so it is synced with style in parentNode.
 
-	                                        c.width = this.oldWidth;
+	                                        var width = this.oldWidth;
 
-	                                        c.height = this.oldHeight;
+	                                        var height = this.oldHeight;
+
+	                                        // Set the WebGL viewport.
+
+	                                        gl.viewportWidth = width;
+
+	                                        gl.viewportHeight = height;
+
+	                                        gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+
+	                                        // Set the canvas size.
+
+	                                        c.width = width;
+
+	                                        c.height = height;
 
 	                                        this.mode = this.UI_DOM;
 
 	                                        // Hide the return button, if it wasn't already.
 
-	                                        this.returnButton.hide();
+	                                        this.exitFullscreenButton.hide();
 
 	                                        this.vrButton.show();
 
@@ -21212,6 +21962,8 @@
 	                                case this.UI_DOM:
 
 	                                        console.log('from DOM to fullscreen...');
+
+	                                        // We hide fullscreen and vr in the calling functions...
 
 	                                        this.mode = this.UI_FULLSCREEN;
 

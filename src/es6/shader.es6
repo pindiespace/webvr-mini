@@ -23,19 +23,23 @@ class Shader {
      * Basic MVC
      * https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_model_view_projection
      */
-    constructor ( init, util, glMatrix, webgl, shaderName ) {
+    constructor ( init, util, glMatrix, webgl, webvr, shaderName ) {
 
         console.log( 'In Shader class' );
 
         this.name = shaderName;
 
-        // class name = this.constructor.name
+        // class name = this.constructor.name // doesn't work with Babel 3/2017
 
-        this.gl = webgl;
+        this.util = util,
 
-        this.util = util;
+        this.glMatrix = glMatrix,
 
-        this.glMatrix = glMatrix;
+        this.webgl = webgl,
+
+        this.vr = webvr;
+
+        // Perspective and model-view matrix.
 
         this.pMatrix = this.glMatrix.mat4.create();
 
@@ -43,9 +47,11 @@ class Shader {
 
         this.mvMatrixStack = this.glMatrix.mat4.create();
 
+        // Floating precision (determined by WebGL object).
+
         this.floatp = ''
 
-        if ( this.gl.stats.highp ) {
+        if ( this.webgl.stats.highp ) {
 
             this.floatp = 'precision highp float;';
 
@@ -90,7 +96,9 @@ class Shader {
      */
 
     /**
-     * prims are added to the webgl program.
+     * Prim references are added to the webgl program, so each Shader can 
+     * handle a subset of the total defined prims. Global list in Prim object.
+     * @param {Prim} obj a Prim object.
      */
     addObj( obj ) {
 
@@ -108,6 +116,7 @@ class Shader {
 
     /** 
      * Check for Prim in list of drawn objects in webgl program.
+     * @param {Prim} obj a Prim object.
      */
     objInList ( obj ) {
 
@@ -122,6 +131,7 @@ class Shader {
     /** 
      * Prims are removed from the webgl program. 
      * NOTE: removing from the array messes up JIT optimization, so slows things down!
+     * @param {Prim} obj a Prim object.
      */
     removeObj( obj ) {
 
@@ -137,6 +147,10 @@ class Shader {
 
     }
 
+    /* 
+     * ============ WEBGL PROGRAM OPERATIONS ============
+     */
+
     /** 
      * Create the rendering program that will use our Shaders. Initially created 
      * by WebGL module, then each Shader adds update() and render() methods specific to 
@@ -148,16 +162,16 @@ class Shader {
 
         if ( this.vertexShaderFile && this.this.fragmentShaderFile ) {
 
-            program = this.gl.createProgram( 
-                this.gl.fetchVertexShader( this.vertexShaderFile ), 
-                this.gl.fetchFragmentShader( this.fragmentShaderFile ) 
+            program = this.webgl.createProgram( 
+                this.webgl.fetchVertexShader( this.vertexShaderFile ), 
+                this.webgl.fetchFragmentShader( this.fragmentShaderFile ) 
             );
 
         } else {
 
             // vsSrc() and fsSrc() are defined in derived Shader objects.
 
-            program = this.gl.createProgram( this.vsSrc(), this.fsSrc() );
+            program = this.webgl.createProgram( this.vsSrc(), this.fsSrc() );
 
         }
 
@@ -216,6 +230,10 @@ class Shader {
 
         let program = this.program;
 
+        this.pMatrix = this.glMatrix.mat4.create(); // projection matrix (defaults to mono view)
+
+        this.mvMatrix = this.glMatrix.mat4.create(); // model-view matrix
+
         /* Return references to our properties, and assign uniform and attribute locations using webgl object.
          * We do this return to provide local references for all the Shader and other objects
          * used by the WebGL program update() and render(). It could be provided in each init, but saves 
@@ -224,9 +242,9 @@ class Shader {
 
         return [ 
 
-            this.gl.getContext(),
+            this.webgl.getContext(),
 
-            this.gl.getCanvas(),
+            this.webgl.getCanvas(),
 
             this.glMatrix.mat4,
 
@@ -234,30 +252,36 @@ class Shader {
 
             this.glMatrix.vec3,
 
-            this.glMatrix.mat4.create(),  // perspective
+            this.pMatrix,
 
-            this.glMatrix.mat4.create(),  // model-view
+            this.mvMatrix,
+
+            //this.glMatrix.mat4.create(),  // projection, pMatrix (defaults to mono view)
+
+            //this.glMatrix.mat4.create(),  // model-view, mvMatrix
 
             program,
 
             {
-                attribute: this.gl.setAttributeArrays( program.shaderProgram, program.vsVars.attribute ),
+                attribute: this.webgl.setAttributeArrays( program.shaderProgram, program.vsVars.attribute ),
 
-                uniform: this.gl.setUniformLocations( program.shaderProgram, program.vsVars.uniform )
+                uniform: this.webgl.setUniformLocations( program.shaderProgram, program.vsVars.uniform )
 
             },
 
             {
 
-                uniform: this.gl.setUniformLocations( program.shaderProgram, program.fsVars.uniform )
+                uniform: this.webgl.setUniformLocations( program.shaderProgram, program.fsVars.uniform )
 
             },
 
-            this.gl.stats,
+            this.webgl.stats,
 
-            this.gl.near,
+            this.webgl.near,
 
-            this.gl.far
+            this.webgl.far,
+
+            this.vr
 
         ];
 
@@ -266,6 +290,26 @@ class Shader {
     /* 
      * ============ MATRIX OPERATIONS ============
      */
+
+    /** 
+     * Get the perspective matrix.
+     * @returns {glMatrix.mat4} the perspective matrix used in the Shader.
+     */
+    getpMatrix () {
+
+        return this.pMatrix;
+
+    }
+
+    /**
+     * Get the model-view matrix.
+     * @returns {glMatrix.mat4} the model-view matrix used in the Shader.
+     */
+    getmvMatrix () {
+
+        return this.mvMatrix;
+
+    }
 
     mvPushMatrix () {
 

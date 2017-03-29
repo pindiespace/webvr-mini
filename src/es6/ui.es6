@@ -41,9 +41,11 @@ class Ui {
 
             // Created by Guilhem.
 
-            backArrow: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2ZXJzaW9uPSIxLjEiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgMTAwIDEyNSIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAwIDAgMTAwIDEwMCIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+PGc+PGxpbmUgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJiZXZlbCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiB4MT0iOTMuMSIgeTE9IjUwIiB4Mj0iNi45IiB5Mj0iNTAiLz48bGluZSBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49ImJldmVsIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHgxPSI2LjkiIHkxPSI1MCIgeDI9IjMyLjciIHkyPSI3NS45Ii8+PGxpbmUgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJiZXZlbCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiB4MT0iNi45IiB5MT0iNTAiIHgyPSIzMi43IiB5Mj0iMjQuMSIvPjwvZz48dGV4dCB4PSIwIiB5PSIxMTUiIGZpbGw9IiMwMDAwMDAiIGZvbnQtc2l6ZT0iNXB4IiBmb250LXdlaWdodD0iYm9sZCIgZm9udC1mYW1pbHk9IidIZWx2ZXRpY2EgTmV1ZScsIEhlbHZldGljYSwgQXJpYWwtVW5pY29kZSwgQXJpYWwsIFNhbnMtc2VyaWYiPkNyZWF0ZWQgYnkgR3VpbGhlbTwvdGV4dD48dGV4dCB4PSIwIiB5PSIxMjAiIGZpbGw9IiMwMDAwMDAiIGZvbnQtc2l6ZT0iNXB4IiBmb250LXdlaWdodD0iYm9sZCIgZm9udC1mYW1pbHk9IidIZWx2ZXRpY2EgTmV1ZScsIEhlbHZldGljYSwgQXJpYWwtVW5pY29kZSwgQXJpYWwsIFNhbnMtc2VyaWYiPmZyb20gdGhlIE5vdW4gUHJvamVjdDwvdGV4dD48L3N2Zz4='
+            backArrow: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2ZXJzaW9uPSIxLjEiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgMTAwIDEyNSIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAwIDAgMTAwIDEwMCIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+PGc+PGxpbmUgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJiZXZlbCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiB4MT0iOTMuMSIgeTE9IjUwIiB4Mj0iNi45IiB5Mj0iNTAiLz48bGluZSBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49ImJldmVsIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHgxPSI2LjkiIHkxPSI1MCIgeDI9IjMyLjciIHkyPSI3NS45Ii8+PGxpbmUgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJiZXZlbCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiB4MT0iNi45IiB5MT0iNTAiIHgyPSIzMi43IiB5Mj0iMjQuMSIvPjwvZz48L3N2Zz4='
 
-        }
+        };
+
+        this.controls = [],
 
         this.util = util,
 
@@ -57,7 +59,9 @@ class Ui {
 
         this.poseButton = null,
 
-        this.returnButton = null;
+        this.exitFullscreenButton = null,
+
+        this.exitVRButton = null;
 
         // save old DOM style
 
@@ -69,15 +73,19 @@ class Ui {
 
     }
 
-    init ( ui ) {
+    init ( uiMode ) {
 
-        if ( ! ui ) {
+        if ( ! uiMode ) {
 
             console.log( 'no mode provided, setting default' );
 
-            ui = this.mode;
+            uiMode = this.mode;
 
         }
+
+        // Give the webvr object a callback for changing ui for 'onvrpresentchange' event.
+
+
 
         // Listen to fullscreen change events.
 
@@ -87,38 +95,28 @@ class Ui {
 
         document.addEventListener( 'msfullscreenchange', this.fullscreenChange.bind( this ), false );
 
-        // switch to the correct screen configuration.
-
-        switch ( ui ) {
-
-            case this.UI_VR:
-
-                break;
-
-            case this.UI_FULLSCREEN:
-
-                break;
-
-            case this.UI_DOM:
-
-            default:
-
-                this.createDOMUi();
-
-                break;
-
-        }
+        this.createUi(); // starting configuration
 
     }
 
     /** 
      * Create the default DOM ui.
      */
-    createDOMUi () {
+    createUi () {
 
         console.log( 'entering DOMUi')
 
-        let c = this.gl.getCanvas();
+        let c = this.gl.getCanvas(),
+
+        p = c.parentNode;
+
+        // Set some local styles overriding any conflicting styles for parentNode.
+
+        p.style.margin = '0';
+
+        p.style.border = '0';
+
+        p.style.padding = '0';
 
         // Check for controls.
 
@@ -170,21 +168,37 @@ class Ui {
 
             this.fullscreenButton = fullscreenButton;
 
-            // Return button.
+            // Fullscreen return button.
 
-            let returnButton = this.createButton();
+            let exitFullscreenButton = this.createButton();
 
-            returnButton.style.top = '0px';
+            exitFullscreenButton.style.top = '0px';
 
-            returnButton.style.left = '0px';
+            exitFullscreenButton.style.left = '0px';
 
-            returnButton.zIndex = '9999',
+            exitFullscreenButton.zIndex = '9999',
 
-            returnButton.src = this.icons.backArrow;
+            exitFullscreenButton.src = this.icons.backArrow;
 
-            returnButton.style.display = 'none'; // inline-block';
+            exitFullscreenButton.style.display = 'none'; // inline-block';
 
-            this.returnButton = returnButton;
+            this.exitFullscreenButton = exitFullscreenButton;
+
+            // VR return button.
+
+            let exitVRButton = this.createButton();
+
+            exitVRButton.style.top = '0px';
+
+            exitVRButton.style.left = '0px';
+
+            exitVRButton.zIndex = '9999',
+
+            exitVRButton.src = this.icons.backArrow;
+
+            exitVRButton.style.display = 'none'; // inline-block';
+
+            this.exitVRButton = exitVRButton;
 
             // Add event listeners.
 
@@ -198,7 +212,13 @@ class Ui {
 
                 this.fullscreenButton.hide();
 
-                this.returnButton.show();
+                this.exitVRButton.show();
+
+                // MANUALLY run fullscreen toggle.
+
+                this.mode = this.UI_VR;
+
+                this.fullscreenChange( evt );
 
                 // Request VR presentation.
 
@@ -216,8 +236,6 @@ class Ui {
 
                 // Get the current size of the parent.
 
-                let p = c.parentNode;
-
                 this.oldWidth  = p.clientWidth  * f | 0;
 
                 this.oldHeight = p.clientHeight * f | 0;
@@ -234,7 +252,7 @@ class Ui {
 
                 this.fullscreenButton.hide();
 
-                this.returnButton.show();
+                this.exitFullscreenButton.show();
 
                 // Fire the fullscreen command.
 
@@ -242,15 +260,17 @@ class Ui {
 
             } );
 
-            // Return button listener.
+            // Return from fullscreen button listener.
 
-            returnButton.addEventListener( 'click' , ( evt ) => {
+            exitFullscreenButton.addEventListener( 'click' , ( evt ) => {
 
-                console.log( 'clicked return button...' );
+                console.log( 'clicked exit fullscreen button...' );
 
                 // TODO: exit fullscreen and/or VR.
 
                 evt.preventDefault();
+
+                this.exitFullscreenButton.hide();
 
                 this.vrButton.show();
 
@@ -262,6 +282,26 @@ class Ui {
 
             } );
 
+            // Return from vr button listener.
+
+            exitVRButton.addEventListener( 'click', ( evt ) => {
+
+                console.log( 'clicked exit vr button' );
+
+                evt.preventDefault();
+
+                this.exitVRButton.hide();
+
+                this.vrButton.show();
+
+                this.fullscreenButton.show();
+
+                // exit VR to DOM (not in fullscreen, but does similar CSS changes to this.exitFullscreen()).
+
+                vr.exitPresent();
+
+            } );
+
             // Reset pose button
 
             // TODO: reset pose
@@ -270,11 +310,9 @@ class Ui {
 
             controls.appendChild( fullscreenButton );
 
-            controls.appendChild( returnButton );
+            controls.appendChild( exitFullscreenButton );
 
-            window.vrButton = vrButton;
-            window.fullscreenButton = fullscreenButton;
-            window.returnButton = returnButton;
+            controls.appendChild( exitVRButton );
 
         } else {
 
@@ -283,8 +321,6 @@ class Ui {
         }
 
     }
-
-
 
     /* 
      * =============== FULLSCREEN EVENTS ====================
@@ -353,17 +389,37 @@ class Ui {
      */
     fullscreenChange ( evt ) {
 
-        let c = this.gl.getCanvas();
+        let c = this.gl.getCanvas(),
 
-        let p = c.parentNode;
+        p = c.parentNode,
+
+        gl = this.gl.getContext();
 
         switch ( this.mode ) {
 
             case this.UI_VR:
 
+                console.log( 'from vr to dom...' );
+
+                this.exitVRButton.show();
+
+                this.vrButton.hide();
+
+                this.fullscreenButton.hide();
+
                 break;
 
             case this.UI_FULLSCREEN:
+
+                /* 
+                 * Due to fullscreen API nastiness, you can't just call your standard resize() method
+                 * and support the canvas jumping back to a DOM mode with CSS styles defined by an external 
+                 * stylesheet. Additional resizing specific to exiting fullscreen has to be done here. 
+                 * Removing the .style properties is particularly important.
+                 *
+                 * NOTE: UI_FULLSCREEN mode is actually from fullscreen to DOM.
+                 * NOTE: UI_VR mode is from DOM to VR
+                 */
 
                 console.log( 'from fullscreen to DOM...' );
 
@@ -375,15 +431,29 @@ class Ui {
 
                 // set the HTML5 canvas back to its original size, so it is synced with style in parentNode.
 
-                c.width = this.oldWidth;
+                let width = this.oldWidth;
 
-                c.height = this.oldHeight;
+                let height = this.oldHeight;
+
+                // Set the WebGL viewport.
+
+                gl.viewportWidth = width;
+
+                gl.viewportHeight = height;
+
+                gl.viewport( 0, 0, gl.viewportWidth, gl.viewportHeight );
+
+                // Set the canvas size.
+
+                c.width = width;
+
+                c.height = height;
 
                 this.mode = this.UI_DOM;
 
                 // Hide the return button, if it wasn't already.
 
-                this.returnButton.hide();
+                this.exitFullscreenButton.hide();
 
                 this.vrButton.show();
 
@@ -396,6 +466,8 @@ class Ui {
             case this.UI_DOM:
 
                 console.log( 'from DOM to fullscreen...' );
+
+                // We hide fullscreen and vr in the calling functions...
 
                 this.mode = this.UI_FULLSCREEN;
 

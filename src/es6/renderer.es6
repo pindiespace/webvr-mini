@@ -4,7 +4,7 @@ class Renderer {
 
         console.log( 'In Renderer class' );
  
-        this.gl = webgl;
+        this.webgl = webgl;
 
         this.util = webgl.util;
 

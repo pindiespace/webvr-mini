@@ -2,9 +2,25 @@ import Shader from './shader'
 
 class ShaderColor extends Shader {
 
-    constructor ( init, util, glMatrix, webgl, shaderName ) {
+    /** 
+     * --------------------------------------------------------------------
+     * VERTEX SHADER 2
+     * colorized, non-lit shader.
+     * @link http://learningwebgl.com/blog/?p=684
+     * StackGL
+     * @link https://github.com/stackgl
+     * phong lighting
+     * @link https://github.com/stackgl/glsl-lighting-walkthrough
+     * - vertex position
+     * - texture coordinate
+     * - model-view matrix
+     * - projection matrix
+     * --------------------------------------------------------------------
+     */
 
-        super( init, util, glMatrix, webgl, shaderName );
+    constructor ( init, util, glMatrix, webgl, webvr, shaderName ) {
+
+        super( init, util, glMatrix, webgl, webvr, shaderName );
 
         // Define arrays that are needed for this shader.
 
@@ -23,11 +39,11 @@ class ShaderColor extends Shader {
     }
 
     /* 
-     * Vertex and Fragment Shaders. We use the internal 'program' object to compile these. Alternatively,
-     * They may be defined to load from HTML or and external file.
-     * @return {Object} an object, with
+     * Vertex and Fragment Shaders. We use the internal 'program' object from the webgl object to compile these. 
+     * Alternatively, They may be defined to load from HTML or and external file.
+     * @return {Object{code, varList}} an object, with internal elements
      * code: The shader code.
-     * varList: A scanned list of all the variables in the shader code.
+     * varList: A scanned list of all the variables in the shader code (created by webgl object).
      */
     vsSrc () {
 
@@ -55,7 +71,7 @@ class ShaderColor extends Shader {
 
             code: s.join('\n'),
 
-            varList: this.gl.createVarList( s )
+            varList: this.webgl.createVarList( s )
 
         };
 
@@ -81,7 +97,7 @@ class ShaderColor extends Shader {
 
             code: s.join('\n'),
 
-            varList: this.gl.createVarList( s )
+            varList: this.webgl.createVarList( s )
 
         };
 
@@ -128,7 +144,9 @@ class ShaderColor extends Shader {
 
         near = arr[ 11 ],
 
-        far = arr[ 12 ];
+        far = arr[ 12 ],
+
+        vr = arr[ 13 ];
 
         // We received webgl in the constructor, and gl above is referenced from it.
 
@@ -153,6 +171,16 @@ class ShaderColor extends Shader {
 
         // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
 
+        // Update overall scene with changes (e.g. VR headset or mouse drags on desktop).
+
+        program.sceneUpdate = () => {
+
+            this.vr.setPM( pMatrix );
+
+            this.vr.setMV( mvMatrix );
+
+        }
+
         /** 
          * POLYMORPHIC METHODS
          */
@@ -161,13 +189,14 @@ class ShaderColor extends Shader {
 
         program.update = ( obj ) => {
 
-            // Standard mvMatrix updates.
+            // Update changes in Prim position, rotation, etc.
 
             obj.setMV( mvMatrix );
 
             // Custom updates go here.
 
         }
+
 
         // Rendering.
 
@@ -179,7 +208,15 @@ class ShaderColor extends Shader {
 
             // Reset perspective matrix.
 
+            // TODO: change this!!!!!!!
+
             mat4.perspective( pMatrix, Math.PI*0.4, canvas.width / canvas.height, near, far ); // right
+
+            // Reset model-view matrix.
+
+            // Reset perspective and model-view matrix.
+
+            program.sceneUpdate();
 
             // Loop through assigned objects.
 
@@ -189,7 +226,7 @@ class ShaderColor extends Shader {
 
                 // Update Model-View matrix with standard Prim values.
 
-                program.update( obj, mvMatrix );
+                program.update( obj, mvMatrix ); // TODO:::::::::mvMatrix needed here???????????????????????
 
                 // Bind vertex buffer.
 
@@ -230,13 +267,13 @@ class ShaderColor extends Shader {
 
                 }
 
-            }
+            } // end of renderList for Prims
 
-        }
+        } // end of program.render()
 
         return program;
 
-    }
+    } // end of init()
 
 }
 

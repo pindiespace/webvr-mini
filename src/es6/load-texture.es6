@@ -17,7 +17,7 @@ class LoadTexture extends LoadPool {
 
         super( init, util, glMatrix, webgl, MAX_CACHE_IMAGES );
 
-        this.gl = webgl;
+        this.webgl = webgl;
 
         // Specific to texture cache.
 
@@ -126,7 +126,7 @@ class LoadTexture extends LoadPool {
 
         ////////////console.log( 'In uploadTexture() for:' + loadObj.prim.name + ' src:' + loadObj.image.src );
 
-        let gl = this.gl.getContext();
+        let gl = this.webgl.getContext();
 
         let textures = loadObj.prim.textures;
 

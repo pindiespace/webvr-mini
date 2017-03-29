@@ -107,7 +107,7 @@ class Prim {
 
         this.util = util;
 
-        this.gl = webgl;
+        this.webgl = webgl;
 
         this.glMatrix = glMatrix;
 
@@ -3600,7 +3600,7 @@ class Prim {
         };
 
         /** 
-         * Set the model-view matrix with position, translation, rotation, and orbital motion.
+         * Update the model-view matrix with position, translation, rotation, and orbital motion for individual Prims.
          * @param {glMatrix.mat4} mvMatrix model-view matrix.
          * @returns {glMatrix.mat4} the altered model-view matrix.
          */
@@ -3901,7 +3901,7 @@ class Prim {
 
         // Geometry factory function, create empty WebGL Buffers.
 
-        prim.geometry = new GeoObj( prim.name, this.util, this.gl );
+        prim.geometry = new GeoObj( prim.name, this.util, this.webgl );
 
         // Create or load Geometry data (may alter some of the above default properties).
 
