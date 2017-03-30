@@ -2585,7 +2585,7 @@
 
 	                console.log('in webVR class');
 
-	                this.util = util, this.glMatrix = glMatrix, this.gl = webgl;
+	                this.util = util, this.glMatrix = glMatrix, this.webgl = webgl;
 
 	                this.vrVers = 1.0, // TODO: is there any way to get this?
 
@@ -2663,22 +2663,22 @@
 	                                                                        _this.exitPresent();
 	                                                                }
 
-	                                                                // Adjust depthNear and depthFar to device info.
+	                                                                // Adjust depthNear and depthFar to device info, or provide defaults.
 
 	                                                                if (!display.depthNear) {
 
-	                                                                        display.depthNear = _this.gl.near;
+	                                                                        display.depthNear = _this.webgl.near;
 	                                                                } else {
 
-	                                                                        _this.gl.near = display.depthNear;
+	                                                                        _this.webgl.near = display.depthNear;
 	                                                                }
 
 	                                                                if (!display.depthFar) {
 
-	                                                                        display.depthFar = _this.gl.far;
+	                                                                        display.depthFar = _this.webgl.far;
 	                                                                } else {
 
-	                                                                        _this.gl.far = display.depthFar;
+	                                                                        _this.webgl.far = display.depthFar;
 	                                                                }
 
 	                                                                stats.displayName = display.displayName; // HMD name
@@ -2779,10 +2779,10 @@
 	                 */
 
 	        }, {
-	                key: 'getStandingPoseMatrix',
-	                value: function getStandingPoseMatrix() {
+	                key: 'getStandingViewMatrix',
+	                value: function getStandingViewMatrix() {
 
-	                        var mat4 = this.glMatrix.mat4,
+	                        var mat4 = this.webglMatrix.mat4,
 	                            display = this.display;
 
 	                        if (display.stageParameters) {
@@ -2831,17 +2831,6 @@
 	                        this.display.resetPose();
 	                }
 
-	                /** 
-	                 * Set the perspective matrix.
-	                 */
-
-	        }, {
-	                key: 'setPM',
-	                value: function setPM() {}
-	        }, {
-	                key: 'setMV',
-	                value: function setMV() {}
-
 	                /* 
 	                 * =============== VR EVENTS ====================
 	                 */
@@ -2858,8 +2847,8 @@
 	                        console.log('WebVR::vrResize(): in vr resize');
 
 	                        var display = this.display,
-	                            gl = this.gl.getContext(),
-	                            c = this.gl.getCanvas(),
+	                            gl = this.webgl.getContext(),
+	                            c = this.webgl.getCanvas(),
 	                            p = c.parentNode;
 
 	                        // Get the current size of the parent <div> for the <canvas>.
@@ -2909,7 +2898,7 @@
 
 	                                p.style.height = '';
 
-	                                this.gl.resizeCanvas();
+	                                this.webgl.resizeCanvas();
 	                        }
 	                }
 
@@ -2927,7 +2916,7 @@
 
 	                        if (display && display.capabilities.canPresent) {
 
-	                                display.requestPresent([{ source: this.gl.getCanvas() }]).then(function () {
+	                                display.requestPresent([{ source: this.webgl.getCanvas() }]).then(function () {
 
 	                                        // success
 
@@ -4478,7 +4467,6 @@
 	        }, {
 	                key: 'init',
 	                value: function init(objList) {
-	                        var _this2 = this;
 
 	                        // DESTRUCTING DID NOT WORK!
 	                        //[gl, canvas, mat4, vec3, pMatrix, mvMatrix, program ] = this.setup();
@@ -4514,15 +4502,6 @@
 	                        // TODO: https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/TechniquesforWorkingwithVertexData/TechniquesforWorkingwithVertexData.html
 	                        // TODO: http://max-limper.de/tech/batchedrendering.html
 
-	                        // Update overall scene with changes (e.g. VR headset or mouse drags on desktop).
-
-	                        program.sceneUpdate = function () {
-
-	                                _this2.vr.setPM(pMatrix);
-
-	                                _this2.vr.setMV(mvMatrix);
-	                        };
-
 	                        /** 
 	                         * POLYMORPHIC METHODS
 	                         */
@@ -4533,14 +4512,23 @@
 
 	                                // Standard Model-View (mvMatrix) updates, per Prim.
 
+	                                mat4.identity(mvMatrix);
+
 	                                obj.setMV(mvMatrix);
 
 	                                // Custom updates go here.
 	                        };
 
+	                        // Rendering mono view.
+
+	                        program.renderMono = function () {
+
+	                                program.render(pMatrix, mvMatrix);
+	                        };
+
 	                        // Rendering.
 
-	                        program.render = function () {
+	                        program.render = function (pm, mvm) {
 
 	                                //console.log( 'gl:' + gl + ' canvas:' + canvas + ' mat4:' + mat4 + ' vec3:' + vec3 + ' pMatrix:' + pMatrix + ' mvMatrix:' + mvMatrix + ' program:' + program );
 
@@ -4549,10 +4537,6 @@
 	                                // Reset perspective matrix.
 
 	                                mat4.perspective(pMatrix, Math.PI * 0.4, canvas.width / canvas.height, near, far); // right
-
-	                                // Reset perspective and model-view matrix.
-
-	                                program.sceneUpdate();
 
 	                                // Begin program loop
 
@@ -5112,12 +5096,7 @@
 
 	                        // Update overall scene with changes (e.g. VR headset or mouse drags on desktop).
 
-	                        program.sceneUpdate = function () {
-
-	                                _this2.vr.setPM(pMatrix);
-
-	                                _this2.vr.setMV(mvMatrix);
-	                        };
+	                        // Get the current perspective matrix.
 
 	                        /** 
 	                         * POLYMORPHIC METHODS
@@ -5129,14 +5108,63 @@
 
 	                                // Update changes in Prim position, rotation, etc.
 
+	                                mat4.identity(mvMatrix);
+
 	                                obj.setMV(mvMatrix);
 
 	                                // Custom updates go here.
 	                        };
 
-	                        // Rendering.
+	                        // Rendering left and right eye for VR 
 
-	                        program.render = function () {
+	                        program.renderVR = function () {
+
+	                                var vr = _this2.vr,
+	                                    display = vr.getDisplay();
+
+	                                if (display && display.isPresenting) {
+
+	                                        frameData = vr.getFrameData();
+
+	                                        if (frameData) {
+
+	                                                // mat4.identity( pMatrix );  not used.
+
+	                                                mat4.identity(mvMatrix);
+
+	                                                // Left eye.
+
+	                                                gl.viewport(0, 0, canvas.width * 0.5, canvas.height);
+
+	                                                vr.getStandingViewMatrix(mvMatrix, frameData.leftViewMatrix);
+
+	                                                program.render(frameData.leftProjectionMatrix, mvMatrix, frameData.pose);
+
+	                                                // Right eye.
+
+	                                                gl.viewport(canvas.width * 0.5, 0, canvas.width * 0.5, canvas.height);
+
+	                                                vr.getStandingViewMatrix(mvMatrix, frameData.rightViewMatrix);
+
+	                                                program.render(frameData.rightProjectionMatrix, mvMatrix, frameData.pose);
+
+	                                                // Submit rendered stereo view to device.
+
+	                                                display.submitFrame();
+	                                        }
+	                                }
+	                        };
+
+	                        // Rendering mono view.
+
+	                        program.renderMono = function () {
+
+	                                program.render(pMatrix, mvMatrix);
+	                        };
+
+	                        // Scene Rendering.
+
+	                        program.render = function (pm, mvm) {
 
 	                                //console.log( 'gl:' + gl + ' canvas:' + canvas + ' mat4:' + mat4 + ' vec3:' + vec3 + ' pMatrix:' + pMatrix + ' mvMatrix:' + mvMatrix + ' program:' + program );
 
@@ -5144,15 +5172,11 @@
 
 	                                // Reset perspective matrix.
 
-	                                // TODO: change this!!!!!!!
-
 	                                mat4.perspective(pMatrix, Math.PI * 0.4, canvas.width / canvas.height, near, far); // right
 
 	                                // Reset model-view matrix.
 
 	                                // Reset perspective and model-view matrix.
-
-	                                program.sceneUpdate();
 
 	                                // Loop through assigned objects.
 
@@ -5162,7 +5186,13 @@
 
 	                                        // Update Model-View matrix with standard Prim values.
 
+	                                        // TODO: scene pass in altered model-view matrix
+
+	                                        // Individual prim update
+
 	                                        program.update(obj, mvMatrix); // TODO:::::::::mvMatrix needed here???????????????????????
+
+	                                        // !!!!!!!!!!!!!!!!!!!!!!!!!UPDATE ALL OTHER SHADERS LIKE THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 	                                        // Bind vertex buffer.
 
@@ -5340,7 +5370,6 @@
 	        }, {
 	                key: 'init',
 	                value: function init(objList) {
-	                        var _this2 = this;
 
 	                        // DESTRUCTING DID NOT WORK!
 	                        //[gl, canvas, mat4, vec3, pMatrix, mvMatrix, program ] = this.setup();
@@ -5391,15 +5420,6 @@
 	                        // TODO: https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/TechniquesforWorkingwithVertexData/TechniquesforWorkingwithVertexData.html
 	                        // TODO: http://max-limper.de/tech/batchedrendering.html
 
-	                        // Update overall scene with changes (e.g. VR headset or mouse drags on desktop).
-
-	                        program.sceneUpdate = function () {
-
-	                                _this2.vr.setPM(pMatrix);
-
-	                                _this2.vr.setMV(mvMatrix);
-	                        };
-
 	                        /** 
 	                         * POLYMORPHIC METHODS
 	                         */
@@ -5407,6 +5427,8 @@
 	                        // Update object position, motion - given to World object.
 
 	                        program.update = function (obj) {
+
+	                                mat4.identity(mvMatrix);
 
 	                                // Standard mvMatrix updates.
 
@@ -5428,9 +5450,16 @@
 	                                // Custom updates go here, make local references to vsVars and fsVars.
 	                        };
 
+	                        // Rendering mono view.
+
+	                        program.renderMono = function () {
+
+	                                program.render(pMatrix, mvMatrix);
+	                        };
+
 	                        // Rendering - given to Renderer object, executed by World.
 
-	                        program.render = function () {
+	                        program.render = function (pm, mvm) {
 
 	                                //console.log( 'gl:' + gl + ' canvas:' + canvas + ' mat4:' + mat4 + ' vec3:' + vec3 + ' pMatrix:' + pMatrix + ' mvMatrix:' + mvMatrix + ' program:' + program );
 
@@ -5439,10 +5468,6 @@
 	                                // Reset perspective matrix.
 
 	                                mat4.perspective(pMatrix, Math.PI * 0.4, canvas.width / canvas.height, near, far); // right
-
-	                                // Reset perspective and model-view matrix.
-
-	                                program.sceneUpdate();
 
 	                                // Begin program loop
 
@@ -5647,7 +5672,6 @@
 	        }, {
 	                key: 'init',
 	                value: function init(objList) {
-	                        var _this2 = this;
 
 	                        var arr = this.setup(),
 	                            gl = arr[0],
@@ -5676,15 +5700,6 @@
 	                                program.renderList = this.util.concatArr(program.renderList, objList);
 	                        }
 
-	                        // Update overall scene with changes (e.g. VR headset or mouse drags on desktop).
-
-	                        program.sceneUpdate = function () {
-
-	                                _this2.vr.setPM(pMatrix);
-
-	                                _this2.vr.setMV(mvMatrix);
-	                        };
-
 	                        /** 
 	                         * POLYMORPHIC METHODS
 	                         */
@@ -5692,6 +5707,8 @@
 	                        // Update object position, motion - given to World object.
 
 	                        program.update = function (obj) {
+
+	                                mat4.identity(mvMatrix);
 
 	                                // Standard mvMatrix updates.
 
@@ -5708,7 +5725,7 @@
 	                                mat3.normalFromMat4(nMatrix, mvMatrix);
 	                        };
 
-	                        program.render = function (obj) {
+	                        program.render = function () {
 
 	                                //console.log( 'gl:' + gl + ' canvas:' + canvas + ' mat4:' + mat4 + ' vec3:' + vec3 + ' pMatrix:' + pMatrix + ' mvMatrix:' + mvMatrix + ' program:' + program );
 
@@ -5718,23 +5735,19 @@
 
 	                                mat4.perspective(pMatrix, Math.PI * 0.4, canvas.width / canvas.height, near, far); // right
 
-	                                // Reset perspective and model-view matrix.
-
-	                                program.sceneUpdate();
-
 	                                // Begin program loop
 
 	                                for (var i = 0, len = program.renderList.length; i < len; i++) {
 
-	                                        var _obj = program.renderList[i];
+	                                        var obj = program.renderList[i];
 
 	                                        // Only render if we have at least one texture loaded.
 
-	                                        if (!_obj.textures[0] || !_obj.textures[0].texture) continue;
+	                                        if (!obj.textures[0] || !obj.textures[0].texture) continue;
 
 	                                        // Update Model-View matrix with standard Prim values.
 
-	                                        program.update(_obj, mvMatrix);
+	                                        program.update(obj, mvMatrix);
 
 	                                        // TODO: bind buffers
 
@@ -5863,7 +5876,6 @@
 	        }, {
 	                key: 'init',
 	                value: function init(objList) {
-	                        var _this2 = this;
 
 	                        var arr = this.setup(),
 	                            gl = arr[0],
@@ -5892,15 +5904,6 @@
 	                                program.renderList = this.util.concatArr(program.renderList, objList);
 	                        }
 
-	                        // Update overall scene with changes (e.g. VR headset or mouse drags on desktop).
-
-	                        program.sceneUpdate = function (pMatrix, mvMatrix) {
-
-	                                _this2.vr.setPM(pMatrix);
-
-	                                _this2.vr.setMV(mvMatrix);
-	                        };
-
 	                        /** 
 	                         * POLYMORPHIC METHODS
 	                         */
@@ -5908,6 +5911,8 @@
 	                        // Update object position, motion - given to World object.
 
 	                        program.update = function (obj) {
+
+	                                mat4.identity(mvMatrix);
 
 	                                // Standard mvMatrix updates.
 
@@ -5924,7 +5929,7 @@
 	                                mat3.normalFromMat4(nMatrix, mvMatrix);
 	                        };
 
-	                        program.render = function (obj) {
+	                        program.render = function () {
 
 	                                //console.log( 'gl:' + gl + ' canvas:' + canvas + ' mat4:' + mat4 + ' vec3:' + vec3 + ' pMatrix:' + pMatrix + ' mvMatrix:' + mvMatrix + ' program:' + program );
 
@@ -5934,23 +5939,19 @@
 
 	                                mat4.perspective(pMatrix, Math.PI * 0.4, canvas.width / canvas.height, near, far); // right
 
-	                                // Reset perspective and model-view matrix.
-
-	                                program.sceneUpdate();
-
 	                                // Begin program loop
 
 	                                for (var i = 0, len = program.renderList.length; i < len; i++) {
 
-	                                        var _obj = program.renderList[i];
+	                                        var obj = program.renderList[i];
 
 	                                        // Only render if we have at least one texture loaded.
 
-	                                        if (!_obj.textures[0] || !_obj.textures[0].texture) continue;
+	                                        if (!obj.textures[0] || !obj.textures[0].texture) continue;
 
 	                                        // Update Model-View matrix with standard Prim values.
 
-	                                        program.update(_obj, mvMatrix);
+	                                        program.update(obj, mvMatrix);
 
 	                                        // TODO: bind buffers
 
@@ -9715,13 +9716,15 @@
 
 	                                var p = prim;
 
-	                                mat4.identity(mvMatrix);
+	                                //mat4.identity( mvMatrix ); // done in calling update()
 
 	                                var z = -5; // TODO: default position relative to camera! !!! CHANGE??????
 
 	                                // Translate.
 
 	                                vec3.add(p.position, p.position, p.acceleration);
+
+	                                // Translate to default position.
 
 	                                mat4.translate(mvMatrix, mvMatrix, [p.position[0], p.position[1], z + p.position[2]]);
 
@@ -13345,7 +13348,7 @@
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
-	            value: true
+	        value: true
 	});
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -13357,668 +13360,658 @@
 	 */
 	var World = function () {
 
-	            /** 
-	             * The World class creates the scene, and should be uniquely 
-	             * written for each instance using the WebVR-Mini library.
-	             * Required functions:
-	             * getVS() - the vertex shader.
-	             * getFS() - get the fragment shader.
-	             * rer() - update on rer of <canvas>.
-	             * render() - rendering loop.
-	             * init() - create the world for this first time.
-	             * constructor() - initialize, passing in WebVR-Mini object.
-	             * 
-	             * TODO: add some standard world objects (e.g. 360 video player by default)
-	             * @link https://github.com/flimshaw/Valiant360/blob/master/src/valiant.jquery.js
-	             */
+	        /** 
+	         * The World class creates the scene, and should be uniquely 
+	         * written for each instance using the WebVR-Mini library.
+	         * Required functions:
+	         * getVS() - the vertex shader.
+	         * getFS() - get the fragment shader.
+	         * rer() - update on rer of <canvas>.
+	         * render() - rendering loop.
+	         * init() - create the world for this first time.
+	         * constructor() - initialize, passing in WebVR-Mini object.
+	         * 
+	         * TODO: add some standard world objects (e.g. 360 video player by default)
+	         * @link https://github.com/flimshaw/Valiant360/blob/master/src/valiant.jquery.js
+	         */
 
-	            /** 
-	             * constructor for World.
-	             * @param {WebGL} gl the webgl module.
-	             * @param {WebVR} webvr the webvr module.
-	             * @param {Prim} prim the object/mesh primitives module.
-	             * @param {Renderer} renderer the GLSL rendering module.
-	             */
-	            function World(webgl, webvr, prim, renderer) {
-	                        _classCallCheck(this, World);
+	        /** 
+	         * constructor for World.
+	         * @param {WebGL} gl the webgl module.
+	         * @param {WebVR} webvr the webvr module.
+	         * @param {Prim} prim the object/mesh primitives module.
+	         * @param {Renderer} renderer the GLSL rendering module.
+	         */
+	        function World(webgl, webvr, prim, renderer) {
+	                _classCallCheck(this, World);
 
-	                        console.log('in World class');
+	                console.log('in World class');
 
-	                        this.webgl = webgl, this.util = webgl.util, this.vr = webvr, this.prim = prim, this.renderer = renderer;
+	                this.webgl = webgl, this.util = webgl.util, this.vr = webvr, this.prim = prim, this.renderer = renderer;
 
-	                        // Matrix operations.
+	                // Matrix operations.
 
-	                        this.canvas = webgl.getCanvas();
+	                this.canvas = webgl.getCanvas();
 
-	                        this.glMatrix = webgl.glMatrix;
+	                this.glMatrix = webgl.glMatrix;
 
-	                        this.pMatrix = this.glMatrix.mat4.create();
+	                this.pMatrix = this.glMatrix.mat4.create();
 
-	                        this.mvMatrix = this.glMatrix.mat4.create();
+	                this.mvMatrix = this.glMatrix.mat4.create();
 
-	                        this.last = performance.now();
+	                this.last = performance.now();
 
-	                        this.counter = 0;
+	                this.counter = 0;
 
-	                        // Bind the render loop (best current method)
+	                // Bind the render loop (best current method)
 
-	                        this.render = this.render.bind(this);
-	            }
+	                this.render = this.render.bind(this);
+	        }
 
-	            /**
-	             * Handle resize event for the World dimensions.
-	             * @param {Number} width world width (x-axis) in units.
-	             * @param {Number} height world height (y-axis) in units.
-	             * @param {Number} depth world depth (z-axis) in units.
-	             */
+	        /**
+	         * Handle resize event for the World dimensions.
+	         * @param {Number} width world width (x-axis) in units.
+	         * @param {Number} height world height (y-axis) in units.
+	         * @param {Number} depth world depth (z-axis) in units.
+	         */
 
 
-	            _createClass(World, [{
-	                        key: 'resize',
-	                        value: function resize(width, height, depth) {
+	        _createClass(World, [{
+	                key: 'resize',
+	                value: function resize(width, height, depth) {
 
-	                                    console.error('world::resize(): not implemented yet!');
-	                        }
-
-	                        /** 
-	                         * load a World from a JSON file description.
-	                         */
-
-	            }, {
-	                        key: 'load',
-	                        value: function load() {
+	                        console.error('world::resize(): not implemented yet!');
+	                }
+
+	                /** 
+	                 * load a World from a JSON file description.
+	                 */
+
+	        }, {
+	                key: 'load',
+	                value: function load() {
 
-	                                    // TODO: use fetch
+	                        // TODO: use fetch
 
-	                                    console.error('world::load(): not implemented yet!');
-	                        }
-
-	                        /** 
-	                         * save a World to a JSON file description.
-	                         * use Prim.toJSON() for indivdiual prims.
-	                         */
+	                        console.error('world::load(): not implemented yet!');
+	                }
+
+	                /** 
+	                 * save a World to a JSON file description.
+	                 * use Prim.toJSON() for indivdiual prims.
+	                 */
 
-	            }, {
-	                        key: 'save',
-	                        value: function save() {
-
-	                                    // TODO: output in editor interface.
-
-	                                    console.error('world::save(): not implemented yet!');
-	                        }
-
-	                        /** 
-	                         * Create the world. Load shader/renderer objects, and 
-	                         * create objects to render in the world.
-	                         */
-
-	            }, {
-	                        key: 'init',
-	                        value: function init() {
-
-	                                    var vec3 = this.glMatrix.vec3;
-
-	                                    var vec4 = this.glMatrix.vec4;
-
-	                                    var vec5 = this.prim.vec5;
-
-	                                    var util = this.util;
-
-	                                    // Get the shaders (not initialized with update() and render() yet!).
-
-	                                    this.s1 = this.renderer.getShader('shaderTexture');
-
-	                                    this.s2 = this.renderer.getShader('shaderColor');
-
-	                                    this.s3 = this.renderer.getShader('shaderDirLightTexture');
-
-	                                    //////////////////////////////////
-	                                    // TEXTURED SHADER.
-	                                    //////////////////////////////////
-
-	                                    // Create a UV skydome.
-
-	                                    this.prim.createPrim(this.s1, // callback function
-	                                    this.prim.typeList.SKYDOME, // type
-	                                    'skydome', // name (not Id)
-	                                    vec5(18, 18, 18, 0), // dimensions
-	                                    vec5(10, 10, 10), // divisions MAKE SMALLER
-	                                    vec3.fromValues(0, 0, 0), // position (absolute)
-	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0.1), util.degToRad(0)), // angular velocity in x, y, x
-	                                    ['img/panorama_01.png'], // texture present
-	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-	                                    );
-
-	                                    this.prim.createPrim(this.s1, // callback function
-	                                    this.prim.typeList.CUBE, 'first cube', // name
-	                                    vec5(1, 1, 1), // dimensions
-	                                    vec5(10, 10, 10, 0), // divisions, pass curving of edges as 4th parameter
-	                                    vec3.fromValues(1, 0, 2), // position (absolute)
-	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                                    vec3.fromValues(util.degToRad(1), util.degToRad(1), util.degToRad(1)), // angular velocity in x, y, x
-	                                    ['img/crate.png', 'img/webvr-logo1.png'], // texture image
-	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0));
-
-	                                    this.prim.createPrim(this.s1, // callback function
-	                                    this.prim.typeList.CUBE, 'toji cube', vec5(1, 1, 1, 0), // dimensions
-	                                    vec5(1, 1, 1, 0), // divisions, pass curving of edges as 4th parameter
-	                                    vec3.fromValues(5.5, 1.5, -3), // position (absolute)
-	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                                    vec3.fromValues(util.degToRad(40), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                                    vec3.fromValues(util.degToRad(0), util.degToRad(1), util.degToRad(0)), // angular velocity in x, y, x
-	                                    ['img/webvr-logo2.png'], vec4.fromValues(0.5, 1.0, 0.2, 1.0));
-
-	                                    this.prim.createPrim(this.s1, // callback function
-	                                    this.prim.typeList.TORUS, 'torus2', vec5(1, 1, 0.5, 0), // dimensions (first is width along x, second  width along y, diameter of torus tube)
-	                                    vec5(9, 9, 9, 1), // divisions (first is number of rings, second is number of sides)
-	                                    vec3.fromValues(-1.8, 3, -3.5), // position (absolute)
-	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                                    vec3.fromValues(util.degToRad(20), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                                    vec3.fromValues(util.degToRad(0), util.degToRad(1), util.degToRad(0)), // angular velocity in x, y, x
-	                                    ['img/uv-test.png'], // texture present, NOT USED
-	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0));
-
-	                                    // DIMENSIONS INDICATE ANY X or Y CURVATURE.
-	                                    // DIVISIONS FOR CUBED AND CURVED PLANE INDICATE SIDE TO DRAW
-
-
-	                                    this.prim.createPrim(this.s1, // callback function
-	                                    this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlaneBack', vec5(2, 1, 1, this.prim.directions.BACK, 1), // pass orientation ONE UNIT CURVE
-	                                    vec5(10, 10, 10), // divisions
-	                                    vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
-	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                                    vec3.fromValues(util.degToRad(0.0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                                    ['img/webvr-logo2.png'], // texture present
-	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-
-	                                    );
-
-	                                    this.prim.createPrim(this.s1, // callback function
-	                                    this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlaneLeft', vec5(2, 1, 1, this.prim.directions.LEFT, 1), // pass orientation ONE UNIT CURVE
-	                                    vec5(10, 10, 10), // divisions
-	                                    vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
-	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                                    vec3.fromValues(util.degToRad(0.0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                                    ['img/webvr-logo3.png'], // texture present
-	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-
-	                                    );
-
-	                                    this.prim.createPrim(this.s1, // callback function
-	                                    this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlaneRight', vec5(2, 1, 1, this.prim.directions.RIGHT, 1), // pass orientation ONE UNIT CURVE
-	                                    vec5(10, 10, 10), // divisions
-	                                    vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
-	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                                    vec3.fromValues(util.degToRad(0.0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                                    ['img/webvr-logo4.png'], // texture present
-	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-
-	                                    );
-
-	                                    this.prim.createPrim(this.s1, // callback function
-	                                    this.prim.typeList.CURVEDOUTERPLANE, 'CurvedPlaneOut', vec5(2, 1, 1, this.prim.directions.RIGHT, 1), // dimensions NOTE: pass radius for curvature (also creates orbit) 
-	                                    vec3.fromValues(10, 10, 10), // divisions
-	                                    vec3.fromValues(-1.2, 0.0, 2.0), // position (absolute)
-	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                                    vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                                    ['img/mozvr-logo2.png'], // texture present
-	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-
-	                                    );
-
-	                                    this.prim.createPrim(this.s1, // callback function
-	                                    this.prim.typeList.ICOSPHERE, 'icosphere', vec5(3, 3, 3, 0), // dimensions
-	                                    vec5(32, 32, 32), // 1 for icosohedron, 16 for good sphere
-	                                    vec3.fromValues(4.5, 3.5, -2), // position (absolute)
-	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                                    ['img/uv-test.png'], // texture present, NOT USED
-	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-
-	                                    );
-
-	                                    this.prim.createPrim(this.s1, // callback function
-	                                    this.prim.typeList.SKYICODOME, 'icoSkyDome', vec5(3, 3, 3, 0), // dimensions
-	                                    vec5(32, 32, 32), // 1 for icosohedron, 16 for good sphere
-	                                    vec3.fromValues(-4.5, 0.5, -2), // position (absolute)
-	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                                    ['img/uv-test.png'], // texture present, NOT USED
-	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-
-	                                    );
-
-	                                    this.prim.createPrim(this.s1, // callback function
-	                                    this.prim.typeList.BOTTOMICODOME, 'bottomicodome', vec5(3, 3, 3, 0), // dimensions
-	                                    vec5(32, 32, 32), // 1 for icosohedron, 16 for good sphere
-	                                    vec3.fromValues(4.5, 0.5, -2), // position (absolute)
-	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                                    ['img/uv-test.png'], // texture present, NOT USED
-	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-
-	                                    );
-
-	                                    this.prim.createPrim(this.s1, // callback function
-	                                    this.prim.typeList.CAP, // CAP DEFAULT, AT WORLD CENTER (also a UV polygon)
-	                                    'CAP', vec5(3, 3, 3, 0), // dimensions INCLUDING start radius or torus radius(last value)
-	                                    vec5(15, 15, 15), // divisions MUST BE CONTROLLED TO < 5
-	                                    //vec3.fromValues(-3.5, -3.5, -1 ),    // position (absolute)
-	                                    vec3.fromValues(-0.0, 0, 2.0), vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                                    vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                                    ['img/mozvr-logo1.png'], // texture present
-	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-
-	                                    );
-
-	                                    this.prim.createPrim(this.s1, // callback function
-	                                    this.prim.typeList.CONE, 'TestCone', vec5(1, 1, 1, 0.0, 0.0), // dimensions (4th dimension is truncation of cone, none = 0, flat circle = 1.0)
-	                                    vec5(10, 10, 10), // divisions MAKE SMALLER
-	                                    vec3.fromValues(-0, -1.5, 2.0), // position (absolute)
-	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                                    vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                                    ['img/uv-test.png'], // texture present
-	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-
-	                                    );
-
-	                                    this.prim.createPrim(this.s1, // callback function
-	                                    this.prim.typeList.CYLINDER, 'TestCylinder', vec5(1, 1, 1, 0.3, 0.7), // dimensions (4th dimension doesn't exist for cylinder)
-	                                    vec5(40, 40, 40), // divisions MAKE SMALLER
-	                                    vec3.fromValues(-1.5, -1.5, 2.0), // position (absolute)
-	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                                    vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                                    ['img/uv-test.png'], // texture present
-	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-
-	                                    );
-
-	                                    this.prim.createPrim(this.s1, // callback function
-	                                    this.prim.typeList.CAPSULE, 'TestCapsule', vec5(0.5, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
-	                                    vec5(40, 40, 0), // divisions MAKE SMALLER
-	                                    vec3.fromValues(-2.0, -1.5, 2.0), // position (absolute)
-	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                                    vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                                    ['img/uv-test.png'], // texture present
-	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-
-	                                    );
-
-	                                    this.prim.createPrim(this.s1, // callback function
-	                                    this.prim.typeList.TEARDROP, 'TestTearDrop', vec5(1, 2, 1), // dimensions (4th dimension doesn't exist for cylinder)
-	                                    vec5(40, 40, 0), // divisions MAKE SMALLER
-	                                    vec3.fromValues(-2.0, 1.5, 2.0), // position (absolute)
-	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                                    vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                                    ['img/uv-test.png'], // texture present
-	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
-
-	                                    );
-
-	                                    this.prim.createPrim(this.s1, // callback function
-	                                    this.prim.typeList.DODECAHEDRON, 'Dodecahedron', vec5(1, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
-	                                    vec5(40, 40, 0), // divisions MAKE SMALLER
-	                                    vec3.fromValues(-1.0, 0.5, 3.0), // position (absolute)
-	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                                    vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                                    ['img/crate.png'], // texture present
-	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0), // color,
-	                                    true // if true, apply texture to each face
-
-	                                    );
-
-	                                    /*
+	        }, {
+	                key: 'save',
+	                value: function save() {
+
+	                        // TODO: output in editor interface.
+
+	                        console.error('world::save(): not implemented yet!');
+	                }
+
+	                /** 
+	                 * Create the world. Load shader/renderer objects, and 
+	                 * create objects to render in the world.
+	                 */
+
+	        }, {
+	                key: 'init',
+	                value: function init() {
+
+	                        var vec3 = this.glMatrix.vec3;
+
+	                        var vec4 = this.glMatrix.vec4;
+
+	                        var vec5 = this.prim.vec5;
+
+	                        var util = this.util;
+
+	                        // Get the shaders (not initialized with update() and render() yet!).
+
+	                        this.s1 = this.renderer.getShader('shaderTexture');
+
+	                        this.s2 = this.renderer.getShader('shaderColor');
+
+	                        this.s3 = this.renderer.getShader('shaderDirLightTexture');
+
+	                        //////////////////////////////////
+	                        // TEXTURED SHADER.
+	                        //////////////////////////////////
+
+	                        // Create a UV skydome.
+
+	                        this.prim.createPrim(this.s1, // callback function
+	                        this.prim.typeList.SKYDOME, // type
+	                        'skydome', // name (not Id)
+	                        vec5(18, 18, 18, 0), // dimensions
+	                        vec5(10, 10, 10), // divisions MAKE SMALLER
+	                        vec3.fromValues(0, 0, 0), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0.1), util.degToRad(0)), // angular velocity in x, y, x
+	                        ['img/panorama_01.png'], // texture present
+	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+	                        );
+
+	                        this.prim.createPrim(this.s1, // callback function
+	                        this.prim.typeList.CUBE, 'first cube', // name
+	                        vec5(1, 1, 1), // dimensions
+	                        vec5(10, 10, 10, 0), // divisions, pass curving of edges as 4th parameter
+	                        vec3.fromValues(1, 0, 2), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(1), util.degToRad(1), util.degToRad(1)), // angular velocity in x, y, x
+	                        ['img/crate.png', 'img/webvr-logo1.png'], // texture image
+	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0));
+
+	                        this.prim.createPrim(this.s1, // callback function
+	                        this.prim.typeList.CUBE, 'toji cube', vec5(1, 1, 1, 0), // dimensions
+	                        vec5(1, 1, 1, 0), // divisions, pass curving of edges as 4th parameter
+	                        vec3.fromValues(5.5, 1.5, -3), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(40), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(1), util.degToRad(0)), // angular velocity in x, y, x
+	                        ['img/webvr-logo2.png'], vec4.fromValues(0.5, 1.0, 0.2, 1.0));
+
+	                        this.prim.createPrim(this.s1, // callback function
+	                        this.prim.typeList.TORUS, 'torus2', vec5(1, 1, 0.5, 0), // dimensions (first is width along x, second  width along y, diameter of torus tube)
+	                        vec5(9, 9, 9, 1), // divisions (first is number of rings, second is number of sides)
+	                        vec3.fromValues(-1.8, 3, -3.5), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(20), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(1), util.degToRad(0)), // angular velocity in x, y, x
+	                        ['img/uv-test.png'], // texture present, NOT USED
+	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0));
+
+	                        // DIMENSIONS INDICATE ANY X or Y CURVATURE.
+	                        // DIVISIONS FOR CUBED AND CURVED PLANE INDICATE SIDE TO DRAW
+
+
+	                        this.prim.createPrim(this.s1, // callback function
+	                        this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlaneBack', vec5(2, 1, 1, this.prim.directions.BACK, 1), // pass orientation ONE UNIT CURVE
+	                        vec5(10, 10, 10), // divisions
+	                        vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(0.0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                        ['img/webvr-logo2.png'], // texture present
+	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	                        );
+
+	                        this.prim.createPrim(this.s1, // callback function
+	                        this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlaneLeft', vec5(2, 1, 1, this.prim.directions.LEFT, 1), // pass orientation ONE UNIT CURVE
+	                        vec5(10, 10, 10), // divisions
+	                        vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(0.0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                        ['img/webvr-logo3.png'], // texture present
+	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	                        );
+
+	                        this.prim.createPrim(this.s1, // callback function
+	                        this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlaneRight', vec5(2, 1, 1, this.prim.directions.RIGHT, 1), // pass orientation ONE UNIT CURVE
+	                        vec5(10, 10, 10), // divisions
+	                        vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(0.0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                        ['img/webvr-logo4.png'], // texture present
+	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	                        );
+
+	                        this.prim.createPrim(this.s1, // callback function
+	                        this.prim.typeList.CURVEDOUTERPLANE, 'CurvedPlaneOut', vec5(2, 1, 1, this.prim.directions.RIGHT, 1), // dimensions NOTE: pass radius for curvature (also creates orbit) 
+	                        vec3.fromValues(10, 10, 10), // divisions
+	                        vec3.fromValues(-1.2, 0.0, 2.0), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                        ['img/mozvr-logo2.png'], // texture present
+	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	                        );
+
+	                        this.prim.createPrim(this.s1, // callback function
+	                        this.prim.typeList.ICOSPHERE, 'icosphere', vec5(3, 3, 3, 0), // dimensions
+	                        vec5(32, 32, 32), // 1 for icosohedron, 16 for good sphere
+	                        vec3.fromValues(4.5, 3.5, -2), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                        ['img/uv-test.png'], // texture present, NOT USED
+	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	                        );
+
+	                        this.prim.createPrim(this.s1, // callback function
+	                        this.prim.typeList.SKYICODOME, 'icoSkyDome', vec5(3, 3, 3, 0), // dimensions
+	                        vec5(32, 32, 32), // 1 for icosohedron, 16 for good sphere
+	                        vec3.fromValues(-4.5, 0.5, -2), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                        ['img/uv-test.png'], // texture present, NOT USED
+	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	                        );
+
+	                        this.prim.createPrim(this.s1, // callback function
+	                        this.prim.typeList.BOTTOMICODOME, 'bottomicodome', vec5(3, 3, 3, 0), // dimensions
+	                        vec5(32, 32, 32), // 1 for icosohedron, 16 for good sphere
+	                        vec3.fromValues(4.5, 0.5, -2), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                        ['img/uv-test.png'], // texture present, NOT USED
+	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	                        );
+
+	                        this.prim.createPrim(this.s1, // callback function
+	                        this.prim.typeList.CAP, // CAP DEFAULT, AT WORLD CENTER (also a UV polygon)
+	                        'CAP', vec5(3, 3, 3, 0), // dimensions INCLUDING start radius or torus radius(last value)
+	                        vec5(15, 15, 15), // divisions MUST BE CONTROLLED TO < 5
+	                        //vec3.fromValues(-3.5, -3.5, -1 ),    // position (absolute)
+	                        vec3.fromValues(-0.0, 0, 2.0), vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                        ['img/mozvr-logo1.png'], // texture present
+	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	                        );
+
+	                        this.prim.createPrim(this.s1, // callback function
+	                        this.prim.typeList.CONE, 'TestCone', vec5(1, 1, 1, 0.0, 0.0), // dimensions (4th dimension is truncation of cone, none = 0, flat circle = 1.0)
+	                        vec5(10, 10, 10), // divisions MAKE SMALLER
+	                        vec3.fromValues(-0, -1.5, 2.0), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                        ['img/uv-test.png'], // texture present
+	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	                        );
+
+	                        this.prim.createPrim(this.s1, // callback function
+	                        this.prim.typeList.CYLINDER, 'TestCylinder', vec5(1, 1, 1, 0.3, 0.7), // dimensions (4th dimension doesn't exist for cylinder)
+	                        vec5(40, 40, 40), // divisions MAKE SMALLER
+	                        vec3.fromValues(-1.5, -1.5, 2.0), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                        ['img/uv-test.png'], // texture present
+	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	                        );
+
+	                        this.prim.createPrim(this.s1, // callback function
+	                        this.prim.typeList.CAPSULE, 'TestCapsule', vec5(0.5, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
+	                        vec5(40, 40, 0), // divisions MAKE SMALLER
+	                        vec3.fromValues(-2.0, -1.5, 2.0), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                        ['img/uv-test.png'], // texture present
+	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	                        );
+
+	                        this.prim.createPrim(this.s1, // callback function
+	                        this.prim.typeList.TEARDROP, 'TestTearDrop', vec5(1, 2, 1), // dimensions (4th dimension doesn't exist for cylinder)
+	                        vec5(40, 40, 0), // divisions MAKE SMALLER
+	                        vec3.fromValues(-2.0, 1.5, 2.0), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                        ['img/uv-test.png'], // texture present
+	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	                        );
+
+	                        this.prim.createPrim(this.s1, // callback function
+	                        this.prim.typeList.DODECAHEDRON, 'Dodecahedron', vec5(1, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
+	                        vec5(40, 40, 0), // divisions MAKE SMALLER
+	                        vec3.fromValues(-1.0, 0.5, 3.0), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                        ['img/crate.png'], // texture present
+	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0), // color,
+	                        true // if true, apply texture to each face
+
+	                        );
+
+	                        /*
+	                        
+	                        // NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
+	                        
+	                        
+	                                    this.prim.createPrim(
+	                        
+	                                        this.s1,                      // callback function
+	                                        this.prim.typeList.MESH,
+	                                        'obj capsule',
+	                                        vec5( 1, 1, 1 ),       // dimensions (4th dimension doesn't exist for cylinder)
+	                                        vec5( 40, 40, 0  ),        // divisions MAKE SMALLER
+	                                        vec3.fromValues(0.0, 1.0, 2.0 ),      // position (absolute)
+	                                        vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+	                                        vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+	                                        vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+	                                        [ 'obj/capsule/capsule.png' ],               // texture present
+	                                        vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color,
+	                                        true,                                   // if true, apply texture to each face,
+	                                        [ 'obj/capsule/capsule.obj', 'obj/capsule/capsule.mtl' ] // object files (.obj, .mtl)
 	                                    
-	                                    // NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
-	                                    
-	                                    
-	                                                this.prim.createPrim(
-	                                    
-	                                                    this.s1,                      // callback function
-	                                                    this.prim.typeList.MESH,
-	                                                    'obj capsule',
-	                                                    vec5( 1, 1, 1 ),       // dimensions (4th dimension doesn't exist for cylinder)
-	                                                    vec5( 40, 40, 0  ),        // divisions MAKE SMALLER
-	                                                    vec3.fromValues(0.0, 1.0, 2.0 ),      // position (absolute)
-	                                                    vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-	                                                    vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-	                                                    vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-	                                                    [ 'obj/capsule/capsule.png' ],               // texture present
-	                                                    vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color,
-	                                                    true,                                   // if true, apply texture to each face,
-	                                                    [ 'obj/capsule/capsule.obj', 'obj/capsule/capsule.mtl' ] // object files (.obj, .mtl)
-	                                                
-	                                                )
-	                                    
-	                                    */
+	                                    )
+	                        
+	                        */
 
-	                                    //////////////////////////////////
-	                                    // COLORED SHADER.
-	                                    //////////////////////////////////
+	                        //////////////////////////////////
+	                        // COLORED SHADER.
+	                        //////////////////////////////////
 
 
-	                                    /*
-	                                        TODO: SOMETHING ABOUT THIS CAUSES AN ERROR!!!!!!!!!!!
-	                                        TODO: OUT OF RANGE ERROR IN SHADER
-	                                        TODO: renderer might need to disable some arrays when shifting betwee shaders!!!!!!
-	                                        TODO: MIGHT NEED A RESET 
-	                                    
-	                                                this.prim.createPrim(
-	                                    
-	                                                    this.s2,                      // callback function
-	                                                    this.prim.typeList.CUBE,
-	                                                    'colored cube',
-	                                                    vec5( 1, 1, 1, 0 ),            // dimensions
-	                                                    vec5( 3, 3, 3 ),            // divisions
-	                                                    vec3.fromValues( 0.2, 0.5, 1 ),          // position (absolute)
-	                                                    vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-	                                                    vec3.fromValues( util.degToRad( 20 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-	                                                    vec3.fromValues( util.degToRad( 0 ), util.degToRad( 1 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-	                                                    [ 'img/webvr-logo3.png' ],               // texture present, NOT USED
-	                                                    vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color
-	                                    
-	                                                ) 
-	                                    */
+	                        /*
+	                            TODO: SOMETHING ABOUT THIS CAUSES AN ERROR!!!!!!!!!!!
+	                            TODO: OUT OF RANGE ERROR IN SHADER
+	                            TODO: renderer might need to disable some arrays when shifting betwee shaders!!!!!!
+	                            TODO: MIGHT NEED A RESET 
+	                        
+	                                    this.prim.createPrim(
+	                        
+	                                        this.s2,                      // callback function
+	                                        this.prim.typeList.CUBE,
+	                                        'colored cube',
+	                                        vec5( 1, 1, 1, 0 ),            // dimensions
+	                                        vec5( 3, 3, 3 ),            // divisions
+	                                        vec3.fromValues( 0.2, 0.5, 1 ),          // position (absolute)
+	                                        vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+	                                        vec3.fromValues( util.degToRad( 20 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+	                                        vec3.fromValues( util.degToRad( 0 ), util.degToRad( 1 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+	                                        [ 'img/webvr-logo3.png' ],               // texture present, NOT USED
+	                                        vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color
+	                        
+	                                    ) 
+	                        */
 
-	                                    // NOTE: webvr implementation
+	                        // NOTE: webvr implementation
 
-	                                    // RESIZE EVENT HANDLING
+	                        // RESIZE EVENT HANDLING
 
-	                                    // NOTE: fullscreen mode with correct return to localscreen
+	                        // NOTE: fullscreen mode with correct return to localscreen
 
-	                                    // NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
+	                        // NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
 
-	                                    // TODO: READ SHADER VALUES TO DETERMINE IF BUFFERS NEEDED WHEN CREATING THE PRIM!!!!!!!!!!!!!!!!!!!!!
-	                                    // TODO: THIS WOULD HAVE TO HAPPEN IN THE PRIM CREATION THEMES
+	                        // TODO: READ SHADER VALUES TO DETERMINE IF BUFFERS NEEDED WHEN CREATING THE PRIM!!!!!!!!!!!!!!!!!!!!!
+	                        // TODO: THIS WOULD HAVE TO HAPPEN IN THE PRIM CREATION THEMES
 
-	                                    // TODO: JSON FILE FOR PRIMS (loadable) use this.load(), this.save()
+	                        // TODO: JSON FILE FOR PRIMS (loadable) use this.load(), this.save()
 
-	                                    // TODO: DEFAULT MINI WORLD IF NO JSON FILE (just a skybox and ground grid)
+	                        // TODO: DEFAULT MINI WORLD IF NO JSON FILE (just a skybox and ground grid)
 
-	                                    // TODO: TEST REMOVING PRIM DURING RUNTIME
+	                        // TODO: TEST REMOVING PRIM DURING RUNTIME
 
-	                                    // TODO: FADEIN/FADEOUT ANIMATION FOR PRIM
+	                        // TODO: FADEIN/FADEOUT ANIMATION FOR PRIM
 
-	                                    // TODO: PRIM LIGHTING MODEL IN PRIM
+	                        // TODO: PRIM LIGHTING MODEL IN PRIM
 
-	                                    this.prim.createPrim(this.s2, // callback function
-	                                    this.prim.typeList.MESH, 'teapot', vec5(1, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
-	                                    vec5(40, 40, 0), // divisions MAKE SMALLER
-	                                    vec3.fromValues(0.0, 1.0, 2.0), // position (absolute)
-	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                                    vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                                    [], // no texture present
-	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0), // color,
-	                                    false, // if true, apply texture to each face,
-	                                    ['obj/teapot/teapot.obj'] // object files (.obj, .mtl)
+	                        this.prim.createPrim(this.s2, // callback function
+	                        this.prim.typeList.MESH, 'teapot', vec5(1, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
+	                        vec5(40, 40, 0), // divisions MAKE SMALLER
+	                        vec3.fromValues(0.0, 1.0, 2.0), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                        [], // no texture present
+	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0), // color,
+	                        false, // if true, apply texture to each face,
+	                        ['obj/teapot/teapot.obj'] // object files (.obj, .mtl)
 
-	                                    );
+	                        );
 
-	                                    //////////////////////////////////
-	                                    // LIT TEXTURE SHADER.
-	                                    //////////////////////////////////
+	                        //////////////////////////////////
+	                        // LIT TEXTURE SHADER.
+	                        //////////////////////////////////
 
-	                                    this.prim.createPrim(this.s3, // callback function
-	                                    this.prim.typeList.CUBE, 'lit cube', vec5(1, 1, 1, 0), // dimensions
-	                                    vec5(1, 1, 1), // divisions
-	                                    vec3.fromValues(-3, -2, -3), // position (absolute)
-	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                                    vec3.fromValues(util.degToRad(20), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                                    vec3.fromValues(util.degToRad(0), util.degToRad(1), util.degToRad(0)), // angular velocity in x, y, x
-	                                    ['img/webvr-logo4.png'], // texture present, NOT USED
-	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0));
+	                        this.prim.createPrim(this.s3, // callback function
+	                        this.prim.typeList.CUBE, 'lit cube', vec5(1, 1, 1, 0), // dimensions
+	                        vec5(1, 1, 1), // divisions
+	                        vec3.fromValues(-3, -2, -3), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(20), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(1), util.degToRad(0)), // angular velocity in x, y, x
+	                        ['img/webvr-logo4.png'], // texture present, NOT USED
+	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0));
 
-	                                    this.prim.createPrim(this.s3, // callback function
-	                                    this.prim.typeList.TERRAIN, 'terrain', vec5(2, 2, 44, this.prim.directions.TOP, 0.1), // NOTE: ORIENTATION DESIRED vec5[3], waterline = vec5[4]
-	                                    vec5(100, 100, 100), // divisions
-	                                    vec3.fromValues(1.5, -1.5, 2), // position (absolute)
-	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                                    vec3.fromValues(util.degToRad(1), util.degToRad(0), util.degToRad(0)), // angular velocity in x, y, x
-	                                    ['img/mozvr-logo1.png'], // texture present
-	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0), // color
-	                                    null //heightMap                       // heightmap
+	                        this.prim.createPrim(this.s3, // callback function
+	                        this.prim.typeList.TERRAIN, 'terrain', vec5(2, 2, 44, this.prim.directions.TOP, 0.1), // NOTE: ORIENTATION DESIRED vec5[3], waterline = vec5[4]
+	                        vec5(100, 100, 100), // divisions
+	                        vec3.fromValues(1.5, -1.5, 2), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(1), util.degToRad(0), util.degToRad(0)), // angular velocity in x, y, x
+	                        ['img/mozvr-logo1.png'], // texture present
+	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0), // color
+	                        null //heightMap                       // heightmap
 
-	                                    );
+	                        );
 
-	                                    this.prim.createPrim(this.s3, // callback function
-	                                    this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlaneFront', vec5(2, 1, 1, this.prim.directions.FRONT, 1), // pass orientation ONE UNIT CURVE
-	                                    vec5(10, 10, 10), // divisions
-	                                    vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
-	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                                    vec3.fromValues(util.degToRad(0.0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                                    ['img/webvr-logo1.png'], // texture present
-	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+	                        this.prim.createPrim(this.s3, // callback function
+	                        this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlaneFront', vec5(2, 1, 1, this.prim.directions.FRONT, 1), // pass orientation ONE UNIT CURVE
+	                        vec5(10, 10, 10), // divisions
+	                        vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(0.0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                        ['img/webvr-logo1.png'], // texture present
+	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 
-	                                    );
+	                        );
 
-	                                    this.prim.createPrim(this.s3, // callback function
-	                                    this.prim.typeList.SPHERE, 'texsphere', vec5(1.5, 1.5, 1.5, 0), // dimensions
-	                                    vec5(6, 6, 6), // at least 8 subdividions to smooth!
+	                        this.prim.createPrim(this.s3, // callback function
+	                        this.prim.typeList.SPHERE, 'texsphere', vec5(1.5, 1.5, 1.5, 0), // dimensions
+	                        vec5(6, 6, 6), // at least 8 subdividions to smooth!
+	                        //vec3.fromValues(-5, -1.3, -1 ),       // position (absolute)
+	                        vec3.fromValues(-0, -1.0, 3.5), vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                        ['img/mozvr-logo1.png'], // texture present, NOT USED
+	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	                        );
+
+	                        this.prim.createPrim(this.s3, // callback function
+	                        this.prim.typeList.CUBESPHERE, 'cubesphere', vec5(3, 3, 3), // dimensions
+	                        vec5(10, 10, 10, 0), // divisions 4th parameter is degree of rounding.
+	                        vec3.fromValues(3, -0.7, -1), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(10), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                        ['img/mozvr-logo1.png'], // texture present, NOT USED
+	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	                        );
+
+	                        this.prim.createPrim(this.s3, // callback function
+	                        this.prim.typeList.REGULARTETRAHEDRON, 'regulartetrahedron', vec5(3, 3, 3, 0), // dimensions
+	                        vec5(18, 18, 18), // divisions
+	                        vec3.fromValues(6.7, 1.5, -4), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                        ['img/mozvr-logo2.png'], // texture present, NOT USED
+	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	                        );
+
+	                        this.prim.createPrim(this.s3, // callback function
+	                        this.prim.typeList.ICOSOHEDRON, 'icosohedron', vec5(3, 3, 3, 0), // dimensions
+	                        vec5(18, 18, 18), // divisions
+	                        vec3.fromValues(0.5, 3.5, -2), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                        ['img/mozvr-logo2.png'], // texture present, NOT USED
+	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	                        );
+
+	                        this.prim.createPrim(this.s3, // callback function
+	                        this.prim.typeList.BOTTOMDOME, 'TestDome', vec5(1, 1, 1, 0), // dimensions
+	                        vec5(10, 10, 10), // divisions MAKE SMALLER
+	                        vec3.fromValues(-4, 0.5, -0.5), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                        ['img/mozvr-logo2.png'], // texture present
+	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	                        );
+
+	                        this.prim.createPrim(this.s3, // callback function
+	                        this.prim.typeList.TORUS, // TORUS DEFAULT
+	                        'TORUS1', vec5(1, 1, 0.5, 0), // dimensions INCLUDING start radius or torus radius(last value)
+	                        vec5(15, 15, 15), // divisions MUST BE CONTROLLED TO < 5
+	                        //vec3.fromValues(-3.5, -3.5, -1 ),        // position (absolute)
+	                        vec3.fromValues(-0.0, 0, 2.0), vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                        ['img/mozvr-logo1.png'], // texture present
+	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+
+	                        );
+
+	                        // NOTE: the init() method sets up the update() and render() methods for the Shader.
+
+	                        this.r1 = this.s1.init();
+
+	                        this.r2 = this.s2.init();
+
+	                        this.r3 = this.s3.init();
+
+	                        /*
+	                            // ANOTHER MESH OBJECT
+	                        
+	                                this.s1.addObj( 
+	                        
+	                                   this.prim.createPrim(
+	                                    this.s1,
+	                                    this.prim.typeList.SPHERE,
+	                                    'texsphere',
+	                                    vec5( 1.5, 1.5, 1.5, 0 ),   // dimensions
+	                                    //vec5( 30, 30, 30 ),         // divisions
+	                                    vec5( 6, 6, 6 ), // at least 8 subdividions to smooth!
 	                                    //vec3.fromValues(-5, -1.3, -1 ),       // position (absolute)
-	                                    vec3.fromValues(-0, -1.0, 3.5), vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                                    ['img/mozvr-logo1.png'], // texture present, NOT USED
-	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+	                                    vec3.fromValues( 1, -1.0, 3.5 ),
+	                                    vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+	                                    vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+	                                    vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+	                                    [ 'img/mozvr-logo1.png' ],               // texture present, NOT USED
+	                                    vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
+	                        
+	                                ) );
+	                        */
 
-	                                    );
+	                        // Fire world update.
 
-	                                    this.prim.createPrim(this.s3, // callback function
-	                                    this.prim.typeList.CUBESPHERE, 'cubesphere', vec5(3, 3, 3), // dimensions
-	                                    vec5(10, 10, 10, 0), // divisions 4th parameter is degree of rounding.
-	                                    vec3.fromValues(3, -0.7, -1), // position (absolute)
-	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                                    vec3.fromValues(util.degToRad(10), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                                    ['img/mozvr-logo1.png'], // texture present, NOT USED
-	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+	                        this.render();
+	                }
 
-	                                    );
+	                /**
+	                 * Create objects specific to this world.
+	                 */
 
-	                                    this.prim.createPrim(this.s3, // callback function
-	                                    this.prim.typeList.REGULARTETRAHEDRON, 'regulartetrahedron', vec5(3, 3, 3, 0), // dimensions
-	                                    vec5(18, 18, 18), // divisions
-	                                    vec3.fromValues(6.7, 1.5, -4), // position (absolute)
-	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                                    ['img/mozvr-logo2.png'], // texture present, NOT USED
-	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+	        }, {
+	                key: 'create',
+	                value: function create() {}
 
-	                                    );
+	                /** 
+	                 * Update world.related properties, e.g. a HUD or framrate reado ut.
+	                 */
 
-	                                    this.prim.createPrim(this.s3, // callback function
-	                                    this.prim.typeList.ICOSOHEDRON, 'icosohedron', vec5(3, 3, 3, 0), // dimensions
-	                                    vec5(18, 18, 18), // divisions
-	                                    vec3.fromValues(0.5, 3.5, -2), // position (absolute)
-	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                                    ['img/mozvr-logo2.png'], // texture present, NOT USED
-	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+	        }, {
+	                key: 'update',
+	                value: function update() {
 
-	                                    );
+	                        // Check for VR mode.
 
-	                                    this.prim.createPrim(this.s3, // callback function
-	                                    this.prim.typeList.BOTTOMDOME, 'TestDome', vec5(1, 1, 1, 0), // dimensions
-	                                    vec5(10, 10, 10), // divisions MAKE SMALLER
-	                                    vec3.fromValues(-4, 0.5, -0.5), // position (absolute)
-	                                    vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                                    vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                                    ['img/mozvr-logo2.png'], // texture present
-	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+	                        // fps calculation.
 
-	                                    );
+	                        var now = performance.now();
 
-	                                    this.prim.createPrim(this.s3, // callback function
-	                                    this.prim.typeList.TORUS, // TORUS DEFAULT
-	                                    'TORUS1', vec5(1, 1, 0.5, 0), // dimensions INCLUDING start radius or torus radius(last value)
-	                                    vec5(15, 15, 15), // divisions MUST BE CONTROLLED TO < 5
-	                                    //vec3.fromValues(-3.5, -3.5, -1 ),        // position (absolute)
-	                                    vec3.fromValues(-0.0, 0, 2.0), vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                                    vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                                    vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                                    ['img/mozvr-logo1.png'], // texture present
-	                                    vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+	                        var delta = now - this.last;
 
-	                                    );
+	                        this.last = now;
 
-	                                    // NOTE: the init() method sets up the update() and render() methods for the Shader.
+	                        this.counter++;
 
-	                                    this.r1 = this.s1.init();
+	                        if (this.counter > 300) {
 
-	                                    this.r2 = this.s2.init();
+	                                this.counter = 0;
 
-	                                    this.r3 = this.s3.init();
-
-	                                    /*
-	                                        // ANOTHER MESH OBJECT
-	                                    
-	                                            this.s1.addObj( 
-	                                    
-	                                               this.prim.createPrim(
-	                                                this.s1,
-	                                                this.prim.typeList.SPHERE,
-	                                                'texsphere',
-	                                                vec5( 1.5, 1.5, 1.5, 0 ),   // dimensions
-	                                                //vec5( 30, 30, 30 ),         // divisions
-	                                                vec5( 6, 6, 6 ), // at least 8 subdividions to smooth!
-	                                                //vec3.fromValues(-5, -1.3, -1 ),       // position (absolute)
-	                                                vec3.fromValues( 1, -1.0, 3.5 ),
-	                                                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-	                                                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-	                                                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-	                                                [ 'img/mozvr-logo1.png' ],               // texture present, NOT USED
-	                                                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
-	                                    
-	                                            ) );
-	                                    */
-
-	                                    // Fire world update.
-
-	                                    this.render();
+	                                /////////console.log( 'delta:' + parseInt( 1000 / delta ) + ' fps' );
 	                        }
+	                }
 
-	                        /**
-	                         * Create objects specific to this world.
-	                         */
+	                /** 
+	                 * render the World for a mono or a VR display.
+	                 * Update Prims locally, then call shader/renderer 
+	                 * objects to do rendering. this.r# was bound (ES5 method) in 
+	                 * the constructor.
+	                 */
 
-	            }, {
-	                        key: 'create',
-	                        value: function create() {}
+	        }, {
+	                key: 'render',
+	                value: function render() {
 
-	                        /** 
-	                         * Update world.related properties, e.g. a HUD or framrate reado ut.
-	                         */
+	                        this.update();
 
-	            }, {
-	                        key: 'update',
-	                        value: function update() {
+	                        this.webgl.clear();
 
-	                                    // Check for VR mode.
+	                        // Render Prims attached to each renderer object.
 
-	                                    // fps calculation.
+	                        // TODO: Don't render until we update in the correct order.
 
-	                                    var now = performance.now();
+	                        // TODO: add this to renderer so we can loop on defined Shaders.
 
-	                                    var delta = now - this.last;
+	                        //this.r3.render();
 
-	                                    this.last = now;
+	                        //this.r2.render();
 
-	                                    this.counter++;
+	                        //this.r1.render();
 
-	                                    if (this.counter > 300) {
+	                        var display = this.vr.getDisplay();
 
-	                                                this.counter = 0;
+	                        if (display && display.isPresenting) {
 
-	                                                /////////console.log( 'delta:' + parseInt( 1000 / delta ) + ' fps' );
-	                                    }
+	                                this.r3.renderVR();
+
+	                                this.r2.renderVR();
+
+	                                this.r1.renderVR();
+
+	                                display.requestAnimationFrame(this.render);
+	                        } else {
+
+	                                // Render mono view.
+
+	                                this.r3.renderMono();
+
+	                                this.r2.renderMono();
+
+	                                this.r1.renderMono();
+
+	                                requestAnimationFrame(this.render);
 	                        }
+	                }
+	        }]);
 
-	                        /** 
-	                         * render the World for a mono or a VR display.
-	                         * Update Prims locally, then call shader/renderer 
-	                         * objects to do rendering. this.r# was bound (ES5 method) in 
-	                         * the constructor.
-	                         */
-
-	            }, {
-	                        key: 'render',
-	                        value: function render() {
-
-	                                    this.update();
-
-	                                    this.webgl.clear();
-
-	                                    // Render Prims attached to each renderer object.
-
-	                                    // TODO: Don't render until we update in the correct order.
-
-	                                    // TODO: add this to renderer so we can loop on defined Shaders.
-
-	                                    this.r3.render();
-
-	                                    this.r2.render();
-
-	                                    this.r1.render();
-
-	                                    var display = this.vr.getDisplay();
-
-	                                    if (display && display.isPresenting) {
-
-	                                                var gl = this.webgl.getContext();
-
-	                                                var c = this.webgl.getCanvas();
-
-	                                                var frameData = this.vr.getFrame(); // keep frameData object in webvr...
-
-	                                                var program = this.s2.getProgram();
-
-	                                                // TODO: DO THIS IN THE SHADER.
-
-	                                                /*
-	                                                // Render to left eye.
-	                                                  gl.viewport (0, 0, c.width * 0.5, c.height );
-	                                                  vr.getStandingPoseMatrix( mvMatrix, frameData.leftViewMatrix );
-	                                                  renderSceneView( frameData.leftProjectionMatrix, mvMatrix, frameData.pose );
-	                                                  // Render to right eye.
-	                                                  gl.viewport( c.width * 0.5, 0, c.width * 0.5, c.height );
-	                                                  vr.getStandingPoseMatrix( viewMat, frameData.rightViewMatrix );
-	                                                  renderSceneView( frameData.rightProjectionMatrix, viewMat, frameData.pose );
-	                                                    vrDisplay.submitFrame();
-	                                                  */
-
-	                                                display.requestAnimationFrame(this.render);
-	                                    } else {
-
-	                                                // Render mono view.
-
-	                                                requestAnimationFrame(this.render);
-	                                    }
-	                        }
-	            }]);
-
-	            return World;
+	        return World;
 	}();
 
 	exports.default = World;
@@ -21727,6 +21720,8 @@
 	                                        _this.fullscreenChange(evt);
 
 	                                        // Request VR presentation.
+
+	                                        // NOTE: THIS MAY TAKE A FEW SECONDS, PROVIDE A SPINNER
 
 	                                        vr.requestPresent();
 	                                });

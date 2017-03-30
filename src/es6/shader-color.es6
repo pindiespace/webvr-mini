@@ -166,20 +166,13 @@ class ShaderColor extends Shader {
 
         }
 
-
         // TODO: ADD CHECK ROUTINE TO ENSURE THAT PRIM IS VALID HERE!!!!!!!!!!!!!!!!
 
         // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
 
         // Update overall scene with changes (e.g. VR headset or mouse drags on desktop).
 
-        program.sceneUpdate = () => {
-
-            this.vr.setPM( pMatrix );
-
-            this.vr.setMV( mvMatrix );
-
-        }
+        // Get the current perspective matrix.
 
         /** 
          * POLYMORPHIC METHODS
@@ -191,16 +184,69 @@ class ShaderColor extends Shader {
 
             // Update changes in Prim position, rotation, etc.
 
+            mat4.identity( mvMatrix );
+
             obj.setMV( mvMatrix );
 
             // Custom updates go here.
 
         }
 
+        // Rendering left and right eye for VR 
 
-        // Rendering.
+        program.renderVR = () => {
 
-        program.render = () => {
+            let vr = this.vr,
+
+            display = vr.getDisplay();
+
+            if ( display && display.isPresenting ) {
+
+                frameData = vr.getFrameData();
+
+                if ( frameData ) {
+
+                    // mat4.identity( pMatrix );  not used.
+
+                    mat4.identity( mvMatrix );
+
+                    // Left eye.
+
+                    gl.viewport( 0, 0, canvas.width * 0.5, canvas.height );
+
+                    vr.getStandingViewMatrix( mvMatrix, frameData.leftViewMatrix );
+
+                    program.render( frameData.leftProjectionMatrix, mvMatrix, frameData.pose );
+
+                    // Right eye.
+
+                    gl.viewport( canvas.width * 0.5, 0, canvas.width * 0.5, canvas.height );
+
+                    vr.getStandingViewMatrix( mvMatrix, frameData.rightViewMatrix );
+
+                    program.render( frameData.rightProjectionMatrix, mvMatrix, frameData.pose );
+
+                    // Submit rendered stereo view to device.
+
+                    display.submitFrame();
+
+                }
+
+            }
+
+        }
+
+        // Rendering mono view.
+
+        program.renderMono = () => {
+
+            program.render( pMatrix, mvMatrix );
+
+        }
+
+        // Scene Rendering.
+
+        program.render = ( pm, mvm ) => {
 
             //console.log( 'gl:' + gl + ' canvas:' + canvas + ' mat4:' + mat4 + ' vec3:' + vec3 + ' pMatrix:' + pMatrix + ' mvMatrix:' + mvMatrix + ' program:' + program );
 
@@ -208,15 +254,11 @@ class ShaderColor extends Shader {
 
             // Reset perspective matrix.
 
-            // TODO: change this!!!!!!!
-
             mat4.perspective( pMatrix, Math.PI*0.4, canvas.width / canvas.height, near, far ); // right
 
             // Reset model-view matrix.
 
             // Reset perspective and model-view matrix.
-
-            program.sceneUpdate();
 
             // Loop through assigned objects.
 
@@ -226,7 +268,13 @@ class ShaderColor extends Shader {
 
                 // Update Model-View matrix with standard Prim values.
 
+                // TODO: scene pass in altered model-view matrix
+
+                // Individual prim update
+
                 program.update( obj, mvMatrix ); // TODO:::::::::mvMatrix needed here???????????????????????
+
+            // !!!!!!!!!!!!!!!!!!!!!!!!!UPDATE ALL OTHER SHADERS LIKE THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
                 // Bind vertex buffer.
 

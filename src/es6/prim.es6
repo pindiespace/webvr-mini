@@ -3608,13 +3608,15 @@ class Prim {
 
             let p = prim;
 
-            mat4.identity( mvMatrix );
+            //mat4.identity( mvMatrix ); // done in calling update()
 
             let z = -5; // TODO: default position relative to camera! !!! CHANGE??????
 
             // Translate.
 
             vec3.add( p.position, p.position, p.acceleration );
+
+            // Translate to default position.
 
             mat4.translate( mvMatrix, mvMatrix, [ p.position[ 0 ], p.position[ 1 ], z + p.position[ 2 ] ] );
 

@@ -222,6 +222,8 @@ class Ui {
 
                 // Request VR presentation.
 
+                // NOTE: THIS MAY TAKE A FEW SECONDS, PROVIDE A SPINNER
+
                 vr.requestPresent();
 
             } );

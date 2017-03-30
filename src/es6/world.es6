@@ -768,53 +768,33 @@ class World {
 
         // TODO: add this to renderer so we can loop on defined Shaders.
 
-        this.r3.render();
+        //this.r3.render();
 
-        this.r2.render();
+        //this.r2.render();
 
-        this.r1.render();
+        //this.r1.render();
 
         let display = this.vr.getDisplay();
 
         if ( display && display.isPresenting ) {
 
-            let gl = this.webgl.getContext();
- 
-            let c = this.webgl.getCanvas();
+            this.r3.renderVR();
 
-            let frameData = this.vr.getFrame(); // keep frameData object in webvr...
+            this.r2.renderVR();
 
-            let program = this.s2.getProgram();
-
-            // TODO: DO THIS IN THE SHADER.
-
-            /*
-            // Render to left eye.
-
-            gl.viewport (0, 0, c.width * 0.5, c.height );
-
-            vr.getStandingPoseMatrix( mvMatrix, frameData.leftViewMatrix );
-
-            renderSceneView( frameData.leftProjectionMatrix, mvMatrix, frameData.pose );
-
-            // Render to right eye.
-
-            gl.viewport( c.width * 0.5, 0, c.width * 0.5, c.height );
-
-            vr.getStandingPoseMatrix( viewMat, frameData.rightViewMatrix );
-
-            renderSceneView( frameData.rightProjectionMatrix, viewMat, frameData.pose );
-
-
-            vrDisplay.submitFrame();
-
-            */
+            this.r1.renderVR();
 
             display.requestAnimationFrame( this.render );
 
         } else {
 
             // Render mono view.
+
+            this.r3.renderMono();
+
+            this.r2.renderMono();
+
+            this.r1.renderMono();
 
             requestAnimationFrame( this.render );
 

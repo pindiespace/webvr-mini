@@ -14,7 +14,7 @@ class WebVR {
 
         this.glMatrix = glMatrix,
 
-        this.gl = webgl;
+        this.webgl = webgl;
 
         this.vrVers = 1.0,         // TODO: is there any way to get this?
 
@@ -90,25 +90,25 @@ class WebVR {
 
                             }
 
-                            // Adjust depthNear and depthFar to device info.
+                            // Adjust depthNear and depthFar to device info, or provide defaults.
 
                             if ( ! display.depthNear ) {
 
-                                display.depthNear = this.gl.near;
+                                display.depthNear = this.webgl.near;
 
                             } else {
 
-                                this.gl.near = display.depthNear;
+                                this.webgl.near = display.depthNear;
 
                             }
 
                             if ( ! display.depthFar ) {
 
-                                display.depthFar = this.gl.far;
+                                display.depthFar = this.webgl.far;
 
                             } else {
 
-                                this.gl.far = display.depthFar;
+                                this.webgl.far = display.depthFar;
 
                             }
 
@@ -214,9 +214,9 @@ class WebVR {
      * Pose matrix for standing roomscale view (move point of view up)
      * In our version, this needs to be called by shader.
      */
-    getStandingPoseMatrix () {
+    getStandingViewMatrix () {
 
-        let mat4 = this.glMatrix.mat4,
+        let mat4 = this.webglMatrix.mat4,
 
         display =  this.display;
 
@@ -267,19 +267,6 @@ class WebVR {
 
     }
 
-    /** 
-     * Set the perspective matrix.
-     */
-    setPM () {
-
-
-    }
-
-    setMV () {
-
-        
-    }
-
     /* 
      * =============== VR EVENTS ====================
      */
@@ -294,9 +281,9 @@ class WebVR {
 
         let display = this.display,
 
-        gl = this.gl.getContext(),
+        gl = this.webgl.getContext(),
 
-        c = this.gl.getCanvas(),
+        c = this.webgl.getCanvas(),
 
         p = c.parentNode;
 
@@ -348,7 +335,7 @@ class WebVR {
 
             p.style.height = '';
 
-            this.gl.resizeCanvas();
+            this.webgl.resizeCanvas();
 
          }
 
@@ -365,7 +352,7 @@ class WebVR {
 
         if ( display && display.capabilities.canPresent ) {
 
-            display.requestPresent( [ { source: this.gl.getCanvas() } ] )
+            display.requestPresent( [ { source: this.webgl.getCanvas() } ] )
 
             .then( () => {
 

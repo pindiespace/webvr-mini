@@ -219,16 +219,6 @@ class shaderDirLightTexture extends Shader {
         // TODO: https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/TechniquesforWorkingwithVertexData/TechniquesforWorkingwithVertexData.html
         // TODO: http://max-limper.de/tech/batchedrendering.html
 
-        // Update overall scene with changes (e.g. VR headset or mouse drags on desktop).
-
-        program.sceneUpdate = () => {
-
-            this.vr.setPM( pMatrix );
-
-            this.vr.setMV( mvMatrix );
-
-        }
-
         /** 
          * POLYMORPHIC METHODS
          */
@@ -236,6 +226,8 @@ class shaderDirLightTexture extends Shader {
         // Update object position, motion - given to World object.
 
         program.update = ( obj ) => {
+
+            mat4.identity( mvMatrix );
 
             // Standard mvMatrix updates.
 
@@ -258,9 +250,17 @@ class shaderDirLightTexture extends Shader {
 
         }
 
+        // Rendering mono view.
+
+        program.renderMono = () => {
+
+            program.render( pMatrix, mvMatrix );
+
+        }
+
         // Rendering - given to Renderer object, executed by World.
 
-        program.render = () => {
+        program.render = ( pm, mvm ) => {
 
             //console.log( 'gl:' + gl + ' canvas:' + canvas + ' mat4:' + mat4 + ' vec3:' + vec3 + ' pMatrix:' + pMatrix + ' mvMatrix:' + mvMatrix + ' program:' + program );
 
@@ -269,10 +269,6 @@ class shaderDirLightTexture extends Shader {
             // Reset perspective matrix.
 
             mat4.perspective( pMatrix, Math.PI*0.4, canvas.width / canvas.height, near, far ); // right
-
-            // Reset perspective and model-view matrix.
-
-            program.sceneUpdate();
 
             // Begin program loop
 

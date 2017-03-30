@@ -124,23 +124,15 @@ class ShaderTerrain extends Shader {
 
         }
 
-        // Update overall scene with changes (e.g. VR headset or mouse drags on desktop).
-
-        program.sceneUpdate = () => {
-
-            this.vr.setPM( pMatrix );
-
-            this.vr.setMV( mvMatrix );
-
-        }
-
         /** 
          * POLYMORPHIC METHODS
          */
 
         // Update object position, motion - given to World object.
 
-        program.update = ( obj ) => {
+        program.update = ( pm, mvm ) => {
+
+            mat4.identity( mvMatrix );
 
             // Standard mvMatrix updates.
 
@@ -158,7 +150,7 @@ class ShaderTerrain extends Shader {
 
         }
 
-        program.render = ( obj ) => {
+        program.render = ( pm, mvm ) => {
 
             //console.log( 'gl:' + gl + ' canvas:' + canvas + ' mat4:' + mat4 + ' vec3:' + vec3 + ' pMatrix:' + pMatrix + ' mvMatrix:' + mvMatrix + ' program:' + program );
 
@@ -167,10 +159,6 @@ class ShaderTerrain extends Shader {
             // Reset perspective matrix.
 
             mat4.perspective( pMatrix, Math.PI*0.4, canvas.width / canvas.height, near, far ); // right
-
-            // Reset perspective and model-view matrix.
-
-            program.sceneUpdate();
 
             // Begin program loop
 
