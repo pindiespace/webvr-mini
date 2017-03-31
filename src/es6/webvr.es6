@@ -1,6 +1,5 @@
 class WebVR {
 
-
     /** 
      * render scenes to webvr devices
      * following toji's room-scale example:
@@ -148,11 +147,19 @@ class WebVR {
      * Getter for frameData object.
      * @returns {VRFrameData} frame object for submission to the VR display.
      */
-    getFrame () {
+    getFrameData () {
 
         if ( this.display ) {
 
-            return this.display.getFrameData( this.frameData );
+              let result = this.display.getFrameData( this.frameData );
+
+              if ( result ) {
+
+                    return this.frameData;
+
+              }
+
+              console.error( 'WebVR::getFrame(): display.getFrameData returned false' );
 
         }
 
@@ -214,9 +221,9 @@ class WebVR {
      * Pose matrix for standing roomscale view (move point of view up)
      * In our version, this needs to be called by shader.
      */
-    getStandingViewMatrix () {
+    getStandingViewMatrix ( out, view ) {
 
-        let mat4 = this.webglMatrix.mat4,
+        let mat4 = this.glMatrix.mat4,
 
         display =  this.display;
 
@@ -313,9 +320,9 @@ class WebVR {
 
             c.height = height;
 
-            p.style.width = c.width + 'px';
+           // p.style.width = c.width + 'px'; // let it get full sized
 
-            p.style.height = c.height + 'px';
+           // p.style.height = c.height + 'px'; // let it get full-sized
 
             gl.viewportWidth = width;
 
@@ -358,11 +365,9 @@ class WebVR {
 
                 // success
 
-                // TOGGLE SHADERS HERE????
-
                 console.log( 'WebVR::requestPresent(): present was successful' );
 
-            },  () => {
+            }, () => {
 
                 // ERROR
                 // VRSamplesUtil.addError("requestPresent failed.", 2000);
@@ -401,6 +406,10 @@ class WebVR {
             .then( () => {
 
                 // success
+
+                // reset the canvas to full-screen.
+
+                //this.vrResize();
 
                 console.log( 'WebVR::exitPresent(): exited vrDisplay presentation' );
 

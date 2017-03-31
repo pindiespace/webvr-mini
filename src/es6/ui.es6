@@ -202,6 +202,8 @@ class Ui {
 
             // Add event listeners.
 
+            // Go to VR mode.
+
             vrButton.addEventListener( 'click' , ( evt ) => {
 
                 console.log( 'clicked vr button...' );
@@ -227,6 +229,8 @@ class Ui {
                 vr.requestPresent();
 
             } );
+
+            // Go to fullscreen mode.
 
             fullscreenButton.addEventListener( 'click', ( evt ) => {
 
@@ -284,7 +288,7 @@ class Ui {
 
             } );
 
-            // Return from vr button listener.
+            // Return from VR button listener.
 
             exitVRButton.addEventListener( 'click', ( evt ) => {
 

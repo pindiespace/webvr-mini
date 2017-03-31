@@ -230,9 +230,60 @@ class Shader {
 
         let program = this.program;
 
-        this.pMatrix = this.glMatrix.mat4.create(); // projection matrix (defaults to mono view)
+        let glMatrix = this.glMatrix;
 
-        this.mvMatrix = this.glMatrix.mat4.create(); // model-view matrix
+        let mat4 = glMatrix.mat4;
+
+        this.pMatrix = glMatrix.mat4.create(); // projection matrix (defaults to mono view)
+
+        this.mvMatrix = glMatrix.mat4.create(); // model-view matrix
+
+        let pMatrix = this.pMatrix;
+
+        let mvMatrix = this.mvMatrix;
+
+        let canvas = this.webgl.getCanvas();
+
+        let gl = this.webgl.getContext();
+
+        // Rendering mono view.
+
+        program.renderMono = () => {
+
+            mat4.identity( mvMatrix );
+
+            program.render( pMatrix, mvMatrix );
+
+        }
+
+
+        // Rendering left and right eye for VR 
+
+        program.renderVR = ( vr, display, frameData ) => {
+
+                mat4.identity( mvMatrix );
+
+                // Left eye.
+
+                gl.viewport( 0, 0, canvas.width * 0.5, canvas.height );
+
+                vr.getStandingViewMatrix( mvMatrix, frameData.leftViewMatrix );
+
+                program.render( frameData.leftProjectionMatrix, mvMatrix, frameData.pose );
+
+                // Right eye.
+
+                mat4.identity( mvMatrix );
+
+                gl.viewport( canvas.width * 0.5, 0, canvas.width * 0.5, canvas.height );
+
+                vr.getStandingViewMatrix( mvMatrix, frameData.rightViewMatrix );
+
+                program.render( frameData.rightProjectionMatrix, mvMatrix, frameData.pose );
+
+                // Submit rendered stereo view to device.
+
+        }
 
         /* Return references to our properties, and assign uniform and attribute locations using webgl object.
          * We do this return to provide local references for all the Shader and other objects
@@ -242,9 +293,9 @@ class Shader {
 
         return [ 
 
-            this.webgl.getContext(),
+            gl, //this.webgl.getContext(),
 
-            this.webgl.getCanvas(),
+            canvas, //this.webgl.getCanvas(),
 
             this.glMatrix.mat4,
 
@@ -256,13 +307,10 @@ class Shader {
 
             this.mvMatrix,
 
-            //this.glMatrix.mat4.create(),  // projection, pMatrix (defaults to mono view)
-
-            //this.glMatrix.mat4.create(),  // model-view, mvMatrix
-
             program,
 
             {
+
                 attribute: this.webgl.setAttributeArrays( program.shaderProgram, program.vsVars.attribute ),
 
                 uniform: this.webgl.setUniformLocations( program.shaderProgram, program.vsVars.uniform )

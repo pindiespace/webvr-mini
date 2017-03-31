@@ -180,101 +180,35 @@ class ShaderColor extends Shader {
 
         // Update object position, motion - given to World object.
 
-        program.update = ( obj ) => {
+        program.update = ( obj, MVM ) => {
 
-            // Update changes in Prim position, rotation, etc.
+            // Update the model-view matrix using current Prim position, rotation, etc.
 
-            mat4.identity( mvMatrix );
-
-            obj.setMV( mvMatrix );
-
-            // Custom updates go here.
-
-        }
-
-        // Rendering left and right eye for VR 
-
-        program.renderVR = () => {
-
-            let vr = this.vr,
-
-            display = vr.getDisplay();
-
-            if ( display && display.isPresenting ) {
-
-                frameData = vr.getFrameData();
-
-                if ( frameData ) {
-
-                    // mat4.identity( pMatrix );  not used.
-
-                    mat4.identity( mvMatrix );
-
-                    // Left eye.
-
-                    gl.viewport( 0, 0, canvas.width * 0.5, canvas.height );
-
-                    vr.getStandingViewMatrix( mvMatrix, frameData.leftViewMatrix );
-
-                    program.render( frameData.leftProjectionMatrix, mvMatrix, frameData.pose );
-
-                    // Right eye.
-
-                    gl.viewport( canvas.width * 0.5, 0, canvas.width * 0.5, canvas.height );
-
-                    vr.getStandingViewMatrix( mvMatrix, frameData.rightViewMatrix );
-
-                    program.render( frameData.rightProjectionMatrix, mvMatrix, frameData.pose );
-
-                    // Submit rendered stereo view to device.
-
-                    display.submitFrame();
-
-                }
-
-            }
-
-        }
-
-        // Rendering mono view.
-
-        program.renderMono = () => {
-
-            program.render( pMatrix, mvMatrix );
+            obj.setMV( MVM );
 
         }
 
         // Scene Rendering.
 
-        program.render = ( pm, mvm ) => {
-
-            //console.log( 'gl:' + gl + ' canvas:' + canvas + ' mat4:' + mat4 + ' vec3:' + vec3 + ' pMatrix:' + pMatrix + ' mvMatrix:' + mvMatrix + ' program:' + program );
+        program.render = ( PM, MVM ) => {
 
             gl.useProgram( shaderProgram );
 
+            // Save the model-view supplied by the shader. Mono and VR return different MV matrices.
+
+            let saveMV = mat4.clone( MVM );
+
             // Reset perspective matrix.
 
-            mat4.perspective( pMatrix, Math.PI*0.4, canvas.width / canvas.height, near, far ); // right
-
-            // Reset model-view matrix.
-
-            // Reset perspective and model-view matrix.
-
-            // Loop through assigned objects.
+            mat4.perspective( PM, Math.PI*0.4, canvas.width / canvas.height, near, far ); // right
 
             for ( let i = 0, len = program.renderList.length; i < len; i++ ) {
 
                 let obj = program.renderList[ i ];
 
-                // Update Model-View matrix with standard Prim values.
-
-                // TODO: scene pass in altered model-view matrix
-
                 // Individual prim update
 
-                program.update( obj, mvMatrix ); // TODO:::::::::mvMatrix needed here???????????????????????
-
-            // !!!!!!!!!!!!!!!!!!!!!!!!!UPDATE ALL OTHER SHADERS LIKE THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                program.update( obj, MVM );
 
                 // Bind vertex buffer.
 
@@ -292,8 +226,8 @@ class ShaderColor extends Shader {
 
                 // Set perspective and model-view matrix uniforms.
 
-                gl.uniformMatrix4fv( vsVars.uniform.mat4.uPMatrix, false, pMatrix );
-                gl.uniformMatrix4fv( vsVars.uniform.mat4.uMVMatrix, false, mvMatrix );
+                gl.uniformMatrix4fv( vsVars.uniform.mat4.uPMatrix, false, PM );
+                gl.uniformMatrix4fv( vsVars.uniform.mat4.uMVMatrix, false, MVM );
 
                 // Bind indices buffer.
 
@@ -314,6 +248,10 @@ class ShaderColor extends Shader {
                     gl.drawElements( gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0 );
 
                 }
+
+                // Copy back the original for the next Prim. 
+
+                mat4.copy( MVM, saveMV, MVM );
 
             } // end of renderList for Prims
 

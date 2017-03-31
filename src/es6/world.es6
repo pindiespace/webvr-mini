@@ -751,7 +751,7 @@ class World {
     }
 
     /** 
-     * render the World for a mono or a VR display.
+     * Render the World for a mono or a VR display.
      * Update Prims locally, then call shader/renderer 
      * objects to do rendering. this.r# was bound (ES5 method) in 
      * the constructor.
@@ -762,27 +762,21 @@ class World {
 
         this.webgl.clear();
 
-        // Render Prims attached to each renderer object.
+        let vr = this.vr;
 
-        // TODO: Don't render until we update in the correct order.
-
-        // TODO: add this to renderer so we can loop on defined Shaders.
-
-        //this.r3.render();
-
-        //this.r2.render();
-
-        //this.r1.render();
-
-        let display = this.vr.getDisplay();
+        let display = vr.getDisplay();
 
         if ( display && display.isPresenting ) {
 
-            this.r3.renderVR();
+            let frameData = this.vr.getFrameData();
 
-            this.r2.renderVR();
+            this.r3.renderVR( vr, display, frameData );  // directional light texture
 
-            this.r1.renderVR();
+            this.r2.renderVR( vr, display, frameData );  // color
+
+            this.r1.renderVR( vr, display, frameData );  // textured
+
+            display.submitFrame();
 
             display.requestAnimationFrame( this.render );
 

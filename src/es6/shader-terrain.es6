@@ -130,11 +130,9 @@ class ShaderTerrain extends Shader {
 
         // Update object position, motion - given to World object.
 
-        program.update = ( pm, mvm ) => {
+        program.update = ( obj, MVM ) => {
 
-            mat4.identity( mvMatrix );
-
-            // Standard mvMatrix updates.
+            // Update the model-view matrix using current Prim position, rotation, etc.
 
             obj.setMV( mvMatrix );
 
@@ -150,15 +148,17 @@ class ShaderTerrain extends Shader {
 
         }
 
-        program.render = ( pm, mvm ) => {
-
-            //console.log( 'gl:' + gl + ' canvas:' + canvas + ' mat4:' + mat4 + ' vec3:' + vec3 + ' pMatrix:' + pMatrix + ' mvMatrix:' + mvMatrix + ' program:' + program );
+        program.render = ( PM, MVM ) => {
 
             gl.useProgram( shaderProgram );
 
+            // Save the model-view supplied by the shader. Mono and VR return different MV matrices.
+
+            let saveMV = mat4.clone( MVM );
+
             // Reset perspective matrix.
 
-            mat4.perspective( pMatrix, Math.PI*0.4, canvas.width / canvas.height, near, far ); // right
+            mat4.perspective( PM, Math.PI*0.4, canvas.width / canvas.height, near, far ); // right
 
             // Begin program loop
 
@@ -172,7 +172,7 @@ class ShaderTerrain extends Shader {
 
                 // Update Model-View matrix with standard Prim values.
 
-                program.update( obj, mvMatrix );
+                program.update( obj, MVM );
 
                 // TODO: bind buffers
 
@@ -180,7 +180,11 @@ class ShaderTerrain extends Shader {
 
                 // TODO: drawElements()
 
-            } // end of renderList for prims.
+                // Copy back the original for the next Prim. 
+
+                mat4.copy( MVM, saveMV, MVM );
+
+            } // end of renderList for Prims.
 
         } // end of program.render()
 

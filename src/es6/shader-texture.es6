@@ -176,50 +176,39 @@ class ShaderTexture extends Shader {
 
         // Update object position, motion - given to World object.
 
-        program.update = ( obj ) => {
+        program.update = ( obj, MVM ) => {
 
-            // Standard Model-View (mvMatrix) updates, per Prim.
+            // Update the model-view matrix using current Prim position, rotation, etc.
 
-            mat4.identity( mvMatrix );
-
-            obj.setMV( mvMatrix );
-
-            // Custom updates go here.
-
-        }
-
-        // Rendering mono view.
-
-        program.renderMono = () => {
-
-            program.render( pMatrix, mvMatrix );
+            obj.setMV( MVM );
 
         }
 
         // Rendering.
 
-        program.render = ( pm, mvm ) => {
-
-            //console.log( 'gl:' + gl + ' canvas:' + canvas + ' mat4:' + mat4 + ' vec3:' + vec3 + ' pMatrix:' + pMatrix + ' mvMatrix:' + mvMatrix + ' program:' + program );
+        program.render = ( PM, MVM ) => {
 
             gl.useProgram( shaderProgram );
 
+            // Save the model-view supplied by the shader. Mono and VR return different MV matrices.
+
+            let saveMV = mat4.clone( MVM );
+
             // Reset perspective matrix.
 
-            mat4.perspective( pMatrix, Math.PI*0.4, canvas.width / canvas.height, near, far ); // right
-
-            // Begin program loop
+            mat4.perspective( PM, Math.PI*0.4, canvas.width / canvas.height, near, far ); // right
 
             for ( let i = 0, len = program.renderList.length; i < len; i++ ) {
 
                 let obj = program.renderList[ i ];
 
                 // Only render if we have at least one texture loaded.
-                  if ( ! obj.textures[0] || ! obj.textures[0].texture ) continue;
 
-                // Update Model-View matrix with standard Prim values.
+                if ( ! obj.textures[0] || ! obj.textures[0].texture ) continue;
 
-                program.update( obj, mvMatrix );
+                // Individual Prim update.
+
+                program.update( obj, MVM );
 
                 // Bind vertex buffer.
 
@@ -243,8 +232,8 @@ class ShaderTexture extends Shader {
 
                 // Set perspective and model-view matrix uniforms.
 
-                gl.uniformMatrix4fv( vsVars.uniform.mat4.uPMatrix, false, pMatrix );
-                gl.uniformMatrix4fv( vsVars.uniform.mat4.uMVMatrix, false, mvMatrix );
+                gl.uniformMatrix4fv( vsVars.uniform.mat4.uPMatrix, false, PM );
+                gl.uniformMatrix4fv( vsVars.uniform.mat4.uMVMatrix, false, MVM );
 
                 // Bind index buffer.
 
@@ -266,6 +255,10 @@ class ShaderTexture extends Shader {
                     gl.drawElements( gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0 );
 
                 }
+
+                // Copy back the original for the next Prim. 
+
+                mat4.copy( MVM, saveMV, MVM );
 
             } // end of renderList for Prims
 

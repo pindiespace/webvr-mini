@@ -225,13 +225,11 @@ class shaderDirLightTexture extends Shader {
 
         // Update object position, motion - given to World object.
 
-        program.update = ( obj ) => {
+        program.update = ( obj, MVM ) => {
 
-            mat4.identity( mvMatrix );
+            // Update the model-view matrix using current Prim position, rotation, etc.
 
-            // Standard mvMatrix updates.
-
-            obj.setMV( mvMatrix );
+            obj.setMV( MVM );
 
             // Compute lighting normals.
 
@@ -241,34 +239,27 @@ class shaderDirLightTexture extends Shader {
 
             // Calculates a 3x3 normal matrix (transpose inverse) from the 4x4 matrix.
 
-            mat3.normalFromMat4( nMatrix, mvMatrix );
+            /////mat3.normalFromMat4( nMatrix, mvMatrix );
 
-            // glmat3 library
-            //mat4.normalFromMat4( nMatrix, mvMatrix );
+            mat3.normalFromMat4( nMatrix, MVM );
 
             // Custom updates go here, make local references to vsVars and fsVars.
 
         }
 
-        // Rendering mono view.
-
-        program.renderMono = () => {
-
-            program.render( pMatrix, mvMatrix );
-
-        }
-
         // Rendering - given to Renderer object, executed by World.
 
-        program.render = ( pm, mvm ) => {
-
-            //console.log( 'gl:' + gl + ' canvas:' + canvas + ' mat4:' + mat4 + ' vec3:' + vec3 + ' pMatrix:' + pMatrix + ' mvMatrix:' + mvMatrix + ' program:' + program );
+        program.render = ( PM, MVM ) => {
 
             gl.useProgram( shaderProgram );
 
+            // Save the model-view supplied by the shader. Mono and VR return different MV matrices.
+
+            let saveMV = mat4.clone( MVM );
+
             // Reset perspective matrix.
 
-            mat4.perspective( pMatrix, Math.PI*0.4, canvas.width / canvas.height, near, far ); // right
+            mat4.perspective( PM, Math.PI*0.4, canvas.width / canvas.height, near, far ); // right
 
             // Begin program loop
 
@@ -282,7 +273,7 @@ class shaderDirLightTexture extends Shader {
 
                 // Update Model-View matrix with standard Prim values.
 
-                program.update( obj, mvMatrix );
+                program.update( obj, MVM );
 
                 // Bind vertex buffer.
 
@@ -343,8 +334,8 @@ class shaderDirLightTexture extends Shader {
 
                 // Set perspective and model-view matrix uniforms.
 
-                gl.uniformMatrix4fv( vsVars.uniform.mat4.uPMatrix, false, pMatrix );
-                gl.uniformMatrix4fv( vsVars.uniform.mat4.uMVMatrix, false, mvMatrix );
+                gl.uniformMatrix4fv( vsVars.uniform.mat4.uPMatrix, false, PM );
+                gl.uniformMatrix4fv( vsVars.uniform.mat4.uMVMatrix, false, MVM );
 
                 gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer );
 
@@ -363,7 +354,11 @@ class shaderDirLightTexture extends Shader {
 
                 }
 
-            }
+                // Copy back the original for the next Prim. 
+
+                mat4.copy( MVM, saveMV, MVM );
+
+            } // end of renderList for Prims
 
         } // end of program.render()
 
