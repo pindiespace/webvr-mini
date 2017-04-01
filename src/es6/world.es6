@@ -770,11 +770,11 @@ class World {
 
             let frameData = this.vr.getFrameData();
 
-            this.r3.renderVR( vr, display, frameData );  // directional light texture
+                this.r3.renderVR( vr, display, frameData );  // directional light texture
 
-            this.r2.renderVR( vr, display, frameData );  // color
+                this.r2.renderVR( vr, display, frameData );  // color
 
-            this.r1.renderVR( vr, display, frameData );  // textured
+                this.r1.renderVR( vr, display, frameData );  // textured
 
             display.submitFrame();
 

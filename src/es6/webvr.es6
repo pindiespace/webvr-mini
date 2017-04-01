@@ -218,10 +218,14 @@ class WebVR {
     }
 
     /** 
-     * Pose matrix for standing roomscale view (move point of view up)
-     * In our version, this needs to be called by shader.
+     * Pose matrix for standing roomscale view (move point of view up). Also multiply our 
+     * current model-view matrix by the left and right eye view matrix.
+     *
+     * @param {glMatrix.vec4} mvMatrix the current model-view matrix.
+     * @param {glmatrix.vec4} eyeView the frameData.leftViewMatrix or frameData.rightViewMatrix.
+     * @param {glMatrix.vec4} pose matrix describing user pose.
      */
-    getStandingViewMatrix ( out, view ) {
+    getStandingViewMatrix ( mvMatrix, eyeView, pose ) {
 
         let mat4 = this.glMatrix.mat4,
 
@@ -229,48 +233,41 @@ class WebVR {
 
         if ( display.stageParameters ) {
 
-          /* 
-           * After toji:
-           * If the headset provides stageParameters use the
-           * sittingToStandingTransform to transform the view matrix into a
-           * space where the floor in the center of the users play space is the
-           * origin.
-           */
+             /* 
+             * After toji:
+             * If the headset provides stageParameters use the
+             * sittingToStandingTransform to transform the view matrix into a
+             * space where the floor in the center of the users play space is the
+             * origin.
+             */
 
-          mat4.invert( out, display.stageParameters.sittingToStandingTransform );
+            // This pulls us off the floor, and rotates the view on HTC Vive 90 degres clockwise in the xz direction.
 
-          mat4.multiply( out, view, out );
+            mat4.invert( mvMatrix, display.stageParameters.sittingToStandingTransform );
+
+            mat4.multiply( mvMatrix, eyeView, mvMatrix );
 
         } else {
 
-          /* 
-           * After toji:
-           * You'll want to translate the view to compensate for the
-           * scene floor being at Y=0. Ideally this should match the user's
-           * height (you may want to make it configurable). For this demo we'll
-           * just assume all human beings are 1.65 meters (~5.4ft) tall.
-           */
+            /* 
+             * After toji:
+             * You'll want to translate the view to compensate for the
+             * scene floor being at Y=0. Ideally this should match the user's
+             * height (you may want to make it configurable). For this demo we'll
+             * just assume all human beings are 1.65 meters (~5.4ft) tall.
+             */
 
-          mat4.identity( out );
+            mat4.identity( mvMatrix );
 
-          mat4.translate( out, out, [ 0, PLAYER_HEIGHT, 0 ] );
+            mat4.translate( mvMatrix, mvMatrix, [ 0, PLAYER_HEIGHT, 0 ] );
 
-          mat4.invert( out, out );
+            mat4.invert( mvMatrix, mvMatrix );
 
-          mat4.multiply( out, view, out );
+            mat4.multiply( mvMatrix, eyeView, mvMatrix );
 
         }
 
-        return out;
-
-    }
-
-    /** 
-     * Reset user pose in the simulation.
-     */
-    resetPose () {
-
-        this.display.resetPose();
+        return mvMatrix;
 
     }
 
@@ -342,7 +339,9 @@ class WebVR {
 
             p.style.height = '';
 
-            this.webgl.resizeCanvas();
+            // Force a canvas resize, even if our window size did not change.
+
+            this.webgl.resizeCanvas( true );
 
          }
 
@@ -364,6 +363,13 @@ class WebVR {
             .then( () => {
 
                 // success
+
+                /* 
+                 * Note: the <canvas> size changes, but it is wrapped in our <div> so 
+                 * doesn't change size. This makes it easier to see the whole stereo view onscreen.
+                 * 
+                 * TODO: expand to window width???????
+                 */
 
                 console.log( 'WebVR::requestPresent(): present was successful' );
 

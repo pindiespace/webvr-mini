@@ -380,11 +380,10 @@ class WebGL {
 
     /** 
      * Resize the canvas if the window changes size. 
-     * NOTE: affected by CSS styles.
-     * TODO: check current CSS style.
-     * (TWGL)
+     * @param {Boolean} force force a resize, even if window size has not changed. Use 
+     * when exiting VR.
      */
-    resizeCanvas () {
+    resizeCanvas ( force ) {
 
         if ( this.ready() ) {
 
@@ -394,7 +393,7 @@ class WebGL {
 
             let wHeight = this.util.getWindowHeight();
 
-            if ( wWidth !== this.oldWidth ) {
+            if ( force || wWidth !== this.oldWidth ) {
 
                 const f = Math.max( window.devicePixelRatio, 1 );
 

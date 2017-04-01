@@ -196,7 +196,7 @@ class ShaderTexture extends Shader {
 
             // Reset perspective matrix.
 
-            mat4.perspective( PM, Math.PI*0.4, canvas.width / canvas.height, near, far ); // right
+            //mat4.perspective( PM, Math.PI*0.4, canvas.width / canvas.height, near, far ); // right
 
             for ( let i = 0, len = program.renderList.length; i < len; i++ ) {
 

@@ -216,7 +216,7 @@ class Ui {
 
                 this.exitVRButton.show();
 
-                // MANUALLY run fullscreen toggle.
+                // Set the mode (DOM -> WebVR stereo).
 
                 this.mode = this.UI_VR;
 
@@ -246,9 +246,13 @@ class Ui {
 
                 this.oldHeight = p.clientHeight * f | 0;
 
+                // Set style of enclosing element <div><canvas><</div> to screen size.
+
                 p.style.width = this.util.getScreenWidth() + 'px';
 
                 p.style.height = this.util.getScreenHeight() + 'px';
+
+                // Set the mode (DOM -> Fullscreen)
 
                 this.mode = this.UI_DOM;
 

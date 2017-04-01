@@ -153,10 +153,6 @@ class ShaderMetal extends Shader {
 
             let saveMV = mat4.clone( MVM );
 
-            // Reset perspective matrix.
-
-            mat4.perspective( PM, Math.PI*0.4, canvas.width / canvas.height, near, far ); // right
-
             // Begin program loop
 
             for ( let i = 0, len = program.renderList.length; i < len; i++ ) {

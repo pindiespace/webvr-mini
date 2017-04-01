@@ -246,11 +246,17 @@ class Shader {
 
         let gl = this.webgl.getContext();
 
+        let near = this.webgl.near;
+
+        let far = this.webgl.far;
+
         // Rendering mono view.
 
         program.renderMono = () => {
 
             mat4.identity( mvMatrix );
+
+            mat4.perspective( pMatrix, Math.PI*0.4, canvas.width / canvas.height, near, far );
 
             program.render( pMatrix, mvMatrix );
 
@@ -261,15 +267,17 @@ class Shader {
 
         program.renderVR = ( vr, display, frameData ) => {
 
-                mat4.identity( mvMatrix );
+                // Framedata provided by calling function.
 
                 // Left eye.
 
+                mat4.identity( mvMatrix );
+
                 gl.viewport( 0, 0, canvas.width * 0.5, canvas.height );
 
-                vr.getStandingViewMatrix( mvMatrix, frameData.leftViewMatrix );
+                vr.getStandingViewMatrix( mvMatrix, frameData.leftViewMatrix, frameData.pose ); // after Toji
 
-                program.render( frameData.leftProjectionMatrix, mvMatrix, frameData.pose );
+                program.render( frameData.leftProjectionMatrix, mvMatrix );
 
                 // Right eye.
 
@@ -277,11 +285,11 @@ class Shader {
 
                 gl.viewport( canvas.width * 0.5, 0, canvas.width * 0.5, canvas.height );
 
-                vr.getStandingViewMatrix( mvMatrix, frameData.rightViewMatrix );
+                vr.getStandingViewMatrix( mvMatrix, frameData.rightViewMatrix, frameData.pose ); // after Toji
 
-                program.render( frameData.rightProjectionMatrix, mvMatrix, frameData.pose );
+                program.render( frameData.rightProjectionMatrix, mvMatrix );
 
-                // Submit rendered stereo view to device.
+                // Calling function submits rendered stereo view to device.
 
         }
 
