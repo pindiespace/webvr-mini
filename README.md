@@ -1,4 +1,4 @@
-# ![webvr-mini](docs/images/logo.png)
+# ![webvr-mini](docs/image/logo.png)
 
 ### mini library offering basic webgl and webvr support
 
