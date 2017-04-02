@@ -10,25 +10,33 @@ The goal was to create an app that would allow experimentation in WebVR with sim
 
 The dev environment uses WebPack. Gulp might be a better choice, but errors can crash gulp silently so you continue to edit while your bundle is not updated. Since development with WebGL and WebVR causes a lot of crashes, using WebPack and the WebPack development server seemed a better choice.
 
-```npm install webpack -g
+```
+npm install webpack -g
 npm install webpack-dev-server -g
-npm install```
+npm install
+```
 
 ## Development
 
 To run debugging, use the following npm command (in a separate window)
 
-```npm run dev```
+```
+npm run dev
+```
 
 To minify and run production, excluding debugging libraries, type.
 
-```npm run build```
+```
+npm run build
+```
 
 ## Starting the server
 
 Start webpack watching in first console window:
 
-```"start": "webpack-dev-server --inline --devtool eval --progress --colors --content-base dist"```
+```
+"start": "webpack-dev-server --inline --devtool eval --progress --colors --content-base dist"
+```
 
 ## Checking things in the console
 
