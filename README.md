@@ -4,11 +4,15 @@
 
 This library illustrates how to get a WebVR installation up in barebones code, without any frameworks or JavaScript libraries, relying directly on the WebGL and WebVR libraries.
 
-# Building
+The goal was to create an app that would allow experimentation in WebVR with simple worlds, without the overhead of a large library like THREE.js. In addition, it is written in ES6 instead of ES5.
 
-npm install webpack -g
+## Building
+
+The dev environment uses WebPack. Gulp might be a better choice, but errors can crash gulp silently so you continue to edit while your bundle is not updated. Since development with WebGL and WebVR causes a lot of crashes, using WebPack and the WebPack development server seemed a better choice.
+
+```npm install webpack -g
 npm install webpack-dev-server -g
-npm install
+npm install```
 
 ## Development
 
@@ -30,11 +34,13 @@ Start webpack watching in first console window:
 
 To see auto-updates, access using the dev server URL. NOTE: this will only show 
 internal console.logs. You can't see objects attached to the window from here, since we 
-are in an <iframe>.
+are running in an <iframe>.
 
 http://localhost:8080/webpack-dev-server/
 
-To see the site without auto-updates, and with GLOBAL windows object visible in the Console, use http://localhost:8080
+To see the site without auto-updates, and with objects attached to the window object visible in the Console (really needed for debugging without a lot of unit tests), use:
+
+http://localhost:8080
 
 ## Note on environment variables
 
@@ -52,7 +58,6 @@ __RELEASE__ means we are in a production environment
 Royalty-free 3d models for testing from [CG Trader](https://www.cgtrader.com)
 
 [Ui icons from The Noun Project](https://thenounproject.com/) (see individual credits in source).
-
 
 ## References
 
