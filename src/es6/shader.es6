@@ -263,7 +263,7 @@ class Shader {
         }
 
 
-        // Rendering left and right eye for VR 
+        // Rendering left and right eye for VR. Called once for each Shader by World.
 
         program.renderVR = ( vr, display, frameData ) => {
 
@@ -275,7 +275,9 @@ class Shader {
 
                 gl.viewport( 0, 0, canvas.width * 0.5, canvas.height );
 
-                vr.getStandingViewMatrix( mvMatrix, frameData.leftViewMatrix, frameData.pose ); // after Toji
+                // Multiply mvMatrix by our eye.leftViewMatrix, and adjust for height of VR viewer.
+
+                vr.getStandingViewMatrix( mvMatrix, frameData.leftViewMatrix, frameData.pose );
 
                 program.render( frameData.leftProjectionMatrix, mvMatrix );
 
@@ -284,6 +286,8 @@ class Shader {
                 mat4.identity( mvMatrix );
 
                 gl.viewport( canvas.width * 0.5, 0, canvas.width * 0.5, canvas.height );
+
+                // Multiply mvMatrix by our eye.rightViewMatrix, and adjust for height of VR viewer.
 
                 vr.getStandingViewMatrix( mvMatrix, frameData.rightViewMatrix, frameData.pose ); // after Toji
 

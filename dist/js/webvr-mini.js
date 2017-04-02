@@ -1454,7 +1454,11 @@
 
 	                                    if (canvas) {
 
-	                                                // NOTE: IE10 needs this bound to DOM for the following command to work.
+	                                                // This line will make the <canvas> element work for focus events.
+
+	                                                // canvas.addAttribute( 'tabindex', '1' );
+
+	                                                // NOTE: IE10 needs canvas bound to DOM for the following command to work.
 
 	                                                var r = canvas.getBoundingClientRect();
 
@@ -2598,6 +2602,8 @@
 
 	                this.stats = {};
 
+	                // Immediately initialize (for now).
+
 	                if (init === true) {
 
 	                        this.init();
@@ -2927,7 +2933,10 @@
 	                                         * Note: the <canvas> size changes, but it is wrapped in our <div> so 
 	                                         * doesn't change size. This makes it easier to see the whole stereo view onscreen.
 	                                         * 
-	                                         * TODO: expand to window width???????
+	                                         * NOTE: this triggers this.vrResize(), but NOT a window resize (handler: webgl.resize() ) event;
+	                                         * 
+	                                         * TODO: fullscreen? Expand to window width???????
+	                                         *
 	                                         */
 
 	                                        console.log('WebVR::requestPresent(): present was successful');
@@ -2951,6 +2960,7 @@
 	        }, {
 	                key: 'exitPresent',
 	                value: function exitPresent() {
+	                        var _this2 = this;
 
 	                        console.log('WebVR::exitPresent():');
 
@@ -2963,26 +2973,32 @@
 	                                        return;
 	                                }
 
-	                                display.exitPresent().then(function () {
+	                                display.exitPresent() // NO semicolon!
 
-	                                        // success
+	                                .then(function () {
 
-	                                        // reset the canvas to full-screen.
+	                                        /* 
+	                                         * Success!
+	                                         *
+	                                         * NOTE: this triggers this.vrResize, which manually forces a window.resize event
+	                                         * (handler: webgl.resize()) to set our <canvas> back to its DOM dimensions.
+	                                         *
+	                                         */
 
-	                                        //this.vrResize();
+	                                        removeEventListener('keydown', _this2.vrHandleEsc); ///////////////////////////////////////////////////
 
-	                                        console.log('WebVR::exitPresent(): exited vrDisplay presentation');
+	                                        console.log('WebVR::exitPresent(): exited display presentation');
 	                                }, function () {
 
 	                                        // ERROR
 
 	                                        //VRSamplesUtil.addError("exitPresent failed.", 2000);
 
-	                                        console.error('WebVR::exitPresent(): failed to exit vrDisplay presentation');
+	                                        console.error('WebVR::exitPresent(): failed to exit display presentation');
 	                                });
 	                        } else {
 
-	                                console.error('WebVR::exitPresent(): no valid vr display found');
+	                                console.error('WebVR::exitPresent(): no valid display found');
 	                        }
 	                }
 
@@ -3006,14 +3022,14 @@
 
 	                                if (display.capabilities.hasExternalDisplay) {
 
-	                                        // trigger exit vr in ui object
+	                                        // Any changes needed when we jump to VR presenting.
 
 	                                }
 	                        } else {
 
 	                                if (display.capabilities.hasExternalDisplay) {
 
-	                                        // trigger enter vr in ui object
+	                                        // Any changes needed when we leave VR presenting.
 
 	                                }
 	                        }
@@ -4537,10 +4553,6 @@
 
 	                                var saveMV = mat4.clone(MVM);
 
-	                                // Reset perspective matrix.
-
-	                                //mat4.perspective( PM, Math.PI*0.4, canvas.width / canvas.height, near, far ); // right
-
 	                                for (var i = 0, len = program.renderList.length; i < len; i++) {
 
 	                                        var obj = program.renderList[i];
@@ -4883,7 +4895,7 @@
 	                                program.render(pMatrix, mvMatrix);
 	                        };
 
-	                        // Rendering left and right eye for VR 
+	                        // Rendering left and right eye for VR. Called once for each Shader by World.
 
 	                        program.renderVR = function (vr, display, frameData) {
 
@@ -4895,7 +4907,9 @@
 
 	                                gl.viewport(0, 0, canvas.width * 0.5, canvas.height);
 
-	                                vr.getStandingViewMatrix(mvMatrix, frameData.leftViewMatrix, frameData.pose); // after Toji
+	                                // Multiply mvMatrix by our eye.leftViewMatrix, and adjust for height of VR viewer.
+
+	                                vr.getStandingViewMatrix(mvMatrix, frameData.leftViewMatrix, frameData.pose);
 
 	                                program.render(frameData.leftProjectionMatrix, mvMatrix);
 
@@ -4904,6 +4918,8 @@
 	                                mat4.identity(mvMatrix);
 
 	                                gl.viewport(canvas.width * 0.5, 0, canvas.width * 0.5, canvas.height);
+
+	                                // Multiply mvMatrix by our eye.rightViewMatrix, and adjust for height of VR viewer.
 
 	                                vr.getStandingViewMatrix(mvMatrix, frameData.rightViewMatrix, frameData.pose); // after Toji
 
@@ -21554,9 +21570,13 @@
 
 	                };
 
-	                this.controls = [], this.util = util, this.gl = webgl, this.vr = webvr;
+	                this.controls = [], this.util = util, this.webgl = webgl, this.webvr = webvr;
 
 	                this.vrButton = null, this.fullscreenButton = null, this.poseButton = null, this.exitFullscreenButton = null, this.exitVRButton = null;
+
+	                // EventHandler ES6 kludges. Rebind handlers so we can use removeEventListener.
+
+	                this.vrHandleKeys = this.vrHandleKeys.bind(this);
 
 	                // save old DOM style
 
@@ -21576,9 +21596,6 @@
 
 	                                uiMode = this.mode;
 	                        }
-
-	                        // Give the webvr object a callback for changing ui for 'onvrpresentchange' event.
-
 
 	                        // Listen to fullscreen change events.
 
@@ -21602,8 +21619,14 @@
 
 	                        console.log('entering DOMUi');
 
-	                        var c = this.gl.getCanvas(),
+	                        var c = this.webgl.getCanvas(),
 	                            p = c.parentNode;
+
+	                        // c.parentNode should be a <div> that gets ALL the DOM styling. Don't touch <canvas>.
+
+	                        // TODO: set local style of <canvas> to width=100%, height = 100%
+
+	                        // TODO: test with fullscreen <canvas> style (attached to document.body)
 
 	                        // Set some local styles overriding any conflicting styles for parentNode.
 
@@ -21613,7 +21636,7 @@
 
 	                        p.style.padding = '0';
 
-	                        // Check for controls.
+	                        // Check for control HTML markup.
 
 	                        var controls = c.parentNode.querySelector('.webvr-mini-controls');
 
@@ -21626,9 +21649,11 @@
 
 	                                console.log('creating DOM Ui');
 
+	                                this.controls = controls; // save a shadow reference
+
 	                                // VR button
 
-	                                var vr = this.vr; // WebVR object with display
+	                                var vr = this.webvr; // WebVR object with display
 
 	                                var vrButton = this.createButton();
 
@@ -21660,6 +21685,8 @@
 
 	                                this.fullscreenButton = fullscreenButton;
 
+	                                this.controls.fullscreenButton = fullscreenButton;
+
 	                                // Fullscreen return button.
 
 	                                var exitFullscreenButton = this.createButton();
@@ -21674,6 +21701,8 @@
 
 	                                this.exitFullscreenButton = exitFullscreenButton;
 
+	                                this.controls.exitFullscreenButton = exitFullscreenButton;
+
 	                                // VR return button.
 
 	                                var exitVRButton = this.createButton();
@@ -21686,7 +21715,9 @@
 
 	                                exitVRButton.style.display = 'none'; // inline-block';
 
-	                                this.exitVRButton = exitVRButton;
+	                                this.exitVRButton = exitVRButton; // save reference
+
+	                                this.controls.exitVRButton = exitVRButton; // group under controls
 
 	                                // Add event listeners.
 
@@ -21709,6 +21740,10 @@
 	                                        _this.mode = _this.UI_VR;
 
 	                                        _this.fullscreenChange(evt);
+
+	                                        // Add a keydown event to make VR entry and exit like fullscreen.
+
+	                                        addEventListener('keydown', _this.vrHandleKeys); ////////////////////////////////////////////////////////////////////
 
 	                                        // Request VR presentation.
 
@@ -21798,8 +21833,6 @@
 
 	                                // Reset pose button
 
-	                                // TODO: reset pose
-
 	                                controls.appendChild(vrButton);
 
 	                                controls.appendChild(fullscreenButton);
@@ -21810,6 +21843,61 @@
 	                        } else {
 
 	                                console.error('Ui::createDOMUi(): canvas not defined');
+	                        }
+	                }
+
+	                /** 
+	                 * Set the Ui by the current mode.
+	                 */
+
+	        }, {
+	                key: 'setByMode',
+	                value: function setByMode(mode) {}
+
+	                //TODO: switch() toggle control configurations.
+
+	                // TODO: use this to control event handler response
+
+	                // TODO: bind all the event handlers as separate functions in the constructor
+
+	                /* 
+	                 * =============== KEYDOWN EVENTS ====================
+	                 */
+
+	                /** 
+	                 * Add an escape key handler for entry into VR, similar to fullscreen. 
+	                 * 
+	                  * NOTE: we bind this 
+	                 * sucker to itself(!) in the constructor, so that we can supply addEventListener with a named function, 
+	                 * and remove it later. Otherwise, you can't remove handlers bound with addEventListener.
+	                 */
+
+	        }, {
+	                key: 'vrHandleKeys',
+	                value: function vrHandleKeys(evt) {
+
+	                        switch (evt.keyCode) {
+
+	                                case 27:
+	                                        // ESC key
+
+	                                        console.log("AN ESCAPE");
+
+	                                        this.mode = this.UI_DOM;
+
+	                                        // this.webvr.exitPresent handles some of the resizing, we have to restore the Uis
+
+
+	                                        // exit VR presentation
+
+	                                        this.webvr.exitPresent();
+
+	                                        break;
+
+	                                default:
+
+	                                        break;
+
 	                        }
 	                }
 
@@ -21827,7 +21915,7 @@
 	                key: 'requestFullscreen',
 	                value: function requestFullscreen(evt) {
 
-	                        var canvas = this.gl.getCanvas();
+	                        var canvas = this.webgl.getCanvas();
 
 	                        var parent = canvas.parentNode;
 
@@ -21879,9 +21967,9 @@
 	                key: 'fullscreenChange',
 	                value: function fullscreenChange(evt) {
 
-	                        var c = this.gl.getCanvas(),
+	                        var c = this.webgl.getCanvas(),
 	                            p = c.parentNode,
-	                            gl = this.gl.getContext();
+	                            gl = this.webgl.getContext();
 
 	                        switch (this.mode) {
 

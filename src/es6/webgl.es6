@@ -124,7 +124,11 @@ class WebGL {
 
         if ( canvas ) {
 
-            // NOTE: IE10 needs this bound to DOM for the following command to work.
+            // This line will make the <canvas> element work for focus events.
+
+            // canvas.addAttribute( 'tabindex', '1' );
+
+            // NOTE: IE10 needs canvas bound to DOM for the following command to work.
 
             let r = canvas.getBoundingClientRect();
 

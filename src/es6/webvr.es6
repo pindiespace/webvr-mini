@@ -27,6 +27,8 @@ class WebVR {
 
         this.stats = {};
 
+        // Immediately initialize (for now).
+
         if ( init === true ) {
 
             this.init();
@@ -368,7 +370,10 @@ class WebVR {
                  * Note: the <canvas> size changes, but it is wrapped in our <div> so 
                  * doesn't change size. This makes it easier to see the whole stereo view onscreen.
                  * 
-                 * TODO: expand to window width???????
+                 * NOTE: this triggers this.vrResize(), but NOT a window resize (handler: webgl.resize() ) event;
+                 * 
+                 * TODO: fullscreen? Expand to window width???????
+                 *
                  */
 
                 console.log( 'WebVR::requestPresent(): present was successful' );
@@ -407,17 +412,21 @@ class WebVR {
 
             }
 
-            display.exitPresent()
+            display.exitPresent() // NO semicolon!
 
             .then( () => {
 
-                // success
+                /* 
+                 * Success!
+                 *
+                 * NOTE: this triggers this.vrResize, which manually forces a window.resize event
+                 * (handler: webgl.resize()) to set our <canvas> back to its DOM dimensions.
+                 *
+                 */
 
-                // reset the canvas to full-screen.
+                removeEventListener( 'keydown', this.vrHandleEsc ); ///////////////////////////////////////////////////
 
-                //this.vrResize();
-
-                console.log( 'WebVR::exitPresent(): exited vrDisplay presentation' );
+                console.log( 'WebVR::exitPresent(): exited display presentation' );
 
             }, () => {
 
@@ -425,13 +434,13 @@ class WebVR {
 
                 //VRSamplesUtil.addError("exitPresent failed.", 2000);
 
-                console.error( 'WebVR::exitPresent(): failed to exit vrDisplay presentation' );
+                console.error( 'WebVR::exitPresent(): failed to exit display presentation' );
 
             } );
 
         } else { 
 
-            console.error( 'WebVR::exitPresent(): no valid vr display found' );
+            console.error( 'WebVR::exitPresent(): no valid display found' );
 
         }
 
@@ -454,7 +463,7 @@ class WebVR {
 
           if ( display.capabilities.hasExternalDisplay ) {
 
-            // trigger exit vr in ui object
+            // Any changes needed when we jump to VR presenting.
 
           }
 
@@ -462,7 +471,7 @@ class WebVR {
 
           if ( display.capabilities.hasExternalDisplay ) {
 
-            // trigger enter vr in ui object
+            // Any changes needed when we leave VR presenting.
 
           }
 

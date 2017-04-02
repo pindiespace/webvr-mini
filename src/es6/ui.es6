@@ -49,9 +49,9 @@ class Ui {
 
         this.util = util,
 
-        this.gl = webgl,
+        this.webgl = webgl,
 
-        this.vr = webvr;
+        this.webvr = webvr;
 
         this.vrButton = null,
 
@@ -62,6 +62,10 @@ class Ui {
         this.exitFullscreenButton = null,
 
         this.exitVRButton = null;
+
+        // EventHandler ES6 kludges. Rebind handlers so we can use removeEventListener.
+
+        this.vrHandleKeys = this.vrHandleKeys.bind( this );
 
         // save old DOM style
 
@@ -83,10 +87,6 @@ class Ui {
 
         }
 
-        // Give the webvr object a callback for changing ui for 'onvrpresentchange' event.
-
-
-
         // Listen to fullscreen change events.
 
         document.addEventListener( 'webkitfullscreenchange', this.fullscreenChange.bind( this ), false );
@@ -106,9 +106,15 @@ class Ui {
 
         console.log( 'entering DOMUi')
 
-        let c = this.gl.getCanvas(),
+        let c = this.webgl.getCanvas(),
 
         p = c.parentNode;
+
+        // c.parentNode should be a <div> that gets ALL the DOM styling. Don't touch <canvas>.
+
+        // TODO: set local style of <canvas> to width=100%, height = 100%
+
+        // TODO: test with fullscreen <canvas> style (attached to document.body)
 
         // Set some local styles overriding any conflicting styles for parentNode.
 
@@ -118,7 +124,7 @@ class Ui {
 
         p.style.padding = '0';
 
-        // Check for controls.
+        // Check for control HTML markup.
 
         let controls = c.parentNode.querySelector( '.webvr-mini-controls' );
 
@@ -130,11 +136,13 @@ class Ui {
 
         if ( c ) {
 
-            console.log( 'creating DOM Ui')
+            console.log( 'creating DOM Ui');
+
+            this.controls = controls; // save a shadow reference
 
             // VR button
 
-            let vr = this.vr; // WebVR object with display
+            let vr = this.webvr; // WebVR object with display
 
             let vrButton = this.createButton();
 
@@ -168,6 +176,8 @@ class Ui {
 
             this.fullscreenButton = fullscreenButton;
 
+            this.controls.fullscreenButton = fullscreenButton;
+
             // Fullscreen return button.
 
             let exitFullscreenButton = this.createButton();
@@ -184,6 +194,8 @@ class Ui {
 
             this.exitFullscreenButton = exitFullscreenButton;
 
+            this.controls.exitFullscreenButton = exitFullscreenButton;
+
             // VR return button.
 
             let exitVRButton = this.createButton();
@@ -198,7 +210,9 @@ class Ui {
 
             exitVRButton.style.display = 'none'; // inline-block';
 
-            this.exitVRButton = exitVRButton;
+            this.exitVRButton = exitVRButton; // save reference
+
+            this.controls.exitVRButton = exitVRButton; // group under controls
 
             // Add event listeners.
 
@@ -221,6 +235,10 @@ class Ui {
                 this.mode = this.UI_VR;
 
                 this.fullscreenChange( evt );
+
+                // Add a keydown event to make VR entry and exit like fullscreen.
+
+                addEventListener( 'keydown', this.vrHandleKeys ); ////////////////////////////////////////////////////////////////////
 
                 // Request VR presentation.
 
@@ -314,8 +332,6 @@ class Ui {
 
             // Reset pose button
 
-            // TODO: reset pose
-
             controls.appendChild( vrButton );
 
             controls.appendChild( fullscreenButton );
@@ -332,6 +348,57 @@ class Ui {
 
     }
 
+    /** 
+     * Set the Ui by the current mode.
+     */
+    setByMode( mode ) {
+
+        //TODO: switch() toggle control configurations.
+
+        // TODO: use this to control event handler response
+
+        // TODO: bind all the event handlers as separate functions in the constructor
+
+    }
+
+    /* 
+     * =============== KEYDOWN EVENTS ====================
+     */
+
+    /** 
+     * Add an escape key handler for entry into VR, similar to fullscreen. 
+     * 
+      * NOTE: we bind this 
+     * sucker to itself(!) in the constructor, so that we can supply addEventListener with a named function, 
+     * and remove it later. Otherwise, you can't remove handlers bound with addEventListener.
+     */
+    vrHandleKeys ( evt ) {
+
+        switch ( evt.keyCode) {
+
+            case 27: // ESC key
+
+                console.log("AN ESCAPE");
+
+                this.mode = this.UI_DOM;
+
+                // this.webvr.exitPresent handles some of the resizing, we have to restore the Uis
+
+
+                // exit VR presentation
+
+                this.webvr.exitPresent();
+
+                break;
+
+            default:
+
+                break;
+
+        }
+
+    }
+
     /* 
      * =============== FULLSCREEN EVENTS ====================
      */
@@ -343,7 +410,7 @@ class Ui {
      */
     requestFullscreen ( evt ) {
 
-        let canvas = this.gl.getCanvas();
+        let canvas = this.webgl.getCanvas();
 
         const parent = canvas.parentNode;
 
@@ -399,11 +466,11 @@ class Ui {
      */
     fullscreenChange ( evt ) {
 
-        let c = this.gl.getCanvas(),
+        let c = this.webgl.getCanvas(),
 
         p = c.parentNode,
 
-        gl = this.gl.getContext();
+        gl = this.webgl.getContext();
 
         switch ( this.mode ) {
 
