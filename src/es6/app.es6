@@ -27,7 +27,7 @@ if ( ! glMatrix ) {
 
 // Import WebVR-Mini libraries. Note: if you don't use super() imports will fail!
 
-import Util from  './util';
+import Util from './util'; // NOTE: imports Emitter class
 
 import GamePad from './gamepad';
 
@@ -86,8 +86,6 @@ let util = new Util();
 // If we are in dev mode, load any special libraries.
 
 let webgl = null;
-
-
 
 
 if ( __DEV__ === 'true' ) {

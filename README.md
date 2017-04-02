@@ -1,10 +1,24 @@
 # ![webvr-mini](doc/image/logo.png)
 
-### mini library offering basic webgl and webvr support
+### ...a mini library offering basic webgl and webvr support
 
 This library illustrates how to get a WebVR installation up in barebones code, without any frameworks or JavaScript libraries, relying directly on the WebGL and WebVR libraries.
 
-The goal was to create an app that would allow experimentation in WebVR with simple worlds, without the overhead of a large library like [THREE.js](http://threejs.org). In addition, it is written in ES6 instead of ES5. It is NOT a replacement for comprehensive libraries like [THREE](http://threejs.org), [A-Frame](http://aframe.io) or [PrimroseVR](http://primrosevr.com).
+The goal was to create an app with a small download footprint that would allow experimentation in WebVR with simple worlds, without the overhead of a large library like [THREE.js](http://threejs.org). In addition, it is written in ES6 instead of ES5. 
+
+## DOM Friendly
+
+A key feature of WebVR mini is the ability to embed a WebGL scene in a standard DOM page, rather than attaching it as a fullscreen canvas typical of most frameworks. The requirement for a 3D scene to completely fill the browser window or screen is a problem when designing "Ux in VR" which provides WebVR as a progressive enhancement of a static image or 3D WebGL image. You can't just add the WebVR with a cameo 3D scene to an existing web page.
+
+Most frameworks don't play nice with browser, which makes it difficult to insert a WebGL experience into a page other than as a link to another site. Given the likely uses of WebVR, this is a problem.
+
+In contrast, WebVR mini can be added to regular web pages. When a "fullscreen" WebGL or WebVR experience is exited, the HTML5 canvas returns to to the DOM with its size determined by external CSS.
+
+## Browser Support
+
+Since WebVR Polyfill tries to grab the entire screen, the effect of including this library is unpredictable. This also restricts the library to running with native WebVR implementations. You can check current browser support at [WebVR Rocks](https://webvr.rocks/)
+
+Webvr mini is experimental, and is NOT a replacement for comprehensive libraries like [THREE](http://threejs.org), [A-Frame](http://aframe.io) or [PrimroseVR](http://primrosevr.com).
 
 ## Building
 

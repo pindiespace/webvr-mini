@@ -1,16 +1,22 @@
+import Emitter from  './emitter';
+
 class Util {
 
     /** 
      * Utility functions.
      */
 
-    constructor () {
+    constructor ( emitter ) {
 
         console.log( 'in Util' );
 
         // Shared constants
 
         this.NOT_IN_LIST = -1; // for .indexOf() checks
+
+        // Create an Emitter object.
+
+        this.emitter = new Emitter();
 
         // String polyfills.
 

@@ -309,6 +309,12 @@ class WebGL {
 
     }
 
+    hasWebGL () {
+
+        return ( !! this.getContext() );
+
+    }
+
     /* 
      * =============== WEBGL EXTENSIONS ====================
      */

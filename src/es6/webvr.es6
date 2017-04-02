@@ -79,11 +79,9 @@ class WebVR {
 
                             console.log( 'WebVR::init(): valid vr display present' );
 
-                            // Check if somehow already presenting.
+                            // Check if we are somehow already presenting.
 
                             if( display.isPresenting ) {
-
-                                // reload?
 
                                 console.warn( 'WebVR::init(): display was already presenting, exit first' );
 
@@ -113,11 +111,17 @@ class WebVR {
 
                             }
 
+                            // At present, the device name is the only static value in the display.
+
                             stats.displayName = display.displayName; // HMD name
 
                             // Set WebVR display stage parameters.
 
                             this.setStageParameters( display );
+
+                            // Fire our pseudo-event 'vrdisplay' for webvr capability.
+
+                            this.util.emitter.emit( 'vrdisplayready' );
 
                             // Listen for WebVR events.
 
@@ -168,6 +172,12 @@ class WebVR {
         console.error( 'WebVR::getFrame(): display not available to get frameData' );
 
         return null;
+
+    }
+
+    hasWebVR () {
+
+        return ( !! ( this.frameData && this.display ) );
 
     }
 
@@ -279,7 +289,8 @@ class WebVR {
 
      /** 
       * resize event when in VR mode. Changes canvas 
-      * to hold stereo view.
+      * to hold stereo view. Since it mixes in WebVR display 
+      * objects, we put it here, instead of in Ui.
       */
     vrResize () {
 
@@ -380,9 +391,6 @@ class WebVR {
 
             }, () => {
 
-                // ERROR
-                // VRSamplesUtil.addError("requestPresent failed.", 2000);
-
                 console.error( 'WebVR::requestPresent(): present failed' );
 
         } );
@@ -419,20 +427,14 @@ class WebVR {
                 /* 
                  * Success!
                  *
-                 * NOTE: this triggers this.vrResize, which manually forces a window.resize event
-                 * (handler: webgl.resize()) to set our <canvas> back to its DOM dimensions.
+                 * NOTE: this triggers this.vrResize(). The callcack also manually forces a
+                 * window.resize event (handler: webgl.resize()) to set our <canvas> back to its DOM dimensions.
                  *
                  */
-
-                removeEventListener( 'keydown', this.vrHandleEsc ); ///////////////////////////////////////////////////
 
                 console.log( 'WebVR::exitPresent(): exited display presentation' );
 
             }, () => {
-
-                // ERROR
-
-                //VRSamplesUtil.addError("exitPresent failed.", 2000);
 
                 console.error( 'WebVR::exitPresent(): failed to exit display presentation' );
 
