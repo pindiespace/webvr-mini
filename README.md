@@ -4,7 +4,7 @@
 
 This library illustrates how to get a WebVR installation up in barebones code, without any frameworks or JavaScript libraries, relying directly on the WebGL and WebVR libraries.
 
-The goal was to create an app that would allow experimentation in WebVR with simple worlds, without the overhead of a large library like THREE.js. In addition, it is written in ES6 instead of ES5.
+The goal was to create an app that would allow experimentation in WebVR with simple worlds, without the overhead of a large library like [THREE.js](http://threejs.org). In addition, it is written in ES6 instead of ES5. It is NOT a replacement for comprehensive libraries like [THREE](http://threejs.org), [A-Frame](http://aframe.io) or [PrimroseVR](http://primrosevr.com).
 
 ## Building
 
@@ -66,6 +66,14 @@ __RELEASE__ means we are in a production environment
 Royalty-free 3d models for testing from [CG Trader](https://www.cgtrader.com)
 
 [Ui icons from The Noun Project](https://thenounproject.com/) (see individual credits in source).
+
+## Default
+
+The current version programmatically creates a world consisting of a bunch of shapes, both generated, and loaded from an OBJ file. 
+
+## Future updates
+
+WebVR mini is currently being updated to include a better way of creating and saving worlds, as well as streaming WebGL asset loading.
 
 ## References
 
