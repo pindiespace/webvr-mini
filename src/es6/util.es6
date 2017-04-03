@@ -14,7 +14,7 @@ class Util {
 
         this.NOT_IN_LIST = -1; // for .indexOf() checks
 
-        // Create an Emitter object.
+        // Create an Emitter object for pseudo-events.
 
         this.emitter = new Emitter();
 

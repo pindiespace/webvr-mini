@@ -121,7 +121,7 @@ class WebVR {
 
                             // Fire our pseudo-event 'vrdisplay' for webvr capability.
 
-                            this.util.emitter.emit( 'vrdisplayready' );
+                            this.util.emitter.emit( 'vrdisplayready', display.displayName );
 
                             // Listen for WebVR events.
 

@@ -29,7 +29,7 @@ class Emitter {
 
         var args = [].slice.call( arguments );
 
-        // Eliminate the first param in the argument list (the callback).
+        // Eliminate the first param in the argument list (eventName).
 
         args.shift();
 
