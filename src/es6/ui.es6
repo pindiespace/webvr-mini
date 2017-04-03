@@ -35,6 +35,8 @@ class Ui {
 
             oculusrift: 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgOTAgMTEyLjUiIHN0eWxlPSJlbmFibGUtYmFja2dyb3VuZDpuZXcgMCAwIDkwIDExMi41OyIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+PHN0eWxlIHR5cGU9InRleHQvY3NzIj4uc3Qwe2ZpbGw6IzJEMkQyRDt9LnN0MXtmaWxsOiMyODI4Mjc7fS5zdDJ7ZmlsbDpub25lO3N0cm9rZTojRkZGRkZGO3N0cm9rZS13aWR0aDo3O3N0cm9rZS1taXRlcmxpbWl0OjEwO30uc3Qze2ZpbGw6bm9uZTtzdHJva2U6I0EwQTBBMDtzdHJva2Utd2lkdGg6MjtzdHJva2UtbWl0ZXJsaW1pdDoxMDt9LnN0NHtmaWxsOiMyODI4Mjc7c3Ryb2tlOiNBMEEwQTA7c3Ryb2tlLXdpZHRoOjI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7fTwvc3R5bGU+PHBhdGggY2xhc3M9InN0MCIgZD0iTTcxLjUsNzYuN2wtNS43LTIuN2MtMS43LTAuOC0yLjUtMi45LTEuNy00LjdsNC42LTkuOGMwLjgtMS43LDIuOS0yLjUsNC43LTEuN2w1LjcsMi43YzEuNywwLjgsMi41LDIuOSwxLjcsNC43bC00LjYsOS44Qzc1LjQsNzYuOCw3My4zLDc3LjYsNzEuNSw3Ni43eiIvPjxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik0yMy40LDc0LjVsLTUuNywyLjRjLTEuOCwwLjctMy44LTAuMS00LjYtMS45TDksNjVjLTAuNy0xLjgsMC4xLTMuOCwxLjktNC42bDUuNy0yLjRjMS44LTAuNywzLjgsMC4xLDQuNiwxLjlsNC4xLDEwQzI2LjEsNzEuNywyNS4yLDczLjgsMjMuNCw3NC41eiIvPjxpbWFnZSBzdHlsZT0ib3ZlcmZsb3c6dmlzaWJsZTsiIHdpZHRoPSIxOTIwIiBoZWlnaHQ9IjEyMDAiIHhsaW5rOmhyZWY9IkNCMUE2Mjg5LmpwZyIgIHRyYW5zZm9ybT0ibWF0cml4KDEgMCAwIDEgLTQ5NzcgLTQ3NjYpIj48L2ltYWdlPjxpbWFnZSBzdHlsZT0ib3ZlcmZsb3c6dmlzaWJsZTsiIHdpZHRoPSIxOTIwIiBoZWlnaHQ9IjEyMDAiIHhsaW5rOmhyZWY9IkNCMUE2MjhGLmpwZyIgIHRyYW5zZm9ybT0ibWF0cml4KDEgMCAwIDEgMzE0Ni4wOTQgMzY3OS42MDM1KSI+PC9pbWFnZT48cGF0aCBjbGFzcz0ic3QxIiBkPSJNMzM2MS44LDM2MjkuMWgtMzIyLjVjLTUwLjcsMC05Mi4yLTQxLjUtOTIuMi05Mi4ydi0xMzMuNWMwLTQ3LjQsMzguOC04Ni4yLDg2LjItODYuMmgzMjguNWM1MC43LDAsOTIuMiw0MS41LDkyLjIsOTIuMnYxMjcuNUMzNDU0LjEsMzU4Ny42LDM0MTIuNiwzNjI5LjEsMzM2MS44LDM2MjkuMXoiLz48cGF0aCBjbGFzcz0ic3QxIiBkPSJNMzI0My42LDMzMjcuMWgtODUuNWMtNi42LDAtMTItNS40LTEyLTEydi0xMzkuNWMwLTYuNiw1LjQtMTIsMTItMTJoODUuNWM2LjYsMCwxMiw1LjQsMTIsMTJ2MTM5LjVDMzI1NS42LDMzMjEuNywzMjUwLjIsMzMyNy4xLDMyNDMuNiwzMzI3LjF6Ii8+PGNpcmNsZSBjbGFzcz0ic3QyIiBjeD0iMzA0Ni44IiBjeT0iMzM4My41IiByPSIzMi41Ii8+PGNpcmNsZSBjbGFzcz0ic3QyIiBjeD0iMzM2My42IiBjeT0iMzM4My41IiByPSIzMi41Ii8+PGNpcmNsZSBjbGFzcz0ic3QyIiBjeD0iMzIwMC44IiBjeT0iMzU3NS44IiByPSIzMi41Ii8+PGNpcmNsZSBjbGFzcz0ic3QyIiBjeD0iMzAxNC4zIiBjeT0iMzQ5MC40IiByPSIzMi41Ii8+PGNpcmNsZSBjbGFzcz0ic3QyIiBjeD0iMzM5MC42IiBjeT0iMzQ5MC40IiByPSIzMi41Ii8+PGNpcmNsZSBjbGFzcz0ic3QyIiBjeD0iMzIwMC44IiBjeT0iMzU3Ni44IiByPSIxNy42Ii8+PHBvbHlsaW5lIGNsYXNzPSJzdDIiIHBvaW50cz0iMzMxMC44LDMzMTQuMSAzMjc4LjcsMzM1Ni4zIDMyNTEuMywzMzc2LjMgMzIwNCwzMzc2LjMgMzE0Ni4xLDMzNzYuMyAzMTIxLjMsMzM1OS43IDMwODkuMSwzMzE3LjEgIi8+PHBvbHlnb24gY2xhc3M9InN0MSIgcG9pbnRzPSIzMDA0LjUsMzMzOS4xIDMwMDQuNSwzMzIxLjEgMzAzMSwzMjgwLjEgMzA2NiwzMjQ0LjUgMzA5OS41LDMyMjMuNiAzMTM0LjUsMzIwOC4xIDMxMzQuNSwzMjc3LjEgMzEwOSwzMjkxLjEgMzA5MC40LDMzMDYuOSAzMDg4LjUsMzMyMiAiLz48cG9seWdvbiBjbGFzcz0ic3QxIiBwb2ludHM9IjMzOTQsMzMzNi4xIDMzOTQsMzMxOC4xIDMzNjcuNSwzMjc3LjEgMzMzMi41LDMyNDEuNSAzMjk5LDMyMjAuNiAzMjY0LDMyMDUuMSAzMjY0LDMyNzQuMSAzMjg5LjUsMzI4OC4xIDMzMTAsMzMwNi41IDMzMTIuMywzMzE4LjQgIi8+PGxpbmUgY2xhc3M9InN0MiIgeDE9IjMyMDAuOCIgeTE9IjMzNzYuMyIgeDI9IjMyMDAuOCIgeTI9IjM1NDMuMyIvPjxwYXRoIGNsYXNzPSJzdDEiIGQ9Ik00OC45LDMyLjVoLTQuOGMtMS43LDAtMy4xLTEuNC0zLjEtMy4xVjguNmMwLTEuNywxLjQtMy4xLDMuMS0zLjFoNC44YzEuNywwLDMuMSwxLjQsMy4xLDMuMXYyMC44QzUyLDMxLjEsNTAuNiwzMi41LDQ4LjksMzIuNXoiLz48bGluZSBjbGFzcz0ic3QzIiB4MT0iNTIiIHkxPSIxMy41IiB4Mj0iNDEiIHkyPSIxMy41Ii8+PHBhdGggY2xhc3M9InN0MCIgZD0iTTkuMiw2Ni44TDkuMiw2Ni44Yy0xLjQsMC4yLTIuNy0wLjctMi45LTJMMC45LDM1LjZjLTAuMi0xLjQsMC43LTIuNywyLTIuOWgwYzEuNC0wLjIsMi43LDAuNywyLjksMmw1LjQsMjkuMUMxMS40LDY1LjIsMTAuNSw2Ni41LDkuMiw2Ni44eiIvPjxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik04MS40LDY3TDgxLjQsNjdjLTEuNC0wLjItMi4zLTEuNS0yLTIuOWw1LTI5LjZjMC4yLTEuNCwxLjUtMi4zLDIuOS0yaDBjMS40LDAuMiwyLjMsMS41LDIsMi45bC01LDI5LjZDODQuMSw2Ni4zLDgyLjgsNjcuMiw4MS40LDY3eiIvPjxwYXRoIGNsYXNzPSJzdDQiIGQ9Ik02Ni4yLDcwLjVIMjMuOGMtNy42LDAtMTMuOC02LjItMTMuOC0xMy44VjM5LjZjMC02LjYsNS40LTEyLjEsMTIuMS0xMi4xaDQ0LjJjNy42LDAsMTMuOCw2LjIsMTMuOCwxMy44djE1LjVDODAsNjQuMyw3My44LDcwLjUsNjYuMiw3MC41eiIvPjwvc3ZnPg==',
 
+            emulated: 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgMTAwIDEyNSIgc3R5bGU9ImVuYWJsZS1iYWNrZ3JvdW5kOm5ldyAwIDAgMTAwIDEyNTsiIHhtbDpzcGFjZT0icHJlc2VydmUiPjxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI+LnN0MHtmaWxsOiNGRjczNzM7fTwvc3R5bGU+PHBhdGggY2xhc3M9InN0MCIgZD0iTTQ4LjgsMTA5LjlIMzIuNmMwLjEsMS40LDAuNCwyLjYsMSwzLjRjMC44LDEuMSwxLjgsMS42LDMsMS42YzAuOCwwLDEuNi0wLjMsMi4yLTAuN2MwLjQtMC4zLDAuOS0wLjgsMS4zLTEuNmw3LjgsMC45Yy0xLjIsMi41LTIuNyw0LjItNC4zLDUuM2MtMS43LDEuMS00LjEsMS42LTcuMywxLjZjLTIuOCwwLTQuOS0wLjQtNi41LTEuM2MtMS42LTAuOS0yLjktMi40LTMuOS00LjNjLTEtMi0xLjYtNC4zLTEuNi03LjFjMC0zLjgsMS03LDMuMS05LjNjMi4xLTIuNCw1LTMuNiw4LjYtMy42YzMsMCw1LjMsMC41LDcsMS42YzEuNywxLjEsMywyLjYsMy45LDQuNmMwLjksMiwxLjMsNC42LDEuMyw3Ljl2MS4xSDQ4Ljh6IE00MC40LDEwNS40Yy0wLjEtMS44LTAuNi0zLjItMS4yLTMuOWMtMC43LTAuOC0xLjYtMS4yLTIuNy0xLjJjLTEuMiwwLTIuMiwwLjctMywxLjhjLTAuNCwwLjgtMC44LDEuOC0wLjksMy4zSDQwLjR6Ii8+PHBhdGggY2xhc3M9InN0MCIgZD0iTTUxLjYsMTAxLjhsNC41LTAuNWwzLjcsMC41bDMuMiwxMS4xbDMuMi0xMS4xbDQuMy0wLjVsMy45LDAuNVYxMjBoLTVMNjkuMSwxMDhMNjUuMywxMjBoLTQuNmwtMy41LTExLjlMNTYuOSwxMjBoLTVMNTEuNiwxMDEuOEw1MS42LDEwMS44eiIvPjwvc3ZnPg==',
+
             // Added strikethrough.
 
             inactiveVR: 'data:image/svg+xml;base64,PHN2ZyB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgOTAgMTEyLjUiIHN0eWxlPSJlbmFibGUtYmFja2dyb3VuZDpuZXcgMCAwIDkwIDExMi41OyIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+PHN0eWxlIHR5cGU9InRleHQvY3NzIj4uc3Qwe2ZpbGw6IzYwNjA2MDt9LnN0MXtmaWxsOm5vbmU7c3Ryb2tlOiNGRjczNzM7c3Ryb2tlLXdpZHRoOjM7c3Ryb2tlLW1pdGVybGltaXQ6MTA7fTwvc3R5bGU+PHBhdGggY2xhc3M9InN0MCIgZD0iTTgxLjcsMjEuM2MtMi4xLTIuMS03Mi41LTEuNi03NC4xLDBjLTEuNywxLjctMS43LDQ2LDAsNDcuN2MwLjYsMC42LDEyLjIsMC45LDI2LDFsMy4xLTguNWMwLDAsMi04LDcuOS04YzYuMywwLDksOS43LDksOS43bDIuNiw2LjhjMTMuNi0wLjEsMjUtMC41LDI1LjUtMUM4My4yLDY3LjUsODMuNywyMy4zLDgxLjcsMjEuM3ogTTI0LjYsNTQuNmMtNi4xLDAtMTEtNC45LTExLTExYzAtNi4xLDQuOS0xMSwxMS0xMXMxMSw0LjksMTEsMTFDMzUuNiw0OS43LDMwLjYsNTQuNiwyNC42LDU0LjZ6IE02NC4zLDU0LjZjLTYuMSwwLTExLTQuOS0xMS0xMWMwLTYuMSw0LjktMTEsMTEtMTFjNi4xLDAsMTEsNC45LDExLDExQzc1LjMsNDkuNyw3MC40LDU0LjYsNjQuMyw1NC42eiIvPjxsaW5lIGNsYXNzPSJzdDEiIHgxPSI4NCIgeTE9IjYiIHgyPSIxOSIgeTI9Ijg5Ii8+PC9zdmc+',
@@ -268,15 +270,23 @@ class Ui {
 
             this.util.emitter.on( 'vrdisplayready', 
 
-                ( deviceName ) => { 
+                ( deviceName ) => {
+
+                    let dName = deviceName.toLowerCase();
 
                     if ( deviceName ) {
 
-                        if ( deviceName.toLowerCase().indexOf( 'vive') !== this.util.NOT_IN_LIST ) {
+                        if ( dName.indexOf( 'vive') !== this.util.NOT_IN_LIST ) {
 
                             vrButton.src = vrButton.activeSrc = this.icons.htcvive;
 
-                        } else if ( deviceName.toLowercase().indexOf( 'oculus' ) !== this.util.NOT_IN_LIST ) {
+                            if ( dName.indexOf( 'emulat' ) !== this.util.NOT_IN_LIST ) {
+
+                                vrButton.emulated( this.icons.emulated );
+
+                            }
+
+                        } else if ( dName.indexOf( 'oculus' ) !== this.util.NOT_IN_LIST ) {
 
                             vrButton.src = vrButton.activeSrc = this.icons.oculusrift;
 
@@ -776,7 +786,7 @@ class Ui {
 
         s.padding = '12px',
 
-        s.zIndex = 1,
+        s.zIndex = '10',
 
         s.display = 'none',
 
@@ -819,6 +829,32 @@ class Ui {
         button.hide = () => {
 
             button.style.display = 'none';
+
+        }
+
+        // Add the emulated symbol underneath a given button.
+
+        button.emulated = ( emuImg ) => {
+
+            let emu = document.createElement( 'img' );
+
+            emu.style.position = 'absolute';
+
+            emu.style.width = '36px';
+
+            emu.style.height = '56px';
+
+            emu.style.top = '0';
+
+            emu.style.left = button.style.left;
+
+            emu.style.zIndex = '1';
+
+            emu.style.display = 'inline-block';
+
+            emu.src = emuImg;
+
+            this.controls.appendChild( emu );
 
         }
 
