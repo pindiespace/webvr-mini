@@ -90,7 +90,7 @@ class LoadTexture extends LoadPool {
 
         loadObj.image.addEventListener( 'load', ( e ) => this.uploadTexture( loadObj, loadObj.callback ) );
 
-        loadObj.image.addEventListener( 'error', ( e) => console.log( 'error loading image:' + waitObj.source ), false );
+        loadObj.image.addEventListener( 'error', ( e ) => console.log( 'error loading image:' + waitObj.source ), false );
 
         // Start the loading.
 
@@ -132,11 +132,15 @@ class LoadTexture extends LoadPool {
 
         gl.pixelStorei( gl.UNPACK_FLIP_Y_WEBGL, true );
 
+        // Create a textureObj that we will bind to the Prim texture array later.
+
         let textureObj = {
             image: loadObj.image,
             src: loadObj.image.src,
             texture: gl.createTexture()
         };
+
+        // Bind the texture data to the videocard.
 
         gl.bindTexture( gl.TEXTURE_2D, textureObj.texture );
 
@@ -157,6 +161,8 @@ class LoadTexture extends LoadPool {
             gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, this.greyPixel );
 
         }
+
+        // Generate mipmaps if we are a power of 2 texture.
 
         if ( this.util.isPowerOfTwo( textureObj.image.width ) && this.util.isPowerOfTwo( textureObj.image.height ) ) {
 
@@ -179,6 +185,11 @@ class LoadTexture extends LoadPool {
         gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE );
 
         gl.bindTexture( gl.TEXTURE_2D, null );
+
+        /* 
+         * We save all the texture information into the Prim, both path, 
+         * image data, and WebGL texture reference.
+         */
 
         textures.push( textureObj );
 

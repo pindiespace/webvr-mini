@@ -480,11 +480,11 @@
 
 	        ui = new _ui2.default(false, util, webgl, webvr);
 
-	        // The Prim object needs Loaders.
-
-	        exports.loadModel = loadModel = new _loadModel2.default(true, util, glMatrix, webgl);
+	        // The Prim object needs Loaders. LoadModel might need the Texture loader.
 
 	        exports.loadTexture = loadTexture = new _loadTexture2.default(true, util, glMatrix, webgl);
+
+	        exports.loadModel = loadModel = new _loadModel2.default(true, util, glMatrix, webgl, loadTexture);
 
 	        exports.loadAudio = loadAudio = new _loadAudio2.default(true, util, glMatrix, webgl);
 
@@ -4197,11 +4197,15 @@
 
 	            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 
+	            // Create a textureObj that we will bind to the Prim texture array later.
+
 	            var textureObj = {
 	                image: loadObj.image,
 	                src: loadObj.image.src,
 	                texture: gl.createTexture()
 	            };
+
+	            // Bind the texture data to the videocard.
 
 	            gl.bindTexture(gl.TEXTURE_2D, textureObj.texture);
 
@@ -4220,6 +4224,8 @@
 
 	                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, this.greyPixel);
 	            }
+
+	            // Generate mipmaps if we are a power of 2 texture.
 
 	            if (this.util.isPowerOfTwo(textureObj.image.width) && this.util.isPowerOfTwo(textureObj.image.height)) {
 
@@ -4240,6 +4246,11 @@
 	            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
 	            gl.bindTexture(gl.TEXTURE_2D, null);
+
+	            /* 
+	             * We save all the texture information into the Prim, both path, 
+	             * image data, and WebGL texture reference.
+	             */
 
 	            textures.push(textureObj);
 
@@ -4446,7 +4457,12 @@
 	        key: 'load',
 	        value: function load(source, attach, callback, finalCallback) {
 
-	            // If we need a final callback, apply it here.
+	            // If we need a callback or final callback, apply it here.
+
+	            if (!callback) {
+
+	                callback = function callback() {};
+	            }
 
 	            if (finalCallback) {
 
@@ -4506,12 +4522,28 @@
 	     * @param {WebGL} webgl reference to webgl object.
 	     */
 
-	    function LoadModel(init, util, glMatrix, webgl) {
+	    function LoadModel(init, util, glMatrix, webgl, loadTexture) {
 	        _classCallCheck(this, LoadModel);
 
 	        console.log('in LoadModel class');
 
-	        return _possibleConstructorReturn(this, (LoadModel.__proto__ || Object.getPrototypeOf(LoadModel)).call(this, init, util, glMatrix, webgl));
+	        // Reference the loadTexture object.
+
+	        var _this = _possibleConstructorReturn(this, (LoadModel.__proto__ || Object.getPrototypeOf(LoadModel)).call(this, init, util, glMatrix, webgl));
+
+	        _this.loadTexture = loadTexture;
+
+	        /* 
+	         * Bind loadTexture to a 'newtexture' pseudo-event via our 
+	         * Emitter utility object.
+	         */
+
+	        _this.util.emitter.on('newtexture', function (path, prim) {
+
+	            _this.loadTexture.load(path, prim);
+	        });
+
+	        return _this;
 	    }
 
 	    /** 
@@ -4724,6 +4756,22 @@
 
 	                        break;
 
+	                    case 'mtllib':
+	                        // materials library data
+
+	                        // TODO: Load material file data.
+
+	                        break;
+
+	                    case 'g':
+	                        // group name (collection of vertices forming face)
+
+	                        // TODO: assign faces (sides in our internal language).
+
+	                        // @link https://people.cs.clemson.edu/~dhouse/courses/405/docs/brief-obj-file-format.html
+
+	                        break;
+
 	                    case 'vp': // parameter vertices
 	                    case 'p': // point
 	                    case 'l': // line
@@ -4736,7 +4784,7 @@
 	                    case 'sp': // special point
 	                    case 'end': // end statment
 	                    case 'con': // connectivity between free-form surfaces
-	                    case 'g': // group name
+
 	                    case 's': // smoothing group
 	                    case 'mg': // merging group
 	                    case 'bevel': // bevel interpolation
@@ -4749,6 +4797,7 @@
 	                    case 'stech': // surface approximation
 	                    case 'mtllib': // materials library data
 	                    case 'usemtl':
+	                        // use material
 
 	                        console.warn('loadModel::computeObjMesh(): OBJ data type: ' + type + ' in .obj file not supported');
 
@@ -4823,7 +4872,7 @@
 	                switch (type) {
 
 	                    case 'newmtl':
-	                        // name
+	                        // name of material.
 
 	                        material.name = data[1];
 
@@ -4956,6 +5005,7 @@
 	                    case 'map_Kd':
 	                        // diffuse map, an image file (e.g. file.jpg)
 
+
 	                        break;
 
 	                    case 'map_Ks': // specular map
@@ -4983,7 +5033,7 @@
 	         * adapted from:
 	         * @link https://github.com/m0ppers/babylon-objloader/blob/master/src/babylon.objloader.js
 	         * @param {Object} loadObject custom loader object defined in load-pool.es6
-	         * @param {Function} callback the intermediate callback function, called for each model file loaded.
+	         * @param {Function} callback the *INTERMEDIATE* callback function, called for each model file loaded.
 	         */
 
 	    }, {
@@ -5006,13 +5056,15 @@
 
 	                    var d = this.computeObjMesh(data, loadObj.prim);
 
-	                    // Re-compute if stuff is missing
+	                    loadObj.prim.geometry.addBufferData(d.vertices, d.indices, d.normals, d.texCoords, []);
+
+	                    // Re-compute if some arrays are missing.
 
 	                    if (d.texCoords.length / loadObj.prim.geometry.texCoords.itemSize !== d.vertices.length / loadObj.prim.geometry.vertices.itemSize) {
 
-	                        console.log("TEXCOORDS:" + d.texCoords.length / loadObj.prim.geometry.texCoords.itemSize + " VERTICES:" + d.vertices.length / loadObj.prim.geometry.vertices.itemSize);
+	                        console.log("Creating TEXCOORDS:" + d.texCoords.length / loadObj.prim.geometry.texCoords.itemSize + " VERTICES:" + d.vertices.length / loadObj.prim.geometry.vertices.itemSize);
 
-	                        ///////////loadObj.prim.updateTexCoords();
+	                        loadObj.prim.updateTexCoords();
 	                    }
 
 	                    if (d.normals.length / loadObj.prim.geometry.normals.itemSize !== d.vertices.length / loadObj.prim.geometry.vertices.itemSize) {
@@ -5020,13 +5072,14 @@
 	                        loadObj.prim.updateNormals();
 	                    }
 
+	                    // Update arrays not specified in the OBJ format.
+
 	                    loadObj.prim.updateTangents();
 
 	                    loadObj.prim.updateColors();
 
 	                    // Add buffer data (and create WebGL buffers).
 
-	                    loadObj.prim.geometry.addBufferData(d.vertices, d.indices, d.normals, d.texCoords, []);
 
 	                    console.log("IN UPLOAD MODEL, VERTICES DATA:" + loadObj.prim.geometry.vertices.data.length / 3);
 
@@ -5084,7 +5137,7 @@
 
 	            loadObj.busy = true;
 
-	            // Callback from load-pool for next object to load.
+	            // Callback from load-pool.es6 for next object to load.
 
 	            loadObj.next = function (source) {
 
@@ -7205,6 +7258,8 @@
 	     * @param {LoadVideo} video loading class
 	     */
 	    function Prim(init, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo) {
+	        var _this = this;
+
 	        _classCallCheck(this, Prim);
 
 	        console.log('in Prim class');
@@ -7333,11 +7388,14 @@
 
 	        };
 
-	        // WebGL currently limits the number of vertices referenced by gl.drawElements.
+	        /* 
+	         * Bind the Prim callback for geometry creation.
+	         */
 
-	        // For larger Prims, split into several drawing operations, or use gl.drawArrays without an index.
+	        this.util.emitter.on('geometryready', function (prim, vertices, indices, normals, texCoords, tangents) {
 
-	        // NOTE: for gl.drawArrays there will be replication of positions not found with gl.drawElements.
+	            _this.initPrim(prim, vertices, indices, normals, texCoords, tangents);
+	        });
 
 	        // Visible from inside or outside.
 
@@ -10434,6 +10492,8 @@
 	                }
 	            }
 
+	            window.prim = prim;
+
 	            // Color array is pre-created, or gets a default when WebGL buffers are created.
 
 	            // Initialize the Prim, adding normals, texCoords and tangents as necessary.
@@ -10450,36 +10510,6 @@
 	    }, {
 	        key: 'geometrySpring',
 	        value: function geometrySpring(prim) {}
-
-	        /** 
-	         * Callback for assembling Mesh, after ALL OBJ and material files are loaded.
-	         * @param {Prim} prim a Prim object.
-	         */
-
-	    }, {
-	        key: 'meshCallback',
-	        value: function meshCallback(prim) {
-
-	            var geo = prim.geometry;
-
-	            console.log('++++++++++++++++++++++++++++in mesh callback for prim:' + prim.name + ', all model files loaded...');
-
-	            // TODO: add model materials during load to Prim.
-
-	            console.log('Prim::meshCallback(): vertices.length:' + geo.numVertices() + ' normals.length:' + geo.numNormals() + ' tangents.length:' + geo.numTangents() + ' colors.length:' + geo.numColors());
-
-	            // Set the ready flag so we don't re-initialize the geometry buffers.
-
-	            prim.ready = true;
-
-	            // Initialize the prim, WITHOUT adding the geo data (already added in load-model).
-
-	            this.initPrim(prim); // CHECK CREATE PRIM - ATTACHES TO SHADER
-
-	            // Delayed set to true.
-
-	            return true;
-	        }
 
 	        /** 
 	         * Generic 3d shape defined from files (e.g. OBJ model).
@@ -10506,12 +10536,12 @@
 	                console.log(">>>>>>>>>>>>>>geometryMesh():" + prim.models[i]);
 
 	                /* 
-	                 * NOTE: the final callback is given prim to manipulate by loadModel.load(). 
+	                 * NOTE: the final callback is given the Prim to manipulate by loadModel.load(). 
 	                 * Intermediate callbacks between files loaded (e.g. material files) get the 
 	                 * empty function below.
 	                 */
 
-	                this.loadModel.load(prim.models[i], prim, function () {}, this.meshCallback.bind(this));
+	                this.loadModel.load(prim.models[i], prim, function () {}, this.initPrim.bind(this));
 	            }
 
 	            return false;
@@ -10534,7 +10564,7 @@
 
 	            var geo = prim.geometry;
 
-	            console.log('(re)calculating normals and tangents for ' + prim.name);
+	            console.log(prim.name + ' generation complete,(re)calculating normals and tangents');
 
 	            /* 
 	             * Add buffer data, and re-bind to WebGL.
@@ -10542,19 +10572,17 @@
 	             * (this.meshCallback() passes empty coordinate arrays)
 	             */
 
-	            // Vertices must be present.
+	            // Update vertices if they were supplied.
 
-	            geo.setVertices(vertices);
+	            prim.updateVertices(vertices);
 
-	            var numVertices = geo.numVertices();
-
-	            console.log(prim.name + ' generation complete, computing bounding box');
+	            // Compute bounding box.
 
 	            prim.boundingBox = this.computeBoundingBox(prim.geometry.vertices.data);
 
-	            // Indices must be present.
+	            // Update indices if they were supplied.
 
-	            geo.setIndices(indices);
+	            prim.updateIndices(indices);
 
 	            // If normals are used, re-compute.
 
@@ -10564,18 +10592,13 @@
 
 	            prim.updateTexCoords(texCoords);
 
-	            // If tangents are used, re-compute.
-	            // if ( prim.useTangents ... )
+	            // Tangents aren't supplied by OBJ format, so re-compute.
 
 	            prim.updateTangents();
 
-	            // Update colors, if not defined ( as a normalMap )
+	            // Colors aren't supplied by OBJ format, so re-compute.
 
 	            prim.updateColors();
-
-	            //prim.geometry.setBufferData( vertices, indices, normals, texCoords, tangents )
-
-	            //prim.geometry.addBufferData( vertices, indices, normals, texCoords, tangents );
 
 	            //if ( prim.name === 'cubesphere' ) {
 	            //if ( prim.name === 'TestCapsule' ) {
@@ -10583,14 +10606,6 @@
 	            //if ( prim.name === 'texsphere' ) {
 
 	            var mesh = new _mesh2.default(prim);
-
-	            //window.mesh = mesh;
-
-	            //window.prim = prim;
-
-	            // SIMPLIFY TEST
-
-	            ///mesh.simplify();
 
 	            // SUBDIVIDE TEST
 
@@ -10604,10 +10619,6 @@
 	            //mesh.subdivide( true );
 	            //mesh.subdivide( true ); // this one zaps from low-vertex < 10 prim
 
-	            // TODO: THESE ARE NOT BEING ADDED
-
-	            // TODO: FIGURE OUT WHAT NEEDS TO BE DONE WITH A SUBDIVIDE AND SIMPLIFY
-
 	            //}
 
 	            console.log("checking buffer data for " + prim.name);
@@ -10615,7 +10626,7 @@
 	            prim.geometry.checkBufferData();
 
 	            /* 
-	             * If we were supplied a shader, add to display list. 
+	             * If we were supplied a Shader, add it to the display list. 
 	             * A reference to individual Prims is kept independently in the Prim object if 
 	             * the Shader is not present.
 	            */
@@ -10624,6 +10635,8 @@
 
 	                prim.shader.addObj(prim);
 	            }
+
+	            prim.ready = true;
 	        }
 
 	        /** 
@@ -10669,7 +10682,7 @@
 	            var textureImages = arguments.length > 9 && arguments[9] !== undefined ? arguments[9] : [];
 	            var colors = arguments.length > 10 && arguments[10] !== undefined ? arguments[10] : null;
 
-	            var _this = this;
+	            var _this2 = this;
 
 	            var applyTexToFace = arguments.length > 11 && arguments[11] !== undefined ? arguments[11] : false;
 	            var modelFiles = arguments.length > 12 && arguments[12] !== undefined ? arguments[12] : [];
@@ -10733,20 +10746,61 @@
 	                return mvMatrix;
 	            };
 
-	            /** 
+	            /* 
+	             * If we loaded multiple textures, set the texture. Textures are stored 
+	             * in a numerical array of Objects under prim.textures.
+	             */
+
+	            prim.setTexture = function (textureId) {}
+
+	            // TODO: abstract load-texture.uploadTexture() so we can rebind 
+	            // TODO: a texture based on its id in the texture array.
+	            // TODO: map a texture obj generator which may be called from 
+	            // TODO: uploadTexture with a object built from .loadObj, or directly
+	            // TODO: from the texture array object in the prim.textures array.
+
+	            /* 
 	             * Set the Prim as a glowing object. Global lights 
 	             * are handled by the World.
 	             */
-	            prim.setLight = function () {
+	            ;prim.setLight = function () {
 	                var direction = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [1, 1, 1];
 	                var color = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [255, 255, 255];
-	                var prim = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : _this;
+	                var prim = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : _this2;
 
 
 	                var p = prim;
 
 	                p.light.direction = direction, p.light.color = color;
 	            };
+
+	            // We don't have a .setMaterial - set directly in loadModel.updateMateria()
+
+	            // Update vertices (no re-compute available).
+
+	            prim.updateVertices = function (vertices) {
+
+	                var geo = prim.geometry;
+
+	                if (vertices && vertices.length) {
+
+	                    geo.setVertices(vertices);
+	                }
+	            };
+
+	            // update indices (no re-compute available).
+
+	            prim.updateIndices = function (indices) {
+
+	                var geo = prim.geometry;
+
+	                if (indices && indices.length) {
+
+	                    geo.setIndices(indices);
+	                }
+	            };
+
+	            // Update or re-compute normals.
 
 	            prim.updateNormals = function (normals) {
 
@@ -10757,26 +10811,28 @@
 	                    geo.setNormals(normals);
 	                } else {
 
-	                    geo.setNormals(_this.computeNormals(geo.vertices.data, geo.indices.data, [], prim.useFaceNormals));
+	                    geo.setNormals(_this2.computeNormals(geo.vertices.data, geo.indices.data, [], prim.useFaceNormals));
 	                }
 	            };
+
+	            // Update or re-compute texture coordinates.
 
 	            prim.updateTexCoords = function (texCoords) {
 
 	                var geo = prim.geometry;
 
-	                if (texCoords.length > 0) {
+	                if (texCoords && texCoords.length > 0) {
 
 	                    geo.setTexCoords(texCoords);
 	                } else if (geo.numTexCoords() !== geo.numVertices()) {
 
-	                    console.log("PRIM:" + prim.name + ' recalculating texture coordinates');
+	                    console.log("Prim:" + prim.name + ' recalculating texture coordinates');
 
-	                    window.teapot = prim;
-
-	                    geo.setTexCoords(_this.computeTexCoords(geo.vertices.data));
+	                    geo.setTexCoords(_this2.computeTexCoords(geo.vertices.data));
 	                }
 	            };
+
+	            // Update or re-compute tangents.
 
 	            prim.updateTangents = function (tangents) {
 
@@ -10787,9 +10843,11 @@
 	                    geo.setTangents(tangents);
 	                } else {
 
-	                    geo.setTangents(_this.computeTangents(geo.vertices.data, geo.indices.data, geo.normals.data, geo.texCoords.data, []));
+	                    geo.setTangents(_this2.computeTangents(geo.vertices.data, geo.indices.data, geo.normals.data, geo.texCoords.data, []));
 	                }
 	            };
+
+	            // Update or re-compute colors.
 
 	            prim.updateColors = function (colors) {
 
@@ -10800,7 +10858,7 @@
 	                    geo.setColors(colors);
 	                } else {
 
-	                    geo.setColors(_this.computeColors(geo.normals.data, []));
+	                    geo.setColors(_this2.computeColors(geo.normals.data, []));
 	                }
 	            };
 
@@ -10808,35 +10866,35 @@
 
 	            prim.computeBoundingBox = function () {
 
-	                _this.computeBoundingBox(prim.geometry.vertices);
+	                _this2.computeBoundingBox(prim.geometry.vertices);
 	            };
 
 	            // Compute the bounding sphere.
 
 	            prim.computeBoundingSphere = function () {
 
-	                _this.computeBoundingSphere(prim.geometry.vertices);
+	                _this2.computeBoundingSphere(prim.geometry.vertices);
 	            };
 
 	            // Scale. Normally, we use matrix transforms to accomplish this.
 
 	            prim.scaleVertices = function (scale) {
 
-	                _this.scale(scale, prim.geometry.vertices);
+	                _this2.scale(scale, prim.geometry.vertices);
 	            };
 
 	            // Move. Normally, we use matrix transforms to accomplish this.
 
 	            prim.moveVertices = function (pos) {
 
-	                _this.computeMove(scale, prim.geometry.vertices);
+	                _this2.computeMove(scale, prim.geometry.vertices);
 	            };
 
 	            // Convert a Prim to its JSON equivalent
 
 	            prim.toJSON = function () {
 
-	                _this.toJSON(prim);
+	                _this2.toJSON(prim);
 	            };
 
 	            // Give the Prim a unique Id.
@@ -13201,7 +13259,7 @@
 	            var colors = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
 
 
-	            console.warn('Mesh::geometryToVertex() for:' + this.prim.name);
+	            /////////console.warn( 'Mesh::geometryToVertex() for:' + this.prim.name );
 
 	            /* 
 	             * The incoming flattened index array has stride = 3, so 
@@ -14704,29 +14762,15 @@
 	            // COLORED SHADER.
 	            //////////////////////////////////
 
-
-	            /*
-	                TODO: SOMETHING ABOUT THIS CAUSES AN ERROR!!!!!!!!!!!
-	                TODO: OUT OF RANGE ERROR IN SHADER
-	                TODO: renderer might need to disable some arrays when shifting betwee shaders!!!!!!
-	                TODO: MIGHT NEED A RESET 
-	            
-	                        this.prim.createPrim(
-	            
-	                            this.s2,                      // callback function
-	                            this.prim.typeList.CUBE,
-	                            'colored cube',
-	                            vec5( 1, 1, 1, 0 ),            // dimensions
-	                            vec5( 3, 3, 3 ),            // divisions
-	                            vec3.fromValues( 0.2, 0.5, 1 ),          // position (absolute)
-	                            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-	                            vec3.fromValues( util.degToRad( 20 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-	                            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 1 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-	                            [ 'img/webvr-logo3.png' ],               // texture present, NOT USED
-	                            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color
-	            
-	                        ) 
-	            */
+	            this.prim.createPrim(this.s2, // callback function
+	            this.prim.typeList.CUBE, 'colored cube', vec5(1, 1, 1, 0), // dimensions
+	            vec5(3, 3, 3), // divisions
+	            vec3.fromValues(0.2, 0.5, 1), // position (absolute)
+	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	            vec3.fromValues(util.degToRad(20), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	            vec3.fromValues(util.degToRad(0), util.degToRad(1), util.degToRad(0)), // angular velocity in x, y, x
+	            ['img/webvr-logo3.png'], // texture present, NOT USED
+	            vec4.fromValues(0.5, 1.0, 0.2, 1.0));
 
 	            // NOTE: webvr implementation
 

@@ -1307,7 +1307,7 @@ class Mesh {
      */
     geometryToVertex ( vertices, indices, texCoords, colors = [] ) {
 
-        console.warn( 'Mesh::geometryToVertex() for:' + this.prim.name );
+        /////////console.warn( 'Mesh::geometryToVertex() for:' + this.prim.name );
 
         /* 
          * The incoming flattened index array has stride = 3, so 

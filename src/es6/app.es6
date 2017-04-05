@@ -133,11 +133,11 @@ var promise = new Promise( ( resolve, reject ) => {
 
         ui = new Ui( false, util, webgl, webvr );
 
-        // The Prim object needs Loaders.
-
-        loadModel = new LoadModel( true, util, glMatrix, webgl );
+        // The Prim object needs Loaders. LoadModel might need the Texture loader.
 
         loadTexture = new LoadTexture( true, util, glMatrix, webgl );
+
+        loadModel = new LoadModel( true, util, glMatrix, webgl, loadTexture );
 
         loadAudio = new LoadAudio( true, util, glMatrix, webgl );
 

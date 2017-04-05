@@ -453,13 +453,6 @@ class World {
 // COLORED SHADER.
 //////////////////////////////////
 
-
-/*
-    TODO: SOMETHING ABOUT THIS CAUSES AN ERROR!!!!!!!!!!!
-    TODO: OUT OF RANGE ERROR IN SHADER
-    TODO: renderer might need to disable some arrays when shifting betwee shaders!!!!!!
-    TODO: MIGHT NEED A RESET 
-
             this.prim.createPrim(
 
                 this.s2,                      // callback function
@@ -474,8 +467,7 @@ class World {
                 [ 'img/webvr-logo3.png' ],               // texture present, NOT USED
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color
 
-            ) 
-*/
+            );
 
 // NOTE: webvr implementation
 

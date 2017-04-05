@@ -229,11 +229,17 @@ class Prim {
 
         };
 
-        // WebGL currently limits the number of vertices referenced by gl.drawElements.
+        /* 
+         * Bind the Prim callback for geometry creation.
+         */
 
-        // For larger Prims, split into several drawing operations, or use gl.drawArrays without an index.
+        this.util.emitter.on( 'geometryready', 
 
-        // NOTE: for gl.drawArrays there will be replication of positions not found with gl.drawElements.
+            ( prim, vertices, indices, normals, texCoords, tangents ) => {
+
+                this.initPrim( prim, vertices, indices, normals, texCoords, tangents );
+
+        } );
 
         // Visible from inside or outside.
 
@@ -3335,6 +3341,8 @@ class Prim {
 
         }
 
+        window.prim = prim;
+
         // Color array is pre-created, or gets a default when WebGL buffers are created.
 
         // Initialize the Prim, adding normals, texCoords and tangents as necessary.
@@ -3350,35 +3358,6 @@ class Prim {
      * a Torus that doesn't close
      */
     geometrySpring ( prim ) {
-
-
-    }
-
-    /** 
-     * Callback for assembling Mesh, after ALL OBJ and material files are loaded.
-     * @param {Prim} prim a Prim object.
-     */
-    meshCallback( prim ) {
-
-        let geo = prim.geometry;
-
-        console.log( '++++++++++++++++++++++++++++in mesh callback for prim:' + prim.name + ', all model files loaded...' );
-
-        // TODO: add model materials during load to Prim.
-
-        console.log('Prim::meshCallback(): vertices.length:' + geo.numVertices() + ' normals.length:' + geo.numNormals() +  ' tangents.length:' + geo.numTangents() + ' colors.length:' + geo.numColors() )
-
-        // Set the ready flag so we don't re-initialize the geometry buffers.
-
-        prim.ready = true;
-
-        // Initialize the prim, WITHOUT adding the geo data (already added in load-model).
-
-        this.initPrim( prim ); // CHECK CREATE PRIM - ATTACHES TO SHADER
-
-        // Delayed set to true.
-
-        return true;
 
 
     }
@@ -3405,12 +3384,12 @@ class Prim {
             console.log(">>>>>>>>>>>>>>geometryMesh():" + prim.models[ i ] );
 
             /* 
-             * NOTE: the final callback is given prim to manipulate by loadModel.load(). 
+             * NOTE: the final callback is given the Prim to manipulate by loadModel.load(). 
              * Intermediate callbacks between files loaded (e.g. material files) get the 
              * empty function below.
              */
 
-            this.loadModel.load( prim.models[ i ], prim, function() {}, this.meshCallback.bind( this ) );
+            this.loadModel.load( prim.models[ i ], prim, () => {}, this.initPrim.bind( this ) );
 
         }
 
@@ -3428,7 +3407,7 @@ class Prim {
 
         let geo = prim.geometry;
 
-        console.log( '(re)calculating normals and tangents for ' + prim.name)
+        console.log( prim.name + ' generation complete,(re)calculating normals and tangents' );
 
         /* 
          * Add buffer data, and re-bind to WebGL.
@@ -3436,19 +3415,17 @@ class Prim {
          * (this.meshCallback() passes empty coordinate arrays)
          */
 
-        // Vertices must be present.
+        // Update vertices if they were supplied.
 
-        geo.setVertices( vertices );
+        prim.updateVertices( vertices );
 
-        let numVertices = geo.numVertices();
-
-        console.log( prim.name + ' generation complete, computing bounding box' );
+        // Compute bounding box.
 
         prim.boundingBox = this.computeBoundingBox( prim.geometry.vertices.data );
 
-        // Indices must be present.
+        // Update indices if they were supplied.
 
-        geo.setIndices( indices );
+        prim.updateIndices ( indices );
 
         // If normals are used, re-compute.
 
@@ -3458,18 +3435,13 @@ class Prim {
 
         prim.updateTexCoords( texCoords );
 
-        // If tangents are used, re-compute.
-        // if ( prim.useTangents ... )
+        // Tangents aren't supplied by OBJ format, so re-compute.
 
         prim.updateTangents();
 
-        // Update colors, if not defined ( as a normalMap )
+        // Colors aren't supplied by OBJ format, so re-compute.
 
         prim.updateColors();
-
-        //prim.geometry.setBufferData( vertices, indices, normals, texCoords, tangents )
-
-        //prim.geometry.addBufferData( vertices, indices, normals, texCoords, tangents );
 
         //if ( prim.name === 'cubesphere' ) {
         //if ( prim.name === 'TestCapsule' ) {
@@ -3477,14 +3449,6 @@ class Prim {
         //if ( prim.name === 'texsphere' ) {
 
             let mesh = new Mesh( prim );
-
-            //window.mesh = mesh;
-
-            //window.prim = prim;
-
-            // SIMPLIFY TEST
-
-            ///mesh.simplify();
 
             // SUBDIVIDE TEST
 
@@ -3498,10 +3462,6 @@ class Prim {
             //mesh.subdivide( true );
             //mesh.subdivide( true ); // this one zaps from low-vertex < 10 prim
 
-            // TODO: THESE ARE NOT BEING ADDED
-
-            // TODO: FIGURE OUT WHAT NEEDS TO BE DONE WITH A SUBDIVIDE AND SIMPLIFY
-
        //}
 
         console.log("checking buffer data for " + prim.name )
@@ -3509,7 +3469,7 @@ class Prim {
         prim.geometry.checkBufferData();
 
         /* 
-         * If we were supplied a shader, add to display list. 
+         * If we were supplied a Shader, add it to the display list. 
          * A reference to individual Prims is kept independently in the Prim object if 
          * the Shader is not present.
         */
@@ -3519,6 +3479,8 @@ class Prim {
             prim.shader.addObj( prim );
 
         }
+
+        prim.ready = true;
 
     }
 
@@ -3637,7 +3599,22 @@ class Prim {
 
         };
 
-        /** 
+        /* 
+         * If we loaded multiple textures, set the texture. Textures are stored 
+         * in a numerical array of Objects under prim.textures.
+         */
+
+        prim.setTexture = ( textureId ) => {
+
+            // TODO: abstract load-texture.uploadTexture() so we can rebind 
+            // TODO: a texture based on its id in the texture array.
+            // TODO: map a texture obj generator which may be called from 
+            // TODO: uploadTexture with a object built from .loadObj, or directly
+            // TODO: from the texture array object in the prim.textures array.
+
+        }
+
+        /* 
          * Set the Prim as a glowing object. Global lights 
          * are handled by the World.
          */
@@ -3650,6 +3627,38 @@ class Prim {
             p.light.color = color;
 
         };
+
+        // We don't have a .setMaterial - set directly in loadModel.updateMateria()
+
+        // Update vertices (no re-compute available).
+
+        prim.updateVertices = ( vertices ) => {
+
+            let geo = prim.geometry;
+
+            if ( vertices && vertices.length ) {
+
+                geo.setVertices( vertices );
+
+            }
+
+        }
+
+        // update indices (no re-compute available).
+
+        prim.updateIndices = ( indices ) => {
+
+            let geo = prim.geometry;
+
+            if ( indices && indices.length ) {
+
+                geo.setIndices ( indices );
+
+            }
+
+        }
+
+        // Update or re-compute normals.
 
         prim.updateNormals = ( normals ) => {
 
@@ -3667,25 +3676,27 @@ class Prim {
 
         }
 
+        // Update or re-compute texture coordinates.
+
         prim.updateTexCoords = ( texCoords ) => {
 
             let geo = prim.geometry;
 
-            if ( texCoords.length > 0 ) {
+            if ( texCoords && texCoords.length > 0 ) {
 
                 geo.setTexCoords( texCoords );
 
             } else if ( geo.numTexCoords() !== geo.numVertices() ) {
 
-                console.log("PRIM:" + prim.name + ' recalculating texture coordinates' );
-
-                window.teapot = prim;
+                console.log("Prim:" + prim.name + ' recalculating texture coordinates' );
 
                 geo.setTexCoords( this.computeTexCoords( geo.vertices.data ) );
 
             }
 
         }
+
+        // Update or re-compute tangents.
 
         prim.updateTangents = ( tangents ) => {
 
@@ -3702,6 +3713,8 @@ class Prim {
             }
 
         }
+
+        // Update or re-compute colors.
 
         prim.updateColors = ( colors ) => {
 

@@ -148,7 +148,13 @@ class LoadPool {
      */
     load ( source, attach, callback, finalCallback ) {
 
-        // If we need a final callback, apply it here.
+        // If we need a callback or final callback, apply it here.
+
+        if ( ! callback ) {
+
+            callback = () => {};
+
+        }
 
         if ( finalCallback ) {
 

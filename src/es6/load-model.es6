@@ -10,11 +10,26 @@ class LoadModel extends LoadPool {
      * @param {WebGL} webgl reference to webgl object.
      */
 
-    constructor ( init, util, glMatrix, webgl ) {
+    constructor ( init, util, glMatrix, webgl, loadTexture ) {
 
         console.log( 'in LoadModel class' );
 
         super( init, util, glMatrix, webgl );
+
+        // Reference the loadTexture object.
+
+        this.loadTexture = loadTexture;
+
+        /* 
+         * Bind loadTexture to a 'newtexture' pseudo-event via our 
+         * Emitter utility object.
+         */
+
+        this.util.emitter.on( 'newtexture', ( path, prim ) => {
+
+            this.loadTexture.load( path, prim );
+
+        } );
 
     }
 
@@ -212,6 +227,20 @@ class LoadModel extends LoadPool {
 
                     break;
 
+                case 'mtllib': // materials library data
+
+                    // TODO: Load material file data.
+
+                    break;
+
+                case 'g': // group name (collection of vertices forming face)
+
+                    // TODO: assign faces (sides in our internal language).
+
+                    // @link https://people.cs.clemson.edu/~dhouse/courses/405/docs/brief-obj-file-format.html
+
+                    break;               
+
                 case 'vp': // parameter vertices
                 case 'p': // point
                 case 'l': // line
@@ -224,7 +253,7 @@ class LoadModel extends LoadPool {
                 case 'sp': // special point
                 case 'end': // end statment
                 case 'con': // connectivity between free-form surfaces
-                case 'g': // group name
+
                 case 's': // smoothing group
                 case 'mg': // merging group
                 case 'bevel': // bevel interpolation
@@ -236,7 +265,7 @@ class LoadModel extends LoadPool {
                 case 'ctech': // curve approximation
                 case 'stech': // surface approximation
                 case 'mtllib': // materials library data
-                case 'usemtl':
+                case 'usemtl': // use material
 
                     console.warn( 'loadModel::computeObjMesh(): OBJ data type: ' + type + ' in .obj file not supported' );
 
@@ -310,7 +339,7 @@ class LoadModel extends LoadPool {
 
              switch ( type ) {
 
-                case 'newmtl': // name
+                case 'newmtl': // name of material.
 
                     material.name = data[ 1 ];
 
@@ -473,6 +502,8 @@ class LoadModel extends LoadPool {
 
                 case 'map_Kd':   // diffuse map, an image file (e.g. file.jpg)
 
+
+
                     break;
 
                 case 'map_Ks':   // specular map
@@ -488,7 +519,6 @@ class LoadModel extends LoadPool {
 
                     break;
 
-
             }
 
             lineNum++;
@@ -503,7 +533,7 @@ class LoadModel extends LoadPool {
      * adapted from:
      * @link https://github.com/m0ppers/babylon-objloader/blob/master/src/babylon.objloader.js
      * @param {Object} loadObject custom loader object defined in load-pool.es6
-     * @param {Function} callback the intermediate callback function, called for each model file loaded.
+     * @param {Function} callback the *INTERMEDIATE* callback function, called for each model file loaded.
      */
     uploadModel ( loadObj, callback ) {
 
@@ -523,14 +553,15 @@ class LoadModel extends LoadPool {
 
                 let d = this.computeObjMesh( data, loadObj.prim );
 
+                loadObj.prim.geometry.addBufferData( d.vertices, d.indices, d.normals, d.texCoords, [] );
 
-                // Re-compute if stuff is missing
+                // Re-compute if some arrays are missing.
 
                 if( d.texCoords.length / loadObj.prim.geometry.texCoords.itemSize  !== d.vertices.length / loadObj.prim.geometry.vertices.itemSize ) {
 
-                    console.log("TEXCOORDS:" + (d.texCoords.length / loadObj.prim.geometry.texCoords.itemSize) + " VERTICES:" + (d.vertices.length / loadObj.prim.geometry.vertices.itemSize))
+                    console.log("Creating TEXCOORDS:" + (d.texCoords.length / loadObj.prim.geometry.texCoords.itemSize) + " VERTICES:" + ( d.vertices.length / loadObj.prim.geometry.vertices.itemSize ) );
 
-                    ///////////loadObj.prim.updateTexCoords();
+                    loadObj.prim.updateTexCoords();
 
                 }
 
@@ -540,15 +571,16 @@ class LoadModel extends LoadPool {
 
                 }
 
+                // Update arrays not specified in the OBJ format.
+
                 loadObj.prim.updateTangents();
 
                 loadObj.prim.updateColors();
 
                 // Add buffer data (and create WebGL buffers).
 
-                loadObj.prim.geometry.addBufferData( d.vertices, d.indices, d.normals, d.texCoords, [] );
 
-                console.log("IN UPLOAD MODEL, VERTICES DATA:" + (loadObj.prim.geometry.vertices.data.length / 3) )
+                console.log("IN UPLOAD MODEL, VERTICES DATA:" + ( loadObj.prim.geometry.vertices.data.length / 3 ) )
 
                 break;
 
@@ -601,7 +633,7 @@ class LoadModel extends LoadPool {
 
         loadObj.busy = true;
 
-        // Callback from load-pool for next object to load.
+        // Callback from load-pool.es6 for next object to load.
 
         loadObj.next = ( source ) => {
 
