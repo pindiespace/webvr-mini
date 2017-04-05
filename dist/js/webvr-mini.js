@@ -786,6 +786,30 @@
 	            return str.match(/^\s*$/);
 	        }
 
+	        /** 
+	         * Unique object id
+	         * @link https://jsfiddle.net/briguy37/2MVFd/
+	         * @returns {String} a unique UUID format id.
+	         */
+
+	    }, {
+	        key: 'computeId',
+	        value: function computeId() {
+
+	            var d = new Date().getTime();
+
+	            var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+
+	                var r = (d + Math.random() * 16) % 16 | 0;
+
+	                d = Math.floor(d / 16);
+
+	                return (c == 'x' ? r : r & 0x3 | 0x8).toString(16);
+	            });
+
+	            return uuid;
+	        }
+
 	        /* 
 	         * =============== NUMBER OPERATIONS ====================
 	         */
@@ -1186,12 +1210,33 @@
 	            return unique;
 	        }
 	    }, {
-	        key: 'getSeed',
+	        key: 'swap',
 
+
+	        /**
+	         * Fastest swap method for JS.
+	         * @link https://jsperf.com/js-list-swap/2
+	         * @param {Array} arr the array with elements to swap
+	         * @param {Number|String} p1 the first position.
+	         * @param {Number|String} p2 the second position.
+	         */
+	        value: function swap(arr, p1, p2) {
+
+	            var t = arr[p1];
+
+	            arr[p1] = x[p2];
+
+	            arr[p1] = t;
+
+	            return arr;
+	        }
 
 	        /** 
 	         * Random seed.
 	         */
+
+	    }, {
+	        key: 'getSeed',
 	        value: function getSeed() {
 
 	            var number = void 0;
@@ -1224,6 +1269,28 @@
 	        /* 
 	         * ============ SYSTEM AND Ui OPERATIONS =================
 	         */
+
+	        /** 
+	         * Get the path only of a file name.
+	         */
+
+	    }, {
+	        key: 'getFilePath',
+	        value: function getFilePath(fname) {
+
+	            return fname.substring(0, fname.lastIndexOf('/')) + '/';
+	        }
+
+	        /** 
+	         * Get the file name, without path or extension.
+	         */
+
+	    }, {
+	        key: 'getBaseName',
+	        value: function getBaseName(fname) {
+
+	            return fname.replace(/^(.*[/\\])?/, '').replace(/(\.[^.]*)$/, '');
+	        }
 
 	        // Get the file extension of a file.
 
@@ -4138,13 +4205,7 @@
 
 	            loadObj.image = new Image();
 
-	            loadObj.image.crossOrigin = 'anonymous';
-
-	            loadObj.callback = waitObj.callback;
-
-	            loadObj.prim = waitObj.attach; ///////////////////////////
-
-	            loadObj.busy = true;
+	            loadObj.image.crossOrigin = 'anonymous', loadObj.path = waitObj.path, loadObj.callback = waitObj.callback, loadObj.prim = waitObj.attach, loadObj.busy = true;
 
 	            // https://www.nczonline.net/blog/2013/09/10/understanding-ecmascript-6-arrow-functions/
 
@@ -4177,35 +4238,17 @@
 	        }
 
 	        /** 
-	         * Create a WebGL texture and upload to GPU.
-	         * Note: problems with firefox data, see:
-	         * http://stackoverflow.com/questions/39251254/avoid-cpu-side-conversion-with-teximage2d-in-firefox
-	         * @param {Object} loadObj the loader object containing Image data.
-	         * @param {Function} callback callback function for individual texture load.
-	         * @memberOf module: webvr-mini/LoadTexture
+	         * Given the standard Prim texture object, bind it for drawing. 
+	         * gl.TEXTURE0, gl.TEXTURE1...
 	         */
 
 	    }, {
-	        key: 'uploadTexture',
-	        value: function uploadTexture(loadObj, callback) {
-
-	            ////////////console.log( 'In uploadTexture() for:' + loadObj.prim.name + ' src:' + loadObj.image.src );
+	        key: 'bindTexture',
+	        value: function bindTexture(textureObj) {
 
 	            var gl = this.webgl.getContext();
 
-	            var textures = loadObj.prim.textures;
-
-	            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-
-	            // Create a textureObj that we will bind to the Prim texture array later.
-
-	            var textureObj = {
-	                image: loadObj.image,
-	                src: loadObj.image.src,
-	                texture: gl.createTexture()
-	            };
-
-	            // Bind the texture data to the videocard.
+	            // Bind the texture data to the videocard, receive a WebGL texture in our textureObject.
 
 	            gl.bindTexture(gl.TEXTURE_2D, textureObj.texture);
 
@@ -4247,6 +4290,44 @@
 
 	            gl.bindTexture(gl.TEXTURE_2D, null);
 
+	            return textureObj;
+	        }
+
+	        /** 
+	         * Create a WebGL texture and upload to GPU.
+	         * Note: problems with firefox data, see:
+	         * http://stackoverflow.com/questions/39251254/avoid-cpu-side-conversion-with-teximage2d-in-firefox
+	         * @param {Object} loadObj the loader object containing Image data.
+	         * @param {Function} callback callback function for individual texture load.
+	         * @memberOf module: webvr-mini/LoadTexture
+	         */
+
+	    }, {
+	        key: 'uploadTexture',
+	        value: function uploadTexture(loadObj, callback) {
+
+	            ////////////console.log( 'In uploadTexture() for:' + loadObj.prim.name + ' src:' + loadObj.image.src );
+
+	            var gl = this.webgl.getContext();
+
+	            var textures = loadObj.prim.textures;
+
+	            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+
+	            // Create a textureObj that we will bind to the Prim texture array later.
+
+	            // Bind the texture in WebGL.
+
+	            var textureObj = this.bindTexture({
+
+	                image: loadObj.image,
+
+	                src: loadObj.image.src,
+
+	                texture: gl.createTexture()
+
+	            });
+
 	            /* 
 	             * We save all the texture information into the Prim, both path, 
 	             * image data, and WebGL texture reference.
@@ -4254,13 +4335,11 @@
 
 	            textures.push(textureObj);
 
-	            //window.prim = loadObj.prim;
-
-	            // Clear the object for re-use.
+	            // Clear the loadObj for re-use.
 
 	            loadObj.busy = false;
 
-	            // Send this loadObj to update for re-use .
+	            // Send this loadObj to our .update() method so it can be re-used.
 
 	            this.update(loadObj);
 	        }
@@ -4360,6 +4439,8 @@
 	            this.waitCache.push({
 
 	                source: source,
+
+	                path: this.util.getFilePath(source),
 
 	                attach: attach,
 
@@ -4535,7 +4616,9 @@
 
 	        /* 
 	         * Bind loadTexture to a 'newtexture' pseudo-event via our 
-	         * Emitter utility object.
+	         * Emitter utility object. This allows us to add textures that 
+	         * weren't defined in Prim creation but reside internally in the 
+	         * OBJ and MTL files.
 	         */
 
 	        _this.util.emitter.on('newtexture', function (path, prim) {
@@ -4650,11 +4733,15 @@
 	        /** 
 	         * Parse the .obj file into flattened object data
 	         * @link http://paulbourke.net/dataformats/obj/
+	         * 
+	         * @param {String} data the incoming data from the file.
+	         * @param {Prim} prim the Prim object defined in prim.es6
+	         * @param {String} path the path to the file. MTL files may reference other files in their directory.
 	         */
 
 	    }, {
 	        key: 'computeObjMesh',
-	        value: function computeObjMesh(data, prim) {
+	        value: function computeObjMesh(data, prim, path) {
 	            var _this2 = this;
 
 	            console.log("LOADING MODEL COMPUTEVERTICES");
@@ -4763,6 +4850,13 @@
 
 	                        break;
 
+	                    case 'usemtl':
+	                        // use material
+
+	                        console.log("::::::::::::GOTTA USEMTL in OBJ file: " + data[1]);
+
+	                        break;
+
 	                    case 'g':
 	                        // group name (collection of vertices forming face)
 
@@ -4795,9 +4889,8 @@
 	                    case 'trace_obj': // ray tracing
 	                    case 'ctech': // curve approximation
 	                    case 'stech': // surface approximation
-	                    case 'mtllib': // materials library data
-	                    case 'usemtl':
-	                        // use material
+	                    case 'mtllib':
+	                        // materials library data
 
 	                        console.warn('loadModel::computeObjMesh(): OBJ data type: ' + type + ' in .obj file not supported');
 
@@ -4819,11 +4912,7 @@
 	                lineNum++;
 	            });
 
-	            // Indices in .obj format wind a bit differently, so change.
-
-	            // TODO: Make indices work
-
-	            // Colors and tangents are not part of the Wavefront .obj format
+	            // NOTE: Colors and tangents are not part of the Wavefront .obj format
 
 	            console.log("load-model::computeObjMesh(): v:" + vertices.length / 3 + " i:" + indices.length / 3 + " t:" + texCoords.length / 2 + " n:" + normals.length / 3);
 
@@ -4847,17 +4936,22 @@
 	         * 
 	         * Reference:
 	         * @link http://paulbourke.net/dataformats/mtl/
+	         * 
+	         * @param {String} data the incoming data from the file.
+	         * @param {Prim} prim the Prim object defined in prim.es6
+	         * @param {String} path the path to the file. MTL files may reference other files in their directory.
 	         */
 
 	    }, {
 	        key: 'computeObjMaterials',
-	        value: function computeObjMaterials(data, prim) {
+	        value: function computeObjMaterials(data, prim, path) {
+	            var _this3 = this;
 
 	            console.log("LOADING MODEL MATERIALS");
 
 	            var lineNum = 0;
 
-	            var material = prim.material;
+	            var material = {};
 
 	            var lines = data.split('\n');
 
@@ -5005,6 +5099,31 @@
 	                    case 'map_Kd':
 	                        // diffuse map, an image file (e.g. file.jpg)
 
+	                        /* 
+	                         * This loads the file, and appends to Prim texture list using the LoadTexture object.
+	                         * @link  "filename" is the name of a color texture file (.mpc), a color 
+	                         * procedural texture file (.cxc), or an image file.
+	                         * @link http://paulbourke.net/dataformats/mtl/
+	                         * 
+	                         * TODO: support options
+	                         * -blenu on | off    texture blending in horizontal direction
+	                         * -blenv on | off    texture blending in vertical direction
+	                         * -bm    mult        bump multiplier, only with 'bump'.
+	                         * -boost value       sharpens mipmaps (may cause texture crawling)
+	                         * -cc on | off       color correction, can only be used for colormaps map_Ka, map_Kd, and map_Ks
+	                         * -clamp on | off    texture clamped 0-1
+	                         * -imfchan r | g | b | m | l | z channel used to create bump texture
+	                         * -mm base gain      range of variation for color, base adds base value (brightens), gain increases contrast
+	                         * -o u v w           shifts map origin from 0, 0
+	                         * -t u v w           adds turbulence, so tiling is less repetitive
+	                         * -texres resolution scale up non-power of 2
+	                         */
+
+	                        console.log("::::::::::::GOTTA DIFFUSE MAP in OBJ MTL file: " + data[1]);
+
+	                        // TODO: maket this attach to prim.textures
+
+	                        _this3.util.emitter.emit('newtexture', path + data[data.length - 1], prim);
 
 	                        break;
 
@@ -5026,6 +5145,8 @@
 
 	                lineNum++;
 	            });
+
+	            return material;
 	        }
 
 	        /** 
@@ -5054,7 +5175,7 @@
 
 	                    console.log("OBJ file loaded, now parse it....");
 
-	                    var d = this.computeObjMesh(data, loadObj.prim);
+	                    var d = this.computeObjMesh(data, loadObj.prim, loadObj.path);
 
 	                    loadObj.prim.geometry.addBufferData(d.vertices, d.indices, d.normals, d.texCoords, []);
 
@@ -5089,7 +5210,18 @@
 
 	                    console.log("MTL file loaded, parsing....");
 
-	                    this.computeObjMaterials(data, loadObj.prim);
+	                    var material = this.computeObjMaterials(data, loadObj.prim, loadObj.path);
+
+	                    if (!material.name) {
+
+	                        material.name = this.util.getBaseName(loadObj.path);
+	                    }
+
+	                    // TODO: LOAD THIS MATERIAL
+
+	                    console.log("ADDING MATERIAL ARRAY:" + material.name);
+
+	                    prim.material[material.name] = material;
 
 	                    break;
 
@@ -5121,21 +5253,13 @@
 	    }, {
 	        key: 'createLoadObj',
 	        value: function createLoadObj(waitObj) {
-	            var _this3 = this;
+	            var _this4 = this;
 
 	            console.log(">>>>>>>>>>>>>>>>MODEL createLoadObj Loading " + waitObj.source);
 
 	            var loadObj = {};
 
-	            loadObj.model = {};
-
-	            loadObj.model.crossOrigin = 'anonymous';
-
-	            loadObj.callback = waitObj.callback;
-
-	            loadObj.prim = waitObj.attach; ///////////////////////////
-
-	            loadObj.busy = true;
+	            loadObj.model = {}, loadObj.model.crossOrigin = 'anonymous', loadObj.path = waitObj.path, loadObj.callback = waitObj.callback, loadObj.prim = waitObj.attach, loadObj.busy = true;
 
 	            // Callback from load-pool.es6 for next object to load.
 
@@ -5143,12 +5267,12 @@
 
 	                console.log(">>>>>>>>>>>>>MODEL NEXT SOURCE:" + source);
 
-	                loadObj.fType = _this3.util.getFileExtension(source);
+	                loadObj.fType = _this4.util.getFileExtension(source);
 
 	                fetch(source).then(function (response) {
 	                    return response.text();
 	                }).then(function (xmlString) {
-	                    loadObj.data = xmlString;_this3.uploadModel(loadObj, loadObj.callback);
+	                    loadObj.data = xmlString;_this4.uploadModel(loadObj, loadObj.callback);
 	                });
 	            };
 
@@ -7426,30 +7550,6 @@
 	            }
 
 	            return true;
-	        }
-
-	        /** 
-	         * Unique object id
-	         * @link https://jsfiddle.net/briguy37/2MVFd/
-	         * @returns {String} a unique UUID format id.
-	         */
-
-	    }, {
-	        key: 'setId',
-	        value: function setId() {
-
-	            var d = new Date().getTime();
-
-	            var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-
-	                var r = (d + Math.random() * 16) % 16 | 0;
-
-	                d = Math.floor(d / 16);
-
-	                return (c == 'x' ? r : r & 0x3 | 0x8).toString(16);
-	            });
-
-	            return uuid;
 	        }
 
 	        /** 
@@ -10531,6 +10631,9 @@
 
 	            var geo = prim.geometry;
 
+	            /////////////////
+	            if (prim.name === 'capsule') window.capsule = prim;
+
 	            for (var i = 0; i < prim.models.length; i++) {
 
 	                console.log(">>>>>>>>>>>>>>geometryMesh():" + prim.models[i]);
@@ -10746,24 +10849,38 @@
 	                return mvMatrix;
 	            };
 
-	            /* 
+	            /** 
 	             * If we loaded multiple textures, set the texture. Textures are stored 
 	             * in a numerical array of Objects under prim.textures.
+	             * 
 	             */
 
-	            prim.setTexture = function (textureId) {}
+	            prim.setTexture = function (num) {
 
-	            // TODO: abstract load-texture.uploadTexture() so we can rebind 
-	            // TODO: a texture based on its id in the texture array.
-	            // TODO: map a texture obj generator which may be called from 
-	            // TODO: uploadTexture with a object built from .loadObj, or directly
-	            // TODO: from the texture array object in the prim.textures array.
+	                console.log('in PRIM::::::setActiveTexture');
+	            };
+
+	            /* 
+	             * Activate a texture by placing it first in position in the Prim texture array (with is what is used by shader first).
+	             * Complex textures have the order of binding set by their respective Shader. ShaderTexture and ShaderDirLightTexture 
+	             * just use the first array element. ShaderTerrain uses several elements (e.g. tiling textures, bumpmaps) defined in the 
+	             * ShaderTerrain texture object.
+	             */
+	            prim.activeTexture = function (num) {
+
+	                if (prim.textures[num]) {
+
+	                    _this2.util.swap(0, num);
+	                }
+
+	                console.log('in PRIM::::::activeTexture, setting active texture');
+	            };
 
 	            /* 
 	             * Set the Prim as a glowing object. Global lights 
 	             * are handled by the World.
 	             */
-	            ;prim.setLight = function () {
+	            prim.setLight = function () {
 	                var direction = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [1, 1, 1];
 	                var color = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [255, 255, 255];
 	                var prim = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : _this2;
@@ -10772,6 +10889,47 @@
 	                var p = prim;
 
 	                p.light.direction = direction, p.light.color = color;
+	            };
+
+	            prim.setMaterial = function (name) {
+	                var colorMult = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
+	                var ambient = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [0.1, 0.1, 0.1];
+	                var diffuse = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [0, 0, 0];
+	                var specular = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : [1, 1, 1, 1];
+	                var shininess = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : 250;
+	                var specularFactor = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : 1;
+	                var transparency = arguments.length > 7 && arguments[7] !== undefined ? arguments[7] : 1.0;
+	                var illum = arguments.length > 8 && arguments[8] !== undefined ? arguments[8] : 1;
+
+
+	                var p = prim;
+
+	                if (!p.material[name]) {
+
+	                    p.material[name] = {};
+	                }
+
+	                p.material[name] = {
+
+	                    colorMult: colorMult,
+
+	                    ambient: ambient, // ambient reflectivity
+
+	                    diffuse: diffuse, // diffuse reflectivity
+
+	                    specular: specular, // specular reflectivity
+
+	                    shininess: shininess, // surface shininess
+
+	                    specularFactor: specularFactor, // specular factor
+
+	                    transparency: transparency, // transparency, 0.0 - 1.0
+
+	                    illum: illum, // Illumination model 0-10, color on and Ambient on
+
+	                    name: 'default'
+
+	                };
 	            };
 
 	            // We don't have a .setMaterial - set directly in loadModel.updateMateria()
@@ -10899,7 +11057,7 @@
 
 	            // Give the Prim a unique Id.
 
-	            prim.id = this.setId();
+	            prim.id = this.util.computeId();
 
 	            // Shader object for adding/removing from display list.
 
@@ -10954,30 +11112,6 @@
 
 	            prim.scale = 1.0;
 
-	            // Set default Prim material (can be altered by .mtl file).
-
-	            prim.material = {
-
-	                colorMult: 1,
-
-	                ambient: [0.1, 0.1, 0.1], // ambient reflectivity
-
-	                diffuse: [0, 0, 0], // diffuse reflectivity
-
-	                specular: [1, 1, 1, 1], // specular reflectivity
-
-	                shininess: 250, // surface shininess
-
-	                specularFactor: 1, // specular factor
-
-	                transparency: 1.0, // transparency, 0.0 - 1.0
-
-	                illum: 1, // Illumination model 0-10, color on and Ambient on
-
-	                name: 'default'
-
-	            };
-
 	            // Set prim lighting.
 	            // TODO:::::::::::::::::::::::::::::::::::::::
 
@@ -11014,6 +11148,10 @@
 
 	            prim.waypoints = [];
 
+	            // Material files.
+
+	            prim.material = [];
+
 	            // Store multiple textures for one Prim.
 
 	            prim.textures = [];
@@ -11033,6 +11171,10 @@
 	            // Child Prim array.
 
 	            prim.children = [];
+
+	            // Set default Prim material (can be altered by .mtl file).
+
+	            prim.setMaterial('default');
 
 	            // Execute geometry creation routine (which may be a file load).
 
@@ -14733,30 +14875,21 @@
 
 	            );
 
-	            /*
-	            
 	            // NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
-	            
-	            
-	                        this.prim.createPrim(
-	            
-	                            this.s1,                      // callback function
-	                            this.prim.typeList.MESH,
-	                            'obj capsule',
-	                            vec5( 1, 1, 1 ),       // dimensions (4th dimension doesn't exist for cylinder)
-	                            vec5( 40, 40, 0  ),        // divisions MAKE SMALLER
-	                            vec3.fromValues(0.0, 1.0, 2.0 ),      // position (absolute)
-	                            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-	                            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-	                            vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-	                            [ 'obj/capsule/capsule.png' ],               // texture present
-	                            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color,
-	                            true,                                   // if true, apply texture to each face,
-	                            [ 'obj/capsule/capsule.obj', 'obj/capsule/capsule.mtl' ] // object files (.obj, .mtl)
-	                        
-	                        )
-	            
-	            */
+
+	            this.prim.createPrim(this.s1, // callback function
+	            this.prim.typeList.MESH, 'capsule', vec5(1, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
+	            vec5(40, 40, 0), // divisions MAKE SMALLER
+	            vec3.fromValues(0.0, 0.0, 0.0), // position (absolute)
+	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	            vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	            ['obj/capsule/capsule0.png'], // texture present
+	            vec4.fromValues(0.5, 1.0, 0.2, 1.0), // color,
+	            true, // if true, apply texture to each face,
+	            ['obj/capsule/capsule.obj', 'obj/capsule/capsule.mtl'] // object files (.obj, .mtl)
+
+	            );
 
 	            //////////////////////////////////
 	            // COLORED SHADER.
@@ -14776,12 +14909,16 @@
 
 	            // RESIZE EVENT HANDLING
 
+	            // TODO: PRIM CONCATENATE SEVERAL PRIMS TOGETHER INTO ONE ARRAY??? CHECK HOW TO DO
+
 	            // NOTE: fullscreen mode with correct return to localscreen
 
 	            // NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
 
 	            // TODO: READ SHADER VALUES TO DETERMINE IF BUFFERS NEEDED WHEN CREATING THE PRIM!!!!!!!!!!!!!!!!!!!!!
 	            // TODO: THIS WOULD HAVE TO HAPPEN IN THE PRIM CREATION THEMES
+
+	            // TODO: make npm run PRODUCTION work!!!!!!
 
 	            // TODO: JSON FILE FOR PRIMS (loadable) use this.load(), this.save()
 
@@ -14926,29 +15063,6 @@
 	            this.r2 = this.s2.init();
 
 	            this.r3 = this.s3.init();
-
-	            /*
-	                // ANOTHER MESH OBJECT
-	            
-	                    this.s1.addObj( 
-	            
-	                       this.prim.createPrim(
-	                        this.s1,
-	                        this.prim.typeList.SPHERE,
-	                        'texsphere',
-	                        vec5( 1.5, 1.5, 1.5, 0 ),   // dimensions
-	                        //vec5( 30, 30, 30 ),         // divisions
-	                        vec5( 6, 6, 6 ), // at least 8 subdividions to smooth!
-	                        //vec3.fromValues(-5, -1.3, -1 ),       // position (absolute)
-	                        vec3.fromValues( 1, -1.0, 3.5 ),
-	                        vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-	                        vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-	                        vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-	                        [ 'img/mozvr-logo1.png' ],               // texture present, NOT USED
-	                        vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
-	            
-	                    ) );
-	            */
 
 	            // Fire world update.
 

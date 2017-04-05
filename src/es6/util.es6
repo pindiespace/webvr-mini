@@ -170,6 +170,29 @@ class Util {
 
     }
 
+    /** 
+     * Unique object id
+     * @link https://jsfiddle.net/briguy37/2MVFd/
+     * @returns {String} a unique UUID format id.
+     */
+    computeId () {
+
+        let d = new Date().getTime();
+
+        let uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace( /[xy]/g, function( c ) {
+
+            let r = (d + Math.random() * 16 ) % 16 | 0;
+
+            d = Math.floor( d / 16 );
+
+            return ( c == 'x' ? r : ( r&0x3|0x8 ) ).toString( 16 );
+
+        } );
+
+        return uuid;
+
+    }
+
     /* 
      * =============== NUMBER OPERATIONS ====================
      */
@@ -568,6 +591,25 @@ class Util {
 
     };
 
+    /**
+     * Fastest swap method for JS.
+     * @link https://jsperf.com/js-list-swap/2
+     * @param {Array} arr the array with elements to swap
+     * @param {Number|String} p1 the first position.
+     * @param {Number|String} p2 the second position.
+     */
+    swap( arr, p1, p2 ) {
+
+        let t = arr[ p1 ];
+
+        arr[ p1 ] = x[ p2 ];
+
+        arr[ p1 ] = t;
+
+        return arr;
+
+    }
+
 
 
     /** 
@@ -610,6 +652,24 @@ class Util {
     /* 
      * ============ SYSTEM AND Ui OPERATIONS =================
      */
+
+    /** 
+     * Get the path only of a file name.
+     */
+    getFilePath ( fname ) {
+
+        return fname.substring( 0, fname.lastIndexOf( '/' ) ) + '/';
+
+    }
+
+    /** 
+     * Get the file name, without path or extension.
+     */
+    getBaseName ( fname ) {
+
+        return fname.replace( /^(.*[/\\])?/, '' ).replace( /(\.[^.]*)$/, '' );
+
+    }
 
     // Get the file extension of a file.
 

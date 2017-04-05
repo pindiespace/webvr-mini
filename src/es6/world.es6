@@ -424,30 +424,29 @@ class World {
             )
 
 
-/*
+
 
 // NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
-
 
             this.prim.createPrim(
 
                 this.s1,                      // callback function
                 this.prim.typeList.MESH,
-                'obj capsule',
+                'capsule',
                 vec5( 1, 1, 1 ),       // dimensions (4th dimension doesn't exist for cylinder)
                 vec5( 40, 40, 0  ),        // divisions MAKE SMALLER
-                vec3.fromValues(0.0, 1.0, 2.0 ),      // position (absolute)
+                vec3.fromValues(0.0, 0.0, 0.0 ),      // position (absolute)
                 vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
                 vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
                 vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [ 'obj/capsule/capsule.png' ],               // texture present
+                [ 'obj/capsule/capsule0.png' ],               // texture present
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color,
                 true,                                   // if true, apply texture to each face,
                 [ 'obj/capsule/capsule.obj', 'obj/capsule/capsule.mtl' ] // object files (.obj, .mtl)
             
             )
 
-*/
+
 
 //////////////////////////////////
 // COLORED SHADER.
@@ -473,12 +472,16 @@ class World {
 
 // RESIZE EVENT HANDLING
 
+// TODO: PRIM CONCATENATE SEVERAL PRIMS TOGETHER INTO ONE ARRAY??? CHECK HOW TO DO
+
 // NOTE: fullscreen mode with correct return to localscreen
 
 // NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
 
 // TODO: READ SHADER VALUES TO DETERMINE IF BUFFERS NEEDED WHEN CREATING THE PRIM!!!!!!!!!!!!!!!!!!!!!
 // TODO: THIS WOULD HAVE TO HAPPEN IN THE PRIM CREATION THEMES
+
+// TODO: make npm run PRODUCTION work!!!!!!
 
 // TODO: JSON FILE FOR PRIMS (loadable) use this.load(), this.save()
 
@@ -679,28 +682,6 @@ class World {
 
         this.r3 = this.s3.init();
 
-/*
-    // ANOTHER MESH OBJECT
-
-        this.s1.addObj( 
-
-           this.prim.createPrim(
-            this.s1,
-            this.prim.typeList.SPHERE,
-            'texsphere',
-            vec5( 1.5, 1.5, 1.5, 0 ),   // dimensions
-            //vec5( 30, 30, 30 ),         // divisions
-            vec5( 6, 6, 6 ), // at least 8 subdividions to smooth!
-            //vec3.fromValues(-5, -1.3, -1 ),       // position (absolute)
-            vec3.fromValues( 1, -1.0, 3.5 ),
-            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-            [ 'img/mozvr-logo1.png' ],               // texture present, NOT USED
-            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
-
-        ) );
-*/
 
         // Fire world update.
 

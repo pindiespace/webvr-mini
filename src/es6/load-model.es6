@@ -22,7 +22,9 @@ class LoadModel extends LoadPool {
 
         /* 
          * Bind loadTexture to a 'newtexture' pseudo-event via our 
-         * Emitter utility object.
+         * Emitter utility object. This allows us to add textures that 
+         * weren't defined in Prim creation but reside internally in the 
+         * OBJ and MTL files.
          */
 
         this.util.emitter.on( 'newtexture', ( path, prim ) => {
@@ -128,8 +130,12 @@ class LoadModel extends LoadPool {
     /** 
      * Parse the .obj file into flattened object data
      * @link http://paulbourke.net/dataformats/obj/
+     * 
+     * @param {String} data the incoming data from the file.
+     * @param {Prim} prim the Prim object defined in prim.es6
+     * @param {String} path the path to the file. MTL files may reference other files in their directory.
      */
-    computeObjMesh ( data, prim ) {
+    computeObjMesh ( data, prim, path ) {
 
         console.log("LOADING MODEL COMPUTEVERTICES")
 
@@ -233,6 +239,12 @@ class LoadModel extends LoadPool {
 
                     break;
 
+                case 'usemtl': // use material
+
+                     console.log("::::::::::::GOTTA USEMTL in OBJ file: " + data[ 1 ] )
+
+                    break;
+
                 case 'g': // group name (collection of vertices forming face)
 
                     // TODO: assign faces (sides in our internal language).
@@ -265,7 +277,6 @@ class LoadModel extends LoadPool {
                 case 'ctech': // curve approximation
                 case 'stech': // surface approximation
                 case 'mtllib': // materials library data
-                case 'usemtl': // use material
 
                     console.warn( 'loadModel::computeObjMesh(): OBJ data type: ' + type + ' in .obj file not supported' );
 
@@ -289,11 +300,8 @@ class LoadModel extends LoadPool {
 
         } );
 
-        // Indices in .obj format wind a bit differently, so change.
 
-        // TODO: Make indices work
-        
-        // Colors and tangents are not part of the Wavefront .obj format
+        // NOTE: Colors and tangents are not part of the Wavefront .obj format
 
         console.log("load-model::computeObjMesh(): v:" + (vertices.length /3) + " i:" + (indices.length /3 )+ " t:" + (texCoords.length /2) + " n:" + (normals.length /3))
 
@@ -318,14 +326,18 @@ class LoadModel extends LoadPool {
      * 
      * Reference:
      * @link http://paulbourke.net/dataformats/mtl/
+     * 
+     * @param {String} data the incoming data from the file.
+     * @param {Prim} prim the Prim object defined in prim.es6
+     * @param {String} path the path to the file. MTL files may reference other files in their directory.
      */
-    computeObjMaterials ( data, prim ) {
+    computeObjMaterials ( data, prim, path ) {
 
         console.log("LOADING MODEL MATERIALS")
 
         let lineNum = 0;
 
-        let material = prim.material;
+        let material = {};
 
         let lines = data.split( '\n' );
 
@@ -502,6 +514,32 @@ class LoadModel extends LoadPool {
 
                 case 'map_Kd':   // diffuse map, an image file (e.g. file.jpg)
 
+                    /* 
+                     * This loads the file, and appends to Prim texture list using the LoadTexture object.
+                     * @link  "filename" is the name of a color texture file (.mpc), a color 
+                     * procedural texture file (.cxc), or an image file.
+                     * @link http://paulbourke.net/dataformats/mtl/
+                     * 
+                     * TODO: support options
+                     * -blenu on | off    texture blending in horizontal direction
+                     * -blenv on | off    texture blending in vertical direction
+                     * -bm    mult        bump multiplier, only with 'bump'.
+                     * -boost value       sharpens mipmaps (may cause texture crawling)
+                     * -cc on | off       color correction, can only be used for colormaps map_Ka, map_Kd, and map_Ks
+                     * -clamp on | off    texture clamped 0-1
+                     * -imfchan r | g | b | m | l | z channel used to create bump texture
+                     * -mm base gain      range of variation for color, base adds base value (brightens), gain increases contrast
+                     * -o u v w           shifts map origin from 0, 0
+                     * -t u v w           adds turbulence, so tiling is less repetitive
+                     * -texres resolution scale up non-power of 2
+                     */
+
+                     console.log("::::::::::::GOTTA DIFFUSE MAP in OBJ MTL file: " + data[ 1 ] )
+
+                    // TODO: maket this attach to prim.textures
+
+                    this.util.emitter.emit( 'newtexture', path + data[ data.length - 1 ], prim );
+
 
 
                     break;
@@ -525,6 +563,7 @@ class LoadModel extends LoadPool {
 
         } );
 
+        return material;
 
     }
 
@@ -551,7 +590,7 @@ class LoadModel extends LoadPool {
 
                 console.log("OBJ file loaded, now parse it....")
 
-                let d = this.computeObjMesh( data, loadObj.prim );
+                let d = this.computeObjMesh( data, loadObj.prim, loadObj.path );
 
                 loadObj.prim.geometry.addBufferData( d.vertices, d.indices, d.normals, d.texCoords, [] );
 
@@ -588,7 +627,19 @@ class LoadModel extends LoadPool {
 
                 console.log("MTL file loaded, parsing....")
 
-                this.computeObjMaterials( data, loadObj.prim );
+                let material = this.computeObjMaterials( data, loadObj.prim, loadObj.path );
+
+                if ( ! material.name ) {
+
+                    material.name = this.util.getBaseName( loadObj.path );
+
+                }
+
+                // TODO: LOAD THIS MATERIAL
+
+                console.log("ADDING MATERIAL ARRAY:" + material.name )
+
+                prim.material[ material.name ] = material;
 
                 break;
 
@@ -623,13 +674,15 @@ class LoadModel extends LoadPool {
 
         let loadObj = {};
 
-        loadObj.model = {};
+        loadObj.model = {},
 
-        loadObj.model.crossOrigin = 'anonymous';
+        loadObj.model.crossOrigin = 'anonymous',
 
-        loadObj.callback = waitObj.callback;
+        loadObj.path = waitObj.path,
 
-        loadObj.prim = waitObj.attach; ///////////////////////////
+        loadObj.callback = waitObj.callback,
+
+        loadObj.prim = waitObj.attach,
 
         loadObj.busy = true;
 

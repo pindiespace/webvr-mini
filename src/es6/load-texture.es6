@@ -78,11 +78,13 @@ class LoadTexture extends LoadPool {
 
         loadObj.image = new Image();
 
-        loadObj.image.crossOrigin = 'anonymous';
+        loadObj.image.crossOrigin = 'anonymous',
 
-        loadObj.callback = waitObj.callback;
+        loadObj.path = waitObj.path,
 
-        loadObj.prim = waitObj.attach; ///////////////////////////
+        loadObj.callback = waitObj.callback,
+
+        loadObj.prim = waitObj.attach,
 
         loadObj.busy = true;
 
@@ -115,32 +117,15 @@ class LoadTexture extends LoadPool {
     }
 
     /** 
-     * Create a WebGL texture and upload to GPU.
-     * Note: problems with firefox data, see:
-     * http://stackoverflow.com/questions/39251254/avoid-cpu-side-conversion-with-teximage2d-in-firefox
-     * @param {Object} loadObj the loader object containing Image data.
-     * @param {Function} callback callback function for individual texture load.
-     * @memberOf module: webvr-mini/LoadTexture
+     * Given the standard Prim texture object, bind it for drawing. 
+     * gl.TEXTURE0, gl.TEXTURE1...
      */
-    uploadTexture ( loadObj, callback ) {
 
-        ////////////console.log( 'In uploadTexture() for:' + loadObj.prim.name + ' src:' + loadObj.image.src );
+    bindTexture ( textureObj ) {
 
         let gl = this.webgl.getContext();
 
-        let textures = loadObj.prim.textures;
-
-        gl.pixelStorei( gl.UNPACK_FLIP_Y_WEBGL, true );
-
-        // Create a textureObj that we will bind to the Prim texture array later.
-
-        let textureObj = {
-            image: loadObj.image,
-            src: loadObj.image.src,
-            texture: gl.createTexture()
-        };
-
-        // Bind the texture data to the videocard.
+        // Bind the texture data to the videocard, receive a WebGL texture in our textureObject.
 
         gl.bindTexture( gl.TEXTURE_2D, textureObj.texture );
 
@@ -186,6 +171,42 @@ class LoadTexture extends LoadPool {
 
         gl.bindTexture( gl.TEXTURE_2D, null );
 
+        return textureObj;
+
+    }
+
+    /** 
+     * Create a WebGL texture and upload to GPU.
+     * Note: problems with firefox data, see:
+     * http://stackoverflow.com/questions/39251254/avoid-cpu-side-conversion-with-teximage2d-in-firefox
+     * @param {Object} loadObj the loader object containing Image data.
+     * @param {Function} callback callback function for individual texture load.
+     * @memberOf module: webvr-mini/LoadTexture
+     */
+    uploadTexture ( loadObj, callback ) {
+
+        ////////////console.log( 'In uploadTexture() for:' + loadObj.prim.name + ' src:' + loadObj.image.src );
+
+        let gl = this.webgl.getContext();
+
+        let textures = loadObj.prim.textures;
+
+        gl.pixelStorei( gl.UNPACK_FLIP_Y_WEBGL, true );
+
+        // Create a textureObj that we will bind to the Prim texture array later.
+
+        // Bind the texture in WebGL.
+
+        let textureObj = this.bindTexture( {
+
+            image: loadObj.image,
+
+            src: loadObj.image.src,
+
+            texture: gl.createTexture()
+
+        } );
+
         /* 
          * We save all the texture information into the Prim, both path, 
          * image data, and WebGL texture reference.
@@ -193,13 +214,11 @@ class LoadTexture extends LoadPool {
 
         textures.push( textureObj );
 
-        //window.prim = loadObj.prim;
-
-        // Clear the object for re-use.
+        // Clear the loadObj for re-use.
 
         loadObj.busy = false;
 
-        // Send this loadObj to update for re-use .
+        // Send this loadObj to our .update() method so it can be re-used.
 
         this.update( loadObj );
 

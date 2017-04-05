@@ -274,29 +274,6 @@ class Prim {
     }
 
     /** 
-     * Unique object id
-     * @link https://jsfiddle.net/briguy37/2MVFd/
-     * @returns {String} a unique UUID format id.
-     */
-    setId () {
-
-        let d = new Date().getTime();
-
-        let uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace( /[xy]/g, function( c ) {
-
-            let r = (d + Math.random() * 16 ) % 16 | 0;
-
-            d = Math.floor( d / 16 );
-
-            return ( c == 'x' ? r : ( r&0x3|0x8 ) ).toString( 16 );
-
-        } );
-
-        return uuid;
-
-    }
-
-    /** 
      * Get the big array with all vertex data. Every time a 
      * Prim is made, we store a reference in the this.objs[] 
      * array. So, to make one, we just concatenate the 
@@ -3379,6 +3356,9 @@ class Prim {
 
         let geo = prim.geometry;
 
+        /////////////////
+        if ( prim.name === 'capsule' ) window.capsule = prim;
+
         for ( let i = 0; i < prim.models.length; i++ ) {
 
             console.log(">>>>>>>>>>>>>>geometryMesh():" + prim.models[ i ] );
@@ -3599,18 +3579,33 @@ class Prim {
 
         };
 
-        /* 
+        /** 
          * If we loaded multiple textures, set the texture. Textures are stored 
          * in a numerical array of Objects under prim.textures.
+         * 
          */
 
-        prim.setTexture = ( textureId ) => {
+        prim.setTexture = ( num ) => {
 
-            // TODO: abstract load-texture.uploadTexture() so we can rebind 
-            // TODO: a texture based on its id in the texture array.
-            // TODO: map a texture obj generator which may be called from 
-            // TODO: uploadTexture with a object built from .loadObj, or directly
-            // TODO: from the texture array object in the prim.textures array.
+            console.log( 'in PRIM::::::setActiveTexture')
+
+        }
+
+        /* 
+         * Activate a texture by placing it first in position in the Prim texture array (with is what is used by shader first).
+         * Complex textures have the order of binding set by their respective Shader. ShaderTexture and ShaderDirLightTexture 
+         * just use the first array element. ShaderTerrain uses several elements (e.g. tiling textures, bumpmaps) defined in the 
+         * ShaderTerrain texture object.
+         */
+        prim.activeTexture = ( num ) => {
+
+            if ( prim.textures[ num ] ) {
+
+                this.util.swap( 0, num );
+
+            }
+
+            console.log( 'in PRIM::::::activeTexture, setting active texture' );
 
         }
 
@@ -3627,6 +3622,40 @@ class Prim {
             p.light.color = color;
 
         };
+
+        prim.setMaterial = ( name, colorMult = 1, ambient = [ 0.1, 0.1, 0.1 ], diffuse = [ 0, 0, 0 ], specular = [ 1, 1, 1, 1 ], shininess = 250, specularFactor = 1, transparency = 1.0, illum = 1 ) => {
+
+            let p = prim;
+
+            if ( ! p.material[ name ] ) {
+
+                p.material[ name ] = {};
+
+            }
+
+            p.material[ name ] = {
+
+                colorMult: colorMult, 
+
+                ambient: ambient,  // ambient reflectivity
+
+                diffuse: diffuse,        // diffuse reflectivity
+
+                specular: specular,    // specular reflectivity
+
+                shininess: shininess,              // surface shininess
+
+                specularFactor: specularFactor,           // specular factor
+
+                transparency: transparency,   // transparency, 0.0 - 1.0
+
+                illum: illum,            // Illumination model 0-10, color on and Ambient on
+
+                name: 'default'
+
+            }
+
+        }
 
         // We don't have a .setMaterial - set directly in loadModel.updateMateria()
 
@@ -3774,7 +3803,7 @@ class Prim {
 
         // Give the Prim a unique Id.
 
-        prim.id = this.setId();
+        prim.id = this.util.computeId();
 
         // Shader object for adding/removing from display list.
 
@@ -3830,34 +3859,13 @@ class Prim {
 
         prim.scale = 1.0;
 
-        // Set default Prim material (can be altered by .mtl file).
-
-        prim.material = {
-
-            colorMult: 1, 
-
-            ambient: [ 0.1, 0.1, 0.1 ],  // ambient reflectivity
-
-            diffuse: [ 0, 0, 0 ],        // diffuse reflectivity
-
-            specular: [ 1, 1, 1, 1 ],    // specular reflectivity
-
-            shininess: 250,              // surface shininess
-
-            specularFactor: 1,           // specular factor
-
-            transparency: 1.0,   // transparency, 0.0 - 1.0
-
-            illum: 1,            // Illumination model 0-10, color on and Ambient on
-
-            name: 'default'
-
-        };
 
         // Set prim lighting.
         // TODO:::::::::::::::::::::::::::::::::::::::
 
         prim.light = {};
+
+
 
         // TODO:::::::::::::::::::::::::::::::::::::::
 
@@ -3890,6 +3898,10 @@ class Prim {
 
         prim.waypoints = [];
 
+        // Material files.
+
+        prim.material = [];
+
         // Store multiple textures for one Prim.
 
         prim.textures = [];
@@ -3909,6 +3921,10 @@ class Prim {
         // Child Prim array.
 
         prim.children = [];
+
+        // Set default Prim material (can be altered by .mtl file).
+
+        prim.setMaterial( 'default' );
 
        // Execute geometry creation routine (which may be a file load).
 

@@ -49,6 +49,8 @@ class LoadPool {
 
             source: source,
 
+            path: this.util.getFilePath( source ),
+
             attach: attach,
 
             callback: callback

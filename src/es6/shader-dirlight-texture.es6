@@ -291,7 +291,7 @@ class shaderDirLightTexture extends Shader {
 
                 gl.activeTexture( gl.TEXTURE0 );
                 gl.bindTexture( gl.TEXTURE_2D, null );
-                gl.bindTexture( gl.TEXTURE_2D, obj.textures[0].texture );
+                gl.bindTexture( gl.TEXTURE_2D, obj.textures[ 0 ].texture );
 
                 // Set fragment shader sampler uniform.
 
@@ -305,9 +305,9 @@ class shaderDirLightTexture extends Shader {
 
                     gl.uniform3f(
                         vsVars.uniform.vec3.uAmbientColor,
-                        ambient[0],
-                        ambient[1],
-                        ambient[2]
+                        ambient[ 0 ],
+                        ambient[ 1 ],
+                        ambient[ 2 ]
                     );
 
                     gl.uniform3fv( 
@@ -317,9 +317,9 @@ class shaderDirLightTexture extends Shader {
 
                     gl.uniform3f(
                         vsVars.uniform.vec3.uDirectionalColor,
-                        directionalColor[0],
-                        directionalColor[1],
-                        directionalColor[2]
+                        directionalColor[ 0 ],
+                        directionalColor[ 1 ],
+                        directionalColor[ 2 ]
                     );
 
                 }
