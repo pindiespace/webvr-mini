@@ -580,7 +580,7 @@ class LoadModel extends LoadPool {
 
         let models = loadObj.prim.models;
 
-        console.log("::::::::UPLOADMODEL CALLBACK:" + callback)
+        console.log("::::::::UPLOADMODEL for Prim:" + loadObj.prim.name + " CALLBACK:" + callback)
 
         // Since we may have different file types for object loads, switch on the file extension
 
@@ -588,7 +588,7 @@ class LoadModel extends LoadPool {
 
             case 'obj':
 
-                console.log("OBJ file loaded, now parse it....")
+                console.log("OBJ file for prim:" + loadObj.prim.name + " loaded, now parse it....")
 
                 let d = this.computeObjMesh( data, loadObj.prim, loadObj.path );
 
@@ -625,7 +625,7 @@ class LoadModel extends LoadPool {
 
             case 'mtl':
 
-                console.log("MTL file loaded, parsing....")
+                console.log("MTL file for prim:" + loadObj.prim.name + " loaded, parsing....")
 
                 let material = this.computeObjMaterials( data, loadObj.prim, loadObj.path );
 
@@ -635,11 +635,9 @@ class LoadModel extends LoadPool {
 
                 }
 
-                // TODO: LOAD THIS MATERIAL
+                console.log("ADDING MATERIAL ARRAY:" + material.name + " to Prim:" + loadObj.prim.name )
 
-                console.log("ADDING MATERIAL ARRAY:" + material.name )
-
-                prim.material[ material.name ] = material;
+                loadObj.prim.material.push( material );
 
                 break;
 

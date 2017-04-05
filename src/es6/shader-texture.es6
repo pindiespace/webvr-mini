@@ -166,6 +166,8 @@ class ShaderTexture extends Shader {
 
         }
 
+        window.rList = program.renderList;
+
         // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
         // TODO: https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/TechniquesforWorkingwithVertexData/TechniquesforWorkingwithVertexData.html
         // TODO: http://max-limper.de/tech/batchedrendering.html

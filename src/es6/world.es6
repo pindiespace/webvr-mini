@@ -138,7 +138,6 @@ class World {
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0) // color
             );
 
-
             this.prim.createPrim(
 
                 this.s1,                      // callback function
@@ -153,8 +152,7 @@ class World {
                 [ 'img/crate.png', 'img/webvr-logo1.png' ],          // texture image
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ), // RGBA color
 
-            )
-
+            );
 
             this.prim.createPrim(
 
@@ -170,8 +168,7 @@ class World {
                 [ 'img/webvr-logo2.png' ],
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color
 
-            ) 
-
+            );
 
             this.prim.createPrim(
 
@@ -187,12 +184,12 @@ class World {
                 [ 'img/uv-test.png' ],               // texture present, NOT USED
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color
 
-            ) 
+            );
 
-
-        // DIMENSIONS INDICATE ANY X or Y CURVATURE.
-        // DIVISIONS FOR CUBED AND CURVED PLANE INDICATE SIDE TO DRAW
-
+            /* 
+             * DIMENSIONS INDICATE ANY X or Y CURVATURE.
+             * DIVISIONS FOR CUBED AND CURVED PLANE INDICATE SIDE TO DRAW
+             */
 
             this.prim.createPrim(
 
@@ -208,8 +205,7 @@ class World {
                 [ 'img/webvr-logo2.png' ],               // texture present
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
 
-            )
-
+            );
 
             this.prim.createPrim(
 
@@ -225,8 +221,7 @@ class World {
                 [ 'img/webvr-logo3.png' ],               // texture present
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         
-            ) 
-
+            );
 
             this.prim.createPrim(
 
@@ -242,8 +237,7 @@ class World {
                 [ 'img/webvr-logo4.png' ],               // texture present
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         
-            )
-
+            );
 
             this.prim.createPrim(
 
@@ -259,8 +253,7 @@ class World {
                 [ 'img/mozvr-logo2.png' ],               // texture present
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         
-            )
-
+            );
 
             this.prim.createPrim(
 
@@ -276,8 +269,7 @@ class World {
                 [ 'img/uv-test.png' ],               // texture present, NOT USED
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         
-            ) 
-
+            );
 
             this.prim.createPrim(
 
@@ -293,9 +285,7 @@ class World {
                 [ 'img/uv-test.png' ],               // texture present, NOT USED
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         
-            )
-
-
+            );
 
             this.prim.createPrim(
             
@@ -311,9 +301,7 @@ class World {
                 [ 'img/uv-test.png' ],               // texture present, NOT USED
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
 
-            )
-
-
+            );
 
             this.prim.createPrim(
             
@@ -330,9 +318,7 @@ class World {
                 [ 'img/mozvr-logo1.png' ],               // texture present
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         
-            ) 
-
-
+            ); 
 
             this.prim.createPrim(
             
@@ -348,9 +334,7 @@ class World {
                 [ 'img/uv-test.png' ],               // texture present
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
             
-            )
-
-
+            );
 
             this.prim.createPrim(
             
@@ -366,9 +350,7 @@ class World {
                 [ 'img/uv-test.png' ],               // texture present
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
             
-            )
-
-
+            );
 
             this.prim.createPrim(
             
@@ -384,9 +366,7 @@ class World {
                 [ 'img/uv-test.png' ],               // texture present
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         
-            )
-
-
+            );
 
             this.prim.createPrim(
             
@@ -402,9 +382,7 @@ class World {
                 [ 'img/uv-test.png' ],               // texture present
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         
-            )
-
-
+            );
 
             this.prim.createPrim(
             
@@ -421,32 +399,28 @@ class World {
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color,
                 true                                    // if true, apply texture to each face
         
-            )
+            );
 
-
-
-
-// NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
+            // NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
 
             this.prim.createPrim(
 
-                this.s1,                      // callback function
+                this.s1,                               // callback function
                 this.prim.typeList.MESH,
                 'capsule',
-                vec5( 1, 1, 1 ),       // dimensions (4th dimension doesn't exist for cylinder)
-                vec5( 40, 40, 0  ),        // divisions MAKE SMALLER
-                vec3.fromValues(0.0, 0.0, 0.0 ),      // position (absolute)
+                vec5( 1, 1, 1 ),                       // dimensions (4th dimension doesn't exist for cylinder)
+                vec5( 40, 40, 0  ),                    // divisions MAKE SMALLER
+                vec3.fromValues( 0.0, 0.0, 0.0 ),      // position (absolute)
                 vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
                 vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
                 vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
                 [ 'obj/capsule/capsule0.png' ],               // texture present
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color,
                 true,                                   // if true, apply texture to each face,
-                [ 'obj/capsule/capsule.obj', 'obj/capsule/capsule.mtl' ] // object files (.obj, .mtl)
-            
-            )
+                [ 'obj/capsule/capsule.obj' ] // object files (.obj, .mtl)
+                ///////[ 'obj/capsule/capsule.obj', 'obj/capsule/capsule.mtl' ] // object files (.obj, .mtl)
 
-
+            );
 
 //////////////////////////////////
 // COLORED SHADER.
@@ -509,8 +483,7 @@ class World {
                 false,                                 // if true, apply texture to each face,
                 [ 'obj/teapot/teapot.obj' ] // object files (.obj, .mtl)
 
-            )
-
+            );
 
 //////////////////////////////////
 // LIT TEXTURE SHADER.
@@ -530,8 +503,7 @@ class World {
                 [ 'img/webvr-logo4.png' ],               // texture present, NOT USED
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color
 
-            ) 
-
+            );
 
             this.prim.createPrim(
 
@@ -548,8 +520,7 @@ class World {
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0),  // color
                 null //heightMap                       // heightmap
 
-            ) 
-
+            );
 
             this.prim.createPrim(
 
@@ -565,8 +536,7 @@ class World {
                 [ 'img/webvr-logo1.png' ],               // texture present
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         
-            ) 
-
+            );
 
             this.prim.createPrim(
             
@@ -583,9 +553,7 @@ class World {
                 [ 'img/mozvr-logo1.png' ],               // texture present, NOT USED
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         
-            )
-
-
+            );
 
             this.prim.createPrim(
 
@@ -601,9 +569,7 @@ class World {
                 [ 'img/mozvr-logo1.png' ],               // texture present, NOT USED
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
 
-            ) 
-
-
+            ); 
 
             this.prim.createPrim(
 
@@ -619,9 +585,7 @@ class World {
                 [ 'img/mozvr-logo2.png' ],               // texture present, NOT USED
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
 
-            )
-
-
+            );
 
             this.prim.createPrim(
 
@@ -637,8 +601,7 @@ class World {
                 [ 'img/mozvr-logo2.png' ],               // texture present, NOT USED
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         
-            )
-
+            );
 
             this.prim.createPrim(
 
@@ -654,8 +617,7 @@ class World {
                 [ 'img/mozvr-logo2.png' ],               // texture present
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
 
-            )
-
+            );
 
             this.prim.createPrim(
 

@@ -152,6 +152,8 @@ class LoadPool {
 
         // If we need a callback or final callback, apply it here.
 
+        console.log("SOURCE:" + source + " attach:" + attach + " callback:" + callback + " finalCallback" + finalCallback )
+
         if ( ! callback ) {
 
             callback = () => {};
@@ -164,7 +166,7 @@ class LoadPool {
 
         } else {
 
-            this.finalCallback = () => {};
+            this.finalCallback = () => { console.warn('empty final callback')};
 
         }
 

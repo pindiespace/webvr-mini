@@ -4540,6 +4540,8 @@
 
 	            // If we need a callback or final callback, apply it here.
 
+	            console.log("SOURCE:" + source + " attach:" + attach + " callback:" + callback + " finalCallback" + finalCallback);
+
 	            if (!callback) {
 
 	                callback = function callback() {};
@@ -4550,7 +4552,9 @@
 	                this.finalCallback = finalCallback;
 	            } else {
 
-	                this.finalCallback = function () {};
+	                this.finalCallback = function () {
+	                    console.warn('empty final callback');
+	                };
 	            }
 
 	            // Push a load request onto the queue.
@@ -5165,7 +5169,7 @@
 
 	            var models = loadObj.prim.models;
 
-	            console.log("::::::::UPLOADMODEL CALLBACK:" + callback);
+	            console.log("::::::::UPLOADMODEL for Prim:" + loadObj.prim.name + " CALLBACK:" + callback);
 
 	            // Since we may have different file types for object loads, switch on the file extension
 
@@ -5173,7 +5177,7 @@
 
 	                case 'obj':
 
-	                    console.log("OBJ file loaded, now parse it....");
+	                    console.log("OBJ file for prim:" + loadObj.prim.name + " loaded, now parse it....");
 
 	                    var d = this.computeObjMesh(data, loadObj.prim, loadObj.path);
 
@@ -5208,7 +5212,7 @@
 
 	                case 'mtl':
 
-	                    console.log("MTL file loaded, parsing....");
+	                    console.log("MTL file for prim:" + loadObj.prim.name + " loaded, parsing....");
 
 	                    var material = this.computeObjMaterials(data, loadObj.prim, loadObj.path);
 
@@ -5217,11 +5221,9 @@
 	                        material.name = this.util.getBaseName(loadObj.path);
 	                    }
 
-	                    // TODO: LOAD THIS MATERIAL
+	                    console.log("ADDING MATERIAL ARRAY:" + material.name + " to Prim:" + loadObj.prim.name);
 
-	                    console.log("ADDING MATERIAL ARRAY:" + material.name);
-
-	                    prim.material[material.name] = material;
+	                    loadObj.prim.material.push(material);
 
 	                    break;
 
@@ -5680,6 +5682,8 @@
 
 	                program.renderList = this.util.concatArr(program.renderList, objList);
 	            }
+
+	            window.rList = program.renderList;
 
 	            // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
 	            // TODO: https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/TechniquesforWorkingwithVertexData/TechniquesforWorkingwithVertexData.html
@@ -7275,6 +7279,10 @@
 
 	var _mesh2 = _interopRequireDefault(_mesh);
 
+	var _loadModel = __webpack_require__(12);
+
+	var _loadModel2 = _interopRequireDefault(_loadModel);
+
 	var _geoObj = __webpack_require__(28);
 
 	var _geoObj2 = _interopRequireDefault(_geoObj);
@@ -7516,9 +7524,9 @@
 	         * Bind the Prim callback for geometry creation.
 	         */
 
-	        this.util.emitter.on('geometryready', function (prim, vertices, indices, normals, texCoords, tangents) {
+	        this.util.emitter.on('geometryready', function (prim) {
 
-	            _this.initPrim(prim, vertices, indices, normals, texCoords, tangents);
+	            _this.initPrim(prim, prim.vertices, prim.indices, prim.normals, prim.texCoords, prim.tangents);
 	        });
 
 	        // Visible from inside or outside.
@@ -10473,8 +10481,6 @@
 
 	            normals = flatten(normals);
 
-	            console.log("@@@@@@@@@@DODECAHEDRON vertices:" + vertices.length + ' texCoords:' + texCoords.length + ' normals:' + normals.length);
-
 	            // Color array is pre-created, or gets a default when WebGL buffers are created.
 
 	            // Initialize the Prim, adding normals, texCoords and tangents as necessary.
@@ -10628,6 +10634,7 @@
 	    }, {
 	        key: 'geometryMesh',
 	        value: function geometryMesh(prim) {
+	            var _this2 = this;
 
 	            var geo = prim.geometry;
 
@@ -10644,8 +10651,29 @@
 	                 * empty function below.
 	                 */
 
-	                this.loadModel.load(prim.models[i], prim, function () {}, this.initPrim.bind(this));
-	            }
+	                if (prim.name === 'capsule') console.log("$$$$$$$$$$$$$$$$cHECKING FOR SHADER FOR PRIM:" + prim.name + " SHADEr: " + prim.shader.name);
+
+	                if (prim.name === 'teapot') console.log("@@@@@@@@@@@@@@@@@cHECKING FOR SHADER FOR PRIM:" + prim.name + " SHADEr: " + prim.shader.name);
+
+	                // TODO: LOAD LISTS NATIVE CODE FOR THIS, BUT ONLY TEAPOT WORKS
+
+	                // COULD TRY OUR LOCAL ROUTER!!!!!!!!!!!!!!!!!!!!!!!!
+
+	                //this.loadModel.load( prim.models[ i ], prim, () => {}, this.initPrim.bind( this ) );
+
+	                // geometryready
+
+	                // TODO: THEY INTERFERE WITH EACH OTHER
+
+	                var lm = new _loadModel2.default(true, this.util, this.glMatrix, this.webgl, this.loadTexture);
+
+	                this.loadModel.load(prim.models[i], prim, function () {}, function () {
+
+	                    console.log('!!!!!!!!!!!!!!!!GEOMETRY READY:::::: ' + prim.name);
+
+	                    _this2.util.emitter.emit('geometryready', prim);
+	                });
+	            } // end of for loop.
 
 	            return false;
 	        }
@@ -10668,6 +10696,13 @@
 	            var geo = prim.geometry;
 
 	            console.log(prim.name + ' generation complete,(re)calculating normals and tangents');
+
+	            if (prim.name === 'capsule') console.log("&&&&&&&&&&&&&&&&&cHECKING FOR SHADER FOR PRIM:" + prim.name + " SHADEr: " + prim.shader.name);
+
+	            // TODO: TEAPOT GOES HERE BUT CAPSULE DOES NOT
+
+
+	            if (prim.name === 'teapot') console.log("###############cHECKING FOR SHADER FOR PRIM:" + prim.name + " SHADEr: " + prim.shader.name);
 
 	            /* 
 	             * Add buffer data, and re-bind to WebGL.
@@ -10732,9 +10767,11 @@
 	             * If we were supplied a Shader, add it to the display list. 
 	             * A reference to individual Prims is kept independently in the Prim object if 
 	             * the Shader is not present.
-	            */
+	             */
 
 	            if (prim.shader) {
+
+	                console.log("ADDING PRIM:" + prim.name + " TO:" + prim.shader.name);
 
 	                prim.shader.addObj(prim);
 	            }
@@ -10785,7 +10822,7 @@
 	            var textureImages = arguments.length > 9 && arguments[9] !== undefined ? arguments[9] : [];
 	            var colors = arguments.length > 10 && arguments[10] !== undefined ? arguments[10] : null;
 
-	            var _this2 = this;
+	            var _this3 = this;
 
 	            var applyTexToFace = arguments.length > 11 && arguments[11] !== undefined ? arguments[11] : false;
 	            var modelFiles = arguments.length > 12 && arguments[12] !== undefined ? arguments[12] : [];
@@ -10870,7 +10907,7 @@
 
 	                if (prim.textures[num]) {
 
-	                    _this2.util.swap(0, num);
+	                    _this3.util.swap(0, num);
 	                }
 
 	                console.log('in PRIM::::::activeTexture, setting active texture');
@@ -10883,7 +10920,7 @@
 	            prim.setLight = function () {
 	                var direction = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [1, 1, 1];
 	                var color = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [255, 255, 255];
-	                var prim = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : _this2;
+	                var prim = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : _this3;
 
 
 	                var p = prim;
@@ -10904,12 +10941,7 @@
 
 	                var p = prim;
 
-	                if (!p.material[name]) {
-
-	                    p.material[name] = {};
-	                }
-
-	                p.material[name] = {
+	                p.material.push({
 
 	                    colorMult: colorMult,
 
@@ -10927,9 +10959,9 @@
 
 	                    illum: illum, // Illumination model 0-10, color on and Ambient on
 
-	                    name: 'default'
+	                    name: name
 
-	                };
+	                });
 	            };
 
 	            // We don't have a .setMaterial - set directly in loadModel.updateMateria()
@@ -10969,7 +11001,7 @@
 	                    geo.setNormals(normals);
 	                } else {
 
-	                    geo.setNormals(_this2.computeNormals(geo.vertices.data, geo.indices.data, [], prim.useFaceNormals));
+	                    geo.setNormals(_this3.computeNormals(geo.vertices.data, geo.indices.data, [], prim.useFaceNormals));
 	                }
 	            };
 
@@ -10986,7 +11018,7 @@
 
 	                    console.log("Prim:" + prim.name + ' recalculating texture coordinates');
 
-	                    geo.setTexCoords(_this2.computeTexCoords(geo.vertices.data));
+	                    geo.setTexCoords(_this3.computeTexCoords(geo.vertices.data));
 	                }
 	            };
 
@@ -11001,7 +11033,7 @@
 	                    geo.setTangents(tangents);
 	                } else {
 
-	                    geo.setTangents(_this2.computeTangents(geo.vertices.data, geo.indices.data, geo.normals.data, geo.texCoords.data, []));
+	                    geo.setTangents(_this3.computeTangents(geo.vertices.data, geo.indices.data, geo.normals.data, geo.texCoords.data, []));
 	                }
 	            };
 
@@ -11016,7 +11048,7 @@
 	                    geo.setColors(colors);
 	                } else {
 
-	                    geo.setColors(_this2.computeColors(geo.normals.data, []));
+	                    geo.setColors(_this3.computeColors(geo.normals.data, []));
 	                }
 	            };
 
@@ -11024,35 +11056,35 @@
 
 	            prim.computeBoundingBox = function () {
 
-	                _this2.computeBoundingBox(prim.geometry.vertices);
+	                _this3.computeBoundingBox(prim.geometry.vertices);
 	            };
 
 	            // Compute the bounding sphere.
 
 	            prim.computeBoundingSphere = function () {
 
-	                _this2.computeBoundingSphere(prim.geometry.vertices);
+	                _this3.computeBoundingSphere(prim.geometry.vertices);
 	            };
 
 	            // Scale. Normally, we use matrix transforms to accomplish this.
 
 	            prim.scaleVertices = function (scale) {
 
-	                _this2.scale(scale, prim.geometry.vertices);
+	                _this3.scale(scale, prim.geometry.vertices);
 	            };
 
 	            // Move. Normally, we use matrix transforms to accomplish this.
 
 	            prim.moveVertices = function (pos) {
 
-	                _this2.computeMove(scale, prim.geometry.vertices);
+	                _this3.computeMove(scale, prim.geometry.vertices);
 	            };
 
 	            // Convert a Prim to its JSON equivalent
 
 	            prim.toJSON = function () {
 
-	                _this2.toJSON(prim);
+	                _this3.toJSON(prim);
 	            };
 
 	            // Give the Prim a unique Id.
@@ -14713,9 +14745,10 @@
 	            ['img/uv-test.png'], // texture present, NOT USED
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0));
 
-	            // DIMENSIONS INDICATE ANY X or Y CURVATURE.
-	            // DIVISIONS FOR CUBED AND CURVED PLANE INDICATE SIDE TO DRAW
-
+	            /* 
+	             * DIMENSIONS INDICATE ANY X or Y CURVATURE.
+	             * DIVISIONS FOR CUBED AND CURVED PLANE INDICATE SIDE TO DRAW
+	             */
 
 	            this.prim.createPrim(this.s1, // callback function
 	            this.prim.typeList.CURVEDINNERPLANE, 'CurvedPlaneBack', vec5(2, 1, 1, this.prim.directions.BACK, 1), // pass orientation ONE UNIT CURVE
@@ -14887,7 +14920,8 @@
 	            ['obj/capsule/capsule0.png'], // texture present
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0), // color,
 	            true, // if true, apply texture to each face,
-	            ['obj/capsule/capsule.obj', 'obj/capsule/capsule.mtl'] // object files (.obj, .mtl)
+	            ['obj/capsule/capsule.obj'] // object files (.obj, .mtl)
+	            ///////[ 'obj/capsule/capsule.obj', 'obj/capsule/capsule.mtl' ] // object files (.obj, .mtl)
 
 	            );
 

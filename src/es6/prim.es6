@@ -1,6 +1,7 @@
 import Map2d from './map2d';
 import Map3d from './map3d';
 import Mesh from  './mesh';
+import LoadModel from './load-model';
 import GeoObj from './geo-obj';
 
 class Prim {
@@ -235,9 +236,9 @@ class Prim {
 
         this.util.emitter.on( 'geometryready', 
 
-            ( prim, vertices, indices, normals, texCoords, tangents ) => {
+            ( prim ) => {
 
-                this.initPrim( prim, vertices, indices, normals, texCoords, tangents );
+                this.initPrim( prim, prim.vertices, prim.indices, prim.normals, prim.texCoords, prim.tangents );
 
         } );
 
@@ -3205,8 +3206,6 @@ class Prim {
 
         normals = flatten( normals );
 
-        console.log( "@@@@@@@@@@DODECAHEDRON vertices:" + vertices.length + ' texCoords:' + texCoords.length + ' normals:' + normals.length)
-
         // Color array is pre-created, or gets a default when WebGL buffers are created.
 
         // Initialize the Prim, adding normals, texCoords and tangents as necessary.
@@ -3369,9 +3368,41 @@ class Prim {
              * empty function below.
              */
 
-            this.loadModel.load( prim.models[ i ], prim, () => {}, this.initPrim.bind( this ) );
+        if ( prim.name === 'capsule') console.log("$$$$$$$$$$$$$$$$cHECKING FOR SHADER FOR PRIM:" + prim.name + " SHADEr: " + prim.shader.name)
 
-        }
+        if ( prim.name === 'teapot') console.log("@@@@@@@@@@@@@@@@@cHECKING FOR SHADER FOR PRIM:" + prim.name + " SHADEr: " + prim.shader.name)
+
+            // TODO: LOAD LISTS NATIVE CODE FOR THIS, BUT ONLY TEAPOT WORKS
+
+        // COULD TRY OUR LOCAL ROUTER!!!!!!!!!!!!!!!!!!!!!!!!
+
+            //this.loadModel.load( prim.models[ i ], prim, () => {}, this.initPrim.bind( this ) );
+
+            // geometryready
+
+            // TODO: THEY INTERFERE WITH EACH OTHER
+
+            let lm = new LoadModel( true, this.util, this.glMatrix, this.webgl, this.loadTexture );
+
+            this.loadModel.load( 
+
+                prim.models[ i ],
+
+                prim,
+
+                () => {},
+
+                () => {
+
+                    console.log('!!!!!!!!!!!!!!!!GEOMETRY READY:::::: ' + prim.name)
+
+                    this.util.emitter.emit( 'geometryready', prim )
+
+                }
+
+            );
+
+        } // end of for loop.
 
         return false;
 
@@ -3388,6 +3419,13 @@ class Prim {
         let geo = prim.geometry;
 
         console.log( prim.name + ' generation complete,(re)calculating normals and tangents' );
+
+        if ( prim.name === 'capsule') console.log("&&&&&&&&&&&&&&&&&cHECKING FOR SHADER FOR PRIM:" + prim.name + " SHADEr: " + prim.shader.name)
+
+        // TODO: TEAPOT GOES HERE BUT CAPSULE DOES NOT
+
+
+       if ( prim.name === 'teapot') console.log("###############cHECKING FOR SHADER FOR PRIM:" + prim.name + " SHADEr: " + prim.shader.name)
 
         /* 
          * Add buffer data, and re-bind to WebGL.
@@ -3452,9 +3490,11 @@ class Prim {
          * If we were supplied a Shader, add it to the display list. 
          * A reference to individual Prims is kept independently in the Prim object if 
          * the Shader is not present.
-        */
+         */
 
         if ( prim.shader ) {
+
+            console.log("ADDING PRIM:" + prim.name + " TO:" + prim.shader.name )
 
             prim.shader.addObj( prim );
 
@@ -3627,13 +3667,7 @@ class Prim {
 
             let p = prim;
 
-            if ( ! p.material[ name ] ) {
-
-                p.material[ name ] = {};
-
-            }
-
-            p.material[ name ] = {
+            p.material.push( {
 
                 colorMult: colorMult, 
 
@@ -3651,9 +3685,9 @@ class Prim {
 
                 illum: illum,            // Illumination model 0-10, color on and Ambient on
 
-                name: 'default'
+                name: name
 
-            }
+            } );
 
         }
 
@@ -3864,8 +3898,6 @@ class Prim {
         // TODO:::::::::::::::::::::::::::::::::::::::
 
         prim.light = {};
-
-
 
         // TODO:::::::::::::::::::::::::::::::::::::::
 
