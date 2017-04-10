@@ -1,5 +1,7 @@
 import Mapd from  './mapd';
 
+'use strict'
+
 class Map2d extends Mapd {
 
     /* 

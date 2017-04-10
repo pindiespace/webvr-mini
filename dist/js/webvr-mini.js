@@ -44,8 +44,7 @@
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	__webpack_require__(1);
-	module.exports = __webpack_require__(3);
+	module.exports = __webpack_require__(1);
 
 
 /***/ },
@@ -53,57 +52,259 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/*
-	 * app.js
-	 * main entry point for this application. Uses 
-	 * ES5 syntax (es6 will be transpiled). Central 
-	 * point for including both ES5 and ES6 libraries.
+	 * app.es6
+	 * es6 entry point, transpiled (via BabelJS) to ES5.
 	 */
-	console.log( 'in app.js' );
 
-	// DEV ENVIRONMENT.
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.world = exports.webvr = exports.prim = exports.loadVideo = exports.loadAudio = exports.loadTexture = exports.loadModel = exports.webgl = exports.util = undefined;
+
+	var _util = __webpack_require__(3);
+
+	var _util2 = _interopRequireDefault(_util);
+
+	var _gamepad = __webpack_require__(5);
+
+	var _gamepad2 = _interopRequireDefault(_gamepad);
+
+	var _webgl = __webpack_require__(6);
+
+	var _webgl2 = _interopRequireDefault(_webgl);
+
+	var _webvr = __webpack_require__(7);
+
+	var _webvr2 = _interopRequireDefault(_webvr);
+
+	var _ui = __webpack_require__(8);
+
+	var _ui2 = _interopRequireDefault(_ui);
+
+	var _loadTexture = __webpack_require__(9);
+
+	var _loadTexture2 = _interopRequireDefault(_loadTexture);
+
+	var _loadModel = __webpack_require__(11);
+
+	var _loadModel2 = _interopRequireDefault(_loadModel);
+
+	var _loadAudio = __webpack_require__(12);
+
+	var _loadAudio2 = _interopRequireDefault(_loadAudio);
+
+	var _loadVideo = __webpack_require__(13);
+
+	var _loadVideo2 = _interopRequireDefault(_loadVideo);
+
+	var _loadFont = __webpack_require__(14);
+
+	var _loadFont2 = _interopRequireDefault(_loadFont);
+
+	var _shaderTexture = __webpack_require__(15);
+
+	var _shaderTexture2 = _interopRequireDefault(_shaderTexture);
+
+	var _shaderColor = __webpack_require__(17);
+
+	var _shaderColor2 = _interopRequireDefault(_shaderColor);
+
+	var _shaderDirlightTexture = __webpack_require__(18);
+
+	var _shaderDirlightTexture2 = _interopRequireDefault(_shaderDirlightTexture);
+
+	var _shaderWater = __webpack_require__(19);
+
+	var _shaderWater2 = _interopRequireDefault(_shaderWater);
+
+	var _shaderMetal = __webpack_require__(20);
+
+	var _shaderMetal2 = _interopRequireDefault(_shaderMetal);
+
+	var _renderer = __webpack_require__(21);
+
+	var _renderer2 = _interopRequireDefault(_renderer);
+
+	var _prim = __webpack_require__(22);
+
+	var _prim2 = _interopRequireDefault(_prim);
+
+	var _world = __webpack_require__(28);
+
+	var _world2 = _interopRequireDefault(_world);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	console.log('in es6');
+
+	// DEV ENVIRONMENT
 
 	var env = process.env.WEBPACK_ENV;
 
-	// REQUIRE ALL .es6 files.
+	// REQUIRE ALL POLYFILLS
 
-	    var vrmini = __webpack_require__( 3 );
+	// WebGL math library.
 
-	    // Done in app.es6
-	    ///////////////////////////vrmini.world.init();
+	var glMatrix = __webpack_require__(30);
 
-	// Check ES6 module structure.
+	if (!glMatrix) {
 
-	for (var i in vrmini ) {
+	    console.error('gl-matrix could\'nt be loaded...');
+	} else {
 
-	    console.log( i + ":" + vrmini[i] );
-
+	    console.log('loaded gl-matrix');
 	}
 
-	/* 
-	 * these variables are defined by webpack inputs in package.json.
-	 * "build": "cross-env __RELEASE__=true __DEV__=false webpack --config webpack-production.config.js -p -p",
-	 * "dev": "cross-env __RELEASE__=false __DEV__=true webpack",
-	 */
+	// Import WebVR-Mini libraries. Note: if you don't use super() imports will fail!
 
-	if ( true ) {
+	// NOTE: imports Emitter class
 
-	    console.warn('app.js: in development mode...');
+	//import Loader from './load-pool';
 
-	} else if ( __RELEASE__ === 'true' ) {
+	// import Shader from './Shader';
 
-	    console.warn('in release mode');
+	// Collects the shaders in one place.
 
+	// All objects.
+
+	// import Map2d from './map2d';
+	// import Map3d from './map3d';
+	// import Morph from './morph';
+
+	// Object primitives.
+
+	// Import the world (variable object, changes with each VR world).
+
+	// Init Util first to create shortcuts.
+
+	var util = new _util2.default();
+
+	// If we are in dev mode, load any special libraries.
+
+	var webgl = null;
+
+	if (true) {
+
+	    console.log('app.es6: in development mode');
+
+	    // require kronos webgl debug from node_modules
+	    // https://github.com/vorg/webgl-debug
+
+	    var debug = __webpack_require__(40);
+
+	    exports.webgl = webgl = new _webgl2.default(false, glMatrix, util, debug);
+
+	    if (debug) {
+
+	        console.log('Loading webgl-debug');
+	    } else {
+
+	        console.log('Error loading webgl-debug');
+	    }
+	} else if (__RELEASE__ === 'true') {
+
+	    // Code only added to release.
+
+	    exports.webgl = webgl = new _webgl2.default(false, glMatrix, util);
 	}
 
-	// EXPOSE IN BROWSER WINDOW OBJECT
+	var webvr = void 0,
+	    ui = void 0,
+	    loadModel = void 0,
+	    loadTexture = void 0,
+	    loadAudio = void 0,
+	    loadVideo = void 0,
+	    loadFont = void 0,
+	    prim = void 0,
+	    renderer = void 0,
+	    world = void 0;
 
-	window.vrmini = vrmini;
+	// WebGL can take some time to init.
 
-	console.log("Window.vrmini:" + vrmini );
+	var promise = new Promise(function (resolve, reject) {
+
+	    // do a thing, possibly async, then…
+
+	    if (webgl.init('webvr-mini-canvas')) {
+
+	        exports.webvr = webvr = new _webvr2.default(true, util, glMatrix, webgl);
+
+	        // Load our (minimal) 2d user interface.
+
+	        ui = new _ui2.default(false, util, webgl, webvr);
+
+	        // The Prim object needs Loaders. LoadModel might need the Texture loader.
+
+	        exports.loadTexture = loadTexture = new _loadTexture2.default(true, util, glMatrix, webgl);
+
+	        exports.loadModel = loadModel = new _loadModel2.default(true, util, glMatrix, webgl, loadTexture);
+
+	        exports.loadAudio = loadAudio = new _loadAudio2.default(true, util, glMatrix, webgl);
+
+	        exports.loadVideo = loadVideo = new _loadVideo2.default(true, util, glMatrix, webgl);
+
+	        loadFont = new _loadFont2.default(true, util, glMatrix, webgl);
+
+	        exports.prim = prim = new _prim2.default(true, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo);
+
+	        // Add shaders to Renderer.
+
+	        renderer = new _renderer2.default(true, util, glMatrix, webgl);
+
+	        renderer.addShader(new _shaderTexture2.default(true, util, glMatrix, webgl, webvr, 'shaderTexture'));
+
+	        renderer.addShader(new _shaderColor2.default(true, util, glMatrix, webgl, webvr, 'shaderColor'));
+
+	        renderer.addShader(new _shaderDirlightTexture2.default(true, util, glMatrix, webgl, webvr, 'shaderDirLightTexture'));
+
+	        // Create the world, which needs WebGL, WebVR, and Prim.
+
+	        exports.world = world = new _world2.default(webgl, webvr, prim, renderer);
+
+	        // Initialize our Ui.
+
+	        ui.init();
+
+	        resolve('Stuff worked!');
+	    } else {
+
+	        reject(Error('It broke'));
+	    }
+	}).then(function (result) {
+
+	    // TODO: Call ui to create a wait icon here.
+
+	    world.init();
+	});
+
+	window.vrmin = world;
+
+	//.catch( ( err ) => {
+
+	//    // error
+
+	//    console.error( 'app.es6 load error:' + err );
+
+	//} );
 
 
+	// TODO: don't automatically update webgl
+	// TODO: enclose in a promise, then update renderer and shaders.
+	// TODO: then call world
 
+	// Export our classes to app.js.
 
+	exports.util = util;
+	exports.webgl = webgl;
+	exports.loadModel = loadModel;
+	exports.loadTexture = loadTexture;
+	exports.loadAudio = loadAudio;
+	exports.loadVideo = loadVideo;
+	exports.prim = prim;
+	exports.webvr = webvr;
+	exports.world = world;
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
 
 /***/ },
@@ -296,308 +497,6 @@
 /* 3 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(process) {'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-	exports.world = exports.webvr = exports.prim = exports.loadVideo = exports.loadAudio = exports.loadTexture = exports.loadModel = exports.webgl = exports.util = undefined;
-
-	var _util = __webpack_require__(4);
-
-	var _util2 = _interopRequireDefault(_util);
-
-	var _gamepad = __webpack_require__(6);
-
-	var _gamepad2 = _interopRequireDefault(_gamepad);
-
-	var _webgl = __webpack_require__(7);
-
-	var _webgl2 = _interopRequireDefault(_webgl);
-
-	var _webvr = __webpack_require__(8);
-
-	var _webvr2 = _interopRequireDefault(_webvr);
-
-	var _ui = __webpack_require__(9);
-
-	var _ui2 = _interopRequireDefault(_ui);
-
-	var _loadTexture = __webpack_require__(10);
-
-	var _loadTexture2 = _interopRequireDefault(_loadTexture);
-
-	var _loadModel = __webpack_require__(12);
-
-	var _loadModel2 = _interopRequireDefault(_loadModel);
-
-	var _loadAudio = __webpack_require__(13);
-
-	var _loadAudio2 = _interopRequireDefault(_loadAudio);
-
-	var _loadVideo = __webpack_require__(14);
-
-	var _loadVideo2 = _interopRequireDefault(_loadVideo);
-
-	var _loadFont = __webpack_require__(15);
-
-	var _loadFont2 = _interopRequireDefault(_loadFont);
-
-	var _shaderTexture = __webpack_require__(16);
-
-	var _shaderTexture2 = _interopRequireDefault(_shaderTexture);
-
-	var _shaderColor = __webpack_require__(18);
-
-	var _shaderColor2 = _interopRequireDefault(_shaderColor);
-
-	var _shaderDirlightTexture = __webpack_require__(19);
-
-	var _shaderDirlightTexture2 = _interopRequireDefault(_shaderDirlightTexture);
-
-	var _shaderWater = __webpack_require__(20);
-
-	var _shaderWater2 = _interopRequireDefault(_shaderWater);
-
-	var _shaderMetal = __webpack_require__(21);
-
-	var _shaderMetal2 = _interopRequireDefault(_shaderMetal);
-
-	var _renderer = __webpack_require__(22);
-
-	var _renderer2 = _interopRequireDefault(_renderer);
-
-	var _prim = __webpack_require__(23);
-
-	var _prim2 = _interopRequireDefault(_prim);
-
-	var _world = __webpack_require__(29);
-
-	var _world2 = _interopRequireDefault(_world);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	/*
-	 * app.es6
-	 * es6 entry point, transpiled (via BabelJS) to ES5.
-	 */
-
-	console.log('in es6');
-
-	// DEV ENVIRONMENT
-
-	var env = process.env.WEBPACK_ENV;
-
-	// REQUIRE ALL POLYFILLS
-
-	// WebGL math library.
-
-	var glMatrix = __webpack_require__(30);
-
-	if (!glMatrix) {
-
-	    console.error('gl-matrix could\'nt be loaded...');
-	} else {
-
-	    console.log('loaded gl-matrix');
-	}
-
-	// Import WebVR-Mini libraries. Note: if you don't use super() imports will fail!
-
-	// NOTE: imports Emitter class
-
-	//import Loader from './load-pool';
-
-	// import Shader from './Shader';
-
-	// Collects the shaders in one place.
-
-	// All objects.
-
-	// import Map2d from './map2d';
-	// import Map3d from './map3d';
-	// import Morph from './morph';
-
-	// Object primitives.
-
-	// Import the world (variable object, changes with each VR world).
-
-	// Init Util first to create shortcuts.
-
-	var util = new _util2.default();
-
-	// If we are in dev mode, load any special libraries.
-
-	var webgl = null;
-
-	if (true) {
-
-	    console.log('app.es6: in development mode');
-
-	    // require kronos webgl debug from node_modules
-	    // https://github.com/vorg/webgl-debug
-
-	    var debug = __webpack_require__(40);
-
-	    exports.webgl = webgl = new _webgl2.default(false, glMatrix, util, debug);
-
-	    if (debug) {
-
-	        console.log('Loading webgl-debug');
-	    } else {
-
-	        console.log('Error loading webgl-debug');
-	    }
-	} else if (__RELEASE__ === 'true') {
-
-	    // Code only added to release.
-
-	    exports.webgl = webgl = new _webgl2.default(false, glMatrix, util);
-	}
-
-	var webvr = void 0,
-	    ui = void 0,
-	    loadModel = void 0,
-	    loadTexture = void 0,
-	    loadAudio = void 0,
-	    loadVideo = void 0,
-	    loadFont = void 0,
-	    prim = void 0,
-	    renderer = void 0,
-	    world = void 0;
-
-	// WebGL can take some time to init.
-	///////////////////////////////////////////////////////
-	var promise = new Promise(function (resolve, reject) {
-
-	    // do a thing, possibly async, then…
-
-	    if (webgl.init('webvr-mini-canvas')) {
-
-	        exports.webvr = webvr = new _webvr2.default(true, util, glMatrix, webgl);
-
-	        // Load our (minimal) 2d user interface.
-
-	        ui = new _ui2.default(false, util, webgl, webvr);
-
-	        // The Prim object needs Loaders. LoadModel might need the Texture loader.
-
-	        exports.loadTexture = loadTexture = new _loadTexture2.default(true, util, glMatrix, webgl);
-
-	        exports.loadModel = loadModel = new _loadModel2.default(true, util, glMatrix, webgl, loadTexture);
-
-	        exports.loadAudio = loadAudio = new _loadAudio2.default(true, util, glMatrix, webgl);
-
-	        exports.loadVideo = loadVideo = new _loadVideo2.default(true, util, glMatrix, webgl);
-
-	        loadFont = new _loadFont2.default(true, util, glMatrix, webgl);
-
-	        exports.prim = prim = new _prim2.default(true, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo);
-
-	        // Add shaders to Renderer.
-
-	        renderer = new _renderer2.default(true, util, glMatrix, webgl);
-
-	        renderer.addShader(new _shaderTexture2.default(true, util, glMatrix, webgl, webvr, 'shaderTexture'));
-
-	        renderer.addShader(new _shaderColor2.default(true, util, glMatrix, webgl, webvr, 'shaderColor'));
-
-	        renderer.addShader(new _shaderDirlightTexture2.default(true, util, glMatrix, webgl, webvr, 'shaderDirLightTexture'));
-
-	        // Create the world, which needs WebGL, WebVR, and Prim.
-
-	        exports.world = world = new _world2.default(webgl, webvr, prim, renderer);
-
-	        // Initialize our Ui.
-
-	        ui.init();
-
-	        resolve("Stuff worked!");
-	    } else {
-
-	        reject(Error("It broke"));
-	    }
-	}).then(function (result) {
-
-	    // TODO: Call ui to create a wait icon here.
-
-	    world.init();
-	});
-
-	/*
-
-	.catch( ( err ) => {
-
-	    // error
-
-	    console.error( 'app.es6 load error:' + err );
-
-	} );
-
-	*/
-
-	///////////////////////////////////////////////////////
-
-	// WebVR needs WebGL.
-
-	/*
-	let webvr = new WebVR( false, util, glMatrix, webgl );
-
-	// The Prim object needs Loaders.
-
-	let loadModel = new LoadModel( true, util, glMatrix, webgl );
-
-	let loadTexture = new LoadTexture( true, util, glMatrix, webgl );
-
-	let loadAudio = new LoadAudio( true, util, glMatrix, webgl );
-
-	let loadVideo = new LoadVideo( true, util, glMatrix, webgl );
-
-	let loadFont = new LoadFont( true, util, glMatrix, webgl );
-
-	let prim = new Prim ( true, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo );
-
-	let shaderTexture = new ShaderTexture ( true, util, glMatrix, webgl, 'shaderTexture' );
-
-	let shaderColor = new ShaderColor ( true, util, glMatrix, webgl, 'shaderColor' );
-
-	let shaderDirLightTexture = new shaderDirLightTexture( true, util, glMatrix, webgl, 'shaderDirLightTexture' );
-
-	let renderer = new Renderer ( true, util, glMatrix, webgl, shaderTexture, shaderColor, shaderDirLightTexture );
-
-	renderer.addShader( shaderTexture );
-
-	renderer.addShader( shaderColor );
-
-	renderer.addShader( shaderDirLightTexture );
-
-	// Create the world, which needs WebGL, WebVR, and Prim.
-
-	let world = new World( webgl, prim, renderer );
-
-	*/
-
-	// TODO: don't automatically update webgl
-	// TODO: enclose in a promise, then update renderer and shaders.
-	// TODO: then call world
-
-	// Export our classes to app.js.
-
-	exports.util = util;
-	exports.webgl = webgl;
-	exports.loadModel = loadModel;
-	exports.loadTexture = loadTexture;
-	exports.loadAudio = loadAudio;
-	exports.loadVideo = loadVideo;
-	exports.prim = prim;
-	exports.webvr = webvr;
-	exports.world = world;
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
-
-/***/ },
-/* 4 */
-/***/ function(module, exports, __webpack_require__) {
-
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
@@ -606,7 +505,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _emitter = __webpack_require__(5);
+	var _emitter = __webpack_require__(4);
 
 	var _emitter2 = _interopRequireDefault(_emitter);
 
@@ -1394,10 +1293,10 @@
 	exports.default = Util;
 
 /***/ },
-/* 5 */
+/* 4 */
 /***/ function(module, exports) {
 
-	"use strict";
+	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
@@ -1425,7 +1324,7 @@
 	    }
 
 	    _createClass(Emitter, [{
-	        key: "emit",
+	        key: 'emit',
 	        value: function emit(eventName) {
 
 	            var callbacks = this.callbacks[eventName];
@@ -1456,7 +1355,7 @@
 	         */
 
 	    }, {
-	        key: "on",
+	        key: 'on',
 	        value: function on(eventName, callback) {
 
 	            if (eventName in this.callbacks) {
@@ -1475,7 +1374,7 @@
 	exports.default = Emitter;
 
 /***/ },
-/* 6 */
+/* 5 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -1537,7 +1436,7 @@
 	}();
 
 /***/ },
-/* 7 */
+/* 6 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -2791,7 +2690,7 @@
 	exports.default = WebGL;
 
 /***/ },
-/* 8 */
+/* 7 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -3282,7 +3181,7 @@
 	exports.default = WebVR;
 
 /***/ },
-/* 9 */
+/* 8 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -4098,7 +3997,7 @@
 	exports.default = Ui;
 
 /***/ },
-/* 10 */
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -4109,7 +4008,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _loadPool = __webpack_require__(11);
+	var _loadPool = __webpack_require__(10);
 
 	var _loadPool2 = _interopRequireDefault(_loadPool);
 
@@ -4120,6 +4019,8 @@
 	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	'use strict';
 
 	var LoadTexture = function (_LoadPool) {
 	    _inherits(LoadTexture, _LoadPool);
@@ -4372,7 +4273,7 @@
 	exports.default = LoadTexture;
 
 /***/ },
-/* 11 */
+/* 10 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -4540,7 +4441,7 @@
 
 	            // If we need a callback or final callback, apply it here.
 
-	            console.log("SOURCE:" + source + " attach:" + attach + " callback:" + callback + " finalCallback" + finalCallback);
+	            /////////////console.log("SOURCE:" + source + " attach:" + attach + " callback:" + callback + " finalCallback" + finalCallback )
 
 	            if (!callback) {
 
@@ -4573,7 +4474,7 @@
 	exports.default = LoadPool;
 
 /***/ },
-/* 12 */
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -4584,7 +4485,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _loadPool = __webpack_require__(11);
+	var _loadPool = __webpack_require__(10);
 
 	var _loadPool2 = _interopRequireDefault(_loadPool);
 
@@ -4595,6 +4496,8 @@
 	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	'use strict';
 
 	var LoadModel = function (_LoadPool) {
 	    _inherits(LoadModel, _LoadPool);
@@ -5296,7 +5199,7 @@
 	exports.default = LoadModel;
 
 /***/ },
-/* 13 */
+/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -5307,7 +5210,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _loadPool = __webpack_require__(11);
+	var _loadPool = __webpack_require__(10);
 
 	var _loadPool2 = _interopRequireDefault(_loadPool);
 
@@ -5431,7 +5334,7 @@
 	exports.default = LoadAudio;
 
 /***/ },
-/* 14 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -5442,7 +5345,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _loadPool = __webpack_require__(11);
+	var _loadPool = __webpack_require__(10);
 
 	var _loadPool2 = _interopRequireDefault(_loadPool);
 
@@ -5453,6 +5356,8 @@
 	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	'use strict';
 
 	var LoadVideo = function (_LoadPool) {
 	    _inherits(LoadVideo, _LoadPool);
@@ -5480,7 +5385,7 @@
 	exports.default = LoadVideo;
 
 /***/ },
-/* 15 */
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -5489,7 +5394,7 @@
 	    value: true
 	});
 
-	var _loadPool = __webpack_require__(11);
+	var _loadPool = __webpack_require__(10);
 
 	var _loadPool2 = _interopRequireDefault(_loadPool);
 
@@ -5528,7 +5433,7 @@
 	exports.default = LoadFont;
 
 /***/ },
-/* 16 */
+/* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -5539,7 +5444,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _shader = __webpack_require__(17);
+	var _shader = __webpack_require__(16);
 
 	var _shader2 = _interopRequireDefault(_shader);
 
@@ -5550,6 +5455,8 @@
 	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	'use strict';
 
 	var ShaderTexture = function (_Shader) {
 	    _inherits(ShaderTexture, _Shader);
@@ -5683,8 +5590,6 @@
 	                program.renderList = this.util.concatArr(program.renderList, objList);
 	            }
 
-	            window.rList = program.renderList;
-
 	            // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
 	            // TODO: https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/TechniquesforWorkingwithVertexData/TechniquesforWorkingwithVertexData.html
 	            // TODO: http://max-limper.de/tech/batchedrendering.html
@@ -5692,6 +5597,20 @@
 	            /** 
 	             * POLYMORPHIC METHODS
 	             */
+
+	            // Check if object is ready to be rendered using this shader.
+
+	            program.isReady = function (obj) {
+
+	                // Need 1 WebGL texture
+
+	                if (!object.geometry.checkBuffers() && obj.textures[0].texture) {
+
+	                    return true;
+	                }
+
+	                return false;
+	            };
 
 	            // Update object position, motion - given to World object.
 
@@ -5784,7 +5703,7 @@
 	exports.default = ShaderTexture;
 
 /***/ },
-/* 17 */
+/* 16 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -6168,7 +6087,7 @@
 	exports.default = Shader;
 
 /***/ },
-/* 18 */
+/* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -6179,7 +6098,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _shader = __webpack_require__(17);
+	var _shader = __webpack_require__(16);
 
 	var _shader2 = _interopRequireDefault(_shader);
 
@@ -6190,6 +6109,8 @@
 	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	'use strict';
 
 	var ShaderColor = function (_Shader) {
 	    _inherits(ShaderColor, _Shader);
@@ -6337,6 +6258,18 @@
 	             * POLYMORPHIC METHODS
 	             */
 
+	            // Check if object is ready to be rendered using this shader.
+
+	            program.isReady = function (obj) {
+
+	                if (!object.geometry.checkBuffers() && object.geometry.colors.buffer) {
+
+	                    return true;
+	                }
+
+	                return false;
+	            };
+
 	            // Update object position, motion - given to World object.
 
 	            program.update = function (obj, MVM) {
@@ -6420,7 +6353,7 @@
 	exports.default = ShaderColor;
 
 /***/ },
-/* 19 */
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -6431,7 +6364,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _shader = __webpack_require__(17);
+	var _shader = __webpack_require__(16);
 
 	var _shader2 = _interopRequireDefault(_shader);
 
@@ -6442,6 +6375,8 @@
 	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	'use strict';
 
 	var shaderDirLightTexture = function (_Shader) {
 	    _inherits(shaderDirLightTexture, _Shader);
@@ -6602,6 +6537,20 @@
 	             * POLYMORPHIC METHODS
 	             */
 
+	            // Check if object is ready to be rendered using this shader.
+
+	            program.isReady = function (obj) {
+
+	                // Need 1 WebGL texture
+
+	                if (!object.geometry.checkBuffers() && obj.textures[0].texture) {
+
+	                    return true;
+	                }
+
+	                return false;
+	            };
+
 	            // Update object position, motion - given to World object.
 
 	            program.update = function (obj, MVM) {
@@ -6728,7 +6677,7 @@
 	exports.default = shaderDirLightTexture;
 
 /***/ },
-/* 20 */
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -6739,7 +6688,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _shader = __webpack_require__(17);
+	var _shader = __webpack_require__(16);
 
 	var _shader2 = _interopRequireDefault(_shader);
 
@@ -6750,6 +6699,8 @@
 	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	'use strict';
 
 	var ShaderWater = function (_Shader) {
 	    _inherits(ShaderWater, _Shader);
@@ -6874,6 +6825,13 @@
 	             * POLYMORPHIC METHODS
 	             */
 
+	            // Check if object is ready to be rendered using this shader.
+
+	            program.isReady = function (obj) {
+
+	                return true;
+	            };
+
 	            // Update object position, motion - given to World object.
 
 	            program.update = function (obj, MVM) {
@@ -6936,7 +6894,7 @@
 	exports.default = ShaderWater;
 
 /***/ },
-/* 21 */
+/* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -6947,7 +6905,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _shader = __webpack_require__(17);
+	var _shader = __webpack_require__(16);
 
 	var _shader2 = _interopRequireDefault(_shader);
 
@@ -6958,6 +6916,8 @@
 	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	'use strict';
 
 	var ShaderMetal = function (_Shader) {
 	    _inherits(ShaderMetal, _Shader);
@@ -7078,6 +7038,13 @@
 	             * POLYMORPHIC METHODS
 	             */
 
+	            // Check if object is ready to be rendered using this shader.
+
+	            program.isReady = function (obj) {
+
+	                return true;
+	            };
+
 	            // Update object position, motion - given to World object.
 
 	            program.update = function (obj, MVM) {
@@ -7140,7 +7107,7 @@
 	exports.default = ShaderMetal;
 
 /***/ },
-/* 22 */
+/* 21 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -7256,7 +7223,7 @@
 	exports.default = Renderer;
 
 /***/ },
-/* 23 */
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -7267,29 +7234,31 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _map2d = __webpack_require__(24);
+	var _map2d = __webpack_require__(23);
 
 	var _map2d2 = _interopRequireDefault(_map2d);
 
-	var _map3d = __webpack_require__(26);
+	var _map3d = __webpack_require__(25);
 
 	var _map3d2 = _interopRequireDefault(_map3d);
 
-	var _mesh = __webpack_require__(27);
+	var _mesh = __webpack_require__(26);
 
 	var _mesh2 = _interopRequireDefault(_mesh);
 
-	var _loadModel = __webpack_require__(12);
+	var _loadModel = __webpack_require__(11);
 
 	var _loadModel2 = _interopRequireDefault(_loadModel);
 
-	var _geoObj = __webpack_require__(28);
+	var _geoObj = __webpack_require__(27);
 
 	var _geoObj2 = _interopRequireDefault(_geoObj);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	'use strict';
 
 	var Prim = function () {
 
@@ -10651,9 +10620,15 @@
 	                 * empty function below.
 	                 */
 
-	                if (prim.name === 'capsule') console.log("$$$$$$$$$$$$$$$$cHECKING FOR SHADER FOR PRIM:" + prim.name + " SHADEr: " + prim.shader.name);
+	                if (prim.name === 'capsule') {
 
-	                if (prim.name === 'teapot') console.log("@@@@@@@@@@@@@@@@@cHECKING FOR SHADER FOR PRIM:" + prim.name + " SHADEr: " + prim.shader.name);
+	                    console.log("cHECKING FOR SHADER FOR PRIM:" + prim.name + " SHADEr: " + prim.shader.name);
+	                }
+
+	                if (prim.name === 'teapot') {
+
+	                    console.log("cHECKING FOR SHADER FOR PRIM:" + prim.name + " SHADEr: " + prim.shader.name);
+	                }
 
 	                // TODO: LOAD LISTS NATIVE CODE FOR THIS, BUT ONLY TEAPOT WORKS
 
@@ -10697,12 +10672,17 @@
 
 	            console.log(prim.name + ' generation complete,(re)calculating normals and tangents');
 
-	            if (prim.name === 'capsule') console.log("&&&&&&&&&&&&&&&&&cHECKING FOR SHADER FOR PRIM:" + prim.name + " SHADEr: " + prim.shader.name);
+	            if (prim.name === 'capsule') {
+
+	                console.log("Prim::initPrim():cHECKING FOR SHADER FOR PRIM:" + prim.name + " SHADEr: " + prim.shader.name);
+	            }
 
 	            // TODO: TEAPOT GOES HERE BUT CAPSULE DOES NOT
 
+	            if (prim.name === 'teapot') {
 
-	            if (prim.name === 'teapot') console.log("###############cHECKING FOR SHADER FOR PRIM:" + prim.name + " SHADEr: " + prim.shader.name);
+	                console.log("Prim::initPrim: cHECKING FOR SHADER FOR PRIM:" + prim.name + " SHADEr: " + prim.shader.name);
+	            }
 
 	            /* 
 	             * Add buffer data, and re-bind to WebGL.
@@ -10884,17 +10864,6 @@
 	                // TODO: rotate (internal), translate, rotate (orbit)
 
 	                return mvMatrix;
-	            };
-
-	            /** 
-	             * If we loaded multiple textures, set the texture. Textures are stored 
-	             * in a numerical array of Objects under prim.textures.
-	             * 
-	             */
-
-	            prim.setTexture = function (num) {
-
-	                console.log('in PRIM::::::setActiveTexture');
 	            };
 
 	            /* 
@@ -11252,7 +11221,7 @@
 	exports.default = Prim;
 
 /***/ },
-/* 24 */
+/* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -11263,7 +11232,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _mapd = __webpack_require__(25);
+	var _mapd = __webpack_require__(24);
 
 	var _mapd2 = _interopRequireDefault(_mapd);
 
@@ -11274,6 +11243,8 @@
 	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	'use strict';
 
 	var Map2d = function (_Mapd) {
 	    _inherits(Map2d, _Mapd);
@@ -11954,10 +11925,10 @@
 	exports.default = Map2d;
 
 /***/ },
-/* 25 */
+/* 24 */
 /***/ function(module, exports) {
 
-	"use strict";
+	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
@@ -11979,7 +11950,7 @@
 	exports.default = Mapd;
 
 /***/ },
-/* 26 */
+/* 25 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -11990,7 +11961,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _mapd = __webpack_require__(25);
+	var _mapd = __webpack_require__(24);
 
 	var _mapd2 = _interopRequireDefault(_mapd);
 
@@ -12001,6 +11972,8 @@
 	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	'use strict';
 
 	var Map3d = function (_Mapd) {
 	    _inherits(Map3d, _Mapd);
@@ -12152,10 +12125,15 @@
 	exports.default = Map3d;
 
 /***/ },
-/* 27 */
+/* 26 */
 /***/ function(module, exports) {
 
 	'use strict';
+
+	/** 
+	 * A mesh object containing un-flattened references to vertices, indices, and 
+	 * texture coordinates, suitable for subdivision and other complex manipulations.
+	 */
 
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
@@ -12164,11 +12142,6 @@
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	/** 
-	 * A mesh object containing un-flattened references to vertices, indices, and 
-	 * texture coordinates, suitable for subdivision and other complex manipulations.
-	 */
 
 	var Coords = function () {
 
@@ -13606,7 +13579,7 @@
 	exports.default = Mesh;
 
 /***/ },
-/* 28 */
+/* 27 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -14563,22 +14536,29 @@
 	exports.default = GeoObj;
 
 /***/ },
-/* 29 */
-/***/ function(module, exports) {
+/* 28 */
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
+
+	// TODO: TEMPORARY DEBUG
 
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
 
+	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _getAssets = __webpack_require__(29);
+
+	var _getAssets2 = _interopRequireDefault(_getAssets);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	/** 
-	 * Loads objects and renderers and runs the rendering loop.
-	 */
 	var World = function () {
 
 	    /** 
@@ -15090,6 +15070,78 @@
 
 	            );
 
+	            /////////////////////////////////////////////////////////
+
+	            // TODO: TEMP DEBUG
+
+	            var getter = new _getAssets2.default(this.util);
+
+	            var mimeType = 'image/png';
+
+	            var cacheBust = true;
+
+	            var phil = []; // ASSET ARRAY
+
+	            var bob = {
+
+	                files: ['img/mozvr-logo1.png', 'img/soda-can.png'],
+
+	                data: null,
+
+	                bob: null,
+
+	                updateFn: function updateFn(request) {
+
+	                    console.log('request is a:' + (typeof request === 'undefined' ? 'undefined' : _typeof(request)));
+	                    window.req = request;
+
+	                    //console.log( 'World:::data update for ' + request.path + ' is a :' + request.data );
+
+	                    if (request.data !== null) {
+
+	                        // use the data!!!
+	                        var image = new Image();
+
+	                        image.src = URL.createObjectURL(request);
+
+	                        document.body.appendChild(image);
+
+	                        // see if we have everything.
+
+
+	                        // TODO: request should come back with a position for the receiving array.
+
+	                        // this.emitter.emit('apseudoevent', request );
+	                    } else {
+
+	                        // decide if we want to re-try
+
+	                        if (request.numTries < getter.MAX_TRIES) {
+
+	                            request.numTries++;
+
+	                            console.log('World:::request for:' + request.path + ' tried ' + request.numTries + ' time');
+
+	                            // TODO: increase wait time until at max
+
+	                            getter.addRequest(request.path, bob.updateFn, cacheBust, mimeType, request.numTries);
+	                        } else {
+
+	                            console.log('World:::FAILED request for:' + request.path + ' after ' + request.numTries + ' tries');
+	                        }
+	                    }
+	                },
+
+	                cacheBust: true,
+
+	                mimeType: 'image/png'
+
+	            };
+
+	            getter.addRequests(bob);
+
+	            ////////////////////////////////////////////////////////
+
 	            // NOTE: the init() method sets up the update() and render() methods for the Shader.
 
 	            this.r1 = this.s1.init();
@@ -15098,18 +15150,20 @@
 
 	            this.r3 = this.s3.init();
 
-	            // Fire world update.
+	            // Fire world update. 
 
 	            this.render();
 	        }
 
 	        /**
-	         * Create objects specific to this world.
+	         * Create objects specific to this world. 
 	         */
 
 	    }, {
 	        key: 'create',
 	        value: function create() {}
+
+	        // TODO: not implemented yet
 
 	        /** 
 	         * Update world.related properties, e.g. a HUD or framrate reado ut.
@@ -15190,6 +15244,278 @@
 	}();
 
 	exports.default = World;
+
+/***/ },
+/* 29 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var GetAssets = function () {
+
+	    /** 
+	     * Load a set of URLs to grab, and run parallel, queued requests until 
+	     * complete or timed out. Also provide a callback so the requesting object 
+	     * can check if their load is complete.
+	     * Inspired by:
+	     * @link https://blog.hospodarets.com/fetch_in_action
+	     */
+	    function GetAssets(util) {
+	        _classCallCheck(this, GetAssets);
+
+	        this.util = util, this.MAX_WAIT_TIME = 50, this.MAX_TRIES = 6;
+	    }
+
+	    /** 
+	     * Wrap a Promise in an object.
+	     */
+
+
+	    _createClass(GetAssets, [{
+	        key: 'getWrappedPromise',
+	        value: function getWrappedPromise() {
+
+	            var wrappedPromise = {},
+	                promise = new Promise(function (resolve, reject) {
+
+	                wrappedPromise.resolve = resolve, wrappedPromise.reject = reject;
+	            });
+
+	            wrappedPromise.then = promise.then.bind(promise);
+
+	            wrappedPromise.catch = promise.catch.bind(promise);
+
+	            wrappedPromise.promise = promise;
+
+	            return wrappedPromise;
+	        }
+
+	        /** 
+	         * get fetch wrapped into a wrapped Promise.
+	         */
+
+	    }, {
+	        key: 'getWrappedFetch',
+	        value: function getWrappedFetch(url, params) {
+
+	            var wrappedPromise = this.getWrappedPromise();
+
+	            var req = new Request(url, params);
+
+	            // Apply arguments to fetch
+
+	            fetch(req).then(function (response) {
+
+	                wrappedPromise.resolve(response);
+	            }, function (error) {
+
+	                wrappedPromise.reject(response);
+	            }).catch(function (error) {
+
+	                wrappedPromise.catch(error);
+	            });
+
+	            return wrappedPromise;
+	        }
+	    }, {
+	        key: 'doRequest',
+	        value: function doRequest(requestURL, pos, updateFn) {
+	            var cacheBust = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : true;
+
+	            var _this = this;
+
+	            var mimeType = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : 'text/plain';
+	            var numTries = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : 0;
+
+
+	            // Create our wrapped (with timeout) fetch request (url, params)
+
+	            var ft = this.getWrappedFetch(cacheBust ? requestURL + '?' + new Date().getTime() : requestURL, {
+
+	                method: 'get', // optional, "GET" is default value
+
+	                mode: 'cors',
+
+	                redirect: 'follow',
+
+	                headers: {
+
+	                    'Accept': mimeType
+
+	                }
+
+	            });
+
+	            // Create a custom results object.
+
+	            var result = {
+
+	                path: requestURL,
+
+	                pos: pos,
+
+	                data: null,
+
+	                numTries: numTries,
+
+	                message: 'ok'
+
+	            };
+
+	            // Add a timeout rejection.
+
+	            var delay = this.MAX_WAIT_TIME * (1 + numTries);
+
+	            var timeoutId = setTimeout(function () {
+
+	                // otherwise, reject the request
+
+	                result.message = new Error('GetAssets::doRequest() in TIMEOUT: Load timeout (' + delay + 'ms) for resource: ' + requestURL);
+
+	                console.error('GetAssets::doRequest() in TIMEOUT: result.data is:' + result.data);
+
+	                clearTimeout(timeoutId); // must clear for re-try!!
+
+	                ft.reject(result); // reject on timeout
+	            }, delay // TODO: DOUBLE THIS UNTIL MAX_TRIES
+
+	            );
+
+	            return ft.promise.then(function (response) {
+
+	                clearTimeout(timeoutId);
+
+	                if (response.status === 200 || response.status === 0) {
+
+	                    // we got something back
+
+	                    console.error('GetAssets::doRequest() in THEN: response is:' + (typeof response === 'undefined' ? 'undefined' : _typeof(response)));
+
+	                    if (mimeType === 'application/json') {
+
+	                        result.data = response.json();
+
+	                        return Promise.resolve(result.data);
+	                    } else if (mimeType.indexOf('text') !== _this.util.NOT_IN_LIST) {
+
+	                        result.data = response.text();
+
+	                        return Promise.resolve(result.data);
+	                    } else if (mimeType === 'application/xml') {
+
+	                        result.data = response.formData();
+
+	                        return Promise.resolve(result.data);
+	                    } else {
+	                        // all other mime types (e.g. images, audio, video)
+
+	                        result.data = response.blob();
+
+	                        return Promise.resolve(result.data);
+	                    }
+	                } else {
+
+	                    result.message = new Error('GetAssets::doRequest(): Status error(' + response.statusText + 'for resource' + requestURL);
+
+	                    return Promise.reject(result);
+	                }
+	            });
+
+	            // TODO: add 'then' here to pass result, rather than result-data
+
+	            ///.then ( ( data ) => {
+
+	            // result.data = data;
+
+	            ///    updateFn( result );
+
+	            ///    } ); // provided by caller, tests if it is complete/ready
+	        }
+
+	        /** 
+	         * Trigger an individual request.
+	         */
+
+	    }, {
+	        key: 'addRequest',
+	        value: function addRequest(paths, updateFn, cacheBust, mimeType, numTries) {
+
+	            this.doRequest(paths, updateFn, cacheBust, mimeType, numTries) // initial request at 0 tries
+
+	            .then(function (response) {
+
+	                console.error('GetAssets::addRequest(): doRequest complete, rrresponse is a:' + response);
+
+	                updateFn(response); // function determines whether the requestor has everything it needs
+	            }, function (error) {
+
+	                console.error('GetAssets::addRequests(): An error occured!');
+
+	                console.error(error.message ? error.message : error);
+
+	                updateFn(error);
+	            });
+	        }
+
+	        /** 
+	         * Add fetch() url requests for resolve, with a timeout for fails. 
+	         * when individual fetch()es are complete, run a callback.
+	         * when all fetch()es are complete, run a final callback
+	         * usage: addRequests( requestor, '/first.jpg', 'second.jpg',...);
+	         * @param {Object} requestor the name of the requestor.
+	         *         - requestor.name = the name of the requestor
+	         *         - requestor.updateFn = the function receiving data from the fetch() call
+	         *         - requestor.cacheBust = if true, randomize URL query string to prevent caching
+	         *         - requestor.mimeType = if present, set to a specific MIME type. Default = text/text
+	         * @param {Function} updateFn the function to call after each fetch completes. The 
+	         * calling program is responsible for handing determining if it has enough fetch() 
+	         * operations to complete. 
+	         */
+
+	    }, {
+	        key: 'addRequests',
+	        value: function addRequests(requestor) {
+
+	            var paths = requestor.files;
+
+	            for (var i = 0; i < paths.length; i++) {
+
+	                var path = paths[i];
+
+	                console.log("GetAssets::addRequests(): " + path, ", " + _typeof(requestor.updateFn) + ", " + requestor.cacheBust + ", " + requestor.mimeType);
+
+	                this.doRequest(path, i, requestor.updateFn, requestor.cacheBust, requestor.mimeType, 0) // initial request at 0 tries
+
+	                .then(function (response) {
+
+	                    requestor.updateFn(response); // function determines whether the requestor has everything it needs
+	                }, function (error) {
+
+	                    console.error('GetAssets::addRequests(): An error occured!');
+
+	                    console.error(error.message ? error.message : error);
+
+	                    requestor.updateFn(error);
+	                });
+	            } // end of request loop
+	        } // end of addRequests()
+
+	    }]);
+
+	    return GetAssets;
+	}();
+
+	exports.default = GetAssets;
 
 /***/ },
 /* 30 */

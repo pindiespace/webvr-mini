@@ -1,5 +1,7 @@
 import Shader from './shader'
 
+'use strict'
+
 class ShaderMetal extends Shader {
 
     /** 
@@ -124,6 +126,14 @@ class ShaderMetal extends Shader {
         /** 
          * POLYMORPHIC METHODS
          */
+
+        // Check if object is ready to be rendered using this shader.
+
+        program.isReady = ( obj ) => {
+
+            return true;
+
+        }
 
         // Update object position, motion - given to World object.
 

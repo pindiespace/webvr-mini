@@ -1,5 +1,7 @@
 import Shader from './shader'
 
+'use strict'
+
 class ShaderColor extends Shader {
 
     /** 
@@ -177,6 +179,21 @@ class ShaderColor extends Shader {
         /** 
          * POLYMORPHIC METHODS
          */
+
+        // Check if object is ready to be rendered using this shader.
+
+        program.isReady = ( obj ) => {
+
+            if( ! object.geometry.checkBuffers()  && object.geometry.colors.buffer ) {
+
+                return true;
+
+            }
+
+
+            return false;
+
+        }
 
         // Update object position, motion - given to World object.
 

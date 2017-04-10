@@ -22,7 +22,7 @@ var ExtendedDefinePlugin = require( 'extended-define-webpack-plugin' );
 
 module.exports = {
 
-    entry: [ './src/js/app.js', './src/es6/app.es6' ],
+    entry: [ './src/es6/app.es6' ],
 
     output: {
 
@@ -86,6 +86,8 @@ module.exports = {
     },
 
     plugins: [
+
+        // NOTE: we can't use uglify plugin or updates don't work - production only!
 
         // Define DEV and RELEASE variables from command-line (in package.json)
 

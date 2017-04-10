@@ -3,11 +3,15 @@
  * es6 entry point, transpiled (via BabelJS) to ES5.
  */
 
+'use strict'
+
 console.log( 'in es6' ); 
 
 // DEV ENVIRONMENT
 
 let env = process.env.WEBPACK_ENV;
+
+
 
 // REQUIRE ALL POLYFILLS
 
@@ -120,7 +124,7 @@ if ( __DEV__ === 'true' ) {
 let webvr, ui, loadModel, loadTexture, loadAudio, loadVideo, loadFont, prim, renderer, world;
 
 // WebGL can take some time to init.
-///////////////////////////////////////////////////////
+
 var promise = new Promise( ( resolve, reject ) => {
 
   // do a thing, possibly async, then…
@@ -165,13 +169,13 @@ var promise = new Promise( ( resolve, reject ) => {
 
         ui.init();
 
-        resolve("Stuff worked!");
+        resolve( 'Stuff worked!' );
 
     }
 
     else {
 
-        reject( Error("It broke") );
+        reject( Error( 'It broke' ) );
 
     }
 
@@ -181,63 +185,19 @@ var promise = new Promise( ( resolve, reject ) => {
 
         world.init();
 
-}) 
+});
 
 
-/*
+window.vrmin = world;
 
-.catch( ( err ) => {
+//.catch( ( err ) => {
 
-    // error
+//    // error
 
-    console.error( 'app.es6 load error:' + err );
+//    console.error( 'app.es6 load error:' + err );
 
-} );
+//} );
 
-*/
-
-
-
-///////////////////////////////////////////////////////
-
-// WebVR needs WebGL.
-
-/*
-let webvr = new WebVR( false, util, glMatrix, webgl );
-
-// The Prim object needs Loaders.
-
-let loadModel = new LoadModel( true, util, glMatrix, webgl );
-
-let loadTexture = new LoadTexture( true, util, glMatrix, webgl );
-
-let loadAudio = new LoadAudio( true, util, glMatrix, webgl );
-
-let loadVideo = new LoadVideo( true, util, glMatrix, webgl );
-
-let loadFont = new LoadFont( true, util, glMatrix, webgl );
-
-let prim = new Prim ( true, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo );
-
-let shaderTexture = new ShaderTexture ( true, util, glMatrix, webgl, 'shaderTexture' );
-
-let shaderColor = new ShaderColor ( true, util, glMatrix, webgl, 'shaderColor' );
-
-let shaderDirLightTexture = new shaderDirLightTexture( true, util, glMatrix, webgl, 'shaderDirLightTexture' );
-
-let renderer = new Renderer ( true, util, glMatrix, webgl, shaderTexture, shaderColor, shaderDirLightTexture );
-
-renderer.addShader( shaderTexture );
-
-renderer.addShader( shaderColor );
-
-renderer.addShader( shaderDirLightTexture );
-
-// Create the world, which needs WebGL, WebVR, and Prim.
-
-let world = new World( webgl, prim, renderer );
-
-*/
 
 // TODO: don't automatically update webgl
 // TODO: enclose in a promise, then update renderer and shaders.

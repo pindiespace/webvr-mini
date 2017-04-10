@@ -1,5 +1,7 @@
 import Shader from './shader'
 
+'use strict'
+
 class shaderDirLightTexture extends Shader {
 
 
@@ -222,6 +224,22 @@ class shaderDirLightTexture extends Shader {
         /** 
          * POLYMORPHIC METHODS
          */
+
+        // Check if object is ready to be rendered using this shader.
+
+        program.isReady = ( obj ) => {
+
+            // Need 1 WebGL texture
+
+            if ( ! object.geometry.checkBuffers()  && obj.textures[ 0 ].texture ) {
+
+                return true;
+
+            }
+
+            return false;
+
+        }
 
         // Update object position, motion - given to World object.
 

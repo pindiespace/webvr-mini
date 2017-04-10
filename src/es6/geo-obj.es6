@@ -1,3 +1,5 @@
+'use strict'
+
 class GeoObj {
 
     /** 
@@ -30,7 +32,7 @@ class GeoObj {
 
                 data: [],
 
-                buffer: null,
+                buffer: null, 
 
                 itemSize: 3,
 

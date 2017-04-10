@@ -4,6 +4,8 @@ import Mesh from  './mesh';
 import LoadModel from './load-model';
 import GeoObj from './geo-obj';
 
+'use strict'
+
 class Prim {
 
     /** 
@@ -3368,9 +3370,17 @@ class Prim {
              * empty function below.
              */
 
-        if ( prim.name === 'capsule') console.log("$$$$$$$$$$$$$$$$cHECKING FOR SHADER FOR PRIM:" + prim.name + " SHADEr: " + prim.shader.name)
+        if ( prim.name === 'capsule') {
 
-        if ( prim.name === 'teapot') console.log("@@@@@@@@@@@@@@@@@cHECKING FOR SHADER FOR PRIM:" + prim.name + " SHADEr: " + prim.shader.name)
+            console.log("cHECKING FOR SHADER FOR PRIM:" + prim.name + " SHADEr: " + prim.shader.name);
+
+        }
+
+        if ( prim.name === 'teapot') {
+
+            console.log("cHECKING FOR SHADER FOR PRIM:" + prim.name + " SHADEr: " + prim.shader.name);
+
+        }
 
             // TODO: LOAD LISTS NATIVE CODE FOR THIS, BUT ONLY TEAPOT WORKS
 
@@ -3420,12 +3430,19 @@ class Prim {
 
         console.log( prim.name + ' generation complete,(re)calculating normals and tangents' );
 
-        if ( prim.name === 'capsule') console.log("&&&&&&&&&&&&&&&&&cHECKING FOR SHADER FOR PRIM:" + prim.name + " SHADEr: " + prim.shader.name)
+        if ( prim.name === 'capsule') {
+
+            console.log("Prim::initPrim():cHECKING FOR SHADER FOR PRIM:" + prim.name + " SHADEr: " + prim.shader.name);
+
+        }
 
         // TODO: TEAPOT GOES HERE BUT CAPSULE DOES NOT
 
+       if ( prim.name === 'teapot') {
 
-       if ( prim.name === 'teapot') console.log("###############cHECKING FOR SHADER FOR PRIM:" + prim.name + " SHADEr: " + prim.shader.name)
+            console.log("Prim::initPrim: cHECKING FOR SHADER FOR PRIM:" + prim.name + " SHADEr: " + prim.shader.name)
+
+        }
 
         /* 
          * Add buffer data, and re-bind to WebGL.
@@ -3618,18 +3635,6 @@ class Prim {
             return mvMatrix;
 
         };
-
-        /** 
-         * If we loaded multiple textures, set the texture. Textures are stored 
-         * in a numerical array of Objects under prim.textures.
-         * 
-         */
-
-        prim.setTexture = ( num ) => {
-
-            console.log( 'in PRIM::::::setActiveTexture')
-
-        }
 
         /* 
          * Activate a texture by placing it first in position in the Prim texture array (with is what is used by shader first).

@@ -1,3 +1,5 @@
+'use strict' 
+
 class Renderer {
 
     constructor ( init, util, glMatrix, webgl ) {

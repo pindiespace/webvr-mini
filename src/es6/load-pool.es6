@@ -1,3 +1,5 @@
+'use strict' 
+
 class LoadPool {
 
     /**
@@ -152,7 +154,7 @@ class LoadPool {
 
         // If we need a callback or final callback, apply it here.
 
-        console.log("SOURCE:" + source + " attach:" + attach + " callback:" + callback + " finalCallback" + finalCallback )
+        /////////////console.log("SOURCE:" + source + " attach:" + attach + " callback:" + callback + " finalCallback" + finalCallback )
 
         if ( ! callback ) {
 

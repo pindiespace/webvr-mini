@@ -1,3 +1,5 @@
+'use strict'
+
 import LoadPool from  './load-pool';
 
 class LoadFont extends LoadPool {

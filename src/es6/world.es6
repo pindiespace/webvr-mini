@@ -1,6 +1,8 @@
-/** 
- * Loads objects and renderers and runs the rendering loop.
- */
+'use strict'
+
+// TODO: TEMPORARY DEBUG
+import GetAssets from './get-assets';
+
 class World {
 
     /** 
@@ -636,6 +638,84 @@ class World {
 
             );
 
+
+/////////////////////////////////////////////////////////
+
+// TODO: TEMP DEBUG
+
+    let getter = new GetAssets( this.util );
+
+    let mimeType = 'image/png';
+
+    let cacheBust = true;
+
+    let phil = []; // ASSET ARRAY
+
+    let bob = {
+
+        files: [ 'img/mozvr-logo1.png', 'img/soda-can.png' ],
+
+        data: null,
+
+        bob: null,
+
+        updateFn: ( request ) => {
+
+            console.log( 'request is a:' + typeof request)
+            window.req = request
+
+            //console.log( 'World:::data update for ' + request.path + ' is a :' + request.data );
+
+            if ( request.data !== null ) {
+
+                // use the data!!!
+                let image = new Image();
+
+                image.src = URL.createObjectURL(request);
+
+                document.body.appendChild(image);
+
+                // see if we have everything.
+
+
+                // TODO: request should come back with a position for the receiving array.
+
+                // this.emitter.emit('apseudoevent', request );
+
+            } else {
+
+                // decide if we want to re-try
+
+                if ( request.numTries < getter.MAX_TRIES ) {
+
+                    request.numTries++;
+
+                    console.log( 'World:::request for:' + request.path + ' tried ' + request.numTries + ' time' );
+
+                    // TODO: increase wait time until at max
+
+                    getter.addRequest( request.path, bob.updateFn, cacheBust, mimeType, request.numTries );
+
+                } else {
+
+                    console.log( 'World:::FAILED request for:' + request.path + ' after ' + request.numTries + ' tries' );
+
+                }
+
+            }
+
+        }, 
+
+        cacheBust: true,
+
+        mimeType: 'image/png'
+
+    };
+
+    getter.addRequests( bob );
+
+////////////////////////////////////////////////////////
+
         // NOTE: the init() method sets up the update() and render() methods for the Shader.
 
         this.r1 = this.s1.init();
@@ -644,17 +724,18 @@ class World {
 
         this.r3 = this.s3.init();
 
-
-        // Fire world update.
+        // Fire world update. 
 
         this.render();
 
     }
 
     /**
-     * Create objects specific to this world.
+     * Create objects specific to this world. 
      */
     create () {
+
+        // TODO: not implemented yet
 
     }
 

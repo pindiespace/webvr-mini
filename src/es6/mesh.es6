@@ -1,3 +1,5 @@
+'use strict'
+
 /** 
  * A mesh object containing un-flattened references to vertices, indices, and 
  * texture coordinates, suitable for subdivision and other complex manipulations.

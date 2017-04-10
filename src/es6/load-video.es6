@@ -1,5 +1,7 @@
 import LoadPool from  './load-pool';
 
+'use strict'
+
 class LoadVideo extends LoadPool {
 
     /**
