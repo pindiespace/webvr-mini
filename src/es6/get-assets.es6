@@ -13,7 +13,7 @@ class GetAssets {
 
         this.util = util,
 
-        this.MAX_WAIT_TIME = 50,
+        this.MIN_WAIT_TIME = 100,
 
         this.MAX_TRIES = 6;
 
@@ -46,28 +46,76 @@ class GetAssets {
 
     /** 
      * get fetch wrapped into a wrapped Promise.
+     * @link http://stackoverflow.com/questions/35520790/error-handling-for-fetch-in-aurelia
      */
-    getWrappedFetch ( url, params ) {
+    getWrappedFetch ( url, params, tries, key ) {
 
         let wrappedPromise = this.getWrappedPromise();
 
         let req = new Request( url, params );
 
-        // Apply arguments to fetch
+        wrappedPromise.url = url;
+
+        wrappedPromise.params = params;
+
+        wrappedPromise.tries = tries;
+
+        wrappedPromise.key = key;
+
+        // Start the timeout, which lengthens with each attempt.
+
+        wrappedPromise.timeoutId = setTimeout( () => {
+
+            console.warn( 'GetAssets::getWrappedFetch(): TIMEOUT ' + wrappedPromise.url );
+
+            wrappedPromise.catch( 0 );
+
+        }, this.MIN_WAIT_TIME * wrappedPromise.tries );
+
+
+        // Apply arguments to fetch.
 
         fetch( req )
+
+        .then (
+
+            ( response ) => { 
+
+                if ( ! response.ok ) { // catch 404 errors
+
+                    throw new Error('Network response was not ok for ' + wrappedPromise.url );
+
+                } else {
+
+                    return response;
+
+                }
+
+            }
+
+        )
 
         .then ( 
 
             ( response ) => {
 
-                wrappedPromise.resolve( response );
+                console.warn( 'GetAssets::getWrappedFetch(): OK, RESOLVE ' + wrappedPromise.url );
+
+                clearTimeout( wrappedPromise.timeoutId );
+
+                return wrappedPromise.resolve( response );
 
             },
 
             ( error ) => {
 
-                wrappedPromise.reject( response );
+                console.warn( 'GetAssets::getWrappedFetch(): NOT OK, REJECT ' + wrappedPromise.url );
+
+                clearTimeout( wrappedPromise.timeoutId );
+
+                window.res = error;
+
+                return wrappedPromise.reject( error ); // fixes it!!!!!!!!!!!!!!! USING Error causes a strange fail!!!!
 
             }
 
@@ -77,7 +125,11 @@ class GetAssets {
 
             ( error ) => {
 
-                wrappedPromise.catch( error );
+                console.warn( 'GetAssets::getWrappedFetch(): NOT OK, CATCH ' + wrappedPromise.url );
+
+                clearTimeout( wrappedPromise.timeoutId );
+
+                return wrappedPromise.catch( error );
 
             }
 
@@ -87,9 +139,11 @@ class GetAssets {
 
     }
 
-    doRequest( requestURL, pos, updateFn, cacheBust = true, mimeType = 'text/plain', numTries = 0 ) {
 
-        // Create our wrapped (with timeout) fetch request (url, params)
+
+    doRequest( requestURL, key, updateFn, cacheBust = true, mimeType = 'text/plain', tries = 0 ) {
+
+        console.log(">>>>MIMETYPE:" + mimeType )
 
         let ft = this.getWrappedFetch( 
 
@@ -109,140 +163,113 @@ class GetAssets {
 
                 }
 
-            }
+            },
+
+            tries, // attach some additional variables to this fetch
+
+            key // key (keyition) for object in calling routine.
 
         );
 
-        // Create a custom results object.
 
-        let result = {
-
-            path: requestURL,
-
-            pos: pos,
-
-            data: null,
-
-            numTries: numTries,
-
-            message: 'ok'
-
-        };
-
-        // Add a timeout rejection.
-
-        let delay = this.MAX_WAIT_TIME * ( 1 + numTries );
-
-        let timeoutId = setTimeout( () => {
-
-                // otherwise, reject the request
-
-                result.message = new Error( 'GetAssets::doRequest() in TIMEOUT: Load timeout (' + delay + 'ms) for resource: ' + requestURL );
-
-                console.error( 'GetAssets::doRequest() in TIMEOUT: result.data is:' + result.data );
-
-                clearTimeout( timeoutId ); // must clear for re-try!!
-
-               ft.reject( result ); // reject on timeout
-
-            }, 
-
-            delay // TODO: DOUBLE THIS UNTIL MAX_TRIES
-
-        );
+        // Return the Promise.
 
         return ft.promise
 
-        .then ( ( response ) => {
-
-            clearTimeout( timeoutId );
-
-            if ( response.status === 200 || response.status === 0 ) {
-
-                // we got something back
-
-                console.error( 'GetAssets::doRequest() in THEN: response is:' + typeof response );
-
-
-                if ( mimeType === 'application/json' ) {
-
-                    result.data = response.json();
-
-                    return Promise.resolve( result.data );
-
-                } else if ( mimeType.indexOf( 'text' ) !== this.util.NOT_IN_LIST ) {
-
-                    result.data = response.text();
-
-                    return Promise.resolve( result.data );
-
-                } else if ( mimeType === 'application/xml' ) {
-
-                    result.data = response.formData();
-
-                    return Promise.resolve( result.data );
-
-                } else { // all other mime types (e.g. images, audio, video)
-
-                    result.data = response.blob();
-
-                    return Promise.resolve( result.data );
-
-                }
-
-            } else {
-
-                result.message = new Error( 'GetAssets::doRequest(): Status error(' + response.statusText +  'for resource' + requestURL )
-
-                return Promise.reject( result );
-
-            }
-
-        } )
-
-        // TODO: add 'then' here to pass result, rather than result-data
-
-        ///.then ( ( data ) => {
-
-        // result.data = data;
-
-        ///    updateFn( result );
-
-        ///    } ); // provided by caller, tests if it is complete/ready
-
-    }
-
-
-    /** 
-     * Trigger an individual request.
-     */
-    addRequest ( paths, updateFn, cacheBust, mimeType, numTries ) {
-
-        this.doRequest( paths, updateFn, cacheBust, mimeType, numTries )  // initial request at 0 tries
-
-        .then( 
+        .then ( 
 
             ( response ) => {
 
-                console.error( 'GetAssets::addRequest(): doRequest complete, rrresponse is a:' + response );
+                console.warn( '1. GetAssets::doRequest(): ft.promise FIRST .then OK, response.status:' + response.status + ' for ' + ft.url );
 
-                updateFn( response ); // function determines whether the requestor has everything it needs
+                console.warn( '1. GetAssets::doRequest(): ft.promise FIRST .then OK, response:' + response + ' for ' + ft.url );
+
+                console.warn( '1. GetAssets::doRequest(): ft.promise FIRST .then OK, tries:' + ft.tries + ' for ' + ft.url );
+
+                console.warn( '1. GetAssets::doRequest(): ft.promise FIRST .then OK, mimeType:' + mimeType + ' for ' + ft.url );
+
+                let data = null;
+
+                if ( response.status === 200 || response.status === 0 ) {
+
+                    if ( mimeType === 'application/json' ) {
+
+                        data = response.json();
+
+                    } else if ( mimeType.indexOf( 'text' ) !== this.util.NOT_IN_LIST ) {
+
+                        data = response.text();
+
+                    } else if ( mimeType === 'application/xml' ) {
+
+                        data = response.formData();
+
+                    } else { // all other mime types (e.g. images, audio, video)
+
+                        data = response.blob();
+
+                    }
+
+                    return Promise.resolve( data );
+
+                } else {
+
+                    return Promise.reject( response );
+
+                }
+
+            },
+
+            ( error ) => { // Triggered by setTimeout(). Try up to this.MAX_TRIES before giving up.
+
+                console.warn( '2. GetAssets::doRequest(): ft.promise FIRST .then error, error:' + error + ' for ' + ft.url );
+
+                console.warn( '2. GetAssets::doRequest(): ft.promise FIRST .then error, tries:' + ft.tries + ' for ' + ft.url );
+
+                ft.tries++;
+
+                if ( ft.tries < this.MAX_TRIES ) {
+
+                    console.warn( 'GetAssets::doRequest(): ft.promise FIRST .then error, TRYING AGAIN:' + error + ' for ' + ft.url );
+
+                    this.doRequest( requestURL, key, updateFn, cacheBust = true, mimeType, ft.tries );
+
+                }
+
+                return Promise.resolve( error );
+
+            } 
+
+        )
+
+        .then (
+
+            ( response ) => {
+
+                if ( response instanceof Error ) {
+
+                    updateFn( { key: key, data: null, error: response } ); // Send a wrapped error object
+
+                } else {
+
+                    updateFn( { key: key, data: response, error: false } ); // Send the data to the caller.
+
+                }
+
+
 
             },
 
             ( error ) => {
 
-                console.error( 'GetAssets::addRequests(): An error occured!' );
+                return Promise.reject();
 
-                console.error( error.message ? error.message : error );
-
-                 updateFn( error );
-
-             }
+            }
 
         );
 
     }
+
 
     /** 
      * Add fetch() url requests for resolve, with a timeout for fails. 
@@ -262,33 +289,16 @@ class GetAssets {
 
         let paths = requestor.files;
 
+        // TODO: THIS CAN BE A KEY. ONE CAN CHECK THE POOL (maintained here???) for a key, which doesn't have to be Array position
+        // TODO: use an associative key!!!!!!!!!
+
         for ( let i = 0; i < paths.length; i++ ) {
 
             let path = paths[ i ];
 
             console.log("GetAssets::addRequests(): " +  path, ", " + typeof requestor.updateFn + ", " + requestor.cacheBust + ", " + requestor.mimeType )
 
-            this.doRequest( path, i, requestor.updateFn, requestor.cacheBust, requestor.mimeType, 0 ) // initial request at 0 tries
-
-            .then( 
-
-                ( response ) => {
-
-                    requestor.updateFn( response ); // function determines whether the requestor has everything it needs
-
-                },
-
-                ( error ) => {
-
-                    console.error( 'GetAssets::addRequests(): An error occured!' );
-
-                    console.error( error.message ? error.message : error );
-
-                     requestor.updateFn( error );
-
-                }
-
-            );
+            this.doRequest( path, i, requestor.updateFn, requestor.cacheBust, requestor.mimeType, 0 ); // initial request at 0 tries
 
         } // end of request loop
 

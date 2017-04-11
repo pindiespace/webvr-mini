@@ -643,6 +643,8 @@ class World {
 
 // TODO: TEMP DEBUG
 
+// TODO: TEST WITH "GOOD 3G NETWORK SETTING"
+
     let getter = new GetAssets( this.util );
 
     let mimeType = 'image/png';
@@ -653,54 +655,47 @@ class World {
 
     let bob = {
 
-        files: [ 'img/mozvr-logo1.png', 'img/soda-can.png' ],
+        files: [ 'img/mozvr-logo1.png', 'img/soda-can.png', 'sdsfjslkfsjlsfdsdf' ],  // , 'img/soda-can.png'
 
         data: null,
 
         bob: null,
 
-        updateFn: ( request ) => {
+        updateFn: ( result ) => {
 
-            console.log( 'request is a:' + typeof request)
-            window.req = request
+            console.log( 'World::bob.updateFn(): result is a:' + result )
 
-            //console.log( 'World:::data update for ' + request.path + ' is a :' + request.data );
+            console.log( 'World::bob.updateFn(): result.data is a:' + result )
 
-            if ( request.data !== null ) {
+            console.log( 'World::bob.updateFn(): result.key is a:' + result )
+
+            //console.log( 'World:::data update for ' + result.path + ' is a :' + result.data );
+
+            if ( result && ! result.error && result.data ) {
+
+                console.log( 'result.data.message is:' + result.data.message );
 
                 // use the data!!!
+
                 let image = new Image();
 
-                image.src = URL.createObjectURL(request);
+                image.src = URL.createObjectURL( result.data );
 
-                document.body.appendChild(image);
+                console.log("key:" + result.key )
+
+                document.body.appendChild( image );
 
                 // see if we have everything.
 
+                // TODO: result should come back with the key for the receiving array.
 
-                // TODO: request should come back with a position for the receiving array.
-
-                // this.emitter.emit('apseudoevent', request );
+                // this.emitter.emit('apseudoevent', result );
 
             } else {
 
-                // decide if we want to re-try
+                console.warn( 'World::bob.updateFn(): no result in updateFn');
 
-                if ( request.numTries < getter.MAX_TRIES ) {
-
-                    request.numTries++;
-
-                    console.log( 'World:::request for:' + request.path + ' tried ' + request.numTries + ' time' );
-
-                    // TODO: increase wait time until at max
-
-                    getter.addRequest( request.path, bob.updateFn, cacheBust, mimeType, request.numTries );
-
-                } else {
-
-                    console.log( 'World:::FAILED request for:' + request.path + ' after ' + request.numTries + ' tries' );
-
-                }
+                console.warn( 'World::bob.updateFn(): ERROR is ' + result.error.message );
 
             }
 

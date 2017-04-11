@@ -14547,8 +14547,6 @@
 	    value: true
 	});
 
-	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 	var _getAssets = __webpack_require__(29);
@@ -15074,6 +15072,8 @@
 
 	            // TODO: TEMP DEBUG
 
+	            // TODO: TEST WITH "GOOD 3G NETWORK SETTING"
+
 	            var getter = new _getAssets2.default(this.util);
 
 	            var mimeType = 'image/png';
@@ -15084,51 +15084,46 @@
 
 	            var bob = {
 
-	                files: ['img/mozvr-logo1.png', 'img/soda-can.png'],
+	                files: ['img/mozvr-logo1.png', 'img/soda-can.png', 'sdsfjslkfsjlsfdsdf'], // , 'img/soda-can.png'
 
 	                data: null,
 
 	                bob: null,
 
-	                updateFn: function updateFn(request) {
+	                updateFn: function updateFn(result) {
 
-	                    console.log('request is a:' + (typeof request === 'undefined' ? 'undefined' : _typeof(request)));
-	                    window.req = request;
+	                    console.log('World::bob.updateFn(): result is a:' + result);
 
-	                    //console.log( 'World:::data update for ' + request.path + ' is a :' + request.data );
+	                    console.log('World::bob.updateFn(): result.data is a:' + result);
 
-	                    if (request.data !== null) {
+	                    console.log('World::bob.updateFn(): result.key is a:' + result);
+
+	                    //console.log( 'World:::data update for ' + result.path + ' is a :' + result.data );
+
+	                    if (result && !result.error && result.data) {
+
+	                        console.log('result.data.message is:' + result.data.message);
 
 	                        // use the data!!!
+
 	                        var image = new Image();
 
-	                        image.src = URL.createObjectURL(request);
+	                        image.src = URL.createObjectURL(result.data);
+
+	                        console.log("key:" + result.key);
 
 	                        document.body.appendChild(image);
 
 	                        // see if we have everything.
 
+	                        // TODO: result should come back with the key for the receiving array.
 
-	                        // TODO: request should come back with a position for the receiving array.
-
-	                        // this.emitter.emit('apseudoevent', request );
+	                        // this.emitter.emit('apseudoevent', result );
 	                    } else {
 
-	                        // decide if we want to re-try
+	                        console.warn('World::bob.updateFn(): no result in updateFn');
 
-	                        if (request.numTries < getter.MAX_TRIES) {
-
-	                            request.numTries++;
-
-	                            console.log('World:::request for:' + request.path + ' tried ' + request.numTries + ' time');
-
-	                            // TODO: increase wait time until at max
-
-	                            getter.addRequest(request.path, bob.updateFn, cacheBust, mimeType, request.numTries);
-	                        } else {
-
-	                            console.log('World:::FAILED request for:' + request.path + ' after ' + request.numTries + ' tries');
-	                        }
+	                        console.warn('World::bob.updateFn(): ERROR is ' + result.error.message);
 	                    }
 	                },
 
@@ -15273,7 +15268,7 @@
 	    function GetAssets(util) {
 	        _classCallCheck(this, GetAssets);
 
-	        this.util = util, this.MAX_WAIT_TIME = 50, this.MAX_TRIES = 6;
+	        this.util = util, this.MIN_WAIT_TIME = 100, this.MAX_TRIES = 6;
 	    }
 
 	    /** 
@@ -15302,43 +15297,85 @@
 
 	        /** 
 	         * get fetch wrapped into a wrapped Promise.
+	         * @link http://stackoverflow.com/questions/35520790/error-handling-for-fetch-in-aurelia
 	         */
 
 	    }, {
 	        key: 'getWrappedFetch',
-	        value: function getWrappedFetch(url, params) {
+	        value: function getWrappedFetch(url, params, tries, key) {
 
 	            var wrappedPromise = this.getWrappedPromise();
 
 	            var req = new Request(url, params);
 
-	            // Apply arguments to fetch
+	            wrappedPromise.url = url;
+
+	            wrappedPromise.params = params;
+
+	            wrappedPromise.tries = tries;
+
+	            wrappedPromise.key = key;
+
+	            // Start the timeout, which lengthens with each attempt.
+
+	            wrappedPromise.timeoutId = setTimeout(function () {
+
+	                console.warn('GetAssets::getWrappedFetch(): TIMEOUT ' + wrappedPromise.url);
+
+	                wrappedPromise.catch(0);
+	            }, this.MIN_WAIT_TIME * wrappedPromise.tries);
+
+	            // Apply arguments to fetch.
 
 	            fetch(req).then(function (response) {
 
-	                wrappedPromise.resolve(response);
+	                if (!response.ok) {
+	                    // catch 404 errors
+
+	                    throw new Error('Network response was not ok for ' + wrappedPromise.url);
+	                } else {
+
+	                    return response;
+	                }
+	            }).then(function (response) {
+
+	                console.warn('GetAssets::getWrappedFetch(): OK, RESOLVE ' + wrappedPromise.url);
+
+	                clearTimeout(wrappedPromise.timeoutId);
+
+	                return wrappedPromise.resolve(response);
 	            }, function (error) {
 
-	                wrappedPromise.reject(response);
+	                console.warn('GetAssets::getWrappedFetch(): NOT OK, REJECT ' + wrappedPromise.url);
+
+	                clearTimeout(wrappedPromise.timeoutId);
+
+	                window.res = error;
+
+	                return wrappedPromise.reject(error); // fixes it!!!!!!!!!!!!!!! USING Error causes a strange fail!!!!
 	            }).catch(function (error) {
 
-	                wrappedPromise.catch(error);
+	                console.warn('GetAssets::getWrappedFetch(): NOT OK, CATCH ' + wrappedPromise.url);
+
+	                clearTimeout(wrappedPromise.timeoutId);
+
+	                return wrappedPromise.catch(error);
 	            });
 
 	            return wrappedPromise;
 	        }
 	    }, {
 	        key: 'doRequest',
-	        value: function doRequest(requestURL, pos, updateFn) {
+	        value: function doRequest(requestURL, key, updateFn) {
 	            var cacheBust = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : true;
 
 	            var _this = this;
 
 	            var mimeType = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : 'text/plain';
-	            var numTries = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : 0;
+	            var tries = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : 0;
 
 
-	            // Create our wrapped (with timeout) fetch request (url, params)
+	            console.log(">>>>MIMETYPE:" + mimeType);
 
 	            var ft = this.getWrappedFetch(cacheBust ? requestURL + '?' + new Date().getTime() : requestURL, {
 
@@ -15354,116 +15391,77 @@
 
 	                }
 
-	            });
+	            }, tries, // attach some additional variables to this fetch
 
-	            // Create a custom results object.
-
-	            var result = {
-
-	                path: requestURL,
-
-	                pos: pos,
-
-	                data: null,
-
-	                numTries: numTries,
-
-	                message: 'ok'
-
-	            };
-
-	            // Add a timeout rejection.
-
-	            var delay = this.MAX_WAIT_TIME * (1 + numTries);
-
-	            var timeoutId = setTimeout(function () {
-
-	                // otherwise, reject the request
-
-	                result.message = new Error('GetAssets::doRequest() in TIMEOUT: Load timeout (' + delay + 'ms) for resource: ' + requestURL);
-
-	                console.error('GetAssets::doRequest() in TIMEOUT: result.data is:' + result.data);
-
-	                clearTimeout(timeoutId); // must clear for re-try!!
-
-	                ft.reject(result); // reject on timeout
-	            }, delay // TODO: DOUBLE THIS UNTIL MAX_TRIES
+	            key // key (keyition) for object in calling routine.
 
 	            );
 
+	            // Return the Promise.
+
 	            return ft.promise.then(function (response) {
 
-	                clearTimeout(timeoutId);
+	                console.warn('1. GetAssets::doRequest(): ft.promise FIRST .then OK, response.status:' + response.status + ' for ' + ft.url);
+
+	                console.warn('1. GetAssets::doRequest(): ft.promise FIRST .then OK, response:' + response + ' for ' + ft.url);
+
+	                console.warn('1. GetAssets::doRequest(): ft.promise FIRST .then OK, tries:' + ft.tries + ' for ' + ft.url);
+
+	                console.warn('1. GetAssets::doRequest(): ft.promise FIRST .then OK, mimeType:' + mimeType + ' for ' + ft.url);
+
+	                var data = null;
 
 	                if (response.status === 200 || response.status === 0) {
 
-	                    // we got something back
-
-	                    console.error('GetAssets::doRequest() in THEN: response is:' + (typeof response === 'undefined' ? 'undefined' : _typeof(response)));
-
 	                    if (mimeType === 'application/json') {
 
-	                        result.data = response.json();
-
-	                        return Promise.resolve(result.data);
+	                        data = response.json();
 	                    } else if (mimeType.indexOf('text') !== _this.util.NOT_IN_LIST) {
 
-	                        result.data = response.text();
-
-	                        return Promise.resolve(result.data);
+	                        data = response.text();
 	                    } else if (mimeType === 'application/xml') {
 
-	                        result.data = response.formData();
-
-	                        return Promise.resolve(result.data);
+	                        data = response.formData();
 	                    } else {
 	                        // all other mime types (e.g. images, audio, video)
 
-	                        result.data = response.blob();
-
-	                        return Promise.resolve(result.data);
+	                        data = response.blob();
 	                    }
+
+	                    return Promise.resolve(data);
 	                } else {
 
-	                    result.message = new Error('GetAssets::doRequest(): Status error(' + response.statusText + 'for resource' + requestURL);
-
-	                    return Promise.reject(result);
+	                    return Promise.reject(response);
 	                }
-	            });
+	            }, function (error) {
+	                // Triggered by setTimeout(). Try up to this.MAX_TRIES before giving up.
 
-	            // TODO: add 'then' here to pass result, rather than result-data
+	                console.warn('2. GetAssets::doRequest(): ft.promise FIRST .then error, error:' + error + ' for ' + ft.url);
 
-	            ///.then ( ( data ) => {
+	                console.warn('2. GetAssets::doRequest(): ft.promise FIRST .then error, tries:' + ft.tries + ' for ' + ft.url);
 
-	            // result.data = data;
+	                ft.tries++;
 
-	            ///    updateFn( result );
+	                if (ft.tries < _this.MAX_TRIES) {
 
-	            ///    } ); // provided by caller, tests if it is complete/ready
-	        }
+	                    console.warn('GetAssets::doRequest(): ft.promise FIRST .then error, TRYING AGAIN:' + error + ' for ' + ft.url);
 
-	        /** 
-	         * Trigger an individual request.
-	         */
+	                    _this.doRequest(requestURL, key, updateFn, cacheBust = true, mimeType, ft.tries);
+	                }
 
-	    }, {
-	        key: 'addRequest',
-	        value: function addRequest(paths, updateFn, cacheBust, mimeType, numTries) {
+	                return Promise.resolve(error);
+	            }).then(function (response) {
 
-	            this.doRequest(paths, updateFn, cacheBust, mimeType, numTries) // initial request at 0 tries
+	                if (response instanceof Error) {
 
-	            .then(function (response) {
+	                    updateFn({ key: key, data: null, error: response }); // Send a wrapped error object
+	                } else {
 
-	                console.error('GetAssets::addRequest(): doRequest complete, rrresponse is a:' + response);
-
-	                updateFn(response); // function determines whether the requestor has everything it needs
+	                    updateFn({ key: key, data: response, error: false }); // Send the data to the caller.
+	                }
 	            }, function (error) {
 
-	                console.error('GetAssets::addRequests(): An error occured!');
-
-	                console.error(error.message ? error.message : error);
-
-	                updateFn(error);
+	                return Promise.reject();
 	            });
 	        }
 
@@ -15488,25 +15486,16 @@
 
 	            var paths = requestor.files;
 
+	            // TODO: THIS CAN BE A KEY. ONE CAN CHECK THE POOL (maintained here???) for a key, which doesn't have to be Array position
+	            // TODO: use an associative key!!!!!!!!!
+
 	            for (var i = 0; i < paths.length; i++) {
 
 	                var path = paths[i];
 
 	                console.log("GetAssets::addRequests(): " + path, ", " + _typeof(requestor.updateFn) + ", " + requestor.cacheBust + ", " + requestor.mimeType);
 
-	                this.doRequest(path, i, requestor.updateFn, requestor.cacheBust, requestor.mimeType, 0) // initial request at 0 tries
-
-	                .then(function (response) {
-
-	                    requestor.updateFn(response); // function determines whether the requestor has everything it needs
-	                }, function (error) {
-
-	                    console.error('GetAssets::addRequests(): An error occured!');
-
-	                    console.error(error.message ? error.message : error);
-
-	                    requestor.updateFn(error);
-	                });
+	                this.doRequest(path, i, requestor.updateFn, requestor.cacheBust, requestor.mimeType, 0); // initial request at 0 tries
 	            } // end of request loop
 	        } // end of addRequests()
 
