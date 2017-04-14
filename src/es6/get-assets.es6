@@ -87,7 +87,7 @@ class GetAssets {
 
                 } else {
 
-                    return response;
+                    return response; // send to the next '.then'
 
                 }
 
@@ -140,7 +140,16 @@ class GetAssets {
     }
 
 
-
+    /** 
+     * Get an individual file.
+     * @param {String} requestURL the file path for our asset.
+     * @param {String} key identifier key for the asset, so the requesting object can put it in the right place.
+     * @param {Function} updateFn callback function when an asset loads or fails
+     * @param {Boolean} cacheBust if true, add a random query string to avoid caching
+     * @param {String} mimeType the MIME type of the expected data
+     * @param {Number} tries. If load fails, try to load again with a longer timeout. Load until 
+     *        number of 'tries' = this.MAX_TRIES. Lengthen the timeout with each try.
+     */
     doRequest( requestURL, key, updateFn, cacheBust = true, mimeType = 'text/plain', tries = 0 ) {
 
         console.log(">>>>MIMETYPE:" + mimeType )
@@ -167,7 +176,7 @@ class GetAssets {
 
             tries, // attach some additional variables to this fetch
 
-            key // key (keyition) for object in calling routine.
+            key // key identifier for object requested, from the calling requestor object.
 
         );
 
@@ -190,6 +199,8 @@ class GetAssets {
 
                 let data = null;
 
+                // Check response.status ('0' is ok if we are serving from desktop os).
+
                 if ( response.status === 200 || response.status === 0 ) {
 
                     if ( mimeType === 'application/json' ) {
@@ -209,6 +220,8 @@ class GetAssets {
                         data = response.blob();
 
                     }
+
+                    // Return a resolved Promise to the next '.then'.
 
                     return Promise.resolve( data );
 
@@ -248,21 +261,27 @@ class GetAssets {
 
                 if ( response instanceof Error ) {
 
+                    // Run the callback with error values.
+
                     updateFn( { key: key, data: null, error: response } ); // Send a wrapped error object
 
                 } else {
+
+                    // Run the callback we got in the original request, return received file in data.
+
+                    console.log('>>>>>>>>>>>>>>about to call update function!!!!!!')
 
                     updateFn( { key: key, data: response, error: false } ); // Send the data to the caller.
 
                 }
 
-
-
             },
 
             ( error ) => {
 
-                return Promise.reject();
+                // Unknown error?
+
+                return Promise.reject( 0 );
 
             }
 

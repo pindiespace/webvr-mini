@@ -1,6 +1,6 @@
 'use strict'
 
-class GeoObj {
+class ShaderObj {
 
     /** 
      * @class
@@ -988,4 +988,4 @@ class GeoObj {
 
 }
 
-export default GeoObj;
+export default ShaderObj;

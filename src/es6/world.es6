@@ -106,7 +106,11 @@ class World {
 
         const vec4 = this.glMatrix.vec4;
 
-        const vec5 = this.prim.vec5;
+        const vec5 = this.prim.geometry.vec5;
+
+        console.log("(((((((THIS PRIM GEOMETRY:" + this.prim.geometry)
+
+        const typeList = this.prim.geometry.typeList;
 
         const util = this.util;
 
@@ -128,7 +132,7 @@ class World {
             this.prim.createPrim(
 
                 this.s1,                      // callback function
-                this.prim.typeList.SKYDOME,          // type
+                typeList.SKYDOME,          // type
                 'skydome',                           // name (not Id)
                 vec5( 18, 18, 18, 0 ),               // dimensions
                 vec5( 10, 10, 10 ),                  // divisions MAKE SMALLER
@@ -143,7 +147,7 @@ class World {
             this.prim.createPrim(
 
                 this.s1,                      // callback function
-                this.prim.typeList.CUBE,
+                typeList.CUBE,
                 'first cube',                                        // name
                 vec5( 1, 1, 1 ),            // dimensions
                 vec5( 10, 10, 10, 0 ),            // divisions, pass curving of edges as 4th parameter
@@ -159,7 +163,7 @@ class World {
             this.prim.createPrim(
 
                 this.s1,                      // callback function
-                this.prim.typeList.CUBE,
+                typeList.CUBE,
                 'toji cube',
                 vec5( 1, 1, 1, 0 ),            // dimensions
                 vec5( 1, 1, 1, 0 ),            // divisions, pass curving of edges as 4th parameter
@@ -175,7 +179,7 @@ class World {
             this.prim.createPrim(
 
                 this.s1,                      // callback function
-                this.prim.typeList.TORUS,
+                typeList.TORUS,
                 'torus2',
                 vec5( 1, 1, 0.5, 0 ),         // dimensions (first is width along x, second  width along y, diameter of torus tube)
                 vec5( 9, 9, 9, 1 ),            // divisions (first is number of rings, second is number of sides)
@@ -196,7 +200,7 @@ class World {
             this.prim.createPrim(
 
                 this.s1,                      // callback function
-                this.prim.typeList.CURVEDINNERPLANE,
+                typeList.CURVEDINNERPLANE,
                 'CurvedPlaneBack',
                 vec5( 2, 1, 1, this.prim.directions.BACK, 1 ),         // pass orientation ONE UNIT CURVE
                 vec5( 10, 10, 10 ),        // divisions
@@ -212,7 +216,7 @@ class World {
             this.prim.createPrim(
 
                 this.s1,                      // callback function
-                this.prim.typeList.CURVEDINNERPLANE,
+                typeList.CURVEDINNERPLANE,
                 'CurvedPlaneLeft',
                 vec5( 2, 1, 1, this.prim.directions.LEFT, 1 ),         // pass orientation ONE UNIT CURVE
                 vec5( 10, 10, 10 ),        // divisions
@@ -228,7 +232,7 @@ class World {
             this.prim.createPrim(
 
                 this.s1,                      // callback function
-                this.prim.typeList.CURVEDINNERPLANE,
+                typeList.CURVEDINNERPLANE,
                 'CurvedPlaneRight',
                 vec5( 2, 1, 1, this.prim.directions.RIGHT, 1 ),         // pass orientation ONE UNIT CURVE
                 vec5( 10, 10, 10 ),        // divisions
@@ -244,7 +248,7 @@ class World {
             this.prim.createPrim(
 
                 this.s1,                      // callback function
-                this.prim.typeList.CURVEDOUTERPLANE,
+                typeList.CURVEDOUTERPLANE,
                 'CurvedPlaneOut',
                 vec5( 2, 1, 1, this.prim.directions.RIGHT, 1 ),         // dimensions NOTE: pass radius for curvature (also creates orbit) 
                 vec3.fromValues( 10, 10, 10 ),        // divisions
@@ -260,7 +264,7 @@ class World {
             this.prim.createPrim(
 
                 this.s1,                      // callback function
-                this.prim.typeList.ICOSPHERE,
+                typeList.ICOSPHERE,
                 'icosphere',
                 vec5( 3, 3, 3, 0 ),            // dimensions
                 vec5( 32, 32, 32 ),            // 1 for icosohedron, 16 for good sphere
@@ -276,7 +280,7 @@ class World {
             this.prim.createPrim(
 
                 this.s1,                      // callback function
-                this.prim.typeList.SKYICODOME,
+                typeList.SKYICODOME,
                 'icoSkyDome',
                 vec5( 3, 3, 3, 0 ),            // dimensions
                 vec5( 32, 32, 32 ),            // 1 for icosohedron, 16 for good sphere
@@ -292,7 +296,7 @@ class World {
             this.prim.createPrim(
             
                 this.s1,                      // callback function
-                this.prim.typeList.BOTTOMICODOME,
+                typeList.BOTTOMICODOME,
                 'bottomicodome',
                 vec5( 3, 3, 3, 0 ),            // dimensions
                 vec5( 32, 32, 32 ),            // 1 for icosohedron, 16 for good sphere
@@ -308,7 +312,7 @@ class World {
             this.prim.createPrim(
             
                 this.s1,                      // callback function
-                this.prim.typeList.CAP, // CAP DEFAULT, AT WORLD CENTER (also a UV polygon)
+                typeList.CAP, // CAP DEFAULT, AT WORLD CENTER (also a UV polygon)
                 'CAP',
                 vec5( 3, 3, 3, 0 ),         // dimensions INCLUDING start radius or torus radius(last value)
                 vec5( 15, 15, 15 ),         // divisions MUST BE CONTROLLED TO < 5
@@ -325,7 +329,7 @@ class World {
             this.prim.createPrim(
             
                 this.s1,                      // callback function
-                this.prim.typeList.CONE,
+                typeList.CONE,
                 'TestCone',
                 vec5( 1, 1, 1, 0.0, 0.0 ),         // dimensions (4th dimension is truncation of cone, none = 0, flat circle = 1.0)
                 vec5( 10, 10, 10  ),        // divisions MAKE SMALLER
@@ -341,7 +345,7 @@ class World {
             this.prim.createPrim(
             
                 this.s1,                      // callback function
-                this.prim.typeList.CYLINDER,
+                typeList.CYLINDER,
                 'TestCylinder',
                 vec5( 1, 1, 1, 0.3, 0.7 ),       // dimensions (4th dimension doesn't exist for cylinder)
                 vec5( 40, 40, 40  ),        // divisions MAKE SMALLER
@@ -357,7 +361,7 @@ class World {
             this.prim.createPrim(
             
                 this.s1,                      // callback function
-                this.prim.typeList.CAPSULE,
+                typeList.CAPSULE,
                 'TestCapsule',
                 vec5( 0.5, 1, 1 ),       // dimensions (4th dimension doesn't exist for cylinder)
                 vec5( 40, 40, 0  ),        // divisions MAKE SMALLER
@@ -373,7 +377,7 @@ class World {
             this.prim.createPrim(
             
                 this.s1,                      // callback function
-                this.prim.typeList.TEARDROP,
+                typeList.TEARDROP,
                 'TestTearDrop',
                 vec5( 1, 2, 1 ),       // dimensions (4th dimension doesn't exist for cylinder)
                 vec5( 40, 40, 0  ),        // divisions MAKE SMALLER
@@ -389,7 +393,7 @@ class World {
             this.prim.createPrim(
             
                 this.s1,                      // callback function
-                this.prim.typeList.DODECAHEDRON,
+                typeList.DODECAHEDRON,
                 'Dodecahedron',
                 vec5( 1, 1, 1 ),       // dimensions (4th dimension doesn't exist for cylinder)
                 vec5( 40, 40, 0  ),        // divisions MAKE SMALLER
@@ -408,7 +412,7 @@ class World {
             this.prim.createPrim(
 
                 this.s1,                               // callback function
-                this.prim.typeList.MESH,
+                typeList.MESH,
                 'capsule',
                 vec5( 1, 1, 1 ),                       // dimensions (4th dimension doesn't exist for cylinder)
                 vec5( 40, 40, 0  ),                    // divisions MAKE SMALLER
@@ -431,7 +435,7 @@ class World {
             this.prim.createPrim(
 
                 this.s2,                      // callback function
-                this.prim.typeList.CUBE,
+                typeList.CUBE,
                 'colored cube',
                 vec5( 1, 1, 1, 0 ),            // dimensions
                 vec5( 3, 3, 3 ),            // divisions
@@ -472,7 +476,7 @@ class World {
             this.prim.createPrim(
 
                 this.s2,                               // callback function
-                this.prim.typeList.MESH,
+                typeList.MESH,
                 'teapot',
                 vec5( 1, 1, 1 ),                       // dimensions (4th dimension doesn't exist for cylinder)
                 vec5( 40, 40, 0  ),                    // divisions MAKE SMALLER
@@ -494,7 +498,7 @@ class World {
             this.prim.createPrim(
 
                 this.s3,                      // callback function
-                this.prim.typeList.CUBE,
+                typeList.CUBE,
                 'lit cube',
                 vec5( 1, 1, 1, 0 ),            // dimensions
                 vec5( 1, 1, 1 ),            // divisions
@@ -510,7 +514,7 @@ class World {
             this.prim.createPrim(
 
                 this.s3,                      // callback function
-                this.prim.typeList.TERRAIN,
+                typeList.TERRAIN,
                 'terrain',
                 vec5( 2, 2, 44, this.prim.directions.TOP, 0.1 ),            // NOTE: ORIENTATION DESIRED vec5[3], waterline = vec5[4]
                 vec5( 100, 100, 100 ),           // divisions
@@ -527,7 +531,7 @@ class World {
             this.prim.createPrim(
 
                 this.s3,                      // callback function
-                this.prim.typeList.CURVEDINNERPLANE,
+                typeList.CURVEDINNERPLANE,
                 'CurvedPlaneFront',
                 vec5( 2, 1, 1, this.prim.directions.FRONT, 1 ),         // pass orientation ONE UNIT CURVE
                 vec5( 10, 10, 10 ),        // divisions
@@ -543,7 +547,7 @@ class World {
             this.prim.createPrim(
             
                 this.s3,                      // callback function
-                this.prim.typeList.SPHERE,
+                typeList.SPHERE,
                 'texsphere',
                 vec5( 1.5, 1.5, 1.5, 0 ),   // dimensions
                 vec5( 6, 6, 6 ), // at least 8 subdividions to smooth!
@@ -560,7 +564,7 @@ class World {
             this.prim.createPrim(
 
                 this.s3,                      // callback function
-                this.prim.typeList.CUBESPHERE,
+                typeList.CUBESPHERE,
                 'cubesphere',
                 vec5( 3, 3, 3 ),            // dimensions
                 vec5( 10, 10, 10, 0 ),         // divisions 4th parameter is degree of rounding.
@@ -576,7 +580,7 @@ class World {
             this.prim.createPrim(
 
                 this.s3,                      // callback function
-                this.prim.typeList.REGULARTETRAHEDRON,
+                typeList.REGULARTETRAHEDRON,
                 'regulartetrahedron',
                 vec5( 3, 3, 3, 0 ),            // dimensions
                 vec5( 18, 18, 18 ),               // divisions
@@ -592,7 +596,7 @@ class World {
             this.prim.createPrim(
 
                 this.s3,                      // callback function
-                this.prim.typeList.ICOSOHEDRON,
+                typeList.ICOSOHEDRON,
                 'icosohedron',
                 vec5( 3, 3, 3, 0 ),            // dimensions
                 vec5( 18, 18, 18 ),               // divisions
@@ -608,7 +612,7 @@ class World {
             this.prim.createPrim(
 
                 this.s3,                      // callback function
-                this.prim.typeList.BOTTOMDOME,
+                typeList.BOTTOMDOME,
                 'TestDome',
                 vec5( 1, 1, 1, 0 ),            // dimensions
                 vec5( 10, 10, 10  ),            // divisions MAKE SMALLER
@@ -624,7 +628,7 @@ class World {
             this.prim.createPrim(
 
                 this.s3,                  // callback function
-                this.prim.typeList.TORUS, // TORUS DEFAULT
+                typeList.TORUS, // TORUS DEFAULT
                 'TORUS1',
                 vec5( 1, 1, 0.5, 0 ),            // dimensions INCLUDING start radius or torus radius(last value)
                 vec5( 15, 15, 15 ),            // divisions MUST BE CONTROLLED TO < 5
@@ -663,17 +667,9 @@ class World {
 
         updateFn: ( result ) => {
 
-            console.log( 'World::bob.updateFn(): result is a:' + result )
-
-            console.log( 'World::bob.updateFn(): result.data is a:' + result )
-
-            console.log( 'World::bob.updateFn(): result.key is a:' + result )
-
-            //console.log( 'World:::data update for ' + result.path + ' is a :' + result.data );
-
             if ( result && ! result.error && result.data ) {
 
-                console.log( 'result.data.message is:' + result.data.message );
+                console.log( 'result.key is:' + result.key + ' and result.error is:' + result.error );
 
                 // use the data!!!
 
@@ -695,7 +691,7 @@ class World {
 
                 console.warn( 'World::bob.updateFn(): no result in updateFn');
 
-                console.warn( 'World::bob.updateFn(): ERROR is ' + result.error.message );
+                console.warn( 'World::bob.updateFn(): ERROR is ' + result.error );
 
             }
 

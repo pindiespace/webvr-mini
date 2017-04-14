@@ -410,7 +410,7 @@ class Mesh {
     /** 
      * @class
      * Our class for subdivision and other complex coordinate manipulation.
-     * @param {GeoObj} An object with flattened vertices, indices, and texture 
+     * @param {Prim} An object with flattened vertices, indices, and texture 
      * coordinates, as well as the Prim type.
      * @constructor
      * @param {Geometry} geo a geometry object (defined in Prim.es6)
