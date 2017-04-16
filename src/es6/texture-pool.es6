@@ -331,9 +331,11 @@ class TexturePool extends GetAssets {
 
                             // Fire the onload even (internal browser instead of off network)
 
-                            let base64Flag = 'data:' + mimeType + ';base64,';
-
                             image.src = URL.createObjectURL( updateObj.data );
+
+                            // TODO: PASS ARRAYBUFFERVIEW TYPE COERCED ARRAYBUFFER
+                            // TODO: get ARRAYBUFFERVIEW FROM ARRAYBUFFER
+                            //let textureObj = this.addTexture( updateObj.data, updateObj.path, updateObj.key, mimeType );
 
                         }, cacheBust, mimeType, 0 ); // end of this.doRequest(), initial request at 0 tries
 
@@ -366,6 +368,12 @@ class TexturePool extends GetAssets {
 
         texture = gl.createTexture();
 
+        ///console.log('(((((((((((create2dTexture, instanceof arraybuffer:' + ( image instanceof ArrayBuffer) ) 
+        ////console.log('(((((((((((create2dTexture, image:' + image)
+        //console.log('(((((((((((create2dTexture:image.src:' + image.src)
+
+        //image = new Uint8Array(image); // for arrayBuffer (which should work)
+
         gl.pixelStorei( gl.UNPACK_FLIP_Y_WEBGL, true );
 
         // Bind the texture data to the videocard, receive a WebGL texture in our textureObject.
@@ -377,6 +385,9 @@ class TexturePool extends GetAssets {
         if ( image ) {
 
             gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image ); // HASN'T LOADED YET
+
+            // TODO: pass ArrayBufferView for Image and this would work
+            //gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, 100, 100, 0, gl.RGBA, gl.UNSIGNED_BYTE, image, 0 );
 
             // TODO: WHEN TO USE gl.renderBufferStorage()???
 

@@ -218,13 +218,14 @@ class GetAssets {
 
                         data = response.formData();
 
-                    } else if ( mimeType.indexOf( 'image ') !== this.util.NOT_IN_LIST ) {
+                    } else if ( mimeType.indexOf( 'image') !== this.util.NOT_IN_LIST ) {
 
                         data = response.blob();
 
-                        /////data = response.arrayBuffer(); // should work with texImage2d
+                        // TODO: data = arraybufferview type
+                        ///TODO: data = response.arrayBuffer(); // NEED ARRAYBUFFERVIEW
 
-                    } else { // all other mime types (e.g. images, audio, video)
+                    } else { // all other mime types (e.g. audio, video)
 
                         data = response.blob();
 
