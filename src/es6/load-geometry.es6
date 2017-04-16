@@ -1,9 +1,9 @@
-'use strict'
-
 import Map2d from './map2d';
 import Map3d from './map3d';
 import Mesh from  './mesh';
 import LoadModel from './load-model';
+
+'use strict'
 
 class LoadGeometry {
 
@@ -11,11 +11,11 @@ class LoadGeometry {
 
         console.log( 'in LoadGeometry class' );
 
-        this.util = util;
+        this.util = util,
 
-        this.webgl = webgl;
+        this.webgl = webgl,
 
-        this.glMatrix = glMatrix;
+        this.glMatrix = glMatrix,
 
         this.typeList = {
 
@@ -125,11 +125,13 @@ class LoadGeometry {
 
         };
 
-        // Visible from inside or outside.
+        // Visible from inside or outside, or not visible.
 
         this.OUTSIDE = 100,
 
-        this.INSIDE = 101;
+        this.INSIDE = 101,
+
+        this.INVISIBLE = 102;
 
         // Math shorthand.
 
@@ -138,22 +140,22 @@ class LoadGeometry {
     }
 
     /** 
-     * See if supplied Prim type is supported. Individual Prim factory 
-     * methods do more detailed checking.
-     * @param {String} type the prim type.
+     * See if supplied Prim type is supported via a method. 
+     * Individual Prim factory methods may do more detailed checking.
+     * @param {String} type the Prim type.
      * @returns {Boolean} if supported, return true, else false.
      */
     checkType ( type ) {
 
         // Confirm we have a factory function for this type.
 
-        if ( typeof type == 'function' ) {
+        if ( this[ type ] instanceof Function ) {
 
             return true;
 
         }
 
-        return true;
+        return false;
 
     }
 
@@ -1776,12 +1778,10 @@ class LoadGeometry {
      * position x axis is the radius, y axis is the height z not used
      * dimensions x is number of steps along the y axis, dimensions y is the number of radial 
      * divisions around the capsule.
-     * prim.dimensions    = (vec4) [ x, y, z ]
-     * prim.divisions     = (vec3) [ x, y, z ]
-     * 
      * @param {Prim} the Prim needing geometry. 
+     *  - prim.dimensions    = (vec4) [ x, y, z ]
+     *  - prim.divisions     = (vec3) [ x, y, z ]
      * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
-     * Creating WebGL buffers is turned on or off conditionally in the method.
      */
     geometryCapsule ( prim ) {
 
@@ -1802,8 +1802,11 @@ class LoadGeometry {
         // Radius is measured along the x axis, height along y axis.
 
         let radius = prim.dimensions[ 0 ] || 0.5,
+
         height = prim.dimensions[ 1 ] || 1.0,
+
         segmentHeight = prim.divisions[ 0 ] || 12,
+
         numSegments = prim.divisions[ 1 ] || 12;
 
         // Compute a capsule ring.
@@ -1905,12 +1908,10 @@ class LoadGeometry {
      * adjust curveRadius to round the edges of the Cube.
      * used by several other Prim routines (CUBESPHERE, PLANE, OUTERPLANE, 
      * INNERPLANE, CURVEDPLANE, CURVEDOUTERPLANE, CURVEDINNERPLANE)
-     * prim.dimensions    = (vec4) [ x, y, z, Prim.side, curveRadius ]
-     * prim.divisions     = (vec3) [ x, y, z ]
-     * 
      * @param {Prim} the Prim needing geometry. 
+     *  - prim.dimensions    = (vec4) [ x, y, z, Prim.side, curveRadius ]
+     *  - prim.divisions     = (vec3) [ x, y, z ]
      * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
-     * Creating WebGL buffers is turned on or off conditionally in the method.
      */
     geometryCube ( prim ) {
 
@@ -1976,36 +1977,51 @@ class LoadGeometry {
                 switch( prim.dimensions[ 3 ] ) { // which side, based on cube sides
 
                     case side.FRONT:
+
                         computeSquare( 0, 1, 2, sx, sy, nx, ny, sz / 2,  1, -1, side.FRONT );
+
                     break;
 
                     case side.BACK:
+
                         computeSquare( 0, 1, 2, sx, sy, nx, ny, -sz / 2, -1, -1, side.BACK );
+
                     break;
 
                     case side.LEFT:
+
                         computeSquare( 2, 1, 0, sx, sy, nz, ny, -sx / 2,  1, -1, side.LEFT );
+
                     break;
 
                     case side.RIGHT:
+
                         computeSquare( 2, 1, 0, sx, sy, nz, ny,  sx / 2, -1, -1, side.RIGHT ); 
+
                         break;
 
                     case side.TOP:
+
                         computeSquare( 0, 2, 1, sx, sy, nx, nz,  sy / 2,  1,  1, side.TOP ); // ROTATE xy axis
+
                         break;
 
                     case side.BOTTOM:
+
                         computeSquare( 0, 2, 1, sx, -sy, nx, nz, -sy / 2,  1, -1, side.BOTTOM ); // ROTATE xy axis
+
                         break;
 
                     default:
+
                         break;
 
                 }
+
                 break;
 
             default:
+
                 break;
 
         }
@@ -2171,27 +2187,39 @@ class LoadGeometry {
             switch( prim.dimensions[ 3 ] ) {
 
                 case side.FRONT:
+
                     if ( prim.type === list.CURVEDINNERPLANE || prim.type == list.INNERPLANE ) dSide = -1;
+
                     break;
 
                 case side.BACK:
+
                     if ( prim.type === list.CURVEDOUTERPLANE || prim.type === list.OUTERPLANE ) dSide = -1;
+
                     break;
 
                 case side.LEFT:
+
                     if ( prim.type === list.CURVEDOUTERPLANE || prim.type === list.OUTERPLANE ) dSide = -1;
+
                     break;
 
                 case side.RIGHT:
+
                     if ( prim.type === list.CURVEDINNERPLANE || prim.type === list.INNERPLANE ) dSide = -1;
+
                     break;
 
                 case side.TOP:
+
                     if ( prim.type === list.CURVEDOUTERPLANE || prim.type === list.OUTERPLANE ) dSide = -1;
+
                     break;
 
                 case side.BOTTOM:
+
                     if ( prim.type === list.CURVEDINNERPLANE || prim.type === list.INNERPLANE ) dSide = -1
+
                     break;
             }
 
@@ -2200,27 +2228,39 @@ class LoadGeometry {
                 switch ( prim.dimensions[ 3 ] ) {
 
                 case side.FRONT:
+
                     positions[ i ][ 2 ] = dSide * Math.cos( positions[ i ][ 0 ] ) * prim.dimensions[ 4 ];
+
                     break;
 
                 case side.BACK:
+
                     positions[ i ][ 2 ] = dSide * Math.cos( positions[ i ][ 0 ] ) * prim.dimensions[ 4 ];
+
                     break;
 
                 case side.LEFT:
+
                     positions[ i ][ 0 ] = dSide * Math.cos( positions[ i ][ 2 ] ) * prim.dimensions[ 4 ];
+
                     break;
 
                 case side.RIGHT:
+
                     positions[ i ][ 0 ] = dSide * Math.cos( positions[ i ][ 2 ] ) * prim.dimensions[ 4 ];
+
                     break;
 
                 case side.TOP:
+
                     positions[ i ][ 1 ] = dSide * Math.cos( positions[ i ][ 0 ] ) * prim.dimensions[ 4 ];
+
                     break;
 
                 case side.BOTTOM:
+
                     positions[ i ][ 1 ] = -Math.cos( positions[ i ][ 0 ] ) * prim.dimensions[ 4 ]; // SEEN FROM INSIDE< CORRECT
+
                     break;
 
                 }
@@ -2245,12 +2285,10 @@ class LoadGeometry {
      * type PLANE, OUTERPLANE
      * rendered as WebGL TRIANGLES.
      * visible from the 'outside' as defined by the outward vector from Prim.side.
-     * prim.dimensions    = (vec4) [ x, y, z, Prim.side ]
-     * prim.divisions     = (vec3) [ x, y, z ]
-     * 
      * @param {Prim} the Prim needing geometry. 
+     *  - prim.dimensions    = (vec4) [ x, y, z, Prim.side ]
+     *  - prim.divisions     = (vec3) [ x, y, z ]
      * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
-     * Creating WebGL buffers is turned on or off conditionally in the method.
      */
     geometryOuterPlane ( prim ) {
 
@@ -2262,12 +2300,10 @@ class LoadGeometry {
      * type INNERPLANE
      * rendered as WebGL TRIANGLES.
      * visible from the 'inside', as defined by the outward vectore from Prim.side.
-     * prim.dimensions    = (vec4) [ x, y, z, Prim.side ]
-     * prim.divisions     = (vec3) [ x, y, z ]
-     * 
      * @param {Prim} the Prim needing geometry. 
+     *  - prim.dimensions    = (vec4) [ x, y, z, Prim.side ]
+     *  - prim.divisions     = (vec3) [ x, y, z ]
      * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
-     * Creating WebGL buffers is turned on or off conditionally in the method.
      */
     geometryInnerPlane ( prim ) {
 
@@ -2280,12 +2316,10 @@ class LoadGeometry {
      * rendered as WebGL TRIANGLES.
      * visible from the 'outside' as defined by the outward vector from Prim.side.
      * curve radius sets the amount of curve by assigning a radius for a circle.
-     * prim.dimensions    = (vec4) [ x, y, z, Prim.side, curveRadius | 0 ]
-     * prim.divisions     = (vec3) [ x, y, z ]
-     * 
      * @param {Prim} the Prim needing geometry. 
+     *  - prim.dimensions    = (vec4) [ x, y, z, Prim.side, curveRadius | 0 ]
+     *  - prim.divisions     = (vec3) [ x, y, z ]
      * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
-     * Creating WebGL buffers is turned on or off conditionally in the method.
      */
      geometryCurvedOuterPlane( prim ) {
 
@@ -2298,12 +2332,10 @@ class LoadGeometry {
      * rendered as GL_TRIANGLES.
      * visible from the 'inside', as defined by the outward vectore from Prim.side.
      * curve radius sets the amount of curve by assigning a radius for a circle.
-     * prim.dimensions    = (vec4) [ x, y, z, Prim.side, curveRadius | 0 ]
-     * prim.divisions     = (vec3) [ x, y, z ]
-     * 
      * @param {Prim} the Prim needing geometry. 
+     *  - prim.dimensions    = (vec4) [ x, y, z, Prim.side, curveRadius | 0 ]
+     *  - prim.divisions     = (vec3) [ x, y, z ]
      * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
-     * Creating WebGL buffers is turned on or off conditionally in the method.
      */
      geometryCurvedInnerPlane( prim ) {
 
@@ -2316,12 +2348,10 @@ class LoadGeometry {
      * rendered as GL_TRIANGLES.
      * Generate terrain, using a heightMap, from a PLANE object. The 
      * heightMap values are interpolated for each vertex in the PLANE.
-     * prim.dimensions    = (vec4) [ x, y, z, Prim.side ]
-     * prim.divisions     = (vec3) [ x, y, z ]
-     * 
      * @param {Prim} the Prim needing geometry. 
-     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
-     * Creating WebGL buffers is turned on or off conditionally in the method.
+     *  - prim.dimensions    = (vec4) [ x, y, z, Prim.side ]
+     *  - prim.divisions     = (vec3) [ x, y, z ]
+     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. .
      */
     geometryTerrain ( prim ) {
 
@@ -2369,14 +2399,11 @@ class LoadGeometry {
      * rendered as WebGL TRIANGLES.
      * http://catlikecoding.com/unity/tutorials/rounded-cube/
      * http://mathproofs.blogspot.com.au/2005/07/mapping-cube-to-sphere.html
-     * 
      * just sets the curveRadius to 1/2 of the prim size.
-     * prim.dimensions    = (vec4) [ x, y, z, Prim.side, curveRadius ]
-     * prim.divisions     = (vec3) [ x, y, z ]
-     * 
      * @param {Prim} the Prim needing geometry. 
+     *  - prim.dimensions    = (vec4) [ x, y, z, Prim.side, curveRadius ]
+     *  - prim.divisions     = (vec3) [ x, y, z ]
      * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
-     * Creating WebGL buffers is turned on or off conditionally in the method.
      */
     geometryCubeSphere ( prim ) {
 
@@ -2393,18 +2420,18 @@ class LoadGeometry {
     /** 
      * Icosphere, adapted from Unity 3d tutorial.
      * @link https://www.binpress.com/tutorial/creating-an-octahedron-sphere/162
+     * Additional tutorials:
      * @link https://bitbucket.org/transporter/ogre-procedural/src/ca6eb3363a53c2b53c055db5ce68c1d35daab0d5/library/src/ProceduralIcoSphereGenerator.cpp?at=default&fileviewer=file-view-default
-     * http://donhavey.com/blog/tutorials/tutorial-3-the-icosahedron-sphere/
+     * @link http://donhavey.com/blog/tutorials/tutorial-3-the-icosahedron-sphere/
      * http://blog.andreaskahler.com/2009/06/creating-icosphere-mesh-in-code.html
      * https://github.com/glo-js/primitive-icosphere
      * https://github.com/hughsk/icosphere
      * http://mft-dev.dk/uv-mapping-sphere/
-     * octahedron sphere generation
-     * https://www.binpress.com/tutorial/creating-an-octahedron-sphere/162
-     * https://experilous.com/1/blog/post/procedural-planet-generation
-     * https://experilous.com/1/planet-generator/2014-09-28/planet-generator.js
-     * https://fossies.org/dox/eigen-3.2.10/icosphere_8cpp_source.html
-     * 
+     * Octahedron sphere generation:
+     * @link https://www.binpress.com/tutorial/creating-an-octahedron-sphere/162
+     * @link  https://experilous.com/1/blog/post/procedural-planet-generation
+     * @link https://experilous.com/1/planet-generator/2014-09-28/planet-generator.js
+     * @link https://fossies.org/dox/eigen-3.2.10/icosphere_8cpp_source.html
      * divisions max: ~60
      * @param {Object} prim the primitive needing geometry.
      * @param {Boolean} domeFlag if 0, do nothing, if 1, do top, if 2, do bottom.
@@ -2450,25 +2477,34 @@ class LoadGeometry {
         let getStdVecs = this.getStdVecs.bind( this );
 
         let directions = [
+
             side.LEFT,
+
             side.BACK,
+
             side.RIGHT,
+
             side.FORWARD,
+
         ];
 
         /* 
          * The original algorithm tried to pre-define the size of the index array, since out-of-range 
          * indices may be accessed. However, for some sizes this leads to a blob of undefineds, which 
-         * would cause problems elsewhere. So, use the dynamic feature of JS arrays - slower, but 
+         * would cause problems elsewhere. So, we use the dynamic feature of JS arrays - slower, but 
          * more compatible. The browser needs to support adding a new cell with aVar[num++] constructs
          */
 
         let geo = prim.geometry;
 
         let vertices = new Array ( ( resolution + 1 ) * ( resolution + 1 ) * 4 - (resolution * 2 - 1) * 3 ),
+
         indices = new Array( vertices.length), // will get bigger!
+
         texCoords = new Array( vertices.length ),
+
         normals = new Array( vertices.length ),
+
         tangents = new Array( vertices.length );
 
         // Initialize lots of default variables.
@@ -2573,7 +2609,6 @@ class LoadGeometry {
 
             // Toggle icosphere with icosohedron.
 
-
             if ( prim.type !== list.OCTAHEDRON ) {
 
                 vertices[i] = vec3.normalize( [ 0, 0, 0 ], vertices[ i ] );
@@ -2590,7 +2625,7 @@ class LoadGeometry {
 
         console.log(" ICOSPHERE VERTICES: " + vertices.length + " texCoords:" + texCoords.length)
 
-
+        // Scale if necessary.
 
         if ( radius != 1 ) {
 
@@ -2606,8 +2641,7 @@ class LoadGeometry {
 
         }
 
-
-        // Tangents.
+        // Tangents (nonstandard).
 
         createTangents( vertices, tangents );
 
@@ -2753,17 +2787,23 @@ class LoadGeometry {
             for ( let i = 1; i < steps; i++ ) {
 
                 triangles[t++] = vBottom;
+
                 triangles[t++] = vTop - 1;
+
                 triangles[t++] = vTop;
 
                 triangles[t++] = vBottom++;
+
                 triangles[t++] = vTop++;
+
                 triangles[t++] = vBottom;
 
             }
 
             triangles[t++] = vBottom;
+
             triangles[t++] = vTop - 1;
+
             triangles[t++] = vTop;
 
             return t;
@@ -2775,19 +2815,25 @@ class LoadGeometry {
         function createUpperStrip ( steps, vTop, vBottom, t, triangles ) {
 
             triangles[t++] = vBottom;
-            triangles[t++] = vTop - 1;   
+
+            triangles[t++] = vTop - 1;
+
             triangles[t++] = ++vBottom;
 
             for ( let i = 1; i <= steps; i++ ) {
 
                 triangles[t++] = vTop - 1;
+
                 triangles[t++] = vTop;
+
                 triangles[t++] = vBottom;
 
                 triangles[t++] = vBottom;
+
                 triangles[t++] = vTop++;
+
                 triangles[t++] = ++vBottom;
-            }     
+            }
 
             return t;
 
@@ -2798,17 +2844,23 @@ class LoadGeometry {
         function createUpperSkyStrip ( steps, vTop, vBottom, t, triangles ) {
 
             triangles[t++] = vBottom;
+
             triangles[t++] = ++vBottom;
-            triangles[t++] = vTop - 1;   
+
+            triangles[t++] = vTop - 1;
 
             for ( let i = 1; i <= steps; i++ ) {
+
                 triangles[t++] = vTop;
+
                 triangles[t++] = vTop - 1;
-                triangles[t++] = vBottom;
-
 
                 triangles[t++] = vBottom;
+
+                triangles[t++] = vBottom;
+
                 triangles[t++] = ++vBottom;
+
                 triangles[t++] = vTop++;
 
             }
@@ -2818,9 +2870,6 @@ class LoadGeometry {
 
         console.log("ICOSPHERE: vertices:" + vertices.length + " TANGENTS:" + tangents.length);
 
-
-        // Color array is pre-created, or gets a default when WebGL buffers are created.
-
         // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
         prim.initPrim( prim, vertices, indices, normals, texCoords, tangents ); // CHECK CREATE PRIM - ATTACHES TO SHADER
@@ -2829,6 +2878,12 @@ class LoadGeometry {
 
     }
 
+    /** 
+     * Type REGULARTETRAHEDRON.
+     * Create a icosohedron.
+     * @param {Prim} the Prim needing geometry. 
+     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
+     */
     geometryRegularTetrahedron ( prim ) {
 
         return this.geometryIcoSphere ( prim );
@@ -2836,12 +2891,10 @@ class LoadGeometry {
     }
 
     /** 
-     * type ICOSOHEDRON.
-     * create a icosohedron.
-     * 
+     * Type ICOSOHEDRON.
+     * Create a icosohedron.
      * @param {Prim} the Prim needing geometry. 
      * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
-     * Creating WebGL buffers is turned on or off conditionally in the method.
      */
     geometryIcosohedron ( prim ) {
 
@@ -2850,8 +2903,11 @@ class LoadGeometry {
     }
 
     /** 
-     * type PRISM.
+     * Type PRISM.
      * create a closed prism type shape.
+     * Create a icosohedron.
+     * @param {Prim} the Prim needing geometry. 
+     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
      */
     geometryPrism( prim ) {
 
@@ -2860,12 +2916,10 @@ class LoadGeometry {
     }
 
     /** 
-     * type PYRAMID.
+     * Type PYRAMID.
      * create a closed pyramid shape, half of an icosohedron.
-     * 
      * @param {Prim} the Prim needing geometry. 
      * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
-     * Creating WebGL buffers is turned on or off conditionally in the method.
      */
     geometryPyramid ( prim ) {
 
@@ -2877,10 +2931,8 @@ class LoadGeometry {
     /** 
      * type ICODOME.
      * create a half-sphere from an icosphere.
-     * 
      * @param {Prim} the Prim needing geometry. 
      * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
-     * Creating WebGL buffers is turned on or off conditionally in the method.
      */
     geometryIcoDome( prim ) {
 
@@ -2891,10 +2943,8 @@ class LoadGeometry {
     /** 
      * type TOPICODOME.
      * create a half-sphere from an icosphere.
-     * 
      * @param {Prim} the Prim needing geometry. 
      * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
-     * Creating WebGL buffers is turned on or off conditionally in the method.
      */
     geometryTopIcoDome ( prim ) {
 
@@ -2903,12 +2953,10 @@ class LoadGeometry {
     }
 
     /** 
-     * type SKYICODOME.
+     * Type SKYICODOME.
      * create a half-sphere with texture only visible from the inside.
-     * 
      * @param {Prim} the Prim needing geometry. 
      * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
-     * Creating WebGL buffers is turned on or off conditionally in the method.
      */
     geometrySkyIcoDome ( prim ) {
 
@@ -2921,12 +2969,10 @@ class LoadGeometry {
     }
 
     /** 
-     * type BOTTOMICODOME.
+     * Type BOTTOMICODOME.
      * create a bowl shape from the lower half of an icosphere.
-     * 
      * @param {Prim} the Prim needing geometry. 
      * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
-     * Creating WebGL buffers is turned on or off conditionally in the method.
      */
     geometryBottomIcoDome ( prim ) {
 
@@ -2936,18 +2982,16 @@ class LoadGeometry {
 
 
     /** 
+     * Type OCTAHEDRON.
      * Create an octahedron
-     * Note: the icosphere algorith returns an octahedron if we don't "inflate" 
+     * Note: the icosphere algorithm returns an octahedron if we don't "inflate" 
      * the object's vertices by normalizing.
-     * 
      * Additional links:
      * @link https://github.com/nickdesaulniers/prims/blob/master/octahedron.js
      * @link http://paulbourke.net/geometry/platonic/
      * @link https://www.binpress.com/tutorial/creating-an-octahedron-sphere/162
-     * 
      * @param {Prim} the Prim needing geometry. 
      * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
-     * Creating WebGL buffers is turned on or off conditionally in the method.
      */
     geometryOctahedron ( prim ) {
 
@@ -2956,10 +3000,13 @@ class LoadGeometry {
     }
 
     /** 
-     * Dodecahedron
+     * Type DODECAHEDRON.
+     * Create a dodecahedron.
      * @link https://github.com/prideout/par/blob/master/par_shapes.h
      * @link https://github.com/nickdesaulniers/prims/blob/master/dodecahedron.js
      * @link http://vorg.github.io/pex/docs/pex-gen/Dodecahedron.html
+     * @param {Prim} the Prim needing geometry. 
+     * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
      */
     geometryDodecahedron ( prim ) {
 
@@ -2974,14 +3021,19 @@ class LoadGeometry {
         let vertices = [], indices  = [], normals = [], texCoords = [], tangents = [];
 
         let w = prim.dimensions[ 0 ],
+
         h = prim.dimensions[ 1 ],
+
         d = prim.dimensions[ 2 ];
 
         let r = prim.divisions[ 0 ] || 0.5;
 
         let phi = ( 1 + Math.sqrt( 5 ) ) / 2;
+
         let a = 0.5;
+
         let b = 0.5 * 1 / phi;
+
         let c = 0.5 * ( 2 - phi );
 
         let vtx = [
@@ -3016,6 +3068,7 @@ class LoadGeometry {
       //vertices = vertices.map(function(v) { return v.normalize().scale(r); })
 
       let faces = [
+
             [  4,  3,  2,  1,  0 ],
             [  7,  6,  5,  0,  1 ],
             [ 12, 11, 10,  9,  8 ],
@@ -3028,6 +3081,7 @@ class LoadGeometry {
             [ 12,  8, 13, 16, 19 ],
             [ 15,  9, 10, 18, 17 ],
             [  7,  1,  2, 17, 18 ]
+
         ];
 
         if ( prim.applyTexToFace ) {
@@ -3094,9 +3148,12 @@ class LoadGeometry {
 
                     let v2 = vvv[ p2 ];
 
-                    vertices.push( 
-                        vec3.copy( [ 0, 0, 0 ], v1 ), 
+                    vertices.push(
+
+                        vec3.copy( [ 0, 0, 0 ], v1 ),
+
                         vec3.copy( [ 0, 0, 0 ], v2 ),
+
                         vec3.copy( [ 0, 0, 0 ], center )
 
                     );
@@ -3105,9 +3162,12 @@ class LoadGeometry {
 
                     indices.push( cLen - 2, cLen - 1, cLen );
 
-                    normals.push( 
-                        vec3.copy( [ 0, 0, 0 ], v1 ), 
+                    normals.push(
+
+                        vec3.copy( [ 0, 0, 0 ], v1 ),
+
                         vec3.copy( [ 0, 0, 0 ], v2 ),
+
                         vec3.copy( [ 0, 0, 0 ], center )
 
                     );
@@ -3151,8 +3211,6 @@ class LoadGeometry {
 
         normals = flatten( normals );
 
-        // Color array is pre-created, or gets a default when WebGL buffers are created.
-
         // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
         prim.initPrim( prim, vertices, indices, normals, texCoords, tangents ); // CHECK CREATE PRIM - ATTACHES TO SHADER
@@ -3162,7 +3220,8 @@ class LoadGeometry {
     }
 
     /** 
-     * Torus object
+     * Type TORUS
+     * A Torus object.
      * @link https://blogoben.wordpress.com/2011/10/26/webgl-basics-7-colored-torus/
      * @link http://apparat-engine.blogspot.com/2013/04/procedural-meshes-torus.html
      * Creates a 3D torus in the XY plane, returns the data in a new object composed of
@@ -3254,7 +3313,7 @@ class LoadGeometry {
 
                 indices.push( lb, rb, rt, lb, rt, lt );
 
-                // NOTE: wrap backwards to see inside of torus (tunnel?).
+                // NOTE: wrap backwards to see inside of torus ( a tunnel?).
 
             }
 
@@ -3266,13 +3325,21 @@ class LoadGeometry {
 
         return true;
 
+    }
+
+    geometryTunnel ( prim ) {
+
+        // TODO: write
 
     }
 
     /** 
+     * Type SPRING.
      * a Torus that doesn't close
      */
     geometrySpring ( prim ) {
+
+        // TODO: write
 
     }
 
@@ -3293,9 +3360,6 @@ class LoadGeometry {
 
         let geo = prim.geometry;
 
-        /////////////////
-        if ( prim.name === 'capsule' ) window.capsule = prim;
-
         for ( let i = 0; i < prim.models.length; i++ ) {
 
             console.log(">>>>>>>>>>>>>>geometryMesh():" + prim.models[ i ] );
@@ -3306,43 +3370,21 @@ class LoadGeometry {
              * empty function below.
              */
 
-        if ( prim.name === 'capsule') {
+        let lm = new LoadModel( true, this.util, this.glMatrix, this.webgl, this.loadTexture );
 
-            console.log("cHECKING FOR SHADER FOR PRIM:" + prim.name + " SHADEr: " + prim.shader.name);
+        lm.load( 
 
-        }
+            prim.models[ i ],
 
-        if ( prim.name === 'teapot') {
+            prim,
 
-            console.log("cHECKING FOR SHADER FOR PRIM:" + prim.name + " SHADEr: " + prim.shader.name);
+            () => {},
 
-        }
+            () => {
 
-            // TODO: LOAD LISTS NATIVE CODE FOR THIS, BUT ONLY TEAPOT WORKS
+                console.log('!!!!!!!!!!!!!!!!GEOMETRY READY:::::: ' + prim.name)
 
-        // COULD TRY OUR LOCAL ROUTER!!!!!!!!!!!!!!!!!!!!!!!!
-
-            //this.loadModel.load( prim.models[ i ], prim, () => {}, prim.initPrim.bind( this ) );
-
-            // geometryready
-
-            // TODO: THEY INTERFERE WITH EACH OTHER
-
-            let lm = new LoadModel( true, this.util, this.glMatrix, this.webgl, this.loadTexture );
-
-            lm.load( 
-
-                prim.models[ i ],
-
-                prim,
-
-                () => {},
-
-                () => {
-
-                    console.log('!!!!!!!!!!!!!!!!GEOMETRY READY:::::: ' + prim.name)
-
-                    this.util.emitter.emit( 'geometryready', prim );
+                this.util.emitter.emit( 'geometryready', prim );
 
                 }
 

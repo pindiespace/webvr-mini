@@ -3,9 +3,12 @@
 class WebVR {
 
     /** 
+     * @class
      * render scenes to webvr devices
      * following toji's room-scale example:
      * @link https://github.com/toji/webvr.info/blob/master/samples/05-room-scale.html
+     * NOTE: significant webvr code in Shader parent object (sets left and right eye matrix).
+     * @constructor
      */
     constructor ( init, util, glMatrix, webgl  ) {
 

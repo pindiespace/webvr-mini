@@ -289,7 +289,6 @@ class GetAssets {
 
     }
 
-
     /** 
      * Add fetch() url requests for resolve, with a timeout for fails. 
      * when individual fetch()es are complete, run a callback.

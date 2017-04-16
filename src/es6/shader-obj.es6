@@ -4,8 +4,8 @@ class ShaderObj {
 
     /** 
      * @class
-     * Create WebGL buffers from flattened vertex, index, texture 
-     * and other coordinate data.
+     * Create an object from a Prim which may be used by our Shader objects.
+     * Create WebGL buffers from flattened vertex, index, texture and other coordinate data.
      * @constructor
      * @param {Util} util shared utility methods, patches, polyfills.
      * @param {WebGL} webgl object holding the WebGLRenderingContext.

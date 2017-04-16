@@ -125,32 +125,6 @@ class Prim {
 
         this.objs = []; // Keep a reference to all created Prims here.
 
-        // Sideness, direction. Mapped to equivalent unit vector names in this.getStdVecs()
-
-        this.directions = {
-
-            DEFAULT: 'up',
-
-            FORWARD: 'forward',
-
-            FRONT: 'forward',
-
-            BACK: 'back',
-
-            LEFT: 'left',
-
-            RIGHT: 'right',
-
-            UP: 'up',
-
-            TOP: 'up',
-
-            DOWN: 'down',
-
-            BOTTOM: 'down'
-
-        };
-
         this.geometry = new LoadGeometry( init, util, glMatrix, webgl );
 
         /* 
@@ -165,37 +139,8 @@ class Prim {
 
         } );
 
-        // Visible from inside or outside.
-
-        this.OUTSIDE = 100,
-
-        this.INSIDE = 101;
-
-        // Shorthand.
-
-        this.TWO_PI = Math.PI * 2;
-
     }
 
-    /** 
-     * See if supplied Prim type is supported. Individual Prim factory 
-     * methods do more detailed checking.
-     * @param {String} type the prim type.
-     * @returns {Boolean} if supported, return true, else false.
-     */
-    checkType ( type ) {
-
-        // Confirm we have a factory function for this type.
-
-        if ( typeof type == 'function' ) {
-
-            return true;
-
-        }
-
-        return true;
-
-    }
 
     /** 
      * Get the big array with all vertex data. Every time a 
@@ -212,7 +157,7 @@ class Prim {
 
         for ( let i in this.objs ) {
 
-            vertices = vertices.concat( this.objs[i].vertices );
+            vertices = vertices.concat( this.objs[ i ].vertices );
 
         }
 
@@ -233,7 +178,7 @@ class Prim {
 
         for ( let i in this.objs ) {
 
-            indices = indices.concat( this.objs[i].indices );
+            indices = indices.concat( this.objs[ i ].indices );
 
         }
 
@@ -243,7 +188,7 @@ class Prim {
 
     /*
      * ---------------------------------------
-     * PRIMS
+     * PRIM FACTORY
      * ---------------------------------------
      */
 
@@ -336,7 +281,7 @@ class Prim {
 
             console.log("ADDING PRIM:" + prim.name + " TO:" + prim.shader.name )
 
-            prim.shader.addObj( prim );
+            prim.shader.addPrim( prim );
 
         }
 
@@ -378,9 +323,9 @@ class Prim {
 
         name = 'unknown', 
 
-        dimensions = this.vec5( 1, 1, 1, 0, 0 ), 
+        dimensions = [ 1, 1, 1, 0, 0 ], // vec5
 
-        divisions = this.vec5( 1, 1, 1, 0, 0 ), 
+        divisions = [ 1, 1, 1, 0, 0 ], // vec5
 
         position = this.glMatrix.vec3.create(), 
 
@@ -404,7 +349,7 @@ class Prim {
 
         const mat4 = this.glMatrix.mat4;
 
-        if ( ! this.checkType( type ) ) {
+        if ( ! this.geometry.checkType( type ) ) {
 
             console.error( 'Prim::createPrim(): unsupported Prim type:' + type );
 
@@ -642,19 +587,35 @@ class Prim {
 
         // Scale. Normally, we use matrix transforms to accomplish this.
 
-        prim.scaleVertices = ( scale ) => { 
+        prim.scale = ( scale ) => { 
 
-            this.scale ( scale, prim.geometry.vertices );
+            this.geometry.scale ( scale, prim.geometry.vertices );
 
         };
 
         // Move. Normally, we use matrix transforms to accomplish this.
 
-        prim.moveVertices = ( pos ) => { 
+        prim.move = ( pos ) => { 
 
-            this.computeMove( scale, prim.geometry.vertices );
+            this.geometry.computeMove( scale, prim.geometry.vertices );
 
         };
+
+        // Move to a specificed coordinate.
+
+        prim.moveTo = ( pos ) => {
+
+            this.geometry.move( [ 
+
+            this.position[ 0 ] - pos[ 0 ],
+
+            this.position[ 1 ] - pos[ 1 ],
+
+            this.position[ 2 ] - pos[ 2 ]
+
+            ] );
+
+        }
 
         // Convert a Prim to its JSON equivalent
 
@@ -663,6 +624,8 @@ class Prim {
             this.toJSON( prim );
 
         }
+
+        // Reference the init method inside the prim.
 
         prim.initPrim = this.initPrim;
 
@@ -682,7 +645,7 @@ class Prim {
 
         prim.type = type;
 
-        // If we're a mesh, we need modelFiles
+        // If we're a mesh, we need modelFiles.
 
         if ( prim.type === this.geometry.typeList.MESH && modelFiles.length < 1 ) {
 
@@ -706,7 +669,7 @@ class Prim {
 
         prim.acceleration = acceleration || vec3.create();
 
-        // Prim rotation on x, y, z axis
+        // Prim rotation on x, y, z axis.
 
         prim.rotation = rotation || vec3.create();
 
@@ -724,7 +687,6 @@ class Prim {
 
         prim.scale = 1.0;
 
-
         // Set prim lighting.
         // TODO:::::::::::::::::::::::::::::::::::::::
 
@@ -734,7 +696,9 @@ class Prim {
 
         // Visible from outside (counterclockwise winding) or inside (clockwise winding).
 
-        prim.visibleFrom = this.OUTSIDE;
+        // Invisible if this.INVISIBLE
+
+        prim.visibleFrom = this.geometry.OUTSIDE;
 
         // Repeatedly apply the texture to each Face of the Prim (instead of wrapping around the Mesh).
         // If we have multiple textures, apply in succession.
@@ -823,6 +787,30 @@ class Prim {
         this.objs.push( prim );
 
         return prim;
+
+    }
+
+    /*
+     * ---------------------------------------
+     * PRIM LIST OPERATIONS
+     * ---------------------------------------
+     */
+
+    addPrim ( prim ) {
+
+        // TODO: also need to add/remove in Shader
+
+    }
+
+    removePrim () {
+
+        // TODO: also need to add/remove in Shader
+
+    }
+
+    primInList () {
+
+        // TODO: also need to add/remove in Shader
 
     }
 

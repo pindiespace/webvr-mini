@@ -656,6 +656,10 @@
 	                }
 
 	                /* 
+	                 * =============== TYPE VERIFICATION ====================
+	                 */
+
+	                /* 
 	                 * =============== STRING OPERATIONS ====================
 	                 */
 
@@ -2706,9 +2710,12 @@
 	var WebVR = function () {
 
 	        /** 
+	         * @class
 	         * render scenes to webvr devices
 	         * following toji's room-scale example:
 	         * @link https://github.com/toji/webvr.info/blob/master/samples/05-room-scale.html
+	         * NOTE: significant webvr code in Shader parent object (sets left and right eye matrix).
+	         * @constructor
 	         */
 	        function WebVR(init, util, glMatrix, webgl) {
 	                _classCallCheck(this, WebVR);
@@ -5774,19 +5781,7 @@
 
 	                // Define the arrays needed for shaders to work. Subclasses override these values.
 
-	                this.needVertices = true;
-
-	                this.needIndices = false;
-
-	                this.needTexCoords = false;
-
-	                this.needColors = false;
-
-	                this.needNormals = false;
-
-	                this.needTangents = false;
-
-	                this.needLights = false;
+	                this.needVertices = true, this.needIndices = false, this.needTexCoords = false, this.needTexCoords1 = false, this.needTexCoords2 = false, this.needTexCoords3 = false, this.needColors = false, this.needNormals = false, this.needTangents = false, this.needLights = false, this.needBump = false;
 
 	                // If we need to load a vertex and fragment shader files (in text format), put their paths in derived classes.
 
@@ -5806,58 +5801,73 @@
 	         */
 
 	        /**
-	         * Prim references are added to the webgl program, so each Shader can 
-	         * handle a subset of the total defined prims. Global list in Prim object.
-	         * @param {Prim} obj a Prim object.
+	         * We add each Prim to our internal Program (returned from webgl).
+	         * NOTE: we store Prims as numeric array only.
+	         * @param {Prim} prim a Prim object.
 	         */
 
 
 	        _createClass(Shader, [{
-	                key: 'addObj',
-	                value: function addObj(obj) {
+	                key: 'addPrim',
+	                value: function addPrim(prim) {
 
-	                        if (this.objInList(obj) === this.NOT_IN_LIST) {
+	                        if (this.primInList(prim) === this.NOT_IN_LIST) {
 
-	                                this.program.renderList.push(obj);
+	                                this.program.renderList.push(prim);
 	                        } else {
 
-	                                console.error(obj.name + ' already added to shader::' + this.name);
+	                                console.error(prim.name + ' already added to Shader::' + this.name);
 	                        }
 	                }
 
 	                /** 
-	                 * Check for Prim in list of drawn objects in webgl program.
-	                 * @param {Prim} obj a Prim object.
+	                 * Check for a Prim in list of drawn objects in this Shader.
+	                 * NOTE: we store Prims as a numeric array only.s
+	                 * @param {Prim} prim a Prim object.
 	                 */
 
 	        }, {
-	                key: 'objInList',
-	                value: function objInList(obj) {
+	                key: 'primInList',
+	                value: function primInList(prim) {
 
 	                        var renderList = this.program.renderList;
 
-	                        var pos = renderList.indexOf(obj);
+	                        var pos = renderList.indexOf(prim);
 
 	                        return pos;
 	                }
 
 	                /** 
-	                 * Prims are removed from the webgl program. 
+	                 * Remove a Prim from the Shader. 
 	                 * NOTE: removing from the array messes up JIT optimization, so slows things down!
 	                 * @param {Prim} obj a Prim object.
 	                 */
 
 	        }, {
-	                key: 'removeObj',
-	                value: function removeObj(obj) {
+	                key: 'removePrim',
+	                value: function removePrim(prim) {
 
-	                        if (this.objInList(obj) !== this.NOT_IN_LIST) {
+	                        var pos = this.primInList(prim);
+
+	                        if (pos !== this.NOT_IN_LIST) {
 
 	                                this.program.renderList.splice(pos, 1);
 	                        } else {
 
-	                                console.warn(obj.name + ' not found in shader::' + this.name);
+	                                console.warn(obj.name + ' not found in Shader::' + this.name);
 	                        }
+	                }
+
+	                /** 
+	                 * Check if a given Prim has the elements to be rendered by this Shader.
+	                 * @returns {Boolean} if everything is there, return true, else false.
+	                 */
+
+	        }, {
+	                key: 'checkPrim',
+	                value: function checkPrim(prim) {
+
+	                        return (this.needVertices && prim.geometry.vertices.buffer ? true : false) && (this.needIndices && prim.geometry.indices.buffer ? true : false) && (this.needTexCoords && prim.geometry.texCoords.buffer ? true : false) && (this.needTexCoords1 && prim.geometry.texCoords1 ? true : false) && (this.needTexCoords2 && prim.geometry.texCoords2 ? true : false) && (this.needTexCoords3 && prim.geometry.texCoords3 ? true : false) && (this.needColors && prim.geometry.colors ? true : false) && (this.needNormals && prim.geometry.normals ? true : false) && (this.needTangents && prim.geometry.tangents ? true : false) && (this.needLights && prim.lights ? true : false);
 	                }
 
 	                /* 
@@ -5876,7 +5886,7 @@
 
 	                        var program = null;
 
-	                        if (this.vertexShaderFile && this.this.fragmentShaderFile) {
+	                        if (this.vertexShaderFile && this.fragmentShaderFile) {
 
 	                                program = this.webgl.createProgram(this.webgl.fetchVertexShader(this.vertexShaderFile), this.webgl.fetchFragmentShader(this.fragmentShaderFile));
 	                        } else {
@@ -7140,40 +7150,61 @@
 	        }
 
 	        /** 
-	         * Get a shader, error, if it isn't present.
-	         * @param {String} shaderName the assigned name of the Shader.
+	         * Check if a Shader is initialized within our Shader list.
+	         * @param {String} key the shader key === shader.name
+	         * @returns {Shader|false} if found, return the shader, else return false.
 	         */
 
 
 	        _createClass(Renderer, [{
+	                key: 'shaderInList',
+	                value: function shaderInList(key) {
+
+	                        if (this.shaderList[key]) {
+
+	                                return this.shaderList[key];
+	                        }
+
+	                        console.warn('Renderer::shaderInList(): shader ' + key + ' not found in list');
+
+	                        return false;
+	                }
+
+	                /** 
+	                 * Get a Shader.
+	                 * NOTE: Shaders are stored in an associative array only.
+	                 * @param {String} key the key in the shaderList === the assigned name of the Shader.
+	                 */
+
+	        }, {
 	                key: 'getShader',
-	                value: function getShader(shaderName) {
+	                value: function getShader(key) {
 
-	                        if (this.shaderList[shaderName]) {
+	                        if (this.shaderList[key]) {
 
-	                                return this.shaderList[shaderName];
+	                                return this.shaderList[key];
 	                        } else {
 
-	                                console.error('Renderer::getShader(): shader ' + shaderName + ' not found');
+	                                console.error('Renderer::getShader(): shader ' + key + ' not found');
 	                        }
 
 	                        return false;
 	                }
 
 	                /**
-	                 * Setter for adding shaders, possibly BEFORE webgl context is defined.
-	                 * NOTE: TYPICALLY INVOKED IN 'app.es6'.
-	                 * @param {String} shaderName the assigned name of the Shader.
-	                 * @param {Shader} shader the shader object.
+	                 * Setter for adding Shaders, possibly BEFORE webgl context is defined.
+	                 * NOTE: Shaders are stored in a numeric array only.
+	                 * @param {Shader} the new Shader.
+	                 * @returns {Boolean} if added, return true, else false.
 	                 */
 
 	        }, {
 	                key: 'addShader',
 	                value: function addShader(shader) {
 
-	                        if (this.shaderList.indexOf(shader.name) === this.NOT_IN_LIST) {
+	                        if (!this.shaderList[shader.name]) {
 
-	                                console.log('adding Shader ' + shader.name + ' to rendering list');
+	                                console.log('Renderer::addShader(): adding ' + shader.name + ' to rendering list');
 
 	                                this.shaderList[shader.name] = shader;
 
@@ -7187,32 +7218,70 @@
 	                }
 
 	                /** 
+	                 * Remove a Shader.
+	                 * NOTE: Shaders are sored in a numerica array only.
+	                 * @param {String} key the shader's key in the list
+	                 * @returns {Boolean} if removed, return true, else false.
+	                 */
+
+	        }, {
+	                key: 'removeShader',
+	                value: function removeShader(key) {
+
+	                        // TODO: remove shader (also remove Prims using said shader to not try to draw).
+
+	                        if (this.shaderList[key]) {
+
+	                                delete this.shaderList[key];
+	                        }
+
+	                        console.warn('Renderer::removeShader(): shader ' + key + ' not in list');
+
+	                        return false;
+	                }
+
+	                /** 
 	                 * Initialize shaders AFTER webgl context is defined.
+	                 * Note: we only define an associatve array for shaders.
 	                 */
 
 	        }, {
 	                key: 'initShaders',
 	                value: function initShaders() {
 
-	                        for (var i = 0; i < this.shaderList.length; i++) {
+	                        for (var i in this.shaderList) {
 
 	                                this.shaderList[i].init();
 	                        }
 	                }
 
 	                /** 
-	                 * Render everything.
+	                 * Render everything in mono 3d, for non-VR use case.
+	                 * NOTE: you may want to call shaders individually in World.render()
 	                 */
 
 	        }, {
-	                key: 'render',
-	                value: function render() {
+	                key: 'renderMono',
+	                value: function renderMono() {
 
-	                        for (var i = 0; i < this.shaderList.length; i++) {
-
-	                                console.log('SHADERLIST I:' + this.shaderList[i]);
+	                        for (var i in this.shaderList) {
 
 	                                this.shaderList[i].program.render();
+	                        }
+	                }
+
+	                /** 
+	                 * Render everything in VR, for displays or polyfills.
+	                 * NOTE: you may want to call shaders individually in World.render()
+	                 */
+
+	        }, {
+	                key: 'renderVR',
+	                value: function renderVR(vr, display, frameData) {
+
+	                        for (var i in this.shaderList) {
+
+	                                this.shaderList[i].renderVR(vr, display, frameData);
 	                        }
 	                }
 	        }]);
@@ -7385,32 +7454,6 @@
 
 	                this.objs = []; // Keep a reference to all created Prims here.
 
-	                // Sideness, direction. Mapped to equivalent unit vector names in this.getStdVecs()
-
-	                this.directions = {
-
-	                        DEFAULT: 'up',
-
-	                        FORWARD: 'forward',
-
-	                        FRONT: 'forward',
-
-	                        BACK: 'back',
-
-	                        LEFT: 'left',
-
-	                        RIGHT: 'right',
-
-	                        UP: 'up',
-
-	                        TOP: 'up',
-
-	                        DOWN: 'down',
-
-	                        BOTTOM: 'down'
-
-	                };
-
 	                this.geometry = new _loadGeometry2.default(init, util, glMatrix, webgl);
 
 	                /* 
@@ -7421,49 +7464,20 @@
 
 	                        _this.initPrim(prim, prim.vertices, prim.indices, prim.normals, prim.texCoords, prim.tangents);
 	                });
-
-	                // Visible from inside or outside.
-
-	                this.OUTSIDE = 100, this.INSIDE = 101;
-
-	                // Shorthand.
-
-	                this.TWO_PI = Math.PI * 2;
 	        }
 
 	        /** 
-	         * See if supplied Prim type is supported. Individual Prim factory 
-	         * methods do more detailed checking.
-	         * @param {String} type the prim type.
-	         * @returns {Boolean} if supported, return true, else false.
+	         * Get the big array with all vertex data. Every time a 
+	         * Prim is made, we store a reference in the this.objs[] 
+	         * array. So, to make one, we just concatenate the 
+	         * vertices. Use to send multiple prims sharing the same shader to one 
+	         * Renderer.
+	         * @param {glMatrix.vec3[]} vertices
+	         * @returns {glMatrix.vec3[]} vertices
 	         */
 
 
 	        _createClass(Prim, [{
-	                key: 'checkType',
-	                value: function checkType(type) {
-
-	                        // Confirm we have a factory function for this type.
-
-	                        if (typeof type == 'function') {
-
-	                                return true;
-	                        }
-
-	                        return true;
-	                }
-
-	                /** 
-	                 * Get the big array with all vertex data. Every time a 
-	                 * Prim is made, we store a reference in the this.objs[] 
-	                 * array. So, to make one, we just concatenate the 
-	                 * vertices. Use to send multiple prims sharing the same shader to one 
-	                 * Renderer.
-	                 * @param {glMatrix.vec3[]} vertices
-	                 * @returns {glMatrix.vec3[]} vertices
-	                 */
-
-	        }, {
 	                key: 'setVertexData',
 	                value: function setVertexData(vertices) {
 
@@ -7501,7 +7515,7 @@
 
 	                /*
 	                 * ---------------------------------------
-	                 * PRIMS
+	                 * PRIM FACTORY
 	                 * ---------------------------------------
 	                 */
 
@@ -7599,7 +7613,7 @@
 
 	                                console.log("ADDING PRIM:" + prim.name + " TO:" + prim.shader.name);
 
-	                                prim.shader.addObj(prim);
+	                                prim.shader.addPrim(prim);
 	                        }
 
 	                        prim.ready = true;
@@ -7642,8 +7656,8 @@
 
 	                {
 	                        var name = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'unknown';
-	                        var dimensions = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : this.vec5(1, 1, 1, 0, 0);
-	                        var divisions = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : this.vec5(1, 1, 1, 0, 0);
+	                        var dimensions = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [1, 1, 1, 0, 0];
+	                        var divisions = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : [1, 1, 1, 0, 0];
 	                        var position = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : this.glMatrix.vec3.create();
 	                        var acceleration = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : this.glMatrix.vec3.create();
 	                        var rotation = arguments.length > 7 && arguments[7] !== undefined ? arguments[7] : this.glMatrix.vec3.create();
@@ -7661,7 +7675,7 @@
 
 	                        var mat4 = this.glMatrix.mat4;
 
-	                        if (!this.checkType(type)) {
+	                        if (!this.geometry.checkType(type)) {
 
 	                                console.error('Prim::createPrim(): unsupported Prim type:' + type);
 
@@ -7886,16 +7900,23 @@
 
 	                        // Scale. Normally, we use matrix transforms to accomplish this.
 
-	                        prim.scaleVertices = function (scale) {
+	                        prim.scale = function (scale) {
 
-	                                _this2.scale(scale, prim.geometry.vertices);
+	                                _this2.geometry.scale(scale, prim.geometry.vertices);
 	                        };
 
 	                        // Move. Normally, we use matrix transforms to accomplish this.
 
-	                        prim.moveVertices = function (pos) {
+	                        prim.move = function (pos) {
 
-	                                _this2.computeMove(scale, prim.geometry.vertices);
+	                                _this2.geometry.computeMove(scale, prim.geometry.vertices);
+	                        };
+
+	                        // Move to a specificed coordinate.
+
+	                        prim.moveTo = function (pos) {
+
+	                                _this2.geometry.move([_this2.position[0] - pos[0], _this2.position[1] - pos[1], _this2.position[2] - pos[2]]);
 	                        };
 
 	                        // Convert a Prim to its JSON equivalent
@@ -7904,6 +7925,8 @@
 
 	                                _this2.toJSON(prim);
 	                        };
+
+	                        // Reference the init method inside the prim.
 
 	                        prim.initPrim = this.initPrim;
 
@@ -7923,7 +7946,7 @@
 
 	                        prim.type = type;
 
-	                        // If we're a mesh, we need modelFiles
+	                        // If we're a mesh, we need modelFiles.
 
 	                        if (prim.type === this.geometry.typeList.MESH && modelFiles.length < 1) {
 
@@ -7946,7 +7969,7 @@
 
 	                        prim.acceleration = acceleration || vec3.create();
 
-	                        // Prim rotation on x, y, z axis
+	                        // Prim rotation on x, y, z axis.
 
 	                        prim.rotation = rotation || vec3.create();
 
@@ -7973,7 +7996,9 @@
 
 	                        // Visible from outside (counterclockwise winding) or inside (clockwise winding).
 
-	                        prim.visibleFrom = this.OUTSIDE;
+	                        // Invisible if this.INVISIBLE
+
+	                        prim.visibleFrom = this.geometry.OUTSIDE;
 
 	                        // Repeatedly apply the texture to each Face of the Prim (instead of wrapping around the Mesh).
 	                        // If we have multiple textures, apply in succession.
@@ -8061,6 +8086,34 @@
 	                        this.objs.push(prim);
 
 	                        return prim;
+	                }
+
+	                /*
+	                 * ---------------------------------------
+	                 * PRIM LIST OPERATIONS
+	                 * ---------------------------------------
+	                 */
+
+	        }, {
+	                key: 'addPrim',
+	                value: function addPrim(prim) {
+
+	                        // TODO: also need to add/remove in Shader
+
+	                }
+	        }, {
+	                key: 'removePrim',
+	                value: function removePrim() {
+
+	                        // TODO: also need to add/remove in Shader
+
+	                }
+	        }, {
+	                key: 'primInList',
+	                value: function primInList() {
+
+	                        // TODO: also need to add/remove in Shader
+
 	                }
 	        }]);
 
@@ -10436,21 +10489,26 @@
 
 	'use strict';
 
-	// TODO: TEMPORARY DEBUG
-
 	Object.defineProperty(exports, "__esModule", {
 	        value: true
 	});
 
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); // TODO: TEMPORARY DEBUG
+
 
 	var _getAssets = __webpack_require__(29);
 
 	var _getAssets2 = _interopRequireDefault(_getAssets);
 
+	var _texturePool = __webpack_require__(43);
+
+	var _texturePool2 = _interopRequireDefault(_texturePool);
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	'use strict';
 
 	var World = function () {
 
@@ -10563,6 +10621,8 @@
 
 	                        var typeList = this.prim.geometry.typeList;
 
+	                        var directions = this.prim.geometry.directions;
+
 	                        var util = this.util;
 
 	                        // Get the shaders (not initialized with update() and render() yet!).
@@ -10628,7 +10688,7 @@
 	                         */
 
 	                        this.prim.createPrim(this.s1, // callback function
-	                        typeList.CURVEDINNERPLANE, 'CurvedPlaneBack', vec5(2, 1, 1, this.prim.directions.BACK, 1), // pass orientation ONE UNIT CURVE
+	                        typeList.CURVEDINNERPLANE, 'CurvedPlaneBack', vec5(2, 1, 1, directions.BACK, 1), // pass orientation ONE UNIT CURVE
 	                        vec5(10, 10, 10), // divisions
 	                        vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -10640,7 +10700,7 @@
 	                        );
 
 	                        this.prim.createPrim(this.s1, // callback function
-	                        typeList.CURVEDINNERPLANE, 'CurvedPlaneLeft', vec5(2, 1, 1, this.prim.directions.LEFT, 1), // pass orientation ONE UNIT CURVE
+	                        typeList.CURVEDINNERPLANE, 'CurvedPlaneLeft', vec5(2, 1, 1, directions.LEFT, 1), // pass orientation ONE UNIT CURVE
 	                        vec5(10, 10, 10), // divisions
 	                        vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -10652,7 +10712,7 @@
 	                        );
 
 	                        this.prim.createPrim(this.s1, // callback function
-	                        typeList.CURVEDINNERPLANE, 'CurvedPlaneRight', vec5(2, 1, 1, this.prim.directions.RIGHT, 1), // pass orientation ONE UNIT CURVE
+	                        typeList.CURVEDINNERPLANE, 'CurvedPlaneRight', vec5(2, 1, 1, directions.RIGHT, 1), // pass orientation ONE UNIT CURVE
 	                        vec5(10, 10, 10), // divisions
 	                        vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -10664,7 +10724,7 @@
 	                        );
 
 	                        this.prim.createPrim(this.s1, // callback function
-	                        typeList.CURVEDOUTERPLANE, 'CurvedPlaneOut', vec5(2, 1, 1, this.prim.directions.RIGHT, 1), // dimensions NOTE: pass radius for curvature (also creates orbit) 
+	                        typeList.CURVEDOUTERPLANE, 'CurvedPlaneOut', vec5(2, 1, 1, directions.RIGHT, 1), // dimensions NOTE: pass radius for curvature (also creates orbit) 
 	                        vec3.fromValues(10, 10, 10), // divisions
 	                        vec3.fromValues(-1.2, 0.0, 2.0), // position (absolute)
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -10870,7 +10930,7 @@
 	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0));
 
 	                        this.prim.createPrim(this.s3, // callback function
-	                        typeList.TERRAIN, 'terrain', vec5(2, 2, 44, this.prim.directions.TOP, 0.1), // NOTE: ORIENTATION DESIRED vec5[3], waterline = vec5[4]
+	                        typeList.TERRAIN, 'terrain', vec5(2, 2, 44, directions.TOP, 0.1), // NOTE: ORIENTATION DESIRED vec5[3], waterline = vec5[4]
 	                        vec5(100, 100, 100), // divisions
 	                        vec3.fromValues(1.5, -1.5, 2), // position (absolute)
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -10883,7 +10943,7 @@
 	                        );
 
 	                        this.prim.createPrim(this.s3, // callback function
-	                        typeList.CURVEDINNERPLANE, 'CurvedPlaneFront', vec5(2, 1, 1, this.prim.directions.FRONT, 1), // pass orientation ONE UNIT CURVE
+	                        typeList.CURVEDINNERPLANE, 'CurvedPlaneFront', vec5(2, 1, 1, directions.FRONT, 1), // pass orientation ONE UNIT CURVE
 	                        vec5(10, 10, 10), // divisions
 	                        vec3.fromValues(-1, 0.0, 2.0), // position (absolute)
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
@@ -10973,7 +11033,10 @@
 
 	                        // TODO: TEST WITH "GOOD 3G NETWORK SETTING"
 
+
 	                        var getter = new _getAssets2.default(this.util);
+
+	                        var texturePool = new _texturePool2.default(this.util, this.webgl);
 
 	                        var mimeType = 'image/png';
 
@@ -11084,6 +11147,8 @@
 	                 * Update Prims locally, then call shader/renderer 
 	                 * objects to do rendering. this.r# was bound (ES5 method) in 
 	                 * the constructor.
+	                 * NOTE: we can call Shaders indivdiually, or use the global 
+	                 * this.renderer.renderVR() or this.renderer.renderMono() will will render everything.
 	                 */
 
 	        }, {
@@ -18926,8 +18991,8 @@
 
 	        /** 
 	         * @class
-	         * Create WebGL buffers from flattened vertex, index, texture 
-	         * and other coordinate data.
+	         * Create an object from a Prim which may be used by our Shader objects.
+	         * Create WebGL buffers from flattened vertex, index, texture and other coordinate data.
 	         * @constructor
 	         * @param {Util} util shared utility methods, patches, polyfills.
 	         * @param {WebGL} webgl object holding the WebGLRenderingContext.
@@ -19897,19 +19962,15 @@
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+	'use strict';
+
 	var LoadGeometry = function () {
 	        function LoadGeometry(init, util, glMatrix, webgl) {
 	                _classCallCheck(this, LoadGeometry);
 
 	                console.log('in LoadGeometry class');
 
-	                this.util = util;
-
-	                this.webgl = webgl;
-
-	                this.glMatrix = glMatrix;
-
-	                this.typeList = {
+	                this.util = util, this.webgl = webgl, this.glMatrix = glMatrix, this.typeList = {
 
 	                        POINT: 'geometryPointCloud',
 
@@ -20017,9 +20078,9 @@
 
 	                };
 
-	                // Visible from inside or outside.
+	                // Visible from inside or outside, or not visible.
 
-	                this.OUTSIDE = 100, this.INSIDE = 101;
+	                this.OUTSIDE = 100, this.INSIDE = 101, this.INVISIBLE = 102;
 
 	                // Math shorthand.
 
@@ -20027,9 +20088,9 @@
 	        }
 
 	        /** 
-	         * See if supplied Prim type is supported. Individual Prim factory 
-	         * methods do more detailed checking.
-	         * @param {String} type the prim type.
+	         * See if supplied Prim type is supported via a method. 
+	         * Individual Prim factory methods may do more detailed checking.
+	         * @param {String} type the Prim type.
 	         * @returns {Boolean} if supported, return true, else false.
 	         */
 
@@ -20040,12 +20101,12 @@
 
 	                        // Confirm we have a factory function for this type.
 
-	                        if (typeof type == 'function') {
+	                        if (this[type] instanceof Function) {
 
 	                                return true;
 	                        }
 
-	                        return true;
+	                        return false;
 	                }
 
 	                /* 
@@ -21679,12 +21740,10 @@
 	                 * position x axis is the radius, y axis is the height z not used
 	                 * dimensions x is number of steps along the y axis, dimensions y is the number of radial 
 	                 * divisions around the capsule.
-	                 * prim.dimensions    = (vec4) [ x, y, z ]
-	                 * prim.divisions     = (vec3) [ x, y, z ]
-	                 * 
 	                 * @param {Prim} the Prim needing geometry. 
+	                 *  - prim.dimensions    = (vec4) [ x, y, z ]
+	                 *  - prim.divisions     = (vec3) [ x, y, z ]
 	                 * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
-	                 * Creating WebGL buffers is turned on or off conditionally in the method.
 	                 */
 
 	        }, {
@@ -21790,12 +21849,10 @@
 	                 * adjust curveRadius to round the edges of the Cube.
 	                 * used by several other Prim routines (CUBESPHERE, PLANE, OUTERPLANE, 
 	                 * INNERPLANE, CURVEDPLANE, CURVEDOUTERPLANE, CURVEDINNERPLANE)
-	                 * prim.dimensions    = (vec4) [ x, y, z, Prim.side, curveRadius ]
-	                 * prim.divisions     = (vec3) [ x, y, z ]
-	                 * 
 	                 * @param {Prim} the Prim needing geometry. 
+	                 *  - prim.dimensions    = (vec4) [ x, y, z, Prim.side, curveRadius ]
+	                 *  - prim.divisions     = (vec3) [ x, y, z ]
 	                 * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
-	                 * Creating WebGL buffers is turned on or off conditionally in the method.
 	                 */
 
 	        }, {
@@ -21873,36 +21930,51 @@
 	                                        switch (prim.dimensions[3]) {// which side, based on cube sides
 
 	                                                case side.FRONT:
+
 	                                                        computeSquare(0, 1, 2, sx, sy, nx, ny, sz / 2, 1, -1, side.FRONT);
+
 	                                                        break;
 
 	                                                case side.BACK:
+
 	                                                        computeSquare(0, 1, 2, sx, sy, nx, ny, -sz / 2, -1, -1, side.BACK);
+
 	                                                        break;
 
 	                                                case side.LEFT:
+
 	                                                        computeSquare(2, 1, 0, sx, sy, nz, ny, -sx / 2, 1, -1, side.LEFT);
+
 	                                                        break;
 
 	                                                case side.RIGHT:
+
 	                                                        computeSquare(2, 1, 0, sx, sy, nz, ny, sx / 2, -1, -1, side.RIGHT);
+
 	                                                        break;
 
 	                                                case side.TOP:
+
 	                                                        computeSquare(0, 2, 1, sx, sy, nx, nz, sy / 2, 1, 1, side.TOP); // ROTATE xy axis
+
 	                                                        break;
 
 	                                                case side.BOTTOM:
+
 	                                                        computeSquare(0, 2, 1, sx, -sy, nx, nz, -sy / 2, 1, -1, side.BOTTOM); // ROTATE xy axis
+
 	                                                        break;
 
 	                                                default:
+
 	                                                        break;
 
 	                                        }
+
 	                                        break;
 
 	                                default:
+
 	                                        break;
 
 	                        }
@@ -22048,27 +22120,39 @@
 	                                switch (prim.dimensions[3]) {
 
 	                                        case side.FRONT:
+
 	                                                if (prim.type === list.CURVEDINNERPLANE || prim.type == list.INNERPLANE) dSide = -1;
+
 	                                                break;
 
 	                                        case side.BACK:
+
 	                                                if (prim.type === list.CURVEDOUTERPLANE || prim.type === list.OUTERPLANE) dSide = -1;
+
 	                                                break;
 
 	                                        case side.LEFT:
+
 	                                                if (prim.type === list.CURVEDOUTERPLANE || prim.type === list.OUTERPLANE) dSide = -1;
+
 	                                                break;
 
 	                                        case side.RIGHT:
+
 	                                                if (prim.type === list.CURVEDINNERPLANE || prim.type === list.INNERPLANE) dSide = -1;
+
 	                                                break;
 
 	                                        case side.TOP:
+
 	                                                if (prim.type === list.CURVEDOUTERPLANE || prim.type === list.OUTERPLANE) dSide = -1;
+
 	                                                break;
 
 	                                        case side.BOTTOM:
+
 	                                                if (prim.type === list.CURVEDINNERPLANE || prim.type === list.INNERPLANE) dSide = -1;
+
 	                                                break;
 	                                }
 
@@ -22077,27 +22161,39 @@
 	                                        switch (prim.dimensions[3]) {
 
 	                                                case side.FRONT:
+
 	                                                        positions[_i5][2] = dSide * Math.cos(positions[_i5][0]) * prim.dimensions[4];
+
 	                                                        break;
 
 	                                                case side.BACK:
+
 	                                                        positions[_i5][2] = dSide * Math.cos(positions[_i5][0]) * prim.dimensions[4];
+
 	                                                        break;
 
 	                                                case side.LEFT:
+
 	                                                        positions[_i5][0] = dSide * Math.cos(positions[_i5][2]) * prim.dimensions[4];
+
 	                                                        break;
 
 	                                                case side.RIGHT:
+
 	                                                        positions[_i5][0] = dSide * Math.cos(positions[_i5][2]) * prim.dimensions[4];
+
 	                                                        break;
 
 	                                                case side.TOP:
+
 	                                                        positions[_i5][1] = dSide * Math.cos(positions[_i5][0]) * prim.dimensions[4];
+
 	                                                        break;
 
 	                                                case side.BOTTOM:
+
 	                                                        positions[_i5][1] = -Math.cos(positions[_i5][0]) * prim.dimensions[4]; // SEEN FROM INSIDE< CORRECT
+
 	                                                        break;
 
 	                                        }
@@ -22119,12 +22215,10 @@
 	                 * type PLANE, OUTERPLANE
 	                 * rendered as WebGL TRIANGLES.
 	                 * visible from the 'outside' as defined by the outward vector from Prim.side.
-	                 * prim.dimensions    = (vec4) [ x, y, z, Prim.side ]
-	                 * prim.divisions     = (vec3) [ x, y, z ]
-	                 * 
 	                 * @param {Prim} the Prim needing geometry. 
+	                 *  - prim.dimensions    = (vec4) [ x, y, z, Prim.side ]
+	                 *  - prim.divisions     = (vec3) [ x, y, z ]
 	                 * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
-	                 * Creating WebGL buffers is turned on or off conditionally in the method.
 	                 */
 
 	        }, {
@@ -22138,12 +22232,10 @@
 	                 * type INNERPLANE
 	                 * rendered as WebGL TRIANGLES.
 	                 * visible from the 'inside', as defined by the outward vectore from Prim.side.
-	                 * prim.dimensions    = (vec4) [ x, y, z, Prim.side ]
-	                 * prim.divisions     = (vec3) [ x, y, z ]
-	                 * 
 	                 * @param {Prim} the Prim needing geometry. 
+	                 *  - prim.dimensions    = (vec4) [ x, y, z, Prim.side ]
+	                 *  - prim.divisions     = (vec3) [ x, y, z ]
 	                 * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
-	                 * Creating WebGL buffers is turned on or off conditionally in the method.
 	                 */
 
 	        }, {
@@ -22158,12 +22250,10 @@
 	                 * rendered as WebGL TRIANGLES.
 	                 * visible from the 'outside' as defined by the outward vector from Prim.side.
 	                 * curve radius sets the amount of curve by assigning a radius for a circle.
-	                 * prim.dimensions    = (vec4) [ x, y, z, Prim.side, curveRadius | 0 ]
-	                 * prim.divisions     = (vec3) [ x, y, z ]
-	                 * 
 	                 * @param {Prim} the Prim needing geometry. 
+	                 *  - prim.dimensions    = (vec4) [ x, y, z, Prim.side, curveRadius | 0 ]
+	                 *  - prim.divisions     = (vec3) [ x, y, z ]
 	                 * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
-	                 * Creating WebGL buffers is turned on or off conditionally in the method.
 	                 */
 
 	        }, {
@@ -22178,12 +22268,10 @@
 	                * rendered as GL_TRIANGLES.
 	                * visible from the 'inside', as defined by the outward vectore from Prim.side.
 	                * curve radius sets the amount of curve by assigning a radius for a circle.
-	                * prim.dimensions    = (vec4) [ x, y, z, Prim.side, curveRadius | 0 ]
-	                * prim.divisions     = (vec3) [ x, y, z ]
-	                * 
 	                * @param {Prim} the Prim needing geometry. 
+	                *  - prim.dimensions    = (vec4) [ x, y, z, Prim.side, curveRadius | 0 ]
+	                *  - prim.divisions     = (vec3) [ x, y, z ]
 	                * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
-	                * Creating WebGL buffers is turned on or off conditionally in the method.
 	                */
 
 	        }, {
@@ -22201,12 +22289,10 @@
 	                 * rendered as GL_TRIANGLES.
 	                 * Generate terrain, using a heightMap, from a PLANE object. The 
 	                 * heightMap values are interpolated for each vertex in the PLANE.
-	                 * prim.dimensions    = (vec4) [ x, y, z, Prim.side ]
-	                 * prim.divisions     = (vec3) [ x, y, z ]
-	                 * 
 	                 * @param {Prim} the Prim needing geometry. 
-	                 * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
-	                 * Creating WebGL buffers is turned on or off conditionally in the method.
+	                 *  - prim.dimensions    = (vec4) [ x, y, z, Prim.side ]
+	                 *  - prim.divisions     = (vec3) [ x, y, z ]
+	                 * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. .
 	                 */
 	                value: function geometryTerrain(prim) {
 
@@ -22254,14 +22340,11 @@
 	                 * rendered as WebGL TRIANGLES.
 	                 * http://catlikecoding.com/unity/tutorials/rounded-cube/
 	                 * http://mathproofs.blogspot.com.au/2005/07/mapping-cube-to-sphere.html
-	                 * 
 	                 * just sets the curveRadius to 1/2 of the prim size.
-	                 * prim.dimensions    = (vec4) [ x, y, z, Prim.side, curveRadius ]
-	                 * prim.divisions     = (vec3) [ x, y, z ]
-	                 * 
 	                 * @param {Prim} the Prim needing geometry. 
+	                 *  - prim.dimensions    = (vec4) [ x, y, z, Prim.side, curveRadius ]
+	                 *  - prim.divisions     = (vec3) [ x, y, z ]
 	                 * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
-	                 * Creating WebGL buffers is turned on or off conditionally in the method.
 	                 */
 
 	        }, {
@@ -22280,18 +22363,18 @@
 	                /** 
 	                 * Icosphere, adapted from Unity 3d tutorial.
 	                 * @link https://www.binpress.com/tutorial/creating-an-octahedron-sphere/162
+	                 * Additional tutorials:
 	                 * @link https://bitbucket.org/transporter/ogre-procedural/src/ca6eb3363a53c2b53c055db5ce68c1d35daab0d5/library/src/ProceduralIcoSphereGenerator.cpp?at=default&fileviewer=file-view-default
-	                 * http://donhavey.com/blog/tutorials/tutorial-3-the-icosahedron-sphere/
+	                 * @link http://donhavey.com/blog/tutorials/tutorial-3-the-icosahedron-sphere/
 	                 * http://blog.andreaskahler.com/2009/06/creating-icosphere-mesh-in-code.html
 	                 * https://github.com/glo-js/primitive-icosphere
 	                 * https://github.com/hughsk/icosphere
 	                 * http://mft-dev.dk/uv-mapping-sphere/
-	                 * octahedron sphere generation
-	                 * https://www.binpress.com/tutorial/creating-an-octahedron-sphere/162
-	                 * https://experilous.com/1/blog/post/procedural-planet-generation
-	                 * https://experilous.com/1/planet-generator/2014-09-28/planet-generator.js
-	                 * https://fossies.org/dox/eigen-3.2.10/icosphere_8cpp_source.html
-	                 * 
+	                 * Octahedron sphere generation:
+	                 * @link https://www.binpress.com/tutorial/creating-an-octahedron-sphere/162
+	                 * @link  https://experilous.com/1/blog/post/procedural-planet-generation
+	                 * @link https://experilous.com/1/planet-generator/2014-09-28/planet-generator.js
+	                 * @link https://fossies.org/dox/eigen-3.2.10/icosphere_8cpp_source.html
 	                 * divisions max: ~60
 	                 * @param {Object} prim the primitive needing geometry.
 	                 * @param {Boolean} domeFlag if 0, do nothing, if 1, do top, if 2, do bottom.
@@ -22341,7 +22424,7 @@
 	                        /* 
 	                         * The original algorithm tried to pre-define the size of the index array, since out-of-range 
 	                         * indices may be accessed. However, for some sizes this leads to a blob of undefineds, which 
-	                         * would cause problems elsewhere. So, use the dynamic feature of JS arrays - slower, but 
+	                         * would cause problems elsewhere. So, we use the dynamic feature of JS arrays - slower, but 
 	                         * more compatible. The browser needs to support adding a new cell with aVar[num++] constructs
 	                         */
 
@@ -22350,6 +22433,7 @@
 	                        var vertices = new Array((resolution + 1) * (resolution + 1) * 4 - (resolution * 2 - 1) * 3),
 	                            indices = new Array(vertices.length),
 	                            // will get bigger!
+
 	                        texCoords = new Array(vertices.length),
 	                            normals = new Array(vertices.length),
 	                            tangents = new Array(vertices.length);
@@ -22453,7 +22537,6 @@
 
 	                                // Toggle icosphere with icosohedron.
 
-
 	                                if (prim.type !== list.OCTAHEDRON) {
 
 	                                        vertices[i] = vec3.normalize([0, 0, 0], vertices[i]);
@@ -22468,6 +22551,8 @@
 
 	                        console.log(" ICOSPHERE VERTICES: " + vertices.length + " texCoords:" + texCoords.length);
 
+	                        // Scale if necessary.
+
 	                        if (radius != 1) {
 
 	                                for (i = 0; i < vertices.length; i++) {
@@ -22480,7 +22565,7 @@
 	                                }
 	                        }
 
-	                        // Tangents.
+	                        // Tangents (nonstandard).
 
 	                        createTangents(vertices, tangents);
 
@@ -22620,16 +22705,22 @@
 	                                for (var _i7 = 1; _i7 < steps; _i7++) {
 
 	                                        triangles[t++] = vBottom;
+
 	                                        triangles[t++] = vTop - 1;
+
 	                                        triangles[t++] = vTop;
 
 	                                        triangles[t++] = vBottom++;
+
 	                                        triangles[t++] = vTop++;
+
 	                                        triangles[t++] = vBottom;
 	                                }
 
 	                                triangles[t++] = vBottom;
+
 	                                triangles[t++] = vTop - 1;
+
 	                                triangles[t++] = vTop;
 
 	                                return t;
@@ -22640,17 +22731,23 @@
 	                        function createUpperStrip(steps, vTop, vBottom, t, triangles) {
 
 	                                triangles[t++] = vBottom;
+
 	                                triangles[t++] = vTop - 1;
+
 	                                triangles[t++] = ++vBottom;
 
 	                                for (var _i8 = 1; _i8 <= steps; _i8++) {
 
 	                                        triangles[t++] = vTop - 1;
+
 	                                        triangles[t++] = vTop;
+
 	                                        triangles[t++] = vBottom;
 
 	                                        triangles[t++] = vBottom;
+
 	                                        triangles[t++] = vTop++;
+
 	                                        triangles[t++] = ++vBottom;
 	                                }
 
@@ -22662,16 +22759,23 @@
 	                        function createUpperSkyStrip(steps, vTop, vBottom, t, triangles) {
 
 	                                triangles[t++] = vBottom;
+
 	                                triangles[t++] = ++vBottom;
+
 	                                triangles[t++] = vTop - 1;
 
 	                                for (var _i9 = 1; _i9 <= steps; _i9++) {
+
 	                                        triangles[t++] = vTop;
+
 	                                        triangles[t++] = vTop - 1;
+
 	                                        triangles[t++] = vBottom;
 
 	                                        triangles[t++] = vBottom;
+
 	                                        triangles[t++] = ++vBottom;
+
 	                                        triangles[t++] = vTop++;
 	                                }
 
@@ -22680,14 +22784,20 @@
 
 	                        console.log("ICOSPHERE: vertices:" + vertices.length + " TANGENTS:" + tangents.length);
 
-	                        // Color array is pre-created, or gets a default when WebGL buffers are created.
-
 	                        // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
 	                        prim.initPrim(prim, vertices, indices, normals, texCoords, tangents); // CHECK CREATE PRIM - ATTACHES TO SHADER
 
 	                        return true;
 	                }
+
+	                /** 
+	                 * Type REGULARTETRAHEDRON.
+	                 * Create a icosohedron.
+	                 * @param {Prim} the Prim needing geometry. 
+	                 * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
+	                 */
+
 	        }, {
 	                key: 'geometryRegularTetrahedron',
 	                value: function geometryRegularTetrahedron(prim) {
@@ -22696,12 +22806,10 @@
 	                }
 
 	                /** 
-	                 * type ICOSOHEDRON.
-	                 * create a icosohedron.
-	                 * 
+	                 * Type ICOSOHEDRON.
+	                 * Create a icosohedron.
 	                 * @param {Prim} the Prim needing geometry. 
 	                 * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
-	                 * Creating WebGL buffers is turned on or off conditionally in the method.
 	                 */
 
 	        }, {
@@ -22712,8 +22820,11 @@
 	                }
 
 	                /** 
-	                 * type PRISM.
+	                 * Type PRISM.
 	                 * create a closed prism type shape.
+	                 * Create a icosohedron.
+	                 * @param {Prim} the Prim needing geometry. 
+	                 * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
 	                 */
 
 	        }, {
@@ -22723,12 +22834,10 @@
 	                // TODO code needs to be written.
 
 	                /** 
-	                 * type PYRAMID.
+	                 * Type PYRAMID.
 	                 * create a closed pyramid shape, half of an icosohedron.
-	                 * 
 	                 * @param {Prim} the Prim needing geometry. 
 	                 * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
-	                 * Creating WebGL buffers is turned on or off conditionally in the method.
 	                 */
 
 	        }, {
@@ -22741,10 +22850,8 @@
 	                /** 
 	                 * type ICODOME.
 	                 * create a half-sphere from an icosphere.
-	                 * 
 	                 * @param {Prim} the Prim needing geometry. 
 	                 * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
-	                 * Creating WebGL buffers is turned on or off conditionally in the method.
 	                 */
 
 	        }, {
@@ -22757,10 +22864,8 @@
 	                /** 
 	                 * type TOPICODOME.
 	                 * create a half-sphere from an icosphere.
-	                 * 
 	                 * @param {Prim} the Prim needing geometry. 
 	                 * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
-	                 * Creating WebGL buffers is turned on or off conditionally in the method.
 	                 */
 
 	        }, {
@@ -22771,12 +22876,10 @@
 	                }
 
 	                /** 
-	                 * type SKYICODOME.
+	                 * Type SKYICODOME.
 	                 * create a half-sphere with texture only visible from the inside.
-	                 * 
 	                 * @param {Prim} the Prim needing geometry. 
 	                 * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
-	                 * Creating WebGL buffers is turned on or off conditionally in the method.
 	                 */
 
 	        }, {
@@ -22791,12 +22894,10 @@
 	                }
 
 	                /** 
-	                 * type BOTTOMICODOME.
+	                 * Type BOTTOMICODOME.
 	                 * create a bowl shape from the lower half of an icosphere.
-	                 * 
 	                 * @param {Prim} the Prim needing geometry. 
 	                 * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
-	                 * Creating WebGL buffers is turned on or off conditionally in the method.
 	                 */
 
 	        }, {
@@ -22807,18 +22908,16 @@
 	                }
 
 	                /** 
+	                 * Type OCTAHEDRON.
 	                 * Create an octahedron
-	                 * Note: the icosphere algorith returns an octahedron if we don't "inflate" 
+	                 * Note: the icosphere algorithm returns an octahedron if we don't "inflate" 
 	                 * the object's vertices by normalizing.
-	                 * 
 	                 * Additional links:
 	                 * @link https://github.com/nickdesaulniers/prims/blob/master/octahedron.js
 	                 * @link http://paulbourke.net/geometry/platonic/
 	                 * @link https://www.binpress.com/tutorial/creating-an-octahedron-sphere/162
-	                 * 
 	                 * @param {Prim} the Prim needing geometry. 
 	                 * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
-	                 * Creating WebGL buffers is turned on or off conditionally in the method.
 	                 */
 
 	        }, {
@@ -22829,10 +22928,13 @@
 	                }
 
 	                /** 
-	                 * Dodecahedron
+	                 * Type DODECAHEDRON.
+	                 * Create a dodecahedron.
 	                 * @link https://github.com/prideout/par/blob/master/par_shapes.h
 	                 * @link https://github.com/nickdesaulniers/prims/blob/master/dodecahedron.js
 	                 * @link http://vorg.github.io/pex/docs/pex-gen/Dodecahedron.html
+	                 * @param {Prim} the Prim needing geometry. 
+	                 * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
 	                 */
 
 	        }, {
@@ -22860,8 +22962,11 @@
 	                        var r = prim.divisions[0] || 0.5;
 
 	                        var phi = (1 + Math.sqrt(5)) / 2;
+
 	                        var a = 0.5;
+
 	                        var b = 0.5 * 1 / phi;
+
 	                        var c = 0.5 * (2 - phi);
 
 	                        var vtx = [[c, 0, a], // 0
@@ -22988,8 +23093,6 @@
 
 	                        normals = flatten(normals);
 
-	                        // Color array is pre-created, or gets a default when WebGL buffers are created.
-
 	                        // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
 	                        prim.initPrim(prim, vertices, indices, normals, texCoords, tangents); // CHECK CREATE PRIM - ATTACHES TO SHADER
@@ -22998,7 +23101,8 @@
 	                }
 
 	                /** 
-	                 * Torus object
+	                 * Type TORUS
+	                 * A Torus object.
 	                 * @link https://blogoben.wordpress.com/2011/10/26/webgl-basics-7-colored-torus/
 	                 * @link http://apparat-engine.blogspot.com/2013/04/procedural-meshes-torus.html
 	                 * Creates a 3D torus in the XY plane, returns the data in a new object composed of
@@ -23099,7 +23203,7 @@
 
 	                                        indices.push(lb, rb, rt, lb, rt, lt);
 
-	                                        // NOTE: wrap backwards to see inside of torus (tunnel?).
+	                                        // NOTE: wrap backwards to see inside of torus ( a tunnel?).
 	                                }
 	                        }
 
@@ -23109,14 +23213,22 @@
 
 	                        return true;
 	                }
+	        }, {
+	                key: 'geometryTunnel',
+	                value: function geometryTunnel(prim) {}
+
+	                // TODO: write
 
 	                /** 
+	                 * Type SPRING.
 	                 * a Torus that doesn't close
 	                 */
 
 	        }, {
 	                key: 'geometrySpring',
 	                value: function geometrySpring(prim) {}
+
+	                // TODO: write
 
 	                /** 
 	                 * Generic 3d shape defined from files (e.g. OBJ model).
@@ -23139,9 +23251,6 @@
 
 	                        var geo = prim.geometry;
 
-	                        /////////////////
-	                        if (prim.name === 'capsule') window.capsule = prim;
-
 	                        for (var i = 0; i < prim.models.length; i++) {
 
 	                                console.log(">>>>>>>>>>>>>>geometryMesh():" + prim.models[i]);
@@ -23151,26 +23260,6 @@
 	                                 * Intermediate callbacks between files loaded (e.g. material files) get the 
 	                                 * empty function below.
 	                                 */
-
-	                                if (prim.name === 'capsule') {
-
-	                                        console.log("cHECKING FOR SHADER FOR PRIM:" + prim.name + " SHADEr: " + prim.shader.name);
-	                                }
-
-	                                if (prim.name === 'teapot') {
-
-	                                        console.log("cHECKING FOR SHADER FOR PRIM:" + prim.name + " SHADEr: " + prim.shader.name);
-	                                }
-
-	                                // TODO: LOAD LISTS NATIVE CODE FOR THIS, BUT ONLY TEAPOT WORKS
-
-	                                // COULD TRY OUR LOCAL ROUTER!!!!!!!!!!!!!!!!!!!!!!!!
-
-	                                //this.loadModel.load( prim.models[ i ], prim, () => {}, prim.initPrim.bind( this ) );
-
-	                                // geometryready
-
-	                                // TODO: THEY INTERFERE WITH EACH OTHER
 
 	                                var lm = new _loadModel2.default(true, this.util, this.glMatrix, this.webgl, this.loadTexture);
 
@@ -23190,6 +23279,306 @@
 	}();
 
 	exports.default = LoadGeometry;
+
+/***/ }),
+/* 43 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	        value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _getAssets = __webpack_require__(29);
+
+	var _getAssets2 = _interopRequireDefault(_getAssets);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	'use strict';
+
+	var TexturePool = function (_GetAssets) {
+	        _inherits(TexturePool, _GetAssets);
+
+	        /** 
+	         * Manage texture assets, similar to GeoObj for 
+	         * coordinate data
+	         */
+	        function TexturePool(util, webgl) {
+	                _classCallCheck(this, TexturePool);
+
+	                var _this = _possibleConstructorReturn(this, (TexturePool.__proto__ || Object.getPrototypeOf(TexturePool)).call(this, util));
+
+	                // Initialize superclass.
+
+	                _this.util = util, _this.webgl = webgl, _this.NOT_IN_LIST = _this.util.NOT_IN_LIST, _this.textureList = [], _this.keyList = [], _this.greyPixel = new Uint8Array([0.5, 0.5, 0.5, 1.0]);
+
+	                return _this;
+	        }
+
+	        /**
+	         * Sets a texture to a 1x1 pixel color. 
+	         * @param {WebGLRenderingContext} gl the WebGLRenderingContext.
+	         * @param {WebGLTexture} texture the WebGLTexture to set parameters for.
+	         * @param {WebGLParameter} target.
+	         * @memberOf module: webvr-mini/LoadTexture
+	         */
+
+
+	        _createClass(TexturePool, [{
+	                key: 'setDefaultTexturePixel',
+	                value: function setDefaultTexturePixel(texture, target) {
+
+	                        var gl = this.webgl.getContext();
+
+	                        // Put 1x1 pixels in texture. That makes it renderable immediately regardless of filtering.
+
+	                        var color = this.greyPixel;
+
+	                        if (target === gl.TEXTURE_CUBE_MAP) {
+
+	                                for (var i = 0; i < 6; ++i) {
+
+	                                        gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, color);
+	                                }
+	                        } else if (target === gl.TEXTURE_3D) {
+
+	                                gl.texImage3D(target, 0, gl.RGBA, 1, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, color);
+	                        } else {
+
+	                                gl.texImage2D(target, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, color);
+	                        }
+	                }
+
+	                /** 
+	                 * Create a WebGL texture from an image, and 
+	                 * add it to our texture list.
+	                 */
+
+	        }, {
+	                key: 'addTexture',
+	                value: function addTexture(image, key) {
+	                        var type = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this.TEXTURE_2D;
+
+
+	                        if (key === undefined) {
+
+	                                console.error('TextureObj::addTexture(): undefined key');
+
+	                                return false;
+	                        }
+
+	                        var gl = this.webgl.getContext();
+
+	                        var texture = null;
+
+	                        switch (type) {
+
+	                                case gl.TEXTURE_2D:
+
+	                                        texture = this.create2dTexture(image, key);
+
+	                                case gl.TEXTURE_3D:
+
+	                                        texture = this.create3dTexture(image, key);
+
+	                                case gl.TEXTURE_CUBE_MAP:
+
+	                                case gl.TEXTURE_CUBE_MAP_POSITIVE_X:
+
+	                                        break;
+
+	                                default:
+
+	                                        break;
+
+	                        }
+
+	                        if (texture) {
+
+	                                var obj = {};
+
+	                                // we save references to the object in both numeric and associative arrays.
+
+	                                obj.texture = texture, obj.key = key;
+
+	                                if (!this.util.isNumeric(key)) {
+
+	                                        this.keyList[key] = obj;
+	                                }
+
+	                                this.textureList.push(obj);
+
+	                                obj.pos = this.textureList.length - 1;
+
+	                                return true;
+	                        }
+
+	                        return false;
+	                }
+
+	                /** 
+	                 * Find a texture by its key (numeric or string)
+	                 */
+
+	        }, {
+	                key: 'textureInList',
+	                value: function textureInList(key) {
+
+	                        if (!key) {
+
+	                                console.error('TextureObj::textureInlist(): undefined key');
+
+	                                return false;
+	                        }
+
+	                        if (this.util.isNumeric(key)) {
+
+	                                return this.textureList[key];
+	                        } else if (this.keyList[key]) {
+
+	                                return this.keyList[key];
+	                        }
+
+	                        return this.NOT_IN_LIST;
+	                }
+
+	                /** 
+	                 * Remove a texture from both numeric and associative arrays.
+	                 * @param {String|Number} key
+	                 * @returns {Boolean} if found and deleted, return true, else false.
+	                 */
+
+	        }, {
+	                key: 'removeTexture',
+	                value: function removeTexture(key) {
+
+	                        var obj = null;
+
+	                        if (this.util.isNumeric(key)) {
+
+	                                obj = this.textureList.splice(key, 1);
+
+	                                if (obj.length !== 0) {
+
+	                                        delete this.keyList[obj.key];
+	                                }
+	                        } else if (this.keyList[key]) {
+
+	                                obj = this.keyList[key];
+
+	                                if (obj) {
+
+	                                        this.textureList.splice(obj.pos, 1);
+
+	                                        delete this.keyList[key];
+	                                }
+	                        } else {
+
+	                                console.warn('TextureObj::removeTexture(): key not found in textureList');
+	                        }
+	                }
+
+	                /** 
+	                 * Create a new WebGL texture object.
+	                 */
+
+	        }, {
+	                key: 'create2dTexture',
+	                value: function create2dTexture(image) {
+
+	                        var gl = this.webgl.getContext();
+
+	                        src = image.src, texture = gl.createTexture();
+
+	                        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+
+	                        // Bind the texture data to the videocard, receive a WebGL texture in our textureObject.
+
+	                        gl.bindTexture(gl.TEXTURE_2D, texture);
+
+	                        // Use image, or default to single-color texture if image is not present.
+
+	                        if (image) {
+
+	                                //////////console.log( 'binding image:' + image.src );
+
+	                                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+
+	                                // TODO: WHEN TO USE gl.renderBufferStorage()???
+	                        } else {
+
+	                                console.warn('TextureObj::create2DTexture(): no image (' + image.src + '), using default pixel texture');
+
+	                                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, this.greyPixel);
+	                        }
+
+	                        // Generate mipmaps if we are a power of 2 texture.
+
+	                        if (this.util.isPowerOfTwo(image.width) && this.util.isPowerOfTwo(image.height)) {
+
+	                                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+	                                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+
+	                                gl.generateMipmap(gl.TEXTURE_2D);
+	                        } else {
+
+	                                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+	                                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+	                        }
+
+	                        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+
+	                        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+	                        gl.bindTexture(gl.TEXTURE_2D, null);
+
+	                        return texture;
+	                }
+
+	                /** 
+	                 * Upload a 3d texture.
+	                 * @memberOf module: webvr-mini/LoadTexture
+	                 */
+
+	        }, {
+	                key: 'create3dTexture',
+	                value: function create3dTexture() {
+
+	                        return null;
+	                }
+
+	                /** 
+	                 * Upload a cubemap texture.
+	                 * @memberOf module: webvr-mini/LoadTexture
+	                 */
+
+	        }, {
+	                key: 'createCubeMapTexture',
+	                value: function createCubeMapTexture() {
+
+	                        return null;
+	                }
+
+	                // To add textures, use super.addRequests() or super.doRequest()
+
+	        }]);
+
+	        return TexturePool;
+	}(_getAssets2.default);
+
+	exports.default = TexturePool;
 
 /***/ })
 /******/ ]);

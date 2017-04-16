@@ -1,7 +1,8 @@
-'use strict'
-
 // TODO: TEMPORARY DEBUG
 import GetAssets from './get-assets';
+import TexturePool from './texture-pool';
+
+'use strict'
 
 class World {
 
@@ -112,6 +113,8 @@ class World {
 
         const typeList = this.prim.geometry.typeList;
 
+        const directions = this.prim.geometry.directions;
+
         const util = this.util;
 
         // Get the shaders (not initialized with update() and render() yet!).
@@ -202,7 +205,7 @@ class World {
                 this.s1,                      // callback function
                 typeList.CURVEDINNERPLANE,
                 'CurvedPlaneBack',
-                vec5( 2, 1, 1, this.prim.directions.BACK, 1 ),         // pass orientation ONE UNIT CURVE
+                vec5( 2, 1, 1, directions.BACK, 1 ),         // pass orientation ONE UNIT CURVE
                 vec5( 10, 10, 10 ),        // divisions
                 vec3.fromValues(-1, 0.0, 2.0 ),          // position (absolute)
                 vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -218,7 +221,7 @@ class World {
                 this.s1,                      // callback function
                 typeList.CURVEDINNERPLANE,
                 'CurvedPlaneLeft',
-                vec5( 2, 1, 1, this.prim.directions.LEFT, 1 ),         // pass orientation ONE UNIT CURVE
+                vec5( 2, 1, 1, directions.LEFT, 1 ),         // pass orientation ONE UNIT CURVE
                 vec5( 10, 10, 10 ),        // divisions
                 vec3.fromValues(-1, 0.0, 2.0 ),          // position (absolute)
                 vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -234,7 +237,7 @@ class World {
                 this.s1,                      // callback function
                 typeList.CURVEDINNERPLANE,
                 'CurvedPlaneRight',
-                vec5( 2, 1, 1, this.prim.directions.RIGHT, 1 ),         // pass orientation ONE UNIT CURVE
+                vec5( 2, 1, 1, directions.RIGHT, 1 ),         // pass orientation ONE UNIT CURVE
                 vec5( 10, 10, 10 ),        // divisions
                 vec3.fromValues(-1, 0.0, 2.0 ),          // position (absolute)
                 vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -250,7 +253,7 @@ class World {
                 this.s1,                      // callback function
                 typeList.CURVEDOUTERPLANE,
                 'CurvedPlaneOut',
-                vec5( 2, 1, 1, this.prim.directions.RIGHT, 1 ),         // dimensions NOTE: pass radius for curvature (also creates orbit) 
+                vec5( 2, 1, 1, directions.RIGHT, 1 ),         // dimensions NOTE: pass radius for curvature (also creates orbit) 
                 vec3.fromValues( 10, 10, 10 ),        // divisions
                 vec3.fromValues(-1.2, 0.0, 2.0 ),          // position (absolute)
                 vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -516,7 +519,7 @@ class World {
                 this.s3,                      // callback function
                 typeList.TERRAIN,
                 'terrain',
-                vec5( 2, 2, 44, this.prim.directions.TOP, 0.1 ),            // NOTE: ORIENTATION DESIRED vec5[3], waterline = vec5[4]
+                vec5( 2, 2, 44, directions.TOP, 0.1 ),            // NOTE: ORIENTATION DESIRED vec5[3], waterline = vec5[4]
                 vec5( 100, 100, 100 ),           // divisions
                 vec3.fromValues( 1.5, -1.5, 2 ),       // position (absolute)
                 vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -533,7 +536,7 @@ class World {
                 this.s3,                      // callback function
                 typeList.CURVEDINNERPLANE,
                 'CurvedPlaneFront',
-                vec5( 2, 1, 1, this.prim.directions.FRONT, 1 ),         // pass orientation ONE UNIT CURVE
+                vec5( 2, 1, 1, directions.FRONT, 1 ),         // pass orientation ONE UNIT CURVE
                 vec5( 10, 10, 10 ),        // divisions
                 vec3.fromValues(-1, 0.0, 2.0 ),          // position (absolute)
                 vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -649,7 +652,10 @@ class World {
 
 // TODO: TEST WITH "GOOD 3G NETWORK SETTING"
 
+
     let getter = new GetAssets( this.util );
+
+    let texturePool = new TexturePool( this.util, this.webgl );
 
     let mimeType = 'image/png';
 
@@ -762,6 +768,8 @@ class World {
      * Update Prims locally, then call shader/renderer 
      * objects to do rendering. this.r# was bound (ES5 method) in 
      * the constructor.
+     * NOTE: we can call Shaders indivdiually, or use the global 
+     * this.renderer.renderVR() or this.renderer.renderMono() will will render everything.
      */
     render () {
 

@@ -65,19 +65,27 @@ class Shader {
 
         // Define the arrays needed for shaders to work. Subclasses override these values.
 
-        this.needVertices = true;
+        this.needVertices = true,
 
-        this.needIndices = false;
+        this.needIndices = false,
 
-        this.needTexCoords = false;
+        this.needTexCoords = false,
 
-        this.needColors = false;
+        this.needTexCoords1 = false,
 
-        this.needNormals = false;
+        this.needTexCoords2 = false,
 
-        this.needTangents = false;
+        this.needTexCoords3 = false,
 
-        this.needLights = false;
+        this.needColors = false,
+
+        this.needNormals = false,
+
+        this.needTangents = false,
+
+        this.needLights = false,
+
+        this.needBump = false;
 
         // If we need to load a vertex and fragment shader files (in text format), put their paths in derived classes.
 
@@ -98,54 +106,89 @@ class Shader {
      */
 
     /**
-     * Prim references are added to the webgl program, so each Shader can 
-     * handle a subset of the total defined prims. Global list in Prim object.
-     * @param {Prim} obj a Prim object.
+     * We add each Prim to our internal Program (returned from webgl).
+     * NOTE: we store Prims as numeric array only.
+     * @param {Prim} prim a Prim object.
      */
-    addObj( obj ) {
+    addPrim( prim ) {
 
-        if ( this.objInList( obj ) === this.NOT_IN_LIST ) {
+        if ( this.primInList( prim ) === this.NOT_IN_LIST ) {
 
-            this.program.renderList.push ( obj );
+            this.program.renderList.push( prim );
 
         } else {
 
-            console.error( obj.name + ' already added to shader::' + this.name );
+            console.error( prim.name + ' already added to Shader::' + this.name );
 
         }
 
     }
 
     /** 
-     * Check for Prim in list of drawn objects in webgl program.
-     * @param {Prim} obj a Prim object.
+     * Check for a Prim in list of drawn objects in this Shader.
+     * NOTE: we store Prims as a numeric array only.s
+     * @param {Prim} prim a Prim object.
      */
-    objInList ( obj ) {
+    primInList ( prim ) {
 
         let renderList = this.program.renderList;
 
-        let pos = renderList.indexOf( obj );
+        let pos = renderList.indexOf( prim );
 
         return pos;
 
     }
 
     /** 
-     * Prims are removed from the webgl program. 
+     * Remove a Prim from the Shader. 
      * NOTE: removing from the array messes up JIT optimization, so slows things down!
      * @param {Prim} obj a Prim object.
      */
-    removeObj( obj ) {
+    removePrim( prim ) {
 
-        if ( this.objInList( obj ) !== this.NOT_IN_LIST ) {
+        let pos = this.primInList( prim );
+
+        if ( pos !== this.NOT_IN_LIST ) {
 
             this.program.renderList.splice( pos, 1 );
 
         } else {
 
-            console.warn( obj.name + ' not found in shader::' + this.name );
+            console.warn( obj.name + ' not found in Shader::' + this.name );
 
         }
+
+    }
+
+    /** 
+     * Check if a given Prim has the elements to be rendered by this Shader.
+     * @returns {Boolean} if everything is there, return true, else false.
+     */
+    checkPrim( prim ) {
+
+        return (
+
+            ( ( this.needVertices && prim.geometry.vertices.buffer ) ? true : false ) && 
+
+            ( ( this.needIndices && prim.geometry.indices.buffer ) ? true : false ) && 
+
+            ( ( this.needTexCoords && prim.geometry.texCoords.buffer ) ? true : false ) && 
+
+            ( ( this.needTexCoords1 && prim.geometry.texCoords1 ) ? true : false ) && 
+
+            ( ( this.needTexCoords2 && prim.geometry.texCoords2 ) ? true : false ) && 
+
+            ( ( this.needTexCoords3 && prim.geometry.texCoords3 ) ? true : false ) && 
+
+            ( ( this.needColors && prim.geometry.colors ) ? true : false ) && 
+
+            ( ( this.needNormals && prim.geometry.normals ) ? true : false ) && 
+
+            ( ( this.needTangents && prim.geometry.tangents ) ? true : false ) && 
+
+            ( ( this.needLights && prim.lights ) ? true : false )
+
+        );
 
     }
 
@@ -162,11 +205,14 @@ class Shader {
 
         let program = null;
 
-        if ( this.vertexShaderFile && this.this.fragmentShaderFile ) {
+        if ( this.vertexShaderFile && this.fragmentShaderFile ) {
 
             program = this.webgl.createProgram( 
+
                 this.webgl.fetchVertexShader( this.vertexShaderFile ), 
+
                 this.webgl.fetchFragmentShader( this.fragmentShaderFile ) 
+
             );
 
         } else {

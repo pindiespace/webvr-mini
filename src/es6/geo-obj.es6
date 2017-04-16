@@ -100,6 +100,42 @@ class GeoObj {
 
         },
 
+        this.texCoords1 = {
+
+                data: [],
+
+                buffer: null,
+
+                itemSize: 2,
+
+                numItems: 0
+
+        },
+
+        this.texCoords2 = {
+
+                data: [],
+
+                buffer: null,
+
+                itemSize: 2,
+
+                numItems: 0
+
+        },
+
+        this.texCoords3 = {
+
+                data: [],
+
+                buffer: null,
+
+                itemSize: 2,
+
+                numItems: 0
+
+        },
+
         this.colors = {
 
                 data: [],
@@ -174,6 +210,55 @@ class GeoObj {
         }
 
         return true;
+
+    }
+
+    /** 
+     * Check the texture buffers. Some objects may have several textures, so abstract. Call 
+     * separately when more than one texture is required for the Shader.
+     * @param {Object} texCoord the texCoord# of the GeoObject.
+     * - either this.texCoords (TEXTURE0), this.texCoords1 (TEXTURE1) , this.texCoords2 (TEXTURE2) , this.texCoords3 (TEXTURE3)...
+     * @returns {Boolean} if valid, return true, else false.
+     */
+    checkTextureBufferData ( texCoord, complete ) {
+
+        // Texture coords check.
+
+        len = this.numTexCoords(); // Texture coordinate zero, all others should be the same!
+
+        if ( len > 0 ) {
+
+            if ( len < ( this.texCoord.itemSize ) ||  this.util.frac( len ) !== 0 ) {
+
+                console.error( fnName + ' invalid texCoords size, ' + this.texCoords.data.length );
+
+                valid = false;
+
+            } else if ( len !== numVertices ) {
+
+                console.error( fnName + ' texCoords length: ' + len + ' does not match vertices length: ' + numVertices );
+
+                valid = false;
+
+            }
+
+        } else {
+
+            console.warn( fnName + ' no texCoords data defined.' );
+
+        }
+
+        if ( complete ) {
+
+            if ( ! this.confirmNumericalData( this.texCoord.data, this.FLOAT32, 'texCoords' ) ) {
+
+                valid = false;
+
+            }
+
+        }
+
+        return valid;
 
     }
 
@@ -299,41 +384,9 @@ class GeoObj {
 
         }
 
-        // Texture coords check.
+        // Texture coords check. We only check texture0 here. If a Shader needs more, the Prim should check separately.
 
-        len = this.numTexCoords();
-
-        if ( len > 0 ) {
-
-            if ( len < ( this.texCoords.itemSize ) ||  this.util.frac( len ) !== 0 ) {
-
-                console.error( fnName + ' invalid texCoords size, ' + this.texCoords.data.length );
-
-                valid = false;
-
-            } else if ( len !== numVertices ) {
-
-                console.error( fnName + ' texCoords length: ' + len + ' does not match vertices length: ' + numVertices );
-
-                valid = false;
-
-            }
-
-        } else {
-
-            console.warn( fnName + ' no texCoords data defined.' );
-
-        }
-
-        if ( complete ) {
-
-            if ( ! this.confirmNumericalData( this.texCoords.data, this.FLOAT32, 'texCoords' ) ) {
-
-                valid = false;
-
-            }
-
-        }
+        valid = this.checkTextureBufferData( this.texCoords, complete )
 
         // Tangents check.
 
