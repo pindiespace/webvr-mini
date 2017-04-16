@@ -3,7 +3,7 @@
 class Shader {
 
     /* 
-     * Renderers.
+     * Shaders used for rendering.
      * GREAT description of model, view, projection matrix
      * @link https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_model_view_projection
      * 
@@ -236,7 +236,7 @@ class Shader {
              * program.update()
              * program.render() 
              * 
-             * To the program object. The Renderer grabs the Shader.program.update() and Shader.program.render()
+             * To the program object. The ShaderPool grabs the Shader.program.update() and Shader.program.render()
              * methods when rendering.
              *
              */

@@ -123,9 +123,9 @@
 
 	var _shaderMetal2 = _interopRequireDefault(_shaderMetal);
 
-	var _renderer = __webpack_require__(21);
+	var _shaderPool = __webpack_require__(44);
 
-	var _renderer2 = _interopRequireDefault(_renderer);
+	var _shaderPool2 = _interopRequireDefault(_shaderPool);
 
 	var _prim = __webpack_require__(22);
 
@@ -218,7 +218,7 @@
 	    loadVideo = void 0,
 	    loadFont = void 0,
 	    prim = void 0,
-	    renderer = void 0,
+	    shaderPool = void 0,
 	    world = void 0;
 
 	// WebGL can take some time to init.
@@ -249,19 +249,19 @@
 
 	                exports.prim = prim = new _prim2.default(true, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo);
 
-	                // Add shaders to Renderer.
+	                // Add shaders to ShaderPool.
 
-	                renderer = new _renderer2.default(true, util, glMatrix, webgl);
+	                shaderPool = new _shaderPool2.default(true, util, glMatrix, webgl);
 
-	                renderer.addShader(new _shaderTexture2.default(true, util, glMatrix, webgl, webvr, 'shaderTexture'));
+	                shaderPool.addShader(new _shaderTexture2.default(true, util, glMatrix, webgl, webvr, 'shaderTexture'));
 
-	                renderer.addShader(new _shaderColor2.default(true, util, glMatrix, webgl, webvr, 'shaderColor'));
+	                shaderPool.addShader(new _shaderColor2.default(true, util, glMatrix, webgl, webvr, 'shaderColor'));
 
-	                renderer.addShader(new _shaderDirlightTexture2.default(true, util, glMatrix, webgl, webvr, 'shaderDirLightTexture'));
+	                shaderPool.addShader(new _shaderDirlightTexture2.default(true, util, glMatrix, webgl, webvr, 'shaderDirLightTexture'));
 
 	                // Create the world, which needs WebGL, WebVR, and Prim.
 
-	                exports.world = world = new _world2.default(webgl, webvr, prim, renderer);
+	                exports.world = world = new _world2.default(webgl, webvr, prim, shaderPool);
 
 	                // Initialize our Ui.
 
@@ -291,7 +291,7 @@
 
 
 	// TODO: don't automatically update webgl
-	// TODO: enclose in a promise, then update renderer and shaders.
+	// TODO: enclose in a promise, then update ShaderPool and Shaders.
 	// TODO: then call world
 
 	// Export our classes to app.js.
@@ -5560,12 +5560,12 @@
 
 	                /** 
 	                 * initialize the update() and render() methods for this shader.
-	                 * @param{Prim[]} objList a list of initializing Prims (optional).
+	                 * @param{Prim[]} primList a list of initializing Prims (optional).
 	                 */
 
 	        }, {
 	                key: 'init',
-	                value: function init(objList) {
+	                value: function init(primList) {
 
 	                        // DESTRUCTING DID NOT WORK!
 	                        //[gl, canvas, mat4, vec3, pMatrix, mvMatrix, program ] = this.setup();
@@ -5590,11 +5590,11 @@
 
 	                        var shaderProgram = program.shaderProgram;
 
-	                        // If we init with object, add them here.
+	                        // If we init with a primList, add them here.
 
-	                        if (objList) {
+	                        if (primList) {
 
-	                                program.renderList = this.util.concatArr(program.renderList, objList);
+	                                program.renderList = this.util.concatArr(program.renderList, primList);
 	                        }
 
 	                        // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
@@ -5605,13 +5605,13 @@
 	                         * POLYMORPHIC METHODS
 	                         */
 
-	                        // Check if object is ready to be rendered using this shader.
+	                        // Check if Prim is ready to be rendered using this shader.
 
-	                        program.isReady = function (obj) {
+	                        program.isReady = function (prim) {
 
-	                                // Need 1 WebGL texture
+	                                // Need 1 WebGL texture for rendering, no Lights.
 
-	                                if (!object.geometry.checkBuffers() && obj.textures[0].texture) {
+	                                if (!prim.geometry.checkBuffers() && prim.textures[0].texture) {
 
 	                                        return true;
 	                                }
@@ -5619,13 +5619,13 @@
 	                                return false;
 	                        };
 
-	                        // Update object position, motion - given to World object.
+	                        // Update Prim position, motion - given to World object.
 
-	                        program.update = function (obj, MVM) {
+	                        program.update = function (prim, MVM) {
 
 	                                // Update the model-view matrix using current Prim position, rotation, etc.
 
-	                                obj.setMV(MVM);
+	                                prim.setMV(MVM);
 	                        };
 
 	                        // Rendering.
@@ -5640,31 +5640,31 @@
 
 	                                for (var i = 0, len = program.renderList.length; i < len; i++) {
 
-	                                        var obj = program.renderList[i];
+	                                        var prim = program.renderList[i];
 
 	                                        // Only render if we have at least one texture loaded.
 
-	                                        if (!obj.textures[0] || !obj.textures[0].texture) continue;
+	                                        if (!prim.textures[0] || !prim.textures[0].texture) continue;
 
 	                                        // Individual Prim update.
 
-	                                        program.update(obj, MVM);
+	                                        program.update(prim, MVM);
 
 	                                        // Bind vertex buffer.
 
-	                                        gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.vertices.buffer);
+	                                        gl.bindBuffer(gl.ARRAY_BUFFER, prim.geometry.vertices.buffer);
 	                                        gl.enableVertexAttribArray(vsVars.attribute.vec3.aVertexPosition);
-	                                        gl.vertexAttribPointer(vsVars.attribute.vec3.aVertexPosition, obj.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0);
+	                                        gl.vertexAttribPointer(vsVars.attribute.vec3.aVertexPosition, prim.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0);
 
 	                                        // Bind Textures buffer (could have multiple bindings here).
 
-	                                        gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.texCoords.buffer);
+	                                        gl.bindBuffer(gl.ARRAY_BUFFER, prim.geometry.texCoords.buffer);
 	                                        gl.enableVertexAttribArray(vsVars.attribute.vec2.aTextureCoord);
-	                                        gl.vertexAttribPointer(vsVars.attribute.vec2.aTextureCoord, obj.geometry.texCoords.itemSize, gl.FLOAT, false, 0, 0);
+	                                        gl.vertexAttribPointer(vsVars.attribute.vec2.aTextureCoord, prim.geometry.texCoords.itemSize, gl.FLOAT, false, 0, 0);
 
 	                                        gl.activeTexture(gl.TEXTURE0);
 	                                        gl.bindTexture(gl.TEXTURE_2D, null);
-	                                        gl.bindTexture(gl.TEXTURE_2D, obj.textures[0].texture);
+	                                        gl.bindTexture(gl.TEXTURE_2D, prim.textures[0].texture);
 
 	                                        // Set fragment shader sampler uniform.
 
@@ -5677,7 +5677,7 @@
 
 	                                        // Bind index buffer.
 
-	                                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer);
+	                                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, prim.geometry.indices.buffer);
 
 	                                        // Draw elements.
 
@@ -5685,12 +5685,12 @@
 
 	                                                // Draw elements, 0 -> 2e9
 
-	                                                gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_INT, 0);
+	                                                gl.drawElements(gl.TRIANGLES, prim.geometry.indices.numItems, gl.UNSIGNED_INT, 0);
 	                                        } else {
 
 	                                                // Draw elements, 0 -> 65k (old platforms).
 
-	                                                gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
+	                                                gl.drawElements(gl.TRIANGLES, prim.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
 	                                        }
 
 	                                        // Copy back the original for the next Prim. 
@@ -5726,7 +5726,7 @@
 	var Shader = function () {
 
 	        /* 
-	         * Renderers.
+	         * Shaders used for rendering.
 	         * GREAT description of model, view, projection matrix
 	         * @link https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_model_view_projection
 	         * 
@@ -5908,7 +5908,7 @@
 	                         * program.update()
 	                         * program.render() 
 	                         * 
-	                         * To the program object. The Renderer grabs the Shader.program.update() and Shader.program.render()
+	                         * To the program object. The ShaderPool grabs the Shader.program.update() and Shader.program.render()
 	                         * methods when rendering.
 	                         *
 	                         */
@@ -6213,12 +6213,12 @@
 
 	                /** 
 	                 * initialize the update() and render() methods for this shader.
-	                 * @param{Prim[]} objList a list of initializing Prims (optional).
+	                 * @param{Prim[]} primList a list of initializing Prims (optional).
 	                 */
 
 	        }, {
 	                key: 'init',
-	                value: function init(objList) {
+	                value: function init(primList) {
 
 	                        // DESTRUCTING DID NOT WORK!
 	                        //[gl, canvas, mat4, vec3, pMatrix, mvMatrix, program ] = this.setup();
@@ -6249,11 +6249,11 @@
 
 	                        var shaderProgram = program.shaderProgram;
 
-	                        // If we init with object, add them here.
+	                        // If we init with a primList, add them here.
 
-	                        if (objList) {
+	                        if (primList) {
 
-	                                program.renderList = this.util.concatArr(program.renderList, objList);
+	                                program.renderList = this.util.concatArr(program.renderList, primList);
 	                        }
 
 	                        // TODO: ADD CHECK ROUTINE TO ENSURE THAT PRIM IS VALID HERE!!!!!!!!!!!!!!!!
@@ -6268,11 +6268,13 @@
 	                         * POLYMORPHIC METHODS
 	                         */
 
-	                        // Check if object is ready to be rendered using this shader.
+	                        // Check if Prim is ready to be rendered using this Shader.
 
-	                        program.isReady = function (obj) {
+	                        program.isReady = function (prim) {
 
-	                                if (!object.geometry.checkBuffers() && object.geometry.colors.buffer) {
+	                                // Need only a color buffer for this Shader.
+
+	                                if (!prim.geometry.checkBuffers() && prim.geometry.colors.buffer) {
 
 	                                        return true;
 	                                }
@@ -6280,16 +6282,16 @@
 	                                return false;
 	                        };
 
-	                        // Update object position, motion - given to World object.
+	                        // Update Prim position, motion - given to World object.
 
-	                        program.update = function (obj, MVM) {
+	                        program.update = function (prim, MVM) {
 
 	                                // Update the model-view matrix using current Prim position, rotation, etc.
 
-	                                obj.setMV(MVM);
+	                                prim.setMV(MVM);
 	                        };
 
-	                        // Scene Rendering.
+	                        // Prim rendering - Shader in ShaderPool, rendered by World.
 
 	                        program.render = function (PM, MVM) {
 
@@ -6305,23 +6307,23 @@
 
 	                                for (var i = 0, len = program.renderList.length; i < len; i++) {
 
-	                                        var obj = program.renderList[i];
+	                                        var prim = program.renderList[i];
 
 	                                        // Individual prim update
 
-	                                        program.update(obj, MVM);
+	                                        program.update(prim, MVM);
 
 	                                        // Bind vertex buffer.
 
-	                                        gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.vertices.buffer);
+	                                        gl.bindBuffer(gl.ARRAY_BUFFER, prim.geometry.vertices.buffer);
 	                                        gl.enableVertexAttribArray(vsVars.attribute.vec3.aVertexPosition);
-	                                        gl.vertexAttribPointer(vsVars.attribute.vec3.aVertexPosition, obj.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0);
+	                                        gl.vertexAttribPointer(vsVars.attribute.vec3.aVertexPosition, prim.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0);
 
 	                                        // Bind color buffer.
 
-	                                        gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.colors.buffer);
+	                                        gl.bindBuffer(gl.ARRAY_BUFFER, prim.geometry.colors.buffer);
 	                                        gl.enableVertexAttribArray(vsVars.attribute.vec4.aVertexColor);
-	                                        gl.vertexAttribPointer(vsVars.attribute.vec4.aVertexColor, obj.geometry.colors.itemSize, gl.FLOAT, false, 0, 0);
+	                                        gl.vertexAttribPointer(vsVars.attribute.vec4.aVertexColor, prim.geometry.colors.itemSize, gl.FLOAT, false, 0, 0);
 	                                        //gl.disableVertexAttribArray( vsVars.attribute.vec4.aVertexColor );
 
 
@@ -6332,18 +6334,18 @@
 
 	                                        // Bind indices buffer.
 
-	                                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer);
+	                                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, prim.geometry.indices.buffer);
 
 	                                        if (stats.uint32) {
 
 	                                                // Draw elements, 0 -> 2e9
 
-	                                                gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_INT, 0);
+	                                                gl.drawElements(gl.TRIANGLES, prim.geometry.indices.numItems, gl.UNSIGNED_INT, 0);
 	                                        } else {
 
 	                                                // Draw elements, 0 -> 65k (old platforms).
 
-	                                                gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
+	                                                gl.drawElements(gl.TRIANGLES, prim.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
 	                                        }
 
 	                                        // Copy back the original for the next Prim. 
@@ -6487,12 +6489,12 @@
 
 	                /** 
 	                 * initialize the update() and render() methods for this shader.
-	                 * @param{Prim[]} objList a list of initializing Prims (optional).
+	                 * @param{Prim[]} primList a list of initializing Prims (optional).
 	                 */
 
 	        }, {
 	                key: 'init',
-	                value: function init(objList) {
+	                value: function init(primList) {
 
 	                        // DESTRUCTING DID NOT WORK!
 	                        //[gl, canvas, mat4, vec3, pMatrix, mvMatrix, program ] = this.setup();
@@ -6519,9 +6521,9 @@
 
 	                        // If we init with object, add them here.
 
-	                        if (objList) {
+	                        if (primList) {
 
-	                                program.renderList = this.util.concatArr(program.renderList, objList);
+	                                program.renderList = this.util.concatArr(program.renderList, primList);
 	                        }
 
 	                        // TODO: TEMPORARY ADD LIGHTING CONTROL
@@ -6547,13 +6549,13 @@
 	                         * POLYMORPHIC METHODS
 	                         */
 
-	                        // Check if object is ready to be rendered using this shader.
+	                        // Check if Prim is ready to be rendered using this shader.
 
-	                        program.isReady = function (obj) {
+	                        program.isReady = function (prim) {
 
-	                                // Need 1 WebGL texture
+	                                // Need 1 WebGL texture, plus Light for this particular Shader.
 
-	                                if (!object.geometry.checkBuffers() && obj.textures[0].texture) {
+	                                if (!prim.geometry.checkBuffers() && prim.textures[0].texture) {
 
 	                                        return true;
 	                                }
@@ -6561,13 +6563,13 @@
 	                                return false;
 	                        };
 
-	                        // Update object position, motion - given to World object.
+	                        // Update prim position, motion - given to World object.
 
-	                        program.update = function (obj, MVM) {
+	                        program.update = function (prim, MVM) {
 
 	                                // Update the model-view matrix using current Prim position, rotation, etc.
 
-	                                obj.setMV(MVM);
+	                                prim.setMV(MVM);
 
 	                                // Compute lighting normals.
 
@@ -6584,7 +6586,7 @@
 	                                // Custom updates go here, make local references to vsVars and fsVars.
 	                        };
 
-	                        // Rendering - given to Renderer object, executed by World.
+	                        // Prim rendering - Shader in ShaderPool, rendered by World.
 
 	                        program.render = function (PM, MVM) {
 
@@ -6598,37 +6600,37 @@
 
 	                                for (var i = 0, len = program.renderList.length; i < len; i++) {
 
-	                                        var obj = program.renderList[i];
+	                                        var prim = program.renderList[i];
 
 	                                        // Only render if we have at least one texture loaded.
 
-	                                        if (!obj.textures[0] || !obj.textures[0].texture) continue;
+	                                        if (!prim.textures[0] || !prim.textures[0].texture) continue;
 
 	                                        // Update Model-View matrix with standard Prim values.
 
-	                                        program.update(obj, MVM);
+	                                        program.update(prim, MVM);
 
 	                                        // Bind vertex buffer.
 
-	                                        gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.vertices.buffer);
+	                                        gl.bindBuffer(gl.ARRAY_BUFFER, prim.geometry.vertices.buffer);
 	                                        gl.enableVertexAttribArray(vsVars.attribute.vec3.aVertexPosition);
-	                                        gl.vertexAttribPointer(vsVars.attribute.vec3.aVertexPosition, obj.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0);
+	                                        gl.vertexAttribPointer(vsVars.attribute.vec3.aVertexPosition, prim.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0);
 
 	                                        // Bind normals buffer.
 
-	                                        gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.normals.buffer);
+	                                        gl.bindBuffer(gl.ARRAY_BUFFER, prim.geometry.normals.buffer);
 	                                        gl.enableVertexAttribArray(vsVars.attribute.vec3.aVertexNormal);
-	                                        gl.vertexAttribPointer(vsVars.attribute.vec3.aVertexNormal, obj.geometry.normals.itemSize, gl.FLOAT, false, 0, 0);
+	                                        gl.vertexAttribPointer(vsVars.attribute.vec3.aVertexNormal, prim.geometry.normals.itemSize, gl.FLOAT, false, 0, 0);
 
 	                                        // Bind textures buffer (could have multiple bindings here).
 
-	                                        gl.bindBuffer(gl.ARRAY_BUFFER, obj.geometry.texCoords.buffer);
+	                                        gl.bindBuffer(gl.ARRAY_BUFFER, prim.geometry.texCoords.buffer);
 	                                        gl.enableVertexAttribArray(vsVars.attribute.vec2.aTextureCoord);
-	                                        gl.vertexAttribPointer(vsVars.attribute.vec2.aTextureCoord, obj.geometry.texCoords.itemSize, gl.FLOAT, false, 0, 0);
+	                                        gl.vertexAttribPointer(vsVars.attribute.vec2.aTextureCoord, prim.geometry.texCoords.itemSize, gl.FLOAT, false, 0, 0);
 
 	                                        gl.activeTexture(gl.TEXTURE0);
 	                                        gl.bindTexture(gl.TEXTURE_2D, null);
-	                                        gl.bindTexture(gl.TEXTURE_2D, obj.textures[0].texture);
+	                                        gl.bindTexture(gl.TEXTURE_2D, prim.textures[0].texture);
 
 	                                        // Set fragment shader sampler uniform.
 
@@ -6656,18 +6658,18 @@
 	                                        gl.uniformMatrix4fv(vsVars.uniform.mat4.uPMatrix, false, PM);
 	                                        gl.uniformMatrix4fv(vsVars.uniform.mat4.uMVMatrix, false, MVM);
 
-	                                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer);
+	                                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, prim.geometry.indices.buffer);
 
 	                                        if (stats.uint32) {
 
 	                                                // Draw elements, 0 -> 2e9
 
-	                                                gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_INT, 0);
+	                                                gl.drawElements(gl.TRIANGLES, prim.geometry.indices.numItems, gl.UNSIGNED_INT, 0);
 	                                        } else {
 
 	                                                // Draw elements, 0 -> 65k (old platforms).
 
-	                                                gl.drawElements(gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
+	                                                gl.drawElements(gl.TRIANGLES, prim.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
 	                                        }
 
 	                                        // Copy back the original for the next Prim. 
@@ -6797,12 +6799,12 @@
 
 	                /** 
 	                 * initialize the update() and render() methods for this shader.
-	                 * @param{Prim[]} objList a list of initializing Prims (optional).
+	                 * @param{Prim[]} primList a list of initializing Prims (optional).
 	                 */
 
 	        }, {
 	                key: 'init',
-	                value: function init(objList) {
+	                value: function init(primList) {
 
 	                        var arr = this.setup(),
 	                            gl = arr[0],
@@ -6824,31 +6826,33 @@
 
 	                        var shaderProgram = program.shaderProgram;
 
-	                        // If we init with object, add them here.
+	                        // If we init with primList, add them here.
 
-	                        if (objList) {
+	                        if (primList) {
 
-	                                program.renderList = this.util.concatArr(program.renderList, objList);
+	                                program.renderList = this.util.concatArr(program.renderList, primList);
 	                        }
 
 	                        /** 
 	                         * POLYMORPHIC METHODS
 	                         */
 
-	                        // Check if object is ready to be rendered using this shader.
+	                        // Check if Prim is ready to be rendered using this Shader.
 
-	                        program.isReady = function (obj) {
+	                        program.isReady = function (prim) {
+
+	                                // TODO: list everything WaterShader needs for rendering.
 
 	                                return true;
 	                        };
 
-	                        // Update object position, motion - given to World object.
+	                        // Update Prim position, motion - given to World object.
 
-	                        program.update = function (obj, MVM) {
+	                        program.update = function (prim, MVM) {
 
 	                                // Update the model-view matrix using current Prim position, rotation, etc.
 
-	                                obj.setMV(mvMatrix);
+	                                prim.setMV(mvMatrix);
 
 	                                // Compute lighting normals.
 
@@ -6860,6 +6864,8 @@
 
 	                                mat3.normalFromMat4(nMatrix, mvMatrix);
 	                        };
+
+	                        // Prim rendering - Shader in ShaderPool, rendered by World.
 
 	                        program.render = function (PM, MVM) {
 
@@ -6873,15 +6879,15 @@
 
 	                                for (var i = 0, len = program.renderList.length; i < len; i++) {
 
-	                                        var obj = program.renderList[i];
+	                                        var prim = program.renderList[i];
 
 	                                        // Only render if we have at least one texture loaded.
 
-	                                        if (!obj.textures[0] || !obj.textures[0].texture) continue;
+	                                        if (!prim.textures[0] || !prim.textures[0].texture) continue;
 
 	                                        // Update Model-View matrix with standard Prim values.
 
-	                                        program.update(obj, MVM);
+	                                        program.update(prim, MVM);
 
 	                                        // TODO: bind buffers
 
@@ -7010,12 +7016,12 @@
 
 	                /** 
 	                 * initialize the update() and render() methods for this shader.
-	                 * @param{Prim[]} objList a list of initializing Prims (optional).
+	                 * @param{Prim[]} primList a list of initializing Prims (optional).
 	                 */
 
 	        }, {
 	                key: 'init',
-	                value: function init(objList) {
+	                value: function init(primList) {
 
 	                        var arr = this.setup(),
 	                            gl = arr[0],
@@ -7037,31 +7043,31 @@
 
 	                        var shaderProgram = program.shaderProgram;
 
-	                        // If we init with object, add them here.
+	                        // If we init with primList, add them here.
 
-	                        if (objList) {
+	                        if (primList) {
 
-	                                program.renderList = this.util.concatArr(program.renderList, objList);
+	                                program.renderList = this.util.concatArr(program.renderList, primList);
 	                        }
 
 	                        /** 
 	                         * POLYMORPHIC METHODS
 	                         */
 
-	                        // Check if object is ready to be rendered using this shader.
+	                        // Check if Prim is ready to be rendered using this Shader.
 
-	                        program.isReady = function (obj) {
+	                        program.isReady = function (prim) {
 
 	                                return true;
 	                        };
 
-	                        // Update object position, motion - given to World object.
+	                        // Update Prim position, motion - given to World object.
 
-	                        program.update = function (obj, MVM) {
+	                        program.update = function (prim, MVM) {
 
 	                                // Update the model-view matrix using current Prim position, rotation, etc.
 
-	                                obj.setMV(mvMatrix);
+	                                prim.setMV(mvMatrix);
 
 	                                // Compute lighting normals.
 
@@ -7073,6 +7079,8 @@
 
 	                                mat3.normalFromMat4(nMatrix, mvMatrix);
 	                        };
+
+	                        // Prim rendering - Shader in ShaderPool, rendered by World.
 
 	                        program.render = function (PM, MVM) {
 
@@ -7086,15 +7094,15 @@
 
 	                                for (var i = 0, len = program.renderList.length; i < len; i++) {
 
-	                                        var obj = program.renderList[i];
+	                                        var prim = program.renderList[i];
 
 	                                        // Only render if we have at least one texture loaded.
 
-	                                        if (!obj.textures[0] || !obj.textures[0].texture) continue;
+	                                        if (!prim.textures[0] || !prim.textures[0].texture) continue;
 
 	                                        // Update Model-View matrix with standard Prim values.
 
-	                                        program.update(obj, MVM);
+	                                        program.update(prim, MVM);
 
 	                                        // TODO: bind buffers
 
@@ -7117,181 +7125,7 @@
 	exports.default = ShaderMetal;
 
 /***/ }),
-/* 21 */
-/***/ (function(module, exports) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	        value: true
-	});
-
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	var Renderer = function () {
-	        function Renderer(init, util, glMatrix, webgl) {
-	                _classCallCheck(this, Renderer);
-
-	                console.log('In Renderer class');
-
-	                this.webgl = webgl;
-
-	                this.util = webgl.util;
-
-	                this.glmatrix = glMatrix;
-
-	                this.shaderList = [];
-
-	                this.NOT_IN_LIST = util.NOT_IN_LIST; // .indexOf comparisons
-
-	                if (this.init) {}
-	        }
-
-	        /** 
-	         * Check if a Shader is initialized within our Shader list.
-	         * @param {String} key the shader key === shader.name
-	         * @returns {Shader|false} if found, return the shader, else return false.
-	         */
-
-
-	        _createClass(Renderer, [{
-	                key: 'shaderInList',
-	                value: function shaderInList(key) {
-
-	                        if (this.shaderList[key]) {
-
-	                                return this.shaderList[key];
-	                        }
-
-	                        console.warn('Renderer::shaderInList(): shader ' + key + ' not found in list');
-
-	                        return false;
-	                }
-
-	                /** 
-	                 * Get a Shader.
-	                 * NOTE: Shaders are stored in an associative array only.
-	                 * @param {String} key the key in the shaderList === the assigned name of the Shader.
-	                 */
-
-	        }, {
-	                key: 'getShader',
-	                value: function getShader(key) {
-
-	                        if (this.shaderList[key]) {
-
-	                                return this.shaderList[key];
-	                        } else {
-
-	                                console.error('Renderer::getShader(): shader ' + key + ' not found');
-	                        }
-
-	                        return false;
-	                }
-
-	                /**
-	                 * Setter for adding Shaders, possibly BEFORE webgl context is defined.
-	                 * NOTE: Shaders are stored in a numeric array only.
-	                 * @param {Shader} the new Shader.
-	                 * @returns {Boolean} if added, return true, else false.
-	                 */
-
-	        }, {
-	                key: 'addShader',
-	                value: function addShader(shader) {
-
-	                        if (!this.shaderList[shader.name]) {
-
-	                                console.log('Renderer::addShader(): adding ' + shader.name + ' to rendering list');
-
-	                                this.shaderList[shader.name] = shader;
-
-	                                return true;
-	                        } else {
-
-	                                console.error('Renderer::addShader(): already added shader:' + shader.name + ' to Renderer');
-	                        }
-
-	                        return false;
-	                }
-
-	                /** 
-	                 * Remove a Shader.
-	                 * NOTE: Shaders are sored in a numerica array only.
-	                 * @param {String} key the shader's key in the list
-	                 * @returns {Boolean} if removed, return true, else false.
-	                 */
-
-	        }, {
-	                key: 'removeShader',
-	                value: function removeShader(key) {
-
-	                        // TODO: remove shader (also remove Prims using said shader to not try to draw).
-
-	                        if (this.shaderList[key]) {
-
-	                                delete this.shaderList[key];
-	                        }
-
-	                        console.warn('Renderer::removeShader(): shader ' + key + ' not in list');
-
-	                        return false;
-	                }
-
-	                /** 
-	                 * Initialize shaders AFTER webgl context is defined.
-	                 * Note: we only define an associatve array for shaders.
-	                 */
-
-	        }, {
-	                key: 'initShaders',
-	                value: function initShaders() {
-
-	                        for (var i in this.shaderList) {
-
-	                                this.shaderList[i].init();
-	                        }
-	                }
-
-	                /** 
-	                 * Render everything in mono 3d, for non-VR use case.
-	                 * NOTE: you may want to call shaders individually in World.render()
-	                 */
-
-	        }, {
-	                key: 'renderMono',
-	                value: function renderMono() {
-
-	                        for (var i in this.shaderList) {
-
-	                                this.shaderList[i].program.render();
-	                        }
-	                }
-
-	                /** 
-	                 * Render everything in VR, for displays or polyfills.
-	                 * NOTE: you may want to call shaders individually in World.render()
-	                 */
-
-	        }, {
-	                key: 'renderVR',
-	                value: function renderVR(vr, display, frameData) {
-
-	                        for (var i in this.shaderList) {
-
-	                                this.shaderList[i].renderVR(vr, display, frameData);
-	                        }
-	                }
-	        }]);
-
-	        return Renderer;
-	}();
-
-	exports.default = Renderer;
-
-/***/ }),
+/* 21 */,
 /* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -7318,6 +7152,10 @@
 	var _loadGeometry = __webpack_require__(42);
 
 	var _loadGeometry2 = _interopRequireDefault(_loadGeometry);
+
+	var _texturePool = __webpack_require__(43);
+
+	var _texturePool2 = _interopRequireDefault(_texturePool);
 
 	var _loadModel = __webpack_require__(11);
 
@@ -7456,6 +7294,8 @@
 
 	                this.geometry = new _loadGeometry2.default(init, util, glMatrix, webgl);
 
+	                this.texturePool = new _texturePool2.default(init, util, webgl); ///////////////////////////////////
+
 	                /* 
 	                 * Bind the Prim callback for geometry creation.
 	                 */
@@ -7470,8 +7310,7 @@
 	         * Get the big array with all vertex data. Every time a 
 	         * Prim is made, we store a reference in the this.objs[] 
 	         * array. So, to make one, we just concatenate the 
-	         * vertices. Use to send multiple prims sharing the same shader to one 
-	         * Renderer.
+	         * vertices. Use to send multiple prims sharing the same Shader.
 	         * @param {glMatrix.vec3[]} vertices
 	         * @returns {glMatrix.vec3[]} vertices
 	         */
@@ -7493,8 +7332,7 @@
 
 	                /** 
 	                 * get the big array with all index data. Use to 
-	                 * send multiple prims sharing the same shader to one 
-	                 * Renderer.
+	                 * send multiple prims sharing the same Shader.
 	                 * @param {Array} indices the indices to add to the larger array.
 	                 * @returns {Array} the indices.
 	                 */
@@ -7512,6 +7350,12 @@
 
 	                        return indices;
 	                }
+
+	                /* 
+	                 * ---------------------------------------
+	                 * LOADERS
+	                 * ---------------------------------------
+	                 */
 
 	                /*
 	                 * ---------------------------------------
@@ -7685,11 +7529,14 @@
 	                        var prim = {};
 
 	                        // Define internal methods for the Prim.
-	                        // TODO: define renderers for object and store in renderer class.
 
-	                        prim.setRenderer = function (renderer) {
+	                        /** 
+	                         * Set the Shader used for rendering. Only one Shader may be 
+	                         * used at a time.
+	                         */
+	                        prim.setShader = function (shader) {
 
-	                                prim.renderer = renderer;
+	                                prim.shader = shader;
 	                        };
 
 	                        /** 
@@ -8078,12 +7925,17 @@
 	                                this.loadTexture.load(textureImages[i], prim);
 	                        }
 
+	                        this.texturePool.getTextures(textureImages, prim.textures); // assume cacheBust === true, mimeType determined by file extension.
+
+
 	                        // TODO: use this!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	                        //prim.setLight();
 
 	                        // Push into our list of all Prims. Shaders keep a local list of Prims they are rendering.
 
 	                        this.objs.push(prim);
+
+	                        window.prim = prim;
 
 	                        return prim;
 	                }
@@ -10532,14 +10384,14 @@
 	         * @param {WebGL} gl the webgl module.
 	         * @param {WebVR} webvr the webvr module.
 	         * @param {Prim} prim the object/mesh primitives module.
-	         * @param {Renderer} renderer the GLSL rendering module.
+	         * @param {ShaderPool} shaderPool the GLSL rendering module.
 	         */
-	        function World(webgl, webvr, prim, renderer) {
+	        function World(webgl, webvr, prim, shaderPool) {
 	                _classCallCheck(this, World);
 
 	                console.log('in World class');
 
-	                this.webgl = webgl, this.util = webgl.util, this.vr = webvr, this.prim = prim, this.renderer = renderer;
+	                this.webgl = webgl, this.util = webgl.util, this.vr = webvr, this.prim = prim, this.shaderPool = shaderPool;
 
 	                // Matrix operations.
 
@@ -10603,7 +10455,7 @@
 	                }
 
 	                /** 
-	                 * Create the world. Load shader/renderer objects, and 
+	                 * Create the world. Load Shader objects, and 
 	                 * create objects to render in the world.
 	                 */
 
@@ -10627,11 +10479,11 @@
 
 	                        // Get the shaders (not initialized with update() and render() yet!).
 
-	                        this.s1 = this.renderer.getShader('shaderTexture');
+	                        this.s1 = this.shaderPool.getShader('shaderTexture');
 
-	                        this.s2 = this.renderer.getShader('shaderColor');
+	                        this.s2 = this.shaderPool.getShader('shaderColor');
 
-	                        this.s3 = this.renderer.getShader('shaderDirLightTexture');
+	                        this.s3 = this.shaderPool.getShader('shaderDirLightTexture');
 
 	                        //////////////////////////////////
 	                        // TEXTURED SHADER.
@@ -11031,26 +10883,20 @@
 
 	                        // TODO: TEMP DEBUG
 
-	                        // TODO: TEST WITH "GOOD 3G NETWORK SETTING"
-
-
-	                        var getter = new _getAssets2.default(this.util);
-
-	                        var texturePool = new _texturePool2.default(this.util, this.webgl);
-
 	                        var mimeType = 'image/png';
 
 	                        var cacheBust = true;
 
-	                        var phil = []; // ASSET ARRAY
+	                        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	                        var getter = new _getAssets2.default(this.util);
+
+	                        //let phil = []; // ASSET ARRAY
 
 	                        var bob = {
 
 	                                files: ['img/mozvr-logo1.png', 'img/soda-can.png', 'sdsfjslkfsjlsfdsdf'], // , 'img/soda-can.png'
 
 	                                data: null,
-
-	                                bob: null,
 
 	                                updateFn: function updateFn(result) {
 
@@ -11064,7 +10910,7 @@
 
 	                                                image.src = URL.createObjectURL(result.data);
 
-	                                                console.log("key:" + result.key);
+	                                                console.log("####key:" + result.key + " data:" + result.data + ' image.src:' + image.src);
 
 	                                                document.body.appendChild(image);
 
@@ -11088,6 +10934,11 @@
 	                        };
 
 	                        getter.addRequests(bob);
+
+	                        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	                        //let texturePool = new TexturePool( this.util, this.webgl );
+
+	                        //texturePool.addRequests( bob );
 
 	                        ////////////////////////////////////////////////////////
 
@@ -11144,11 +10995,11 @@
 
 	                /** 
 	                 * Render the World for a mono or a VR display.
-	                 * Update Prims locally, then call shader/renderer 
+	                 * Update Prims locally, then call Shader.
 	                 * objects to do rendering. this.r# was bound (ES5 method) in 
 	                 * the constructor.
 	                 * NOTE: we can call Shaders indivdiually, or use the global 
-	                 * this.renderer.renderVR() or this.renderer.renderMono() will will render everything.
+	                 * this.shaderPool.renderVR() or this.shaderPool.renderMono() will will render everything.
 	                 */
 
 	        }, {
@@ -11200,6 +11051,7 @@
 /* 29 */
 /***/ (function(module, exports) {
 
+	
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
@@ -11224,7 +11076,7 @@
 	        function GetAssets(util) {
 	                _classCallCheck(this, GetAssets);
 
-	                this.util = util, this.MIN_WAIT_TIME = 100, this.MAX_TRIES = 6;
+	                this.util = util, this.emitter = util.emitter, this.MIN_WAIT_TIME = 100, this.MAX_TRIES = 6;
 	        }
 
 	        /** 
@@ -11392,6 +11244,11 @@
 	                                        } else if (mimeType === 'application/xml') {
 
 	                                                data = response.formData();
+	                                        } else if (mimeType.indexOf('image ') !== _this.util.NOT_IN_LIST) {
+
+	                                                data = response.blob();
+
+	                                                /////data = response.arrayBuffer(); // should work with texImage2d
 	                                        } else {
 	                                                // all other mime types (e.g. images, audio, video)
 
@@ -11428,14 +11285,14 @@
 
 	                                        // Run the callback with error values.
 
-	                                        updateFn({ key: key, data: null, error: response }); // Send a wrapped error object
+	                                        updateFn({ key: key, path: requestURL, data: null, error: response }); // Send a wrapped error object
 	                                } else {
 
 	                                        // Run the callback we got in the original request, return received file in data.
 
 	                                        console.log('>>>>>>>>>>>>>>about to call update function!!!!!!');
 
-	                                        updateFn({ key: key, data: response, error: false }); // Send the data to the caller.
+	                                        updateFn({ key: key, path: requestURL, data: response, error: false }); // Send the data to the caller.
 	                                }
 	                        }, function (error) {
 
@@ -23313,14 +23170,26 @@
 	         * Manage texture assets, similar to GeoObj for 
 	         * coordinate data
 	         */
-	        function TexturePool(util, webgl) {
+	        function TexturePool(init, util, webgl) {
 	                _classCallCheck(this, TexturePool);
 
-	                var _this = _possibleConstructorReturn(this, (TexturePool.__proto__ || Object.getPrototypeOf(TexturePool)).call(this, util));
+	                console.log('in TexturePool');
 
 	                // Initialize superclass.
 
-	                _this.util = util, _this.webgl = webgl, _this.NOT_IN_LIST = _this.util.NOT_IN_LIST, _this.textureList = [], _this.keyList = [], _this.greyPixel = new Uint8Array([0.5, 0.5, 0.5, 1.0]);
+	                var _this = _possibleConstructorReturn(this, (TexturePool.__proto__ || Object.getPrototypeOf(TexturePool)).call(this, util));
+
+	                _this.util = util, _this.webgl = webgl, _this.NOT_IN_LIST = _this.util.NOT_IN_LIST, _this.textureMimeTypes = {
+
+	                        'png': 'image/png',
+
+	                        'jpg': 'image/jpeg',
+
+	                        'jpeg': 'image/jpeg',
+
+	                        'gif': 'image/gif'
+
+	                }, _this.textureList = [], _this.keyList = [], _this.greyPixel = new Uint8Array([0.5, 0.5, 0.5, 1.0]);
 
 	                return _this;
 	        }
@@ -23360,24 +23229,26 @@
 	                }
 
 	                /** 
-	                 * Create a WebGL texture from an image, and 
-	                 * add it to our texture list.
+	                 * Create a WebGL texture from a JavaScript Image object, and add it to our texture list.
 	                 */
 
 	        }, {
 	                key: 'addTexture',
-	                value: function addTexture(image, key) {
-	                        var type = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this.TEXTURE_2D;
-
+	                value: function addTexture(image, path, key, mimeType, type) {
 
 	                        if (key === undefined) {
 
 	                                console.error('TextureObj::addTexture(): undefined key');
 
-	                                return false;
+	                                return null;
 	                        }
 
 	                        var gl = this.webgl.getContext();
+
+	                        if (!type) {
+
+	                                type = gl.TEXTURE_2D;
+	                        }
 
 	                        var texture = null;
 
@@ -23407,9 +23278,24 @@
 
 	                                var obj = {};
 
-	                                // we save references to the object in both numeric and associative arrays.
+	                                /* 
+	                                 * We save references to the object in both numeric and associative arrays.
+	                                 * Format: { texture: WebGLTexture, key: associative key, pos: position in numeric array }
+	                                 */
 
-	                                obj.texture = texture, obj.key = key;
+	                                obj.image = image, // JavaScript Image object.
+
+	                                obj.mimeType = mimeType, // image/png, image/jpg...
+
+	                                obj.type = type, // gl.TEXTURE_2D, gl.TEXTURE_3D...
+
+	                                obj.path = path, // URL of object
+
+	                                obj.src = path, ////////////////TODO: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! REPLACE.src with path in Prim
+
+	                                obj.texture = texture, // WebGLTexture
+
+	                                obj.key = key; // Associative key for this object
 
 	                                if (!this.util.isNumeric(key)) {
 
@@ -23420,10 +23306,13 @@
 
 	                                obj.pos = this.textureList.length - 1;
 
-	                                return true;
+	                                return obj;
+	                        } else {
+
+	                                console.warn('TexturePool::addTexture(): no texture returned by createXXTexture() function');
 	                        }
 
-	                        return false;
+	                        return null;
 	                }
 
 	                /** 
@@ -23449,7 +23338,28 @@
 	                                return this.keyList[key];
 	                        }
 
-	                        return this.NOT_IN_LIST;
+	                        return null;
+	                }
+
+	                /** 
+	                 * Find a texture by its path, if the path was not used as the key.
+	                 * @param {String} path the URL of the texture file.
+	                 * @returns {Boolean} if found in current textureList, return true, else false.
+	                 */
+
+	        }, {
+	                key: 'pathInList',
+	                value: function pathInList(path) {
+
+	                        for (var i = 0; i < this.textureList[i]; i++) {
+
+	                                if (this.textureList[i].path === path) {
+
+	                                        return this.textureList[i];
+	                                }
+	                        }
+
+	                        return null;
 	                }
 
 	                /** 
@@ -23489,16 +23399,114 @@
 	                }
 
 	                /** 
+	                 * Load textures, using a list of paths. If a Texture already exists, 
+	                 * just return it. Otherwise, do the load.
+	                 * @param {Array[String]} pathList a list of URL paths to load.
+	                 * @param {Array[Object]} primTextureList the Prim textureList. 
+	                 */
+
+	        }, {
+	                key: 'getTextures',
+	                value: function getTextures(pathList, primTextureList) {
+	                        var _this2 = this;
+
+	                        var cacheBust = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+
+
+	                        // TODO: check texture list. If paths are already there, just use the path
+	                        // TODO: and return the webgl texture buffer object.
+
+	                        for (var i = 0; i < pathList.length; i++) {
+
+	                                var path = pathList[i];
+
+	                                var poolTexture = this.pathInList(path);
+
+	                                if (poolTexture) {
+
+	                                        // Immediately ready, so just bind back to Prim.
+
+	                                        // TODO: kludge
+	                                        poolTexture.src = poolTexture.path;
+
+	                                        primTextureList.push(poolTexture); /////////////////////////////////
+	                                } else {
+	                                        (function () {
+
+	                                                // Get the image mimeType.
+
+	                                                var mimeType = _this2.textureMimeTypes[_this2.util.getFileExtension(path)];
+
+	                                                // check if mimeType is OK.
+
+	                                                if (mimeType) {
+
+	                                                        // Image has to be loaded. NOTE: calling our own addTexture as updateFn in GetAssets.
+
+	                                                        _this2.doRequest(path, i, function (updateObj) {
+
+	                                                                /* 
+	                                                                 * updateObj returned from GetAssets has the following format:
+	                                                                 * { key: key, path: requestURL, data: null|response, error: false|response } 
+	                                                                 */
+
+	                                                                var image = new Image();
+
+	                                                                // Blob data type requires .onload
+
+	                                                                image.onload = function () {
+
+	                                                                        // Create a WebGLTexture from the Image (left off 'type' for gl.TEXTURE type).
+
+	                                                                        var textureObj = _this2.addTexture(image, updateObj.path, updateObj.key, mimeType);
+
+	                                                                        console.log(")))))))))))textureObj is a:" + textureObj);
+
+	                                                                        document.body.appendChild(image); // WORKS PERFECTLY WITH BLOB
+
+	                                                                        // TODO: KLUDGE
+	                                                                        // TODO: COULD EMIT HERE.....
+
+	                                                                        if (textureObj) {
+
+	                                                                                textureObj.src = textureObj.path;
+
+	                                                                                primTextureList.push(textureObj);
+	                                                                        }
+	                                                                }; // end of image.onload
+
+	                                                                // Fire the onload even (internal browser instead of off network)
+
+	                                                                var base64Flag = 'data:' + mimeType + ';base64,';
+
+	                                                                image.src = URL.createObjectURL(updateObj.data);
+	                                                        }, cacheBust, mimeType, 0); // end of this.doRequest(), initial request at 0 tries
+	                                                } else {
+
+	                                                        console.error('TexturePool::getTextures(): file type "' + _this2.util.getFileExtension(path) + ' not supported, not loading');
+	                                                }
+	                                        })();
+	                                }
+	                        }
+	                }
+
+	                /* 
+	                 * ---------------------------------------
+	                 * TEXTURE CREATION BY TYPE
+	                 * ---------------------------------------
+	                 */
+
+	                /** 
 	                 * Create a new WebGL texture object.
 	                 */
 
 	        }, {
 	                key: 'create2dTexture',
-	                value: function create2dTexture(image) {
+	                value: function create2dTexture(image, key) {
 
-	                        var gl = this.webgl.getContext();
-
-	                        src = image.src, texture = gl.createTexture();
+	                        var gl = this.webgl.getContext(),
+	                            src = image.src,
+	                            texture = gl.createTexture();
 
 	                        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 
@@ -23510,9 +23518,7 @@
 
 	                        if (image) {
 
-	                                //////////console.log( 'binding image:' + image.src );
-
-	                                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+	                                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image); // HASN'T LOADED YET
 
 	                                // TODO: WHEN TO USE gl.renderBufferStorage()???
 	                        } else {
@@ -23554,7 +23560,7 @@
 
 	        }, {
 	                key: 'create3dTexture',
-	                value: function create3dTexture() {
+	                value: function create3dTexture(image, key) {
 
 	                        return null;
 	                }
@@ -23566,7 +23572,7 @@
 
 	        }, {
 	                key: 'createCubeMapTexture',
-	                value: function createCubeMapTexture() {
+	                value: function createCubeMapTexture(image, key) {
 
 	                        return null;
 	                }
@@ -23579,6 +23585,181 @@
 	}(_getAssets2.default);
 
 	exports.default = TexturePool;
+
+/***/ }),
+/* 44 */
+/***/ (function(module, exports) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	        value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var ShaderPool = function () {
+	        function ShaderPool(init, util, glMatrix, webgl) {
+	                _classCallCheck(this, ShaderPool);
+
+	                console.log('In ShaderPool class');
+
+	                this.webgl = webgl;
+
+	                this.util = webgl.util;
+
+	                this.glmatrix = glMatrix;
+
+	                this.shaderList = [];
+
+	                this.NOT_IN_LIST = util.NOT_IN_LIST; // .indexOf comparisons
+
+	                if (this.init) {}
+	        }
+
+	        /** 
+	         * Check if a Shader is initialized within our Shader list.
+	         * @param {String} key the shader key === shader.name
+	         * @returns {Shader|false} if found, return the shader, else return false.
+	         */
+
+
+	        _createClass(ShaderPool, [{
+	                key: 'shaderInList',
+	                value: function shaderInList(key) {
+
+	                        if (this.shaderList[key]) {
+
+	                                return this.shaderList[key];
+	                        }
+
+	                        console.warn('ShaderPool::shaderInList(): shader ' + key + ' not found in list');
+
+	                        return false;
+	                }
+
+	                /** 
+	                 * Get a Shader.
+	                 * NOTE: Shaders are stored in an associative array only.
+	                 * @param {String} key the key in the shaderList === the assigned name of the Shader.
+	                 */
+
+	        }, {
+	                key: 'getShader',
+	                value: function getShader(key) {
+
+	                        if (this.shaderList[key]) {
+
+	                                return this.shaderList[key];
+	                        } else {
+
+	                                console.error('ShaderPool::getShader(): shader ' + key + ' not found');
+	                        }
+
+	                        return false;
+	                }
+
+	                /**
+	                 * Setter for adding Shaders, possibly BEFORE webgl context is defined.
+	                 * NOTE: Shaders are stored in a numeric array only.
+	                 * @param {Shader} the new Shader.
+	                 * @returns {Boolean} if added, return true, else false.
+	                 */
+
+	        }, {
+	                key: 'addShader',
+	                value: function addShader(shader) {
+
+	                        if (!this.shaderList[shader.name]) {
+
+	                                console.log('ShaderPool::addShader(): adding ' + shader.name + ' to rendering list');
+
+	                                this.shaderList[shader.name] = shader;
+
+	                                return true;
+	                        } else {
+
+	                                console.error('ShaderPool::addShader(): already added shader:' + shader.name + ' to Renderer');
+	                        }
+
+	                        return false;
+	                }
+
+	                /** 
+	                 * Remove a Shader.
+	                 * NOTE: Shaders are sored in a numerica array only.
+	                 * @param {String} key the shader's key in the list
+	                 * @returns {Boolean} if removed, return true, else false.
+	                 */
+
+	        }, {
+	                key: 'removeShader',
+	                value: function removeShader(key) {
+
+	                        // TODO: remove shader (also remove Prims using said shader to not try to draw).
+
+	                        if (this.shaderList[key]) {
+
+	                                delete this.shaderList[key];
+	                        }
+
+	                        console.warn('Renderer::removeShader(): shader ' + key + ' not in list');
+
+	                        return false;
+	                }
+
+	                /** 
+	                 * Initialize shaders AFTER webgl context is defined.
+	                 * Note: we only define an associatve array for shaders.
+	                 */
+
+	        }, {
+	                key: 'initShaders',
+	                value: function initShaders() {
+
+	                        for (var i in this.shaderList) {
+
+	                                this.shaderList[i].init();
+	                        }
+	                }
+
+	                /** 
+	                 * Render everything in mono 3d, for non-VR use case.
+	                 * NOTE: you may want to call shaders individually in World.render()
+	                 */
+
+	        }, {
+	                key: 'renderMono',
+	                value: function renderMono() {
+
+	                        for (var i in this.shaderList) {
+
+	                                this.shaderList[i].program.render();
+	                        }
+	                }
+
+	                /** 
+	                 * Render everything in VR, for displays or polyfills.
+	                 * NOTE: you may want to call shaders individually in World.render()
+	                 */
+
+	        }, {
+	                key: 'renderVR',
+	                value: function renderVR(vr, display, frameData) {
+
+	                        for (var i in this.shaderList) {
+
+	                                this.shaderList[i].renderVR(vr, display, frameData);
+	                        }
+	                }
+	        }]);
+
+	        return ShaderPool;
+	}();
+
+	exports.default = ShaderPool;
 
 /***/ })
 /******/ ]);

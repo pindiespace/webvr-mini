@@ -150,9 +150,9 @@ class shaderDirLightTexture extends Shader {
 
     /** 
      * initialize the update() and render() methods for this shader.
-     * @param{Prim[]} objList a list of initializing Prims (optional).
+     * @param{Prim[]} primList a list of initializing Prims (optional).
      */
-    init ( objList ) {
+    init ( primList ) {
 
         // DESTRUCTING DID NOT WORK!
         //[gl, canvas, mat4, vec3, pMatrix, mvMatrix, program ] = this.setup();
@@ -193,9 +193,9 @@ class shaderDirLightTexture extends Shader {
 
         // If we init with object, add them here.
 
-        if ( objList ) {
+        if ( primList ) {
 
-            program.renderList = this.util.concatArr( program.renderList, objList );
+            program.renderList = this.util.concatArr( program.renderList, primList );
 
         }
 
@@ -211,7 +211,7 @@ class shaderDirLightTexture extends Shader {
             -0.1
         ];
 
-        let directionalColor = [ 0.7, 0.7, 0.7];
+        let directionalColor = [ 0.7, 0.7, 0.7 ];
 
         let nMatrix = mat3.create(); // TODO: ADD MAT3 TO PASSED VARIABLES
 
@@ -225,13 +225,13 @@ class shaderDirLightTexture extends Shader {
          * POLYMORPHIC METHODS
          */
 
-        // Check if object is ready to be rendered using this shader.
+        // Check if Prim is ready to be rendered using this shader.
 
-        program.isReady = ( obj ) => {
+        program.isReady = ( prim ) => {
 
-            // Need 1 WebGL texture
+            // Need 1 WebGL texture, plus Light for this particular Shader.
 
-            if ( ! object.geometry.checkBuffers()  && obj.textures[ 0 ].texture ) {
+            if ( ! prim.geometry.checkBuffers() && prim.textures[ 0 ].texture ) {
 
                 return true;
 
@@ -241,13 +241,13 @@ class shaderDirLightTexture extends Shader {
 
         }
 
-        // Update object position, motion - given to World object.
+        // Update prim position, motion - given to World object.
 
-        program.update = ( obj, MVM ) => {
+        program.update = ( prim, MVM ) => {
 
             // Update the model-view matrix using current Prim position, rotation, etc.
 
-            obj.setMV( MVM );
+            prim.setMV( MVM );
 
             // Compute lighting normals.
 
@@ -265,7 +265,7 @@ class shaderDirLightTexture extends Shader {
 
         }
 
-        // Rendering - given to Renderer object, executed by World.
+        // Prim rendering - Shader in ShaderPool, rendered by World.
 
         program.render = ( PM, MVM ) => {
 
@@ -279,37 +279,37 @@ class shaderDirLightTexture extends Shader {
 
             for ( let i = 0, len = program.renderList.length; i < len; i++ ) {
 
-                let obj = program.renderList[ i ];
+                let prim = program.renderList[ i ];
 
                 // Only render if we have at least one texture loaded.
 
-                if ( ! obj.textures[ 0 ] || ! obj.textures[ 0 ].texture ) continue;
+                if ( ! prim.textures[ 0 ] || ! prim.textures[ 0 ].texture ) continue;
 
                 // Update Model-View matrix with standard Prim values.
 
-                program.update( obj, MVM );
+                program.update( prim, MVM );
 
                 // Bind vertex buffer.
 
-                gl.bindBuffer( gl.ARRAY_BUFFER, obj.geometry.vertices.buffer );
+                gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.vertices.buffer );
                 gl.enableVertexAttribArray( vsVars.attribute.vec3.aVertexPosition );
-                gl.vertexAttribPointer( vsVars.attribute.vec3.aVertexPosition, obj.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0 );
+                gl.vertexAttribPointer( vsVars.attribute.vec3.aVertexPosition, prim.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0 );
 
                 // Bind normals buffer.
 
-                gl.bindBuffer( gl.ARRAY_BUFFER, obj.geometry.normals.buffer );
+                gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.normals.buffer );
                 gl.enableVertexAttribArray( vsVars.attribute.vec3.aVertexNormal );
-                gl.vertexAttribPointer( vsVars.attribute.vec3.aVertexNormal, obj.geometry.normals.itemSize, gl.FLOAT, false, 0, 0);
+                gl.vertexAttribPointer( vsVars.attribute.vec3.aVertexNormal, prim.geometry.normals.itemSize, gl.FLOAT, false, 0, 0);
 
                 // Bind textures buffer (could have multiple bindings here).
 
-                gl.bindBuffer( gl.ARRAY_BUFFER, obj.geometry.texCoords.buffer );
+                gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.texCoords.buffer );
                 gl.enableVertexAttribArray( vsVars.attribute.vec2.aTextureCoord );
-                gl.vertexAttribPointer( vsVars.attribute.vec2.aTextureCoord, obj.geometry.texCoords.itemSize, gl.FLOAT, false, 0, 0 );
+                gl.vertexAttribPointer( vsVars.attribute.vec2.aTextureCoord, prim.geometry.texCoords.itemSize, gl.FLOAT, false, 0, 0 );
 
                 gl.activeTexture( gl.TEXTURE0 );
                 gl.bindTexture( gl.TEXTURE_2D, null );
-                gl.bindTexture( gl.TEXTURE_2D, obj.textures[ 0 ].texture );
+                gl.bindTexture( gl.TEXTURE_2D, prim.textures[ 0 ].texture );
 
                 // Set fragment shader sampler uniform.
 
@@ -351,20 +351,20 @@ class shaderDirLightTexture extends Shader {
                 gl.uniformMatrix4fv( vsVars.uniform.mat4.uPMatrix, false, PM );
                 gl.uniformMatrix4fv( vsVars.uniform.mat4.uMVMatrix, false, MVM );
 
-                gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer );
+                gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, prim.geometry.indices.buffer );
 
                 if ( stats.uint32 ) { 
 
                     // Draw elements, 0 -> 2e9
 
-                    gl.drawElements( gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_INT, 0 );
+                    gl.drawElements( gl.TRIANGLES, prim.geometry.indices.numItems, gl.UNSIGNED_INT, 0 );
 
 
                 } else {
 
                     // Draw elements, 0 -> 65k (old platforms).
 
-                    gl.drawElements( gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0 );
+                    gl.drawElements( gl.TRIANGLES, prim.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0 );
 
                 }
 

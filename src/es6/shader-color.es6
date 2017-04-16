@@ -113,9 +113,9 @@ class ShaderColor extends Shader {
 
     /** 
      * initialize the update() and render() methods for this shader.
-     * @param{Prim[]} objList a list of initializing Prims (optional).
+     * @param{Prim[]} primList a list of initializing Prims (optional).
      */
-    init ( objList ) {
+    init ( primList ) {
 
         // DESTRUCTING DID NOT WORK!
         //[gl, canvas, mat4, vec3, pMatrix, mvMatrix, program ] = this.setup();
@@ -160,11 +160,11 @@ class ShaderColor extends Shader {
 
         let shaderProgram = program.shaderProgram;
 
-        // If we init with object, add them here.
+        // If we init with a primList, add them here.
 
-        if ( objList ) {
+        if ( primList ) {
 
-            program.renderList = this.util.concatArr( program.renderList, objList );
+            program.renderList = this.util.concatArr( program.renderList, primList );
 
         }
 
@@ -180,11 +180,13 @@ class ShaderColor extends Shader {
          * POLYMORPHIC METHODS
          */
 
-        // Check if object is ready to be rendered using this shader.
+        // Check if Prim is ready to be rendered using this Shader.
 
-        program.isReady = ( obj ) => {
+        program.isReady = ( prim ) => {
 
-            if( ! object.geometry.checkBuffers()  && object.geometry.colors.buffer ) {
+            // Need only a color buffer for this Shader.
+
+            if( ! prim.geometry.checkBuffers()  && prim.geometry.colors.buffer ) {
 
                 return true;
 
@@ -195,17 +197,17 @@ class ShaderColor extends Shader {
 
         }
 
-        // Update object position, motion - given to World object.
+        // Update Prim position, motion - given to World object.
 
-        program.update = ( obj, MVM ) => {
+        program.update = ( prim, MVM ) => {
 
             // Update the model-view matrix using current Prim position, rotation, etc.
 
-            obj.setMV( MVM );
+            prim.setMV( MVM );
 
         }
 
-        // Scene Rendering.
+        // Prim rendering - Shader in ShaderPool, rendered by World.
 
         program.render = ( PM, MVM ) => {
 
@@ -221,23 +223,23 @@ class ShaderColor extends Shader {
 
             for ( let i = 0, len = program.renderList.length; i < len; i++ ) {
 
-                let obj = program.renderList[ i ];
+                let prim = program.renderList[ i ];
 
                 // Individual prim update
 
-                program.update( obj, MVM );
+                program.update( prim, MVM );
 
                 // Bind vertex buffer.
 
-                gl.bindBuffer( gl.ARRAY_BUFFER, obj.geometry.vertices.buffer );
+                gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.vertices.buffer );
                 gl.enableVertexAttribArray( vsVars.attribute.vec3.aVertexPosition );
-                gl.vertexAttribPointer( vsVars.attribute.vec3.aVertexPosition, obj.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0 );
+                gl.vertexAttribPointer( vsVars.attribute.vec3.aVertexPosition, prim.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0 );
 
                 // Bind color buffer.
 
-                gl.bindBuffer( gl.ARRAY_BUFFER, obj.geometry.colors.buffer );
+                gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.colors.buffer );
                 gl.enableVertexAttribArray( vsVars.attribute.vec4.aVertexColor );
-                gl.vertexAttribPointer( vsVars.attribute.vec4.aVertexColor, obj.geometry.colors.itemSize, gl.FLOAT, false, 0, 0 );
+                gl.vertexAttribPointer( vsVars.attribute.vec4.aVertexColor, prim.geometry.colors.itemSize, gl.FLOAT, false, 0, 0 );
                 //gl.disableVertexAttribArray( vsVars.attribute.vec4.aVertexColor );
 
 
@@ -248,21 +250,21 @@ class ShaderColor extends Shader {
 
                 // Bind indices buffer.
 
-                gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, obj.geometry.indices.buffer );
+                gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, prim.geometry.indices.buffer );
 
 
                 if ( stats.uint32 ) {
 
                     // Draw elements, 0 -> 2e9
 
-                    gl.drawElements( gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_INT, 0 );
+                    gl.drawElements( gl.TRIANGLES, prim.geometry.indices.numItems, gl.UNSIGNED_INT, 0 );
 
 
                 } else {
 
                     // Draw elements, 0 -> 65k (old platforms).
 
-                    gl.drawElements( gl.TRIANGLES, obj.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0 );
+                    gl.drawElements( gl.TRIANGLES, prim.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0 );
 
                 }
 

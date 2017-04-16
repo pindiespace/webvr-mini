@@ -26,9 +26,9 @@ class World {
      * @param {WebGL} gl the webgl module.
      * @param {WebVR} webvr the webvr module.
      * @param {Prim} prim the object/mesh primitives module.
-     * @param {Renderer} renderer the GLSL rendering module.
+     * @param {ShaderPool} shaderPool the GLSL rendering module.
      */
-    constructor ( webgl, webvr, prim, renderer ) {
+    constructor ( webgl, webvr, prim, shaderPool ) {
 
         console.log( 'in World class' );
 
@@ -40,7 +40,7 @@ class World {
 
         this.prim = prim,
 
-        this.renderer = renderer;
+        this.shaderPool = shaderPool;
 
         // Matrix operations.
 
@@ -98,7 +98,7 @@ class World {
     }
 
     /** 
-     * Create the world. Load shader/renderer objects, and 
+     * Create the world. Load Shader objects, and 
      * create objects to render in the world.
      */
     init () {
@@ -119,11 +119,11 @@ class World {
 
         // Get the shaders (not initialized with update() and render() yet!).
 
-        this.s1 = this.renderer.getShader( 'shaderTexture' );
+        this.s1 = this.shaderPool.getShader( 'shaderTexture' );
 
-        this.s2 = this.renderer.getShader( 'shaderColor' );
+        this.s2 = this.shaderPool.getShader( 'shaderColor' );
 
-        this.s3 = this.renderer.getShader( 'shaderDirLightTexture' );
+        this.s3 = this.shaderPool.getShader( 'shaderDirLightTexture' );
 
 
 //////////////////////////////////
@@ -650,26 +650,20 @@ class World {
 
 // TODO: TEMP DEBUG
 
-// TODO: TEST WITH "GOOD 3G NETWORK SETTING"
-
-
-    let getter = new GetAssets( this.util );
-
-    let texturePool = new TexturePool( this.util, this.webgl );
-
     let mimeType = 'image/png';
 
     let cacheBust = true;
 
-    let phil = []; // ASSET ARRAY
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    let getter = new GetAssets( this.util );
+
+    //let phil = []; // ASSET ARRAY
 
     let bob = {
 
         files: [ 'img/mozvr-logo1.png', 'img/soda-can.png', 'sdsfjslkfsjlsfdsdf' ],  // , 'img/soda-can.png'
 
         data: null,
-
-        bob: null,
 
         updateFn: ( result ) => {
 
@@ -683,7 +677,7 @@ class World {
 
                 image.src = URL.createObjectURL( result.data );
 
-                console.log("key:" + result.key )
+                console.log("####key:" + result.key + " data:" + result.data  + ' image.src:' + image.src)
 
                 document.body.appendChild( image );
 
@@ -711,7 +705,12 @@ class World {
 
     getter.addRequests( bob );
 
-////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //let texturePool = new TexturePool( this.util, this.webgl );
+
+    //texturePool.addRequests( bob );
+
+    ////////////////////////////////////////////////////////
 
         // NOTE: the init() method sets up the update() and render() methods for the Shader.
 
@@ -765,11 +764,11 @@ class World {
 
     /** 
      * Render the World for a mono or a VR display.
-     * Update Prims locally, then call shader/renderer 
+     * Update Prims locally, then call Shader.
      * objects to do rendering. this.r# was bound (ES5 method) in 
      * the constructor.
      * NOTE: we can call Shaders indivdiually, or use the global 
-     * this.renderer.renderVR() or this.renderer.renderMono() will will render everything.
+     * this.shaderPool.renderVR() or this.shaderPool.renderMono() will will render everything.
      */
     render () {
 

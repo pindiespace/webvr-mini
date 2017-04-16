@@ -67,7 +67,7 @@ import ShaderMetal from './shader-metal';
 
 // Collects the shaders in one place.
 
-import Renderer from './renderer';
+import ShaderPool from './shader-pool';
 
 // All objects.
 
@@ -121,7 +121,7 @@ if ( __DEV__ === 'true' ) {
 
 }
 
-let webvr, ui, loadModel, loadTexture, loadAudio, loadVideo, loadFont, prim, renderer, world;
+let webvr, ui, loadModel, loadTexture, loadAudio, loadVideo, loadFont, prim, shaderPool, world;
 
 // WebGL can take some time to init.
 
@@ -151,19 +151,19 @@ var promise = new Promise( ( resolve, reject ) => {
 
         prim = new Prim ( true, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo );
 
-        // Add shaders to Renderer.
+        // Add shaders to ShaderPool.
 
-        renderer = new Renderer ( true, util, glMatrix, webgl );
+        shaderPool = new ShaderPool ( true, util, glMatrix, webgl );
 
-        renderer.addShader( new ShaderTexture ( true, util, glMatrix, webgl, webvr, 'shaderTexture' ) );
+        shaderPool.addShader( new ShaderTexture ( true, util, glMatrix, webgl, webvr, 'shaderTexture' ) );
 
-        renderer.addShader( new ShaderColor ( true, util, glMatrix, webgl, webvr, 'shaderColor' ) );
+        shaderPool.addShader( new ShaderColor ( true, util, glMatrix, webgl, webvr, 'shaderColor' ) );
 
-        renderer.addShader( new shaderDirLightTexture( true, util, glMatrix, webgl, webvr, 'shaderDirLightTexture' ) );
+        shaderPool.addShader( new shaderDirLightTexture( true, util, glMatrix, webgl, webvr, 'shaderDirLightTexture' ) );
 
         // Create the world, which needs WebGL, WebVR, and Prim.
 
-        world = new World( webgl, webvr, prim, renderer );
+        world = new World( webgl, webvr, prim, shaderPool );
 
         // Initialize our Ui.
 
@@ -200,7 +200,7 @@ window.vrmin = world;
 
 
 // TODO: don't automatically update webgl
-// TODO: enclose in a promise, then update renderer and shaders.
+// TODO: enclose in a promise, then update ShaderPool and Shaders.
 // TODO: then call world
 
 // Export our classes to app.js.

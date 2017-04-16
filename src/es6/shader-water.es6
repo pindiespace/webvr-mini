@@ -80,9 +80,9 @@ class ShaderWater extends Shader {
 
     /** 
      * initialize the update() and render() methods for this shader.
-     * @param{Prim[]} objList a list of initializing Prims (optional).
+     * @param{Prim[]} primList a list of initializing Prims (optional).
      */
-     init ( objList ) {
+     init ( primList ) {
 
         let arr = this.setup(),
 
@@ -118,11 +118,11 @@ class ShaderWater extends Shader {
 
         let shaderProgram = program.shaderProgram;
 
-        // If we init with object, add them here.
+        // If we init with primList, add them here.
 
-        if ( objList ) {
+        if ( primList ) {
 
-            program.renderList = this.util.concatArr( program.renderList, objList );
+            program.renderList = this.util.concatArr( program.renderList, primList );
 
         }
 
@@ -130,21 +130,23 @@ class ShaderWater extends Shader {
          * POLYMORPHIC METHODS
          */
 
-        // Check if object is ready to be rendered using this shader.
+        // Check if Prim is ready to be rendered using this Shader.
 
-        program.isReady = ( obj ) => {
+        program.isReady = ( prim ) => {
+
+            // TODO: list everything WaterShader needs for rendering.
 
             return true;
 
         }
 
-        // Update object position, motion - given to World object.
+        // Update Prim position, motion - given to World object.
 
-        program.update = ( obj, MVM ) => {
+        program.update = ( prim, MVM ) => {
 
             // Update the model-view matrix using current Prim position, rotation, etc.
 
-            obj.setMV( mvMatrix );
+            prim.setMV( mvMatrix );
 
             // Compute lighting normals.
 
@@ -158,6 +160,8 @@ class ShaderWater extends Shader {
 
         }
 
+        // Prim rendering - Shader in ShaderPool, rendered by World.
+
         program.render = ( PM, MVM ) => {
 
             gl.useProgram( shaderProgram );
@@ -170,15 +174,15 @@ class ShaderWater extends Shader {
 
             for ( let i = 0, len = program.renderList.length; i < len; i++ ) {
 
-                let obj = program.renderList[ i ];
+                let prim = program.renderList[ i ];
 
                 // Only render if we have at least one texture loaded.
 
-                if ( ! obj.textures[ 0 ] || ! obj.textures[ 0 ].texture ) continue;
+                if ( ! prim.textures[ 0 ] || ! prim.textures[ 0 ].texture ) continue;
 
                 // Update Model-View matrix with standard Prim values.
 
-                program.update( obj, MVM );
+                program.update( prim, MVM );
 
                 // TODO: bind buffers
 

@@ -2,6 +2,7 @@ import Map2d from './map2d';
 import Map3d from './map3d';
 import Mesh from  './mesh';
 import LoadGeometry from './load-geometry';
+import TexturePool from './texture-pool';
 import LoadModel from './load-model';
 import ShaderObj from './shader-obj';
 
@@ -127,6 +128,8 @@ class Prim {
 
         this.geometry = new LoadGeometry( init, util, glMatrix, webgl );
 
+        this.texturePool = new TexturePool( init, util, webgl ); ///////////////////////////////////
+
         /* 
          * Bind the Prim callback for geometry creation.
          */
@@ -146,8 +149,7 @@ class Prim {
      * Get the big array with all vertex data. Every time a 
      * Prim is made, we store a reference in the this.objs[] 
      * array. So, to make one, we just concatenate the 
-     * vertices. Use to send multiple prims sharing the same shader to one 
-     * Renderer.
+     * vertices. Use to send multiple prims sharing the same Shader.
      * @param {glMatrix.vec3[]} vertices
      * @returns {glMatrix.vec3[]} vertices
      */
@@ -167,8 +169,7 @@ class Prim {
 
     /** 
      * get the big array with all index data. Use to 
-     * send multiple prims sharing the same shader to one 
-     * Renderer.
+     * send multiple prims sharing the same Shader.
      * @param {Array} indices the indices to add to the larger array.
      * @returns {Array} the indices.
      */
@@ -185,6 +186,14 @@ class Prim {
         return indices;
 
     }
+
+    /* 
+     * ---------------------------------------
+     * LOADERS
+     * ---------------------------------------
+     */
+
+
 
     /*
      * ---------------------------------------
@@ -359,11 +368,14 @@ class Prim {
         let prim = {};
 
         // Define internal methods for the Prim.
-        // TODO: define renderers for object and store in renderer class.
 
-        prim.setRenderer  = ( renderer ) => {
+        /** 
+         * Set the Shader used for rendering. Only one Shader may be 
+         * used at a time.
+         */
+        prim.setShader  = ( shader ) => {
 
-            prim.renderer = renderer;
+            prim.shader = shader;
 
         };
 
@@ -779,12 +791,18 @@ class Prim {
 
         }
 
+
+        this.texturePool.getTextures( textureImages, prim.textures ); // assume cacheBust === true, mimeType determined by file extension.
+
+
         // TODO: use this!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         //prim.setLight();
 
         // Push into our list of all Prims. Shaders keep a local list of Prims they are rendering.
 
         this.objs.push( prim );
+
+        window.prim = prim;
 
         return prim;
 

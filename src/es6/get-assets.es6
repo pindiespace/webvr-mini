@@ -1,3 +1,4 @@
+
 'use strict'
 
 class GetAssets {
@@ -12,6 +13,8 @@ class GetAssets {
     constructor ( util ) {
 
         this.util = util,
+
+        this.emitter = util.emitter,
 
         this.MIN_WAIT_TIME = 100,
 
@@ -215,6 +218,12 @@ class GetAssets {
 
                         data = response.formData();
 
+                    } else if ( mimeType.indexOf( 'image ') !== this.util.NOT_IN_LIST ) {
+
+                        data = response.blob();
+
+                        /////data = response.arrayBuffer(); // should work with texImage2d
+
                     } else { // all other mime types (e.g. images, audio, video)
 
                         data = response.blob();
@@ -263,7 +272,7 @@ class GetAssets {
 
                     // Run the callback with error values.
 
-                    updateFn( { key: key, data: null, error: response } ); // Send a wrapped error object
+                    updateFn( { key: key, path: requestURL, data: null, error: response } ); // Send a wrapped error object
 
                 } else {
 
@@ -271,7 +280,7 @@ class GetAssets {
 
                     console.log('>>>>>>>>>>>>>>about to call update function!!!!!!')
 
-                    updateFn( { key: key, data: response, error: false } ); // Send the data to the caller.
+                    updateFn( { key: key, path: requestURL, data: response, error: false } ); // Send the data to the caller.
 
                 }
 

@@ -1,10 +1,10 @@
 'use strict' 
 
-class Renderer {
+class ShaderPool {
 
     constructor ( init, util, glMatrix, webgl ) {
 
-        console.log( 'In Renderer class' );
+        console.log( 'In ShaderPool class' );
  
         this.webgl = webgl;
 
@@ -35,7 +35,7 @@ class Renderer {
 
         }
 
-        console.warn( 'Renderer::shaderInList(): shader ' + key + ' not found in list' );
+        console.warn( 'ShaderPool::shaderInList(): shader ' + key + ' not found in list' );
 
         return false;
 
@@ -54,7 +54,7 @@ class Renderer {
 
         } else {
 
-            console.error( 'Renderer::getShader(): shader ' + key + ' not found' );
+            console.error( 'ShaderPool::getShader(): shader ' + key + ' not found' );
 
         }
 
@@ -72,7 +72,7 @@ class Renderer {
 
         if ( ! this.shaderList[ shader.name ] ) {
 
-            console.log( 'Renderer::addShader(): adding ' + shader.name + ' to rendering list' );
+            console.log( 'ShaderPool::addShader(): adding ' + shader.name + ' to rendering list' );
 
             this.shaderList[ shader.name ] = shader;
 
@@ -80,7 +80,7 @@ class Renderer {
 
         } else {
 
-            console.error( 'Renderer::addShader(): already added shader:' + shader.name + ' to Renderer' );
+            console.error( 'ShaderPool::addShader(): already added shader:' + shader.name + ' to Renderer' );
 
         }
 
@@ -154,4 +154,4 @@ class Renderer {
 
 }
 
-export default Renderer;
+export default ShaderPool;
