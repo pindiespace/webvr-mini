@@ -15,6 +15,18 @@ class Emitter {
 
         this.callbacks = {};
 
+        // Define supported emitter events.
+
+        this.events = {
+
+            GEOMETRY_READY: 'geometryready',
+
+            TEXTURE_READY: 'textureready',
+
+            VR_DISPLAY_READY: 'vrdisplayready'
+
+        };
+
     }
 
     emit ( eventName ) {

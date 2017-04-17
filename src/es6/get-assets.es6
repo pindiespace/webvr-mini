@@ -116,9 +116,7 @@ class GetAssets {
 
                 clearTimeout( wrappedPromise.timeoutId );
 
-                window.res = error;
-
-                return wrappedPromise.reject( error ); // fixes it!!!!!!!!!!!!!!! USING Error causes a strange fail!!!!
+                return wrappedPromise.reject( error ); // TODO: using Error causes a strange fail here(!)
 
             }
 
@@ -176,12 +174,6 @@ class GetAssets {
                 redirect: 'follow',
 
                 headers: headers,
-
-                //headers: {
-
-                //    'Accept': mimeType
-
-                //}
 
             },
 

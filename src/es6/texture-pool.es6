@@ -34,11 +34,39 @@ class TexturePool extends GetAssets {
 
         },
 
+        /* 
+         * TODO: 
+         * DXT: supported by all desktop devices and some Android devices
+         * PVR: supported by all iOS devices and some Android devices
+         * ETC1: supported by most Android devices
+         */
+
         this.textureList = [],
 
         this.keyList = [],
 
         this.greyPixel = new Uint8Array( [ 0.5, 0.5, 0.5, 1.0 ] );
+
+        // Define emitter events
+
+        /* 
+         * Bind the Prim callback for geometry creation.
+         */
+
+        this.util.emitter.on( 'textureready', 
+
+            ( prim ) => {
+
+                this.initPrim( prim, prim.vertices, prim.indices, prim.normals, prim.texCoords, prim.tangents );
+
+        } );
+
+
+        if ( init ) {
+
+            // do something
+
+        }
 
     }
 
@@ -154,6 +182,8 @@ class TexturePool extends GetAssets {
 
             obj.key = key;          // Associative key for this object
 
+            // If our key is non-numeric, push it into our keyList indexing the global texture pool.
+
             if( ! this.util.isNumber( key ) ) {
 
                 this.keyList[ key ] = obj;
@@ -161,6 +191,8 @@ class TexturePool extends GetAssets {
             } 
 
             this.textureList.push( obj );
+
+            // Object also saves its position index in the global texture pool.
 
             obj.pos = this.textureList.length - 1;
 
@@ -329,13 +361,13 @@ class TexturePool extends GetAssets {
 
                                 let textureObj = this.addTexture( image, updateObj.path, updateObj.key, mimeType );
 
-                                console.log(")))))))))))textureObj is a:" + textureObj );
+                                // TODO: save seperately, OR DELEte
 
                                 document.body.appendChild( image ); // WORKS PERFECTLY WITH BLOB
 
                                 // Remove the object URL (clear storage)
 
-                                window.URL.revokeObjectURL( this.src );
+                                window.URL.revokeObjectURL( image.src );
 
                                 // TODO: KLUDGE
                                 // TODO: COULD EMIT EVENT HERE.....
