@@ -157,6 +157,12 @@ class GetAssets {
 
         console.log(">>>>MIMETYPE:" + mimeType )
 
+        let headers = new Headers( {
+
+            'Content-Type': mimeType
+
+        } ); 
+
         let ft = this.getWrappedFetch( 
 
             cacheBust ? requestURL + '?' + new Date().getTime() : requestURL,
@@ -169,11 +175,13 @@ class GetAssets {
 
                 redirect: 'follow',
 
-                headers: {
+                headers: headers,
 
-                    'Accept': mimeType
+                //headers: {
 
-                }
+                //    'Accept': mimeType
+
+                //}
 
             },
 

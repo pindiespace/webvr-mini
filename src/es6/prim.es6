@@ -785,11 +785,11 @@ class Prim {
 
         // Multiple textures per Prim. Rendering defines how textures for each Prim type are used.
 
-        for ( let i = 0; i < textureImages.length; i++ ) {
+        //for ( let i = 0; i < textureImages.length; i++ ) {
 
-            this.loadTexture.load( textureImages[ i ], prim );
+        //    this.loadTexture.load( textureImages[ i ], prim );
 
-        }
+        //}
 
 
         this.texturePool.getTextures( textureImages, prim.textures ); // assume cacheBust === true, mimeType determined by file extension.

@@ -4,7 +4,7 @@
   "main": "./src/js/app.js",
   "scripts": {
     "esdoc": "esdoc -c ./esdoc.json",
-    "build": "cross-env __RELEASE__=true __DEV__=false webpack --config webpack-production.config.js -p",
+    "build": "cross-env __RELEASE__=true __DEV__=false webpack -p",
     "dev": "cross-env __RELEASE__=false __DEV__=true webpack",
     "start": "webpack-dev-server --inline --devtool eval --progress --colors --content-base dist"
   },

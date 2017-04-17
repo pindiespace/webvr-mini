@@ -107,9 +107,13 @@ class TexturePool extends GetAssets {
 
                 texture = this.create2dTexture( image, key );
 
+                break;
+
             case gl.TEXTURE_3D:
 
                 texture = this.create3dTexture( image, key );
+
+                break;
 
             case gl.TEXTURE_CUBE_MAP:
 
@@ -123,9 +127,13 @@ class TexturePool extends GetAssets {
 
         }
 
+        console.log( 'after trying to make 2d texture, texture: ' + texture );
+
         if ( texture ) {
 
             let obj = {};
+
+            console.log( 'got a 2d texture' );
 
             /* 
              * We save references to the object in both numeric and associative arrays.
@@ -146,7 +154,7 @@ class TexturePool extends GetAssets {
 
             obj.key = key;          // Associative key for this object
 
-            if( ! this.util.isNumeric( key ) ) {
+            if( ! this.util.isNumber( key ) ) {
 
                 this.keyList[ key ] = obj;
 
@@ -181,7 +189,7 @@ class TexturePool extends GetAssets {
 
         }
 
-        if ( this.util.isNumeric( key ) ) {
+        if ( this.util.isNumber( key ) ) {
 
             return this.textureList[ key ];
 
@@ -291,20 +299,29 @@ class TexturePool extends GetAssets {
 
                 if( mimeType ) {
 
-                    // Image has to be loaded. NOTE: calling our own addTexture as updateFn in GetAssets.
+                    /* 
+                     * Use Fetch API to load the image, wrapped in a Promise timeout with 
+                     * multiple retries possible (in parent class GetAssets). Return a 
+                     * response.blob() for images, and add to DOM or WebGL texture here.
+                     */
 
                     this.doRequest( path, i, 
 
                         ( updateObj ) => {
 
                             /* 
-                             * updateObj returned from GetAssets has the following format:
-                             * { key: key, path: requestURL, data: null|response, error: false|response } 
+                             * updateObj returned from GetAssets has the following structure:
+                             * { 
+                             *   key: key, 
+                             *   path: requestURL, 
+                             *   data: null|response, 
+                             *   error: false|response 
+                             * } 
                              */
 
                             let image = new Image();
 
-                            // Blob data type requires .onload
+                            // Blob data type requires Image .onload for processing.
 
                             image.onload = () => {
 
@@ -316,8 +333,12 @@ class TexturePool extends GetAssets {
 
                                 document.body.appendChild( image ); // WORKS PERFECTLY WITH BLOB
 
+                                // Remove the object URL (clear storage)
+
+                                window.URL.revokeObjectURL( this.src );
+
                                 // TODO: KLUDGE
-                                // TODO: COULD EMIT HERE.....
+                                // TODO: COULD EMIT EVENT HERE.....
 
                                 if ( textureObj ) {
 
@@ -331,7 +352,7 @@ class TexturePool extends GetAssets {
 
                             // Fire the onload even (internal browser instead of off network)
 
-                            image.src = URL.createObjectURL( updateObj.data );
+                            image.src = window.URL.createObjectURL( updateObj.data );
 
                             // TODO: PASS ARRAYBUFFERVIEW TYPE COERCED ARRAYBUFFER
                             // TODO: get ARRAYBUFFERVIEW FROM ARRAYBUFFER
@@ -372,7 +393,7 @@ class TexturePool extends GetAssets {
         ////console.log('(((((((((((create2dTexture, image:' + image)
         //console.log('(((((((((((create2dTexture:image.src:' + image.src)
 
-        //image = new Uint8Array(image); // for arrayBuffer (which should work)
+        //image = new Uint8Array(image); // for arrayBuffer (which didn't work)
 
         gl.pixelStorei( gl.UNPACK_FLIP_Y_WEBGL, true );
 
@@ -384,7 +405,11 @@ class TexturePool extends GetAssets {
 
         if ( image ) {
 
+            console.log('TextureObj::create2DTexture(): HAVE an Image ' + image + ', try .texImage2D')
+
             gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image ); // HASN'T LOADED YET
+
+            console.log('TextureObj::create2DTexture(): texture is now a ' + texture );
 
             // TODO: pass ArrayBufferView for Image and this would work
             //gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, 100, 100, 0, gl.RGBA, gl.UNSIGNED_BYTE, image, 0 );
@@ -421,7 +446,11 @@ class TexturePool extends GetAssets {
 
         gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE );
 
+        console.log( 'TextureObj::create2DTexture(): at end, texture is a:' + texture );
+
         gl.bindTexture( gl.TEXTURE_2D, null );
+
+        console.log( 'TextureObj::create2DTexture(): after unbound, texture is a:' + texture );
 
         return texture;
 
@@ -433,6 +462,8 @@ class TexturePool extends GetAssets {
      */
     create3dTexture ( image, key ) {
 
+        console.log( 'creating 3D texture' );
+
         return null;
 
     }
@@ -442,6 +473,8 @@ class TexturePool extends GetAssets {
      * @memberOf module: webvr-mini/LoadTexture
      */
     createCubeMapTexture ( image, key ) {
+
+        console.log( 'creating cubemap texture' );
 
         return null;
 

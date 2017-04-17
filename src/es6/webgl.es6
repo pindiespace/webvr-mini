@@ -1262,6 +1262,24 @@ class WebGL {
     }
 
     /** 
+     * Convert WebGL ENUM to string.
+     */
+    enumToString ( gl, val ) {
+
+        for ( let i in gl ) {
+
+            if ( gl[ i ] == val ) {
+
+            return i;
+
+            }
+        }
+
+        return '0x' + val.toString( 16 );
+
+    }
+
+    /** 
      * Provide statistics for display as JSON data.
      */
     stats () {
