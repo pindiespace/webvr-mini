@@ -1,7 +1,7 @@
 import Map2d from './map2d';
 import Map3d from './map3d';
 import Mesh from  './mesh';
-import LoadGeometry from './load-geometry';
+import GeometryPool from './geometry-pool';
 import TexturePool from './texture-pool';
 import LoadModel from './load-model';
 import ShaderObj from './shader-obj';
@@ -126,15 +126,19 @@ class Prim {
 
         this.objs = []; // Keep a reference to all created Prims here.
 
-        this.geometry = new LoadGeometry( init, util, glMatrix, webgl );
+        // Attach 1 copy of LoadGeometry to this Factory.
 
-        this.texturePool = new TexturePool( init, util, webgl ); ///////////////////////////////////
+        this.geometryPool = new GeometryPool( init, util, glMatrix, webgl );
+
+        // Attache 1 copy of the Texture loader to this Factory.
+
+        this.texturePool = new TexturePool( init, util, webgl );
 
         /* 
          * Bind the Prim callback for geometry creation.
          */
 
-        this.util.emitter.on( 'geometryready', 
+        this.util.emitter.on( this.util.emitter.events.GEOMETRY_READY, 
 
             ( prim ) => {
 
@@ -358,7 +362,7 @@ class Prim {
 
         const mat4 = this.glMatrix.mat4;
 
-        if ( ! this.geometry.checkType( type ) ) {
+        if ( ! this.geometryPool.checkType( type ) ) {
 
             console.error( 'Prim::createPrim(): unsupported Prim type:' + type );
 
@@ -519,7 +523,7 @@ class Prim {
 
             } else {
 
-                geo.setNormals( this.geometry.computeNormals( geo.vertices.data, geo.indices.data, [], prim.useFaceNormals ) );
+                geo.setNormals( this.geometryPool.computeNormals( geo.vertices.data, geo.indices.data, [], prim.useFaceNormals ) );
 
             }
 
@@ -539,7 +543,7 @@ class Prim {
 
                 console.log("Prim:" + prim.name + ' recalculating texture coordinates' );
 
-                geo.setTexCoords( this.geometry.computeTexCoords( geo.vertices.data ) );
+                geo.setTexCoords( this.geometryPool.computeTexCoords( geo.vertices.data ) );
 
             }
 
@@ -557,7 +561,7 @@ class Prim {
 
             } else {
 
-                geo.setTangents( this.geometry.computeTangents ( geo.vertices.data, geo.indices.data, geo.normals.data, geo.texCoords.data, [] ) );
+                geo.setTangents( this.geometryPool.computeTangents ( geo.vertices.data, geo.indices.data, geo.normals.data, geo.texCoords.data, [] ) );
 
             }
 
@@ -575,7 +579,7 @@ class Prim {
 
             } else {
 
-                geo.setColors( this.geometry.computeColors( geo.normals.data, [] ) );
+                geo.setColors( this.geometryPool.computeColors( geo.normals.data, [] ) );
 
             }
 
@@ -585,7 +589,7 @@ class Prim {
 
         prim.computeBoundingBox = () => {
 
-            this.geometry.computeBoundingBox( prim.geometry.vertices );
+            this.geometryPool.computeBoundingBox( prim.geometry.vertices );
 
         };
 
@@ -593,7 +597,7 @@ class Prim {
 
         prim.computeBoundingSphere = () => {
 
-            this.geometry.computeBoundingSphere( prim.geometry.vertices );
+            this.geometryPool.computeBoundingSphere( prim.geometry.vertices );
 
         };
 
@@ -601,7 +605,7 @@ class Prim {
 
         prim.scale = ( scale ) => { 
 
-            this.geometry.scale ( scale, prim.geometry.vertices );
+            this.geometryPool.scale ( scale, prim.geometry.vertices );
 
         };
 
@@ -609,7 +613,7 @@ class Prim {
 
         prim.move = ( pos ) => { 
 
-            this.geometry.computeMove( scale, prim.geometry.vertices );
+            this.geometryPool.computeMove( scale, prim.geometry.vertices );
 
         };
 
@@ -617,7 +621,7 @@ class Prim {
 
         prim.moveTo = ( pos ) => {
 
-            this.geometry.move( [ 
+            this.geometryPool.move( [ 
 
             this.position[ 0 ] - pos[ 0 ],
 
@@ -659,7 +663,7 @@ class Prim {
 
         // If we're a mesh, we need modelFiles.
 
-        if ( prim.type === this.geometry.typeList.MESH && modelFiles.length < 1 ) {
+        if ( prim.type === this.geometryPool.typeList.MESH && modelFiles.length < 1 ) {
 
             console.error( 'invalid Mesh Prim - needs model files' );
 
@@ -710,7 +714,7 @@ class Prim {
 
         // Invisible if this.INVISIBLE
 
-        prim.visibleFrom = this.geometry.OUTSIDE;
+        prim.visibleFrom = this.geometryPool.OUTSIDE;
 
         // Repeatedly apply the texture to each Face of the Prim (instead of wrapping around the Mesh).
         // If we have multiple textures, apply in succession.
@@ -775,25 +779,11 @@ class Prim {
 
         // Create or load Geometry data (may alter some of the above default properties).
 
-        this.geometry[ type ]( prim );
+        this.geometryPool[ type ]( prim );
 
-        // Create default WebGL buffers to bind our Prim coordinate data to.
+        // Get the static network textures async (use emitter to decide what to do when each texture loads).
 
-        // TODO: HAVE THIS HAPPEN WHEN WE ADD BUFFER DATA
-
-        ///////////prim.geometry = prim.geometry.createGLBuffers(); // ???????????????WHY CAN'T WE MOVE THIS EARLIER????????????????????????????
-
-        // Multiple textures per Prim. Rendering defines how textures for each Prim type are used.
-
-        //for ( let i = 0; i < textureImages.length; i++ ) {
-
-        //    this.loadTexture.load( textureImages[ i ], prim );
-
-        //}
-
-
-        this.texturePool.getTextures( textureImages, prim.textures ); // assume cacheBust === true, mimeType determined by file extension.
-
+        this.texturePool.getTextures( prim, textureImages, true, false ); // assume cacheBust === true, mimeType determined by file extension.
 
         // TODO: use this!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         //prim.setLight();

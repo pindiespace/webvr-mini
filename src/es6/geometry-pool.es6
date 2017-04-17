@@ -5,11 +5,11 @@ import LoadModel from './load-model';
 
 'use strict'
 
-class LoadGeometry {
+class GeometryPool {
 
     constructor ( init, util, glMatrix, webgl ) {
 
-        console.log( 'in LoadGeometry class' );
+        console.log( 'in GeometryPool class' );
 
         this.util = util,
 
@@ -145,7 +145,7 @@ class LoadGeometry {
 
             ( prim ) => {
 
-                // TODO: call update function
+                // TODO: call update function when a geometry is ready.
 
         } );
 
@@ -1201,7 +1201,7 @@ class LoadGeometry {
 
         if ( ! prim.spaceMap ) {
 
-            console.log( 'LoadGeometry::geometryPointCloud(): adding spaceMap for:' + prim.name );
+            console.log( 'GeometryPool::geometryPointCloud(): adding spaceMap for:' + prim.name );
 
             prim.sphereMap = new Map3d( this.util );
 
@@ -3417,4 +3417,4 @@ class LoadGeometry {
 
 }
 
-export default LoadGeometry;
+export default GeometryPool;

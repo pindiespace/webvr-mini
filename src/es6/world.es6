@@ -1,6 +1,5 @@
 // TODO: TEMPORARY DEBUG
 import GetAssets from './get-assets';
-import TexturePool from './texture-pool';
 
 'use strict'
 
@@ -107,13 +106,11 @@ class World {
 
         const vec4 = this.glMatrix.vec4;
 
-        const vec5 = this.prim.geometry.vec5;
+        const vec5 = this.prim.geometryPool.vec5;
 
-        console.log("(((((((THIS PRIM GEOMETRY:" + this.prim.geometry)
+        const typeList = this.prim.geometryPool.typeList;
 
-        const typeList = this.prim.geometry.typeList;
-
-        const directions = this.prim.geometry.directions;
+        const directions = this.prim.geometryPool.directions;
 
         const util = this.util;
 
@@ -648,13 +645,12 @@ class World {
 
 /////////////////////////////////////////////////////////
 
-// TODO: TEMP DEBUG
+    /* TODO: TEMP DEBUG
 
     let mimeType = 'image/png';
 
     let cacheBust = true;
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     let getter = new GetAssets( this.util );
 
     //let phil = []; // ASSET ARRAY
@@ -705,12 +701,8 @@ class World {
 
     getter.addRequests( bob );
 
+    */
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //let texturePool = new TexturePool( this.util, this.webgl );
-
-    //texturePool.addRequests( bob );
-
-    ////////////////////////////////////////////////////////
 
         // NOTE: the init() method sets up the update() and render() methods for the Shader.
 

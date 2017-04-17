@@ -39,6 +39,8 @@ class TexturePool extends GetAssets {
          * DXT: supported by all desktop devices and some Android devices
          * PVR: supported by all iOS devices and some Android devices
          * ETC1: supported by most Android devices
+         * @link https://github.com/toji/texture-tester/blob/master/js/webgl-texture-util.js
+         * @link https://github.com/toji/webgl-texture-utils
          */
 
         this.textureList = [],
@@ -53,11 +55,11 @@ class TexturePool extends GetAssets {
          * Bind the Prim callback for geometry creation.
          */
 
-        this.util.emitter.on( 'textureready', 
+        this.util.emitter.on( this.util.emitter.events.TEXTURE_READY, 
 
             ( prim ) => {
 
-                this.initPrim( prim, prim.vertices, prim.indices, prim.normals, prim.texCoords, prim.tangents );
+                // TODO: call update function
 
         } );
 
@@ -75,10 +77,9 @@ class TexturePool extends GetAssets {
    * Sets a texture to a 1x1 pixel color. 
    * @param {WebGLRenderingContext} gl the WebGLRenderingContext.
    * @param {WebGLTexture} texture the WebGLTexture to set parameters for.
-   * @param {WebGLParameter} target.
-   * @memberOf module: webvr-mini/LoadTexture
+   * @param {WebGLParameter} type the WebGL texture type/target.
    */
-    setDefaultTexturePixel ( texture, target ) {
+    setDefaultTexturePixel ( texture, type ) {
 
         let gl = this.webgl.getContext();
 
@@ -86,7 +87,9 @@ class TexturePool extends GetAssets {
 
         let color = this.greyPixel;
 
-        if ( target === gl.TEXTURE_CUBE_MAP ) {
+        // Handle all local textures.
+
+        if ( type === gl.GL_TEXTURE_CUBE_MAP ) {
 
             for ( let i = 0; i < 6; ++i ) {
 
@@ -94,13 +97,15 @@ class TexturePool extends GetAssets {
 
             }
 
-        } else if ( target === gl.TEXTURE_3D ) {
+        } else if ( type === gl.TEXTURE_3D ) {
 
-            gl.texImage3D( target, 0, gl.RGBA, 1, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, color );
+            gl.texImage3D( type, 0, gl.RGBA, 1, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, color );
 
         } else {
 
-            gl.texImage2D( target, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, color );
+            // gl.TEXTURE_2D.
+
+            gl.texImage2D( type, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, color );
 
         }
 
@@ -137,6 +142,12 @@ class TexturePool extends GetAssets {
 
                 break;
 
+            case gl.TEXTURE_2D_ARRAY:
+
+                // TODO: make this.
+
+                break;
+
             case gl.TEXTURE_3D:
 
                 texture = this.create3dTexture( image, key );
@@ -145,23 +156,23 @@ class TexturePool extends GetAssets {
 
             case gl.TEXTURE_CUBE_MAP:
 
-            case gl.TEXTURE_CUBE_MAP_POSITIVE_X:
+                texture = this.createCubeMapTexture( image, key );
 
                 break;
 
             default:
 
+                console.warn( 'TexturePool::addTexture(): unsupported texture requested' );
+
                 break;
 
         }
 
-        console.log( 'after trying to make 2d texture, texture: ' + texture );
+        // If we got a texture, construct the output object for JS.
 
         if ( texture ) {
 
             let obj = {};
-
-            console.log( 'got a 2d texture' );
 
             /* 
              * We save references to the object in both numeric and associative arrays.
@@ -175,8 +186,6 @@ class TexturePool extends GetAssets {
             obj.type = type, // gl.TEXTURE_2D, gl.TEXTURE_3D...
 
             obj.path = path,        // URL of object
-
-            obj.src = path, ////////////////TODO: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! REPLACE.src with path in Prim
 
             obj.texture = texture,  // WebGLTexture
 
@@ -299,9 +308,11 @@ class TexturePool extends GetAssets {
      * Load textures, using a list of paths. If a Texture already exists, 
      * just return it. Otherwise, do the load.
      * @param {Array[String]} pathList a list of URL paths to load.
-     * @param {Array[Object]} primTextureList the Prim textureList. 
+     * @param {Array[Object]} primTextureList the Prim textureList array for texture objects.
+     * @param {Boolean} cacheBust if true, add a http://url?random query string to request.
+     * @param {Boolean} keepDOMImage if true, keep the Image object we created the texture from (internal Blob). 
      */
-    getTextures ( pathList, primTextureList, cacheBust = true ) {
+    getTextures ( prim, pathList, cacheBust = true, keepDOMImage = false ) {
 
         // TODO: check texture list. If paths are already there, just use the path
         // TODO: and return the webgl texture buffer object.
@@ -314,12 +325,7 @@ class TexturePool extends GetAssets {
 
             if ( poolTexture ) {
 
-                // Immediately ready, so just bind back to Prim.
-
-                // TODO: kludge
-                poolTexture.src = poolTexture.path;
-
-                primTextureList.push( poolTexture ); /////////////////////////////////
+                prim.textures.push( poolTexture ); // just reference an existing texture in this pool.
 
             } else {
 
@@ -334,7 +340,9 @@ class TexturePool extends GetAssets {
                     /* 
                      * Use Fetch API to load the image, wrapped in a Promise timeout with 
                      * multiple retries possible (in parent class GetAssets). Return a 
-                     * response.blob() for images, and add to DOM or WebGL texture here.
+                     * response.blob() for images, and add to DOM or WebGL texture here. 
+                     * We apply the Blob data to a JS image to decode. Since this may not 
+                     * be insteant, we catch the .onload event to actually send the WebGL texture.
                      */
 
                     this.doRequest( path, i, 
@@ -346,7 +354,7 @@ class TexturePool extends GetAssets {
                              * { 
                              *   key: key, 
                              *   path: requestURL, 
-                             *   data: null|response, 
+                             *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
                              *   error: false|response 
                              * } 
                              */
@@ -357,38 +365,38 @@ class TexturePool extends GetAssets {
 
                             image.onload = () => {
 
-                            // Create a WebGLTexture from the Image (left off 'type' for gl.TEXTURE type).
+                                //document.body.appendChild( image );
+
+                                // Create a WebGLTexture from the Image (left off 'type' for gl.TEXTURE type).
 
                                 let textureObj = this.addTexture( image, updateObj.path, updateObj.key, mimeType );
 
-                                // TODO: save seperately, OR DELEte
-
-                                document.body.appendChild( image ); // WORKS PERFECTLY WITH BLOB
-
-                                // Remove the object URL (clear storage)
-
-                                window.URL.revokeObjectURL( image.src );
-
-                                // TODO: KLUDGE
-                                // TODO: COULD EMIT EVENT HERE.....
-
                                 if ( textureObj ) {
 
-                                    textureObj.src = textureObj.path;
+                                    if( ! keepDOMImage ) {
 
-                                    primTextureList.push( textureObj );
+                                        // Kill the reference to our local Image and its (Blob) data.
+
+                                        textureObj.image = null;
+
+                                        window.URL.revokeObjectURL( image.src );
+
+                                    }
+
+                                    // Emit a 'texture ready event' with the key in the pool and path.
+
+                                    this.util.emitter.emit( this.util.emitter.events.TEXTURE_READY, prim, textureObj.key );
+
+                                    prim.textures.push( textureObj );
 
                                 }
 
                             } // end of image.onload
 
-                            // Fire the onload even (internal browser instead of off network)
+                            // Create a URL to the Blob, and fire the onload event (internal browser URL instead of network).
 
                             image.src = window.URL.createObjectURL( updateObj.data );
 
-                            // TODO: PASS ARRAYBUFFERVIEW TYPE COERCED ARRAYBUFFER
-                            // TODO: get ARRAYBUFFERVIEW FROM ARRAYBUFFER
-                            //let textureObj = this.addTexture( updateObj.data, updateObj.path, updateObj.key, mimeType );
 
                         }, cacheBust, mimeType, 0 ); // end of this.doRequest(), initial request at 0 tries
 
@@ -412,20 +420,15 @@ class TexturePool extends GetAssets {
 
     /** 
      * Create a new WebGL texture object.
+     * @param {Image} image a JS Image object.
+     * @param {String} key a numeric or text key referencing this texture in the load pool.
+     * @param {Number} compressed the parameter identifying a compressed texture, e.g. gl.COMPRESSED_RGBA8_ETC2_EAC
      */
-    create2dTexture ( image, key ) {
+    create2dTexture ( image, key, compressed ) {
 
         let gl = this.webgl.getContext(),
 
-        src = image.src,
-
         texture = gl.createTexture();
-
-        ///console.log('(((((((((((create2dTexture, instanceof arraybuffer:' + ( image instanceof ArrayBuffer) ) 
-        ////console.log('(((((((((((create2dTexture, image:' + image)
-        //console.log('(((((((((((create2dTexture:image.src:' + image.src)
-
-        //image = new Uint8Array(image); // for arrayBuffer (which didn't work)
 
         gl.pixelStorei( gl.UNPACK_FLIP_Y_WEBGL, true );
 
@@ -433,18 +436,14 @@ class TexturePool extends GetAssets {
 
         gl.bindTexture( gl.TEXTURE_2D, texture );
 
-        // Use image, or default to single-color texture if image is not present.
+        // Use JS Image object, or default to single-color texture if image is not present.
 
         if ( image ) {
 
-            console.log('TextureObj::create2DTexture(): HAVE an Image ' + image + ', try .texImage2D')
-
             gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image ); // HASN'T LOADED YET
 
-            console.log('TextureObj::create2DTexture(): texture is now a ' + texture );
-
-            // TODO: pass ArrayBufferView for Image and this would work
-            //gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, 100, 100, 0, gl.RGBA, gl.UNSIGNED_BYTE, image, 0 );
+            // TODO: pass ArrayBufferView for Image and this would work?
+            // TODO: gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, 100, 100, 0, gl.RGBA, gl.UNSIGNED_BYTE, image, 0 );
 
             // TODO: WHEN TO USE gl.renderBufferStorage()???
 
@@ -478,11 +477,7 @@ class TexturePool extends GetAssets {
 
         gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE );
 
-        console.log( 'TextureObj::create2DTexture(): at end, texture is a:' + texture );
-
         gl.bindTexture( gl.TEXTURE_2D, null );
-
-        console.log( 'TextureObj::create2DTexture(): after unbound, texture is a:' + texture );
 
         return texture;
 
@@ -492,23 +487,129 @@ class TexturePool extends GetAssets {
      * Upload a 3d texture.
      * @memberOf module: webvr-mini/LoadTexture
      */
-    create3dTexture ( image, key ) {
+    create3dTexture ( data, size, key ) {
 
         console.log( 'creating 3D texture' );
 
-        return null;
+        let gl = this.webgl.getContext(),
+
+        texture = gl.createTexture();
+
+        gl.pixelStorei( gl.UNPACK_FLIP_Y_WEBGL, true );
+
+        // Bind the texture data to the videocard, receive a WebGL texture in our textureObject.
+
+        gl.bindTexture( gl.TEXTURE_3D, texture );
+
+        // Use JS Image object, or default to single-color texture if image is not present.
+
+        if ( image ) {
+
+            gl.texParameteri( gl.TEXTURE_3D, gl.TEXTURE_BASE_LEVEL, 0);
+
+            gl.texParameteri( gl.TEXTURE_3D, gl.TEXTURE_MAX_LEVEL, Math.log2( size ) );
+
+            gl.texParameteri( gl.TEXTURE_3D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR );
+
+            gl.texParameteri( gl.TEXTURE_3D, gl.TEXTURE_MAG_FILTER, gl.LINEAR );
+
+            gl.texImage3D( 
+
+                gl.TEXTURE_3D,    // target
+
+                0,                // level
+
+                gl.R8,            // internalformat
+
+                data.width,       // width
+
+                data.height,      // height
+
+                data.depth,       // depth
+
+                0,                // border
+
+                gl.RED,           // format
+
+                gl.UNSIGNED_BYTE, // data type
+
+                data              // data pixels
+
+            );
+
+
+        } else {
+
+            console.error( 'TextureObj::create2DTexture(): no data (' + data + '), for 3d, giving up' );
+
+        }
+
+        // Generate mipmaps.
+
+        gl.generateMipmap( gl.TEXTURE_3D );
+
+        gl.bindTexture( gl.TEXTURE_3D, null );
+
+        return texture;
 
     }
 
     /** 
-     * Upload a cubemap texture.
+     * Upload a cubemap texture. Note that this can't be called unless a cubemap set 
+     * is available. Typically called by a Prim using a cubemap after all the cubemap textures 
+     * have been loaded.
      * @memberOf module: webvr-mini/LoadTexture
      */
-    createCubeMapTexture ( image, key ) {
+    createCubeMapTexture ( images, key ) {
 
         console.log( 'creating cubemap texture' );
 
-        return null;
+        let gl = this.webgl.getContext(),
+
+        texture = gl.createTexture();
+
+        gl.pixelStorei( gl.UNPACK_FLIP_Y_WEBGL, true );
+
+        // Bind the texture data to the videocard, receive a WebGL texture in our textureObject.
+
+        gl.bindTexture( gl.TEXTURE_CUBE_MAP, texture );
+
+        // Use JS Image object, or default to single-color texture if image is not present.
+
+        if ( images ) {
+
+            gl.bindTexture( gl.TEXTURE_CUBE_MAP, texture);
+
+            gl.texParameteri( gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE ),
+
+            gl.texParameteri( gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE ),
+
+            gl.texParameteri( gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.NEAREST ),
+
+            gl.texParameteri( gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAG_FILTER, gl.NEAREST ),
+
+            gl.texImage2D( gl.TEXTURE_CUBE_MAP_POSITIVE_X, 0, format, format, type, images.pos.x ),
+
+            gl.texImage2D( gl.TEXTURE_CUBE_MAP_POSITIVE_Y, 0, format, format, type, images.pos.y ),
+
+            gl.texImage2D( gl.TEXTURE_CUBE_MAP_POSITIVE_Z, 0, format, format, type, images.pos.z ),
+
+            gl.texImage2D( gl.TEXTURE_CUBE_MAP_NEGATIVE_X, 0, format, format, type, images.neg.x ),
+
+            gl.texImage2D( gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, format, format, type, images.neg.y ),
+
+            gl.texImage2D( gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, format, format, type, images.neg.z );
+
+
+        } else {
+
+            console.error( 'TextureObj::create2DTexture(): no data (' + images + '), for cubemap, giving up' );
+
+        }
+
+        gl.bindTexture( gl.TEXTURE_CUBE_MAP, null );
+
+        return texture;
 
     }
 

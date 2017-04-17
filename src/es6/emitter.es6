@@ -19,9 +19,13 @@ class Emitter {
 
         this.events = {
 
-            GEOMETRY_READY: 'geometryready',
+            GEOMETRY_READY: 'geometryready',      // Sends Prim reference. Not used for procedural geometry.
 
-            TEXTURE_READY: 'textureready',
+            MATERIAL_READY: 'materialready',      // Sends Prim reference. Not used for procedural geometry.
+
+            TEXTURE_READY: 'textureready',        // sends Prim reference, key in Prim texture Array.
+
+            CUBEMAP_READY: 'cubemapready',
 
             VR_DISPLAY_READY: 'vrdisplayready'
 
