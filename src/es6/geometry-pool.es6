@@ -2,12 +2,13 @@ import Map2d from './map2d';
 import Map3d from './map3d';
 import Mesh from  './mesh';
 import LoadModel from './load-model';
+import ModelPool from './model-pool';
 
 'use strict'
 
 class GeometryPool {
 
-    constructor ( init, util, glMatrix, webgl ) {
+    constructor ( init, util, glMatrix, webgl, modelPool ) {
 
         console.log( 'in GeometryPool class' );
 
@@ -136,6 +137,10 @@ class GeometryPool {
         // Math shorthand.
 
         this.TWO_PI = Math.PI * 2;
+
+        // Save a reference to the modelPool (passed from Prim)
+
+        this.modelPool = modelPool;
 
         /* 
          * Bind the Prim callback for geometry creation.
@@ -3379,15 +3384,15 @@ class GeometryPool {
 
         let geo = prim.geometry;
 
-        for ( let i = 0; i < prim.models.length; i++ ) {
+        console.log( '&&&&&TRYING TO LOAD MODEL:' + prim.name + ' WITH GETMODEL')
 
-            console.log(">>>>>>>>>>>>>>geometryMesh():" + prim.models[ i ] );
+        this.modelPool.getModels( prim, prim.models, true );
 
-            /* 
-             * NOTE: the final callback is given the Prim to manipulate by loadModel.load(). 
-             * Intermediate callbacks between files loaded (e.g. material files) get the 
-             * empty function below.
-             */
+/*
+
+    console.log(">>>>>>>>>>>>>>geometryMesh():" + prim.models[ i ] );
+
+    for ( let i = 0; i < prim.models.length; i++ ) {
 
         let lm = new LoadModel( true, this.util, this.glMatrix, this.webgl, this.loadTexture );
 
@@ -3410,6 +3415,8 @@ class GeometryPool {
             );
 
         } // end of for loop.
+*/
+
 
         return false;
 

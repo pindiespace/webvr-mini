@@ -1,8 +1,8 @@
-import GetAssets from './get-assets';
+import AssetPool from './asset-pool';
 
 'use strict'
 
-class TexturePool extends GetAssets {
+class TexturePool extends AssetPool {
 
     /** 
      * Manage texture assets, similar to GeoObj for 
@@ -35,7 +35,7 @@ class TexturePool extends GetAssets {
         },
 
         /* 
-         * TODO: 
+         * TODO: COMPRESSED TEXTURES
          * DXT: supported by all desktop devices and some Android devices
          * PVR: supported by all iOS devices and some Android devices
          * ETC1: supported by most Android devices
@@ -43,17 +43,12 @@ class TexturePool extends GetAssets {
          * @link https://github.com/toji/webgl-texture-utils
          */
 
-        this.textureList = [],
 
-        this.keyList = [],
+        // Default texture pixel.
 
         this.greyPixel = new Uint8Array( [ 0.5, 0.5, 0.5, 1.0 ] );
 
-        // Define emitter events
-
-        /* 
-         * Bind the Prim callback for geometry creation.
-         */
+        // Emit a 'texture ready' event when WebGL texture is uploaded.
 
         this.util.emitter.on( this.util.emitter.events.TEXTURE_READY, 
 
@@ -113,6 +108,11 @@ class TexturePool extends GetAssets {
 
     /** 
      * Create a WebGL texture from a JavaScript Image object, and add it to our texture list.
+     * @param {Image} image a JS Image object with defined .src
+     * @param {String} path the file URL for the texture.
+     * @param {String|Number} key the key (index) for assigning the texture in the calling Prim .textures array
+     * @param {String} mimeType the MIME type of the image
+     * @param {Number} type the WebGL texture type (e.g. TEXTURE_2D, TEXTURE_CUBE_MAP).
      */
     addTexture ( image, path, key, mimeType, type ) {
 
@@ -191,6 +191,11 @@ class TexturePool extends GetAssets {
 
             obj.key = key;          // Associative key for this object
 
+            // Add the asset to our texture pool.
+
+            return this.addAsset( key, obj );
+
+            /*
             // If our key is non-numeric, push it into our keyList indexing the global texture pool.
 
             if( ! this.util.isNumber( key ) ) {
@@ -199,13 +204,14 @@ class TexturePool extends GetAssets {
 
             } 
 
-            this.textureList.push( obj );
+            this.numericList.push( obj );
 
             // Object also saves its position index in the global texture pool.
 
-            obj.pos = this.textureList.length - 1;
+            obj.pos = this.numericList.length - 1;
 
             return obj;
+            */
 
         } else {
 
@@ -218,97 +224,9 @@ class TexturePool extends GetAssets {
     }
 
     /** 
-     * Find a texture by its key (numeric or string)
-     */
-    textureInList( key ) {
-
-        if ( ! key ) {
-
-            console.error( 'TextureObj::textureInlist(): undefined key' );
-
-            return false;
-
-        }
-
-        if ( this.util.isNumber( key ) ) {
-
-            return this.textureList[ key ];
-
-        } else if ( this.keyList[ key ] ) {
-
-            return this.keyList[ key ];
-
-        }
-
-        return null;
-
-    }
-
-    /** 
-     * Find a texture by its path, if the path was not used as the key.
-     * @param {String} path the URL of the texture file.
-     * @returns {Boolean} if found in current textureList, return true, else false.
-     */
-    pathInList ( path ) {
-
-        for ( let i = 0; i < this.textureList[ i ]; i++ ) {
-
-            if( this.textureList[ i ].path === path ) {
-
-                return this.textureList[ i ];
-
-            }
-
-        }
-
-        return null;
-
-    }
-
-    /** 
-     * Remove a texture from both numeric and associative arrays.
-     * @param {String|Number} key
-     * @returns {Boolean} if found and deleted, return true, else false.
-     */
-    removeTexture( key ) {
-
-        let obj = null;
-
-        if ( this.util.isNumeric( key ) ) {
-
-            obj = this.textureList.splice( key, 1 );
-
-            if ( obj.length !== 0 ) {
-
-                delete this.keyList[ obj.key ];
-
-            }
-
-        } else if ( this.keyList[ key ] ) {
-
-            obj = this.keyList[ key ];
-
-            if ( obj ) {
-
-                this.textureList.splice( obj.pos, 1 );
-
-                delete this.keyList[ key ];
-
-            }
-
-        } else {
-
-            console.warn( 'TextureObj::removeTexture(): key not found in textureList' );
-
-        }
-
-    }
-
-    /** 
      * Load textures, using a list of paths. If a Texture already exists, 
      * just return it. Otherwise, do the load.
      * @param {Array[String]} pathList a list of URL paths to load.
-     * @param {Array[Object]} primTextureList the Prim textureList array for texture objects.
      * @param {Boolean} cacheBust if true, add a http://url?random query string to request.
      * @param {Boolean} keepDOMImage if true, keep the Image object we created the texture from (internal Blob). 
      */

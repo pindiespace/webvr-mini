@@ -1,7 +1,7 @@
 
 'use strict'
 
-class GetAssets {
+class AssetPool {
 
     /** 
      * Load a set of URLs to grab, and run parallel, queued requests until 
@@ -20,7 +20,167 @@ class GetAssets {
 
         this.MAX_TRIES = 6;
 
+        // Store assets as a pool, with two arrays referencing them (numeric and key-based).
+
+        this.numericList = [],
+
+        this.keyList = [];
+
     }
+
+    /*
+     * ---------------------------------------
+     * ASSET POOL OPERATIONS
+     * ---------------------------------------
+     */
+
+    /** 
+     * Find a texture by its path, if the path was not used as the key.
+     * @param {String} path the URL of the texture file.
+     * @returns {Boolean} if found in current textureList, return true, else false.
+     */
+    pathInList ( path ) {
+
+        for ( let i = 0; i < this.numericList[ i ]; i++ ) {
+
+            if( this.numericList[ i ].path === path ) {
+
+                return this.numericList[ i ];
+
+            }
+
+        }
+
+        return null;
+
+    }
+
+    /** 
+     * Find a texture by its key (numeric or string)
+     */
+    assetInList( key ) {
+
+        if ( ! key ) {
+
+            console.error( 'AssetPool::assetInlist(): undefined key' );
+
+            return false;
+
+        }
+
+        if ( this.util.isNumber( key ) ) {
+
+            return this.numericList[ key ];
+
+        } else if ( this.keyList[ key ] ) {
+
+            return this.keyList[ key ];
+
+        }
+
+        return null;
+
+    }
+
+    /*
+     * add an asset to the pool.
+     * @param {String|Number} key the key of the object, either a number or a guid style key.
+     * @param {Object} the asset.
+     * @returns {Object} the stored object.
+    */
+    addAsset ( key, obj ) {
+
+        if( ! this.util.isNumber( key ) ) { // guid key
+
+            // Object saves its associative key.
+
+            obj.key = key;
+
+            if ( this.keyList[ key ] ) {
+
+                if ( this.keyList[ key ] === obj ) {
+
+                    console.warn( 'AssetPool::addAsset(): asset ' + key + ' already added to pool' );
+
+                } else {
+
+                    console.warn( 'AssetPool::addAsset(): replacing asset at key:' + key );  
+
+                }
+
+            }
+
+            this.keyList[ key ] = obj;
+    
+        } else { // numerical key
+
+            let pos = this.numericList.indexOf( obj );
+
+            if ( pos !== this.NOT_IN_LIST ) {
+
+                obj.pos = pos;
+
+                console.warn( 'AssetPool::addAsset(): asset ' + key + ' already added to pool' );
+
+            } else {
+
+                this.numericList.push( obj );
+
+                // Object also saves its position index in the global texture pool.
+
+                obj.pos = this.numericList.length - 1;
+
+            }
+
+        }
+
+        // Return the asset
+
+        return obj;
+
+    }
+
+    removeAsset ( key ) {
+
+        let obj = null;
+
+        if ( this.util.isNumeric( key ) ) {
+
+            obj = this.numericList.splice( key, 1 );
+
+            if ( obj.length !== 0 ) {
+
+                delete this.keyList[ key ];
+
+            }
+
+        } else if ( this.keyList[ key ] ) {
+
+            obj = this.keyList[ key ];
+
+            if ( obj ) {
+
+                this.numericList.splice( obj.pos, 1 );
+
+                delete this.keyList[ key ];
+
+            }
+
+        } else {
+
+            console.warn( 'AssetPool::removeAsset(): key not found in assetList' );
+
+        }
+
+        return obj;
+
+    }
+
+    /*
+     * ---------------------------------------
+     * FETCH API (WRAPPED)
+     * ---------------------------------------
+     */
 
     /** 
      * Wrap a Promise in an object.
@@ -69,7 +229,7 @@ class GetAssets {
 
         wrappedPromise.timeoutId = setTimeout( () => {
 
-            console.warn( 'GetAssets::getWrappedFetch(): TIMEOUT ' + wrappedPromise.url );
+            console.warn( 'AssetPool::getWrappedFetch(): TIMEOUT ' + wrappedPromise.url );
 
             wrappedPromise.catch( 0 );
 
@@ -102,7 +262,7 @@ class GetAssets {
 
             ( response ) => {
 
-                console.warn( 'GetAssets::getWrappedFetch(): OK, RESOLVE ' + wrappedPromise.url );
+                console.warn( 'AssetPool::getWrappedFetch(): OK, RESOLVE ' + wrappedPromise.url );
 
                 clearTimeout( wrappedPromise.timeoutId );
 
@@ -112,7 +272,7 @@ class GetAssets {
 
             ( error ) => {
 
-                console.warn( 'GetAssets::getWrappedFetch(): NOT OK, REJECT ' + wrappedPromise.url );
+                console.warn( 'AssetPool::getWrappedFetch(): NOT OK, REJECT ' + wrappedPromise.url );
 
                 clearTimeout( wrappedPromise.timeoutId );
 
@@ -126,7 +286,7 @@ class GetAssets {
 
             ( error ) => {
 
-                console.warn( 'GetAssets::getWrappedFetch(): NOT OK, CATCH ' + wrappedPromise.url );
+                console.warn( 'AssetPool::getWrappedFetch(): NOT OK, CATCH ' + wrappedPromise.url );
 
                 clearTimeout( wrappedPromise.timeoutId );
 
@@ -192,13 +352,13 @@ class GetAssets {
 
             ( response ) => {
 
-                console.warn( '1. GetAssets::doRequest(): ft.promise FIRST .then OK, response.status:' + response.status + ' for ' + ft.url );
+                console.warn( '1. AssetPool::doRequest(): ft.promise FIRST .then OK, response.status:' + response.status + ' for ' + ft.url );
 
-                console.warn( '1. GetAssets::doRequest(): ft.promise FIRST .then OK, response:' + response + ' for ' + ft.url );
+                console.warn( '1. AssetPool::doRequest(): ft.promise FIRST .then OK, response:' + response + ' for ' + ft.url );
 
-                console.warn( '1. GetAssets::doRequest(): ft.promise FIRST .then OK, tries:' + ft.tries + ' for ' + ft.url );
+                console.warn( '1. AssetPool::doRequest(): ft.promise FIRST .then OK, tries:' + ft.tries + ' for ' + ft.url );
 
-                console.warn( '1. GetAssets::doRequest(): ft.promise FIRST .then OK, mimeType:' + mimeType + ' for ' + ft.url );
+                console.warn( '1. AssetPool::doRequest(): ft.promise FIRST .then OK, mimeType:' + mimeType + ' for ' + ft.url );
 
                 let data = null;
 
@@ -245,15 +405,15 @@ class GetAssets {
 
             ( error ) => { // Triggered by setTimeout(). Try up to this.MAX_TRIES before giving up.
 
-                console.warn( '2. GetAssets::doRequest(): ft.promise FIRST .then error, error:' + error + ' for ' + ft.url );
+                console.warn( '2. AssetPool::doRequest(): ft.promise FIRST .then error, error:' + error + ' for ' + ft.url );
 
-                console.warn( '2. GetAssets::doRequest(): ft.promise FIRST .then error, tries:' + ft.tries + ' for ' + ft.url );
+                console.warn( '2. AssetPool::doRequest(): ft.promise FIRST .then error, tries:' + ft.tries + ' for ' + ft.url );
 
                 ft.tries++;
 
                 if ( ft.tries < this.MAX_TRIES ) {
 
-                    console.warn( 'GetAssets::doRequest(): ft.promise FIRST .then error, TRYING AGAIN:' + error + ' for ' + ft.url );
+                    console.warn( 'AssetPool::doRequest(): ft.promise FIRST .then error, TRYING AGAIN:' + error + ' for ' + ft.url );
 
                     this.doRequest( requestURL, key, updateFn, cacheBust = true, mimeType, ft.tries );
 
@@ -324,7 +484,7 @@ class GetAssets {
 
             let path = paths[ i ];
 
-            console.log("GetAssets::addRequests(): " +  path, ", " + typeof requestor.updateFn + ", " + requestor.cacheBust + ", " + requestor.mimeType )
+            console.log("AssetPool::addRequests(): " +  path, ", " + typeof requestor.updateFn + ", " + requestor.cacheBust + ", " + requestor.mimeType )
 
             this.doRequest( path, i, requestor.updateFn, requestor.cacheBust, requestor.mimeType, 0 ); // initial request at 0 tries
 
@@ -334,4 +494,4 @@ class GetAssets {
 
 }
 
-export default GetAssets;
+export default AssetPool;

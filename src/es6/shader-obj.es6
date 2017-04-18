@@ -118,7 +118,7 @@ class ShaderObj {
 
         this.MAX_DRAWELEMENTS = this.webgl.MAX_DRAWELEMENTS;
 
-        this.mName = 'geo-obj for ' + this.primName + '::';
+        this.mName = this.primName + ' ShaderObj::';
 
     } // end of constructor
 
@@ -283,7 +283,7 @@ class ShaderObj {
 
         } else if ( len !== numVertices ) {
 
-            console.error( fnName + ' normals length: ' + len + ' does not match vertices length: ' + numVertices );
+            console.error( fnName + ' normals length: ' + this.numNormals() + ' does not match vertices length: ' + this.numVertices() );
 
             valid = false;
 
@@ -313,7 +313,7 @@ class ShaderObj {
 
             } else if ( len !== numVertices ) {
 
-                console.error( fnName + ' texCoords length: ' + len + ' does not match vertices length: ' + numVertices );
+                console.error( fnName + ' texCoords length: ' + this.numTexCoords() + ' does not match vertices length: ' + this.numVertices() );
 
                 valid = false;
 
@@ -349,7 +349,7 @@ class ShaderObj {
 
             } else if ( len !== numVertices ) {
 
-                console.error( fnName + ' tangents length ' + len + ' does not match vertices length: ' + numVertices );
+                console.error( fnName + ' tangents length ' + this.numTangents() + ' does not match vertices length: ' + this.numVertices() );
 
                 valid = false;
 
@@ -385,7 +385,7 @@ class ShaderObj {
 
             } else if ( len !== numVertices ) {
 
-                console.error( fnName + ' colors length: ' + len + ' does not match vertices length:' + numVertices );
+                console.error( fnName + ' colors length: ' + this.numColors() + ' does not match vertices length:' + this.numVertices() );
 
                 valid = false;
 

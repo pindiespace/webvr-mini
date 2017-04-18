@@ -4,6 +4,7 @@ import Mesh from  './mesh';
 import GeometryPool from './geometry-pool';
 import TexturePool from './texture-pool';
 import LoadModel from './load-model';
+import ModelPool from './model-pool';
 import ShaderObj from './shader-obj';
 
 'use strict'
@@ -126,17 +127,23 @@ class Prim {
 
         this.objs = []; // Keep a reference to all created Prims here.
 
-        // Attach 1 copy of LoadGeometry to this Factory.
-
-        this.geometryPool = new GeometryPool( init, util, glMatrix, webgl );
-
-        // Attache 1 copy of the Texture loader to this Factory.
+        // Attach 1 copy of the Texture loader to this Factory.
 
         this.texturePool = new TexturePool( init, util, webgl );
+
+        // Attach 1 copy of the Model loader to this Factory.
+
+        this.modelPool = new ModelPool( init, util, webgl );
+
+        // Attach 1 copy of LoadGeometry to this Factory.
+
+        this.geometryPool = new GeometryPool( init, util, glMatrix, webgl, this.modelPool );
 
         /* 
          * Bind the Prim callback for geometry creation.
          */
+
+        // TODO: NEEDED TO LOAD THE SECOND MODEL WITH A TEXTURE CAPSULE
 
         this.util.emitter.on( this.util.emitter.events.GEOMETRY_READY, 
 
@@ -523,6 +530,8 @@ class Prim {
 
             } else {
 
+                console.log("Prim::updateNormals():" + prim.name + ' recalculating normal coordinates' );
+
                 geo.setNormals( this.geometryPool.computeNormals( geo.vertices.data, geo.indices.data, [], prim.useFaceNormals ) );
 
             }
@@ -541,7 +550,7 @@ class Prim {
 
             } else if ( geo.numTexCoords() !== geo.numVertices() ) {
 
-                console.log("Prim:" + prim.name + ' recalculating texture coordinates' );
+                console.log("Prim::updateTexCoords():" + prim.name + ' recalculating texture coordinates' );
 
                 geo.setTexCoords( this.geometryPool.computeTexCoords( geo.vertices.data ) );
 
@@ -561,6 +570,8 @@ class Prim {
 
             } else {
 
+                console.log("Prim::updateTangents():" + prim.name + ' recalculating tangent coordinates' );
+
                 geo.setTangents( this.geometryPool.computeTangents ( geo.vertices.data, geo.indices.data, geo.normals.data, geo.texCoords.data, [] ) );
 
             }
@@ -578,6 +589,8 @@ class Prim {
                 geo.setColors( colors );
 
             } else {
+
+                console.log("Prim::updateColors():" + prim.name + ' recalculating color coordinates' );
 
                 geo.setColors( this.geometryPool.computeColors( geo.normals.data, [] ) );
 
@@ -777,7 +790,7 @@ class Prim {
 
         prim.geometry = new ShaderObj( prim.name, this.util, this.webgl );
 
-        // Create or load Geometry data (may alter some of the above default properties).
+        // Create Geometry data, or load Mesh data (may alter some of the above default properties).
 
         this.geometryPool[ type ]( prim );
 
@@ -791,8 +804,6 @@ class Prim {
         // Push into our list of all Prims. Shaders keep a local list of Prims they are rendering.
 
         this.objs.push( prim );
-
-        window.prim = prim;
 
         return prim;
 

@@ -1,5 +1,5 @@
 // TODO: TEMPORARY DEBUG
-import GetAssets from './get-assets';
+import ModelPool from './model-pool';
 
 'use strict'
 

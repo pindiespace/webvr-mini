@@ -655,12 +655,10 @@
 	            }
 	        }
 
-	        /* 
-	         * =============== TYPE VERIFICATION ====================
-	         */
-
-	        /* 
-	         * =============== STRING OPERATIONS ====================
+	        /*
+	         * ---------------------------------------
+	         * STRING OPERATIONS
+	         * ---------------------------------------
 	         */
 
 	    }, {
@@ -713,8 +711,10 @@
 	            return uuid;
 	        }
 
-	        /* 
-	         * =============== NUMBER OPERATIONS ====================
+	        /*
+	         * ---------------------------------------
+	         * NUMBER OPERATIONS
+	         * ---------------------------------------
 	         */
 
 	        /** 
@@ -779,8 +779,10 @@
 	            return min + (Math.random() + 1 / (1 + this.getSeed())) % 1 * (max - min);
 	        }
 
-	        /* 
-	         * =============== RANDOMIZERS ====================
+	        /*
+	         * ---------------------------------------
+	         * RANDOMIZERS
+	         * ---------------------------------------
 	         */
 
 	    }, {
@@ -796,8 +798,10 @@
 	            return [Math.abs(Math.random()), Math.abs(Math.random()), Math.abs(Math.random())];
 	        }
 
-	        /* 
-	         * =============== ARRAY OPERATIONS ====================
+	        /*
+	         * ---------------------------------------
+	         * ARRAY OPERATIONS
+	         * ---------------------------------------
 	         */
 
 	        /** 
@@ -1169,8 +1173,10 @@
 	            return number;
 	        }
 
-	        /* 
-	         * ============ SYSTEM AND Ui OPERATIONS =================
+	        /*
+	         * ---------------------------------------
+	         * OS AND UI OPERATIONS
+	         * ---------------------------------------
 	         */
 
 	        /** 
@@ -1241,13 +1247,15 @@
 	            };
 	        }
 
-	        /* 
+	        /*
+	         * ---------------------------------------
 	         * WINDOW AND SCREEN DIMENSIONS
-	         * @link http://ryanve.com/lab/dimensions/
+	         * ---------------------------------------
 	         */
 
 	        /** 
 	         * Get the width of the entire screen (excluding OS taskbars)
+	         * @link http://ryanve.com/lab/dimensions/
 	         */
 
 	    }, {
@@ -7370,6 +7378,10 @@
 
 	var _loadModel2 = _interopRequireDefault(_loadModel);
 
+	var _modelPool = __webpack_require__(44);
+
+	var _modelPool2 = _interopRequireDefault(_modelPool);
+
 	var _shaderObj = __webpack_require__(30);
 
 	var _shaderObj2 = _interopRequireDefault(_shaderObj);
@@ -7501,17 +7513,23 @@
 
 	        this.objs = []; // Keep a reference to all created Prims here.
 
-	        // Attach 1 copy of LoadGeometry to this Factory.
-
-	        this.geometryPool = new _geometryPool2.default(init, util, glMatrix, webgl);
-
-	        // Attache 1 copy of the Texture loader to this Factory.
+	        // Attach 1 copy of the Texture loader to this Factory.
 
 	        this.texturePool = new _texturePool2.default(init, util, webgl);
+
+	        // Attach 1 copy of the Model loader to this Factory.
+
+	        this.modelPool = new _modelPool2.default(init, util, webgl);
+
+	        // Attach 1 copy of LoadGeometry to this Factory.
+
+	        this.geometryPool = new _geometryPool2.default(init, util, glMatrix, webgl, this.modelPool);
 
 	        /* 
 	         * Bind the Prim callback for geometry creation.
 	         */
+
+	        // TODO: NEEDED TO LOAD THE SECOND MODEL WITH A TEXTURE CAPSULE
 
 	        this.util.emitter.on(this.util.emitter.events.GEOMETRY_READY, function (prim) {
 
@@ -7893,6 +7911,8 @@
 	                    geo.setNormals(normals);
 	                } else {
 
+	                    console.log("Prim::updateNormals():" + prim.name + ' recalculating normal coordinates');
+
 	                    geo.setNormals(_this2.geometryPool.computeNormals(geo.vertices.data, geo.indices.data, [], prim.useFaceNormals));
 	                }
 	            };
@@ -7908,7 +7928,7 @@
 	                    geo.setTexCoords(texCoords);
 	                } else if (geo.numTexCoords() !== geo.numVertices()) {
 
-	                    console.log("Prim:" + prim.name + ' recalculating texture coordinates');
+	                    console.log("Prim::updateTexCoords():" + prim.name + ' recalculating texture coordinates');
 
 	                    geo.setTexCoords(_this2.geometryPool.computeTexCoords(geo.vertices.data));
 	                }
@@ -7925,6 +7945,8 @@
 	                    geo.setTangents(tangents);
 	                } else {
 
+	                    console.log("Prim::updateTangents():" + prim.name + ' recalculating tangent coordinates');
+
 	                    geo.setTangents(_this2.geometryPool.computeTangents(geo.vertices.data, geo.indices.data, geo.normals.data, geo.texCoords.data, []));
 	                }
 	            };
@@ -7939,6 +7961,8 @@
 
 	                    geo.setColors(colors);
 	                } else {
+
+	                    console.log("Prim::updateColors():" + prim.name + ' recalculating color coordinates');
 
 	                    geo.setColors(_this2.geometryPool.computeColors(geo.normals.data, []));
 	                }
@@ -8121,7 +8145,7 @@
 
 	            prim.geometry = new _shaderObj2.default(prim.name, this.util, this.webgl);
 
-	            // Create or load Geometry data (may alter some of the above default properties).
+	            // Create Geometry data, or load Mesh data (may alter some of the above default properties).
 
 	            this.geometryPool[type](prim);
 
@@ -8135,8 +8159,6 @@
 	            // Push into our list of all Prims. Shaders keep a local list of Prims they are rendering.
 
 	            this.objs.push(prim);
-
-	            window.prim = prim;
 
 	            return prim;
 	        }
@@ -10548,9 +10570,9 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _getAssets = __webpack_require__(29);
+	var _assetPool = __webpack_require__(45);
 
-	var _getAssets2 = _interopRequireDefault(_getAssets);
+	var _assetPool2 = _interopRequireDefault(_assetPool);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -10562,8 +10584,8 @@
 
 	'use strict';
 
-	var TexturePool = function (_GetAssets) {
-	    _inherits(TexturePool, _GetAssets);
+	var TexturePool = function (_AssetPool) {
+	    _inherits(TexturePool, _AssetPool);
 
 	    /** 
 	     * Manage texture assets, similar to GeoObj for 
@@ -10591,7 +10613,7 @@
 	        },
 
 	        /* 
-	         * TODO: 
+	         * TODO: COMPRESSED TEXTURES
 	         * DXT: supported by all desktop devices and some Android devices
 	         * PVR: supported by all iOS devices and some Android devices
 	         * ETC1: supported by most Android devices
@@ -10599,13 +10621,11 @@
 	         * @link https://github.com/toji/webgl-texture-utils
 	         */
 
-	        _this.textureList = [], _this.keyList = [], _this.greyPixel = new Uint8Array([0.5, 0.5, 0.5, 1.0]);
+	        // Default texture pixel.
 
-	        // Define emitter events
+	        _this.greyPixel = new Uint8Array([0.5, 0.5, 0.5, 1.0]);
 
-	        /* 
-	         * Bind the Prim callback for geometry creation.
-	         */
+	        // Emit a 'texture ready' event when WebGL texture is uploaded.
 
 	        _this.util.emitter.on(_this.util.emitter.events.TEXTURE_READY, function (prim) {
 
@@ -10661,6 +10681,11 @@
 
 	        /** 
 	         * Create a WebGL texture from a JavaScript Image object, and add it to our texture list.
+	         * @param {Image} image a JS Image object with defined .src
+	         * @param {String} path the file URL for the texture.
+	         * @param {String|Number} key the key (index) for assigning the texture in the calling Prim .textures array
+	         * @param {String} mimeType the MIME type of the image
+	         * @param {Number} type the WebGL texture type (e.g. TEXTURE_2D, TEXTURE_CUBE_MAP).
 	         */
 
 	    }, {
@@ -10740,20 +10765,20 @@
 
 	                obj.key = key; // Associative key for this object
 
+	                // Add the asset to our texture pool.
+
+	                return this.addAsset(key, obj);
+
+	                /*
 	                // If our key is non-numeric, push it into our keyList indexing the global texture pool.
-
-	                if (!this.util.isNumber(key)) {
-
-	                    this.keyList[key] = obj;
-	                }
-
-	                this.textureList.push(obj);
-
-	                // Object also saves its position index in the global texture pool.
-
-	                obj.pos = this.textureList.length - 1;
-
-	                return obj;
+	                 if( ! this.util.isNumber( key ) ) {
+	                     this.keyList[ key ] = obj;
+	                 } 
+	                 this.numericList.push( obj );
+	                 // Object also saves its position index in the global texture pool.
+	                 obj.pos = this.numericList.length - 1;
+	                 return obj;
+	                */
 	            } else {
 
 	                console.warn('TexturePool::addTexture(): no texture returned by createXXTexture() function');
@@ -10763,93 +10788,9 @@
 	        }
 
 	        /** 
-	         * Find a texture by its key (numeric or string)
-	         */
-
-	    }, {
-	        key: 'textureInList',
-	        value: function textureInList(key) {
-
-	            if (!key) {
-
-	                console.error('TextureObj::textureInlist(): undefined key');
-
-	                return false;
-	            }
-
-	            if (this.util.isNumber(key)) {
-
-	                return this.textureList[key];
-	            } else if (this.keyList[key]) {
-
-	                return this.keyList[key];
-	            }
-
-	            return null;
-	        }
-
-	        /** 
-	         * Find a texture by its path, if the path was not used as the key.
-	         * @param {String} path the URL of the texture file.
-	         * @returns {Boolean} if found in current textureList, return true, else false.
-	         */
-
-	    }, {
-	        key: 'pathInList',
-	        value: function pathInList(path) {
-
-	            for (var i = 0; i < this.textureList[i]; i++) {
-
-	                if (this.textureList[i].path === path) {
-
-	                    return this.textureList[i];
-	                }
-	            }
-
-	            return null;
-	        }
-
-	        /** 
-	         * Remove a texture from both numeric and associative arrays.
-	         * @param {String|Number} key
-	         * @returns {Boolean} if found and deleted, return true, else false.
-	         */
-
-	    }, {
-	        key: 'removeTexture',
-	        value: function removeTexture(key) {
-
-	            var obj = null;
-
-	            if (this.util.isNumeric(key)) {
-
-	                obj = this.textureList.splice(key, 1);
-
-	                if (obj.length !== 0) {
-
-	                    delete this.keyList[obj.key];
-	                }
-	            } else if (this.keyList[key]) {
-
-	                obj = this.keyList[key];
-
-	                if (obj) {
-
-	                    this.textureList.splice(obj.pos, 1);
-
-	                    delete this.keyList[key];
-	                }
-	            } else {
-
-	                console.warn('TextureObj::removeTexture(): key not found in textureList');
-	            }
-	        }
-
-	        /** 
 	         * Load textures, using a list of paths. If a Texture already exists, 
 	         * just return it. Otherwise, do the load.
 	         * @param {Array[String]} pathList a list of URL paths to load.
-	         * @param {Array[Object]} primTextureList the Prim textureList array for texture objects.
 	         * @param {Boolean} cacheBust if true, add a http://url?random query string to request.
 	         * @param {Boolean} keepDOMImage if true, keep the Image object we created the texture from (internal Blob). 
 	         */
@@ -11129,308 +11070,12 @@
 	    }]);
 
 	    return TexturePool;
-	}(_getAssets2.default);
+	}(_assetPool2.default);
 
 	exports.default = TexturePool;
 
 /***/ },
-/* 29 */
-/***/ function(module, exports) {
-
-	
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-
-	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	var GetAssets = function () {
-
-	    /** 
-	     * Load a set of URLs to grab, and run parallel, queued requests until 
-	     * complete or timed out. Also provide a callback so the requesting object 
-	     * can check if their load is complete.
-	     * Inspired by:
-	     * @link https://blog.hospodarets.com/fetch_in_action
-	     */
-	    function GetAssets(util) {
-	        _classCallCheck(this, GetAssets);
-
-	        this.util = util, this.emitter = util.emitter, this.MIN_WAIT_TIME = 100, this.MAX_TRIES = 6;
-	    }
-
-	    /** 
-	     * Wrap a Promise in an object.
-	     */
-
-
-	    _createClass(GetAssets, [{
-	        key: 'getWrappedPromise',
-	        value: function getWrappedPromise() {
-
-	            var wrappedPromise = {},
-	                promise = new Promise(function (resolve, reject) {
-
-	                wrappedPromise.resolve = resolve, wrappedPromise.reject = reject;
-	            });
-
-	            wrappedPromise.then = promise.then.bind(promise);
-
-	            wrappedPromise.catch = promise.catch.bind(promise);
-
-	            wrappedPromise.promise = promise;
-
-	            return wrappedPromise;
-	        }
-
-	        /** 
-	         * get fetch wrapped into a wrapped Promise.
-	         * @link http://stackoverflow.com/questions/35520790/error-handling-for-fetch-in-aurelia
-	         */
-
-	    }, {
-	        key: 'getWrappedFetch',
-	        value: function getWrappedFetch(url, params, tries, key) {
-
-	            var wrappedPromise = this.getWrappedPromise();
-
-	            var req = new Request(url, params);
-
-	            wrappedPromise.url = url;
-
-	            wrappedPromise.params = params;
-
-	            wrappedPromise.tries = tries;
-
-	            wrappedPromise.key = key;
-
-	            // Start the timeout, which lengthens with each attempt.
-
-	            wrappedPromise.timeoutId = setTimeout(function () {
-
-	                console.warn('GetAssets::getWrappedFetch(): TIMEOUT ' + wrappedPromise.url);
-
-	                wrappedPromise.catch(0);
-	            }, this.MIN_WAIT_TIME * wrappedPromise.tries);
-
-	            // Apply arguments to fetch.
-
-	            fetch(req).then(function (response) {
-
-	                if (!response.ok) {
-	                    // catch 404 errors
-
-	                    throw new Error('Network response was not ok for ' + wrappedPromise.url);
-	                } else {
-
-	                    return response; // send to the next '.then'
-	                }
-	            }).then(function (response) {
-
-	                console.warn('GetAssets::getWrappedFetch(): OK, RESOLVE ' + wrappedPromise.url);
-
-	                clearTimeout(wrappedPromise.timeoutId);
-
-	                return wrappedPromise.resolve(response);
-	            }, function (error) {
-
-	                console.warn('GetAssets::getWrappedFetch(): NOT OK, REJECT ' + wrappedPromise.url);
-
-	                clearTimeout(wrappedPromise.timeoutId);
-
-	                return wrappedPromise.reject(error); // TODO: using Error causes a strange fail here(!)
-	            }).catch(function (error) {
-
-	                console.warn('GetAssets::getWrappedFetch(): NOT OK, CATCH ' + wrappedPromise.url);
-
-	                clearTimeout(wrappedPromise.timeoutId);
-
-	                return wrappedPromise.catch(error);
-	            });
-
-	            return wrappedPromise;
-	        }
-
-	        /** 
-	         * Get an individual file.
-	         * @param {String} requestURL the file path for our asset.
-	         * @param {String} key identifier key for the asset, so the requesting object can put it in the right place.
-	         * @param {Function} updateFn callback function when an asset loads or fails
-	         * @param {Boolean} cacheBust if true, add a random query string to avoid caching
-	         * @param {String} mimeType the MIME type of the expected data
-	         * @param {Number} tries. If load fails, try to load again with a longer timeout. Load until 
-	         *        number of 'tries' = this.MAX_TRIES. Lengthen the timeout with each try.
-	         */
-
-	    }, {
-	        key: 'doRequest',
-	        value: function doRequest(requestURL, key, updateFn) {
-	            var cacheBust = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : true;
-
-	            var _this = this;
-
-	            var mimeType = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : 'text/plain';
-	            var tries = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : 0;
-
-
-	            console.log(">>>>MIMETYPE:" + mimeType);
-
-	            var headers = new Headers({
-
-	                'Content-Type': mimeType
-
-	            });
-
-	            var ft = this.getWrappedFetch(cacheBust ? requestURL + '?' + new Date().getTime() : requestURL, {
-
-	                method: 'get', // optional, "GET" is default value
-
-	                mode: 'cors',
-
-	                redirect: 'follow',
-
-	                headers: headers
-
-	            }, tries, // attach some additional variables to this fetch
-
-	            key // key identifier for object requested, from the calling requestor object.
-
-	            );
-
-	            // Return the Promise.
-
-	            return ft.promise.then(function (response) {
-
-	                console.warn('1. GetAssets::doRequest(): ft.promise FIRST .then OK, response.status:' + response.status + ' for ' + ft.url);
-
-	                console.warn('1. GetAssets::doRequest(): ft.promise FIRST .then OK, response:' + response + ' for ' + ft.url);
-
-	                console.warn('1. GetAssets::doRequest(): ft.promise FIRST .then OK, tries:' + ft.tries + ' for ' + ft.url);
-
-	                console.warn('1. GetAssets::doRequest(): ft.promise FIRST .then OK, mimeType:' + mimeType + ' for ' + ft.url);
-
-	                var data = null;
-
-	                // Check response.status ('0' is ok if we are serving from desktop os).
-
-	                if (response.status === 200 || response.status === 0) {
-
-	                    if (mimeType === 'application/json') {
-
-	                        data = response.json();
-	                    } else if (mimeType.indexOf('text') !== _this.util.NOT_IN_LIST) {
-
-	                        data = response.text();
-	                    } else if (mimeType === 'application/xml') {
-
-	                        data = response.formData();
-	                    } else if (mimeType.indexOf('image') !== _this.util.NOT_IN_LIST) {
-
-	                        data = response.blob();
-
-	                        // TODO: data = arraybufferview type
-	                        ///TODO: data = response.arrayBuffer(); // NEED ARRAYBUFFERVIEW
-	                    } else {
-	                        // all other mime types (e.g. audio, video)
-
-	                        data = response.blob();
-	                    }
-
-	                    // Return a resolved Promise to the next '.then'.
-
-	                    return Promise.resolve(data);
-	                } else {
-
-	                    return Promise.reject(response);
-	                }
-	            }, function (error) {
-	                // Triggered by setTimeout(). Try up to this.MAX_TRIES before giving up.
-
-	                console.warn('2. GetAssets::doRequest(): ft.promise FIRST .then error, error:' + error + ' for ' + ft.url);
-
-	                console.warn('2. GetAssets::doRequest(): ft.promise FIRST .then error, tries:' + ft.tries + ' for ' + ft.url);
-
-	                ft.tries++;
-
-	                if (ft.tries < _this.MAX_TRIES) {
-
-	                    console.warn('GetAssets::doRequest(): ft.promise FIRST .then error, TRYING AGAIN:' + error + ' for ' + ft.url);
-
-	                    _this.doRequest(requestURL, key, updateFn, cacheBust = true, mimeType, ft.tries);
-	                }
-
-	                return Promise.resolve(error);
-	            }).then(function (response) {
-
-	                if (response instanceof Error) {
-
-	                    // Run the callback with error values.
-
-	                    updateFn({ key: key, path: requestURL, data: null, error: response }); // Send a wrapped error object
-	                } else {
-
-	                    // Run the callback we got in the original request, return received file in data.
-
-	                    console.log('>>>>>>>>>>>>>>about to call update function!!!!!!');
-
-	                    updateFn({ key: key, path: requestURL, data: response, error: false }); // Send the data to the caller.
-	                }
-	            }, function (error) {
-
-	                // Unknown error?
-
-	                return Promise.reject(0);
-	            });
-	        }
-
-	        /** 
-	         * Add fetch() url requests for resolve, with a timeout for fails. 
-	         * when individual fetch()es are complete, run a callback.
-	         * when all fetch()es are complete, run a final callback
-	         * usage: addRequests( requestor, '/first.jpg', 'second.jpg',...);
-	         * @param {Object} requestor the name of the requestor.
-	         *         - requestor.name = the name of the requestor
-	         *         - requestor.updateFn = the function receiving data from the fetch() call
-	         *         - requestor.cacheBust = if true, randomize URL query string to prevent caching
-	         *         - requestor.mimeType = if present, set to a specific MIME type. Default = text/text
-	         * @param {Function} updateFn the function to call after each fetch completes. The 
-	         * calling program is responsible for handing determining if it has enough fetch() 
-	         * operations to complete. 
-	         */
-
-	    }, {
-	        key: 'addRequests',
-	        value: function addRequests(requestor) {
-
-	            var paths = requestor.files;
-
-	            // TODO: THIS CAN BE A KEY. ONE CAN CHECK THE POOL (maintained here???) for a key, which doesn't have to be Array position
-	            // TODO: use an associative key!!!!!!!!!
-
-	            for (var i = 0; i < paths.length; i++) {
-
-	                var path = paths[i];
-
-	                console.log("GetAssets::addRequests(): " + path, ", " + _typeof(requestor.updateFn) + ", " + requestor.cacheBust + ", " + requestor.mimeType);
-
-	                this.doRequest(path, i, requestor.updateFn, requestor.cacheBust, requestor.mimeType, 0); // initial request at 0 tries
-	            } // end of request loop
-	        } // end of addRequests()
-
-	    }]);
-
-	    return GetAssets;
-	}();
-
-	exports.default = GetAssets;
-
-/***/ },
+/* 29 */,
 /* 30 */
 /***/ function(module, exports) {
 
@@ -11541,7 +11186,7 @@
 
 	        this.MAX_DRAWELEMENTS = this.webgl.MAX_DRAWELEMENTS;
 
-	        this.mName = 'geo-obj for ' + this.primName + '::';
+	        this.mName = this.primName + ' ShaderObj::';
 	    } // end of constructor
 
 	    /** 
@@ -11699,7 +11344,7 @@
 	                valid = false;
 	            } else if (len !== numVertices) {
 
-	                console.error(fnName + ' normals length: ' + len + ' does not match vertices length: ' + numVertices);
+	                console.error(fnName + ' normals length: ' + this.numNormals() + ' does not match vertices length: ' + this.numVertices());
 
 	                valid = false;
 	            }
@@ -11725,7 +11370,7 @@
 	                    valid = false;
 	                } else if (len !== numVertices) {
 
-	                    console.error(fnName + ' texCoords length: ' + len + ' does not match vertices length: ' + numVertices);
+	                    console.error(fnName + ' texCoords length: ' + this.numTexCoords() + ' does not match vertices length: ' + this.numVertices());
 
 	                    valid = false;
 	                }
@@ -11755,7 +11400,7 @@
 	                    valid = false;
 	                } else if (len !== numVertices) {
 
-	                    console.error(fnName + ' tangents length ' + len + ' does not match vertices length: ' + numVertices);
+	                    console.error(fnName + ' tangents length ' + this.numTangents() + ' does not match vertices length: ' + this.numVertices());
 
 	                    valid = false;
 	                }
@@ -11785,7 +11430,7 @@
 	                    valid = false;
 	                } else if (len !== numVertices) {
 
-	                    console.error(fnName + ' colors length: ' + len + ' does not match vertices length:' + numVertices);
+	                    console.error(fnName + ' colors length: ' + this.numColors() + ' does not match vertices length:' + this.numVertices());
 
 	                    valid = false;
 	                }
@@ -12400,9 +12045,9 @@
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); // TODO: TEMPORARY DEBUG
 
 
-	var _getAssets = __webpack_require__(29);
+	var _modelPool = __webpack_require__(44);
 
-	var _getAssets2 = _interopRequireDefault(_getAssets);
+	var _modelPool2 = _interopRequireDefault(_modelPool);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -20578,6 +20223,10 @@
 
 	var _loadModel2 = _interopRequireDefault(_loadModel);
 
+	var _modelPool = __webpack_require__(44);
+
+	var _modelPool2 = _interopRequireDefault(_modelPool);
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -20585,7 +20234,7 @@
 	'use strict';
 
 	var GeometryPool = function () {
-	    function GeometryPool(init, util, glMatrix, webgl) {
+	    function GeometryPool(init, util, glMatrix, webgl, modelPool) {
 	        _classCallCheck(this, GeometryPool);
 
 	        console.log('in GeometryPool class');
@@ -20705,6 +20354,10 @@
 	        // Math shorthand.
 
 	        this.TWO_PI = Math.PI * 2;
+
+	        // Save a reference to the modelPool (passed from Prim)
+
+	        this.modelPool = modelPool;
 
 	        /* 
 	         * Bind the Prim callback for geometry creation.
@@ -23883,29 +23536,41 @@
 	    }, {
 	        key: 'geometryMesh',
 	        value: function geometryMesh(prim) {
-	            var _this = this;
 
 	            var geo = prim.geometry;
 
-	            for (var i = 0; i < prim.models.length; i++) {
+	            console.log('&&&&&TRYING TO LOAD MODEL:' + prim.name + ' WITH GETMODEL');
 
-	                console.log(">>>>>>>>>>>>>>geometryMesh():" + prim.models[i]);
+	            this.modelPool.getModels(prim, prim.models, true);
 
-	                /* 
-	                 * NOTE: the final callback is given the Prim to manipulate by loadModel.load(). 
-	                 * Intermediate callbacks between files loaded (e.g. material files) get the 
-	                 * empty function below.
-	                 */
-
-	                var lm = new _loadModel2.default(true, this.util, this.glMatrix, this.webgl, this.loadTexture);
-
-	                lm.load(prim.models[i], prim, function () {}, function () {
-
-	                    console.log('!!!!!!!!!!!!!!!!GEOMETRY READY:::::: ' + prim.name);
-
-	                    _this.util.emitter.emit('geometryready', prim);
-	                });
-	            } // end of for loop.
+	            /*
+	            
+	                console.log(">>>>>>>>>>>>>>geometryMesh():" + prim.models[ i ] );
+	            
+	                for ( let i = 0; i < prim.models.length; i++ ) {
+	            
+	                    let lm = new LoadModel( true, this.util, this.glMatrix, this.webgl, this.loadTexture );
+	            
+	                    lm.load( 
+	            
+	                        prim.models[ i ],
+	            
+	                        prim,
+	            
+	                        () => {},
+	            
+	                        () => {
+	            
+	                            console.log('!!!!!!!!!!!!!!!!GEOMETRY READY:::::: ' + prim.name)
+	            
+	                            this.util.emitter.emit( 'geometryready', prim );
+	            
+	                            }
+	            
+	                        );
+	            
+	                    } // end of for loop.
+	            */
 
 	            return false;
 	        }
@@ -23915,6 +23580,1227 @@
 	}();
 
 	exports.default = GeometryPool;
+
+/***/ },
+/* 44 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _assetPool = __webpack_require__(45);
+
+	var _assetPool2 = _interopRequireDefault(_assetPool);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	'use strict';
+
+	var ModelPool = function (_AssetPool) {
+	    _inherits(ModelPool, _AssetPool);
+
+	    function ModelPool(init, util, webgl) {
+	        _classCallCheck(this, ModelPool);
+
+	        console.log('in ModelPool');
+
+	        // Initialize superclass.
+
+	        var _this = _possibleConstructorReturn(this, (ModelPool.__proto__ || Object.getPrototypeOf(ModelPool)).call(this, util));
+
+	        _this.util = util, _this.webgl = webgl, _this.NOT_IN_LIST = _this.util.NOT_IN_LIST;
+
+	        _this.modelMimeTypes = {
+
+	            'obj': 'text/plain',
+
+	            'mtl': 'text/plain',
+
+	            'html': 'text/html', // A-Frame?
+
+	            'x3d': 'model/x3d+xml', // X3DOM
+
+	            'x3dv': 'model/x3d-vrml' // VRML
+
+	        };
+
+	        // If we encounter a texture file in the model file, load it, and emit.    
+
+	        _this.util.emitter.on(_this.util.emitter.events.TEXTURE_READY, function (prim) {
+
+	            // TODO: call update function when texture is ready.
+
+	        });
+
+	        // Model data ready.
+	        /*
+	                this.util.emitter.on( this.util.emitter.events.GEOMETRY_READY, 
+	        
+	                    ( prim ) => {
+	        
+	                        // TODO: call update function when a geometry is ready.
+	        
+	                } );
+	        */
+	        _this.util.emitter.on(_this.util.emitter.events.MATERIAL_READY, function (prim) {
+
+	            // TODO: call update function when a material file is ready.
+
+	            // TODO: probably need a material pool file loader
+
+	        });
+
+	        if (init) {
+
+	            // do something
+
+	        }
+
+	        return _this;
+	    }
+
+	    /** 
+	     * Extract 3d vertex data (vertices, normals) from a string.
+	     * @param {String} data string to be parsed for 3d coordinate values.
+	     * @param {Array} arr the array to add the coordinate values to.
+	     * @param {Number} lineNum the current line in the file.
+	     */
+
+
+	    _createClass(ModelPool, [{
+	        key: 'computeObj3d',
+	        value: function computeObj3d(data, arr, lineNum) {
+
+	            var vs = data.match(/^(-?\d+(\.\d+)?)\s*(-?\d+(\.\d+)?)\s*(-?\d+(\.\d+)?)/);
+
+	            arr.push(parseFloat(vs[1]), parseFloat(vs[3]), parseFloat(vs[5]));
+	        }
+
+	        /** 
+	         * Extract 2 vertex data (texture coordinates) from a string.
+	         * @param {String} data string to be parsed for 3d coordinate values.
+	         * @param {Array} arr the array to add the coordinate values to.
+	         * @param {Number} lineNum the current line in the file.
+	         */
+
+	    }, {
+	        key: 'computeObj2d',
+	        value: function computeObj2d(data, arr, lineNum) {
+
+	            var uvs = data.match(/^(-?\d+(\.\d+)?)\s+(-?\d+(\.\d+)?)$/);
+
+	            arr.push(parseFloat(uvs[1]), parseFloat(uvs[3]));
+	        }
+
+	        /** 
+	         * Extract index data from a string. At present, indexing of vertices, 
+	         * texture coordinates, normals is assumed to be the same, so only one 
+	         * index array is constructed.
+	         * @param {String} data string to be parsed for indices (integer).
+	         * @param {Array} indices array for indices into vertex array.
+	         * @param {Array} lineNum array for vertices (optional).
+	         * @param {Array} texCoords array for texture coordinates (optional).
+	         * @param {Array} normals array for normals coordinates (optional).
+	         */
+
+	    }, {
+	        key: 'computeObjIndices',
+	        value: function computeObjIndices(data, indices, lineNum) {
+	            var texCoords = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
+	            var normals = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : [];
+
+
+	            var parts = data.match(/[^\s]+/g);
+
+	            var idxs = void 0,
+	                idx = void 0,
+	                texCoord = void 0,
+	                normal = void 0;
+
+	            var NOT_IN_STRING = this.NOT_IN_LIST;
+
+	            var face = parts.map(function (fs) {
+
+	                ///console.log("fs:" + fs)
+
+	                // Split indices with and without normals and texture coordinates.
+
+	                if (fs.indexOf('//') !== NOT_IN_STRING) {
+
+	                    idxs = fs.split('//');
+
+	                    idx = parseInt(idxs[0]) - 1; // NOTE: OBJ first index = 1, our arrays index = 0
+
+	                    texCoord = 0.0; // NO TEXTURE COORDINATES PROVIDED
+
+	                    normal = parseInt(idxs[1]) - 1;
+
+	                    ///console.log( '//:' + idx, texCoord, normal );
+	                } else if (fs.indexOf('/') !== NOT_IN_STRING) {
+
+	                    idxs = fs.split('/');
+
+	                    idx = parseInt(idxs[0]) - 1;
+
+	                    texCoord = parseFloat(idx[1]) - 1;
+
+	                    normal = parseFloat(idx[2]) - 1;
+
+	                    ////console.log( '/:', idx, texCoord, normal );
+	                } else {
+
+	                    console.error('ModelPool()::computeObjIndices(): illegal index object index statement at line:' + lineNum);
+
+	                    return false;
+	                }
+
+	                indices.push(idx);
+
+	                texCoords.push(texCoord);
+
+	                normals.push(normal);
+	            });
+	        }
+
+	        /** 
+	         * Parse the .obj file into flattened object data
+	         * @link http://paulbourke.net/dataformats/obj/
+	         * 
+	         * @param {String} data the incoming data from the file.
+	         * @param {Prim} prim the Prim object defined in prim.es6
+	         * @param {String} path the path to the file. MTL files may reference other files in their directory.
+	         */
+
+	    }, {
+	        key: 'computeObjMesh',
+	        value: function computeObjMesh(data, prim, path) {
+	            var _this2 = this;
+
+	            console.log('ModelPool::computeObjMesh(): loading a new file:' + path + ' for ' + prim.name);
+
+	            var isWhitespace = this.util.isWhitespace;
+
+	            var vertices = [];
+
+	            var indices = [];
+
+	            var texCoords = [];
+
+	            var normals = [];
+
+	            // Get the lines of the file.
+
+	            var lineNum = 0;
+
+	            var lines = data.split('\n');
+
+	            var iTexCords = [];
+
+	            var iNormals = [];
+
+	            lines.forEach(function (line) {
+
+	                //line = line.trim();
+
+	                var type = line.split(' ')[0].trim();
+
+	                var data = line.substr(type.length).trim();
+
+	                switch (type) {
+
+	                    case 'o':
+	                        // object name
+
+	                        if (!prim.name) {
+
+	                            prim.name = data;
+	                        }
+
+	                        break;
+
+	                    case 'g':
+	                        // group name, store hierarchy
+
+	                        if (!prim.group) {
+
+	                            prim.group = [];
+	                        }
+
+	                        prim.group[data] = lineNum;
+
+	                        break;
+
+	                    case 'v':
+	                        // vertices
+
+	                        _this2.computeObj3d(data, vertices, lineNum);
+
+	                        break;
+
+	                    case 'f':
+	                        // face, indices
+
+	                        _this2.computeObjIndices(data, indices, lineNum, iTexCords, iNormals);
+
+	                        break;
+
+	                    case 'vn':
+	                        // normals
+
+	                        _this2.computeObj3d(data, normals, lineNum);
+
+	                        break;
+
+	                    case 'vt':
+	                        // texture uvs
+
+	                        _this2.computeObj2d(data, texCoords, lineNum);
+
+	                        break;
+
+	                    case 's':
+	                        // smoothing group (related to 'g')
+
+	                        if (!prim.smoothingGroup) {
+
+	                            prim.smoothingGroup = [];
+	                        }
+
+	                        if (data) break;
+
+	                    case '#':
+	                        // comment
+
+	                        break;
+
+	                    case 'mtllib':
+	                        // materials library data
+
+	                        // TODO: Load material file data.
+
+	                        break;
+
+	                    case 'usemtl':
+	                        // use material
+
+	                        console.log("::::::::::::GOTTA USEMTL in OBJ file: " + data[1]);
+
+	                        break;
+
+	                    case 'g':
+	                        // group name (collection of vertices forming face)
+
+	                        // TODO: assign faces (sides in our internal language).
+
+	                        // @link https://people.cs.clemson.edu/~dhouse/courses/405/docs/brief-obj-file-format.html
+
+	                        break;
+
+	                    case 'vp': // parameter vertices
+	                    case 'p': // point
+	                    case 'l': // line
+	                    case 'curv': // 2d curve
+	                    case 'surf': //surface
+	                    case 'parm': // parameter values
+	                    case 'trim': // outer trimming loop
+	                    case 'hole': // inner trimming loop
+	                    case 'scrv': //special curve
+	                    case 'sp': // special point
+	                    case 'end': // end statment
+	                    case 'con': // connectivity between free-form surfaces
+
+	                    case 's': // smoothing group
+	                    case 'mg': // merging group
+	                    case 'bevel': // bevel interpolation
+	                    case 'c_interp': // color interpolation
+	                    case 'd_interp': // dissolve interpolation
+	                    case 'lod': // level of detail
+	                    case 'shadow_obj': // shadow casting
+	                    case 'trace_obj': // ray tracing
+	                    case 'ctech': // curve approximation
+	                    case 'stech': // surface approximation
+	                    case 'mtllib':
+	                        // materials library data
+
+	                        console.warn('ModelPool::computeObjMesh(): OBJ data type: ' + type + ' in .obj file not supported');
+
+	                        break;
+
+	                    default:
+
+	                        // If it's not a pure whitespace line, report.
+
+	                        if (!isWhitespace(data)) {
+
+	                            console.error('ModelPool::computeObjMesh(): unknown line data: ' + line + ' in .obj file at line:' + lineNum);
+	                        }
+
+	                        break;
+
+	                }
+
+	                lineNum++;
+	            });
+
+	            // NOTE: Colors and tangents are not part of the Wavefront .obj format
+
+	            console.log("ModelPool::computeObjMesh(): v:" + vertices.length / 3 + " i:" + indices.length / 3 + " t:" + texCoords.length / 2 + " n:" + normals.length / 3);
+
+	            return {
+
+	                vertices: vertices,
+
+	                indices: indices,
+
+	                texCoords: texCoords,
+
+	                normals: normals
+
+	            };
+	        }
+
+	        /** 
+	         * Compute material properties for a model.
+	         * Similar to:
+	         * @link https://github.com/tiansijie/ObjLoader/blob/master/src/objLoader.js
+	         * 
+	         * Reference:
+	         * @link http://paulbourke.net/dataformats/mtl/
+	         * 
+	         * @param {String} data the incoming data from the file.
+	         * @param {Prim} prim the Prim object defined in prim.es6
+	         * @param {String} path the path to the file. MTL files may reference other files in their directory.
+	         */
+
+	    }, {
+	        key: 'computeObjMaterials',
+	        value: function computeObjMaterials(data, prim, path) {
+
+	            console.log('ModelPool::computeObjMaterials(): loading model:' + path + ' for:' + prim.name);
+
+	            var lineNum = 0;
+
+	            var material = {};
+
+	            var lines = data.split('\n');
+
+	            lines.forEach(function (line) {
+
+	                line = line.trim();
+
+	                var data = line.split(' ');
+
+	                var type = data[0];
+
+	                switch (type) {
+
+	                    case 'newmtl':
+	                        // name of material.
+
+	                        material.name = data[1];
+
+	                        break;
+
+	                    case 'Ka':
+	                        // ambient
+
+	                        if (data.length < 3) {
+
+	                            console.error('ModelPool::computeObjMaterials(): error in ambient material array at line:' + lineNum);
+	                        } else {
+
+	                            data[1] = parseFloat(data[1]), data[2] = parseFloat(data[2]), data[3] = parseFloat(data[3]);
+
+	                            if (Number.isFinite(data[1]) && Number.isFinite(data[2]) && Number.isFinite(data[3])) {
+
+	                                material.ambient = [data[1], data[2], data[3]];
+	                            } else {
+
+	                                console.error('ModelPool::computerObjMaterials(): invalid ambient data at line:' + lineNum);
+	                            }
+	                        }
+
+	                        break;
+
+	                    case 'Kd':
+	                        // diffuse
+
+	                        if (data.length < 3) {
+
+	                            console.error('ModelPool::computeObjMaterials(): error in diffuse material array at line:' + lineNum);
+	                        } else {
+
+	                            data[1] = parseFloat(data[1]), data[2] = parseFloat(data[2]), data[3] = parseFloat(data[3]);
+
+	                            if (Number.isFinite(data[1]) && Number.isFinite(data[2]) && Number.isFinite(data[3])) {
+
+	                                material.diffuse = [data[1], data[2], data[3]];
+	                            } else {
+
+	                                console.error('ModelPool::computeObjMaterials(): invalid diffuse array at line:' + lineNum);
+	                            }
+	                        }
+
+	                        break;
+
+	                    case 'Ks':
+	                        // specular
+
+	                        if (data.length < 3) {
+
+	                            console.error('ModelPool::computeObjMaterials(): error in specular array at line:' + lineNum);
+	                        } else {
+
+	                            data[1] = parseFloat(data[1]), data[2] = parseFloat(data[2]), data[3] = parseFloat(data[3]);
+
+	                            if (Number.isFinite(data[1]) && Number.isFinite(data[2]) && Number.isFinite(data[3])) {
+
+	                                material.specular = [data[1], data[2], data[3]];
+	                            } else {
+
+	                                console.error('ModelPool::computeObjMaterials(): invalid specular array at line:' + lineNum);
+	                            }
+	                        }
+
+	                        break;
+
+	                    case 'Ns':
+	                        // specular exponent
+
+	                        if (data.length < 1) {
+
+	                            console.error('ModelPool::computeObjMaterials(): error in specular exponent array at line:' + lineNum);
+	                        } else {
+
+	                            data[1] = parseFloat(data[1]);
+
+	                            if (Number.isFinite(data[1])) {
+
+	                                material.specularFactor = data[1];
+	                            } else {
+
+	                                console.error('ModelPool::computeObjMaterials(): invalid specular exponent array at line:' + lineNum);
+	                            }
+	                        }
+
+	                        break;
+
+	                    case 'd':
+	                    case 'Tr':
+	                        // transparent
+
+	                        if (data.length < 1) {
+
+	                            console.error('ModelPool::computeObjMaterials(): error in transparency value at line:' + lineNum);
+	                        } else {
+
+	                            data[1] = parseFloat(data[1]);
+
+	                            if (Number.isFinite(data[1])) {
+
+	                                material.transparency = parseFloat(data[1]); // single value, 0.0 - 1.0
+	                            } else {
+
+	                                console.error('ModelPool::computeObjMaterials(): invalid transparency value at line:' + lineNum);
+	                            }
+	                        }
+
+	                        break;
+
+	                    case 'illum':
+	                        // illumination mode
+
+	                        if (data.length < 1) {
+
+	                            console.error('ModelPool::computeObjMaterials(): error in illumination value at line:' + lineNum);
+	                        } else {
+
+	                            data[1] = parseInt(data[1]);
+
+	                            if (Number.isFinite(data[1]) && data[1] > 0 && data[1] < 11) {
+
+	                                material.illum = data[1];
+	                            }
+	                        }
+
+	                        break;
+
+	                    case 'map_Kd':
+	                        // diffuse map, an image file (e.g. file.jpg)
+
+	                        /* 
+	                         * This loads the file, and appends to Prim texture list using the LoadTexture object.
+	                         * @link  "filename" is the name of a color texture file (.mpc), a color 
+	                         * procedural texture file (.cxc), or an image file.
+	                         * @link http://paulbourke.net/dataformats/mtl/
+	                         * 
+	                         * TODO: support options
+	                         * -blenu on | off    texture blending in horizontal direction
+	                         * -blenv on | off    texture blending in vertical direction
+	                         * -bm    mult        bump multiplier, only with 'bump'.
+	                         * -boost value       sharpens mipmaps (may cause texture crawling)
+	                         * -cc on | off       color correction, can only be used for colormaps map_Ka, map_Kd, and map_Ks
+	                         * -clamp on | off    texture clamped 0-1
+	                         * -imfchan r | g | b | m | l | z channel used to create bump texture
+	                         * -mm base gain      range of variation for color, base adds base value (brightens), gain increases contrast
+	                         * -o u v w           shifts map origin from 0, 0
+	                         * -t u v w           adds turbulence, so tiling is less repetitive
+	                         * -texres resolution scale up non-power of 2
+	                         */
+
+	                        console.log("ModelPool::computeObjMaterials():::::::::::::GOTTA DIFFUSE MAP in OBJ MTL file: " + data[1]);
+
+	                        // TODO: maket this attach to prim.textures
+
+	                        break;
+
+	                    case 'map_Ks': // specular map
+	                    case 'map_Ka': // ambient map
+	                    case 'map_d': // alpha map
+	                    case 'bump': // bumpmap
+	                    case 'map_bump': // bumpmap
+	                    case 'disp':
+	                        // displacement map
+
+	                        break;
+
+	                    default:
+
+	                        break;
+
+	                }
+
+	                lineNum++;
+	            });
+
+	            return material;
+	        }
+
+	        /** 
+	         * Add a model
+	         */
+
+	    }, {
+	        key: 'addModel',
+	        value: function addModel(prim, data, path, key, mimeType) {
+
+	            if (key === undefined) {
+
+	                console.error('TextureObj::addTexture(): undefined key');
+
+	                return null;
+	            }
+
+	            var fType = this.util.getFileExtension(path);
+
+	            var model = {};
+
+	            switch (fType) {
+
+	                case 'obj':
+
+	                    var d = this.computeObjMesh(data, prim, path);
+
+	                    prim.geometry.addBufferData(d.vertices, d.indices, d.normals, d.texCoords, []);
+
+	                    // Compute texture coordinates if they are missing with a default.
+
+	                    if (d.texCoords.length / prim.geometry.texCoords.itemSize !== d.vertices.length / prim.geometry.vertices.itemSize) {
+
+	                        prim.updateTexCoords();
+	                    }
+
+	                    // Compute normals if they are missing.
+
+	                    if (d.normals.length / prim.geometry.normals.itemSize !== d.vertices.length / prim.geometry.vertices.itemSize) {
+
+	                        prim.updateNormals();
+	                    }
+
+	                    // Updates of tangents is not directly specified in the OBJ format.
+
+	                    prim.updateTangents();
+
+	                    // Updates of colors is not directly specified in the OBJ format (but might be supplied as a material).
+
+	                    prim.updateColors();
+
+	                    // Emit a geometry complete event (callback is Prim.initPrim()).
+
+	                    this.util.emitter.emit(this.util.emitter.events.GEOMETRY_READY, prim, key);
+
+	                    break;
+
+	                case 'mtl':
+
+	                    console.log("MTL file for prim:" + prim.name + " loaded, parsing....");
+
+	                    var material = this.computeObjMaterials(data, prim, path);
+
+	                    if (!material.name) {
+
+	                        material.name = this.util.getBaseName(path);
+	                    }
+
+	                    console.log("ADDING MATERIAL ARRAY:" + material.name + " to Prim:" + prim.name);
+
+	                    prim.material.push(material);
+
+	                    // Emit a materials complete event.
+
+	                    this.util.emitter.emit(this.util.emitter.events.MATERIAL_READY, prim, key);
+
+	                    break;
+
+	                case 'html':
+	                    // A-Frame?
+
+	                    break;
+
+	                case 'x3d':
+	                    // X3DOM
+
+	                    break;
+
+	                case 'x3dv':
+	                    // VRML
+
+	                    break;
+
+	                default:
+
+	                    break;
+	            }
+	        }
+
+	        /** 
+	         * Load models, using a list of paths. If a Model already exists, 
+	         * just return it. Otherwise, do the load.
+	         * @param {Array[String]} pathList a list of URL paths to load.
+	         * @param {Boolean} cacheBust if true, add a http://url?random query string to request.
+	         */
+
+	    }, {
+	        key: 'getModels',
+	        value: function getModels(prim, pathList) {
+	            var _this3 = this;
+
+	            var cacheBust = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+
+
+	            for (var i = 0; i < pathList.length; i++) {
+
+	                var path = pathList[i];
+
+	                var poolModel = this.pathInList(path);
+
+	                if (poolModel) {
+
+	                    prim.models.push(poolModel); // just reference an existing texture in this pool.
+	                } else {
+	                    (function () {
+
+	                        // Get the image mimeType.
+
+	                        var mimeType = _this3.modelMimeTypes[_this3.util.getFileExtension(path)];
+
+	                        // check if mimeType is OK.
+
+	                        if (mimeType) {
+
+	                            _this3.doRequest(path, i, function (updateObj) {
+
+	                                /* 
+	                                 * updateObj returned from GetAssets has the following structure:
+	                                 * { 
+	                                 *   key: key, 
+	                                 *   path: requestURL, 
+	                                 *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
+	                                 *   error: false|response 
+	                                 * } 
+	                                 */
+
+	                                var modelData = _this3.addModel(prim, updateObj.data, updateObj.path, updateObj.key, mimeType);
+	                            }, cacheBust, mimeType, 0); // end of this.doRequest(), initial request at 0 tries
+	                        } else {
+
+	                            console.error('ModelPool::getModels(): file type "' + _this3.util.getFileExtension(path) + ' not supported, not loading');
+	                        }
+	                    })();
+	                }
+	            } // end of loop
+	        }
+
+	        /** 
+	         * Parse the downloaded model file contents.
+	         */
+
+	    }, {
+	        key: 'createModel',
+	        value: function createModel() {}
+	    }]);
+
+	    return ModelPool;
+	}(_assetPool2.default);
+
+	exports.default = ModelPool;
+
+/***/ },
+/* 45 */
+/***/ function(module, exports) {
+
+	
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var AssetPool = function () {
+
+	    /** 
+	     * Load a set of URLs to grab, and run parallel, queued requests until 
+	     * complete or timed out. Also provide a callback so the requesting object 
+	     * can check if their load is complete.
+	     * Inspired by:
+	     * @link https://blog.hospodarets.com/fetch_in_action
+	     */
+	    function AssetPool(util) {
+	        _classCallCheck(this, AssetPool);
+
+	        this.util = util, this.emitter = util.emitter, this.MIN_WAIT_TIME = 100, this.MAX_TRIES = 6;
+
+	        // Store assets as a pool, with two arrays referencing them (numeric and key-based).
+
+	        this.numericList = [], this.keyList = [];
+	    }
+
+	    /*
+	     * ---------------------------------------
+	     * ASSET POOL OPERATIONS
+	     * ---------------------------------------
+	     */
+
+	    /** 
+	     * Find a texture by its path, if the path was not used as the key.
+	     * @param {String} path the URL of the texture file.
+	     * @returns {Boolean} if found in current textureList, return true, else false.
+	     */
+
+
+	    _createClass(AssetPool, [{
+	        key: 'pathInList',
+	        value: function pathInList(path) {
+
+	            for (var i = 0; i < this.numericList[i]; i++) {
+
+	                if (this.numericList[i].path === path) {
+
+	                    return this.numericList[i];
+	                }
+	            }
+
+	            return null;
+	        }
+
+	        /** 
+	         * Find a texture by its key (numeric or string)
+	         */
+
+	    }, {
+	        key: 'assetInList',
+	        value: function assetInList(key) {
+
+	            if (!key) {
+
+	                console.error('AssetPool::assetInlist(): undefined key');
+
+	                return false;
+	            }
+
+	            if (this.util.isNumber(key)) {
+
+	                return this.numericList[key];
+	            } else if (this.keyList[key]) {
+
+	                return this.keyList[key];
+	            }
+
+	            return null;
+	        }
+
+	        /*
+	         * add an asset to the pool.
+	         * @param {String|Number} key the key of the object, either a number or a guid style key.
+	         * @param {Object} the asset.
+	         * @returns {Object} the stored object.
+	        */
+
+	    }, {
+	        key: 'addAsset',
+	        value: function addAsset(key, obj) {
+
+	            if (!this.util.isNumber(key)) {
+	                // guid key
+
+	                // Object saves its associative key.
+
+	                obj.key = key;
+
+	                if (this.keyList[key]) {
+
+	                    if (this.keyList[key] === obj) {
+
+	                        console.warn('AssetPool::addAsset(): asset ' + key + ' already added to pool');
+	                    } else {
+
+	                        console.warn('AssetPool::addAsset(): replacing asset at key:' + key);
+	                    }
+	                }
+
+	                this.keyList[key] = obj;
+	            } else {
+	                // numerical key
+
+	                var pos = this.numericList.indexOf(obj);
+
+	                if (pos !== this.NOT_IN_LIST) {
+
+	                    obj.pos = pos;
+
+	                    console.warn('AssetPool::addAsset(): asset ' + key + ' already added to pool');
+	                } else {
+
+	                    this.numericList.push(obj);
+
+	                    // Object also saves its position index in the global texture pool.
+
+	                    obj.pos = this.numericList.length - 1;
+	                }
+	            }
+
+	            // Return the asset
+
+	            return obj;
+	        }
+	    }, {
+	        key: 'removeAsset',
+	        value: function removeAsset(key) {
+
+	            var obj = null;
+
+	            if (this.util.isNumeric(key)) {
+
+	                obj = this.numericList.splice(key, 1);
+
+	                if (obj.length !== 0) {
+
+	                    delete this.keyList[key];
+	                }
+	            } else if (this.keyList[key]) {
+
+	                obj = this.keyList[key];
+
+	                if (obj) {
+
+	                    this.numericList.splice(obj.pos, 1);
+
+	                    delete this.keyList[key];
+	                }
+	            } else {
+
+	                console.warn('AssetPool::removeAsset(): key not found in assetList');
+	            }
+
+	            return obj;
+	        }
+
+	        /*
+	         * ---------------------------------------
+	         * FETCH API (WRAPPED)
+	         * ---------------------------------------
+	         */
+
+	        /** 
+	         * Wrap a Promise in an object.
+	         */
+
+	    }, {
+	        key: 'getWrappedPromise',
+	        value: function getWrappedPromise() {
+
+	            var wrappedPromise = {},
+	                promise = new Promise(function (resolve, reject) {
+
+	                wrappedPromise.resolve = resolve, wrappedPromise.reject = reject;
+	            });
+
+	            wrappedPromise.then = promise.then.bind(promise);
+
+	            wrappedPromise.catch = promise.catch.bind(promise);
+
+	            wrappedPromise.promise = promise;
+
+	            return wrappedPromise;
+	        }
+
+	        /** 
+	         * get fetch wrapped into a wrapped Promise.
+	         * @link http://stackoverflow.com/questions/35520790/error-handling-for-fetch-in-aurelia
+	         */
+
+	    }, {
+	        key: 'getWrappedFetch',
+	        value: function getWrappedFetch(url, params, tries, key) {
+
+	            var wrappedPromise = this.getWrappedPromise();
+
+	            var req = new Request(url, params);
+
+	            wrappedPromise.url = url;
+
+	            wrappedPromise.params = params;
+
+	            wrappedPromise.tries = tries;
+
+	            wrappedPromise.key = key;
+
+	            // Start the timeout, which lengthens with each attempt.
+
+	            wrappedPromise.timeoutId = setTimeout(function () {
+
+	                console.warn('AssetPool::getWrappedFetch(): TIMEOUT ' + wrappedPromise.url);
+
+	                wrappedPromise.catch(0);
+	            }, this.MIN_WAIT_TIME * wrappedPromise.tries);
+
+	            // Apply arguments to fetch.
+
+	            fetch(req).then(function (response) {
+
+	                if (!response.ok) {
+	                    // catch 404 errors
+
+	                    throw new Error('Network response was not ok for ' + wrappedPromise.url);
+	                } else {
+
+	                    return response; // send to the next '.then'
+	                }
+	            }).then(function (response) {
+
+	                console.warn('AssetPool::getWrappedFetch(): OK, RESOLVE ' + wrappedPromise.url);
+
+	                clearTimeout(wrappedPromise.timeoutId);
+
+	                return wrappedPromise.resolve(response);
+	            }, function (error) {
+
+	                console.warn('AssetPool::getWrappedFetch(): NOT OK, REJECT ' + wrappedPromise.url);
+
+	                clearTimeout(wrappedPromise.timeoutId);
+
+	                return wrappedPromise.reject(error); // TODO: using Error causes a strange fail here(!)
+	            }).catch(function (error) {
+
+	                console.warn('AssetPool::getWrappedFetch(): NOT OK, CATCH ' + wrappedPromise.url);
+
+	                clearTimeout(wrappedPromise.timeoutId);
+
+	                return wrappedPromise.catch(error);
+	            });
+
+	            return wrappedPromise;
+	        }
+
+	        /** 
+	         * Get an individual file.
+	         * @param {String} requestURL the file path for our asset.
+	         * @param {String} key identifier key for the asset, so the requesting object can put it in the right place.
+	         * @param {Function} updateFn callback function when an asset loads or fails
+	         * @param {Boolean} cacheBust if true, add a random query string to avoid caching
+	         * @param {String} mimeType the MIME type of the expected data
+	         * @param {Number} tries. If load fails, try to load again with a longer timeout. Load until 
+	         *        number of 'tries' = this.MAX_TRIES. Lengthen the timeout with each try.
+	         */
+
+	    }, {
+	        key: 'doRequest',
+	        value: function doRequest(requestURL, key, updateFn) {
+	            var cacheBust = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : true;
+
+	            var _this = this;
+
+	            var mimeType = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : 'text/plain';
+	            var tries = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : 0;
+
+
+	            console.log(">>>>MIMETYPE:" + mimeType);
+
+	            var headers = new Headers({
+
+	                'Content-Type': mimeType
+
+	            });
+
+	            var ft = this.getWrappedFetch(cacheBust ? requestURL + '?' + new Date().getTime() : requestURL, {
+
+	                method: 'get', // optional, "GET" is default value
+
+	                mode: 'cors',
+
+	                redirect: 'follow',
+
+	                headers: headers
+
+	            }, tries, // attach some additional variables to this fetch
+
+	            key // key identifier for object requested, from the calling requestor object.
+
+	            );
+
+	            // Return the Promise.
+
+	            return ft.promise.then(function (response) {
+
+	                console.warn('1. AssetPool::doRequest(): ft.promise FIRST .then OK, response.status:' + response.status + ' for ' + ft.url);
+
+	                console.warn('1. AssetPool::doRequest(): ft.promise FIRST .then OK, response:' + response + ' for ' + ft.url);
+
+	                console.warn('1. AssetPool::doRequest(): ft.promise FIRST .then OK, tries:' + ft.tries + ' for ' + ft.url);
+
+	                console.warn('1. AssetPool::doRequest(): ft.promise FIRST .then OK, mimeType:' + mimeType + ' for ' + ft.url);
+
+	                var data = null;
+
+	                // Check response.status ('0' is ok if we are serving from desktop os).
+
+	                if (response.status === 200 || response.status === 0) {
+
+	                    if (mimeType === 'application/json') {
+
+	                        data = response.json();
+	                    } else if (mimeType.indexOf('text') !== _this.util.NOT_IN_LIST) {
+
+	                        data = response.text();
+	                    } else if (mimeType === 'application/xml') {
+
+	                        data = response.formData();
+	                    } else if (mimeType.indexOf('image') !== _this.util.NOT_IN_LIST) {
+
+	                        data = response.blob();
+
+	                        // TODO: data = arraybufferview type
+	                        ///TODO: data = response.arrayBuffer(); // NEED ARRAYBUFFERVIEW
+	                    } else {
+	                        // all other mime types (e.g. audio, video)
+
+	                        data = response.blob();
+	                    }
+
+	                    // Return a resolved Promise to the next '.then'.
+
+	                    return Promise.resolve(data);
+	                } else {
+
+	                    return Promise.reject(response);
+	                }
+	            }, function (error) {
+	                // Triggered by setTimeout(). Try up to this.MAX_TRIES before giving up.
+
+	                console.warn('2. AssetPool::doRequest(): ft.promise FIRST .then error, error:' + error + ' for ' + ft.url);
+
+	                console.warn('2. AssetPool::doRequest(): ft.promise FIRST .then error, tries:' + ft.tries + ' for ' + ft.url);
+
+	                ft.tries++;
+
+	                if (ft.tries < _this.MAX_TRIES) {
+
+	                    console.warn('AssetPool::doRequest(): ft.promise FIRST .then error, TRYING AGAIN:' + error + ' for ' + ft.url);
+
+	                    _this.doRequest(requestURL, key, updateFn, cacheBust = true, mimeType, ft.tries);
+	                }
+
+	                return Promise.resolve(error);
+	            }).then(function (response) {
+
+	                if (response instanceof Error) {
+
+	                    // Run the callback with error values.
+
+	                    updateFn({ key: key, path: requestURL, data: null, error: response }); // Send a wrapped error object
+	                } else {
+
+	                    // Run the callback we got in the original request, return received file in data.
+
+	                    console.log('>>>>>>>>>>>>>>about to call update function!!!!!!');
+
+	                    updateFn({ key: key, path: requestURL, data: response, error: false }); // Send the data to the caller.
+	                }
+	            }, function (error) {
+
+	                // Unknown error?
+
+	                return Promise.reject(0);
+	            });
+	        }
+
+	        /** 
+	         * Add fetch() url requests for resolve, with a timeout for fails. 
+	         * when individual fetch()es are complete, run a callback.
+	         * when all fetch()es are complete, run a final callback
+	         * usage: addRequests( requestor, '/first.jpg', 'second.jpg',...);
+	         * @param {Object} requestor the name of the requestor.
+	         *         - requestor.name = the name of the requestor
+	         *         - requestor.updateFn = the function receiving data from the fetch() call
+	         *         - requestor.cacheBust = if true, randomize URL query string to prevent caching
+	         *         - requestor.mimeType = if present, set to a specific MIME type. Default = text/text
+	         * @param {Function} updateFn the function to call after each fetch completes. The 
+	         * calling program is responsible for handing determining if it has enough fetch() 
+	         * operations to complete. 
+	         */
+
+	    }, {
+	        key: 'addRequests',
+	        value: function addRequests(requestor) {
+
+	            var paths = requestor.files;
+
+	            // TODO: THIS CAN BE A KEY. ONE CAN CHECK THE POOL (maintained here???) for a key, which doesn't have to be Array position
+	            // TODO: use an associative key!!!!!!!!!
+
+	            for (var i = 0; i < paths.length; i++) {
+
+	                var path = paths[i];
+
+	                console.log("AssetPool::addRequests(): " + path, ", " + _typeof(requestor.updateFn) + ", " + requestor.cacheBust + ", " + requestor.mimeType);
+
+	                this.doRequest(path, i, requestor.updateFn, requestor.cacheBust, requestor.mimeType, 0); // initial request at 0 tries
+	            } // end of request loop
+	        } // end of addRequests()
+
+	    }]);
+
+	    return AssetPool;
+	}();
+
+	exports.default = AssetPool;
 
 /***/ }
 /******/ ]);
