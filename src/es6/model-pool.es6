@@ -25,7 +25,7 @@ class ModelPool extends AssetPool {
 
             'mtl': 'text/plain',
 
-            'html': 'text/html' ,     // A-Frame?
+            'html': 'text/html',      // A-Frame?
 
             'x3d': 'model/x3d+xml',   // X3DOM
 
@@ -624,35 +624,9 @@ class ModelPool extends AssetPool {
 
                 let d = this.computeObjMesh( data, prim, path );
 
-                prim.geometry.addBufferData( d.vertices, d.indices, d.normals, d.texCoords, [] );
+                // Emit the GEOMETRY_READY event with arguments.
 
-                // Compute texture coordinates if they are missing with a default.
-
-                if( d.texCoords.length / prim.geometry.texCoords.itemSize  !== d.vertices.length / prim.geometry.vertices.itemSize ) {
-
-                    prim.updateTexCoords();
-
-                }
-
-                // Compute normals if they are missing.
-
-                if( d.normals.length / prim.geometry.normals.itemSize  !== d.vertices.length / prim.geometry.vertices.itemSize ) {
-
-                    prim.updateNormals();
-
-                }
-
-                // Updates of tangents is not directly specified in the OBJ format.
-
-                prim.updateTangents();
-
-                // Updates of colors is not directly specified in the OBJ format (but might be supplied as a material).
-
-                prim.updateColors();
-
-                // Emit a geometry complete event (callback is Prim.initPrim()).
-
-                this.util.emitter.emit( this.util.emitter.events.GEOMETRY_READY, prim, key );
+                this.util.emitter.emit( this.util.emitter.events.GEOMETRY_READY, prim, key, d.vertices, d.indices, d.normals, d.texCoords, [] );
 
                 break;
 
@@ -672,7 +646,7 @@ class ModelPool extends AssetPool {
 
                 prim.material.push( material );
 
-                // Emit a materials complete event.
+                // Emit a materials complete event (callback is Prim.initPrimMaterials()).
 
                 this.util.emitter.emit( this.util.emitter.events.MATERIAL_READY, prim, key );
 

@@ -107,7 +107,7 @@ class Prim {
      * @param {LoadAudio} audio loading class
      * @param {LoadVideo} video loading class
      */
-    constructor ( init, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo ) {
+    constructor ( init, util, glMatrix, webgl, loadAudio, loadVideo ) {
 
         console.log( 'in Prim class' );
 
@@ -116,10 +116,6 @@ class Prim {
         this.webgl = webgl;
 
         this.glMatrix = glMatrix;
-
-        this.loadModel = loadModel;
-
-        this.loadTexture = loadTexture;
 
         this.loadAudio = loadAudio;
 
@@ -137,14 +133,14 @@ class Prim {
 
         // Attach 1 copy of LoadGeometry to this Factory.
 
-        this.geometryPool = new GeometryPool( init, util, glMatrix, webgl, this.modelPool );
+        this.geometryPool = new GeometryPool( init, util, glMatrix, webgl, this.modelPool, this.texturePool );
 
         /* 
          * Bind the Prim callback for geometry creation.
          */
 
         // TODO: NEEDED TO LOAD THE SECOND MODEL WITH A TEXTURE CAPSULE
-
+/*
         this.util.emitter.on( this.util.emitter.events.GEOMETRY_READY, 
 
             ( prim ) => {
@@ -152,6 +148,15 @@ class Prim {
                 this.initPrim( prim, prim.vertices, prim.indices, prim.normals, prim.texCoords, prim.tangents );
 
         } );
+*/
+        this.util.emitter.on( this.util.emitter.events.GEOMETRY_READY, 
+
+            ( prim, key, vertices, indices, normals, texCoords, tangents, colors ) => {
+
+
+                this.initPrim( prim, key, vertices, indices, normals, texCoords, tangents, colors );
+
+            });
 
     }
 
@@ -198,13 +203,6 @@ class Prim {
 
     }
 
-    /* 
-     * ---------------------------------------
-     * LOADERS
-     * ---------------------------------------
-     */
-
-
 
     /*
      * ---------------------------------------
@@ -212,31 +210,23 @@ class Prim {
      * ---------------------------------------
      */
 
-    initPrim ( prim, vertices, indices, normals = [], texCoords = [], tangents = [], colors = [] ) {
+    initPrim ( prim, key, vertices, indices, normals = [], texCoords = [], tangents = [], colors = [] ) {
 
-        let geo = prim.geometry;
+        console.log(")()()()(PRIM.initPrim(): doing" + prim.name)
+        console.log(")()()()(PRIM.initPrim(): vertices:" + vertices.length + ' indices:' + indices.length + ' normals:' + normals.length + ' texCoords:' + texCoords.length + ' tangents:' + tangents.length + ' colors:' + colors.length );
 
-        console.log( prim.name + ' generation complete,(re)calculating normals and tangents' );
-
-        if ( prim.name === 'capsule') {
-
-            console.log("Prim::initPrim():cHECKING FOR SHADER FOR PRIM:" + prim.name + " SHADEr: " + prim.shader.name);
-
-        }
-
-        // TODO: TEAPOT GOES HERE BUT CAPSULE DOES NOT
-
-       if ( prim.name === 'teapot') {
-
-            console.log("Prim::initPrim: cHECKING FOR SHADER FOR PRIM:" + prim.name + " SHADEr: " + prim.shader.name)
-
-        }
+        //let geo = prim.geometry;
 
         /* 
          * Add buffer data, and re-bind to WebGL.
          * NOTE: Mesh callbacks don't actually add any data here 
          * (this.meshCallback() passes empty coordinate arrays)
          */
+
+        // TODO: THIS MAY BE REDUNDANT BELOW!!!!!!!!!!!!!!!!!!!!!!!
+        // TODO: CHANGE GEOMETRY SO IT DOES THIS FOR EVERYTHING
+
+        prim.geometry.addBufferData( vertices, indices, normals, texCoords, tangents, colors );
 
         // Update vertices if they were supplied.
 
@@ -306,6 +296,15 @@ class Prim {
         }
 
         prim.ready = true;
+
+    }
+
+    /** 
+     * Fired when we receive an this.util.emitter.events.MATERIAL_READY event
+     */
+    initPrimMaterials ( prim ) {
+
+        // TODO: update based on materials.
 
     }
 
@@ -784,7 +783,7 @@ class Prim {
 
        // Execute geometry creation routine (which may be a file load).
 
-       console.log("Generating Prim:" + prim.name + '(' + prim.type + ')' );
+       console.log( 'Generating Prim:' + prim.name + '(' + prim.type + ')' );
 
         // Geometry factory function, create empty WebGL Buffers.
 
@@ -792,7 +791,7 @@ class Prim {
 
         // Create Geometry data, or load Mesh data (may alter some of the above default properties).
 
-        this.geometryPool[ type ]( prim );
+        this.geometryPool.getGeometry( type, prim, 0 );
 
         // Get the static network textures async (use emitter to decide what to do when each texture loads).
 

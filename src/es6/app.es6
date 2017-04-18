@@ -149,7 +149,7 @@ var promise = new Promise( ( resolve, reject ) => {
 
         loadFont = new LoadFont( true, util, glMatrix, webgl );
 
-        prim = new Prim ( true, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo );
+        prim = new Prim ( true, util, glMatrix, webgl, loadAudio, loadVideo );
 
         // Add shaders to ShaderPool.
 

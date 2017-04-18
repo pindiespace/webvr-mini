@@ -247,7 +247,7 @@
 
 	        loadFont = new _loadFont2.default(true, util, glMatrix, webgl);
 
-	        exports.prim = prim = new _prim2.default(true, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo);
+	        exports.prim = prim = new _prim2.default(true, util, glMatrix, webgl, loadAudio, loadVideo);
 
 	        // Add shaders to ShaderPool.
 
@@ -7490,7 +7490,7 @@
 	     * @param {LoadAudio} audio loading class
 	     * @param {LoadVideo} video loading class
 	     */
-	    function Prim(init, util, glMatrix, webgl, loadModel, loadTexture, loadAudio, loadVideo) {
+	    function Prim(init, util, glMatrix, webgl, loadAudio, loadVideo) {
 	        var _this = this;
 
 	        _classCallCheck(this, Prim);
@@ -7502,10 +7502,6 @@
 	        this.webgl = webgl;
 
 	        this.glMatrix = glMatrix;
-
-	        this.loadModel = loadModel;
-
-	        this.loadTexture = loadTexture;
 
 	        this.loadAudio = loadAudio;
 
@@ -7523,17 +7519,25 @@
 
 	        // Attach 1 copy of LoadGeometry to this Factory.
 
-	        this.geometryPool = new _geometryPool2.default(init, util, glMatrix, webgl, this.modelPool);
+	        this.geometryPool = new _geometryPool2.default(init, util, glMatrix, webgl, this.modelPool, this.texturePool);
 
 	        /* 
 	         * Bind the Prim callback for geometry creation.
 	         */
 
 	        // TODO: NEEDED TO LOAD THE SECOND MODEL WITH A TEXTURE CAPSULE
+	        /*
+	                this.util.emitter.on( this.util.emitter.events.GEOMETRY_READY, 
+	        
+	                    ( prim ) => {
+	        
+	                        this.initPrim( prim, prim.vertices, prim.indices, prim.normals, prim.texCoords, prim.tangents );
+	        
+	                } );
+	        */
+	        this.util.emitter.on(this.util.emitter.events.GEOMETRY_READY, function (prim, key, vertices, indices, normals, texCoords, tangents, colors) {
 
-	        this.util.emitter.on(this.util.emitter.events.GEOMETRY_READY, function (prim) {
-
-	            _this.initPrim(prim, prim.vertices, prim.indices, prim.normals, prim.texCoords, prim.tangents);
+	            _this.initPrim(prim, key, vertices, indices, normals, texCoords, tangents, colors);
 	        });
 	    }
 
@@ -7582,12 +7586,6 @@
 	            return indices;
 	        }
 
-	        /* 
-	         * ---------------------------------------
-	         * LOADERS
-	         * ---------------------------------------
-	         */
-
 	        /*
 	         * ---------------------------------------
 	         * PRIM FACTORY
@@ -7596,34 +7594,28 @@
 
 	    }, {
 	        key: 'initPrim',
-	        value: function initPrim(prim, vertices, indices) {
-	            var normals = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
-	            var texCoords = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : [];
-	            var tangents = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : [];
-	            var colors = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : [];
+	        value: function initPrim(prim, key, vertices, indices) {
+	            var normals = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : [];
+	            var texCoords = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : [];
+	            var tangents = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : [];
+	            var colors = arguments.length > 7 && arguments[7] !== undefined ? arguments[7] : [];
 
 
-	            var geo = prim.geometry;
+	            console.log(")()()()(PRIM.initPrim(): doing" + prim.name);
+	            console.log(")()()()(PRIM.initPrim(): vertices:" + vertices.length + ' indices:' + indices.length + ' normals:' + normals.length + ' texCoords:' + texCoords.length + ' tangents:' + tangents.length + ' colors:' + colors.length);
 
-	            console.log(prim.name + ' generation complete,(re)calculating normals and tangents');
-
-	            if (prim.name === 'capsule') {
-
-	                console.log("Prim::initPrim():cHECKING FOR SHADER FOR PRIM:" + prim.name + " SHADEr: " + prim.shader.name);
-	            }
-
-	            // TODO: TEAPOT GOES HERE BUT CAPSULE DOES NOT
-
-	            if (prim.name === 'teapot') {
-
-	                console.log("Prim::initPrim: cHECKING FOR SHADER FOR PRIM:" + prim.name + " SHADEr: " + prim.shader.name);
-	            }
+	            //let geo = prim.geometry;
 
 	            /* 
 	             * Add buffer data, and re-bind to WebGL.
 	             * NOTE: Mesh callbacks don't actually add any data here 
 	             * (this.meshCallback() passes empty coordinate arrays)
 	             */
+
+	            // TODO: THIS MAY BE REDUNDANT BELOW!!!!!!!!!!!!!!!!!!!!!!!
+	            // TODO: CHANGE GEOMETRY SO IT DOES THIS FOR EVERYTHING
+
+	            prim.geometry.addBufferData(vertices, indices, normals, texCoords, tangents, colors);
 
 	            // Update vertices if they were supplied.
 
@@ -7693,6 +7685,16 @@
 
 	            prim.ready = true;
 	        }
+
+	        /** 
+	         * Fired when we receive an this.util.emitter.events.MATERIAL_READY event
+	         */
+
+	    }, {
+	        key: 'initPrimMaterials',
+	        value: function initPrimMaterials(prim) {}
+
+	        // TODO: update based on materials.
 
 	        /** 
 	         * Convert a Prim to its JSON equivalent
@@ -8139,7 +8141,7 @@
 
 	            // Execute geometry creation routine (which may be a file load).
 
-	            console.log("Generating Prim:" + prim.name + '(' + prim.type + ')');
+	            console.log('Generating Prim:' + prim.name + '(' + prim.type + ')');
 
 	            // Geometry factory function, create empty WebGL Buffers.
 
@@ -8147,7 +8149,7 @@
 
 	            // Create Geometry data, or load Mesh data (may alter some of the above default properties).
 
-	            this.geometryPool[type](prim);
+	            this.geometryPool.getGeometry(type, prim, 0);
 
 	            // Get the static network textures async (use emitter to decide what to do when each texture loads).
 
@@ -20234,7 +20236,20 @@
 	'use strict';
 
 	var GeometryPool = function () {
-	    function GeometryPool(init, util, glMatrix, webgl, modelPool) {
+
+	    /** 
+	     * @class GeometryPool
+	     * create coordinate geometry for vertices, textures, normals, tangents, either 
+	     * from a file or proceedurally.
+	     * @constructor
+	     * @param {Boolean} init if true, initialize in the constructor.
+	     * @param {Util} util the utility class.
+	     * @param {glMatrix} the glMatrix class.
+	     * @param {WebGL} the webGL class.
+	     * @param {ModelPool} the ModelPool class.
+	     * @param {TexturePool} the TexturePool class.
+	     */
+	    function GeometryPool(init, util, glMatrix, webgl, modelPool, texturePool) {
 	        _classCallCheck(this, GeometryPool);
 
 	        console.log('in GeometryPool class');
@@ -20358,6 +20373,10 @@
 	        // Save a reference to the modelPool (passed from Prim)
 
 	        this.modelPool = modelPool;
+
+	        // Save a reference to the texturePool (passed from Prim
+
+	        this.texturePool = texturePool;
 
 	        /* 
 	         * Bind the Prim callback for geometry creation.
@@ -21465,9 +21484,9 @@
 
 	                // Initialize the Prim, adding normals, texCoords, colors and tangents as necessary.
 
-	            prim.initPrim(prim, vertices, indices, normals, texCoords, tangents); // CHECK CREATE PRIM - ATTACHES TO SHADER
+	                //prim.initPrim( prim, vertices, indices, normals, texCoords, tangents ); // CHECK CREATE PRIM - ATTACHES TO SHADER
 
-	            return true;
+	            return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
 	        }
 
 	        /** 
@@ -21511,9 +21530,9 @@
 
 	            // Return data to build WebGL buffers.
 
-	            prim.initPrim(prim, vertices, indices, normals, texCoords, tangents); // CHECK CREATE PRIM - ATTACHES TO SHADER
+	            //prim.initPrim( prim, vertices, indices, normals, texCoords, tangents ); // CHECK CREATE PRIM - ATTACHES TO SHADER
 
-	            return true;
+	            return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
 	        }
 
 	        /** 
@@ -21815,9 +21834,9 @@
 
 	            // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
-	            prim.initPrim(prim, vertices, indices, normals, texCoords, tangents); // CHECK CREATE PRIM - ATTACHES TO SHADER
+	            //prim.initPrim( prim, vertices, indices, normals, texCoords, tangents ); // CHECK CREATE PRIM - ATTACHES TO SHADER
 
-	            return true;
+	            return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
 	        }
 
 	        /** 
@@ -22123,9 +22142,9 @@
 
 	            // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
-	            prim.initPrim(prim, vertices, indices, normals, texCoords, tangents); // CHECK CREATE PRIM - ATTACHES TO SHADER
+	            //prim.initPrim( prim, vertices, indices, normals, texCoords, tangents ); // CHECK CREATE PRIM - ATTACHES TO SHADER
 
-	            return true;
+	            return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
 	        }
 
 	        /** 
@@ -22495,9 +22514,9 @@
 
 	            // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
-	            prim.initPrim(prim, vertices, indices, normals, texCoords, tangents); // CHECK CREATE PRIM - ATTACHES TO SHADER
+	            //prim.initPrim( prim, vertices, indices, normals, texCoords, tangents ); // CHECK CREATE PRIM - ATTACHES TO SHADER
 
-	            return true;
+	            return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
 	        }
 
 	        /** 
@@ -23075,9 +23094,9 @@
 
 	            // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
-	            prim.initPrim(prim, vertices, indices, normals, texCoords, tangents); // CHECK CREATE PRIM - ATTACHES TO SHADER
+	            //prim.initPrim( prim, vertices, indices, normals, texCoords, tangents ); // CHECK CREATE PRIM - ATTACHES TO SHADER
 
-	            return true;
+	            return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
 	        }
 
 	        /** 
@@ -23384,9 +23403,9 @@
 
 	            // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
-	            prim.initPrim(prim, vertices, indices, normals, texCoords, tangents); // CHECK CREATE PRIM - ATTACHES TO SHADER
+	            //prim.initPrim( prim, vertices, indices, normals, texCoords, tangents ); // CHECK CREATE PRIM - ATTACHES TO SHADER
 
-	            return true;
+	            return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
 	        }
 
 	        /** 
@@ -23498,9 +23517,9 @@
 
 	            // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
-	            prim.initPrim(prim, vertices, indices, normals, texCoords, tangents); // CHECK CREATE PRIM - ATTACHES TO SHADER
+	            //prim.initPrim( prim, vertices, indices, normals, texCoords, tangents ); // CHECK CREATE PRIM - ATTACHES TO SHADER
 
-	            return true;
+	            return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
 	        }
 	    }, {
 	        key: 'geometryTunnel',
@@ -23537,42 +23556,45 @@
 	        key: 'geometryMesh',
 	        value: function geometryMesh(prim) {
 
-	            var geo = prim.geometry;
-
 	            console.log('&&&&&TRYING TO LOAD MODEL:' + prim.name + ' WITH GETMODEL');
 
+	            // Get the model file. Pass in Prim so we can responde to model completion events.
+
 	            this.modelPool.getModels(prim, prim.models, true);
+	        }
 
-	            /*
-	            
-	                console.log(">>>>>>>>>>>>>>geometryMesh():" + prim.models[ i ] );
-	            
-	                for ( let i = 0; i < prim.models.length; i++ ) {
-	            
-	                    let lm = new LoadModel( true, this.util, this.glMatrix, this.webgl, this.loadTexture );
-	            
-	                    lm.load( 
-	            
-	                        prim.models[ i ],
-	            
-	                        prim,
-	            
-	                        () => {},
-	            
-	                        () => {
-	            
-	                            console.log('!!!!!!!!!!!!!!!!GEOMETRY READY:::::: ' + prim.name)
-	            
-	                            this.util.emitter.emit( 'geometryready', prim );
-	            
-	                            }
-	            
-	                        );
-	            
-	                    } // end of for loop.
-	            */
+	        /* 
+	         * ---------------------------------------
+	         * LOADERS
+	         * ---------------------------------------
+	         */
 
-	            return false;
+	        /** 
+	         * Procedurally generate geometry coordinates, then emit a pseudo-event to the calling Prim.
+	         * @param {String} type the type of procedural geometry type, also the name of the factory funciton.
+	         * @param {Prim} prim the calling Prim.
+	         * @param {String|number} key the key to assign the geometry model to in the prim.models array.
+	         */
+
+	    }, {
+	        key: 'getGeometry',
+	        value: function getGeometry(type, prim, key) {
+
+	            if (type === this.typeList.MESH) {
+
+	                // Load geometry from a file, with callback emitter event in ModelPool, calling Prim.initPrim().
+
+	                this.geometryMesh(prim);
+	            } else {
+
+	                // procedural geometry
+
+	                var c = this[type](prim);
+
+	                // Emit a geometry ready event, calling Prim.initPrim().
+
+	                this.util.emitter.emit(this.util.emitter.events.GEOMETRY_READY, prim, key, c.vertices, c.indices, c.normals, c.texCoords, c.tangents);
+	            }
 	        }
 	    }]);
 
@@ -24212,33 +24234,9 @@
 
 	                    var d = this.computeObjMesh(data, prim, path);
 
-	                    prim.geometry.addBufferData(d.vertices, d.indices, d.normals, d.texCoords, []);
+	                    // Emit the GEOMETRY_READY event with arguments.
 
-	                    // Compute texture coordinates if they are missing with a default.
-
-	                    if (d.texCoords.length / prim.geometry.texCoords.itemSize !== d.vertices.length / prim.geometry.vertices.itemSize) {
-
-	                        prim.updateTexCoords();
-	                    }
-
-	                    // Compute normals if they are missing.
-
-	                    if (d.normals.length / prim.geometry.normals.itemSize !== d.vertices.length / prim.geometry.vertices.itemSize) {
-
-	                        prim.updateNormals();
-	                    }
-
-	                    // Updates of tangents is not directly specified in the OBJ format.
-
-	                    prim.updateTangents();
-
-	                    // Updates of colors is not directly specified in the OBJ format (but might be supplied as a material).
-
-	                    prim.updateColors();
-
-	                    // Emit a geometry complete event (callback is Prim.initPrim()).
-
-	                    this.util.emitter.emit(this.util.emitter.events.GEOMETRY_READY, prim, key);
+	                    this.util.emitter.emit(this.util.emitter.events.GEOMETRY_READY, prim, key, d.vertices, d.indices, d.normals, d.texCoords, []);
 
 	                    break;
 
@@ -24257,7 +24255,7 @@
 
 	                    prim.material.push(material);
 
-	                    // Emit a materials complete event.
+	                    // Emit a materials complete event (callback is Prim.initPrimMaterials()).
 
 	                    this.util.emitter.emit(this.util.emitter.events.MATERIAL_READY, prim, key);
 
