@@ -25,7 +25,7 @@ class Shader {
      * Basic MVC
      * https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_model_view_projection
      */
-    constructor ( init, util, glMatrix, webgl, webvr, shaderName ) {
+    constructor ( init, util, glMatrix, webgl, webvr, shaderName, lights ) {
 
         console.log( 'In Shader class' );
 
@@ -60,6 +60,16 @@ class Shader {
         } else {
 
             this.floatp = 'precision mediump float;';
+
+        }
+
+        // Add Lights, if present.
+
+        if ( lights ) {
+
+            console.log("ADDING LIGHT TO SHADER:" + this.name )
+
+            this.lights = lights;
 
         }
 
@@ -157,6 +167,7 @@ class Shader {
      * We add each Prim to our internal Program (returned from webgl).
      * NOTE: we store Prims as numeric array only.
      * @param {Prim} prim a Prim object.
+     * @param {Shader} shader an optional shader object.
      */
     addPrim( prim ) {
 
@@ -164,8 +175,13 @@ class Shader {
 
             console.warn( prim.name + ' added to Shader::' + this.name );
 
-            // Switch the Prim's default Shader (there can only be one).
-            // TODO: IS THIS TRUE? COULD WE RUN MULTIPLE SHADERS ON ONE PRIM?
+            // Switch the Prim's default Shader, and remove it from its old Shader (there can only be one).
+
+            if ( prim.shader && prim.shader !== this ) {
+
+                prim.shader.removePrim( prim );
+
+            }
 
             prim.shader = this;
 
@@ -211,13 +227,11 @@ class Shader {
 
         if ( pos !== this.NOT_IN_LIST ) {
 
-            // Remove a Prim from the Shader program's renderList.
+            // Remove a Prim from the Shader program's renderList (still in PrimList and World).
+
+            this.shader = null;
 
             this.program.renderList.splice( pos, 1 );
-
-            // TODO: if we are removed, we need to store the 'default' shader for this Prim.
-            // TODO: so if we add it back later, we add it to the initially defined Shader.
-            // TODO: Do we want one Prim to be in multiple shaders? no.
 
             // Emit a Prim removal event.
 
@@ -322,16 +336,6 @@ class Shader {
             }
 
         }
-
-    }
-
-    /** 
-     * Add a Light to the Shader. Only useful for 
-     * Shaders that use Light.
-     */
-    addLight ( light ) {
-
-        this.light = light;
 
     }
 

@@ -51,19 +51,13 @@ import ShaderWater from './shader-water';
 
 import ShaderMetal from './shader-metal';
 
+// Lights
+
+import Lights from './lights';
+
 // Collects the shaders in one place.
 
 import ShaderPool from './shader-pool';
-
-// All objects.
-
-// import Map2d from './map2d';
-// import Map3d from './map3d';
-// import Morph from './morph';
-
-// Light (for World).
-
-import Light from './light';
 
 // Object primitives.
 
@@ -111,7 +105,7 @@ if ( __DEV__ === 'true' ) {
 
 }
 
-let webvr, ui, prim, shaderPool, world;
+let webvr, ui, prim, shaderPool, lights, world;
 
 // WebGL can take some time to init.
 
@@ -131,6 +125,10 @@ var promise = new Promise( ( resolve, reject ) => {
 
         prim = new Prim ( true, util, glMatrix, webgl );
 
+        // Add lights
+
+        lights = new Lights( glMatrix );
+
         // Add shaders to ShaderPool.
 
         shaderPool = new ShaderPool ( true, util, glMatrix, webgl );
@@ -139,7 +137,7 @@ var promise = new Promise( ( resolve, reject ) => {
 
         shaderPool.addShader( new ShaderColor ( true, util, glMatrix, webgl, webvr, 'shaderColor' ) );
 
-        shaderPool.addShader( new shaderDirLightTexture( true, util, glMatrix, webgl, webvr, 'shaderDirLightTexture' ) );
+        shaderPool.addShader( new shaderDirLightTexture( true, util, glMatrix, webgl, webvr, 'shaderDirLightTexture', lights ) );
 
         // Create the world, which needs WebGL, WebVR, and Prim.
 

@@ -1,7 +1,7 @@
 import Map2d from './map2d';
 import Map3d from './map3d';
 import Mesh from  './mesh';
-import Light from './light';
+import Lights from './lights';
 import GeometryPool from './geometry-pool';
 import TexturePool from './texture-pool';
 import ModelPool from './model-pool';
@@ -609,10 +609,6 @@ class Prim {
 
             // BAD TANGENT DATA FOR TEAPOT!!!
 
-            // MANAGE PRIM REMOVAL EVENT FROM SHADER. STORE THE SHADER REMOVED FROM
-
-            // SO WE CAN ADD IT BACK LATER.
-
             // Use LIGHT object to define World Light. Shaders can use World Light, or local one.
 
             // Add LIGHT to WORLD. FIGURE OUT STRATEGY TO BROADCAST LIGHT TO SHADERS.
@@ -709,7 +705,7 @@ class Prim {
 
         // Shader object for adding/removing from display list.
 
-        prim.shader = shader;
+        prim.shader = prim.defaultShader = shader;
 
         // Name (arbitrary).
 
@@ -763,7 +759,7 @@ class Prim {
 
         // Set prim lighting (use Shader-defined lighting).
 
-        prim.light = new Light();
+        prim.light = new Lights( this.glMatrix );
 
         // Visible from outside (counterclockwise winding) or inside (clockwise winding).
 

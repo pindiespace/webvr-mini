@@ -103,19 +103,19 @@
 
 	var _shaderMetal2 = _interopRequireDefault(_shaderMetal);
 
-	var _shaderPool = __webpack_require__(15);
+	var _lights = __webpack_require__(15);
+
+	var _lights2 = _interopRequireDefault(_lights);
+
+	var _shaderPool = __webpack_require__(16);
 
 	var _shaderPool2 = _interopRequireDefault(_shaderPool);
 
-	var _light = __webpack_require__(39);
-
-	var _light2 = _interopRequireDefault(_light);
-
-	var _prim = __webpack_require__(16);
+	var _prim = __webpack_require__(17);
 
 	var _prim2 = _interopRequireDefault(_prim);
 
-	var _world = __webpack_require__(27);
+	var _world = __webpack_require__(28);
 
 	var _world2 = _interopRequireDefault(_world);
 
@@ -131,7 +131,7 @@
 
 	// WebGL matrix math library.
 
-	var glMatrix = __webpack_require__(28);
+	var glMatrix = __webpack_require__(29);
 
 	if (!glMatrix) {
 
@@ -147,15 +147,9 @@
 
 	// TODO: decide whether to import model, texture, audio, video, font loaders.
 
+	// Lights
+
 	// Collects the shaders in one place.
-
-	// All objects.
-
-	// import Map2d from './map2d';
-	// import Map3d from './map3d';
-	// import Morph from './morph';
-
-	// Light (for World).
 
 	// Object primitives.
 
@@ -176,7 +170,7 @@
 	    // require kronos webgl debug from node_modules
 	    // https://github.com/vorg/webgl-debug
 
-	    var debug = __webpack_require__(38);
+	    var debug = __webpack_require__(39);
 
 	    exports.webgl = webgl = new _webgl2.default(false, glMatrix, util, debug);
 
@@ -198,6 +192,7 @@
 	    ui = void 0,
 	    prim = void 0,
 	    shaderPool = void 0,
+	    lights = void 0,
 	    world = void 0;
 
 	// WebGL can take some time to init.
@@ -218,6 +213,10 @@
 
 	        exports.prim = prim = new _prim2.default(true, util, glMatrix, webgl);
 
+	        // Add lights
+
+	        lights = new _lights2.default(glMatrix);
+
 	        // Add shaders to ShaderPool.
 
 	        shaderPool = new _shaderPool2.default(true, util, glMatrix, webgl);
@@ -226,7 +225,7 @@
 
 	        shaderPool.addShader(new _shaderColor2.default(true, util, glMatrix, webgl, webvr, 'shaderColor'));
 
-	        shaderPool.addShader(new _shaderDirlightTexture2.default(true, util, glMatrix, webgl, webvr, 'shaderDirLightTexture'));
+	        shaderPool.addShader(new _shaderDirlightTexture2.default(true, util, glMatrix, webgl, webvr, 'shaderDirLightTexture', lights));
 
 	        // Create the world, which needs WebGL, WebVR, and Prim.
 
@@ -4320,7 +4319,7 @@
 	     * Basic MVC
 	     * https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_model_view_projection
 	     */
-	    function Shader(init, util, glMatrix, webgl, webvr, shaderName) {
+	    function Shader(init, util, glMatrix, webgl, webvr, shaderName, lights) {
 	        var _this = this;
 
 	        _classCallCheck(this, Shader);
@@ -4351,6 +4350,15 @@
 	        } else {
 
 	            this.floatp = 'precision mediump float;';
+	        }
+
+	        // Add Lights, if present.
+
+	        if (lights) {
+
+	            console.log("ADDING LIGHT TO SHADER:" + this.name);
+
+	            this.lights = lights;
 	        }
 
 	        // Define the arrays needed for shaders to work. Subclasses override these values.
@@ -4437,6 +4445,7 @@
 	     * We add each Prim to our internal Program (returned from webgl).
 	     * NOTE: we store Prims as numeric array only.
 	     * @param {Prim} prim a Prim object.
+	     * @param {Shader} shader an optional shader object.
 	     */
 
 
@@ -4448,8 +4457,12 @@
 
 	                console.warn(prim.name + ' added to Shader::' + this.name);
 
-	                // Switch the Prim's default Shader (there can only be one).
-	                // TODO: IS THIS TRUE? COULD WE RUN MULTIPLE SHADERS ON ONE PRIM?
+	                // Switch the Prim's default Shader, and remove it from its old Shader (there can only be one).
+
+	                if (prim.shader && prim.shader !== this) {
+
+	                    prim.shader.removePrim(prim);
+	                }
 
 	                prim.shader = this;
 
@@ -4497,13 +4510,11 @@
 
 	            if (pos !== this.NOT_IN_LIST) {
 
-	                // Remove a Prim from the Shader program's renderList.
+	                // Remove a Prim from the Shader program's renderList (still in PrimList and World).
+
+	                this.shader = null;
 
 	                this.program.renderList.splice(pos, 1);
-
-	                // TODO: if we are removed, we need to store the 'default' shader for this Prim.
-	                // TODO: so if we add it back later, we add it to the initially defined Shader.
-	                // TODO: Do we want one Prim to be in multiple shaders? no.
 
 	                // Emit a Prim removal event.
 
@@ -4605,18 +4616,6 @@
 	                    return this.removePrim(prim); // only removed if it is already added      
 	                }
 	            }
-	        }
-
-	        /** 
-	         * Add a Light to the Shader. Only useful for 
-	         * Shaders that use Light.
-	         */
-
-	    }, {
-	        key: 'addLight',
-	        value: function addLight(light) {
-
-	            this.light = light;
 	        }
 
 	        /*
@@ -5153,10 +5152,10 @@
 	     * - projection matrix
 	     * --------------------------------------------------------------------
 	     */
-	    function shaderDirLightTexture(init, util, glMatrix, webgl, webvr, shaderName) {
+	    function shaderDirLightTexture(init, util, glMatrix, webgl, webvr, shaderName, lights) {
 	        _classCallCheck(this, shaderDirLightTexture);
 
-	        var _this = _possibleConstructorReturn(this, (shaderDirLightTexture.__proto__ || Object.getPrototypeOf(shaderDirLightTexture)).call(this, init, util, glMatrix, webgl, webvr, shaderName));
+	        var _this = _possibleConstructorReturn(this, (shaderDirLightTexture.__proto__ || Object.getPrototypeOf(shaderDirLightTexture)).call(this, init, util, glMatrix, webgl, webvr, shaderName, lights));
 
 	        _this.required.indices = true, _this.required.texCoords = true, _this.required.normals = true, _this.required.textures = 1, _this.required.lights = 1;
 
@@ -5261,18 +5260,17 @@
 	                program.renderList = this.util.concatArr(program.renderList, primList);
 	            }
 
-	            // TODO: TEMPORARY ADD LIGHTING CONTROL
-
-	            // TODO: Use Shader.getLight() to add this Light
-
 	            var lighting = true;
 
-	            var ambient = [0.1, 0.1, 0.1]; // ambient colors WORKING
+	            // Use just one light, diffuse illumination ( see lights.es6 for defaults).
 
-	            var lightingDirection = [//TODO: REDO
-	            -0.25, -0.5, -0.1];
+	            var light0 = this.lights.getLight(this.lights.lightTypes.LIGHT_0);
 
-	            var directionalColor = [0.7, 0.7, 0.7];
+	            var ambient = light0.ambient;
+
+	            var lightingDirection = light0.lightingDirection;
+
+	            var directionalColor = light0.directionalColor;
 
 	            var nMatrix = mat3.create(); // TODO: ADD MAT3 TO PASSED VARIABLES
 
@@ -5849,6 +5847,95 @@
 /* 15 */
 /***/ function(module, exports) {
 
+	
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var Lights = function () {
+	    function Lights(glMatrix) {
+	        var ambient = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [0.1, 0.1, 0.1];
+	        var lightingDirection = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [-0.25, -0.5, -0.1];
+	        var directionalColor = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [0.7, 0.7, 0.7];
+
+	        _classCallCheck(this, Lights);
+
+	        this.glMatrix = glMatrix;
+
+	        this.lightTypes = {
+
+	            LIGHT_0: 'light0',
+
+	            LIGHT_1: 'light1',
+
+	            LIGHT_2: 'light2',
+
+	            LIGHT_3: 'light3'
+
+	        };
+
+	        this.lightList = [];
+
+	        this.lightList[this.lightTypes.LIGHT_0] = {
+
+	            ambient: ambient,
+
+	            lightingDirection: lightingDirection,
+
+	            directionalColor: directionalColor
+
+	        };
+	    }
+
+	    _createClass(Lights, [{
+	        key: 'getLight',
+	        value: function getLight(id) {
+
+	            console.log(">>>>>>>>>>>TRYING TO GET LIGHT");
+
+	            window.lightList = this.lightList;
+
+	            return this.lightList[id];
+	        }
+
+	        /** 
+	         * Set Light to an XYZ coordinate.
+	         */
+
+	    }, {
+	        key: 'setPos',
+	        value: function setPos(id, x, y, z) {}
+
+	        // TODO:
+
+	        /**
+	         * Set Light by Polar coordinates.
+	         */
+
+	    }, {
+	        key: 'setPolar',
+	        value: function setPolar(id, u, v) {
+
+	            // TODO:
+
+	        }
+	    }]);
+
+	    return Lights;
+	}();
+
+	exports.default = Lights;
+
+/***/ },
+/* 16 */
+/***/ function(module, exports) {
+
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
@@ -6021,7 +6108,7 @@
 	exports.default = ShaderPool;
 
 /***/ },
-/* 16 */
+/* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -6032,39 +6119,39 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _map2d = __webpack_require__(17);
+	var _map2d = __webpack_require__(18);
 
 	var _map2d2 = _interopRequireDefault(_map2d);
 
-	var _map3d = __webpack_require__(19);
+	var _map3d = __webpack_require__(20);
 
 	var _map3d2 = _interopRequireDefault(_map3d);
 
-	var _mesh = __webpack_require__(20);
+	var _mesh = __webpack_require__(21);
 
 	var _mesh2 = _interopRequireDefault(_mesh);
 
-	var _light = __webpack_require__(39);
+	var _lights = __webpack_require__(15);
 
-	var _light2 = _interopRequireDefault(_light);
+	var _lights2 = _interopRequireDefault(_lights);
 
-	var _geometryPool = __webpack_require__(21);
+	var _geometryPool = __webpack_require__(22);
 
 	var _geometryPool2 = _interopRequireDefault(_geometryPool);
 
-	var _texturePool = __webpack_require__(24);
+	var _texturePool = __webpack_require__(25);
 
 	var _texturePool2 = _interopRequireDefault(_texturePool);
 
-	var _modelPool = __webpack_require__(22);
+	var _modelPool = __webpack_require__(23);
 
 	var _modelPool2 = _interopRequireDefault(_modelPool);
 
-	var _audioPool = __webpack_require__(25);
+	var _audioPool = __webpack_require__(26);
 
 	var _audioPool2 = _interopRequireDefault(_audioPool);
 
-	var _shaderObj = __webpack_require__(26);
+	var _shaderObj = __webpack_require__(27);
 
 	var _shaderObj2 = _interopRequireDefault(_shaderObj);
 
@@ -6657,10 +6744,6 @@
 
 	                // BAD TANGENT DATA FOR TEAPOT!!!
 
-	                // MANAGE PRIM REMOVAL EVENT FROM SHADER. STORE THE SHADER REMOVED FROM
-
-	                // SO WE CAN ADD IT BACK LATER.
-
 	                // Use LIGHT object to define World Light. Shaders can use World Light, or local one.
 
 	                // Add LIGHT to WORLD. FIGURE OUT STRATEGY TO BROADCAST LIGHT TO SHADERS.
@@ -6743,7 +6826,7 @@
 
 	            // Shader object for adding/removing from display list.
 
-	            prim.shader = shader;
+	            prim.shader = prim.defaultShader = shader;
 
 	            // Name (arbitrary).
 
@@ -6796,7 +6879,7 @@
 
 	            // Set prim lighting (use Shader-defined lighting).
 
-	            prim.light = new _light2.default();
+	            prim.light = new _lights2.default(this.glMatrix);
 
 	            // Visible from outside (counterclockwise winding) or inside (clockwise winding).
 
@@ -6920,7 +7003,7 @@
 	exports.default = Prim;
 
 /***/ },
-/* 17 */
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -6931,7 +7014,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _mapd = __webpack_require__(18);
+	var _mapd = __webpack_require__(19);
 
 	var _mapd2 = _interopRequireDefault(_mapd);
 
@@ -7624,7 +7707,7 @@
 	exports.default = Map2d;
 
 /***/ },
-/* 18 */
+/* 19 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -7649,7 +7732,7 @@
 	exports.default = Mapd;
 
 /***/ },
-/* 19 */
+/* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -7660,7 +7743,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _mapd = __webpack_require__(18);
+	var _mapd = __webpack_require__(19);
 
 	var _mapd2 = _interopRequireDefault(_mapd);
 
@@ -7824,7 +7907,7 @@
 	exports.default = Map3d;
 
 /***/ },
-/* 20 */
+/* 21 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -9280,7 +9363,7 @@
 	exports.default = Mesh;
 
 /***/ },
-/* 21 */
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -9291,19 +9374,19 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _map2d = __webpack_require__(17);
+	var _map2d = __webpack_require__(18);
 
 	var _map2d2 = _interopRequireDefault(_map2d);
 
-	var _map3d = __webpack_require__(19);
+	var _map3d = __webpack_require__(20);
 
 	var _map3d2 = _interopRequireDefault(_map3d);
 
-	var _mesh = __webpack_require__(20);
+	var _mesh = __webpack_require__(21);
 
 	var _mesh2 = _interopRequireDefault(_mesh);
 
-	var _modelPool = __webpack_require__(22);
+	var _modelPool = __webpack_require__(23);
 
 	var _modelPool2 = _interopRequireDefault(_modelPool);
 
@@ -12668,7 +12751,7 @@
 	exports.default = GeometryPool;
 
 /***/ },
-/* 22 */
+/* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -12679,7 +12762,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _assetPool = __webpack_require__(23);
+	var _assetPool = __webpack_require__(24);
 
 	var _assetPool2 = _interopRequireDefault(_assetPool);
 
@@ -13399,7 +13482,7 @@
 	exports.default = ModelPool;
 
 /***/ },
-/* 23 */
+/* 24 */
 /***/ function(module, exports) {
 
 	
@@ -13843,7 +13926,7 @@
 	exports.default = AssetPool;
 
 /***/ },
-/* 24 */
+/* 25 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -13854,7 +13937,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _assetPool = __webpack_require__(23);
+	var _assetPool = __webpack_require__(24);
 
 	var _assetPool2 = _interopRequireDefault(_assetPool);
 
@@ -14342,7 +14425,7 @@
 	exports.default = TexturePool;
 
 /***/ },
-/* 25 */
+/* 26 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -14351,7 +14434,7 @@
 	    value: true
 	});
 
-	var _assetPool = __webpack_require__(23);
+	var _assetPool = __webpack_require__(24);
 
 	var _assetPool2 = _interopRequireDefault(_assetPool);
 
@@ -14397,7 +14480,7 @@
 	exports.default = AudioPool;
 
 /***/ },
-/* 26 */
+/* 27 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -15534,7 +15617,7 @@
 	exports.default = ShaderObj;
 
 /***/ },
-/* 27 */
+/* 28 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -15543,12 +15626,11 @@
 	    value: true
 	});
 
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); // TODO: TEMPORARY DEBUG
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); // Light (for World).
 
+	var _lights = __webpack_require__(15);
 
-	var _modelPool = __webpack_require__(22);
-
-	var _modelPool2 = _interopRequireDefault(_modelPool);
+	var _lights2 = _interopRequireDefault(_lights);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -15580,7 +15662,7 @@
 	     * @param {Prim} prim the object/mesh primitives module.
 	     * @param {ShaderPool} shaderPool the GLSL rendering module.
 	     */
-	    function World(webgl, webvr, prim, shaderPool) {
+	    function World(webgl, webvr, prim, shaderPool, lights) {
 	        _classCallCheck(this, World);
 
 	        console.log('in World class');
@@ -15600,6 +15682,8 @@
 	        this.last = performance.now();
 
 	        this.counter = 0;
+
+	        this.lights = lights;
 
 	        // Bind the render loop (best current method)
 
@@ -16210,7 +16294,7 @@
 	exports.default = World;
 
 /***/ },
-/* 28 */
+/* 29 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -16241,18 +16325,18 @@
 	THE SOFTWARE. */
 	// END HEADER
 
-	exports.glMatrix = __webpack_require__(29);
-	exports.mat2 = __webpack_require__(30);
-	exports.mat2d = __webpack_require__(31);
-	exports.mat3 = __webpack_require__(32);
-	exports.mat4 = __webpack_require__(33);
-	exports.quat = __webpack_require__(34);
-	exports.vec2 = __webpack_require__(37);
-	exports.vec3 = __webpack_require__(35);
-	exports.vec4 = __webpack_require__(36);
+	exports.glMatrix = __webpack_require__(30);
+	exports.mat2 = __webpack_require__(31);
+	exports.mat2d = __webpack_require__(32);
+	exports.mat3 = __webpack_require__(33);
+	exports.mat4 = __webpack_require__(34);
+	exports.quat = __webpack_require__(35);
+	exports.vec2 = __webpack_require__(38);
+	exports.vec3 = __webpack_require__(36);
+	exports.vec4 = __webpack_require__(37);
 
 /***/ },
-/* 29 */
+/* 30 */
 /***/ function(module, exports) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -16328,7 +16412,7 @@
 
 
 /***/ },
-/* 30 */
+/* 31 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -16351,7 +16435,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(29);
+	var glMatrix = __webpack_require__(30);
 
 	/**
 	 * @class 2x2 Matrix
@@ -16770,7 +16854,7 @@
 
 
 /***/ },
-/* 31 */
+/* 32 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -16793,7 +16877,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(29);
+	var glMatrix = __webpack_require__(30);
 
 	/**
 	 * @class 2x3 Matrix
@@ -17245,7 +17329,7 @@
 
 
 /***/ },
-/* 32 */
+/* 33 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -17268,7 +17352,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(29);
+	var glMatrix = __webpack_require__(30);
 
 	/**
 	 * @class 3x3 Matrix
@@ -17997,7 +18081,7 @@
 
 
 /***/ },
-/* 33 */
+/* 34 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -18020,7 +18104,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(29);
+	var glMatrix = __webpack_require__(30);
 
 	/**
 	 * @class 4x4 Matrix
@@ -20139,7 +20223,7 @@
 
 
 /***/ },
-/* 34 */
+/* 35 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -20162,10 +20246,10 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(29);
-	var mat3 = __webpack_require__(32);
-	var vec3 = __webpack_require__(35);
-	var vec4 = __webpack_require__(36);
+	var glMatrix = __webpack_require__(30);
+	var mat3 = __webpack_require__(33);
+	var vec3 = __webpack_require__(36);
+	var vec4 = __webpack_require__(37);
 
 	/**
 	 * @class Quaternion
@@ -20745,7 +20829,7 @@
 
 
 /***/ },
-/* 35 */
+/* 36 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -20768,7 +20852,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(29);
+	var glMatrix = __webpack_require__(30);
 
 	/**
 	 * @class 3 Dimensional Vector
@@ -21528,7 +21612,7 @@
 
 
 /***/ },
-/* 36 */
+/* 37 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -21551,7 +21635,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(29);
+	var glMatrix = __webpack_require__(30);
 
 	/**
 	 * @class 4 Dimensional Vector
@@ -22143,7 +22227,7 @@
 
 
 /***/ },
-/* 37 */
+/* 38 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -22166,7 +22250,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(29);
+	var glMatrix = __webpack_require__(30);
 
 	/**
 	 * @class 2 Dimensional Vector
@@ -22736,7 +22820,7 @@
 
 
 /***/ },
-/* 38 */
+/* 39 */
 /***/ function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {/*
@@ -23695,32 +23779,6 @@
 	module.exports = WebGLDebugUtils;
 
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
-
-/***/ },
-/* 39 */
-/***/ function(module, exports) {
-
-	
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-		value: true
-	});
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	var Light = function Light() {
-		var ambient = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [0.1, 0.1, 0.1];
-		var lightingDirection = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [-0.25, -0.5, -0.1];
-		var adjustedLD = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [0, 0, 0];
-		var directionalColor = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [0.7, 0.7, 0.7];
-
-		_classCallCheck(this, Light);
-
-		this.ambient = ambient, this.lightingDirection = lightingDirection, this.adjustedLD = adjustedLD, this.directionalColor = directionalColor;
-	};
-
-	exports.default = Light;
 
 /***/ }
 /******/ ]);

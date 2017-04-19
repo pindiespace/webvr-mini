@@ -20,9 +20,9 @@ class shaderDirLightTexture extends Shader {
      * - projection matrix
      * --------------------------------------------------------------------
      */
-    constructor ( init, util, glMatrix, webgl, webvr, shaderName ) {
+    constructor ( init, util, glMatrix, webgl, webvr, shaderName, lights ) {
 
-        super( init, util, glMatrix, webgl, webvr, shaderName );
+        super( init, util, glMatrix, webgl, webvr, shaderName, lights );
 
         this.required.indices = true,
 
@@ -197,21 +197,17 @@ class shaderDirLightTexture extends Shader {
 
         }
 
-        // TODO: TEMPORARY ADD LIGHTING CONTROL
-
-        // TODO: Use Shader.getLight() to add this Light
-
         let lighting = true;
 
-        let ambient = [ 0.1, 0.1, 0.1 ]; // ambient colors WORKING
+        // Use just one light, diffuse illumination ( see lights.es6 for defaults).
 
-        let lightingDirection = [  //TODO: REDO
-            -0.25,
-            -0.5,
-            -0.1
-        ];
+        let light0 = this.lights.getLight( this.lights.lightTypes.LIGHT_0 );
 
-        let directionalColor = [ 0.7, 0.7, 0.7 ];
+        let ambient = light0.ambient;
+
+        let lightingDirection = light0.lightingDirection;
+
+        let directionalColor = light0.directionalColor;
 
         let nMatrix = mat3.create(); // TODO: ADD MAT3 TO PASSED VARIABLES
 

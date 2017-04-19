@@ -1,5 +1,6 @@
-// TODO: TEMPORARY DEBUG
-import ModelPool from './model-pool';
+// Light (for World).
+
+import Lights from './lights';
 
 'use strict'
 
@@ -27,7 +28,7 @@ class World {
      * @param {Prim} prim the object/mesh primitives module.
      * @param {ShaderPool} shaderPool the GLSL rendering module.
      */
-    constructor ( webgl, webvr, prim, shaderPool ) {
+    constructor ( webgl, webvr, prim, shaderPool, lights ) {
 
         console.log( 'in World class' );
 
@@ -54,6 +55,8 @@ class World {
         this.last = performance.now();
 
         this.counter = 0;
+
+        this.lights = lights;
 
         // Bind the render loop (best current method)
 
@@ -121,7 +124,6 @@ class World {
         this.s2 = this.shaderPool.getShader( 'shaderColor' );
 
         this.s3 = this.shaderPool.getShader( 'shaderDirLightTexture' );
-
 
 //////////////////////////////////
 // TEXTURED SHADER.
