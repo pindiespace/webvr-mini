@@ -65,27 +65,37 @@ class Shader {
 
         // Define the arrays needed for shaders to work. Subclasses override these values.
 
-        this.needVertices = true,
+        this.required = {
 
-        this.needIndices = false,
+            vertices: true,
 
-        this.needTexCoords = false,
+            indices: false,
 
-        this.needTexCoords1 = false,
+            texCoords: false,
 
-        this.needTexCoords2 = false,
+            texCoords1: false,
 
-        this.needTexCoords3 = false,
+            texCoords2: false,
 
-        this.needColors = false,
+            texCoords3: false,
 
-        this.needNormals = false,
+            texCoords4: false,
 
-        this.needTangents = false,
+            texCoords5: false,
 
-        this.needLights = false,
+            bumpMap: false,
 
-        this.needBump = false;
+            colors: false,
+
+            normals: false,
+
+            tangents: false,
+
+            lights: 0,
+
+            textures: 0
+
+        };
 
         // If we need to load a vertex and fragment shader files (in text format), put their paths in derived classes.
 
@@ -96,14 +106,38 @@ class Shader {
         this.NOT_IN_LIST = util.NOT_IN_LIST; // for indexOf tests.
 
         /* 
-         * Bind the Prim callback for updates. Run a check. If Prim is OK, add (or leave alone) If not, don't add or delete.
+         * Subscribe to TEXTURE_2D_READY events, check Prim to see if it is (still) valid.
          */
 
-        this.util.emitter.on( this.util.emitter.events.PRIM_READY, 
+        this.util.emitter.on( this.util.emitter.events.TEXTURE_2D_READY, 
 
-            ( prim ) => {
+            ( prim, key ) => {
 
                 this.checkPrim( prim );
+
+        } );
+
+        /* 
+         * Subscribe to GEOMETRY_READY events, check Prim to see if it is (still) valid.
+         */
+
+        this.util.emitter.on( this.util.emitter.events.GEOMETRY_READY,
+
+            ( prim, key ) => {
+
+                this.checkPrim( prim );
+
+        } );
+
+        /* 
+         * Subscribe to MATERIAL_READY events, check Prim to see if it is (still) valid.
+         */
+
+        this.util.emitter.on( this.util.emitter.events.MATERIAL_READY,
+
+            ( prim, key ) => {
+
+                this.checkPrimMaterial( prim );
 
         } );
 
@@ -113,8 +147,10 @@ class Shader {
 
     }
 
-    /* 
-     * ============ PRIM OPERATIONS ============
+    /*
+     * ---------------------------------------
+     * PRIM OPERATIONS
+     * ---------------------------------------
      */
 
     /**
@@ -126,11 +162,24 @@ class Shader {
 
         if ( this.primInList( prim ) === this.NOT_IN_LIST ) {
 
+            console.warn( prim.name + ' added to Shader::' + this.name );
+
+            // Switch the Prim's default Shader (there can only be one).
+            // TODO: IS THIS TRUE? COULD WE RUN MULTIPLE SHADERS ON ONE PRIM?
+
+            prim.shader = this;
+
+            // Add the Prim to the Shader program's renderList.
+
             this.program.renderList.push( prim );
+
+            // Emit a 'prim ready' event.
+
+            this.util.emitter.emit( this.util.emitter.events.PRIM_READY, prim );
 
         } else {
 
-            console.error( prim.name + ' already added to Shader::' + this.name );
+            console.warn( prim.name + ' already added to Shader::' + this.name );
 
         }
 
@@ -162,13 +211,89 @@ class Shader {
 
         if ( pos !== this.NOT_IN_LIST ) {
 
+            // Remove a Prim from the Shader program's renderList.
+
             this.program.renderList.splice( pos, 1 );
+
+            // TODO: if we are removed, we need to store the 'default' shader for this Prim.
+            // TODO: so if we add it back later, we add it to the initially defined Shader.
+            // TODO: Do we want one Prim to be in multiple shaders? no.
+
+            // Emit a Prim removal event.
+
+            this.util.emitter.emit( this.util.emitter.events.PRIM_REMOVE, prim );
 
         } else {
 
-            console.warn( obj.name + ' not found in Shader::' + this.name );
+            console.warn( prim.name + ' not found in Shader::' + this.name );
 
         }
+
+    }
+
+    /**
+     * Confirm that all required WebGL coordinate buffers are present.
+     */
+    checkPrimBuffers ( prim ) {
+
+        let required = this.required,
+
+        geo = prim.geometry, 
+
+        valid = true;
+
+        // Loop through geometry buffer objects, which are part of 'required' here.
+
+        for ( let i in required ) {
+
+            if ( required[ i ] && geo[ i ] && ! geo[ i ].buffer ) {
+
+                return false;
+
+            }
+
+        }
+
+        return true;
+
+    }
+
+    /** 
+     * Check to see if any required material properties are available for the Shader.
+     * TODO: 
+     */
+    checkPrimMaterial ( prim ) {
+
+        console.log( 'Shader::checkPrimMaterial(): event MATERIAL_READY fired' );
+
+        return true;
+
+    }
+
+    /** 
+     * Check to confirm that the required set of textures is available for Shader.
+     */
+    checkPrimTextures ( prim ) {
+
+        // Loop through required number of textures.
+
+        if ( prim.textures.length < this.required.textures ) {
+
+            return false;
+
+        }
+
+        for ( let i = 0; i < prim.textures.length; i++ ) {
+
+            if ( ! prim.textures[ i ].texture ) {
+
+                return false;
+
+            }
+
+        }
+
+        return true;      
 
     }
 
@@ -176,39 +301,44 @@ class Shader {
      * Check if a given Prim has the elements to be rendered by this Shader.
      * @returns {Boolean} if everything is there, return true, else false.
      */
-    checkPrim( prim ) {
+    checkPrim ( prim ) {
 
-        // TODO: LOGIC FOR ADDING AND REMOVING FROM SHADER DRAWING LIST 
-        // TODO: CALLED FROM EMITTER EVENT UP TOP.
+        // Only check the Prim if this Shader is defined for it.
 
-        return (
+        if ( prim.shader === this ) { // Prim is using this Shader
 
-            ( ( this.needVertices && prim.geometry.vertices.buffer ) ? true : false ) && 
+            // Confirm Prim has WebGLBuffers and Textures needed to render.
 
-            ( ( this.needIndices && prim.geometry.indices.buffer ) ? true : false ) && 
+            if ( this.checkPrimTextures( prim ) && this.checkPrimBuffers( prim ) ) {
 
-            ( ( this.needTexCoords && prim.geometry.texCoords.buffer ) ? true : false ) && 
+                // console.log( 'prim: ' + prim.name + ' is valid' );
+        
+                return this.addPrim( prim ); // add to the Shader's renderList
 
-            ( ( this.needTexCoords1 && prim.geometry.texCoords1 ) ? true : false ) && 
+            } else {
 
-            ( ( this.needTexCoords2 && prim.geometry.texCoords2 ) ? true : false ) && 
+                return this.removePrim( prim ); // only removed if it is already added      
 
-            ( ( this.needTexCoords3 && prim.geometry.texCoords3 ) ? true : false ) && 
+            }
 
-            ( ( this.needColors && prim.geometry.colors ) ? true : false ) && 
-
-            ( ( this.needNormals && prim.geometry.normals ) ? true : false ) && 
-
-            ( ( this.needTangents && prim.geometry.tangents ) ? true : false ) && 
-
-            ( ( this.needLights && prim.lights ) ? true : false )
-
-        );
+        }
 
     }
 
-    /* 
-     * ============ WEBGL PROGRAM OPERATIONS ============
+    /** 
+     * Add a Light to the Shader. Only useful for 
+     * Shaders that use Light.
+     */
+    addLight ( light ) {
+
+        this.light = light;
+
+    }
+
+    /*
+     * ---------------------------------------
+     * WEBGL PROGRAM OPERATIONS
+     * ---------------------------------------
      */
 
     /** 
@@ -410,8 +540,10 @@ class Shader {
 
     }
 
-    /* 
-     * ============ MATRIX OPERATIONS ============
+    /*
+     * ---------------------------------------
+     * MATRIX OPERATIONS
+     * ---------------------------------------
      */
 
     /** 

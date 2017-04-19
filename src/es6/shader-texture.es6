@@ -23,15 +23,15 @@ class ShaderTexture extends Shader {
 
         super( init, util, glMatrix, webgl, webvr, shaderName );
 
-        this.needIndices = true;
+        this.required.indices = true,
 
-        this.needTexCoords = true;
+        this.required.colors = true,
 
-        this.needColors = false;
+        this.required.normals = true,
 
-        this.needNormals = false;
+        this.required.lights = 0,
 
-        this.needTangents = false;
+        this.required.textures = 1;
 
         console.log( 'In ShaderTexture class' );
 

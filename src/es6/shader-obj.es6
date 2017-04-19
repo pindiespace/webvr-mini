@@ -100,6 +100,66 @@ class ShaderObj {
 
         },
 
+        this.texCoords1 = {
+
+            data: [],
+
+            buffer: null,
+
+            itemSize: 2,
+
+            numItems: 0
+
+        },
+
+        this.texCoords2 = {
+
+            data: [],
+
+            buffer: null,
+
+            itemSize: 2,
+
+            numItems: 0
+
+        },
+
+        this.texCoords3 = {
+
+            data: [],
+
+            buffer: null,
+
+            itemSize: 2,
+
+            numItems: 0
+
+        },
+
+        this.texCoords4 = {
+
+            data: [],
+
+            buffer: null,
+
+            itemSize: 2,
+
+            numItems: 0
+
+        },
+
+        this.texCoords5 = {
+
+            data: [],
+
+            buffer: null,
+
+            itemSize: 2,
+
+            numItems: 0
+
+        },
+
         this.colors = {
 
                 data: [],
@@ -124,6 +184,9 @@ class ShaderObj {
 
     /** 
      * Confirm that data is a number.
+     * @param {Array} data the data array
+     * @param {String} dataType the type (FLOAT32, UINT16, UINT32, UINT)
+     * @param {String} arrName the name of the array.
      */
     confirmNumericalData ( data, dataType, arrName ) {
 
@@ -139,7 +202,7 @@ class ShaderObj {
 
                     if ( ! Number.isFinite( parseFloat( d ) ) ) {
 
-                        console.error( mName +  'confirmNumericalData(): invalid float32 at pos:' + i );
+                        console.error( this.mName +  'confirmNumericalData(): invalid float32 in ' + arrName + ' at pos:' + i + ' = ' + d );
 
                         return false;
 
@@ -153,7 +216,7 @@ class ShaderObj {
 
                     if ( ! Number.isFinite( parseInt( d ) ) ) {
 
-                        console.error( mName +  'confirmNumericalData(): invalid Uint at pos:' + i );
+                        console.error( this.mName +  'confirmNumericalData(): invalid Uint in ' + arrName + ' at pos:' + i + ' = ' + d );
 
                         return false;
 
@@ -163,7 +226,7 @@ class ShaderObj {
 
                 default:
 
-                    console.error( mName +  ' confirmNumericalData(): unknown data type ' + dataType );
+                    console.error( this.mName +  ' confirmNumericalData(): unknown data type ' + dataType + ' for:' + arrName );
 
                     return false;
 
@@ -178,21 +241,13 @@ class ShaderObj {
     }
 
     /** 
-     * Check validity of buffer data.
-     * @param {Boolean} complete if true, do extra checks.
-     * @returns {Boolean} if buffers ok to use, return true, else false.
+     * Check integrity of vertex data
      */
-    checkBufferData ( complete ) {
+    checkVertexData ( complete ) {
 
-        let valid = this.valid = true;
-
-        let fnName = this.mName + ' checkBufferData():'; // so many error messages we use this.
-
-        // Vertex check.
+        let fnName = this.mName + ' checkVertexData():'; // so many error messages we use this.
 
         let len = this.vertices.data.length;
-
-        let vLen = len; // used in indices checks
 
         let numVertices = this.numVertices();
 
@@ -200,34 +255,45 @@ class ShaderObj {
 
             console.error( fnName + ' invalid vertex size, ' + numVertices );
 
-            valid = false;
+            return false;
 
         } else if ( len > this.MAX_DRAWELEMENTS ) {
 
             console.error( fnName + ' vertex size exceeds 64k on hardware not supporting it' );
 
-            valid = false;
+            return false;
         }
 
         if ( complete ) {
 
             if ( ! this.confirmNumericalData( this.vertices.data, this.FLOAT32, 'vertices' ) ) {
 
-                valid = false;
+               return false;
 
             }
 
         }
 
-        // Index check. 
+        return numVertices; // number of vertices (not array length)
 
-        len = this.numIndices();
+    }
+
+    /** 
+     * Check integrity of index data.
+     */
+    checkIndexData ( complete ) {
+
+        let fnName = this.mName + ' checkIndexData():'; // so many error messages we use this.
+
+        let len = this.numIndices(),
+
+        vLen = this.numVertices();
 
         if ( len < this.indices.itemSize ) { // can be fractional
 
             console.error( fnName + ' invalid index size, ' + len );
 
-            valid = false;
+            return false;
 
         }
 
@@ -237,17 +303,7 @@ class ShaderObj {
 
             if ( ! this.confirmNumericalData( this.indices.data, this.UINT, 'indices' ) ) {
 
-                valid = false;
-
-            }
-
-            // Make sure we have a valid number of triangles
-
-            if ( ! this.numFaces() ) {
-
-                console.error( fnName + ' number of sides (triangles) is invalid' );
-
-                valid = false;
+                return false;
 
             }
 
@@ -259,11 +315,11 @@ class ShaderObj {
 
                 let di = d[ i ];
 
-                if ( di <= 0 || di > vLen ) {
+                if ( di < 0 || di > vLen ) {
 
                     console.error ( fnName + ' index at ' + i + ' points to invalid postion in vertices ' + di + ', max:' + vLen );
 
-                    valid = false;
+                    return false;
 
                 }
 
@@ -271,7 +327,39 @@ class ShaderObj {
 
         }
 
-        // Normals check (should always be present).
+        return len; // number of indices
+
+    }
+
+    /** 
+     * Check the number of sides (triangles) 
+     */
+    checkFacesData () {
+
+        // Make sure we have a valid number of Faces (triangles)
+
+        let len = this.numFaces();
+
+        if ( ! len ) {
+
+            console.error( fnName + ' number of sides (triangles) is invalid' );
+
+            return false;
+
+        }
+
+        return len;
+
+    }
+
+    /** 
+     * Normals check (assumed always present for drawing)
+     */
+    checkNormalsData ( complete ) {
+
+        let fnName = this.mName + ' checkNormalsData():'; // so many error messages we use this.
+
+        let numVertices = this.numVertices(),
 
         len = this.numNormals();
 
@@ -279,13 +367,13 @@ class ShaderObj {
 
             console.error( fnName + ' invalid normals size, ' + len );
 
-            valid = false;
+            return false;
 
         } else if ( len !== numVertices ) {
 
             console.error( fnName + ' normals length: ' + this.numNormals() + ' does not match vertices length: ' + this.numVertices() );
 
-            valid = false;
+            return false;
 
         }
 
@@ -293,29 +381,42 @@ class ShaderObj {
 
           if ( ! this.confirmNumericalData( this.normals.data, this.FLOAT32, 'normals' ) ) {
 
-                valid = false;
+                return false;
 
             }
 
         }
 
-        // Texture coords check.
+        return len;
 
-        len = this.numTexCoords();
+    }
+
+    /** 
+     * Check texture coordinate data.
+     */
+    checkTexCoordsData ( complete, texCoords ) {
+
+        let fnName = this.mName + ' checkTexCoordsData():'; // so many error messages we use this.
+
+        let numVertices = this.numVertices(),
+
+        tc = texCoords || this.texCoords, // allows handling multiple texCoord buffers.
+
+        len = this.numTexCoords( tc );
 
         if ( len > 0 ) {
 
-            if ( len < ( this.texCoords.itemSize ) ||  this.util.frac( len ) !== 0 ) {
+            if ( len < ( tc.itemSize ) ||  this.util.frac( len ) !== 0 ) {
 
-                console.error( fnName + ' invalid texCoords size, ' + this.texCoords.data.length );
+                console.error( fnName + ' invalid texCoords size, ' + tc.data.length );
 
-                valid = false;
+                return false;
 
             } else if ( len !== numVertices ) {
 
-                console.error( fnName + ' texCoords length: ' + this.numTexCoords() + ' does not match vertices length: ' + this.numVertices() );
+                console.error( fnName + ' texCoords length: ' + this.numTexCoords( tc ) + ' does not match vertices length: ' + this.numVertices() );
 
-                valid = false;
+                return false;
 
             }
 
@@ -327,15 +428,26 @@ class ShaderObj {
 
         if ( complete ) {
 
-            if ( ! this.confirmNumericalData( this.texCoords.data, this.FLOAT32, 'texCoords' ) ) {
+            if ( ! this.confirmNumericalData( tc.data, this.FLOAT32, 'texCoords' ) ) {
 
-                valid = false;
+                return false;
 
             }
 
         }
 
-        // Tangents check.
+        return len;
+
+    }
+
+    /** 
+     * Check tangent data.
+     */
+    checkTangentsData ( complete ) {
+
+        let fnName = this.mName + ' checkTangentsData():'; // so many error messages we use this.
+
+        let numVertices = this.numVertices(),
 
         len = this.numTangents();
 
@@ -345,13 +457,13 @@ class ShaderObj {
 
                 console.error(fnName + ' invalid tangents size, ' + len );
 
-                valid = false;
+                return false;
 
             } else if ( len !== numVertices ) {
 
                 console.error( fnName + ' tangents length ' + this.numTangents() + ' does not match vertices length: ' + this.numVertices() );
 
-                valid = false;
+                return false;
 
             }
 
@@ -365,13 +477,24 @@ class ShaderObj {
 
             if ( ! this.confirmNumericalData( this.tangents.data, this.FLOAT32, 'tangents' ) ) {
 
-                valid = false;
+                return false;
 
             }
 
         }
 
-        // Texture coords check.
+        return len;
+
+    }
+
+    /**
+     * Check color data
+     */
+    checkColorsData ( complete ){
+
+        let fnName = this.mName + ' checkColorssData():'; // so many error messages we use this.
+
+        let numVertices = this.numVertices(),
 
         len = this.numColors();
 
@@ -381,13 +504,13 @@ class ShaderObj {
 
                 console.error( fnName + ' invalid colors size, ' + this.colors.data.length );
 
-                valid = false;
+                return false;
 
             } else if ( len !== numVertices ) {
 
                 console.error( fnName + ' colors length: ' + this.numColors() + ' does not match vertices length:' + this.numVertices() );
 
-                valid = false;
+                return false;
 
             }
 
@@ -401,24 +524,53 @@ class ShaderObj {
 
             if ( ! this.confirmNumericalData( this.colors.data, this.FLOAT32, 'colors' ) ) {
 
-                valid = false;
+                return false;
 
             }
 
         }
 
-        // All ok?
+    }
 
-        if ( complete ) {
 
-            console.log( this.mName +'checkBuffers() buffers are ok' );
+    /** 
+     * Check validity of buffer data.
+     * @param {Boolean} complete if true, do extra checks.
+     * @returns {Boolean} if buffers ok to use, return true, else false.
+     */
+    checkBufferData ( complete ) {
+
+        let valid = this.valid = true;
+
+        let len = this.vertices.data.length;
+
+        let vLen = len; // used in indices checks
+
+        let fnName = this.mName + ' checkBufferData():'; // so many error messages we use this.
+        
+        // Vertex check.
+
+        if ( this.checkVertexData( true ) && 
+
+            this.checkIndexData( true ) && 
+        
+            this.checkNormalsData( true ) && 
+        
+            this.checkTexCoordsData( true ) && 
+
+            this.checkTangentsData( true ) && 
+        
+            this.checkColorsData( true ) ) {
+
+            return true;
 
         }
 
-        return valid;
+        console.warn( this.mName + 'checkBuffers() buffers not ok' );
+
+        return false;
 
     }
-
 
     /** 
      * Returns the number of vertex points.
@@ -452,11 +604,16 @@ class ShaderObj {
 
     /** 
      * Returns the number of texture coordinates.
+     * @param {glMatrix.vec2[] texCoords} use if defined, else default to this.texCoords buffer.
      * @returns {Number} the number of texture coordinates.
      */
-    numTexCoords () {
+    numTexCoords ( texCoords ) {
 
-        return ( this.texCoords.data.length / this.texCoords.itemSize );
+        // Since we can have multiple texCoords, condtional.
+
+        let tc = texCoords || this.texCoords;
+
+        return ( tc.data.length / tc.itemSize );
 
     }
 
@@ -731,8 +888,15 @@ class ShaderObj {
 
     /** 
      * Add data to existing data (e.g. combine two Prims into one).
+     * @param {glMatrix.vec3[]} vertices the position data.
+     * @param {Number} indices the index array for the vertices.
+     * @param {glMatrix.vec3[]} the normals array for the vertices.
+     * @param {glMatrix.vec2[]} the texture coordinates for the vertices.
+     * @param {glMatrix.vec4[]} the tangent coordinates for the vertices.
+     * @param {glMatrix.vec4[]} colors the colors array for the vertices.
+     * @param {Boolean} check if true, check the data for consistency, else do not.
      */
-    addBufferData ( vertices = [], indices = [], normals = [], texCoords = [], tangents = [], colors = [] ) {
+    addBufferData ( vertices = [], indices = [], normals = [], texCoords = [], tangents = [], colors = [], check ) {
 
         // Local reference to utility function.
 
@@ -774,7 +938,51 @@ class ShaderObj {
 
         }
 
-        return this.checkBufferData();
+        // If check flagged, make sure the data is valid for drawing by a Shader.
+
+        if ( check ) {
+
+            return this.checkBufferData();
+
+        } 
+
+        return true;
+
+    }
+
+    clearData ( c ) {
+
+        c.data = [];
+
+    }
+
+    clearBuffer ( c ) {
+
+        this.clearData( c ),
+
+        c.buffer = null,
+
+        c.numItems = 0;
+
+    }
+
+    clear () {
+
+        this.clearBuffer( this.vertices ),
+
+        this.clearBuffer( this.indices ),
+
+        this.clearBuffer( this.normals ),
+
+        this.clearBuffer( this.texCoords ),
+
+        this.clearBuffer( this.texCoords1 ),
+
+        this.clearBuffer( this.texCoords2 ),
+
+        this.clearBuffer( this.texCoords3 ),
+
+        this.clearBuffer( this.colors );
 
     }
 

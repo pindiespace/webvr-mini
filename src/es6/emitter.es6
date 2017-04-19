@@ -19,17 +19,23 @@ class Emitter {
 
         this.events = {
 
-            GEOMETRY_READY: 'geometryready',      // sends Prim reference. Not used for procedural geometry
+            GEOMETRY_READY: 'grdy',      // sends Prim reference. Not used for procedural geometry
 
-            MATERIAL_READY: 'materialready',      // sends Prim reference. Not used for procedural geometry
+            MATERIAL_READY: 'mrdy',      // sends Prim reference. Not used for procedural geometry
 
-            TEXTURE_READY: 'textureready',        // sends Prim reference, key in Prim texture Array
+            TEXTURE_2D_READY: 'trdy',        // sends Prim reference, key in Prim texture Array
 
-            CUBEMAP_READY: 'cubemapready',        // sends Prim reference, since multiple files needed for cubemap
+            TEXTURE_3D_READY: 't3drdy',   // 3d texture is ready
 
-            PRIM_READY: 'primready',              // see if Prim is ready for Shader
+            TEXTURE_CUBEMAP_READY: 'tcmprdy',        // sends Prim reference, since multiple files needed for cubemap
 
-            VR_DISPLAY_READY: 'vrdisplayready'    // raise an event when the VR device is ready
+            TEXTURE_REMOVE: 'trm',
+
+            PRIM_READY: 'prdy',              // see if Prim is ready for Shader
+
+            PRIM_REMOVE: 'prm',            // a Prim was removed by a Shader
+
+            VR_DISPLAY_READY: 'vrdispready'    // raise an event when the VR device is ready
 
         };
 
@@ -45,7 +51,7 @@ class Emitter {
 
         }
 
-        // Convert arguments to useful Array.
+        // Convert arguments to a useful Array.
 
         var args = [].slice.call( arguments );
 

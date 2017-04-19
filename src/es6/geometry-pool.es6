@@ -1,14 +1,12 @@
 import Map2d from './map2d';
 import Map3d from './map3d';
 import Mesh from  './mesh';
-import LoadModel from './load-model';
 import ModelPool from './model-pool';
 
 'use strict'
 
 class GeometryPool {
-
-
+ 
     /** 
      * @class GeometryPool
      * create coordinate geometry for vertices, textures, normals, tangents, either 

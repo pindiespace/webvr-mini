@@ -262,7 +262,7 @@ class AssetPool {
 
             ( response ) => {
 
-                console.warn( 'AssetPool::getWrappedFetch(): OK, RESOLVE ' + wrappedPromise.url );
+                //console.warn( 'AssetPool::getWrappedFetch(): OK, RESOLVE ' + wrappedPromise.url );
 
                 clearTimeout( wrappedPromise.timeoutId );
 
@@ -313,8 +313,6 @@ class AssetPool {
      */
     doRequest( requestURL, key, updateFn, cacheBust = true, mimeType = 'text/plain', tries = 0 ) {
 
-        console.log(">>>>MIMETYPE:" + mimeType )
-
         let headers = new Headers( {
 
             'Content-Type': mimeType
@@ -352,13 +350,13 @@ class AssetPool {
 
             ( response ) => {
 
-                console.warn( '1. AssetPool::doRequest(): ft.promise FIRST .then OK, response.status:' + response.status + ' for ' + ft.url );
+                //console.warn( '1. AssetPool::doRequest(): ft.promise FIRST .then OK, response.status:' + response.status + ' for ' + ft.url );
 
-                console.warn( '1. AssetPool::doRequest(): ft.promise FIRST .then OK, response:' + response + ' for ' + ft.url );
+                //console.warn( '1. AssetPool::doRequest(): ft.promise FIRST .then OK, response:' + response + ' for ' + ft.url );
 
-                console.warn( '1. AssetPool::doRequest(): ft.promise FIRST .then OK, tries:' + ft.tries + ' for ' + ft.url );
+                //console.warn( '1. AssetPool::doRequest(): ft.promise FIRST .then OK, tries:' + ft.tries + ' for ' + ft.url );
 
-                console.warn( '1. AssetPool::doRequest(): ft.promise FIRST .then OK, mimeType:' + mimeType + ' for ' + ft.url );
+                //console.warn( '1. AssetPool::doRequest(): ft.promise FIRST .then OK, mimeType:' + mimeType + ' for ' + ft.url );
 
                 let data = null;
 
@@ -405,9 +403,9 @@ class AssetPool {
 
             ( error ) => { // Triggered by setTimeout(). Try up to this.MAX_TRIES before giving up.
 
-                console.warn( '2. AssetPool::doRequest(): ft.promise FIRST .then error, error:' + error + ' for ' + ft.url );
+                //console.warn( '2. AssetPool::doRequest(): ft.promise FIRST .then error, error:' + error + ' for ' + ft.url );
 
-                console.warn( '2. AssetPool::doRequest(): ft.promise FIRST .then error, tries:' + ft.tries + ' for ' + ft.url );
+                //console.warn( '2. AssetPool::doRequest(): ft.promise FIRST .then error, tries:' + ft.tries + ' for ' + ft.url );
 
                 ft.tries++;
 
@@ -439,7 +437,7 @@ class AssetPool {
 
                     // Run the callback we got in the original request, return received file in data.
 
-                    console.log('>>>>>>>>>>>>>>about to call update function!!!!!!')
+                    //console.log('>>>>>>>>>>>>>>about to call update function!!!!!!')
 
                     updateFn( { key: key, path: requestURL, data: response, error: false } ); // Send the data to the caller.
 

@@ -24,19 +24,17 @@ class shaderDirLightTexture extends Shader {
 
         super( init, util, glMatrix, webgl, webvr, shaderName );
 
-        this.needIndices = true;
+        this.required.indices = true,
 
-        this.needTexCoords = true;
+        this.required.texCoords = true,
 
-        this.needColors = false;
+        this.required.normals = true,
 
-        this.needNormals = true;
+        this.required.textures = 1,
 
-        this.needTangents = false;
+        this.required.lights = 1;
 
-        this.needLights = true;
-
-        console.log( 'In ShaderTexture class' );
+        console.log( 'In ShaderDirLightTexture class' );
 
     }
 
@@ -200,6 +198,8 @@ class shaderDirLightTexture extends Shader {
         }
 
         // TODO: TEMPORARY ADD LIGHTING CONTROL
+
+        // TODO: Use Shader.getLight() to add this Light
 
         let lighting = true;
 

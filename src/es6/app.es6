@@ -11,11 +11,9 @@ console.log( 'in es6' );
 
 let env = process.env.WEBPACK_ENV;
 
-
-
 // REQUIRE ALL POLYFILLS
 
-// WebGL math library.
+// WebGL matrix math library.
 
 let glMatrix = require( 'gl-matrix' );
 
@@ -41,19 +39,7 @@ import WebVR from './webvr';
 
 import Ui from './ui';
 
-//import Loader from './load-pool';
-
-import LoadTexture from './load-texture';
-
-import LoadModel from './load-model';
-
-import LoadAudio from './load-audio';
-
-import LoadVideo from './load-video';
-
-import LoadFont from './load-font';
-
-// import Shader from './Shader';
+// TODO: decide whether to import model, texture, audio, video, font loaders.
 
 import ShaderTexture from './shader-texture';
 
@@ -74,6 +60,10 @@ import ShaderPool from './shader-pool';
 // import Map2d from './map2d';
 // import Map3d from './map3d';
 // import Morph from './morph';
+
+// Light (for World).
+
+import Light from './light';
 
 // Object primitives.
 
@@ -121,7 +111,7 @@ if ( __DEV__ === 'true' ) {
 
 }
 
-let webvr, ui, loadModel, loadTexture, loadAudio, loadVideo, loadFont, prim, shaderPool, world;
+let webvr, ui, prim, shaderPool, world;
 
 // WebGL can take some time to init.
 
@@ -137,19 +127,9 @@ var promise = new Promise( ( resolve, reject ) => {
 
         ui = new Ui( false, util, webgl, webvr );
 
-        // The Prim object needs Loaders. LoadModel might need the Texture loader.
+        // The Prim object needs util, glmatrix, webgl.
 
-        loadTexture = new LoadTexture( true, util, glMatrix, webgl );
-
-        loadModel = new LoadModel( true, util, glMatrix, webgl, loadTexture );
-
-        loadAudio = new LoadAudio( true, util, glMatrix, webgl );
-
-        loadVideo = new LoadVideo( true, util, glMatrix, webgl );
-
-        loadFont = new LoadFont( true, util, glMatrix, webgl );
-
-        prim = new Prim ( true, util, glMatrix, webgl, loadAudio, loadVideo );
+        prim = new Prim ( true, util, glMatrix, webgl );
 
         // Add shaders to ShaderPool.
 
@@ -187,7 +167,6 @@ var promise = new Promise( ( resolve, reject ) => {
 
 });
 
-
 window.vrmin = world;
 
 //.catch( ( err ) => {
@@ -205,4 +184,4 @@ window.vrmin = world;
 
 // Export our classes to app.js.
 
-export { util, webgl, loadModel, loadTexture, loadAudio, loadVideo, prim, webvr, world };
+export { util, webgl, prim, webvr, world };

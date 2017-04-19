@@ -1,10 +1,11 @@
 import Map2d from './map2d';
 import Map3d from './map3d';
 import Mesh from  './mesh';
+import Light from './light';
 import GeometryPool from './geometry-pool';
 import TexturePool from './texture-pool';
-import LoadModel from './load-model';
 import ModelPool from './model-pool';
+import AudioPool from './audio-pool';
 import ShaderObj from './shader-obj';
 
 'use strict'
@@ -65,7 +66,7 @@ class Prim {
      *  }
      *
      * ---------------------------------------------------------------
-     * WebGL Buffer == ShaderObj, duplicates Geometry, but with geometry data copied to sub-object
+     * ShaderObj, above geometry, plus WebGL buffers created from it.
      * ---------------------------------------------------------------
      * Array optimization
      * https://gamealchemist.wordpress.com/2013/05/01/lets-get-those-javascript-arrays-to-work-fast/
@@ -102,12 +103,8 @@ class Prim {
      * @param {Util} util shared utility methods, patches, polyfills.
      * @param {glMatrix} glMatrix fast array manipulation object.
      * @param {WebGL} webgl object holding the WebGLRenderingContext.
-     * @param {LoadModel} model loading class
-     * @param {LoadTexture} texture loading class
-     * @param {LoadAudio} audio loading class
-     * @param {LoadVideo} video loading class
      */
-    constructor ( init, util, glMatrix, webgl, loadAudio, loadVideo ) {
+    constructor ( init, util, glMatrix, webgl ) {
 
         console.log( 'in Prim class' );
 
@@ -116,10 +113,6 @@ class Prim {
         this.webgl = webgl;
 
         this.glMatrix = glMatrix;
-
-        this.loadAudio = loadAudio;
-
-        this.loadVideo = loadVideo;
 
         this.objs = []; // Keep a reference to all created Prims here.
 
@@ -140,8 +133,6 @@ class Prim {
          */
 
         this.util.emitter.on( this.util.emitter.events.GEOMETRY_READY, 
-
-            /////////( prim, key, vertices, indices, normals, texCoords, tangents, colors ) => {
 
             ( prim, key, geometry ) => {
 
@@ -225,7 +216,9 @@ class Prim {
 
         // TODO: TIE MESH INTO THE SAME SYSTEM (including adding to asset pool).
 
-        prim.geometry.addBufferData( geometry.vertices, geometry.indices, geometry.normals, geometry.texCoords, geometry.tangents, geometry.colors );
+        // Add buffer data, but don't check buffers yet.
+
+        prim.geometry.addBufferData( geometry.vertices, geometry.indices, geometry.normals, geometry.texCoords, geometry.tangents, geometry.colors, false );
 
         // Update vertices if they were supplied.
 
@@ -255,6 +248,10 @@ class Prim {
 
         prim.updateColors();
 
+        // Check our buffers for consistency.
+
+        prim.geometry.checkBufferData();
+
         //if ( prim.name === 'cubesphere' ) {
         //if ( prim.name === 'TestCapsule' ) {
         //if ( prim.name === 'colored cube' ) {
@@ -281,25 +278,20 @@ class Prim {
         prim.geometry.checkBufferData();
 
         /* 
-         * If we were supplied a Shader, add it to the display list. 
-         * A reference to individual Prims is kept independently in the Prim object if 
-         * the Shader is not present.
+         * The Prim is added to the Shader when it satisfies Shader requirements.
+         * Each time a texture is loaded, an event is emitted which causes the 
+         * Shader to run Shader.checkPrim();
          */
 
-        // TODO: MAKE THIS EVENT-DRIVEN
-        // EMIT A PRIM_READY, and have Shader process and add/remove Prim based on readiness.
-        //this.util.emitter.emit( this.util.emitter.events.PRIMN_READY, prim );
-        // TODO:
+        //if ( prim.shader ) {
 
-        if ( prim.shader ) {
-
-            console.log("ADDING PRIM:" + prim.name + " TO:" + prim.shader.name )
+            //console.log("ADDING PRIM:" + prim.name + " TO:" + prim.shader.name )
 
             // Check if Prim is OK for shader.
 
-            prim.shader.addPrim( prim );
+            //prim.shader.addPrim( prim );
 
-        }
+        //}
 
         prim.ready = true;
 
@@ -615,7 +607,23 @@ class Prim {
 
             // TODO:
 
-            // DELETE UNNEDED LOADER FILES (MAKE THEIR OWN ARCHIVE)
+            // BAD TANGENT DATA FOR TEAPOT!!!
+
+            // MANAGE PRIM REMOVAL EVENT FROM SHADER. STORE THE SHADER REMOVED FROM
+
+            // SO WE CAN ADD IT BACK LATER.
+
+            // Use LIGHT object to define World Light. Shaders can use World Light, or local one.
+
+            // Add LIGHT to WORLD. FIGURE OUT STRATEGY TO BROADCAST LIGHT TO SHADERS.
+
+            // 1. Add Light to World. 2. Have World broadcast Light via Shader.addLight
+
+            // 3. have Shaders that use light use the added Light.
+
+            // LOAD MATERIAL AND TEXTURE OUT OF MODEL-POOL
+
+            // TEST ACTUAL PRIM REMOVAL WHEN IT BECOMES INVALID
 
             // INTERNALIZE THESE METHODS
 
@@ -625,13 +633,13 @@ class Prim {
 
             // KEY FOR OBJ FILE MODELS (Add to ModelPool)
 
-            // SHADER EMIT EVENT CHECKING IF PRIMREADY FOR SHADER
-
             // LOAD WORLD BY FILE (MAKE INTO TESTBED)
 
             // LOAD A-FRAME MODELS (USING EDITOR)
 
             // UI MODAL DIALOG ON HOVER OVER FAILED WEBVR
+
+            // ADD SOME SETINTERVALS DURING LONG COMPUTES
 
         };
 
@@ -753,21 +761,18 @@ class Prim {
 
         prim.scale = 1.0;
 
-        // Set prim lighting.
-        // TODO:::::::::::::::::::::::::::::::::::::::
+        // Set prim lighting (use Shader-defined lighting).
 
-        prim.light = {};
-
-        // TODO:::::::::::::::::::::::::::::::::::::::
+        prim.light = new Light();
 
         // Visible from outside (counterclockwise winding) or inside (clockwise winding).
 
-        // Invisible if this.INVISIBLE
-
         prim.visibleFrom = this.geometryPool.OUTSIDE;
 
-        // Repeatedly apply the texture to each Face of the Prim (instead of wrapping around the Mesh).
-        // If we have multiple textures, apply in succession.
+        /* 
+         * Repeatedly apply the texture to each defined Face of the Prim (instead of wrapping around the Mesh).
+         * If we have multiple textures, apply in succession.
+         */
 
         prim.applyTexToFace = applyTexToFace;
 

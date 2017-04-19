@@ -23,15 +23,19 @@ class ShaderWater extends Shader {
 
         console.log( 'In ShaderWater class' );
 
-        this.needIndices = true;
+        this.required.indices = true,
 
-        this.needTexCoords = true;
+        this.required.texCoords = true,
 
-        this.needColors = true;
+        this.required.colors = true,
 
-        this.needNormals = true;
+        this.required.normals = true,
 
-        this.needTangents = true;
+        this.required.tangents = true,
+
+        this.required.lights = 1,
+
+        this.required.textures = 5;
 
         // TODO: include more for water
 

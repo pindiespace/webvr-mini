@@ -25,15 +25,15 @@ class ShaderTerrain extends Shader {
 
         console.log( 'In ShaderTerrain class' );
 
-        this.needIndices = true;
+        this.required.indices = true,
 
-        this.needTexCoords = true;
+        this.required.texCoords = true,
 
-        this.needColors = false;
+        this.required.normals = true,
 
-        this.needNormals = false;
+        this.required.lights = 1,
 
-        this.needTangents = false;
+        this.required.textures = 1;
 
     }
 

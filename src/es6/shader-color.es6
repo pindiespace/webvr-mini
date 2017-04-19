@@ -26,15 +26,11 @@ class ShaderColor extends Shader {
 
         // Define arrays that are needed for this shader.
 
-        this.needIndices = true;
+        this.required.indices = true,
 
-        this.needTexCoords = false;
+        this.required.colors = true,
 
-        this.needColors = true;
-
-        this.needNormals = false;
-
-        this.needTangents = false;
+        this.required.textures = 0;
 
         console.log( 'In ShaderColor class' );
 

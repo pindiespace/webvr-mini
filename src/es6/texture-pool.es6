@@ -43,21 +43,9 @@ class TexturePool extends AssetPool {
          * @link https://github.com/toji/webgl-texture-utils
          */
 
-
         // Default texture pixel.
 
         this.greyPixel = new Uint8Array( [ 0.5, 0.5, 0.5, 1.0 ] );
-
-        // Emit a 'texture ready' event when WebGL texture is uploaded.
-
-        this.util.emitter.on( this.util.emitter.events.TEXTURE_READY, 
-
-            ( prim ) => {
-
-                // TODO: call update function
-
-        } );
-
 
         if ( init ) {
 
@@ -66,7 +54,6 @@ class TexturePool extends AssetPool {
         }
 
     }
-
 
   /**
    * Sets a texture to a 1x1 pixel color. 
@@ -195,24 +182,6 @@ class TexturePool extends AssetPool {
 
             return this.addAsset( key, obj );
 
-            /*
-            // If our key is non-numeric, push it into our keyList indexing the global texture pool.
-
-            if( ! this.util.isNumber( key ) ) {
-
-                this.keyList[ key ] = obj;
-
-            } 
-
-            this.numericList.push( obj );
-
-            // Object also saves its position index in the global texture pool.
-
-            obj.pos = this.numericList.length - 1;
-
-            return obj;
-            */
-
         } else {
 
             console.warn( 'TexturePool::addTexture(): no texture returned by createXXTexture() function' );
@@ -301,11 +270,13 @@ class TexturePool extends AssetPool {
 
                                     }
 
-                                    // Emit a 'texture ready event' with the key in the pool and path.
-
-                                    this.util.emitter.emit( this.util.emitter.events.TEXTURE_READY, prim, textureObj.key );
+                                    // Add to prim.textures.
 
                                     prim.textures.push( textureObj );
+
+                                    // Emit a 'texture ready event' with the key in the pool and path.
+
+                                    this.util.emitter.emit( this.util.emitter.events.TEXTURE_2D_READY, prim, textureObj.key );
 
                                 }
 

@@ -21,15 +21,17 @@ class ShaderMetal extends Shader {
 
         console.log( 'In ShaderMetal class' );
 
-        this.needIndices = true;
+        this.required.indices = true,
 
-        this.needTexCoords = true;
+        this.required.texCoords = true,
 
-        this.needColors = false;
+        this.required.colors = true,
 
-        this.needNormals = false;
+        this.required.normals = true,
 
-        this.needTangents = false;
+        this.required.lights = 1,
+
+        this.required.textures = 0;
 
     }
 

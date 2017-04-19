@@ -33,36 +33,6 @@ class ModelPool extends AssetPool {
 
         };
 
-        // If we encounter a texture file in the model file, load it, and emit.    
-
-        this.util.emitter.on( this.util.emitter.events.TEXTURE_READY, 
-
-        	( prim ) => {
-
-            	// TODO: call update function when texture is ready.
-
-        } );
-
-        // Model data ready.
-/*
-        this.util.emitter.on( this.util.emitter.events.GEOMETRY_READY, 
-
-            ( prim ) => {
-
-                // TODO: call update function when a geometry is ready.
-
-        } );
-*/
-        this.util.emitter.on( this.util.emitter.events.MATERIAL_READY, 
-
-            ( prim ) => {
-
-                // TODO: call update function when a material file is ready.
-
-                // TODO: probably need a material pool file loader
-
-        } );
-
         if ( init ) {
 
             // do something
@@ -118,7 +88,7 @@ class ModelPool extends AssetPool {
 
         let NOT_IN_STRING = this.NOT_IN_LIST;
 
-        let face = parts.map( ( fs ) => {
+        parts.map( ( fs ) => {
 
             ///console.log("fs:" + fs)
 
@@ -722,7 +692,7 @@ class ModelPool extends AssetPool {
                              * } 
                              */
 
-                             let modelData = this.addModel( prim, updateObj.data, updateObj.path, updateObj.key, mimeType );
+                             this.addModel( prim, updateObj.data, updateObj.path, updateObj.key, mimeType );
 
 
                         }, cacheBust, mimeType, 0 ); // end of this.doRequest(), initial request at 0 tries
