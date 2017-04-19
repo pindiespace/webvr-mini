@@ -19,15 +19,17 @@ class Emitter {
 
         this.events = {
 
-            GEOMETRY_READY: 'geometryready',      // Sends Prim reference. Not used for procedural geometry.
+            GEOMETRY_READY: 'geometryready',      // sends Prim reference. Not used for procedural geometry
 
-            MATERIAL_READY: 'materialready',      // Sends Prim reference. Not used for procedural geometry.
+            MATERIAL_READY: 'materialready',      // sends Prim reference. Not used for procedural geometry
 
-            TEXTURE_READY: 'textureready',        // sends Prim reference, key in Prim texture Array.
+            TEXTURE_READY: 'textureready',        // sends Prim reference, key in Prim texture Array
 
-            CUBEMAP_READY: 'cubemapready',
+            CUBEMAP_READY: 'cubemapready',        // sends Prim reference, since multiple files needed for cubemap
 
-            VR_DISPLAY_READY: 'vrdisplayready'
+            PRIM_READY: 'primready',              // see if Prim is ready for Shader
+
+            VR_DISPLAY_READY: 'vrdisplayready'    // raise an event when the VR device is ready
 
         };
 

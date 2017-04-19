@@ -1253,9 +1253,7 @@ class GeometryPool {
 
         }
 
-        // Initialize the Prim, adding normals, texCoords, colors and tangents as necessary.
-
-        //prim.initPrim( prim, vertices, indices, normals, texCoords, tangents ); // CHECK CREATE PRIM - ATTACHES TO SHADER
+        // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
         return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
 
@@ -1306,9 +1304,7 @@ class GeometryPool {
 
         indices.push( 0, 3 );
 
-        // Return data to build WebGL buffers.
-
-        //prim.initPrim( prim, vertices, indices, normals, texCoords, tangents ); // CHECK CREATE PRIM - ATTACHES TO SHADER
+        // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
         return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
 
@@ -1623,8 +1619,6 @@ class GeometryPool {
 
         // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
-        //prim.initPrim( prim, vertices, indices, normals, texCoords, tangents ); // CHECK CREATE PRIM - ATTACHES TO SHADER
-
         return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
 
     }
@@ -1931,8 +1925,6 @@ class GeometryPool {
         }
 
         // Initialize the Prim, adding normals, texCoords and tangents as necessary.
-
-        //prim.initPrim( prim, vertices, indices, normals, texCoords, tangents ); // CHECK CREATE PRIM - ATTACHES TO SHADER
 
         return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
 
@@ -2310,13 +2302,11 @@ class GeometryPool {
 
         }
 
-        // Flatten arrays, since we created using 2 dimensions.
+        // Flatten vertices, which were created using 2D array.
 
         vertices = flatten( positions, false );
 
         // Initialize the Prim, adding normals, texCoords and tangents as necessary.
-
-        //prim.initPrim( prim, vertices, indices, normals, texCoords, tangents ); // CHECK CREATE PRIM - ATTACHES TO SHADER
 
         return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
 
@@ -2913,8 +2903,6 @@ class GeometryPool {
 
         // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
-        //prim.initPrim( prim, vertices, indices, normals, texCoords, tangents ); // CHECK CREATE PRIM - ATTACHES TO SHADER
-
         return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
 
     }
@@ -3254,8 +3242,6 @@ class GeometryPool {
 
         // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
-        //prim.initPrim( prim, vertices, indices, normals, texCoords, tangents ); // CHECK CREATE PRIM - ATTACHES TO SHADER
-
         return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
 
     }
@@ -3362,8 +3348,6 @@ class GeometryPool {
 
         // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
-        //prim.initPrim( prim, vertices, indices, normals, texCoords, tangents ); // CHECK CREATE PRIM - ATTACHES TO SHADER
-
         return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
 
     }
@@ -3399,9 +3383,7 @@ class GeometryPool {
      */
     geometryMesh ( prim ) {
 
-        console.log( '&&&&&TRYING TO LOAD MODEL:' + prim.name + ' WITH GETMODEL')
-
-        // Get the model file. Pass in Prim so we can responde to model completion events.
+        // Get the model file. Pass in Prim so we can respond to model completion events.
 
         this.modelPool.getModels( prim, prim.models, true );
 
@@ -3423,19 +3405,24 @@ class GeometryPool {
 
         if ( type === this.typeList.MESH ) {
 
-            // Load geometry from a file, with callback emitter event in ModelPool, calling Prim.initPrim().
+            // Load geometry from a file, with callback emitter GEOMETRY_READY in ModelPool, calling Prim.initPrim().
 
             this.geometryMesh( prim );
 
+
         } else {
 
-            // procedural geometry
+            // Procedural geometry.
 
             let c = this[ type ]( prim );
 
-            // Emit a geometry ready event, calling Prim.initPrim().
+            // Colors not supplied by procedural geometry.
 
-            this.util.emitter.emit( this.util.emitter.events.GEOMETRY_READY, prim, key, c.vertices, c.indices, c.normals, c.texCoords, c.tangents );    
+            c.colors = [];
+
+            // Emit a GEOMETRY_READY event, calling Prim.initPrim().
+
+            this.util.emitter.emit( this.util.emitter.events.GEOMETRY_READY, prim, key, c );
 
         }
 

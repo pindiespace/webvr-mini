@@ -624,9 +624,15 @@ class ModelPool extends AssetPool {
 
                 let d = this.computeObjMesh( data, prim, path );
 
+                // Not supplied by OBJ format.
+
+                d.tangents = [];
+
+                d.colors = [];
+
                 // Emit the GEOMETRY_READY event with arguments.
 
-                this.util.emitter.emit( this.util.emitter.events.GEOMETRY_READY, prim, key, d.vertices, d.indices, d.normals, d.texCoords, [] );
+                this.util.emitter.emit( this.util.emitter.events.GEOMETRY_READY, prim, key, d );
 
                 break;
 
@@ -648,7 +654,7 @@ class ModelPool extends AssetPool {
 
                 // Emit a materials complete event (callback is Prim.initPrimMaterials()).
 
-                this.util.emitter.emit( this.util.emitter.events.MATERIAL_READY, prim, key );
+                this.util.emitter.emit( this.util.emitter.events.MATERIAL_READY, prim, key, material );
 
                 break;
 

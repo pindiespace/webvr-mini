@@ -136,27 +136,30 @@ class Prim {
         this.geometryPool = new GeometryPool( init, util, glMatrix, webgl, this.modelPool, this.texturePool );
 
         /* 
-         * Bind the Prim callback for geometry creation.
+         * Bind the Prim callback for geometry initialization.
          */
 
-        // TODO: NEEDED TO LOAD THE SECOND MODEL WITH A TEXTURE CAPSULE
-/*
         this.util.emitter.on( this.util.emitter.events.GEOMETRY_READY, 
 
-            ( prim ) => {
+            /////////( prim, key, vertices, indices, normals, texCoords, tangents, colors ) => {
 
-                this.initPrim( prim, prim.vertices, prim.indices, prim.normals, prim.texCoords, prim.tangents );
+            ( prim, key, geometry ) => {
+
+                this.initPrimGeometry( prim, key, geometry );
 
         } );
-*/
-        this.util.emitter.on( this.util.emitter.events.GEOMETRY_READY, 
 
-            ( prim, key, vertices, indices, normals, texCoords, tangents, colors ) => {
+        /* 
+         * Bind Prim callback for a new material applied to the Prim.
+         */
 
+        this.util.emitter.on( this.util.emitter.events.MATERIAL_READY, 
 
-                this.initPrim( prim, key, vertices, indices, normals, texCoords, tangents, colors );
+            ( prim, key, material ) => {
 
-            });
+                this.initPrimMaterial( material );
+
+        } );
 
     }
 
@@ -210,12 +213,9 @@ class Prim {
      * ---------------------------------------
      */
 
-    initPrim ( prim, key, vertices, indices, normals = [], texCoords = [], tangents = [], colors = [] ) {
+    // TODO: MOVE INSIDE OF PRIM: THIS SHOULD BE PRIMPOOL.
 
-        console.log(")()()()(PRIM.initPrim(): doing" + prim.name)
-        console.log(")()()()(PRIM.initPrim(): vertices:" + vertices.length + ' indices:' + indices.length + ' normals:' + normals.length + ' texCoords:' + texCoords.length + ' tangents:' + tangents.length + ' colors:' + colors.length );
-
-        //let geo = prim.geometry;
+    initPrimGeometry ( prim, key, geometry ) {
 
         /* 
          * Add buffer data, and re-bind to WebGL.
@@ -223,14 +223,13 @@ class Prim {
          * (this.meshCallback() passes empty coordinate arrays)
          */
 
-        // TODO: THIS MAY BE REDUNDANT BELOW!!!!!!!!!!!!!!!!!!!!!!!
-        // TODO: CHANGE GEOMETRY SO IT DOES THIS FOR EVERYTHING
+        // TODO: TIE MESH INTO THE SAME SYSTEM (including adding to asset pool).
 
-        prim.geometry.addBufferData( vertices, indices, normals, texCoords, tangents, colors );
+        prim.geometry.addBufferData( geometry.vertices, geometry.indices, geometry.normals, geometry.texCoords, geometry.tangents, geometry.colors );
 
         // Update vertices if they were supplied.
 
-        prim.updateVertices( vertices );
+        prim.updateVertices( geometry.vertices );
 
         // Compute bounding box.
 
@@ -238,15 +237,15 @@ class Prim {
 
         // Update indices if they were supplied.
 
-        prim.updateIndices ( indices );
+        prim.updateIndices ( geometry.indices );
 
         // If normals are used, re-compute.
 
-        prim.updateNormals( normals );
+        prim.updateNormals( geometry.normals );
 
         // If texcoords are used, re-compute.
 
-        prim.updateTexCoords( texCoords );
+        prim.updateTexCoords( geometry.texCoords );
 
         // Tangents aren't supplied by OBJ format, so re-compute.
 
@@ -287,9 +286,16 @@ class Prim {
          * the Shader is not present.
          */
 
+        // TODO: MAKE THIS EVENT-DRIVEN
+        // EMIT A PRIM_READY, and have Shader process and add/remove Prim based on readiness.
+        //this.util.emitter.emit( this.util.emitter.events.PRIMN_READY, prim );
+        // TODO:
+
         if ( prim.shader ) {
 
             console.log("ADDING PRIM:" + prim.name + " TO:" + prim.shader.name )
+
+            // Check if Prim is OK for shader.
 
             prim.shader.addPrim( prim );
 
@@ -299,10 +305,12 @@ class Prim {
 
     }
 
+    // TODO: MOVE INSIDE OF PRIM. THIS SHOULD BE PRIMPOOL
+
     /** 
      * Fired when we receive an this.util.emitter.events.MATERIAL_READY event
      */
-    initPrimMaterials ( prim ) {
+    initPrimMaterial ( prim, key, material ) {
 
         // TODO: update based on materials.
 
@@ -595,7 +603,37 @@ class Prim {
 
             }
 
-        }
+        };
+
+        prim.initPrimGeometry = ( geometry ) => {
+
+            // TODO:
+
+        };
+
+        prim.initPrimMaterial = ( material ) => {
+
+            // TODO:
+
+            // DELETE UNNEDED LOADER FILES (MAKE THEIR OWN ARCHIVE)
+
+            // INTERNALIZE THESE METHODS
+
+            // KEY FOR PROCEEDURAL GRAPHICS (ADD TO Model-Pool)
+
+            // KEY FOR MESH GRAPHICS (Add to ModelPool)
+
+            // KEY FOR OBJ FILE MODELS (Add to ModelPool)
+
+            // SHADER EMIT EVENT CHECKING IF PRIMREADY FOR SHADER
+
+            // LOAD WORLD BY FILE (MAKE INTO TESTBED)
+
+            // LOAD A-FRAME MODELS (USING EDITOR)
+
+            // UI MODAL DIALOG ON HOVER OVER FAILED WEBVR
+
+        };
 
         // Compute the bounding box.
 

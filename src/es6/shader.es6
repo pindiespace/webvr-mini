@@ -95,6 +95,18 @@ class Shader {
 
         this.NOT_IN_LIST = util.NOT_IN_LIST; // for indexOf tests.
 
+        /* 
+         * Bind the Prim callback for updates. Run a check. If Prim is OK, add (or leave alone) If not, don't add or delete.
+         */
+
+        this.util.emitter.on( this.util.emitter.events.PRIM_READY, 
+
+            ( prim ) => {
+
+                this.checkPrim( prim );
+
+        } );
+
         // Get the WebGL program we will use to render.
 
         this.createProgram();
@@ -165,6 +177,9 @@ class Shader {
      * @returns {Boolean} if everything is there, return true, else false.
      */
     checkPrim( prim ) {
+
+        // TODO: LOGIC FOR ADDING AND REMOVING FROM SHADER DRAWING LIST 
+        // TODO: CALLED FROM EMITTER EVENT UP TOP.
 
         return (
 

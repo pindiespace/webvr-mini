@@ -420,6 +420,8 @@ class Mesh {
 
         this.prim = prim,
 
+        this.util = prim.util,
+
         this.geo = prim.geometry,
 
         this.type = this.geo.type;
@@ -1407,7 +1409,8 @@ class Mesh {
 
         // Update the normals and tangents arrays.
 
-        console.log( 'Mesh::vertexToGeometry(): vertices:' + vertices.length / 3 + ' indices:' + indices.length + ' texCoords:' + texCoords.length / 2 )
+        console.log( 'Mesh::vertexToGeometry(): vertices:' + vertices.length / 3 + ' indices:' + indices.length + ' texCoords:' + texCoords.length / 2 );
+
 
         geo.setVertices( vertices );
 
@@ -1420,6 +1423,8 @@ class Mesh {
         prim.updateTangents();
 
         prim.updateColors();
+
+        // TODO: REPLACE WITH AN EMITTER EVENT!!!!!!!!!!
 
         return geo;
 
