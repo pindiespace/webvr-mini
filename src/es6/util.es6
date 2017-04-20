@@ -14,23 +14,25 @@ class Util {
 
         // Shared constants
 
-        this.NOT_IN_LIST = -1; // for .indexOf() checks
+        this.NOT_IN_LIST = -1, // for .indexOf() checks
+
+        this.DEFAULT_KEY = 'default',
 
         // Create an Emitter object for pseudo-events.
 
-        this.emitter = new Emitter();
+        this.emitter = new Emitter(),
 
         // String polyfills.
 
-        this.setTrim();
+        this.setTrim(),
 
         // Performance polyfill.
 
-        this.setPerformance();
+        this.setPerformance(),
 
         // Finite number polyfill.
 
-        this.setFinite();
+        this.setFinite(),
 
         // Add slice to typed arrays, if needed.
 

@@ -1,5 +1,8 @@
-// Light (for World).
-
+import GeometryPool from './geometry-pool';
+import TexturePool from './texture-pool';
+import ModelPool from './model-pool';
+import AudioPool from './audio-pool';
+import ShaderObj from './shader-obj';
 import Lights from './lights';
 
 'use strict'
@@ -96,6 +99,49 @@ class World {
         // TODO: output in editor interface.
 
         console.error( 'world::save(): not implemented yet!' );
+
+    }
+
+
+    /** 
+     * Get the big array with all vertex data. Every time a 
+     * Prim is made, we store a reference in the this.objs[] 
+     * array. So, to make one, we just concatenate the 
+     * vertices. Use to send multiple prims sharing the same Shader.
+     * @param {glMatrix.vec3[]} vertices
+     * @returns {glMatrix.vec3[]} vertices
+     */
+    setVertexData ( vertices ) {
+
+        vertices = [];
+
+        for ( let i in this.objs ) {
+
+            vertices = vertices.concat( this.objs[ i ].vertices );
+
+        }
+
+        return vertices;
+
+    }
+
+    /** 
+     * get the big array with all index data. Use to 
+     * send multiple prims sharing the same Shader.
+     * @param {Array} indices the indices to add to the larger array.
+     * @returns {Array} the indices.
+     */
+    setIndexData ( indices ) {
+
+        indices = [];
+
+        for ( let i in this.objs ) {
+
+            indices = indices.concat( this.objs[ i ].indices );
+
+        }
+
+        return indices;
 
     }
 
@@ -645,65 +691,6 @@ class World {
             );
 
 
-/////////////////////////////////////////////////////////
-
-    /* TODO: TEMP DEBUG
-
-    let mimeType = 'image/png';
-
-    let cacheBust = true;
-
-    let getter = new GetAssets( this.util );
-
-    //let phil = []; // ASSET ARRAY
-
-    let bob = {
-
-        files: [ 'img/mozvr-logo1.png', 'img/soda-can.png', 'sdsfjslkfsjlsfdsdf' ],  // , 'img/soda-can.png'
-
-        data: null,
-
-        updateFn: ( result ) => {
-
-            if ( result && ! result.error && result.data ) {
-
-                console.log( 'result.key is:' + result.key + ' and result.error is:' + result.error );
-
-                // use the data!!!
-
-                let image = new Image();
-
-                image.src = URL.createObjectURL( result.data );
-
-                console.log("####key:" + result.key + " data:" + result.data  + ' image.src:' + image.src)
-
-                document.body.appendChild( image );
-
-                // see if we have everything.
-
-                // TODO: result should come back with the key for the receiving array.
-
-                // this.emitter.emit('apseudoevent', result );
-
-            } else {
-
-                console.warn( 'World::bob.updateFn(): no result in updateFn');
-
-                console.warn( 'World::bob.updateFn(): ERROR is ' + result.error );
-
-            }
-
-        }, 
-
-        cacheBust: true,
-
-        mimeType: 'image/png'
-
-    };
-
-    getter.addRequests( bob );
-
-    */
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         // NOTE: the init() method sets up the update() and render() methods for the Shader.

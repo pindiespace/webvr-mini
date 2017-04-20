@@ -155,49 +155,6 @@ class Prim {
     }
 
 
-    /** 
-     * Get the big array with all vertex data. Every time a 
-     * Prim is made, we store a reference in the this.objs[] 
-     * array. So, to make one, we just concatenate the 
-     * vertices. Use to send multiple prims sharing the same Shader.
-     * @param {glMatrix.vec3[]} vertices
-     * @returns {glMatrix.vec3[]} vertices
-     */
-    setVertexData ( vertices ) {
-
-        vertices = [];
-
-        for ( let i in this.objs ) {
-
-            vertices = vertices.concat( this.objs[ i ].vertices );
-
-        }
-
-        return vertices;
-
-    }
-
-    /** 
-     * get the big array with all index data. Use to 
-     * send multiple prims sharing the same Shader.
-     * @param {Array} indices the indices to add to the larger array.
-     * @returns {Array} the indices.
-     */
-    setIndexData ( indices ) {
-
-        indices = [];
-
-        for ( let i in this.objs ) {
-
-            indices = indices.concat( this.objs[ i ].indices );
-
-        }
-
-        return indices;
-
-    }
-
-
     /*
      * ---------------------------------------
      * PRIM FACTORY
@@ -298,24 +255,6 @@ class Prim {
     }
 
     // TODO: MOVE INSIDE OF PRIM. THIS SHOULD BE PRIMPOOL
-
-    /** 
-     * Fired when we receive an this.util.emitter.events.MATERIAL_READY event
-     */
-    initPrimMaterial ( prim, key, material ) {
-
-        // TODO: update based on materials.
-
-    }
-
-    /** 
-     * Convert a Prim to its JSON equivalent
-     */
-    toJSON ( prim ) {
-
-        return JSON.stringify( prim );
-
-    }
 
     /** 
      * Create an standard 3d object.
@@ -597,12 +536,6 @@ class Prim {
 
         };
 
-        prim.initPrimGeometry = ( geometry ) => {
-
-            // TODO:
-
-        };
-
         prim.initPrimMaterial = ( material ) => {
 
             // TODO:
@@ -638,6 +571,104 @@ class Prim {
             // ADD SOME SETINTERVALS DURING LONG COMPUTES
 
         };
+
+///////////////////////////////////////////////////////////////////////////////////
+
+    // TODO: MOVE INSIDE OF PRIM: THIS SHOULD BE PRIMPOOL.
+
+        prim.initPrimGeometry = ( prim, key, geometry ) => {
+
+            /* 
+             * Add buffer data, and re-bind to WebGL.
+             * NOTE: Mesh callbacks don't actually add any data here 
+             * (this.meshCallback() passes empty coordinate arrays)
+             */
+
+            // TODO: TIE MESH INTO THE SAME SYSTEM (including adding to asset pool).
+
+            // Add buffer data, but don't check buffers yet.
+
+            prim.geometry.addBufferData( geometry.vertices, geometry.indices, geometry.normals, geometry.texCoords, geometry.tangents, geometry.colors, false );
+
+            // Update vertices if they were supplied.
+
+            prim.updateVertices( geometry.vertices );
+
+            // Compute bounding box.
+
+            prim.boundingBox = prim.computeBoundingBox( prim.geometry.vertices.data );
+
+            // Update indices if they were supplied.
+
+            prim.updateIndices ( geometry.indices );
+
+            // If normals are used, re-compute.
+
+            prim.updateNormals( geometry.normals );
+
+            // If texcoords are used, re-compute.
+
+            prim.updateTexCoords( geometry.texCoords );
+
+            // Tangents aren't supplied by OBJ format, so re-compute.
+
+            prim.updateTangents();
+
+            // Colors aren't supplied by OBJ format, so re-compute.
+
+            prim.updateColors();
+
+            // Check our buffers for consistency.
+
+            prim.geometry.checkBufferData();
+
+            //if ( prim.name === 'cubesphere' ) {
+            //if ( prim.name === 'TestCapsule' ) {
+            //if ( prim.name === 'colored cube' ) {
+            //if ( prim.name === 'texsphere' ) {
+
+                let mesh = new Mesh( prim );
+
+                // SUBDIVIDE TEST
+
+                //mesh.subdivide( true );
+                //mesh.subdivide( true );
+                //mesh.subdivide( true );
+                //mesh.subdivide( true );
+                //mesh.subdivide( true );
+                //mesh.subdivide( true );
+                //mesh.subdivide( true );
+                //mesh.subdivide( true );
+                //mesh.subdivide( true ); // this one zaps from low-vertex < 10 prim
+
+            //}
+
+            console.log("checking buffer data for " + prim.name )
+
+            prim.geometry.checkBufferData();
+
+            /* 
+             * The Prim is added to the Shader when it satisfies Shader requirements.
+             * Each time a texture is loaded, an event is emitted which causes the 
+             * Shader to run Shader.checkPrim();
+             */
+
+            //if ( prim.shader ) {
+
+                //console.log("ADDING PRIM:" + prim.name + " TO:" + prim.shader.name )
+
+                // Check if Prim is OK for shader.
+
+                //prim.shader.addPrim( prim );
+
+            //}
+
+            prim.ready = true;
+
+        }
+
+
+///////////////////////////////////////////////////////////////////////////////////
 
         // Compute the bounding box.
 
@@ -687,11 +718,21 @@ class Prim {
 
         }
 
-        // Convert a Prim to its JSON equivalent
+        /** 
+         * Fired when we receive an this.util.emitter.events.MATERIAL_READY event
+         */
+        prim.initPrimMaterial = ( prim, key, material ) => {
 
-        prim.toJSON = () => {
+            // TODO: update based on materials.
 
-            this.toJSON( prim );
+        }
+
+        /** 
+         * Convert a Prim to its JSON equivalent
+         */
+        prim.toJSON = ( prim ) => {
+
+            return JSON.stringify( prim );
 
         }
 
@@ -840,6 +881,12 @@ class Prim {
         //prim.setLight();
 
         // Push into our list of all Prims. Shaders keep a local list of Prims they are rendering.
+
+            // TODO: DEBUG REMOVE
+            if ( prim.name === 'capsule' ) {
+                console.log('&&&&&&&&&&&&&&&&&&ADDING CAPSULE')
+                window.capsule = prim; //////////////TODO: remove
+            }
 
         this.objs.push( prim );
 
