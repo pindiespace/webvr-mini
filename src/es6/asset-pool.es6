@@ -22,8 +22,6 @@ class AssetPool {
 
         // Store assets as a pool, with two arrays referencing them (numeric and key-based).
 
-        this.numericList = [],
-
         this.keyList = [];
 
     }
@@ -35,17 +33,17 @@ class AssetPool {
      */
 
     /** 
-     * Find a texture by its path, if the path was not used as the key.
+     * Find an asset by its path, if the path was not used as the key.
      * @param {String} path the URL of the texture file.
      * @returns {Boolean} if found in current textureList, return true, else false.
      */
     pathInList ( path ) {
 
-        for ( let i = 0; i < this.numericList[ i ]; i++ ) {
+        for ( let i in this.keyList ) {
 
-            if( this.numericList[ i ].path === path ) {
+            if( this.keyList[ i ].path === path ) {
 
-                return this.numericList[ i ];
+                return this.keyList[ i ];
 
             }
 
@@ -60,21 +58,67 @@ class AssetPool {
      */
     assetInList( key ) {
 
-        if ( ! key ) {
+        if ( key ) {
+
+            if ( this.keyList[ key ] ) {
+
+                return this.keyList[ key ];
+
+            }
+
+        } else {
 
             console.error( 'AssetPool::assetInlist(): undefined key' );
 
-            return false;
+        }
+
+        return null;
+
+    }
+
+    /** 
+     * If the asset has a name, return the first instance in the pool of an object with that name.
+     * @param {String} name the .name property of the object, if it exists.
+     * @returns {Object|null} if found, return the object, else null.
+     */
+    findByName ( name ) {
+
+        for ( let i in this.keyList ) {
+
+            let o = this.keyList[ i ];
+
+            if ( o.name ) {
+
+                if ( o.name === name ) {
+
+                    return o;
+
+                }
+
+            }
 
         }
 
-        if ( this.util.isNumber( key ) ) {
+        return null;
 
-            return this.numericList[ key ];
+    }
 
-        } else if ( this.keyList[ key ] ) {
+    /** 
+     * Check if the actual object (not a clone) has already been added to the list.
+     * @param {Object} the test object.
+     * @returns {Object|null} if found, return the object, else null.
+     */
+    findByObj ( obj ) {
 
-            return this.keyList[ key ];
+        for ( let i in this.keyList ) {
+
+            let o = this.keyList[ i ];
+
+            if ( o === obj ) {
+
+                return obj;
+
+            }
 
         }
 
@@ -88,47 +132,37 @@ class AssetPool {
      * @param {Object} the asset.
      * @returns {Object} the stored object.
     */
-    addAsset ( key, obj ) {
+    addAsset ( obj, key ) {
 
-        if( ! this.util.isNumber( key ) ) { // guid key
+        if ( obj ) {
 
-            // Object saves its associative key.
+            if ( key ) {
 
-            obj.key = key;
+                // Object saves its associative key.
 
-            if ( this.keyList[ key ] ) {
+                obj.key = key;
 
-                if ( this.keyList[ key ] === obj ) {
+                if ( this.keyList[ key ] ) {
 
-                    console.warn( 'AssetPool::addAsset(): asset ' + key + ' already added to pool' );
+                    if ( this.keyList[ key ] === obj ) {
 
-                } else {
+                        console.warn( 'AssetPool::addAsset(): asset ' + key + ' already added to pool' );
 
-                    console.warn( 'AssetPool::addAsset(): replacing asset at key:' + key );  
+                        return obj;
+
+                    } else {
+
+                        console.warn( 'AssetPool::addAsset(): replacing asset at key:' + key );
+
+                    }
 
                 }
 
-            }
-
-            this.keyList[ key ] = obj;
-    
-        } else { // numerical key
-
-            let pos = this.numericList.indexOf( obj );
-
-            if ( pos !== this.NOT_IN_LIST ) {
-
-                obj.pos = pos;
-
-                console.warn( 'AssetPool::addAsset(): asset ' + key + ' already added to pool' );
-
             } else {
 
-                this.numericList.push( obj );
+                obj.key = this.util.computeId();
 
-                // Object also saves its position index in the global texture pool.
-
-                obj.pos = this.numericList.length - 1;
+                this.keyList[ key ] = obj;
 
             }
 
@@ -144,23 +178,11 @@ class AssetPool {
 
         let obj = null;
 
-        if ( this.util.isNumeric( key ) ) {
-
-            obj = this.numericList.splice( key, 1 );
-
-            if ( obj.length !== 0 ) {
-
-                delete this.keyList[ key ];
-
-            }
-
-        } else if ( this.keyList[ key ] ) {
+        if ( this.keyList[ key ] ) { 
 
             obj = this.keyList[ key ];
 
             if ( obj ) {
-
-                this.numericList.splice( obj.pos, 1 );
 
                 delete this.keyList[ key ];
 
@@ -211,7 +233,7 @@ class AssetPool {
      * get fetch wrapped into a wrapped Promise.
      * @link http://stackoverflow.com/questions/35520790/error-handling-for-fetch-in-aurelia
      */
-    getWrappedFetch ( url, params, tries, key ) {
+    getWrappedFetch ( url, params, tries, pos ) {
 
         let wrappedPromise = this.getWrappedPromise();
 
@@ -223,7 +245,7 @@ class AssetPool {
 
         wrappedPromise.tries = tries;
 
-        wrappedPromise.key = key;
+        wrappedPromise.pos = pos;
 
         // Start the timeout, which lengthens with each attempt.
 
@@ -304,14 +326,14 @@ class AssetPool {
     /** 
      * Get an individual file.
      * @param {String} requestURL the file path for our asset.
-     * @param {String} key identifier key for the asset, so the requesting object can put it in the right place.
+     * @param {String} pos position identifier for the asset, so the requesting object can put it in the right place.
      * @param {Function} updateFn callback function when an asset loads or fails
      * @param {Boolean} cacheBust if true, add a random query string to avoid caching
      * @param {String} mimeType the MIME type of the expected data
      * @param {Number} tries. If load fails, try to load again with a longer timeout. Load until 
      *        number of 'tries' = this.MAX_TRIES. Lengthen the timeout with each try.
      */
-    doRequest( requestURL, key, updateFn, cacheBust = true, mimeType = 'text/plain', tries = 0 ) {
+    doRequest( requestURL, pos, updateFn, cacheBust = true, mimeType = 'text/plain', tries = 0 ) {
 
         let headers = new Headers( {
 
@@ -337,7 +359,7 @@ class AssetPool {
 
             tries, // attach some additional variables to this fetch
 
-            key // key identifier for object requested, from the calling requestor object.
+            pos // position identifier for object requested, from the calling requestor object.
 
         );
 
@@ -413,7 +435,7 @@ class AssetPool {
 
                     console.warn( 'AssetPool::doRequest(): ft.promise FIRST .then error, TRYING AGAIN:' + error + ' for ' + ft.url );
 
-                    this.doRequest( requestURL, key, updateFn, cacheBust = true, mimeType, ft.tries );
+                    this.doRequest( requestURL, pos, updateFn, cacheBust = true, mimeType, ft.tries );
 
                 }
 
@@ -431,7 +453,7 @@ class AssetPool {
 
                     // Run the callback with error values.
 
-                    updateFn( { key: key, path: requestURL, data: null, error: response } ); // Send a wrapped error object
+                    updateFn( { pos: pos, path: requestURL, data: null, error: response } ); // Send a wrapped error object
 
                 } else {
 
@@ -439,7 +461,7 @@ class AssetPool {
 
                     //console.log('>>>>>>>>>>>>>>about to call update function!!!!!!')
 
-                    updateFn( { key: key, path: requestURL, data: response, error: false } ); // Send the data to the caller.
+                    updateFn( { pos: pos, path: requestURL, data: response, error: false } ); // Send the data to the caller.
 
                 }
 
@@ -471,12 +493,10 @@ class AssetPool {
      * calling program is responsible for handing determining if it has enough fetch() 
      * operations to complete. 
      */
+/*
     addRequests ( requestor ) {
 
         let paths = requestor.files;
-
-        // TODO: THIS CAN BE A KEY. ONE CAN CHECK THE POOL (maintained here???) for a key, which doesn't have to be Array position
-        // TODO: use an associative key!!!!!!!!!
 
         for ( let i = 0; i < paths.length; i++ ) {
 
@@ -489,6 +509,8 @@ class AssetPool {
         } // end of request loop
 
     } // end of addRequests()
+
+*/
 
 }
 

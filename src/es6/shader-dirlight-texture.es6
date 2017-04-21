@@ -24,11 +24,11 @@ class shaderDirLightTexture extends Shader {
 
         super( init, util, glMatrix, webgl, webvr, shaderName, lights );
 
-        this.required.indices = true,
+        this.required.buffer.indices = true,
 
-        this.required.texCoords = true,
+        this.required.buffer.texCoords = true,
 
-        this.required.normals = true,
+        this.required.buffer.normals = true,
 
         this.required.textures = 1,
 

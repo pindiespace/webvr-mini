@@ -242,6 +242,7 @@ class ShaderObj {
 
     /** 
      * Check integrity of vertex data
+     * @param {Boolean} complete it true, do all the tests.
      */
     checkVertexData ( complete ) {
 
@@ -280,6 +281,7 @@ class ShaderObj {
 
     /** 
      * Check integrity of index data.
+     * @param {Boolean} complete it true, do all the tests.
      */
     checkIndexData ( complete ) {
 
@@ -333,8 +335,13 @@ class ShaderObj {
 
     /** 
      * Check the number of sides (triangles) 
+     * @param {Boolean} complete it true, do all the tests.
      */
-    checkFacesData () {
+    checkFacesData ( complete ) {
+
+        // TODO: first check 3-sided faces (triangles).
+
+        // TODO: then check non-triangle larger drawing faces defined on the object.
 
         // Make sure we have a valid number of Faces (triangles)
 
@@ -353,7 +360,8 @@ class ShaderObj {
     }
 
     /** 
-     * Normals check (assumed always present for drawing)
+     * Normals check (assumed always present for drawing).
+     * @param {Boolean} complete it true, do all the tests.
      */
     checkNormalsData ( complete ) {
 
@@ -393,6 +401,7 @@ class ShaderObj {
 
     /** 
      * Check texture coordinate data.
+     * @param {Boolean} complete it true, do all the tests.
      */
     checkTexCoordsData ( complete, texCoords ) {
 
@@ -442,6 +451,7 @@ class ShaderObj {
 
     /** 
      * Check tangent data.
+     * @param {Boolean} complete it true, do all the tests.
      */
     checkTangentsData ( complete ) {
 
@@ -488,7 +498,8 @@ class ShaderObj {
     }
 
     /**
-     * Check color data
+     * Check color data.
+     * @param {Boolean} complete it true, do all the tests.
      */
     checkColorsData ( complete ){
 
@@ -532,7 +543,6 @@ class ShaderObj {
 
     }
 
-
     /** 
      * Check validity of buffer data.
      * @param {Boolean} complete if true, do extra checks.
@@ -566,7 +576,7 @@ class ShaderObj {
 
         }
 
-        console.warn( this.mName + 'checkBuffers() buffers not ok' );
+        console.warn( this.mName + 'checkBufferData() buffers not ok' );
 
         return false;
 

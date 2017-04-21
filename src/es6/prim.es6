@@ -104,7 +104,7 @@ class Prim {
      * @param {glMatrix} glMatrix fast array manipulation object.
      * @param {WebGL} webgl object holding the WebGLRenderingContext.
      */
-    constructor ( init, util, glMatrix, webgl ) {
+    constructor ( init, util, glMatrix, webgl, texturePool, modelPool, geometryPool ) {
 
         console.log( 'in Prim class' );
 
@@ -118,15 +118,15 @@ class Prim {
 
         // Attach 1 copy of the Texture loader to this Factory.
 
-        this.texturePool = new TexturePool( init, util, webgl );
+        this.texturePool = texturePool, // new TexturePool( init, util, webgl );
 
         // Attach 1 copy of the Model loader to this Factory.
 
-        this.modelPool = new ModelPool( init, util, webgl );
+        this.modelPool = modelPool, // new ModelPool( init, util, webgl );
 
         // Attach 1 copy of LoadGeometry to this Factory.
 
-        this.geometryPool = new GeometryPool( init, util, glMatrix, webgl, this.modelPool, this.texturePool );
+        this.geometryPool = geometryPool; // new GeometryPool( init, util, glMatrix, webgl, this.modelPool, this.texturePool );
 
         /* 
          * Bind the Prim callback for geometry initialization.
@@ -136,7 +136,7 @@ class Prim {
 
             ( prim, key, geometry ) => {
 
-                this.initPrimGeometry( prim, key, geometry );
+                prim.initPrimGeometry( prim, key, geometry );
 
         } );
 
@@ -148,109 +148,9 @@ class Prim {
 
             ( prim, key, material ) => {
 
-                this.initPrimMaterial( material );
+                prim.initPrimMaterial( material );
 
         } );
-
-    }
-
-
-    /*
-     * ---------------------------------------
-     * PRIM FACTORY
-     * ---------------------------------------
-     */
-
-    // TODO: MOVE INSIDE OF PRIM: THIS SHOULD BE PRIMPOOL.
-
-    initPrimGeometry ( prim, key, geometry ) {
-
-        /* 
-         * Add buffer data, and re-bind to WebGL.
-         * NOTE: Mesh callbacks don't actually add any data here 
-         * (this.meshCallback() passes empty coordinate arrays)
-         */
-
-        // TODO: TIE MESH INTO THE SAME SYSTEM (including adding to asset pool).
-
-        // Add buffer data, but don't check buffers yet.
-
-        prim.geometry.addBufferData( geometry.vertices, geometry.indices, geometry.normals, geometry.texCoords, geometry.tangents, geometry.colors, false );
-
-        // Update vertices if they were supplied.
-
-        prim.updateVertices( geometry.vertices );
-
-        // Compute bounding box.
-
-        prim.boundingBox = prim.computeBoundingBox( prim.geometry.vertices.data );
-
-        // Update indices if they were supplied.
-
-        prim.updateIndices ( geometry.indices );
-
-        // If normals are used, re-compute.
-
-        prim.updateNormals( geometry.normals );
-
-        // If texcoords are used, re-compute.
-
-        prim.updateTexCoords( geometry.texCoords );
-
-        // Tangents aren't supplied by OBJ format, so re-compute.
-
-        prim.updateTangents();
-
-        // Colors aren't supplied by OBJ format, so re-compute.
-
-        prim.updateColors();
-
-        // Check our buffers for consistency.
-
-        prim.geometry.checkBufferData();
-
-        //if ( prim.name === 'cubesphere' ) {
-        //if ( prim.name === 'TestCapsule' ) {
-        //if ( prim.name === 'colored cube' ) {
-        //if ( prim.name === 'texsphere' ) {
-
-            let mesh = new Mesh( prim );
-
-            // SUBDIVIDE TEST
-
-            //mesh.subdivide( true );
-            //mesh.subdivide( true );
-            //mesh.subdivide( true );
-            //mesh.subdivide( true );
-            //mesh.subdivide( true );
-            //mesh.subdivide( true );
-            //mesh.subdivide( true );
-            //mesh.subdivide( true );
-            //mesh.subdivide( true ); // this one zaps from low-vertex < 10 prim
-
-       //}
-
-        console.log("checking buffer data for " + prim.name )
-
-        prim.geometry.checkBufferData();
-
-        /* 
-         * The Prim is added to the Shader when it satisfies Shader requirements.
-         * Each time a texture is loaded, an event is emitted which causes the 
-         * Shader to run Shader.checkPrim();
-         */
-
-        //if ( prim.shader ) {
-
-            //console.log("ADDING PRIM:" + prim.name + " TO:" + prim.shader.name )
-
-            // Check if Prim is OK for shader.
-
-            //prim.shader.addPrim( prim );
-
-        //}
-
-        prim.ready = true;
 
     }
 
@@ -402,7 +302,7 @@ class Prim {
 
             let p = prim;
 
-            p.material.push( {
+            p.materials.push( {
 
                 colorMult: colorMult, 
 
@@ -420,7 +320,9 @@ class Prim {
 
                 illum: illum,            // Illumination model 0-10, color on and Ambient on
 
-                name: name
+                name: name,
+
+                texture: null // texture specified by material, points to the .textures[] array.
 
             } );
 
@@ -572,9 +474,7 @@ class Prim {
 
         };
 
-///////////////////////////////////////////////////////////////////////////////////
-
-    // TODO: MOVE INSIDE OF PRIM: THIS SHOULD BE PRIMPOOL.
+        // Initialize geometry.
 
         prim.initPrimGeometry = ( prim, key, geometry ) => {
 
@@ -588,7 +488,7 @@ class Prim {
 
             // Add buffer data, but don't check buffers yet.
 
-            prim.geometry.addBufferData( geometry.vertices, geometry.indices, geometry.normals, geometry.texCoords, geometry.tangents, geometry.colors, false );
+            //prim.geometry.addBufferData( geometry.vertices, geometry.indices, geometry.normals, geometry.texCoords, geometry.tangents, geometry.colors, false );
 
             // Update vertices if they were supplied.
 
@@ -617,6 +517,10 @@ class Prim {
             // Colors aren't supplied by OBJ format, so re-compute.
 
             prim.updateColors();
+
+            // Set our buffer data
+
+            prim.geometry.setBufferData( geometry.vertices, geometry.indices, geometry.normals, geometry.texCoords, geometry.tangents, geometry.colors );
 
             // Check our buffers for consistency.
 
@@ -653,22 +557,13 @@ class Prim {
              * Shader to run Shader.checkPrim();
              */
 
-            //if ( prim.shader ) {
+            // Emit a 'prim ready' event if we don't need material.
 
-                //console.log("ADDING PRIM:" + prim.name + " TO:" + prim.shader.name )
+            // TODO: textures???????????
 
-                // Check if Prim is OK for shader.
-
-                //prim.shader.addPrim( prim );
-
-            //}
-
-            prim.ready = true;
+            this.util.emitter.emit( this.util.emitter.events.PRIM_READY, prim );
 
         }
-
-
-///////////////////////////////////////////////////////////////////////////////////
 
         // Compute the bounding box.
 
@@ -719,15 +614,6 @@ class Prim {
         }
 
         /** 
-         * Fired when we receive an this.util.emitter.events.MATERIAL_READY event
-         */
-        prim.initPrimMaterial = ( prim, key, material ) => {
-
-            // TODO: update based on materials.
-
-        }
-
-        /** 
          * Convert a Prim to its JSON equivalent
          */
         prim.toJSON = ( prim ) => {
@@ -735,10 +621,6 @@ class Prim {
             return JSON.stringify( prim );
 
         }
-
-        // Reference the init method inside the prim.
-
-        prim.initPrim = this.initPrim;
 
         // Give the Prim a unique Id.
 
@@ -755,16 +637,6 @@ class Prim {
         // Type (must match type defined in Prim.typeList).
 
         prim.type = type;
-
-        // If we're a mesh, we need modelFiles.
-
-        if ( prim.type === this.geometryPool.typeList.MESH && modelFiles.length < 1 ) {
-
-            console.error( 'invalid Mesh Prim - needs model files' );
-
-            return null;
-
-        }
 
         // Size in world coordinates.
 
@@ -821,21 +693,13 @@ class Prim {
 
         prim.useTangents = true; // TODO:///////CHANGE!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-        // Store model files for one Prim.
-
-        prim.models = modelFiles;
-
-        // Set ready flag for slow loads.
-
-        prim.ready = false;
-
         // Waypoints for scripted motion or timelines.
 
         prim.waypoints = [];
 
         // Material files.
 
-        prim.material = [];
+        prim.materials = [];
 
         // Store multiple textures for one Prim.
 
@@ -871,20 +735,19 @@ class Prim {
 
         // Create Geometry data, or load Mesh data (may alter some of the above default properties).
 
-        this.geometryPool.getGeometry( type, prim, 0 );
+        //this.geometryPool.getGeometry( type, prim, 0 ); // THIS WORKS FINE!!!!!!
+
+        this.geometryPool.getGeometries( prim, modelFiles );
 
         // Get the static network textures async (use emitter to decide what to do when each texture loads).
 
         this.texturePool.getTextures( prim, textureImages, true, false ); // assume cacheBust === true, mimeType determined by file extension.
 
-        // TODO: use this!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        //prim.setLight();
-
         // Push into our list of all Prims. Shaders keep a local list of Prims they are rendering.
 
             // TODO: DEBUG REMOVE
             if ( prim.name === 'capsule' ) {
-                console.log('&&&&&&&&&&&&&&&&&&ADDING CAPSULE')
+
                 window.capsule = prim; //////////////TODO: remove
             }
 

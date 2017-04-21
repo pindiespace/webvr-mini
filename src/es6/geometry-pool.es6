@@ -16,18 +16,18 @@ class GeometryPool {
      * @param {Util} util the utility class.
      * @param {glMatrix} the glMatrix class.
      * @param {WebGL} the webGL class.
-     * @param {ModelPool} the ModelPool class.
-     * @param {TexturePool} the TexturePool class.
      */
-    constructor ( init, util, glMatrix, webgl, modelPool, texturePool ) {
+    constructor ( init, util, glMatrix, webgl, modelPool ) {
 
         console.log( 'in GeometryPool class' );
 
         this.util = util,
 
+        this.glMatrix = glMatrix,
+
         this.webgl = webgl,
 
-        this.glMatrix = glMatrix,
+        this.modelPool = modelPool,
 
         this.typeList = {
 
@@ -148,26 +148,6 @@ class GeometryPool {
         // Math shorthand.
 
         this.TWO_PI = Math.PI * 2;
-
-        // Save a reference to the modelPool (passed from Prim)
-
-        this.modelPool = modelPool;
-
-        // Save a reference to the texturePool (passed from Prim
-
-        this.texturePool = texturePool;
-
-        /* 
-         * Bind the Prim callback for geometry creation.
-         */
-
-        this.util.emitter.on( 'geometryready', 
-
-            ( prim ) => {
-
-                // TODO: call update function when a geometry is ready.
-
-        } );
 
 
         if ( init ) {
@@ -3379,9 +3359,13 @@ class GeometryPool {
      * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
      * Creating WebGL buffers is turned on or off conditionally in the method.
      */
-    geometryMesh ( prim ) {
+    geometryMesh ( prim, pathList ) {
 
         // Get the model file. Pass in Prim so we can respond to model completion events.
+
+        // TODO: ONLY IF MULTIPLE PATHS
+
+        // TODO: FORWARD SEPARATE ARRAY HERE
 
         this.modelPool.getModels( prim, prim.models, true );
 
@@ -3399,7 +3383,7 @@ class GeometryPool {
      * @param {Prim} prim the calling Prim.
      * @param {String|number} key the key to assign the geometry model to in the prim.models array.
      */
-    getGeometry ( type, prim, key ) {
+    addGeometry ( type, prim, key ) {
 
         if ( type === this.typeList.MESH ) {
 
@@ -3426,7 +3410,58 @@ class GeometryPool {
 
     }
 
+    /** 
+     * Get multiple geometries.
+     */
+    getGeometries( prim, pathList = [], cacheBust = true ) {
 
+        if( pathList && ( prim.type === this.typeList.MESH ) ) {
+
+            for ( let i = 0; i < pathList.length; i++ ) {
+
+                let path = pathList[ i ];
+
+                let poolModel = this.modelPool.pathInList( path );
+
+                if ( poolModel ) {
+
+                    // Reload from the asset file.
+
+                    console.log("FOUND PRE-EXISTING ASSET FOR:" + prim.name)
+
+                    prim.models.push( poolModel ); // just reference an existing texture in this pool.
+
+                } else {
+
+                    // Load geometry from a file, with callback emitter GEOMETRY_READY in ModelPool, calling Prim.initPrim().
+
+                    this.modelPool.getModels( prim, pathList, true );
+
+                }
+
+            } // end of for loop
+
+        } else { 
+
+            // Procedural geometry.
+
+            console.log("NEW PROCEDURAL FOR:" + prim.name)
+
+            let c = this[ prim.type ]( prim );
+
+            console.log("c is a:" + c)
+
+            // Colors not supplied by procedural geometry.
+
+            c.colors = [];
+
+            // Emit a GEOMETRY_READY event, calling Prim.initPrim().
+
+            this.util.emitter.emit( this.util.emitter.events.GEOMETRY_READY, prim, 0, c );
+
+        }
+
+    }
 
 }
 

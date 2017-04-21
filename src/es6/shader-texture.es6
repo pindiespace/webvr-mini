@@ -23,11 +23,11 @@ class ShaderTexture extends Shader {
 
         super( init, util, glMatrix, webgl, webvr, shaderName );
 
-        this.required.indices = true,
+        this.required.buffer.indices = true,
 
-        this.required.colors = true,
+        this.required.buffer.colors = true,
 
-        this.required.normals = true,
+        this.required.buffer.normals = true,
 
         this.required.lights = 0,
 

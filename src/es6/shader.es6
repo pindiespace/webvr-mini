@@ -77,21 +77,25 @@ class Shader {
 
         this.required = {
 
-            vertices: true,
+            buffer: {
 
-            indices: false,
+                vertices: true,
 
-            texCoords: false,
+                indices: false,
 
-            texCoords1: false,
+                texCoords: false,
 
-            texCoords2: false,
+                texCoords1: false,
 
-            texCoords3: false,
+                texCoords2: false,
 
-            texCoords4: false,
+                texCoords3: false,
 
-            texCoords5: false,
+                texCoords4: false,
+
+                texCoords5: false
+
+            },
 
             bumpMap: false,
 
@@ -119,35 +123,21 @@ class Shader {
          * Subscribe to TEXTURE_2D_READY events, check Prim to see if it is (still) valid.
          */
 
+        // TODO: THESE SHOULD BE MOVED TO WORLD!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
         this.util.emitter.on( this.util.emitter.events.TEXTURE_2D_READY, 
 
             ( prim, key ) => {
 
-                this.checkPrim( prim );
+                prim.shader.checkPrim( prim );
 
         } );
 
-        /* 
-         * Subscribe to GEOMETRY_READY events, check Prim to see if it is (still) valid.
-         */
-
-        this.util.emitter.on( this.util.emitter.events.GEOMETRY_READY,
+        this.util.emitter.on( this.util.emitter.events.PRIM_READY, 
 
             ( prim, key ) => {
 
-                this.checkPrim( prim );
-
-        } );
-
-        /* 
-         * Subscribe to MATERIAL_READY events, check Prim to see if it is (still) valid.
-         */
-
-        this.util.emitter.on( this.util.emitter.events.MATERIAL_READY,
-
-            ( prim, key ) => {
-
-                this.checkPrimMaterial( prim );
+                prim.shader.checkPrim( prim );
 
         } );
 
@@ -188,10 +178,6 @@ class Shader {
             // Add the Prim to the Shader program's renderList.
 
             this.program.renderList.push( prim );
-
-            // Emit a 'prim ready' event.
-
-            this.util.emitter.emit( this.util.emitter.events.PRIM_READY, prim );
 
         } else {
 
@@ -247,10 +233,11 @@ class Shader {
 
     /**
      * Confirm that all required WebGL coordinate buffers are present.
+     * @param {Prim} prim an object primitive.
      */
     checkPrimBuffers ( prim ) {
 
-        let required = this.required,
+        let buffer = this.required.buffer,
 
         geo = prim.geometry, 
 
@@ -258,11 +245,18 @@ class Shader {
 
         // Loop through geometry buffer objects, which are part of 'required' here.
 
-        for ( let i in required ) {
+        for ( let i in buffer ) {
 
-            if ( required[ i ] && geo[ i ] && ! geo[ i ].buffer ) {
 
-                return false;
+            if ( buffer[ i ] ) {
+
+                //console.log( prim.name + ' required i:' + i + ' value:' + buffer[ i ] + ' geo value:' + geo[ i ] + ' buffer:' + geo[ i ].buffer)
+
+                if ( geo[ i ] && ! geo[ i ].buffer ) {
+
+                    return false;
+
+                }
 
             }
 
@@ -285,17 +279,23 @@ class Shader {
     }
 
     /** 
-     * Check to confirm that the required set of textures is available for Shader.
+     * Check to confirm that the required number of textures is available for Shader.
+     * @param {Prim} prim the primitive object.
      */
     checkPrimTextures ( prim ) {
-
-        // Loop through required number of textures.
 
         if ( prim.textures.length < this.required.textures ) {
 
             return false;
 
         }
+
+        /* 
+         * Loop through required number of textures. Textures are assigned sequentially. 
+         * Textures added sequentially; 
+         * prim.textures[0] corresponds to ShaderObj.textureCoords, 
+         * prim.textures[1] corresponds to ShaderObj.textureCoords1...
+         */
 
         for ( let i = 0; i < prim.textures.length; i++ ) {
 
@@ -307,12 +307,13 @@ class Shader {
 
         }
 
-        return true;      
+        return true;
 
     }
 
     /** 
      * Check if a given Prim has the elements to be rendered by this Shader.
+     * @param {Prim} prim the primitive object.
      * @returns {Boolean} if everything is there, return true, else false.
      */
     checkPrim ( prim ) {
@@ -323,13 +324,17 @@ class Shader {
 
             // Confirm Prim has WebGLBuffers and Textures needed to render.
 
+            console.log( ')))))prim:' + prim.name + ' using Shader:' + this.name );
+
             if ( this.checkPrimTextures( prim ) && this.checkPrimBuffers( prim ) ) {
 
-                // console.log( 'prim: ' + prim.name + ' is valid' );
-        
+                console.log( '))))))prim: ' + prim.name + ' is valid, adding' );
+
                 return this.addPrim( prim ); // add to the Shader's renderList
 
             } else {
+
+                console.log( ')))))prinm:' + prim.name + ' not valid, removing')
 
                 return this.removePrim( prim ); // only removed if it is already added      
 

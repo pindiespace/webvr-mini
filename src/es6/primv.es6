@@ -115,18 +115,37 @@ class Primv {
 
             this.scale = 1.0;
 
-            // Waypoints for scripted motion or timelines.
-            // TODO: this should be a WayPoints object
+            // Size in world coordinates.
 
-            this.wayPoints = [];
+            this.dimensions = dimensions;
 
-            // Parent Node.
+            // Amount of division of the Prim along each axis.
 
-            this.parentNode = null;
+            this.divisions = divisions;
 
-            // Child Prim array.
+            // Prim Position in World coordinates.
 
-            this.children = [];
+            this.position = position;
+
+            // Prim acceleration in World coordinates.
+
+            this.acceleration = acceleration;
+
+            // Prim rotation on x, y, z axis, in World coordinates.
+
+            this.rotation = rotation;
+
+            this.angular = angular; // TODO: KILL
+
+            // The Prim orbit defines a center that the object orbits around, and orbital velocity.
+
+            this.orbit = {
+
+                radius: 0.0,
+
+                angular: 0.0
+
+            };
 
             // Whether to use face normals for a Face of the prim.
 
@@ -139,6 +158,9 @@ class Primv {
             // Store models.
 
             this.models = [];
+            // Array of model files (paths replaced with Geometry objects)
+
+            this.models = modelFiles;
 
             // Store multiple textures for one Prim (paths replaced with Texture objects).
 
@@ -152,9 +174,18 @@ class Primv {
 
             this.video = [];
 
-            // Array of model files (paths replaced with Geometry objects)
+            // Waypoints for scripted motion or timelines.
+            // TODO: this should be a WayPoints object
 
-            this.models = modelFiles;
+            this.wayPoints = [];
+
+            // Parent Node.
+
+            this.parentNode = null;
+
+            // Child Prim array.
+
+            this.children = [];
 
             /* 
              * Repeatedly apply the texture to each defined Face of the Prim (instead of wrapping around the Mesh).
@@ -163,82 +194,47 @@ class Primv {
 
             this.applyTexToFace = false;
 
-            // DEFAULTS
+            // Shader object for adding/removing from display list.
 
-            // The Prim orbit defines a center that the object orbits around, and orbital velocity.
+            this.shader = this.defaultShader = shader;
 
-            this.orbit = {
+            // Set prim's internal lighting (uses custom Light object, Shader-defined lighting).
 
-                radius: 0.0,
+            this.lightList[ 0 ] = new Lights( this.glMatrix );
 
-                angular: 0.0
+            // Create empty WebGL Buffers.
+            // TODO: ShaderObj = GeoBuffer
 
-            };
+            this.geometry = new ShaderObj( this.name, this.util, this.webgl );
 
-        // Size in world coordinates.
+            // Prim is visible from outside (counterclockwise winding) or inside (clockwise winding).
 
-        this.dimensions = dimensions;
+            this.visibleFrom = this.geometryPool.OUTSIDE;
 
-        // Amount of division of the Prim along each axis.
+            // Get our geometry.
 
-        this.divisions = divisions;
+            //TODO: change to
+            //TODO: get default model if type===MESH, and modelFiles not supplied.
+            //this.geometryPool.getGeometries( prim, true, false, modelFiles );
 
-        // Prim Position in World coordinates.
+            this.geometryPool.getGeometry( type, prim, 0 ); // assume cacheBust === true, mimeType determined by file extension.
 
-        this.position = position;
+            // TODO: EACH 'POOL' should have a default value accessible by .getDefault()
 
-        // Prim acceleration in World coordinates.
+            this.material = this.materialPool.getDefault();
+            this.setMaterial( 'default' );
 
-        this.acceleration = acceleration;
+            // Get the static network textures async (use emitter to decide what to do when each texture loads).
 
-        // Prim rotation on x, y, z axis, in World coordinates.
+            //TODO: change to:
+            //TODO: get default texture if textureImages not supplied.
+            //this.texturePool.getTextures( prim, true, false, textureImages );
 
-        this.rotation = rotation;
+            this.texturePool.getTextures( prim, textureImages, true, false ); // assume cacheBust === true, mimeType determined by file extension.
 
-        // Prim angular velocity in x, y, z, in World coordinates.
+            // Set default Prim material (can be altered by .mtl file).
 
-        this.angular = angular;
 
-        // Shader object for adding/removing from display list.
-
-        this.shader = this.defaultShader = shader;
-
-        // Set prim's internal lighting (uses custom Light object, Shader-defined lighting).
-
-        this.lightList[ 0 ] = new Lights( this.glMatrix );
-
-        // Create empty WebGL Buffers.
-        // TODO: ShaderObj = GeoBuffer
-
-        this.geometry = new ShaderObj( this.name, this.util, this.webgl );
-
-        // Prim is visible from outside (counterclockwise winding) or inside (clockwise winding).
-
-        this.visibleFrom = this.geometryPool.OUTSIDE;
-
-        // Get our geometry.
-
-        //TODO: change to
-        //TODO: get default model if type===MESH, and modelFiles not supplied.
-        //this.geometryPool.getGeometries( prim, true, false, modelFiles );
-
-        this.geometryPool.getGeometry( type, prim, 0 ); // assume cacheBust === true, mimeType determined by file extension.
-
-        // TODO: EACH 'POOL' should have a default value accessible by .getDefault()
-
-        this.material = this.materialPool.getDefault();
-
-        // Get the static network textures async (use emitter to decide what to do when each texture loads).
-
-        //TODO: change to:
-        //TODO: get default texture if textureImages not supplied.
-        //this.texturePool.getTextures( prim, true, false, textureImages );
-
-        this.texturePool.getTextures( prim, textureImages, true, false ); // assume cacheBust === true, mimeType determined by file extension.
-
-        // Set default Prim material (can be altered by .mtl file).
-
-        prim.setMaterial( 'default' );
 
 
         } else {

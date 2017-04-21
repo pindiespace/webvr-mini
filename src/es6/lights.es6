@@ -37,8 +37,6 @@ class Lights {
 
     getLight( id ) {
 
-        console.log(">>>>>>>>>>>TRYING TO GET LIGHT")
-
         window.lightList = this.lightList;
 
         return this.lightList[ id ];

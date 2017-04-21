@@ -1,9 +1,11 @@
 import GeometryPool from './geometry-pool';
 import TexturePool from './texture-pool';
+import MaterialPool from './material-pool';
 import ModelPool from './model-pool';
 import AudioPool from './audio-pool';
 import ShaderObj from './shader-obj';
 import Lights from './lights';
+import Prim from './prim';
 
 'use strict'
 
@@ -31,9 +33,11 @@ class World {
      * @param {Prim} prim the object/mesh primitives module.
      * @param {ShaderPool} shaderPool the GLSL rendering module.
      */
-    constructor ( webgl, webvr, prim, shaderPool, lights ) {
+    constructor ( init, glMatrix, webgl, webvr, shaderPool, lights ) {
 
         console.log( 'in World class' );
+
+        this.glMatrix = glMatrix,
 
         this.webgl = webgl,
 
@@ -41,9 +45,25 @@ class World {
 
         this.vr = webvr,
 
-        this.prim = prim,
+        this.shaderPool = shaderPool,
 
-        this.shaderPool = shaderPool;
+        // Attach 1 copy of Texture loader.
+
+        this.texturePool = new TexturePool( init, this.util, webgl );
+
+        this.materialPool = new MaterialPool( init, this.util, webgl );
+
+        // Attach 1 copy of the Model loader. NOTE: passing in TexturePool and MaterialPool.
+
+        this.modelPool = new ModelPool( init, this.util, webgl, this.texturePool, this.materialPool );
+
+        // Attach 1 copy of geometry loader, with ModelPool (which contains TexturePool and MaterialPool).
+
+        this.geometryPool = new GeometryPool( init, this.util, glMatrix, webgl, this.modelPool );
+
+        this.prim = new Prim ( true, this.util, glMatrix, webgl, this.texturePool, this.modelPool, this.geometryPool );
+
+        this.lights = lights;
 
         // Matrix operations.
 
@@ -58,8 +78,6 @@ class World {
         this.last = performance.now();
 
         this.counter = 0;
-
-        this.lights = lights;
 
         // Bind the render loop (best current method)
 

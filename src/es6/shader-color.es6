@@ -26,9 +26,9 @@ class ShaderColor extends Shader {
 
         // Define arrays that are needed for this shader.
 
-        this.required.indices = true,
+        this.required.buffer.indices = true,
 
-        this.required.colors = true,
+        this.required.buffer.colors = true,
 
         this.required.textures = 0;
 

@@ -105,7 +105,7 @@ if ( __DEV__ === 'true' ) {
 
 }
 
-let webvr, ui, prim, shaderPool, lights, world;
+let webvr, ui, shaderPool, light, world;
 
 // WebGL can take some time to init.
 
@@ -121,27 +121,23 @@ var promise = new Promise( ( resolve, reject ) => {
 
         ui = new Ui( false, util, webgl, webvr );
 
-        // The Prim object needs util, glmatrix, webgl.
-
-        prim = new Prim ( true, util, glMatrix, webgl );
-
-        // Add lights
-
-        lights = new Lights( glMatrix );
-
         // Add shaders to ShaderPool.
 
+        light = new Lights( glMatrix );
+
         shaderPool = new ShaderPool ( true, util, glMatrix, webgl );
+
+        // Define the default Shaders. The Prim and World can also dynamically link to a Shader.
 
         shaderPool.addShader( new ShaderTexture ( true, util, glMatrix, webgl, webvr, 'shaderTexture' ) );
 
         shaderPool.addShader( new ShaderColor ( true, util, glMatrix, webgl, webvr, 'shaderColor' ) );
 
-        shaderPool.addShader( new shaderDirLightTexture( true, util, glMatrix, webgl, webvr, 'shaderDirLightTexture', lights ) );
+        shaderPool.addShader( new shaderDirLightTexture( true, util, glMatrix, webgl, webvr, 'shaderDirLightTexture', light ) );
 
         // Create the world, which needs WebGL, WebVR, and Prim.
 
-        world = new World( webgl, webvr, prim, shaderPool );
+        world = new World( true, glMatrix, webgl, webvr, shaderPool, light );
 
         // Initialize our Ui.
 
@@ -182,4 +178,4 @@ window.vrmin = world;
 
 // Export our classes to app.js.
 
-export { util, webgl, prim, webvr, world };
+export { util, webgl, webvr, world };
