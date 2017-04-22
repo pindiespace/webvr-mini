@@ -18,7 +18,9 @@ class AssetPool {
 
         this.MIN_WAIT_TIME = 100,
 
-        this.MAX_TRIES = 6;
+        this.MAX_TRIES = 6,
+
+        this.NOT_IN_LIST = this.util.NOT_IN_LIST;
 
         // Store assets as a pool, with two arrays referencing them (numeric and key-based).
 
@@ -41,9 +43,13 @@ class AssetPool {
 
         for ( let i in this.keyList ) {
 
-            if( this.keyList[ i ].path === path ) {
+            let obj = this.keyList[ i ];
 
-                return this.keyList[ i ];
+            console.log( '^^^^obj.path:' + obj.path + ' path:' + path )
+
+            if( obj.path === path ) {
+
+                return obj;
 
             }
 
@@ -69,33 +75,6 @@ class AssetPool {
         } else {
 
             console.error( 'AssetPool::assetInlist(): undefined key' );
-
-        }
-
-        return null;
-
-    }
-
-    /** 
-     * If the asset has a name, return the first instance in the pool of an object with that name.
-     * @param {String} name the .name property of the object, if it exists.
-     * @returns {Object|null} if found, return the object, else null.
-     */
-    findByName ( name ) {
-
-        for ( let i in this.keyList ) {
-
-            let o = this.keyList[ i ];
-
-            if ( o.name ) {
-
-                if ( o.name === name ) {
-
-                    return o;
-
-                }
-
-            }
 
         }
 
@@ -162,7 +141,9 @@ class AssetPool {
 
                 obj.key = this.util.computeId();
 
-                this.keyList[ key ] = obj;
+                console.log( '^^ adding obj:' + obj.key + ' path:' + obj.path );
+
+                this.keyList[ obj.key ] = obj;
 
             }
 
@@ -433,7 +414,7 @@ class AssetPool {
 
                 if ( ft.tries < this.MAX_TRIES ) {
 
-                    console.warn( 'AssetPool::doRequest(): ft.promise FIRST .then error, TRYING AGAIN:' + error + ' for ' + ft.url );
+                    console.warn( 'AssetPool::doRequest(): ft.promise .then error, TRYING AGAIN:' + error + ' for ' + ft.url );
 
                     this.doRequest( requestURL, pos, updateFn, cacheBust = true, mimeType, ft.tries );
 

@@ -6,9 +6,11 @@ class FontPool extends AssetPool {
 
     /** 
      * @class
-     * audio resources
+     * font resources
+     * convert fonts to texture
+     * https://github.com/framelab/fontmatic
      * @constructor
-     * Create an audio pool.
+     * Create a font pool.
      * @param {Boolean} init if true, initialize immediately.
      * @param {Util} util utility methods.
      * @param {WebGL} webgl the webgl module.

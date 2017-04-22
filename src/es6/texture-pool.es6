@@ -24,8 +24,6 @@ class TexturePool extends AssetPool {
 
         this.webgl = webgl,
 
-        this.NOT_IN_LIST = this.util.NOT_IN_LIST,
-
         this.textureMimeTypes = {
 
             'png': 'image/png',
@@ -421,6 +419,13 @@ class TexturePool extends AssetPool {
      */
     getTextures ( prim, pathList, cacheBust = true, keepDOMImage = false ) {
 
+        // TODO: TESTO
+        // TODO:
+        // TODO:
+        window.keyList = this.keyList;
+
+        console.log("^^NUM KEYS IN KEYLIST:" + this.util.numKeys( this.keyList ) );
+
         // TODO: check texture list. If paths are already there, just use the path
         // TODO: and return the webgl texture buffer object.
 
@@ -430,7 +435,19 @@ class TexturePool extends AssetPool {
 
             let poolTexture = this.pathInList( path );
 
+            console.log('>>>>>>>>>>>>>>>poolTexture is:' + poolTexture)
+
+            // TODO: LOADING ALL AT ONCE, SO NOBODY HAS TIME TO SEE IF SOMETHING HAS BEEN LOADED.
+            // TODO: LOAD SEQUENTIALLY?????????????????????????
+
+            // TODO: THIS TEST HAS TO BE DONE IN THE CALLBACK!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            // CALLBACK SHOULD TRIGGER NEXT LOAD IN THE QUEUE.
+
+            // POSSIBLY DO THIS IN WORLD FOR EACH NEW PRIM.
+
             if ( poolTexture ) {
+
+                console.log( ')))))))))))))) found pre-existing texture ' + poolTexture.id + ' at path:' + path );
 
                 prim.textures.push( poolTexture ); // just reference an existing texture in this pool.
 

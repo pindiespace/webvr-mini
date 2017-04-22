@@ -61,7 +61,7 @@ import ShaderPool from './shader-pool';
 
 // Object primitives.
 
-import Prim from './prim';
+import PrimFactory from './prim-factory';
 
 // Import the world (variable object, changes with each VR world).
 
@@ -127,7 +127,7 @@ var promise = new Promise( ( resolve, reject ) => {
 
         shaderPool = new ShaderPool ( true, util, glMatrix, webgl );
 
-        // Define the default Shaders. The Prim and World can also dynamically link to a Shader.
+        // Define the default Shaders used by this app.
 
         shaderPool.addShader( new ShaderTexture ( true, util, glMatrix, webgl, webvr, 'shaderTexture' ) );
 
@@ -135,7 +135,7 @@ var promise = new Promise( ( resolve, reject ) => {
 
         shaderPool.addShader( new shaderDirLightTexture( true, util, glMatrix, webgl, webvr, 'shaderDirLightTexture', light ) );
 
-        // Create the world, which needs WebGL, WebVR, and Prim.
+        // Create the world, which needs WebGL, WebVR, the Shader list and world Lights.
 
         world = new World( true, glMatrix, webgl, webvr, shaderPool, light );
 

@@ -153,6 +153,21 @@ class Shader {
      * ---------------------------------------
      */
 
+    /** 
+     * Check for a Prim in list of drawn objects in this Shader.
+     * NOTE: we store Prims as a numeric array only.s
+     * @param {Prim} prim a Prim object.
+     */
+    primInList ( prim ) {
+
+        let renderList = this.program.renderList;
+
+        let pos = renderList.indexOf( prim );
+
+        return pos;
+
+    }
+
     /**
      * We add each Prim to our internal Program (returned from webgl).
      * NOTE: we store Prims as numeric array only.
@@ -184,21 +199,6 @@ class Shader {
             console.warn( prim.name + ' already added to Shader::' + this.name );
 
         }
-
-    }
-
-    /** 
-     * Check for a Prim in list of drawn objects in this Shader.
-     * NOTE: we store Prims as a numeric array only.s
-     * @param {Prim} prim a Prim object.
-     */
-    primInList ( prim ) {
-
-        let renderList = this.program.renderList;
-
-        let pos = renderList.indexOf( prim );
-
-        return pos;
 
     }
 
@@ -293,8 +293,8 @@ class Shader {
         /* 
          * Loop through required number of textures. Textures are assigned sequentially. 
          * Textures added sequentially; 
-         * prim.textures[0] corresponds to ShaderObj.textureCoords, 
-         * prim.textures[1] corresponds to ShaderObj.textureCoords1...
+         * prim.textures[0] corresponds to GeometryBuffer.textureCoords, 
+         * prim.textures[1] corresponds to GeometryBuffer.textureCoords1...
          */
 
         for ( let i = 0; i < prim.textures.length; i++ ) {
@@ -313,6 +313,7 @@ class Shader {
 
     /** 
      * Check if a given Prim has the elements to be rendered by this Shader.
+     * Bound to Emitter.events.PRIM_READY events.
      * @param {Prim} prim the primitive object.
      * @returns {Boolean} if everything is there, return true, else false.
      */
@@ -324,17 +325,17 @@ class Shader {
 
             // Confirm Prim has WebGLBuffers and Textures needed to render.
 
-            console.log( ')))))prim:' + prim.name + ' using Shader:' + this.name );
+            //////////////////////////////console.log( ')))))prim:' + prim.name + ' using Shader:' + this.name );
 
             if ( this.checkPrimTextures( prim ) && this.checkPrimBuffers( prim ) ) {
 
-                console.log( '))))))prim: ' + prim.name + ' is valid, adding' );
+                ///////////////////////console.log( '))))))prim: ' + prim.name + ' is valid, adding' );
 
                 return this.addPrim( prim ); // add to the Shader's renderList
 
             } else {
 
-                console.log( ')))))prinm:' + prim.name + ' not valid, removing')
+                ///////////////////////////console.log( ')))))prinm:' + prim.name + ' not valid, removing')
 
                 return this.removePrim( prim ); // only removed if it is already added      
 

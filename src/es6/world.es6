@@ -3,9 +3,8 @@ import TexturePool from './texture-pool';
 import MaterialPool from './material-pool';
 import ModelPool from './model-pool';
 import AudioPool from './audio-pool';
-import ShaderObj from './shader-obj';
 import Lights from './lights';
-import Prim from './prim';
+import PrimFactory from './prim-factory';
 
 'use strict'
 
@@ -51,7 +50,9 @@ class World {
 
         this.texturePool = new TexturePool( init, this.util, webgl );
 
-        this.materialPool = new MaterialPool( init, this.util, webgl );
+        // Materials file can find a material, or a texture used as material.
+
+        this.materialPool = new MaterialPool( init, this.util, webgl, this.texturePool );
 
         // Attach 1 copy of the Model loader. NOTE: passing in TexturePool and MaterialPool.
 
@@ -61,7 +62,11 @@ class World {
 
         this.geometryPool = new GeometryPool( init, this.util, glMatrix, webgl, this.modelPool );
 
-        this.prim = new Prim ( true, this.util, glMatrix, webgl, this.texturePool, this.modelPool, this.geometryPool );
+        // Create the Prim factory (no Prim class).
+
+        this.primFactory = new PrimFactory ( true, this );
+
+        // Add World Lights (Prims may have their own).
 
         this.lights = lights;
 
@@ -120,49 +125,6 @@ class World {
 
     }
 
-
-    /** 
-     * Get the big array with all vertex data. Every time a 
-     * Prim is made, we store a reference in the this.objs[] 
-     * array. So, to make one, we just concatenate the 
-     * vertices. Use to send multiple prims sharing the same Shader.
-     * @param {glMatrix.vec3[]} vertices
-     * @returns {glMatrix.vec3[]} vertices
-     */
-    setVertexData ( vertices ) {
-
-        vertices = [];
-
-        for ( let i in this.objs ) {
-
-            vertices = vertices.concat( this.objs[ i ].vertices );
-
-        }
-
-        return vertices;
-
-    }
-
-    /** 
-     * get the big array with all index data. Use to 
-     * send multiple prims sharing the same Shader.
-     * @param {Array} indices the indices to add to the larger array.
-     * @returns {Array} the indices.
-     */
-    setIndexData ( indices ) {
-
-        indices = [];
-
-        for ( let i in this.objs ) {
-
-            indices = indices.concat( this.objs[ i ].indices );
-
-        }
-
-        return indices;
-
-    }
-
     /** 
      * Create the world. Load Shader objects, and 
      * create objects to render in the world.
@@ -173,11 +135,11 @@ class World {
 
         const vec4 = this.glMatrix.vec4;
 
-        const vec5 = this.prim.geometryPool.vec5;
+        const vec5 = this.primFactory.geometryPool.vec5;
 
-        const typeList = this.prim.geometryPool.typeList;
+        const typeList = this.primFactory.geometryPool.typeList;
 
-        const directions = this.prim.geometryPool.directions;
+        const directions = this.primFactory.geometryPool.directions;
 
         const util = this.util;
 
@@ -195,7 +157,7 @@ class World {
 
         // Create a UV skydome.
 
-            this.prim.createPrim(
+            this.primFactory.createPrim(
 
                 this.s1,                      // callback function
                 typeList.SKYDOME,          // type
@@ -210,7 +172,7 @@ class World {
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0) // color
             );
 
-            this.prim.createPrim(
+            this.primFactory.createPrim(
 
                 this.s1,                      // callback function
                 typeList.CUBE,
@@ -226,7 +188,7 @@ class World {
 
             );
 
-            this.prim.createPrim(
+            this.primFactory.createPrim(
 
                 this.s1,                      // callback function
                 typeList.CUBE,
@@ -242,7 +204,7 @@ class World {
 
             );
 
-            this.prim.createPrim(
+            this.primFactory.createPrim(
 
                 this.s1,                      // callback function
                 typeList.TORUS,
@@ -263,7 +225,7 @@ class World {
              * DIVISIONS FOR CUBED AND CURVED PLANE INDICATE SIDE TO DRAW
              */
 
-            this.prim.createPrim(
+            this.primFactory.createPrim(
 
                 this.s1,                      // callback function
                 typeList.CURVEDINNERPLANE,
@@ -279,7 +241,7 @@ class World {
 
             );
 
-            this.prim.createPrim(
+            this.primFactory.createPrim(
 
                 this.s1,                      // callback function
                 typeList.CURVEDINNERPLANE,
@@ -295,7 +257,7 @@ class World {
         
             );
 
-            this.prim.createPrim(
+            this.primFactory.createPrim(
 
                 this.s1,                      // callback function
                 typeList.CURVEDINNERPLANE,
@@ -311,7 +273,7 @@ class World {
         
             );
 
-            this.prim.createPrim(
+            this.primFactory.createPrim(
 
                 this.s1,                      // callback function
                 typeList.CURVEDOUTERPLANE,
@@ -327,7 +289,7 @@ class World {
         
             );
 
-            this.prim.createPrim(
+            this.primFactory.createPrim(
 
                 this.s1,                      // callback function
                 typeList.ICOSPHERE,
@@ -343,7 +305,7 @@ class World {
         
             );
 
-            this.prim.createPrim(
+            this.primFactory.createPrim(
 
                 this.s1,                      // callback function
                 typeList.SKYICODOME,
@@ -359,7 +321,7 @@ class World {
         
             );
 
-            this.prim.createPrim(
+            this.primFactory.createPrim(
             
                 this.s1,                      // callback function
                 typeList.BOTTOMICODOME,
@@ -375,7 +337,7 @@ class World {
 
             );
 
-            this.prim.createPrim(
+            this.primFactory.createPrim(
             
                 this.s1,                      // callback function
                 typeList.CAP, // CAP DEFAULT, AT WORLD CENTER (also a UV polygon)
@@ -392,7 +354,7 @@ class World {
         
             ); 
 
-            this.prim.createPrim(
+            this.primFactory.createPrim(
             
                 this.s1,                      // callback function
                 typeList.CONE,
@@ -408,7 +370,7 @@ class World {
             
             );
 
-            this.prim.createPrim(
+            this.primFactory.createPrim(
             
                 this.s1,                      // callback function
                 typeList.CYLINDER,
@@ -424,7 +386,7 @@ class World {
             
             );
 
-            this.prim.createPrim(
+            this.primFactory.createPrim(
             
                 this.s1,                      // callback function
                 typeList.CAPSULE,
@@ -440,7 +402,7 @@ class World {
         
             );
 
-            this.prim.createPrim(
+            this.primFactory.createPrim(
             
                 this.s1,                      // callback function
                 typeList.TEARDROP,
@@ -456,7 +418,7 @@ class World {
         
             );
 
-            this.prim.createPrim(
+            this.primFactory.createPrim(
             
                 this.s1,                      // callback function
                 typeList.DODECAHEDRON,
@@ -475,7 +437,7 @@ class World {
 
             // NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
 
-            this.prim.createPrim(
+            this.primFactory.createPrim(
 
                 this.s1,                               // callback function
                 typeList.MESH,
@@ -498,7 +460,7 @@ class World {
 // COLORED SHADER.
 //////////////////////////////////
 
-            this.prim.createPrim(
+            this.primFactory.createPrim(
 
                 this.s2,                      // callback function
                 typeList.CUBE,
@@ -539,7 +501,7 @@ class World {
 
 // TODO: PRIM LIGHTING MODEL IN PRIM
 
-            this.prim.createPrim(
+            this.primFactory.createPrim(
 
                 this.s2,                               // callback function
                 typeList.MESH,
@@ -561,7 +523,7 @@ class World {
 // LIT TEXTURE SHADER.
 //////////////////////////////////
 
-            this.prim.createPrim(
+            this.primFactory.createPrim(
 
                 this.s3,                      // callback function
                 typeList.CUBE,
@@ -577,7 +539,7 @@ class World {
 
             );
 
-            this.prim.createPrim(
+            this.primFactory.createPrim(
 
                 this.s3,                      // callback function
                 typeList.TERRAIN,
@@ -594,7 +556,7 @@ class World {
 
             );
 
-            this.prim.createPrim(
+            this.primFactory.createPrim(
 
                 this.s3,                      // callback function
                 typeList.CURVEDINNERPLANE,
@@ -610,7 +572,7 @@ class World {
         
             );
 
-            this.prim.createPrim(
+            this.primFactory.createPrim(
             
                 this.s3,                      // callback function
                 typeList.SPHERE,
@@ -627,7 +589,7 @@ class World {
         
             );
 
-            this.prim.createPrim(
+            this.primFactory.createPrim(
 
                 this.s3,                      // callback function
                 typeList.CUBESPHERE,
@@ -643,7 +605,7 @@ class World {
 
             ); 
 
-            this.prim.createPrim(
+            this.primFactory.createPrim(
 
                 this.s3,                      // callback function
                 typeList.REGULARTETRAHEDRON,
@@ -659,7 +621,7 @@ class World {
 
             );
 
-            this.prim.createPrim(
+            this.primFactory.createPrim(
 
                 this.s3,                      // callback function
                 typeList.ICOSOHEDRON,
@@ -675,7 +637,7 @@ class World {
         
             );
 
-            this.prim.createPrim(
+            this.primFactory.createPrim(
 
                 this.s3,                      // callback function
                 typeList.BOTTOMDOME,
@@ -691,7 +653,7 @@ class World {
 
             );
 
-            this.prim.createPrim(
+            this.primFactory.createPrim(
 
                 this.s3,                  // callback function
                 typeList.TORUS, // TORUS DEFAULT

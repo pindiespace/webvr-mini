@@ -11,6 +11,39 @@ class GeometryPool {
      * @class GeometryPool
      * create coordinate geometry for vertices, textures, normals, tangents, either 
      * from a file or proceedurally.
+     *
+     * geo primitive examples
+     * https://github.com/nickdesaulniers/prims
+     * https://github.com/mhintz/platonic/tree/master/src
+     * https://github.com/azmobi2/html5-webgl-geometry-shapes/blob/master/webgl_geometry_shapes.html
+     * 
+     * Ogre 3d procedural
+     * https://bitbucket.org/transporter/ogre-procedural/src/ca6eb3363a53c2b53c055db5ce68c1d35daab0d5/library/include/?at=default
+     * https://bitbucket.org/transporter/ogre-procedural/wiki/Home
+     *
+     * https://github.com/jagenjo/litegl.js/tree/master/src
+     *
+     * http://wiki.unity3d.com/index.php/ProceduralPrimitives
+     * 
+     * advanced toolset
+     * https://www.geometrictools.com/Samples/Geometrics.html
+     * Lots of Webgl tricks!
+     * https://acko.net
+     * http://acko.net/blog/on-webgl/
+     * https://gamedevdaily.io/four-ways-to-create-a-mesh-for-a-sphere-d7956b825db4#.lkbq2omq5
+     *
+     * ---------------------------------------------------------------
+     * Code Writing Conventions
+     * 1. vertices = flattened array, final vertex data for computation or rendering
+     * 2. vtx      = any initialization Vertex object (e.g. for complex polyhedra)
+     * 3. v, vv    = local vertex or vertex array.
+     * 4. when using glMatrix functions, do 'in place' conversion first. 
+     *    If not practical, return the result. If not practical, use an 
+     *    object literal:
+     *    - vec3.sub( resultPt, a, b );
+     *    - resultPt = vec3.sub( resultPt, a, b );
+     *    - resultPt = vec3.sub( [ 0, 0, 0 ], a, b );
+     * ---------------------------------------------------------------
      * @constructor
      * @param {Boolean} init if true, initialize in the constructor.
      * @param {Util} util the utility class.
@@ -3427,13 +3460,15 @@ class GeometryPool {
 
                     // Reload from the asset file.
 
-                    console.log("FOUND PRE-EXISTING ASSET FOR:" + prim.name)
+                    console.log( 'GeometryPool::getGeometries(): model file ' + path + ' already in the pool for:' + prim.name)
 
                     prim.models.push( poolModel ); // just reference an existing texture in this pool.
 
                 } else {
 
                     // Load geometry from a file, with callback emitter GEOMETRY_READY in ModelPool, calling Prim.initPrim().
+
+                    console.log( 'GeometryPool::getGeometries(): new model file ' + path + ' for ' + prim.name );
 
                     this.modelPool.getModels( prim, pathList, true );
 
@@ -3443,21 +3478,38 @@ class GeometryPool {
 
         } else { 
 
-            // Procedural geometry.
+            /* 
+             * Procedural geometry, returns the same structure as modelPool.getModels();
+             *
+             * Model format:
+             * {
+             *   vertices: vertices,
+             *   indices: indices,
+             *   texCoords: texCoords,
+             *   normals: normals
+             *   type: type
+             *   path: no path
+             *   id: NOT_IN_LIST (not in the model pool).
+             * }
+             */
 
-            console.log("NEW PROCEDURAL FOR:" + prim.name)
+            console.log('GeometryPool::getGeometries() new procedural geometry for:' + prim.name)
 
-            let c = this[ prim.type ]( prim );
+            let m = this[ prim.type ]( prim );
 
-            console.log("c is a:" + c)
+            m.type = prim.type,
 
-            // Colors not supplied by procedural geometry.
+            m.path = '', // No path for procedural.
 
-            c.colors = [];
+            m.id = prim.type;   // Not in the model pool 
+
+            //TODO: put type here, make a lookup into the pool run the procedural routine!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+            //TODO: when geo-pool inits, it adds callbacks that fire the procedural routine!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
             // Emit a GEOMETRY_READY event, calling Prim.initPrim().
 
-            this.util.emitter.emit( this.util.emitter.events.GEOMETRY_READY, prim, 0, c );
+            this.util.emitter.emit( this.util.emitter.events.GEOMETRY_READY, prim, 0, m );
 
         }
 

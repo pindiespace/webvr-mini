@@ -1,8 +1,8 @@
 'use strict'
 
-/** 
- * A mesh object containing un-flattened references to vertices, indices, and 
- * texture coordinates, suitable for subdivision and other complex manipulations.
+/* 
+ * A mesh object, along with helper objects, containing un-flattened references to 
+ * vertices, indices, and texture coordinates, suitable for subdivision and other manipulations.
  */
 
  class Coords {
@@ -412,8 +412,10 @@ class Mesh {
      * Our class for subdivision and other complex coordinate manipulation.
      * @param {Prim} An object with flattened vertices, indices, and texture 
      * coordinates, as well as the Prim type.
+     * NOTE: check libraries like http://evanw.github.io/csg.js/ to 
+     * implement more complex mesh operations.
      * @constructor
-     * @param {Geometry} geo a geometry object (defined in Prim.es6)
+     * @param {Prim} prim a 3d objct (defined in PrimFactory.es6)
      */
 
     constructor ( prim ) {

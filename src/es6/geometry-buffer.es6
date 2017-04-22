@@ -1,6 +1,6 @@
 'use strict'
 
-class ShaderObj {
+class GeometryBuffer {
 
     /** 
      * @class
@@ -178,7 +178,7 @@ class ShaderObj {
 
         this.MAX_DRAWELEMENTS = this.webgl.MAX_DRAWELEMENTS;
 
-        this.mName = this.primName + ' ShaderObj::';
+        this.mName = this.primName + ' GeometryBuffer::';
 
     } // end of constructor
 
@@ -1206,4 +1206,4 @@ class ShaderObj {
 
 }
 
-export default ShaderObj;
+export default GeometryBuffer;

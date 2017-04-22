@@ -7,6 +7,8 @@ class ModelPool extends AssetPool {
     /** 
      * @class
      * Load model files for custom geometry.
+     * Geometry prebuilt
+     * http://paulbourke.net/geometry/roundcube/
      * @constructor
      * @param {Boolean} init if true, initialize immediately.
      * @param {Util} util reference to utility methods.
@@ -29,8 +31,6 @@ class ModelPool extends AssetPool {
         this.textuerPool = texturePool,
 
         this.materialPool = materialPool,
-
-        this.NOT_IN_LIST = this.util.NOT_IN_LIST;
 
         this.modelMimeTypes = {
 
@@ -268,6 +268,8 @@ class ModelPool extends AssetPool {
 
                 case 'usemtl': // use material (by name, loaded as .mtl file elsewhere)
 
+                    // TODO: define how to usemtl (keep coordinate start position??????/)
+
                      console.log("::::::::::::GOTTA USEMTL in OBJ file: " + data );
 
                     break;
@@ -351,7 +353,7 @@ class ModelPool extends AssetPool {
     /** 
      * Add a model
      * @param {Prim} prim the requesting Prim object.
-     * @param {Object} data data to construct the Prim ShaderObj.
+     * @param {Object} data data to construct the Prim GeometryBuffer.
      * @param {String} path the file path to the object.
      * @param {Number} pos the index of the object in the calling Prim's array.
      * @param {String} mimeType the MIME type of the file.
@@ -411,8 +413,22 @@ class ModelPool extends AssetPool {
 
         if ( d ) {
 
+            /*
+             * Model format:
+             * {
+             *   vertices: vertices,
+             *   indices: indices,
+             *   texCoords: texCoords,
+             *   normals: normals
+             * }
+            */
+
+            d.type = type,
+
+            d.path = path,
+
             // Emit the GEOMETRY_READY event with (Mesh) arguments.
-            // We don't just return the data since it has to be processed by Prim into a ShaderObj.
+            // We don't just return the data since it has to be processed by Prim into a GeometryBuffer.
 
             this.util.emitter.emit( this.util.emitter.events.GEOMETRY_READY, prim, pos, d );
 
@@ -422,7 +438,7 @@ class ModelPool extends AssetPool {
 
         }
 
-        return d;
+        return this.addAsset( d );
 
     }
 

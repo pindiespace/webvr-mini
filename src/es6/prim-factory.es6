@@ -6,55 +6,33 @@ import GeometryPool from './geometry-pool';
 import TexturePool from './texture-pool';
 import ModelPool from './model-pool';
 import AudioPool from './audio-pool';
-import ShaderObj from './shader-obj';
+import GeometryBuffer from './geometry-buffer';
 
 'use strict'
 
-class Prim {
+class PrimFactory {
 
     /** 
      * @class
-     * Create object primitives, and return vertex and index data 
+     * Object Factory for Prims, and return vertex and index data 
      * suitable for creating a VBO and IBO.
      * 
-     * TODO: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-     * 1. regularize prim creation
-     * - local vertex, index, etc
-     * - vertices used in-place, instead of returned
-     * - arrays created first in prim creation, then routine, then WebGL buffers added
-     * 2. Texture indexing
-     * - create startpoints in indices for swapping textures for complex objects
-     * 3. Update routines
-     * - update when Prim modified (re-compute normals, tangents, smooth, optimize)
+     * Because objects can vary widely in composition and have lots of 
+     * properties, we use an Object-Factory pattern here instead of an ES6 class, and 
+     * don't use 'new' operator to create individual Prims.
+     *
+     * Members of the manufactured Prim (values are units, with 1.0 being normalized size).
+     *
+     * Elements of Prims:
      * 
-     * NOTE: if you need more complex shapes, use a mesh file, or 
-     * a library like http://evanw.github.io/csg.js/ to implement 
-     * mesh operations.
+     * prim.position      = (glMatrix.vec5) [ x, y, z, rounding, | startSlice, endSlice,  ]
+     * prim.dimensions    = (glMatrix.vec4) [ x, y, z ]
+     * prim.divisions     = (glMatrix.vec5) [ x, y, z ]
+     * prim.acceleration  = (glMatrix.vec3) [ x, y, z ]
+     * prim.rotation      = (glMatrix.vec3) [ x, y, z ]
+     * prim.angular       = (glMatrix.vec3) [ x, y, z ]
      * 
-     * Implicit objects (values are units, with 1.0 being normalized size).
-     * 
-     * prim.position      = (vec5) [ x, y, z, rounding, | startSlice, endSlice,  ]
-     * prim.dimensions    = (vec4) [ x, y, z ]
-     * prim.divisions     = (vec3) [ x, y, z ]
-     * prim.acceleration  = (vec3) [ x, y, z ]
-     * prim.rotation      = (vec3) [ x, y, z ]
-     * prim.angular       = (vec3) [ x, y, z ]
-     * prim.colors        = (vec4) [ red, green, blue, alpha... ]
-     * prim.texure1Arr    = (vec2) [ u, v, t... ]
-     * 
-     * ---------------------------------------------------------------
-     * Code Rules
-     * 1. vertices = flattened array, final vertex data for computation or rendering
-     * 2. vtx = any initialization Vertex object (e.g. for complex polyhedra)
-     * 3. v, vv = local vertex or vertex array.
-     * 4. when using glMatrix functions, do 'in place' conversion first. 
-     *    If not practical, return the result. If not practical, use an 
-     *    object literal:
-     *    - vec3.sub( resultPt, a, b );
-     *    - resultPt = vec3.sub( resultPt, a, b );
-     *    - resultPt = vec3.sub( [ 0, 0, 0 ], a, b );
-     * ---------------------------------------------------------------
-     * Geometry - flattened arrays with the following datatypes
+     * prim.geometry      = GeometryBuffer flattened arrays plus WebGL objects with the following datatypes:
      *
      *  { 
      *    vertices:  [],   // Float32Array
@@ -64,97 +42,239 @@ class Prim {
      *    tangents:  [],   // Float32Array
      *    colors:    []    // Float32Array
      *  }
+     * 
+     * prim.shader        = Shader used by this prim.
+     * prim.textures      = array of textures used by this prim.
+     * prim.materials     = materials used by this prim.
+     * prim.audio         = array of audio files use by this prim.
+     * prim.video         = array of video files used by this prim.
      *
-     * ---------------------------------------------------------------
-     * ShaderObj, above geometry, plus WebGL buffers created from it.
-     * ---------------------------------------------------------------
      * Array optimization
      * https://gamealchemist.wordpress.com/2013/05/01/lets-get-those-javascript-arrays-to-work-fast/
-     * 
-     * geo primitives
-     * USE THIS!!!! https://github.com/nickdesaulniers/prims
-     * https://github.com/mhintz/platonic/tree/master/src
-     * https://github.com/azmobi2/html5-webgl-geometry-shapes/blob/master/webgl_geometry_shapes.html
-     * 
-     * convert fonts to texture
-     * https://github.com/framelab/fontmatic
-     * 
-     * More prims
-     * Ogre 3d procedural
-     * https://bitbucket.org/transporter/ogre-procedural/src/ca6eb3363a53c2b53c055db5ce68c1d35daab0d5/library/include/?at=default
-     * https://bitbucket.org/transporter/ogre-procedural/wiki/Home
-     *
-     * https://github.com/jagenjo/litegl.js/tree/master/src
-     *
-     * http://wiki.unity3d.com/index.php/ProceduralPrimitives
-     * 
-     * advanced toolset
-     * https://www.geometrictools.com/Samples/Geometrics.html
-     * Geometry prebuilt
-     * http://paulbourke.net/geometry/roundcube/
-     * Lots of Webgl tricks!
-     * https://acko.net
-     * http://acko.net/blog/on-webgl/
-     * 
-     * https://gamedevdaily.io/four-ways-to-create-a-mesh-for-a-sphere-d7956b825db4#.lkbq2omq5
      *
      * @constructor
      * @param {Boolean} init if true, initialize immediately.
      * @param {Util} util shared utility methods, patches, polyfills.
      * @param {glMatrix} glMatrix fast array manipulation object.
      * @param {WebGL} webgl object holding the WebGLRenderingContext.
+     * @param {TexturePool} a TexturePool object for accessing textures.
+     * @param {ModelPool} a ModelPool for reading OBJ WaveFront and similar 3d object files.
+     * @param {GeometryPool} Creates geometry, procedural or Mesh (by invoking ModelPool).
      */
-    constructor ( init, util, glMatrix, webgl, texturePool, modelPool, geometryPool ) {
+    constructor ( init, world ) {
 
-        console.log( 'in Prim class' );
+        console.log( 'in PrimFactory class' );
 
-        this.util = util;
+        this.util = world.util;
 
-        this.webgl = webgl;
+        this.webgl = world.webgl;
 
-        this.glMatrix = glMatrix;
-
-        this.objs = []; // Keep a reference to all created Prims here.
+        this.glMatrix = world.glMatrix;
 
         // Attach 1 copy of the Texture loader to this Factory.
 
-        this.texturePool = texturePool, // new TexturePool( init, util, webgl );
+        this.texturePool = world.texturePool, // new TexturePool( init, util, webgl );
 
         // Attach 1 copy of the Model loader to this Factory.
 
-        this.modelPool = modelPool, // new ModelPool( init, util, webgl );
+        this.modelPool = world.modelPool, // new ModelPool( init, util, webgl );
 
         // Attach 1 copy of LoadGeometry to this Factory.
 
-        this.geometryPool = geometryPool; // new GeometryPool( init, util, glMatrix, webgl, this.modelPool, this.texturePool );
+        this.geometryPool = world.geometryPool; // new GeometryPool( init, util, glMatrix, webgl, this.modelPool, this.texturePool );
+
+
+        this.objs = []; // Keep a reference to all created Prims here.
 
         /* 
-         * Bind the Prim callback for geometry initialization.
+         * Bind the callback for geometry initialization within individual prims.
          */
 
         this.util.emitter.on( this.util.emitter.events.GEOMETRY_READY, 
 
             ( prim, key, geometry ) => {
 
-                prim.initPrimGeometry( prim, key, geometry );
+                this.initPrimGeometry( prim, key, geometry );
 
         } );
 
         /* 
-         * Bind Prim callback for a new material applied to the Prim.
+         * Bind Prim callback for a new material applied to individual prims.
          */
 
         this.util.emitter.on( this.util.emitter.events.MATERIAL_READY, 
 
             ( prim, key, material ) => {
 
-                prim.initPrimMaterial( material );
+                this.initPrimMaterial( prim, key, material );
 
         } );
 
     }
 
-    // TODO: MOVE INSIDE OF PRIM. THIS SHOULD BE PRIMPOOL
+
+    /** 
+     * Create a large coordinate data array with data for multiple Prims.
+     * When a Prim is made, we store a reference in the this.objs[] 
+     * array. So, to make one, we just concatenate their  
+     * vertices. Use to send multiple prims sharing the same Shader.
+     * @param {glMatrix.vec3[]} vertices
+     * @returns {glMatrix.vec3[]} vertices
+     */
+    setVertexData ( vertices ) {
+
+        vertices = [];
+
+        for ( let i in this.objs ) {
+
+            vertices = vertices.concat( this.objs[ i ].vertices );
+
+        }
+
+        return vertices;
+
+    }
+
+    /** 
+     * get the big array with all index data. Use to 
+     * send multiple prims sharing the same Shader.
+     * @param {Array} indices the indices to add to the larger array.
+     * @returns {Array} the indices.
+     */
+    setIndexData ( indices ) {
+
+        indices = [];
+
+        for ( let i in this.objs ) {
+
+            indices = indices.concat( this.objs[ i ].indices );
+
+        }
+
+        return indices;
+
+    }
+
+    /** 
+     * Prims don't contrl their initialization, so let the factory do it.
+     * @param {prim} prim the Prim.
+     * @param {String} key the identifying the geometry in the ModelPool.
+     * @param {Object} coords coordinates object returned by procedural, Mesh, or ModelPool.
+     * { 
+     *   vertices: vertices, 
+     *   indices: indices,
+     *   normals: normals, 
+     *   texCoords: texCoords, 
+     *   tangents: tangents
+     * };
+     */
+    initPrimGeometry ( prim, key, coords ) {
+
+        /* 
+         * Add buffer data, and re-bind to WebGL.
+         * NOTE: Mesh callbacks don't actually add any data here 
+         * (this.meshCallback() passes empty coordinate arrays)
+         */
+
+        // Update vertices if they were supplied.
+
+        prim.updateVertices( coords.vertices );
+
+        // Compute bounding box.
+
+        prim.boundingBox = prim.computeBoundingBox( prim.geometry.vertices.data );
+
+        // Update indices if they were supplied.
+
+        prim.updateIndices ( coords.indices );
+
+        // If normals are used, re-compute.
+
+        prim.updateNormals( coords.normals );
+
+        // If texcoords are used, re-compute.
+
+        prim.updateTexCoords( coords.texCoords );
+
+        // Tangents aren't supplied by OBJ format, so re-compute.
+
+        prim.updateTangents();
+
+        // Colors aren't supplied by OBJ format, so re-compute.
+
+        prim.updateColors();
+
+        // Set our buffer data
+
+        //prim.geometry.setBufferData( coords.vertices, coords.indices, coords.normals, coords.texCoords, coords.tangents, coords.colors );
+
+        // Check our buffers for consistency.
+
+        prim.geometry.checkBufferData();
+
+        //if ( prim.name === 'cubesphere' ) {
+        //if ( prim.name === 'TestCapsule' ) {
+        //if ( prim.name === 'colored cube' ) {
+        //if ( prim.name === 'texsphere' ) {
+
+            let mesh = new Mesh( prim );
+
+            // SUBDIVIDE TEST
+
+            //mesh.subdivide( true );
+            //mesh.subdivide( true );
+            //mesh.subdivide( true );
+            //mesh.subdivide( true );
+            //mesh.subdivide( true );
+            //mesh.subdivide( true );
+            //mesh.subdivide( true );
+            //mesh.subdivide( true );
+            //mesh.subdivide( true ); // this one zaps from low-vertex < 10 prim
+
+         //}
+
+        console.log("checking buffer data for " + prim.name )
+
+        prim.geometry.checkBufferData();
+
+    }
+
+
+    initPrimMaterial ( material ) {
+
+        // TODO:
+
+        // BAD TANGENT DATA FOR TEAPOT!!!
+
+        // Use LIGHT object to define World Light. Shaders can use World Light, or local one.
+
+        // Add LIGHT to WORLD. FIGURE OUT STRATEGY TO BROADCAST LIGHT TO SHADERS.
+
+        // 1. Add Light to World. 2. Have World broadcast Light via Shader.addLight
+
+        // 3. have Shaders that use light use the added Light.
+
+        // LOAD MATERIAL AND TEXTURE OUT OF MODEL-POOL
+
+        // TEST ACTUAL PRIM REMOVAL WHEN IT BECOMES INVALID
+
+        // INTERNALIZE THESE METHODS
+
+        // KEY FOR PROCEEDURAL GRAPHICS (ADD TO Model-Pool)
+
+        // KEY FOR MESH GRAPHICS (Add to ModelPool)
+
+        // KEY FOR OBJ FILE MODELS (Add to ModelPool)
+
+        // LOAD WORLD BY FILE (MAKE INTO TESTBED)
+
+        // LOAD A-FRAME MODELS (USING EDITOR)
+
+        // UI MODAL DIALOG ON HOVER OVER FAILED WEBVR
+
+        // ADD SOME SETINTERVALS DURING LONG COMPUTES
+
+    }
 
     /** 
      * Create an standard 3d object.
@@ -169,9 +289,8 @@ class Prim {
      * @param {glMatrix.vec3} angular orbital rotation around a defined point ///TODO!!!!! DEFINE########
      * @param {String[]} textureImagea array of the paths to images used to create a texture (one Prim can have several).
      * @param {glMatrix.vec4[]|glMatrix.vec4} color the default color(s) of the object, either a single color or color array.
-     * @param {Boolean} applyTexToFace if true, apply texture to each face, else apply texture to 
-     * the entire object.
-     * @param {String[]} modelFiles path to model and material files used to define non-geometric Prims.
+     * @param {Boolean} applyTexToFace if true, apply texture to each face, else apply texture to the entire object.
+     * @param {String[]} modelFiles path to model OBJ (and indirectly, material files ) used to define non-procedural Mesh Prims.
      */
     createPrim ( 
 
@@ -199,7 +318,7 @@ class Prim {
 
         applyTexToFace = false,
 
-        modelFiles = [], // heightMap file (HEIGHTMAP) or array of coordinate and material files (MESH)
+        modelFiles = [] // heightMap file (HEIGHTMAP) or array of coordinate and material files (MESH)
 
         ) { // function to execute when prim is done (e.g. attach to drawing list shader).
 
@@ -214,19 +333,11 @@ class Prim {
             return null;
         }
 
+        // Start the object factory.
+
         let prim = {};
 
-        // Define internal methods for the Prim.
-
-        /** 
-         * Set the Shader used for rendering. Only one Shader may be 
-         * used at a time.
-         */
-        prim.setShader  = ( shader ) => {
-
-            prim.shader = shader;
-
-        };
+        let p = prim;
 
         /** 
          * Update the model-view matrix with position, translation, rotation, and orbital motion for individual Prims.
@@ -234,8 +345,6 @@ class Prim {
          * @returns {glMatrix.mat4} the altered model-view matrix.
          */
         prim.setMV = ( mvMatrix ) => {
-
-            let p = prim;
 
             // TODO: translate everything.
 
@@ -266,31 +375,13 @@ class Prim {
 
         };
 
-        /* 
-         * Activate a texture by placing it first in position in the Prim texture array (with is what is used by shader first).
-         * Complex textures have the order of binding set by their respective Shader. ShaderTexture and ShaderDirLightTexture 
-         * just use the first array element. ShaderTerrain uses several elements (e.g. tiling textures, bumpmaps) defined in the 
-         * ShaderTerrain texture object.
-         */
-        prim.activeTexture = ( num ) => {
-
-            if ( prim.textures[ num ] ) {
-
-                this.util.swap( 0, num );
-
-            }
-
-            console.log( 'in PRIM::::::activeTexture, setting active texture' );
-
-        }
-
-        /* 
-         * Set the Prim as a glowing object. Global lights 
+        /** 
+         * Set the Prim as a glowing object. Global Lights 
          * are handled by the World.
+         * @param {glMatrix.vec3} direction the direction of the light.
+         * @param {glMatrix.vec4} color light color
          */
-        prim.setLight = ( direction = [ 1, 1, 1 ], color = [ 255, 255, 255 ], prim = this ) => {
-
-            let p = prim;
+        prim.setLight = ( direction = [ 1, 1, 1 ], color = [ 255, 255, 255 ] ) => {
 
             p.light.direction = direction,
 
@@ -298,9 +389,8 @@ class Prim {
 
         };
 
-        prim.setMaterial = ( name, colorMult = 1, ambient = [ 0.1, 0.1, 0.1 ], diffuse = [ 0, 0, 0 ], specular = [ 1, 1, 1, 1 ], shininess = 250, specularFactor = 1, transparency = 1.0, illum = 1 ) => {
 
-            let p = prim;
+        prim.setMaterial = ( name, colorMult = 1, ambient = [ 0.1, 0.1, 0.1 ], diffuse = [ 0, 0, 0 ], specular = [ 1, 1, 1, 1 ], shininess = 250, specularFactor = 1, transparency = 1.0, illum = 1 ) => {
 
             p.materials.push( {
 
@@ -334,7 +424,7 @@ class Prim {
 
         prim.updateVertices = ( vertices ) => {
 
-            let geo = prim.geometry;
+            let geo = p.geometry;
 
             if ( vertices && vertices.length ) {
 
@@ -348,11 +438,11 @@ class Prim {
 
         prim.updateIndices = ( indices ) => {
 
-            let geo = prim.geometry;
+            let geo = p.geometry;
 
             if ( indices && indices.length ) {
 
-                geo.setIndices ( indices );
+                geo.setIndices( indices );
 
             }
 
@@ -362,7 +452,7 @@ class Prim {
 
         prim.updateNormals = ( normals ) => {
 
-            let geo = prim.geometry;
+            let geo = p.geometry;
 
             if ( normals && normals.length ) {
 
@@ -370,9 +460,9 @@ class Prim {
 
             } else {
 
-                console.log("Prim::updateNormals():" + prim.name + ' recalculating normal coordinates' );
+                console.log("Prim::updateNormals():" + p.name + ' recalculating normal coordinates' );
 
-                geo.setNormals( this.geometryPool.computeNormals( geo.vertices.data, geo.indices.data, [], prim.useFaceNormals ) );
+                geo.setNormals( this.geometryPool.computeNormals( geo.vertices.data, geo.indices.data, [], p.useFaceNormals ) );
 
             }
 
@@ -382,7 +472,7 @@ class Prim {
 
         prim.updateTexCoords = ( texCoords ) => {
 
-            let geo = prim.geometry;
+            let geo = p.geometry;
 
             if ( texCoords && texCoords.length > 0 ) {
 
@@ -390,7 +480,7 @@ class Prim {
 
             } else if ( geo.numTexCoords() !== geo.numVertices() ) {
 
-                console.log("Prim::updateTexCoords():" + prim.name + ' recalculating texture coordinates' );
+                console.log("Prim::updateTexCoords():" + p.name + ' recalculating texture coordinates' );
 
                 geo.setTexCoords( this.geometryPool.computeTexCoords( geo.vertices.data ) );
 
@@ -402,7 +492,7 @@ class Prim {
 
         prim.updateTangents = ( tangents ) => {
 
-            let geo = prim.geometry;
+            let geo = p.geometry;
 
             if ( tangents && tangents.length ) {
 
@@ -410,7 +500,7 @@ class Prim {
 
             } else {
 
-                console.log("Prim::updateTangents():" + prim.name + ' recalculating tangent coordinates' );
+                console.log("Prim::updateTangents():" + p.name + ' recalculating tangent coordinates' );
 
                 geo.setTangents( this.geometryPool.computeTangents ( geo.vertices.data, geo.indices.data, geo.normals.data, geo.texCoords.data, [] ) );
 
@@ -422,7 +512,7 @@ class Prim {
 
         prim.updateColors = ( colors ) => {
 
-            let geo = prim.geometry;
+            let geo = p.geometry;
 
             if ( colors && colors.length ) {
 
@@ -430,140 +520,13 @@ class Prim {
 
             } else {
 
-                console.log("Prim::updateColors():" + prim.name + ' recalculating color coordinates' );
+                console.log("Prim::updateColors():" + p.name + ' recalculating color coordinates' );
 
                 geo.setColors( this.geometryPool.computeColors( geo.normals.data, [] ) );
 
             }
 
         };
-
-        prim.initPrimMaterial = ( material ) => {
-
-            // TODO:
-
-            // BAD TANGENT DATA FOR TEAPOT!!!
-
-            // Use LIGHT object to define World Light. Shaders can use World Light, or local one.
-
-            // Add LIGHT to WORLD. FIGURE OUT STRATEGY TO BROADCAST LIGHT TO SHADERS.
-
-            // 1. Add Light to World. 2. Have World broadcast Light via Shader.addLight
-
-            // 3. have Shaders that use light use the added Light.
-
-            // LOAD MATERIAL AND TEXTURE OUT OF MODEL-POOL
-
-            // TEST ACTUAL PRIM REMOVAL WHEN IT BECOMES INVALID
-
-            // INTERNALIZE THESE METHODS
-
-            // KEY FOR PROCEEDURAL GRAPHICS (ADD TO Model-Pool)
-
-            // KEY FOR MESH GRAPHICS (Add to ModelPool)
-
-            // KEY FOR OBJ FILE MODELS (Add to ModelPool)
-
-            // LOAD WORLD BY FILE (MAKE INTO TESTBED)
-
-            // LOAD A-FRAME MODELS (USING EDITOR)
-
-            // UI MODAL DIALOG ON HOVER OVER FAILED WEBVR
-
-            // ADD SOME SETINTERVALS DURING LONG COMPUTES
-
-        };
-
-        // Initialize geometry.
-
-        prim.initPrimGeometry = ( prim, key, geometry ) => {
-
-            /* 
-             * Add buffer data, and re-bind to WebGL.
-             * NOTE: Mesh callbacks don't actually add any data here 
-             * (this.meshCallback() passes empty coordinate arrays)
-             */
-
-            // TODO: TIE MESH INTO THE SAME SYSTEM (including adding to asset pool).
-
-            // Add buffer data, but don't check buffers yet.
-
-            //prim.geometry.addBufferData( geometry.vertices, geometry.indices, geometry.normals, geometry.texCoords, geometry.tangents, geometry.colors, false );
-
-            // Update vertices if they were supplied.
-
-            prim.updateVertices( geometry.vertices );
-
-            // Compute bounding box.
-
-            prim.boundingBox = prim.computeBoundingBox( prim.geometry.vertices.data );
-
-            // Update indices if they were supplied.
-
-            prim.updateIndices ( geometry.indices );
-
-            // If normals are used, re-compute.
-
-            prim.updateNormals( geometry.normals );
-
-            // If texcoords are used, re-compute.
-
-            prim.updateTexCoords( geometry.texCoords );
-
-            // Tangents aren't supplied by OBJ format, so re-compute.
-
-            prim.updateTangents();
-
-            // Colors aren't supplied by OBJ format, so re-compute.
-
-            prim.updateColors();
-
-            // Set our buffer data
-
-            prim.geometry.setBufferData( geometry.vertices, geometry.indices, geometry.normals, geometry.texCoords, geometry.tangents, geometry.colors );
-
-            // Check our buffers for consistency.
-
-            prim.geometry.checkBufferData();
-
-            //if ( prim.name === 'cubesphere' ) {
-            //if ( prim.name === 'TestCapsule' ) {
-            //if ( prim.name === 'colored cube' ) {
-            //if ( prim.name === 'texsphere' ) {
-
-                let mesh = new Mesh( prim );
-
-                // SUBDIVIDE TEST
-
-                //mesh.subdivide( true );
-                //mesh.subdivide( true );
-                //mesh.subdivide( true );
-                //mesh.subdivide( true );
-                //mesh.subdivide( true );
-                //mesh.subdivide( true );
-                //mesh.subdivide( true );
-                //mesh.subdivide( true );
-                //mesh.subdivide( true ); // this one zaps from low-vertex < 10 prim
-
-            //}
-
-            console.log("checking buffer data for " + prim.name )
-
-            prim.geometry.checkBufferData();
-
-            /* 
-             * The Prim is added to the Shader when it satisfies Shader requirements.
-             * Each time a texture is loaded, an event is emitted which causes the 
-             * Shader to run Shader.checkPrim();
-             */
-
-            // Emit a 'prim ready' event if we don't need material.
-
-            // TODO: textures???????????
-
-            this.util.emitter.emit( this.util.emitter.events.PRIM_READY, prim );
-
-        }
 
         // Compute the bounding box.
 
@@ -610,15 +573,6 @@ class Prim {
             this.position[ 2 ] - pos[ 2 ]
 
             ] );
-
-        }
-
-        /** 
-         * Convert a Prim to its JSON equivalent
-         */
-        prim.toJSON = ( prim ) => {
-
-            return JSON.stringify( prim );
 
         }
 
@@ -731,7 +685,7 @@ class Prim {
 
         // Geometry factory function, create empty WebGL Buffers.
 
-        prim.geometry = new ShaderObj( prim.name, this.util, this.webgl );
+        prim.geometry = new GeometryBuffer( prim.name, this.util, this.webgl );
 
         // Create Geometry data, or load Mesh data (may alter some of the above default properties).
 
@@ -751,33 +705,25 @@ class Prim {
                 window.capsule = prim; //////////////TODO: remove
             }
 
+            if ( prim.name === 'torus1' ) {
+
+                window.torus = prim;
+
+            }
+
         this.objs.push( prim );
 
         return prim;
 
     }
 
-    /*
-     * ---------------------------------------
-     * PRIM LIST OPERATIONS
-     * ---------------------------------------
+    /** 
+     * Convert a Prim to its JSON equivalent
+     * @param {Prim} prim the object to stringify.
      */
+    toJSON ( prim ) {
 
-    addPrim ( prim ) {
-
-        // TODO: also need to add/remove in Shader
-
-    }
-
-    removePrim () {
-
-        // TODO: also need to add/remove in Shader
-
-    }
-
-    primInList () {
-
-        // TODO: also need to add/remove in Shader
+        return JSON.stringify( prim );
 
     }
 
@@ -785,4 +731,4 @@ class Prim {
 
 // We put this here because of JSDoc(!).
 
-export default Prim;
+export default PrimFactory;

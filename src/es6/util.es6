@@ -282,6 +282,22 @@ class Util {
 
     }
 
+    /* 
+     * ---------------------------------------
+     * ASSOCIATIVE ARRAY OPTIONS
+     */
+
+    /** 
+     * Number of keys in an associative array or object.
+     * NOTE: won't work on old browsers, but we should never get here.
+     * @param {Object} obj a JS Object.
+     * @returns {Number} the number of keys.
+     */
+    numKeys ( obj ) {
+
+        return Object.keys( obj ).length;
+
+    }
 
     /*
      * ---------------------------------------

@@ -4,7 +4,7 @@ import AssetPool from './asset-pool';
 
 class MaterialPool extends AssetPool {
 
-    constructor ( init, util, webgl ) {
+    constructor ( init, util, webgl, texturePool ) {
 
         console.log( 'in MaterialPool' );
 
@@ -16,7 +16,7 @@ class MaterialPool extends AssetPool {
 
         this.webgl = webgl,
 
-        this.NOT_IN_LIST = this.util.NOT_IN_LIST;
+        this.texturePool = texturePool;
 
         this.materialMimeTypes = {
 
@@ -31,7 +31,6 @@ class MaterialPool extends AssetPool {
         }
 
     }
-
 
     /** 
      * Compute material properties for a model.
@@ -279,7 +278,7 @@ class MaterialPool extends AssetPool {
     /** 
      * Add a model
      * @param {Prim} prim the requesting Prim object.
-     * @param {Object} data data to construct the Prim ShaderObj.
+     * @param {Object} data data to construct the Prim GeoBuffer.
      * @param {String} path the file path to the object.
      * @param {Number} pos the index of the object in the calling Prim's array.
      * @param {String} mimeType the MIME type of the file.
@@ -331,7 +330,7 @@ class MaterialPool extends AssetPool {
 
              m.type = type,
 
-            m.path = path;
+            m.path = path,
 
             m.emits = this.util.emitter.events.MATERIAL_READY;
 
