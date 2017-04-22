@@ -119,28 +119,6 @@ class Shader {
 
         this.NOT_IN_LIST = util.NOT_IN_LIST; // for indexOf tests.
 
-        /* 
-         * Subscribe to TEXTURE_2D_READY events, check Prim to see if it is (still) valid.
-         */
-
-        // TODO: THESE SHOULD BE MOVED TO WORLD!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-        this.util.emitter.on( this.util.emitter.events.TEXTURE_2D_READY, 
-
-            ( prim, key ) => {
-
-                prim.shader.checkPrim( prim );
-
-        } );
-
-        this.util.emitter.on( this.util.emitter.events.PRIM_READY, 
-
-            ( prim, key ) => {
-
-                prim.shader.checkPrim( prim );
-
-        } );
-
         // Get the WebGL program we will use to render.
 
         this.createProgram();
@@ -170,40 +148,47 @@ class Shader {
 
     /**
      * We add each Prim to our internal Program (returned from webgl).
+     * NOTE: the prim must already be initialized
      * NOTE: we store Prims as numeric array only.
      * @param {Prim} prim a Prim object.
      * @param {Shader} shader an optional shader object.
      */
     addPrim( prim ) {
 
-        if ( this.primInList( prim ) === this.NOT_IN_LIST ) {
+        if ( this.checkPrim( prim ) ) {
 
-            console.warn( prim.name + ' added to Shader::' + this.name );
+            if ( this.primInList( prim ) === this.NOT_IN_LIST ) {
 
-            // Switch the Prim's default Shader, and remove it from its old Shader (there can only be one).
+                console.warn( prim.name + ' added to Shader::' + this.name );
 
-            if ( prim.shader && prim.shader !== this ) {
+                // Switch the Prim's default Shader, and remove it from its old Shader (there can only be one).
 
-                prim.shader.removePrim( prim );
+                if ( prim.shader && prim.shader !== this ) {
+
+                    prim.shader.removePrim( prim );
+
+                }
+
+                prim.shader = this; // may already be the case
+
+                // Add the Prim to the Shader program's renderList.
+
+                this.program.renderList.push( prim );
+
+                this.util.emitter.emit( this.util.emitter.events.PRIM_READY, prim );
+
+            } else {
+
+                console.warn( prim.name + ' already added to Shader::' + this.name );
 
             }
-
-            prim.shader = this;
-
-            // Add the Prim to the Shader program's renderList.
-
-            this.program.renderList.push( prim );
-
-        } else {
-
-            console.warn( prim.name + ' already added to Shader::' + this.name );
 
         }
 
     }
 
     /** 
-     * Remove a Prim from the Shader. 
+     * Remove a Prim from the Shader so it isn't rendered (not from PrimFactor). 
      * NOTE: removing from the array messes up JIT optimization, so slows things down!
      * @param {Prim} obj a Prim object.
      */
@@ -299,7 +284,7 @@ class Shader {
 
         for ( let i = 0; i < prim.textures.length; i++ ) {
 
-            if ( ! prim.textures[ i ].texture ) {
+            if ( ! prim.textures[ i ].texture ) { // WebGL texture buffere created
 
                 return false;
 
@@ -325,23 +310,15 @@ class Shader {
 
             // Confirm Prim has WebGLBuffers and Textures needed to render.
 
-            //////////////////////////////console.log( ')))))prim:' + prim.name + ' using Shader:' + this.name );
-
             if ( this.checkPrimTextures( prim ) && this.checkPrimBuffers( prim ) ) {
 
-                ///////////////////////console.log( '))))))prim: ' + prim.name + ' is valid, adding' );
-
-                return this.addPrim( prim ); // add to the Shader's renderList
-
-            } else {
-
-                ///////////////////////////console.log( ')))))prinm:' + prim.name + ' not valid, removing')
-
-                return this.removePrim( prim ); // only removed if it is already added      
+                return true;
 
             }
 
         }
+
+        return false;
 
     }
 

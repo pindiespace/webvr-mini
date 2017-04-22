@@ -52,6 +52,8 @@ class MaterialPool extends AssetPool {
 
         let material = {};
 
+        let dir = this.util.getFilePath( path );
+
         let lines = data.split( '\n' );
 
         lines.forEach( ( line ) => {
@@ -246,7 +248,11 @@ class MaterialPool extends AssetPool {
                      * -texres resolution scale up non-power of 2
                      */
 
-                     console.log("MaterialPool::computeObjMaterials():::::::::::::GOTTA DIFFUSE MAP (TEXTURE) in OBJ MTL file: " + data[ 1 ] )
+                    console.log("MaterialPool::computeObjMaterials():::::::::::::GOTTA DIFFUSE MAP (TEXTURE) in OBJ MTL file: " + data[ 1 ] )
+
+                    // TODO: CONFIRM THAT THIS LOADS CORRECTLY!!!!!!!
+
+                    this.texturePool.getTextures( prim, [ dir + data[ 1 ] ], true );
 
                     // TODO: maket this attach to prim.textures
 

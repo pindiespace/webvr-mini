@@ -28,7 +28,7 @@ class ModelPool extends AssetPool {
 
         this.webgl = webgl,
 
-        this.textuerPool = texturePool,
+        this.texturePool = texturePool,
 
         this.materialPool = materialPool,
 

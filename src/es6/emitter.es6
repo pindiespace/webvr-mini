@@ -19,23 +19,31 @@ class Emitter {
 
         this.events = {
 
-            GEOMETRY_READY: 'grdy',      // sends Prim reference. Not used for procedural geometry
+            GEOMETRY_READY: 'grdy',                       // sends Prim reference. Not used for procedural geometry
 
-            MATERIAL_READY: 'mrdy',      // sends Prim reference. Not used for procedural geometry
+            MATERIAL_READY: 'mrdy',                       // sends Prim reference. Not used for procedural geometry
 
-            TEXTURE_2D_READY: 'trdy',        // sends Prim reference, key in Prim texture Array
+            TEXTURE_2D_READY: 'trdy',                     // sends Prim reference, key in Prim texture Array
 
-            TEXTURE_3D_READY: 't3drdy',   // 3d texture is ready
+            TEXTURE_2D_ARRAY_MEMBER_READY: 'tr2darmbrdy',
 
-            TEXTURE_CUBEMAP_READY: 'tcmprdy',        // sends Prim reference, since multiple files needed for cubemap
+            TEXTURE_2D_ARRAY_READY: 'trarrdy',            // all the files for a 2d texture array are ready
 
-            TEXTURE_REMOVE: 'trm',
+            TEXTURE_3D_READY: 't3drdy',                   // 3d texture is ready
 
-            PRIM_READY: 'prdy',              // see if Prim is ready for Shader
+            TEXTURE_CUBEMAP_MEMBER_READY: 'trcmpmbrdy',   // one file in a cubemap is ready
 
-            PRIM_REMOVE: 'prm',            // a Prim was removed by a Shader
+            TEXTURE_CUBEMAP_READY: 'tcmprdy',             // all files for cubemap loaded
 
-            VR_DISPLAY_READY: 'vrdispready'    // raise an event when the VR device is ready
+            TEXTURE_REMOVE: 'trm',                        // texture removal event
+
+            PRIM_READY: 'prdy',                           // Prim added to Shader
+
+            PRIM_RENDERING: 'prrd',                       // Prim is being rendered by a Shader !!!!!!!!!!!!!!!!! TODO
+
+            PRIM_REMOVE: 'prm',                           // a Prim was removed by a Shader
+
+            VR_DISPLAY_READY: 'vrdispready'               // the VR device is ready
 
         };
 

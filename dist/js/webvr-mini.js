@@ -1290,7 +1290,7 @@
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
-	        value: true
+	            value: true
 	});
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1299,91 +1299,99 @@
 
 	var Emitter = function () {
 
-	        /** 
-	         * Callback organizer. Used to update Ui for webvr, webgl, and other events 
-	         * taking some time, avoiding the CustomEvent interface. The main advantage is that 
-	         * an object (like Ui) can use it to bind one of its callbacks to an 'emit' in another 
-	         * object that doesn't have a reference to it. Creates a de facto extension of processed 
-	         * events for the app.
-	         * Usage similar to webvr-boilerplate:
-	         * @link https://github.com/borismus/webvr-boilerplate/blob/master/build/webvr-manager.js
-	         */
-	        function Emitter() {
-	                _classCallCheck(this, Emitter);
+	            /** 
+	             * Callback organizer. Used to update Ui for webvr, webgl, and other events 
+	             * taking some time, avoiding the CustomEvent interface. The main advantage is that 
+	             * an object (like Ui) can use it to bind one of its callbacks to an 'emit' in another 
+	             * object that doesn't have a reference to it. Creates a de facto extension of processed 
+	             * events for the app.
+	             * Usage similar to webvr-boilerplate:
+	             * @link https://github.com/borismus/webvr-boilerplate/blob/master/build/webvr-manager.js
+	             */
+	            function Emitter() {
+	                        _classCallCheck(this, Emitter);
 
-	                this.callbacks = {};
+	                        this.callbacks = {};
 
-	                // Define supported emitter events.
+	                        // Define supported emitter events.
 
-	                this.events = {
+	                        this.events = {
 
-	                        GEOMETRY_READY: 'grdy', // sends Prim reference. Not used for procedural geometry
+	                                    GEOMETRY_READY: 'grdy', // sends Prim reference. Not used for procedural geometry
 
-	                        MATERIAL_READY: 'mrdy', // sends Prim reference. Not used for procedural geometry
+	                                    MATERIAL_READY: 'mrdy', // sends Prim reference. Not used for procedural geometry
 
-	                        TEXTURE_2D_READY: 'trdy', // sends Prim reference, key in Prim texture Array
+	                                    TEXTURE_2D_READY: 'trdy', // sends Prim reference, key in Prim texture Array
 
-	                        TEXTURE_3D_READY: 't3drdy', // 3d texture is ready
+	                                    TEXTURE_2D_ARRAY_MEMBER_READY: 'tr2darmbrdy',
 
-	                        TEXTURE_CUBEMAP_READY: 'tcmprdy', // sends Prim reference, since multiple files needed for cubemap
+	                                    TEXTURE_2D_ARRAY_READY: 'trarrdy', // all the files for a 2d texture array are ready
 
-	                        TEXTURE_REMOVE: 'trm',
+	                                    TEXTURE_3D_READY: 't3drdy', // 3d texture is ready
 
-	                        PRIM_READY: 'prdy', // see if Prim is ready for Shader
+	                                    TEXTURE_CUBEMAP_MEMBER_READY: 'trcmpmbrdy', // one file in a cubemap is ready
 
-	                        PRIM_REMOVE: 'prm', // a Prim was removed by a Shader
+	                                    TEXTURE_CUBEMAP_READY: 'tcmprdy', // all files for cubemap loaded
 
-	                        VR_DISPLAY_READY: 'vrdispready' // raise an event when the VR device is ready
+	                                    TEXTURE_REMOVE: 'trm', // texture removal event
 
-	                };
-	        }
+	                                    PRIM_READY: 'prdy', // Prim added to Shader
 
-	        _createClass(Emitter, [{
-	                key: 'emit',
-	                value: function emit(eventName) {
+	                                    PRIM_RENDERING: 'prrd', // Prim is being rendered by a Shader !!!!!!!!!!!!!!!!! TODO
 
-	                        var callbacks = this.callbacks[eventName];
+	                                    PRIM_REMOVE: 'prm', // a Prim was removed by a Shader
 
-	                        if (!callbacks) {
+	                                    VR_DISPLAY_READY: 'vrdispready' // the VR device is ready
 
-	                                return;
+	                        };
+	            }
+
+	            _createClass(Emitter, [{
+	                        key: 'emit',
+	                        value: function emit(eventName) {
+
+	                                    var callbacks = this.callbacks[eventName];
+
+	                                    if (!callbacks) {
+
+	                                                return;
+	                                    }
+
+	                                    // Convert arguments to a useful Array.
+
+	                                    var args = [].slice.call(arguments);
+
+	                                    // Eliminate the first param in the argument list (eventName).
+
+	                                    args.shift();
+
+	                                    for (var i = 0; i < callbacks.length; i++) {
+
+	                                                callbacks[i].apply(this, args);
+	                                    }
 	                        }
 
-	                        // Convert arguments to a useful Array.
+	                        /** 
+	                         * Bind a callback to an event (without using CustomEvents)
+	                         * @param {String} eventName an event name.
+	                         * @param {Function} callback function to execute when we 'emit'.
+	                         */
 
-	                        var args = [].slice.call(arguments);
+	            }, {
+	                        key: 'on',
+	                        value: function on(eventName, callback) {
 
-	                        // Eliminate the first param in the argument list (eventName).
+	                                    if (eventName in this.callbacks) {
 
-	                        args.shift();
+	                                                this.callbacks[eventName].push(callback);
+	                                    } else {
 
-	                        for (var i = 0; i < callbacks.length; i++) {
-
-	                                callbacks[i].apply(this, args);
+	                                                this.callbacks[eventName] = [callback];
+	                                    }
 	                        }
-	                }
+	            }]);
 
-	                /** 
-	                 * Bind a callback to an event (without using CustomEvents)
-	                 * @param {String} eventName an event name.
-	                 * @param {Function} callback function to execute when we 'emit'.
-	                 */
-
-	        }, {
-	                key: 'on',
-	                value: function on(eventName, callback) {
-
-	                        if (eventName in this.callbacks) {
-
-	                                this.callbacks[eventName].push(callback);
-	                        } else {
-
-	                                this.callbacks[eventName] = [callback];
-	                        }
-	                }
-	        }]);
-
-	        return Emitter;
+	            return Emitter;
 	}();
 
 	exports.default = Emitter;
@@ -4420,22 +4428,6 @@
 
 	                this.NOT_IN_LIST = util.NOT_IN_LIST; // for indexOf tests.
 
-	                /* 
-	                 * Subscribe to TEXTURE_2D_READY events, check Prim to see if it is (still) valid.
-	                 */
-
-	                // TODO: THESE SHOULD BE MOVED TO WORLD!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-	                this.util.emitter.on(this.util.emitter.events.TEXTURE_2D_READY, function (prim, key) {
-
-	                        prim.shader.checkPrim(prim);
-	                });
-
-	                this.util.emitter.on(this.util.emitter.events.PRIM_READY, function (prim, key) {
-
-	                        prim.shader.checkPrim(prim);
-	                });
-
 	                // Get the WebGL program we will use to render.
 
 	                this.createProgram();
@@ -4467,6 +4459,7 @@
 
 	                /**
 	                 * We add each Prim to our internal Program (returned from webgl).
+	                 * NOTE: the prim must already be initialized
 	                 * NOTE: we store Prims as numeric array only.
 	                 * @param {Prim} prim a Prim object.
 	                 * @param {Shader} shader an optional shader object.
@@ -4476,30 +4469,35 @@
 	                key: 'addPrim',
 	                value: function addPrim(prim) {
 
-	                        if (this.primInList(prim) === this.NOT_IN_LIST) {
+	                        if (this.checkPrim(prim)) {
 
-	                                console.warn(prim.name + ' added to Shader::' + this.name);
+	                                if (this.primInList(prim) === this.NOT_IN_LIST) {
 
-	                                // Switch the Prim's default Shader, and remove it from its old Shader (there can only be one).
+	                                        console.warn(prim.name + ' added to Shader::' + this.name);
 
-	                                if (prim.shader && prim.shader !== this) {
+	                                        // Switch the Prim's default Shader, and remove it from its old Shader (there can only be one).
 
-	                                        prim.shader.removePrim(prim);
+	                                        if (prim.shader && prim.shader !== this) {
+
+	                                                prim.shader.removePrim(prim);
+	                                        }
+
+	                                        prim.shader = this; // may already be the case
+
+	                                        // Add the Prim to the Shader program's renderList.
+
+	                                        this.program.renderList.push(prim);
+
+	                                        this.util.emitter.emit(this.util.emitter.events.PRIM_READY, prim);
+	                                } else {
+
+	                                        console.warn(prim.name + ' already added to Shader::' + this.name);
 	                                }
-
-	                                prim.shader = this;
-
-	                                // Add the Prim to the Shader program's renderList.
-
-	                                this.program.renderList.push(prim);
-	                        } else {
-
-	                                console.warn(prim.name + ' already added to Shader::' + this.name);
 	                        }
 	                }
 
 	                /** 
-	                 * Remove a Prim from the Shader. 
+	                 * Remove a Prim from the Shader so it isn't rendered (not from PrimFactor). 
 	                 * NOTE: removing from the array messes up JIT optimization, so slows things down!
 	                 * @param {Prim} obj a Prim object.
 	                 */
@@ -4596,6 +4594,7 @@
 	                        for (var i = 0; i < prim.textures.length; i++) {
 
 	                                if (!prim.textures[i].texture) {
+	                                        // WebGL texture buffere created
 
 	                                        return false;
 	                                }
@@ -4622,20 +4621,13 @@
 
 	                                // Confirm Prim has WebGLBuffers and Textures needed to render.
 
-	                                //////////////////////////////console.log( ')))))prim:' + prim.name + ' using Shader:' + this.name );
-
 	                                if (this.checkPrimTextures(prim) && this.checkPrimBuffers(prim)) {
 
-	                                        ///////////////////////console.log( '))))))prim: ' + prim.name + ' is valid, adding' );
-
-	                                        return this.addPrim(prim); // add to the Shader's renderList
-	                                } else {
-
-	                                        ///////////////////////////console.log( ')))))prinm:' + prim.name + ' not valid, removing')
-
-	                                        return this.removePrim(prim); // only removed if it is already added      
+	                                        return true;
 	                                }
 	                        }
+
+	                        return false;
 	                }
 
 	                /*
@@ -12013,7 +12005,7 @@
 
 	                var _this = _possibleConstructorReturn(this, (ModelPool.__proto__ || Object.getPrototypeOf(ModelPool)).call(this, util));
 
-	                _this.util = util, _this.webgl = webgl, _this.textuerPool = texturePool, _this.materialPool = materialPool, _this.modelMimeTypes = {
+	                _this.util = util, _this.webgl = webgl, _this.texturePool = texturePool, _this.materialPool = materialPool, _this.modelMimeTypes = {
 
 	                        'obj': 'text/plain',
 
@@ -13290,9 +13282,9 @@
 
 	                                case gl.TEXTURE_2D_ARRAY:
 
-	                                        // TODO: make this.
+	                                        texture = this.create2DArrayTexture(image, pos); // NOTE: image is actually an array here
 
-	                                        emitEvent = this.util.emitter.events.TEXTURE_2D_ARRAY_READY;
+	                                        emitEvent = this.util.emitter.events.TEXTURE_2D_ARRAY_MEMBER_READY;
 
 	                                        break;
 
@@ -13306,9 +13298,9 @@
 
 	                                case gl.TEXTURE_CUBE_MAP:
 
-	                                        texture = this.createCubeMapTexture(image, pos);
+	                                        texture = this.createCubeMapTexture(image, pos); // NOTE: image is actually an array here
 
-	                                        emitEvent = this.util.emitter.events.TEXTURE_CUBE_MAP_READY;
+	                                        emitEvent = this.util.emitter.events.TEXTURE_CUBE_MAP_MEMBER_READY;
 
 	                                        break;
 
@@ -13453,9 +13445,9 @@
 	                                                                                        window.URL.revokeObjectURL(image.src);
 	                                                                                }
 
-	                                                                                // Add to prim.textures.
+	                                                                                // Add to prim.textures, at the position specified in updateObj.
 
-	                                                                                prim.textures.push(textureObj);
+	                                                                                prim.textures[updateObj.pos] = textureObj;
 
 	                                                                                // TODO: add with unique key to texturePool.
 
@@ -21791,12 +21783,15 @@
 	                        _createClass(MaterialPool, [{
 	                                                key: 'computeObjMaterials',
 	                                                value: function computeObjMaterials(data, prim, path) {
+	                                                                        var _this2 = this;
 
 	                                                                        console.log('MaterialPool::computeObjMaterials(): loading model:' + path + ' for:' + prim.name);
 
 	                                                                        var lineNum = 0;
 
 	                                                                        var material = {};
+
+	                                                                        var dir = this.util.getFilePath(path);
 
 	                                                                        var lines = data.split('\n');
 
@@ -21966,6 +21961,10 @@
 
 	                                                                                                                                                console.log("MaterialPool::computeObjMaterials():::::::::::::GOTTA DIFFUSE MAP (TEXTURE) in OBJ MTL file: " + data[1]);
 
+	                                                                                                                                                // TODO: CONFIRM THAT THIS LOADS CORRECTLY!!!!!!!
+
+	                                                                                                                                                _this2.texturePool.getTextures(prim, [dir + data[1]], true);
+
 	                                                                                                                                                // TODO: maket this attach to prim.textures
 
 	                                                                                                                                                break;
@@ -22062,7 +22061,7 @@
 	                        }, {
 	                                                key: 'getMaterials',
 	                                                value: function getMaterials(prim, pathList) {
-	                                                                        var _this2 = this;
+	                                                                        var _this3 = this;
 
 	                                                                        var cacheBust = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
 
@@ -22081,13 +22080,13 @@
 
 	                                                                                                                                                // Get the image mimeType.
 
-	                                                                                                                                                var mimeType = _this2.materialMimeTypes[_this2.util.getFileExtension(path)];
+	                                                                                                                                                var mimeType = _this3.materialMimeTypes[_this3.util.getFileExtension(path)];
 
 	                                                                                                                                                // check if mimeType is OK.
 
 	                                                                                                                                                if (mimeType) {
 
-	                                                                                                                                                                        _this2.doRequest(path, i, function (updateObj) {
+	                                                                                                                                                                        _this3.doRequest(path, i, function (updateObj) {
 
 	                                                                                                                                                                                                /* 
 	                                                                                                                                                                                                 * updateObj returned from GetAssets has the following structure:
@@ -22101,13 +22100,13 @@
 
 	                                                                                                                                                                                                if (updateObj.data) {
 
-	                                                                                                                                                                                                                        var materialObj = _this2.addMaterial(prim, updateObj.data, updateObj.path, updateObj.pos, mimeType, prim.type);
+	                                                                                                                                                                                                                        var materialObj = _this3.addMaterial(prim, updateObj.data, updateObj.path, updateObj.pos, mimeType, prim.type);
 
 	                                                                                                                                                                                                                        if (materialObj) {
 
 	                                                                                                                                                                                                                                                prim.materials.push(materialObj);
 
-	                                                                                                                                                                                                                                                _this2.util.emitter.emit(materialObj.emits, prim, materialObj.key);
+	                                                                                                                                                                                                                                                _this3.util.emitter.emit(materialObj.emits, prim, materialObj.key);
 	                                                                                                                                                                                                                        } // end of material addition.
 	                                                                                                                                                                                                } else {
 
@@ -22116,7 +22115,7 @@
 	                                                                                                                                                                        }, cacheBust, mimeType, 0); // end of this.doRequest(), initial request at 0 tries
 	                                                                                                                                                } else {
 
-	                                                                                                                                                                        console.error('MaterialPool::getModels(): file type "' + _this2.util.getFileExtension(path) + ' not supported, not loading');
+	                                                                                                                                                                        console.error('MaterialPool::getModels(): file type "' + _this3.util.getFileExtension(path) + ' not supported, not loading');
 	                                                                                                                                                }
 	                                                                                                                        })();
 	                                                                                                }
@@ -23408,30 +23407,58 @@
 	                this.geometryPool = world.geometryPool; // new GeometryPool( init, util, glMatrix, webgl, this.modelPool, this.texturePool );
 
 
-	                this.objs = []; // Keep a reference to all created Prims here.
+	                this.prims = []; // Keep a reference to all created Prims here.
 
-	                /* 
-	                 * Bind the callback for geometry initialization within individual prims.
-	                 */
+	                // Bind the callback for geometry initialization applied to individual prims (GeometryPool, Mesh, and ModelPool).
 
 	                this.util.emitter.on(this.util.emitter.events.GEOMETRY_READY, function (prim, key, geometry) {
 
 	                        _this.initPrimGeometry(prim, key, geometry);
+
+	                        prim.shader.addPrim(prim);
 	                });
 
-	                /* 
-	                 * Bind Prim callback for a new material applied to individual prims.
-	                 */
+	                // Bind Prim callback for a new material applied to individual Prims.
 
 	                this.util.emitter.on(this.util.emitter.events.MATERIAL_READY, function (prim, key, material) {
 
 	                        _this.initPrimMaterial(prim, key, material);
+
+	                        prim.shader.addPrim(prim);
+	                });
+
+	                // Bind Prim callback for a new texture loaded .(TexturePool).
+
+	                this.util.emitter.on(this.util.emitter.events.TEXTURE_2D_READY, function (prim, key) {
+
+	                        prim.shader.addPrim(prim);
+	                });
+
+	                // Bind Prim callback for a new texture loaded .(TexturePool).
+
+	                this.util.emitter.on(this.util.emitter.events.TEXTURE_2D_ARRAY_READY, function (prim, key) {
+
+	                        prim.shader.addPrim(prim);
+	                });
+
+	                // Bind Prim callback for a new texture loaded .(TexturePool).
+
+	                this.util.emitter.on(this.util.emitter.events.TEXTURE_3D_READY, function (prim, key) {
+
+	                        prim.shader.addPrim(prim);
+	                });
+
+	                // Bind Prim callback for a new texture loaded .(TexturePool).
+
+	                this.util.emitter.on(this.util.emitter.events.TEXTURE_CUBE_MAP_READY, function (prim, key) {
+
+	                        prim.shader.addPrim(prim);
 	                });
 	        }
 
 	        /** 
 	         * Create a large coordinate data array with data for multiple Prims.
-	         * When a Prim is made, we store a reference in the this.objs[] 
+	         * When a Prim is made, we store a reference in the this.prims[] 
 	         * array. So, to make one, we just concatenate their  
 	         * vertices. Use to send multiple prims sharing the same Shader.
 	         * @param {glMatrix.vec3[]} vertices
@@ -23445,9 +23472,9 @@
 
 	                        vertices = [];
 
-	                        for (var i in this.objs) {
+	                        for (var i in this.prims) {
 
-	                                vertices = vertices.concat(this.objs[i].vertices);
+	                                vertices = vertices.concat(this.prims[i].geometry.vertices.data);
 	                        }
 
 	                        return vertices;
@@ -23466,9 +23493,9 @@
 
 	                        indices = [];
 
-	                        for (var i in this.objs) {
+	                        for (var i in this.prims) {
 
-	                                indices = indices.concat(this.objs[i].indices);
+	                                indices = indices.concat(this.prims[i].geometry.indices.data);
 	                        }
 
 	                        return indices;
@@ -24000,7 +24027,7 @@
 	                                window.torus = prim;
 	                        }
 
-	                        this.objs.push(prim);
+	                        this.prims.push(prim);
 
 	                        return prim;
 	                }

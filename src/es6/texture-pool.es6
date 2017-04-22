@@ -346,9 +346,9 @@ class TexturePool extends AssetPool {
 
             case gl.TEXTURE_2D_ARRAY:
 
-                // TODO: make this.
+                texture = this.create2DArrayTexture( image, pos ); // NOTE: image is actually an array here
 
-                emitEvent = this.util.emitter.events.TEXTURE_2D_ARRAY_READY;
+                emitEvent = this.util.emitter.events.TEXTURE_2D_ARRAY_MEMBER_READY;
 
                 break;
 
@@ -362,9 +362,9 @@ class TexturePool extends AssetPool {
 
             case gl.TEXTURE_CUBE_MAP:
 
-                texture = this.createCubeMapTexture( image, pos );
+                texture = this.createCubeMapTexture( image, pos ); // NOTE: image is actually an array here
 
-                emitEvent = this.util.emitter.events.TEXTURE_CUBE_MAP_READY;
+                emitEvent = this.util.emitter.events.TEXTURE_CUBE_MAP_MEMBER_READY;
 
                 break;
 
@@ -507,9 +507,9 @@ class TexturePool extends AssetPool {
 
                                     }
 
-                                    // Add to prim.textures.
+                                    // Add to prim.textures, at the position specified in updateObj.
 
-                                    prim.textures.push( textureObj );
+                                    prim.textures[ updateObj.pos ] = textureObj;
 
                                     // TODO: add with unique key to texturePool.
 

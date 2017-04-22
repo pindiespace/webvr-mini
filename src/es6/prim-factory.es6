@@ -84,11 +84,9 @@ class PrimFactory {
         this.geometryPool = world.geometryPool; // new GeometryPool( init, util, glMatrix, webgl, this.modelPool, this.texturePool );
 
 
-        this.objs = []; // Keep a reference to all created Prims here.
+        this.prims = []; // Keep a reference to all created Prims here.
 
-        /* 
-         * Bind the callback for geometry initialization within individual prims.
-         */
+        // Bind the callback for geometry initialization applied to individual prims (GeometryPool, Mesh, and ModelPool).
 
         this.util.emitter.on( this.util.emitter.events.GEOMETRY_READY, 
 
@@ -96,11 +94,11 @@ class PrimFactory {
 
                 this.initPrimGeometry( prim, key, geometry );
 
+                prim.shader.addPrim ( prim );
+
         } );
 
-        /* 
-         * Bind Prim callback for a new material applied to individual prims.
-         */
+         // Bind Prim callback for a new material applied to individual Prims.
 
         this.util.emitter.on( this.util.emitter.events.MATERIAL_READY, 
 
@@ -108,14 +106,57 @@ class PrimFactory {
 
                 this.initPrimMaterial( prim, key, material );
 
+                prim.shader.addPrim ( prim );
+
         } );
+
+        // Bind Prim callback for a new texture loaded .(TexturePool).
+
+        this.util.emitter.on( this.util.emitter.events.TEXTURE_2D_READY, 
+
+            ( prim, key ) => {
+
+                prim.shader.addPrim( prim );
+
+        } );
+
+        // Bind Prim callback for a new texture loaded .(TexturePool).
+
+        this.util.emitter.on( this.util.emitter.events.TEXTURE_2D_ARRAY_READY, 
+
+            ( prim, key ) => {
+
+                prim.shader.addPrim( prim );
+
+        } );
+
+        // Bind Prim callback for a new texture loaded .(TexturePool).
+
+        this.util.emitter.on( this.util.emitter.events.TEXTURE_3D_READY, 
+
+            ( prim, key ) => {
+
+                prim.shader.addPrim( prim );
+
+        } );
+
+        // Bind Prim callback for a new texture loaded .(TexturePool).
+
+        this.util.emitter.on( this.util.emitter.events.TEXTURE_CUBE_MAP_READY, 
+
+            ( prim, key ) => {
+
+                prim.shader.addPrim( prim );
+
+        } );
+
 
     }
 
 
     /** 
      * Create a large coordinate data array with data for multiple Prims.
-     * When a Prim is made, we store a reference in the this.objs[] 
+     * When a Prim is made, we store a reference in the this.prims[] 
      * array. So, to make one, we just concatenate their  
      * vertices. Use to send multiple prims sharing the same Shader.
      * @param {glMatrix.vec3[]} vertices
@@ -125,9 +166,9 @@ class PrimFactory {
 
         vertices = [];
 
-        for ( let i in this.objs ) {
+        for ( let i in this.prims ) {
 
-            vertices = vertices.concat( this.objs[ i ].vertices );
+            vertices = vertices.concat( this.prims[ i ].geometry.vertices.data );
 
         }
 
@@ -145,9 +186,9 @@ class PrimFactory {
 
         indices = [];
 
-        for ( let i in this.objs ) {
+        for ( let i in this.prims ) {
 
-            indices = indices.concat( this.objs[ i ].indices );
+            indices = indices.concat( this.prims[ i ].geometry.indices.data );
 
         }
 
@@ -711,7 +752,7 @@ class PrimFactory {
 
             }
 
-        this.objs.push( prim );
+        this.prims.push( prim );
 
         return prim;
 
