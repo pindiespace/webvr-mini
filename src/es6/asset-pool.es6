@@ -143,6 +143,8 @@ class AssetPool {
 
                 console.log( '^^ adding obj:' + obj.key + ' path:' + obj.path );
 
+                // Add the key to the object, just added to the AssetPool
+
                 this.keyList[ obj.key ] = obj;
 
             }

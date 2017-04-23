@@ -132,7 +132,7 @@ class TexturePool extends AssetPool {
 
         } else {
 
-            console.warn( 'TextureObj::create2DTexture(): no image (' + image.src + '), using default pixel texture' );
+            console.warn( 'TexturePool::create2DTexture(): no image (' + image.src + '), using default pixel texture' );
 
             gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, this.greyPixel );
 
@@ -226,7 +226,7 @@ class TexturePool extends AssetPool {
 
         } else {
 
-            console.error( 'TextureObj::create2DTexture(): no data (' + data + '), for 3d, giving up' );
+            console.error( 'TexturePool::create2DTexture(): no data (' + data + '), for 3d, giving up' );
 
         }
 
@@ -381,7 +381,8 @@ class TexturePool extends AssetPool {
         if ( texture ) {
 
             /* 
-             * We save references to the object in an associative array.
+             * We save references to the texture object in TexturePool.
+             * NOTE: .addAsset() puts the assigned key by TexturePool into our object.
              */
 
             return this.addAsset( {
@@ -411,8 +412,9 @@ class TexturePool extends AssetPool {
     }
 
     /** 
-     * Load textures, using a list of paths. If a Texture already exists, 
-     * just return it. Otherwise, do the load.
+     * Load textures, using a list of paths.
+     * NOTE: textures in a single pathList will be loaded in parallel, so redundant textures 
+     * are not checked for.
      * @param {Array[String]} pathList a list of URL paths to load.
      * @param {Boolean} cacheBust if true, add a http://url?random query string to request.
      * @param {Boolean} keepDOMImage if true, keep the Image object we created the texture from (internal Blob). 
@@ -425,6 +427,9 @@ class TexturePool extends AssetPool {
         window.keyList = this.keyList;
 
         console.log("^^NUM KEYS IN KEYLIST:" + this.util.numKeys( this.keyList ) );
+        for ( let i in this.keyList ) {
+            console.log('^^i:' + i)
+        }
 
         // TODO: check texture list. If paths are already there, just use the path
         // TODO: and return the webgl texture buffer object.
@@ -432,6 +437,8 @@ class TexturePool extends AssetPool {
         for ( let i = 0; i < pathList.length; i++ ) {
 
             let path = pathList[ i ];
+
+            console.log( 'path to load: ' + path)
 
             let poolTexture = this.pathInList( path );
 
@@ -489,8 +496,6 @@ class TexturePool extends AssetPool {
 
                             image.onload = () => {
 
-                                //document.body.appendChild( image );
-
                                 // Create a WebGLTexture from the Image (left off 'type' for gl.TEXTURE type).
 
                                 let textureObj = this.addTexture( prim, image, updateObj.path, updateObj.pos, mimeType );
@@ -503,19 +508,27 @@ class TexturePool extends AssetPool {
 
                                         textureObj.image = null;
 
+                                        // If you want to add to DOM, do so here.
+
+                                        //document.body.appendChild( image );
+
                                         window.URL.revokeObjectURL( image.src );
 
                                     }
 
                                     // Add to prim.textures, at the position specified in updateObj.
 
-                                    prim.textures[ updateObj.pos ] = textureObj;
+                                    //prim.textures[ updateObj.pos ] = textureObj;
 
                                     // TODO: add with unique key to texturePool.
 
                                     // Emit a 'texture ready event' with the key in the pool and path.
 
-                                    this.util.emitter.emit( textureObj.emits, prim, textureObj.key );
+                                    this.util.emitter.emit( textureObj.emits, prim, textureObj.key, updateObj.pos );
+
+                                } else {
+
+                                    console.error( 'TexturePool::getTextures(): file:' + path + ' could not be parsed' );
 
                                 }
 

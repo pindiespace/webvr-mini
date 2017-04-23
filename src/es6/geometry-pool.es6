@@ -3495,21 +3495,25 @@ class GeometryPool {
 
             console.log('GeometryPool::getGeometries() new procedural geometry for:' + prim.name)
 
-            let m = this[ prim.type ]( prim );
+            let m = this.modelPool.addAsset( this[ prim.type ]( prim ) );
+
+            window.modelPool = this.modelPool;
+
+            // Store the type.
 
             m.type = prim.type,
 
-            m.path = '', // No path for procedural.
+            // Since there's no file path, we'll use our key for the pseudo-path (Blob-like).
+
+            m.path = m.key,
+
+            // Add the emit event.
+
+            m.emits = this.util.emitter.events.GEOMETRY_READY;
 
             m.id = prim.type;   // Not in the model pool 
 
-            //TODO: put type here, make a lookup into the pool run the procedural routine!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-            //TODO: when geo-pool inits, it adds callbacks that fire the procedural routine!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-            // Emit a GEOMETRY_READY event, calling Prim.initPrim().
-
-            this.util.emitter.emit( this.util.emitter.events.GEOMETRY_READY, prim, 0, m );
+            this.util.emitter.emit( m.emits, prim, m.key, 0 );
 
         }
 

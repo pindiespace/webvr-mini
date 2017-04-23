@@ -43,6 +43,8 @@ class Emitter {
 
             PRIM_REMOVE: 'prm',                           // a Prim was removed by a Shader
 
+            PRIM_FAIL: 'prmfl',                           // a Prim couldn't load its assets
+
             VR_DISPLAY_READY: 'vrdispready'               // the VR device is ready
 
         };

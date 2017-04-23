@@ -81,8 +81,9 @@ class PrimFactory {
 
         // Attach 1 copy of LoadGeometry to this Factory.
 
-        this.geometryPool = world.geometryPool; // new GeometryPool( init, util, glMatrix, webgl, this.modelPool, this.texturePool );
+        this.geometryPool = world.geometryPool, // new GeometryPool( init, util, glMatrix, webgl, this.modelPool, this.texturePool );
 
+        this.materialPool = world.materialPool;
 
         this.prims = []; // Keep a reference to all created Prims here.
 
@@ -90,9 +91,9 @@ class PrimFactory {
 
         this.util.emitter.on( this.util.emitter.events.GEOMETRY_READY, 
 
-            ( prim, key, geometry ) => {
+            ( prim, key, pos ) => {
 
-                this.initPrimGeometry( prim, key, geometry );
+                this.initPrimGeometry( prim, this.modelPool.keyList[ key ], pos );
 
                 prim.shader.addPrim ( prim );
 
@@ -102,9 +103,9 @@ class PrimFactory {
 
         this.util.emitter.on( this.util.emitter.events.MATERIAL_READY, 
 
-            ( prim, key, material ) => {
+            ( prim, key, pos) => {
 
-                this.initPrimMaterial( prim, key, material );
+                this.initPrimMaterial( prim, this.materialPool.keyList[ key ], pos );
 
                 prim.shader.addPrim ( prim );
 
@@ -114,7 +115,11 @@ class PrimFactory {
 
         this.util.emitter.on( this.util.emitter.events.TEXTURE_2D_READY, 
 
-            ( prim, key ) => {
+            ( prim, key, pos ) => {
+
+                console.log( 'prim:' + prim + ' key:' + key + ' pos:' + pos )
+
+                this.initPrim2dTexture( prim, this.texturePool.keyList[ key ], pos );
 
                 prim.shader.addPrim( prim );
 
@@ -197,6 +202,15 @@ class PrimFactory {
     }
 
     /** 
+     * Add a new texture to the Prim.
+     */
+    initPrim2dTexture ( prim, textureObj, pos ) {
+
+        prim.textures[ pos ] = textureObj;
+
+    }
+
+    /** 
      * Prims don't contrl their initialization, so let the factory do it.
      * @param {prim} prim the Prim.
      * @param {String} key the identifying the geometry in the ModelPool.
@@ -209,7 +223,7 @@ class PrimFactory {
      *   tangents: tangents
      * };
      */
-    initPrimGeometry ( prim, key, coords ) {
+    initPrimGeometry ( prim, coords, pos ) {
 
         /* 
          * Add buffer data, and re-bind to WebGL.
@@ -281,7 +295,9 @@ class PrimFactory {
     }
 
 
-    initPrimMaterial ( material ) {
+    initPrimMaterial ( prim, material, pos ) {
+
+        prim.materials.push( material );
 
         // TODO:
 
@@ -729,8 +745,6 @@ class PrimFactory {
         prim.geometry = new GeometryBuffer( prim.name, this.util, this.webgl );
 
         // Create Geometry data, or load Mesh data (may alter some of the above default properties).
-
-        //this.geometryPool.getGeometry( type, prim, 0 ); // THIS WORKS FINE!!!!!!
 
         this.geometryPool.getGeometries( prim, modelFiles );
 

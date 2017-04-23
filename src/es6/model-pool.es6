@@ -361,17 +361,21 @@ class ModelPool extends AssetPool {
      */
     addModel ( prim, data, path, pos, mimeType, type ) {
 
-        let d;
+        //let d;
 
         if ( pos === undefined ) {
 
-            console.error( 'TextureObj::addTexture(): undefined pos' );
+            console.error( 'ModelPool::addModel(): undefined pos' );
 
             return null;
 
         }
 
         let fType = this.util.getFileExtension( path );
+
+        let d = null,
+
+        emitEvent = '';
 
         switch ( fType ) {
 
@@ -386,6 +390,8 @@ class ModelPool extends AssetPool {
                 d.tangents = [];
 
                 d.colors = [];
+
+                emitEvent = this.util.emitter.events.GEOMETRY_READY;
 
                 break;
 
@@ -409,12 +415,16 @@ class ModelPool extends AssetPool {
 
         }
 
-        // If we got a valid model, construct the output object for JS.
+
+        /* 
+         * We save references to the model object in ModelPool.
+         * NOTE: .addAsset() puts the assigned key by ModelPool into our object.
+         */
 
         if ( d ) {
 
             /*
-             * Model format:
+             * Model format which must be returned by Mesh or procedural geometry creation.
              * {
              *   vertices: vertices,
              *   indices: indices,
@@ -427,10 +437,7 @@ class ModelPool extends AssetPool {
 
             d.path = path,
 
-            // Emit the GEOMETRY_READY event with (Mesh) arguments.
-            // We don't just return the data since it has to be processed by Prim into a GeometryBuffer.
-
-            this.util.emitter.emit( this.util.emitter.events.GEOMETRY_READY, prim, pos, d );
+            d.emits = emitEvent;
 
         } else {
 
@@ -486,11 +493,21 @@ class ModelPool extends AssetPool {
 
                              if ( updateObj.data ) {
 
-                                this.addModel( prim, updateObj.data, updateObj.path, updateObj.pos, mimeType, prim.type );
+                                let modelObj = this.addModel( prim, updateObj.data, updateObj.path, updateObj.pos, mimeType, prim.type );
+
+                                if ( modelObj ) {
+
+                                    this.util.emitter.emit( modelObj.emits, prim, modelObj.key, modelObj.pos );
+
+                                } else {
+
+                                    console.error( 'TexturePool::getTextures(): file:' + path + ' could not be parsed' );
+
+                                }
 
                              } else {
 
-                                console.error( 'MaterialPool::getMaterials(): no data found for:' + updateObj.path );
+                                console.error( 'ModelPool::getModels(): no data found for:' + updateObj.path );
 
                              }
 

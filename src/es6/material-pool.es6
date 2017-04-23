@@ -394,9 +394,9 @@ class MaterialPool extends AssetPool {
 
                                 if ( materialObj ) {
 
-                                    prim.materials.push( materialObj );
+                                    //////////////prim.materials.push( materialObj );
 
-                                    this.util.emitter.emit( materialObj.emits, prim, materialObj.key );
+                                    this.util.emitter.emit( materialObj.emits, prim, materialObj.key, i );
 
                                 } // end of material addition.
 

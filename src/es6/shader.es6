@@ -175,6 +175,8 @@ class Shader {
 
                 this.program.renderList.push( prim );
 
+                // Emit a PRIM_READY event.
+
                 this.util.emitter.emit( this.util.emitter.events.PRIM_READY, prim );
 
             } else {

@@ -448,7 +448,7 @@ class World {
                 vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
                 vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
                 vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [ 'obj/capsule/capsule0.png' ],               // texture present
+                [ 'obj/capsule/capsule1.png' ],               // texture present
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color,
                 true,                                   // if true, apply texture to each face,
                 [ 'obj/capsule/capsule.obj' ] // object files (.obj, .mtl)

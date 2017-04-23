@@ -1341,6 +1341,8 @@
 
 	                                    PRIM_REMOVE: 'prm', // a Prim was removed by a Shader
 
+	                                    PRIM_FAIL: 'prmfl', // a Prim couldn't load its assets
+
 	                                    VR_DISPLAY_READY: 'vrdispready' // the VR device is ready
 
 	                        };
@@ -4487,6 +4489,8 @@
 	                                        // Add the Prim to the Shader program's renderList.
 
 	                                        this.program.renderList.push(prim);
+
+	                                        // Emit a PRIM_READY event.
 
 	                                        this.util.emitter.emit(this.util.emitter.events.PRIM_READY, prim);
 	                                } else {
@@ -11933,19 +11937,25 @@
 
 	                                console.log('GeometryPool::getGeometries() new procedural geometry for:' + prim.name);
 
-	                                var m = this[prim.type](prim);
+	                                var m = this.modelPool.addAsset(this[prim.type](prim));
 
-	                                m.type = prim.type, m.path = '', // No path for procedural.
+	                                window.modelPool = this.modelPool;
+
+	                                // Store the type.
+
+	                                m.type = prim.type,
+
+	                                // Since there's no file path, we'll use our key for the pseudo-path (Blob-like).
+
+	                                m.path = m.key,
+
+	                                // Add the emit event.
+
+	                                m.emits = this.util.emitter.events.GEOMETRY_READY;
 
 	                                m.id = prim.type; // Not in the model pool 
 
-	                                //TODO: put type here, make a lookup into the pool run the procedural routine!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-	                                //TODO: when geo-pool inits, it adds callbacks that fire the procedural routine!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-	                                // Emit a GEOMETRY_READY event, calling Prim.initPrim().
-
-	                                this.util.emitter.emit(this.util.emitter.events.GEOMETRY_READY, prim, 0, m);
+	                                this.util.emitter.emit(m.emits, prim, m.key, 0);
 	                        }
 	                }
 	        }]);
@@ -12348,16 +12358,19 @@
 	                key: 'addModel',
 	                value: function addModel(prim, data, path, pos, mimeType, type) {
 
-	                        var d = void 0;
+	                        //let d;
 
 	                        if (pos === undefined) {
 
-	                                console.error('TextureObj::addTexture(): undefined pos');
+	                                console.error('ModelPool::addModel(): undefined pos');
 
 	                                return null;
 	                        }
 
 	                        var fType = this.util.getFileExtension(path);
+
+	                        var d = null,
+	                            emitEvent = '';
 
 	                        switch (fType) {
 
@@ -12372,6 +12385,8 @@
 	                                        d.tangents = [];
 
 	                                        d.colors = [];
+
+	                                        emitEvent = this.util.emitter.events.GEOMETRY_READY;
 
 	                                        break;
 
@@ -12398,12 +12413,15 @@
 
 	                        }
 
-	                        // If we got a valid model, construct the output object for JS.
+	                        /* 
+	                         * We save references to the model object in ModelPool.
+	                         * NOTE: .addAsset() puts the assigned key by ModelPool into our object.
+	                         */
 
 	                        if (d) {
 
 	                                /*
-	                                 * Model format:
+	                                 * Model format which must be returned by Mesh or procedural geometry creation.
 	                                 * {
 	                                 *   vertices: vertices,
 	                                 *   indices: indices,
@@ -12412,12 +12430,7 @@
 	                                 * }
 	                                */
 
-	                                d.type = type, d.path = path,
-
-	                                // Emit the GEOMETRY_READY event with (Mesh) arguments.
-	                                // We don't just return the data since it has to be processed by Prim into a GeometryBuffer.
-
-	                                this.util.emitter.emit(this.util.emitter.events.GEOMETRY_READY, prim, pos, d);
+	                                d.type = type, d.path = path, d.emits = emitEvent;
 	                        } else {
 
 	                                console.warn('TexturePool::addTexture(): no texture returned by createTexture() + ' + mimeType + ' function');
@@ -12440,53 +12453,62 @@
 
 	                        var cacheBust = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
 
-
-	                        for (var i = 0; i < pathList.length; i++) {
+	                        var _loop = function _loop(i) {
 
 	                                var path = pathList[i];
 
-	                                var poolModel = this.pathInList(path);
+	                                var poolModel = _this3.pathInList(path);
 
 	                                if (poolModel) {
 
 	                                        prim.models.push(poolModel); // just reference an existing texture in this pool.
 	                                } else {
-	                                        (function () {
 
-	                                                // Get the image mimeType.
+	                                        // Get the image mimeType.
 
-	                                                var mimeType = _this3.modelMimeTypes[_this3.util.getFileExtension(path)];
+	                                        var mimeType = _this3.modelMimeTypes[_this3.util.getFileExtension(path)];
 
-	                                                // check if mimeType is OK.
+	                                        // check if mimeType is OK.
 
-	                                                if (mimeType) {
+	                                        if (mimeType) {
 
-	                                                        _this3.doRequest(path, i, function (updateObj) {
+	                                                _this3.doRequest(path, i, function (updateObj) {
 
-	                                                                /* 
-	                                                                 * updateObj returned from GetAssets has the following structure:
-	                                                                 * { 
-	                                                                 *   pos: pos, 
-	                                                                 *   path: requestURL, 
-	                                                                 *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
-	                                                                 *   error: false|response 
-	                                                                 * } 
-	                                                                 */
+	                                                        /* 
+	                                                         * updateObj returned from GetAssets has the following structure:
+	                                                         * { 
+	                                                         *   pos: pos, 
+	                                                         *   path: requestURL, 
+	                                                         *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
+	                                                         *   error: false|response 
+	                                                         * } 
+	                                                         */
 
-	                                                                if (updateObj.data) {
+	                                                        if (updateObj.data) {
 
-	                                                                        _this3.addModel(prim, updateObj.data, updateObj.path, updateObj.pos, mimeType, prim.type);
+	                                                                var modelObj = _this3.addModel(prim, updateObj.data, updateObj.path, updateObj.pos, mimeType, prim.type);
+
+	                                                                if (modelObj) {
+
+	                                                                        _this3.util.emitter.emit(modelObj.emits, prim, modelObj.key, modelObj.pos);
 	                                                                } else {
 
-	                                                                        console.error('MaterialPool::getMaterials(): no data found for:' + updateObj.path);
+	                                                                        console.error('TexturePool::getTextures(): file:' + path + ' could not be parsed');
 	                                                                }
-	                                                        }, cacheBust, mimeType, 0); // end of this.doRequest(), initial request at 0 tries
-	                                                } else {
+	                                                        } else {
 
-	                                                        console.error('ModelPool::getModels(): file type "' + _this3.util.getFileExtension(path) + ' not supported, not loading');
-	                                                }
-	                                        })();
+	                                                                console.error('ModelPool::getModels(): no data found for:' + updateObj.path);
+	                                                        }
+	                                                }, cacheBust, mimeType, 0); // end of this.doRequest(), initial request at 0 tries
+	                                        } else {
+
+	                                                console.error('ModelPool::getModels(): file type "' + _this3.util.getFileExtension(path) + ' not supported, not loading');
+	                                        }
 	                                }
+	                        };
+
+	                        for (var i = 0; i < pathList.length; i++) {
+	                                _loop(i);
 	                        } // end of loop
 	                }
 	        }]);
@@ -12643,6 +12665,8 @@
 	                                        obj.key = this.util.computeId();
 
 	                                        console.log('^^ adding obj:' + obj.key + ' path:' + obj.path);
+
+	                                        // Add the key to the object, just added to the AssetPool
 
 	                                        this.keyList[obj.key] = obj;
 	                                }
@@ -13096,7 +13120,7 @@
 	                                // TODO: WHEN TO USE gl.renderBufferStorage()???
 	                        } else {
 
-	                                console.warn('TextureObj::create2DTexture(): no image (' + image.src + '), using default pixel texture');
+	                                console.warn('TexturePool::create2DTexture(): no image (' + image.src + '), using default pixel texture');
 
 	                                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, this.greyPixel);
 	                        }
@@ -13184,7 +13208,7 @@
 	                                );
 	                        } else {
 
-	                                console.error('TextureObj::create2DTexture(): no data (' + data + '), for 3d, giving up');
+	                                console.error('TexturePool::create2DTexture(): no data (' + data + '), for 3d, giving up');
 	                        }
 
 	                        // Generate mipmaps.
@@ -13317,7 +13341,8 @@
 	                        if (texture) {
 
 	                                /* 
-	                                 * We save references to the object in an associative array.
+	                                 * We save references to the texture object in TexturePool.
+	                                 * NOTE: .addAsset() puts the assigned key by TexturePool into our object.
 	                                 */
 
 	                                return this.addAsset({
@@ -13344,8 +13369,9 @@
 	                }
 
 	                /** 
-	                 * Load textures, using a list of paths. If a Texture already exists, 
-	                 * just return it. Otherwise, do the load.
+	                 * Load textures, using a list of paths.
+	                 * NOTE: textures in a single pathList will be loaded in parallel, so redundant textures 
+	                 * are not checked for.
 	                 * @param {Array[String]} pathList a list of URL paths to load.
 	                 * @param {Boolean} cacheBust if true, add a http://url?random query string to request.
 	                 * @param {Boolean} keepDOMImage if true, keep the Image object we created the texture from (internal Blob). 
@@ -13366,15 +13392,20 @@
 	                        window.keyList = this.keyList;
 
 	                        console.log("^^NUM KEYS IN KEYLIST:" + this.util.numKeys(this.keyList));
+	                        for (var i in this.keyList) {
+	                                console.log('^^i:' + i);
+	                        }
 
 	                        // TODO: check texture list. If paths are already there, just use the path
 	                        // TODO: and return the webgl texture buffer object.
 
-	                        for (var i = 0; i < pathList.length; i++) {
+	                        var _loop = function _loop(_i) {
 
-	                                var path = pathList[i];
+	                                var path = pathList[_i];
 
-	                                var poolTexture = this.pathInList(path);
+	                                console.log('path to load: ' + path);
+
+	                                var poolTexture = _this2.pathInList(path);
 
 	                                console.log('>>>>>>>>>>>>>>>poolTexture is:' + poolTexture);
 
@@ -13392,81 +13423,88 @@
 
 	                                        prim.textures.push(poolTexture); // just reference an existing texture in this pool.
 	                                } else {
-	                                        (function () {
 
-	                                                // Get the image mimeType.
+	                                        // Get the image mimeType.
 
-	                                                var mimeType = _this2.textureMimeTypes[_this2.util.getFileExtension(path)];
+	                                        var mimeType = _this2.textureMimeTypes[_this2.util.getFileExtension(path)];
 
-	                                                // check if mimeType is OK.
+	                                        // check if mimeType is OK.
 
-	                                                if (mimeType) {
+	                                        if (mimeType) {
+
+	                                                /* 
+	                                                 * Use Fetch API to load the image, wrapped in a Promise timeout with 
+	                                                 * multiple retries possible (in parent class GetAssets). Return a 
+	                                                 * response.blob() for images, and add to DOM or WebGL texture here. 
+	                                                 * We apply the Blob data to a JS image to decode. Since this may not 
+	                                                 * be insteant, we catch the .onload event to actually send the WebGL texture.
+	                                                 */
+
+	                                                _this2.doRequest(path, _i, function (updateObj) {
 
 	                                                        /* 
-	                                                         * Use Fetch API to load the image, wrapped in a Promise timeout with 
-	                                                         * multiple retries possible (in parent class GetAssets). Return a 
-	                                                         * response.blob() for images, and add to DOM or WebGL texture here. 
-	                                                         * We apply the Blob data to a JS image to decode. Since this may not 
-	                                                         * be insteant, we catch the .onload event to actually send the WebGL texture.
+	                                                         * updateObj returned from GetAssets has the following structure:
+	                                                         * { 
+	                                                         *   pos: pos, 
+	                                                         *   path: requestURL, 
+	                                                         *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
+	                                                         *   error: false|response 
+	                                                         * } 
 	                                                         */
 
-	                                                        _this2.doRequest(path, i, function (updateObj) {
+	                                                        var image = new Image();
 
-	                                                                /* 
-	                                                                 * updateObj returned from GetAssets has the following structure:
-	                                                                 * { 
-	                                                                 *   pos: pos, 
-	                                                                 *   path: requestURL, 
-	                                                                 *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
-	                                                                 *   error: false|response 
-	                                                                 * } 
-	                                                                 */
+	                                                        // Blob data type requires Image .onload for processing.
 
-	                                                                var image = new Image();
+	                                                        image.onload = function () {
 
-	                                                                // Blob data type requires Image .onload for processing.
+	                                                                // Create a WebGLTexture from the Image (left off 'type' for gl.TEXTURE type).
 
-	                                                                image.onload = function () {
+	                                                                var textureObj = _this2.addTexture(prim, image, updateObj.path, updateObj.pos, mimeType);
 
-	                                                                        //document.body.appendChild( image );
+	                                                                if (textureObj) {
 
-	                                                                        // Create a WebGLTexture from the Image (left off 'type' for gl.TEXTURE type).
+	                                                                        if (!keepDOMImage) {
 
-	                                                                        var textureObj = _this2.addTexture(prim, image, updateObj.path, updateObj.pos, mimeType);
+	                                                                                // Kill the reference to our local Image and its (Blob) data.
 
-	                                                                        if (textureObj) {
+	                                                                                textureObj.image = null;
 
-	                                                                                if (!keepDOMImage) {
+	                                                                                // If you want to add to DOM, do so here.
 
-	                                                                                        // Kill the reference to our local Image and its (Blob) data.
+	                                                                                //document.body.appendChild( image );
 
-	                                                                                        textureObj.image = null;
-
-	                                                                                        window.URL.revokeObjectURL(image.src);
-	                                                                                }
-
-	                                                                                // Add to prim.textures, at the position specified in updateObj.
-
-	                                                                                prim.textures[updateObj.pos] = textureObj;
-
-	                                                                                // TODO: add with unique key to texturePool.
-
-	                                                                                // Emit a 'texture ready event' with the key in the pool and path.
-
-	                                                                                _this2.util.emitter.emit(textureObj.emits, prim, textureObj.key);
+	                                                                                window.URL.revokeObjectURL(image.src);
 	                                                                        }
-	                                                                }; // end of image.onload
 
-	                                                                // Create a URL to the Blob, and fire the onload event (internal browser URL instead of network).
+	                                                                        // Add to prim.textures, at the position specified in updateObj.
 
-	                                                                image.src = window.URL.createObjectURL(updateObj.data);
-	                                                        }, cacheBust, mimeType, 0); // end of this.doRequest(), initial request at 0 tries
-	                                                } else {
+	                                                                        //prim.textures[ updateObj.pos ] = textureObj;
 
-	                                                        console.error('TexturePool::getTextures(): file type "' + _this2.util.getFileExtension(path) + ' not supported, not loading');
-	                                                }
-	                                        })();
+	                                                                        // TODO: add with unique key to texturePool.
+
+	                                                                        // Emit a 'texture ready event' with the key in the pool and path.
+
+	                                                                        _this2.util.emitter.emit(textureObj.emits, prim, textureObj.key, updateObj.pos);
+	                                                                } else {
+
+	                                                                        console.error('TexturePool::getTextures(): file:' + path + ' could not be parsed');
+	                                                                }
+	                                                        }; // end of image.onload
+
+	                                                        // Create a URL to the Blob, and fire the onload event (internal browser URL instead of network).
+
+	                                                        image.src = window.URL.createObjectURL(updateObj.data);
+	                                                }, cacheBust, mimeType, 0); // end of this.doRequest(), initial request at 0 tries
+	                                        } else {
+
+	                                                console.error('TexturePool::getTextures(): file type "' + _this2.util.getFileExtension(path) + ' not supported, not loading');
+	                                        }
 	                                }
+	                        };
+
+	                        for (var _i = 0; _i < pathList.length; _i++) {
+	                                _loop(_i);
 	                        }
 	                }
 	        }]);
@@ -13944,7 +13982,7 @@
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
 	                        vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                        ['obj/capsule/capsule0.png'], // texture present
+	                        ['obj/capsule/capsule1.png'], // texture present
 	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0), // color,
 	                        true, // if true, apply texture to each face,
 	                        ['obj/capsule/capsule.obj'] // object files (.obj, .mtl)
@@ -22065,60 +22103,61 @@
 
 	                                                                        var cacheBust = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
 
-
-	                                                                        for (var i = 0; i < pathList.length; i++) {
+	                                                                        var _loop = function _loop(i) {
 
 	                                                                                                var path = pathList[i];
 
-	                                                                                                var poolMaterial = this.pathInList(path);
+	                                                                                                var poolMaterial = _this3.pathInList(path);
 
 	                                                                                                if (poolMaterial) {
 
 	                                                                                                                        prim.materials.push(poolMaterial); // just reference an existing texture in this pool.
 	                                                                                                } else {
-	                                                                                                                        (function () {
 
-	                                                                                                                                                // Get the image mimeType.
+	                                                                                                                        // Get the image mimeType.
 
-	                                                                                                                                                var mimeType = _this3.materialMimeTypes[_this3.util.getFileExtension(path)];
+	                                                                                                                        var mimeType = _this3.materialMimeTypes[_this3.util.getFileExtension(path)];
 
-	                                                                                                                                                // check if mimeType is OK.
+	                                                                                                                        // check if mimeType is OK.
 
-	                                                                                                                                                if (mimeType) {
+	                                                                                                                        if (mimeType) {
 
-	                                                                                                                                                                        _this3.doRequest(path, i, function (updateObj) {
+	                                                                                                                                                _this3.doRequest(path, i, function (updateObj) {
 
-	                                                                                                                                                                                                /* 
-	                                                                                                                                                                                                 * updateObj returned from GetAssets has the following structure:
-	                                                                                                                                                                                                 * { 
-	                                                                                                                                                                                                 *   pos: pos, 
-	                                                                                                                                                                                                 *   path: requestURL, 
-	                                                                                                                                                                                                 *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
-	                                                                                                                                                                                                 *   error: false|response 
-	                                                                                                                                                                                                 * } 
-	                                                                                                                                                                                                 */
+	                                                                                                                                                                        /* 
+	                                                                                                                                                                         * updateObj returned from GetAssets has the following structure:
+	                                                                                                                                                                         * { 
+	                                                                                                                                                                         *   pos: pos, 
+	                                                                                                                                                                         *   path: requestURL, 
+	                                                                                                                                                                         *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
+	                                                                                                                                                                         *   error: false|response 
+	                                                                                                                                                                         * } 
+	                                                                                                                                                                         */
 
-	                                                                                                                                                                                                if (updateObj.data) {
+	                                                                                                                                                                        if (updateObj.data) {
 
-	                                                                                                                                                                                                                        var materialObj = _this3.addMaterial(prim, updateObj.data, updateObj.path, updateObj.pos, mimeType, prim.type);
+	                                                                                                                                                                                                var materialObj = _this3.addMaterial(prim, updateObj.data, updateObj.path, updateObj.pos, mimeType, prim.type);
 
-	                                                                                                                                                                                                                        if (materialObj) {
+	                                                                                                                                                                                                if (materialObj) {
 
-	                                                                                                                                                                                                                                                prim.materials.push(materialObj);
+	                                                                                                                                                                                                                        //////////////prim.materials.push( materialObj );
 
-	                                                                                                                                                                                                                                                _this3.util.emitter.emit(materialObj.emits, prim, materialObj.key);
-	                                                                                                                                                                                                                        } // end of material addition.
-	                                                                                                                                                                                                } else {
+	                                                                                                                                                                                                                        _this3.util.emitter.emit(materialObj.emits, prim, materialObj.key, i);
+	                                                                                                                                                                                                } // end of material addition.
+	                                                                                                                                                                        } else {
 
-	                                                                                                                                                                                                                        console.error('MaterialPool::getMaterials(): no data found for:' + updateObj.path);
-	                                                                                                                                                                                                }
-	                                                                                                                                                                        }, cacheBust, mimeType, 0); // end of this.doRequest(), initial request at 0 tries
-	                                                                                                                                                } else {
+	                                                                                                                                                                                                console.error('MaterialPool::getMaterials(): no data found for:' + updateObj.path);
+	                                                                                                                                                                        }
+	                                                                                                                                                }, cacheBust, mimeType, 0); // end of this.doRequest(), initial request at 0 tries
+	                                                                                                                        } else {
 
-	                                                                                                                                                                        console.error('MaterialPool::getModels(): file type "' + _this3.util.getFileExtension(path) + ' not supported, not loading');
-	                                                                                                                                                }
-	                                                                                                                        })();
+	                                                                                                                                                console.error('MaterialPool::getModels(): file type "' + _this3.util.getFileExtension(path) + ' not supported, not loading');
+	                                                                                                                        }
 	                                                                                                }
+	                                                                        };
+
+	                                                                        for (var i = 0; i < pathList.length; i++) {
+	                                                                                                _loop(i);
 	                                                                        } // end of loop
 	                                                }
 	                        }]);
@@ -23404,32 +23443,37 @@
 
 	                // Attach 1 copy of LoadGeometry to this Factory.
 
-	                this.geometryPool = world.geometryPool; // new GeometryPool( init, util, glMatrix, webgl, this.modelPool, this.texturePool );
+	                this.geometryPool = world.geometryPool, // new GeometryPool( init, util, glMatrix, webgl, this.modelPool, this.texturePool );
 
+	                this.materialPool = world.materialPool;
 
 	                this.prims = []; // Keep a reference to all created Prims here.
 
 	                // Bind the callback for geometry initialization applied to individual prims (GeometryPool, Mesh, and ModelPool).
 
-	                this.util.emitter.on(this.util.emitter.events.GEOMETRY_READY, function (prim, key, geometry) {
+	                this.util.emitter.on(this.util.emitter.events.GEOMETRY_READY, function (prim, key, pos) {
 
-	                        _this.initPrimGeometry(prim, key, geometry);
+	                        _this.initPrimGeometry(prim, _this.modelPool.keyList[key], pos);
 
 	                        prim.shader.addPrim(prim);
 	                });
 
 	                // Bind Prim callback for a new material applied to individual Prims.
 
-	                this.util.emitter.on(this.util.emitter.events.MATERIAL_READY, function (prim, key, material) {
+	                this.util.emitter.on(this.util.emitter.events.MATERIAL_READY, function (prim, key, pos) {
 
-	                        _this.initPrimMaterial(prim, key, material);
+	                        _this.initPrimMaterial(prim, _this.materialPool.keyList[key], pos);
 
 	                        prim.shader.addPrim(prim);
 	                });
 
 	                // Bind Prim callback for a new texture loaded .(TexturePool).
 
-	                this.util.emitter.on(this.util.emitter.events.TEXTURE_2D_READY, function (prim, key) {
+	                this.util.emitter.on(this.util.emitter.events.TEXTURE_2D_READY, function (prim, key, pos) {
+
+	                        console.log('prim:' + prim + ' key:' + key + ' pos:' + pos);
+
+	                        _this.initPrim2dTexture(prim, _this.texturePool.keyList[key], pos);
 
 	                        prim.shader.addPrim(prim);
 	                });
@@ -23502,6 +23546,17 @@
 	                }
 
 	                /** 
+	                 * Add a new texture to the Prim.
+	                 */
+
+	        }, {
+	                key: 'initPrim2dTexture',
+	                value: function initPrim2dTexture(prim, textureObj, pos) {
+
+	                        prim.textures[pos] = textureObj;
+	                }
+
+	                /** 
 	                 * Prims don't contrl their initialization, so let the factory do it.
 	                 * @param {prim} prim the Prim.
 	                 * @param {String} key the identifying the geometry in the ModelPool.
@@ -23517,7 +23572,7 @@
 
 	        }, {
 	                key: 'initPrimGeometry',
-	                value: function initPrimGeometry(prim, key, coords) {
+	                value: function initPrimGeometry(prim, coords, pos) {
 
 	                        /* 
 	                         * Add buffer data, and re-bind to WebGL.
@@ -23588,39 +23643,42 @@
 	                }
 	        }, {
 	                key: 'initPrimMaterial',
-	                value: function initPrimMaterial(material) {}
+	                value: function initPrimMaterial(prim, material, pos) {
 
-	                // TODO:
+	                        prim.materials.push(material);
 
-	                // BAD TANGENT DATA FOR TEAPOT!!!
+	                        // TODO:
 
-	                // Use LIGHT object to define World Light. Shaders can use World Light, or local one.
+	                        // BAD TANGENT DATA FOR TEAPOT!!!
 
-	                // Add LIGHT to WORLD. FIGURE OUT STRATEGY TO BROADCAST LIGHT TO SHADERS.
+	                        // Use LIGHT object to define World Light. Shaders can use World Light, or local one.
 
-	                // 1. Add Light to World. 2. Have World broadcast Light via Shader.addLight
+	                        // Add LIGHT to WORLD. FIGURE OUT STRATEGY TO BROADCAST LIGHT TO SHADERS.
 
-	                // 3. have Shaders that use light use the added Light.
+	                        // 1. Add Light to World. 2. Have World broadcast Light via Shader.addLight
 
-	                // LOAD MATERIAL AND TEXTURE OUT OF MODEL-POOL
+	                        // 3. have Shaders that use light use the added Light.
 
-	                // TEST ACTUAL PRIM REMOVAL WHEN IT BECOMES INVALID
+	                        // LOAD MATERIAL AND TEXTURE OUT OF MODEL-POOL
 
-	                // INTERNALIZE THESE METHODS
+	                        // TEST ACTUAL PRIM REMOVAL WHEN IT BECOMES INVALID
 
-	                // KEY FOR PROCEEDURAL GRAPHICS (ADD TO Model-Pool)
+	                        // INTERNALIZE THESE METHODS
 
-	                // KEY FOR MESH GRAPHICS (Add to ModelPool)
+	                        // KEY FOR PROCEEDURAL GRAPHICS (ADD TO Model-Pool)
 
-	                // KEY FOR OBJ FILE MODELS (Add to ModelPool)
+	                        // KEY FOR MESH GRAPHICS (Add to ModelPool)
 
-	                // LOAD WORLD BY FILE (MAKE INTO TESTBED)
+	                        // KEY FOR OBJ FILE MODELS (Add to ModelPool)
 
-	                // LOAD A-FRAME MODELS (USING EDITOR)
+	                        // LOAD WORLD BY FILE (MAKE INTO TESTBED)
 
-	                // UI MODAL DIALOG ON HOVER OVER FAILED WEBVR
+	                        // LOAD A-FRAME MODELS (USING EDITOR)
 
-	                // ADD SOME SETINTERVALS DURING LONG COMPUTES
+	                        // UI MODAL DIALOG ON HOVER OVER FAILED WEBVR
+
+	                        // ADD SOME SETINTERVALS DURING LONG COMPUTES
+	                }
 
 	                /** 
 	                 * Create an standard 3d object.
@@ -24005,8 +24063,6 @@
 	                        prim.geometry = new _geometryBuffer2.default(prim.name, this.util, this.webgl);
 
 	                        // Create Geometry data, or load Mesh data (may alter some of the above default properties).
-
-	                        //this.geometryPool.getGeometry( type, prim, 0 ); // THIS WORKS FINE!!!!!!
 
 	                        this.geometryPool.getGeometries(prim, modelFiles);
 
