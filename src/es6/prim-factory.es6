@@ -121,8 +121,6 @@ class PrimFactory {
 
             ( prim, key, pos ) => {
 
-                console.log( 'prim:' + prim + ' key:' + key + ' pos:' + pos )
-
                 this.initPrim2dTexture( prim, this.texturePool.keyList[ key ], pos );
 
                 prim.shader.addPrim( prim );
@@ -159,17 +157,23 @@ class PrimFactory {
 
         } );
 
-        // Bing Prim callback for Shader accepting a Prim.
+        // Bind Prim callback for a Shader accepting a Prim for rendering.
 
         this.util.emitter.on( this.util.emitter.events.PRIM_ADDED_TO_SHADER, 
 
             ( prim ) => {
 
+                // If there is no material description, add the default.
 
+                if ( prim.materials.length < 1 ) {
+
+                    prim.setMaterial( this.util.DEFAULT_KEY );
+
+                }
 
         } );
 
-    }
+    } // end of constructor
 
 
     /** 
@@ -272,10 +276,6 @@ class PrimFactory {
 
         prim.updateColors();
 
-        // Set our buffer data
-
-        //prim.geometry.setBufferData( coords.vertices, coords.indices, coords.normals, coords.texCoords, coords.tangents, coords.colors );
-
         // Check our buffers for consistency.
 
         prim.geometry.checkBufferData();
@@ -308,15 +308,26 @@ class PrimFactory {
     }
 
 
+    /** 
+     * Add ma material description to the Prim.
+     * Note: a single .mtl file may add multiple materials.
+     * @param {Prim} prim the prim.
+     * @param {Material} material the material object.
+     * @param {Number} pos starting position in array (usually 0).
+     */
     initPrimMaterial ( prim, material, pos ) {
 
         //prim.materials.push( material );
 
         // Material is returned as an associative array, since multiple materials may be found in one .mtl file.
 
-        for ( let i in material ) {
+        if ( prim.materials.length > 0 && prim.materials[ 0 ].name === this.util.DEFAULT_KEY ) {
 
-            prim.materials.push( material[ i ] );
+            prim.materials[ 0 ] = material; // replace default, if we loaded a material after initialization.
+
+        } else {
+
+            prim.materials.push( material );
 
         }
 
@@ -333,8 +344,6 @@ class PrimFactory {
         // 1. Add Light to World. 2. Have World broadcast Light via Shader.addLight
 
         // 3. have Shaders that use light use the added Light.
-
-        // LOAD MATERIAL AND TEXTURE OUT OF MODEL-POOL
 
         // TEST ACTUAL PRIM REMOVAL WHEN IT BECOMES INVALID
 
@@ -747,7 +756,7 @@ class PrimFactory {
 
         // Set default Prim material (can be altered by .mtl file).
 
-        prim.setMaterial( 'default' ); // TODO::::::::::::::::::::ONLY DO IF WE DON'T have a material file.
+        //prim.setMaterial( 'default' ); // TODO::::::::::::::::::::ONLY DO IF WE DON'T have a material file.
 
        // Execute geometry creation routine (which may be a file load).
 
@@ -773,7 +782,7 @@ class PrimFactory {
                 window.capsule = prim; //////////////TODO: remove
             }
 
-            if ( prim.name === 'torus1' ) {
+            if ( prim.name === 'TORUS1' ) {
 
                 window.torus = prim;
 

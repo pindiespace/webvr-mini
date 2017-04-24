@@ -419,17 +419,7 @@ class TexturePool extends AssetPool {
      * @param {Boolean} cacheBust if true, add a http://url?random query string to request.
      * @param {Boolean} keepDOMImage if true, keep the Image object we created the texture from (internal Blob). 
      */
-    getTextures ( prim, pathList, cacheBust = true, keepDOMImage = false ) {
-
-        // TODO: TESTO
-        // TODO:
-        // TODO:
-        window.keyList = this.keyList;
-
-        console.log("^^NUM KEYS IN KEYLIST:" + this.util.numKeys( this.keyList ) );
-        for ( let i in this.keyList ) {
-            console.log('^^i:' + i)
-        }
+    getTextures ( prim, pathList, cacheBust = true, keepDOMImage = false, use = this.util.DEFAULT_KEY ) {
 
         // TODO: check texture list. If paths are already there, just use the path
         // TODO: and return the webgl texture buffer object.
@@ -513,6 +503,10 @@ class TexturePool extends AssetPool {
                                         // If you want to add to DOM, do so here.
 
                                         }
+
+                                        // Save the usage, either 'default' or a key from an OBJ wavefront file (map_Kd, map_Ks...).
+
+                                        textureObj.use = use;
 
                                         // Emit a 'texture ready event' with the key in the pool and path (intercepted by Prim).
 

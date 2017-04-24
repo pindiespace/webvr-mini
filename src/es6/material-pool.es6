@@ -72,9 +72,7 @@ class MaterialPool extends AssetPool {
 
                     currName = data[ 1 ];
 
-                    material[ currName ] = {};
-
-                    ////material.name = data[ 1 ];
+                    material[ currName ] = { name: currName };
 
                     break;
 
@@ -94,7 +92,7 @@ class MaterialPool extends AssetPool {
 
                         if ( currName && Number.isFinite( data[ 1 ] ) && Number.isFinite( data[ 2 ] ) && Number.isFinite( data[ 3 ] ) ) {
 
-                            material[ currName].ambient = [ data[ 1 ], data[ 2 ], data[ 3 ] ];  
+                            material[ currName ].ambient = [ data[ 1 ], data[ 2 ], data[ 3 ] ];  
 
                         } else {
 
@@ -254,30 +252,24 @@ class MaterialPool extends AssetPool {
                      * -texres resolution scale up non-power of 2
                      */
 
-                    console.log("MaterialPool::computeObjMaterials():::::::::::::GOTTA DIFFUSE MAP (TEXTURE) in OBJ MTL file: " + data[ 1 ] )
-
-                    // TODO: CONFIRM THAT THIS LOADS CORRECTLY!!!!!!!
-
-                    if ( currName ) {
-
-                        material[ currName ].map_Kd = dir + data[ 1 ];
-
-                        // Note: attaches to prim.textures
-
-                        // TODO: HOW TO CONTROL WHERE IT APPEARS IN TEXTURE ARRAY???
-
-                        this.texturePool.getTextures( prim, [ dir + data[ 1 ] ], true );
-
-                    }
-
-                    break;
-
                 case 'map_Ks':   // specular map
                 case 'map_Ka':   // ambient map
                 case 'map_d':    // alpha map
                 case 'bump':     // bumpmap
                 case 'map_bump': // bumpmap
                 case 'disp':     // displacement map
+
+                    console.log("MaterialPool::computeObjMaterials():::::::::::::GOTTA DIFFUSE MAP (TEXTURE) in OBJ MTL file: " + data[ 1 ] )
+
+                    // TODO: CONFIRM THAT THIS LOADS CORRECTLY!!!!!!!
+
+                    if ( currName ) {
+
+                        // Note: attaches to prim.textures, we pass our type as the texture type (map_Kd, map_Ks...)
+
+                        this.texturePool.getTextures( prim, [ dir + data[ 1 ] ], true, false, type );
+
+                    }
 
                     break;
 
@@ -328,6 +320,8 @@ class MaterialPool extends AssetPool {
 
                 m = this.computeObjMaterials( data, prim, path );
 
+                console.log("IMMEDIATELY M is:" + typeof m)
+
                 break;
 
             default:
@@ -339,8 +333,6 @@ class MaterialPool extends AssetPool {
         }
 
         // Set up the Material object(s).
-
-        window.mm = m;
 
         if ( m ) {
 
@@ -354,9 +346,9 @@ class MaterialPool extends AssetPool {
 
                 mi.emits = this.util.emitter.events.MATERIAL_READY;
 
-                console.log("MaterialPool::addMaterial(): adding" + mi.name + " to Prim:" + prim.name )
+                console.log("MaterialPool::addMaterial(): adding:" + mi.name + " to Prim:" + prim.name )
 
-                mi = this.addAsset( mi[ i ] );
+                this.addAsset( mi );
 
             }
 
@@ -416,17 +408,19 @@ class MaterialPool extends AssetPool {
 
                                     let materialObj = this.addMaterial( prim, updateObj.data, updateObj.path, updateObj.pos, mimeType, prim.type );
 
+                                    // Multiple materials may be present in one .mtl file.
+
                                     if ( materialObj ) {
 
-                                        //////////////prim.materials.push( materialObj );
-
                                         for ( let i in materialObj ) {
+
+                                            console.log("MaterialPool sending:" + materialObj[ i ].emits + ' key:' + materialObj[ i ].key + ' i:' + i )
+
+                                            // Note that 'i' is the name of the material, instead of a numerical index (which it is in ModelPool and TexturePool).
 
                                             this.util.emitter.emit( materialObj[ i ].emits, prim, materialObj[ i ].key, i );
 
                                         }
-
-
 
                                     } // end of material addition.
 
