@@ -22103,14 +22103,9 @@
 
 	                                                                                                    console.log("MTL file for prim:" + prim.name + " loaded, parsing....");
 
+	                                                                                                    // Returns an array with one or more materials.
+
 	                                                                                                    m = this.computeObjMaterials(data, prim, path);
-
-	                                                                                                    if (!m.name) {
-
-	                                                                                                                        m.name = this.util.getBaseName(path);
-	                                                                                                    }
-
-	                                                                                                    console.log("ADDING MATERIAL ARRAY:" + m.name + " to Prim:" + prim.name);
 
 	                                                                                                    break;
 
@@ -22124,15 +22119,19 @@
 
 	                                                            // Set up the Material object(s).
 
-	                                                            if (m && m.length) {
+	                                                            window.mm = m;
 
-	                                                                                for (var i = 0; i < m.length; i++) {
+	                                                            if (m) {
+
+	                                                                                for (var i in m) {
 
 	                                                                                                    var mi = m[i];
 
 	                                                                                                    mi.type = type, mi.path = path, mi.emits = this.util.emitter.events.MATERIAL_READY;
 
-	                                                                                                    this.addAsset(mi[i]);
+	                                                                                                    console.log("MaterialPool::addMaterial(): adding" + mi.name + " to Prim:" + prim.name);
+
+	                                                                                                    mi = this.addAsset(mi[i]);
 	                                                                                }
 	                                                            }
 
@@ -22153,7 +22152,8 @@
 
 	                                                            var cacheBust = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
 
-	                                                            var _loop = function _loop(i) {
+
+	                                                            for (var i = 0; i < pathList.length; i++) {
 
 	                                                                                var path = pathList[i];
 
@@ -22161,61 +22161,62 @@
 
 	                                                                                if (path) {
 
-	                                                                                                    var poolMaterial = _this3.pathInList(path);
+	                                                                                                    var poolMaterial = this.pathInList(path);
 
 	                                                                                                    if (poolMaterial) {
 
 	                                                                                                                        prim.materials.push(poolMaterial); // just reference an existing texture in this pool.
 	                                                                                                    } else {
+	                                                                                                                        (function () {
 
-	                                                                                                                        // Get the image mimeType.
+	                                                                                                                                            // Get the image mimeType.
 
-	                                                                                                                        var mimeType = _this3.materialMimeTypes[_this3.util.getFileExtension(path)];
+	                                                                                                                                            var mimeType = _this3.materialMimeTypes[_this3.util.getFileExtension(path)];
 
-	                                                                                                                        // check if mimeType is OK.
+	                                                                                                                                            // check if mimeType is OK.
 
-	                                                                                                                        if (mimeType) {
+	                                                                                                                                            if (mimeType) {
 
-	                                                                                                                                            _this3.doRequest(path, i, function (updateObj) {
+	                                                                                                                                                                _this3.doRequest(path, i, function (updateObj) {
 
-	                                                                                                                                                                /* 
-	                                                                                                                                                                 * updateObj returned from GetAssets has the following structure:
-	                                                                                                                                                                 * { 
-	                                                                                                                                                                 *   pos: pos, 
-	                                                                                                                                                                 *   path: requestURL, 
-	                                                                                                                                                                 *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
-	                                                                                                                                                                 *   error: false|response 
-	                                                                                                                                                                 * } 
-	                                                                                                                                                                 */
+	                                                                                                                                                                                    /* 
+	                                                                                                                                                                                     * updateObj returned from GetAssets has the following structure:
+	                                                                                                                                                                                     * { 
+	                                                                                                                                                                                     *   pos: pos, 
+	                                                                                                                                                                                     *   path: requestURL, 
+	                                                                                                                                                                                     *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
+	                                                                                                                                                                                     *   error: false|response 
+	                                                                                                                                                                                     * } 
+	                                                                                                                                                                                     */
 
-	                                                                                                                                                                if (updateObj.data) {
+	                                                                                                                                                                                    if (updateObj.data) {
 
-	                                                                                                                                                                                    var materialObj = _this3.addMaterial(prim, updateObj.data, updateObj.path, updateObj.pos, mimeType, prim.type);
+	                                                                                                                                                                                                        var materialObj = _this3.addMaterial(prim, updateObj.data, updateObj.path, updateObj.pos, mimeType, prim.type);
 
-	                                                                                                                                                                                    if (materialObj) {
+	                                                                                                                                                                                                        if (materialObj) {
 
-	                                                                                                                                                                                                        //////////////prim.materials.push( materialObj );
+	                                                                                                                                                                                                                            //////////////prim.materials.push( materialObj );
 
-	                                                                                                                                                                                                        _this3.util.emitter.emit(materialObj.emits, prim, materialObj.key, i);
-	                                                                                                                                                                                    } // end of material addition.
-	                                                                                                                                                                } else {
+	                                                                                                                                                                                                                            for (var _i in materialObj) {
 
-	                                                                                                                                                                                    console.error('MaterialPool::getMaterials(): no data found for:' + updateObj.path);
-	                                                                                                                                                                }
-	                                                                                                                                            }, cacheBust, mimeType, 0); // end of this.doRequest(), initial request at 0 tries
-	                                                                                                                        } else {
+	                                                                                                                                                                                                                                                _this3.util.emitter.emit(materialObj[_i].emits, prim, materialObj[_i].key, _i);
+	                                                                                                                                                                                                                            }
+	                                                                                                                                                                                                        } // end of material addition.
+	                                                                                                                                                                                    } else {
 
-	                                                                                                                                            console.error('MaterialPool::getModels(): file type "' + _this3.util.getFileExtension(path) + ' not supported, not loading');
-	                                                                                                                        }
+	                                                                                                                                                                                                        console.error('MaterialPool::getMaterials(): no data found for:' + updateObj.path);
+	                                                                                                                                                                                    }
+	                                                                                                                                                                }, cacheBust, mimeType, 0); // end of this.doRequest(), initial request at 0 tries
+	                                                                                                                                            } else {
+
+	                                                                                                                                                                console.error('MaterialPool::getModels(): file type "' + _this3.util.getFileExtension(path) + ' not supported, not loading');
+	                                                                                                                                            }
+	                                                                                                                        })();
 	                                                                                                    }
 	                                                                                } else {
 
 	                                                                                                    console.warn('MaterialPool::getMaterials(): no path supplied for position ' + i);
 	                                                                                } // end of valid path
-	                                                            };
-
-	                                                            for (var i = 0; i < pathList.length; i++) {
-	                                                                                _loop(i);
 	                                                            } // end of for loop
 	                                        }
 	                    }]);
@@ -23713,9 +23714,14 @@
 
 	                        //prim.materials.push( material );
 
-	                        // TODO: MAKE ARRAY CONCAT FOR MULTIPLE ADDITIONS OF MATERIALS HERE..
+	                        // Material is returned as an associative array, since multiple materials may be found in one .mtl file.
 
-	                        prim.materials[pos] = material;
+	                        for (var i in material) {
+
+	                                prim.materials.push(material[i]);
+	                        }
+
+	                        //prim.materials[ pos ] = material;
 
 	                        // TODO:
 

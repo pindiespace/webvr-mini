@@ -312,9 +312,15 @@ class PrimFactory {
 
         //prim.materials.push( material );
 
-        // TODO: MAKE ARRAY CONCAT FOR MULTIPLE ADDITIONS OF MATERIALS HERE..
+        // Material is returned as an associative array, since multiple materials may be found in one .mtl file.
 
-        prim.materials[ pos ] = material;
+        for ( let i in material ) {
+
+            prim.materials.push( material[ i ] );
+
+        }
+
+        //prim.materials[ pos ] = material;
 
         // TODO:
 

@@ -324,15 +324,9 @@ class MaterialPool extends AssetPool {
 
                 console.log("MTL file for prim:" + prim.name + " loaded, parsing....")
 
+                // Returns an array with one or more materials.
+
                 m = this.computeObjMaterials( data, prim, path );
-
-                if ( ! m.name ) {
-
-                    m.name = this.util.getBaseName( path );
-
-                }
-
-                console.log("ADDING MATERIAL ARRAY:" + m.name + " to Prim:" + prim.name )
 
                 break;
 
@@ -346,9 +340,11 @@ class MaterialPool extends AssetPool {
 
         // Set up the Material object(s).
 
-        if ( m && m.length ) {
+        window.mm = m;
 
-            for ( let i = 0; i < m.length; i++ ) {
+        if ( m ) {
+
+            for ( let i in m ) {
 
                 let mi = m[ i ];
 
@@ -358,7 +354,9 @@ class MaterialPool extends AssetPool {
 
                 mi.emits = this.util.emitter.events.MATERIAL_READY;
 
-                this.addAsset( mi[ i ] );
+                console.log("MaterialPool::addMaterial(): adding" + mi.name + " to Prim:" + prim.name )
+
+                mi = this.addAsset( mi[ i ] );
 
             }
 
@@ -422,7 +420,13 @@ class MaterialPool extends AssetPool {
 
                                         //////////////prim.materials.push( materialObj );
 
-                                        this.util.emitter.emit( materialObj.emits, prim, materialObj.key, i );
+                                        for ( let i in materialObj ) {
+
+                                            this.util.emitter.emit( materialObj[ i ].emits, prim, materialObj[ i ].key, i );
+
+                                        }
+
+
 
                                     } // end of material addition.
 
