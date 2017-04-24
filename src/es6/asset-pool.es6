@@ -86,6 +86,29 @@ class AssetPool {
 
     }
 
+    nameInList ( name ) {
+
+        if ( name ) {
+
+            for ( let i in this.keyList ) {
+
+                let o = this.keyList[ i ];
+
+                if ( o.name ) {
+
+                    return o;
+
+                }
+
+            }
+
+
+        }
+
+        return null;
+
+    }
+
     /** 
      * Check if the actual object (not a clone) has already been added to the list.
      * @param {Object} the test object.
@@ -93,13 +116,17 @@ class AssetPool {
      */
     findByObj ( obj ) {
 
-        for ( let i in this.keyList ) {
+        if ( obj ) {
 
-            let o = this.keyList[ i ];
+            for ( let i in this.keyList ) {
 
-            if ( o === obj ) {
+                let o = this.keyList[ i ];
 
-                return obj;
+                if ( o === obj ) {
+
+                    return o;
+
+                }
 
             }
 

@@ -33,6 +33,186 @@ class MaterialPool extends AssetPool {
     }
 
     /** 
+     * extract additional options for texture maps in OBJ format. Assumes that 
+     * a texture file was specified as the last data item in the line. Only the 
+     * options specified in the file are added (so calling program must test for them).
+     * @param {Array} data the line of the file for a texture map.
+     */
+    computeTextureMapOptions( data ) {
+
+        let options = {};
+
+        // If there there are no options, return an empty object.
+
+        if ( data.length < 4 ) {
+
+            return options;
+
+        }
+
+        for ( let i = 0; i < data.length - 1; i += 2 ) {
+
+            // Get rid of the hyphen.
+
+            let d = data[ i ].substr( 1 );
+
+            // get the value of the option.
+
+            let d2 = data[ i + 1 ];
+
+            switch ( d ) {
+
+                case 'blenu':  // texture blends in horizontal direction
+                case 'blenv': // texture blends in vertical direction
+                case 'cc': // color correction, only with color maps (map_Ka, map_Kd, and map_Ks)
+                case 'clamp': // restrict textures to 0-1 range
+
+                    if ( d2 === 'off' ) options[ d ] = false; else options[ d ] = true;
+
+                    break;
+
+                case 'bm': // bump map multiplier, should be 0-1
+
+                    if ( this.util.isFinite( parseFloat( d2 ) ) ) {
+
+                        options.bm = d2;
+
+                    }
+
+                    break;
+
+                case 'boost': // shapen, any non-negative number
+
+                    d2 = parseFloat( d2 );
+
+                    if ( d2 >= 0 ) {
+
+                        options.boost = d2;
+
+                    }
+
+                    break;
+
+                case 'imfchan': // channel used to create scalar or bump texture, (r | g | b | m | l | z)
+
+                    options.infchan = d2;
+
+                    break;
+
+                case 'mm': // base gain (makes brighter)
+
+                    if ( this.util.isFinite( parseFloat( d2 ) ) ) {
+
+                        options.mm = d2;
+
+                    }
+
+                    break;
+
+                case 'o': // offset texture map origin x, y z
+
+                    if ( i + 3 < data.length - 1 ) {
+
+                        options.o = [];
+
+                        if ( this.util.isFinite( parseFloat( d2 ) ) ) {
+
+                            options.o[ 0 ] = d2;
+                        }
+
+                        if ( this.util.isFinite( parseFloat ( data[ i + 2 ] ) ) ) {
+
+                            options.o[ 1 ] = data[ i + 2 ];
+
+                        }
+
+                        if ( this.util.isFinite( parseFloat( data[ i + 3 ] ) ) ) {
+
+                            options.o[ 2 ] = data[ i + 3 ];
+
+                        }
+
+                    }
+
+                    break;
+
+                case 's': // scales the size of the texture pattern, default 1,1,1
+
+                    if ( i + 3 < data.length - 1 ) {
+
+                        options.s = [];
+
+                        if ( this.util.isFinite( parseFloat( d2 ) ) ) {
+
+                            options.s[ 0 ] = d2;
+                        }
+
+                        if ( this.util.isFinite( parseFloat ( data[ i + 2 ] ) ) ) {
+
+                            options.s[ 1 ] = data[ i + 2 ];
+
+                        }
+
+                        if ( this.util.isFinite( parseFloat( data[ i + 3 ] ) ) ) {
+
+                            options.s[ 2 ] = data[ i + 3 ];
+
+                        }
+
+                    }
+
+                    break;
+
+                case 't': // turn on texture turbulence (u, v, w )
+
+                    if ( i + 3 < data.length - 1 ) {
+
+                        options.t = [];
+
+                        if ( this.util.isFinite( parseFloat( d2 ) ) ) {
+
+                            options.t[ 0 ] = d2;
+                        }
+
+                        if ( this.util.isFinite( parseFloat ( data[ i + 2 ] ) ) ) {
+
+                            options.t[ 1 ] = data[ i + 2 ];
+
+                        }
+
+                        if ( this.util.isFinite( parseFloat( data[ i + 3 ] ) ) ) {
+
+                            options.t[ 2 ] = data[ i + 3 ];
+
+                        }
+
+                    }
+
+                    break;
+
+                case 'texres':
+
+                    options.texres = d2;
+
+                    break;
+
+                default: 
+
+                    console.error( 'unknown texture map option: ' + data );
+
+                    break;
+
+            }
+
+        }
+
+        // Options could be empty.
+
+        return options;
+
+    }
+
+    /** 
      * Compute material properties for a model.
      * Similar to:
      * @link https://github.com/tiansijie/ObjLoader/blob/master/src/objLoader.js
@@ -62,15 +242,19 @@ class MaterialPool extends AssetPool {
 
             line = line.trim();
 
-            let data = line.split( ' ' );
+            // First value, the directive.
 
-            let type = data[ 0 ];
+            let type = line.split( ' ' )[ 0 ].trim();
+
+            // All other values as an array.
+
+            let data = line.substr( type.length ).trim().split( ' ' );
 
              switch ( type ) {
 
                 case 'newmtl': // name of material.
 
-                    currName = data[ 1 ];
+                    currName = data[ 0 ].trim();
 
                     material[ currName ] = { name: currName };
 
@@ -84,15 +268,15 @@ class MaterialPool extends AssetPool {
 
                     } else {
 
+                        data[ 0 ] = parseFloat( data[ 0 ] ),
+
                         data[ 1 ] = parseFloat( data[ 1 ] ),
 
-                        data[ 2 ] = parseFloat( data[ 2 ] ),
+                        data[ 2 ] = parseFloat( data[ 2 ] );
 
-                        data[ 3 ] = parseFloat( data[ 3 ] );
+                        if ( currName && Number.isFinite( data[ 0 ] ) && Number.isFinite( data[ 1 ] ) && Number.isFinite( data[ 2 ] ) ) {
 
-                        if ( currName && Number.isFinite( data[ 1 ] ) && Number.isFinite( data[ 2 ] ) && Number.isFinite( data[ 3 ] ) ) {
-
-                            material[ currName ].ambient = [ data[ 1 ], data[ 2 ], data[ 3 ] ];  
+                            material[ currName ].ambient = [ data[ 0 ], data[ 1 ], data[ 2 ] ];  
 
                         } else {
 
@@ -113,15 +297,15 @@ class MaterialPool extends AssetPool {
 
                     } else {
 
+                        data[ 0 ] = parseFloat( data[ 0 ] ),
+
                         data[ 1 ] = parseFloat( data[ 1 ] ),
 
-                        data[ 2 ] = parseFloat( data[ 2 ] ),
+                        data[ 2 ] = parseFloat( data[ 2 ] );
 
-                        data[ 3 ] = parseFloat( data[ 3 ] );
+                        if ( currName && Number.isFinite( data[ 0 ] ) && Number.isFinite( data[ 1 ] ) && Number.isFinite( data[ 2 ] ) ) {
 
-                        if ( currName && Number.isFinite( data[ 1 ] ) && Number.isFinite( data[ 2 ] ) && Number.isFinite( data[ 3 ] ) ) {
-
-                            material[ currName ].diffuse = [ data[ 1 ], data[ 2 ], data[ 3 ] ];
+                            material[ currName ].diffuse = [ data[ 0 ], data[ 1 ], data[ 2 ] ];
 
                         } else {
 
@@ -141,15 +325,15 @@ class MaterialPool extends AssetPool {
 
                     } else {
 
+                        data[ 0 ] = parseFloat( data[ 0 ] ),
+
                         data[ 1 ] = parseFloat( data[ 1 ] ),
 
-                        data[ 2 ] = parseFloat( data[ 2 ] ),
+                        data[ 2 ] = parseFloat( data[ 2 ] );
 
-                        data[ 3 ] = parseFloat( data[ 3 ] );
+                        if ( currName && Number.isFinite( data[ 0 ] ) && Number.isFinite( data[ 1 ] ) && Number.isFinite( data[ 2 ] ) ) {
 
-                        if ( currName && Number.isFinite( data[ 1 ] ) && Number.isFinite( data[ 2 ] ) && Number.isFinite( data[ 3 ] ) ) {
-
-                            material[ currName ].specular = [ data[ 1 ], data[ 2 ], data[ 3 ] ];
+                            material[ currName ].specular = [ data[ 0 ], data[ 1 ], data[ 2 ] ];
 
                         } else {
 
@@ -169,11 +353,11 @@ class MaterialPool extends AssetPool {
 
                     } else {
 
-                        data[ 1 ] = parseFloat( data[ 1 ] );
+                        data[ 0 ] = parseFloat( data[ 0 ] );
 
-                        if ( currName && Number.isFinite( data[ 1 ] ) ) {
+                        if ( currName && Number.isFinite( data[ 0 ] ) ) {
 
-                            material[ currName].specularFactor = data[ 1 ];    
+                            material[ currName].specularFactor = data[ 0 ];    
 
                         } else {
 
@@ -194,11 +378,11 @@ class MaterialPool extends AssetPool {
 
                     } else {
 
-                        data[ 1 ] = parseFloat( data[ 1 ] );
+                        data[ 0 ] = parseFloat( data[ 0 ] );
 
-                        if ( currName && Number.isFinite( data[ 1 ] ) ) {
+                        if ( currName && Number.isFinite( data[ 0 ] ) ) {
 
-                            material[ currName ].transparency = parseFloat( data[ 1 ] ); // single value, 0.0 - 1.0
+                            material[ currName ].transparency = parseFloat( data[ 0 ] ); // single value, 0.0 - 1.0
 
                         } else {
 
@@ -218,11 +402,11 @@ class MaterialPool extends AssetPool {
 
                     } else {
 
-                        data[ 1 ] = parseInt( data[ 1 ] );
+                        data[ 0 ] = parseInt( data[ 0 ] );
 
-                        if ( currName && Number.isFinite( data[ 1 ] ) && data[ 1 ] > 0 && data[ 1 ] < 11 ) {
+                        if ( currName && Number.isFinite( data[ 0 ] ) && data[ 0 ] > 0 && data[ 0 ] < 11 ) {
 
-                            material[ currName ].illum = data[ 1 ];
+                            material[ currName ].illum = data[ 0 ];
 
                         }
 
@@ -231,27 +415,6 @@ class MaterialPool extends AssetPool {
                     break;
 
                 case 'map_Kd':   // diffuse map, an image file (e.g. file.jpg)
-
-                    /* 
-                     * This loads the file, and appends to Prim texture list using the LoadTexture object.
-                     * @link  "filename" is the name of a color texture file (.mpc), a color 
-                     * procedural texture file (.cxc), or an image file.
-                     * @link http://paulbourke.net/dataformats/mtl/
-                     * 
-                     * TODO: support options
-                     * -blenu on | off    texture blending in horizontal direction
-                     * -blenv on | off    texture blending in vertical direction
-                     * -bm    mult        bump multiplier, only with 'bump'.
-                     * -boost value       sharpens mipmaps (may cause texture crawling)
-                     * -cc on | off       color correction, can only be used for colormaps map_Ka, map_Kd, and map_Ks
-                     * -clamp on | off    texture clamped 0-1
-                     * -imfchan r | g | b | m | l | z channel used to create bump texture
-                     * -mm base gain      range of variation for color, base adds base value (brightens), gain increases contrast
-                     * -o u v w           shifts map origin from 0, 0
-                     * -t u v w           adds turbulence, so tiling is less repetitive
-                     * -texres resolution scale up non-power of 2
-                     */
-
                 case 'map_Ks':   // specular map
                 case 'map_Ka':   // ambient map
                 case 'map_d':    // alpha map
@@ -259,15 +422,28 @@ class MaterialPool extends AssetPool {
                 case 'map_bump': // bumpmap
                 case 'disp':     // displacement map
 
-                    console.log("MaterialPool::computeObjMaterials():::::::::::::GOTTA DIFFUSE MAP (TEXTURE) in OBJ MTL file: " + data[ 1 ] )
+                    /* 
+                     * This loads the file, and appends to Prim texture list using the LoadTexture object.
+                     * @link  "filename" is the name of a color texture file (.mpc), a color 
+                     * procedural texture file (.cxc), or an image file.
+                     * @link http://paulbourke.net/dataformats/mtl/
+                     */
 
-                    // TODO: CONFIRM THAT THIS LOADS CORRECTLY!!!!!!!
+                    let tPath = data[ 0 ].trim();
 
                     if ( currName ) {
 
-                        // Note: attaches to prim.textures, we pass our type as the texture type (map_Kd, map_Ks...)
+                        // get options, if present, and add them to the getTextures() call.
 
-                        this.texturePool.getTextures( prim, [ dir + data[ 1 ] ], true, false, type );
+                        let options = this.computeTextureMapOptions( data );
+
+                        /*
+                         * Note: the texture attaches to prim.textures, so we pass our type as the texture type (map_Kd, map_Ks...).
+                         * Note: the sixth paramater, is NULL since it defines a specific WebGL texture type (we want the default).
+                         * Note: if options are present, we pass those in as well.
+                         */
+
+                        this.texturePool.getTextures( prim, [ dir + tPath ], true, false, type, null, options );
 
                     }
 
@@ -319,8 +495,6 @@ class MaterialPool extends AssetPool {
                 // Returns an array with one or more materials.
 
                 m = this.computeObjMaterials( data, prim, path );
-
-                console.log("IMMEDIATELY M is:" + typeof m)
 
                 break;
 

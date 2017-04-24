@@ -1413,7 +1413,6 @@ class Mesh {
 
         console.log( 'Mesh::vertexToGeometry(): vertices:' + vertices.length / 3 + ' indices:' + indices.length + ' texCoords:' + texCoords.length / 2 );
 
-
         geo.setVertices( vertices );
 
         geo.setIndices( indices );

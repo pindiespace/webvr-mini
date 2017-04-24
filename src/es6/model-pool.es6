@@ -184,17 +184,23 @@ class ModelPool extends AssetPool {
 
         let iNormals = [];
 
+        let objMtl = this.util.DEFAULT_KEY;
+
         lines.forEach( ( line ) => {
 
-            //line = line.trim();
+            // First value.
 
             let type = line.split( ' ' )[ 0 ].trim();
 
+            // All other values as a string.
+
             let data = line.substr( type.length ).trim();
+
+            let numObjs = 0;
 
             switch ( type ) {
 
-                case 'o': // object name
+                case 'o': // object name (could be several in file)
 
                     if ( ! prim.name ) {
 
@@ -258,11 +264,17 @@ class ModelPool extends AssetPool {
 
                 case 'mtllib': // materials library data
 
-                    // TODO: Load material file data.
+                    // Load material file data. Note that multiple files may be specified here.
 
-                    console.log(":::::::::::::GOTTA MATERIAL FILE IN OBJ FILE: " + data );
+                    let mtls = data.split( ' ' );
 
-                    this.materialPool.getMaterials( prim, [ dir + data ], true );
+                    for ( let i = 0; i < mtls.length; i++ ) {
+
+                        this.materialPool.getMaterials( prim, [ dir + data ], true );
+
+                    }
+
+                    //this.materialPool.getMaterials( prim, [ dir + data ], true );
 
                     break;
 
@@ -271,6 +283,8 @@ class ModelPool extends AssetPool {
                     // TODO: define how to usemtl (keep coordinate start position??????/)
 
                      console.log("::::::::::::GOTTA USEMTL in OBJ file: " + data );
+
+                     objMtl = data;
 
                     break;
 
@@ -281,7 +295,9 @@ class ModelPool extends AssetPool {
                     // @link https://people.cs.clemson.edu/~dhouse/courses/405/docs/brief-obj-file-format.html
 
                     break;
-
+                // case 'maplib':
+                // case 'usemap'
+                //  break;
                 case 'vp': // parameter vertices
                 case 'p': // point
                 case 'l': // line
@@ -344,7 +360,9 @@ class ModelPool extends AssetPool {
 
             texCoords: texCoords,
 
-            normals: normals
+            normals: normals,
+
+            material: objMtl
 
         }
 
@@ -423,6 +441,12 @@ class ModelPool extends AssetPool {
 
         if ( d ) {
 
+            d.type = type,
+
+            d.path = path,
+
+            d.emits = emitEvent;
+
             /*
              * Model format which must be returned by Mesh or procedural geometry creation.
              * {
@@ -430,14 +454,11 @@ class ModelPool extends AssetPool {
              *   indices: indices,
              *   texCoords: texCoords,
              *   normals: normals
+             *   type: type.
+             *   path: file path.
+             *   usemtl: util.DEFAULT_KEY ('default') or from OBJ file.
              * }
             */
-
-            d.type = type,
-
-            d.path = path,
-
-            d.emits = emitEvent;
 
         } else {
 
@@ -501,11 +522,13 @@ class ModelPool extends AssetPool {
 
                                     if ( modelObj ) {
 
+                                        // GEOMETRY_READY event.
+
                                         this.util.emitter.emit( modelObj.emits, prim, modelObj.key, modelObj.pos );
 
                                     } else {
 
-                                        console.error( 'TexturePool::getTextures(): file:' + path + ' could not be parsed' );
+                                        console.error( 'TexturePool::getModels(): file:' + path + ' could not be parsed' );
 
                                     }
 

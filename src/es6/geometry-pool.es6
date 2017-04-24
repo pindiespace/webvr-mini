@@ -3450,6 +3450,10 @@ class GeometryPool {
 
         if( pathList && ( prim.type === this.typeList.MESH ) ) {
 
+            /* 
+             * Mesh geometry, uses data from a file in OBJ wavefront format.
+             */
+
             for ( let i = 0; i < pathList.length; i++ ) {
 
                 let path = pathList[ i ];
@@ -3496,10 +3500,10 @@ class GeometryPool {
              *   vertices: vertices,
              *   indices: indices,
              *   texCoords: texCoords,
-             *   normals: normals
-             *   type: type
-             *   path: no path
-             *   id: NOT_IN_LIST (not in the model pool).
+             *   normals: normals,
+             *   type: type,
+             *   path: key to the ModelPool,
+             *   usemtl: util.DEFAULT_KEY (always 'default')
              * }
              */
 
@@ -3517,11 +3521,13 @@ class GeometryPool {
 
             m.path = m.key,
 
+            // Default material, since none specified.
+
+            m.material = this.util.DEFAULT_KEY,
+
             // Add the emit event.
 
             m.emits = this.util.emitter.events.GEOMETRY_READY;
-
-            m.id = prim.type;   // Not in the model pool 
 
             // Procedural models ALWAYS go to position 0
 

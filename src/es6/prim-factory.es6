@@ -228,7 +228,8 @@ class PrimFactory {
     }
 
     /** 
-     * Prims don't contrl their initialization, so let the factory do it.
+     * Prims don't contrl their initialization, so let the factory do it. This standard structure 
+     * is used to return values from proceedural geometry and OBJ wavefront files.
      * @param {prim} prim the Prim.
      * @param {String} key the identifying the geometry in the ModelPool.
      * @param {Object} coords coordinates object returned by procedural, Mesh, or ModelPool.
@@ -238,15 +239,42 @@ class PrimFactory {
      *   normals: normals, 
      *   texCoords: texCoords, 
      *   tangents: tangents
+     *   type: type.
+     *   path: file path.
+     *   usemtl: util.DEFAULT_KEY ('default') or from OBJ file.
      * };
      */
     initPrimGeometry ( prim, coords, pos ) {
 
-        /* 
-         * Add buffer data, and re-bind to WebGL.
-         * NOTE: Mesh callbacks don't actually add any data here 
-         * (this.meshCallback() passes empty coordinate arrays)
+        /*
+           TODO: test grabbing a material file from MaterialPool when a file wasn't specified by the material file.
+           TODO: make Mesh emit an event
+           TODO: World creates prim queue
+           TODO: if the OBJ loader encounters a new geometry, it recursively creates a new Prim.
+           TODO: check WebGL context creator (why errors?)
+           TODO: look for undefined paths in adding to AssetPool 'adding obj: undefined'
          */
+
+        /* 
+         * It is possible to get a usemtl command from an OBJ file, without a corresponding material file. 
+         * If so, check our MaterialPool for it.
+         */
+
+        if ( coords.usemtl !== this.util.DEFAULT_KEY ) {
+
+            // If we don't find it, don't worry. Either added with a 'mtllib' or leave it at the default material.
+
+            // TODO: confirm that we can grab a different material from the MaterialPool...
+
+            let material = this.materialPool.nameInList( coords.usemtl );
+
+            if ( prim.materials.length > 0 && prim.materials[ 0 ].name === this.util.DEFAULT_KEY ) {
+
+                prim.materials[ 0 ] = material; // replace default, if we loaded a material after initialization.
+
+            }
+
+        }
 
         // Update vertices if they were supplied.
 
@@ -276,9 +304,11 @@ class PrimFactory {
 
         prim.updateColors();
 
+        // If a usemtl was specified by a file load
+
         // Check our buffers for consistency.
 
-        prim.geometry.checkBufferData();
+        //////////prim.geometry.checkBufferData();
 
         //if ( prim.name === 'cubesphere' ) {
         //if ( prim.name === 'TestCapsule' ) {
@@ -303,7 +333,7 @@ class PrimFactory {
 
         console.log("checking buffer data for " + prim.name )
 
-        prim.geometry.checkBufferData();
+        /////////prim.geometry.checkBufferData();
 
     }
 
@@ -330,28 +360,6 @@ class PrimFactory {
             prim.materials.push( material );
 
         }
-
-        //prim.materials[ pos ] = material;
-
-        // TODO:
-
-        // BAD TANGENT DATA FOR TEAPOT!!!
-
-        // Use LIGHT object to define World Light. Shaders can use World Light, or local one.
-
-        // Add LIGHT to WORLD. FIGURE OUT STRATEGY TO BROADCAST LIGHT TO SHADERS.
-
-        // 1. Add Light to World. 2. Have World broadcast Light via Shader.addLight
-
-        // 3. have Shaders that use light use the added Light.
-
-        // TEST ACTUAL PRIM REMOVAL WHEN IT BECOMES INVALID
-
-        // LOAD A-FRAME MODELS (USING EDITOR)
-
-        // UI MODAL DIALOG ON HOVER OVER FAILED WEBVR
-
-        // ADD SOME SETINTERVALS DURING LONG COMPUTES
 
     }
 

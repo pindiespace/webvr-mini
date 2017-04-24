@@ -311,6 +311,7 @@ class TexturePool extends AssetPool {
      * @param {String|Number} pos the pos (index) for assigning the texture in the calling Prim .textures array
      * @param {String} mimeType the MIME type of the image
      * @param {Number} type the WebGL texture type (e.g. TEXTURE_2D, TEXTURE_CUBE_MAP).
+     * @param {Object} any additional params.
      */
     addTexture ( prim, image, path, pos, mimeType, type ) {
 
@@ -417,9 +418,13 @@ class TexturePool extends AssetPool {
      * are not checked for.
      * @param {Array[String]} pathList a list of URL paths to load.
      * @param {Boolean} cacheBust if true, add a http://url?random query string to request.
-     * @param {Boolean} keepDOMImage if true, keep the Image object we created the texture from (internal Blob). 
+     * @param {Boolean} keepDOMImage if true, keep the Image object we created the texture from (internal Blob).
+     * @param {String} use the way to use the texture, default is just 2D texture. Other options are borrowed from 
+     *                 OBJ file format, e.g. map_Kd, map_Ks...
+     * @param {WebGL.TEXTURE} textureType a WebGL-enumerated texture type (TEXTURE_2D, TEXTURE_3D...), default TEXTURE_2D.
+     * @param {Object} options if present, additional options for rendering the texture (e.g. scaling, sharpening, brightening).
      */
-    getTextures ( prim, pathList, cacheBust = true, keepDOMImage = false, use = this.util.DEFAULT_KEY ) {
+    getTextures ( prim, pathList, cacheBust = true, keepDOMImage = false, use = this.util.DEFAULT_KEY, textureType, options = {} ) {
 
         // TODO: check texture list. If paths are already there, just use the path
         // TODO: and return the webgl texture buffer object.
@@ -484,7 +489,7 @@ class TexturePool extends AssetPool {
 
                                     // Create a WebGLTexture from the Image (left off 'type' for gl.TEXTURE type).
 
-                                    let textureObj = this.addTexture( prim, image, updateObj.path, updateObj.pos, mimeType );
+                                    let textureObj = this.addTexture( prim, image, updateObj.path, updateObj.pos, mimeType, textureType );
 
                                     if ( textureObj ) {
 
@@ -506,7 +511,9 @@ class TexturePool extends AssetPool {
 
                                         // Save the usage, either 'default' or a key from an OBJ wavefront file (map_Kd, map_Ks...).
 
-                                        textureObj.use = use;
+                                        textureObj.use = use,
+
+                                        textureObj.options = options;
 
                                         // Emit a 'texture ready event' with the key in the pool and path (intercepted by Prim).
 
