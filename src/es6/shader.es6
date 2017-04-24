@@ -177,7 +177,7 @@ class Shader {
 
                 // Emit a PRIM_READY event.
 
-                this.util.emitter.emit( this.util.emitter.events.PRIM_READY, prim );
+                this.util.emitter.emit( this.util.emitter.events.PRIM_ADDED_TO_SHADER, prim );
 
             } else {
 
@@ -208,7 +208,7 @@ class Shader {
 
             // Emit a Prim removal event.
 
-            this.util.emitter.emit( this.util.emitter.events.PRIM_REMOVE, prim );
+            this.util.emitter.emit( this.util.emitter.events.PRIM_REMOVED_FROM_SHADER, prim );
 
         } else {
 
@@ -286,7 +286,7 @@ class Shader {
 
         for ( let i = 0; i < prim.textures.length; i++ ) {
 
-            if ( ! prim.textures[ i ].texture ) { // WebGL texture buffere created
+            if (! prim.textures[ i ] || ! prim.textures[ i ].texture ) { // WebGL texture buffere created
 
                 return false;
 

@@ -3454,29 +3454,39 @@ class GeometryPool {
 
                 let path = pathList[ i ];
 
+                // Could have an empty path.
+
+                if ( path ) {
+
                 let poolModel = this.modelPool.pathInList( path );
 
-                if ( poolModel ) {
+                    if ( poolModel ) {
 
-                    // Reload from the asset file.
+                        // Reload from the asset file.
 
-                    console.log( 'GeometryPool::getGeometries(): model file ' + path + ' already in the pool for:' + prim.name)
+                        console.log( 'GeometryPool::getGeometries(): model file ' + path + ' already in the pool for:' + prim.name)
 
-                    prim.models.push( poolModel ); // just reference an existing texture in this pool.
+                        prim.models.push( poolModel ); // just reference an existing texture in this pool.
+
+                    } else {
+
+                        // Load geometry from a file, with callback emitter GEOMETRY_READY in ModelPool, calling Prim.initPrim().
+
+                        console.log( 'GeometryPool::getGeometries(): new model file ' + path + ' for ' + prim.name );
+
+                        this.modelPool.getModels( prim, pathList, true );
+
+                    }
 
                 } else {
 
-                    // Load geometry from a file, with callback emitter GEOMETRY_READY in ModelPool, calling Prim.initPrim().
+                    console.warn( 'GeometryPool::getTextures(): no path supplied for position ' + i );
 
-                    console.log( 'GeometryPool::getGeometries(): new model file ' + path + ' for ' + prim.name );
-
-                    this.modelPool.getModels( prim, pathList, true );
-
-                }
+                } // end of valid path
 
             } // end of for loop
 
-        } else { 
+        } else { // NO PATHLIST (procedural instead)
 
             /* 
              * Procedural geometry, returns the same structure as modelPool.getModels();
@@ -3493,7 +3503,7 @@ class GeometryPool {
              * }
              */
 
-            console.log('GeometryPool::getGeometries() new procedural geometry for:' + prim.name)
+            console.log( 'GeometryPool::getGeometries() new procedural geometry for:' + prim.name );
 
             let m = this.modelPool.addAsset( this[ prim.type ]( prim ) );
 
@@ -3512,6 +3522,8 @@ class GeometryPool {
             m.emits = this.util.emitter.events.GEOMETRY_READY;
 
             m.id = prim.type;   // Not in the model pool 
+
+            // Procedural models ALWAYS go to position 0
 
             this.util.emitter.emit( m.emits, prim, m.key, 0 );
 

@@ -688,7 +688,13 @@ class Util {
      */
     getFilePath ( fname ) {
 
-        return fname.substring( 0, fname.lastIndexOf( '/' ) ) + '/';
+        if ( fname ) {
+
+            return fname.substring( 0, fname.lastIndexOf( '/' ) ) + '/';
+
+        }
+
+        return null;
 
     }
 
@@ -697,7 +703,13 @@ class Util {
      */
     getBaseName ( fname ) {
 
-        return fname.replace( /^(.*[/\\])?/, '' ).replace( /(\.[^.]*)$/, '' );
+        if ( fname ) {
+
+            return fname.replace( /^(.*[/\\])?/, '' ).replace( /(\.[^.]*)$/, '' );
+
+        }
+
+        return null;
 
     }
 
@@ -705,7 +717,13 @@ class Util {
 
     getFileExtension ( fname ) {
 
-        return fname.slice( ( ( fname.lastIndexOf( '.' ) - 1 >>> 0 ) + 2 ) ).toLowerCase();
+        if ( fname ) {
+
+            return fname.slice( ( ( fname.lastIndexOf( '.' ) - 1 >>> 0 ) + 2 ) ).toLowerCase();
+
+        }
+
+        return null;
 
     }
 

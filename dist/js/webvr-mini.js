@@ -1166,7 +1166,12 @@
 	                key: 'getFilePath',
 	                value: function getFilePath(fname) {
 
-	                        return fname.substring(0, fname.lastIndexOf('/')) + '/';
+	                        if (fname) {
+
+	                                return fname.substring(0, fname.lastIndexOf('/')) + '/';
+	                        }
+
+	                        return null;
 	                }
 
 	                /** 
@@ -1177,7 +1182,12 @@
 	                key: 'getBaseName',
 	                value: function getBaseName(fname) {
 
-	                        return fname.replace(/^(.*[/\\])?/, '').replace(/(\.[^.]*)$/, '');
+	                        if (fname) {
+
+	                                return fname.replace(/^(.*[/\\])?/, '').replace(/(\.[^.]*)$/, '');
+	                        }
+
+	                        return null;
 	                }
 
 	                // Get the file extension of a file.
@@ -1186,7 +1196,12 @@
 	                key: 'getFileExtension',
 	                value: function getFileExtension(fname) {
 
-	                        return fname.slice((fname.lastIndexOf('.') - 1 >>> 0) + 2).toLowerCase();
+	                        if (fname) {
+
+	                                return fname.slice((fname.lastIndexOf('.') - 1 >>> 0) + 2).toLowerCase();
+	                        }
+
+	                        return null;
 	                }
 
 	                // See if we're running in an iframe.
@@ -1335,11 +1350,9 @@
 
 	                                    TEXTURE_REMOVE: 'trm', // texture removal event
 
-	                                    PRIM_READY: 'prdy', // Prim added to Shader
+	                                    PRIM_ADDED_TO_SHADER: 'prdy', // Prim added to Shader
 
-	                                    PRIM_RENDERING: 'prrd', // Prim is being rendered by a Shader !!!!!!!!!!!!!!!!! TODO
-
-	                                    PRIM_REMOVE: 'prm', // a Prim was removed by a Shader
+	                                    PRIM_REMOVED_FROM_SHADER: 'prms', // a Prim was removed by a Shader
 
 	                                    PRIM_FAIL: 'prmfl', // a Prim couldn't load its assets
 
@@ -4492,7 +4505,7 @@
 
 	                                        // Emit a PRIM_READY event.
 
-	                                        this.util.emitter.emit(this.util.emitter.events.PRIM_READY, prim);
+	                                        this.util.emitter.emit(this.util.emitter.events.PRIM_ADDED_TO_SHADER, prim);
 	                                } else {
 
 	                                        console.warn(prim.name + ' already added to Shader::' + this.name);
@@ -4522,7 +4535,7 @@
 
 	                                // Emit a Prim removal event.
 
-	                                this.util.emitter.emit(this.util.emitter.events.PRIM_REMOVE, prim);
+	                                this.util.emitter.emit(this.util.emitter.events.PRIM_REMOVED_FROM_SHADER, prim);
 	                        } else {
 
 	                                console.warn(prim.name + ' not found in Shader::' + this.name);
@@ -4597,7 +4610,7 @@
 
 	                        for (var i = 0; i < prim.textures.length; i++) {
 
-	                                if (!prim.textures[i].texture) {
+	                                if (!prim.textures[i] || !prim.textures[i].texture) {
 	                                        // WebGL texture buffere created
 
 	                                        return false;
@@ -11900,25 +11913,34 @@
 
 	                                        var path = pathList[i];
 
-	                                        var poolModel = this.modelPool.pathInList(path);
+	                                        // Could have an empty path.
 
-	                                        if (poolModel) {
+	                                        if (path) {
 
-	                                                // Reload from the asset file.
+	                                                var poolModel = this.modelPool.pathInList(path);
 
-	                                                console.log('GeometryPool::getGeometries(): model file ' + path + ' already in the pool for:' + prim.name);
+	                                                if (poolModel) {
 
-	                                                prim.models.push(poolModel); // just reference an existing texture in this pool.
+	                                                        // Reload from the asset file.
+
+	                                                        console.log('GeometryPool::getGeometries(): model file ' + path + ' already in the pool for:' + prim.name);
+
+	                                                        prim.models.push(poolModel); // just reference an existing texture in this pool.
+	                                                } else {
+
+	                                                        // Load geometry from a file, with callback emitter GEOMETRY_READY in ModelPool, calling Prim.initPrim().
+
+	                                                        console.log('GeometryPool::getGeometries(): new model file ' + path + ' for ' + prim.name);
+
+	                                                        this.modelPool.getModels(prim, pathList, true);
+	                                                }
 	                                        } else {
 
-	                                                // Load geometry from a file, with callback emitter GEOMETRY_READY in ModelPool, calling Prim.initPrim().
-
-	                                                console.log('GeometryPool::getGeometries(): new model file ' + path + ' for ' + prim.name);
-
-	                                                this.modelPool.getModels(prim, pathList, true);
-	                                        }
+	                                                console.warn('GeometryPool::getTextures(): no path supplied for position ' + i);
+	                                        } // end of valid path
 	                                } // end of for loop
 	                        } else {
+	                                // NO PATHLIST (procedural instead)
 
 	                                /* 
 	                                 * Procedural geometry, returns the same structure as modelPool.getModels();
@@ -11954,6 +11976,8 @@
 	                                m.emits = this.util.emitter.events.GEOMETRY_READY;
 
 	                                m.id = prim.type; // Not in the model pool 
+
+	                                // Procedural models ALWAYS go to position 0
 
 	                                this.util.emitter.emit(m.emits, prim, m.key, 0);
 	                        }
@@ -12457,59 +12481,67 @@
 
 	                                var path = pathList[i];
 
-	                                var poolModel = _this3.pathInList(path);
+	                                // Could have an empty path.
 
-	                                if (poolModel) {
+	                                if (path) {
 
-	                                        prim.models.push(poolModel); // just reference an existing texture in this pool.
-	                                } else {
+	                                        var poolModel = _this3.pathInList(path);
 
-	                                        // Get the image mimeType.
+	                                        if (poolModel) {
 
-	                                        var mimeType = _this3.modelMimeTypes[_this3.util.getFileExtension(path)];
-
-	                                        // check if mimeType is OK.
-
-	                                        if (mimeType) {
-
-	                                                _this3.doRequest(path, i, function (updateObj) {
-
-	                                                        /* 
-	                                                         * updateObj returned from GetAssets has the following structure:
-	                                                         * { 
-	                                                         *   pos: pos, 
-	                                                         *   path: requestURL, 
-	                                                         *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
-	                                                         *   error: false|response 
-	                                                         * } 
-	                                                         */
-
-	                                                        if (updateObj.data) {
-
-	                                                                var modelObj = _this3.addModel(prim, updateObj.data, updateObj.path, updateObj.pos, mimeType, prim.type);
-
-	                                                                if (modelObj) {
-
-	                                                                        _this3.util.emitter.emit(modelObj.emits, prim, modelObj.key, modelObj.pos);
-	                                                                } else {
-
-	                                                                        console.error('TexturePool::getTextures(): file:' + path + ' could not be parsed');
-	                                                                }
-	                                                        } else {
-
-	                                                                console.error('ModelPool::getModels(): no data found for:' + updateObj.path);
-	                                                        }
-	                                                }, cacheBust, mimeType, 0); // end of this.doRequest(), initial request at 0 tries
+	                                                prim.models.push(poolModel); // just reference an existing texture in this pool.
 	                                        } else {
 
-	                                                console.error('ModelPool::getModels(): file type "' + _this3.util.getFileExtension(path) + ' not supported, not loading');
+	                                                // Get the image mimeType.
+
+	                                                var mimeType = _this3.modelMimeTypes[_this3.util.getFileExtension(path)];
+
+	                                                // check if mimeType is OK.
+
+	                                                if (mimeType) {
+
+	                                                        _this3.doRequest(path, i, function (updateObj) {
+
+	                                                                /* 
+	                                                                 * updateObj returned from GetAssets has the following structure:
+	                                                                 * { 
+	                                                                 *   pos: pos, 
+	                                                                 *   path: requestURL, 
+	                                                                 *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
+	                                                                 *   error: false|response 
+	                                                                 * } 
+	                                                                 */
+
+	                                                                if (updateObj.data) {
+
+	                                                                        var modelObj = _this3.addModel(prim, updateObj.data, updateObj.path, updateObj.pos, mimeType, prim.type);
+
+	                                                                        if (modelObj) {
+
+	                                                                                _this3.util.emitter.emit(modelObj.emits, prim, modelObj.key, modelObj.pos);
+	                                                                        } else {
+
+	                                                                                console.error('TexturePool::getTextures(): file:' + path + ' could not be parsed');
+	                                                                        }
+	                                                                } else {
+
+	                                                                        console.error('ModelPool::getModels(): no data found for:' + updateObj.path);
+	                                                                }
+	                                                        }, cacheBust, mimeType, 0); // end of this.doRequest(), initial request at 0 tries
+	                                                } else {
+
+	                                                        console.error('ModelPool::getModels(): file type "' + _this3.util.getFileExtension(path) + ' not supported, not loading');
+	                                                }
 	                                        }
-	                                }
+	                                } else {
+
+	                                        console.warn('ModelPool::getModels(): no path supplied for position ' + i);
+	                                } // end of valid path
 	                        };
 
 	                        for (var i = 0; i < pathList.length; i++) {
 	                                _loop(i);
-	                        } // end of loop
+	                        } // end of for loop
 	                }
 	        }]);
 
@@ -12569,15 +12601,18 @@
 	                key: 'pathInList',
 	                value: function pathInList(path) {
 
-	                        for (var i in this.keyList) {
+	                        if (path) {
 
-	                                var obj = this.keyList[i];
+	                                for (var i in this.keyList) {
 
-	                                console.log('^^^^obj.path:' + obj.path + ' path:' + path);
+	                                        var obj = this.keyList[i];
 
-	                                if (obj.path === path) {
+	                                        //////////////////////////console.log( '^^^^obj.path:' + obj.path + ' path:' + path )
 
-	                                        return obj;
+	                                        if (obj.path === path) {
+
+	                                                return obj;
+	                                        }
 	                                }
 	                        }
 
@@ -13403,109 +13438,105 @@
 
 	                                var path = pathList[_i];
 
-	                                console.log('path to load: ' + path);
+	                                if (path === null) console.log('NULL AT: ' + _i);
 
-	                                var poolTexture = _this2.pathInList(path);
+	                                // Could have an empty path.
 
-	                                console.log('>>>>>>>>>>>>>>>poolTexture is:' + poolTexture);
+	                                if (path) {
 
-	                                // TODO: LOADING ALL AT ONCE, SO NOBODY HAS TIME TO SEE IF SOMETHING HAS BEEN LOADED.
-	                                // TODO: LOAD SEQUENTIALLY?????????????????????????
+	                                        var poolTexture = _this2.pathInList(path);
 
-	                                // TODO: THIS TEST HAS TO BE DONE IN THE CALLBACK!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	                                // CALLBACK SHOULD TRIGGER NEXT LOAD IN THE QUEUE.
+	                                        // If it's already in TexturePool, just use.
 
-	                                // POSSIBLY DO THIS IN WORLD FOR EACH NEW PRIM.
+	                                        if (poolTexture) {
 
-	                                if (poolTexture) {
+	                                                console.log(')))))))))))))) found pre-existing texture ' + poolTexture.id + ' at path:' + path);
 
-	                                        console.log(')))))))))))))) found pre-existing texture ' + poolTexture.id + ' at path:' + path);
-
-	                                        prim.textures.push(poolTexture); // just reference an existing texture in this pool.
-	                                } else {
-
-	                                        // Get the image mimeType.
-
-	                                        var mimeType = _this2.textureMimeTypes[_this2.util.getFileExtension(path)];
-
-	                                        // check if mimeType is OK.
-
-	                                        if (mimeType) {
-
-	                                                /* 
-	                                                 * Use Fetch API to load the image, wrapped in a Promise timeout with 
-	                                                 * multiple retries possible (in parent class GetAssets). Return a 
-	                                                 * response.blob() for images, and add to DOM or WebGL texture here. 
-	                                                 * We apply the Blob data to a JS image to decode. Since this may not 
-	                                                 * be insteant, we catch the .onload event to actually send the WebGL texture.
-	                                                 */
-
-	                                                _this2.doRequest(path, _i, function (updateObj) {
-
-	                                                        /* 
-	                                                         * updateObj returned from GetAssets has the following structure:
-	                                                         * { 
-	                                                         *   pos: pos, 
-	                                                         *   path: requestURL, 
-	                                                         *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
-	                                                         *   error: false|response 
-	                                                         * } 
-	                                                         */
-
-	                                                        var image = new Image();
-
-	                                                        // Blob data type requires Image .onload for processing.
-
-	                                                        image.onload = function () {
-
-	                                                                // Create a WebGLTexture from the Image (left off 'type' for gl.TEXTURE type).
-
-	                                                                var textureObj = _this2.addTexture(prim, image, updateObj.path, updateObj.pos, mimeType);
-
-	                                                                if (textureObj) {
-
-	                                                                        if (!keepDOMImage) {
-
-	                                                                                // Kill the reference to our local Image and its (Blob) data.
-
-	                                                                                textureObj.image = null;
-
-	                                                                                // If you want to add to DOM, do so here.
-
-	                                                                                //document.body.appendChild( image );
-
-	                                                                                window.URL.revokeObjectURL(image.src);
-	                                                                        }
-
-	                                                                        // Add to prim.textures, at the position specified in updateObj.
-
-	                                                                        //prim.textures[ updateObj.pos ] = textureObj;
-
-	                                                                        // TODO: add with unique key to texturePool.
-
-	                                                                        // Emit a 'texture ready event' with the key in the pool and path.
-
-	                                                                        _this2.util.emitter.emit(textureObj.emits, prim, textureObj.key, updateObj.pos);
-	                                                                } else {
-
-	                                                                        console.error('TexturePool::getTextures(): file:' + path + ' could not be parsed');
-	                                                                }
-	                                                        }; // end of image.onload
-
-	                                                        // Create a URL to the Blob, and fire the onload event (internal browser URL instead of network).
-
-	                                                        image.src = window.URL.createObjectURL(updateObj.data);
-	                                                }, cacheBust, mimeType, 0); // end of this.doRequest(), initial request at 0 tries
+	                                                prim.textures.push(poolTexture); // just reference an existing texture in this pool.
 	                                        } else {
 
-	                                                console.error('TexturePool::getTextures(): file type "' + _this2.util.getFileExtension(path) + ' not supported, not loading');
+	                                                // Get the image mimeType.
+
+	                                                var mimeType = _this2.textureMimeTypes[_this2.util.getFileExtension(path)];
+
+	                                                // check if mimeType is OK.
+
+	                                                if (mimeType) {
+
+	                                                        /* 
+	                                                         * Use Fetch API to load the image, wrapped in a Promise timeout with 
+	                                                         * multiple retries possible (in parent class GetAssets). Return a 
+	                                                         * response.blob() for images, and add to DOM or WebGL texture here. 
+	                                                         * We apply the Blob data to a JS image to decode. Since this may not 
+	                                                         * be insteant, we catch the .onload event to actually send the WebGL texture.
+	                                                         */
+
+	                                                        _this2.doRequest(path, _i, function (updateObj) {
+
+	                                                                /* 
+	                                                                 * updateObj returned from GetAssets has the following structure:
+	                                                                 * { 
+	                                                                 *   pos: pos, 
+	                                                                 *   path: requestURL, 
+	                                                                 *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
+	                                                                 *   error: false|response 
+	                                                                 * } 
+	                                                                 */
+
+	                                                                var image = new Image();
+
+	                                                                // Blob data type requires Image .onload for processing.
+
+	                                                                image.onload = function () {
+
+	                                                                        // Create a WebGLTexture from the Image (left off 'type' for gl.TEXTURE type).
+
+	                                                                        var textureObj = _this2.addTexture(prim, image, updateObj.path, updateObj.pos, mimeType);
+
+	                                                                        if (textureObj) {
+
+	                                                                                if (!keepDOMImage) {
+
+	                                                                                        //document.body.appendChild( image );
+
+	                                                                                        // Remove the Blob URL
+
+	                                                                                        window.URL.revokeObjectURL(image.src);
+
+	                                                                                        // Kill the reference to our local Image and its (Blob) data.
+
+	                                                                                        textureObj.image = null;
+
+	                                                                                        // If you want to add to DOM, do so here.
+	                                                                                }
+
+	                                                                                // Emit a 'texture ready event' with the key in the pool and path (intercepted by Prim).
+
+	                                                                                _this2.util.emitter.emit(textureObj.emits, prim, textureObj.key, updateObj.pos);
+	                                                                        } else {
+
+	                                                                                console.error('TexturePool::getTextures(): file:' + path + ' could not be parsed');
+	                                                                        }
+	                                                                }; // end of image.onload
+
+	                                                                // Create a URL to the Blob, and fire the onload event (internal browser URL instead of network).
+
+	                                                                image.src = window.URL.createObjectURL(updateObj.data);
+	                                                        }, cacheBust, mimeType, 0); // end of this.doRequest(), initial request at 0 tries
+	                                                } else {
+
+	                                                        console.error('TexturePool::getTextures(): file type "' + _this2.util.getFileExtension(path) + '" not supported, not loading');
+	                                                }
 	                                        }
-	                                }
+	                                } else {
+
+	                                        console.warn('TexturePool::getTextures(): no path supplied for position ' + _i);
+	                                } // end of valid path
 	                        };
 
 	                        for (var _i = 0; _i < pathList.length; _i++) {
 	                                _loop(_i);
-	                        }
+	                        } // end of for loop for texture paths
 	                }
 	        }]);
 
@@ -13982,11 +14013,10 @@
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
 	                        vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                        ['obj/capsule/capsule1.png'], // texture present
+	                        ['obj/capsule/capsule1.png'], // texture present. TODO::: FIGURE OUT NUMBERING.
 	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0), // color,
 	                        true, // if true, apply texture to each face,
 	                        ['obj/capsule/capsule.obj'] // object files (.obj, .mtl)
-	                        ///////[ 'obj/capsule/capsule.obj', 'obj/capsule/capsule.mtl' ] // object files (.obj, .mtl)
 
 	                        );
 
@@ -21756,7 +21786,7 @@
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
-	                        value: true
+	                    value: true
 	});
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -21776,343 +21806,367 @@
 	'use strict';
 
 	var MaterialPool = function (_AssetPool) {
-	                        _inherits(MaterialPool, _AssetPool);
+	                    _inherits(MaterialPool, _AssetPool);
 
-	                        function MaterialPool(init, util, webgl, texturePool) {
-	                                                _classCallCheck(this, MaterialPool);
+	                    function MaterialPool(init, util, webgl, texturePool) {
+	                                        _classCallCheck(this, MaterialPool);
 
-	                                                console.log('in MaterialPool');
+	                                        console.log('in MaterialPool');
 
-	                                                // Initialize superclass.
+	                                        // Initialize superclass.
 
-	                                                var _this = _possibleConstructorReturn(this, (MaterialPool.__proto__ || Object.getPrototypeOf(MaterialPool)).call(this, util));
+	                                        var _this = _possibleConstructorReturn(this, (MaterialPool.__proto__ || Object.getPrototypeOf(MaterialPool)).call(this, util));
 
-	                                                _this.util = util, _this.webgl = webgl, _this.texturePool = texturePool;
+	                                        _this.util = util, _this.webgl = webgl, _this.texturePool = texturePool;
 
-	                                                _this.materialMimeTypes = {
+	                                        _this.materialMimeTypes = {
 
-	                                                                        'mtl': 'text/plain'
+	                                                            'mtl': 'text/plain'
 
-	                                                };
+	                                        };
 
-	                                                if (init) {
+	                                        if (init) {
 
-	                                                                        // do something
+	                                                            // do something
 
-	                                                }
+	                                        }
 
-	                                                return _this;
-	                        }
+	                                        return _this;
+	                    }
 
-	                        /** 
-	                         * Compute material properties for a model.
-	                         * Similar to:
-	                         * @link https://github.com/tiansijie/ObjLoader/blob/master/src/objLoader.js
-	                         * 
-	                         * Reference:
-	                         * @link http://paulbourke.net/dataformats/mtl/
-	                         * 
-	                         * @param {String} data the incoming data from the file.
-	                         * @param {Prim} prim the Prim object defined in prim.es6
-	                         * @param {String} path the path to the file. MTL files may reference other files in their directory.
-	                         */
+	                    /** 
+	                     * Compute material properties for a model.
+	                     * Similar to:
+	                     * @link https://github.com/tiansijie/ObjLoader/blob/master/src/objLoader.js
+	                     * 
+	                     * Reference:
+	                     * @link http://paulbourke.net/dataformats/mtl/
+	                     * 
+	                     * @param {String} data the incoming data from the file.
+	                     * @param {Prim} prim the Prim object defined in prim.es6
+	                     * @param {String} path the path to the file. MTL files may reference other files in their directory.
+	                     */
 
 
-	                        _createClass(MaterialPool, [{
-	                                                key: 'computeObjMaterials',
-	                                                value: function computeObjMaterials(data, prim, path) {
-	                                                                        var _this2 = this;
+	                    _createClass(MaterialPool, [{
+	                                        key: 'computeObjMaterials',
+	                                        value: function computeObjMaterials(data, prim, path) {
+	                                                            var _this2 = this;
 
-	                                                                        console.log('MaterialPool::computeObjMaterials(): loading model:' + path + ' for:' + prim.name);
+	                                                            console.log('MaterialPool::computeObjMaterials(): loading model:' + path + ' for:' + prim.name);
 
-	                                                                        var lineNum = 0;
+	                                                            var lineNum = 0;
 
-	                                                                        var material = {};
+	                                                            var material = [];
 
-	                                                                        var dir = this.util.getFilePath(path);
+	                                                            var currName = null;
 
-	                                                                        var lines = data.split('\n');
+	                                                            var dir = this.util.getFilePath(path);
 
-	                                                                        lines.forEach(function (line) {
+	                                                            var lines = data.split('\n');
 
-	                                                                                                line = line.trim();
+	                                                            lines.forEach(function (line) {
 
-	                                                                                                var data = line.split(' ');
+	                                                                                line = line.trim();
 
-	                                                                                                var type = data[0];
+	                                                                                var data = line.split(' ');
 
-	                                                                                                switch (type) {
+	                                                                                var type = data[0];
 
-	                                                                                                                        case 'newmtl':
-	                                                                                                                                                // name of material.
+	                                                                                switch (type) {
 
-	                                                                                                                                                material.name = data[1];
+	                                                                                                    case 'newmtl':
+	                                                                                                                        // name of material.
 
-	                                                                                                                                                break;
+	                                                                                                                        currName = data[1];
 
-	                                                                                                                        case 'Ka':
-	                                                                                                                                                // ambient
+	                                                                                                                        material[currName] = {};
 
-	                                                                                                                                                if (data.length < 3) {
+	                                                                                                                        ////material.name = data[ 1 ];
 
-	                                                                                                                                                                        console.error('MaterialPool::computeObjMaterials(): error in ambient material array at line:' + lineNum);
-	                                                                                                                                                } else {
+	                                                                                                                        break;
 
-	                                                                                                                                                                        data[1] = parseFloat(data[1]), data[2] = parseFloat(data[2]), data[3] = parseFloat(data[3]);
+	                                                                                                    case 'Ka':
+	                                                                                                                        // ambient
 
-	                                                                                                                                                                        if (Number.isFinite(data[1]) && Number.isFinite(data[2]) && Number.isFinite(data[3])) {
+	                                                                                                                        if (data.length < 3) {
 
-	                                                                                                                                                                                                material.ambient = [data[1], data[2], data[3]];
-	                                                                                                                                                                        } else {
+	                                                                                                                                            console.error('MaterialPool::computeObjMaterials(): error in ambient material array at line:' + lineNum);
+	                                                                                                                        } else {
 
-	                                                                                                                                                                                                console.error('MaterialPool::computerObjMaterials(): invalid ambient data at line:' + lineNum);
-	                                                                                                                                                                        }
-	                                                                                                                                                }
+	                                                                                                                                            data[1] = parseFloat(data[1]), data[2] = parseFloat(data[2]), data[3] = parseFloat(data[3]);
 
-	                                                                                                                                                break;
+	                                                                                                                                            if (currName && Number.isFinite(data[1]) && Number.isFinite(data[2]) && Number.isFinite(data[3])) {
 
-	                                                                                                                        case 'Kd':
-	                                                                                                                                                // diffuse
+	                                                                                                                                                                material[currName].ambient = [data[1], data[2], data[3]];
+	                                                                                                                                            } else {
 
-	                                                                                                                                                if (data.length < 3) {
-
-	                                                                                                                                                                        console.error('MaterialPool::computeObjMaterials(): error in diffuse material array at line:' + lineNum);
-	                                                                                                                                                } else {
-
-	                                                                                                                                                                        data[1] = parseFloat(data[1]), data[2] = parseFloat(data[2]), data[3] = parseFloat(data[3]);
-
-	                                                                                                                                                                        if (Number.isFinite(data[1]) && Number.isFinite(data[2]) && Number.isFinite(data[3])) {
-
-	                                                                                                                                                                                                material.diffuse = [data[1], data[2], data[3]];
-	                                                                                                                                                                        } else {
-
-	                                                                                                                                                                                                console.error('MaterialPool::computeObjMaterials(): invalid diffuse array at line:' + lineNum);
-	                                                                                                                                                                        }
-	                                                                                                                                                }
-
-	                                                                                                                                                break;
-
-	                                                                                                                        case 'Ks':
-	                                                                                                                                                // specular
-
-	                                                                                                                                                if (data.length < 3) {
-
-	                                                                                                                                                                        console.error('MaterialPool::computeObjMaterials(): error in specular array at line:' + lineNum);
-	                                                                                                                                                } else {
-
-	                                                                                                                                                                        data[1] = parseFloat(data[1]), data[2] = parseFloat(data[2]), data[3] = parseFloat(data[3]);
-
-	                                                                                                                                                                        if (Number.isFinite(data[1]) && Number.isFinite(data[2]) && Number.isFinite(data[3])) {
-
-	                                                                                                                                                                                                material.specular = [data[1], data[2], data[3]];
-	                                                                                                                                                                        } else {
-
-	                                                                                                                                                                                                console.error('MaterialPool::computeObjMaterials(): invalid specular array at line:' + lineNum);
-	                                                                                                                                                                        }
-	                                                                                                                                                }
-
-	                                                                                                                                                break;
-
-	                                                                                                                        case 'Ns':
-	                                                                                                                                                // specular exponent
-
-	                                                                                                                                                if (data.length < 1) {
-
-	                                                                                                                                                                        console.error('MaterialPool::computeObjMaterials(): error in specular exponent array at line:' + lineNum);
-	                                                                                                                                                } else {
-
-	                                                                                                                                                                        data[1] = parseFloat(data[1]);
-
-	                                                                                                                                                                        if (Number.isFinite(data[1])) {
-
-	                                                                                                                                                                                                material.specularFactor = data[1];
-	                                                                                                                                                                        } else {
-
-	                                                                                                                                                                                                console.error('MaterialPool::computeObjMaterials(): invalid specular exponent array at line:' + lineNum);
-	                                                                                                                                                                        }
-	                                                                                                                                                }
-
-	                                                                                                                                                break;
-
-	                                                                                                                        case 'd':
-	                                                                                                                        case 'Tr':
-	                                                                                                                                                // transparent
-
-	                                                                                                                                                if (data.length < 1) {
-
-	                                                                                                                                                                        console.error('MaterialPool::computeObjMaterials(): error in transparency value at line:' + lineNum);
-	                                                                                                                                                } else {
-
-	                                                                                                                                                                        data[1] = parseFloat(data[1]);
-
-	                                                                                                                                                                        if (Number.isFinite(data[1])) {
-
-	                                                                                                                                                                                                material.transparency = parseFloat(data[1]); // single value, 0.0 - 1.0
-	                                                                                                                                                                        } else {
-
-	                                                                                                                                                                                                console.error('MaterialPool::computeObjMaterials(): invalid transparency value at line:' + lineNum);
-	                                                                                                                                                                        }
-	                                                                                                                                                }
-
-	                                                                                                                                                break;
-
-	                                                                                                                        case 'illum':
-	                                                                                                                                                // illumination mode
-
-	                                                                                                                                                if (data.length < 1) {
-
-	                                                                                                                                                                        console.error('MaterialPool::computeObjMaterials(): error in illumination value at line:' + lineNum);
-	                                                                                                                                                } else {
-
-	                                                                                                                                                                        data[1] = parseInt(data[1]);
-
-	                                                                                                                                                                        if (Number.isFinite(data[1]) && data[1] > 0 && data[1] < 11) {
-
-	                                                                                                                                                                                                material.illum = data[1];
-	                                                                                                                                                                        }
-	                                                                                                                                                }
-
-	                                                                                                                                                break;
-
-	                                                                                                                        case 'map_Kd':
-	                                                                                                                                                // diffuse map, an image file (e.g. file.jpg)
-
-	                                                                                                                                                /* 
-	                                                                                                                                                 * This loads the file, and appends to Prim texture list using the LoadTexture object.
-	                                                                                                                                                 * @link  "filename" is the name of a color texture file (.mpc), a color 
-	                                                                                                                                                 * procedural texture file (.cxc), or an image file.
-	                                                                                                                                                 * @link http://paulbourke.net/dataformats/mtl/
-	                                                                                                                                                 * 
-	                                                                                                                                                 * TODO: support options
-	                                                                                                                                                 * -blenu on | off    texture blending in horizontal direction
-	                                                                                                                                                 * -blenv on | off    texture blending in vertical direction
-	                                                                                                                                                 * -bm    mult        bump multiplier, only with 'bump'.
-	                                                                                                                                                 * -boost value       sharpens mipmaps (may cause texture crawling)
-	                                                                                                                                                 * -cc on | off       color correction, can only be used for colormaps map_Ka, map_Kd, and map_Ks
-	                                                                                                                                                 * -clamp on | off    texture clamped 0-1
-	                                                                                                                                                 * -imfchan r | g | b | m | l | z channel used to create bump texture
-	                                                                                                                                                 * -mm base gain      range of variation for color, base adds base value (brightens), gain increases contrast
-	                                                                                                                                                 * -o u v w           shifts map origin from 0, 0
-	                                                                                                                                                 * -t u v w           adds turbulence, so tiling is less repetitive
-	                                                                                                                                                 * -texres resolution scale up non-power of 2
-	                                                                                                                                                 */
-
-	                                                                                                                                                console.log("MaterialPool::computeObjMaterials():::::::::::::GOTTA DIFFUSE MAP (TEXTURE) in OBJ MTL file: " + data[1]);
-
-	                                                                                                                                                // TODO: CONFIRM THAT THIS LOADS CORRECTLY!!!!!!!
-
-	                                                                                                                                                _this2.texturePool.getTextures(prim, [dir + data[1]], true);
-
-	                                                                                                                                                // TODO: maket this attach to prim.textures
-
-	                                                                                                                                                break;
-
-	                                                                                                                        case 'map_Ks': // specular map
-	                                                                                                                        case 'map_Ka': // ambient map
-	                                                                                                                        case 'map_d': // alpha map
-	                                                                                                                        case 'bump': // bumpmap
-	                                                                                                                        case 'map_bump': // bumpmap
-	                                                                                                                        case 'disp':
-	                                                                                                                                                // displacement map
-
-	                                                                                                                                                break;
-
-	                                                                                                                        default:
-
-	                                                                                                                                                break;
-
-	                                                                                                }
-
-	                                                                                                lineNum++;
-	                                                                        });
-
-	                                                                        return material;
-	                                                }
-
-	                                                /** 
-	                                                 * Add a model
-	                                                 * @param {Prim} prim the requesting Prim object.
-	                                                 * @param {Object} data data to construct the Prim GeoBuffer.
-	                                                 * @param {String} path the file path to the object.
-	                                                 * @param {Number} pos the index of the object in the calling Prim's array.
-	                                                 * @param {String} mimeType the MIME type of the file.
-	                                                 * @param {String} type the GeometryPool.typeList type of the object, e.g. MESH, SPHERE...
-	                                                 */
-
-	                        }, {
-	                                                key: 'addMaterial',
-	                                                value: function addMaterial(prim, data, path, pos, mimeType, type) {
-
-	                                                                        if (pos === undefined) {
-
-	                                                                                                console.error('TextureObj::addTexture(): undefined pos');
-
-	                                                                                                return null;
-	                                                                        }
-
-	                                                                        var m = void 0;
-
-	                                                                        var fType = this.util.getFileExtension(path);
-
-	                                                                        switch (fType) {
-
-	                                                                                                case 'mtl':
-
-	                                                                                                                        console.log("MTL file for prim:" + prim.name + " loaded, parsing....");
-
-	                                                                                                                        m = this.computeObjMaterials(data, prim, path);
-
-	                                                                                                                        if (!m.name) {
-
-	                                                                                                                                                m.name = this.util.getBaseName(path);
+	                                                                                                                                                                console.error('MaterialPool::computerObjMaterials(): invalid ambient data at line:' + lineNum);
+	                                                                                                                                            }
 	                                                                                                                        }
 
-	                                                                                                                        console.log("ADDING MATERIAL ARRAY:" + m.name + " to Prim:" + prim.name);
+	                                                                                                                        break;
+
+	                                                                                                    case 'Kd':
+	                                                                                                                        // diffuse
+
+	                                                                                                                        if (data.length < 3) {
+
+	                                                                                                                                            console.error('MaterialPool::computeObjMaterials(): error in diffuse material array at line:' + lineNum);
+	                                                                                                                        } else {
+
+	                                                                                                                                            data[1] = parseFloat(data[1]), data[2] = parseFloat(data[2]), data[3] = parseFloat(data[3]);
+
+	                                                                                                                                            if (currName && Number.isFinite(data[1]) && Number.isFinite(data[2]) && Number.isFinite(data[3])) {
+
+	                                                                                                                                                                material[currName].diffuse = [data[1], data[2], data[3]];
+	                                                                                                                                            } else {
+
+	                                                                                                                                                                console.error('MaterialPool::computeObjMaterials(): invalid diffuse array at line:' + lineNum);
+	                                                                                                                                            }
+	                                                                                                                        }
 
 	                                                                                                                        break;
 
-	                                                                                                default:
+	                                                                                                    case 'Ks':
+	                                                                                                                        // specular
 
-	                                                                                                                        console.warn('MaterialPool::addModel(): unknown material file:' + path + ' MIME type:' + mimeType);
+	                                                                                                                        if (data.length < 3) {
+
+	                                                                                                                                            console.error('MaterialPool::computeObjMaterials(): error in specular array at line:' + lineNum);
+	                                                                                                                        } else {
+
+	                                                                                                                                            data[1] = parseFloat(data[1]), data[2] = parseFloat(data[2]), data[3] = parseFloat(data[3]);
+
+	                                                                                                                                            if (currName && Number.isFinite(data[1]) && Number.isFinite(data[2]) && Number.isFinite(data[3])) {
+
+	                                                                                                                                                                material[currName].specular = [data[1], data[2], data[3]];
+	                                                                                                                                            } else {
+
+	                                                                                                                                                                console.error('MaterialPool::computeObjMaterials(): invalid specular array at line:' + lineNum);
+	                                                                                                                                            }
+	                                                                                                                        }
 
 	                                                                                                                        break;
 
-	                                                                        }
+	                                                                                                    case 'Ns':
+	                                                                                                                        // specular exponent
 
-	                                                                        // Set up the Material object.
+	                                                                                                                        if (data.length < 1) {
 
-	                                                                        if (m) {
+	                                                                                                                                            console.error('MaterialPool::computeObjMaterials(): error in specular exponent array at line:' + lineNum);
+	                                                                                                                        } else {
 
-	                                                                                                m.type = type, m.path = path, m.emits = this.util.emitter.events.MATERIAL_READY;
-	                                                                        }
+	                                                                                                                                            data[1] = parseFloat(data[1]);
 
-	                                                                        return this.addAsset(m);
-	                                                }
+	                                                                                                                                            if (currName && Number.isFinite(data[1])) {
 
-	                                                /** 
-	                                                 * Load models, using a list of paths. If a Model already exists, 
-	                                                 * just return it. Otherwise, do the load.
-	                                                 * @param {Array[String]} pathList a list of URL paths to load.
-	                                                 * @param {Boolean} cacheBust if true, add a http://url?random query string to request.
-	                                                 */
+	                                                                                                                                                                material[currName].specularFactor = data[1];
+	                                                                                                                                            } else {
 
-	                        }, {
-	                                                key: 'getMaterials',
-	                                                value: function getMaterials(prim, pathList) {
-	                                                                        var _this3 = this;
+	                                                                                                                                                                console.error('MaterialPool::computeObjMaterials(): invalid specular exponent array at line:' + lineNum);
+	                                                                                                                                            }
+	                                                                                                                        }
 
-	                                                                        var cacheBust = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+	                                                                                                                        break;
 
-	                                                                        var _loop = function _loop(i) {
+	                                                                                                    case 'd':
+	                                                                                                    case 'Tr':
+	                                                                                                                        // transparent
 
-	                                                                                                var path = pathList[i];
+	                                                                                                                        if (data.length < 1) {
 
-	                                                                                                var poolMaterial = _this3.pathInList(path);
+	                                                                                                                                            console.error('MaterialPool::computeObjMaterials(): error in transparency value at line:' + lineNum);
+	                                                                                                                        } else {
 
-	                                                                                                if (poolMaterial) {
+	                                                                                                                                            data[1] = parseFloat(data[1]);
+
+	                                                                                                                                            if (currName && Number.isFinite(data[1])) {
+
+	                                                                                                                                                                material[currName].transparency = parseFloat(data[1]); // single value, 0.0 - 1.0
+	                                                                                                                                            } else {
+
+	                                                                                                                                                                console.error('MaterialPool::computeObjMaterials(): invalid transparency value at line:' + lineNum);
+	                                                                                                                                            }
+	                                                                                                                        }
+
+	                                                                                                                        break;
+
+	                                                                                                    case 'illum':
+	                                                                                                                        // illumination mode
+
+	                                                                                                                        if (data.length < 1) {
+
+	                                                                                                                                            console.error('MaterialPool::computeObjMaterials(): error in illumination value at line:' + lineNum);
+	                                                                                                                        } else {
+
+	                                                                                                                                            data[1] = parseInt(data[1]);
+
+	                                                                                                                                            if (currName && Number.isFinite(data[1]) && data[1] > 0 && data[1] < 11) {
+
+	                                                                                                                                                                material[currName].illum = data[1];
+	                                                                                                                                            }
+	                                                                                                                        }
+
+	                                                                                                                        break;
+
+	                                                                                                    case 'map_Kd':
+	                                                                                                                        // diffuse map, an image file (e.g. file.jpg)
+
+	                                                                                                                        /* 
+	                                                                                                                         * This loads the file, and appends to Prim texture list using the LoadTexture object.
+	                                                                                                                         * @link  "filename" is the name of a color texture file (.mpc), a color 
+	                                                                                                                         * procedural texture file (.cxc), or an image file.
+	                                                                                                                         * @link http://paulbourke.net/dataformats/mtl/
+	                                                                                                                         * 
+	                                                                                                                         * TODO: support options
+	                                                                                                                         * -blenu on | off    texture blending in horizontal direction
+	                                                                                                                         * -blenv on | off    texture blending in vertical direction
+	                                                                                                                         * -bm    mult        bump multiplier, only with 'bump'.
+	                                                                                                                         * -boost value       sharpens mipmaps (may cause texture crawling)
+	                                                                                                                         * -cc on | off       color correction, can only be used for colormaps map_Ka, map_Kd, and map_Ks
+	                                                                                                                         * -clamp on | off    texture clamped 0-1
+	                                                                                                                         * -imfchan r | g | b | m | l | z channel used to create bump texture
+	                                                                                                                         * -mm base gain      range of variation for color, base adds base value (brightens), gain increases contrast
+	                                                                                                                         * -o u v w           shifts map origin from 0, 0
+	                                                                                                                         * -t u v w           adds turbulence, so tiling is less repetitive
+	                                                                                                                         * -texres resolution scale up non-power of 2
+	                                                                                                                         */
+
+	                                                                                                                        console.log("MaterialPool::computeObjMaterials():::::::::::::GOTTA DIFFUSE MAP (TEXTURE) in OBJ MTL file: " + data[1]);
+
+	                                                                                                                        // TODO: CONFIRM THAT THIS LOADS CORRECTLY!!!!!!!
+
+	                                                                                                                        if (currName) {
+
+	                                                                                                                                            material[currName].map_Kd = dir + data[1];
+
+	                                                                                                                                            // Note: attaches to prim.textures
+
+	                                                                                                                                            // TODO: HOW TO CONTROL WHERE IT APPEARS IN TEXTURE ARRAY???
+
+	                                                                                                                                            _this2.texturePool.getTextures(prim, [dir + data[1]], true);
+	                                                                                                                        }
+
+	                                                                                                                        break;
+
+	                                                                                                    case 'map_Ks': // specular map
+	                                                                                                    case 'map_Ka': // ambient map
+	                                                                                                    case 'map_d': // alpha map
+	                                                                                                    case 'bump': // bumpmap
+	                                                                                                    case 'map_bump': // bumpmap
+	                                                                                                    case 'disp':
+	                                                                                                                        // displacement map
+
+	                                                                                                                        break;
+
+	                                                                                                    default:
+
+	                                                                                                                        break;
+
+	                                                                                }
+
+	                                                                                lineNum++;
+	                                                            });
+
+	                                                            return material;
+	                                        }
+
+	                                        /** 
+	                                         * Add a model
+	                                         * @param {Prim} prim the requesting Prim object.
+	                                         * @param {Object} data data to construct the Prim GeoBuffer.
+	                                         * @param {String} path the file path to the object.
+	                                         * @param {Number} pos the index of the object in the calling Prim's array.
+	                                         * @param {String} mimeType the MIME type of the file.
+	                                         * @param {String} type the GeometryPool.typeList type of the object, e.g. MESH, SPHERE...
+	                                         */
+
+	                    }, {
+	                                        key: 'addMaterial',
+	                                        value: function addMaterial(prim, data, path, pos, mimeType, type) {
+
+	                                                            if (pos === undefined) {
+
+	                                                                                console.error('TextureObj::addTexture(): undefined pos');
+
+	                                                                                return null;
+	                                                            }
+
+	                                                            var m = void 0;
+
+	                                                            var fType = this.util.getFileExtension(path);
+
+	                                                            switch (fType) {
+
+	                                                                                case 'mtl':
+
+	                                                                                                    console.log("MTL file for prim:" + prim.name + " loaded, parsing....");
+
+	                                                                                                    m = this.computeObjMaterials(data, prim, path);
+
+	                                                                                                    if (!m.name) {
+
+	                                                                                                                        m.name = this.util.getBaseName(path);
+	                                                                                                    }
+
+	                                                                                                    console.log("ADDING MATERIAL ARRAY:" + m.name + " to Prim:" + prim.name);
+
+	                                                                                                    break;
+
+	                                                                                default:
+
+	                                                                                                    console.warn('MaterialPool::addModel(): unknown material file:' + path + ' MIME type:' + mimeType);
+
+	                                                                                                    break;
+
+	                                                            }
+
+	                                                            // Set up the Material object(s).
+
+	                                                            if (m && m.length) {
+
+	                                                                                for (var i = 0; i < m.length; i++) {
+
+	                                                                                                    var mi = m[i];
+
+	                                                                                                    mi.type = type, mi.path = path, mi.emits = this.util.emitter.events.MATERIAL_READY;
+
+	                                                                                                    this.addAsset(mi[i]);
+	                                                                                }
+	                                                            }
+
+	                                                            return m;
+	                                        }
+
+	                                        /** 
+	                                         * Load models, using a list of paths. If a Model already exists, 
+	                                         * just return it. Otherwise, do the load.
+	                                         * @param {Array[String]} pathList a list of URL paths to load.
+	                                         * @param {Boolean} cacheBust if true, add a http://url?random query string to request.
+	                                         */
+
+	                    }, {
+	                                        key: 'getMaterials',
+	                                        value: function getMaterials(prim, pathList) {
+	                                                            var _this3 = this;
+
+	                                                            var cacheBust = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+
+	                                                            var _loop = function _loop(i) {
+
+	                                                                                var path = pathList[i];
+
+	                                                                                // Could have an empty path.
+
+	                                                                                if (path) {
+
+	                                                                                                    var poolMaterial = _this3.pathInList(path);
+
+	                                                                                                    if (poolMaterial) {
 
 	                                                                                                                        prim.materials.push(poolMaterial); // just reference an existing texture in this pool.
-	                                                                                                } else {
+	                                                                                                    } else {
 
 	                                                                                                                        // Get the image mimeType.
 
@@ -22122,47 +22176,51 @@
 
 	                                                                                                                        if (mimeType) {
 
-	                                                                                                                                                _this3.doRequest(path, i, function (updateObj) {
+	                                                                                                                                            _this3.doRequest(path, i, function (updateObj) {
 
-	                                                                                                                                                                        /* 
-	                                                                                                                                                                         * updateObj returned from GetAssets has the following structure:
-	                                                                                                                                                                         * { 
-	                                                                                                                                                                         *   pos: pos, 
-	                                                                                                                                                                         *   path: requestURL, 
-	                                                                                                                                                                         *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
-	                                                                                                                                                                         *   error: false|response 
-	                                                                                                                                                                         * } 
-	                                                                                                                                                                         */
+	                                                                                                                                                                /* 
+	                                                                                                                                                                 * updateObj returned from GetAssets has the following structure:
+	                                                                                                                                                                 * { 
+	                                                                                                                                                                 *   pos: pos, 
+	                                                                                                                                                                 *   path: requestURL, 
+	                                                                                                                                                                 *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
+	                                                                                                                                                                 *   error: false|response 
+	                                                                                                                                                                 * } 
+	                                                                                                                                                                 */
 
-	                                                                                                                                                                        if (updateObj.data) {
+	                                                                                                                                                                if (updateObj.data) {
 
-	                                                                                                                                                                                                var materialObj = _this3.addMaterial(prim, updateObj.data, updateObj.path, updateObj.pos, mimeType, prim.type);
+	                                                                                                                                                                                    var materialObj = _this3.addMaterial(prim, updateObj.data, updateObj.path, updateObj.pos, mimeType, prim.type);
 
-	                                                                                                                                                                                                if (materialObj) {
+	                                                                                                                                                                                    if (materialObj) {
 
-	                                                                                                                                                                                                                        //////////////prim.materials.push( materialObj );
+	                                                                                                                                                                                                        //////////////prim.materials.push( materialObj );
 
-	                                                                                                                                                                                                                        _this3.util.emitter.emit(materialObj.emits, prim, materialObj.key, i);
-	                                                                                                                                                                                                } // end of material addition.
-	                                                                                                                                                                        } else {
+	                                                                                                                                                                                                        _this3.util.emitter.emit(materialObj.emits, prim, materialObj.key, i);
+	                                                                                                                                                                                    } // end of material addition.
+	                                                                                                                                                                } else {
 
-	                                                                                                                                                                                                console.error('MaterialPool::getMaterials(): no data found for:' + updateObj.path);
-	                                                                                                                                                                        }
-	                                                                                                                                                }, cacheBust, mimeType, 0); // end of this.doRequest(), initial request at 0 tries
+	                                                                                                                                                                                    console.error('MaterialPool::getMaterials(): no data found for:' + updateObj.path);
+	                                                                                                                                                                }
+	                                                                                                                                            }, cacheBust, mimeType, 0); // end of this.doRequest(), initial request at 0 tries
 	                                                                                                                        } else {
 
-	                                                                                                                                                console.error('MaterialPool::getModels(): file type "' + _this3.util.getFileExtension(path) + ' not supported, not loading');
+	                                                                                                                                            console.error('MaterialPool::getModels(): file type "' + _this3.util.getFileExtension(path) + ' not supported, not loading');
 	                                                                                                                        }
-	                                                                                                }
-	                                                                        };
+	                                                                                                    }
+	                                                                                } else {
 
-	                                                                        for (var i = 0; i < pathList.length; i++) {
-	                                                                                                _loop(i);
-	                                                                        } // end of loop
-	                                                }
-	                        }]);
+	                                                                                                    console.warn('MaterialPool::getMaterials(): no path supplied for position ' + i);
+	                                                                                } // end of valid path
+	                                                            };
 
-	                        return MaterialPool;
+	                                                            for (var i = 0; i < pathList.length; i++) {
+	                                                                                _loop(i);
+	                                                            } // end of for loop
+	                                        }
+	                    }]);
+
+	                    return MaterialPool;
 	}(_assetPool2.default);
 
 	exports.default = MaterialPool;
@@ -23449,6 +23507,10 @@
 
 	                this.prims = []; // Keep a reference to all created Prims here.
 
+	                /** 
+	                 * EMITTER CALLBACKS
+	                 */
+
 	                // Bind the callback for geometry initialization applied to individual prims (GeometryPool, Mesh, and ModelPool).
 
 	                this.util.emitter.on(this.util.emitter.events.GEOMETRY_READY, function (prim, key, pos) {
@@ -23498,6 +23560,10 @@
 
 	                        prim.shader.addPrim(prim);
 	                });
+
+	                // Bing Prim callback for Shader accepting a Prim.
+
+	                this.util.emitter.on(this.util.emitter.events.PRIM_ADDED_TO_SHADER, function (prim) {});
 	        }
 
 	        /** 
@@ -23645,7 +23711,11 @@
 	                key: 'initPrimMaterial',
 	                value: function initPrimMaterial(prim, material, pos) {
 
-	                        prim.materials.push(material);
+	                        //prim.materials.push( material );
+
+	                        // TODO: MAKE ARRAY CONCAT FOR MULTIPLE ADDITIONS OF MATERIALS HERE..
+
+	                        prim.materials[pos] = material;
 
 	                        // TODO:
 
@@ -23662,16 +23732,6 @@
 	                        // LOAD MATERIAL AND TEXTURE OUT OF MODEL-POOL
 
 	                        // TEST ACTUAL PRIM REMOVAL WHEN IT BECOMES INVALID
-
-	                        // INTERNALIZE THESE METHODS
-
-	                        // KEY FOR PROCEEDURAL GRAPHICS (ADD TO Model-Pool)
-
-	                        // KEY FOR MESH GRAPHICS (Add to ModelPool)
-
-	                        // KEY FOR OBJ FILE MODELS (Add to ModelPool)
-
-	                        // LOAD WORLD BY FILE (MAKE INTO TESTBED)
 
 	                        // LOAD A-FRAME MODELS (USING EDITOR)
 
@@ -24052,7 +24112,7 @@
 
 	                        // Set default Prim material (can be altered by .mtl file).
 
-	                        prim.setMaterial('default');
+	                        prim.setMaterial('default'); // TODO::::::::::::::::::::ONLY DO IF WE DON'T have a material file.
 
 	                        // Execute geometry creation routine (which may be a file load).
 

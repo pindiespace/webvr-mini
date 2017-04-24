@@ -50,7 +50,9 @@ class MaterialPool extends AssetPool {
 
         let lineNum = 0;
 
-        let material = {};
+        let material = [];
+
+        let currName = null;
 
         let dir = this.util.getFilePath( path );
 
@@ -68,7 +70,11 @@ class MaterialPool extends AssetPool {
 
                 case 'newmtl': // name of material.
 
-                    material.name = data[ 1 ];
+                    currName = data[ 1 ];
+
+                    material[ currName ] = {};
+
+                    ////material.name = data[ 1 ];
 
                     break;
 
@@ -86,9 +92,9 @@ class MaterialPool extends AssetPool {
 
                         data[ 3 ] = parseFloat( data[ 3 ] );
 
-                        if ( Number.isFinite( data[ 1 ] ) && Number.isFinite( data[ 2 ] ) && Number.isFinite( data[ 3 ] ) ) {
+                        if ( currName && Number.isFinite( data[ 1 ] ) && Number.isFinite( data[ 2 ] ) && Number.isFinite( data[ 3 ] ) ) {
 
-                            material.ambient = [ data[ 1 ], data[ 2 ], data[ 3 ] ];  
+                            material[ currName].ambient = [ data[ 1 ], data[ 2 ], data[ 3 ] ];  
 
                         } else {
 
@@ -115,9 +121,9 @@ class MaterialPool extends AssetPool {
 
                         data[ 3 ] = parseFloat( data[ 3 ] );
 
-                        if ( Number.isFinite( data[ 1 ] ) && Number.isFinite( data[ 2 ] ) && Number.isFinite( data[ 3 ] ) ) {
+                        if ( currName && Number.isFinite( data[ 1 ] ) && Number.isFinite( data[ 2 ] ) && Number.isFinite( data[ 3 ] ) ) {
 
-                            material.diffuse = [ data[ 1 ], data[ 2 ], data[ 3 ] ];
+                            material[ currName ].diffuse = [ data[ 1 ], data[ 2 ], data[ 3 ] ];
 
                         } else {
 
@@ -143,9 +149,9 @@ class MaterialPool extends AssetPool {
 
                         data[ 3 ] = parseFloat( data[ 3 ] );
 
-                        if ( Number.isFinite( data[ 1 ] ) && Number.isFinite( data[ 2 ] ) && Number.isFinite( data[ 3 ] ) ) {
+                        if ( currName && Number.isFinite( data[ 1 ] ) && Number.isFinite( data[ 2 ] ) && Number.isFinite( data[ 3 ] ) ) {
 
-                            material.specular = [ data[ 1 ], data[ 2 ], data[ 3 ] ];
+                            material[ currName ].specular = [ data[ 1 ], data[ 2 ], data[ 3 ] ];
 
                         } else {
 
@@ -167,9 +173,9 @@ class MaterialPool extends AssetPool {
 
                         data[ 1 ] = parseFloat( data[ 1 ] );
 
-                        if ( Number.isFinite( data[ 1 ] ) ) {
+                        if ( currName && Number.isFinite( data[ 1 ] ) ) {
 
-                            material.specularFactor = data[ 1 ];    
+                            material[ currName].specularFactor = data[ 1 ];    
 
                         } else {
 
@@ -192,9 +198,9 @@ class MaterialPool extends AssetPool {
 
                         data[ 1 ] = parseFloat( data[ 1 ] );
 
-                        if ( Number.isFinite( data[ 1 ] ) ) {
+                        if ( currName && Number.isFinite( data[ 1 ] ) ) {
 
-                            material.transparency = parseFloat( data[ 1 ] ); // single value, 0.0 - 1.0
+                            material[ currName ].transparency = parseFloat( data[ 1 ] ); // single value, 0.0 - 1.0
 
                         } else {
 
@@ -216,9 +222,9 @@ class MaterialPool extends AssetPool {
 
                         data[ 1 ] = parseInt( data[ 1 ] );
 
-                        if ( Number.isFinite( data[ 1 ] ) && data[ 1 ] > 0 && data[ 1 ] < 11 ) {
+                        if ( currName && Number.isFinite( data[ 1 ] ) && data[ 1 ] > 0 && data[ 1 ] < 11 ) {
 
-                            material.illum = data[ 1 ];
+                            material[ currName ].illum = data[ 1 ];
 
                         }
 
@@ -252,9 +258,17 @@ class MaterialPool extends AssetPool {
 
                     // TODO: CONFIRM THAT THIS LOADS CORRECTLY!!!!!!!
 
-                    this.texturePool.getTextures( prim, [ dir + data[ 1 ] ], true );
+                    if ( currName ) {
 
-                    // TODO: maket this attach to prim.textures
+                        material[ currName ].map_Kd = dir + data[ 1 ];
+
+                        // Note: attaches to prim.textures
+
+                        // TODO: HOW TO CONTROL WHERE IT APPEARS IN TEXTURE ARRAY???
+
+                        this.texturePool.getTextures( prim, [ dir + data[ 1 ] ], true );
+
+                    }
 
                     break;
 
@@ -330,19 +344,27 @@ class MaterialPool extends AssetPool {
 
         }
 
-        // Set up the Material object.
+        // Set up the Material object(s).
 
-        if ( m ) {
+        if ( m && m.length ) {
 
-             m.type = type,
+            for ( let i = 0; i < m.length; i++ ) {
 
-            m.path = path,
+                let mi = m[ i ];
 
-            m.emits = this.util.emitter.events.MATERIAL_READY;
+                mi.type = type,
+
+                mi.path = path,
+
+                mi.emits = this.util.emitter.events.MATERIAL_READY;
+
+                this.addAsset( mi[ i ] );
+
+            }
 
         }
 
-        return this.addAsset( m );
+        return m ;
 
     }
 
@@ -358,65 +380,75 @@ class MaterialPool extends AssetPool {
 
             let path = pathList[ i ];
 
-            let poolMaterial = this.pathInList( path );
+            // Could have an empty path.
 
-            if ( poolMaterial ) {
+            if ( path ) {
 
-                prim.materials.push( poolMaterial ); // just reference an existing texture in this pool.
+                let poolMaterial = this.pathInList( path );
 
-            } else {
+                if ( poolMaterial ) {
 
-                 // Get the image mimeType.
-
-                let mimeType = this.materialMimeTypes[ this.util.getFileExtension( path ) ];
-
-                // check if mimeType is OK.
-
-                if( mimeType ) {
-
-                    this.doRequest( path, i, 
-
-                        ( updateObj ) => {
-
-                            /* 
-                             * updateObj returned from GetAssets has the following structure:
-                             * { 
-                             *   pos: pos, 
-                             *   path: requestURL, 
-                             *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
-                             *   error: false|response 
-                             * } 
-                             */
-
-                             if ( updateObj.data ) {
-
-                                let materialObj = this.addMaterial( prim, updateObj.data, updateObj.path, updateObj.pos, mimeType, prim.type );
-
-                                if ( materialObj ) {
-
-                                    //////////////prim.materials.push( materialObj );
-
-                                    this.util.emitter.emit( materialObj.emits, prim, materialObj.key, i );
-
-                                } // end of material addition.
-
-                             } else {
-
-                                console.error( 'MaterialPool::getMaterials(): no data found for:' + updateObj.path );
-
-                             }
-
-                        }, cacheBust, mimeType, 0 ); // end of this.doRequest(), initial request at 0 tries
+                    prim.materials.push( poolMaterial ); // just reference an existing texture in this pool.
 
                 } else {
 
-                    console.error( 'MaterialPool::getModels(): file type "' + this.util.getFileExtension( path ) + ' not supported, not loading' );
+                    // Get the image mimeType.
+
+                    let mimeType = this.materialMimeTypes[ this.util.getFileExtension( path ) ];
+
+                    // check if mimeType is OK.
+
+                    if( mimeType ) {
+
+                        this.doRequest( path, i, 
+
+                            ( updateObj ) => {
+
+                                /* 
+                                 * updateObj returned from GetAssets has the following structure:
+                                 * { 
+                                 *   pos: pos, 
+                                 *   path: requestURL, 
+                                 *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
+                                 *   error: false|response 
+                                 * } 
+                                 */
+
+                                if ( updateObj.data ) {
+
+                                    let materialObj = this.addMaterial( prim, updateObj.data, updateObj.path, updateObj.pos, mimeType, prim.type );
+
+                                    if ( materialObj ) {
+
+                                        //////////////prim.materials.push( materialObj );
+
+                                        this.util.emitter.emit( materialObj.emits, prim, materialObj.key, i );
+
+                                    } // end of material addition.
+
+                                } else {
+
+                                    console.error( 'MaterialPool::getMaterials(): no data found for:' + updateObj.path );
+
+                                }
+
+                            }, cacheBust, mimeType, 0 ); // end of this.doRequest(), initial request at 0 tries
+
+                    } else {
+
+                        console.error( 'MaterialPool::getModels(): file type "' + this.util.getFileExtension( path ) + ' not supported, not loading' );
+
+                    }
 
                 }
 
-            }
+            } else {
 
-        } // end of loop
+                console.warn( 'MaterialPool::getMaterials(): no path supplied for position ' + i );
+
+            } // end of valid path
+
+        } // end of for loop
 
     }
 

@@ -87,6 +87,10 @@ class PrimFactory {
 
         this.prims = []; // Keep a reference to all created Prims here.
 
+        /** 
+         * EMITTER CALLBACKS
+         */
+
         // Bind the callback for geometry initialization applied to individual prims (GeometryPool, Mesh, and ModelPool).
 
         this.util.emitter.on( this.util.emitter.events.GEOMETRY_READY, 
@@ -155,6 +159,15 @@ class PrimFactory {
 
         } );
 
+        // Bing Prim callback for Shader accepting a Prim.
+
+        this.util.emitter.on( this.util.emitter.events.PRIM_ADDED_TO_SHADER, 
+
+            ( prim ) => {
+
+
+
+        } );
 
     }
 
@@ -297,7 +310,11 @@ class PrimFactory {
 
     initPrimMaterial ( prim, material, pos ) {
 
-        prim.materials.push( material );
+        //prim.materials.push( material );
+
+        // TODO: MAKE ARRAY CONCAT FOR MULTIPLE ADDITIONS OF MATERIALS HERE..
+
+        prim.materials[ pos ] = material;
 
         // TODO:
 
@@ -314,16 +331,6 @@ class PrimFactory {
         // LOAD MATERIAL AND TEXTURE OUT OF MODEL-POOL
 
         // TEST ACTUAL PRIM REMOVAL WHEN IT BECOMES INVALID
-
-        // INTERNALIZE THESE METHODS
-
-        // KEY FOR PROCEEDURAL GRAPHICS (ADD TO Model-Pool)
-
-        // KEY FOR MESH GRAPHICS (Add to ModelPool)
-
-        // KEY FOR OBJ FILE MODELS (Add to ModelPool)
-
-        // LOAD WORLD BY FILE (MAKE INTO TESTBED)
 
         // LOAD A-FRAME MODELS (USING EDITOR)
 
@@ -734,7 +741,7 @@ class PrimFactory {
 
         // Set default Prim material (can be altered by .mtl file).
 
-        prim.setMaterial( 'default' );
+        prim.setMaterial( 'default' ); // TODO::::::::::::::::::::ONLY DO IF WE DON'T have a material file.
 
        // Execute geometry creation routine (which may be a file load).
 

@@ -461,67 +461,77 @@ class ModelPool extends AssetPool {
 
             let path = pathList[ i ];
 
-            let poolModel = this.pathInList( path );
+            // Could have an empty path.
 
-            if ( poolModel ) {
+            if ( path ) {
 
-                prim.models.push( poolModel ); // just reference an existing texture in this pool.
+                let poolModel = this.pathInList( path );
 
-            } else {
+                if ( poolModel ) {
 
-                 // Get the image mimeType.
-
-                let mimeType = this.modelMimeTypes[ this.util.getFileExtension( path ) ];
-
-                // check if mimeType is OK.
-
-                if( mimeType ) {
-
-                    this.doRequest( path, i, 
-
-                        ( updateObj ) => {
-
-                            /* 
-                             * updateObj returned from GetAssets has the following structure:
-                             * { 
-                             *   pos: pos, 
-                             *   path: requestURL, 
-                             *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
-                             *   error: false|response 
-                             * } 
-                             */
-
-                             if ( updateObj.data ) {
-
-                                let modelObj = this.addModel( prim, updateObj.data, updateObj.path, updateObj.pos, mimeType, prim.type );
-
-                                if ( modelObj ) {
-
-                                    this.util.emitter.emit( modelObj.emits, prim, modelObj.key, modelObj.pos );
-
-                                } else {
-
-                                    console.error( 'TexturePool::getTextures(): file:' + path + ' could not be parsed' );
-
-                                }
-
-                             } else {
-
-                                console.error( 'ModelPool::getModels(): no data found for:' + updateObj.path );
-
-                             }
-
-                        }, cacheBust, mimeType, 0 ); // end of this.doRequest(), initial request at 0 tries
+                    prim.models.push( poolModel ); // just reference an existing texture in this pool.
 
                 } else {
 
-                    console.error( 'ModelPool::getModels(): file type "' + this.util.getFileExtension( path ) + ' not supported, not loading' );
+                    // Get the image mimeType.
+
+                    let mimeType = this.modelMimeTypes[ this.util.getFileExtension( path ) ];
+
+                    // check if mimeType is OK.
+
+                    if( mimeType ) {
+
+                        this.doRequest( path, i, 
+
+                            ( updateObj ) => {
+
+                                /* 
+                                 * updateObj returned from GetAssets has the following structure:
+                                 * { 
+                                 *   pos: pos, 
+                                 *   path: requestURL, 
+                                 *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
+                                 *   error: false|response 
+                                 * } 
+                                 */
+
+                                if ( updateObj.data ) {
+
+                                    let modelObj = this.addModel( prim, updateObj.data, updateObj.path, updateObj.pos, mimeType, prim.type );
+
+                                    if ( modelObj ) {
+
+                                        this.util.emitter.emit( modelObj.emits, prim, modelObj.key, modelObj.pos );
+
+                                    } else {
+
+                                        console.error( 'TexturePool::getTextures(): file:' + path + ' could not be parsed' );
+
+                                    }
+
+                                } else {
+
+                                    console.error( 'ModelPool::getModels(): no data found for:' + updateObj.path );
+
+                                }
+
+                            }, cacheBust, mimeType, 0 ); // end of this.doRequest(), initial request at 0 tries
+
+                    } else {
+
+                        console.error( 'ModelPool::getModels(): file type "' + this.util.getFileExtension( path ) + ' not supported, not loading' );
+
+                    }
 
                 }
 
-            }
+            } else {
 
-        } // end of loop
+                console.warn( 'ModelPool::getModels(): no path supplied for position ' + i );
+
+            } // end of valid path
+
+        } // end of for loop
 
     }
 

@@ -41,15 +41,19 @@ class AssetPool {
      */
     pathInList ( path ) {
 
-        for ( let i in this.keyList ) {
+        if ( path ) {
 
-            let obj = this.keyList[ i ];
+            for ( let i in this.keyList ) {
 
-            console.log( '^^^^obj.path:' + obj.path + ' path:' + path )
+                let obj = this.keyList[ i ];
 
-            if( obj.path === path ) {
+                //////////////////////////console.log( '^^^^obj.path:' + obj.path + ' path:' + path )
 
-                return obj;
+                if( obj.path === path ) {
+
+                    return obj;
+
+                }
 
             }
 

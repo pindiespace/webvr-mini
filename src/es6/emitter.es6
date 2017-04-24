@@ -37,11 +37,9 @@ class Emitter {
 
             TEXTURE_REMOVE: 'trm',                        // texture removal event
 
-            PRIM_READY: 'prdy',                           // Prim added to Shader
+            PRIM_ADDED_TO_SHADER: 'prdy',                 // Prim added to Shader
 
-            PRIM_RENDERING: 'prrd',                       // Prim is being rendered by a Shader !!!!!!!!!!!!!!!!! TODO
-
-            PRIM_REMOVE: 'prm',                           // a Prim was removed by a Shader
+            PRIM_REMOVED_FROM_SHADER: 'prms',             // a Prim was removed by a Shader
 
             PRIM_FAIL: 'prmfl',                           // a Prim couldn't load its assets
 
