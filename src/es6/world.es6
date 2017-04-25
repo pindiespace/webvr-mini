@@ -1,3 +1,4 @@
+import AssetPool from './asset-pool';
 import GeometryPool from './geometry-pool';
 import TexturePool from './texture-pool';
 import MaterialPool from './material-pool';
@@ -8,7 +9,7 @@ import PrimFactory from './prim-factory';
 
 'use strict'
 
-class World {
+class World extends AssetPool {
 
     /** 
      * The World class creates the scene, and should be uniquely 
@@ -33,6 +34,10 @@ class World {
      * @param {ShaderPool} shaderPool the GLSL rendering module.
      */
     constructor ( init, glMatrix, webgl, webvr, shaderPool, lights ) {
+
+        // Initialize AssetLoader superclass.
+
+        super( webgl.util );
 
         console.log( 'in World class' );
 
@@ -142,6 +147,10 @@ class World {
         const directions = this.primFactory.geometryPool.directions;
 
         const util = this.util;
+
+        // Put some media into our asset pools.
+
+
 
         // Get the shaders (not initialized with update() and render() yet!).
 
@@ -402,6 +411,7 @@ class World {
         
             );
 
+
             this.primFactory.createPrim(
             
                 this.s1,                      // callback function
@@ -436,7 +446,7 @@ class World {
             );
 
             // NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
-
+/*
             this.primFactory.createPrim(
 
                 this.s1,                               // callback function
@@ -454,6 +464,29 @@ class World {
                 [ 'obj/capsule/capsule.obj' ] // object files (.obj, .mtl)
 
             );
+*/
+///////////////////////
+// testing other mesh files
+
+            this.primFactory.createPrim(
+
+                this.s1,                               // callback function
+                typeList.MESH,
+                'capsule2',
+                vec5( 1, 1, 1 ),                       // dimensions (4th dimension doesn't exist for cylinder)
+                vec5( 40, 40, 0  ),                    // divisions MAKE SMALLER
+                vec3.fromValues( 1.0, 1.0, -2.0 ),      // position (absolute)
+                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+                vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+                [ 'obj/capsule/capsule1.png' ],               // texture present. TODO::: FIGURE OUT NUMBERING.
+                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color,
+                true,                                   // if true, apply texture to each face,
+                [ 'obj/mountains/mountains.obj' ] // object files (.obj, .mtl)
+
+            );
+
+//////////////////////
 
 //////////////////////////////////
 // COLORED SHADER.
@@ -683,6 +716,64 @@ class World {
         // Fire world update. 
 
         this.render();
+
+    }
+
+    /** 
+     * Create multiple Prims from an OBJ file. Load the file, then parse out individual 
+     * OBJs to ModelPool via PrimFactory. Each 'o' and 'usemtl' defines a new Prim.
+     */
+    initFromFile( path ) {
+
+         if ( path ) {
+
+            // Get the image mimeType.
+
+            let mimeType = this.modelPool.modelMimeTypes[ this.util.getFileExtension( path ) ];
+
+            // check if mimeType is OK.
+
+            if( mimeType ) {
+
+                this.doRequest( path, i, 
+
+                    ( updateObj ) => {
+
+                        /* 
+                         * updateObj returned from GetAssets has the following structure:
+                         * { 
+                         *   pos: pos, 
+                         *   path: requestURL, 
+                         *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
+                         *   error: false|response 
+                         * } 
+                         */
+
+                        // load a Model file. Only the first object in the file will be read.
+
+                        if ( updateObj.data ) {
+
+                            // Split by objects
+
+                            // TODO: IS MTL ALWAYS OVER O?
+
+                            // Split by usemtl
+
+                            // Split by obj within usemtl
+
+                                   
+
+                        } else {
+
+                            console.error( 'ModelPool::getModels(): no data found for:' + updateObj.path );
+
+                        }
+
+                }, cacheBust, mimeType, 0 ); // end of this.doRequest(), initial request at 0 tries
+
+            }
+
+        }
 
     }
 

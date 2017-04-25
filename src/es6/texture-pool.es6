@@ -536,7 +536,7 @@ class TexturePool extends AssetPool {
 
                     } else {
 
-                        console.error( 'TexturePool::getTextures(): file type "' + this.util.getFileExtension( path ) + '" not supported, not loading' );
+                        console.error( 'TexturePool::getTextures(): file type "' + this.util.getFileExtension( path ) + '" in:' + path + ' not supported, not loading' );
 
                     }
 

@@ -15,8 +15,9 @@ class ModelPool extends AssetPool {
      * @param {WebGL} webgl reference to WebGL object.
      * @param {TexturePool} texture loader and asset pool.
      * @param {MaterialPool} material loader and asset pool.
+     * @param {PrimFactory} the Prim creation and ''
      */
-    constructor ( init, util, webgl, texturePool, materialPool ) {
+    constructor ( init, util, webgl, texturePool, materialPool) {
 
         console.log( 'in ModelPool' );
 
@@ -77,8 +78,47 @@ class ModelPool extends AssetPool {
     computeObj2d ( data, arr, lineNum ) {
 
         let uvs = data.match( /^(-?\d+(\.\d+)?)\s+(-?\d+(\.\d+)?)$/ );
+
+        if ( ! uvs ) {
+
+            return false;
+        }
         
         arr.push( parseFloat( uvs[ 1 ] ), parseFloat( uvs[ 3 ] ) );
+
+        return true;
+
+    }
+
+    /** 
+     * If the listing has > 3 indices for a face, convert it to a fan ( all 
+     * triangles share the first vertex). Use when the number of indices 
+     * on a line evaluates to > 3. In-place conversion. 
+     * @param {Array} indices the string of indices to be evaluated. Just the 'fan' region.
+     * @param {Array} texCoords array for vertex texture coordinates.
+     * @param {Array} normals array for vertex normals.
+     */
+    computeFan ( arr ) {
+
+        if ( arr.length ) {
+
+            let nArr = [];
+
+            for ( let i = 1; i < arr.length - 1; i++ ) {
+
+                nArr.push( nArr[ 0 ] );
+
+                nArr.push( nArr[ i ] );
+
+                nArr.push( nArr[ i + 1 ] );
+
+            }
+
+            arr = nArr;
+
+        }
+
+        return arr;
 
     }
 
@@ -101,27 +141,29 @@ class ModelPool extends AssetPool {
 
         let NOT_IN_STRING = this.NOT_IN_LIST;
 
+        let iIndices = [], iTexCoords = [], iNormals = [];
+
+        // Each map should refer to one point.
+
         parts.map( ( fs ) => {
 
             ///console.log("fs:" + fs)
 
             // Split indices with and without normals and texture coordinates.
 
-            if ( fs.indexOf( '//' ) !== NOT_IN_STRING ) {
+            if ( fs.indexOf( '//' ) !== NOT_IN_STRING ) { // No texture coordinates
 
                 idxs = fs.split( '//' );
 
                 idx = parseInt( idxs[ 0 ] ) - 1; // NOTE: OBJ first index = 1, our arrays index = 0
 
-                texCoord = 0.0; // NO TEXTURE COORDINATES PROVIDED
+                /////////////////////////////////////////texCoord = 0.0;
 
                 normal = parseInt( idxs[ 1 ] ) - 1;
 
-                ///console.log( '//:' + idx, texCoord, normal );
-
             } else if ( fs.indexOf ( '/' ) !== NOT_IN_STRING ) {
 
-                idxs = fs.split( '/')
+                idxs = fs.split( '/' );
 
                 idx = parseInt( idxs[ 0 ] ) - 1;
 
@@ -129,26 +171,52 @@ class ModelPool extends AssetPool {
 
                 normal = parseFloat( idx[ 2 ] ) - 1;
 
-                ////console.log( '/:', idx, texCoord, normal );
+            } else { // Has indices only
 
-            } else {
+                idx = parseInt( fs ) - 1;
 
-                console.error( 'ModelPool()::computeObjIndices(): illegal index object index statement at line:' + lineNum );
+                if ( Number.isFinite( idx ) ) {
 
-                return false;
+                }
+
+                /////////////////////////////////////////texCoord = normal = 0.0;
 
             }
 
-            indices.push( idx );
+            // push indices, conditionally push texture coordinates and normals.
 
-            texCoords.push ( texCoord );
+            iIndices.push( idx );
 
-            normals.push( normal );
+            if ( texCoord ) iTexCoords.push( texCoord );
+
+            if ( normal ) iNormals.push( normal );
 
         } );
 
-    }
+        // If we have more than 3 indices (face is NOT a triangle), manually create triangle fan.
 
+        if ( iIndices.length > 3 ) {
+
+            this.computeFan( iIndices );
+
+            this.computeFan( iTexCoords );
+
+            this.computeFan( iNormals );
+
+        }
+
+        /* 
+         * Concat without disturbing our array references (unlike Array.concat).
+         * @link https://davidwalsh.name/merge-arrays-javascript
+         */
+
+        Array.prototype.push.apply( indices, iIndices );
+
+        Array.prototype.push.apply( texCoords, iTexCoords );
+
+        Array.prototype.push.apply( normals, iNormals );
+
+    }
 
     /** 
      * Parse the .obj file into flattened object data
@@ -195,8 +263,6 @@ class ModelPool extends AssetPool {
             // All other values as a string.
 
             let data = line.substr( type.length ).trim();
-
-            let numObjs = 0;
 
             switch ( type ) {
 
@@ -254,8 +320,6 @@ class ModelPool extends AssetPool {
 
                     }
 
-                    if ( data )
-
                     break;
 
                 case '#': // comment
@@ -264,7 +328,7 @@ class ModelPool extends AssetPool {
 
                 case 'mtllib': // materials library data
 
-                    // Load material file data. Note that multiple files may be specified here.
+                    // Multiple files may be specified here, and each file may have multiple materials.
 
                     let mtls = data.split( ' ' );
 
@@ -516,6 +580,8 @@ class ModelPool extends AssetPool {
                                  * } 
                                  */
 
+                                // load a Model file. Only the first object in the file will be read.
+
                                 if ( updateObj.data ) {
 
                                     let modelObj = this.addModel( prim, updateObj.data, updateObj.path, updateObj.pos, mimeType, prim.type );
@@ -542,7 +608,7 @@ class ModelPool extends AssetPool {
 
                     } else {
 
-                        console.error( 'ModelPool::getModels(): file type "' + this.util.getFileExtension( path ) + ' not supported, not loading' );
+                        console.error( 'ModelPool::getModels(): file type "' + this.util.getFileExtension( path ) + '" in:' + path + ' not supported, not loading' );
 
                     }
 

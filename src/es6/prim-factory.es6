@@ -219,7 +219,10 @@ class PrimFactory {
     }
 
     /** 
-     * Add a new texture to the Prim.
+     * Add a new texture to the Prim (callback for TEXTURE_2D_READY event).
+     * @param {Prim} prim the prim to be updated.
+     * @param {TextureObj} textureObj the texture object returned from TexturePool.
+     * @param {Number} pos a position to write the texture to.
      */
     initPrim2dTexture ( prim, textureObj, pos ) {
 
@@ -245,15 +248,6 @@ class PrimFactory {
      * };
      */
     initPrimGeometry ( prim, coords, pos ) {
-
-        /*
-           TODO: test grabbing a material file from MaterialPool when a file wasn't specified by the material file.
-           TODO: make Mesh emit an event
-           TODO: World creates prim queue
-           TODO: if the OBJ loader encounters a new geometry, it recursively creates a new Prim.
-           TODO: check WebGL context creator (why errors?)
-           TODO: look for undefined paths in adding to AssetPool 'adding obj: undefined'
-         */
 
         /* 
          * It is possible to get a usemtl command from an OBJ file, without a corresponding material file. 
@@ -362,6 +356,8 @@ class PrimFactory {
         }
 
     }
+
+
 
     /** 
      * Create an standard 3d object.
@@ -687,9 +683,11 @@ class PrimFactory {
 
         prim.divisions = divisions || this.vec5( 1, 1, 1, 0, 0, 0 );
 
-        // Prim Position in world coordinates.
+        // Prim position in World coordinates.
 
         prim.position = position || vec3.create();
+
+        // Prim speed in World coordinates.
 
         prim.acceleration = acceleration || vec3.create();
 
@@ -697,7 +695,7 @@ class PrimFactory {
 
         prim.rotation = rotation || vec3.create();
 
-        // Prim acceleration object indicates velocity on angular motion in x, y, z
+        // Prim angular rotation indicates circular velocity in x, y, z
 
         prim.angular = angular || vec3.create();
 

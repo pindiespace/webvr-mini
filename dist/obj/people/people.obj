@@ -1,6 +1,6 @@
 # Blender v2.74 (sub 0) OBJ File: ''
 # www.blender.org
-mtllib untitled-scene.mtl
+mtllib people.mtl
 o people_obj_1
 v 3.593767 26.246914 -0.005532
 v 4.046183 24.300945 3.083887

@@ -265,7 +265,7 @@ class AssetPool {
 
         wrappedPromise.timeoutId = setTimeout( () => {
 
-            console.warn( 'AssetPool::getWrappedFetch(): TIMEOUT ' + wrappedPromise.url );
+            console.warn( 'AssetPool::getWrappedFetch(): TIMEOUT' + ' for ' + ( ( this.MIN_WAIT_TIME * wrappedPromise.tries ) + 1 ) + 'msec ' + wrappedPromise.url );
 
             wrappedPromise.catch( 0 );
 

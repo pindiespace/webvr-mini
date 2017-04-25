@@ -6380,7 +6380,10 @@
 	        }
 
 	        /** 
-	         * Add a new texture to the Prim.
+	         * Add a new texture to the Prim (callback for TEXTURE_2D_READY event).
+	         * @param {Prim} prim the prim to be updated.
+	         * @param {TextureObj} textureObj the texture object returned from TexturePool.
+	         * @param {Number} pos a position to write the texture to.
 	         */
 
 	    }, {
@@ -6411,15 +6414,6 @@
 	    }, {
 	        key: 'initPrimGeometry',
 	        value: function initPrimGeometry(prim, coords, pos) {
-
-	            /*
-	               TODO: test grabbing a material file from MaterialPool when a file wasn't specified by the material file.
-	               TODO: make Mesh emit an event
-	               TODO: World creates prim queue
-	               TODO: if the OBJ loader encounters a new geometry, it recursively creates a new Prim.
-	               TODO: check WebGL context creator (why errors?)
-	               TODO: look for undefined paths in adding to AssetPool 'adding obj: undefined'
-	             */
 
 	            /* 
 	             * It is possible to get a usemtl command from an OBJ file, without a corresponding material file. 
@@ -6820,9 +6814,11 @@
 
 	            prim.divisions = divisions || this.vec5(1, 1, 1, 0, 0, 0);
 
-	            // Prim Position in world coordinates.
+	            // Prim position in World coordinates.
 
 	            prim.position = position || vec3.create();
+
+	            // Prim speed in World coordinates.
 
 	            prim.acceleration = acceleration || vec3.create();
 
@@ -6830,7 +6826,7 @@
 
 	            prim.rotation = rotation || vec3.create();
 
-	            // Prim acceleration object indicates velocity on angular motion in x, y, z
+	            // Prim angular rotation indicates circular velocity in x, y, z
 
 	            prim.angular = angular || vec3.create();
 
@@ -12853,6 +12849,7 @@
 	     * @param {WebGL} webgl reference to WebGL object.
 	     * @param {TexturePool} texture loader and asset pool.
 	     * @param {MaterialPool} material loader and asset pool.
+	     * @param {PrimFactory} the Prim creation and ''
 	     */
 	    function ModelPool(init, util, webgl, texturePool, materialPool) {
 	        _classCallCheck(this, ModelPool);
@@ -12916,7 +12913,46 @@
 
 	            var uvs = data.match(/^(-?\d+(\.\d+)?)\s+(-?\d+(\.\d+)?)$/);
 
+	            if (!uvs) {
+
+	                return false;
+	            }
+
 	            arr.push(parseFloat(uvs[1]), parseFloat(uvs[3]));
+
+	            return true;
+	        }
+
+	        /** 
+	         * If the listing has > 3 indices for a face, convert it to a fan ( all 
+	         * triangles share the first vertex). Use when the number of indices 
+	         * on a line evaluates to > 3. In-place conversion. 
+	         * @param {Array} indices the string of indices to be evaluated. Just the 'fan' region.
+	         * @param {Array} texCoords array for vertex texture coordinates.
+	         * @param {Array} normals array for vertex normals.
+	         */
+
+	    }, {
+	        key: 'computeFan',
+	        value: function computeFan(arr) {
+
+	            if (arr.length) {
+
+	                var nArr = [];
+
+	                for (var i = 1; i < arr.length - 1; i++) {
+
+	                    nArr.push(nArr[0]);
+
+	                    nArr.push(nArr[i]);
+
+	                    nArr.push(nArr[i + 1]);
+	                }
+
+	                arr = nArr;
+	            }
+
+	            return arr;
 	        }
 
 	        /** 
@@ -12946,6 +12982,12 @@
 
 	            var NOT_IN_STRING = this.NOT_IN_LIST;
 
+	            var iIndices = [],
+	                iTexCoords = [],
+	                iNormals = [];
+
+	            // Each map should refer to one point.
+
 	            parts.map(function (fs) {
 
 	                ///console.log("fs:" + fs)
@@ -12953,16 +12995,15 @@
 	                // Split indices with and without normals and texture coordinates.
 
 	                if (fs.indexOf('//') !== NOT_IN_STRING) {
+	                    // No texture coordinates
 
 	                    idxs = fs.split('//');
 
 	                    idx = parseInt(idxs[0]) - 1; // NOTE: OBJ first index = 1, our arrays index = 0
 
-	                    texCoord = 0.0; // NO TEXTURE COORDINATES PROVIDED
+	                    /////////////////////////////////////////texCoord = 0.0;
 
 	                    normal = parseInt(idxs[1]) - 1;
-
-	                    ///console.log( '//:' + idx, texCoord, normal );
 	                } else if (fs.indexOf('/') !== NOT_IN_STRING) {
 
 	                    idxs = fs.split('/');
@@ -12972,21 +13013,46 @@
 	                    texCoord = parseFloat(idx[1]) - 1;
 
 	                    normal = parseFloat(idx[2]) - 1;
-
-	                    ////console.log( '/:', idx, texCoord, normal );
 	                } else {
+	                    // Has indices only
 
-	                    console.error('ModelPool()::computeObjIndices(): illegal index object index statement at line:' + lineNum);
+	                    idx = parseInt(fs) - 1;
 
-	                    return false;
+	                    if (Number.isFinite(idx)) {}
+
+	                    /////////////////////////////////////////texCoord = normal = 0.0;
 	                }
 
-	                indices.push(idx);
+	                // push indices, conditionally push texture coordinates and normals.
 
-	                texCoords.push(texCoord);
+	                iIndices.push(idx);
 
-	                normals.push(normal);
+	                if (texCoord) iTexCoords.push(texCoord);
+
+	                if (normal) iNormals.push(normal);
 	            });
+
+	            // If we have more than 3 indices (face is NOT a triangle), manually create triangle fan.
+
+	            if (iIndices.length > 3) {
+
+	                this.computeFan(iIndices);
+
+	                this.computeFan(iTexCoords);
+
+	                this.computeFan(iNormals);
+	            }
+
+	            /* 
+	             * Concat without disturbing our array references (unlike Array.concat).
+	             * @link https://davidwalsh.name/merge-arrays-javascript
+	             */
+
+	            Array.prototype.push.apply(indices, iIndices);
+
+	            Array.prototype.push.apply(texCoords, iTexCoords);
+
+	            Array.prototype.push.apply(normals, iNormals);
 	        }
 
 	        /** 
@@ -13034,8 +13100,6 @@
 	                // All other values as a string.
 
 	                var data = line.substr(type.length).trim();
-
-	                var numObjs = 0;
 
 	                switch (type) {
 
@@ -13097,7 +13161,7 @@
 	                            prim.smoothingGroup = []; // TODO: DO STUFF!!!!!!!!!!!!!!!!!!!!!!
 	                        }
 
-	                        if (data) break;
+	                        break;
 
 	                    case '#':
 	                        // comment
@@ -13107,7 +13171,7 @@
 	                    case 'mtllib':
 	                        // materials library data
 
-	                        // Load material file data. Note that multiple files may be specified here.
+	                        // Multiple files may be specified here, and each file may have multiple materials.
 
 	                        var mtls = data.split(' ');
 
@@ -13356,6 +13420,8 @@
 	                                 * } 
 	                                 */
 
+	                                // load a Model file. Only the first object in the file will be read.
+
 	                                if (updateObj.data) {
 
 	                                    var modelObj = _this3.addModel(prim, updateObj.data, updateObj.path, updateObj.pos, mimeType, prim.type);
@@ -13376,7 +13442,7 @@
 	                            }, cacheBust, mimeType, 0); // end of this.doRequest(), initial request at 0 tries
 	                        } else {
 
-	                            console.error('ModelPool::getModels(): file type "' + _this3.util.getFileExtension(path) + ' not supported, not loading');
+	                            console.error('ModelPool::getModels(): file type "' + _this3.util.getFileExtension(path) + '" in:' + path + ' not supported, not loading');
 	                        }
 	                    }
 	                } else {
@@ -13638,6 +13704,7 @@
 	    }, {
 	        key: 'getWrappedFetch',
 	        value: function getWrappedFetch(url, params, tries, pos) {
+	            var _this = this;
 
 	            var wrappedPromise = this.getWrappedPromise();
 
@@ -13655,7 +13722,7 @@
 
 	            wrappedPromise.timeoutId = setTimeout(function () {
 
-	                console.warn('AssetPool::getWrappedFetch(): TIMEOUT ' + wrappedPromise.url);
+	                console.warn('AssetPool::getWrappedFetch(): TIMEOUT' + ' for ' + (_this.MIN_WAIT_TIME * wrappedPromise.tries + 1) + 'msec ' + wrappedPromise.url);
 
 	                wrappedPromise.catch(0);
 	            }, this.MIN_WAIT_TIME * wrappedPromise.tries);
@@ -13714,7 +13781,7 @@
 	        value: function doRequest(requestURL, pos, updateFn) {
 	            var cacheBust = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : true;
 
-	            var _this = this;
+	            var _this2 = this;
 
 	            var mimeType = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : 'text/plain';
 	            var tries = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : 0;
@@ -13763,13 +13830,13 @@
 	                    if (mimeType === 'application/json') {
 
 	                        data = response.json();
-	                    } else if (mimeType.indexOf('text') !== _this.util.NOT_IN_LIST) {
+	                    } else if (mimeType.indexOf('text') !== _this2.util.NOT_IN_LIST) {
 
 	                        data = response.text();
 	                    } else if (mimeType === 'application/xml') {
 
 	                        data = response.formData();
-	                    } else if (mimeType.indexOf('image') !== _this.util.NOT_IN_LIST) {
+	                    } else if (mimeType.indexOf('image') !== _this2.util.NOT_IN_LIST) {
 
 	                        data = response.blob();
 
@@ -13797,11 +13864,11 @@
 
 	                ft.tries++;
 
-	                if (ft.tries < _this.MAX_TRIES) {
+	                if (ft.tries < _this2.MAX_TRIES) {
 
 	                    console.warn('AssetPool::doRequest(): ft.promise .then error, TRYING AGAIN:' + error + ' for ' + ft.url);
 
-	                    _this.doRequest(requestURL, pos, updateFn, cacheBust = true, mimeType, ft.tries);
+	                    _this2.doRequest(requestURL, pos, updateFn, cacheBust = true, mimeType, ft.tries);
 	                }
 
 	                return Promise.resolve(error);
@@ -14392,7 +14459,7 @@
 	                            }, cacheBust, mimeType, 0); // end of this.doRequest(), initial request at 0 tries
 	                        } else {
 
-	                            console.error('TexturePool::getTextures(): file type "' + _this2.util.getFileExtension(path) + '" not supported, not loading');
+	                            console.error('TexturePool::getTextures(): file type "' + _this2.util.getFileExtension(path) + '" in:' + path + ' not supported, not loading');
 	                        }
 	                    }
 	                } else {
@@ -15630,6 +15697,10 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+	var _assetPool = __webpack_require__(24);
+
+	var _assetPool2 = _interopRequireDefault(_assetPool);
+
 	var _geometryPool = __webpack_require__(22);
 
 	var _geometryPool2 = _interopRequireDefault(_geometryPool);
@@ -15662,9 +15733,14 @@
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
 	'use strict';
 
-	var World = function () {
+	var World = function (_AssetPool) {
+	    _inherits(World, _AssetPool);
 
 	    /** 
 	     * The World class creates the scene, and should be uniquely 
@@ -15691,51 +15767,57 @@
 	    function World(init, glMatrix, webgl, webvr, shaderPool, lights) {
 	        _classCallCheck(this, World);
 
+	        var _this = _possibleConstructorReturn(this, (World.__proto__ || Object.getPrototypeOf(World)).call(this, webgl.util));
+
+	        // Initialize AssetLoader superclass.
+
 	        console.log('in World class');
 
-	        this.glMatrix = glMatrix, this.webgl = webgl, this.util = webgl.util, this.vr = webvr, this.shaderPool = shaderPool,
+	        _this.glMatrix = glMatrix, _this.webgl = webgl, _this.util = webgl.util, _this.vr = webvr, _this.shaderPool = shaderPool,
 
 	        // Attach 1 copy of Texture loader.
 
-	        this.texturePool = new _texturePool2.default(init, this.util, webgl);
+	        _this.texturePool = new _texturePool2.default(init, _this.util, webgl);
 
 	        // Materials file can find a material, or a texture used as material.
 
-	        this.materialPool = new _materialPool2.default(init, this.util, webgl, this.texturePool);
+	        _this.materialPool = new _materialPool2.default(init, _this.util, webgl, _this.texturePool);
 
 	        // Attach 1 copy of the Model loader. NOTE: passing in TexturePool and MaterialPool.
 
-	        this.modelPool = new _modelPool2.default(init, this.util, webgl, this.texturePool, this.materialPool);
+	        _this.modelPool = new _modelPool2.default(init, _this.util, webgl, _this.texturePool, _this.materialPool);
 
 	        // Attach 1 copy of geometry loader, with ModelPool (which contains TexturePool and MaterialPool).
 
-	        this.geometryPool = new _geometryPool2.default(init, this.util, glMatrix, webgl, this.modelPool);
+	        _this.geometryPool = new _geometryPool2.default(init, _this.util, glMatrix, webgl, _this.modelPool);
 
 	        // Create the Prim factory (no Prim class).
 
-	        this.primFactory = new _primFactory2.default(true, this);
+	        _this.primFactory = new _primFactory2.default(true, _this);
 
 	        // Add World Lights (Prims may have their own).
 
-	        this.lights = lights;
+	        _this.lights = lights;
 
 	        // Matrix operations.
 
-	        this.canvas = webgl.getCanvas();
+	        _this.canvas = webgl.getCanvas();
 
-	        this.glMatrix = webgl.glMatrix;
+	        _this.glMatrix = webgl.glMatrix;
 
-	        this.pMatrix = this.glMatrix.mat4.create();
+	        _this.pMatrix = _this.glMatrix.mat4.create();
 
-	        this.mvMatrix = this.glMatrix.mat4.create();
+	        _this.mvMatrix = _this.glMatrix.mat4.create();
 
-	        this.last = performance.now();
+	        _this.last = performance.now();
 
-	        this.counter = 0;
+	        _this.counter = 0;
 
 	        // Bind the render loop (best current method)
 
-	        this.render = this.render.bind(this);
+	        _this.render = _this.render.bind(_this);
+
+	        return _this;
 	    }
 
 	    /**
@@ -15800,6 +15882,9 @@
 	            var directions = this.primFactory.geometryPool.directions;
 
 	            var util = this.util;
+
+	            // Put some media into our asset pools.
+
 
 	            // Get the shaders (not initialized with update() and render() yet!).
 
@@ -16022,20 +16107,43 @@
 	            );
 
 	            // NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
+	            /*
+	                        this.primFactory.createPrim(
+	            
+	                            this.s1,                               // callback function
+	                            typeList.MESH,
+	                            'capsule',
+	                            vec5( 1, 1, 1 ),                       // dimensions (4th dimension doesn't exist for cylinder)
+	                            vec5( 40, 40, 0  ),                    // divisions MAKE SMALLER
+	                            vec3.fromValues( 0.0, 0.0, 0.0 ),      // position (absolute)
+	                            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+	                            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+	                            vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+	                            [ 'obj/capsule/capsule1.png' ],               // texture present. TODO::: FIGURE OUT NUMBERING.
+	                            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color,
+	                            true,                                   // if true, apply texture to each face,
+	                            [ 'obj/capsule/capsule.obj' ] // object files (.obj, .mtl)
+	            
+	                        );
+	            */
+	            ///////////////////////
+	            // testing other mesh files
 
 	            this.primFactory.createPrim(this.s1, // callback function
-	            typeList.MESH, 'capsule', vec5(1, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
+	            typeList.MESH, 'capsule2', vec5(1, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
 	            vec5(40, 40, 0), // divisions MAKE SMALLER
-	            vec3.fromValues(0.0, 0.0, 0.0), // position (absolute)
+	            vec3.fromValues(1.0, 1.0, -2.0), // position (absolute)
 	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
 	            vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
 	            ['obj/capsule/capsule1.png'], // texture present. TODO::: FIGURE OUT NUMBERING.
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0), // color,
 	            true, // if true, apply texture to each face,
-	            ['obj/capsule/capsule.obj'] // object files (.obj, .mtl)
+	            ['obj/mountains/mountains.obj'] // object files (.obj, .mtl)
 
 	            );
+
+	            //////////////////////
 
 	            //////////////////////////////////
 	            // COLORED SHADER.
@@ -16217,6 +16325,59 @@
 	            this.render();
 	        }
 
+	        /** 
+	         * Create multiple Prims from an OBJ file. Load the file, then parse out individual 
+	         * OBJs to ModelPool via PrimFactory. Each 'o' and 'usemtl' defines a new Prim.
+	         */
+
+	    }, {
+	        key: 'initFromFile',
+	        value: function initFromFile(path) {
+
+	            if (path) {
+
+	                // Get the image mimeType.
+
+	                var mimeType = this.modelPool.modelMimeTypes[this.util.getFileExtension(path)];
+
+	                // check if mimeType is OK.
+
+	                if (mimeType) {
+
+	                    this.doRequest(path, i, function (updateObj) {
+
+	                        /* 
+	                         * updateObj returned from GetAssets has the following structure:
+	                         * { 
+	                         *   pos: pos, 
+	                         *   path: requestURL, 
+	                         *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
+	                         *   error: false|response 
+	                         * } 
+	                         */
+
+	                        // load a Model file. Only the first object in the file will be read.
+
+	                        if (updateObj.data) {
+
+	                            // Split by objects
+
+	                            // TODO: IS MTL ALWAYS OVER O?
+
+	                            // Split by usemtl
+
+	                            // Split by obj within usemtl
+
+
+	                        } else {
+
+	                            console.error('ModelPool::getModels(): no data found for:' + updateObj.path);
+	                        }
+	                    }, cacheBust, mimeType, 0); // end of this.doRequest(), initial request at 0 tries
+	                }
+	            }
+	        }
+
 	        /**
 	         * Create objects specific to this world. 
 	         */
@@ -16305,7 +16466,7 @@
 	    }]);
 
 	    return World;
-	}();
+	}(_assetPool2.default);
 
 	exports.default = World;
 

@@ -1,0 +1,18 @@
+# 3ds Max Wavefront OBJ Exporter v0.94b - (c)2007 guruware
+# File Created: 17.08.2013 12:02:46
+
+newmtl Material__0
+	Ns 75.0000
+	Ni 1.5000
+	d 1.0000
+	Tr 1.0000
+	Tf 1.0000 1.0000 1.0000 
+	illum 2
+	Ka 0.5880 0.5880 0.5880
+	Kd 0.5880 0.5880 0.5880
+	Ks 0.0000 0.0000 0.0000
+	Ke 0.0000 0.0000 0.0000
+	map_Ka maps\NBA BASKETBALL DIFFUSE.tga
+	map_Kd maps\NBA BASKETBALL DIFFUSE.tga
+	map_bump maps\NBA BASKETBALL BUMP.tga
+	bump maps\NBA BASKETBALL BUMP.tga
