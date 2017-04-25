@@ -446,7 +446,7 @@ class World extends AssetPool {
             );
 
             // NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
-/*
+
             this.primFactory.createPrim(
 
                 this.s1,                               // callback function
@@ -464,10 +464,10 @@ class World extends AssetPool {
                 [ 'obj/capsule/capsule.obj' ] // object files (.obj, .mtl)
 
             );
-*/
+
 ///////////////////////
 // testing other mesh files
-
+/*
             this.primFactory.createPrim(
 
                 this.s1,                               // callback function
@@ -482,10 +482,10 @@ class World extends AssetPool {
                 [ 'obj/capsule/capsule1.png' ],               // texture present. TODO::: FIGURE OUT NUMBERING.
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color,
                 true,                                   // if true, apply texture to each face,
-                [ 'obj/mountains/mountains.obj' ] // object files (.obj, .mtl)
+                [ 'obj/basketball/basketball.obj' ] // object files (.obj, .mtl)
 
             );
-
+*/
 //////////////////////
 
 //////////////////////////////////
@@ -509,6 +509,12 @@ class World extends AssetPool {
             );
 
 // NOTE: webvr implementation
+
+// TODO: test obj files for forward and backwards culling
+
+// TODO: test obj files for other mapping issues.
+
+// TODO: ModelPool.computeObjIndices may need re-testing.
 
 // RESIZE EVENT HANDLING
 
@@ -752,8 +758,6 @@ class World extends AssetPool {
                         // load a Model file. Only the first object in the file will be read.
 
                         if ( updateObj.data ) {
-
-                            // Split by objects
 
                             // TODO: IS MTL ALWAYS OVER O?
 
