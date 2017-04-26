@@ -467,7 +467,7 @@ class World extends AssetPool {
 
 ///////////////////////
 // testing other mesh files
-/*
+
 
             this.primFactory.createPrim(
 
@@ -488,7 +488,7 @@ class World extends AssetPool {
                 [ 'obj/landscape/landscape.obj']
 
             );
-*/
+
 //////////////////////
 
 //////////////////////////////////

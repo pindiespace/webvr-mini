@@ -95,11 +95,11 @@ class PrimFactory {
 
         this.util.emitter.on( this.util.emitter.events.GEOMETRY_READY, 
 
-            ( prim, key, pos ) => {
+            ( prim, key, pos, options ) => {
 
                 this.initPrimGeometry( prim, this.modelPool.keyList[ key ], pos );
 
-                prim.shader.addPrim ( prim );
+                prim.shader.addPrim ( prim, options );
 
         } );
 
@@ -235,7 +235,8 @@ class PrimFactory {
      * is used to return values from proceedural geometry and OBJ wavefront files.
      * @param {prim} prim the Prim.
      * @param {String} key the identifying the geometry in the ModelPool.
-     * @param {Object} coords coordinates object returned by procedural, Mesh, or ModelPool.
+     * @param {Object} coords coordinates object returned by procedural, Mesh, or ModelPool. Added 
+     * to the ModelPool. The method gets the coords object from ModelPool via a key (see constructor).
      * { 
      *   vertices: vertices, 
      *   indices: indices,
@@ -244,7 +245,7 @@ class PrimFactory {
      *   tangents: tangents
      *   type: type.
      *   path: file path.
-     *   usemtl: util.DEFAULT_KEY ('default') or from OBJ file.
+     *   options: grouping of vertices under objects, groups, materials, smoothinGroups...
      * };
      */
     initPrimGeometry ( prim, coords, pos ) {
@@ -253,6 +254,10 @@ class PrimFactory {
          * It is possible to get a usemtl command from an OBJ file, without a corresponding material file. 
          * If so, check our MaterialPool for it.
          */
+
+        // TODO: coords.options
+        // TODO:
+        // TODO: see TypeError in Console
 
         if ( coords.usemtl !== this.util.DEFAULT_KEY ) {
 
@@ -266,6 +271,9 @@ class PrimFactory {
 
                 prim.materials[ 0 ] = material; // replace default, if we loaded a material after initialization.
 
+            } else {
+
+                prim.materials.push( material );
             }
 
         }
@@ -340,8 +348,6 @@ class PrimFactory {
      * @param {Number} pos starting position in array (usually 0).
      */
     initPrimMaterial ( prim, material, pos ) {
-
-        //prim.materials.push( material );
 
         // Material is returned as an associative array, since multiple materials may be found in one .mtl file.
 

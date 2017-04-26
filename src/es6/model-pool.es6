@@ -60,14 +60,28 @@ class ModelPool extends AssetPool {
      * @param {String} data string to be parsed for 3d coordinate values.
      * @param {Array} arr the array to add the coordinate values to.
      * @param {Number} lineNum the current line in the file.
+     * @param {Number} numReturned number of values to returned. In some 
+     *                 OBJ files, 3 numbers are written for 2d texture.
      */
-    computeObj3d ( data, arr, lineNum ) {
+    computeObj3d ( data, arr, lineNum, numReturned = 3 ) {
+
+        // TODO: replace with .split() and .parseFloat()????
 
         let vs = data.match( /^(-?\d+(\.\d+)?)\s*(-?\d+(\.\d+)?)\s*(-?\d+(\.\d+)?)/ );
 
         if ( vs ) {
 
-            arr.push( parseFloat( vs[ 1 ] ), parseFloat( vs[ 3 ] ), parseFloat( vs[ 5 ] ) );
+            if ( numReturned === 3 ) {
+
+                arr.push( parseFloat( vs[ 1 ] ), parseFloat( vs[ 3 ] ), parseFloat( vs[ 5 ] ) );
+
+            } else if ( numReturned === 2 ) {
+
+                arr.push( parseFloat( vs[ 1 ] ), parseFloat( vs[ 3 ] ) );
+
+            }
+
+            return true;
 
         }
 
@@ -90,9 +104,7 @@ class ModelPool extends AssetPool {
 
             arr.push( parseFloat( uvs[ 1 ] ), parseFloat( uvs[ 3 ] ) );
 
-        } else {
-
-            return this.computeObj3d( data, arr, lineNum );
+            return true;
 
         }
 
@@ -101,9 +113,8 @@ class ModelPool extends AssetPool {
     }
 
     /** 
-     * If the listing has > 3 indices for a face, convert it to a fan ( all 
-     * triangles share the first vertex). Use when the number of indices 
-     * on a line evaluates to > 3. In-place conversion. 
+     * Convert indices > 3 indices for a face to a triangle fan ( all triangles share the first vertex). 
+     * Use when the number of indices on a line evaluates to > 3. In-place conversion. 
      * @param {Array} indices the string of indices to be evaluated. Just the 'fan' region.
      * @param {Array} texCoords array for vertex texture coordinates.
      * @param {Array} normals array for vertex normals.
@@ -117,11 +128,7 @@ class ModelPool extends AssetPool {
 
             for ( let i = 1; i < arr.length - 1; i++ ) {
 
-                nArr.push( arr[ 0 ] );
-
-                nArr.push( arr[ i ] );
-
-                nArr.push( arr[ i + 1 ] );
+                nArr.push( arr[ 0 ], arr[ i ], arr[ i + 1 ] );
 
             }
 
@@ -216,10 +223,6 @@ class ModelPool extends AssetPool {
 
         Array.prototype.push.apply( indices, iIndices );
 
-        //Array.prototype.push.apply( texCoords, iTexCoords );
-
-        //Array.prototype.push.apply( normals, iNormals );
-
     }
 
     /** 
@@ -258,6 +261,8 @@ class ModelPool extends AssetPool {
 
         let objMtl = this.util.DEFAULT_KEY;
 
+        let objects = [], groups = [], smoothingGroups = [], materials = [];
+
         lines.forEach( ( line ) => {
 
             // First value.
@@ -276,19 +281,9 @@ class ModelPool extends AssetPool {
 
                         prim.name = data;
 
-                    }
-
-                    break;
-
-                case 'g': // group name, store hierarchy
-
-                    if ( ! prim.group ) {
-
-                        prim.group = [];
+                        prim.objects[ data ] = vertices.length; // start position in final flattened array
 
                     }
-
-                    prim.group[ data ] = lineNum;
 
                     break;
 
@@ -314,21 +309,11 @@ class ModelPool extends AssetPool {
 
                 case 'vt': // texture uvs
 
-                    this.computeObj2d( data, texCoords, lineNum );
+                    if ( ! this.computeObj2d( data, texCoords, lineNum ) ) {
 
-                    break;
-
-                case 's': // smoothing group (related to 'g')
-
-                    if ( ! prim.smoothingGroup ) {
-
-                        prim.smoothingGroup = []; // TODO: DO STUFF!!!!!!!!!!!!!!!!!!!!!!
+                        this.computeObj3d( data, texCoords, lineNum, 2 );
 
                     }
-
-                    break;
-
-                case '#': // comment
 
                     break;
 
@@ -352,22 +337,30 @@ class ModelPool extends AssetPool {
 
                     // TODO: define how to usemtl (keep coordinate start position??????/)
 
-                     console.log("::::::::::::GOTTA USEMTL in OBJ file: " + data );
+                    console.log("::::::::::::GOTTA USEMTL in OBJ file: " + data );
 
-                     objMtl = data;
+                    materials[ data ] = vertices.length;
 
                     break;
 
-                case 'g': // group name (collection of vertices forming face)
 
-                    // TODO: assign faces (sides in our internal language).
+                case 'g': // group name, store hierarchy
+
+                    groups[ data ] = vertices.length; // starting position in final flattened array
+
+                    break;
+
+                case 's': // smoothing group (related to 'g')
+
+                    smoothingGroups[ data ] = vertices.length; // starting position in final flattened array
 
                     // @link https://people.cs.clemson.edu/~dhouse/courses/405/docs/brief-obj-file-format.html
 
                     break;
-                // case 'maplib':
-                // case 'usemap'
-                //  break;
+
+                case 'maplib': // poorly documented
+                case 'usemap': // ditto
+                case '#': // comment
                 case 'vp': // parameter vertices
                 case 'p': // point
                 case 'l': // line
@@ -381,7 +374,6 @@ class ModelPool extends AssetPool {
                 case 'end': // end statment
                 case 'con': // connectivity between free-form surfaces
 
-                case 's': // smoothing group
                 case 'mg': // merging group
                 case 'bevel': // bevel interpolation
                 case 'c_interp': // color interpolation
@@ -432,7 +424,19 @@ class ModelPool extends AssetPool {
 
             normals: normals,
 
-            material: objMtl
+            // references to sub-regions in the obj file.
+
+            options : {
+
+                objects: objects, 
+
+                groups: groups, 
+
+                smoothingGroups: smoothingGroups, 
+
+                materials: materials
+
+            }
 
         }
 
@@ -594,7 +598,7 @@ class ModelPool extends AssetPool {
 
                                     if ( modelObj ) {
 
-                                        // GEOMETRY_READY event.
+                                        // GEOMETRY_READY event, with additional data referencing sub-groups of the model.
 
                                         this.util.emitter.emit( modelObj.emits, prim, modelObj.key, modelObj.pos );
 

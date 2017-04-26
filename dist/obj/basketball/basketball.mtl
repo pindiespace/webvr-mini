@@ -12,7 +12,7 @@ newmtl Material__0
 	Kd 0.5880 0.5880 0.5880
 	Ks 0.0000 0.0000 0.0000
 	Ke 0.0000 0.0000 0.0000
-	map_Ka maps\NBA BASKETBALL DIFFUSE.tga
-	map_Kd maps\NBA BASKETBALL DIFFUSE.tga
-	map_bump maps\NBA BASKETBALL BUMP.tga
-	bump maps\NBA BASKETBALL BUMP.tga
+	map_Ka basketball_diffuse.tga
+	map_Kd basketball_diffuse.tga
+	map_bump basketball_diffuse.tga
+	bump basketball_diffuse.tga
