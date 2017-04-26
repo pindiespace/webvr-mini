@@ -319,9 +319,15 @@ class Util {
 
     }
 
+    /** 
+     * check if two arrays contain exactly the same items.
+     * @param {Array} arr1 the first array.
+     * @param {Array} arr2 the second Array.
+     * @returns {Boolean} if same items, return true, else false.
+     */
     containsAll ( arr1, arr2 ) {
 
-        arr2.every( arr2Item => arr1.includes( arr2Item ) );
+        return arr2.every( arr2Item => arr1.includes( arr2Item ) );
 
     }
 
@@ -339,7 +345,7 @@ class Util {
     }
 
     /** 
-     * Get a succession of values from a flat array
+     * Get a succession of values from a flat array, similar to Array.substring().
      * @param {Array} arr a flat array.
      * @param {Number} idx index into the array.
      * @param {Number} stride number of elements to get. This is 
@@ -383,7 +389,7 @@ class Util {
 
         if ( alen < 3 ) {
 
-            console.error( 'no value or index specified' );
+            console.error( 'setArr() no value or index specified' );
 
             return -1;
 
@@ -595,6 +601,11 @@ class Util {
 
     }
 
+    /**
+     * Concat multiple arrays, adding only unique elements.
+     * @param {...Array} argument list of arrays
+     * @returns {Array} the unique composite of inputed Arrays.
+     */
     concatUniqueArr ( ...arrs ) {
 
         let unique = [];
@@ -620,7 +631,7 @@ class Util {
     };
 
     /**
-     * Fastest swap method for JS.
+     * Fastest Array swap method for JS.
      * @link https://jsperf.com/js-list-swap/2
      * @param {Array} arr the array with elements to swap
      * @param {Number|String} p1 the first position.

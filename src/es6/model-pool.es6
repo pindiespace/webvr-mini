@@ -65,12 +65,19 @@ class ModelPool extends AssetPool {
 
         let vs = data.match( /^(-?\d+(\.\d+)?)\s*(-?\d+(\.\d+)?)\s*(-?\d+(\.\d+)?)/ );
 
-        arr.push( parseFloat( vs[ 1 ] ), parseFloat( vs[ 3 ] ), parseFloat( vs[ 5 ] ) );
+        if ( vs ) {
+
+            arr.push( parseFloat( vs[ 1 ] ), parseFloat( vs[ 3 ] ), parseFloat( vs[ 5 ] ) );
+
+        }
+
+        return false;
 
     }
 
     /** 
-     * Extract 2 vertex data (texture coordinates) from a string.
+     * Extract 2 vertex data (texture coordinates) from a string. For some routines, 
+     * use the 'return' while others do not.
      * @param {String} data string to be parsed for 3d coordinate values.
      * @param {Array} arr the array to add the coordinate values to.
      * @param {Number} lineNum the current line in the file.
@@ -79,14 +86,17 @@ class ModelPool extends AssetPool {
 
         let uvs = data.match( /^(-?\d+(\.\d+)?)\s+(-?\d+(\.\d+)?)$/ );
 
-        if ( ! uvs ) {
+        if ( uvs ) {
 
-            return false;
+            arr.push( parseFloat( uvs[ 1 ] ), parseFloat( uvs[ 3 ] ) );
+
+        } else {
+
+            return this.computeObj3d( data, arr, lineNum );
+
         }
-        
-        arr.push( parseFloat( uvs[ 1 ] ), parseFloat( uvs[ 3 ] ) );
 
-        return true;
+        return false;
 
     }
 
@@ -97,6 +107,7 @@ class ModelPool extends AssetPool {
      * @param {Array} indices the string of indices to be evaluated. Just the 'fan' region.
      * @param {Array} texCoords array for vertex texture coordinates.
      * @param {Array} normals array for vertex normals.
+     * @returns {Array} Array with extra indices.
      */
     computeFan ( arr ) {
 
@@ -106,15 +117,15 @@ class ModelPool extends AssetPool {
 
             for ( let i = 1; i < arr.length - 1; i++ ) {
 
-                nArr.push( nArr[ 0 ] );
+                nArr.push( arr[ 0 ] );
 
-                nArr.push( nArr[ i ] );
+                nArr.push( arr[ i ] );
 
-                nArr.push( nArr[ i + 1 ] );
+                nArr.push( arr[ i + 1 ] );
 
             }
 
-            arr = nArr;
+            return nArr;
 
         }
 
@@ -141,7 +152,7 @@ class ModelPool extends AssetPool {
 
         let NOT_IN_STRING = this.NOT_IN_LIST;
 
-        let iIndices = [], iTexCoords = [], iNormals = [];
+        let iIndices = [];
 
         // Each map should refer to one point.
 
@@ -157,8 +168,6 @@ class ModelPool extends AssetPool {
 
                 idx = parseInt( idxs[ 0 ] ) - 1; // NOTE: OBJ first index = 1, our arrays index = 0
 
-                /////////////////////////////////////////texCoord = 0.0;
-
                 normal = parseInt( idxs[ 1 ] ) - 1;
 
             } else if ( fs.indexOf ( '/' ) !== NOT_IN_STRING ) {
@@ -173,35 +182,30 @@ class ModelPool extends AssetPool {
 
             } else { // Has indices only
 
-                idx = parseInt( fs ) - 1;
-
-                if ( Number.isFinite( idx ) ) {
-
-                }
-
-                /////////////////////////////////////////texCoord = normal = 0.0;
+                idx = parseInt( fs ) - 1; 
 
             }
 
             // push indices, conditionally push texture coordinates and normals.
 
-            iIndices.push( idx );
+            if ( Number.isFinite( idx ) ) iIndices.push( idx );
 
-            if ( texCoord ) iTexCoords.push( texCoord );
+            if ( Number.isFinite( texCoord ) ) texCoords.push( texCoord );
 
-            if ( normal ) iNormals.push( normal );
+            //console.log('texCoord:' + texCoord)
+
+            if ( Number.isFinite( normal ) ) normals.push( normal );
 
         } );
 
-        // If we have more than 3 indices (face is NOT a triangle), manually create triangle fan.
+        /* 
+         * If we have more than 3 indices (face is NOT a triangle), 
+         * manually create triangle fan, since we only use GL_TRIANGLES in Shader rendering.
+         */
 
         if ( iIndices.length > 3 ) {
 
-            this.computeFan( iIndices );
-
-            this.computeFan( iTexCoords );
-
-            this.computeFan( iNormals );
+            iIndices = this.computeFan( iIndices );
 
         }
 
@@ -212,9 +216,9 @@ class ModelPool extends AssetPool {
 
         Array.prototype.push.apply( indices, iIndices );
 
-        Array.prototype.push.apply( texCoords, iTexCoords );
+        //Array.prototype.push.apply( texCoords, iTexCoords );
 
-        Array.prototype.push.apply( normals, iNormals );
+        //Array.prototype.push.apply( normals, iNormals );
 
     }
 
@@ -248,7 +252,7 @@ class ModelPool extends AssetPool {
 
         let lines = data.split( '\n' );
 
-        let iTexCords = [];
+        let iTexCoords = [];
 
         let iNormals = [];
 
@@ -294,9 +298,11 @@ class ModelPool extends AssetPool {
 
                     break;
 
-                case 'f': // face, indices
+                case 'f': // face, indices, convert polygons to triangles
 
-                    this.computeObjIndices( data, indices, lineNum, iTexCords, iNormals );
+                    this.computeObjIndices( data, indices, lineNum, iTexCoords, iNormals );
+
+                    ////////////////console.log( 'iTexCoords.length:' + iTexCoords.length) // when texture coords are here
 
                     break;
 

@@ -468,21 +468,24 @@ class World extends AssetPool {
 ///////////////////////
 // testing other mesh files
 /*
+
             this.primFactory.createPrim(
 
                 this.s1,                               // callback function
                 typeList.MESH,
-                'capsule2',
+                'objfile',
                 vec5( 1, 1, 1 ),                       // dimensions (4th dimension doesn't exist for cylinder)
                 vec5( 40, 40, 0  ),                    // divisions MAKE SMALLER
                 vec3.fromValues( 1.0, 1.0, -2.0 ),      // position (absolute)
                 vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
                 vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
                 vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [ 'obj/capsule/capsule1.png' ],               // texture present. TODO::: FIGURE OUT NUMBERING.
+                //[ 'img/crate.png' ],               // texture present. TODO::: FIGURE OUT NUMBERING.
+                '', // texture loaded from .mtl file
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color,
                 true,                                   // if true, apply texture to each face,
-                [ 'obj/basketball/basketball.obj' ] // object files (.obj, .mtl)
+                //[ 'obj/mountains/mountains.obj' ] // object files (.obj, .mtl)
+                [ 'obj/landscape/landscape.obj']
 
             );
 */

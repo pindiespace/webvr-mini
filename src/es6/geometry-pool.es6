@@ -975,7 +975,7 @@ class GeometryPool {
      */
     computeTexCoords ( vertices ) {
 
-        // Assume y is vertical, x is horizontal.
+        // Assume y is vertical, x and z are horizontal.
 
         let texCoords = [];
 
@@ -988,6 +988,156 @@ class GeometryPool {
         }
 
         return texCoords; 
+
+    }
+
+    // http://answers.unity3d.com/questions/64410/generating-uvs-for-a-scripted-mesh.html
+    // TODO: get valid results here!!!!!!!
+    computeTexCoords2 ( vertices, indices, scale = 1.0 ) {
+
+        let util = this.util;
+
+        let vec3 = this.glMatrix.vec3;
+
+        let directions = this.directions;
+
+        let i0, i1, i2, v0, v1, v2, side1, side2, direction, facing;
+
+        let Facing = { Up: 0, Forward: 1, Right: 2 };
+
+        let texCoords = new Array( vertices.length * 2 / 3 );
+
+        for ( let i = 0; i < indices.length; i += 3 ) {
+
+            let i0 = i,
+
+            i1 = i + 1,
+
+            i2 = i + 2;
+
+            v0 = this.util.getArr( vertices, i0, 3 ),
+
+            v1 = this.util.getArr( vertices, i1, 3 ),
+
+            v2 = this.util.getArr( vertices, i2, 3 );
+
+            side1 = vec3.sub( [ 0, 0, 0 ], v1, v0 );
+
+            side2 = vec3.sub( [ 0, 0, 0 ], v2, v0 );
+
+            direction = vec3.cross( [ 0, 0, 0 ], side1, side2 );
+
+            facing = facingDirection( direction );
+
+            // NOTE: replace with :         Array.prototype.push.apply( indices, iIndices );
+
+            switch ( facing ) {
+
+                case Facing.Forward:
+
+                    texCoords[i0] = scaledUV( v0[ 0 ], v0[ 1 ], scale );
+
+                    texCoords[i1] = scaledUV( v1[ 0 ], v1[ 1 ], scale );
+
+                    texCoords[i2] = scaledUV( v2[ 0 ], v2[ 1 ], scale );
+
+                    break;
+
+                    texCoords[i0] = scaledUV( v0[ 0 ], v0[ 2 ], scale );
+
+                    texCoords[i1] = scaledUV( v1[ 0 ], v1[ 2 ], scale );
+
+                    texCoords[i2] = scaledUV( v2[ 0 ], v2[ 2 ], scale );
+
+
+                case Facing.up:
+
+                    texCoords[i0] = scaledUV( v0[ 1 ], v0[ 2 ], scale );
+
+                    texCoords[i1] = scaledUV( v1[ 1 ], v1[ 2 ], scale );
+
+                    texCoords[i2] = scaledUV( v2[ 1 ], v2[ 2 ], scale );
+
+                    break;
+
+                case Facing.right:
+
+                    texCoords[i0] = scaledUV(v0[ 2 ], v0[ 1 ], scale );
+
+                    texCoords[i1] = scaledUV(v1[ 2 ], v1[ 1 ], scale );
+
+                    texCoords[i2] = scaledUV(v2[ 2 ], v2[ 1], scale );
+
+                    break;
+            }
+
+
+        } // end of for loop
+
+        function facesThisWay( v, dir, p, maxDot, ret ) {
+
+            let t = vec3.dot( [ 0, 0, 0 ], v, dir );
+
+            if ( t > maxDot ) {
+
+             //ret = p;
+
+             //maxDot = t;
+
+             return {
+                ret: p,
+                maxDot: t
+            };
+
+         }
+
+         return false;
+
+        }
+     
+        function facingDirection( v ) {
+
+            var ret = Facing.Up, val;
+
+            let maxDot = Number.NegativeInfinity;
+
+            if ( ! facesThisWay( v, directions.RIGHT, Facing.Right, maxDot, ret ) ) {
+
+                val = facesThisWay( v, directions.LEFT, Facing.Right, maxDot, ret );
+
+                ret = val.ret, maxDot = val.maxDot
+
+            }
+         
+            if ( ! facesThisWay( v, directions.FORWARD, Facing.Forward, maxDot, ret ) ) {
+
+                val = facesThisWay( v, directions.BACK, Facing.Forward, maxDot, ret );
+
+                ret = val.ret, maxDot = val.maxDot;
+
+            }
+         
+            if ( ! facesThisWay( v, directions.UP, Facing.Up, maxDot, ret ) ) {
+
+                val = facesThisWay( v, directions.DOWN, Facing.Up, maxDot, ret );
+
+                ret = val.ret, maxDot = val.maxDot;
+
+            }
+         
+            return ret;
+
+        }
+     
+        function scaledUV( uv1, uv2, scale ) {
+
+            return [ uv1 / scale, uv2 / scale ];
+
+        }
+
+        // Return computed texCoords
+
+        return texCoords;
 
     }
 

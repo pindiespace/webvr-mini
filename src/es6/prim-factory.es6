@@ -567,6 +567,9 @@ class PrimFactory {
 
                 geo.setTexCoords( this.geometryPool.computeTexCoords( geo.vertices.data ) );
 
+                // TODO: debug
+                ////////////window.texCoords2 = this.geometryPool.computeTexCoords2( geo.vertices.data, geo.indices.data );
+
             }
 
         }
@@ -791,6 +794,12 @@ class PrimFactory {
             if ( prim.name === 'TORUS1' ) {
 
                 window.torus = prim;
+
+            }
+
+            if ( prim.name === 'objfile' ) {
+
+                window.objfile = prim;
 
             }
 
