@@ -423,9 +423,9 @@ class MaterialPool extends AssetPool {
                 case 'disp':     // displacement map
 
                     /* 
-                     * This loads the file, and appends to Prim texture list using the LoadTexture object.
-                     * @link  "filename" is the name of a color texture file (.mpc), a color 
-                     * procedural texture file (.cxc), or an image file.
+                     * These commands all load single image files, and append to Prim texture list 
+                     * after being emitted with a TEXTURE_2D_READY in PrimFactory.
+                     * @link  "filename" is the name of a color texture or image file.
                      * @link http://paulbourke.net/dataformats/mtl/
                      */
 
@@ -438,9 +438,9 @@ class MaterialPool extends AssetPool {
                         let options = this.computeTextureMapOptions( data );
 
                         /*
-                         * Note: the texture attaches to prim.textures, so we pass our type as the texture type (map_Kd, map_Ks...).
-                         * Note: the sixth paramater, is NULL since it defines a specific WebGL texture type (we want the default).
-                         * Note: if options are present, we pass those in as well.
+                         * NOTE: the texture attaches to prim.textures, so the fourth parmeter is the texture type (map_Kd, map_Ks...).
+                         * NOTE: the sixth paramater, is NULL since it defines a specific WebGL texture type (we want the default).
+                         * NOTE: if options are present, we pass those in as well.
                          */
 
                         this.texturePool.getTextures( prim, [ dir + tPath ], true, false, type, null, options );

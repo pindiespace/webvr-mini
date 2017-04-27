@@ -107,4 +107,19 @@ WebVR mini is currently being updated to include a better way of creating and sa
 
 [Some WebGL Samples, including dynamic clouds](https://www.ibiblio.org/e-notes/webgl/webgl.htm)
 
+## Development Notes
+
+The following lists some of the design patterns and techniques applied in development.
+
+### Use of Fetch API and Promises
+
+
+### Emitters
+
+WebVR-Mini uses an emitter object (concept borrowed from webvr-polyfill) to broadcast events. Possible events include:
+
+OBJ Loading
+
+The GEOMETRY_READY is fired when a geometry (defined as coordinates for vertices, textures, normals, tangents) completes loading, either from procedural geometry or an OBJ file. OBJ files may load material files, which in turn fire MATERIAL_READY events when a Material (as defined by the OBJ Wavefront format) is read from a .mtl file. In the case the Material file references a texture, the texture is loaded and options from the .mtl file are passed to the TexturePool as an "options" object. Individual textures fire a TEXTURE_READY event and carry this options file along with them to PrimFactory
+
 

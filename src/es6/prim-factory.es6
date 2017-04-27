@@ -231,6 +231,31 @@ class PrimFactory {
     }
 
     /** 
+     * Add ma material description to the Prim.
+     * Note: a single .mtl file may add multiple materials.
+     * @param {Prim} prim the prim.
+     * @param {Material} material the material object.
+     * @param {Number} pos starting position in array (usually 0).
+     */
+    initPrimMaterial ( prim, material, pos ) {
+
+        // Material is returned as an associative array, since multiple materials may be found in one .mtl file.
+
+        // TODO: CONVERT TO ASSOCIATIVE ARRAY
+
+        if ( material && prim.materials.length > 0 && prim.materials[ 0 ].name === this.util.DEFAULT_KEY ) {
+
+            prim.materials[ 0 ] = material; // replace default, if we loaded a material after initialization.
+
+        } else {
+
+            prim.materials.push( material );
+
+        }
+
+    }
+
+    /** 
      * Prims don't contrl their initialization, so let the factory do it. This standard structure 
      * is used to return values from proceedural geometry and OBJ wavefront files.
      * @param {prim} prim the Prim.
@@ -251,32 +276,24 @@ class PrimFactory {
     initPrimGeometry ( prim, coords, pos ) {
 
         /* 
-         * It is possible to get a usemtl command from an OBJ file, without a corresponding material file. 
-         * If so, check our MaterialPool for it.
+         * Options contain material name declarations, groups, smoothing groups, etc. 
+         * Their value is their start in coords.vertices.
          */
 
-        // TODO: coords.options
-        // TODO:
-        // TODO: see TypeError in Console
+         if ( coords.options ) {
 
-        if ( coords.usemtl !== this.util.DEFAULT_KEY ) {
+            // TODO: look for material names, map to material files.
 
-            // If we don't find it, don't worry. Either added with a 'mtllib' or leave it at the default material.
+            // TODO: add in groups, smoothing groups.
+            // TODO: write in empty names after PRIM_READY event
+            // TODO: map names to start positions of materials after PRIM_READY event
+            //this.initPrimMaterial( prim, material, position );
 
-            // TODO: confirm that we can grab a different material from the MaterialPool...
+         }
 
-            let material = this.materialPool.nameInList( coords.usemtl );
 
-            if ( prim.materials.length > 0 && prim.materials[ 0 ].name === this.util.DEFAULT_KEY ) {
 
-                prim.materials[ 0 ] = material; // replace default, if we loaded a material after initialization.
-
-            } else {
-
-                prim.materials.push( material );
-            }
-
-        }
+        console.log( 'coords.options:' + coords.options )
 
         // Update vertices if they were supplied.
 
@@ -338,32 +355,6 @@ class PrimFactory {
         /////////prim.geometry.checkBufferData();
 
     }
-
-
-    /** 
-     * Add ma material description to the Prim.
-     * Note: a single .mtl file may add multiple materials.
-     * @param {Prim} prim the prim.
-     * @param {Material} material the material object.
-     * @param {Number} pos starting position in array (usually 0).
-     */
-    initPrimMaterial ( prim, material, pos ) {
-
-        // Material is returned as an associative array, since multiple materials may be found in one .mtl file.
-
-        if ( prim.materials.length > 0 && prim.materials[ 0 ].name === this.util.DEFAULT_KEY ) {
-
-            prim.materials[ 0 ] = material; // replace default, if we loaded a material after initialization.
-
-        } else {
-
-            prim.materials.push( material );
-
-        }
-
-    }
-
-
 
     /** 
      * Create an standard 3d object.

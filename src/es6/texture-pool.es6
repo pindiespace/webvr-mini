@@ -310,10 +310,10 @@ class TexturePool extends AssetPool {
      * @param {String} path the file URL for the texture.
      * @param {String|Number} pos the pos (index) for assigning the texture in the calling Prim .textures array
      * @param {String} mimeType the MIME type of the image
-     * @param {Number} type the WebGL texture type (e.g. TEXTURE_2D, TEXTURE_CUBE_MAP).
+     * @param {Number} glTextureType the WebGL texture type (e.g. TEXTURE_2D, TEXTURE_CUBE_MAP).
      * @param {Object} any additional params.
      */
-    addTexture ( prim, image, path, pos, mimeType, type ) {
+    addTexture ( prim, image, path, pos, mimeType, glTextureType ) {
 
         if ( pos === undefined ) {
 
@@ -325,9 +325,9 @@ class TexturePool extends AssetPool {
 
         let gl = this.webgl.getContext();
 
-        if ( ! type ) {
+        if ( ! glTextureType ) {
 
-            type = gl.TEXTURE_2D;
+            glTextureType = gl.TEXTURE_2D;
 
         }
 
@@ -335,7 +335,7 @@ class TexturePool extends AssetPool {
 
         emitEvent = '';
 
-        switch( type ) {
+        switch( glTextureType ) {
 
             case gl.TEXTURE_2D:
 
@@ -392,7 +392,7 @@ class TexturePool extends AssetPool {
 
                 mimeType: mimeType, // image/png, image/jpg...
 
-                type: type,         // gl.TEXTURE_2D, gl.TEXTURE_3D...
+                type: glTextureType,         // gl.TEXTURE_2D, gl.TEXTURE_3D...
 
                 path: path,         // URL of object
 
@@ -424,7 +424,7 @@ class TexturePool extends AssetPool {
      * @param {WebGL.TEXTURE} textureType a WebGL-enumerated texture type (TEXTURE_2D, TEXTURE_3D...), default TEXTURE_2D.
      * @param {Object} options if present, additional options for rendering the texture (e.g. scaling, sharpening, brightening).
      */
-    getTextures ( prim, pathList, cacheBust = true, keepDOMImage = false, use = this.util.DEFAULT_KEY, textureType, options = {} ) {
+    getTextures ( prim, pathList, cacheBust = true, keepDOMImage = false, textureUse = this.util.DEFAULT_KEY, glTextureType, options = {} ) {
 
         // TODO: check texture list. If paths are already there, just use the path
         // TODO: and return the webgl texture buffer object.
@@ -489,7 +489,7 @@ class TexturePool extends AssetPool {
 
                                     // Create a WebGLTexture from the Image (left off 'type' for gl.TEXTURE type).
 
-                                    let textureObj = this.addTexture( prim, image, updateObj.path, updateObj.pos, mimeType, textureType );
+                                    let textureObj = this.addTexture( prim, image, updateObj.path, updateObj.pos, mimeType, glTextureType );
 
                                     if ( textureObj ) {
 
@@ -509,13 +509,19 @@ class TexturePool extends AssetPool {
 
                                         }
 
-                                        // Save the usage, either 'default' or a key from an OBJ wavefront file (map_Kd, map_Ks...).
+                                        // Save the texture usage, either 'default' or a key from calling .mtl file (map_Kd, map_Ks...).
 
-                                        textureObj.use = use,
+                                        textureObj.textureUse = textureUse,
+
+                                        // Additional options (defined in calling .mtl or .obj file), associated with textureUse.
 
                                         textureObj.options = options;
 
-                                        // Emit a 'texture ready event' with the key in the pool and path (intercepted by Prim).
+                                        /*
+                                         * Emit a 'texture ready event' with the key in the pool and path (intercepted by PrimFactory).
+                                         * NOTE: options for each texture's rendering are attached to textureObj.
+                                         * NOTE: in PrimFactory, we recover textureObj by its key in TexturePool.
+                                         */
 
                                         this.util.emitter.emit( textureObj.emits, prim, textureObj.key, updateObj.pos );
 

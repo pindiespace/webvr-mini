@@ -281,9 +281,11 @@ class ModelPool extends AssetPool {
 
                         prim.name = data;
 
-                        prim.objects[ data ] = vertices.length; // start position in final flattened array
+
 
                     }
+
+                    objects[ data ] = vertices.length; // start position in final flattened array
 
                     break;
 
@@ -424,7 +426,7 @@ class ModelPool extends AssetPool {
 
             normals: normals,
 
-            // references to sub-regions in the obj file.
+            // References to sub-regions in the obj file.
 
             options : {
 
@@ -527,10 +529,10 @@ class ModelPool extends AssetPool {
              *   vertices: vertices,
              *   indices: indices,
              *   texCoords: texCoords,
-             *   normals: normals
-             *   type: type.
-             *   path: file path.
-             *   usemtl: util.DEFAULT_KEY ('default') or from OBJ file.
+             *   normals: normals,
+             *   options: options (start points for objects, groups, smoothingGroups, etc),
+             *   type: type,
+             *   path: file path
              * }
             */
 
@@ -598,7 +600,12 @@ class ModelPool extends AssetPool {
 
                                     if ( modelObj ) {
 
-                                        // GEOMETRY_READY event, with additional data referencing sub-groups of the model.
+                                        /* 
+                                         * GEOMETRY_READY event, with additional data referencing sub-groups of the model.
+                                         * NOTE: options (e.g. starts of groups, materials, smoothing groups) are attached to modelObj.
+                                         * NOTE: we recover the modelObj by its key in PrimFactory.
+                                         * See this.addModel() above for more information.
+                                         */
 
                                         this.util.emitter.emit( modelObj.emits, prim, modelObj.key, modelObj.pos );
 
