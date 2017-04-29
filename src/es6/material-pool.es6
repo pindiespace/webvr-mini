@@ -126,17 +126,29 @@ class MaterialPool extends AssetPool {
                     case 's': // scales the size of the texture pattern, default 1,1,1
                     case 't': // turn on texture turbulence (u, v, w )
 
-                        if ( ppp.length > 3 ) {
+                        // Remove anything that isn't a number.
 
-                            //this.util.removeByValue( ppp, ' ', '' );
+                        let ct = 0;
 
-                            options[ d ] = [ parseFloat[ ppp[ 1 ] ], parseFloat[ ppp[ 2 ] ], parseFloat[ ppp[ 3 ] ] ];
+                        options[ d ] = [];
 
-                            if ( ! Number.isFinite( options[ d ][ 0 ] ) ) options[ d ][ 0 ] = 0;
+                        for ( let j = 1; j < ppp.length; j++ ) {
 
-                            if ( ! Number.isFinite( options[ d ][ 1 ] ) ) options[ d ][ 1 ] = 0;
+                            let pi = ppp[ j ];
 
-                            if ( ! Number.isFinite( options[ d ][ 2 ] ) ) options[ d ][ 2 ] = 0;
+                            if ( Number.isFinite( parseFloat( pi ) ) ){
+
+                                options[ d ][ ct++ ] = parseFloat( pi )
+
+                            }
+
+                        }
+
+                        if ( options[ d ].length !== 3 ) {
+
+                            console.warn( 'MaterialPool::computeTextureMapOptions(): in valid texture param for:' + d );
+
+                            options[ d ] = [ 0, 0, 0 ];
 
                         }
 

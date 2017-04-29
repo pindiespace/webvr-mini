@@ -226,6 +226,8 @@ class PrimFactory {
      */
     initPrim2dTexture ( prim, textureObj, pos ) {
 
+        // TODO: see if this texture is a material.
+
         prim.textures[ pos ] = textureObj;
 
     }
@@ -255,6 +257,8 @@ class PrimFactory {
             material.starts = prim.materials[ materialName ].starts;
 
         }
+
+        // TODO: see if we can bind a texture material.
 
         console.log( 'initPrimMaterial():adding material:' + materialName )
 
@@ -312,6 +316,8 @@ class PrimFactory {
                 console.log( "initPrimGeometry():coords options.materials[" + i + "]: adding start:" + coords.options.materials[i] )
 
                 prim.materials[ i ].starts = coords.options.materials[i];
+
+                // TODO: see if we can bind a texture to it.
 
             }
 

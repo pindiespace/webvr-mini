@@ -1137,37 +1137,6 @@
 	        }
 
 	        /** 
-	         * Remove all elements of an array by their value.
-	         * @param {Array} arr the array to remove stuff from.
-	         * @param {...} additional arguments, each one removed from the array by value.
-	         * @returns {Array} the cleaned array.
-	         */
-
-	    }, {
-	        key: 'removeByValue',
-	        value: function removeByValue(arr) {
-
-	            var val,
-	                a = arguments,
-	                l = a.length,
-	                idx;
-
-	            while (l !== 0 && arr.length) {
-
-	                // Next value to remove
-
-	                val = a[--l];
-
-	                while ((idx = arr.indexOf(val)) != -1) {
-
-	                    arr.splice(idx, 1);
-	                }
-	            }
-
-	            return arr;
-	        }
-
-	        /** 
 	         * Random seed.
 	         */
 
@@ -6440,6 +6409,8 @@
 	        key: 'initPrim2dTexture',
 	        value: function initPrim2dTexture(prim, textureObj, pos) {
 
+	            // TODO: see if this texture is a material.
+
 	            prim.textures[pos] = textureObj;
 	        }
 
@@ -6470,6 +6441,8 @@
 
 	                material.starts = prim.materials[materialName].starts;
 	            }
+
+	            // TODO: see if we can bind a texture material.
 
 	            console.log('initPrimMaterial():adding material:' + materialName);
 
@@ -6528,6 +6501,8 @@
 	                    console.log("initPrimGeometry():coords options.materials[" + i + "]: adding start:" + coords.options.materials[i]);
 
 	                    prim.materials[i].starts = coords.options.materials[i];
+
+	                    // TODO: see if we can bind a texture to it.
 	                }
 	            }
 
@@ -16882,17 +16857,27 @@
 	                        case 't':
 	                            // turn on texture turbulence (u, v, w )
 
-	                            if (ppp.length > 3) {
+	                            // Remove anything that isn't a number.
 
-	                                //this.util.removeByValue( ppp, ' ', '' );
+	                            var ct = 0;
 
-	                                options[d] = [parseFloat[ppp[1]], parseFloat[ppp[2]], parseFloat[ppp[3]]];
+	                            options[d] = [];
 
-	                                if (!Number.isFinite(options[d][0])) options[d][0] = 0;
+	                            for (var j = 1; j < ppp.length; j++) {
 
-	                                if (!Number.isFinite(options[d][1])) options[d][1] = 0;
+	                                var pi = ppp[j];
 
-	                                if (!Number.isFinite(options[d][2])) options[d][2] = 0;
+	                                if (Number.isFinite(parseFloat(pi))) {
+
+	                                    options[d][ct++] = parseFloat(pi);
+	                                }
+	                            }
+
+	                            if (options[d].length !== 3) {
+
+	                                console.warn('MaterialPool::computeTextureMapOptions(): in valid texture param for:' + d);
+
+	                                options[d] = [0, 0, 0];
 	                            }
 
 	                            break;
