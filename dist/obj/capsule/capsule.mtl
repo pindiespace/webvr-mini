@@ -8,6 +8,6 @@ Ks 0.000000 0.000000 0.000000
 Tr 1.000000
 illum 1
 Ns 0.000000
-map_Kd capsule0.png
+map_Kd -s 1    1  1 -o 0  0  0   -mm 0 1 capsule0.png
 
 

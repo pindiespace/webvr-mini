@@ -468,7 +468,7 @@ class World extends AssetPool {
 ///////////////////////
 // testing other mesh files
 
-
+/*
             this.primFactory.createPrim(
 
                 this.s1,                               // callback function
@@ -489,6 +489,7 @@ class World extends AssetPool {
 
             );
 
+*/
 //////////////////////
 
 //////////////////////////////////

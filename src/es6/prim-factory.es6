@@ -107,9 +107,9 @@ class PrimFactory {
 
         this.util.emitter.on( this.util.emitter.events.MATERIAL_READY, 
 
-            ( prim, key, pos) => {
+            ( prim, key, materialName ) => {
 
-                this.initPrimMaterial( prim, this.materialPool.keyList[ key ], pos );
+                this.initPrimMaterial( prim, this.materialPool.keyList[ key ], materialName );
 
                 prim.shader.addPrim ( prim );
 
@@ -237,21 +237,28 @@ class PrimFactory {
      * @param {Material} material the material object.
      * @param {Number} pos starting position in array (usually 0).
      */
-    initPrimMaterial ( prim, material, pos ) {
+    initPrimMaterial ( prim, material, materialName ) {
 
         // Material is returned as an associative array, since multiple materials may be found in one .mtl file.
 
-        // TODO: CONVERT TO ASSOCIATIVE ARRAY
+        /* 
+         * If the material already has an entry, it was put there parsing the 
+         * OBJ file. so pull the 'start' value from it, and replace with 
+         * the full material data. Otherwise, add material - this.initPrim() 
+         * will add the start position for the material later.
+         */
 
-        if ( material && prim.materials.length > 0 && prim.materials[ 0 ].name === this.util.DEFAULT_KEY ) {
+        if ( prim.materials[ materialName ] ) {
 
-            prim.materials[ 0 ] = material; // replace default, if we loaded a material after initialization.
+            console.log('initPrimMaterial():found existing material ' + materialName + ' with start:' + prim.materials[ materialName ].starts )
 
-        } else {
-
-            prim.materials.push( material );
+            material.starts = prim.materials[ materialName ].starts;
 
         }
+
+        console.log( 'initPrimMaterial():adding material:' + materialName )
+
+        prim.materials[ materialName ] = material;
 
     }
 
@@ -282,18 +289,33 @@ class PrimFactory {
 
          if ( coords.options ) {
 
-            // TODO: look for material names, map to material files.
+            console.log("initPrimGeometry():COORDS.options:" + coords.options)
 
-            // TODO: add in groups, smoothing groups.
-            // TODO: write in empty names after PRIM_READY event
-            // TODO: map names to start positions of materials after PRIM_READY event
-            //this.initPrimMaterial( prim, material, position );
+            for ( var i in coords.options.materials ) {
+
+                /* 
+                 * If the material exists in prim.materials under its name (meaning that it was loaded 
+                 * by MaterialPool, add the position start in coords.options.materials[i] to it.
+                 * Otherwise, create a empty object with the information.
+                 */
+
+                if ( ! prim.materials[ i ] ) {
+
+                    console.log('initPrimGeometry():creating new material for ' + i )
+
+                    prim.materials[ i ] = {};
+
+                }
+
+                // Add the start position for this material.
+
+                console.log( "initPrimGeometry():coords options.materials[" + i + "]: adding start:" + coords.options.materials[i] )
+
+                prim.materials[ i ].starts = coords.options.materials[i];
+
+            }
 
          }
-
-
-
-        console.log( 'coords.options:' + coords.options )
 
         // Update vertices if they were supplied.
 
@@ -492,7 +514,9 @@ class PrimFactory {
 
                 name: name,
 
-                texture: null // texture specified by material, points to the .textures[] array.
+                texture: null, // texture specified by material, points to the .textures[] array.
+
+                starts: 0
 
             } );
 

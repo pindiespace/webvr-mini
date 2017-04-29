@@ -649,7 +649,32 @@ class Util {
 
     }
 
+    /** 
+     * Remove all elements of an array by their value.
+     * @param {Array} arr the array to remove stuff from.
+     * @param {...} additional arguments, each one removed from the array by value.
+     * @returns {Array} the cleaned array.
+     */
+    removeByValue( arr ) {
 
+        var val, a = arguments, l = a.length, idx;
+
+        while( l !== 0 && arr.length ) {
+
+            // Next value to remove
+
+            val = a[ --l ];
+
+            while( ( idx = arr.indexOf( val ) ) != -1 ) {
+
+                arr.splice( idx, 1 );
+
+            }
+        }
+
+        return arr;
+
+    }
 
     /** 
      * Random seed.

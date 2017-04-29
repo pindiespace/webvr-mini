@@ -42,6 +42,8 @@ class MaterialPool extends AssetPool {
 
         let options = {};
 
+         console.log('computeTextureMapOptions data:' + data + ' length:' + data.length )
+
         // If there there are no options, return an empty object.
 
         if ( data.length < 4 ) {
@@ -50,157 +52,103 @@ class MaterialPool extends AssetPool {
 
         }
 
-        for ( let i = 0; i < data.length - 1; i += 2 ) {
+        console.log('...analyzing TextureMapOptions:' + data);
 
-            // Get rid of the hyphen.
+        /* 
+         * Texturemap format:
+         * -s 1 1 1 -o 0 0 0 -mm 0 1 filename.png
+         * 
+         * Copy the data string, sans filename.
+         */
 
-            let d = data[ i ].substr( 1 );
+        let p = [];
 
-            // get the value of the option.
+        for ( let i = 0; i < data.length - 1; i++ ) {
 
-            let d2 = data[ i + 1 ];
+            p[ i ] = data[ i ]
 
-            switch ( d ) {
+        }
 
-                case 'blenu':  // texture blends in horizontal direction
-                case 'blenv': // texture blends in vertical direction
-                case 'cc': // color correction, only with color maps (map_Ka, map_Kd, and map_Ks)
-                case 'clamp': // restrict textures to 0-1 range
+        let pp = p.join( ' ' ).split( '-' );
 
-                    if ( d2 === 'off' ) options[ d ] = false; else options[ d ] = true;
+        for ( let i = 0; i < pp.length; i++ ) {
 
-                    break;
+            let ppp = pp[ i ].split( ' ' );
 
-                case 'bm': // bump map multiplier, should be 0-1
+            if ( ppp.length > 1 ) {
 
-                    if ( this.util.isFinite( parseFloat( d2 ) ) ) {
+                console.log( 'ppp[0]:' + ppp[0] )
 
-                        options.bm = d2;
+                let d = ppp[ 0 ],
 
-                    }
+                d1 = ppp[ 1 ];
 
-                    break;
+                switch ( d ) {
 
-                case 'boost': // shapen, any non-negative number
+                    case 'blenu':  // texture blends in horizontal direction
+                    case 'blenv': // texture blends in vertical direction
+                    case 'cc': // color correction, only with color maps (map_Ka, map_Kd, and map_Ks)
+                    case 'clamp': // restrict textures to 0-1 range
 
-                    d2 = parseFloat( d2 );
+                    if ( d1 === 'off' ) options[ d ] = false; else options[ d ] = true;
 
-                    if ( d2 >= 0 ) {
+                        break;
 
-                        options.boost = d2;
+                    case 'bm': // bump map multiplier, should be 0-1
+                    case 'mm': // base gain multiplier (makes brighter)
 
-                    }
+                        if ( Number.isFinite( parseFloat( d1 ) ) ) {
 
-                    break;
-
-                case 'imfchan': // channel used to create scalar or bump texture, (r | g | b | m | l | z)
-
-                    options.infchan = d2;
-
-                    break;
-
-                case 'mm': // base gain (makes brighter)
-
-                    if ( this.util.isFinite( parseFloat( d2 ) ) ) {
-
-                        options.mm = d2;
-
-                    }
-
-                    break;
-
-                case 'o': // offset texture map origin x, y z
-
-                    if ( i + 3 < data.length - 1 ) {
-
-                        options.o = [];
-
-                        if ( this.util.isFinite( parseFloat( d2 ) ) ) {
-
-                            options.o[ 0 ] = d2;
-                        }
-
-                        if ( this.util.isFinite( parseFloat ( data[ i + 2 ] ) ) ) {
-
-                            options.o[ 1 ] = data[ i + 2 ];
+                            options[ d ] = parseFloat( d1 );
 
                         }
 
-                        if ( this.util.isFinite( parseFloat( data[ i + 3 ] ) ) ) {
+                        break;
 
-                            options.o[ 2 ] = data[ i + 3 ];
+                    case 'boost': // sharpen, any non-negative number
 
-                        }
+                        if ( Number.isFinite( parseFloat( d1 ) ) && d1 >= 0 ) {
 
-                    }
-
-                    break;
-
-                case 's': // scales the size of the texture pattern, default 1,1,1
-
-                    if ( i + 3 < data.length - 1 ) {
-
-                        options.s = [];
-
-                        if ( this.util.isFinite( parseFloat( d2 ) ) ) {
-
-                            options.s[ 0 ] = d2;
-                        }
-
-                        if ( this.util.isFinite( parseFloat ( data[ i + 2 ] ) ) ) {
-
-                            options.s[ 1 ] = data[ i + 2 ];
+                            options[ d ] = parseFloat( d1 );
 
                         }
 
-                        if ( this.util.isFinite( parseFloat( data[ i + 3 ] ) ) ) {
+                        break;
 
-                            options.s[ 2 ] = data[ i + 3 ];
+                    case 'imfchan': // channel used to create scalar or bump texture, (r | g | b | m | l | z)
+                    case 'texres':
 
-                        }
+                        options[ d ] = d1;
 
-                    }
+                        break;
 
-                    break;
+                    case 'o': // offset texture map origin x, y z
+                    case 's': // scales the size of the texture pattern, default 1,1,1
+                    case 't': // turn on texture turbulence (u, v, w )
 
-                case 't': // turn on texture turbulence (u, v, w )
+                        if ( ppp.length > 3 ) {
 
-                    if ( i + 3 < data.length - 1 ) {
+                            //this.util.removeByValue( ppp, ' ', '' );
 
-                        options.t = [];
+                            options[ d ] = [ parseFloat[ ppp[ 1 ] ], parseFloat[ ppp[ 2 ] ], parseFloat[ ppp[ 3 ] ] ];
 
-                        if ( this.util.isFinite( parseFloat( d2 ) ) ) {
+                            if ( ! Number.isFinite( options[ d ][ 0 ] ) ) options[ d ][ 0 ] = 0;
 
-                            options.t[ 0 ] = d2;
-                        }
+                            if ( ! Number.isFinite( options[ d ][ 1 ] ) ) options[ d ][ 1 ] = 0;
 
-                        if ( this.util.isFinite( parseFloat ( data[ i + 2 ] ) ) ) {
-
-                            options.t[ 1 ] = data[ i + 2 ];
-
-                        }
-
-                        if ( this.util.isFinite( parseFloat( data[ i + 3 ] ) ) ) {
-
-                            options.t[ 2 ] = data[ i + 3 ];
+                            if ( ! Number.isFinite( options[ d ][ 2 ] ) ) options[ d ][ 2 ] = 0;
 
                         }
 
-                    }
+                        break;
 
-                    break;
+                    default: 
 
-                case 'texres':
+                        console.error( 'unknown texture map option: ' + data );
 
-                    options.texres = d2;
+                        break;
 
-                    break;
-
-                default: 
-
-                    console.error( 'unknown texture map option: ' + data );
-
-                    break;
+                }
 
             }
 
@@ -230,7 +178,7 @@ class MaterialPool extends AssetPool {
 
         let lineNum = 0;
 
-        let material = [];
+        let materials = [];
 
         let currName = null;
 
@@ -256,7 +204,7 @@ class MaterialPool extends AssetPool {
 
                     currName = data[ 0 ].trim();
 
-                    material[ currName ] = { name: currName };
+                    materials[ currName ] = { name: currName };
 
                     break;
 
@@ -276,7 +224,7 @@ class MaterialPool extends AssetPool {
 
                         if ( currName && Number.isFinite( data[ 0 ] ) && Number.isFinite( data[ 1 ] ) && Number.isFinite( data[ 2 ] ) ) {
 
-                            material[ currName ].ambient = [ data[ 0 ], data[ 1 ], data[ 2 ] ];  
+                            materials[ currName ].ambient = [ data[ 0 ], data[ 1 ], data[ 2 ] ];  
 
                         } else {
 
@@ -305,7 +253,7 @@ class MaterialPool extends AssetPool {
 
                         if ( currName && Number.isFinite( data[ 0 ] ) && Number.isFinite( data[ 1 ] ) && Number.isFinite( data[ 2 ] ) ) {
 
-                            material[ currName ].diffuse = [ data[ 0 ], data[ 1 ], data[ 2 ] ];
+                            materials[ currName ].diffuse = [ data[ 0 ], data[ 1 ], data[ 2 ] ];
 
                         } else {
 
@@ -333,7 +281,7 @@ class MaterialPool extends AssetPool {
 
                         if ( currName && Number.isFinite( data[ 0 ] ) && Number.isFinite( data[ 1 ] ) && Number.isFinite( data[ 2 ] ) ) {
 
-                            material[ currName ].specular = [ data[ 0 ], data[ 1 ], data[ 2 ] ];
+                            materials[ currName ].specular = [ data[ 0 ], data[ 1 ], data[ 2 ] ];
 
                         } else {
 
@@ -357,7 +305,7 @@ class MaterialPool extends AssetPool {
 
                         if ( currName && Number.isFinite( data[ 0 ] ) ) {
 
-                            material[ currName].specularFactor = data[ 0 ];    
+                            materials[ currName].specularFactor = data[ 0 ];    
 
                         } else {
 
@@ -382,7 +330,7 @@ class MaterialPool extends AssetPool {
 
                         if ( currName && Number.isFinite( data[ 0 ] ) ) {
 
-                            material[ currName ].transparency = parseFloat( data[ 0 ] ); // single value, 0.0 - 1.0
+                            materials[ currName ].transparency = parseFloat( data[ 0 ] ); // single value, 0.0 - 1.0
 
                         } else {
 
@@ -406,7 +354,7 @@ class MaterialPool extends AssetPool {
 
                         if ( currName && Number.isFinite( data[ 0 ] ) && data[ 0 ] > 0 && data[ 0 ] < 11 ) {
 
-                            material[ currName ].illum = data[ 0 ];
+                            materials[ currName ].illum = data[ 0 ];
 
                         }
 
@@ -427,13 +375,18 @@ class MaterialPool extends AssetPool {
                      * after being emitted with a TEXTURE_2D_READY in PrimFactory.
                      * @link  "filename" is the name of a color texture or image file.
                      * @link http://paulbourke.net/dataformats/mtl/
+                     * map_Ka -s 1 1 1 -o 0 0 0 -mm 0 1 file.png
                      */
 
-                    let tPath = data[ 0 ].trim();
+                    let tPath = data[ data.length - 1 ].trim();
+
+                    console.log('path:' + path + ' data:' + data + ' tPath:' + tPath)
 
                     if ( currName ) {
 
-                        // get options, if present, and add them to the getTextures() call.
+                        /* 
+                         * get hyphenated options, if present, and add them to the getTextures() call.
+                         */
 
                         let options = this.computeTextureMapOptions( data );
 
@@ -459,7 +412,7 @@ class MaterialPool extends AssetPool {
 
         } );
 
-        return material;
+        return materials;
 
     }
 
