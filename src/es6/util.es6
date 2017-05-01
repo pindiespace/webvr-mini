@@ -284,8 +284,15 @@ class Util {
 
     /* 
      * ---------------------------------------
-     * ASSOCIATIVE ARRAY OPTIONS
+     * ASSOCIATIVE ARRAY (OBJECT) OPTIONS
+     * ---------------------------------------
      */
+
+    isObject ( obj ) {
+
+        return obj === Object( obj );
+
+    }
 
     /** 
      * Number of keys in an associative array or object.
@@ -295,7 +302,13 @@ class Util {
      */
     numKeys ( obj ) {
 
-        return Object.keys( obj ).length;
+        if ( this.isObject( obj ) ) {
+
+            return Object.keys( obj ).length;
+
+        }
+
+        return this.NOT_IN_LIST;
 
     }
 

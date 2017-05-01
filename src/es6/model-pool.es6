@@ -56,7 +56,15 @@ class ModelPool extends AssetPool {
     }
 
     /** 
-     * Get a default ModelPool object.
+     * Create the default ModelPool object.
+     * @param {glMatrix.vec3[]} vertices flattened vertex array.
+     * @param {Array} indices index array.
+     * @param {glMatrix.vec2[]} texCoords texture coordinates (2D).
+     * @param {glMatrix.vec3[]} normals normals array.
+     * @param {Array[Number]} objects a list of starts in the index array for new sub-objects.
+     * @param {Array[Number]} groups a list of starts in the index array for new groups.
+     * @param {Array[Number]} smoothingGroups a list of starts in the index array for smoothing groups.
+     * @param {Array[Number]} materials a list of starts for materials in the index array.
      */
     default ( vertices = [], indices = [], texCoords = [], normals = [], objects = [ 0 ], 
 
@@ -308,7 +316,7 @@ class ModelPool extends AssetPool {
 
         lines.forEach( ( line ) => {
 
-            // First value.
+            // First value in string.
 
             let type = line.split( ' ' )[ 0 ].trim();
 
@@ -326,7 +334,7 @@ class ModelPool extends AssetPool {
 
                     }
 
-                    objects[ data ] = vertices.length; // start position in final flattened array
+                    objects[ data ] = indices.length; // start position in final flattened array
 
                     break;
 
@@ -378,22 +386,28 @@ class ModelPool extends AssetPool {
 
                     // TODO: define how to usemtl (keep coordinate start position??????/)
 
-                    console.log("::::::::::::GOTTA USEMTL in OBJ file: " + data );
+                    console.log("::::::::::::GOTTA USEMTL in OBJ file: " + data + ' at:' + indices.length );
 
-                    materials[ data ] = vertices.length;
+                    if ( ! materials[ data ] ) {
+
+                        materials[ data ] = [];
+
+                    }
+
+                    materials[ data ].push( indices.length );
 
                     break;
 
 
                 case 'g': // group name, store hierarchy
 
-                    groups[ data ] = vertices.length; // starting position in final flattened array
+                    groups[ data ] = indices.length; // starting position in final flattened array
 
                     break;
 
                 case 's': // smoothing group (related to 'g')
 
-                    smoothingGroups[ data ] = vertices.length; // starting position in final flattened array
+                    smoothingGroups[ data ] = indices.length; // starting position in final flattened array
 
                     // @link https://people.cs.clemson.edu/~dhouse/courses/405/docs/brief-obj-file-format.html
 

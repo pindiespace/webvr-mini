@@ -24,6 +24,28 @@ class MaterialPool extends AssetPool {
 
         };
 
+        // Map textureMap types to position in prim.textures array
+
+        this.texturePositions = {
+
+            'map_Kd': 0,   // diffuse map, an image file (e.g. file.jpg)
+
+            'map_Ks': 1,   // specular map
+
+            'map_Ka': 2,   // ambient map
+
+            'map_d': 3,    // alpha map
+
+            'bump': 4,     // bumpmap
+
+            'map_bump': 4, // bumpmap
+
+            'disp': 5      // displacement map
+
+        };
+
+      
+
         if ( init ) {
 
             // create a default Material asset.
@@ -35,7 +57,7 @@ class MaterialPool extends AssetPool {
     }
 
     /** 
-     * Get a default Material object.
+     * Create the default MaterialPool object.
      * @param {String} name the name of the material, either 'defaul' in .mtl file.
      * @param {Array} ambient ambient color.
      * @param {Array} diffuse diffuse color.
@@ -49,7 +71,7 @@ class MaterialPool extends AssetPool {
      */
     default ( name = this.util.DEFAULT_KEY, ambient = [ 1, 1, 1 ], diffuse = [ 1, 1, 1 ], specular = [ 0, 0, 0 ], 
 
-        specularExponent = 0, sharpness = 60, refraction = 1, transparency = 0, illum = 1, map_Kd = null ) {
+        specularExponent = 0, emissive = [ 0, 0, 0 ], sharpness = 60, refraction = 1, transparency = 0, illum = 1, map_Kd = null ) {
 
         return {
 
@@ -67,6 +89,8 @@ class MaterialPool extends AssetPool {
    
             specularExponent: specularExponent,  // Ns specular exponent, ranges between 0 and 1000
 
+            emissive: emissive,
+
             sharpness: sharpness,                // sharpness of reflection map (0-1000)
 
             refraction: refraction,              // refraction, 1.0 = no refraction
@@ -77,9 +101,17 @@ class MaterialPool extends AssetPool {
 
             map_Kd: map_Kd,               // diffuse map, an image file (other maps not in default)
 
-            starts: [ 0 ],                // Starting position in vertices to apply material
+            map_Ks: null,                 // specular map
 
-            options: {}                   // no options by default
+            map_Ka: null,                 // ambient map
+
+            map_d: null,                  // alpha map
+
+            map_bump: null,               // bumpmap
+
+            disp: null,                   // displacement map
+
+            starts: [ 0 ]                 // Starting position in vertices to apply material
 
         }
 
@@ -384,6 +416,34 @@ class MaterialPool extends AssetPool {
 
                     break;
 
+                case 'Ke': // emissive coefficient
+
+                    if ( data.length < 3 ) {
+
+                        console.error( 'MaterialPool::computeObjMaterials(): error in specular array at line:' + lineNum );
+
+                    } else {
+
+                        data[ 0 ] = parseFloat( data[ 0 ] ),
+
+                        data[ 1 ] = parseFloat( data[ 1 ] ),
+
+                        data[ 2 ] = parseFloat( data[ 2 ] );
+
+                        if ( currName && Number.isFinite( data[ 0 ] ) && Number.isFinite( data[ 1 ] ) && Number.isFinite( data[ 2 ] ) ) {
+
+                            materials[ currName ].emissive = [ data[ 0 ], data[ 1 ], data[ 2 ] ];
+
+                        } else {
+
+                            console.error( 'MaterialPool::computeObjMaterials(): invalid specular array at line:' + lineNum );
+
+                        }
+
+                    }
+
+                    break;
+
                 case 'sharpness': // sharpness, 0-1000, default 60, for reflection maps
 
                     data[ 0 ] = parseFloat( data[ 0 ] );
@@ -495,6 +555,10 @@ class MaterialPool extends AssetPool {
 
                         // Store path to texture for this option.
 
+                        // convert 'bump' to 'map_bump'
+
+                        if ( type === 'bump' ) type = 'map_bump';
+
                         materials[ currName ][ type ] = tPath;
 
                         /* 
@@ -517,6 +581,13 @@ class MaterialPool extends AssetPool {
 
                         }
 
+                        /* 
+                         * multiple textures have a defined order in the textures array.
+                         */
+
+                         options.pos = this.texturePositions[ type ];
+
+
                         /*
                          * NOTE: the texture attaches to prim.textures, so the fourth parmeter is the texture type (map_Kd, map_Ks...).
                          * NOTE: the sixth paramater, is NULL since it defines a specific WebGL texture type (we want the default).
@@ -526,6 +597,12 @@ class MaterialPool extends AssetPool {
                         this.texturePool.getTextures( prim, [ dir + tPath ], true, false, type, null, options );
 
                     }
+
+                    break;
+
+                case 'Tf': // transmission filter
+                case '#':  // ignored options
+                case '':
 
                     break;
 

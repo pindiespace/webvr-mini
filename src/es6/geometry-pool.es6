@@ -519,21 +519,27 @@ class GeometryPool {
 
         // Find minimum topLeft and maximum bottomRight coordinates defining a cube.
 
-        for( let i = 0; i < vertices.length; i++ ) {
+        for( let i = 0; i < vertices.length; i += 3 ) {
 
-            let v = vertices[ i ];
+            let v0 = vertices[ i ],
 
-            tx = Math.min( tx, v[ 0 ] ),
+            v1 = vertices[ i + 1 ],
 
-            ty = Math.min( ty, v[ 1 ] ),
+            v2 = vertices[ i + 2 ];
 
-            tz = Math.min( tz, v[ 2 ] ),
+            tx = Math.min( tx, v0 ),
 
-            bx = Math.max( bx, v[ 0 ] ),
+            ty = Math.min( ty, v1 ),
 
-            by = Math.max( by, v[ 1 ] ),
+            tz = Math.min( tz, v2 ),
 
-            bz = Math.max( bz, v[ 2 ] );
+            bx = Math.max( bx, v0 ),
+
+            by = Math.max( by, v1 ),
+
+            bz = Math.max( bz, v2 );
+
+            //console.log("BX:"+ bx + " V[0]:" + v[0])
 
         }
 

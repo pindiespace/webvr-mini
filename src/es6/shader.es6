@@ -286,7 +286,7 @@ class Shader {
 
         for ( let i = 0; i < prim.textures.length; i++ ) {
 
-            if (! prim.textures[ i ] || ! prim.textures[ i ].texture ) { // WebGL texture buffere created
+            if (! prim.textures[ i ] || ! prim.textures[ i ].texture ) { // WebGL texture buffer created
 
                 return false;
 

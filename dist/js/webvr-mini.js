@@ -760,8 +760,16 @@
 
 	        /* 
 	         * ---------------------------------------
-	         * ASSOCIATIVE ARRAY OPTIONS
+	         * ASSOCIATIVE ARRAY (OBJECT) OPTIONS
+	         * ---------------------------------------
 	         */
+
+	    }, {
+	        key: 'isObject',
+	        value: function isObject(obj) {
+
+	            return obj === Object(obj);
+	        }
 
 	        /** 
 	         * Number of keys in an associative array or object.
@@ -774,7 +782,12 @@
 	        key: 'numKeys',
 	        value: function numKeys(obj) {
 
-	            return Object.keys(obj).length;
+	            if (this.isObject(obj)) {
+
+	                return Object.keys(obj).length;
+	            }
+
+	            return this.NOT_IN_LIST;
 	        }
 
 	        /*
@@ -1352,10 +1365,6 @@
 	            MATERIAL_READY: 'mrdy', // sends Prim reference. Not used for procedural geometry
 
 	            TEXTURE_2D_READY: 'trdy', // sends Prim reference, key in Prim texture Array
-
-	            TEXTURE_2D_ARRAY_MEMBER_READY: 'tr2darmbrdy',
-
-	            TEXTURE_2D_ARRAY_READY: 'trarrdy', // all the files for a 2d texture array are ready
 
 	            TEXTURE_3D_READY: 't3drdy', // 3d texture is ready
 
@@ -4626,7 +4635,7 @@
 	            for (var i = 0; i < prim.textures.length; i++) {
 
 	                if (!prim.textures[i] || !prim.textures[i].texture) {
-	                    // WebGL texture buffere created
+	                    // WebGL texture buffer created
 
 	                    return false;
 	                }
@@ -6289,18 +6298,18 @@
 
 	        // Bind the callback for geometry initialization applied to individual prims (GeometryPool, Mesh, and ModelPool).
 
-	        this.util.emitter.on(this.util.emitter.events.GEOMETRY_READY, function (prim, key, pos, options) {
+	        this.util.emitter.on(this.util.emitter.events.GEOMETRY_READY, function (prim, key, pos) {
 
 	            _this.initPrimGeometry(prim, _this.modelPool.keyList[key], pos);
 
-	            prim.shader.addPrim(prim, options);
+	            prim.shader.addPrim(prim);
 	        });
 
 	        // Bind Prim callback for a new material applied to individual Prims.
 
 	        this.util.emitter.on(this.util.emitter.events.MATERIAL_READY, function (prim, key, materialName) {
 
-	            _this.initPrimMaterial(prim, _this.materialPool.keyList[key], materialName);
+	            _this.initPrimMaterial(prim, _this.materialPool.keyList[key], materialName); // associative array
 
 	            prim.shader.addPrim(prim);
 	        });
@@ -6309,14 +6318,7 @@
 
 	        this.util.emitter.on(this.util.emitter.events.TEXTURE_2D_READY, function (prim, key, pos) {
 
-	            _this.initPrim2dTexture(prim, _this.texturePool.keyList[key], pos);
-
-	            prim.shader.addPrim(prim);
-	        });
-
-	        // Bind Prim callback for a new texture loaded .(TexturePool).
-
-	        this.util.emitter.on(this.util.emitter.events.TEXTURE_2D_ARRAY_READY, function (prim, key) {
+	            _this.initPrimTexture(prim, _this.texturePool.keyList[key], pos);
 
 	            prim.shader.addPrim(prim);
 	        });
@@ -6324,6 +6326,8 @@
 	        // Bind Prim callback for a new texture loaded .(TexturePool).
 
 	        this.util.emitter.on(this.util.emitter.events.TEXTURE_3D_READY, function (prim, key) {
+
+	            _this.initTexture(prim, _this.texturePool.keyList[key], pos);
 
 	            prim.shader.addPrim(prim);
 	        });
@@ -6339,12 +6343,9 @@
 
 	        this.util.emitter.on(this.util.emitter.events.PRIM_ADDED_TO_SHADER, function (prim) {
 
-	            // If there is no material description, add the default.
+	            console.log('PRIM_ADDED_TO_SHADER:' + prim.name);
 
-	            if (prim.materials.length < 1) {
-
-	                prim.setMaterial(_this.util.DEFAULT_KEY);
-	            }
+	            // post-addition events.
 	        });
 	    } // end of constructor
 
@@ -6402,8 +6403,8 @@
 	         */
 
 	    }, {
-	        key: 'initPrim2dTexture',
-	        value: function initPrim2dTexture(prim, textureObj, pos) {
+	        key: 'initPrimTexture',
+	        value: function initPrimTexture(prim, textureObj, pos) {
 
 	            // TODO: see if this texture is a material.
 
@@ -6496,7 +6497,7 @@
 
 	                    console.log("initPrimGeometry():coords options.materials[" + i + "]: adding start:" + coords.options.materials[i]);
 
-	                    prim.materials[i].starts.push(coords.options.materials[i]);
+	                    prim.materials[i].starts = coords.options.materials[i];
 
 	                    // TODO: see if we can bind a texture to it.
 	                }
@@ -6508,7 +6509,7 @@
 
 	            // Compute bounding box.
 
-	            prim.boundingBox = prim.computeBoundingBox(prim.geometry.vertices.data);
+	            prim.computeBoundingBox(prim.geometry.vertices.data);
 
 	            // Update indices if they were supplied.
 
@@ -6788,28 +6789,32 @@
 
 	            prim.computeBoundingBox = function () {
 
-	                _this2.geometryPool.computeBoundingBox(prim.geometry.vertices);
+	                // TODO: check supplied dimensions. Scale size so it matches ratio of world/prim.dimensions
+	                // TODO:
+	                // TODO:
+
+	                prim.boundingBox = _this2.geometryPool.computeBoundingBox(prim.geometry.vertices.data);
 	            };
 
 	            // Compute the bounding sphere.
 
 	            prim.computeBoundingSphere = function () {
 
-	                _this2.geometryPool.computeBoundingSphere(prim.geometry.vertices);
+	                _this2.geometryPool.computeBoundingSphere(prim.geometry.vertices.data);
 	            };
 
 	            // Scale. Normally, we use matrix transforms to accomplish this.
 
 	            prim.scale = function (scale) {
 
-	                _this2.geometryPool.scale(scale, prim.geometry.vertices);
+	                _this2.geometryPool.scale(scale, prim.geometry.vertices.data);
 	            };
 
 	            // Move. Normally, we use matrix transforms to accomplish this.
 
 	            prim.move = function (pos) {
 
-	                _this2.geometryPool.computeMove(scale, prim.geometry.vertices);
+	                _this2.geometryPool.computeMove(scale, prim.geometry.vertices.data);
 	            };
 
 	            // Move to a specificed coordinate.
@@ -6899,6 +6904,8 @@
 	            // Material files.
 
 	            prim.materials = [];
+
+	            prim.setMaterial(this.util.DEFAULT_KEY);
 
 	            // Store multiple textures for one Prim.
 
@@ -9906,11 +9913,15 @@
 
 	            // Find minimum topLeft and maximum bottomRight coordinates defining a cube.
 
-	            for (var i = 0; i < vertices.length; i++) {
+	            for (var i = 0; i < vertices.length; i += 3) {
 
-	                var _v = vertices[i];
+	                var v0 = vertices[i],
+	                    v1 = vertices[i + 1],
+	                    v2 = vertices[i + 2];
 
-	                tx = Math.min(tx, _v[0]), ty = Math.min(ty, _v[1]), tz = Math.min(tz, _v[2]), bx = Math.max(bx, _v[0]), by = Math.max(by, _v[1]), bz = Math.max(bz, _v[2]);
+	                tx = Math.min(tx, v0), ty = Math.min(ty, v1), tz = Math.min(tz, v2), bx = Math.max(bx, v0), by = Math.max(by, v1), bz = Math.max(bz, v2);
+
+	                //console.log("BX:"+ bx + " V[0]:" + v[0])
 	            }
 
 	            // Two quads, vary by z values only, clockwise.
@@ -10918,7 +10929,7 @@
 	                        y = void 0,
 	                        z = void 0,
 	                        _u = void 0,
-	                        _v2 = void 0,
+	                        _v = void 0,
 	                        r = void 0;
 
 	                    // Compute vertices.
@@ -10931,7 +10942,7 @@
 
 	                    _u = 1 - long;
 
-	                    _v2 = 1 - lat;
+	                    _v = 1 - lat;
 
 	                    x = cosPhi * sinTheta / 2;
 
@@ -10998,7 +11009,7 @@
 
 	                            _u = long;
 
-	                            _v2 = lat;
+	                            _v = lat;
 
 	                            break;
 
@@ -11090,7 +11101,7 @@
 
 	                    // Texture coords.
 
-	                    texCoords.push(_u, _v2);
+	                    texCoords.push(_u, _v);
 
 	                    // Push normals.
 
@@ -11400,9 +11411,9 @@
 
 	                    var _u2 = 1 - s * segIncr;
 
-	                    var _v3 = 0.5 + (radius * y + height * dy) / (2.0 * radius + height);
+	                    var _v2 = 0.5 + (radius * y + height * dy) / (2.0 * radius + height);
 
-	                    texCoords.push(_u2, _v3);
+	                    texCoords.push(_u2, _v2);
 	                }
 	            }
 
@@ -12248,9 +12259,9 @@
 
 	                for (i = 0; i < vertices.length; i++) {
 
-	                    var _v4 = vertices[i];
+	                    var _v3 = vertices[i];
 
-	                    var vt = vec3.normalize([0, 0, 0], [_v4[0], 0, _v4[2]]);
+	                    var vt = vec3.normalize([0, 0, 0], [_v3[0], 0, _v3[2]]);
 
 	                    var tangent = [0, 0, 0, 0];
 
@@ -12780,9 +12791,9 @@
 
 	                    var _u3 = horizRow / vertsPerRow;
 
-	                    var _v5 = vertColumn / vertsPerColumn;
+	                    var _v4 = vertColumn / vertsPerColumn;
 
-	                    texCoords.push(_u3, _v5);
+	                    texCoords.push(_u3, _v4);
 	                }
 	            }
 
@@ -13066,7 +13077,15 @@
 	    }
 
 	    /** 
-	     * Get a default ModelPool object.
+	     * Create the default ModelPool object.
+	     * @param {glMatrix.vec3[]} vertices flattened vertex array.
+	     * @param {Array} indices index array.
+	     * @param {glMatrix.vec2[]} texCoords texture coordinates (2D).
+	     * @param {glMatrix.vec3[]} normals normals array.
+	     * @param {Array[Number]} objects a list of starts in the index array for new sub-objects.
+	     * @param {Array[Number]} groups a list of starts in the index array for new groups.
+	     * @param {Array[Number]} smoothingGroups a list of starts in the index array for smoothing groups.
+	     * @param {Array[Number]} materials a list of starts for materials in the index array.
 	     */
 
 
@@ -13329,7 +13348,7 @@
 
 	            lines.forEach(function (line) {
 
-	                // First value.
+	                // First value in string.
 
 	                var type = line.split(' ')[0].trim();
 
@@ -13347,7 +13366,7 @@
 	                            prim.name = data;
 	                        }
 
-	                        objects[data] = vertices.length; // start position in final flattened array
+	                        objects[data] = indices.length; // start position in final flattened array
 
 	                        break;
 
@@ -13403,23 +13422,28 @@
 
 	                        // TODO: define how to usemtl (keep coordinate start position??????/)
 
-	                        console.log("::::::::::::GOTTA USEMTL in OBJ file: " + data);
+	                        console.log("::::::::::::GOTTA USEMTL in OBJ file: " + data + ' at:' + indices.length);
 
-	                        materials[data] = vertices.length;
+	                        if (!materials[data]) {
+
+	                            materials[data] = [];
+	                        }
+
+	                        materials[data].push(indices.length);
 
 	                        break;
 
 	                    case 'g':
 	                        // group name, store hierarchy
 
-	                        groups[data] = vertices.length; // starting position in final flattened array
+	                        groups[data] = indices.length; // starting position in final flattened array
 
 	                        break;
 
 	                    case 's':
 	                        // smoothing group (related to 'g')
 
-	                        smoothingGroups[data] = vertices.length; // starting position in final flattened array
+	                        smoothingGroups[data] = indices.length; // starting position in final flattened array
 
 	                        // @link https://people.cs.clemson.edu/~dhouse/courses/405/docs/brief-obj-file-format.html
 
@@ -14229,25 +14253,71 @@
 	        return _this;
 	    }
 
-	    /**
-	     * Sets a texture to a 1x1 pixel color. 
-	     * @param {WebGLRenderingContext} gl the WebGLRenderingContext.
-	     * @param {WebGLTexture} texture the WebGLTexture to set parameters for.
-	     * @param {WebGLParameter} type the WebGL texture type/target.
+	    /** 
+	     * Create the default TexturePool object.
+	     * @param {Image} image the image providing texture data (if present).
+	     * @param {MimeType} the MIME type of the Image.
+	     * @param {GLTextureType} gl.TEXTURE_2D, gl.TEXTURE_3D...
+	     * @param {String} path the path to the Image file, if present.
+	     * @param {WebGLTexture} the WebGL texture buffer.
+	     * @param {Emitter.events} the Emitter event for this texture.
+	     * @returns {Object} the Texture object for our TexturePool.
 	     */
 
 
 	    _createClass(TexturePool, [{
+	        key: 'default',
+	        value: function _default() {
+	            var image = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+	            var mimeType = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+	            var type = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+	            var path = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
+	            var texture = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : null;
+	            var emitEvent = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : null;
+
+
+	            return {
+
+	                image: image, // JavaScript Image object.
+
+	                mimeType: mimeType, // image/png, image/jpg...
+
+	                type: type, // gl.TEXTURE_2D, gl.TEXTURE_3D...
+
+	                path: path, // URL of object
+
+	                texture: texture, // WebGLTexture
+
+	                emits: emitEvent // emitted event
+
+	            };
+	        }
+
+	        /**
+	         * Sets a texture to a 1x1 pixel color. 
+	         * @param {WebGLRenderingContext} gl the WebGLRenderingContext.
+	         * @param {WebGLParameter} type the WebGL texture type/target.
+	         */
+
+	    }, {
 	        key: 'setDefaultTexturePixel',
-	        value: function setDefaultTexturePixel(texture, type) {
+	        value: function setDefaultTexturePixel(type) {
 
 	            var gl = this.webgl.getContext();
+
+	            // Create empty WebGL texture buffer.
+
+	            var texture = gl.createTexture();
 
 	            // Put 1x1 pixels in texture. That makes it renderable immediately regardless of filtering.
 
 	            var color = this.greyPixel;
 
-	            // Handle all local textures.
+	            // Bind texture buffer.
+
+	            gl.bindTexture(gl.TEXTURE_2D, texture);
+
+	            // Handle all locally defined texture typess.
 
 	            if (type === gl.GL_TEXTURE_CUBE_MAP) {
 
@@ -14264,6 +14334,14 @@
 
 	                gl.texImage2D(type, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, color);
 	            }
+
+	            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+
+	            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+	            gl.bindTexture(gl.TEXTURE_2D, null);
+
+	            return texture;
 	        }
 
 	        /* 
@@ -14489,14 +14567,6 @@
 
 	                    break;
 
-	                case gl.TEXTURE_2D_ARRAY:
-
-	                    texture = this.create2DArrayTexture(image, pos); // NOTE: image is actually an array here
-
-	                    emitEvent = this.util.emitter.events.TEXTURE_2D_ARRAY_MEMBER_READY;
-
-	                    break;
-
 	                case gl.TEXTURE_3D:
 
 	                    texture = this.create3dTexture(image, pos);
@@ -14529,22 +14599,25 @@
 	                 * We save references to the texture object in TexturePool.
 	                 * NOTE: .addAsset() puts the assigned key by TexturePool into our object.
 	                 */
+	                /*
+	                            return this.addAsset( {
+	                
+	                                image: image,       // JavaScript Image object.
+	                
+	                                mimeType: mimeType, // image/png, image/jpg...
+	                
+	                                type: glTextureType, // gl.TEXTURE_2D, gl.TEXTURE_3D...
+	                
+	                                path: path,         // URL of object
+	                
+	                                texture: texture,   // WebGLTexture
+	                
+	                                emits: emitEvent    // emitted event
+	                
+	                            } );
+	                */
 
-	                return this.addAsset({
-
-	                    image: image, // JavaScript Image object.
-
-	                    mimeType: mimeType, // image/png, image/jpg...
-
-	                    type: glTextureType, // gl.TEXTURE_2D, gl.TEXTURE_3D...
-
-	                    path: path, // URL of object
-
-	                    texture: texture, // WebGLTexture
-
-	                    emits: emitEvent // emitted event
-
-	                });
+	                return this.addAsset(this.default(image, mimeType, glTextureType, path, texture, emitEvent));
 	            } else {
 
 	                console.warn('TexturePool::addTexture(): no texture returned by createXXTexture() function');
@@ -14662,6 +14735,17 @@
 
 	                                        textureObj.options = options;
 
+	                                        /* 
+	                                         * If the texture returned a position to assign itself, use it. Otherwise use default.
+	                                         * This can happen when the texture is defined by an .mtl file, and the 'options' object 
+	                                         * is passed through. Definitions for positions are in the MaterialPool constructor.
+	                                         */
+
+	                                        if (textureObj.options.pos !== undefined) {
+
+	                                            updateObj.pos = textureObj.options.pos;
+	                                        }
+
 	                                        /*
 	                                         * Emit a 'texture ready event' with the key in the pool and path (intercepted by PrimFactory).
 	                                         * NOTE: options for each texture's rendering are attached to textureObj.
@@ -14677,7 +14761,10 @@
 
 	                                // Create a URL to the Blob, and fire the onload event (internal browser URL instead of network).
 
-	                                image.src = window.URL.createObjectURL(updateObj.data);
+	                                if (updateObj.data) {
+
+	                                    image.src = window.URL.createObjectURL(updateObj.data);
+	                                }
 	                            }, cacheBust, mimeType, 0); // end of this.doRequest(), initial request at 0 tries
 	                        } else {
 
@@ -16347,28 +16434,28 @@
 	            ///////////////////////
 	            // testing other mesh files
 
-	            /*
-	                        this.primFactory.createPrim(
-	            
-	                            this.s1,                               // callback function
-	                            typeList.MESH,
-	                            'objfile',
-	                            vec5( 1, 1, 1 ),                       // dimensions (4th dimension doesn't exist for cylinder)
-	                            vec5( 40, 40, 0  ),                    // divisions MAKE SMALLER
-	                            vec3.fromValues( 1.0, 1.0, -2.0 ),      // position (absolute)
-	                            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-	                            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-	                            vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-	                            //[ 'img/crate.png' ],               // texture present. TODO::: FIGURE OUT NUMBERING.
-	                            '', // texture loaded from .mtl file
-	                            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color,
-	                            true,                                   // if true, apply texture to each face,
-	                            //[ 'obj/mountains/mountains.obj' ] // object files (.obj, .mtl)
-	                            [ 'obj/landscape/landscape.obj']
-	            
-	                        );
-	            
-	            */
+	            // NOTE: IF YOU ASSIGN A PRIM TO WRONG SHADER = SILENT ERROR. WORLD NEEDS A SCAN FOR FAILS.
+
+	            this.primFactory.createPrim(this.s1, // callback function
+	            typeList.MESH, 'objfile', vec5(1, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
+	            vec5(40, 40, 0), // divisions MAKE SMALLER
+	            vec3.fromValues(1.0, 1.0, -2.0), // position (absolute)
+	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	            vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	            //[ 'img/crate.png' ],               // texture present. TODO::: FIGURE OUT NUMBERING.
+	            '', // texture loaded from .mtl file
+	            vec4.fromValues(0.5, 1.0, 0.2, 1.0), // color,
+	            true, // if true, apply texture to each face,
+	            //[ 'obj/mountains/mountains.obj' ] // object files (.obj, .mtl)
+	            //[ 'obj/landscape/landscape.obj'] // ok?
+	            //[ 'obj/toilet/toilet.obj' ] // no texture
+	            ['obj/naboo/naboo.obj'] // needs to be shrunk
+	            //[ 'obj/basketball/basketball.obj'] // needs TGA translation
+	            //[ 'obj/rock1/rock1.obj'] // rock plus surface, works
+
+	            );
+
 	            //////////////////////
 
 	            //////////////////////////////////
@@ -16609,12 +16696,12 @@
 	        }
 
 	        /**
-	         * Create objects specific to this world. 
+	         * Create a default World.
 	         */
 
 	    }, {
 	        key: 'create',
-	        value: function create() {}
+	        value: function create(width, height, depth) {}
 
 	        // TODO: not implemented yet
 
@@ -16746,6 +16833,26 @@
 
 	        };
 
+	        // Map textureMap types to position in prim.textures array
+
+	        _this.texturePositions = {
+
+	            'map_Kd': 0, // diffuse map, an image file (e.g. file.jpg)
+
+	            'map_Ks': 1, // specular map
+
+	            'map_Ka': 2, // ambient map
+
+	            'map_d': 3, // alpha map
+
+	            'bump': 4, // bumpmap
+
+	            'map_bump': 4, // bumpmap
+
+	            'disp': 5 // displacement map
+
+	        };
+
 	        if (init) {
 
 	            // create a default Material asset.
@@ -16757,7 +16864,7 @@
 	    }
 
 	    /** 
-	     * Get a default Material object.
+	     * Create the default MaterialPool object.
 	     * @param {String} name the name of the material, either 'defaul' in .mtl file.
 	     * @param {Array} ambient ambient color.
 	     * @param {Array} diffuse diffuse color.
@@ -16779,11 +16886,12 @@
 	            var diffuse = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [1, 1, 1];
 	            var specular = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [0, 0, 0];
 	            var specularExponent = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : 0;
-	            var sharpness = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : 60;
-	            var refraction = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : 1;
-	            var transparency = arguments.length > 7 && arguments[7] !== undefined ? arguments[7] : 0;
-	            var illum = arguments.length > 8 && arguments[8] !== undefined ? arguments[8] : 1;
-	            var map_Kd = arguments.length > 9 && arguments[9] !== undefined ? arguments[9] : null;
+	            var emissive = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : [0, 0, 0];
+	            var sharpness = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : 60;
+	            var refraction = arguments.length > 7 && arguments[7] !== undefined ? arguments[7] : 1;
+	            var transparency = arguments.length > 8 && arguments[8] !== undefined ? arguments[8] : 0;
+	            var illum = arguments.length > 9 && arguments[9] !== undefined ? arguments[9] : 1;
+	            var map_Kd = arguments.length > 10 && arguments[10] !== undefined ? arguments[10] : null;
 
 
 	            return {
@@ -16802,6 +16910,8 @@
 
 	                specularExponent: specularExponent, // Ns specular exponent, ranges between 0 and 1000
 
+	                emissive: emissive,
+
 	                sharpness: sharpness, // sharpness of reflection map (0-1000)
 
 	                refraction: refraction, // refraction, 1.0 = no refraction
@@ -16812,9 +16922,17 @@
 
 	                map_Kd: map_Kd, // diffuse map, an image file (other maps not in default)
 
-	                starts: [0], // Starting position in vertices to apply material
+	                map_Ks: null, // specular map
 
-	                options: {} // no options by default
+	                map_Ka: null, // ambient map
+
+	                map_d: null, // alpha map
+
+	                map_bump: null, // bumpmap
+
+	                disp: null, // displacement map
+
+	                starts: [0] // Starting position in vertices to apply material
 
 	            };
 	        }
@@ -17095,6 +17213,27 @@
 
 	                        break;
 
+	                    case 'Ke':
+	                        // emissive coefficient
+
+	                        if (data.length < 3) {
+
+	                            console.error('MaterialPool::computeObjMaterials(): error in specular array at line:' + lineNum);
+	                        } else {
+
+	                            data[0] = parseFloat(data[0]), data[1] = parseFloat(data[1]), data[2] = parseFloat(data[2]);
+
+	                            if (currName && Number.isFinite(data[0]) && Number.isFinite(data[1]) && Number.isFinite(data[2])) {
+
+	                                materials[currName].emissive = [data[0], data[1], data[2]];
+	                            } else {
+
+	                                console.error('MaterialPool::computeObjMaterials(): invalid specular array at line:' + lineNum);
+	                            }
+	                        }
+
+	                        break;
+
 	                    case 'sharpness':
 	                        // sharpness, 0-1000, default 60, for reflection maps
 
@@ -17204,6 +17343,10 @@
 
 	                            // Store path to texture for this option.
 
+	                            // convert 'bump' to 'map_bump'
+
+	                            if (type === 'bump') type = 'map_bump';
+
 	                            materials[currName][type] = tPath;
 
 	                            /* 
@@ -17224,6 +17367,12 @@
 	                                options.materials.push(currName);
 	                            }
 
+	                            /* 
+	                             * multiple textures have a defined order in the textures array.
+	                             */
+
+	                            options.pos = _this2.texturePositions[type];
+
 	                            /*
 	                             * NOTE: the texture attaches to prim.textures, so the fourth parmeter is the texture type (map_Kd, map_Ks...).
 	                             * NOTE: the sixth paramater, is NULL since it defines a specific WebGL texture type (we want the default).
@@ -17232,6 +17381,12 @@
 
 	                            _this2.texturePool.getTextures(prim, [dir + tPath], true, false, type, null, options);
 	                        }
+
+	                        break;
+
+	                    case 'Tf': // transmission filter
+	                    case '#': // ignored options
+	                    case '':
 
 	                        break;
 

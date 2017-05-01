@@ -25,10 +25,6 @@ class Emitter {
 
             TEXTURE_2D_READY: 'trdy',                     // sends Prim reference, key in Prim texture Array
 
-            TEXTURE_2D_ARRAY_MEMBER_READY: 'tr2darmbrdy',
-
-            TEXTURE_2D_ARRAY_READY: 'trarrdy',            // all the files for a 2d texture array are ready
-
             TEXTURE_3D_READY: 't3drdy',                   // 3d texture is ready
 
             TEXTURE_CUBEMAP_MEMBER_READY: 'trcmpmbrdy',   // one file in a cubemap is ready

@@ -468,7 +468,8 @@ class World extends AssetPool {
 ///////////////////////
 // testing other mesh files
 
-/*
+// NOTE: IF YOU ASSIGN A PRIM TO WRONG SHADER = SILENT ERROR. WORLD NEEDS A SCAN FOR FAILS.
+
             this.primFactory.createPrim(
 
                 this.s1,                               // callback function
@@ -485,11 +486,15 @@ class World extends AssetPool {
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color,
                 true,                                   // if true, apply texture to each face,
                 //[ 'obj/mountains/mountains.obj' ] // object files (.obj, .mtl)
-                [ 'obj/landscape/landscape.obj']
+                //[ 'obj/landscape/landscape.obj'] // ok?
+                //[ 'obj/toilet/toilet.obj' ] // no texture
+                [ 'obj/naboo/naboo.obj' ] // needs to be shrunk
+                //[ 'obj/basketball/basketball.obj'] // needs TGA translation
+                //[ 'obj/rock1/rock1.obj'] // rock plus surface, works
 
             );
 
-*/
+
 //////////////////////
 
 //////////////////////////////////
@@ -786,9 +791,9 @@ class World extends AssetPool {
     }
 
     /**
-     * Create objects specific to this world. 
+     * Create a default World.
      */
-    create () {
+    create ( width, height, depth ) {
 
         // TODO: not implemented yet
 

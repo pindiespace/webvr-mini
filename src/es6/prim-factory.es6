@@ -95,11 +95,11 @@ class PrimFactory {
 
         this.util.emitter.on( this.util.emitter.events.GEOMETRY_READY, 
 
-            ( prim, key, pos, options ) => {
+            ( prim, key, pos ) => {
 
                 this.initPrimGeometry( prim, this.modelPool.keyList[ key ], pos );
 
-                prim.shader.addPrim ( prim, options );
+                prim.shader.addPrim ( prim );
 
         } );
 
@@ -109,7 +109,7 @@ class PrimFactory {
 
             ( prim, key, materialName ) => {
 
-                this.initPrimMaterial( prim, this.materialPool.keyList[ key ], materialName );
+                this.initPrimMaterial( prim, this.materialPool.keyList[ key ], materialName ); // associative array
 
                 prim.shader.addPrim ( prim );
 
@@ -121,27 +121,20 @@ class PrimFactory {
 
             ( prim, key, pos ) => {
 
-                this.initPrim2dTexture( prim, this.texturePool.keyList[ key ], pos );
+                this.initPrimTexture( prim, this.texturePool.keyList[ key ], pos );
 
                 prim.shader.addPrim( prim );
 
         } );
 
-        // Bind Prim callback for a new texture loaded .(TexturePool).
-
-        this.util.emitter.on( this.util.emitter.events.TEXTURE_2D_ARRAY_READY, 
-
-            ( prim, key ) => {
-
-                prim.shader.addPrim( prim );
-
-        } );
 
         // Bind Prim callback for a new texture loaded .(TexturePool).
 
         this.util.emitter.on( this.util.emitter.events.TEXTURE_3D_READY, 
 
             ( prim, key ) => {
+
+                this.initTexture( prim, this.texturePool.keyList[ key ], pos );
 
                 prim.shader.addPrim( prim );
 
@@ -163,14 +156,9 @@ class PrimFactory {
 
             ( prim ) => {
 
-                // If there is no material description, add the default.
+                console.log( 'PRIM_ADDED_TO_SHADER:' + prim.name );
 
-                if ( prim.materials.length < 1 ) {
-
-                    prim.setMaterial( this.util.DEFAULT_KEY );
-
-
-                }
+                // post-addition events.
 
         } );
 
@@ -225,7 +213,7 @@ class PrimFactory {
      * @param {TextureObj} textureObj the texture object returned from TexturePool.
      * @param {Number} pos a position to write the texture to.
      */
-    initPrim2dTexture ( prim, textureObj, pos ) {
+    initPrimTexture ( prim, textureObj, pos ) {
 
         // TODO: see if this texture is a material.
 
@@ -316,7 +304,7 @@ class PrimFactory {
 
                 console.log( "initPrimGeometry():coords options.materials[" + i + "]: adding start:" + coords.options.materials[i] )
 
-                prim.materials[ i ].starts.push( coords.options.materials[ i ] );
+                prim.materials[ i ].starts = coords.options.materials[ i ];
 
                 // TODO: see if we can bind a texture to it.
 
@@ -330,7 +318,7 @@ class PrimFactory {
 
         // Compute bounding box.
 
-        prim.boundingBox = prim.computeBoundingBox( prim.geometry.vertices.data );
+        prim.computeBoundingBox( prim.geometry.vertices.data );
 
         // Update indices if they were supplied.
 
@@ -509,7 +497,7 @@ class PrimFactory {
 
                 specularExponent, sharpness, refraction, transparency, illum, map_Kd );
 
-        }
+        };
 
         // We don't have a .setMaterial - set directly in loadModel.updateMateria()
 
@@ -525,7 +513,7 @@ class PrimFactory {
 
             }
 
-        }
+        };
 
         // update indices (no re-compute available).
 
@@ -539,7 +527,7 @@ class PrimFactory {
 
             }
 
-        }
+        };
 
         // Update or re-compute normals.
 
@@ -559,7 +547,7 @@ class PrimFactory {
 
             }
 
-        }
+        };
 
         // Update or re-compute texture coordinates.
 
@@ -582,7 +570,7 @@ class PrimFactory {
 
             }
 
-        }
+        };
 
         // Update or re-compute tangents.
 
@@ -602,7 +590,7 @@ class PrimFactory {
 
             }
 
-        }
+        };
 
         // Update or re-compute colors.
 
@@ -628,7 +616,11 @@ class PrimFactory {
 
         prim.computeBoundingBox = () => {
 
-            this.geometryPool.computeBoundingBox( prim.geometry.vertices );
+            // TODO: check supplied dimensions. Scale size so it matches ratio of world/prim.dimensions
+            // TODO:
+            // TODO:
+
+            prim.boundingBox = this.geometryPool.computeBoundingBox( prim.geometry.vertices.data );
 
         };
 
@@ -636,7 +628,7 @@ class PrimFactory {
 
         prim.computeBoundingSphere = () => {
 
-            this.geometryPool.computeBoundingSphere( prim.geometry.vertices );
+            this.geometryPool.computeBoundingSphere( prim.geometry.vertices.data );
 
         };
 
@@ -644,7 +636,7 @@ class PrimFactory {
 
         prim.scale = ( scale ) => { 
 
-            this.geometryPool.scale ( scale, prim.geometry.vertices );
+            this.geometryPool.scale ( scale, prim.geometry.vertices.data );
 
         };
 
@@ -652,7 +644,7 @@ class PrimFactory {
 
         prim.move = ( pos ) => { 
 
-            this.geometryPool.computeMove( scale, prim.geometry.vertices );
+            this.geometryPool.computeMove( scale, prim.geometry.vertices.data );
 
         };
 
@@ -752,6 +744,8 @@ class PrimFactory {
         // Material files.
 
         prim.materials = [];
+
+        prim.setMaterial( this.util.DEFAULT_KEY );
 
         // Store multiple textures for one Prim.
 

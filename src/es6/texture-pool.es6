@@ -57,21 +57,58 @@ class TexturePool extends AssetPool {
 
     }
 
-  /**
-   * Sets a texture to a 1x1 pixel color. 
-   * @param {WebGLRenderingContext} gl the WebGLRenderingContext.
-   * @param {WebGLTexture} texture the WebGLTexture to set parameters for.
-   * @param {WebGLParameter} type the WebGL texture type/target.
-   */
-    setDefaultTexturePixel ( texture, type ) {
+    /** 
+     * Create the default TexturePool object.
+     * @param {Image} image the image providing texture data (if present).
+     * @param {MimeType} the MIME type of the Image.
+     * @param {GLTextureType} gl.TEXTURE_2D, gl.TEXTURE_3D...
+     * @param {String} path the path to the Image file, if present.
+     * @param {WebGLTexture} the WebGL texture buffer.
+     * @param {Emitter.events} the Emitter event for this texture.
+     * @returns {Object} the Texture object for our TexturePool.
+     */
+    default ( image = null, mimeType = null, type = null, path = null, texture = null, emitEvent = null ) {
+
+        return {
+
+            image: image,       // JavaScript Image object.
+
+            mimeType: mimeType, // image/png, image/jpg...
+
+            type: type,         // gl.TEXTURE_2D, gl.TEXTURE_3D...
+
+            path: path,         // URL of object
+
+            texture: texture,   // WebGLTexture
+
+            emits: emitEvent    // emitted event
+
+        }
+
+    }
+
+    /**
+     * Sets a texture to a 1x1 pixel color. 
+     * @param {WebGLRenderingContext} gl the WebGLRenderingContext.
+     * @param {WebGLParameter} type the WebGL texture type/target.
+     */
+    setDefaultTexturePixel ( type ) {
 
         let gl = this.webgl.getContext();
+
+        // Create empty WebGL texture buffer.
+
+        let texture = gl.createTexture();
 
         // Put 1x1 pixels in texture. That makes it renderable immediately regardless of filtering.
 
         let color = this.greyPixel;
 
-        // Handle all local textures.
+        // Bind texture buffer.
+
+        gl.bindTexture( gl.TEXTURE_2D, texture );
+
+        // Handle all locally defined texture typess.
 
         if ( type === gl.GL_TEXTURE_CUBE_MAP ) {
 
@@ -92,6 +129,14 @@ class TexturePool extends AssetPool {
             gl.texImage2D( type, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, color );
 
         }
+
+        gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE );
+
+        gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE );
+
+        gl.bindTexture( gl.TEXTURE_2D, null );
+
+        return texture;
 
     }
 
@@ -345,14 +390,6 @@ class TexturePool extends AssetPool {
 
                 break;
 
-            case gl.TEXTURE_2D_ARRAY:
-
-                texture = this.create2DArrayTexture( image, pos ); // NOTE: image is actually an array here
-
-                emitEvent = this.util.emitter.events.TEXTURE_2D_ARRAY_MEMBER_READY;
-
-                break;
-
             case gl.TEXTURE_3D:
 
                 texture = this.create3dTexture( image, pos );
@@ -385,14 +422,14 @@ class TexturePool extends AssetPool {
              * We save references to the texture object in TexturePool.
              * NOTE: .addAsset() puts the assigned key by TexturePool into our object.
              */
-
+/*
             return this.addAsset( {
 
                 image: image,       // JavaScript Image object.
 
                 mimeType: mimeType, // image/png, image/jpg...
 
-                type: glTextureType,         // gl.TEXTURE_2D, gl.TEXTURE_3D...
+                type: glTextureType, // gl.TEXTURE_2D, gl.TEXTURE_3D...
 
                 path: path,         // URL of object
 
@@ -401,6 +438,13 @@ class TexturePool extends AssetPool {
                 emits: emitEvent    // emitted event
 
             } );
+*/
+
+            return this.addAsset( 
+
+                this.default( image, mimeType, glTextureType, path, texture, emitEvent )
+
+            );
 
         } else {
 
@@ -517,6 +561,18 @@ class TexturePool extends AssetPool {
 
                                         textureObj.options = options;
 
+                                        /* 
+                                         * If the texture returned a position to assign itself, use it. Otherwise use default.
+                                         * This can happen when the texture is defined by an .mtl file, and the 'options' object 
+                                         * is passed through. Definitions for positions are in the MaterialPool constructor.
+                                         */
+
+                                        if ( textureObj.options.pos !== undefined ) {
+
+                                            updateObj.pos = textureObj.options.pos;
+
+                                        }
+
                                         /*
                                          * Emit a 'texture ready event' with the key in the pool and path (intercepted by PrimFactory).
                                          * NOTE: options for each texture's rendering are attached to textureObj.
@@ -535,8 +591,11 @@ class TexturePool extends AssetPool {
 
                                 // Create a URL to the Blob, and fire the onload event (internal browser URL instead of network).
 
-                                image.src = window.URL.createObjectURL( updateObj.data );
+                                if ( updateObj.data ) {
 
+                                    image.src = window.URL.createObjectURL( updateObj.data );
+
+                                }
 
                         }, cacheBust, mimeType, 0 ); // end of this.doRequest(), initial request at 0 tries
 
