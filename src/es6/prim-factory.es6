@@ -169,6 +169,7 @@ class PrimFactory {
 
                     prim.setMaterial( this.util.DEFAULT_KEY );
 
+
                 }
 
         } );
@@ -307,7 +308,7 @@ class PrimFactory {
 
                     console.log('initPrimGeometry():creating new material for ' + i )
 
-                    prim.materials[ i ] = {};
+                    prim.materials[ i ] = { starts: [] };
 
                 }
 
@@ -315,7 +316,7 @@ class PrimFactory {
 
                 console.log( "initPrimGeometry():coords options.materials[" + i + "]: adding start:" + coords.options.materials[i] )
 
-                prim.materials[ i ].starts = coords.options.materials[i];
+                prim.materials[ i ].starts.push( coords.options.materials[ i ] );
 
                 // TODO: see if we can bind a texture to it.
 
@@ -497,34 +498,16 @@ class PrimFactory {
 
         };
 
+        /** 
+         * Set Prim material, with defaults available from MaterialPoo.
+         */
+        prim.setMaterial = ( name = this.util.DEFAULT_KEY, ambient, diffuse, specular, 
 
-        prim.setMaterial = ( name, colorMult = 1, ambient = [ 0.1, 0.1, 0.1 ], diffuse = [ 0, 0, 0 ], specular = [ 1, 1, 1, 1 ], shininess = 250, specularFactor = 1, transparency = 1.0, illum = 1 ) => {
+            specularExponent, sharpness, refraction, transparency, illum, map_Kd ) => {
 
-            p.materials.push( {
+            p.materials[ name ] = this.materialPool.default( name, ambient, diffuse, specular, 
 
-                colorMult: colorMult, 
-
-                ambient: ambient,  // ambient reflectivity
-
-                diffuse: diffuse,        // diffuse reflectivity
-
-                specular: specular,    // specular reflectivity
-
-                shininess: shininess,              // surface shininess
-
-                specularFactor: specularFactor,           // specular factor
-
-                transparency: transparency,   // transparency, 0.0 - 1.0
-
-                illum: illum,            // Illumination model 0-10, color on and Ambient on
-
-                name: name,
-
-                texture: null, // texture specified by material, points to the .textures[] array.
-
-                starts: 0
-
-            } );
+                specularExponent, sharpness, refraction, transparency, illum, map_Kd );
 
         }
 

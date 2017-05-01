@@ -42,14 +42,14 @@
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ function(module, exports, __webpack_require__) {
 
 	module.exports = __webpack_require__(1);
 
 
-/***/ }),
+/***/ },
 /* 1 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/*
 	 * app.es6
@@ -265,9 +265,9 @@
 	exports.world = world;
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
 
-/***/ }),
+/***/ },
 /* 2 */
-/***/ (function(module, exports) {
+/***/ function(module, exports) {
 
 	// shim for using process in browser
 	var process = module.exports = {};
@@ -439,10 +439,6 @@
 	process.removeListener = noop;
 	process.removeAllListeners = noop;
 	process.emit = noop;
-	process.prependListener = noop;
-	process.prependOnceListener = noop;
-
-	process.listeners = function (name) { return [] }
 
 	process.binding = function (name) {
 	    throw new Error('process.binding is not supported');
@@ -455,9 +451,9 @@
 	process.umask = function() { return 0; };
 
 
-/***/ }),
+/***/ },
 /* 3 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -1317,9 +1313,9 @@
 
 	exports.default = Util;
 
-/***/ }),
+/***/ },
 /* 4 */
-/***/ (function(module, exports) {
+/***/ function(module, exports) {
 
 	'use strict';
 
@@ -1430,9 +1426,9 @@
 
 	exports.default = Emitter;
 
-/***/ }),
+/***/ },
 /* 5 */
-/***/ (function(module, exports) {
+/***/ function(module, exports) {
 
 	'use strict';
 
@@ -1492,9 +1488,9 @@
 	    return GamePad;
 	}();
 
-/***/ }),
+/***/ },
 /* 6 */
-/***/ (function(module, exports) {
+/***/ function(module, exports) {
 
 	'use strict';
 
@@ -2765,9 +2761,9 @@
 
 	exports.default = WebGL;
 
-/***/ }),
+/***/ },
 /* 7 */
-/***/ (function(module, exports) {
+/***/ function(module, exports) {
 
 	'use strict';
 
@@ -3259,9 +3255,9 @@
 
 	exports.default = WebVR;
 
-/***/ }),
+/***/ },
 /* 8 */
-/***/ (function(module, exports) {
+/***/ function(module, exports) {
 
 	'use strict';
 
@@ -4075,9 +4071,9 @@
 
 	exports.default = Ui;
 
-/***/ }),
+/***/ },
 /* 9 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -4337,9 +4333,9 @@
 
 	exports.default = ShaderTexture;
 
-/***/ }),
+/***/ },
 /* 10 */
-/***/ (function(module, exports) {
+/***/ function(module, exports) {
 
 	'use strict';
 
@@ -4896,9 +4892,9 @@
 
 	exports.default = Shader;
 
-/***/ }),
+/***/ },
 /* 11 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -5156,9 +5152,9 @@
 
 	exports.default = ShaderColor;
 
-/***/ }),
+/***/ },
 /* 12 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -5471,9 +5467,9 @@
 
 	exports.default = shaderDirLightTexture;
 
-/***/ }),
+/***/ },
 /* 13 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -5684,9 +5680,9 @@
 
 	exports.default = ShaderWater;
 
-/***/ }),
+/***/ },
 /* 14 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -5891,9 +5887,9 @@
 
 	exports.default = ShaderMetal;
 
-/***/ }),
+/***/ },
 /* 15 */
-/***/ (function(module, exports) {
+/***/ function(module, exports) {
 
 	
 	'use strict';
@@ -5978,9 +5974,9 @@
 
 	exports.default = Lights;
 
-/***/ }),
+/***/ },
 /* 16 */
-/***/ (function(module, exports) {
+/***/ function(module, exports) {
 
 	'use strict';
 
@@ -6153,9 +6149,9 @@
 
 	exports.default = ShaderPool;
 
-/***/ }),
+/***/ },
 /* 17 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -6493,14 +6489,14 @@
 
 	                        console.log('initPrimGeometry():creating new material for ' + i);
 
-	                        prim.materials[i] = {};
+	                        prim.materials[i] = { starts: [] };
 	                    }
 
 	                    // Add the start position for this material.
 
 	                    console.log("initPrimGeometry():coords options.materials[" + i + "]: adding start:" + coords.options.materials[i]);
 
-	                    prim.materials[i].starts = coords.options.materials[i];
+	                    prim.materials[i].starts.push(coords.options.materials[i]);
 
 	                    // TODO: see if we can bind a texture to it.
 	                }
@@ -6672,42 +6668,23 @@
 	                p.light.direction = direction, p.light.color = color;
 	            };
 
-	            prim.setMaterial = function (name) {
-	                var colorMult = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
-	                var ambient = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [0.1, 0.1, 0.1];
-	                var diffuse = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [0, 0, 0];
-	                var specular = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : [1, 1, 1, 1];
-	                var shininess = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : 250;
-	                var specularFactor = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : 1;
-	                var transparency = arguments.length > 7 && arguments[7] !== undefined ? arguments[7] : 1.0;
-	                var illum = arguments.length > 8 && arguments[8] !== undefined ? arguments[8] : 1;
+	            /** 
+	             * Set Prim material, with defaults available from MaterialPoo.
+	             */
+	            prim.setMaterial = function () {
+	                var name = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : _this2.util.DEFAULT_KEY;
+	                var ambient = arguments[1];
+	                var diffuse = arguments[2];
+	                var specular = arguments[3];
+	                var specularExponent = arguments[4];
+	                var sharpness = arguments[5];
+	                var refraction = arguments[6];
+	                var transparency = arguments[7];
+	                var illum = arguments[8];
+	                var map_Kd = arguments[9];
 
 
-	                p.materials.push({
-
-	                    colorMult: colorMult,
-
-	                    ambient: ambient, // ambient reflectivity
-
-	                    diffuse: diffuse, // diffuse reflectivity
-
-	                    specular: specular, // specular reflectivity
-
-	                    shininess: shininess, // surface shininess
-
-	                    specularFactor: specularFactor, // specular factor
-
-	                    transparency: transparency, // transparency, 0.0 - 1.0
-
-	                    illum: illum, // Illumination model 0-10, color on and Ambient on
-
-	                    name: name,
-
-	                    texture: null, // texture specified by material, points to the .textures[] array.
-
-	                    starts: 0
-
-	                });
+	                p.materials[name] = _this2.materialPool.default(name, ambient, diffuse, specular, specularExponent, sharpness, refraction, transparency, illum, map_Kd);
 	            };
 
 	            // We don't have a .setMaterial - set directly in loadModel.updateMateria()
@@ -7006,9 +6983,9 @@
 
 	exports.default = PrimFactory;
 
-/***/ }),
+/***/ },
 /* 18 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -7710,9 +7687,9 @@
 
 	exports.default = Map2d;
 
-/***/ }),
+/***/ },
 /* 19 */
-/***/ (function(module, exports) {
+/***/ function(module, exports) {
 
 	'use strict';
 
@@ -7735,9 +7712,9 @@
 
 	exports.default = Mapd;
 
-/***/ }),
+/***/ },
 /* 20 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -7910,9 +7887,9 @@
 
 	exports.default = Map3d;
 
-/***/ }),
+/***/ },
 /* 21 */
-/***/ (function(module, exports) {
+/***/ function(module, exports) {
 
 	'use strict';
 
@@ -9368,9 +9345,9 @@
 
 	exports.default = Mesh;
 
-/***/ }),
+/***/ },
 /* 22 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -13014,9 +12991,9 @@
 
 	exports.default = GeometryPool;
 
-/***/ }),
+/***/ },
 /* 23 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -13089,16 +13066,60 @@
 	    }
 
 	    /** 
-	     * Extract 3d vertex data (vertices, normals) from a string.
-	     * @param {String} data string to be parsed for 3d coordinate values.
-	     * @param {Array} arr the array to add the coordinate values to.
-	     * @param {Number} lineNum the current line in the file.
-	     * @param {Number} numReturned number of values to returned. In some 
-	     *                 OBJ files, 3 numbers are written for 2d texture.
+	     * Get a default ModelPool object.
 	     */
 
 
 	    _createClass(ModelPool, [{
+	        key: 'default',
+	        value: function _default() {
+	            var vertices = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+	            var indices = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
+	            var texCoords = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [];
+	            var normals = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
+	            var objects = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : [0];
+	            var groups = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : [0];
+	            var smoothingGroups = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : [0];
+	            var materials = arguments.length > 7 && arguments[7] !== undefined ? arguments[7] : [];
+
+
+	            return {
+
+	                vertices: vertices,
+
+	                indices: indices,
+
+	                texCoords: texCoords,
+
+	                normals: normals,
+
+	                // References to sub-regions in the obj file, number = position in vertices.
+
+	                options: {
+
+	                    objects: objects,
+
+	                    groups: groups,
+
+	                    smoothingGroups: smoothingGroups,
+
+	                    materials: materials
+
+	                }
+
+	            };
+	        }
+
+	        /** 
+	         * Extract 3d vertex data (vertices, normals) from a string.
+	         * @param {String} data string to be parsed for 3d coordinate values.
+	         * @param {Array} arr the array to add the coordinate values to.
+	         * @param {Number} lineNum the current line in the file.
+	         * @param {Number} numReturned number of values to returned. In some 
+	         *                 OBJ files, 3 numbers are written for 2d texture.
+	         */
+
+	    }, {
 	        key: 'computeObj3d',
 	        value: function computeObj3d(data, arr, lineNum) {
 	            var numReturned = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 3;
@@ -13281,11 +13302,18 @@
 
 	            console.log('ModelPool::computeObjMesh(): loading a new file:' + path + ' for ' + prim.name);
 
+	            var m = this.default();
+
 	            var isWhitespace = this.util.isWhitespace,
-	                vertices = [],
-	                indices = [],
-	                texCoords = [],
-	                normals = [];
+	                vertices = m.vertices,
+	                indices = m.indices,
+	                texCoords = m.texCoords,
+	                normals = m.normals,
+	                objMtl = this.util.DEFAULT_KEY,
+	                objects = m.options.objects,
+	                groups = m.options.groups,
+	                smoothingGroups = m.options.smoothingGroups,
+	                materials = m.options.materials;
 
 	            var dir = this.util.getFilePath(path);
 
@@ -13298,13 +13326,6 @@
 	            var iTexCoords = [];
 
 	            var iNormals = [];
-
-	            var objMtl = this.util.DEFAULT_KEY;
-
-	            var objects = [],
-	                groups = [],
-	                smoothingGroups = [],
-	                materials = [];
 
 	            lines.forEach(function (line) {
 
@@ -13374,8 +13395,6 @@
 
 	                            _this2.materialPool.getMaterials(prim, [dir + data], true);
 	                        }
-
-	                        //this.materialPool.getMaterials( prim, [ dir + data ], true );
 
 	                        break;
 
@@ -13460,31 +13479,7 @@
 
 	            // Model object format.
 
-	            return {
-
-	                vertices: vertices,
-
-	                indices: indices,
-
-	                texCoords: texCoords,
-
-	                normals: normals,
-
-	                // References to sub-regions in the obj file.
-
-	                options: {
-
-	                    objects: objects,
-
-	                    groups: groups,
-
-	                    smoothingGroups: smoothingGroups,
-
-	                    materials: materials
-
-	                }
-
-	            };
+	            return m;
 	        }
 
 	        /** 
@@ -13681,9 +13676,9 @@
 
 	exports.default = ModelPool;
 
-/***/ }),
+/***/ },
 /* 24 */
-/***/ (function(module, exports) {
+/***/ function(module, exports) {
 
 	
 	'use strict';
@@ -14154,9 +14149,9 @@
 
 	exports.default = AssetPool;
 
-/***/ }),
+/***/ },
 /* 25 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -14709,9 +14704,9 @@
 
 	exports.default = TexturePool;
 
-/***/ }),
+/***/ },
 /* 26 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -14764,9 +14759,9 @@
 
 	exports.default = AudioPool;
 
-/***/ }),
+/***/ },
 /* 27 */
-/***/ (function(module, exports) {
+/***/ function(module, exports) {
 
 	'use strict';
 
@@ -15912,9 +15907,9 @@
 
 	exports.default = GeometryBuffer;
 
-/***/ }),
+/***/ },
 /* 28 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -16705,9 +16700,9 @@
 
 	exports.default = World;
 
-/***/ }),
+/***/ },
 /* 29 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -16753,22 +16748,85 @@
 
 	        if (init) {
 
-	            // do something
+	            // create a default Material asset.
 
+	            _this.defaultKey = _this.addAsset(_this.default()).key;
 	        }
 
 	        return _this;
 	    }
 
 	    /** 
-	     * extract additional options for texture maps in OBJ format. Assumes that 
-	     * a texture file was specified as the last data item in the line. Only the 
-	     * options specified in the file are added (so calling program must test for them).
-	     * @param {Array} data the line of the file for a texture map.
+	     * Get a default Material object.
+	     * @param {String} name the name of the material, either 'defaul' in .mtl file.
+	     * @param {Array} ambient ambient color.
+	     * @param {Array} diffuse diffuse color.
+	     * @param {Array} specular specular color.
+	     * @param {Number} specularExponent the shininess of the object.
+	     * @param {Number} sharpness of reflection map.
+	     * @param {Number} refraction light-bending of transparent objects.
+	     * @param {Number} transparency.
+	     * @param {Number} enumerated list of lighting modes.
+	     * @param {String} map_Kd the default texture for diffuse mapping.
 	     */
 
 
 	    _createClass(MaterialPool, [{
+	        key: 'default',
+	        value: function _default() {
+	            var name = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.util.DEFAULT_KEY;
+	            var ambient = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [1, 1, 1];
+	            var diffuse = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [1, 1, 1];
+	            var specular = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [0, 0, 0];
+	            var specularExponent = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : 0;
+	            var sharpness = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : 60;
+	            var refraction = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : 1;
+	            var transparency = arguments.length > 7 && arguments[7] !== undefined ? arguments[7] : 0;
+	            var illum = arguments.length > 8 && arguments[8] !== undefined ? arguments[8] : 1;
+	            var map_Kd = arguments.length > 9 && arguments[9] !== undefined ? arguments[9] : null;
+
+
+	            return {
+
+	                name: name,
+
+	                key: null, // key in MaterialPool
+
+	                path: null, // path to file
+
+	                ambient: ambient, // Ka ambient color, white
+
+	                diffuse: diffuse, // Kd diffuse color, white
+
+	                specular: specular, // Ks specular color, black (off)
+
+	                specularExponent: specularExponent, // Ns specular exponent, ranges between 0 and 1000
+
+	                sharpness: sharpness, // sharpness of reflection map (0-1000)
+
+	                refraction: refraction, // refraction, 1.0 = no refraction
+
+	                transparency: transparency, // d | Tr = transparency 1.0 = transparent
+
+	                illum: illum, // illium, color and ambient on
+
+	                map_Kd: map_Kd, // diffuse map, an image file (other maps not in default)
+
+	                starts: [0], // Starting position in vertices to apply material
+
+	                options: {} // no options by default
+
+	            };
+	        }
+
+	        /** 
+	         * extract additional options for texture maps in OBJ format. Assumes that 
+	         * a texture file was specified as the last data item in the line. Only the 
+	         * options specified in the file are added (so calling program must test for them).
+	         * @param {Array} data the line of the file for a texture map.
+	         */
+
+	    }, {
 	        key: 'computeTextureMapOptions',
 	        value: function computeTextureMapOptions(data) {
 
@@ -16826,7 +16884,7 @@
 
 	                        case 'bm': // bump map multiplier, should be 0-1
 	                        case 'mm':
-	                            // base gain multiplier (makes brighter)
+	                            // base gain multiplier (makes brighter, 0-1)
 
 	                            if (Number.isFinite(parseFloat(d1))) {
 
@@ -16847,6 +16905,7 @@
 
 	                        case 'imfchan': // channel used to create scalar or bump texture, (r | g | b | m | l | z)
 	                        case 'texres':
+	                            // scale up images to the next power of 2.
 
 	                            options[d] = d1;
 
@@ -16946,7 +17005,9 @@
 
 	                        currName = data[0].trim();
 
-	                        materials[currName] = { name: currName };
+	                        // Apply file data to our default Material.
+
+	                        materials[currName] = _this2.default(currName);
 
 	                        break;
 
@@ -16972,7 +17033,7 @@
 	                        break;
 
 	                    case 'Kd':
-	                        // diffuse
+	                        // diffuse (usually the same as ambient)
 
 	                        if (data.length < 3) {
 
@@ -17023,9 +17084,9 @@
 
 	                            data[0] = parseFloat(data[0]);
 
-	                            if (currName && Number.isFinite(data[0])) {
+	                            if (currName && Number.isFinite(data[0]) && data[0] >= 0 && data[0] < 1001) {
 
-	                                materials[currName].specularFactor = data[0];
+	                                materials[currName].specularExponent = data[0];
 	                            } else {
 
 	                                console.error('MaterialPool::computeObjMaterials(): invalid specular exponent array at line:' + lineNum);
@@ -17034,9 +17095,35 @@
 
 	                        break;
 
-	                    case 'd':
+	                    case 'sharpness':
+	                        // sharpness, 0-1000, default 60, for reflection maps
+
+	                        data[0] = parseFloat(data[0]);
+
+	                        if (currName && Number.isFinite(data[0]) && data[0] >= 0 && data[0] < 1001) {
+
+	                            materials[currName].sharpness = data[0];
+	                        }
+
+	                        break;
+
+	                    case 'Ni':
+	                        // optical density (refraction index, 1.0 = no refraction)
+
+	                        data[0] = parseFloat(data[0]);
+
+	                        if (currName && Number.isFinite(data[0]) && data[0] >= 0 && data[0] < 1001) {
+
+	                            materials[currName].refraction = data[0];
+	                        }
+
+	                        break;
+
+	                    case 'd': // opacity
 	                    case 'Tr':
 	                        // transparent
+
+	                        // TODO: handle -halo parameter  d -halo factor
 
 	                        if (data.length < 1) {
 
@@ -17046,6 +17133,8 @@
 	                            data[0] = parseFloat(data[0]);
 
 	                            if (currName && Number.isFinite(data[0])) {
+
+	                                if (type === 'Tr') data[0] = 1.0 - data[0]; // Invert
 
 	                                materials[currName].transparency = parseFloat(data[0]); // single value, 0.0 - 1.0
 	                            } else {
@@ -17067,6 +17156,21 @@
 	                            data[0] = parseInt(data[0]);
 
 	                            if (currName && Number.isFinite(data[0]) && data[0] > 0 && data[0] < 11) {
+
+	                                /* 
+	                                 * VALUES:
+	                                 * 0. Color on and Ambient off
+	                                 * 1. Color on and Ambient on
+	                                 * 2. Highlight on
+	                                 * 3. Reflection on and Ray trace on
+	                                 * 4. Transparency: Glass on, Reflection: Ray trace on
+	                                 * 5. Reflection: Fresnel on and Ray trace on
+	                                 * 6. Transparency: Refraction on, Reflection: Fresnel off and Ray trace on
+	                                 * 7. Transparency: Refraction on, Reflection: Fresnel on and Ray trace on
+	                                 * 8. Reflection on and Ray trace off
+	                                 * 9. Transparency: Glass on, Reflection: Ray trace off
+	                                 * 10. Casts shadows onto invisible surfaces
+	                                 */
 
 	                                materials[currName].illum = data[0];
 	                            }
@@ -17096,17 +17200,34 @@
 	                        console.log('path:' + path + ' data:' + data + ' tPath:' + tPath);
 
 	                        if (currName) {
+	                            // if not, file is corrupt.
+
+	                            // Store path to texture for this option.
+
+	                            materials[currName][type] = tPath;
 
 	                            /* 
-	                             * get hyphenated options, if present, and add them to the getTextures() call.
+	                             * get (hyphenated) texture options, if present, and add them to the getTextures() call.
+	                             * Each texture has a list of materials it belongs to. Material objects may query 
+	                             * for the texture they need.
 	                             */
 
 	                            var options = _this2.computeTextureMapOptions(data);
 
+	                            // This lets us associate materials associated with this texture
+
+	                            if (!options.materials) {
+
+	                                options.materials = [currName];
+	                            } else {
+
+	                                options.materials.push(currName);
+	                            }
+
 	                            /*
 	                             * NOTE: the texture attaches to prim.textures, so the fourth parmeter is the texture type (map_Kd, map_Ks...).
 	                             * NOTE: the sixth paramater, is NULL since it defines a specific WebGL texture type (we want the default).
-	                             * NOTE: if options are present, we pass those in as well.
+	                             * NOTE: thex seventh paramater, options, if present, we pass those in as well.
 	                             */
 
 	                            _this2.texturePool.getTextures(prim, [dir + tPath], true, false, type, null, options);
@@ -17115,6 +17236,8 @@
 	                        break;
 
 	                    default:
+
+	                        console.warn('MaterialPool::computeObjMaterials(): unknown property:' + type + ' in file');
 
 	                        break;
 
@@ -17282,9 +17405,9 @@
 
 	exports.default = MaterialPool;
 
-/***/ }),
+/***/ },
 /* 30 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ function(module, exports, __webpack_require__) {
 
 	/**
 	 * @fileoverview gl-matrix - High performance matrix and vector operations
@@ -17324,9 +17447,9 @@
 	exports.vec3 = __webpack_require__(37);
 	exports.vec4 = __webpack_require__(38);
 
-/***/ }),
+/***/ },
 /* 31 */
-/***/ (function(module, exports) {
+/***/ function(module, exports) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
 
@@ -17400,9 +17523,9 @@
 	module.exports = glMatrix;
 
 
-/***/ }),
+/***/ },
 /* 32 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
 
@@ -17842,9 +17965,9 @@
 	module.exports = mat2;
 
 
-/***/ }),
+/***/ },
 /* 33 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
 
@@ -18317,9 +18440,9 @@
 	module.exports = mat2d;
 
 
-/***/ }),
+/***/ },
 /* 34 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
 
@@ -19069,9 +19192,9 @@
 	module.exports = mat3;
 
 
-/***/ }),
+/***/ },
 /* 35 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
 
@@ -21211,9 +21334,9 @@
 	module.exports = mat4;
 
 
-/***/ }),
+/***/ },
 /* 36 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
 
@@ -21817,9 +21940,9 @@
 	module.exports = quat;
 
 
-/***/ }),
+/***/ },
 /* 37 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
 
@@ -22600,9 +22723,9 @@
 	module.exports = vec3;
 
 
-/***/ }),
+/***/ },
 /* 38 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
 
@@ -23215,9 +23338,9 @@
 	module.exports = vec4;
 
 
-/***/ }),
+/***/ },
 /* 39 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
 
@@ -23808,9 +23931,9 @@
 	module.exports = vec2;
 
 
-/***/ }),
+/***/ },
 /* 40 */
-/***/ (function(module, exports) {
+/***/ function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {/*
 	** Copyright (c) 2012 The Khronos Group Inc.
@@ -24769,5 +24892,5 @@
 
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
-/***/ })
+/***/ }
 /******/ ]);

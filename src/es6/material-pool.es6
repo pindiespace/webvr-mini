@@ -26,7 +26,60 @@ class MaterialPool extends AssetPool {
 
         if ( init ) {
 
-            // do something
+            // create a default Material asset.
+
+            this.defaultKey = this.addAsset( this.default() ).key;
+
+        }
+
+    }
+
+    /** 
+     * Get a default Material object.
+     * @param {String} name the name of the material, either 'defaul' in .mtl file.
+     * @param {Array} ambient ambient color.
+     * @param {Array} diffuse diffuse color.
+     * @param {Array} specular specular color.
+     * @param {Number} specularExponent the shininess of the object.
+     * @param {Number} sharpness of reflection map.
+     * @param {Number} refraction light-bending of transparent objects.
+     * @param {Number} transparency.
+     * @param {Number} enumerated list of lighting modes.
+     * @param {String} map_Kd the default texture for diffuse mapping.
+     */
+    default ( name = this.util.DEFAULT_KEY, ambient = [ 1, 1, 1 ], diffuse = [ 1, 1, 1 ], specular = [ 0, 0, 0 ], 
+
+        specularExponent = 0, sharpness = 60, refraction = 1, transparency = 0, illum = 1, map_Kd = null ) {
+
+        return {
+
+            name: name,
+
+            key: null,          // key in MaterialPool
+
+            path: null,         // path to file
+
+            ambient: ambient,   // Ka ambient color, white
+
+            diffuse: diffuse,    // Kd diffuse color, white
+
+            specular: specular,  // Ks specular color, black (off)
+   
+            specularExponent: specularExponent,  // Ns specular exponent, ranges between 0 and 1000
+
+            sharpness: sharpness,                // sharpness of reflection map (0-1000)
+
+            refraction: refraction,              // refraction, 1.0 = no refraction
+
+            transparency: transparency,   // d | Tr = transparency 1.0 = transparent
+
+            illum: illum,                 // illium, color and ambient on
+
+            map_Kd: map_Kd,               // diffuse map, an image file (other maps not in default)
+
+            starts: [ 0 ],                // Starting position in vertices to apply material
+
+            options: {}                   // no options by default
 
         }
 
@@ -95,7 +148,7 @@ class MaterialPool extends AssetPool {
                         break;
 
                     case 'bm': // bump map multiplier, should be 0-1
-                    case 'mm': // base gain multiplier (makes brighter)
+                    case 'mm': // base gain multiplier (makes brighter, 0-1)
 
                         if ( Number.isFinite( parseFloat( d1 ) ) ) {
 
@@ -116,7 +169,7 @@ class MaterialPool extends AssetPool {
                         break;
 
                     case 'imfchan': // channel used to create scalar or bump texture, (r | g | b | m | l | z)
-                    case 'texres':
+                    case 'texres':  // scale up images to the next power of 2.
 
                         options[ d ] = d1;
 
@@ -216,7 +269,9 @@ class MaterialPool extends AssetPool {
 
                     currName = data[ 0 ].trim();
 
-                    materials[ currName ] = { name: currName };
+                    // Apply file data to our default Material.
+
+                    materials[ currName ] = this.default( currName );
 
                     break;
 
@@ -248,7 +303,7 @@ class MaterialPool extends AssetPool {
 
                     break;
 
-                case 'Kd': // diffuse
+                case 'Kd': // diffuse (usually the same as ambient)
 
                     if ( data.length < 3 ) {
 
@@ -315,9 +370,9 @@ class MaterialPool extends AssetPool {
 
                         data[ 0 ] = parseFloat( data[ 0 ] );
 
-                        if ( currName && Number.isFinite( data[ 0 ] ) ) {
+                        if ( currName && Number.isFinite( data[ 0 ] ) && data[ 0 ] >= 0 && data[ 0 ] < 1001 ) {
 
-                            materials[ currName].specularFactor = data[ 0 ];    
+                            materials[ currName].specularExponent = data[ 0 ];    
 
                         } else {
 
@@ -329,8 +384,33 @@ class MaterialPool extends AssetPool {
 
                     break;
 
-                case 'd':
+                case 'sharpness': // sharpness, 0-1000, default 60, for reflection maps
+
+                    data[ 0 ] = parseFloat( data[ 0 ] );
+
+                    if ( currName && Number.isFinite( data[ 0 ] ) && data[ 0 ] >= 0 && data[ 0 ] < 1001 ) {
+
+                        materials[ currName].sharpness = data[ 0 ]; 
+                    }
+
+                    break;
+
+                case 'Ni': // optical density (refraction index, 1.0 = no refraction)
+
+                    data[ 0 ] = parseFloat( data[ 0 ])
+
+
+                    if ( currName && Number.isFinite( data[ 0 ] ) && data[ 0 ] >= 0 && data[ 0 ] < 1001 ) {
+
+                        materials[ currName].refraction = data[ 0 ]; 
+                    }
+
+                    break;
+
+                case 'd':  // opacity
                 case 'Tr': // transparent
+
+                // TODO: handle -halo parameter  d -halo factor
 
                     if ( data.length <  1 ) {
 
@@ -341,6 +421,8 @@ class MaterialPool extends AssetPool {
                         data[ 0 ] = parseFloat( data[ 0 ] );
 
                         if ( currName && Number.isFinite( data[ 0 ] ) ) {
+
+                            if ( type === 'Tr' ) data[ 0 ] = 1.0 - data[ 0 ]; // Invert
 
                             materials[ currName ].transparency = parseFloat( data[ 0 ] ); // single value, 0.0 - 1.0
 
@@ -365,6 +447,21 @@ class MaterialPool extends AssetPool {
                         data[ 0 ] = parseInt( data[ 0 ] );
 
                         if ( currName && Number.isFinite( data[ 0 ] ) && data[ 0 ] > 0 && data[ 0 ] < 11 ) {
+
+                            /* 
+                             * VALUES:
+                             * 0. Color on and Ambient off
+                             * 1. Color on and Ambient on
+                             * 2. Highlight on
+                             * 3. Reflection on and Ray trace on
+                             * 4. Transparency: Glass on, Reflection: Ray trace on
+                             * 5. Reflection: Fresnel on and Ray trace on
+                             * 6. Transparency: Refraction on, Reflection: Fresnel off and Ray trace on
+                             * 7. Transparency: Refraction on, Reflection: Fresnel on and Ray trace on
+                             * 8. Reflection on and Ray trace off
+                             * 9. Transparency: Glass on, Reflection: Ray trace off
+                             * 10. Casts shadows onto invisible surfaces
+                             */
 
                             materials[ currName ].illum = data[ 0 ];
 
@@ -394,18 +491,36 @@ class MaterialPool extends AssetPool {
 
                     console.log('path:' + path + ' data:' + data + ' tPath:' + tPath)
 
-                    if ( currName ) {
+                    if ( currName ) { // if not, file is corrupt.
+
+                        // Store path to texture for this option.
+
+                        materials[ currName ][ type ] = tPath;
 
                         /* 
-                         * get hyphenated options, if present, and add them to the getTextures() call.
+                         * get (hyphenated) texture options, if present, and add them to the getTextures() call.
+                         * Each texture has a list of materials it belongs to. Material objects may query 
+                         * for the texture they need.
                          */
 
                         let options = this.computeTextureMapOptions( data );
 
+                        // This lets us associate materials associated with this texture
+
+                        if ( ! options.materials ) {
+
+                            options.materials = [ currName ];
+
+                        } else {
+
+                            options.materials.push( currName );
+
+                        }
+
                         /*
                          * NOTE: the texture attaches to prim.textures, so the fourth parmeter is the texture type (map_Kd, map_Ks...).
                          * NOTE: the sixth paramater, is NULL since it defines a specific WebGL texture type (we want the default).
-                         * NOTE: if options are present, we pass those in as well.
+                         * NOTE: thex seventh paramater, options, if present, we pass those in as well.
                          */
 
                         this.texturePool.getTextures( prim, [ dir + tPath ], true, false, type, null, options );
@@ -414,7 +529,9 @@ class MaterialPool extends AssetPool {
 
                     break;
 
-                default:
+                default: 
+
+                    console.warn( 'MaterialPool::computeObjMaterials(): unknown property:' + type + ' in file' );
 
                     break;
 

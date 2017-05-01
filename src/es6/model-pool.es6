@@ -56,6 +56,41 @@ class ModelPool extends AssetPool {
     }
 
     /** 
+     * Get a default ModelPool object.
+     */
+    default ( vertices = [], indices = [], texCoords = [], normals = [], objects = [ 0 ], 
+
+        groups = [ 0 ], smoothingGroups = [ 0 ], materials = [] ) {
+
+        return {
+
+            vertices: vertices,
+
+            indices: indices,
+
+            texCoords: texCoords,
+
+            normals: normals,
+
+            // References to sub-regions in the obj file, number = position in vertices.
+
+            options : {
+
+                objects: objects, 
+
+                groups: groups, 
+
+                smoothingGroups: smoothingGroups, 
+
+                materials: materials
+
+            }
+
+        }
+
+    }
+
+    /** 
      * Extract 3d vertex data (vertices, normals) from a string.
      * @param {String} data string to be parsed for 3d coordinate values.
      * @param {Array} arr the array to add the coordinate values to.
@@ -237,15 +272,27 @@ class ModelPool extends AssetPool {
 
         console.log( 'ModelPool::computeObjMesh(): loading a new file:' + path + ' for ' + prim.name );
 
+        let m = this.default();
+
         let isWhitespace = this.util.isWhitespace,
 
-        vertices = [],
+        vertices = m.vertices,
 
-        indices = [],
+        indices = m.indices,
 
-        texCoords = [],
+        texCoords = m.texCoords,
 
-        normals = [];
+        normals = m.normals,
+
+        objMtl = this.util.DEFAULT_KEY,
+
+        objects = m.options.objects, 
+
+        groups = m.options.groups, 
+
+        smoothingGroups = m.options.smoothingGroups, 
+
+        materials = m.options.materials;
 
         let dir = this.util.getFilePath( path );
 
@@ -258,10 +305,6 @@ class ModelPool extends AssetPool {
         let iTexCoords = [];
 
         let iNormals = [];
-
-        let objMtl = this.util.DEFAULT_KEY;
-
-        let objects = [], groups = [], smoothingGroups = [], materials = [];
 
         lines.forEach( ( line ) => {
 
@@ -280,8 +323,6 @@ class ModelPool extends AssetPool {
                     if ( ! prim.name ) {
 
                         prim.name = data;
-
-
 
                     }
 
@@ -330,8 +371,6 @@ class ModelPool extends AssetPool {
                         this.materialPool.getMaterials( prim, [ dir + data ], true );
 
                     }
-
-                    //this.materialPool.getMaterials( prim, [ dir + data ], true );
 
                     break;
 
@@ -416,31 +455,7 @@ class ModelPool extends AssetPool {
 
         // Model object format.
 
-        return {
-
-            vertices: vertices,
-
-            indices: indices,
-
-            texCoords: texCoords,
-
-            normals: normals,
-
-            // References to sub-regions in the obj file.
-
-            options : {
-
-                objects: objects, 
-
-                groups: groups, 
-
-                smoothingGroups: smoothingGroups, 
-
-                materials: materials
-
-            }
-
-        }
+        return m;
 
     }
 
