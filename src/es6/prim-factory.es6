@@ -256,8 +256,7 @@ class PrimFactory {
     }
 
     /** 
-     * Prims don't contrl their initialization, so let the factory do it. This standard structure 
-     * is used to return values from proceedural geometry and OBJ wavefront files.
+     * Initialize Prim geometry from proceedural geometry routines or OBJ wavefront files.
      * @param {prim} prim the Prim.
      * @param {String} key the identifying the geometry in the ModelPool.
      * @param {Object} coords coordinates object returned by procedural, Mesh, or ModelPool. Added 

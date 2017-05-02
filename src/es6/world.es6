@@ -442,7 +442,7 @@ class World extends AssetPool {
                 [ 'img/crate.png' ],               // texture present
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color,
                 true                                    // if true, apply texture to each face
-        
+
             );
 
             // NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
