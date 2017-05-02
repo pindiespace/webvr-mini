@@ -24,6 +24,8 @@ class MaterialPool extends AssetPool {
 
         };
 
+        this.defaultTextureMap = 'map_Kd'; // also pos zero for texturePositions
+
         // Map textureMap types to position in prim.textures array
 
         this.texturePositions = {

@@ -192,6 +192,32 @@ class GeometryPool {
     }
 
     /** 
+     * Return a default GeometryPool object.
+     * @param {glMatrix.vec3[]} vertices the vertex data.
+     * @param {Array} indices index data for vertices.
+     * @param {glMatrix.vec2[]} texCoords the 2d texture coordinate data.
+     * @param {glMatrix.vec3[]} normals normals for the vertices.
+     * @param {glMatrix.vec3[]} tangents tangent data for vertices.
+     */
+    default ( vertices = [], indices = [], texCoords = [], normals = [], tangents = [] ) {
+
+        return {
+
+            vertices: vertices, 
+
+            indices: indices, 
+
+            normals: normals, 
+
+            texCoords: texCoords, 
+
+            tangents: tangents 
+
+        };
+
+    }
+
+    /** 
      * See if supplied Prim type is supported via a method. 
      * Individual Prim factory methods may do more detailed checking.
      * @param {String} type the Prim type.

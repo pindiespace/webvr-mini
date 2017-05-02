@@ -531,24 +531,11 @@ class World extends AssetPool {
 
 // NOTE: webvr implementation
 
-// TODO: test obj files for forward and backwards culling
-
-// TODO: test obj files for other mapping issues.
-
-// TODO: ModelPool.computeObjIndices may need re-testing.
-
 // RESIZE EVENT HANDLING
 
 // TODO: PRIM CONCATENATE SEVERAL PRIMS TOGETHER INTO ONE ARRAY??? CHECK HOW TO DO
 
-// NOTE: fullscreen mode with correct return to localscreen
-
 // NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
-
-// TODO: READ SHADER VALUES TO DETERMINE IF BUFFERS NEEDED WHEN CREATING THE PRIM!!!!!!!!!!!!!!!!!!!!!
-// TODO: THIS WOULD HAVE TO HAPPEN IN THE PRIM CREATION THEMES
-
-// TODO: make npm run PRODUCTION work!!!!!!
 
 // TODO: JSON FILE FOR PRIMS (loadable) use this.load(), this.save()
 

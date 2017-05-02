@@ -463,12 +463,12 @@ class TexturePool extends AssetPool {
      * @param {Array[String]} pathList a list of URL paths to load.
      * @param {Boolean} cacheBust if true, add a http://url?random query string to request.
      * @param {Boolean} keepDOMImage if true, keep the Image object we created the texture from (internal Blob).
-     * @param {String} use the way to use the texture, default is just 2D texture. Other options are borrowed from 
-     *                 OBJ file format, e.g. map_Kd, map_Ks...
+     * @param {String} textureUse use the way to use the texture, default is just 2D ambient texture. Other options are borrowed from 
+     *                 OBJ file format, e.g. map_Ks, bump...
      * @param {WebGL.TEXTURE} textureType a WebGL-enumerated texture type (TEXTURE_2D, TEXTURE_3D...), default TEXTURE_2D.
      * @param {Object} options if present, additional options for rendering the texture (e.g. scaling, sharpening, brightening).
      */
-    getTextures ( prim, pathList, cacheBust = true, keepDOMImage = false, textureUse = this.util.DEFAULT_KEY, glTextureType, options = {} ) {
+    getTextures ( prim, pathList, cacheBust = true, keepDOMImage = false, textureUse = 'map_Kd', glTextureType, options = {} ) {
 
         // TODO: check texture list. If paths are already there, just use the path
         // TODO: and return the webgl texture buffer object.

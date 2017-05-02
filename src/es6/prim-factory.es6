@@ -229,7 +229,10 @@ class PrimFactory {
 
             let tex = material[ textureObj.textureUse ];
 
-            if ( tex && ! ( tex instanceof WebGLTexture ) ) {
+            console.log( 'PrimFactory::initPrimTexture():finding texture for:' + material.name + ' to:' + prim.name );
+            console.log( 'TEX:' + tex + ' instanceof WebGLTexture:' + ( tex instanceof WebGLTexture) )
+
+            if ( ! ( tex instanceof WebGLTexture ) ) {
 
                 console.log( 'PrimFactory::initPrimTexture():matching texture ' + material.name + ' to:' + prim.name );
 
@@ -267,7 +270,7 @@ class PrimFactory {
 
         }
 
-        console.log( 'initPrimMaterial():adding material:' + materialName )
+        console.log( 'initPrimMaterial():adding material:' + materialName + ' for prim:' + prim.name )
 
         prim.materials[ materialName ] = material;
 
@@ -275,25 +278,24 @@ class PrimFactory {
          * Check the texture files to see if we can map a texture to a material declaration.
          * We use the list of possible texture use types in MaterialPool. 
          * NOTE: unlikely, since material file is read for textures!
+         *
+         * NOTE: Prim.setMaterial() is used to create a default material in Prim.createPrim();
          */
 
         for ( let i in this.materialPool.texturePositions ) {
 
             let key = this.materialPool.texturePositions[ i ];
 
-            if ( material[ i ] ) {
+            console.log( 'PrimFactory::initPrimMaterial(): material texture ' + i + ' for prim:' + prim.name + ' present...' );
+            console.log( 'PRIM.TEXTURES LENGTH IS A:' + prim.textures.length )
 
-                console.log( 'PrimFactory::initPrimMaterial(): material texture ' + i + ' present...' );
+            for ( let  j = 0; j < prim.textures.length; j++ ) {
 
-                for ( let  j = 0; j < prim.textures.length; j++ ) {
+                if ( prim.textures[ j ][ i ] && ( prim.textures[ j ][ i ].texture instanceof WebGLTexture ) ) {
 
-                    if ( prim.textures[ j ][ i ] && ( prim.textures[ j ][ i ].texture instanceof WebGLTexture ) ) {
+                    console.log( 'PrimFactory::initPrimMaterial(): matching material:' + material.name + ' texture type:' + i + ' with prim.textures:' + j );
 
-                        console.log( 'PrimFactory::initPrimMaterial(): matching material:' + material.name + ' texture type:' + i + ' with prim.textures:' + j );
-
-                        material[ i ] = prim.textures[ j ][ i ].texture;
-
-                    }
+                    material[ i ] = prim.textures[ j ][ i ].texture;
 
                 }
 
@@ -327,9 +329,11 @@ class PrimFactory {
          * Their value is their start in coords.vertices.
          */
 
+       if ( coords.material ) console.log('coords.material found for:' + prim.name + ' mat:' + coords.material)
+
          if ( coords.options ) {
 
-            console.log("initPrimGeometry():COORDS.options:" + coords.options)
+            console.log("initPrimGeometry():COORDS.options:" + coords.options + ' for:' + prim.name)
 
             for ( var i in coords.options.materials ) {
 
@@ -337,6 +341,7 @@ class PrimFactory {
                  * If the material exists in prim.materials under its name (meaning that it was loaded 
                  * by MaterialPool, add the position start in coords.options.materials[i] to it.
                  * Otherwise, create a empty object with the information.
+                 * NOTE: Prim.setMaterial() is used to create a default material in Prim.createPrim();
                  */
 
                 if ( ! prim.materials[ i ] ) {
@@ -433,7 +438,7 @@ class PrimFactory {
 
             // SUBDIVIDE TEST
 
-            //mesh.subdivide( true );
+            mesh.subdivide( true );
             //mesh.subdivide( true );
             //mesh.subdivide( true );
             //mesh.subdivide( true );
@@ -574,9 +579,18 @@ class PrimFactory {
 
             specularExponent, sharpness, refraction, transparency, illum, map_Kd ) => {
 
-            p.materials[ name ] = this.materialPool.default( name, ambient, diffuse, specular, 
+            //p.materials[ name ] = this.materialPool.default( name, ambient, diffuse, specular, 
+
+            //    specularExponent, sharpness, refraction, transparency, illum, map_Kd );
+
+            let material = this.materialPool.default( name, ambient, diffuse, specular, 
 
                 specularExponent, sharpness, refraction, transparency, illum, map_Kd );
+
+            // Check for links in Prim.textures.
+
+            this.initPrimMaterial ( prim, material, material.name );
+
 
         };
 
@@ -815,15 +829,15 @@ class PrimFactory {
 
         prim.waypoints = [];
 
+        // Store multiple textures for one Prim (must be defined for prim.materials to work).
+
+        prim.textures = [];
+
         // Material files.
 
         prim.materials = [];
 
         prim.setMaterial( this.util.DEFAULT_KEY );
-
-        // Store multiple textures for one Prim.
-
-        prim.textures = [];
 
         // Store multiple sounds for one Prim.
 
@@ -859,7 +873,7 @@ class PrimFactory {
 
         // Get the static network textures async (use emitter to decide what to do when each texture loads).
 
-        this.texturePool.getTextures( prim, textureImages, true, false ); // assume cacheBust === true, mimeType determined by file extension.
+        this.texturePool.getTextures( prim, textureImages, true, false, this.materialPool.defaultTextureMap ); // assume cacheBust === true, mimeType determined by file extension.
 
         // Push into our list of all Prims. Shaders keep a local list of Prims they are rendering.
 
