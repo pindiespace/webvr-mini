@@ -2,6 +2,11 @@
 
 class ShaderPool {
 
+    /** 
+     * Store Shader objects used to render scenes, input 
+     * inherited classes from Shader (e.g. ShaderWater)
+     */
+
     constructor ( init, util, glMatrix, webgl ) {
 
         console.log( 'In ShaderPool class' );

@@ -75,6 +75,18 @@ class World extends AssetPool {
 
         this.lights = lights;
 
+        // default dimensions.
+
+        this.dimensions = {
+
+            width: 100,
+
+            height: 100,
+
+            depth: 100
+
+        };
+
         // Matrix operations.
 
         this.canvas = webgl.getCanvas();
@@ -452,7 +464,7 @@ class World extends AssetPool {
                 this.s1,                               // callback function
                 typeList.MESH,
                 'capsule',
-                vec5( 1, 1, 1 ),                       // dimensions (4th dimension doesn't exist for cylinder)
+                vec5( 2, 2, 2 ),                       // dimensions (4th dimension doesn't exist for cylinder)
                 vec5( 40, 40, 0  ),                    // divisions MAKE SMALLER
                 vec3.fromValues( 0.0, 0.0, 0.0 ),      // position (absolute)
                 vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -475,9 +487,9 @@ class World extends AssetPool {
                 this.s1,                               // callback function
                 typeList.MESH,
                 'objfile',
-                vec5( 1, 1, 1 ),                       // dimensions (4th dimension doesn't exist for cylinder)
-                vec5( 40, 40, 0  ),                    // divisions MAKE SMALLER
-                vec3.fromValues( 1.0, 1.0, -2.0 ),      // position (absolute)
+                vec5( 2, 2, 2 ),                       // dimensions (4th dimension doesn't exist for cylinder)
+                vec5( 40, 40, 40  ),                    // divisions MAKE SMALLER
+                vec3.fromValues( -7, 3, -2.0 ),      // position (absolute)
                 vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
                 vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
                 vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
@@ -554,7 +566,7 @@ class World extends AssetPool {
                 typeList.MESH,
                 'teapot',
                 vec5( 1, 1, 1 ),                       // dimensions (4th dimension doesn't exist for cylinder)
-                vec5( 40, 40, 0  ),                    // divisions MAKE SMALLER
+                vec5( 40, 40, 40  ),                    // divisions MAKE SMALLER
                 vec3.fromValues( 0.0, 1.0, 2.0 ),      // position (absolute)
                 vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
                 vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
@@ -591,7 +603,7 @@ class World extends AssetPool {
                 this.s3,                      // callback function
                 typeList.TERRAIN,
                 'terrain',
-                vec5( 2, 2, 44, directions.TOP, 0.1 ),            // NOTE: ORIENTATION DESIRED vec5[3], waterline = vec5[4]
+                vec5( 2, 2, 2, directions.TOP, 0.1 ),       // NOTE: ORIENTATION DESIRED vec5[3], waterline = vec5[4]
                 vec5( 100, 100, 100 ),           // divisions
                 vec3.fromValues( 1.5, -1.5, 2 ),       // position (absolute)
                 vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z

@@ -215,9 +215,29 @@ class PrimFactory {
      */
     initPrimTexture ( prim, textureObj, pos ) {
 
-        // TODO: see if this texture is a material.
-
         prim.textures[ pos ] = textureObj;
+
+        /* 
+         * Check materials files, and link texture to the files. We do the reverse in initPrimMaterial()
+         * NOTE: prim.materials[ i ] initially has the FILE PATH of the texture. If we fail to find a 
+         * WebGL texture the file path will remain as a debugging string.
+         */
+
+        for ( let i in prim.materials ) {
+
+            let material = prim.materials[ i ];
+
+            let tex = material[ textureObj.textureUse ];
+
+            if ( tex && ! ( tex instanceof WebGLTexture ) ) {
+
+                console.log( 'PrimFactory::initPrimTexture():matching texture ' + material.name + ' to:' + prim.name );
+
+                material[ textureObj.textureUse ] = textureObj.texture;
+
+            }
+
+        }
 
     }
 
@@ -247,11 +267,39 @@ class PrimFactory {
 
         }
 
-        // TODO: see if we can bind a texture material.
-
         console.log( 'initPrimMaterial():adding material:' + materialName )
 
         prim.materials[ materialName ] = material;
+
+        /* 
+         * Check the texture files to see if we can map a texture to a material declaration.
+         * We use the list of possible texture use types in MaterialPool. 
+         * NOTE: unlikely, since material file is read for textures!
+         */
+
+        for ( let i in this.materialPool.texturePositions ) {
+
+            let key = this.materialPool.texturePositions[ i ];
+
+            if ( material[ i ] ) {
+
+                console.log( 'PrimFactory::initPrimMaterial(): material texture ' + i + ' present...' );
+
+                for ( let  j = 0; j < prim.textures.length; j++ ) {
+
+                    if ( prim.textures[ j ][ i ] && ( prim.textures[ j ][ i ].texture instanceof WebGLTexture ) ) {
+
+                        console.log( 'PrimFactory::initPrimMaterial(): matching material:' + material.name + ' texture type:' + i + ' with prim.textures:' + j );
+
+                        material[ i ] = prim.textures[ j ][ i ].texture;
+
+                    }
+
+                }
+
+            }
+
+        }
 
     }
 
@@ -311,6 +359,7 @@ class PrimFactory {
 
          }
 
+
         // Update vertices if they were supplied.
 
         prim.updateVertices( coords.vertices );
@@ -318,6 +367,36 @@ class PrimFactory {
         // Compute bounding box.
 
         prim.computeBoundingBox( prim.geometry.vertices.data );
+
+
+        /* 
+         * Procedural geometry is already at scale = 1, so bounding box should be computed 
+         * automatically.
+         * 
+         * For a Mesh, look at dimensions supplied in the initial Prim call, 
+         * relative to topleft and bottomright of bounding box
+         * and determine a scale. Use this to scale in the MV matrix
+         *
+         */
+
+        // TODO: compute scale using supplied Prim.createPrim coordinates.
+        // TODO:
+
+        // prim.scale = 0.01;
+
+        let scale =  prim.dimensions[ 0 ] / prim.boundingBox.dimensions[ 0 ];
+
+        scale = Math.max( scale, prim.dimensions[ 1 ] / prim.boundingBox.dimensions[ 1 ] );
+
+        scale = Math.max( prim.dimensions[ 2 ] / prim.boundingBox.dimensions[ 2 ] );
+
+        prim.scale = [ scale, scale, scale ];
+
+        if ( scale != 1 ) {
+
+            console.log('scale for prim:' + prim.name + " scale:" + scale )
+
+        }
 
         // Update indices if they were supplied.
 
@@ -366,7 +445,7 @@ class PrimFactory {
 
          //}
 
-        console.log("checking buffer data for " + prim.name )
+        console.log("checking buffer data for " + prim.name );
 
         /////////prim.geometry.checkBufferData();
 
@@ -464,8 +543,11 @@ class PrimFactory {
 
             mat4.rotate( mvMatrix, mvMatrix, p.rotation[ 2 ], [ 0, 0, 1 ] );
 
+            mat4.scale( mvMatrix, mvMatrix, p.scale );
+
             // TODO: rotate second for orbiting.
             // TODO: rotate (internal), translate, rotate (orbit)
+            // TODO: orbit
 
             return mvMatrix;
 
@@ -564,9 +646,6 @@ class PrimFactory {
 
                 geo.setTexCoords( this.geometryPool.computeTexCoords( geo.vertices.data ) );
 
-                // TODO: debug
-                ////////////window.texCoords2 = this.geometryPool.computeTexCoords2( geo.vertices.data, geo.indices.data );
-
             }
 
         };
@@ -615,15 +694,11 @@ class PrimFactory {
 
         prim.computeBoundingBox = () => {
 
-            // TODO: check supplied dimensions. Scale size so it matches ratio of world/prim.dimensions
-            // TODO:
-            // TODO:
-
             prim.boundingBox = this.geometryPool.computeBoundingBox( prim.geometry.vertices.data );
 
         };
 
-        // Compute the bounding sphere.
+        // Compute the bounding sphere (could be used for auto-computation of texture coordinates).
 
         prim.computeBoundingSphere = () => {
 
@@ -709,9 +784,9 @@ class PrimFactory {
 
         prim.orbitAngular = 0.0;
 
-        // Prim scale, in World coordinates.
+        // Prim scale, default in World coordinates (adjusted after Geometry created).
 
-        prim.scale = 1.0;
+        prim.scale = [ 1.0, 1.0, 1.0 ];
 
         // Set prim lighting (use Shader-defined lighting).
 
