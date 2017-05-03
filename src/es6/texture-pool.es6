@@ -47,7 +47,7 @@ class TexturePool extends AssetPool {
 
         // Default texture pixel.
 
-        this.greyPixel = new Uint8Array( [ 0.5, 0.5, 0.5, 1.0 ] );
+        this.greyPixel = new Uint8Array( [ 128, 128, 128, 255 ] );
 
         if ( init ) {
 
@@ -55,7 +55,7 @@ class TexturePool extends AssetPool {
 
             let gl = webgl.getContext();
 
-            this.defaultKey = this.addAsset( this.default( null, null, gl.TEXTURE_2D, null, this.setDefaultTexturePixel( gl.TEXTURE_2D ), null ) ).key;
+            this.defaultKey = this.addAsset( this.default( null, null, gl.TEXTURE_2D, null, this.create2dTexture(), null ) ).key;
 
         }
 
@@ -91,59 +91,6 @@ class TexturePool extends AssetPool {
 
     }
 
-    /**
-     * Sets a texture to a 1x1 pixel color. 
-     * @param {WebGLRenderingContext} gl the WebGLRenderingContext.
-     * @param {WebGLParameter} type the WebGL texture type/target.
-     */
-    setDefaultTexturePixel ( type ) {
-
-        let gl = this.webgl.getContext();
-
-        // Create empty WebGL texture buffer.
-
-        let texture = gl.createTexture();
-
-        // Put 1x1 pixels in texture. That makes it renderable immediately regardless of filtering.
-
-        let color = this.greyPixel;
-
-        // Bind texture buffer.
-
-        gl.bindTexture( gl.TEXTURE_2D, texture );
-
-        // Handle all locally defined texture typess.
-
-        if ( type === gl.GL_TEXTURE_CUBE_MAP ) {
-
-            for ( let i = 0; i < 6; ++i ) {
-
-                gl.texImage2D( gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, color );
-
-            }
-
-        } else if ( type === gl.TEXTURE_3D ) {
-
-            gl.texImage3D( type, 0, gl.RGBA, 1, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, color );
-
-        } else {
-
-            // gl.TEXTURE_2D.
-
-            gl.texImage2D( type, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, color );
-
-        }
-
-        gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE );
-
-        gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE );
-
-        gl.bindTexture( gl.TEXTURE_2D, null );
-
-        return texture;
-
-    }
-
     /* 
      * ---------------------------------------
      * TEXTURE CREATION BY TYPE
@@ -174,14 +121,11 @@ class TexturePool extends AssetPool {
 
             gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image ); // HASN'T LOADED YET
 
-            // TODO: pass ArrayBufferView for Image and this would work?
-            // TODO: gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, 100, 100, 0, gl.RGBA, gl.UNSIGNED_BYTE, image, 0 );
-
-            // TODO: WHEN TO USE gl.renderBufferStorage()???
-
         } else {
 
-            console.warn( 'TexturePool::create2DTexture(): no image (' + image.src + '), using default pixel texture' );
+            console.warn( 'TexturePool::create2DTexture(): no image (' + image + '), using default pixel texture' );
+
+            image = { width: 1, height: 1 }; // kludge image structure
 
             gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, this.greyPixel );
 
@@ -600,6 +544,10 @@ class TexturePool extends AssetPool {
                     } else {
 
                         console.error( 'TexturePool::getTextures(): file type "' + this.util.getFileExtension( path ) + '" in:' + path + ' not supported, not loading' );
+
+                        // Put a single-pixel texture in its place.
+
+                        this.util.emitter.emit( this.util.emitter.events.TEXTURE_2D_READY, prim, this.defaultKey, i );
 
                     }
 

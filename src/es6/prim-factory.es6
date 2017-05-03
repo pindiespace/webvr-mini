@@ -394,7 +394,6 @@ class PrimFactory {
 
          }
 
-
         // Update vertices if they were supplied.
 
         prim.updateVertices( coords.vertices );
@@ -480,7 +479,7 @@ class PrimFactory {
 
          //}
 
-        console.log("checking buffer data for " + prim.name );
+        //console.log("checking buffer data for " + prim.name );
 
         /////////prim.geometry.checkBufferData();
 

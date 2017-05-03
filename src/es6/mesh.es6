@@ -179,13 +179,22 @@ class Vertex {
 
         if ( this.coords.isValid() && 
 
-            Number.isFinite( parseFloat( texCoords.u ) ) && texCoords.u >= 0 && 
+            Number.isFinite( parseFloat( texCoords.u ) ) && 
 
-            Number.isFinite( parseFloat( texCoords.v ) ) && texCoords.v >= 0 ) {
+            Number.isFinite( parseFloat( texCoords.v ) ) ) {
 
-            return true;
+            if ( texCoords.u >= 0 && texCoords.v >= 0 ) {
+
+                return true;
+
+            }
+
+            console.warn( 'Vertex.isValid(): negative texture coordinates for:' + this.idx );
+
+            return false;
 
         }
+
 
         console.error( 'Vertex::isValid(): invalid coordinates for:' + this.idx );
 
@@ -1262,8 +1271,6 @@ class Mesh {
 
         console.log('Simplifying mesh... type:' + this.geo.type )
 
-        //this.geometryToVertex( this.geo.vertices.data, this.geo.indices.data, this.geo.texCoords.data, this.geo.colors.data );
-
         let vertexArr = this.vertexArr;
 
         let indexArr = this.indexArr;
@@ -1275,8 +1282,6 @@ class Mesh {
         let newIndexArr = [];
 
         // Generate our Edge array
-
-
 
         // Copy over old Vertex and Index array.
 
@@ -1311,8 +1316,6 @@ class Mesh {
      */
     geometryToVertex ( vertices, indices, texCoords, colors = [] ) {
 
-        /////////console.warn( 'Mesh::geometryToVertex() for:' + this.prim.name );
-
         /* 
          * The incoming flattened index array has stride = 3, so 
          * an x coord in the vertexArr is just the index value
@@ -1328,14 +1331,13 @@ class Mesh {
 
         console.log( 'Mesh::geometryToVertex(): numVertices:' + this.vertexArr.length + ' numIndices:' + this.indexArr.length );
 
-        return this;
+        return this.isValid();
 
     }
 
     /** 
      * Convert an array of Vertex objects back to our native 
-     * flattened data representation.
-     * @returns{ Object{vertices:Array, indices:Array, texCoords:Array}} an object with the flattened arrays.
+     * flattened data representation, and apply to our Prim's geometry.
      */
     vertexToGeometry () {
 
@@ -1407,7 +1409,11 @@ class Mesh {
 
         }
 
-        // Update the normals and tangents arrays.
+        /* 
+         * Update our GeometryBuffer object with vertices, indices, and texture coordinates.
+         * We do this directly, instead of emitting a NEW_GEOMETRY event since we are using the 
+         * existing geometry, without changing position, scale, etc.
+         */
 
         console.log( 'Mesh::vertexToGeometry(): vertices:' + vertices.length / 3 + ' indices:' + indices.length + ' texCoords:' + texCoords.length / 2 );
 
@@ -1417,15 +1423,15 @@ class Mesh {
 
         geo.setTexCoords( texCoords );
 
+        // Update normals, tangents, and colors to reflect the altered Mesh.
+
         prim.updateNormals();
 
         prim.updateTangents();
 
         prim.updateColors();
 
-        // TODO: REPLACE WITH AN EMITTER EVENT!!!!!!!!!!
-
-        return geo;
+        //return geo.checkBufferData();
 
     }
 
@@ -1461,7 +1467,7 @@ class Mesh {
 
                 if ( ! vertexArr[ i ].isValid() ) {
 
-                    console.error( 'Mesh::isValid(): invalid supplied vertex at:' + i );
+                    console.warn( 'Mesh::isValid(): invalid supplied vertex at:' + i );
 
                     return false;
 

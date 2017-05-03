@@ -6708,7 +6708,7 @@
 
 	            //}
 
-	            console.log("checking buffer data for " + prim.name);
+	            //console.log("checking buffer data for " + prim.name );
 
 	            /////////prim.geometry.checkBufferData();
 	        }
@@ -8263,9 +8263,16 @@
 	                return false;
 	            }
 
-	            if (this.coords.isValid() && Number.isFinite(parseFloat(texCoords.u)) && texCoords.u >= 0 && Number.isFinite(parseFloat(texCoords.v)) && texCoords.v >= 0) {
+	            if (this.coords.isValid() && Number.isFinite(parseFloat(texCoords.u)) && Number.isFinite(parseFloat(texCoords.v))) {
 
-	                return true;
+	                if (texCoords.u >= 0 && texCoords.v >= 0) {
+
+	                    return true;
+	                }
+
+	                console.warn('Vertex.isValid(): negative texture coordinates for:' + this.idx);
+
+	                return false;
 	            }
 
 	            console.error('Vertex::isValid(): invalid coordinates for:' + this.idx);
@@ -9279,8 +9286,6 @@
 
 	            console.log('Simplifying mesh... type:' + this.geo.type);
 
-	            //this.geometryToVertex( this.geo.vertices.data, this.geo.indices.data, this.geo.texCoords.data, this.geo.colors.data );
-
 	            var vertexArr = this.vertexArr;
 
 	            var indexArr = this.indexArr;
@@ -9292,7 +9297,6 @@
 	            var newIndexArr = [];
 
 	            // Generate our Edge array
-
 
 	            // Copy over old Vertex and Index array.
 
@@ -9330,8 +9334,6 @@
 	            var colors = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
 
 
-	            /////////console.warn( 'Mesh::geometryToVertex() for:' + this.prim.name );
-
 	            /* 
 	             * The incoming flattened index array has stride = 3, so 
 	             * an x coord in the vertexArr is just the index value
@@ -9347,13 +9349,12 @@
 
 	            console.log('Mesh::geometryToVertex(): numVertices:' + this.vertexArr.length + ' numIndices:' + this.indexArr.length);
 
-	            return this;
+	            return this.isValid();
 	        }
 
 	        /** 
 	         * Convert an array of Vertex objects back to our native 
-	         * flattened data representation.
-	         * @returns{ Object{vertices:Array, indices:Array, texCoords:Array}} an object with the flattened arrays.
+	         * flattened data representation, and apply to our Prim's geometry.
 	         */
 
 	    }, {
@@ -9425,7 +9426,11 @@
 	                }
 	            }
 
-	            // Update the normals and tangents arrays.
+	            /* 
+	             * Update our GeometryBuffer object with vertices, indices, and texture coordinates.
+	             * We do this directly, instead of emitting a NEW_GEOMETRY event since we are using the 
+	             * existing geometry, without changing position, scale, etc.
+	             */
 
 	            console.log('Mesh::vertexToGeometry(): vertices:' + vertices.length / 3 + ' indices:' + indices.length + ' texCoords:' + texCoords.length / 2);
 
@@ -9435,15 +9440,15 @@
 
 	            geo.setTexCoords(texCoords);
 
+	            // Update normals, tangents, and colors to reflect the altered Mesh.
+
 	            prim.updateNormals();
 
 	            prim.updateTangents();
 
 	            prim.updateColors();
 
-	            // TODO: REPLACE WITH AN EMITTER EVENT!!!!!!!!!!
-
-	            return geo;
+	            //return geo.checkBufferData();
 	        }
 
 	        /** 
@@ -9479,7 +9484,7 @@
 
 	                    if (!vertexArr[i].isValid()) {
 
-	                        console.error('Mesh::isValid(): invalid supplied vertex at:' + i);
+	                        console.warn('Mesh::isValid(): invalid supplied vertex at:' + i);
 
 	                        return false;
 	                    }
@@ -14457,7 +14462,7 @@
 
 	        // Default texture pixel.
 
-	        _this.greyPixel = new Uint8Array([0.5, 0.5, 0.5, 1.0]);
+	        _this.greyPixel = new Uint8Array([128, 128, 128, 255]);
 
 	        if (init) {
 
@@ -14465,7 +14470,7 @@
 
 	            var gl = webgl.getContext();
 
-	            _this.defaultKey = _this.addAsset(_this.default(null, null, gl.TEXTURE_2D, null, _this.setDefaultTexturePixel(gl.TEXTURE_2D), null)).key;
+	            _this.defaultKey = _this.addAsset(_this.default(null, null, gl.TEXTURE_2D, null, _this.create2dTexture(), null)).key;
 	        }
 
 	        return _this;
@@ -14511,57 +14516,6 @@
 	            };
 	        }
 
-	        /**
-	         * Sets a texture to a 1x1 pixel color. 
-	         * @param {WebGLRenderingContext} gl the WebGLRenderingContext.
-	         * @param {WebGLParameter} type the WebGL texture type/target.
-	         */
-
-	    }, {
-	        key: 'setDefaultTexturePixel',
-	        value: function setDefaultTexturePixel(type) {
-
-	            var gl = this.webgl.getContext();
-
-	            // Create empty WebGL texture buffer.
-
-	            var texture = gl.createTexture();
-
-	            // Put 1x1 pixels in texture. That makes it renderable immediately regardless of filtering.
-
-	            var color = this.greyPixel;
-
-	            // Bind texture buffer.
-
-	            gl.bindTexture(gl.TEXTURE_2D, texture);
-
-	            // Handle all locally defined texture typess.
-
-	            if (type === gl.GL_TEXTURE_CUBE_MAP) {
-
-	                for (var i = 0; i < 6; ++i) {
-
-	                    gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, color);
-	                }
-	            } else if (type === gl.TEXTURE_3D) {
-
-	                gl.texImage3D(type, 0, gl.RGBA, 1, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, color);
-	            } else {
-
-	                // gl.TEXTURE_2D.
-
-	                gl.texImage2D(type, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, color);
-	            }
-
-	            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-
-	            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-
-	            gl.bindTexture(gl.TEXTURE_2D, null);
-
-	            return texture;
-	        }
-
 	        /* 
 	         * ---------------------------------------
 	         * TEXTURE CREATION BY TYPE
@@ -14593,14 +14547,11 @@
 	            if (image) {
 
 	                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image); // HASN'T LOADED YET
-
-	                // TODO: pass ArrayBufferView for Image and this would work?
-	                // TODO: gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, 100, 100, 0, gl.RGBA, gl.UNSIGNED_BYTE, image, 0 );
-
-	                // TODO: WHEN TO USE gl.renderBufferStorage()???
 	            } else {
 
-	                console.warn('TexturePool::create2DTexture(): no image (' + image.src + '), using default pixel texture');
+	                console.warn('TexturePool::create2DTexture(): no image (' + image + '), using default pixel texture');
+
+	                image = { width: 1, height: 1 }; // kludge image structure
 
 	                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, this.greyPixel);
 	            }
@@ -14983,6 +14934,10 @@
 	                        } else {
 
 	                            console.error('TexturePool::getTextures(): file type "' + _this2.util.getFileExtension(path) + '" in:' + path + ' not supported, not loading');
+
+	                            // Put a single-pixel texture in its place.
+
+	                            _this2.util.emitter.emit(_this2.util.emitter.events.TEXTURE_2D_READY, prim, _this2.defaultKey, i);
 	                        }
 	                    }
 	                } else {
@@ -16617,7 +16572,7 @@
 	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
 	            vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
 	            //[ 'img/crate.png' ],               // texture present. TODO::: FIGURE OUT NUMBERING.
-	            '', // texture loaded from .mtl file
+	            '', // texture loaded directly
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0), // color,
 	            true, // if true, apply texture to each face,
 	            //[ 'obj/mountains/mountains.obj' ] // object files (.obj, .mtl)
@@ -16785,6 +16740,7 @@
 	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
 	            vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
 	            ['img/mozvr-logo1.png', 'ew9ruqwdfhfw'], // texture present
+	            //[ 'sld;fkjasfd'],
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 
 	            );
