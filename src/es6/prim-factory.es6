@@ -835,6 +835,10 @@ class PrimFactory {
 
         prim.light = new Lights( this.glMatrix );
 
+        // Prim's overall opacity 
+
+        prim.alpha = 1.0;
+
         // Visible from outside (counterclockwise winding) or inside (clockwise winding).
 
         prim.visibleFrom = this.geometryPool.OUTSIDE;

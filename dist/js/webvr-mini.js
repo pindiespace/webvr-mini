@@ -5088,14 +5088,6 @@
 	                program.renderList = this.util.concatArr(program.renderList, primList);
 	            }
 
-	            // TODO: ADD CHECK ROUTINE TO ENSURE THAT PRIM IS VALID HERE!!!!!!!!!!!!!!!!
-
-	            // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
-
-	            // Update overall scene with changes (e.g. VR headset or mouse drags on desktop).
-
-	            // Get the current perspective matrix.
-
 	            /** 
 	             * POLYMORPHIC METHODS
 	             */
@@ -5156,10 +5148,8 @@
 	                    gl.bindBuffer(gl.ARRAY_BUFFER, prim.geometry.colors.buffer);
 	                    gl.enableVertexAttribArray(vsVars.attribute.vec4.aVertexColor);
 	                    gl.vertexAttribPointer(vsVars.attribute.vec4.aVertexColor, prim.geometry.colors.itemSize, gl.FLOAT, false, 0, 0);
-	                    //gl.disableVertexAttribArray( vsVars.attribute.vec4.aVertexColor );
 
-
-	                    // Set perspective and model-view matrix uniforms.
+	                    // Bind perspective and model-view matrix uniforms.
 
 	                    gl.uniformMatrix4fv(vsVars.uniform.mat4.uPMatrix, false, PM);
 	                    gl.uniformMatrix4fv(vsVars.uniform.mat4.uMVMatrix, false, MVM);
@@ -7031,6 +7021,10 @@
 	            // Set prim lighting (use Shader-defined lighting).
 
 	            prim.light = new _lights2.default(this.glMatrix);
+
+	            // Prim's overall opacity 
+
+	            prim.alpha = 1.0;
 
 	            // Visible from outside (counterclockwise winding) or inside (clockwise winding).
 
@@ -16600,10 +16594,6 @@
 	            ['img/webvr-logo3.png'], // texture present, NOT USED
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0));
 
-	            // NOTE: webvr implementation
-
-	            // RESIZE EVENT HANDLING
-
 	            // TODO: PRIM CONCATENATE SEVERAL PRIMS TOGETHER INTO ONE ARRAY??? CHECK HOW TO DO
 
 	            // NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
@@ -16740,7 +16730,7 @@
 	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
 	            vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
 	            ['img/mozvr-logo1.png', 'ew9ruqwdfhfw'], // texture present
-	            //[ 'sld;fkjasfd'],
+	            //[ 'sld;fkjasfd'], // test default procedural texture pixel
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 
 	            );

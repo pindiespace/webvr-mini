@@ -164,14 +164,6 @@ class ShaderColor extends Shader {
 
         }
 
-        // TODO: ADD CHECK ROUTINE TO ENSURE THAT PRIM IS VALID HERE!!!!!!!!!!!!!!!!
-
-        // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
-
-        // Update overall scene with changes (e.g. VR headset or mouse drags on desktop).
-
-        // Get the current perspective matrix.
-
         /** 
          * POLYMORPHIC METHODS
          */
@@ -236,10 +228,8 @@ class ShaderColor extends Shader {
                 gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.colors.buffer );
                 gl.enableVertexAttribArray( vsVars.attribute.vec4.aVertexColor );
                 gl.vertexAttribPointer( vsVars.attribute.vec4.aVertexColor, prim.geometry.colors.itemSize, gl.FLOAT, false, 0, 0 );
-                //gl.disableVertexAttribArray( vsVars.attribute.vec4.aVertexColor );
 
-
-                // Set perspective and model-view matrix uniforms.
+                // Bind perspective and model-view matrix uniforms.
 
                 gl.uniformMatrix4fv( vsVars.uniform.mat4.uPMatrix, false, PM );
                 gl.uniformMatrix4fv( vsVars.uniform.mat4.uMVMatrix, false, MVM );

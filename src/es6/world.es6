@@ -529,10 +529,6 @@ class World extends AssetPool {
 
             );
 
-// NOTE: webvr implementation
-
-// RESIZE EVENT HANDLING
-
 // TODO: PRIM CONCATENATE SEVERAL PRIMS TOGETHER INTO ONE ARRAY??? CHECK HOW TO DO
 
 // NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
@@ -712,7 +708,7 @@ class World extends AssetPool {
                 vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
                 vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
                 [ 'img/mozvr-logo1.png', 'ew9ruqwdfhfw' ],               // texture present
-                //[ 'sld;fkjasfd'],
+                //[ 'sld;fkjasfd'], // test default procedural texture pixel
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
 
             );
