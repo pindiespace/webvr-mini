@@ -83,9 +83,28 @@ class ShaderColor extends Shader {
 
             'void main(void) {',
 
+                'float uAlpha = 0.4;',
+
+                'float vLightWeighting = 0.5;',
+
+                // TODO: have to render AFTER we render all the opaque stuff!!!!
+                // TODO: http://stackoverflow.com/questions/8763603/transparent-textures-behaviour-in-webgl
+
                 //'gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);',
 
+                //'vec4 aColor = vec4(1.0, 1.0, 1.0, 0.5);',
+
+                //'gl_FragColor = vec4(vColor.rgb, aColor.a);',
+
+                //'gl_FragColor = vec4(vColor.rgb * vLightWeighting, uAlpha);',
+
+                //'gl_FragColor = vec4(gl_FragColor.rgb * vLightWeighting, uAlpha);',
+
+                //'gl_FragColor = vec4(mix(vColor.rgb, vColor.rgb, aColor.a), aColor.a);',
+
                 'gl_FragColor = vColor;',
+
+                //'if(gl_FragColor.a < 0.5 ) discard;',
 
             '}'
 
@@ -237,7 +256,6 @@ class ShaderColor extends Shader {
                 // Bind indices buffer.
 
                 gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, prim.geometry.indices.buffer );
-
 
                 if ( stats.uint32 ) {
 

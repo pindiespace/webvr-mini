@@ -278,6 +278,16 @@ class WebGL {
                 // set this for individual objects 
                 //gl.blendFunc( gl.SRC_ALPHA, gl.ONE );
 
+                //gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+                // partly transparent to grey opaque
+
+                gl.blendFunc( gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA );
+
+                //gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+                // bright, partly transparent
+                //gl.blendEquationSeparate(gl.FUNC_ADD,gl.FUNC_ADD);
+                //gl.blendFuncSeparate(gl.ONE,gl.ONE_MINUS_SRC_ALPHA,gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
+
                 /* 
                  * IMPORTANT: tells WebGL to premultiply alphas for <canvas>
                  * @link http://stackoverflow.com/questions/39251254/avoid-cpu-side-conversion-with-teximage2d-in-firefox
