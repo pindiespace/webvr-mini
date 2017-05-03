@@ -9,6 +9,8 @@ class ModelPool extends AssetPool {
      * Load model files for custom geometry.
      * Geometry prebuilt
      * http://paulbourke.net/geometry/roundcube/
+     * NOTE: GeometryPool adds its geometry objects to this pool, doesn't have its own!
+     *
      * @constructor
      * @param {Boolean} init if true, initialize immediately.
      * @param {Util} util reference to utility methods.
@@ -17,7 +19,7 @@ class ModelPool extends AssetPool {
      * @param {MaterialPool} material loader and asset pool.
      * @param {PrimFactory} the Prim creation and ''
      */
-    constructor ( init, util, webgl, texturePool, materialPool) {
+    constructor ( init, util, webgl, texturePool, materialPool ) {
 
         console.log( 'in ModelPool' );
 
@@ -49,7 +51,9 @@ class ModelPool extends AssetPool {
 
         if ( init ) {
 
-            // do something
+            // Create and store a default Model.
+
+           this.defaultKey = this.addAsset( this.default() ).key;
 
         }
 
@@ -79,6 +83,8 @@ class ModelPool extends AssetPool {
             texCoords: texCoords,
 
             normals: normals,
+
+            tangents: [],  // not supplied by OBJ file format
 
             // References to sub-regions in the obj file, number = position in vertices.
 
@@ -324,139 +330,143 @@ class ModelPool extends AssetPool {
 
             let data = line.substr( type.length ).trim();
 
-            switch ( type ) {
+            // If there's no data, don't process.
 
-                case 'o': // object name (could be several in file)
+            if ( data !== '' ) {
 
-                    if ( ! prim.name ) {
+                switch ( type ) {
 
-                        prim.name = data;
+                    case 'o': // object name (could be several in file)
 
-                    }
+                        if ( ! prim.name ) {
 
-                    objects[ data ] = indices.length; // start position in final flattened array
+                            prim.name = data;
 
-                    break;
+                        }
 
-                case 'v': // vertices
+                        objects[ data ] = indices.length; // start position in final flattened array
 
-                    this.computeObj3d( data, vertices, lineNum );
+                        break;
 
-                    break;
+                    case 'v': // vertices
 
-                case 'f': // face, indices, convert polygons to triangles
+                        this.computeObj3d( data, vertices, lineNum );
 
-                    this.computeObjIndices( data, indices, lineNum, iTexCoords, iNormals );
+                        break;
 
-                    ////////////////console.log( 'iTexCoords.length:' + iTexCoords.length) // when texture coords are here
+                    case 'f': // face, indices, convert polygons to triangles
 
-                    break;
+                        this.computeObjIndices( data, indices, lineNum, iTexCoords, iNormals );
 
-                case 'vn': // normals
+                        break;
 
-                    this.computeObj3d( data, normals, lineNum );
+                    case 'vn': // normals
 
-                    break;
+                        this.computeObj3d( data, normals, lineNum );
 
-                case 'vt': // texture uvs
+                        break;
 
-                    if ( ! this.computeObj2d( data, texCoords, lineNum ) ) {
+                    case 'vt': // texture uvs
 
-                        this.computeObj3d( data, texCoords, lineNum, 2 );
+                        if ( ! this.computeObj2d( data, texCoords, lineNum ) ) {
 
-                    }
+                            this.computeObj3d( data, texCoords, lineNum, 2 );
 
-                    break;
+                        }
 
-                case 'mtllib': // materials library data
+                        break;
 
-                    // Multiple files may be specified here, and each file may have multiple materials.
+                    case 'mtllib': // materials library data
 
-                    let mtls = data.split( ' ' );
+                        // Multiple files may be specified here, and each file may have multiple materials.
 
-                    for ( let i = 0; i < mtls.length; i++ ) {
+                        let mtls = data.split( ' ' );
 
-                        this.materialPool.getMaterials( prim, [ dir + data ], true );
+                        for ( let i = 0; i < mtls.length; i++ ) {
 
-                    }
+                            this.materialPool.getMaterials( prim, [ dir + data ], true );
 
-                    break;
+                        }
 
-                case 'usemtl': // use material (by name, loaded as .mtl file elsewhere)
+                        break;
 
-                    // TODO: define how to usemtl (keep coordinate start position??????/)
+                    case 'usemtl': // use material (by name, loaded as .mtl file elsewhere)
 
-                    console.log("::::::::::::GOTTA USEMTL in OBJ file: " + data + ' at:' + indices.length );
+                        console.log("::::::::::::GOTTA USEMTL in OBJ file: " + data + ' at:' + indices.length );
 
-                    if ( ! materials[ data ] ) {
+                        if ( ! materials[ data ] ) {
 
-                        materials[ data ] = [];
+                            materials[ data ] = [];
 
-                    }
+                        }
 
-                    materials[ data ].push( indices.length );
+                        materials[ data ].push( indices.length );
 
-                    break;
+                        break;
 
 
-                case 'g': // group name, store hierarchy
+                    case 'g': // group name, store hierarchy
 
-                    groups[ data ] = indices.length; // starting position in final flattened array
+                        groups[ data ] = indices.length; // starting position in final flattened array
 
-                    break;
+                        break;
 
-                case 's': // smoothing group (related to 'g')
+                    case 's': // smoothing group (related to 'g')
 
-                    smoothingGroups[ data ] = indices.length; // starting position in final flattened array
+                        smoothingGroups[ data ] = indices.length; // starting position in final flattened array
 
-                    // @link https://people.cs.clemson.edu/~dhouse/courses/405/docs/brief-obj-file-format.html
+                        // @link https://people.cs.clemson.edu/~dhouse/courses/405/docs/brief-obj-file-format.html
 
-                    break;
+                        break;
 
-                case 'maplib': // poorly documented
-                case 'usemap': // ditto
-                case '#': // comment
-                case 'vp': // parameter vertices
-                case 'p': // point
-                case 'l': // line
-                case 'curv': // 2d curve
-                case 'surf': //surface
-                case 'parm': // parameter values
-                case 'trim': // outer trimming loop
-                case 'hole': // inner trimming loop
-                case 'scrv': //special curve
-                case 'sp': // special point
-                case 'end': // end statment
-                case 'con': // connectivity between free-form surfaces
+                    case '#': // comments are ignored
 
-                case 'mg': // merging group
-                case 'bevel': // bevel interpolation
-                case 'c_interp': // color interpolation
-                case 'd_interp': // dissolve interpolation
-                case 'lod': // level of detail
-                case 'shadow_obj': // shadow casting
-                case 'trace_obj': // ray tracing
-                case 'ctech': // curve approximation
-                case 'stech': // surface approximation
-                case 'mtllib': // materials library data
+                        break;
 
-                    console.warn( 'ModelPool::computeObjMesh(): OBJ data type: ' + type + ' in .obj file not supported' );
+                    case 'maplib': // poorly documented
+                    case 'usemap': // ditto
+                    case 'vp': // parameter vertices
+                    case 'p': // point
+                    case 'l': // line
+                    case 'curv': // 2d curve
+                    case 'surf': //surface
+                    case 'parm': // parameter values
+                    case 'trim': // outer trimming loop
+                    case 'hole': // inner trimming loop
+                    case 'scrv': //special curve
+                    case 'sp': // special point
+                    case 'end': // end statment
+                    case 'con': // connectivity between free-form surfaces
+                    case 'mg': // merging group
+                    case 'bevel': // bevel interpolation
+                    case 'c_interp': // color interpolation
+                    case 'd_interp': // dissolve interpolation
+                    case 'lod': // level of detail
+                    case 'shadow_obj': // shadow casting
+                    case 'trace_obj': // ray tracing
+                    case 'ctech': // curve approximation
+                    case 'stech': // surface approximation
+                    case '': // no parameter
 
-                    break;
+                        console.warn( 'ModelPool::computeObjMesh(): OBJ data type: ' + type + ' in .obj file not supported' );
 
-                default:
+                        break;
 
-                    // If it's not a pure whitespace line, report.
+                    default:
 
-                    if( ! isWhitespace( data ) ) {
+                        // If it's not a pure whitespace line, report.
 
-                        console.error( 'ModelPool::computeObjMesh(): unknown line data: ' + line + ' in .obj file at line:' + lineNum );
+                        if( ! isWhitespace( data ) ) {
 
-                    }
+                            console.error( 'ModelPool::computeObjMesh(): unknown line data: ' + line + ' in .obj file at line:' + lineNum );
 
-                    break;
+                        }
 
-            }
+                        break;
+
+                } // end of switch
+
+            } // end of data !== ''
 
             lineNum++;
 
@@ -578,10 +588,18 @@ class ModelPool extends AssetPool {
     /** 
      * Load models, using a list of paths. If a Model already exists, 
      * just return it. Otherwise, do the load.
-     * @param {Array[String]} pathList a list of URL paths to load.
+     * @param {Array[String]} pathList a list of URL paths to load, or keys referencing our pool.
      * @param {Boolean} cacheBust if true, add a http://url?random query string to request.
      */
     getModels ( prim, pathList, cacheBust = true ) {
+
+        // Wrap single strings in an Array.
+
+        if ( this.util.isString( pathList ) ) {
+
+            pathList = [ pathList ];
+
+        }
 
         for ( let i = 0; i < pathList.length; i++ ) {
 
@@ -589,7 +607,9 @@ class ModelPool extends AssetPool {
 
             // Could have an empty path.
 
-            if ( path ) {
+            if ( ! this.util.isWhitespace( path ) ) {
+
+                // See if the 'path' is actually a key for our ModelPool.
 
                 let poolModel = this.pathInList( path );
 

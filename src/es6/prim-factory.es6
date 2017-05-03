@@ -99,6 +99,8 @@ class PrimFactory {
 
                 this.initPrimGeometry( prim, this.modelPool.keyList[ key ], pos );
 
+                // Check if complete, add if it is...
+
                 prim.shader.addPrim ( prim );
 
         } );
@@ -110,6 +112,8 @@ class PrimFactory {
             ( prim, key, materialName ) => {
 
                 this.initPrimMaterial( prim, this.materialPool.keyList[ key ], materialName ); // associative array
+
+                // Check if complete, add if it is...
 
                 prim.shader.addPrim ( prim );
 
@@ -123,6 +127,8 @@ class PrimFactory {
 
                 this.initPrimTexture( prim, this.texturePool.keyList[ key ], pos );
 
+                // Check if complete, add if it is...
+
                 prim.shader.addPrim( prim );
 
         } );
@@ -134,7 +140,9 @@ class PrimFactory {
 
             ( prim, key ) => {
 
-                this.initTexture( prim, this.texturePool.keyList[ key ], pos );
+                this.initPrimTexture3d( prim, this.texturePool.keyList[ key ], pos );
+
+                // Check if complete, add if it is...
 
                 prim.shader.addPrim( prim );
 
@@ -145,6 +153,10 @@ class PrimFactory {
         this.util.emitter.on( this.util.emitter.events.TEXTURE_CUBE_MAP_READY, 
 
             ( prim, key ) => {
+
+                this.initPrimTextureCubeMap( prim, this.texturePool.keyList[ key ], pos );
+
+                // Check if complete, add if it is...
 
                 prim.shader.addPrim( prim );
 
@@ -241,6 +253,24 @@ class PrimFactory {
             }
 
         }
+
+    }
+
+    /** 
+     * Add a new 3d texture to the Prim.
+     */
+    initPrimTexture3d( prim, textureObj, pos ) {
+
+        prim.textures[ pos ] = textureObj;
+
+    }
+
+    /** 
+     * Add a new cubemap texture to the Prim
+     */
+    initPrimTextureCubeMap( prim, textureObj, pos ) {
+
+        prim.textures[ pos ] = textureObj;
 
     }
 

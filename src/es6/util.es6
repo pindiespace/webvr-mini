@@ -153,31 +153,43 @@ class Util {
      * ---------------------------------------
      */
 
+    /**
+     * Check if object is a string.
+     * @param {String} str the string.
+     * @returns {Boolean} return true/false.
+     */
     isString( str ) {
 
-        return typeof str == 'string' || ( isObjectLike( str ) && objToString.call( str ) == stringTag) || false;
+        return Object.prototype.toString.call(str) === '[object String]';
 
     }
 
     /** 
-     * Reverse string (used in hash keys)
+     * Check if string is only invisible characters, or is an empty string ''.
+     * @param {String} str the string.
+     * @returns {Boolean} true/false.
+     */
+    isWhitespace ( str ) {
+
+        return ( ! /[^\s]/.test( str ) );
+
+    }
+
+    /** 
+     * Reverse string (used in hash keys).
+     * @param {String} str the string.
+     * @returns {String} the reversed string.
      */
     reverseString( str ) {
+
+        if ( ! str.split ) return null;
 
         return str.split('').reverse().join('');
 
     }
 
-    isWhitespace ( str ) {
-
-        if ( ! str.match ) return false;
-
-        return str.match( /^\s*$/ );
-
-    }
-
     /** 
-     * Unique object id
+     * Get an unique object id.
      * @link https://jsfiddle.net/briguy37/2MVFd/
      * @returns {String} a unique UUID format id.
      */
@@ -207,6 +219,8 @@ class Util {
 
     /** 
      * Check if a variable can be coerced to a number.
+     * @param {Number} n the variable to be tested.
+     * @returns {Boolean} if Number, return true, else false.
      */
     isNumber ( n ) {
 
@@ -214,24 +228,44 @@ class Util {
 
     }
 
+    /** 
+     * Check if a number is a power of two.
+     * @param {Number} n the variable to be tested.
+     * @returns {Boolean} if a power of 2, return true, else false.
+     */
     isPowerOfTwo ( n ) {
 
         return ( n & ( n - 1 ) ) === 0;
 
     }
 
+    /** 
+     * Check if a number is even.
+     * @param {Number} n the variable to be tested.
+     * @returns {Boolean} if even, return true, else false.
+     */
     isEven ( n ) {
 
         return n % 2 == 0;
 
     }
 
+    /** 
+     * Check if a number is odd.
+     * @param {Number} n the variable to be tested.
+     * @returns {Boolean} if odd, return true, else false.
+     */
     isOdd ( n ) {
 
         return Math.abs( n % 2 ) == 1;
 
     }
 
+    /** 
+     * Return radians for degrees.
+     * @param {Number} n the number, in degrees (0-360).
+     * @returns {Nu,ber} return the same number, in radians (0-2PI).
+     */
     degToRad( deg ) {
 
         return deg * Math.PI / 180;

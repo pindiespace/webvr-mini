@@ -172,6 +172,8 @@ class AssetPool {
 
                 obj.key = this.util.computeId();
 
+                // Undefined path ok for procedural geometry.
+
                 console.log( '^^ adding obj:' + obj.key + ' path:' + obj.path );
 
                 // Add the key to the object, just added to the AssetPool

@@ -3636,13 +3636,23 @@ class GeometryPool {
              * Mesh geometry, uses data from a file in OBJ wavefront format.
              */
 
+            // Wrap single strings in an Array.
+
+            if ( this.util.isString( pathList ) ) {
+
+                pathList = [ pathList ];
+
+            }
+
             for ( let i = 0; i < pathList.length; i++ ) {
 
                 let path = pathList[ i ];
 
                 // Could have an empty path.
 
-                if ( path ) {
+                if ( ! this.util.isWhitespace( path ) ) {
+
+                // See if the 'path' is actually a key in this.modelPool.
 
                 let poolModel = this.modelPool.pathInList( path );
 
@@ -3683,6 +3693,7 @@ class GeometryPool {
              *   indices: indices,
              *   texCoords: texCoords,
              *   normals: normals,
+             *   tangents: tangents,
              *   type: type,
              *   path: key to the ModelPool,
              *   usemtl: util.DEFAULT_KEY (always 'default')
@@ -3692,8 +3703,6 @@ class GeometryPool {
             console.log( 'GeometryPool::getGeometries() new procedural geometry for:' + prim.name );
 
             let m = this.modelPool.addAsset( this[ prim.type ]( prim ) );
-
-            window.modelPool = this.modelPool;
 
             // Store the type.
 

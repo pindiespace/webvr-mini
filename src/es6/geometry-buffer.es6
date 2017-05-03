@@ -100,66 +100,6 @@ class GeometryBuffer {
 
         },
 
-        this.texCoords1 = {
-
-            data: [],
-
-            buffer: null,
-
-            itemSize: 2,
-
-            numItems: 0
-
-        },
-
-        this.texCoords2 = {
-
-            data: [],
-
-            buffer: null,
-
-            itemSize: 2,
-
-            numItems: 0
-
-        },
-
-        this.texCoords3 = {
-
-            data: [],
-
-            buffer: null,
-
-            itemSize: 2,
-
-            numItems: 0
-
-        },
-
-        this.texCoords4 = {
-
-            data: [],
-
-            buffer: null,
-
-            itemSize: 2,
-
-            numItems: 0
-
-        },
-
-        this.texCoords5 = {
-
-            data: [],
-
-            buffer: null,
-
-            itemSize: 2,
-
-            numItems: 0
-
-        },
-
         this.colors = {
 
                 data: [],
@@ -985,12 +925,6 @@ class GeometryBuffer {
         this.clearBuffer( this.normals ),
 
         this.clearBuffer( this.texCoords ),
-
-        this.clearBuffer( this.texCoords1 ),
-
-        this.clearBuffer( this.texCoords2 ),
-
-        this.clearBuffer( this.texCoords3 ),
 
         this.clearBuffer( this.colors );
 

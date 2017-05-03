@@ -711,11 +711,15 @@ class World extends AssetPool {
                 vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
                 vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
                 vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [ 'img/mozvr-logo1.png' ],               // texture present
+                [ 'img/mozvr-logo1.png', 'ew9ruqwdfhfw' ],               // texture present
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
 
             );
 
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    window.prims = this.primFactory.prims;
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

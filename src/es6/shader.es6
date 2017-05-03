@@ -83,17 +83,7 @@ class Shader {
 
                 indices: false,
 
-                texCoords: false,
-
-                texCoords1: false,
-
-                texCoords2: false,
-
-                texCoords3: false,
-
-                texCoords4: false,
-
-                texCoords5: false
+                texCoords: false
 
             },
 

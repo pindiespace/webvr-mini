@@ -51,7 +51,11 @@ class TexturePool extends AssetPool {
 
         if ( init ) {
 
-            // do something
+            // Create and store a default texture (one greyPixel).
+
+            let gl = webgl.getContext();
+
+            this.defaultKey = this.addAsset( this.default( null, null, gl.TEXTURE_2D, null, this.setDefaultTexturePixel( gl.TEXTURE_2D ), null ) ).key;
 
         }
 
@@ -420,25 +424,8 @@ class TexturePool extends AssetPool {
 
             /* 
              * We save references to the texture object in TexturePool.
-             * NOTE: .addAsset() puts the assigned key by TexturePool into our object.
+             * NOTE: .addAsset() also puts the assigned key by TexturePool into our object.
              */
-/*
-            return this.addAsset( {
-
-                image: image,       // JavaScript Image object.
-
-                mimeType: mimeType, // image/png, image/jpg...
-
-                type: glTextureType, // gl.TEXTURE_2D, gl.TEXTURE_3D...
-
-                path: path,         // URL of object
-
-                texture: texture,   // WebGLTexture
-
-                emits: emitEvent    // emitted event
-
-            } );
-*/
 
             return this.addAsset( 
 
@@ -460,7 +447,7 @@ class TexturePool extends AssetPool {
      * Load textures, using a list of paths.
      * NOTE: textures in a single pathList will be loaded in parallel, so redundant textures 
      * are not checked for.
-     * @param {Array[String]} pathList a list of URL paths to load.
+     * @param {Array[String]} pathList a list of URL paths to load, or keys referencing our pool.
      * @param {Boolean} cacheBust if true, add a http://url?random query string to request.
      * @param {Boolean} keepDOMImage if true, keep the Image object we created the texture from (internal Blob).
      * @param {String} textureUse use the way to use the texture, default is just 2D ambient texture. Other options are borrowed from 
@@ -470,8 +457,13 @@ class TexturePool extends AssetPool {
      */
     getTextures ( prim, pathList, cacheBust = true, keepDOMImage = false, textureUse = 'map_Kd', glTextureType, options = {} ) {
 
-        // TODO: check texture list. If paths are already there, just use the path
-        // TODO: and return the webgl texture buffer object.
+        // Wrap single strings in an Array.
+
+        if ( this.util.isString( pathList ) ) {
+
+            pathList = [ pathList ];
+
+        }
 
         for ( let i = 0; i < pathList.length; i++ ) {
 
@@ -481,7 +473,9 @@ class TexturePool extends AssetPool {
 
             // Could have an empty path.
 
-            if ( path ) {
+            if ( ! this.util.isWhitespace( path ) ) {
+
+                // See if the 'path' is actually a key for our TexturePool.
 
                 let poolTexture = this.pathInList( path );
 
@@ -594,6 +588,10 @@ class TexturePool extends AssetPool {
                                 if ( updateObj.data ) {
 
                                     image.src = window.URL.createObjectURL( updateObj.data );
+
+                                } else {
+
+                                    console.error( 'TexturePool::getTextures(): invalid image data:' + updateObj.path + ' data:' + updateObj.data );
 
                                 }
 

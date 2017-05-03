@@ -50,7 +50,7 @@ class MaterialPool extends AssetPool {
 
         if ( init ) {
 
-            // create a default Material asset.
+            // Create and store a default Material asset.
 
             this.defaultKey = this.addAsset( this.default() ).key;
 
@@ -297,324 +297,331 @@ class MaterialPool extends AssetPool {
 
             let data = line.substr( type.length ).trim().split( ' ' );
 
-             switch ( type ) {
+            // If there's no data, don't process.
 
-                case 'newmtl': // name of material.
+            if ( data !== '' ) {
 
-                    currName = data[ 0 ].trim();
+                switch ( type ) {
 
-                    // Apply file data to our default Material.
+                    case 'newmtl': // name of material.
 
-                    materials[ currName ] = this.default( currName );
+                        currName = data[ 0 ].trim();
 
-                    break;
+                        // Apply file data to our default Material.
 
-                case 'Ka': // ambient
+                        materials[ currName ] = this.default( currName );
 
-                    if ( data.length < 3 ) {
+                        break;
 
-                        console.error( 'MaterialPool::computeObjMaterials(): error in ambient material array at line:' + lineNum );
+                    case 'Ka': // ambient
 
-                    } else {
+                        if ( data.length < 3 ) {
 
-                        data[ 0 ] = parseFloat( data[ 0 ] ),
-
-                        data[ 1 ] = parseFloat( data[ 1 ] ),
-
-                        data[ 2 ] = parseFloat( data[ 2 ] );
-
-                        if ( currName && Number.isFinite( data[ 0 ] ) && Number.isFinite( data[ 1 ] ) && Number.isFinite( data[ 2 ] ) ) {
-
-                            materials[ currName ].ambient = [ data[ 0 ], data[ 1 ], data[ 2 ] ];  
+                            console.error( 'MaterialPool::computeObjMaterials(): error in ambient material array at line:' + lineNum );
 
                         } else {
 
-                            console.error( 'MaterialPool::computerObjMaterials(): invalid ambient data at line:' + lineNum );
+                            data[ 0 ] = parseFloat( data[ 0 ] ),
+
+                            data[ 1 ] = parseFloat( data[ 1 ] ),
+
+                            data[ 2 ] = parseFloat( data[ 2 ] );
+
+                            if ( currName && Number.isFinite( data[ 0 ] ) && Number.isFinite( data[ 1 ] ) && Number.isFinite( data[ 2 ] ) ) {
+
+                                materials[ currName ].ambient = [ data[ 0 ], data[ 1 ], data[ 2 ] ];  
+
+                            } else {
+
+                                console.error( 'MaterialPool::computerObjMaterials(): invalid ambient data at line:' + lineNum );
+
+                            }
 
                         }
 
-                    }
+                        break;
 
-                    break;
+                    case 'Kd': // diffuse (usually the same as ambient)
 
-                case 'Kd': // diffuse (usually the same as ambient)
+                        if ( data.length < 3 ) {
 
-                    if ( data.length < 3 ) {
-
-                        console.error( 'MaterialPool::computeObjMaterials(): error in diffuse material array at line:' + lineNum );
-
-
-                    } else {
-
-                        data[ 0 ] = parseFloat( data[ 0 ] ),
-
-                        data[ 1 ] = parseFloat( data[ 1 ] ),
-
-                        data[ 2 ] = parseFloat( data[ 2 ] );
-
-                        if ( currName && Number.isFinite( data[ 0 ] ) && Number.isFinite( data[ 1 ] ) && Number.isFinite( data[ 2 ] ) ) {
-
-                            materials[ currName ].diffuse = [ data[ 0 ], data[ 1 ], data[ 2 ] ];
+                            console.error( 'MaterialPool::computeObjMaterials(): error in diffuse material array at line:' + lineNum );
 
                         } else {
 
-                            console.error( 'MaterialPool::computeObjMaterials(): invalid diffuse array at line:' + lineNum );
+                            data[ 0 ] = parseFloat( data[ 0 ] ),
+
+                            data[ 1 ] = parseFloat( data[ 1 ] ),
+
+                            data[ 2 ] = parseFloat( data[ 2 ] );
+
+                            if ( currName && Number.isFinite( data[ 0 ] ) && Number.isFinite( data[ 1 ] ) && Number.isFinite( data[ 2 ] ) ) {
+
+                                materials[ currName ].diffuse = [ data[ 0 ], data[ 1 ], data[ 2 ] ];
+
+                            } else {
+
+                                console.error( 'MaterialPool::computeObjMaterials(): invalid diffuse array at line:' + lineNum );
+
+                            }
 
                         }
 
-                    }
+                        break;
 
-                    break;
+                    case 'Ks': // specular
 
-                case 'Ks': // specular
+                        if ( data.length < 3 ) {
 
-                    if ( data.length < 3 ) {
-
-                        console.error( 'MaterialPool::computeObjMaterials(): error in specular array at line:' + lineNum );
-
-                    } else {
-
-                        data[ 0 ] = parseFloat( data[ 0 ] ),
-
-                        data[ 1 ] = parseFloat( data[ 1 ] ),
-
-                        data[ 2 ] = parseFloat( data[ 2 ] );
-
-                        if ( currName && Number.isFinite( data[ 0 ] ) && Number.isFinite( data[ 1 ] ) && Number.isFinite( data[ 2 ] ) ) {
-
-                            materials[ currName ].specular = [ data[ 0 ], data[ 1 ], data[ 2 ] ];
+                            console.error( 'MaterialPool::computeObjMaterials(): error in specular array at line:' + lineNum );
 
                         } else {
 
-                            console.error( 'MaterialPool::computeObjMaterials(): invalid specular array at line:' + lineNum );
+                            data[ 0 ] = parseFloat( data[ 0 ] ),
+
+                            data[ 1 ] = parseFloat( data[ 1 ] ),
+
+                            data[ 2 ] = parseFloat( data[ 2 ] );
+
+                            if ( currName && Number.isFinite( data[ 0 ] ) && Number.isFinite( data[ 1 ] ) && Number.isFinite( data[ 2 ] ) ) {
+
+                                materials[ currName ].specular = [ data[ 0 ], data[ 1 ], data[ 2 ] ];
+
+                            } else {
+
+                                console.error( 'MaterialPool::computeObjMaterials(): invalid specular array at line:' + lineNum );
+
+                            }
 
                         }
 
-                    }
+                        break;
 
-                    break;
+                    case 'Ns': // specular exponent
 
-                case 'Ns': // specular exponent
+                        if ( data.length < 1 ) {
 
-                    if ( data.length < 1 ) {
+                            console.error( 'MaterialPool::computeObjMaterials(): error in specular exponent array at line:' + lineNum );
 
-                        console.error( 'MaterialPool::computeObjMaterials(): error in specular exponent array at line:' + lineNum );
+                        } else {
 
-                    } else {
+                            data[ 0 ] = parseFloat( data[ 0 ] );
+
+                            if ( currName && Number.isFinite( data[ 0 ] ) && data[ 0 ] >= 0 && data[ 0 ] < 1001 ) {
+
+                                materials[ currName].specularExponent = data[ 0 ];    
+
+                            } else {
+
+                                console.error( 'MaterialPool::computeObjMaterials(): invalid specular exponent array at line:' + lineNum );
+
+                            }
+
+                        }
+
+                        break;
+
+                    case 'Ke': // emissive coefficient
+
+                        if ( data.length < 3 ) {
+
+                            console.error( 'MaterialPool::computeObjMaterials(): error in specular array at line:' + lineNum );
+
+                        } else {
+
+                            data[ 0 ] = parseFloat( data[ 0 ] ),
+
+                            data[ 1 ] = parseFloat( data[ 1 ] ),
+
+                            data[ 2 ] = parseFloat( data[ 2 ] );
+
+                            if ( currName && Number.isFinite( data[ 0 ] ) && Number.isFinite( data[ 1 ] ) && Number.isFinite( data[ 2 ] ) ) {
+
+                                materials[ currName ].emissive = [ data[ 0 ], data[ 1 ], data[ 2 ] ];
+
+                            } else {
+
+                                console.error( 'MaterialPool::computeObjMaterials(): invalid specular array at line:' + lineNum );
+
+                            }
+
+                        }
+
+                        break;
+
+                    case 'sharpness': // sharpness, 0-1000, default 60, for reflection maps
 
                         data[ 0 ] = parseFloat( data[ 0 ] );
 
                         if ( currName && Number.isFinite( data[ 0 ] ) && data[ 0 ] >= 0 && data[ 0 ] < 1001 ) {
 
-                            materials[ currName].specularExponent = data[ 0 ];    
-
-                        } else {
-
-                            console.error( 'MaterialPool::computeObjMaterials(): invalid specular exponent array at line:' + lineNum );
+                            materials[ currName].sharpness = data[ 0 ];
 
                         }
 
-                    }
+                        break;
 
-                    break;
+                    case 'Ni': // optical density (refraction index, 1.0 = no refraction)
 
-                case 'Ke': // emissive coefficient
+                        data[ 0 ] = parseFloat( data[ 0 ])
 
-                    if ( data.length < 3 ) {
+                        if ( currName && Number.isFinite( data[ 0 ] ) && data[ 0 ] >= 0 && data[ 0 ] < 1001 ) {
 
-                        console.error( 'MaterialPool::computeObjMaterials(): error in specular array at line:' + lineNum );
-
-                    } else {
-
-                        data[ 0 ] = parseFloat( data[ 0 ] ),
-
-                        data[ 1 ] = parseFloat( data[ 1 ] ),
-
-                        data[ 2 ] = parseFloat( data[ 2 ] );
-
-                        if ( currName && Number.isFinite( data[ 0 ] ) && Number.isFinite( data[ 1 ] ) && Number.isFinite( data[ 2 ] ) ) {
-
-                            materials[ currName ].emissive = [ data[ 0 ], data[ 1 ], data[ 2 ] ];
-
-                        } else {
-
-                            console.error( 'MaterialPool::computeObjMaterials(): invalid specular array at line:' + lineNum );
+                            materials[ currName].refraction = data[ 0 ];
 
                         }
 
-                    }
+                        break;
 
-                    break;
+                    case 'd':  // opacity
+                    case 'Tr': // transparent
 
-                case 'sharpness': // sharpness, 0-1000, default 60, for reflection maps
+                    // TODO: handle -halo parameter  d -halo factor
 
-                    data[ 0 ] = parseFloat( data[ 0 ] );
+                        if ( data.length <  1 ) {
 
-                    if ( currName && Number.isFinite( data[ 0 ] ) && data[ 0 ] >= 0 && data[ 0 ] < 1001 ) {
-
-                        materials[ currName].sharpness = data[ 0 ]; 
-                    }
-
-                    break;
-
-                case 'Ni': // optical density (refraction index, 1.0 = no refraction)
-
-                    data[ 0 ] = parseFloat( data[ 0 ])
-
-
-                    if ( currName && Number.isFinite( data[ 0 ] ) && data[ 0 ] >= 0 && data[ 0 ] < 1001 ) {
-
-                        materials[ currName].refraction = data[ 0 ]; 
-                    }
-
-                    break;
-
-                case 'd':  // opacity
-                case 'Tr': // transparent
-
-                // TODO: handle -halo parameter  d -halo factor
-
-                    if ( data.length <  1 ) {
-
-                        console.error( 'MaterialPool::computeObjMaterials(): error in transparency value at line:' + lineNum );
-
-                    } else {
-
-                        data[ 0 ] = parseFloat( data[ 0 ] );
-
-                        if ( currName && Number.isFinite( data[ 0 ] ) ) {
-
-                            if ( type === 'Tr' ) data[ 0 ] = 1.0 - data[ 0 ]; // Invert
-
-                            materials[ currName ].transparency = parseFloat( data[ 0 ] ); // single value, 0.0 - 1.0
+                            console.error( 'MaterialPool::computeObjMaterials(): error in transparency value at line:' + lineNum );
 
                         } else {
 
-                            console.error( 'MaterialPool::computeObjMaterials(): invalid transparency value at line:' + lineNum );
+                            data[ 0 ] = parseFloat( data[ 0 ] );
+
+                            if ( currName && Number.isFinite( data[ 0 ] ) ) {
+
+                                if ( type === 'Tr' ) data[ 0 ] = 1.0 - data[ 0 ]; // Invert
+
+                                materials[ currName ].transparency = parseFloat( data[ 0 ] ); // single value, 0.0 - 1.0
+
+                            } else {
+
+                                console.error( 'MaterialPool::computeObjMaterials(): invalid transparency value at line:' + lineNum );
+
+                            }
 
                         }
 
-                    }
+                        break;
 
-                    break;
+                    case 'illum':    // illumination mode
 
-                case 'illum':    // illumination mode
+                        if ( data.length < 1 ) {
 
-                    if ( data.length < 1 ) {
+                            console.error( 'MaterialPool::computeObjMaterials(): error in illumination value at line:' + lineNum );
 
-                        console.error( 'MaterialPool::computeObjMaterials(): error in illumination value at line:' + lineNum );
+                        } else {
 
-                    } else {
+                            data[ 0 ] = parseInt( data[ 0 ] );
 
-                        data[ 0 ] = parseInt( data[ 0 ] );
+                            if ( currName && Number.isFinite( data[ 0 ] ) && data[ 0 ] > 0 && data[ 0 ] < 11 ) {
 
-                        if ( currName && Number.isFinite( data[ 0 ] ) && data[ 0 ] > 0 && data[ 0 ] < 11 ) {
+                                /* 
+                                 * VALUES:
+                                 * 0. Color on and Ambient off
+                                 * 1. Color on and Ambient on (DEFAULT FOR THIS APP)
+                                 * 2. Highlight on
+                                 * 3. Reflection on and Ray trace on
+                                 * 4. Transparency: Glass on, Reflection: Ray trace on
+                                 * 5. Reflection: Fresnel on and Ray trace on
+                                 * 6. Transparency: Refraction on, Reflection: Fresnel off and Ray trace on
+                                 * 7. Transparency: Refraction on, Reflection: Fresnel on and Ray trace on
+                                 * 8. Reflection on and Ray trace off
+                                 * 9. Transparency: Glass on, Reflection: Ray trace off
+                                 * 10. Casts shadows onto invisible surfaces
+                                 */
+
+                                materials[ currName ].illum = data[ 0 ];
+
+                            }
+
+                        }
+
+                        break;
+
+                    case 'map_Kd':   // diffuse map, an image file (e.g. file.jpg)
+                    case 'map_Ks':   // specular map
+                    case 'map_Ka':   // ambient map
+                    case 'map_d':    // alpha map
+                    case 'bump':     // bumpmap
+                    case 'map_bump': // bumpmap
+                    case 'disp':     // displacement map
+
+                        /* 
+                         * These commands all load single image files, and append to Prim texture list 
+                         * after being emitted with a TEXTURE_2D_READY in PrimFactory.
+                         * @link  "filename" is the name of a color texture or image file.
+                         * @link http://paulbourke.net/dataformats/mtl/
+                         * Additional texture parameters go in texture.options
+                         * map_Ka -s 1 1 1 -o 0 0 0 -mm 0 1 file.png
+                         */
+
+                        let tPath = data[ data.length - 1 ].trim();
+
+                        console.log('path:' + path + ' data:' + data + ' tPath:' + tPath)
+
+                        if ( currName ) { // if not, file is corrupt.
+
+                            // Convert 'bump' to 'map_bump'.
+
+                            if ( type === 'bump' ) type = 'map_bump';
+
+                                // Set the materials value to texture path.
+
+                                materials[ currName ][ type ] = tPath;
+
+                                /* 
+                                 * get (hyphenated) texture options, if present, and add them to the getTextures() call.
+                                 * Each texture has a list of materials it belongs to. Material objects may query 
+                                 * for the texture they need.
+                                 */
+
+                                let options = this.computeTextureMapOptions( data );
+
+                                // This lets us associate materials associated with this texture
+
+                                if ( ! options.materials ) {
+
+                                    options.materials = [ currName ];
+
+                                } else {
+
+                                    options.materials.push( currName );
+
+                                }
 
                             /* 
-                             * VALUES:
-                             * 0. Color on and Ambient off
-                             * 1. Color on and Ambient on
-                             * 2. Highlight on
-                             * 3. Reflection on and Ray trace on
-                             * 4. Transparency: Glass on, Reflection: Ray trace on
-                             * 5. Reflection: Fresnel on and Ray trace on
-                             * 6. Transparency: Refraction on, Reflection: Fresnel off and Ray trace on
-                             * 7. Transparency: Refraction on, Reflection: Fresnel on and Ray trace on
-                             * 8. Reflection on and Ray trace off
-                             * 9. Transparency: Glass on, Reflection: Ray trace off
-                             * 10. Casts shadows onto invisible surfaces
+                             * multiple textures have a defined order in the textures array.
                              */
 
-                            materials[ currName ].illum = data[ 0 ];
+                             options.pos = this.texturePositions[ type ];
+
+
+                            /*
+                             * NOTE: the texture attaches to prim.textures, so the fourth parmeter is the texture type (map_Kd, map_Ks...).
+                             * NOTE: the sixth paramater, is NULL since it defines a specific WebGL texture type (we want the default).
+                             * NOTE: thex seventh paramater, options, if present, we pass those in as well.
+                             */
+
+                            this.texturePool.getTextures( prim, [ dir + tPath ], true, false, type, null, options );
 
                         }
 
-                    }
+                        break;
 
-                    break;
+                    case 'Tf': // transmission filter
+                    case '#':  // comment
+                    case '':   // no parameter
 
-                case 'map_Kd':   // diffuse map, an image file (e.g. file.jpg)
-                case 'map_Ks':   // specular map
-                case 'map_Ka':   // ambient map
-                case 'map_d':    // alpha map
-                case 'bump':     // bumpmap
-                case 'map_bump': // bumpmap
-                case 'disp':     // displacement map
+                        break;
 
-                    /* 
-                     * These commands all load single image files, and append to Prim texture list 
-                     * after being emitted with a TEXTURE_2D_READY in PrimFactory.
-                     * @link  "filename" is the name of a color texture or image file.
-                     * @link http://paulbourke.net/dataformats/mtl/
-                     * map_Ka -s 1 1 1 -o 0 0 0 -mm 0 1 file.png
-                     */
+                    default: 
 
-                    let tPath = data[ data.length - 1 ].trim();
+                        console.warn( 'MaterialPool::computeObjMaterials(): unknown property:' + type + ' in file' );
 
-                    console.log('path:' + path + ' data:' + data + ' tPath:' + tPath)
+                        break;
 
-                    if ( currName ) { // if not, file is corrupt.
+                } // end of switch
 
-                        // Store path to texture for this option.
-
-                        // convert 'bump' to 'map_bump'
-
-                        if ( type === 'bump' ) type = 'map_bump';
-
-                        materials[ currName ][ type ] = tPath;
-
-                        /* 
-                         * get (hyphenated) texture options, if present, and add them to the getTextures() call.
-                         * Each texture has a list of materials it belongs to. Material objects may query 
-                         * for the texture they need.
-                         */
-
-                        let options = this.computeTextureMapOptions( data );
-
-                        // This lets us associate materials associated with this texture
-
-                        if ( ! options.materials ) {
-
-                            options.materials = [ currName ];
-
-                        } else {
-
-                            options.materials.push( currName );
-
-                        }
-
-                        /* 
-                         * multiple textures have a defined order in the textures array.
-                         */
-
-                         options.pos = this.texturePositions[ type ];
-
-
-                        /*
-                         * NOTE: the texture attaches to prim.textures, so the fourth parmeter is the texture type (map_Kd, map_Ks...).
-                         * NOTE: the sixth paramater, is NULL since it defines a specific WebGL texture type (we want the default).
-                         * NOTE: thex seventh paramater, options, if present, we pass those in as well.
-                         */
-
-                        this.texturePool.getTextures( prim, [ dir + tPath ], true, false, type, null, options );
-
-                    }
-
-                    break;
-
-                case 'Tf': // transmission filter
-                case '#':  // ignored options
-                case '':
-
-                    break;
-
-                default: 
-
-                    console.warn( 'MaterialPool::computeObjMaterials(): unknown property:' + type + ' in file' );
-
-                    break;
-
-            }
+            } // end of if data !== ''
 
             lineNum++;
 
@@ -696,10 +703,19 @@ class MaterialPool extends AssetPool {
     /** 
      * Load models, using a list of paths. If a Model already exists, 
      * just return it. Otherwise, do the load.
-     * @param {Array[String]} pathList a list of URL paths to load.
+     * @param {Prim} prim the calling Prim.
+     * @param {Array[String]} pathList a list of URL paths to load, or a key for a material in our pool.
      * @param {Boolean} cacheBust if true, add a http://url?random query string to request.
      */
     getMaterials ( prim, pathList, cacheBust = true ) {
+
+        // Wrap single strings in an Array.
+
+        if ( this.util.isString( pathList ) ) {
+
+            pathList = [ pathList ];
+
+        }
 
         for ( let i = 0; i < pathList.length; i++ ) {
 
@@ -707,7 +723,9 @@ class MaterialPool extends AssetPool {
 
             // Could have an empty path.
 
-            if ( path ) {
+            if ( ! this.util.isWhitespace( path ) ) {
+
+                // See if the 'path' is actually a key for our MaterialPool.
 
                 let poolMaterial = this.pathInList( path );
 

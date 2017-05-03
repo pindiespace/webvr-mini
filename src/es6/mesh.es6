@@ -187,7 +187,7 @@ class Vertex {
 
         }
 
-        console.error( 'Vertex::isValid(): undefined coordinates for:' + this.idx );
+        console.error( 'Vertex::isValid(): invalid coordinates for:' + this.idx );
 
         return false;
 
@@ -480,9 +480,7 @@ class Mesh {
 
         this.geometryToVertex( this.geo.vertices.data, this.geo.indices.data, this.geo.texCoords.data );
 
-        // Check converted Vertices for validity.
-
-        //this.isValid();
+        console.log( 'created Mesh for ' + prim.name );
 
     }
 
