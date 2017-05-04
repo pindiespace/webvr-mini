@@ -79,14 +79,19 @@ class ShaderColor extends Shader {
 
         let s = [
 
+            this.floatp,
+
             'varying lowp vec4 vColor;',
 
             'void main(void) {',
 
-                'float uAlpha = 0.4;',
+                'float uAlpha = 1.0;',
 
-                'float vLightWeighting = 0.5;',
+                'float vLightWeighting = 1.0;',
 
+                // TODO: swap anything with partial alpha to top of drawing list, then draw back to front.
+                // TODO: WebGL sorter:
+                // TODO: http://delphic.me.uk/webglalpha.html
                 // TODO: have to render AFTER we render all the opaque stuff!!!!
                 // TODO: http://stackoverflow.com/questions/8763603/transparent-textures-behaviour-in-webgl
 
@@ -96,13 +101,13 @@ class ShaderColor extends Shader {
 
                 //'gl_FragColor = vec4(vColor.rgb, aColor.a);',
 
-                //'gl_FragColor = vec4(vColor.rgb * vLightWeighting, uAlpha);',
+                'gl_FragColor = vec4(vColor.rgb * vLightWeighting, uAlpha);',
 
                 //'gl_FragColor = vec4(gl_FragColor.rgb * vLightWeighting, uAlpha);',
 
                 //'gl_FragColor = vec4(mix(vColor.rgb, vColor.rgb, aColor.a), aColor.a);',
 
-                'gl_FragColor = vColor;',
+                //'gl_FragColor = vColor;',
 
                 //'if(gl_FragColor.a < 0.5 ) discard;',
 

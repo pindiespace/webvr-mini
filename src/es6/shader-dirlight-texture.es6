@@ -110,8 +110,6 @@ class shaderDirLightTexture extends Shader {
 
         let s =  [
 
-            //'precision mediump float;',
-
             this.floatp,
 
             'varying vec2 vTextureCoord;',
@@ -125,6 +123,8 @@ class shaderDirLightTexture extends Shader {
             '    vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));',
 
             '    gl_FragColor = vec4(textureColor.rgb * vLightWeighting, textureColor.a);',
+
+            //'    gl_FragColor = vec4(texture2D(uSampler, vTextureCoord).rgb, texture2D(uSampler, vTextureCoord).a * 0.1);',
 
             '}'
 

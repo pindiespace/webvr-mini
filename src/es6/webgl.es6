@@ -283,6 +283,10 @@ class WebGL {
 
                 gl.blendFunc( gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA );
 
+
+                //gl.blendFunc( gl.ONE, gl.ONE);
+                //gl.blendFunc(gl.SRC_COLOR, gl.ONE_MINUS_SRC_ALPHA);
+
                 //gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
                 // bright, partly transparent
                 //gl.blendEquationSeparate(gl.FUNC_ADD,gl.FUNC_ADD);
