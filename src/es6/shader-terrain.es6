@@ -1,29 +1,25 @@
 import Shader from './shader'
 
+'use strict'
+
 class ShaderTerrain extends Shader {
 
-    'use strict'
+
 
     /** 
      * --------------------------------------------------------------------
-     * VERTEX SHADER 4
-     * a directionally-lit terrain surface (not using standard WebGL lighting).
-     * @link http://learningwebgl.com/blog/?p=684
-     * StackGL
-     * @link https://github.com/stackgl
-     * phong lighting
-     * @link https://github.com/stackgl/glsl-lighting-walkthrough
-     * - vertex position
-     * - texture coordinate
-     * - model-view matrix
-     * - projection matrix
+     * VERTEX SHADER 5
+     * For semi-transparent object in fading animation only. Objects placed  
+     * here are moved to their regular shader when alpha = 1.0. It 
+     * draws the object with the first texture defined in its texture array, 
+     * dropping back to the color array if the texture isn't defined.
      * --------------------------------------------------------------------
      */
     constructor ( init, util, glMatrix, webgl, webvr, shaderName ) {
 
         super( init, util, glMatrix, webgl, webvr, shaderName );
 
-        console.log( 'In ShaderTerrain class' );
+        console.log( 'In ShaderFader class' );
 
         this.required.buffer.indices = true,
 

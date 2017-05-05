@@ -18,6 +18,10 @@ class Util {
 
         this.DEFAULT_KEY = 'default',
 
+        this.POSITIVE = 1,
+
+        this.NEGATIVE = -1,
+
         // Create an Emitter object for pseudo-events.
 
         this.emitter = new Emitter(),

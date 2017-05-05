@@ -6,7 +6,7 @@ class ShaderMetal extends Shader {
 
     /** 
      * --------------------------------------------------------------------
-     * VERTEX SHADER 3
+     * VERTEX SHADER 4
      * a directionally-lit textured object vertex shader.
      * @link http://learningwebgl.com/blog/?p=684
      * - vertex position

@@ -153,17 +153,16 @@ class Shader {
 
                 // Switch the Prim's default Shader, and remove it from its old Shader (there can only be one).
 
-                if ( prim.shader && prim.shader !== this ) {
-
-                    prim.shader.removePrim( prim );
-
-                }
-
                 prim.shader = this; // may already be the case
 
                 // Add the Prim to the Shader program's renderList.
 
                 this.program.renderList.push( prim );
+
+                if ( prim.shader && prim.shader !== this ) {
+
+                    prim.shader.removePrim( prim );
+                }
 
                 // Emit a PRIM_READY event.
 
@@ -216,9 +215,7 @@ class Shader {
 
         let buffer = this.required.buffer,
 
-        geo = prim.geometry, 
-
-        valid = true;
+        geo = prim.geometry; 
 
         // Loop through geometry buffer objects, which are part of 'required' here.
 
@@ -341,7 +338,10 @@ class Shader {
 
         } else {
 
-            // vsSrc() and fsSrc() are defined in derived Shader objects.
+            /*
+             * NOTE: webgl.createProgram adds the render array .renderList
+             * vsSrc() and fsSrc() are defined in derived Shader objects.
+             */
 
             program = this.webgl.createProgram( this.vsSrc(), this.fsSrc() );
 
@@ -364,8 +364,6 @@ class Shader {
              * methods when rendering.
              *
              */
-
-            //program.renderList = [];
 
         }
 

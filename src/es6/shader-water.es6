@@ -6,7 +6,7 @@ class ShaderWater extends Shader {
 
     /** 
      * --------------------------------------------------------------------
-     * VERTEX SHADER 5
+     * VERTEX SHADER 6
      * a directionally-lit textured water shader.
      * @link http://learningwebgl.com/blog/?p=684
      * - vertex position

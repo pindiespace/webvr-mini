@@ -273,6 +273,7 @@ class WebGL {
                 // Fog NOT in Webgl use shader
                 //http://www.geeks3d.com/20100228/fog-in-glsl-webgl/
                 // http://in2gpu.com/2014/07/22/create-fog-shader/
+
                 //gl.enable( gl.FOG );
 
                 // set this for individual objects 
@@ -288,6 +289,7 @@ class WebGL {
                 //gl.blendFunc(gl.SRC_COLOR, gl.ONE_MINUS_SRC_ALPHA);
 
                 //gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
                 // bright, partly transparent
                 //gl.blendEquationSeparate(gl.FUNC_ADD,gl.FUNC_ADD);
                 //gl.blendFuncSeparate(gl.ONE,gl.ONE_MINUS_SRC_ALPHA,gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
@@ -332,7 +334,9 @@ class WebGL {
     }
 
     /* 
-     * =============== WEBGL EXTENSIONS ====================
+     * ---------------------------------------
+     * WEBGL EXTENSIONS
+     * ---------------------------------------
      */
 
     /** 
@@ -380,18 +384,114 @@ class WebGL {
     /** 
      * Support indexed vertex drawing when there are more than 
      * 64k vertices in WebGL 1.0. Enabled by default in WebGL 2.0.
-     * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only)l
+     * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only).
      */
-    addIndex32Support( gl ) {
+    addIndex32Support ( gl ) {
 
-        const ext = gl.getExtension( 'OES_element_index_uint' );
+        return gl.getExtension( 'OES_element_index_uint' );
 
-        return ext;
+    }
+
+    /** 
+     * Add support for depth textures, allows WebGLRenderingContext.texImage2D() format and internalformat parameters 
+     * to accept accept gl.DEPTH_COMPONENT and gl.DEPTH_STENCIL. The type parameter now accepts gl.UNSIGNED_SHORT, 
+     * gl.UNSIGNED_INT, and ext.UNSIGNED_INT_24_8_WEBGL. The pixels parameter now accepts an ArrayBufferView of type Uint16Array and Uint32Array.
+     * @link https://developer.mozilla.org/en-US/docs/Web/API/WEBGL_depth_texture
+     * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only).
+     */
+    addDepthTextureSupport ( gl ) {
+
+        return ( gl.getExtension( 'WEBGL_depth_texture' ) || gl.getExtension( 'MOZ_WEBGL_depth_texture' ) || gl.getExtension( 'WEBKIT_WEBGL_depth_texture' ) );
+
+    }
+
+    /** 
+     * Add support for anisotrophic texture filtering, improving mipmap quality.
+     * gl.texParameterf(gl.TEXTURE_2D, ext.TEXTURE_MAX_ANISOTROPY_EXT, 4);
+     * @link http://blog.tojicode.com/2012/03/anisotropic-filtering-in-webgl.html
+     * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only).
+     */
+    addAnisotropicSupport ( gl ) {
+
+        return ( gl.getExtension('EXT_texture_filter_anisotropic') || gl.getExtension( 'MOZ_EXT_texture_filter_anisotropic' ) || gl.getExtension( 'WEBKIT_EXT_texture_filter_anisotropic' ) );
+
+    }
+
+    /** 
+     * Add support for S3 compressed textures.
+     * @link http://blog.tojicode.com/2011/12/compressed-textures-in-webgl.html
+     * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only).
+     */
+    addS3TextureSupport ( gl ) {
+
+        return ( gl.getExtension( 'WEBGL_compressed_texture_s3tc' ) || gl.getExtension( 'MOZ_WEBGL_compressed_texture_s3tc' ) || gl.getExtension( 'WEBKIT_WEBGL_compressed_texture_s3tc' ) );
+
+    }
+
+    /** 
+     * Add support for PVR compressed textures.
+     * @link http://blog.tojicode.com/2011/12/compressed-textures-in-webgl.html
+     * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only).
+     */
+    addPVRTextureSupport ( gl ) {
+
+        return ( gl.getExtension('WEBGL_compressed_texture_pvrtc ') || gl.getExtension( 'WEBKIT_WEBGL_compressed_texture_pvrtc' ) );
+
+    }
+
+    /** 
+     * Add support for ETC compressed textures.
+     * @link http://blog.tojicode.com/2011/12/compressed-textures-in-webgl.html
+     * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only).
+     */
+    addETCTextureSupport( gl ) {
+
+        return ( gl.getExtension('WEBGL_compressed_texture_etc1' ) );
+
+    }
+
+    /*
+     * ---------------------------------------
+     * WEBGL STATE TOGGLES
+     * ---------------------------------------
+     */
+
+    enableBlending ( source, dest, eq ) {
+
+        const gl = this.getContext();
+
+        if( eq ) {
+
+            gl.blendEquation( gl[ eq ] );
+
+        }
+
+        if( source && dest ) {
+
+            gl.blendFunc( gl[ source ], gl[ dest ] );
+
+        }
+
+        gl.enable( gl.BLEND );
+
+        gl.depthMask( false );
+
+    }
+
+    disableBlending () {
+
+        const gl = this.getContext();
+
+        gl.disable( gl.BLEND );
+
+        gl.depthMask( true );
 
     }
 
     /* 
-     * =============== CANVAS OPERATIONS ====================
+     * ---------------------------------------
+     * CANVAS OPERATIONS
+     * ---------------------------------------
      */
 
     /** 
@@ -461,8 +561,10 @@ class WebGL {
 
     }
 
-    /* 
-     * =============== WEBGL CONTEXT OPERATIONS ====================
+    /*
+     * ---------------------------------------
+     * WEBGL CONTEXT OPERATIONS
+     * ---------------------------------------
      */
 
     /** 
@@ -520,6 +622,7 @@ class WebGL {
                             gl = canvas.getContext( n[ i ] );
 
                             console.warn( 'unable to use debug context, trying release:' + n[ i ], ' getParameter:' + gl.getParameter );
+
                         }
 
                         break;
@@ -584,7 +687,7 @@ class WebGL {
 
                         //if ( ! gl.TRANSFORM_FEEDBACK ) {
                         // revert to 1.0
-                        //    console.log("TRANSFORM FEEDBACK NOT SUPPORTED")
+                        //    console.log('TRANSFORM FEEDBACK NOT SUPPORTED')
                         //}
 
                         this.glVers = 2.0;
@@ -677,8 +780,10 @@ class WebGL {
 
     }
 
-    /* 
-     * =============== CLEAR/RESET OPERATIONS ====================
+    /*
+     * ---------------------------------------
+     * CLEAR/RESET OPERATIONS
+     * ---------------------------------------
      */
 
     /** 
@@ -721,8 +826,10 @@ class WebGL {
 
     }
 
-    /* 
-     * =============== SHADER VARIABLES AND UNIFORMS ====================
+    /*
+     * ---------------------------------------
+     * SHADER VARIABLES AND UNIFORMS
+     * ---------------------------------------
      */
 
     /** 
@@ -911,8 +1018,10 @@ class WebGL {
 
     }
 
-    /* 
-     * =============== COMPILE WEBGL PROGRAM ====================
+    /*
+     * ---------------------------------------
+     * COMPILE WEBGL PROGRAM
+     * ---------------------------------------
      */
 
     /** 
@@ -939,7 +1048,7 @@ class WebGL {
 
         }
 
-        // Wrap the program object to make V8 happy.
+        // Wrap the program object to keep V8 JIT happy.
 
         let prg = {};
 
@@ -973,7 +1082,7 @@ class WebGL {
 
                 prg.fsVars = fs.varList,
 
-                prg.renderList = [];
+                prg.renderList = []
 
             }
 
@@ -1080,7 +1189,9 @@ class WebGL {
     }
 
     /** 
-     * assign the attribute arrays.
+     * Assign the attribute arrays.
+     * @param {WebGLProgram} program a compiled WebGL program.
+     * @param {Object} attributes the attributes we want to extract.
      */
     setAttributeArrays ( shaderProgram, attributes ) {
 
@@ -1106,6 +1217,11 @@ class WebGL {
 
     }
 
+    /** 
+     * Store our uniform locations.
+     * @param {WebGLProgram} program a compiled WebGL program.
+     * @param {Object} uniforms array of uniforms.
+     */
     setUniformLocations ( shaderProgram, uniforms ) {
 
         const gl = this.gl;
@@ -1189,7 +1305,7 @@ class WebGL {
 
     /** 
      * Create associative array with shader uniforms.
-     * NOTE: Only attributes actually used in the shader show.
+     * NOTE: Only attributes actually used in the Shader show.
      * @param {WebGLProgram} program a compiled WebGL program.
      * @returns {Object} a collection of attributes, with .count = number.
      */
@@ -1225,6 +1341,7 @@ class WebGL {
 
     /** 
      * Create associative array with shader varying variables.
+     * @param {WebGLProgram} program a compiled WebGL program.
      */
     getVarying ( program ) {
 
@@ -1233,6 +1350,9 @@ class WebGL {
     /** 
      * check to see if we're ready to run, after supplying 
      * shaders.
+     * @param {WebGLShader} vs the vertex shader.
+     * @param {WebGLShader} fs the fragment shader.
+     * @param {WebGLProgram} program a compiled WebGL program.
      */
     checkShaders ( vs, fs, program ) {
 

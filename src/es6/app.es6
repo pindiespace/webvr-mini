@@ -41,11 +41,15 @@ import Ui from './ui';
 
 // TODO: decide whether to import model, texture, audio, video, font loaders.
 
+import ShaderFader from './shader-fader';
+
 import ShaderTexture from './shader-texture';
 
 import ShaderColor from './shader-color';
 
 import shaderDirLightTexture from './shader-dirlight-texture';
+
+import ShaderTerrain from './shader-terrain';
 
 import ShaderWater from './shader-water';
 
@@ -129,9 +133,11 @@ var promise = new Promise( ( resolve, reject ) => {
 
         // Define the default Shaders used by this app.
 
-        shaderPool.addShader( new ShaderTexture ( true, util, glMatrix, webgl, webvr, 'shaderTexture' ) );
+        shaderPool.addShader( new ShaderFader ( true, util, glMatrix, webgl, webvr, 'shaderFader', light ) );
 
-        shaderPool.addShader( new ShaderColor ( true, util, glMatrix, webgl, webvr, 'shaderColor' ) );
+        shaderPool.addShader( new ShaderTexture( true, util, glMatrix, webgl, webvr, 'shaderTexture' ) );
+
+        shaderPool.addShader( new ShaderColor( true, util, glMatrix, webgl, webvr, 'shaderColor' ) );
 
         shaderPool.addShader( new shaderDirLightTexture( true, util, glMatrix, webgl, webvr, 'shaderDirLightTexture', light ) );
 
@@ -162,6 +168,9 @@ var promise = new Promise( ( resolve, reject ) => {
 });
 
 window.vrmin = world;
+
+
+// Commented out since all errors end up here if we don't
 
 //.catch( ( err ) => {
 

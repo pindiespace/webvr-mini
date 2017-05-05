@@ -162,9 +162,9 @@ class World extends AssetPool {
 
         // Put some media into our asset pools.
 
-
-
         // Get the shaders (not initialized with update() and render() yet!).
+
+        this.s0 = this.shaderPool.getShader( 'shaderFader' );
 
         this.s1 = this.shaderPool.getShader( 'shaderTexture' );
 
@@ -714,6 +714,24 @@ class World extends AssetPool {
             );
 
 
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            this.primFactory.createPrim(
+
+                this.s0,                      // callback function
+                typeList.CUBESPHERE,
+                'cubespheretransparent',
+                vec5( 5, 5, 5 ),            // dimensions
+                vec5( 10, 10, 10, 0 ),         // divisions 4th parameter is degree of rounding.
+                vec3.fromValues(-3, -1, 0 ),       // position (absolute)
+                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+                vec3.fromValues( util.degToRad( 10 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+                [ 'img/mozvr-logo1.png' ],               // texture present, NOT USED
+                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
+
+            ); 
+
+
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     window.prims = this.primFactory.prims;
@@ -721,6 +739,8 @@ class World extends AssetPool {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         // NOTE: the init() method sets up the update() and render() methods for the Shader.
+
+        this.r0 = this.s0.init();
 
         this.r1 = this.s1.init();
 
@@ -828,10 +848,10 @@ class World extends AssetPool {
 
     /** 
      * Render the World for a mono or a VR display.
-     * Update Prims locally, then call Shader.
-     * objects to do rendering. this.r# was bound (ES5 method) in 
-     * the constructor.
-     * NOTE: we can call Shaders indivdiually, or use the global 
+     * Update Prims locally, then call Shader. objects to do rendering. Individual renderers 
+     * (this.r#) were bound (ES5 method) in the constructor. 
+     * NOTE: Our scene graph is just the rendering order shown here.
+     * NOTE: we can call Shaders indivdually, or use the global 
      * this.shaderPool.renderVR() or this.shaderPool.renderMono() will will render everything.
      */
     render () {
@@ -852,7 +872,9 @@ class World extends AssetPool {
 
                 this.r2.renderVR( vr, display, frameData );  // color
 
-                this.r1.renderVR( vr, display, frameData );  // textured
+                this.r1.renderVR( vr, display, frameData );  // textured, no lighting
+
+                this.r0.renderVR( vr, display, frameData );  // alpha (Prim appearing or disappearing), drawn in front
 
             display.submitFrame();
 
@@ -862,11 +884,13 @@ class World extends AssetPool {
 
             // Render mono view.
 
-            this.r3.renderMono();
+            this.r3.renderMono(); // directional light texture
 
-            this.r2.renderMono();
+            this.r2.renderMono(); // color
 
-            this.r1.renderMono();
+            this.r1.renderMono(); // textured, no lighting
+
+            this.r0.renderMono(); // alpha (Prim appearing or disappearing), drawn in front
 
             requestAnimationFrame( this.render );
 

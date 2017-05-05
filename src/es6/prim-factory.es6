@@ -53,6 +53,8 @@ class PrimFactory {
      * https://gamealchemist.wordpress.com/2013/05/01/lets-get-those-javascript-arrays-to-work-fast/
      *
      * @constructor
+     * Note don't call anything in World that requires World.init() in constructor.
+     *
      * @param {Boolean} init if true, initialize immediately.
      * @param {Util} util shared utility methods, patches, polyfills.
      * @param {glMatrix} glMatrix fast array manipulation object.
@@ -75,17 +77,25 @@ class PrimFactory {
 
         this.texturePool = world.texturePool, // new TexturePool( init, util, webgl );
 
+        // Keep a copy of the World for up-communication.
+
+        this.world = world;
+
         // Attach 1 copy of the Model loader to this Factory.
 
         this.modelPool = world.modelPool, // new ModelPool( init, util, webgl );
 
-        // Attach 1 copy of LoadGeometry to this Factory.
+        // Attach 1 copy of GeometryPool to this Factory (itself loading a reference to world.modelPool.
 
-        this.geometryPool = world.geometryPool, // new GeometryPool( init, util, glMatrix, webgl, this.modelPool, this.texturePool );
+        this.geometryPool = world.geometryPool,
+
+        // Attach 1 copy of MaterialPool to this Factory.
 
         this.materialPool = world.materialPool;
 
-        this.prims = []; // Keep a reference to all created Prims here.
+        // Keep a list of all created Prims here.
+
+        this.prims = []; 
 
         /** 
          * EMITTER CALLBACKS
@@ -171,6 +181,10 @@ class PrimFactory {
                 console.log( 'PRIM_ADDED_TO_SHADER:' + prim.name );
 
                 // post-addition events.
+
+                    prim.alpha = 0.0;
+
+                    prim.setFade( 0,1 );
 
         } );
 
@@ -781,13 +795,54 @@ class PrimFactory {
 
         }
 
+        /** 
+         * Fade the Prim in or out, optionally using a define equation.
+         * @param {Boolean} direction if true, fade in, else fade out.
+         * @param {Number} start starting alpha.
+         * @param {Number} end ending alpha.
+         * @param {Function} eq (optional) fading equation.
+         */
+
+        prim.setFade = ( start, end, eq ) => {
+
+            prim.fade.startAlpha = start;
+
+            prim.fade.endAlpha = end;
+
+            prim.alpha = start;
+
+            if ( eq ) prim.fade.eq = eq;
+
+            // Save our current Shader as a default.
+
+            prim.defaultShader = prim.shader;
+
+            // Switch to the ShaderFader, and start animation.
+
+            prim.shader = this.world.s0; // TODO: DIFFERENT NAME this.world['shaderFader'] ????
+
+            // TODO: add and remove - swap Prim to s0 shader, remove from current list.
+
+            //prim.defaultShader.removePrim( prim )
+
+            //prim.shader.addPrim( prim )
+
+
+        }
+
         // Give the Prim a unique Id.
 
         prim.id = this.util.computeId();
 
         // Shader object for adding/removing from display list.
 
-        prim.shader = prim.defaultShader = shader;
+        // The alpha shader when a Prim is becoming visible or invisible.
+
+        prim.faderShader = this.world.s0;
+
+        // Shader after the Prim has initialized.
+
+        prim.shader = shader;
 
         // Name (arbitrary).
 
@@ -821,9 +876,11 @@ class PrimFactory {
 
         prim.angular = angular || vec3.create();
 
-        // The Prim orbit defines a center that the object orbits around, and orbital velocity.
+        // If orbiting, the radius to orbit around.
 
         prim.orbitRadius = 0.0;
+
+        // Angular velocity in an orbit.
 
         prim.orbitAngular = 0.0;
 
@@ -835,9 +892,19 @@ class PrimFactory {
 
         prim.light = new Lights( this.glMatrix );
 
-        // Prim's overall opacity 
+        // Prim's overall opacity at creation (default is invisible).
 
         prim.alpha = 1.0;
+
+        prim.fade = {
+
+            startAlpha: 0.0,
+
+            endAlpha: 1.0,
+
+            eq: ( a ) => { return a + 0.03; }
+
+        };
 
         // Visible from outside (counterclockwise winding) or inside (clockwise winding).
 
@@ -866,9 +933,11 @@ class PrimFactory {
 
         prim.textures = [];
 
-        // Material files.
+        // Material array.
 
         prim.materials = [];
+
+        // Set default material.
 
         prim.setMaterial( this.util.DEFAULT_KEY );
 
@@ -887,10 +956,6 @@ class PrimFactory {
         // Child Prim array.
 
         prim.children = [];
-
-        // Set default Prim material (can be altered by .mtl file).
-
-        //prim.setMaterial( 'default' ); // TODO::::::::::::::::::::ONLY DO IF WE DON'T have a material file.
 
        // Execute geometry creation routine (which may be a file load).
 
@@ -925,6 +990,12 @@ class PrimFactory {
             if ( prim.name === 'objfile' ) {
 
                 window.objfile = prim;
+
+            }
+
+            if ( prim.name === 'cubespheretransparent' ) {
+
+                window.cubetrans = prim;
 
             }
 

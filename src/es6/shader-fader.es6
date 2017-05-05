@@ -2,12 +2,12 @@ import Shader from './shader'
 
 'use strict'
 
-class ShaderTexture extends Shader {
+class ShaderFader extends Shader {
 
     /** 
      * --------------------------------------------------------------------
-     * VERTEX SHADER 1
-     * textured, no lighting.
+     * VERTEX SHADER 0
+     * Prims with varying alpha values during creation and deletion.
      * @link http://learningwebgl.com/blog/?p=684
      * StackGL
      * @link https://github.com/stackgl
@@ -19,7 +19,7 @@ class ShaderTexture extends Shader {
      * - projection matrix
      * --------------------------------------------------------------------
      */
-    constructor ( init, util, glMatrix, webgl, webvr, shaderName ) {
+    constructor ( init, util, glMatrix, webgl, webvr, shaderName, lights ) {
 
         super( init, util, glMatrix, webgl, webvr, shaderName );
 
@@ -33,7 +33,13 @@ class ShaderTexture extends Shader {
 
         this.required.textures = 1;
 
-        console.log( 'In ShaderTexture class' );
+        this.alphaStart = 0.0;
+
+        this.alphaEnd = 1.0;
+
+        this.alphaDir = 1; // 1 is a fadein, -1 is a
+
+        console.log( 'In ShaderFader class' );
 
     }
 
@@ -50,10 +56,14 @@ class ShaderTexture extends Shader {
 
             'attribute vec3 aVertexPosition;',
             'attribute vec2 aTextureCoord;',
+            'attribute vec4 aVertexColor;',
 
             'uniform mat4 uMVMatrix;',
             'uniform mat4 uPMatrix;',
+
             'varying vec2 vTextureCoord;',
+
+
 
             'void main(void) {',
 
@@ -92,9 +102,15 @@ class ShaderTexture extends Shader {
 
             'uniform sampler2D uSampler;',
 
+            'uniform float uAlpha;',
+
+            'float vLightWeighting = 1.0;',
+
             'void main(void) {',
 
-            '    gl_FragColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));',
+            '    vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));',
+
+            '    gl_FragColor = vec4(textureColor.rgb * vLightWeighting, textureColor.a * uAlpha);',
 
             '}'
 
@@ -168,6 +184,11 @@ class ShaderTexture extends Shader {
 
         }
 
+        // DEBUG
+
+        window.vsVars = vsVars;
+        window.fsVars = fsVars;
+
         // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
         // TODO: https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/TechniquesforWorkingwithVertexData/TechniquesforWorkingwithVertexData.html
         // TODO: http://max-limper.de/tech/batchedrendering.html
@@ -175,6 +196,10 @@ class ShaderTexture extends Shader {
         /** 
          * POLYMORPHIC METHODS
          */
+
+        // Set our global (to the Prim) alpha value.
+
+        let alpha = 0.01;
 
         // Check if Prim is ready to be rendered using this shader.
 
@@ -195,6 +220,64 @@ class ShaderTexture extends Shader {
         // Update Prim position, motion - given to World object.
 
         program.update = ( prim, MVM ) => {
+
+                let ps = prim.shader,
+
+                fade = prim.fade;
+
+                ///////console.log('alpha:' + alpha + ' startAlpha:' + fade.startAlpha + ' endAlpha:' + fade.endAlpha );
+
+                /////console.log('shader:' + prim.shader.name + ' default:' + prim.defaultShader.name)
+
+                if ( alpha < fade.endAlpha ) {
+
+                        prim.alpha += 0.03;
+
+                } else if ( alpha > fade.endAlpha ) {
+
+                        prim.alpha -= 0.03;
+
+                } else if ( prim.defaultShader && ( prim.shader !== prim.defaultShader ) ) {
+
+                    console.log("switch shader")
+
+                    // TODO: THIS NEVER FIRES!!!!!!!!!!!
+
+                    prim.shader = prim.defaultShader;
+
+                    prim.defaultShader = ps;
+
+                    prim.shader.addPrim( prim );
+
+                    prim.defaultShader.removePrim( prim ); // remove Prim from us.
+                    // this.removePrim( prim );
+
+                }
+
+                if ( prim.alpha > 1.0 ) prim.alpha = 1.0;
+
+                if ( prim.alpha < 0.0 ) prim.alpha = 0.0;
+
+                alpha = prim.alpha;
+
+/*
+            if ( alpha < 1.0 ) { 
+
+                alpha += 0.003;
+
+            } else {
+
+                // Delete from this shader, and add to the standard Prim Shader.
+
+                //prim.shader.addShader( prim );
+
+                //prim.faderShader.removeShader( prim );
+
+            }
+*/
+
+
+            // TODO: vary until 1.0 or 0.0, then swap out to another Shader.
 
             // Update the model-view matrix using current Prim position, rotation, etc.
 
@@ -230,24 +313,40 @@ class ShaderTexture extends Shader {
                 gl.enableVertexAttribArray( vsVars.attribute.vec3.aVertexPosition );
                 gl.vertexAttribPointer( vsVars.attribute.vec3.aVertexPosition, prim.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0 );
 
-                // Bind Textures buffer (could have multiple bindings here).
+                if ( prim.textures[ 0 ].texture ) {
 
-                gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.texCoords.buffer );
-                gl.enableVertexAttribArray( vsVars.attribute.vec2.aTextureCoord );
-                gl.vertexAttribPointer( vsVars.attribute.vec2.aTextureCoord, prim.geometry.texCoords.itemSize, gl.FLOAT, false, 0, 0 );
+                    // Bind Textures buffer (could have multiple bindings here).
 
-                gl.activeTexture( gl.TEXTURE0 );
-                gl.bindTexture( gl.TEXTURE_2D, null );
-                gl.bindTexture( gl.TEXTURE_2D, prim.textures[ 0 ].texture );
+                    gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.texCoords.buffer );
+                    gl.enableVertexAttribArray( vsVars.attribute.vec2.aTextureCoord );
+                    gl.vertexAttribPointer( vsVars.attribute.vec2.aTextureCoord, prim.geometry.texCoords.itemSize, gl.FLOAT, false, 0, 0 );
 
-                // Set fragment shader sampler uniform.
+                    gl.activeTexture( gl.TEXTURE0 );
+                    gl.bindTexture( gl.TEXTURE_2D, null );
+                    gl.bindTexture( gl.TEXTURE_2D, prim.textures[ 0 ].texture );
 
-                gl.uniform1i( fsVars.uniform.sampler2D.uSampler, 0 ); //STRANGE
+                    // Set fragment shader sampler uniform.
+
+                    gl.uniform1i( fsVars.uniform.sampler2D.uSampler, 0 );
+
+                } else {
+
+                    // Bind color buffer.
+
+                    gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.colors.buffer );
+                    gl.enableVertexAttribArray( vsVars.attribute.vec4.aVertexColor );
+                    gl.vertexAttribPointer( vsVars.attribute.vec4.aVertexColor, prim.geometry.colors.itemSize, gl.FLOAT, false, 0, 0 );
+
+                }
 
                 // Set perspective and model-view matrix uniforms.
 
                 gl.uniformMatrix4fv( vsVars.uniform.mat4.uPMatrix, false, PM );
                 gl.uniformMatrix4fv( vsVars.uniform.mat4.uMVMatrix, false, MVM );
+
+                // Set our alpha.
+
+                gl.uniform1f( fsVars.uniform.float.uAlpha, alpha );
 
                 // Bind index buffer.
 
@@ -284,4 +383,4 @@ class ShaderTexture extends Shader {
 
 }
 
-export default ShaderTexture;
+export default ShaderFader;
