@@ -27,17 +27,13 @@ class ShaderFader extends Shader {
 
         this.required.buffer.colors = true,
 
-        this.required.buffer.normals = true,
+        this.required.buffer.normals = false,
 
         this.required.lights = 0,
 
-        this.required.textures = 1;
+        this.required.textures = 0;
 
-        this.alphaStart = 0.0;
-
-        this.alphaEnd = 1.0;
-
-        this.alphaDir = 1; // 1 is a fadein, -1 is a
+        this.sortByDistance = true; // sort translucent objects
 
         console.log( 'In ShaderFader class' );
 
@@ -104,7 +100,7 @@ class ShaderFader extends Shader {
 
             'uniform float uAlpha;',
 
-            'float vLightWeighting = 1.0;',
+            'float vLightWeighting = 0.5;',
 
             'void main(void) {',
 
@@ -221,63 +217,48 @@ class ShaderFader extends Shader {
 
         program.update = ( prim, MVM ) => {
 
-                let ps = prim.shader,
+                let fade = prim.fade;
 
-                fade = prim.fade;
+                //////console.log('alpha:' + alpha + ' startAlpha:' + fade.startAlpha + ' endAlpha:' + fade.endAlpha );
 
-                ///////console.log('alpha:' + alpha + ' startAlpha:' + fade.startAlpha + ' endAlpha:' + fade.endAlpha );
+                //////console.log('shader:' + prim.shader.name + ' default:' + prim.defaultShader.name)
 
-                /////console.log('shader:' + prim.shader.name + ' default:' + prim.defaultShader.name)
+                let dir = fade.endAlpha - fade.startAlpha;
 
-                if ( alpha < fade.endAlpha ) {
+                let inc = 0.0005;
 
-                        prim.alpha += 0.03;
+                if ( dir > 0 ) {
 
-                } else if ( alpha > fade.endAlpha ) {
+                    prim.alpha += inc;
 
-                        prim.alpha -= 0.03;
+                    if ( prim.alpha >= fade.endAlpha ) {
 
-                } else if ( prim.defaultShader && ( prim.shader !== prim.defaultShader ) ) {
+                        prim.alpha = fade.endAlpha;
 
-                    console.log("switch shader")
+                        //////console.log("ShaderFader::update(): faded UP, switch shader from:" + prim.shader.name + ' to:' + prim.defaultShader.name ) 
 
-                    // TODO: THIS NEVER FIRES!!!!!!!!!!!
+                        prim.shader.movePrim( prim, prim.defaultShader );
 
-                    prim.shader = prim.defaultShader;
+                    }
 
-                    prim.defaultShader = ps;
 
-                    prim.shader.addPrim( prim );
+                } else if ( dir < 0 ) {
 
-                    prim.defaultShader.removePrim( prim ); // remove Prim from us.
-                    // this.removePrim( prim );
+                    prim.alpha -= inc;
+
+                    if ( prim.alpha <= fade.endAlpha ) {
+
+                        prim.alpha = fade.endAlpha;
+
+                        //////console.log("ShaderFader::update(): faded DOWN, switch shader from:" + prim.shader.name + ' to:' + prim.defaultShader.name ) 
+
+                        prim.shader.movePrim( prim, prim.defaultShader );
+
+                    }
 
                 }
 
-                if ( prim.alpha > 1.0 ) prim.alpha = 1.0;
-
-                if ( prim.alpha < 0.0 ) prim.alpha = 0.0;
-
                 alpha = prim.alpha;
-
-/*
-            if ( alpha < 1.0 ) { 
-
-                alpha += 0.003;
-
-            } else {
-
-                // Delete from this shader, and add to the standard Prim Shader.
-
-                //prim.shader.addShader( prim );
-
-                //prim.faderShader.removeShader( prim );
-
-            }
-*/
-
-
-            // TODO: vary until 1.0 or 0.0, then swap out to another Shader.
 
             // Update the model-view matrix using current Prim position, rotation, etc.
 
@@ -291,6 +272,12 @@ class ShaderFader extends Shader {
 
             gl.useProgram( shaderProgram );
 
+            gl.blendFuncSeparate( gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA );
+
+            //gl.depthFunc( gl.NEVER );      // Ignore depth values (Z) to cause drawing bottom to top
+
+            gl.disable( gl.DEPTH_TEST );
+
             // Save the model-view supplied by the shader. Mono and VR return different MV matrices.
 
             let saveMV = mat4.clone( MVM );
@@ -301,7 +288,7 @@ class ShaderFader extends Shader {
 
                 // Only render if we have at least one texture loaded.
 
-                if ( ! prim.textures[0] || ! prim.textures[ 0 ].texture ) continue;
+                if ( ! prim || ! prim.textures[0] || ! prim.textures[ 0 ].texture ) continue;
 
                 // Individual Prim update.
 
@@ -374,6 +361,10 @@ class ShaderFader extends Shader {
                 mat4.copy( MVM, saveMV, MVM );
 
             } // end of renderList for Prims
+
+            // Reset the rendering defaults.
+
+            this.webgl.glDefaults();
 
         } // end of program.render()
 

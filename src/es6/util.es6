@@ -180,6 +180,17 @@ class Util {
     }
 
     /** 
+     * Check if a string looks like a URL.
+     * @param {String} str the test string
+     */
+    isURL ( str ) {
+
+        return ( /^[\w+:\/\/]/.exec( str ) != null );
+
+    }
+
+
+    /** 
      * Reverse string (used in hash keys).
      * @param {String} str the string.
      * @returns {String} the reversed string.

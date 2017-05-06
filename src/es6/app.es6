@@ -167,8 +167,10 @@ var promise = new Promise( ( resolve, reject ) => {
 
 });
 
-window.vrmin = world;
+// DEBUG
+// TODO: remove
 
+window.world = world;
 
 // Commented out since all errors end up here if we don't
 

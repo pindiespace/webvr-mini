@@ -67,19 +67,19 @@ class PrimFactory {
 
         console.log( 'in PrimFactory class' );
 
-        this.util = world.util;
+        // Keep a copy of the World for up-communication.
 
-        this.webgl = world.webgl;
+        this.world = world,
 
-        this.glMatrix = world.glMatrix;
+        this.util = world.util,
+
+        this.webgl = world.webgl,
+
+        this.glMatrix = world.glMatrix,
 
         // Attach 1 copy of the Texture loader to this Factory.
 
         this.texturePool = world.texturePool, // new TexturePool( init, util, webgl );
-
-        // Keep a copy of the World for up-communication.
-
-        this.world = world;
 
         // Attach 1 copy of the Model loader to this Factory.
 
@@ -95,10 +95,12 @@ class PrimFactory {
 
         // Keep a list of all created Prims here.
 
-        this.prims = []; 
+        this.prims = [];
 
         /** 
+         * ---------------------------------------
          * EMITTER CALLBACKS
+         * ---------------------------------------
          */
 
         // Bind the callback for geometry initialization applied to individual prims (GeometryPool, Mesh, and ModelPool).
@@ -182,9 +184,15 @@ class PrimFactory {
 
                 // post-addition events.
 
+                //if ( prim.name === 'cubespheretransparent' ) {
+
+                    console.warn('cubetrans set to fade....')
+
                     prim.alpha = 0.0;
 
-                    prim.setFade( 0,1 );
+                    prim.setFade( 0, 1 );
+
+                //}
 
         } );
 
@@ -813,20 +821,15 @@ class PrimFactory {
 
             if ( eq ) prim.fade.eq = eq;
 
-            // Save our current Shader as a default.
+            // Save our current Shader as a default (swapped back by s0).
 
             prim.defaultShader = prim.shader;
 
-            // Switch to the ShaderFader, and start animation.
+            // Move the Prim WITHOUT emitting  Prim add/remove event.
 
-            prim.shader = this.world.s0; // TODO: DIFFERENT NAME this.world['shaderFader'] ????
+            prim.shader.movePrim( prim, this.world.s0 );
 
-            // TODO: add and remove - swap Prim to s0 shader, remove from current list.
-
-            //prim.defaultShader.removePrim( prim )
-
-            //prim.shader.addPrim( prim )
-
+            // TODO: DIFFERENT NAME this.world['shaderFader'] ????
 
         }
 
@@ -834,15 +837,9 @@ class PrimFactory {
 
         prim.id = this.util.computeId();
 
-        // Shader object for adding/removing from display list.
-
-        // The alpha shader when a Prim is becoming visible or invisible.
-
-        prim.faderShader = this.world.s0;
-
         // Shader after the Prim has initialized.
 
-        prim.shader = shader;
+        prim.shader = prim.defaultShader = shader;
 
         // Name (arbitrary).
 
@@ -984,6 +981,12 @@ class PrimFactory {
             if ( prim.name === 'TORUS1' ) {
 
                 window.torus = prim;
+
+            }
+
+            if ( prim.name === 'teapot' ) {
+
+                window.teapot = prim;
 
             }
 

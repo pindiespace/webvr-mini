@@ -101,13 +101,19 @@ class Shader {
 
         };
 
+        // If we need to sort by distance (translucent Prims), set to true.
+
+        this.sortByDistance = false;
+
         // If we need to load a vertex and fragment shader files (in text format), put their paths in derived classes.
 
         this.vertexShaderFile = null;
 
         this.fragmentShaderFile = null;
 
-        this.NOT_IN_LIST = util.NOT_IN_LIST; // for indexOf tests.
+        // For indexOf tests.
+
+        this.NOT_IN_LIST = util.NOT_IN_LIST;
 
         // Get the WebGL program we will use to render.
 
@@ -141,40 +147,76 @@ class Shader {
      * NOTE: the prim must already be initialized
      * NOTE: we store Prims as numeric array only.
      * @param {Prim} prim a Prim object.
-     * @param {Shader} shader an optional shader object.
+     * @param {Boolean} emit if true, broadcast the event, else false.
      */
-    addPrim( prim ) {
+    addPrim( prim, emit = true ) {
 
         if ( this.checkPrim( prim ) ) {
 
             if ( this.primInList( prim ) === this.NOT_IN_LIST ) {
 
-                console.warn( prim.name + ' added to Shader::' + this.name );
+                console.warn( 'Shader::addPrim():prim:'  + prim.name + ' not in list, adding to Shader::' + this.name );
+
+                // Add the Prim to the Shader program's renderList. If a nulled position is present, use it.
+
+                let pos = this.program.renderList.indexOf( null );
+
+                if ( pos !== this.NOT_IN_LIST ) {
+
+                    console.log( 'Shader::addPrim():filling NULL with:' + prim.name + ' to:' + this.name );
+
+                    this.program.renderList[ pos ] = prim ;
+
+                } else {
+
+                    console.log( 'Shader::addPrim():appending prim:' + prim.name + ' to:' + this.name )
+
+                    this.program.renderList.push( prim );
+
+                }
+
+                // Sort by distance
+
+                this.sortPrimsByDistance( [ 0, 0, 0 ] );
+
+
+                if ( prim.shader && prim.shader !== this ) {
+
+                    console.log( 'Shader::addPrim(): removing prim:' + prim.name + ' from old Shader:' + prim.shader.name)
+
+                    prim.shader.removePrim( prim, emit );
+
+                }
 
                 // Switch the Prim's default Shader, and remove it from its old Shader (there can only be one).
 
                 prim.shader = this; // may already be the case
 
-                // Add the Prim to the Shader program's renderList.
-
-                this.program.renderList.push( prim );
-
-                if ( prim.shader && prim.shader !== this ) {
-
-                    prim.shader.removePrim( prim );
-                }
-
                 // Emit a PRIM_READY event.
 
-                this.util.emitter.emit( this.util.emitter.events.PRIM_ADDED_TO_SHADER, prim );
+                if ( emit ) {
+
+                    this.util.emitter.emit( this.util.emitter.events.PRIM_ADDED_TO_SHADER, prim );
+
+                }
+
+                return true;
 
             } else {
 
-                console.warn( prim.name + ' already added to Shader::' + this.name );
+                console.warn( 'Shader::addPrim():' + prim.name + ' already added to Shader::' + this.name );
 
             }
 
+        } else {
+
+            //TODO: REMOVE THIS OPTION:
+
+            console.log( 'Shader::addPrim():' + prim.name + ' did not pass Shader test for ' + this.name )
+
         }
+
+        return false;
 
     }
 
@@ -182,8 +224,9 @@ class Shader {
      * Remove a Prim from the Shader so it isn't rendered (not from PrimFactor). 
      * NOTE: removing from the array messes up JIT optimization, so slows things down!
      * @param {Prim} obj a Prim object.
+     * @param {Boolean} emit if true, emit the event, else false.
      */
-    removePrim( prim ) {
+    removePrim( prim, emit = true ) {
 
         let pos = this.primInList( prim );
 
@@ -191,19 +234,70 @@ class Shader {
 
             // Remove a Prim from the Shader program's renderList (still in PrimList and World).
 
-            this.shader = null;
+            console.warn( 'Shader::removePrim():removing prim:' + prim.name );
 
-            this.program.renderList.splice( pos, 1 );
+            //////////////////////this.program.renderList.splice( pos, 1 );
+
+            this.program.renderList[ pos ] = null;
 
             // Emit a Prim removal event.
 
-            this.util.emitter.emit( this.util.emitter.events.PRIM_REMOVED_FROM_SHADER, prim );
+            if ( emit ) {
+
+                this.util.emitter.emit( this.util.emitter.events.PRIM_REMOVED_FROM_SHADER, prim );
+
+            }
+
+            return true;
 
         } else {
 
-            console.warn( prim.name + ' not found in Shader::' + this.name );
+            console.warn( 'Shader::removePrim():' + prim.name + ' not found in Shader::' + this.name );
 
         }
+
+        return false;
+
+    }
+
+    /** 
+     * Move a Prim between Shaders.
+     * @param {Prim} prim the Prim to move.
+     * @param {Shader} newShader the Shader to move to.
+     */
+    movePrim( prim, newShader ) {
+
+        if ( prim.shader && newShader && ( prim.shader !== newShader ) ) {
+
+            /*
+             * NOTE: emit MUST be false to prevent a race condition.
+             */
+
+            console.log("Shader::movePrim():" + prim.name )
+
+            return newShader.addPrim( prim, false );
+
+        }
+
+    }
+
+    /** 
+     * Check if a given Prim has the elements to be rendered by this Shader.
+     * Bound to Emitter.events.PRIM_READY events.
+     * @param {Prim} prim the primitive object.
+     * @returns {Boolean} if everything is there, return true, else false.
+     */
+    checkPrim ( prim ) {
+
+        // Confirm Prim has WebGLBuffers and Textures needed to render.
+
+        if ( this.checkPrimTextures( prim ) && this.checkPrimBuffers( prim ) ) {
+
+            return true;
+
+        }
+
+        return false;
 
     }
 
@@ -220,7 +314,6 @@ class Shader {
         // Loop through geometry buffer objects, which are part of 'required' here.
 
         for ( let i in buffer ) {
-
 
             if ( buffer[ i ] ) {
 
@@ -285,29 +378,24 @@ class Shader {
 
     }
 
-    /** 
-     * Check if a given Prim has the elements to be rendered by this Shader.
-     * Bound to Emitter.events.PRIM_READY events.
-     * @param {Prim} prim the primitive object.
-     * @returns {Boolean} if everything is there, return true, else false.
+    /**
+     * Sort the list of rendered Prims furthest to closest to the viewer or Camera.
+     * NOTE: don't use for large > 20 sorts.
+     * @param {glMatrix.vec3} viewer position of viewer (camera).
      */
-    checkPrim ( prim ) {
+    sortPrimsByDistance( viewer ) {
 
-        // Only check the Prim if this Shader is defined for it.
+        let vec3 = this.glMatrix.vec3;
 
-        if ( prim.shader === this ) { // Prim is using this Shader
+        this.program.renderList.sort( ( a, b ) => {
 
-            // Confirm Prim has WebGLBuffers and Textures needed to render.
+            if ( a && b ) { // nulls possible
 
-            if ( this.checkPrimTextures( prim ) && this.checkPrimBuffers( prim ) ) {
-
-                return true;
+                return ( vec3.distance( a.position, viewer ) - vec3.distance( b.position, viewer ) );
 
             }
 
-        }
-
-        return false;
+        } );
 
     }
 
@@ -431,7 +519,6 @@ class Shader {
             program.render( pMatrix, mvMatrix );
 
         }
-
 
         // Rendering left and right eye for VR. Called once for each Shader by World.
 

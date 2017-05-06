@@ -124,7 +124,7 @@ class shaderDirLightTexture extends Shader {
 
             '    gl_FragColor = vec4(textureColor.rgb * vLightWeighting, textureColor.a);',
 
-            //'    gl_FragColor = vec4(texture2D(uSampler, vTextureCoord).rgb, texture2D(uSampler, vTextureCoord).a * 0.1);',
+            //'  gl_FragColor = vec4(texture2D(uSampler, vTextureCoord).rgb, texture2D(uSampler, vTextureCoord).a * 0.1);',
 
             '}'
 
@@ -279,7 +279,7 @@ class shaderDirLightTexture extends Shader {
 
                 // Only render if we have at least one texture loaded.
 
-                if ( ! prim.textures[ 0 ] || ! prim.textures[ 0 ].texture ) continue;
+                if ( ! prim || ! prim.textures[ 0 ] || ! prim.textures[ 0 ].texture ) continue;
 
                 // Update Model-View matrix with standard Prim values.
 

@@ -500,10 +500,11 @@ class World extends AssetPool {
                 //[ 'obj/mountains/mountains.obj' ] // object files (.obj, .mtl)
                 //[ 'obj/landscape/landscape.obj'] // ok?
                 //[ 'obj/toilet/toilet.obj' ] // no texture
-                [ 'obj/naboo/naboo.obj' ] // needs to be shrunk
+                //[ 'obj/naboo/naboo.obj' ] // needs to be shrunk
+                //[ 'obj/star/star.obj']
                 //[ 'obj/basketball/basketball.obj'] // needs TGA translation
                 //[ 'obj/rock1/rock1.obj'] // rock plus surface, works
-
+                [ 'obj/banana/banana.obj' ]
             );
 
 
@@ -528,6 +529,8 @@ class World extends AssetPool {
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color
 
             );
+
+// TODO: ANIMATION CLASS FOR PRIM IN UPDATEMV ROUTINE.
 
 // TODO: PRIM CONCATENATE SEVERAL PRIMS TOGETHER INTO ONE ARRAY??? CHECK HOW TO DO
 
@@ -717,7 +720,7 @@ class World extends AssetPool {
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
             this.primFactory.createPrim(
 
-                this.s0,                      // callback function
+                this.s1,                      // callback function
                 typeList.CUBESPHERE,
                 'cubespheretransparent',
                 vec5( 5, 5, 5 ),            // dimensions

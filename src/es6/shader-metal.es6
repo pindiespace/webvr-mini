@@ -175,7 +175,7 @@ class ShaderMetal extends Shader {
 
                 // Only render if we have at least one texture loaded.
 
-                if ( ! prim.textures[ 0 ] || ! prim.textures[ 0 ].texture ) continue;
+                if ( ! prim || ! prim.textures[ 0 ] || ! prim.textures[ 0 ].texture ) continue;
 
                 // Update Model-View matrix with standard Prim values.
 

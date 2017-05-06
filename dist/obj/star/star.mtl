@@ -1,0 +1,11 @@
+# Blender MTL File: '20facestar.blend'
+# Material Count: 1
+
+newmtl Material.001
+Ns 321.568627
+Ka 0.000000 0.000000 0.000000
+Kd 0.800000 0.403595 0.000000
+Ks 1.000000 1.000000 1.000000
+Ni 1.000000
+d 1.000000
+illum 2

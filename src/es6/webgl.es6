@@ -255,52 +255,9 @@ class WebGL {
 
                 this.clearTextures();
 
+                // Set our default rendering values.
 
-                // Default 3D enables.
-
-                gl.enable( gl.DEPTH_TEST );
-
-                gl.enable( gl.CULL_FACE );
-
-                //gl.disable(gl.CULL_FACE);
-
-                gl.clearDepth( 1.0 );                 // Clear everything
-
-                gl.depthFunc( gl.LEQUAL );            // Near things obscure far things
-
-                gl.enable( gl.BLEND );              // Allow blending
-
-                // Fog NOT in Webgl use shader
-                //http://www.geeks3d.com/20100228/fog-in-glsl-webgl/
-                // http://in2gpu.com/2014/07/22/create-fog-shader/
-
-                //gl.enable( gl.FOG );
-
-                // set this for individual objects 
-                //gl.blendFunc( gl.SRC_ALPHA, gl.ONE );
-
-                //gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-                // partly transparent to grey opaque
-
-                gl.blendFunc( gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA );
-
-
-                //gl.blendFunc( gl.ONE, gl.ONE);
-                //gl.blendFunc(gl.SRC_COLOR, gl.ONE_MINUS_SRC_ALPHA);
-
-                //gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-
-                // bright, partly transparent
-                //gl.blendEquationSeparate(gl.FUNC_ADD,gl.FUNC_ADD);
-                //gl.blendFuncSeparate(gl.ONE,gl.ONE_MINUS_SRC_ALPHA,gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
-
-                /* 
-                 * IMPORTANT: tells WebGL to premultiply alphas for <canvas>
-                 * @link http://stackoverflow.com/questions/39251254/avoid-cpu-side-conversion-with-teximage2d-in-firefox
-                 */
-                gl.pixelStorei( gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true );
-
-                gl.clearColor( 0.1, 0.1, 0.1, 1.0 );
+                this.glDefaults();
 
                 // Clear the screen to the clearColor by default.
 
@@ -327,6 +284,66 @@ class WebGL {
 
     }
 
+    /**
+     * (re)set the defaults we draw with.
+     */
+    glDefaults() {
+
+        let gl = this.getContext();
+
+        if ( gl ) {
+
+            // Default 3D enables.
+
+            gl.enable( gl.DEPTH_TEST );
+
+            gl.enable( gl.CULL_FACE );
+
+            gl.clearDepth( 1.0 );             // Clear everything
+
+            gl.depthFunc( gl.LEQUAL );        // Near things obscure far things
+
+            gl.enable( gl.BLEND );            // Allow blending
+
+            // Fog NOT in Webgl use shader
+            //http://www.geeks3d.com/20100228/fog-in-glsl-webgl/
+            // http://in2gpu.com/2014/07/22/create-fog-shader/
+
+            //gl.enable( gl.FOG );
+
+            // set this for individual objects 
+            //gl.blendFunc( gl.SRC_ALPHA, gl.ONE );
+
+            //gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+            // partly transparent to grey opaque
+
+            gl.blendFunc( gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA );
+
+            //gl.blendFunc( gl.ONE, gl.ONE);
+            //gl.blendFunc(gl.SRC_COLOR, gl.ONE_MINUS_SRC_ALPHA);
+
+            //gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
+            // bright, partly transparent
+            //gl.blendEquationSeparate(gl.FUNC_ADD,gl.FUNC_ADD);
+            //gl.blendFuncSeparate(gl.ONE,gl.ONE_MINUS_SRC_ALPHA,gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
+
+            /* 
+             * IMPORTANT: tells WebGL to premultiply alphas for <canvas>
+             * @link http://stackoverflow.com/questions/39251254/avoid-cpu-side-conversion-with-teximage2d-in-firefox
+             */
+            gl.pixelStorei( gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true );
+
+            gl.clearColor( 0.1, 0.1, 0.1, 1.0 );
+
+        }
+
+    }
+
+    /** 
+     * Flag for supporting WebGL.
+     * @returns {Boolean} if WebGL context is present, return true, else false.s
+     */
     hasWebGL () {
 
         return ( !! this.getContext() );
