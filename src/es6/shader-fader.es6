@@ -51,7 +51,16 @@ class ShaderFader extends Shader {
 
         let s = [
 
+            // render flags
+
+            'uniform bool uUseLighting;',
+            'uniform bool uUseTexture;',
+            'uniform bool uUseColor;',
+
+            // coordinates
+
             'attribute vec3 aVertexPosition;',
+            'attribute vec3 aVertexNormal;',
 
             'uniform mat4 uMVMatrix;',
             'uniform mat4 uPMatrix;',
@@ -66,6 +75,8 @@ class ShaderFader extends Shader {
             'varying lowp vec4 vColor;',
 
             // lighting 
+
+            'uniform mat3 uNMatrix;',
 
             'uniform vec3 uAmbientColor;',
             'uniform vec3 uLightingDirection;',
@@ -83,6 +94,20 @@ class ShaderFader extends Shader {
             '    vTextureCoord = aTextureCoord;',
 
             '    vColor = aVertexColor;',
+
+            '   if(!uUseLighting) {',
+
+            '       vLightWeighting = vec3(1.0, 1.0, 1.0);',
+
+            '   } else {',
+
+            '       vec3 transformedNormal = uNMatrix * aVertexNormal;',
+
+            '       float directionalLightWeighting = max(dot(transformedNormal, uLightingDirection), 0.0);',
+
+            '       vLightWeighting = uAmbientColor + uDirectionalColor * directionalLightWeighting;',
+
+            '   }',
 
             '}'
 
@@ -133,6 +158,8 @@ class ShaderFader extends Shader {
 
                 'if (uUseColor) {',
 
+                // TODO: ADD LIGHTING HERE
+
                     'gl_FragColor = vec4(vColor.rgb * vLightWeighting, uAlpha);',
 
                 '}',
@@ -141,12 +168,11 @@ class ShaderFader extends Shader {
 
                     'vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));',
 
+                // TODO: ADD LIGHTING HERE
+
                     'gl_FragColor = vec4(textureColor.rgb * vLightWeighting, textureColor.a * uAlpha);',
 
                 '}',
-
-
-                //'gl_FragColor = vec4(vColor.rgb * vLightWeighting, uAlpha);',
 
             '}'
 
@@ -270,8 +296,6 @@ class ShaderFader extends Shader {
 
                         prim.alpha = fade.endAlpha;
 
-                        //////console.log("ShaderFader::update(): faded UP, switch shader from:" + prim.shader.name + ' to:' + prim.defaultShader.name ) 
-
                         prim.shader.movePrim( prim, prim.defaultShader );
 
                     }
@@ -283,8 +307,6 @@ class ShaderFader extends Shader {
                     if ( prim.alpha <= fade.endAlpha ) {
 
                         prim.alpha = fade.endAlpha;
-
-                        //////console.log("ShaderFader::update(): faded DOWN, switch shader from:" + prim.shader.name + ' to:' + prim.defaultShader.name ) 
 
                         prim.shader.movePrim( prim, prim.defaultShader );
 
@@ -377,6 +399,37 @@ class ShaderFader extends Shader {
 
                 }
 
+                // Lighting, if present
+
+                if ( prim.defaultShader.required.lights > 0 ) {
+
+                    // Bind normals buffer.
+
+                    gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.normals.buffer );
+                    gl.enableVertexAttribArray( vsVars.attribute.vec3.aVertexNormal );
+                    gl.vertexAttribPointer( vsVars.attribute.vec3.aVertexNormal, prim.geometry.normals.itemSize, gl.FLOAT, false, 0, 0);
+
+                    gl.uniform3f(
+                        vsVars.uniform.vec3.uAmbientColor,
+                        ambient[ 0 ],
+                        ambient[ 1 ],
+                        ambient[ 2 ]
+                    );
+
+                    gl.uniform3fv( 
+                        vsVars.uniform.vec3.uLightingDirection, 
+                        adjustedLD 
+                    );
+
+                    gl.uniform3f(
+                        vsVars.uniform.vec3.uDirectionalColor,
+                        directionalColor[ 0 ],
+                        directionalColor[ 1 ],
+                        directionalColor[ 2 ]
+                    );
+
+                }
+
                 // Bind perspective and model-view matrix uniforms.
 
                 gl.uniformMatrix4fv( vsVars.uniform.mat4.uPMatrix, false, PM );
@@ -404,6 +457,7 @@ class ShaderFader extends Shader {
                 // NOTE: since we bound BOTH texture and color arrays, we MUST clear them both!
 
                 gl.bindBuffer( gl.ARRAY_BUFFER, null );
+                gl.disableVertexAttribArray( vsVars.attribute.vec3.aVertexNormal );
                 gl.disableVertexAttribArray( vsVars.attribute.vec2.aTextureCoord );
                 gl.disableVertexAttribArray( vsVars.attribute.vec4.aVertexColor );              
 
