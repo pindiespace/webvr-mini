@@ -176,22 +176,6 @@ class ShaderTexture extends Shader {
          * POLYMORPHIC METHODS
          */
 
-        // Check if Prim is ready to be rendered using this shader.
-
-        program.isReady =  ( prim ) => {
-
-            // Need 1 WebGL texture for rendering, no Lights.
-
-            if ( ! prim.geometry.checkBuffers() && prim.textures[ 0 ].texture ) {
-
-                return true;
-
-            }
-
-            return false;
-
-        }
-
         // Update Prim position, motion - given to World object.
 
         program.update = ( prim, MVM ) => {
@@ -239,6 +223,8 @@ class ShaderTexture extends Shader {
                 gl.activeTexture( gl.TEXTURE0 );
                 gl.bindTexture( gl.TEXTURE_2D, null );
                 gl.bindTexture( gl.TEXTURE_2D, prim.textures[ 0 ].texture );
+
+                // Bind additional texture units.
 
                 // Set fragment shader sampler uniform.
 

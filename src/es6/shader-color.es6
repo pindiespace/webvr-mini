@@ -178,7 +178,7 @@ class ShaderColor extends Shader {
 
             // Need only a color buffer for this Shader.
 
-            if( ! prim.geometry.checkBuffers()  && prim.geometry.colors.buffer ) {
+            if( prim.geometry.checkColorsData() && prim.geometry.colors.buffer ) {
 
                 return true;
 

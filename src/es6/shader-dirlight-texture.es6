@@ -57,11 +57,11 @@ class shaderDirLightTexture extends Shader {
             'uniform mat4 uPMatrix;',
             'uniform mat3 uNMatrix;',
 
+            'uniform bool uUseLighting;',
+
             'uniform vec3 uAmbientColor;',
             'uniform vec3 uLightingDirection;',
             'uniform vec3 uDirectionalColor;',
-
-            'uniform bool uUseLighting;', // TODO: remove?
 
             'varying vec2 vTextureCoord;',
             'varying vec3 vLightWeighting;',
@@ -219,22 +219,6 @@ class shaderDirLightTexture extends Shader {
          * POLYMORPHIC METHODS
          */
 
-        // Check if Prim is ready to be rendered using this shader.
-
-        program.isReady = ( prim ) => {
-
-            // Need 1 WebGL texture, plus Light for this particular Shader.
-
-            if ( ! prim.geometry.checkBuffers() && prim.textures[ 0 ].texture ) {
-
-                return true;
-
-            }
-
-            return false;
-
-        }
-
         // Update prim position, motion - given to World object.
 
         program.update = ( prim, MVM ) => {
@@ -304,6 +288,8 @@ class shaderDirLightTexture extends Shader {
                 gl.activeTexture( gl.TEXTURE0 );
                 gl.bindTexture( gl.TEXTURE_2D, null );
                 gl.bindTexture( gl.TEXTURE_2D, prim.textures[ 0 ].texture );
+
+                // Bind additional texture units.
 
                 // Set fragment shader sampler uniform.
 

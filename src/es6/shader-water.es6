@@ -134,15 +134,6 @@ class ShaderWater extends Shader {
          * POLYMORPHIC METHODS
          */
 
-        // Check if Prim is ready to be rendered using this Shader.
-
-        program.isReady = ( prim ) => {
-
-            // TODO: list everything WaterShader needs for rendering.
-
-            return true;
-
-        }
 
         // Update Prim position, motion - given to World object.
 

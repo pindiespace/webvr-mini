@@ -129,14 +129,6 @@ class ShaderMetal extends Shader {
          * POLYMORPHIC METHODS
          */
 
-        // Check if Prim is ready to be rendered using this Shader.
-
-        program.isReady = ( prim ) => {
-
-            return true;
-
-        }
-
         // Update Prim position, motion - given to World object.
 
         program.update = ( prim, MVM ) => {

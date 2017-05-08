@@ -443,7 +443,7 @@ class GeometryBuffer {
      */
     checkColorsData ( complete ){
 
-        let fnName = this.mName + ' checkColorssData():'; // so many error messages we use this.
+        let fnName = this.mName + ' checkColorsData():'; // so many error messages we use this.
 
         let numVertices = this.numVertices(),
 
@@ -480,6 +480,8 @@ class GeometryBuffer {
             }
 
         }
+
+        return len;
 
     }
 

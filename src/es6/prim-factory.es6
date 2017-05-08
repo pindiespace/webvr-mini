@@ -186,6 +186,7 @@ class PrimFactory {
 
                 //if ( prim.name === 'cubespheretransparent' ) {
                 //if ( prim.name !== 'teapot' && prim.name !== 'colored cube' ) {
+                //if ( prim.defaultShader.name == 'shaderColor') {
 
                     // TODO: teapot doesn't draw!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -1002,6 +1003,12 @@ class PrimFactory {
             if ( prim.name === 'cubespheretransparent' ) {
 
                 window.cubetrans = prim;
+
+            }
+
+            if ( prim.name === 'TestTearDrop' ) {
+
+                window.teardrop = prim;
 
             }
 
