@@ -33,7 +33,7 @@ class ShaderFader extends Shader {
 
         this.required.textures = 0;
 
-        this.sortByDistance = true; // sort translucent objects
+        this.sortByDistance = true;
 
         console.log( 'In ShaderFader class' );
 
@@ -58,14 +58,15 @@ class ShaderFader extends Shader {
             'uniform mat4 uPMatrix;',
 
             'varying vec2 vTextureCoord;',
-
-
+            'varying lowp vec4 vColor;',
 
             'void main(void) {',
 
             '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);',
 
             '    vTextureCoord = aTextureCoord;',
+
+            '    vColor = aVertexColor;',
 
             '}'
 
@@ -100,13 +101,25 @@ class ShaderFader extends Shader {
 
             'uniform float uAlpha;',
 
-            'float vLightWeighting = 0.5;',
+            'float vLightWeighting = 1.0;',
+
+            'varying lowp vec4 vColor;',
 
             'void main(void) {',
 
-            '    vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));',
+            //'   if ( vColor ) {',
 
-            '    gl_FragColor = vec4(textureColor.rgb * vLightWeighting, textureColor.a * uAlpha);',
+                  'gl_FragColor = vec4(vColor.rgb * vLightWeighting, uAlpha);',
+
+            //'   } ',
+
+            //'else {',
+
+            '      vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));',
+
+            '      gl_FragColor = vec4(textureColor.rgb * vLightWeighting, textureColor.a * uAlpha);',
+
+            //   '},'
 
             '}'
 
@@ -203,7 +216,7 @@ class ShaderFader extends Shader {
 
             // Need 1 WebGL texture for rendering, no Lights.
 
-            if ( ! prim.geometry.checkBuffers() && prim.textures[ 0 ].texture ) {
+            if ( ! prim.geometry.checkBuffers() && ( prim.textures[ 0 ] && prim.textures[ 0 ].texture || prim.geometry.colors.buffer ) ) {
 
                 return true;
 
@@ -276,7 +289,7 @@ class ShaderFader extends Shader {
 
             //gl.depthFunc( gl.NEVER );      // Ignore depth values (Z) to cause drawing bottom to top
 
-            gl.disable( gl.DEPTH_TEST );
+            //gl.disable( gl.DEPTH_TEST );
 
             // Save the model-view supplied by the shader. Mono and VR return different MV matrices.
 
@@ -288,7 +301,7 @@ class ShaderFader extends Shader {
 
                 // Only render if we have at least one texture loaded.
 
-                if ( ! prim || ! prim.textures[0] || ! prim.textures[ 0 ].texture ) continue;
+                if ( ! prim ) continue;
 
                 // Individual Prim update.
 
@@ -300,7 +313,7 @@ class ShaderFader extends Shader {
                 gl.enableVertexAttribArray( vsVars.attribute.vec3.aVertexPosition );
                 gl.vertexAttribPointer( vsVars.attribute.vec3.aVertexPosition, prim.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0 );
 
-                if ( prim.textures[ 0 ].texture ) {
+                if ( prim.textures[ 0 ] && prim.textures[ 0 ].texture ) {
 
                     // Bind Textures buffer (could have multiple bindings here).
 
@@ -319,6 +332,8 @@ class ShaderFader extends Shader {
                 } else {
 
                     // Bind color buffer.
+
+                    console.log('binding color buffer for:' + prim.name + ' buffer:' + vsVars.attribute.vec4.aVertexColor + ' glbuffer:' + prim.geometry.colors.buffer)
 
                     gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.colors.buffer );
                     gl.enableVertexAttribArray( vsVars.attribute.vec4.aVertexColor );

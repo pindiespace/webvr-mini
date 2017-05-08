@@ -4778,7 +4778,10 @@
 
 	                                        // Sort by distance
 
-	                                        this.sortPrimsByDistance([0, 0, 0]);
+	                                        if (this.sortByDistance) {
+
+	                                                this.sortPrimsByDistance([0, 0, 0]);
+	                                        }
 
 	                                        if (prim.shader && prim.shader !== this) {
 
@@ -24751,6 +24754,8 @@
 
 	                        //if ( prim.name === 'cubespheretransparent' ) {
 
+	                        // TODO: teapot doesn't draw!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 	                        console.warn('cubetrans set to fade....');
 
 	                        prim.alpha = 0.0;
@@ -25609,7 +25614,7 @@
 
 	                _this.required.buffer.indices = true, _this.required.buffer.colors = true, _this.required.buffer.normals = false, _this.required.lights = 0, _this.required.textures = 0;
 
-	                _this.sortByDistance = true; // sort translucent objects
+	                _this.sortByDistance = true;
 
 	                console.log('In ShaderFader class');
 
@@ -25629,7 +25634,7 @@
 	                key: 'vsSrc',
 	                value: function vsSrc() {
 
-	                        var s = ['attribute vec3 aVertexPosition;', 'attribute vec2 aTextureCoord;', 'attribute vec4 aVertexColor;', 'uniform mat4 uMVMatrix;', 'uniform mat4 uPMatrix;', 'varying vec2 vTextureCoord;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vTextureCoord = aTextureCoord;', '}'];
+	                        var s = ['attribute vec3 aVertexPosition;', 'attribute vec2 aTextureCoord;', 'attribute vec4 aVertexColor;', 'uniform mat4 uMVMatrix;', 'uniform mat4 uPMatrix;', 'varying vec2 vTextureCoord;', 'varying lowp vec4 vColor;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vTextureCoord = aTextureCoord;', '    vColor = aVertexColor;', '}'];
 
 	                        return {
 
@@ -25654,7 +25659,21 @@
 
 	                        // 'precision mediump float;',
 
-	                        this.floatp, 'varying vec2 vTextureCoord;', 'uniform sampler2D uSampler;', 'uniform float uAlpha;', 'float vLightWeighting = 0.5;', 'void main(void) {', '    vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));', '    gl_FragColor = vec4(textureColor.rgb * vLightWeighting, textureColor.a * uAlpha);', '}'];
+	                        this.floatp, 'varying vec2 vTextureCoord;', 'uniform sampler2D uSampler;', 'uniform float uAlpha;', 'float vLightWeighting = 1.0;', 'varying lowp vec4 vColor;', 'void main(void) {',
+
+	                        //'   if ( vColor ) {',
+
+	                        'gl_FragColor = vec4(vColor.rgb * vLightWeighting, uAlpha);',
+
+	                        //'   } ',
+
+	                        //'else {',
+
+	                        '      vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));', '      gl_FragColor = vec4(textureColor.rgb * vLightWeighting, textureColor.a * uAlpha);',
+
+	                        //   '},'
+
+	                        '}'];
 
 	                        return {
 
@@ -25734,7 +25753,7 @@
 
 	                                // Need 1 WebGL texture for rendering, no Lights.
 
-	                                if (!prim.geometry.checkBuffers() && prim.textures[0].texture) {
+	                                if (!prim.geometry.checkBuffers() && (prim.textures[0] && prim.textures[0].texture || prim.geometry.colors.buffer)) {
 
 	                                        return true;
 	                                }
@@ -25799,7 +25818,7 @@
 
 	                                //gl.depthFunc( gl.NEVER );      // Ignore depth values (Z) to cause drawing bottom to top
 
-	                                gl.disable(gl.DEPTH_TEST);
+	                                //gl.disable( gl.DEPTH_TEST );
 
 	                                // Save the model-view supplied by the shader. Mono and VR return different MV matrices.
 
@@ -25811,7 +25830,7 @@
 
 	                                        // Only render if we have at least one texture loaded.
 
-	                                        if (!prim || !prim.textures[0] || !prim.textures[0].texture) continue;
+	                                        if (!prim) continue;
 
 	                                        // Individual Prim update.
 
@@ -25823,7 +25842,7 @@
 	                                        gl.enableVertexAttribArray(vsVars.attribute.vec3.aVertexPosition);
 	                                        gl.vertexAttribPointer(vsVars.attribute.vec3.aVertexPosition, prim.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0);
 
-	                                        if (prim.textures[0].texture) {
+	                                        if (prim.textures[0] && prim.textures[0].texture) {
 
 	                                                // Bind Textures buffer (could have multiple bindings here).
 
@@ -25841,6 +25860,8 @@
 	                                        } else {
 
 	                                                // Bind color buffer.
+
+	                                                console.log('binding color buffer for:' + prim.name + ' buffer:' + vsVars.attribute.vec4.aVertexColor + ' glbuffer:' + prim.geometry.colors.buffer);
 
 	                                                gl.bindBuffer(gl.ARRAY_BUFFER, prim.geometry.colors.buffer);
 	                                                gl.enableVertexAttribArray(vsVars.attribute.vec4.aVertexColor);

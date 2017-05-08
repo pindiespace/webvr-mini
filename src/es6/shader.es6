@@ -177,8 +177,11 @@ class Shader {
 
                 // Sort by distance
 
-                this.sortPrimsByDistance( [ 0, 0, 0 ] );
+                if ( this.sortByDistance ) {
 
+                    this.sortPrimsByDistance( [ 0, 0, 0 ] );
+
+                }
 
                 if ( prim.shader && prim.shader !== this ) {
 

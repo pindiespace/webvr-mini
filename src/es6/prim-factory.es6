@@ -186,6 +186,8 @@ class PrimFactory {
 
                 //if ( prim.name === 'cubespheretransparent' ) {
 
+                    // TODO: teapot doesn't draw!!!!!!!!!!!!!!!!!!!!!!!!!!
+
                     console.warn('cubetrans set to fade....')
 
                     prim.alpha = 0.0;
