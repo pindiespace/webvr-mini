@@ -519,9 +519,9 @@ class World extends AssetPool {
                 this.s2,                      // callback function
                 typeList.CUBE,
                 'colored cube',
-                vec5( 1, 1, 1, 0 ),            // dimensions
+                vec5( 0.7, 0.7, 0.7, 0 ),            // dimensions
                 vec5( 3, 3, 3 ),            // divisions
-                vec3.fromValues( 0.2, 0.5, 1 ),          // position (absolute)
+                vec3.fromValues( 3.2, -0.3, 2 ),          // position (absolute)
                 vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
                 vec3.fromValues( util.degToRad( 20 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
                 vec3.fromValues( util.degToRad( 0 ), util.degToRad( 1 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
@@ -652,7 +652,7 @@ class World extends AssetPool {
 
             this.primFactory.createPrim(
 
-                this.s3,                      // callback function
+                this.s1,                      // callback function
                 typeList.REGULARTETRAHEDRON,
                 'regulartetrahedron',
                 vec5( 3, 3, 3, 0 ),            // dimensions
@@ -661,7 +661,7 @@ class World extends AssetPool {
                 vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
                 vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
                 vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [ 'img/mozvr-logo2.png' ],               // texture present, NOT USED
+                [ 'img/mozvr-logo2.png' ],               // texture present
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
 
             );
@@ -871,13 +871,13 @@ class World extends AssetPool {
 
             let frameData = this.vr.getFrameData();
 
-                this.r3.renderVR( vr, display, frameData );  // directional light texture
+            this.r3.renderVR( vr, display, frameData );  // directional light texture
 
-                this.r2.renderVR( vr, display, frameData );  // color
+            this.r2.renderVR( vr, display, frameData );  // color
 
-                this.r1.renderVR( vr, display, frameData );  // textured, no lighting
+            this.r1.renderVR( vr, display, frameData );  // textured, no lighting
 
-                this.r0.renderVR( vr, display, frameData );  // alpha (Prim appearing or disappearing), drawn in front
+            this.r0.renderVR( vr, display, frameData );  // alpha (Prim appearing or disappearing), drawn in front
 
             display.submitFrame();
 

@@ -124,8 +124,6 @@ class shaderDirLightTexture extends Shader {
 
             '    gl_FragColor = vec4(textureColor.rgb * vLightWeighting, textureColor.a);',
 
-            //'  gl_FragColor = vec4(texture2D(uSampler, vTextureCoord).rgb, texture2D(uSampler, vTextureCoord).a * 0.1);',
-
             '}'
 
             ];

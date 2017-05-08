@@ -185,6 +185,7 @@ class PrimFactory {
                 // post-addition events.
 
                 //if ( prim.name === 'cubespheretransparent' ) {
+                //if ( prim.name !== 'teapot' && prim.name !== 'colored cube' ) {
 
                     // TODO: teapot doesn't draw!!!!!!!!!!!!!!!!!!!!!!!!!!
 

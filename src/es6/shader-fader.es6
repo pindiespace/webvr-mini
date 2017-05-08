@@ -96,10 +96,13 @@ class ShaderFader extends Shader {
             this.floatp,
 
             'varying vec2 vTextureCoord;',
-
             'uniform sampler2D uSampler;',
 
             'uniform float uAlpha;',
+
+            'uniform bool uUseLighting;',
+            'uniform bool uUseTexture;',
+            'uniform bool uUseColor;',
 
             'float vLightWeighting = 1.0;',
 
@@ -107,19 +110,19 @@ class ShaderFader extends Shader {
 
             'void main(void) {',
 
-            //'   if ( vColor ) {',
+            '   if (uUseColor) {',
 
                   'gl_FragColor = vec4(vColor.rgb * vLightWeighting, uAlpha);',
 
-            //'   } ',
+            '   } ',
 
-            //'else {',
+            'else if(uUseTexture) {',
 
             '      vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));',
 
             '      gl_FragColor = vec4(textureColor.rgb * vLightWeighting, textureColor.a * uAlpha);',
 
-            //   '},'
+               '}',
 
             '}'
 
@@ -193,11 +196,6 @@ class ShaderFader extends Shader {
 
         }
 
-        // DEBUG
-
-        window.vsVars = vsVars;
-        window.fsVars = fsVars;
-
         // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
         // TODO: https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/TechniquesforWorkingwithVertexData/TechniquesforWorkingwithVertexData.html
         // TODO: http://max-limper.de/tech/batchedrendering.html
@@ -238,7 +236,7 @@ class ShaderFader extends Shader {
 
                 let dir = fade.endAlpha - fade.startAlpha;
 
-                let inc = 0.0005;
+                let inc = 0.005;
 
                 if ( dir > 0 ) {
 
@@ -299,6 +297,7 @@ class ShaderFader extends Shader {
 
                 let prim = program.renderList[ i ];
 
+
                 // Only render if we have at least one texture loaded.
 
                 if ( ! prim ) continue;
@@ -309,11 +308,26 @@ class ShaderFader extends Shader {
 
                 // Bind vertex buffer.
 
+                if ( prim.name == 'regulartetrahedron' ) {
+
+                    //console.log( prim.name + ' atexturecoord:' + vsVars.attribute.vec2.aTextureCoord + ' acolorcoord:' + vsVars.attribute.vec4.aVertexColor)
+                    //console.log( 'texCoords:' + prim.geometry.texCoords.buffer + ' len:' + prim.geometry.texCoords.data.length )
+                    //console.log( 'colors:' + prim.geometry.colors.buffer + ' len:' + prim.geometry.colors.data.length )
+                    //console.log("test numVertices:" + prim.geometry.numVertices() + ' colors:' + prim.geometry.numColors() + ' texcoords:' + prim.geometry.numTexCoords() )
+                    
+                }
+
                 gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.vertices.buffer );
                 gl.enableVertexAttribArray( vsVars.attribute.vec3.aVertexPosition );
                 gl.vertexAttribPointer( vsVars.attribute.vec3.aVertexPosition, prim.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0 );
 
                 if ( prim.textures[ 0 ] && prim.textures[ 0 ].texture ) {
+
+                    // Set conditional uniforms for rendering different kinds of Prims (e.g. only color array defined)
+
+                    gl.uniform1i( fsVars.uniform.bool.uUseColor, 0 );
+                    gl.uniform1i( fsVars.uniform.bool.uUseTexture, 1 );
+                    gl.uniform1i( fsVars.uniform.bool.uUseLighting, 0 );
 
                     // Bind Textures buffer (could have multiple bindings here).
 
@@ -329,11 +343,15 @@ class ShaderFader extends Shader {
 
                     gl.uniform1i( fsVars.uniform.sampler2D.uSampler, 0 );
 
-                } else {
+                }  else {
 
                     // Bind color buffer.
 
-                    console.log('binding color buffer for:' + prim.name + ' buffer:' + vsVars.attribute.vec4.aVertexColor + ' glbuffer:' + prim.geometry.colors.buffer)
+                    //console.log('binding color buffer for:' + prim.name + ' vertex attribute:' + vsVars.attribute.vec4.aVertexColor + ' vertices:' + prim.geometry.vertices.data.length + ' vertices buffer:' + prim.geometry.vertices.buffer + ' color glbuffer:' + prim.geometry.colors.buffer)
+
+                    gl.uniform1i( fsVars.uniform.bool.uUseColor, 1 );
+                    gl.uniform1i( fsVars.uniform.bool.uUseTexture, 0 );
+                    gl.uniform1i( fsVars.uniform.bool.uUseLighting, 0 );
 
                     gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.colors.buffer );
                     gl.enableVertexAttribArray( vsVars.attribute.vec4.aVertexColor );
