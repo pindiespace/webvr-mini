@@ -14316,7 +14316,7 @@
 
 	            if (uvs) {
 
-	                arr.push(parseFloat(uvs[1]), parseFloat(uvs[3]));
+	                arr.push(parseFloat(uvs[1]), parseFloat(uvs[2]));
 
 	                return true;
 	            }
@@ -14379,15 +14379,19 @@
 
 	            var NOT_IN_STRING = this.NOT_IN_LIST;
 
-	            var iIndices = [];
+	            var iHashIndices = [],
+	                iIndices = [],
+	                iTexCoords = [],
+	                iNormals = [];
 
 	            // Each map should refer to one point.
 
 	            parts.map(function (fs) {
 
-	                ///console.log("fs:" + fs)
+	                //console.log("fs:" + fs)
 
 	                // Split indices with and without normals and texture coordinates.
+	                // NOTE: need to RE-MAP TEXCOORDS AND NORMALS!!!!!
 
 	                if (fs.indexOf('//') !== NOT_IN_STRING) {
 	                    // No texture coordinates
@@ -14403,14 +14407,18 @@
 
 	                    idx = parseInt(idxs[0]) - 1;
 
-	                    texCoord = parseFloat(idx[1]) - 1;
+	                    texCoord = parseFloat(idxs[1]) - 1;
 
-	                    normal = parseFloat(idx[2]) - 1;
+	                    normal = parseFloat(idxs[2]) - 1;
+
+	                    ////console.log(idx, texCoord, normal)
 	                } else {
 	                    // Has indices only
 
 	                    idx = parseInt(fs) - 1;
 	                }
+
+	                //console.log(' iIndices:' + idx + ' texCoord:' + texCoord + ' normal:' + normal)
 
 	                // push indices, conditionally push texture coordinates and normals.
 
@@ -14418,9 +14426,11 @@
 
 	                if (Number.isFinite(texCoord)) texCoords.push(texCoord);
 
-	                //console.log('texCoord:' + texCoord)
+	                if (Number.isFinite(texCoord)) iTexCoords.push(texCoord); /// NEW!!!!!!!!!!!!!!!!!!  
 
 	                if (Number.isFinite(normal)) normals.push(normal);
+
+	                if (Number.isFinite(normal)) iNormals.push(normal); ///// NEW!!!!!!!!!!!!!!!!!
 	            });
 
 	            /* 
@@ -14431,7 +14441,32 @@
 	            if (iIndices.length > 3) {
 
 	                iIndices = this.computeFan(iIndices);
+
+	                iTexCoords = this.computeFan(iTexCoords);
+
+	                iNormals = this.computeFan(iNormals);
 	            }
+
+	            // TODO: have to do the same for the normals and texCoords
+
+	            /* 
+	             * Re-work texture and normal coordinates
+	             * https://github.com/frenchtoast747/webgl-obj-loader/blob/master/webgl-obj-loader.js
+	             * https://github.com/mrdoob/three.js/blob/master/examples/js/loaders/OBJLoader.js
+	             * http://k3d.ivank.net/?p=download
+	             * http://stackoverflow.com/questions/27231685/obj-file-loader-with-different-indices
+	             * Before you can process it in OpenGL you must expand the data in the .obj file. For each unique tuple of 
+	             * attributes introduce a new vertex with a new index and replace indexed attributes from the .obj with the indexed vertex OpenGL requires.
+	             * http://programminglinuxgames.blogspot.com/2010/03/wavefront-obj-file-format-opengl-vertex.html
+	             * If there are two vertices with the same position, but different normal, then they are different vertices! 
+	             * Wavefront OBJ files are a misnormer because they call positions "vertices" (they are not, they are just positions) 
+	             * and the face records index into "vertex" and "vertex normal" records (the proper names for the records would be 
+	             * "position record" and "normal record"). – datenwolf Sep 22 '16 at 6:54
+	             * verts = [vec3f, vec3f, ...]
+	             * norms = [vec3f, vec3f, ...]
+	             * uvs = [vec2f, vec2f, ...]
+	             * verts = [(vec3f, vec3f, vec2f), (vec3f, vec3f, vec2f), ...]
+	             */
 
 	            /* 
 	             * Concat without disturbing our array references (unlike Array.concat).
@@ -14535,6 +14570,8 @@
 	                            // texture uvs
 
 	                            if (!_this2.computeObj2d(data, texCoords, lineNum)) {
+
+	                                console.warn('3D texture encountered:' + data);
 
 	                                _this2.computeObj3d(data, texCoords, lineNum, 2);
 	                            }
@@ -17536,22 +17573,6 @@
 	            ['img/webvr-logo3.png'], // texture present, NOT USED
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0));
 
-	            // TODO: ANIMATION CLASS FOR PRIM IN UPDATEMV ROUTINE.
-
-	            // TODO: PRIM CONCATENATE SEVERAL PRIMS TOGETHER INTO ONE ARRAY??? CHECK HOW TO DO
-
-	            // NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
-
-	            // TODO: JSON FILE FOR PRIMS (loadable) use this.load(), this.save()
-
-	            // TODO: DEFAULT MINI WORLD IF NO JSON FILE (just a skybox and ground grid)
-
-	            // TODO: TEST REMOVING PRIM DURING RUNTIME
-
-	            // TODO: FADEIN/FADEOUT ANIMATION FOR PRIM
-
-	            // TODO: PRIM LIGHTING MODEL IN PRIM
-
 	            this.primFactory.createPrim(this.s2, // callback function
 	            typeList.MESH, 'teapot', vec5(1, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
 	            vec5(40, 40, 40), // divisions MAKE SMALLER
@@ -17774,7 +17795,35 @@
 	        // TODO: not implemented yet
 
 	        /** 
-	         * Update world.related properties, e.g. a HUD or framrate reado ut.
+	         * Update the World. Called occsionally.
+	         */
+
+	    }, {
+	        key: 'housekeep',
+	        value: function housekeep() {}
+
+	        // TODO: TEXTURE LOADING IN MODEL - wrong tcoords, or processing (RGB vs RGBA)
+
+	        // TODO: no bound texture in Shader - check
+
+	        // TODO: ANIMATION CLASS FOR PRIM IN UPDATEMV ROUTINE.
+
+	        // TODO: PRIM CONCATENATE SEVERAL PRIMS TOGETHER INTO ONE ARRAY??? CHECK HOW TO DO
+
+	        // NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
+
+	        // TODO: JSON FILE FOR PRIMS (loadable) use this.load(), this.save()
+
+	        // TODO: DEFAULT MINI WORLD IF NO JSON FILE (just a skybox and ground grid)
+
+	        // TODO: TEST REMOVING PRIM DURING RUNTIME
+
+	        // TODO: FADEIN/FADEOUT ANIMATION FOR PRIM
+
+	        // TODO: PRIM LIGHTING MODEL IN PRIM
+
+	        /** 
+	         * Update the World, called with each animation frame.
 	         */
 
 	    }, {

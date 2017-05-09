@@ -151,7 +151,7 @@ class ModelPool extends AssetPool {
 
         if ( uvs ) {
 
-            arr.push( parseFloat( uvs[ 1 ] ), parseFloat( uvs[ 3 ] ) );
+            arr.push( parseFloat( uvs[ 1 ] ), parseFloat( uvs[ 2 ] ) );
 
             return true;
 
@@ -189,7 +189,6 @@ class ModelPool extends AssetPool {
 
     }
 
-
     /** 
      * Extract index data from a string. At present, indexing of vertices, 
      * texture coordinates, normals is assumed to be the same, so only one 
@@ -208,15 +207,22 @@ class ModelPool extends AssetPool {
 
         let NOT_IN_STRING = this.NOT_IN_LIST;
 
-        let iIndices = [];
+        let iHashIndices = [],
+
+        iIndices = [],
+
+        iTexCoords = [],
+
+        iNormals = [];
 
         // Each map should refer to one point.
 
         parts.map( ( fs ) => {
 
-            ///console.log("fs:" + fs)
+            //console.log("fs:" + fs)
 
             // Split indices with and without normals and texture coordinates.
+            // NOTE: need to RE-MAP TEXCOORDS AND NORMALS!!!!!
 
             if ( fs.indexOf( '//' ) !== NOT_IN_STRING ) { // No texture coordinates
 
@@ -232,9 +238,11 @@ class ModelPool extends AssetPool {
 
                 idx = parseInt( idxs[ 0 ] ) - 1;
 
-                texCoord = parseFloat( idx[ 1 ] ) - 1;
+                texCoord = parseFloat( idxs[ 1 ] ) - 1;
 
-                normal = parseFloat( idx[ 2 ] ) - 1;
+                normal = parseFloat( idxs[ 2 ] ) - 1;
+
+                ////console.log(idx, texCoord, normal)
 
             } else { // Has indices only
 
@@ -242,15 +250,20 @@ class ModelPool extends AssetPool {
 
             }
 
+
+            //console.log(' iIndices:' + idx + ' texCoord:' + texCoord + ' normal:' + normal)
+
             // push indices, conditionally push texture coordinates and normals.
 
             if ( Number.isFinite( idx ) ) iIndices.push( idx );
 
             if ( Number.isFinite( texCoord ) ) texCoords.push( texCoord );
 
-            //console.log('texCoord:' + texCoord)
+            if ( Number.isFinite( texCoord ) ) iTexCoords.push( texCoord ); /// NEW!!!!!!!!!!!!!!!!!!  
 
             if ( Number.isFinite( normal ) ) normals.push( normal );
+
+            if ( Number.isFinite( normal ) ) iNormals.push( normal ); ///// NEW!!!!!!!!!!!!!!!!!
 
         } );
 
@@ -263,7 +276,34 @@ class ModelPool extends AssetPool {
 
             iIndices = this.computeFan( iIndices );
 
+            iTexCoords = this.computeFan( iTexCoords );
+
+            iNormals = this.computeFan( iNormals );
+
         }
+
+        // TODO: have to do the same for the normals and texCoords
+
+        /* 
+         * Re-work texture and normal coordinates
+         * https://github.com/frenchtoast747/webgl-obj-loader/blob/master/webgl-obj-loader.js
+         * https://github.com/mrdoob/three.js/blob/master/examples/js/loaders/OBJLoader.js
+         * http://k3d.ivank.net/?p=download
+         * http://stackoverflow.com/questions/27231685/obj-file-loader-with-different-indices
+         * Before you can process it in OpenGL you must expand the data in the .obj file. For each unique tuple of 
+         * attributes introduce a new vertex with a new index and replace indexed attributes from the .obj with the indexed vertex OpenGL requires.
+         * http://programminglinuxgames.blogspot.com/2010/03/wavefront-obj-file-format-opengl-vertex.html
+         * If there are two vertices with the same position, but different normal, then they are different vertices! 
+         * Wavefront OBJ files are a misnormer because they call positions "vertices" (they are not, they are just positions) 
+         * and the face records index into "vertex" and "vertex normal" records (the proper names for the records would be 
+         * "position record" and "normal record"). – datenwolf Sep 22 '16 at 6:54
+         * verts = [vec3f, vec3f, ...]
+         * norms = [vec3f, vec3f, ...]
+         * uvs = [vec2f, vec2f, ...]
+         * verts = [(vec3f, vec3f, vec2f), (vec3f, vec3f, vec2f), ...]
+         */
+
+
 
         /* 
          * Concat without disturbing our array references (unlike Array.concat).
@@ -369,6 +409,8 @@ class ModelPool extends AssetPool {
                     case 'vt': // texture uvs
 
                         if ( ! this.computeObj2d( data, texCoords, lineNum ) ) {
+
+                            console.warn( '3D texture encountered:'+ data );
 
                             this.computeObj3d( data, texCoords, lineNum, 2 );
 

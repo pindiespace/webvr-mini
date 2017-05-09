@@ -530,22 +530,6 @@ class World extends AssetPool {
 
             );
 
-// TODO: ANIMATION CLASS FOR PRIM IN UPDATEMV ROUTINE.
-
-// TODO: PRIM CONCATENATE SEVERAL PRIMS TOGETHER INTO ONE ARRAY??? CHECK HOW TO DO
-
-// NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
-
-// TODO: JSON FILE FOR PRIMS (loadable) use this.load(), this.save()
-
-// TODO: DEFAULT MINI WORLD IF NO JSON FILE (just a skybox and ground grid)
-
-// TODO: TEST REMOVING PRIM DURING RUNTIME
-
-// TODO: FADEIN/FADEOUT ANIMATION FOR PRIM
-
-// TODO: PRIM LIGHTING MODEL IN PRIM
-
             this.primFactory.createPrim(
 
                 this.s2,                               // callback function
@@ -821,7 +805,34 @@ class World extends AssetPool {
     }
 
     /** 
-     * Update world.related properties, e.g. a HUD or framrate reado ut.
+     * Update the World. Called occsionally.
+     */
+    housekeep () {
+
+// TODO: TEXTURE LOADING IN MODEL - wrong tcoords, or processing (RGB vs RGBA)
+
+// TODO: no bound texture in Shader - check
+
+// TODO: ANIMATION CLASS FOR PRIM IN UPDATEMV ROUTINE.
+
+// TODO: PRIM CONCATENATE SEVERAL PRIMS TOGETHER INTO ONE ARRAY??? CHECK HOW TO DO
+
+// NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
+
+// TODO: JSON FILE FOR PRIMS (loadable) use this.load(), this.save()
+
+// TODO: DEFAULT MINI WORLD IF NO JSON FILE (just a skybox and ground grid)
+
+// TODO: TEST REMOVING PRIM DURING RUNTIME
+
+// TODO: FADEIN/FADEOUT ANIMATION FOR PRIM
+
+// TODO: PRIM LIGHTING MODEL IN PRIM
+
+    }
+
+    /** 
+     * Update the World, called with each animation frame.
      */
     update () {
 
