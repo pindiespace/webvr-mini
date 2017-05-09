@@ -2847,7 +2847,7 @@ class GeometryPool {
 
         createUV( vertices, texCoords );
 
-        console.log(" ICOSPHERE VERTICES: " + vertices.length + " texCoords:" + texCoords.length)
+        ////////////console.log(" ICOSPHERE VERTICES: " + vertices.length + " texCoords:" + texCoords.length)
 
         // Scale if necessary.
 
@@ -3092,7 +3092,7 @@ class GeometryPool {
             return t;
         }
 
-        console.log("ICOSPHERE: vertices:" + vertices.length + " TANGENTS:" + tangents.length);
+        /////////////console.log("ICOSPHERE: vertices:" + vertices.length + " TANGENTS:" + tangents.length);
 
         // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
@@ -3668,7 +3668,7 @@ class GeometryPool {
 
                         // Load geometry from a file, with callback emitter GEOMETRY_READY in ModelPool, calling Prim.initPrim().
 
-                        console.log( 'GeometryPool::getGeometries(): new model file ' + path + ' for ' + prim.name );
+                        ///////console.log( 'GeometryPool::getGeometries(): new model file ' + path + ' for ' + prim.name );
 
                         this.modelPool.getModels( prim, pathList, true );
 
@@ -3700,7 +3700,7 @@ class GeometryPool {
              * }
              */
 
-            console.log( 'GeometryPool::getGeometries() new procedural geometry for:' + prim.name );
+            /////////////console.log( 'GeometryPool::getGeometries() new procedural geometry for:' + prim.name );
 
             let m = this.modelPool.addAsset( this[ prim.type ]( prim ) );
 

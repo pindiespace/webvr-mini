@@ -489,7 +489,7 @@ class Mesh {
 
         this.geometryToVertex( this.geo.vertices.data, this.geo.indices.data, this.geo.texCoords.data );
 
-        console.log( 'created Mesh for ' + prim.name );
+        //////////console.log( 'created Mesh for ' + prim.name );
 
     }
 
@@ -995,7 +995,7 @@ class Mesh {
 
         // Compute Faces and Edges (hash back to Vertices).
 
-        console.log( 'Mesh::subdivide(): ' + this.prim.name + ' beginning subdivision, ' + this.iterations + ', starting size:' + this.oldVertexArr.length );
+        ////////console.log( 'Mesh::subdivide(): ' + this.prim.name + ' beginning subdivision, ' + this.iterations + ', starting size:' + this.oldVertexArr.length );
 
         this.computeFaces();
 
@@ -1329,7 +1329,7 @@ class Mesh {
 
         this.vertexArr = this.computeVertices( vertices, texCoords, colors );
 
-        console.log( 'Mesh::geometryToVertex(): numVertices:' + this.vertexArr.length + ' numIndices:' + this.indexArr.length );
+        ////////console.log( 'Mesh::geometryToVertex(): numVertices:' + this.vertexArr.length + ' numIndices:' + this.indexArr.length );
 
         return this.isValid();
 

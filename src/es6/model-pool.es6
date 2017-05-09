@@ -392,7 +392,7 @@ class ModelPool extends AssetPool {
 
                     case 'usemtl': // use material (by name, loaded as .mtl file elsewhere)
 
-                        console.log("::::::::::::GOTTA USEMTL in OBJ file: " + data + ' at:' + indices.length );
+                        //////////////console.log("::::::::::::GOTTA USEMTL in OBJ file: " + data + ' at:' + indices.length );
 
                         if ( ! materials[ data ] ) {
 
@@ -475,7 +475,7 @@ class ModelPool extends AssetPool {
 
         // NOTE: Colors and tangents are not part of the Wavefront .obj format
 
-        console.log("ModelPool::computeObjMesh(): v:" + (vertices.length /3) + " i:" + (indices.length /3 )+ " t:" + (texCoords.length /2) + " n:" + (normals.length /3))
+        //////////console.log("ModelPool::computeObjMesh(): v:" + (vertices.length /3) + " i:" + (indices.length /3 )+ " t:" + (texCoords.length /2) + " n:" + (normals.length /3))
 
         // Model object format.
 

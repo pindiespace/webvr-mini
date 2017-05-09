@@ -180,23 +180,13 @@ class PrimFactory {
 
             ( prim ) => {
 
-                console.log( 'PRIM_ADDED_TO_SHADER:' + prim.name );
+                //////console.log( 'PrimFactory::constructor():' + prim.name + ' added to Shader ' + prim.shader.name );
 
                 // post-addition events.
 
-                //if ( prim.name === 'cubespheretransparent' ) {
-                //if ( prim.name !== 'teapot' && prim.name !== 'colored cube' ) {
-                //if ( prim.defaultShader.name == 'shaderColor') {
+                prim.alpha = 0.0;
 
-                    // TODO: teapot doesn't draw!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-                    console.warn('cubetrans set to fade....')
-
-                    prim.alpha = 0.0;
-
-                    prim.setFade( 0, 1 );
-
-                //}
+                prim.setFade( 0, 1 );
 
         } );
 
@@ -267,12 +257,12 @@ class PrimFactory {
 
             let tex = material[ textureObj.textureUse ];
 
-            console.log( 'PrimFactory::initPrimTexture():finding texture for:' + material.name + ' to:' + prim.name );
-            console.log( 'TEX:' + tex + ' instanceof WebGLTexture:' + ( tex instanceof WebGLTexture) )
+            //////////console.log( 'PrimFactory::initPrimTexture():finding texture for:' + material.name + ' to:' + prim.name );
+            ////////console.log( 'TEX:' + tex + ' instanceof WebGLTexture:' + ( tex instanceof WebGLTexture) )
 
             if ( ! ( tex instanceof WebGLTexture ) ) {
 
-                console.log( 'PrimFactory::initPrimTexture():matching texture ' + material.name + ' to:' + prim.name );
+                //////////console.log( 'PrimFactory::initPrimTexture():matching texture ' + material.name + ' to:' + prim.name );
 
                 material[ textureObj.textureUse ] = textureObj.texture;
 
@@ -320,13 +310,13 @@ class PrimFactory {
 
         if ( prim.materials[ materialName ] ) {
 
-            console.log('initPrimMaterial():found existing material ' + materialName + ' with start:' + prim.materials[ materialName ].starts )
+            ///////console.log('initPrimMaterial():found existing material ' + materialName + ' with start:' + prim.materials[ materialName ].starts )
 
             material.starts = prim.materials[ materialName ].starts;
 
         }
 
-        console.log( 'initPrimMaterial():adding material:' + materialName + ' for prim:' + prim.name )
+        ///////////console.log( 'initPrimMaterial():adding material:' + materialName + ' for prim:' + prim.name )
 
         prim.materials[ materialName ] = material;
 
@@ -342,14 +332,14 @@ class PrimFactory {
 
             let key = this.materialPool.texturePositions[ i ];
 
-            console.log( 'PrimFactory::initPrimMaterial(): material texture ' + i + ' for prim:' + prim.name + ' present...' );
-            console.log( 'PRIM.TEXTURES LENGTH IS A:' + prim.textures.length )
+            ////////console.log( 'PrimFactory::initPrimMaterial(): material texture ' + i + ' for prim:' + prim.name + ' present...' );
+            ////////console.log( 'PRIM.TEXTURES LENGTH IS A:' + prim.textures.length )
 
             for ( let  j = 0; j < prim.textures.length; j++ ) {
 
                 if ( prim.textures[ j ][ i ] && ( prim.textures[ j ][ i ].texture instanceof WebGLTexture ) ) {
 
-                    console.log( 'PrimFactory::initPrimMaterial(): matching material:' + material.name + ' texture type:' + i + ' with prim.textures:' + j );
+                    ////////console.log( 'PrimFactory::initPrimMaterial(): matching material:' + material.name + ' texture type:' + i + ' with prim.textures:' + j );
 
                     material[ i ] = prim.textures[ j ][ i ].texture;
 
@@ -385,11 +375,11 @@ class PrimFactory {
          * Their value is their start in coords.vertices.
          */
 
-       if ( coords.material ) console.log('coords.material found for:' + prim.name + ' mat:' + coords.material)
+       /////////////if ( coords.material ) console.log('coords.material found for:' + prim.name + ' mat:' + coords.material)
 
          if ( coords.options ) {
 
-            console.log("initPrimGeometry():COORDS.options:" + coords.options + ' for:' + prim.name)
+            /////////console.log("initPrimGeometry():COORDS.options:" + coords.options + ' for:' + prim.name)
 
             for ( var i in coords.options.materials ) {
 
@@ -410,7 +400,7 @@ class PrimFactory {
 
                 // Add the start position for this material.
 
-                console.log( "initPrimGeometry():coords options.materials[" + i + "]: adding start:" + coords.options.materials[i] )
+                /////////console.log( "initPrimGeometry():coords options.materials[" + i + "]: adding start:" + coords.options.materials[i] )
 
                 prim.materials[ i ].starts = coords.options.materials[ i ];
 
@@ -439,11 +429,6 @@ class PrimFactory {
          *
          */
 
-        // TODO: compute scale using supplied Prim.createPrim coordinates.
-        // TODO:
-
-        // prim.scale = 0.01;
-
         let scale =  prim.dimensions[ 0 ] / prim.boundingBox.dimensions[ 0 ];
 
         scale = Math.max( scale, prim.dimensions[ 1 ] / prim.boundingBox.dimensions[ 1 ] );
@@ -451,12 +436,6 @@ class PrimFactory {
         scale = Math.max( prim.dimensions[ 2 ] / prim.boundingBox.dimensions[ 2 ] );
 
         prim.scale = [ scale, scale, scale ];
-
-        if ( scale != 1 ) {
-
-            console.log('scale for prim:' + prim.name + " scale:" + scale )
-
-        }
 
         // Update indices if they were supplied.
 
@@ -493,7 +472,7 @@ class PrimFactory {
 
             // SUBDIVIDE TEST
 
-            mesh.subdivide( true );
+            //mesh.subdivide( true );
             //mesh.subdivide( true );
             //mesh.subdivide( true );
             //mesh.subdivide( true );
@@ -691,7 +670,7 @@ class PrimFactory {
 
             } else {
 
-                console.log("Prim::updateNormals():" + p.name + ' recalculating normal coordinates' );
+                //////////console.log("Prim::updateNormals():" + p.name + ' recalculating normal coordinates' );
 
                 geo.setNormals( this.geometryPool.computeNormals( geo.vertices.data, geo.indices.data, [], p.useFaceNormals ) );
 
@@ -711,7 +690,7 @@ class PrimFactory {
 
             } else if ( geo.numTexCoords() !== geo.numVertices() ) {
 
-                console.log("Prim::updateTexCoords():" + p.name + ' recalculating texture coordinates' );
+                //////////console.log("Prim::updateTexCoords():" + p.name + ' recalculating texture coordinates' );
 
                 geo.setTexCoords( this.geometryPool.computeTexCoords( geo.vertices.data ) );
 
@@ -731,7 +710,7 @@ class PrimFactory {
 
             } else {
 
-                console.log("Prim::updateTangents():" + p.name + ' recalculating tangent coordinates' );
+                /////////console.log("Prim::updateTangents():" + p.name + ' recalculating tangent coordinates' );
 
                 geo.setTangents( this.geometryPool.computeTangents ( geo.vertices.data, geo.indices.data, geo.normals.data, geo.texCoords.data, [] ) );
 
@@ -751,7 +730,7 @@ class PrimFactory {
 
             } else {
 
-                console.log("Prim::updateColors():" + p.name + ' recalculating color coordinates' );
+                ////////console.log("Prim::updateColors():" + p.name + ' recalculating color coordinates' );
 
                 geo.setColors( this.geometryPool.computeColors( geo.normals.data, [] ) );
 
@@ -827,13 +806,15 @@ class PrimFactory {
 
             // Save our current Shader as a default (swapped back by s0).
 
-            prim.defaultShader = prim.shader;
+            if ( prim.shader !== this.world.s0 ) {
 
-            // Move the Prim WITHOUT emitting  Prim add/remove event.
+                prim.defaultShader = prim.shader;
 
-            prim.shader.movePrim( prim, this.world.s0 );
+                // Move the Prim WITHOUT emitting a Prim add/remove event.
 
-            // TODO: DIFFERENT NAME this.world['shaderFader'] ????
+                prim.shader.movePrim( prim, this.world.s0 );
+              
+            }
 
         }
 

@@ -77,7 +77,7 @@ class ShaderPool {
 
         if ( ! this.shaderList[ shader.name ] ) {
 
-            console.log( 'ShaderPool::addShader(): adding ' + shader.name + ' to rendering list' );
+            ////////console.log( 'ShaderPool::addShader(): adding ' + shader.name + ' to rendering list' );
 
             this.shaderList[ shader.name ] = shader;
 

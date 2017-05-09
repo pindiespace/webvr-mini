@@ -95,6 +95,8 @@ class ShaderFader extends Shader {
 
             '    vColor = aVertexColor;',
 
+            // Conditionals slow this down, but typically there won't be a lot of fading Prims.
+
             '   if(!uUseLighting) {',
 
             '       vLightWeighting = vec3(1.0, 1.0, 1.0);',
@@ -358,7 +360,10 @@ class ShaderFader extends Shader {
 
                 gl.uniform1f( fsVars.uniform.float.uAlpha, alpha );
 
-                if ( prim.defaultShader.required.textures > 0 ) {
+                // TODO: PICK UP CASE WHERE TRYING TO ASSIGN SHADER TO ITSELF!!!!!!!!!!!
+                // WHY REQUIRED TEXTURES
+
+                if ( prim.defaultShader.required.textures > 0 && prim.textures[ 0 ] && prim.textures[ 0 ].texture ) {
 
                     gl.uniform1i( fsVars.uniform.bool.uUseColor, 0 );
                     gl.uniform1i( fsVars.uniform.bool.uUseTexture, 1 );
@@ -454,12 +459,12 @@ class ShaderFader extends Shader {
 
                 }
 
-                // NOTE: since we bound BOTH texture and color arrays, we MUST clear them both!
+                // NOTE: since we bound BOTH texture and color arrays (and some Prims don't have both), we should clear them both!
 
                 gl.bindBuffer( gl.ARRAY_BUFFER, null );
-                gl.disableVertexAttribArray( vsVars.attribute.vec3.aVertexNormal );
                 gl.disableVertexAttribArray( vsVars.attribute.vec2.aTextureCoord );
-                gl.disableVertexAttribArray( vsVars.attribute.vec4.aVertexColor );              
+                gl.disableVertexAttribArray( vsVars.attribute.vec4.aVertexColor );
+                gl.disableVertexAttribArray( vsVars.attribute.vec3.aVertexNormal );
 
                 // Copy back the original for the next Prim. 
 

@@ -133,11 +133,19 @@ var promise = new Promise( ( resolve, reject ) => {
 
         // Define the default Shaders used by this app.
 
+        // REQUIRED Shader, used for fadeins on Prim creation.
+
         shaderPool.addShader( new ShaderFader ( true, util, glMatrix, webgl, webvr, 'shaderFader', light ) );
+
+        // Basic one-texture Shader, without lighting.
 
         shaderPool.addShader( new ShaderTexture( true, util, glMatrix, webgl, webvr, 'shaderTexture' ) );
 
+        // Basic color array Shader, without lighting.
+
         shaderPool.addShader( new ShaderColor( true, util, glMatrix, webgl, webvr, 'shaderColor' ) );
+
+        // One texture Shader with directional lighting.
 
         shaderPool.addShader( new shaderDirLightTexture( true, util, glMatrix, webgl, webvr, 'shaderDirLightTexture', light ) );
 

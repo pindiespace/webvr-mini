@@ -129,7 +129,7 @@ class MaterialPool extends AssetPool {
 
         let options = {};
 
-         console.log('computeTextureMapOptions data:' + data + ' length:' + data.length )
+         ///////console.log('computeTextureMapOptions data:' + data + ' length:' + data.length )
 
         // If there there are no options, return an empty object.
 
@@ -139,7 +139,7 @@ class MaterialPool extends AssetPool {
 
         }
 
-        console.log('...analyzing TextureMapOptions:' + data);
+        ///////console.log('...analyzing TextureMapOptions:' + data);
 
         /* 
          * Texturemap format:
@@ -164,7 +164,7 @@ class MaterialPool extends AssetPool {
 
             if ( ppp.length > 1 ) {
 
-                console.log( 'ppp[0]:' + ppp[0] )
+                ////////console.log( 'ppp[0]:' + ppp[0] )
 
                 let d = ppp[ 0 ],
 
@@ -273,7 +273,7 @@ class MaterialPool extends AssetPool {
      */
     computeObjMaterials ( data, prim, path ) {
 
-        console.log( 'MaterialPool::computeObjMaterials(): loading model:' + path + ' for:' + prim.name );
+        ////////console.log( 'MaterialPool::computeObjMaterials(): loading model:' + path + ' for:' + prim.name );
 
         let lineNum = 0;
 
@@ -556,7 +556,7 @@ class MaterialPool extends AssetPool {
 
                         let tPath = data[ data.length - 1 ].trim();
 
-                        console.log('path:' + path + ' data:' + data + ' tPath:' + tPath)
+                        //////////console.log('path:' + path + ' data:' + data + ' tPath:' + tPath)
 
                         if ( currName ) { // if not, file is corrupt.
 
@@ -658,7 +658,7 @@ class MaterialPool extends AssetPool {
 
             case 'mtl':
 
-                console.log("MTL file for prim:" + prim.name + " loaded, parsing....")
+                /////////////console.log("MTL file for prim:" + prim.name + " loaded, parsing....")
 
                 // Returns an array with one or more materials.
 
@@ -688,7 +688,7 @@ class MaterialPool extends AssetPool {
 
                 mi.emits = this.util.emitter.events.MATERIAL_READY;
 
-                console.log("MaterialPool::addMaterial(): adding:" + mi.name + " to Prim:" + prim.name )
+                ///////////console.log("MaterialPool::addMaterial(): adding:" + mi.name + " to Prim:" + prim.name )
 
                 this.addAsset( mi );
 
@@ -767,7 +767,7 @@ class MaterialPool extends AssetPool {
 
                                         for ( let i in materialObj ) {
 
-                                            console.log("MaterialPool sending:" + materialObj[ i ].emits + ' key:' + materialObj[ i ].key + ' i:' + i )
+                                            ////////////console.log("MaterialPool sending:" + materialObj[ i ].emits + ' key:' + materialObj[ i ].key + ' i:' + i )
 
                                             // Note that 'i' is the name of the material, instead of a numerical index (which it is in ModelPool and TexturePool).
 

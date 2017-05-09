@@ -733,8 +733,6 @@ class World extends AssetPool {
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
 
             ); 
-
-
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     window.prims = this.primFactory.prims;
@@ -877,7 +875,7 @@ class World extends AssetPool {
 
             this.r1.renderVR( vr, display, frameData );  // textured, no lighting
 
-            this.r0.renderVR( vr, display, frameData );  // alpha (Prim appearing or disappearing), drawn in front
+            this.r0.renderVR( vr, display, frameData );  // REQUIRED alpha (Prim appearing or disappearing), drawn in front
 
             display.submitFrame();
 
@@ -893,7 +891,7 @@ class World extends AssetPool {
 
             this.r1.renderMono(); // textured, no lighting
 
-            this.r0.renderMono(); // alpha (Prim appearing or disappearing), drawn in front
+            this.r0.renderMono(); // REQUIRED alpha (Prim appearing or disappearing), drawn in front
 
             requestAnimationFrame( this.render );
 

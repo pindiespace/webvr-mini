@@ -156,13 +156,13 @@ class AssetPool {
 
                     if ( this.keyList[ key ] === obj ) {
 
-                        console.warn( 'AssetPool::addAsset(): asset ' + key + ' already added to pool' );
+                        ///////////console.warn( 'AssetPool::addAsset(): asset ' + key + ' already added to pool' );
 
                         return obj;
 
                     } else {
 
-                        console.warn( 'AssetPool::addAsset(): replacing asset at key:' + key );
+                        /////////console.warn( 'AssetPool::addAsset(): replacing asset at key:' + key );
 
                     }
 
@@ -174,7 +174,7 @@ class AssetPool {
 
                 // Undefined path ok for procedural geometry.
 
-                console.log( '^^ adding obj:' + obj.key + ' path:' + obj.path );
+                ///////////console.log( '^^ adding obj:' + obj.key + ' path:' + obj.path );
 
                 // Add the key to the object, just added to the AssetPool
 

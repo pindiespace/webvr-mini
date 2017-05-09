@@ -224,11 +224,19 @@
 
 	        // Define the default Shaders used by this app.
 
+	        // REQUIRED Shader, used for fadeins on Prim creation.
+
 	        shaderPool.addShader(new _shaderFader2.default(true, util, glMatrix, webgl, webvr, 'shaderFader', light));
+
+	        // Basic one-texture Shader, without lighting.
 
 	        shaderPool.addShader(new _shaderTexture2.default(true, util, glMatrix, webgl, webvr, 'shaderTexture'));
 
+	        // Basic color array Shader, without lighting.
+
 	        shaderPool.addShader(new _shaderColor2.default(true, util, glMatrix, webgl, webvr, 'shaderColor'));
+
+	        // One texture Shader with directional lighting.
 
 	        shaderPool.addShader(new _shaderDirlightTexture2.default(true, util, glMatrix, webgl, webvr, 'shaderDirLightTexture', light));
 
@@ -4423,7 +4431,11 @@
 
 	            // passed to fragment shader
 
-	            'varying vec2 vTextureCoord;', 'varying vec3 vLightWeighting;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vTextureCoord = aTextureCoord;', '    vColor = aVertexColor;', '   if(!uUseLighting) {', '       vLightWeighting = vec3(1.0, 1.0, 1.0);', '   } else {', '       vec3 transformedNormal = uNMatrix * aVertexNormal;', '       float directionalLightWeighting = max(dot(transformedNormal, uLightingDirection), 0.0);', '       vLightWeighting = uAmbientColor + uDirectionalColor * directionalLightWeighting;', '   }', '}'];
+	            'varying vec2 vTextureCoord;', 'varying vec3 vLightWeighting;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vTextureCoord = aTextureCoord;', '    vColor = aVertexColor;',
+
+	            // Conditionals slow this down, but typically there won't be a lot of fading Prims.
+
+	            '   if(!uUseLighting) {', '       vLightWeighting = vec3(1.0, 1.0, 1.0);', '   } else {', '       vec3 transformedNormal = uNMatrix * aVertexNormal;', '       float directionalLightWeighting = max(dot(transformedNormal, uLightingDirection), 0.0);', '       vLightWeighting = uAmbientColor + uDirectionalColor * directionalLightWeighting;', '   }', '}'];
 
 	            return {
 
@@ -4628,7 +4640,10 @@
 
 	                    gl.uniform1f(fsVars.uniform.float.uAlpha, alpha);
 
-	                    if (prim.defaultShader.required.textures > 0) {
+	                    // TODO: PICK UP CASE WHERE TRYING TO ASSIGN SHADER TO ITSELF!!!!!!!!!!!
+	                    // WHY REQUIRED TEXTURES
+
+	                    if (prim.defaultShader.required.textures > 0 && prim.textures[0] && prim.textures[0].texture) {
 
 	                        gl.uniform1i(fsVars.uniform.bool.uUseColor, 0);
 	                        gl.uniform1i(fsVars.uniform.bool.uUseTexture, 1);
@@ -4704,12 +4719,12 @@
 	                        gl.drawElements(gl.TRIANGLES, prim.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
 	                    }
 
-	                    // NOTE: since we bound BOTH texture and color arrays, we MUST clear them both!
+	                    // NOTE: since we bound BOTH texture and color arrays (and some Prims don't have both), we should clear them both!
 
 	                    gl.bindBuffer(gl.ARRAY_BUFFER, null);
-	                    gl.disableVertexAttribArray(vsVars.attribute.vec3.aVertexNormal);
 	                    gl.disableVertexAttribArray(vsVars.attribute.vec2.aTextureCoord);
 	                    gl.disableVertexAttribArray(vsVars.attribute.vec4.aVertexColor);
+	                    gl.disableVertexAttribArray(vsVars.attribute.vec3.aVertexNormal);
 
 	                    // Copy back the original for the next Prim. 
 
@@ -4801,7 +4816,7 @@
 
 	        if (lights) {
 
-	            console.log("ADDING LIGHT TO SHADER:" + this.name);
+	            /////////////console.log("ADDING LIGHT TO SHADER:" + this.name )
 
 	            this.lights = lights;
 	        }
@@ -4895,7 +4910,7 @@
 
 	                if (this.primInList(prim) === this.NOT_IN_LIST) {
 
-	                    console.warn('Shader::addPrim():prim:' + prim.name + ' not in list, adding to Shader::' + this.name);
+	                    //////////console.warn( 'Shader::addPrim():prim:'  + prim.name + ' not in list, adding to Shader::' + this.name );
 
 	                    // Add the Prim to the Shader program's renderList. If a nulled position is present, use it.
 
@@ -4903,12 +4918,12 @@
 
 	                    if (pos !== this.NOT_IN_LIST) {
 
-	                        console.log('Shader::addPrim():filling NULL with:' + prim.name + ' to:' + this.name);
+	                        ///////////console.log( 'Shader::addPrim():filling NULL with:' + prim.name + ' to:' + this.name );
 
 	                        this.program.renderList[pos] = prim;
 	                    } else {
 
-	                        console.log('Shader::addPrim():appending prim:' + prim.name + ' to:' + this.name);
+	                        //////////console.log( 'Shader::addPrim():appending prim:' + prim.name + ' to:' + this.name )
 
 	                        this.program.renderList.push(prim);
 	                    }
@@ -4922,7 +4937,7 @@
 
 	                    if (prim.shader && prim.shader !== this) {
 
-	                        console.log('Shader::addPrim(): removing prim:' + prim.name + ' from old Shader:' + prim.shader.name);
+	                        /////////console.log( 'Shader::addPrim(): removing prim:' + prim.name + ' from old Shader:' + prim.shader.name)
 
 	                        prim.shader.removePrim(prim, emit);
 	                    }
@@ -4947,7 +4962,8 @@
 
 	                //TODO: REMOVE THIS OPTION:
 
-	                console.log('Shader::addPrim():' + prim.name + ' did not pass Shader test for ' + this.name);
+	                //////////console.log( 'Shader::addPrim():' + prim.name + ' did not pass Shader test for ' + this.name )
+
 	            }
 
 	            return false;
@@ -4972,11 +4988,15 @@
 
 	                // Remove a Prim from the Shader program's renderList (still in PrimList and World).
 
-	                console.warn('Shader::removePrim():removing prim:' + prim.name);
+	                ///////////console.warn( 'Shader::removePrim():removing prim:' + prim.name );
 
 	                //////////////////////this.program.renderList.splice( pos, 1 );
 
 	                this.program.renderList[pos] = null;
+
+	                // TODO:
+	                // TODO: null at the end of the redraw, then callback to switch the Prim.
+	                // TODO:
 
 	                // Emit a Prim removal event.
 
@@ -5010,7 +5030,7 @@
 	                 * NOTE: emit MUST be false to prevent a race condition.
 	                 */
 
-	                console.log("Shader::movePrim():" + prim.name);
+	                //////////console.log("Shader::movePrim():" + prim.name )
 
 	                return newShader.addPrim(prim, false);
 	            }
@@ -5605,6 +5625,11 @@
 
 	                    mat4.copy(MVM, saveMV, MVM);
 	                } // end of renderList for Prims
+
+	                // Disable buffers that might cause problems in another Prim.
+
+	                gl.bindBuffer(gl.ARRAY_BUFFER, null);
+	                gl.disableVertexAttribArray(vsVars.attribute.vec2.aTextureCoord);
 	            }; // end of program.render()
 
 	            return program;
@@ -5855,6 +5880,11 @@
 
 	                    mat4.copy(MVM, saveMV, MVM);
 	                } // end of renderList for Prims
+
+	                // Disable buffers that might cause problems in another Shader.
+
+	                gl.bindBuffer(gl.ARRAY_BUFFER, null);
+	                gl.disableVertexAttribArray(vsVars.attribute.vec4.aVertexColor);
 	            }; // end of program.render()
 
 	            return program;
@@ -6152,6 +6182,12 @@
 
 	                    mat4.copy(MVM, saveMV, MVM);
 	                } // end of renderList for Prims
+
+	                // Disable buffers that might cause problems in another Prim.
+
+	                gl.bindBuffer(gl.ARRAY_BUFFER, null);
+	                gl.disableVertexAttribArray(vsVars.attribute.vec3.aVertexNormal);
+	                gl.disableVertexAttribArray(vsVars.attribute.vec2.aTextureCoord);
 	            }; // end of program.render()
 
 	            return program;
@@ -6947,7 +6983,7 @@
 
 	            if (!this.shaderList[shader.name]) {
 
-	                console.log('ShaderPool::addShader(): adding ' + shader.name + ' to rendering list');
+	                ////////console.log( 'ShaderPool::addShader(): adding ' + shader.name + ' to rendering list' );
 
 	                this.shaderList[shader.name] = shader;
 
@@ -7237,23 +7273,13 @@
 
 	        this.util.emitter.on(this.util.emitter.events.PRIM_ADDED_TO_SHADER, function (prim) {
 
-	            console.log('PRIM_ADDED_TO_SHADER:' + prim.name);
+	            //////console.log( 'PrimFactory::constructor():' + prim.name + ' added to Shader ' + prim.shader.name );
 
 	            // post-addition events.
-
-	            //if ( prim.name === 'cubespheretransparent' ) {
-	            //if ( prim.name !== 'teapot' && prim.name !== 'colored cube' ) {
-	            //if ( prim.defaultShader.name == 'shaderColor') {
-
-	            // TODO: teapot doesn't draw!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-	            console.warn('cubetrans set to fade....');
 
 	            prim.alpha = 0.0;
 
 	            prim.setFade(0, 1);
-
-	            //}
 	        });
 	    } // end of constructor
 
@@ -7328,12 +7354,12 @@
 
 	                var tex = material[textureObj.textureUse];
 
-	                console.log('PrimFactory::initPrimTexture():finding texture for:' + material.name + ' to:' + prim.name);
-	                console.log('TEX:' + tex + ' instanceof WebGLTexture:' + (tex instanceof WebGLTexture));
+	                //////////console.log( 'PrimFactory::initPrimTexture():finding texture for:' + material.name + ' to:' + prim.name );
+	                ////////console.log( 'TEX:' + tex + ' instanceof WebGLTexture:' + ( tex instanceof WebGLTexture) )
 
 	                if (!(tex instanceof WebGLTexture)) {
 
-	                    console.log('PrimFactory::initPrimTexture():matching texture ' + material.name + ' to:' + prim.name);
+	                    //////////console.log( 'PrimFactory::initPrimTexture():matching texture ' + material.name + ' to:' + prim.name );
 
 	                    material[textureObj.textureUse] = textureObj.texture;
 	                }
@@ -7385,12 +7411,12 @@
 
 	            if (prim.materials[materialName]) {
 
-	                console.log('initPrimMaterial():found existing material ' + materialName + ' with start:' + prim.materials[materialName].starts);
+	                ///////console.log('initPrimMaterial():found existing material ' + materialName + ' with start:' + prim.materials[ materialName ].starts )
 
 	                material.starts = prim.materials[materialName].starts;
 	            }
 
-	            console.log('initPrimMaterial():adding material:' + materialName + ' for prim:' + prim.name);
+	            ///////////console.log( 'initPrimMaterial():adding material:' + materialName + ' for prim:' + prim.name )
 
 	            prim.materials[materialName] = material;
 
@@ -7406,14 +7432,14 @@
 
 	                var key = this.materialPool.texturePositions[i];
 
-	                console.log('PrimFactory::initPrimMaterial(): material texture ' + i + ' for prim:' + prim.name + ' present...');
-	                console.log('PRIM.TEXTURES LENGTH IS A:' + prim.textures.length);
+	                ////////console.log( 'PrimFactory::initPrimMaterial(): material texture ' + i + ' for prim:' + prim.name + ' present...' );
+	                ////////console.log( 'PRIM.TEXTURES LENGTH IS A:' + prim.textures.length )
 
 	                for (var j = 0; j < prim.textures.length; j++) {
 
 	                    if (prim.textures[j][i] && prim.textures[j][i].texture instanceof WebGLTexture) {
 
-	                        console.log('PrimFactory::initPrimMaterial(): matching material:' + material.name + ' texture type:' + i + ' with prim.textures:' + j);
+	                        ////////console.log( 'PrimFactory::initPrimMaterial(): matching material:' + material.name + ' texture type:' + i + ' with prim.textures:' + j );
 
 	                        material[i] = prim.textures[j][i].texture;
 	                    }
@@ -7448,11 +7474,11 @@
 	             * Their value is their start in coords.vertices.
 	             */
 
-	            if (coords.material) console.log('coords.material found for:' + prim.name + ' mat:' + coords.material);
+	            /////////////if ( coords.material ) console.log('coords.material found for:' + prim.name + ' mat:' + coords.material)
 
 	            if (coords.options) {
 
-	                console.log("initPrimGeometry():COORDS.options:" + coords.options + ' for:' + prim.name);
+	                /////////console.log("initPrimGeometry():COORDS.options:" + coords.options + ' for:' + prim.name)
 
 	                for (var i in coords.options.materials) {
 
@@ -7472,7 +7498,7 @@
 
 	                    // Add the start position for this material.
 
-	                    console.log("initPrimGeometry():coords options.materials[" + i + "]: adding start:" + coords.options.materials[i]);
+	                    /////////console.log( "initPrimGeometry():coords options.materials[" + i + "]: adding start:" + coords.options.materials[i] )
 
 	                    prim.materials[i].starts = coords.options.materials[i];
 
@@ -7498,11 +7524,6 @@
 	             *
 	             */
 
-	            // TODO: compute scale using supplied Prim.createPrim coordinates.
-	            // TODO:
-
-	            // prim.scale = 0.01;
-
 	            var scale = prim.dimensions[0] / prim.boundingBox.dimensions[0];
 
 	            scale = Math.max(scale, prim.dimensions[1] / prim.boundingBox.dimensions[1]);
@@ -7510,11 +7531,6 @@
 	            scale = Math.max(prim.dimensions[2] / prim.boundingBox.dimensions[2]);
 
 	            prim.scale = [scale, scale, scale];
-
-	            if (scale != 1) {
-
-	                console.log('scale for prim:' + prim.name + " scale:" + scale);
-	            }
 
 	            // Update indices if they were supplied.
 
@@ -7551,7 +7567,7 @@
 
 	            // SUBDIVIDE TEST
 
-	            mesh.subdivide(true);
+	            //mesh.subdivide( true );
 	            //mesh.subdivide( true );
 	            //mesh.subdivide( true );
 	            //mesh.subdivide( true );
@@ -7741,7 +7757,7 @@
 	                    geo.setNormals(normals);
 	                } else {
 
-	                    console.log("Prim::updateNormals():" + p.name + ' recalculating normal coordinates');
+	                    //////////console.log("Prim::updateNormals():" + p.name + ' recalculating normal coordinates' );
 
 	                    geo.setNormals(_this2.geometryPool.computeNormals(geo.vertices.data, geo.indices.data, [], p.useFaceNormals));
 	                }
@@ -7758,7 +7774,7 @@
 	                    geo.setTexCoords(texCoords);
 	                } else if (geo.numTexCoords() !== geo.numVertices()) {
 
-	                    console.log("Prim::updateTexCoords():" + p.name + ' recalculating texture coordinates');
+	                    //////////console.log("Prim::updateTexCoords():" + p.name + ' recalculating texture coordinates' );
 
 	                    geo.setTexCoords(_this2.geometryPool.computeTexCoords(geo.vertices.data));
 	                }
@@ -7775,7 +7791,7 @@
 	                    geo.setTangents(tangents);
 	                } else {
 
-	                    console.log("Prim::updateTangents():" + p.name + ' recalculating tangent coordinates');
+	                    /////////console.log("Prim::updateTangents():" + p.name + ' recalculating tangent coordinates' );
 
 	                    geo.setTangents(_this2.geometryPool.computeTangents(geo.vertices.data, geo.indices.data, geo.normals.data, geo.texCoords.data, []));
 	                }
@@ -7792,7 +7808,7 @@
 	                    geo.setColors(colors);
 	                } else {
 
-	                    console.log("Prim::updateColors():" + p.name + ' recalculating color coordinates');
+	                    ////////console.log("Prim::updateColors():" + p.name + ' recalculating color coordinates' );
 
 	                    geo.setColors(_this2.geometryPool.computeColors(geo.normals.data, []));
 	                }
@@ -7853,13 +7869,14 @@
 
 	                // Save our current Shader as a default (swapped back by s0).
 
-	                prim.defaultShader = prim.shader;
+	                if (prim.shader !== _this2.world.s0) {
 
-	                // Move the Prim WITHOUT emitting  Prim add/remove event.
+	                    prim.defaultShader = prim.shader;
 
-	                prim.shader.movePrim(prim, _this2.world.s0);
+	                    // Move the Prim WITHOUT emitting a Prim add/remove event.
 
-	                // TODO: DIFFERENT NAME this.world['shaderFader'] ????
+	                    prim.shader.movePrim(prim, _this2.world.s0);
+	                }
 	            };
 
 	            // Give the Prim a unique Id.
@@ -9476,7 +9493,7 @@
 
 	        this.geometryToVertex(this.geo.vertices.data, this.geo.indices.data, this.geo.texCoords.data);
 
-	        console.log('created Mesh for ' + prim.name);
+	        //////////console.log( 'created Mesh for ' + prim.name );
 	    }
 
 	    /** 
@@ -9945,7 +9962,7 @@
 
 	            // Compute Faces and Edges (hash back to Vertices).
 
-	            console.log('Mesh::subdivide(): ' + this.prim.name + ' beginning subdivision, ' + this.iterations + ', starting size:' + this.oldVertexArr.length);
+	            ////////console.log( 'Mesh::subdivide(): ' + this.prim.name + ' beginning subdivision, ' + this.iterations + ', starting size:' + this.oldVertexArr.length );
 
 	            this.computeFaces();
 
@@ -10262,7 +10279,7 @@
 
 	            this.vertexArr = this.computeVertices(vertices, texCoords, colors);
 
-	            console.log('Mesh::geometryToVertex(): numVertices:' + this.vertexArr.length + ' numIndices:' + this.indexArr.length);
+	            ////////console.log( 'Mesh::geometryToVertex(): numVertices:' + this.vertexArr.length + ' numIndices:' + this.indexArr.length );
 
 	            return this.isValid();
 	        }
@@ -13269,7 +13286,7 @@
 
 	            createUV(vertices, texCoords);
 
-	            console.log(" ICOSPHERE VERTICES: " + vertices.length + " texCoords:" + texCoords.length);
+	            ////////////console.log(" ICOSPHERE VERTICES: " + vertices.length + " texCoords:" + texCoords.length)
 
 	            // Scale if necessary.
 
@@ -13502,7 +13519,7 @@
 	                return t;
 	            }
 
-	            console.log("ICOSPHERE: vertices:" + vertices.length + " TANGENTS:" + tangents.length);
+	            /////////////console.log("ICOSPHERE: vertices:" + vertices.length + " TANGENTS:" + tangents.length);
 
 	            // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
@@ -14056,7 +14073,7 @@
 
 	                            // Load geometry from a file, with callback emitter GEOMETRY_READY in ModelPool, calling Prim.initPrim().
 
-	                            console.log('GeometryPool::getGeometries(): new model file ' + path + ' for ' + prim.name);
+	                            ///////console.log( 'GeometryPool::getGeometries(): new model file ' + path + ' for ' + prim.name );
 
 	                            this.modelPool.getModels(prim, pathList, true);
 	                        }
@@ -14084,7 +14101,7 @@
 	                 * }
 	                 */
 
-	                console.log('GeometryPool::getGeometries() new procedural geometry for:' + prim.name);
+	                /////////////console.log( 'GeometryPool::getGeometries() new procedural geometry for:' + prim.name );
 
 	                var m = this.modelPool.addAsset(this[prim.type](prim));
 
@@ -14541,7 +14558,7 @@
 	                        case 'usemtl':
 	                            // use material (by name, loaded as .mtl file elsewhere)
 
-	                            console.log("::::::::::::GOTTA USEMTL in OBJ file: " + data + ' at:' + indices.length);
+	                            //////////////console.log("::::::::::::GOTTA USEMTL in OBJ file: " + data + ' at:' + indices.length );
 
 	                            if (!materials[data]) {
 
@@ -14622,7 +14639,7 @@
 
 	            // NOTE: Colors and tangents are not part of the Wavefront .obj format
 
-	            console.log("ModelPool::computeObjMesh(): v:" + vertices.length / 3 + " i:" + indices.length / 3 + " t:" + texCoords.length / 2 + " n:" + normals.length / 3);
+	            //////////console.log("ModelPool::computeObjMesh(): v:" + (vertices.length /3) + " i:" + (indices.length /3 )+ " t:" + (texCoords.length /2) + " n:" + (normals.length /3))
 
 	            // Model object format.
 
@@ -14992,12 +15009,13 @@
 
 	                        if (this.keyList[key] === obj) {
 
-	                            console.warn('AssetPool::addAsset(): asset ' + key + ' already added to pool');
+	                            ///////////console.warn( 'AssetPool::addAsset(): asset ' + key + ' already added to pool' );
 
 	                            return obj;
 	                        } else {
 
-	                            console.warn('AssetPool::addAsset(): replacing asset at key:' + key);
+	                            /////////console.warn( 'AssetPool::addAsset(): replacing asset at key:' + key );
+
 	                        }
 	                    }
 	                } else {
@@ -15006,7 +15024,7 @@
 
 	                    // Undefined path ok for procedural geometry.
 
-	                    console.log('^^ adding obj:' + obj.key + ' path:' + obj.path);
+	                    ///////////console.log( '^^ adding obj:' + obj.key + ' path:' + obj.path );
 
 	                    // Add the key to the object, just added to the AssetPool
 
@@ -17673,7 +17691,6 @@
 	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
 
 	            );
-
 	            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	            window.prims = this.primFactory.prims;
@@ -17815,7 +17832,7 @@
 
 	                this.r1.renderVR(vr, display, frameData); // textured, no lighting
 
-	                this.r0.renderVR(vr, display, frameData); // alpha (Prim appearing or disappearing), drawn in front
+	                this.r0.renderVR(vr, display, frameData); // REQUIRED alpha (Prim appearing or disappearing), drawn in front
 
 	                display.submitFrame();
 
@@ -17830,7 +17847,7 @@
 
 	                this.r1.renderMono(); // textured, no lighting
 
-	                this.r0.renderMono(); // alpha (Prim appearing or disappearing), drawn in front
+	                this.r0.renderMono(); // REQUIRED alpha (Prim appearing or disappearing), drawn in front
 
 	                requestAnimationFrame(this.render);
 	            }
@@ -18007,7 +18024,7 @@
 
 	            var options = {};
 
-	            console.log('computeTextureMapOptions data:' + data + ' length:' + data.length);
+	            ///////console.log('computeTextureMapOptions data:' + data + ' length:' + data.length )
 
 	            // If there there are no options, return an empty object.
 
@@ -18016,7 +18033,7 @@
 	                return options;
 	            }
 
-	            console.log('...analyzing TextureMapOptions:' + data);
+	            ///////console.log('...analyzing TextureMapOptions:' + data);
 
 	            /* 
 	             * Texturemap format:
@@ -18040,7 +18057,7 @@
 
 	                if (ppp.length > 1) {
 
-	                    console.log('ppp[0]:' + ppp[0]);
+	                    ////////console.log( 'ppp[0]:' + ppp[0] )
 
 	                    var d = ppp[0],
 	                        d1 = ppp[1];
@@ -18149,7 +18166,7 @@
 	        value: function computeObjMaterials(data, prim, path) {
 	            var _this2 = this;
 
-	            console.log('MaterialPool::computeObjMaterials(): loading model:' + path + ' for:' + prim.name);
+	            ////////console.log( 'MaterialPool::computeObjMaterials(): loading model:' + path + ' for:' + prim.name );
 
 	            var lineNum = 0;
 
@@ -18398,7 +18415,7 @@
 
 	                            var tPath = data[data.length - 1].trim();
 
-	                            console.log('path:' + path + ' data:' + data + ' tPath:' + tPath);
+	                            //////////console.log('path:' + path + ' data:' + data + ' tPath:' + tPath)
 
 	                            if (currName) {
 	                                // if not, file is corrupt.
@@ -18497,7 +18514,7 @@
 
 	                case 'mtl':
 
-	                    console.log("MTL file for prim:" + prim.name + " loaded, parsing....");
+	                    /////////////console.log("MTL file for prim:" + prim.name + " loaded, parsing....")
 
 	                    // Returns an array with one or more materials.
 
@@ -18523,7 +18540,7 @@
 
 	                    mi.type = type, mi.path = path, mi.emits = this.util.emitter.events.MATERIAL_READY;
 
-	                    console.log("MaterialPool::addMaterial(): adding:" + mi.name + " to Prim:" + prim.name);
+	                    ///////////console.log("MaterialPool::addMaterial(): adding:" + mi.name + " to Prim:" + prim.name )
 
 	                    this.addAsset(mi);
 	                }
@@ -18603,7 +18620,7 @@
 
 	                                            for (var _i2 in materialObj) {
 
-	                                                console.log("MaterialPool sending:" + materialObj[_i2].emits + ' key:' + materialObj[_i2].key + ' i:' + _i2);
+	                                                ////////////console.log("MaterialPool sending:" + materialObj[ i ].emits + ' key:' + materialObj[ i ].key + ' i:' + i )
 
 	                                                // Note that 'i' is the name of the material, instead of a numerical index (which it is in ModelPool and TexturePool).
 
