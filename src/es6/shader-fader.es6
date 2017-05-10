@@ -360,9 +360,6 @@ class ShaderFader extends Shader {
 
                 gl.uniform1f( fsVars.uniform.float.uAlpha, alpha );
 
-                // TODO: PICK UP CASE WHERE TRYING TO ASSIGN SHADER TO ITSELF!!!!!!!!!!!
-                // WHY REQUIRED TEXTURES
-
                 if ( prim.defaultShader.required.textures > 0 && prim.textures[ 0 ] && prim.textures[ 0 ].texture ) {
 
                     gl.uniform1i( fsVars.uniform.bool.uUseColor, 0 );
@@ -371,6 +368,14 @@ class ShaderFader extends Shader {
 
                     // Bind the texture buffer (could have multiple bindings here).
 
+                // OBJFILE WRONG TEX COORDS
+                //if ( ! prim.geometry.checkTexCoordsData() ) window.primName = prim.name
+                //if ( ! prim.geometry.texCoords.buffer ) window.primName = prim.name;
+                // NOTE: FIX THIS WAY...
+                // http://stackoverflow.com/questions/19722247/webgl-wait-for-texture-to-load/19748905#19748905
+
+                // TODO: NO TEXTURE BOUND ERROR IS FROM HERE!!!!
+
                     gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.texCoords.buffer );
                     gl.enableVertexAttribArray( vsVars.attribute.vec2.aTextureCoord );
                     gl.vertexAttribPointer( vsVars.attribute.vec2.aTextureCoord, prim.geometry.texCoords.itemSize, gl.FLOAT, false, 0, 0 );
@@ -378,7 +383,10 @@ class ShaderFader extends Shader {
                     // Bind the first texture.
 
                     gl.activeTexture( gl.TEXTURE0 );
-                    gl.bindTexture( gl.TEXTURE_2D, null );
+
+                    //////gl.bindTexture( gl.TEXTURE_2D, null );
+                    //if ( ! prim.textures[ 0 ].texture ) window.primName = prim.name
+
                     gl.bindTexture( gl.TEXTURE_2D, prim.textures[ 0 ].texture );
 
                     // Other texture units below.
@@ -406,7 +414,10 @@ class ShaderFader extends Shader {
 
                 // Lighting, if present
 
-                if ( prim.defaultShader.required.lights > 0 ) {
+                // NOTE: GL ERRORS
+
+/*
+                if ( prim.defaultShader.required.lights > 0 && vsVars.attribute.vec3.aVertexNormal ) {
 
                     // Bind normals buffer.
 
@@ -434,6 +445,7 @@ class ShaderFader extends Shader {
                     );
 
                 }
+*/
 
                 // Bind perspective and model-view matrix uniforms.
 
@@ -462,9 +474,13 @@ class ShaderFader extends Shader {
                 // NOTE: since we bound BOTH texture and color arrays (and some Prims don't have both), we should clear them both!
 
                 gl.bindBuffer( gl.ARRAY_BUFFER, null );
+
                 gl.disableVertexAttribArray( vsVars.attribute.vec2.aTextureCoord );
+
+                // TODO: THIS ZAPS THINGS, GL ERRORS
+                //gl.disableVertexAttribArray( vsVars.attribute.vec3.aVertexNormal );
+
                 gl.disableVertexAttribArray( vsVars.attribute.vec4.aVertexColor );
-                gl.disableVertexAttribArray( vsVars.attribute.vec3.aVertexNormal );
 
                 // Copy back the original for the next Prim. 
 

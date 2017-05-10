@@ -216,6 +216,9 @@ class ShaderTexture extends Shader {
 
                 // Bind Textures buffer (could have multiple bindings here).
 
+                ///if ( ! prim.geometry.checkTexCoordsData() ) window.primName = prim.name
+                ///if ( ! prim.geometry.texCoords.buffer ) window.primName = prim.name;
+
                 gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.texCoords.buffer );
                 gl.enableVertexAttribArray( vsVars.attribute.vec2.aTextureCoord );
                 gl.vertexAttribPointer( vsVars.attribute.vec2.aTextureCoord, prim.geometry.texCoords.itemSize, gl.FLOAT, false, 0, 0 );
@@ -265,7 +268,7 @@ class ShaderTexture extends Shader {
             // Disable buffers that might cause problems in another Prim.
 
             gl.bindBuffer( gl.ARRAY_BUFFER, null );
-            gl.disableVertexAttribArray( vsVars.attribute.vec2.aTextureCoord );
+           if ( vsVars.attribute.vec2.aTextureCoord ) gl.disableVertexAttribArray( vsVars.attribute.vec2.aTextureCoord );
 
         } // end of program.render()
 

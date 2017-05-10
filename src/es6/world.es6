@@ -507,7 +507,6 @@ class World extends AssetPool {
                 [ 'obj/banana/banana.obj' ]
             );
 
-
 //////////////////////
 
 //////////////////////////////////
