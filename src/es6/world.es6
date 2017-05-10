@@ -182,6 +182,30 @@ class World extends AssetPool {
 // TEXTURED SHADER.
 //////////////////////////////////
 
+/*
+
+            // TODO: MAKE SURE CAP IS ACTUALLY BEING DRAWN!!!!
+
+            this.primFactory.createPrim(
+            
+                this.s1,                      // callback function
+                typeList.CAP, // CAP DEFAULT, AT WORLD CENTER (also a UV polygon)
+                'CAP',
+                vec5( 3, 3, 3, 0 ),         // dimensions INCLUDING start radius or torus radius(last value)
+                vec5( 15, 15, 15 ),         // divisions MUST BE CONTROLLED TO < 5
+                //vec3.fromValues(-3.5, -3.5, -1 ),    // position (absolute)
+                vec3.fromValues(-0.0, 0, 2.0),
+                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+                vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+                [ 'img/mozvr-logo1.png' ],               // texture present
+                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
+        
+            ); 
+*/
+
+/*
+
         // Create a UV skydome.
 
             this.primFactory.createPrim(
@@ -199,6 +223,8 @@ class World extends AssetPool {
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0) // color
             );
 
+
+
             this.primFactory.createPrim(
 
                 this.s1,                      // callback function
@@ -214,6 +240,7 @@ class World extends AssetPool {
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ), // RGBA color
 
             );
+
 
             this.primFactory.createPrim(
 
@@ -247,10 +274,24 @@ class World extends AssetPool {
 
             );
 
-            /* 
-             * DIMENSIONS INDICATE ANY X or Y CURVATURE.
-             * DIVISIONS FOR CUBED AND CURVED PLANE INDICATE SIDE TO DRAW
-             */
+            this.primFactory.createPrim(
+
+                this.s1,                      // callback function
+                typeList.CUBESPHERE,
+                'cubespheretransparent',
+                vec5( 5, 5, 5 ),            // dimensions
+                vec5( 10, 10, 10, 0 ),         // divisions 4th parameter is degree of rounding.
+                vec3.fromValues(-3, -1, 0 ),       // position (absolute)
+                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+                vec3.fromValues( util.degToRad( 10 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+                [ 'img/mozvr-logo1.png' ],               // texture present, NOT USED
+                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
+
+            ); 
+
+             //DIMENSIONS INDICATE ANY X or Y CURVATURE.
+             //DIVISIONS FOR CUBED AND CURVED PLANE INDICATE SIDE TO DRAW
 
             this.primFactory.createPrim(
 
@@ -367,23 +408,6 @@ class World extends AssetPool {
             this.primFactory.createPrim(
             
                 this.s1,                      // callback function
-                typeList.CAP, // CAP DEFAULT, AT WORLD CENTER (also a UV polygon)
-                'CAP',
-                vec5( 3, 3, 3, 0 ),         // dimensions INCLUDING start radius or torus radius(last value)
-                vec5( 15, 15, 15 ),         // divisions MUST BE CONTROLLED TO < 5
-                //vec3.fromValues(-3.5, -3.5, -1 ),    // position (absolute)
-                vec3.fromValues(-0.0, 0, 2.0),
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [ 'img/mozvr-logo1.png' ],               // texture present
-                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
-        
-            ); 
-
-            this.primFactory.createPrim(
-            
-                this.s1,                      // callback function
                 typeList.CONE,
                 'TestCone',
                 vec5( 1, 1, 1, 0.0, 0.0 ),         // dimensions (4th dimension is truncation of cone, none = 0, flat circle = 1.0)
@@ -429,7 +453,6 @@ class World extends AssetPool {
         
             );
 
-
             this.primFactory.createPrim(
             
                 this.s1,                      // callback function
@@ -445,6 +468,8 @@ class World extends AssetPool {
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         
             );
+
+            // TODO: DOES THIS ACTUALLY BECOME TRANSPARENT????
 
             this.primFactory.createPrim(
             
@@ -463,7 +488,12 @@ class World extends AssetPool {
 
             );
 
+///////////////////////////////////////
+// TEXTURED MESH
+///////////////////////////////////////
+
             // NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
+            // TODO: INVALID TEXTURING
 
             this.primFactory.createPrim(
 
@@ -483,10 +513,21 @@ class World extends AssetPool {
 
             );
 
-///////////////////////
-// testing other mesh files
+            this.primFactory.createPrim(
 
-// NOTE: IF YOU ASSIGN A PRIM TO WRONG SHADER = SILENT ERROR. WORLD NEEDS A SCAN FOR FAILS.
+                this.s1,                      // callback function
+                typeList.REGULARTETRAHEDRON,
+                'regulartetrahedron',
+                vec5( 3, 3, 3, 0 ),            // dimensions
+                vec5( 18, 18, 18 ),               // divisions
+                vec3.fromValues(6.7, 1.5, -4 ),       // position (absolute)
+                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+                [ 'img/mozvr-logo2.png' ],               // texture present
+                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
+
+            );
 
             this.primFactory.createPrim(
 
@@ -513,10 +554,8 @@ class World extends AssetPool {
                 [ 'obj/banana/banana.obj' ]
             );
 
-//////////////////////
-
 //////////////////////////////////
-// COLORED SHADER.
+// COLOR SHADER.
 //////////////////////////////////
 
             this.primFactory.createPrim(
@@ -535,6 +574,7 @@ class World extends AssetPool {
 
             );
 
+
             this.primFactory.createPrim(
 
                 this.s2,                               // callback function
@@ -552,26 +592,12 @@ class World extends AssetPool {
                 [ 'obj/teapot/teapot.obj' ] // object files (.obj, .mtl)
 
             );
+*/
 
 //////////////////////////////////
 // LIT TEXTURE SHADER.
 //////////////////////////////////
 
-            this.primFactory.createPrim(
-
-                this.s3,                      // callback function
-                typeList.CUBE,
-                'lit cube',
-                vec5( 1, 1, 1, 0 ),            // dimensions
-                vec5( 1, 1, 1 ),            // divisions
-                vec3.fromValues( -3, -2, -3 ),          // position (absolute)
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 20 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 1 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [ 'img/webvr-logo4.png' ],               // texture present, NOT USED
-                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color
-
-            );
 
             this.primFactory.createPrim(
 
@@ -590,21 +616,6 @@ class World extends AssetPool {
 
             );
 
-            this.primFactory.createPrim(
-
-                this.s3,                      // callback function
-                typeList.CURVEDINNERPLANE,
-                'CurvedPlaneFront',
-                vec5( 2, 1, 1, directions.FRONT, 1 ),         // pass orientation ONE UNIT CURVE
-                vec5( 10, 10, 10 ),        // divisions
-                vec3.fromValues(-1, 0.0, 2.0 ),          // position (absolute)
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0.0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [ 'img/webvr-logo1.png' ],               // texture present
-                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
-        
-            );
 
             this.primFactory.createPrim(
             
@@ -641,18 +652,34 @@ class World extends AssetPool {
 
             this.primFactory.createPrim(
 
-                this.s1,                      // callback function
-                typeList.REGULARTETRAHEDRON,
-                'regulartetrahedron',
-                vec5( 3, 3, 3, 0 ),            // dimensions
-                vec5( 18, 18, 18 ),               // divisions
-                vec3.fromValues(6.7, 1.5, -4 ),       // position (absolute)
+                this.s3,                      // callback function
+                typeList.CUBE,
+                'lit cube',
+                vec5( 1, 1, 1, 0 ),            // dimensions
+                vec5( 1, 1, 1 ),            // divisions
+                vec3.fromValues( -3, -2, -3 ),          // position (absolute)
+                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+                vec3.fromValues( util.degToRad( 20 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 1 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+                [ 'img/webvr-logo4.png' ],               // texture present, NOT USED
+                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color
+
+            );
+
+            this.primFactory.createPrim(
+
+                this.s3,                      // callback function
+                typeList.CURVEDINNERPLANE,
+                'CurvedPlaneFront',
+                vec5( 2, 1, 1, directions.FRONT, 1 ),         // pass orientation ONE UNIT CURVE
+                vec5( 10, 10, 10 ),        // divisions
+                vec3.fromValues(-1, 0.0, 2.0 ),          // position (absolute)
                 vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
                 vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [ 'img/mozvr-logo2.png' ],               // texture present
+                vec3.fromValues( util.degToRad( 0.0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+                [ 'img/webvr-logo1.png' ],               // texture present
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
-
+        
             );
 
             this.primFactory.createPrim(
@@ -704,25 +731,6 @@ class World extends AssetPool {
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
 
             );
-
-
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            this.primFactory.createPrim(
-
-                this.s1,                      // callback function
-                typeList.CUBESPHERE,
-                'cubespheretransparent',
-                vec5( 5, 5, 5 ),            // dimensions
-                vec5( 10, 10, 10, 0 ),         // divisions 4th parameter is degree of rounding.
-                vec3.fromValues(-3, -1, 0 ),       // position (absolute)
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 10 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [ 'img/mozvr-logo1.png' ],               // texture present, NOT USED
-                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
-
-            ); 
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     window.prims = this.primFactory.prims;
 

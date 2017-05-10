@@ -51,65 +51,44 @@ class ShaderFader extends Shader {
 
         let s = [
 
+            // Note: ALWAYS name the vertex attribute using the default!
+
+            'attribute vec3 ' + this.webgl.defaultVertexPositionAttribute + ';',
+            'attribute vec4 aVertexColor;',
+
+            'attribute vec2 aTextureCoord;',
+            'attribute vec3 aVertexNormal;',
+
             // render flags
 
             'uniform bool uUseLighting;',
             'uniform bool uUseTexture;',
             'uniform bool uUseColor;',
 
-            // coordinates
-
-            'attribute vec3 aVertexPosition;',
-            'attribute vec3 aVertexNormal;',
-
             'uniform mat4 uMVMatrix;',
             'uniform mat4 uPMatrix;',
 
-            // texture 
-
-            'attribute vec2 aTextureCoord;',
-            'attribute vec4 aVertexColor;',
-
-            // color
-
-            'varying lowp vec4 vColor;',
-
-            // lighting 
-
-            'uniform mat3 uNMatrix;',
-
-            'uniform vec3 uAmbientColor;',
-            'uniform vec3 uLightingDirection;',
-            'uniform vec3 uDirectionalColor;',
-
-            // passed to fragment shader
-
             'varying vec2 vTextureCoord;',
+            'varying lowp vec4 vColor;',
             'varying vec3 vLightWeighting;',
 
             'void main(void) {',
 
             '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);',
 
-            '    vTextureCoord = aTextureCoord;',
+            '    vLightWeighting = vec3(1.0, 1.0, 1.0);',
 
-            '    vColor = aVertexColor;',
+            '    if (uUseTexture) { ',
 
-            // Conditionals slow this down, but typically there won't be a lot of fading Prims.
+            '      vTextureCoord = aTextureCoord;',
 
-            '   if(!uUseLighting) {',
+            '    } else { ',
 
-            '       vLightWeighting = vec3(1.0, 1.0, 1.0);',
+            '      vTextureCoord = vec2(0.0, 0.0);', // Prim has no textures
 
-            '   } else {',
+            '    }',
 
-            '       vec3 transformedNormal = uNMatrix * aVertexNormal;',
-
-            '       float directionalLightWeighting = max(dot(transformedNormal, uLightingDirection), 0.0);',
-
-            '       vLightWeighting = uAmbientColor + uDirectionalColor * directionalLightWeighting;',
-
-            '   }',
+            '    vColor = aVertexColor;', // we always read this, so always bind it
 
             '}'
 
@@ -131,27 +110,14 @@ class ShaderFader extends Shader {
 
             this.floatp,
 
-            // render flags
-
             'uniform bool uUseLighting;',
             'uniform bool uUseTexture;',
             'uniform bool uUseColor;',
 
-            // texture
-
-            'varying vec2 vTextureCoord;',
             'uniform sampler2D uSampler;',
-
-            // lighting
-
-            'varying vec3 vLightWeighting;',
-
-            // alpha fade value
-
             'uniform float uAlpha;',
 
-            // passed in from vertex shader
-
+            'varying vec2 vTextureCoord;',
             'varying lowp vec4 vColor;',
 
             'void main(void) {',
@@ -175,6 +141,9 @@ class ShaderFader extends Shader {
                     'gl_FragColor = vec4(textureColor.rgb * vLightWeighting, textureColor.a * uAlpha);',
 
                 '}',
+
+
+                //'gl_FragColor = vec4(vColor.rgb * vLightWeighting, uAlpha);',
 
             '}'
 
@@ -260,7 +229,7 @@ class ShaderFader extends Shader {
 
         // Set our global (to the Prim) alpha value.
 
-        let alpha = 0.01;
+        //let alpha = 0.01;
 
         // Use just the primary World light (see lights.es6 for defaults).
 
@@ -316,15 +285,15 @@ class ShaderFader extends Shader {
 
                 }
 
-                alpha = prim.alpha;
+            window.vsVars = vsVars;
+            window.fsVars = fsVars;
 
             // Update the model-view matrix using current Prim position, rotation, etc.
 
             prim.setMV( MVM );
 
         }
-
-        // Prim rendering - Shader in ShaderPool, rendered by World.
+       // Prim rendering - Shader in ShaderPool, rendered by World.
 
         program.render = ( PM, MVM ) => {
 
@@ -356,36 +325,35 @@ class ShaderFader extends Shader {
                 gl.enableVertexAttribArray( vsVars.attribute.vec3.aVertexPosition );
                 gl.vertexAttribPointer( vsVars.attribute.vec3.aVertexPosition, prim.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0 );
 
+                // NOTE: We always bind the color buffer, even if we don't draw with it (prevents 'out of range' errors).
+
+                gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.colors.buffer );
+                gl.enableVertexAttribArray( vsVars.attribute.vec4.aVertexColor );
+                gl.vertexAttribPointer( vsVars.attribute.vec4.aVertexColor, prim.geometry.colors.itemSize, gl.FLOAT, false, 0, 0 );
+
+                // NOTE: we always bind the texture buffer, even if we don't used it (prevent 'out of range' errors).
+
+                gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.texCoords.buffer );
+                gl.enableVertexAttribArray( vsVars.attribute.vec2.aTextureCoord );
+                gl.vertexAttribPointer( vsVars.attribute.vec2.aTextureCoord, prim.geometry.texCoords.itemSize, gl.FLOAT, false, 0, 0 );
+
                 // Set our alpha.
 
-                gl.uniform1f( fsVars.uniform.float.uAlpha, alpha );
+                gl.uniform1f( fsVars.uniform.float.uAlpha, prim.alpha );
+
+                // Draw using either the texture[0] or color array.
 
                 if ( prim.defaultShader.required.textures > 0 && prim.textures[ 0 ] && prim.textures[ 0 ].texture ) {
+
+                    // NOTE: the shader must do logic to prevent texture calcs if there is no texture.
 
                     gl.uniform1i( fsVars.uniform.bool.uUseColor, 0 );
                     gl.uniform1i( fsVars.uniform.bool.uUseTexture, 1 );
                     gl.uniform1i( fsVars.uniform.bool.uUseLighting, 0 );
 
-                    // Bind the texture buffer (could have multiple bindings here).
-
-                // OBJFILE WRONG TEX COORDS
-                //if ( ! prim.geometry.checkTexCoordsData() ) window.primName = prim.name
-                //if ( ! prim.geometry.texCoords.buffer ) window.primName = prim.name;
-                // NOTE: FIX THIS WAY...
-                // http://stackoverflow.com/questions/19722247/webgl-wait-for-texture-to-load/19748905#19748905
-
-                // TODO: NO TEXTURE BOUND ERROR IS FROM HERE!!!!
-
-                    gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.texCoords.buffer );
-                    gl.enableVertexAttribArray( vsVars.attribute.vec2.aTextureCoord );
-                    gl.vertexAttribPointer( vsVars.attribute.vec2.aTextureCoord, prim.geometry.texCoords.itemSize, gl.FLOAT, false, 0, 0 );
-
-                    // Bind the first texture.
+                   // Bind the first texture.
 
                     gl.activeTexture( gl.TEXTURE0 );
-
-                    //////gl.bindTexture( gl.TEXTURE_2D, null );
-                    //if ( ! prim.textures[ 0 ].texture ) window.primName = prim.name
 
                     gl.bindTexture( gl.TEXTURE_2D, prim.textures[ 0 ].texture );
 
@@ -395,57 +363,15 @@ class ShaderFader extends Shader {
 
                     gl.uniform1i( fsVars.uniform.sampler2D.uSampler, 0 );
 
+                } else {
 
-                } else if ( prim.defaultShader.required.textures === 0 ) {
-
-                    // Drawing flags for color array.
+                    // Bind color buffer.
 
                     gl.uniform1i( fsVars.uniform.bool.uUseColor, 1 );
                     gl.uniform1i( fsVars.uniform.bool.uUseTexture, 0 );
                     gl.uniform1i( fsVars.uniform.bool.uUseLighting, 0 );
 
-                    // Bind color buffer.
-
-                    gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.colors.buffer );
-                    gl.enableVertexAttribArray( vsVars.attribute.vec4.aVertexColor );
-                    gl.vertexAttribPointer( vsVars.attribute.vec4.aVertexColor, prim.geometry.colors.itemSize, gl.FLOAT, false, 0, 0 );
-
                 }
-
-                // Lighting, if present
-
-                // NOTE: GL ERRORS
-
-/*
-                if ( prim.defaultShader.required.lights > 0 && vsVars.attribute.vec3.aVertexNormal ) {
-
-                    // Bind normals buffer.
-
-                    gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.normals.buffer );
-                    gl.enableVertexAttribArray( vsVars.attribute.vec3.aVertexNormal );
-                    gl.vertexAttribPointer( vsVars.attribute.vec3.aVertexNormal, prim.geometry.normals.itemSize, gl.FLOAT, false, 0, 0);
-
-                    gl.uniform3f(
-                        vsVars.uniform.vec3.uAmbientColor,
-                        ambient[ 0 ],
-                        ambient[ 1 ],
-                        ambient[ 2 ]
-                    );
-
-                    gl.uniform3fv( 
-                        vsVars.uniform.vec3.uLightingDirection, 
-                        adjustedLD 
-                    );
-
-                    gl.uniform3f(
-                        vsVars.uniform.vec3.uDirectionalColor,
-                        directionalColor[ 0 ],
-                        directionalColor[ 1 ],
-                        directionalColor[ 2 ]
-                    );
-
-                }
-*/
 
                 // Bind perspective and model-view matrix uniforms.
 
@@ -471,22 +397,18 @@ class ShaderFader extends Shader {
 
                 }
 
-                // NOTE: since we bound BOTH texture and color arrays (and some Prims don't have both), we should clear them both!
-
-                gl.bindBuffer( gl.ARRAY_BUFFER, null );
-
-                gl.disableVertexAttribArray( vsVars.attribute.vec2.aTextureCoord );
-
-                // TODO: THIS ZAPS THINGS, GL ERRORS
-                //gl.disableVertexAttribArray( vsVars.attribute.vec3.aVertexNormal );
-
-                gl.disableVertexAttribArray( vsVars.attribute.vec4.aVertexColor );
-
                 // Copy back the original for the next Prim. 
 
                 mat4.copy( MVM, saveMV, MVM );
 
             } // end of renderList for Prims
+
+            // Disable buffers that might cause problems in another Shader.
+
+            gl.bindBuffer( gl.ARRAY_BUFFER, null );
+            gl.enableVertexAttribArray( vsVars.attribute.vec3.aVertexPosition );
+            gl.disableVertexAttribArray( vsVars.attribute.vec4.aVertexColor );
+            gl.disableVertexAttribArray( vsVars.attribute.vec2.aTextureCoord );
 
         } // end of program.render()
 

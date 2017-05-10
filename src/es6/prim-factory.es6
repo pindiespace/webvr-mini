@@ -328,20 +328,20 @@ class PrimFactory {
          * NOTE: Prim.setMaterial() is used to create a default material in Prim.createPrim();
          */
 
-        for ( let i in this.materialPool.texturePositions ) {
+        for ( let key in this.materialPool.texturePositions ) {
 
-            let key = this.materialPool.texturePositions[ i ];
+            // Get the keys, map_Kd, map_Ka, map_Ks 
 
-            ////////console.log( 'PrimFactory::initPrimMaterial(): material texture ' + i + ' for prim:' + prim.name + ' present...' );
-            ////////console.log( 'PRIM.TEXTURES LENGTH IS A:' + prim.textures.length )
+            //console.log( 'PrimFactory::initPrimMaterial(): material texture ' + key + ' for prim:' + prim.name + ' present...' );
+            //console.log( 'PRIM.TEXTURES LENGTH IS A:' + prim.textures.length )
 
             for ( let  j = 0; j < prim.textures.length; j++ ) {
 
-                if ( prim.textures[ j ][ i ] && ( prim.textures[ j ][ i ].texture instanceof WebGLTexture ) ) {
+                if ( prim.textures[ j ][ key ] && ( prim.textures[ j ][ key ].texture instanceof WebGLTexture ) ) {
 
-                    ////////console.log( 'PrimFactory::initPrimMaterial(): matching material:' + material.name + ' texture type:' + i + ' with prim.textures:' + j );
+                    console.log( 'PrimFactory::initPrimMaterial(): matching material:' + material.name + ' texture type:' + key + ' with prim.textures:' + j );
 
-                    material[ i ] = prim.textures[ j ][ i ].texture;
+                    material[ i ] = prim.textures[ j ][ key ].texture;
 
                 }
 
@@ -953,7 +953,7 @@ class PrimFactory {
 
         // Get the static network textures async (use emitter to decide what to do when each texture loads).
 
-        //prim.textures[ 0 ] = this.TexturePool.
+        //prim.textures[ 0 ] = this.TexturePool.getDefault();
 
         this.texturePool.getTextures( prim, textureImages, true, false, this.materialPool.defaultTextureMap ); // assume cacheBust === true, mimeType determined by file extension.
 
@@ -992,6 +992,12 @@ class PrimFactory {
             if ( prim.name === 'TestTearDrop' ) {
 
                 window.teardrop = prim;
+
+            }
+
+            if ( prim.name === 'skydome' ) {
+
+                window.skydome = prim;
 
             }
 

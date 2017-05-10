@@ -45,6 +45,10 @@ class WebGL {
 
         this.NOT_IN_LIST = util.NOT_IN_LIST; // -1 value for .indexOf()
 
+        // Default shader name for vertices (must always use in vertex and fragment shader).
+
+        this.defaultVertexPositionAttribute = 'aVertexPosition';
+
         // Perspective matrix in Shaders.
 
         this.near = 0.1;
@@ -1087,7 +1091,7 @@ class WebGL {
 
             if ( ! gl.getProgramParameter( program, gl.LINK_STATUS ) ) {
 
-                console.error( 'createProgram:' + gl.getProgramInfoLog( program ) );
+                console.error( 'WebGL::createProgram():' + gl.getProgramInfoLog( program ) );
 
                 this.checkShaders( vs, fs, program );
 
@@ -1218,13 +1222,37 @@ class WebGL {
 
             let attb = attributes[ i ];
 
+            let zeroPos = ''; // position that holds the 0th getAttribLocation
+
             // Note: we call glEnableAttribArray only when rendering
 
             for ( let j in attb ) {
 
                 attb[ j ] = gl.getAttribLocation( shaderProgram, j );
 
-                //////////console.log('gl.getAttribLocation( shaderProgram, "' + j + '" ) is:' + attb[ j ] );
+                if ( attb[ j ] === 0 ) zeroPos = j; // save the key
+
+                //console.log('gl.getAttribLocation( shaderProgram, "' + j + '" ) is:' + attb[ j ] );
+
+            }
+
+            /* 
+             * To prevent 'performance warning' errors, we need to make sure that index 0 from gl.getAttributeLocation 
+             * is assigned to a buffer that is ALWAYS initialized and activated (e.g. 'aVertexPosition'). So, 
+             * look for this key, and swap the location keys so aVertexPosition always has index 0.
+             */
+
+            let t = attb[ this.defaultVertexPositionAttribute ]; // index
+
+            if ( t !== 0 ) {
+
+                if ( zeroPos !== '' ) {
+
+                    attb[ zeroPos ] = t;
+
+                    attb[ this.defaultVertexPositionAttribute ] = 0;
+
+                }
 
             }
 
