@@ -52,8 +52,8 @@ class ShaderColor extends Shader {
              * vertex, textureX coordinates, colors, normals, tangents.
              */
 
-            'attribute vec3 ' + this.webgl.attributeName.vertex + ';',
-            'attribute vec4 ' + this.webgl.attributeName.color + ';',
+            'attribute vec3 ' + this.webgl.attributeNames.aVertexPosition[ 0 ] + ';',
+            'attribute vec4 ' + this.webgl.attributeNames.aVertexColor[ 0 ] + ';',
 
             'uniform mat4 uMVMatrix;',
             'uniform mat4 uPMatrix;',

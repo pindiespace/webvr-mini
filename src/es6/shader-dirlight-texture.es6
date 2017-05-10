@@ -49,11 +49,11 @@ class shaderDirLightTexture extends Shader {
 
         let s = [
 
-            'attribute vec3 ' + this.webgl.attributeName.vertex + ';',
-            ///////'attribute vec4 ' + this.webgl.attributeName.color + ';',
+            'attribute vec3 ' + this.webgl.attributeNames.aVertexPosition[ 0 ] + ';',
+            ///////'attribute vec4 ' + this.webgl.attributeNames.color[ 0 ] + ';',
 
-            'attribute vec2 ' + this.webgl.attributeName.texture0 + ';',
-            'attribute vec3 ' + this.webgl.attributeName.normal + ';',
+            'attribute vec2 ' + this.webgl.attributeNames.aTextureCoord[ 0 ] + ';',
+            'attribute vec3 ' + this.webgl.attributeNames.aVertexNormal[ 0 ] + ';',
 
             'uniform mat4 uMVMatrix;',
             'uniform mat4 uPMatrix;',

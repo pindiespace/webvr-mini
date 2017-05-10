@@ -53,11 +53,11 @@ class ShaderFader extends Shader {
 
             // Note: ALWAYS name the vertex attribute using the default!
 
-            'attribute vec3 ' + this.webgl.attributeName.vertex + ';',
-            'attribute vec4 ' + this.webgl.attributeName.color + ';',
+            'attribute vec3 ' + this.webgl.attributeNames.aVertexPosition[ 0 ] + ';',
+            'attribute vec4 ' + this.webgl.attributeNames.aVertexColor[ 0 ] + ';',
 
-            'attribute vec2 ' + this.webgl.attributeName.texture0 + ';',
-            'attribute vec3 ' + this.webgl.attributeName.normal + ';',
+            'attribute vec2 ' + this.webgl.attributeNames.aTextureCoord[ 0 ] + ';',
+            'attribute vec3 ' + this.webgl.attributeNames.aVertexNormal[ 0 ] + ';',
 
             // render flags
 

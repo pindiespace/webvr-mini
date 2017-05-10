@@ -1645,27 +1645,27 @@
 	         * hard-coded to improve positioning.
 	         */
 
-	        this.attributeName = {
+	        this.attributeNames = {
 
-	            vertex: 'aVertexPosition',
+	            aVertexPosition: ['aVertexPosition', 0],
 
-	            color: 'aVertexColor',
+	            aVertexColor: ['aVertexColor', 1],
 
-	            texture0: 'aTextureCoord',
+	            aTextureCoord: ['aTextureCoord', 2],
 
-	            texture1: 'aTextureCoord1',
+	            aTextureCoord1: ['aTextureCoord1', 3],
 
-	            texture2: 'aTextureCoord2',
+	            aTextureCoord2: ['aTextureCoord2', 4],
 
-	            texture3: 'aTextureCoord3',
+	            aTextureCoord3: ['aTextureCoord3', 5],
 
-	            texture4: 'aTextureCoord4',
+	            aTextureCoord4: ['aTextureCoord4', 6],
 
-	            texture5: 'aTextureCoord5',
+	            aTextureCoord5: ['aTextureCoord5', 7],
 
-	            normal: 'aVertexNormal',
+	            aVertexNormal: ['aVertexNormal', 8],
 
-	            tangent: 'aVertexTangent'
+	            aVertexTangent: ['aVertexTangent', 9]
 
 	        };
 
@@ -2702,6 +2702,13 @@
 
 	                gl.attachShader(program, fso);
 
+	                // TODO: this is where we need to explicitly assign attribute array indices
+	                // TODO:
+	                // TODO:
+	                // TOTOD:
+
+	                //////////////////this.setAttributeArrays( program, vs.varList.attribute ); /////////////////////////////////
+
 	                gl.linkProgram(program);
 
 	                if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
@@ -2838,6 +2845,30 @@
 	                    //console.log('gl.getAttribLocation( shaderProgram, "' + j + '" ) is:' + attb[ j ] );
 	                }
 
+	                /*
+	                            // NOTE: ShaderFader works, but switch to another Shader fails!!!!
+	                
+	                            // TODO: WORK ON AUTOMATIC ASSIGNMENT
+	                            // TODO:
+	                            // TODO:
+	                            // TODO:
+	                            // TODO:
+	                            // http://stackoverflow.com/questions/4635913/explicit-vs-automatic-attribute-location-binding-for-opengl-shaders
+	                
+	                            for ( let j in attb ) {
+	                
+	                                //console.log('j:' + j + ' this.attributeNames[' + j + ']')
+	                
+	                                console.log('gl.bindAttrib( shaderProgram, "' + this.attributeNames[ j ][ 1 ] + '", "' +  this.attributeNames[ j ][ 0 ] + '"' );
+	                
+	                                gl.bindAttribLocation ( shaderProgram, this.attributeNames[ j ][ 1 ], this.attributeNames[ j ][ 0 ] );
+	                
+	                                attb[ j ] = this.attributeNames[ j ][ 1 ];
+	                
+	                                console.log('gl.getAttribLocation( shaderProgram, "' + j + '" ) ' + ' is:' + attb[ j ] );
+	                
+	                            }
+	                */
 	                /* 
 	                 * To prevent 'performance warning' errors, we need to make sure that index 0 from gl.getAttributeLocation 
 	                 * is assigned to a buffer that is ALWAYS initialized and activated (e.g. 'aVertexPosition'). So, 
@@ -2893,6 +2924,8 @@
 
 	        /** 
 	         * Bind attribute locations.
+	         * Preferred when multiple shaders are being used.
+	         * http://stackoverflow.com/questions/4635913/explicit-vs-automatic-attribute-location-binding-for-opengl-shaders
 	         * @param {WebGLProgram} program a compiled WebGL program.
 	         * @param {Object} attribLocationmap the attributes.
 	         */
@@ -2903,18 +2936,24 @@
 
 	            var gl = this.gl;
 
-	            if (attribLocationMap) {
-
-	                for (var attribName in attribLocationMap) {
-
-	                    console.log('binding attribute:' + attribName + ' to:' + attribLocationMap[attribName]);
-
-	                    gl.bindAttribLocation(program, attribLocationMap[attribName], attribName);
-	                }
-	            } else {
-
-	                console.warn('webgl.bindAttributes: no attributes supplied');
-	            }
+	            /*
+	                    if ( attribLocationMap ) {
+	            
+	                        for ( let attribName in attribLocationMap ) {
+	            
+	                            console.log('binding attribute:' + attribName + ' to:' + attribLocationMap[attribName]);
+	            
+	                            gl.bindAttribLocation( program, attribLocationMap[ attribName ], attribName );
+	            
+	                        }
+	            
+	                    } else {
+	            
+	                        console.warn( 'webgl.bindAttributes: no attributes supplied' );
+	            
+	                    }
+	            
+	                    */
 	        }
 
 	        /** 
@@ -4475,7 +4514,7 @@
 
 	            // Note: ALWAYS name the vertex attribute using the default!
 
-	            'attribute vec3 ' + this.webgl.attributeName.vertex + ';', 'attribute vec4 ' + this.webgl.attributeName.color + ';', 'attribute vec2 ' + this.webgl.attributeName.texture0 + ';', 'attribute vec3 ' + this.webgl.attributeName.normal + ';',
+	            'attribute vec3 ' + this.webgl.attributeNames.aVertexPosition[0] + ';', 'attribute vec4 ' + this.webgl.attributeNames.aVertexColor[0] + ';', 'attribute vec2 ' + this.webgl.attributeNames.aTextureCoord[0] + ';', 'attribute vec3 ' + this.webgl.attributeNames.aVertexNormal[0] + ';',
 
 	            // render flags
 
@@ -5479,7 +5518,7 @@
 	             * vertex, textureX coordinates, colors, normals, tangents.
 	             */
 
-	            'attribute vec3 ' + this.webgl.attributeName.vertex + ';', 'attribute vec2 ' + this.webgl.attributeName.texture0 + ';', 'uniform mat4 uMVMatrix;', 'uniform mat4 uPMatrix;', 'varying vec2 vTextureCoord;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vTextureCoord = aTextureCoord;', '}'];
+	            'attribute vec3 ' + this.webgl.attributeNames.aVertexPosition[0] + ';', 'attribute vec2 ' + this.webgl.attributeNames.aTextureCoord[0] + ';', 'uniform mat4 uMVMatrix;', 'uniform mat4 uPMatrix;', 'varying vec2 vTextureCoord;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vTextureCoord = aTextureCoord;', '}'];
 
 	            return {
 
@@ -5747,7 +5786,7 @@
 	             * vertex, textureX coordinates, colors, normals, tangents.
 	             */
 
-	            'attribute vec3 ' + this.webgl.attributeName.vertex + ';', 'attribute vec4 ' + this.webgl.attributeName.color + ';', 'uniform mat4 uMVMatrix;', 'uniform mat4 uPMatrix;', 'varying lowp vec4 vColor;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vColor = aVertexColor;', '}'];
+	            'attribute vec3 ' + this.webgl.attributeNames.aVertexPosition[0] + ';', 'attribute vec4 ' + this.webgl.attributeNames.aVertexColor[0] + ';', 'uniform mat4 uMVMatrix;', 'uniform mat4 uPMatrix;', 'varying lowp vec4 vColor;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vColor = aVertexColor;', '}'];
 
 	            return {
 
@@ -5999,10 +6038,10 @@
 	        key: 'vsSrc',
 	        value: function vsSrc() {
 
-	            var s = ['attribute vec3 ' + this.webgl.attributeName.vertex + ';',
-	            ///////'attribute vec4 ' + this.webgl.attributeName.color + ';',
+	            var s = ['attribute vec3 ' + this.webgl.attributeNames.aVertexPosition[0] + ';',
+	            ///////'attribute vec4 ' + this.webgl.attributeNames.color[ 0 ] + ';',
 
-	            'attribute vec2 ' + this.webgl.attributeName.texture0 + ';', 'attribute vec3 ' + this.webgl.attributeName.normal + ';', 'uniform mat4 uMVMatrix;', 'uniform mat4 uPMatrix;', 'uniform mat3 uNMatrix;', 'uniform bool uUseLighting;', 'uniform vec3 uAmbientColor;', 'uniform vec3 uLightingDirection;', 'uniform vec3 uDirectionalColor;', 'varying vec2 vTextureCoord;', 'varying vec3 vLightWeighting;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vTextureCoord = aTextureCoord;', '   if(!uUseLighting) {', '       vLightWeighting = vec3(1.0, 1.0, 1.0);', '   } else {', '       vec3 transformedNormal = uNMatrix * aVertexNormal;', '       float directionalLightWeighting = max(dot(transformedNormal, uLightingDirection), 0.0);', '       vLightWeighting = uAmbientColor + uDirectionalColor * directionalLightWeighting;', '   }', '}'];
+	            'attribute vec2 ' + this.webgl.attributeNames.aTextureCoord[0] + ';', 'attribute vec3 ' + this.webgl.attributeNames.aVertexNormal[0] + ';', 'uniform mat4 uMVMatrix;', 'uniform mat4 uPMatrix;', 'uniform mat3 uNMatrix;', 'uniform bool uUseLighting;', 'uniform vec3 uAmbientColor;', 'uniform vec3 uLightingDirection;', 'uniform vec3 uDirectionalColor;', 'varying vec2 vTextureCoord;', 'varying vec3 vLightWeighting;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vTextureCoord = aTextureCoord;', '   if(!uUseLighting) {', '       vLightWeighting = vec3(1.0, 1.0, 1.0);', '   } else {', '       vec3 transformedNormal = uNMatrix * aVertexNormal;', '       float directionalLightWeighting = max(dot(transformedNormal, uLightingDirection), 0.0);', '       vLightWeighting = uAmbientColor + uDirectionalColor * directionalLightWeighting;', '   }', '}'];
 
 	            return {
 

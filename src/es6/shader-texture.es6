@@ -53,8 +53,8 @@ class ShaderTexture extends Shader {
              * vertex, textureX coordinates, colors, normals, tangents.
              */
 
-            'attribute vec3 ' + this.webgl.attributeName.vertex + ';',
-            'attribute vec2 ' + this.webgl.attributeName.texture0 + ';',
+            'attribute vec3 ' + this.webgl.attributeNames.aVertexPosition[ 0 ] + ';',
+            'attribute vec2 ' + this.webgl.attributeNames.aTextureCoord[ 0 ] + ';',
 
             'uniform mat4 uMVMatrix;',
             'uniform mat4 uPMatrix;',

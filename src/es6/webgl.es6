@@ -52,29 +52,30 @@ class WebGL {
          * hard-coded to improve positioning.
          */
 
-        this.attributeName = {
+        this.attributeNames = {
 
-            vertex: 'aVertexPosition',
+            aVertexPosition: [ 'aVertexPosition', 0 ],
 
-            color:  'aVertexColor',
+            aVertexColor: [ 'aVertexColor', 1 ],
 
-            texture0: 'aTextureCoord',
+            aTextureCoord: [ 'aTextureCoord', 2 ],
 
-            texture1: 'aTextureCoord1',
+            aTextureCoord1: [ 'aTextureCoord1', 3 ],
 
-            texture2: 'aTextureCoord2',
+            aTextureCoord2: [ 'aTextureCoord2', 4 ],
 
-            texture3: 'aTextureCoord3',
+            aTextureCoord3: [ 'aTextureCoord3', 5 ],
 
-            texture4: 'aTextureCoord4',
+            aTextureCoord4: [ 'aTextureCoord4', 6 ],
 
-            texture5: 'aTextureCoord5',
+            aTextureCoord5: [ 'aTextureCoord5', 7 ],
 
-            normal: 'aVertexNormal',
+            aVertexNormal: [ 'aVertexNormal', 8 ],
 
-            tangent: 'aVertexTangent'
+            aVertexTangent: [ 'aVertexTangent', 9 ]
 
-        };
+
+        }
 
         //TODO: hard-code the attribute bindings, so they always have the same index.
         //TODO: use the above array.
@@ -1121,6 +1122,13 @@ class WebGL {
 
             gl.attachShader( program, fso );
 
+            // TODO: this is where we need to explicitly assign attribute array indices
+            // TODO:
+            // TODO:
+            // TOTOD:
+
+            //////////////////this.setAttributeArrays( program, vs.varList.attribute ); /////////////////////////////////
+
             gl.linkProgram( program );
 
             if ( ! gl.getProgramParameter( program, gl.LINK_STATUS ) ) {
@@ -1270,6 +1278,30 @@ class WebGL {
 
             }
 
+/*
+            // NOTE: ShaderFader works, but switch to another Shader fails!!!!
+
+            // TODO: WORK ON AUTOMATIC ASSIGNMENT
+            // TODO:
+            // TODO:
+            // TODO:
+            // TODO:
+            // http://stackoverflow.com/questions/4635913/explicit-vs-automatic-attribute-location-binding-for-opengl-shaders
+
+            for ( let j in attb ) {
+
+                //console.log('j:' + j + ' this.attributeNames[' + j + ']')
+
+                console.log('gl.bindAttrib( shaderProgram, "' + this.attributeNames[ j ][ 1 ] + '", "' +  this.attributeNames[ j ][ 0 ] + '"' );
+
+                gl.bindAttribLocation ( shaderProgram, this.attributeNames[ j ][ 1 ], this.attributeNames[ j ][ 0 ] );
+
+                attb[ j ] = this.attributeNames[ j ][ 1 ];
+
+                console.log('gl.getAttribLocation( shaderProgram, "' + j + '" ) ' + ' is:' + attb[ j ] );
+
+            }
+*/
             /* 
              * To prevent 'performance warning' errors, we need to make sure that index 0 from gl.getAttributeLocation 
              * is assigned to a buffer that is ALWAYS initialized and activated (e.g. 'aVertexPosition'). So, 
@@ -1327,6 +1359,8 @@ class WebGL {
 
     /** 
      * Bind attribute locations.
+     * Preferred when multiple shaders are being used.
+     * http://stackoverflow.com/questions/4635913/explicit-vs-automatic-attribute-location-binding-for-opengl-shaders
      * @param {WebGLProgram} program a compiled WebGL program.
      * @param {Object} attribLocationmap the attributes.
      */
@@ -1334,6 +1368,7 @@ class WebGL {
 
         const gl = this.gl;
 
+/*
         if ( attribLocationMap ) {
 
             for ( let attribName in attribLocationMap ) {
@@ -1349,6 +1384,8 @@ class WebGL {
             console.warn( 'webgl.bindAttributes: no attributes supplied' );
 
         }
+
+        */
 
     }
 
