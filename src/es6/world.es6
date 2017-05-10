@@ -204,7 +204,7 @@ class World extends AssetPool {
             ); 
 */
 
-/*
+
 
         // Create a UV skydome.
 
@@ -223,7 +223,7 @@ class World extends AssetPool {
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0) // color
             );
 
-
+/*
 
             this.primFactory.createPrim(
 
@@ -574,6 +574,7 @@ class World extends AssetPool {
 
             );
 
+*/
 
             this.primFactory.createPrim(
 
@@ -592,7 +593,7 @@ class World extends AssetPool {
                 [ 'obj/teapot/teapot.obj' ] // object files (.obj, .mtl)
 
             );
-*/
+
 
 //////////////////////////////////
 // LIT TEXTURE SHADER.

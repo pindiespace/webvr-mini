@@ -119,7 +119,7 @@
 
 	var _shaderPool2 = _interopRequireDefault(_shaderPool);
 
-	var _primFactory = __webpack_require__(19);
+	var _primFactory = __webpack_require__(20);
 
 	var _primFactory2 = _interopRequireDefault(_primFactory);
 
@@ -1640,7 +1640,41 @@
 
 	        // Default shader name for vertices (must always use in vertex and fragment shader).
 
-	        this.defaultVertexPositionAttribute = 'aVertexPosition';
+	        /*
+	         * All the Shaders MUST use the followin names for common shader attributes. They are 
+	         * hard-coded to improve positioning.
+	         */
+
+	        this.attributeName = {
+
+	            vertex: 'aVertexPosition',
+
+	            color: 'aVertexColor',
+
+	            texture0: 'aTextureCoord',
+
+	            texture1: 'aTextureCoord1',
+
+	            texture2: 'aTextureCoord2',
+
+	            texture3: 'aTextureCoord3',
+
+	            texture4: 'aTextureCoord4',
+
+	            texture5: 'aTextureCoord5',
+
+	            normal: 'aVertexNormal',
+
+	            tangent: 'aVertexTangent'
+
+	        };
+
+	        //TODO: hard-code the attribute bindings, so they always have the same index.
+	        //TODO: use the above array.
+	        //TODO: otherwise, getting confusing errors when we try to assign arrays.
+	        //https://www.khronos.org/webgl/public-mailing-list/public_webgl/1003/msg00068.php
+	        //TODO:
+	        //TODO:
 
 	        // Perspective matrix in Shaders.
 
@@ -2809,18 +2843,22 @@
 	                 * is assigned to a buffer that is ALWAYS initialized and activated (e.g. 'aVertexPosition'). So, 
 	                 * look for this key, and swap the location keys so aVertexPosition always has index 0.
 	                 */
-
-	                var t = attb[this.defaultVertexPositionAttribute]; // index
-
-	                if (t !== 0) {
-
-	                    if (zeroPos !== '') {
-
-	                        attb[zeroPos] = t;
-
-	                        attb[this.defaultVertexPositionAttribute] = 0;
-	                    }
-	                }
+	                /*
+	                            let t = attb[ this.defaultAttributes.vertex ]; // index
+	                
+	                            if ( t !== 0 ) {
+	                
+	                                if ( zeroPos !== '' ) {
+	                
+	                                    attb[ zeroPos ] = t;
+	                
+	                                    attb[ this.defaultAttributes.vertex ] = 0;
+	                
+	                                }
+	                
+	                            }
+	                
+	                */
 	            }
 
 	            return attributes;
@@ -4437,7 +4475,7 @@
 
 	            // Note: ALWAYS name the vertex attribute using the default!
 
-	            'attribute vec3 ' + this.webgl.defaultVertexPositionAttribute + ';', 'attribute vec4 aVertexColor;', 'attribute vec2 aTextureCoord;', 'attribute vec3 aVertexNormal;',
+	            'attribute vec3 ' + this.webgl.attributeName.vertex + ';', 'attribute vec4 ' + this.webgl.attributeName.color + ';', 'attribute vec2 ' + this.webgl.attributeName.texture0 + ';', 'attribute vec3 ' + this.webgl.attributeName.normal + ';',
 
 	            // render flags
 
@@ -5434,7 +5472,14 @@
 	        key: 'vsSrc',
 	        value: function vsSrc() {
 
-	            var s = ['attribute vec3 aVertexPosition;', 'attribute vec2 aTextureCoord;', 'uniform mat4 uMVMatrix;', 'uniform mat4 uPMatrix;', 'varying vec2 vTextureCoord;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vTextureCoord = aTextureCoord;', '}'];
+	            var s = [
+
+	            /* 
+	             * Attribute names are hard-coded in the WebGL object, with rigid indices.
+	             * vertex, textureX coordinates, colors, normals, tangents.
+	             */
+
+	            'attribute vec3 ' + this.webgl.attributeName.vertex + ';', 'attribute vec2 ' + this.webgl.attributeName.texture0 + ';', 'uniform mat4 uMVMatrix;', 'uniform mat4 uPMatrix;', 'varying vec2 vTextureCoord;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vTextureCoord = aTextureCoord;', '}'];
 
 	            return {
 
@@ -5695,7 +5740,14 @@
 	        key: 'vsSrc',
 	        value: function vsSrc() {
 
-	            var s = ['attribute vec3 aVertexPosition;', 'attribute vec4 aVertexColor;', 'uniform mat4 uMVMatrix;', 'uniform mat4 uPMatrix;', 'varying lowp vec4 vColor;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vColor = aVertexColor;', '}'];
+	            var s = [
+
+	            /* 
+	             * Attribute names are hard-coded in the WebGL object, with rigid indices.
+	             * vertex, textureX coordinates, colors, normals, tangents.
+	             */
+
+	            'attribute vec3 ' + this.webgl.attributeName.vertex + ';', 'attribute vec4 ' + this.webgl.attributeName.color + ';', 'uniform mat4 uMVMatrix;', 'uniform mat4 uPMatrix;', 'varying lowp vec4 vColor;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vColor = aVertexColor;', '}'];
 
 	            return {
 
@@ -5947,7 +5999,10 @@
 	        key: 'vsSrc',
 	        value: function vsSrc() {
 
-	            var s = ['attribute vec3 aVertexPosition;', 'attribute vec3 aVertexNormal;', 'attribute vec2 aTextureCoord;', 'uniform mat4 uMVMatrix;', 'uniform mat4 uPMatrix;', 'uniform mat3 uNMatrix;', 'uniform bool uUseLighting;', 'uniform vec3 uAmbientColor;', 'uniform vec3 uLightingDirection;', 'uniform vec3 uDirectionalColor;', 'varying vec2 vTextureCoord;', 'varying vec3 vLightWeighting;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vTextureCoord = aTextureCoord;', '   if(!uUseLighting) {', '       vLightWeighting = vec3(1.0, 1.0, 1.0);', '   } else {', '       vec3 transformedNormal = uNMatrix * aVertexNormal;', '       float directionalLightWeighting = max(dot(transformedNormal, uLightingDirection), 0.0);', '       vLightWeighting = uAmbientColor + uDirectionalColor * directionalLightWeighting;', '   }', '}'];
+	            var s = ['attribute vec3 ' + this.webgl.attributeName.vertex + ';',
+	            ///////'attribute vec4 ' + this.webgl.attributeName.color + ';',
+
+	            'attribute vec2 ' + this.webgl.attributeName.texture0 + ';', 'attribute vec3 ' + this.webgl.attributeName.normal + ';', 'uniform mat4 uMVMatrix;', 'uniform mat4 uPMatrix;', 'uniform mat3 uNMatrix;', 'uniform bool uUseLighting;', 'uniform vec3 uAmbientColor;', 'uniform vec3 uLightingDirection;', 'uniform vec3 uDirectionalColor;', 'varying vec2 vTextureCoord;', 'varying vec3 vLightWeighting;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vTextureCoord = aTextureCoord;', '   if(!uUseLighting) {', '       vLightWeighting = vec3(1.0, 1.0, 1.0);', '   } else {', '       vec3 transformedNormal = uNMatrix * aVertexNormal;', '       float directionalLightWeighting = max(dot(transformedNormal, uLightingDirection), 0.0);', '       vLightWeighting = uAmbientColor + uDirectionalColor * directionalLightWeighting;', '   }', '}'];
 
 	            return {
 
@@ -6884,7 +6939,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _assetPool = __webpack_require__(26);
+	var _assetPool = __webpack_require__(19);
 
 	var _assetPool2 = _interopRequireDefault(_assetPool);
 
@@ -6969,6 +7024,504 @@
 
 /***/ },
 /* 19 */
+/***/ function(module, exports) {
+
+	
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var AssetPool = function () {
+
+	    /** 
+	     * Load a set of URLs to grab, and run parallel, queued requests until 
+	     * complete or timed out. Also provide a callback so the requesting object 
+	     * can check if their load is complete.
+	     * Inspired by:
+	     * @link https://blog.hospodarets.com/fetch_in_action
+	     */
+	    function AssetPool(util) {
+	        _classCallCheck(this, AssetPool);
+
+	        this.util = util, this.emitter = util.emitter, this.MIN_WAIT_TIME = 100, this.MAX_TRIES = 6, this.NOT_IN_LIST = this.util.NOT_IN_LIST,
+
+	        // Store assets as a pool, with two arrays referencing them (numeric and key-based).
+
+	        this.keyList = [], this.defaultKey = null;
+	    }
+
+	    /*
+	     * ---------------------------------------
+	     * ASSET POOL OPERATIONS
+	     * ---------------------------------------
+	     */
+
+	    /** 
+	     * Get the default asset, if it is defined.
+	     * @returns {Object} default object in the pool.
+	     */
+
+
+	    _createClass(AssetPool, [{
+	        key: 'getDefault',
+	        value: function getDefault() {
+
+	            if (defaultKey) {
+
+	                return this.keyList[defaultKey];
+	            }
+
+	            return null;
+	        }
+
+	        /** 
+	         * Find an asset by its path, if the path was not used as the key.
+	         * @param {String} path the URL of the texture file.
+	         * @returns {Boolean} if found in current textureList, return true, else false.
+	         */
+
+	    }, {
+	        key: 'pathInList',
+	        value: function pathInList(path) {
+
+	            if (path) {
+
+	                for (var i in this.keyList) {
+
+	                    var obj = this.keyList[i];
+
+	                    //////////////////////////console.log( '^^^^obj.path:' + obj.path + ' path:' + path )
+
+	                    if (obj.path && obj.path === path) {
+
+	                        return obj;
+	                    }
+	                }
+	            }
+
+	            return null;
+	        }
+
+	        /** 
+	         * Find a texture by its key (numeric or string)
+	         */
+
+	    }, {
+	        key: 'getAssetByKey',
+	        value: function getAssetByKey(key) {
+
+	            if (key) {
+
+	                if (this.keyList[key]) {
+
+	                    return this.keyList[key];
+	                }
+	            } else {
+
+	                console.error('AssetPool::getAssetByKey(): undefined key');
+	            }
+
+	            return null;
+	        }
+
+	        /** 
+	         * Find an asset by its name
+	         */
+
+	    }, {
+	        key: 'getAssetByName',
+	        value: function getAssetByName(name) {
+
+	            if (name) {
+
+	                for (var i in this.keyList) {
+
+	                    var o = this.keyList[i];
+
+	                    if (o.name && o.name === name) {
+
+	                        return o;
+	                    }
+	                }
+	            }
+
+	            return null;
+	        }
+
+	        /** 
+	         * Check if the actual object (not a clone) has already been added to the list.
+	         * @param {Object} the test object.
+	         * @returns {Object|null} if found, return the object, else null.
+	         */
+
+	    }, {
+	        key: 'assetInList',
+	        value: function assetInList(obj) {
+
+	            if (obj) {
+
+	                for (var i in this.keyList) {
+
+	                    var o = this.keyList[i];
+
+	                    if (o === obj) {
+
+	                        return o;
+	                    }
+	                }
+	            }
+
+	            return null;
+	        }
+
+	        /*
+	         * add an asset to the pool.
+	         * @param {String|Number} key the key of the object, either a number or a guid style key.
+	         * @param {Object} the asset.
+	         * @returns {Object} the stored object.
+	        */
+
+	    }, {
+	        key: 'addAsset',
+	        value: function addAsset(obj, key) {
+
+	            if (obj) {
+
+	                if (key) {
+
+	                    // Object saves its associative key.
+
+	                    obj.key = key;
+
+	                    if (this.keyList[key]) {
+
+	                        if (this.keyList[key] === obj) {
+
+	                            ///////////console.warn( 'AssetPool::addAsset(): asset ' + key + ' already added to pool' );
+
+	                            return obj;
+	                        } else {
+
+	                            /////////console.warn( 'AssetPool::addAsset(): replacing asset at key:' + key );
+
+	                        }
+	                    }
+	                } else {
+
+	                    obj.key = this.util.computeId();
+
+	                    // Undefined path ok for procedural geometry.
+
+	                    ///////////console.log( '^^ adding obj:' + obj.key + ' path:' + obj.path );
+
+	                    // Add the key to the object, just added to the AssetPool
+
+	                    this.keyList[obj.key] = obj;
+	                }
+	            }
+
+	            // Return the asset
+
+	            return obj;
+	        }
+	    }, {
+	        key: 'removeAsset',
+	        value: function removeAsset(key) {
+
+	            var obj = null;
+
+	            if (this.keyList[key]) {
+
+	                obj = this.keyList[key];
+
+	                if (obj) {
+
+	                    delete this.keyList[key];
+	                }
+	            } else {
+
+	                console.warn('AssetPool::removeAsset(): key not found in assetList');
+	            }
+
+	            return obj;
+	        }
+
+	        /*
+	         * ---------------------------------------
+	         * FETCH API (WRAPPED)
+	         * ---------------------------------------
+	         */
+
+	        /** 
+	         * Wrap a Promise in an object.
+	         */
+
+	    }, {
+	        key: 'getWrappedPromise',
+	        value: function getWrappedPromise() {
+
+	            var wrappedPromise = {},
+	                promise = new Promise(function (resolve, reject) {
+
+	                wrappedPromise.resolve = resolve, wrappedPromise.reject = reject;
+	            });
+
+	            wrappedPromise.then = promise.then.bind(promise);
+
+	            wrappedPromise.catch = promise.catch.bind(promise);
+
+	            wrappedPromise.promise = promise;
+
+	            return wrappedPromise;
+	        }
+
+	        /** 
+	         * get fetch wrapped into a wrapped Promise.
+	         * @link http://stackoverflow.com/questions/35520790/error-handling-for-fetch-in-aurelia
+	         */
+
+	    }, {
+	        key: 'getWrappedFetch',
+	        value: function getWrappedFetch(url, params, tries, pos) {
+	            var _this = this;
+
+	            var wrappedPromise = this.getWrappedPromise();
+
+	            var req = new Request(url, params);
+
+	            wrappedPromise.url = url;
+
+	            wrappedPromise.params = params;
+
+	            wrappedPromise.tries = tries;
+
+	            wrappedPromise.pos = pos;
+
+	            // Start the timeout, which lengthens with each attempt.
+
+	            wrappedPromise.timeoutId = setTimeout(function () {
+
+	                console.warn('AssetPool::getWrappedFetch(): TIMEOUT' + ' for ' + (_this.MIN_WAIT_TIME * wrappedPromise.tries + 1) + 'msec ' + wrappedPromise.url);
+
+	                wrappedPromise.catch(0);
+	            }, this.MIN_WAIT_TIME * wrappedPromise.tries);
+
+	            // Apply arguments to fetch.
+
+	            fetch(req).then(function (response) {
+
+	                if (!response.ok) {
+	                    // catch 404 errors
+
+	                    throw new Error('Network response was not ok for ' + wrappedPromise.url);
+	                } else {
+
+	                    return response; // send to the next '.then'
+	                }
+	            }).then(function (response) {
+
+	                //console.warn( 'AssetPool::getWrappedFetch(): OK, RESOLVE ' + wrappedPromise.url );
+
+	                clearTimeout(wrappedPromise.timeoutId);
+
+	                return wrappedPromise.resolve(response);
+	            }, function (error) {
+
+	                console.warn('AssetPool::getWrappedFetch(): NOT OK, REJECT ' + wrappedPromise.url);
+
+	                clearTimeout(wrappedPromise.timeoutId);
+
+	                return wrappedPromise.reject(error); // TODO: using Error causes a strange fail here(!)
+	            }).catch(function (error) {
+
+	                console.warn('AssetPool::getWrappedFetch(): NOT OK, CATCH ' + wrappedPromise.url);
+
+	                clearTimeout(wrappedPromise.timeoutId);
+
+	                return wrappedPromise.catch(error);
+	            });
+
+	            return wrappedPromise;
+	        }
+
+	        /** 
+	         * Get an individual file from the server.
+	         * @param {String} requestURL the file path for our asset.
+	         * @param {String} pos position identifier for the asset, so the requesting object can put it in the right place.
+	         * @param {Function} updateFn callback function when an asset loads or fails
+	         * @param {Boolean} cacheBust if true, add a random query string to avoid caching
+	         * @param {String} mimeType the MIME type of the expected data
+	         * @param {Number} tries. If load fails, try to load again with a longer timeout. Load until 
+	         *        number of 'tries' = this.MAX_TRIES. Lengthen the timeout with each try.
+	         */
+
+	    }, {
+	        key: 'doRequest',
+	        value: function doRequest(requestURL, pos, updateFn) {
+	            var cacheBust = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : true;
+
+	            var _this2 = this;
+
+	            var mimeType = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : 'text/plain';
+	            var tries = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : 0;
+
+
+	            var headers = new Headers({
+
+	                'Content-Type': mimeType
+
+	            });
+
+	            var ft = this.getWrappedFetch(cacheBust ? requestURL + '?' + new Date().getTime() : requestURL, {
+
+	                method: 'get', // optional, "GET" is default value
+
+	                mode: 'cors',
+
+	                redirect: 'follow',
+
+	                headers: headers
+
+	            }, tries, // attach some additional variables to this fetch
+
+	            pos // position identifier for object requested, from the calling requestor object.
+
+	            );
+
+	            // Return the Promise.
+
+	            return ft.promise.then(function (response) {
+
+	                //console.warn( '1. AssetPool::doRequest(): ft.promise FIRST .then OK, response.status:' + response.status + ' for ' + ft.url );
+
+	                //console.warn( '1. AssetPool::doRequest(): ft.promise FIRST .then OK, response:' + response + ' for ' + ft.url );
+
+	                //console.warn( '1. AssetPool::doRequest(): ft.promise FIRST .then OK, tries:' + ft.tries + ' for ' + ft.url );
+
+	                //console.warn( '1. AssetPool::doRequest(): ft.promise FIRST .then OK, mimeType:' + mimeType + ' for ' + ft.url );
+
+	                var data = null;
+
+	                // Check response.status ('0' is ok if we are serving from desktop os).
+
+	                if (response.status === 200 || response.status === 0) {
+
+	                    if (mimeType === 'application/json') {
+
+	                        data = response.json();
+	                    } else if (mimeType.indexOf('text') !== _this2.util.NOT_IN_LIST) {
+
+	                        data = response.text();
+	                    } else if (mimeType === 'application/xml') {
+
+	                        data = response.formData();
+	                    } else if (mimeType.indexOf('image') !== _this2.util.NOT_IN_LIST) {
+
+	                        data = response.blob();
+
+	                        // TODO: data = arraybufferview type
+	                        ///TODO: data = response.arrayBuffer(); // NEED ARRAYBUFFERVIEW
+	                    } else {
+	                        // all other mime types (e.g. audio, video)
+
+	                        data = response.blob();
+	                    }
+
+	                    // Return a resolved Promise to the next '.then'.
+
+	                    return Promise.resolve(data);
+	                } else {
+
+	                    return Promise.reject(response);
+	                }
+	            }, function (error) {
+	                // Triggered by setTimeout(). Try up to this.MAX_TRIES before giving up.
+
+	                //console.warn( '2. AssetPool::doRequest(): ft.promise FIRST .then error, error:' + error + ' for ' + ft.url );
+
+	                //console.warn( '2. AssetPool::doRequest(): ft.promise FIRST .then error, tries:' + ft.tries + ' for ' + ft.url );
+
+	                ft.tries++;
+
+	                if (ft.tries < _this2.MAX_TRIES) {
+
+	                    console.warn('AssetPool::doRequest(): ft.promise .then error, TRYING AGAIN:' + error + ' for ' + ft.url);
+
+	                    _this2.doRequest(requestURL, pos, updateFn, cacheBust = true, mimeType, ft.tries);
+	                }
+
+	                return Promise.resolve(error);
+	            }).then(function (response) {
+
+	                if (response instanceof Error) {
+
+	                    // Run the callback with error values.
+
+	                    updateFn({ pos: pos, path: requestURL, data: null, error: response }); // Send a wrapped error object
+	                } else {
+
+	                    // Run the callback we got in the original request, return received file in data.
+
+	                    //console.log('>>>>>>>>>>>>>>about to call update function!!!!!!')
+
+	                    updateFn({ pos: pos, path: requestURL, data: response, error: false }); // Send the data to the caller.
+	                }
+	            }, function (error) {
+
+	                // Unknown error?
+
+	                return Promise.reject(0);
+	            });
+	        }
+
+	        /** 
+	         * Add fetch() url requests for resolve, with a timeout for fails. 
+	         * when individual fetch()es are complete, run a callback.
+	         * when all fetch()es are complete, run a final callback
+	         * usage: addRequests( requestor, '/first.jpg', 'second.jpg',...);
+	         * @param {Object} requestor the name of the requestor.
+	         *         - requestor.name = the name of the requestor
+	         *         - requestor.updateFn = the function receiving data from the fetch() call
+	         *         - requestor.cacheBust = if true, randomize URL query string to prevent caching
+	         *         - requestor.mimeType = if present, set to a specific MIME type. Default = text/text
+	         * @param {Function} updateFn the function to call after each fetch completes. The 
+	         * calling program is responsible for handing determining if it has enough fetch() 
+	         * operations to complete. 
+	         */
+	        /*
+	            addRequests ( requestor ) {
+	        
+	                let paths = requestor.files;
+	        
+	                for ( let i = 0; i < paths.length; i++ ) {
+	        
+	                    let path = paths[ i ];
+	        
+	                    console.log("AssetPool::addRequests(): " +  path, ", " + typeof requestor.updateFn + ", " + requestor.cacheBust + ", " + requestor.mimeType )
+	        
+	                    this.doRequest( path, i, requestor.updateFn, requestor.cacheBust, requestor.mimeType, 0 ); // initial request at 0 tries
+	        
+	                } // end of request loop
+	        
+	            } // end of addRequests()
+	        
+	        */
+
+	    }]);
+
+	    return AssetPool;
+	}();
+
+	exports.default = AssetPool;
+
+/***/ },
+/* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -6979,15 +7532,15 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _map2d = __webpack_require__(20);
+	var _map2d = __webpack_require__(21);
 
 	var _map2d2 = _interopRequireDefault(_map2d);
 
-	var _map3d = __webpack_require__(22);
+	var _map3d = __webpack_require__(23);
 
 	var _map3d2 = _interopRequireDefault(_map3d);
 
-	var _mesh = __webpack_require__(23);
+	var _mesh = __webpack_require__(24);
 
 	var _mesh2 = _interopRequireDefault(_mesh);
 
@@ -6995,7 +7548,7 @@
 
 	var _lights2 = _interopRequireDefault(_lights);
 
-	var _geometryPool = __webpack_require__(24);
+	var _geometryPool = __webpack_require__(25);
 
 	var _geometryPool2 = _interopRequireDefault(_geometryPool);
 
@@ -7003,7 +7556,7 @@
 
 	var _texturePool2 = _interopRequireDefault(_texturePool);
 
-	var _modelPool = __webpack_require__(25);
+	var _modelPool = __webpack_require__(26);
 
 	var _modelPool2 = _interopRequireDefault(_modelPool);
 
@@ -7981,7 +8534,7 @@
 	exports.default = PrimFactory;
 
 /***/ },
-/* 20 */
+/* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -7992,7 +8545,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _mapd = __webpack_require__(21);
+	var _mapd = __webpack_require__(22);
 
 	var _mapd2 = _interopRequireDefault(_mapd);
 
@@ -8685,7 +9238,7 @@
 	exports.default = Map2d;
 
 /***/ },
-/* 21 */
+/* 22 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -8710,7 +9263,7 @@
 	exports.default = Mapd;
 
 /***/ },
-/* 22 */
+/* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -8721,7 +9274,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _mapd = __webpack_require__(21);
+	var _mapd = __webpack_require__(22);
 
 	var _mapd2 = _interopRequireDefault(_mapd);
 
@@ -8885,7 +9438,7 @@
 	exports.default = Map3d;
 
 /***/ },
-/* 23 */
+/* 24 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -10346,7 +10899,7 @@
 	exports.default = Mesh;
 
 /***/ },
-/* 24 */
+/* 25 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -10357,19 +10910,19 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _map2d = __webpack_require__(20);
+	var _map2d = __webpack_require__(21);
 
 	var _map2d2 = _interopRequireDefault(_map2d);
 
-	var _map3d = __webpack_require__(22);
+	var _map3d = __webpack_require__(23);
 
 	var _map3d2 = _interopRequireDefault(_map3d);
 
-	var _mesh = __webpack_require__(23);
+	var _mesh = __webpack_require__(24);
 
 	var _mesh2 = _interopRequireDefault(_mesh);
 
-	var _modelPool = __webpack_require__(25);
+	var _modelPool = __webpack_require__(26);
 
 	var _modelPool2 = _interopRequireDefault(_modelPool);
 
@@ -14038,7 +14591,7 @@
 	exports.default = GeometryPool;
 
 /***/ },
-/* 25 */
+/* 26 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -14049,7 +14602,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _assetPool = __webpack_require__(26);
+	var _assetPool = __webpack_require__(19);
 
 	var _assetPool2 = _interopRequireDefault(_assetPool);
 
@@ -14792,504 +15345,6 @@
 	exports.default = ModelPool;
 
 /***/ },
-/* 26 */
-/***/ function(module, exports) {
-
-	
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	var AssetPool = function () {
-
-	    /** 
-	     * Load a set of URLs to grab, and run parallel, queued requests until 
-	     * complete or timed out. Also provide a callback so the requesting object 
-	     * can check if their load is complete.
-	     * Inspired by:
-	     * @link https://blog.hospodarets.com/fetch_in_action
-	     */
-	    function AssetPool(util) {
-	        _classCallCheck(this, AssetPool);
-
-	        this.util = util, this.emitter = util.emitter, this.MIN_WAIT_TIME = 100, this.MAX_TRIES = 6, this.NOT_IN_LIST = this.util.NOT_IN_LIST,
-
-	        // Store assets as a pool, with two arrays referencing them (numeric and key-based).
-
-	        this.keyList = [], this.defaultKey = null;
-	    }
-
-	    /*
-	     * ---------------------------------------
-	     * ASSET POOL OPERATIONS
-	     * ---------------------------------------
-	     */
-
-	    /** 
-	     * Get the default asset, if it is defined.
-	     * @returns {Object} default object in the pool.
-	     */
-
-
-	    _createClass(AssetPool, [{
-	        key: 'getDefault',
-	        value: function getDefault() {
-
-	            if (defaultKey) {
-
-	                return this.keyList[defaultKey];
-	            }
-
-	            return null;
-	        }
-
-	        /** 
-	         * Find an asset by its path, if the path was not used as the key.
-	         * @param {String} path the URL of the texture file.
-	         * @returns {Boolean} if found in current textureList, return true, else false.
-	         */
-
-	    }, {
-	        key: 'pathInList',
-	        value: function pathInList(path) {
-
-	            if (path) {
-
-	                for (var i in this.keyList) {
-
-	                    var obj = this.keyList[i];
-
-	                    //////////////////////////console.log( '^^^^obj.path:' + obj.path + ' path:' + path )
-
-	                    if (obj.path && obj.path === path) {
-
-	                        return obj;
-	                    }
-	                }
-	            }
-
-	            return null;
-	        }
-
-	        /** 
-	         * Find a texture by its key (numeric or string)
-	         */
-
-	    }, {
-	        key: 'getAssetByKey',
-	        value: function getAssetByKey(key) {
-
-	            if (key) {
-
-	                if (this.keyList[key]) {
-
-	                    return this.keyList[key];
-	                }
-	            } else {
-
-	                console.error('AssetPool::getAssetByKey(): undefined key');
-	            }
-
-	            return null;
-	        }
-
-	        /** 
-	         * Find an asset by its name
-	         */
-
-	    }, {
-	        key: 'getAssetByName',
-	        value: function getAssetByName(name) {
-
-	            if (name) {
-
-	                for (var i in this.keyList) {
-
-	                    var o = this.keyList[i];
-
-	                    if (o.name && o.name === name) {
-
-	                        return o;
-	                    }
-	                }
-	            }
-
-	            return null;
-	        }
-
-	        /** 
-	         * Check if the actual object (not a clone) has already been added to the list.
-	         * @param {Object} the test object.
-	         * @returns {Object|null} if found, return the object, else null.
-	         */
-
-	    }, {
-	        key: 'assetInList',
-	        value: function assetInList(obj) {
-
-	            if (obj) {
-
-	                for (var i in this.keyList) {
-
-	                    var o = this.keyList[i];
-
-	                    if (o === obj) {
-
-	                        return o;
-	                    }
-	                }
-	            }
-
-	            return null;
-	        }
-
-	        /*
-	         * add an asset to the pool.
-	         * @param {String|Number} key the key of the object, either a number or a guid style key.
-	         * @param {Object} the asset.
-	         * @returns {Object} the stored object.
-	        */
-
-	    }, {
-	        key: 'addAsset',
-	        value: function addAsset(obj, key) {
-
-	            if (obj) {
-
-	                if (key) {
-
-	                    // Object saves its associative key.
-
-	                    obj.key = key;
-
-	                    if (this.keyList[key]) {
-
-	                        if (this.keyList[key] === obj) {
-
-	                            ///////////console.warn( 'AssetPool::addAsset(): asset ' + key + ' already added to pool' );
-
-	                            return obj;
-	                        } else {
-
-	                            /////////console.warn( 'AssetPool::addAsset(): replacing asset at key:' + key );
-
-	                        }
-	                    }
-	                } else {
-
-	                    obj.key = this.util.computeId();
-
-	                    // Undefined path ok for procedural geometry.
-
-	                    ///////////console.log( '^^ adding obj:' + obj.key + ' path:' + obj.path );
-
-	                    // Add the key to the object, just added to the AssetPool
-
-	                    this.keyList[obj.key] = obj;
-	                }
-	            }
-
-	            // Return the asset
-
-	            return obj;
-	        }
-	    }, {
-	        key: 'removeAsset',
-	        value: function removeAsset(key) {
-
-	            var obj = null;
-
-	            if (this.keyList[key]) {
-
-	                obj = this.keyList[key];
-
-	                if (obj) {
-
-	                    delete this.keyList[key];
-	                }
-	            } else {
-
-	                console.warn('AssetPool::removeAsset(): key not found in assetList');
-	            }
-
-	            return obj;
-	        }
-
-	        /*
-	         * ---------------------------------------
-	         * FETCH API (WRAPPED)
-	         * ---------------------------------------
-	         */
-
-	        /** 
-	         * Wrap a Promise in an object.
-	         */
-
-	    }, {
-	        key: 'getWrappedPromise',
-	        value: function getWrappedPromise() {
-
-	            var wrappedPromise = {},
-	                promise = new Promise(function (resolve, reject) {
-
-	                wrappedPromise.resolve = resolve, wrappedPromise.reject = reject;
-	            });
-
-	            wrappedPromise.then = promise.then.bind(promise);
-
-	            wrappedPromise.catch = promise.catch.bind(promise);
-
-	            wrappedPromise.promise = promise;
-
-	            return wrappedPromise;
-	        }
-
-	        /** 
-	         * get fetch wrapped into a wrapped Promise.
-	         * @link http://stackoverflow.com/questions/35520790/error-handling-for-fetch-in-aurelia
-	         */
-
-	    }, {
-	        key: 'getWrappedFetch',
-	        value: function getWrappedFetch(url, params, tries, pos) {
-	            var _this = this;
-
-	            var wrappedPromise = this.getWrappedPromise();
-
-	            var req = new Request(url, params);
-
-	            wrappedPromise.url = url;
-
-	            wrappedPromise.params = params;
-
-	            wrappedPromise.tries = tries;
-
-	            wrappedPromise.pos = pos;
-
-	            // Start the timeout, which lengthens with each attempt.
-
-	            wrappedPromise.timeoutId = setTimeout(function () {
-
-	                console.warn('AssetPool::getWrappedFetch(): TIMEOUT' + ' for ' + (_this.MIN_WAIT_TIME * wrappedPromise.tries + 1) + 'msec ' + wrappedPromise.url);
-
-	                wrappedPromise.catch(0);
-	            }, this.MIN_WAIT_TIME * wrappedPromise.tries);
-
-	            // Apply arguments to fetch.
-
-	            fetch(req).then(function (response) {
-
-	                if (!response.ok) {
-	                    // catch 404 errors
-
-	                    throw new Error('Network response was not ok for ' + wrappedPromise.url);
-	                } else {
-
-	                    return response; // send to the next '.then'
-	                }
-	            }).then(function (response) {
-
-	                //console.warn( 'AssetPool::getWrappedFetch(): OK, RESOLVE ' + wrappedPromise.url );
-
-	                clearTimeout(wrappedPromise.timeoutId);
-
-	                return wrappedPromise.resolve(response);
-	            }, function (error) {
-
-	                console.warn('AssetPool::getWrappedFetch(): NOT OK, REJECT ' + wrappedPromise.url);
-
-	                clearTimeout(wrappedPromise.timeoutId);
-
-	                return wrappedPromise.reject(error); // TODO: using Error causes a strange fail here(!)
-	            }).catch(function (error) {
-
-	                console.warn('AssetPool::getWrappedFetch(): NOT OK, CATCH ' + wrappedPromise.url);
-
-	                clearTimeout(wrappedPromise.timeoutId);
-
-	                return wrappedPromise.catch(error);
-	            });
-
-	            return wrappedPromise;
-	        }
-
-	        /** 
-	         * Get an individual file from the server.
-	         * @param {String} requestURL the file path for our asset.
-	         * @param {String} pos position identifier for the asset, so the requesting object can put it in the right place.
-	         * @param {Function} updateFn callback function when an asset loads or fails
-	         * @param {Boolean} cacheBust if true, add a random query string to avoid caching
-	         * @param {String} mimeType the MIME type of the expected data
-	         * @param {Number} tries. If load fails, try to load again with a longer timeout. Load until 
-	         *        number of 'tries' = this.MAX_TRIES. Lengthen the timeout with each try.
-	         */
-
-	    }, {
-	        key: 'doRequest',
-	        value: function doRequest(requestURL, pos, updateFn) {
-	            var cacheBust = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : true;
-
-	            var _this2 = this;
-
-	            var mimeType = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : 'text/plain';
-	            var tries = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : 0;
-
-
-	            var headers = new Headers({
-
-	                'Content-Type': mimeType
-
-	            });
-
-	            var ft = this.getWrappedFetch(cacheBust ? requestURL + '?' + new Date().getTime() : requestURL, {
-
-	                method: 'get', // optional, "GET" is default value
-
-	                mode: 'cors',
-
-	                redirect: 'follow',
-
-	                headers: headers
-
-	            }, tries, // attach some additional variables to this fetch
-
-	            pos // position identifier for object requested, from the calling requestor object.
-
-	            );
-
-	            // Return the Promise.
-
-	            return ft.promise.then(function (response) {
-
-	                //console.warn( '1. AssetPool::doRequest(): ft.promise FIRST .then OK, response.status:' + response.status + ' for ' + ft.url );
-
-	                //console.warn( '1. AssetPool::doRequest(): ft.promise FIRST .then OK, response:' + response + ' for ' + ft.url );
-
-	                //console.warn( '1. AssetPool::doRequest(): ft.promise FIRST .then OK, tries:' + ft.tries + ' for ' + ft.url );
-
-	                //console.warn( '1. AssetPool::doRequest(): ft.promise FIRST .then OK, mimeType:' + mimeType + ' for ' + ft.url );
-
-	                var data = null;
-
-	                // Check response.status ('0' is ok if we are serving from desktop os).
-
-	                if (response.status === 200 || response.status === 0) {
-
-	                    if (mimeType === 'application/json') {
-
-	                        data = response.json();
-	                    } else if (mimeType.indexOf('text') !== _this2.util.NOT_IN_LIST) {
-
-	                        data = response.text();
-	                    } else if (mimeType === 'application/xml') {
-
-	                        data = response.formData();
-	                    } else if (mimeType.indexOf('image') !== _this2.util.NOT_IN_LIST) {
-
-	                        data = response.blob();
-
-	                        // TODO: data = arraybufferview type
-	                        ///TODO: data = response.arrayBuffer(); // NEED ARRAYBUFFERVIEW
-	                    } else {
-	                        // all other mime types (e.g. audio, video)
-
-	                        data = response.blob();
-	                    }
-
-	                    // Return a resolved Promise to the next '.then'.
-
-	                    return Promise.resolve(data);
-	                } else {
-
-	                    return Promise.reject(response);
-	                }
-	            }, function (error) {
-	                // Triggered by setTimeout(). Try up to this.MAX_TRIES before giving up.
-
-	                //console.warn( '2. AssetPool::doRequest(): ft.promise FIRST .then error, error:' + error + ' for ' + ft.url );
-
-	                //console.warn( '2. AssetPool::doRequest(): ft.promise FIRST .then error, tries:' + ft.tries + ' for ' + ft.url );
-
-	                ft.tries++;
-
-	                if (ft.tries < _this2.MAX_TRIES) {
-
-	                    console.warn('AssetPool::doRequest(): ft.promise .then error, TRYING AGAIN:' + error + ' for ' + ft.url);
-
-	                    _this2.doRequest(requestURL, pos, updateFn, cacheBust = true, mimeType, ft.tries);
-	                }
-
-	                return Promise.resolve(error);
-	            }).then(function (response) {
-
-	                if (response instanceof Error) {
-
-	                    // Run the callback with error values.
-
-	                    updateFn({ pos: pos, path: requestURL, data: null, error: response }); // Send a wrapped error object
-	                } else {
-
-	                    // Run the callback we got in the original request, return received file in data.
-
-	                    //console.log('>>>>>>>>>>>>>>about to call update function!!!!!!')
-
-	                    updateFn({ pos: pos, path: requestURL, data: response, error: false }); // Send the data to the caller.
-	                }
-	            }, function (error) {
-
-	                // Unknown error?
-
-	                return Promise.reject(0);
-	            });
-	        }
-
-	        /** 
-	         * Add fetch() url requests for resolve, with a timeout for fails. 
-	         * when individual fetch()es are complete, run a callback.
-	         * when all fetch()es are complete, run a final callback
-	         * usage: addRequests( requestor, '/first.jpg', 'second.jpg',...);
-	         * @param {Object} requestor the name of the requestor.
-	         *         - requestor.name = the name of the requestor
-	         *         - requestor.updateFn = the function receiving data from the fetch() call
-	         *         - requestor.cacheBust = if true, randomize URL query string to prevent caching
-	         *         - requestor.mimeType = if present, set to a specific MIME type. Default = text/text
-	         * @param {Function} updateFn the function to call after each fetch completes. The 
-	         * calling program is responsible for handing determining if it has enough fetch() 
-	         * operations to complete. 
-	         */
-	        /*
-	            addRequests ( requestor ) {
-	        
-	                let paths = requestor.files;
-	        
-	                for ( let i = 0; i < paths.length; i++ ) {
-	        
-	                    let path = paths[ i ];
-	        
-	                    console.log("AssetPool::addRequests(): " +  path, ", " + typeof requestor.updateFn + ", " + requestor.cacheBust + ", " + requestor.mimeType )
-	        
-	                    this.doRequest( path, i, requestor.updateFn, requestor.cacheBust, requestor.mimeType, 0 ); // initial request at 0 tries
-	        
-	                } // end of request loop
-	        
-	            } // end of addRequests()
-	        
-	        */
-
-	    }]);
-
-	    return AssetPool;
-	}();
-
-	exports.default = AssetPool;
-
-/***/ },
 /* 27 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -15301,7 +15356,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _assetPool = __webpack_require__(26);
+	var _assetPool = __webpack_require__(19);
 
 	var _assetPool2 = _interopRequireDefault(_assetPool);
 
@@ -15869,7 +15924,7 @@
 	    value: true
 	});
 
-	var _assetPool = __webpack_require__(26);
+	var _assetPool = __webpack_require__(19);
 
 	var _assetPool2 = _interopRequireDefault(_assetPool);
 
@@ -17026,11 +17081,11 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _assetPool = __webpack_require__(26);
+	var _assetPool = __webpack_require__(19);
 
 	var _assetPool2 = _interopRequireDefault(_assetPool);
 
-	var _geometryPool = __webpack_require__(24);
+	var _geometryPool = __webpack_require__(25);
 
 	var _geometryPool2 = _interopRequireDefault(_geometryPool);
 
@@ -17042,7 +17097,7 @@
 
 	var _materialPool2 = _interopRequireDefault(_materialPool);
 
-	var _modelPool = __webpack_require__(25);
+	var _modelPool = __webpack_require__(26);
 
 	var _modelPool2 = _interopRequireDefault(_modelPool);
 
@@ -17054,7 +17109,7 @@
 
 	var _lights2 = _interopRequireDefault(_lights);
 
-	var _primFactory = __webpack_require__(19);
+	var _primFactory = __webpack_require__(20);
 
 	var _primFactory2 = _interopRequireDefault(_primFactory);
 
@@ -17267,26 +17322,22 @@
 	                        ); 
 	            */
 
+	            // Create a UV skydome.
+
+	            this.primFactory.createPrim(this.s1, // callback function
+	            typeList.SKYDOME, // type
+	            'skydome', // name (not Id)
+	            vec5(18, 18, 18, 0), // dimensions
+	            vec5(10, 10, 10), // divisions MAKE SMALLER
+	            vec3.fromValues(0, 0, 0), // position (absolute)
+	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	            vec3.fromValues(util.degToRad(0), util.degToRad(0.1), util.degToRad(0)), // angular velocity in x, y, x
+	            ['img/panorama_01.png'], // texture present
+	            vec4.fromValues(0.5, 1.0, 0.2, 1.0) // color
+	            );
+
 	            /*
-	            
-	                    // Create a UV skydome.
-	            
-	                        this.primFactory.createPrim(
-	            
-	                            this.s1,                      // callback function
-	                            typeList.SKYDOME,          // type
-	                            'skydome',                           // name (not Id)
-	                            vec5( 18, 18, 18, 0 ),               // dimensions
-	                            vec5( 10, 10, 10 ),                  // divisions MAKE SMALLER
-	                            vec3.fromValues( 0, 0, 0 ),          // position (absolute)
-	                            vec3.fromValues( 0, 0, 0 ),          // acceleration in x, y, z
-	                            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-	                            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.1 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-	                            [ 'img/panorama_01.png' ],           // texture present
-	                            vec4.fromValues( 0.5, 1.0, 0.2, 1.0) // color
-	                        );
-	            
-	            
 	            
 	                        this.primFactory.createPrim(
 	            
@@ -17637,25 +17688,21 @@
 	            
 	                        );
 	            
-	            
-	                        this.primFactory.createPrim(
-	            
-	                            this.s2,                               // callback function
-	                            typeList.MESH,
-	                            'teapot',
-	                            vec5( 1, 1, 1 ),                       // dimensions (4th dimension doesn't exist for cylinder)
-	                            vec5( 40, 40, 40  ),                    // divisions MAKE SMALLER
-	                            vec3.fromValues( 0.0, 1.0, 2.0 ),      // position (absolute)
-	                            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-	                            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-	                            vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-	                            [],               // no texture present
-	                            vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ), // color,
-	                            false,                                 // if true, apply texture to each face,
-	                            [ 'obj/teapot/teapot.obj' ] // object files (.obj, .mtl)
-	            
-	                        );
 	            */
+
+	            this.primFactory.createPrim(this.s2, // callback function
+	            typeList.MESH, 'teapot', vec5(1, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
+	            vec5(40, 40, 40), // divisions MAKE SMALLER
+	            vec3.fromValues(0.0, 1.0, 2.0), // position (absolute)
+	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	            vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	            [], // no texture present
+	            vec4.fromValues(0.5, 1.0, 0.2, 1.0), // color,
+	            false, // if true, apply texture to each face,
+	            ['obj/teapot/teapot.obj'] // object files (.obj, .mtl)
+
+	            );
 
 	            //////////////////////////////////
 	            // LIT TEXTURE SHADER.
@@ -17965,7 +18012,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _assetPool = __webpack_require__(26);
+	var _assetPool = __webpack_require__(19);
 
 	var _assetPool2 = _interopRequireDefault(_assetPool);
 

@@ -47,7 +47,41 @@ class WebGL {
 
         // Default shader name for vertices (must always use in vertex and fragment shader).
 
-        this.defaultVertexPositionAttribute = 'aVertexPosition';
+        /*
+         * All the Shaders MUST use the followin names for common shader attributes. They are 
+         * hard-coded to improve positioning.
+         */
+
+        this.attributeName = {
+
+            vertex: 'aVertexPosition',
+
+            color:  'aVertexColor',
+
+            texture0: 'aTextureCoord',
+
+            texture1: 'aTextureCoord1',
+
+            texture2: 'aTextureCoord2',
+
+            texture3: 'aTextureCoord3',
+
+            texture4: 'aTextureCoord4',
+
+            texture5: 'aTextureCoord5',
+
+            normal: 'aVertexNormal',
+
+            tangent: 'aVertexTangent'
+
+        };
+
+        //TODO: hard-code the attribute bindings, so they always have the same index.
+        //TODO: use the above array.
+        //TODO: otherwise, getting confusing errors when we try to assign arrays.
+        //https://www.khronos.org/webgl/public-mailing-list/public_webgl/1003/msg00068.php
+        //TODO:
+        //TODO:
 
         // Perspective matrix in Shaders.
 
@@ -1241,8 +1275,8 @@ class WebGL {
              * is assigned to a buffer that is ALWAYS initialized and activated (e.g. 'aVertexPosition'). So, 
              * look for this key, and swap the location keys so aVertexPosition always has index 0.
              */
-
-            let t = attb[ this.defaultVertexPositionAttribute ]; // index
+/*
+            let t = attb[ this.defaultAttributes.vertex ]; // index
 
             if ( t !== 0 ) {
 
@@ -1250,11 +1284,13 @@ class WebGL {
 
                     attb[ zeroPos ] = t;
 
-                    attb[ this.defaultVertexPositionAttribute ] = 0;
+                    attb[ this.defaultAttributes.vertex ] = 0;
 
                 }
 
             }
+
+*/
 
         }
 

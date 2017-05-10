@@ -47,8 +47,13 @@ class ShaderColor extends Shader {
 
         let s = [
 
-            'attribute vec3 aVertexPosition;',
-            'attribute vec4 aVertexColor;',
+            /* 
+             * Attribute names are hard-coded in the WebGL object, with rigid indices.
+             * vertex, textureX coordinates, colors, normals, tangents.
+             */
+
+            'attribute vec3 ' + this.webgl.attributeName.vertex + ';',
+            'attribute vec4 ' + this.webgl.attributeName.color + ';',
 
             'uniform mat4 uMVMatrix;',
             'uniform mat4 uPMatrix;',
