@@ -39,7 +39,7 @@ import WebVR from './webvr';
 
 import Ui from './ui';
 
-// TODO: decide whether to import model, texture, audio, video, font loaders.
+// Import Shaders.
 
 import ShaderFader from './shader-fader';
 
@@ -135,19 +135,19 @@ var promise = new Promise( ( resolve, reject ) => {
 
         // REQUIRED Shader, used for fadeins on Prim creation.
 
-        shaderPool.addShader( new ShaderFader ( true, util, glMatrix, webgl, webvr, 'shaderFader', light ) );
+        shaderPool.addAsset( new ShaderFader ( true, util, glMatrix, webgl, webvr, 'shaderFader', light ) );
 
         // Basic one-texture Shader, without lighting.
 
-        shaderPool.addShader( new ShaderTexture( true, util, glMatrix, webgl, webvr, 'shaderTexture' ) );
+        shaderPool.addAsset( new ShaderTexture( true, util, glMatrix, webgl, webvr, 'shaderTexture' ) );        
 
         // Basic color array Shader, without lighting.
 
-        shaderPool.addShader( new ShaderColor( true, util, glMatrix, webgl, webvr, 'shaderColor' ) );
+        shaderPool.addAsset( new ShaderColor( true, util, glMatrix, webgl, webvr, 'shaderColor' ) );
 
         // One texture Shader with directional lighting.
 
-        shaderPool.addShader( new shaderDirLightTexture( true, util, glMatrix, webgl, webvr, 'shaderDirLightTexture', light ) );
+        shaderPool.addAsset( new shaderDirLightTexture( true, util, glMatrix, webgl, webvr, 'shaderDirLightTexture', light ) );
 
         // Create the world, which needs WebGL, WebVR, the Shader list and world Lights.
 

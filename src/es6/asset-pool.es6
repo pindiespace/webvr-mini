@@ -20,11 +20,13 @@ class AssetPool {
 
         this.MAX_TRIES = 6,
 
-        this.NOT_IN_LIST = this.util.NOT_IN_LIST;
+        this.NOT_IN_LIST = this.util.NOT_IN_LIST,
 
         // Store assets as a pool, with two arrays referencing them (numeric and key-based).
 
-        this.keyList = [];
+        this.keyList = [],
+
+        this.defaultKey = null;
 
     }
 
@@ -33,6 +35,22 @@ class AssetPool {
      * ASSET POOL OPERATIONS
      * ---------------------------------------
      */
+
+    /** 
+     * Get the default asset, if it is defined.
+     * @returns {Object} default object in the pool.
+     */
+    getDefault () {
+
+        if ( defaultKey ) {
+
+            return this.keyList[ defaultKey ];
+
+        }
+
+        return null;
+
+    }
 
     /** 
      * Find an asset by its path, if the path was not used as the key.
@@ -49,7 +67,7 @@ class AssetPool {
 
                 //////////////////////////console.log( '^^^^obj.path:' + obj.path + ' path:' + path )
 
-                if( obj.path === path ) {
+                if( obj.path && obj.path === path ) {
 
                     return obj;
 
@@ -66,7 +84,7 @@ class AssetPool {
     /** 
      * Find a texture by its key (numeric or string)
      */
-    assetInList( key ) {
+    getAssetByKey ( key ) {
 
         if ( key ) {
 
@@ -78,7 +96,7 @@ class AssetPool {
 
         } else {
 
-            console.error( 'AssetPool::assetInlist(): undefined key' );
+            console.error( 'AssetPool::getAssetByKey(): undefined key' );
 
         }
 
@@ -86,7 +104,10 @@ class AssetPool {
 
     }
 
-    nameInList ( name ) {
+    /** 
+     * Find an asset by its name
+     */
+    getAssetByName ( name ) {
 
         if ( name ) {
 
@@ -94,14 +115,13 @@ class AssetPool {
 
                 let o = this.keyList[ i ];
 
-                if ( o.name ) {
+                if ( o.name && o.name === name ) {
 
                     return o;
 
                 }
 
             }
-
 
         }
 
@@ -114,7 +134,7 @@ class AssetPool {
      * @param {Object} the test object.
      * @returns {Object|null} if found, return the object, else null.
      */
-    findByObj ( obj ) {
+    assetInList ( obj ) {
 
         if ( obj ) {
 
@@ -338,9 +358,8 @@ class AssetPool {
 
     }
 
-
     /** 
-     * Get an individual file.
+     * Get an individual file from the server.
      * @param {String} requestURL the file path for our asset.
      * @param {String} pos position identifier for the asset, so the requesting object can put it in the right place.
      * @param {Function} updateFn callback function when an asset loads or fails

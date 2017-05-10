@@ -83,7 +83,11 @@ class TexturePool extends AssetPool {
 
             path: path,         // URL of object
 
+            // options: {},     // only present for some textures
+
             texture: texture,   // WebGLTexture
+
+            textureUse: null,   // Texture use
 
             emits: emitEvent    // emitted event
 

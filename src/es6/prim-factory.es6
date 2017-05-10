@@ -953,6 +953,8 @@ class PrimFactory {
 
         // Get the static network textures async (use emitter to decide what to do when each texture loads).
 
+        //prim.textures[ 0 ] = this.TexturePool.
+
         this.texturePool.getTextures( prim, textureImages, true, false, this.materialPool.defaultTextureMap ); // assume cacheBust === true, mimeType determined by file extension.
 
         // Push into our list of all Prims. Shaders keep a local list of Prims they are rendering.

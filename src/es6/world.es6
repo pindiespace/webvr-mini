@@ -164,13 +164,19 @@ class World extends AssetPool {
 
         // Get the shaders (not initialized with update() and render() yet!).
 
-        this.s0 = this.shaderPool.getShader( 'shaderFader' );
+        this.s0 = this.shaderPool.getAssetByName( 'shaderFader' );
 
-        this.s1 = this.shaderPool.getShader( 'shaderTexture' );
+        this.s1 = this.shaderPool.getAssetByName( 'shaderTexture' );
 
-        this.s2 = this.shaderPool.getShader( 'shaderColor' );
+        this.s2 = this.shaderPool.getAssetByName( 'shaderColor' );
 
-        this.s3 = this.shaderPool.getShader( 'shaderDirLightTexture' );
+        this.s3 = this.shaderPool.getAssetByName( 'shaderDirLightTexture' );
+
+        window.s0 = this.s0;
+        window.s1 = this.s1;
+        window.s2 = this.s2;
+        window.s3 = this.s3;
+
 
 //////////////////////////////////
 // TEXTURED SHADER.
