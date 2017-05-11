@@ -1122,7 +1122,8 @@ class WebGL {
 
             gl.attachShader( program, fso );
 
-            // Explicitly assign attribute names BEFORE linking.
+            // Explicitly assign attribute names and indexes (0-32k) BEFORE linking.
+            // http://stackoverflow.com/questions/4635913/explicit-vs-automatic-attribute-location-binding-for-opengl-shaders
 
             for ( let j in this.attributeNames ) {
 
@@ -1255,7 +1256,8 @@ class WebGL {
     }
 
     /** 
-     * Assign the attribute arrays.
+     * Pass the attribute arrays and values to and individual Shader program. 
+     * The names and indexes are defined in the constructor.
      * @param {WebGLProgram} program a compiled WebGL program.
      * @param {Object} attributes the attributes we want to extract.
      */
@@ -1267,67 +1269,13 @@ class WebGL {
 
             let attb = attributes[ i ];
 
-            let zeroPos = ''; // position that holds the 0th getAttribLocation
-
-            // Note: we call glEnableAttribArray only when rendering
-
-/*
             for ( let j in attb ) {
-
-                attb[ j ] = gl.getAttribLocation( shaderProgram, j );
-
-                if ( attb[ j ] === 0 ) zeroPos = j; // save the key
-
-                //console.log('gl.getAttribLocation( shaderProgram, "' + j + '" ) is:' + attb[ j ] );
-
-            }
-
-*/
-
-            // NOTE: ShaderFader works, but switch to another Shader fails!!!!
-
-            // TODO: WORK ON AUTOMATIC ASSIGNMENT
-            // TODO:
-            // TODO:
-            // TODO:
-            // TODO:
-            // http://stackoverflow.com/questions/4635913/explicit-vs-automatic-attribute-location-binding-for-opengl-shaders
-
-            for ( let j in attb ) {
-
-                //console.log('j:' + j + ' this.attributeNames[' + j + ']')
 
                 console.log('setAttributeNames for attb["' + j + '""],' + this.attributeNames[ j ][ 1 ] + '", "' +  this.attributeNames[ j ][ 0 ] + '"' );
 
-                //gl.bindAttribLocation ( shaderProgram, this.attributeNames[ j ][ 1 ], this.attributeNames[ j ][ 0 ] );
-
                 attb[ j ] = this.attributeNames[ j ][ 1 ];
 
-                //console.log('gl.getAttribLocation( shaderProgram, "' + j + '" ) ' + ' is:' + attb[ j ] );
-
             }
-
-            /* 
-             * To prevent 'performance warning' errors, we need to make sure that index 0 from gl.getAttributeLocation 
-             * is assigned to a buffer that is ALWAYS initialized and activated (e.g. 'aVertexPosition'). So, 
-             * look for this key, and swap the location keys so aVertexPosition always has index 0.
-             */
-/*
-            let t = attb[ this.defaultAttributes.vertex ]; // index
-
-            if ( t !== 0 ) {
-
-                if ( zeroPos !== '' ) {
-
-                    attb[ zeroPos ] = t;
-
-                    attb[ this.defaultAttributes.vertex ] = 0;
-
-                }
-
-            }
-
-*/
 
         }
 

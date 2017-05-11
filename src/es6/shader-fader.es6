@@ -67,6 +67,11 @@ class ShaderFader extends Shader {
 
             'uniform mat4 uMVMatrix;',
             'uniform mat4 uPMatrix;',
+            'uniform mat3 uNMatrix;',
+
+            'uniform vec3 uAmbientColor;',
+            'uniform vec3 uLightingDirection;',
+            'uniform vec3 uDirectionalColor;',
 
             'varying vec2 vTextureCoord;',
             'varying lowp vec4 vColor;',
@@ -244,8 +249,6 @@ class ShaderFader extends Shader {
 
         let adjustedLD = vec3.create(); // TODO: redo
 
-        let altRender = 0;
-
         // Update Prim position, motion - given to World object.
 
         program.update = ( prim, MVM ) => {
@@ -282,14 +285,16 @@ class ShaderFader extends Shader {
 
                 }
 
-            window.vsVars = vsVars;
-            window.fsVars = fsVars;
-
             // Update the model-view matrix using current Prim position, rotation, etc.
 
             prim.setMV( MVM );
 
+            // Calculates a 3x3 normal matrix (transpose inverse) from the 4x4 matrix.
+
+            mat3.normalFromMat4( nMatrix, MVM );
+
         }
+
        // Prim rendering - Shader in ShaderPool, rendered by World.
 
         program.render = ( PM, MVM ) => {
@@ -336,7 +341,7 @@ class ShaderFader extends Shader {
 
                 gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.normals.buffer );
                 gl.enableVertexAttribArray( vsVars.attribute.vec3.aVertexNormal );
-                gl.vertexAttribPointer( vsVars.attribute.vec3.aVertexNormal, prim.geometry.normals.itemSize, gl.FLOAT, false, 0, 0);
+                gl.vertexAttribPointer( vsVars.attribute.vec3.aVertexNormal, prim.geometry.normals.itemSize, gl.FLOAT, false, 0, 0 );
 
                 // Set our alpha.
 
@@ -373,6 +378,10 @@ class ShaderFader extends Shader {
                     gl.uniform1i( fsVars.uniform.bool.uUseLighting, 0 );
 
                 }
+
+                // Normals matrix uniform
+
+                gl.uniformMatrix3fv( vsVars.uniform.mat3.uNMatrix, false, nMatrix );
 
                 // Bind perspective and model-view matrix uniforms.
 

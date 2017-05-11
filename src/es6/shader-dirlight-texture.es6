@@ -200,7 +200,7 @@ class shaderDirLightTexture extends Shader {
 
         let lighting = true;
 
-        // Use just one light, diffuse illumination ( see lights.es6 for defaults).
+        // Use just one light, diffuse illumination from World ( see lights.es6 for defaults).
 
         let light0 = this.lights.getLight( this.lights.lightTypes.LIGHT_0 );
 
@@ -237,8 +237,6 @@ class shaderDirLightTexture extends Shader {
             vec3.scale( adjustedLD, adjustedLD, -1 );
 
             // Calculates a 3x3 normal matrix (transpose inverse) from the 4x4 matrix.
-
-            /////mat3.normalFromMat4( nMatrix, mvMatrix );
 
             mat3.normalFromMat4( nMatrix, MVM );
 

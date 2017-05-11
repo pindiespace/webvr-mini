@@ -2702,7 +2702,8 @@
 
 	                                                gl.attachShader(program, fso);
 
-	                                                // Explicitly assign attribute names BEFORE linking.
+	                                                // Explicitly assign attribute names and indexes (0-32k) BEFORE linking.
+	                                                // http://stackoverflow.com/questions/4635913/explicit-vs-automatic-attribute-location-binding-for-opengl-shaders
 
 	                                                for (var j in this.attributeNames) {
 
@@ -2819,7 +2820,8 @@
 	                        }
 
 	                        /** 
-	                         * Assign the attribute arrays.
+	                         * Pass the attribute arrays and values to and individual Shader program. 
+	                         * The names and indexes are defined in the constructor.
 	                         * @param {WebGLProgram} program a compiled WebGL program.
 	                         * @param {Object} attributes the attributes we want to extract.
 	                         */
@@ -2834,66 +2836,12 @@
 
 	                                                var attb = attributes[i];
 
-	                                                var zeroPos = ''; // position that holds the 0th getAttribLocation
-
-	                                                // Note: we call glEnableAttribArray only when rendering
-
-	                                                /*
-	                                                            for ( let j in attb ) {
-	                                                
-	                                                                attb[ j ] = gl.getAttribLocation( shaderProgram, j );
-	                                                
-	                                                                if ( attb[ j ] === 0 ) zeroPos = j; // save the key
-	                                                
-	                                                                //console.log('gl.getAttribLocation( shaderProgram, "' + j + '" ) is:' + attb[ j ] );
-	                                                
-	                                                            }
-	                                                
-	                                                */
-
-	                                                // NOTE: ShaderFader works, but switch to another Shader fails!!!!
-
-	                                                // TODO: WORK ON AUTOMATIC ASSIGNMENT
-	                                                // TODO:
-	                                                // TODO:
-	                                                // TODO:
-	                                                // TODO:
-	                                                // http://stackoverflow.com/questions/4635913/explicit-vs-automatic-attribute-location-binding-for-opengl-shaders
-
 	                                                for (var j in attb) {
-
-	                                                            //console.log('j:' + j + ' this.attributeNames[' + j + ']')
 
 	                                                            console.log('setAttributeNames for attb["' + j + '""],' + this.attributeNames[j][1] + '", "' + this.attributeNames[j][0] + '"');
 
-	                                                            //gl.bindAttribLocation ( shaderProgram, this.attributeNames[ j ][ 1 ], this.attributeNames[ j ][ 0 ] );
-
 	                                                            attb[j] = this.attributeNames[j][1];
-
-	                                                            //console.log('gl.getAttribLocation( shaderProgram, "' + j + '" ) ' + ' is:' + attb[ j ] );
 	                                                }
-
-	                                                /* 
-	                                                 * To prevent 'performance warning' errors, we need to make sure that index 0 from gl.getAttributeLocation 
-	                                                 * is assigned to a buffer that is ALWAYS initialized and activated (e.g. 'aVertexPosition'). So, 
-	                                                 * look for this key, and swap the location keys so aVertexPosition always has index 0.
-	                                                 */
-	                                                /*
-	                                                            let t = attb[ this.defaultAttributes.vertex ]; // index
-	                                                
-	                                                            if ( t !== 0 ) {
-	                                                
-	                                                                if ( zeroPos !== '' ) {
-	                                                
-	                                                                    attb[ zeroPos ] = t;
-	                                                
-	                                                                    attb[ this.defaultAttributes.vertex ] = 0;
-	                                                
-	                                                                }
-	                                                
-	                                                            }
-	                                                
-	                                                */
 	                                    }
 
 	                                    return attributes;
@@ -5766,7 +5714,7 @@
 
 	                        var lighting = true;
 
-	                        // Use just one light, diffuse illumination ( see lights.es6 for defaults).
+	                        // Use just one light, diffuse illumination from World ( see lights.es6 for defaults).
 
 	                        var light0 = this.lights.getLight(this.lights.lightTypes.LIGHT_0);
 
@@ -5803,8 +5751,6 @@
 	                                vec3.scale(adjustedLD, adjustedLD, -1);
 
 	                                // Calculates a 3x3 normal matrix (transpose inverse) from the 4x4 matrix.
-
-	                                /////mat3.normalFromMat4( nMatrix, mvMatrix );
 
 	                                mat3.normalFromMat4(nMatrix, MVM);
 
@@ -25843,7 +25789,7 @@
 
 	                        // render flags
 
-	                        'uniform bool uUseLighting;', 'uniform bool uUseTexture;', 'uniform bool uUseColor;', 'uniform mat4 uMVMatrix;', 'uniform mat4 uPMatrix;', 'varying vec2 vTextureCoord;', 'varying lowp vec4 vColor;', 'varying vec3 vLightWeighting;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vLightWeighting = vec3(1.0, 1.0, 1.0);', '    if (uUseTexture) { ', '      vTextureCoord = aTextureCoord;', '    } else { ', '      vTextureCoord = vec2(0.0, 0.0);', // Prim has no textures
+	                        'uniform bool uUseLighting;', 'uniform bool uUseTexture;', 'uniform bool uUseColor;', 'uniform mat4 uMVMatrix;', 'uniform mat4 uPMatrix;', 'uniform mat3 uNMatrix;', 'uniform vec3 uAmbientColor;', 'uniform vec3 uLightingDirection;', 'uniform vec3 uDirectionalColor;', 'varying vec2 vTextureCoord;', 'varying lowp vec4 vColor;', 'varying vec3 vLightWeighting;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vLightWeighting = vec3(1.0, 1.0, 1.0);', '    if (uUseTexture) { ', '      vTextureCoord = aTextureCoord;', '    } else { ', '      vTextureCoord = vec2(0.0, 0.0);', // Prim has no textures
 
 	                        '    }', '    vColor = aVertexColor;', // we always read this, so always bind it
 
@@ -25955,8 +25901,6 @@
 
 	                        var adjustedLD = vec3.create(); // TODO: redo
 
-	                        var altRender = 0;
-
 	                        // Update Prim position, motion - given to World object.
 
 	                        program.update = function (prim, MVM) {
@@ -25989,13 +25933,15 @@
 	                                        }
 	                                }
 
-	                                window.vsVars = vsVars;
-	                                window.fsVars = fsVars;
-
 	                                // Update the model-view matrix using current Prim position, rotation, etc.
 
 	                                prim.setMV(MVM);
+
+	                                // Calculates a 3x3 normal matrix (transpose inverse) from the 4x4 matrix.
+
+	                                mat3.normalFromMat4(nMatrix, MVM);
 	                        };
+
 	                        // Prim rendering - Shader in ShaderPool, rendered by World.
 
 	                        program.render = function (PM, MVM) {
@@ -26077,6 +26023,10 @@
 	                                                gl.uniform1i(fsVars.uniform.bool.uUseTexture, 0);
 	                                                gl.uniform1i(fsVars.uniform.bool.uUseLighting, 0);
 	                                        }
+
+	                                        // Normals matrix uniform
+
+	                                        gl.uniformMatrix3fv(vsVars.uniform.mat3.uNMatrix, false, nMatrix);
 
 	                                        // Bind perspective and model-view matrix uniforms.
 
