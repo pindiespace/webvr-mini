@@ -356,6 +356,7 @@ class World extends AssetPool {
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         
             );
+*/
 
             this.primFactory.createPrim(
 
@@ -373,6 +374,7 @@ class World extends AssetPool {
         
             );
 
+/*
             this.primFactory.createPrim(
 
                 this.s1,                      // callback function

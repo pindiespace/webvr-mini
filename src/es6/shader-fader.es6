@@ -142,9 +142,6 @@ class ShaderFader extends Shader {
 
                 '}',
 
-
-                //'gl_FragColor = vec4(vColor.rgb * vLightWeighting, uAlpha);',
-
             '}'
 
         ];
@@ -337,6 +334,10 @@ class ShaderFader extends Shader {
                 gl.enableVertexAttribArray( vsVars.attribute.vec2.aTextureCoord );
                 gl.vertexAttribPointer( vsVars.attribute.vec2.aTextureCoord, prim.geometry.texCoords.itemSize, gl.FLOAT, false, 0, 0 );
 
+                gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.normals.buffer );
+                gl.enableVertexAttribArray( vsVars.attribute.vec3.aVertexNormal );
+                gl.vertexAttribPointer( vsVars.attribute.vec3.aVertexNormal, prim.geometry.normals.itemSize, gl.FLOAT, false, 0, 0);
+
                 // Set our alpha.
 
                 gl.uniform1f( fsVars.uniform.float.uAlpha, prim.alpha );
@@ -406,9 +407,9 @@ class ShaderFader extends Shader {
             // Disable buffers that might cause problems in another Shader.
 
             gl.bindBuffer( gl.ARRAY_BUFFER, null );
-            gl.enableVertexAttribArray( vsVars.attribute.vec3.aVertexPosition );
             gl.disableVertexAttribArray( vsVars.attribute.vec4.aVertexColor );
             gl.disableVertexAttribArray( vsVars.attribute.vec2.aTextureCoord );
+            gl.disableVertexAttribArray( vsVars.attribute.vec3.aVertexNormal );
 
         } // end of program.render()
 

@@ -50,7 +50,7 @@ class shaderDirLightTexture extends Shader {
         let s = [
 
             'attribute vec3 ' + this.webgl.attributeNames.aVertexPosition[ 0 ] + ';',
-            ///////'attribute vec4 ' + this.webgl.attributeNames.color[ 0 ] + ';',
+            //'attribute vec4 ' + this.webgl.attributeNames.aVertexColor[ 0 ] + ';',
 
             'attribute vec2 ' + this.webgl.attributeNames.aTextureCoord[ 0 ] + ';',
             'attribute vec3 ' + this.webgl.attributeNames.aVertexNormal[ 0 ] + ';',
@@ -81,6 +81,7 @@ class shaderDirLightTexture extends Shader {
             '   } else {',
 
             '       vec3 transformedNormal = uNMatrix * aVertexNormal;',
+            ///'       vec3 transformedNormal = uNMatrix * vec3(1.0, 1.0, 1.0);',
 
             '       float directionalLightWeighting = max(dot(transformedNormal, uLightingDirection), 0.0);',
 
@@ -275,19 +276,17 @@ class shaderDirLightTexture extends Shader {
                 gl.enableVertexAttribArray( vsVars.attribute.vec3.aVertexPosition );
                 gl.vertexAttribPointer( vsVars.attribute.vec3.aVertexPosition, prim.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0 );
 
+                // Bind textures buffer (could have multiple bindings here).
+
+                gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.texCoords.buffer );
+                gl.enableVertexAttribArray( vsVars.attribute.vec2.aTextureCoord );
+                gl.vertexAttribPointer( vsVars.attribute.vec2.aTextureCoord, prim.geometry.texCoords.itemSize, gl.FLOAT, false, 0, 0 );
+
                 // Bind normals buffer.
 
                 gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.normals.buffer );
                 gl.enableVertexAttribArray( vsVars.attribute.vec3.aVertexNormal );
                 gl.vertexAttribPointer( vsVars.attribute.vec3.aVertexNormal, prim.geometry.normals.itemSize, gl.FLOAT, false, 0, 0);
-
-                // Bind textures buffer (could have multiple bindings here).
-
-                ///if ( ! prim.geometry.checkTexCoordsData() ) window.primName = prim.name
-                ///if ( ! prim.geometry.texCoords.buffer ) window.primName = prim.name;
-                gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.texCoords.buffer );
-                gl.enableVertexAttribArray( vsVars.attribute.vec2.aTextureCoord );
-                gl.vertexAttribPointer( vsVars.attribute.vec2.aTextureCoord, prim.geometry.texCoords.itemSize, gl.FLOAT, false, 0, 0 );
 
                 gl.activeTexture( gl.TEXTURE0 );
                 gl.bindTexture( gl.TEXTURE_2D, null );
@@ -361,8 +360,8 @@ class shaderDirLightTexture extends Shader {
             // Disable buffers that might cause problems in another Prim.
 
             gl.bindBuffer( gl.ARRAY_BUFFER, null );
-            if ( vsVars.attribute.vec3.aVertexNormal ) gl.disableVertexAttribArray( vsVars.attribute.vec3.aVertexNormal );
-            if ( vsVars.attribute.vec2.aTextureCoord ) gl.disableVertexAttribArray( vsVars.attribute.vec2.aTextureCoord );
+            gl.disableVertexAttribArray( vsVars.attribute.vec3.aVertexNormal );
+            gl.disableVertexAttribArray( vsVars.attribute.vec2.aTextureCoord );
 
         } // end of program.render()
 
