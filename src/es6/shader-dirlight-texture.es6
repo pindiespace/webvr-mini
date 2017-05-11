@@ -81,7 +81,6 @@ class shaderDirLightTexture extends Shader {
             '   } else {',
 
             '       vec3 transformedNormal = uNMatrix * aVertexNormal;',
-            ///'       vec3 transformedNormal = uNMatrix * vec3(1.0, 1.0, 1.0);',
 
             '       float directionalLightWeighting = max(dot(transformedNormal, uLightingDirection), 0.0);',
 

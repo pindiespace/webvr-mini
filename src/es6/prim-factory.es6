@@ -951,9 +951,15 @@ class PrimFactory {
 
         this.geometryPool.getGeometries( prim, modelFiles );
 
-        // Get the static network textures async (use emitter to decide what to do when each texture loads).
+        /* 
+         * Add a default texture to all Prims so Shaders always have something to 
+         * bind, even if they are not used. On slower systems, WebGL can generate errors 
+         * due to finite time needed to generate mipmaps after the WebGL texture is first created.
+         */
 
-        //prim.textures[ 0 ] = this.TexturePool.getDefault();
+        prim.textures[ 0 ] = this.texturePool.getDefault();
+
+        // Get textures assigned directly ( .mtl files may assign others ) in the createPrim() call.
 
         this.texturePool.getTextures( prim, textureImages, true, false, this.materialPool.defaultTextureMap ); // assume cacheBust === true, mimeType determined by file extension.
 

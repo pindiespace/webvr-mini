@@ -172,12 +172,6 @@ class World extends AssetPool {
 
         this.s3 = this.shaderPool.getAssetByName( 'shaderDirLightTexture' );
 
-        window.s0 = this.s0;
-        window.s1 = this.s1;
-        window.s2 = this.s2;
-        window.s3 = this.s3;
-
-
 //////////////////////////////////
 // TEXTURED SHADER.
 //////////////////////////////////
@@ -204,8 +198,6 @@ class World extends AssetPool {
             ); 
 */
 
-
-
         // Create a UV skydome.
 
             this.primFactory.createPrim(
@@ -222,8 +214,6 @@ class World extends AssetPool {
                 [ 'img/panorama_01.png' ],           // texture present
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0) // color
             );
-
-/*
 
             this.primFactory.createPrim(
 
@@ -356,7 +346,6 @@ class World extends AssetPool {
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         
             );
-*/
 
             this.primFactory.createPrim(
 
@@ -374,7 +363,7 @@ class World extends AssetPool {
         
             );
 
-/*
+
             this.primFactory.createPrim(
 
                 this.s1,                      // callback function
@@ -576,7 +565,7 @@ class World extends AssetPool {
 
             );
 
-*/
+
 
             this.primFactory.createPrim(
 

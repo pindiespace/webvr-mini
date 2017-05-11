@@ -95,6 +95,23 @@ class ShaderFader extends Shader {
 
             '    vColor = aVertexColor;', // we always read this, so always bind it
 
+            '    if(uUseLighting) {',
+
+            '       vec3 transformedNormal = uNMatrix * aVertexNormal;',
+
+            // TODO: experiment until we get a good value here...
+
+            '       float directionalLightWeighting = max(dot(transformedNormal, uLightingDirection), 0.0);',
+
+            '       vLightWeighting = uAmbientColor + uDirectionalColor * directionalLightWeighting;',
+
+
+            '    } else {',
+
+            '       vLightWeighting = vec3(1.0, 1.0, 1.0);',
+
+            '    }',
+
             '}'
 
         ];
@@ -125,9 +142,9 @@ class ShaderFader extends Shader {
             'varying vec2 vTextureCoord;',
             'varying lowp vec4 vColor;',
 
-            'void main(void) {',
+            'varying vec3 vLightWeighting;',
 
-                'float vLightWeighting = 1.0;',
+            'void main(void) {',
 
                 'if (uUseColor) {',
 
@@ -140,8 +157,6 @@ class ShaderFader extends Shader {
                 'else if(uUseTexture) {',
 
                     'vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));',
-
-                // TODO: ADD LIGHTING HERE
 
                     'gl_FragColor = vec4(textureColor.rgb * vLightWeighting, textureColor.a * uAlpha);',
 
@@ -224,7 +239,6 @@ class ShaderFader extends Shader {
 
         }
 
-
         /** 
          * POLYMORPHIC METHODS
          */
@@ -235,7 +249,7 @@ class ShaderFader extends Shader {
 
         // Use just the primary World light (see lights.es6 for defaults).
 
-        let lighting = true; // DEFAULT ONLY
+        let lighting = false;
 
         let light0 = this.lights.getLight( this.lights.lightTypes.LIGHT_0 );
 
@@ -347,15 +361,26 @@ class ShaderFader extends Shader {
 
                 gl.uniform1f( fsVars.uniform.float.uAlpha, prim.alpha );
 
+                // Conditionally set lighting based on default Shader the Prim was assigned to.
+
+                if ( prim.defaultShader.required.lights > 0 ) {
+
+                    gl.uniform1i( fsVars.uniform.bool.uUseLighting, 1 );
+
+                } else {
+
+                    gl.uniform1i( fsVars.uniform.bool.uUseLighting, 0 );
+                       
+                }
+
                 // Draw using either the texture[0] or color array.
 
                 if ( prim.defaultShader.required.textures > 0 && prim.textures[ 0 ] && prim.textures[ 0 ].texture ) {
 
-                    // NOTE: the shader must do logic to prevent texture calcs if there is no texture.
+                    // Conditionally set use of color and texture arrays.
 
                     gl.uniform1i( fsVars.uniform.bool.uUseColor, 0 );
                     gl.uniform1i( fsVars.uniform.bool.uUseTexture, 1 );
-                    gl.uniform1i( fsVars.uniform.bool.uUseLighting, 0 );
 
                    // Bind the first texture.
 
@@ -371,17 +396,37 @@ class ShaderFader extends Shader {
 
                 } else {
 
-                    // Bind color buffer.
+                    // Conditionally set use of color and texture array.
 
                     gl.uniform1i( fsVars.uniform.bool.uUseColor, 1 );
                     gl.uniform1i( fsVars.uniform.bool.uUseTexture, 0 );
-                    gl.uniform1i( fsVars.uniform.bool.uUseLighting, 0 );
 
                 }
 
                 // Normals matrix uniform
 
                 gl.uniformMatrix3fv( vsVars.uniform.mat3.uNMatrix, false, nMatrix );
+
+                // Lighting (always bound)
+
+                    gl.uniform3f(
+                        vsVars.uniform.vec3.uAmbientColor,
+                        ambient[ 0 ],
+                        ambient[ 1 ],
+                        ambient[ 2 ]
+                    );
+
+                    gl.uniform3fv( 
+                        vsVars.uniform.vec3.uLightingDirection, 
+                        adjustedLD 
+                    );
+
+                    gl.uniform3f(
+                        vsVars.uniform.vec3.uDirectionalColor,
+                        directionalColor[ 0 ],
+                        directionalColor[ 1 ],
+                        directionalColor[ 2 ]
+                    );
 
                 // Bind perspective and model-view matrix uniforms.
 

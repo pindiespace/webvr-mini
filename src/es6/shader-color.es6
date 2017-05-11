@@ -55,6 +55,8 @@ class ShaderColor extends Shader {
             'attribute vec3 ' + this.webgl.attributeNames.aVertexPosition[ 0 ] + ';',
             'attribute vec4 ' + this.webgl.attributeNames.aVertexColor[ 0 ] + ';',
 
+            //'attribute vec2 ' + this.webgl.attributeNames.aTextureCoord[ 0 ] + ';',
+
             'uniform mat4 uMVMatrix;',
             'uniform mat4 uPMatrix;',
 
@@ -241,6 +243,10 @@ class ShaderColor extends Shader {
                 gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.colors.buffer );
                 gl.enableVertexAttribArray( vsVars.attribute.vec4.aVertexColor );
                 gl.vertexAttribPointer( vsVars.attribute.vec4.aVertexColor, prim.geometry.colors.itemSize, gl.FLOAT, false, 0, 0 );
+
+//                gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.texCoords.buffer );
+//                gl.enableVertexAttribArray( vsVars.attribute.vec2.aTextureCoord );
+//                gl.vertexAttribPointer( vsVars.attribute.vec2.aTextureCoord, prim.geometry.texCoords.itemSize, gl.FLOAT, false, 0, 0 );
 
                 // Bind perspective and model-view matrix uniforms.
 

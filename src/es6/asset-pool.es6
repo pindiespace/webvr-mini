@@ -42,9 +42,9 @@ class AssetPool {
      */
     getDefault () {
 
-        if ( defaultKey ) {
+        if ( this.defaultKey ) {
 
-            return this.keyList[ defaultKey ];
+            return this.keyList[ this.defaultKey ];
 
         }
 
