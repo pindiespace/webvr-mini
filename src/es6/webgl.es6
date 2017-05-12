@@ -1104,7 +1104,7 @@ class WebGL {
 
         }
 
-        // Wrap the program object to keep V8 JIT happy.
+        // Wrap the VBO program object to keep V8 JIT happy.
 
         let prg = {};
 
@@ -1127,7 +1127,7 @@ class WebGL {
 
             for ( let j in this.attributeNames ) {
 
-                console.log('gl.bindAttrib( shaderProgram, "' + this.attributeNames[ j ][ 1 ] + '", "' +  this.attributeNames[ j ][ 0 ] + '"' );
+                //console.log('gl.bindAttrib( shaderProgram, "' + this.attributeNames[ j ][ 1 ] + '", "' +  this.attributeNames[ j ][ 0 ] + '"' );
 
                 gl.bindAttribLocation ( program, this.attributeNames[ j ][ 1 ], this.attributeNames[ j ][ 0 ] );
 
@@ -1256,7 +1256,7 @@ class WebGL {
     }
 
     /** 
-     * Pass the attribute arrays and values to and individual Shader program. 
+     * Pass the pre-defined attribute indexes and names to individual Shader programs. 
      * The names and indexes are defined in the constructor.
      * @param {WebGLProgram} program a compiled WebGL program.
      * @param {Object} attributes the attributes we want to extract.
@@ -1271,7 +1271,7 @@ class WebGL {
 
             for ( let j in attb ) {
 
-                console.log('setAttributeNames for attb["' + j + '""],' + this.attributeNames[ j ][ 1 ] + '", "' +  this.attributeNames[ j ][ 0 ] + '"' );
+                //console.log('setAttributeNames for attb["' + j + '""],' + this.attributeNames[ j ][ 1 ] + '", "' +  this.attributeNames[ j ][ 0 ] + '"' );
 
                 attb[ j ] = this.attributeNames[ j ][ 1 ];
 
@@ -1307,38 +1307,6 @@ class WebGL {
         }
 
         return uniforms;
-
-    }
-
-    /** 
-     * Bind attribute locations.
-     * Preferred when multiple shaders are being used.
-     * http://stackoverflow.com/questions/4635913/explicit-vs-automatic-attribute-location-binding-for-opengl-shaders
-     * @param {WebGLProgram} program a compiled WebGL program.
-     * @param {Object} attribLocationmap the attributes.
-     */
-    bindAttributeLocations ( program, attribLocationMap ) {
-
-        const gl = this.gl;
-
-/*
-        if ( attribLocationMap ) {
-
-            for ( let attribName in attribLocationMap ) {
-
-                console.log('binding attribute:' + attribName + ' to:' + attribLocationMap[attribName]);
-
-                gl.bindAttribLocation( program, attribLocationMap[ attribName ], attribName );
-
-            }
-
-        } else {
-
-            console.warn( 'webgl.bindAttributes: no attributes supplied' );
-
-        }
-
-        */
 
     }
 
@@ -1396,7 +1364,7 @@ class WebGL {
 
             uniformName = uniformInfo.name.replace( '[0]', '' );
 
-            console.log("adding uniform:" + uniformName );
+            //console.log("adding uniform:" + uniformName );
 
             uniform[ uniformName ] = gl.getUniformLocation( program, uniformName );
 

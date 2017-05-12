@@ -243,9 +243,14 @@ class ShaderFader extends Shader {
          * POLYMORPHIC METHODS
          */
 
-        // Set our global (to the Prim) alpha value.
+        // Shorten names of attributes, uniforms for rendering.
 
-        //let alpha = 0.01;
+
+        // Local link to easing function
+
+        let easeIn = this.util.easeIn;
+
+        let easeType = 0;
 
         // Use just the primary World light (see lights.es6 for defaults).
 
@@ -271,7 +276,7 @@ class ShaderFader extends Shader {
 
                 let dir = fade.endAlpha - fade.startAlpha;
 
-                let inc = 0.005;
+                let inc = 0.01;
 
                 if ( dir > 0 ) {
 
@@ -298,6 +303,12 @@ class ShaderFader extends Shader {
                     }
 
                 }
+
+            // Compute lighting normals.
+
+            vec3.normalize( adjustedLD, lightingDirection );
+
+            vec3.scale( adjustedLD, adjustedLD, -1 );
 
             // Update the model-view matrix using current Prim position, rotation, etc.
 
@@ -357,9 +368,9 @@ class ShaderFader extends Shader {
                 gl.enableVertexAttribArray( vsVars.attribute.vec3.aVertexNormal );
                 gl.vertexAttribPointer( vsVars.attribute.vec3.aVertexNormal, prim.geometry.normals.itemSize, gl.FLOAT, false, 0, 0 );
 
-                // Set our alpha.
+                // Set our alpha - NOTE: easing animation specified
 
-                gl.uniform1f( fsVars.uniform.float.uAlpha, prim.alpha );
+                gl.uniform1f( fsVars.uniform.float.uAlpha, easeIn( prim.alpha, 0 ) );
 
                 // Conditionally set lighting based on default Shader the Prim was assigned to.
 
@@ -460,10 +471,10 @@ class ShaderFader extends Shader {
 
             // Disable buffers that might cause problems in another Shader.
 
-            gl.bindBuffer( gl.ARRAY_BUFFER, null );
-            gl.disableVertexAttribArray( vsVars.attribute.vec4.aVertexColor );
-            gl.disableVertexAttribArray( vsVars.attribute.vec2.aTextureCoord );
-            gl.disableVertexAttribArray( vsVars.attribute.vec3.aVertexNormal );
+            //gl.bindBuffer( gl.ARRAY_BUFFER, null );
+            //gl.disableVertexAttribArray( vsVars.attribute.vec4.aVertexColor );
+            //gl.disableVertexAttribArray( vsVars.attribute.vec2.aTextureCoord );
+            //gl.disableVertexAttribArray( vsVars.attribute.vec3.aVertexNormal );
 
         } // end of program.render()
 

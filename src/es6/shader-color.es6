@@ -280,8 +280,8 @@ class ShaderColor extends Shader {
 
             // Disable buffers that might cause problems in another Shader.
 
-            gl.bindBuffer( gl.ARRAY_BUFFER, null );
-            gl.disableVertexAttribArray( vsVars.attribute.vec4.aVertexColor ); 
+            //gl.bindBuffer( gl.ARRAY_BUFFER, null );
+            //gl.disableVertexAttribArray( vsVars.attribute.vec4.aVertexColor ); 
 
         } // end of program.render()
 

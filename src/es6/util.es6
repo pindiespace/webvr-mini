@@ -313,6 +313,57 @@ class Util {
 
     }
 
+    /** 
+     * Basic easing operations.
+     * @link https://gist.github.com/gre/1650294
+     * @link https://github.com/gre/bezier-easing
+     * @param {Number} a a number between 0-1
+     * @param {Number} type the type of easing.
+     */
+    easeIn ( a, type ) {
+
+        let t = a;
+
+        switch( type ) {
+
+            case 0: return t * t; // ease-in quad
+
+            case 1: return Math.pow( t, 3 ); // ease-in cubic
+
+            case 2: return t * t * t * t * t; // ease-in quint
+
+            case 3: return t < 0.5 ? 8 * t * t * t * t : 1 - 8 * ( --t ) * t * t * t; // in-out quart
+
+            case 4: return t < 0.5 ? 16 * t * t * t * t * t : 1 + 16 * ( --t ) * t * t * t * t ; // in-out quint
+
+        }
+
+        return a;
+
+    }
+
+    easeOut ( a, type ) {
+
+        let t = a;
+
+        switch( type ) {
+
+            case 0: return t * ( 2 - t ); // ease-out quad
+
+            case 1: return 1 - Math.pow( 1 - t, 3 ); // ease-out cubic
+
+            case 2: return 1 + (--t ) * t * t * t * t; // ease-out quint
+
+            case 3: return 1 + (--t ) * ( t < 0.5 ? 8  * t * t * t * t : 1 - 8 * ( --t ) * t * t * t ); // in-out quart
+
+            case 4: return 1 + (--t ) * ( t < 0.5 ? 16 * t * t * t * t * t : 1 + 16 * ( --t ) * t * t * t * t ); // out-in quint
+
+        }
+
+        return a;
+
+    }
+
     /*
      * ---------------------------------------
      * RANDOMIZERS

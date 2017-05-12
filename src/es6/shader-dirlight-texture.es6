@@ -322,7 +322,7 @@ class shaderDirLightTexture extends Shader {
 
                 }
 
-                // Normals matrix uniform
+                // Set normals matrix uniform.
 
                 gl.uniformMatrix3fv( vsVars.uniform.mat3.uNMatrix, false, nMatrix );
 
@@ -356,11 +356,13 @@ class shaderDirLightTexture extends Shader {
 
             // Disable buffers that might cause problems in another Prim.
 
-            gl.bindBuffer( gl.ARRAY_BUFFER, null );
-            gl.disableVertexAttribArray( vsVars.attribute.vec3.aVertexNormal );
-            gl.disableVertexAttribArray( vsVars.attribute.vec2.aTextureCoord );
+
 
         } // end of program.render()
+
+        //gl.bindBuffer( gl.ARRAY_BUFFER, null );
+        //gl.disableVertexAttribArray( vsVars.attribute.vec3.aVertexNormal );
+        //gl.disableVertexAttribArray( vsVars.attribute.vec2.aTextureCoord );
 
         return program;
 

@@ -236,11 +236,9 @@ class Shader {
 
         if ( pos !== this.NOT_IN_LIST ) {
 
-            // Remove a Prim from the Shader program's renderList (still in PrimList and World).
+            // Remove a Prim from the Shader program's renderList (still referenced in PrimList and World).
 
             ///////////console.warn( 'Shader::removePrim():removing prim:' + prim.name );
-
-            //////////////////////this.program.renderList.splice( pos, 1 );
 
             this.program.renderList[ pos ] = null;
 

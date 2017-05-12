@@ -269,8 +269,8 @@ class ShaderTexture extends Shader {
 
             // Disable buffers that might cause problems in another Prim.
 
-            gl.bindBuffer( gl.ARRAY_BUFFER, null );
-           if ( vsVars.attribute.vec2.aTextureCoord ) gl.disableVertexAttribArray( vsVars.attribute.vec2.aTextureCoord );
+            //gl.bindBuffer( gl.ARRAY_BUFFER, null );
+            //gl.disableVertexAttribArray( vsVars.attribute.vec2.aTextureCoord );
 
         } // end of program.render()
 
