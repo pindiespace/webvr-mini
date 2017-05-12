@@ -180,8 +180,6 @@ class PrimFactory {
 
             ( prim ) => {
 
-                //////console.log( 'PrimFactory::constructor():' + prim.name + ' added to Shader ' + prim.shader.name );
-
                 // post-addition events.
 
                 prim.alpha = 0.0;
@@ -198,6 +196,9 @@ class PrimFactory {
      * When a Prim is made, we store a reference in the this.prims[] 
      * array. So, to make one, we just concatenate their  
      * vertices. Use to send multiple prims sharing the same Shader.
+    // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
+    // TODO: https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/TechniquesforWorkingwithVertexData/TechniquesforWorkingwithVertexData.html
+    // TODO: http://max-limper.de/tech/batchedrendering.html
      * @param {glMatrix.vec3[]} vertices
      * @returns {glMatrix.vec3[]} vertices
      */
@@ -813,7 +814,7 @@ class PrimFactory {
                 // Move the Prim WITHOUT emitting a Prim add/remove event.
 
                 prim.shader.movePrim( prim, this.world.s0 );
-              
+
             }
 
         }
@@ -824,7 +825,11 @@ class PrimFactory {
 
         // Shader after the Prim has initialized.
 
-        prim.shader = prim.defaultShader = shader;
+        ///////////////////////prim.shader = prim.defaultShader = shader;
+
+        prim.shader = this.world.s0; // Fadein shader
+
+        prim.defaultShader = shader;
 
         // Name (arbitrary).
 
@@ -870,7 +875,7 @@ class PrimFactory {
 
         prim.scale = [ 1.0, 1.0, 1.0 ];
 
-        // Set prim lighting (use Shader-defined lighting).
+        // Set Prim lighting (use Shader-defined lighting).
 
         prim.light = new Lights( this.glMatrix );
 
@@ -878,13 +883,13 @@ class PrimFactory {
 
         prim.alpha = 1.0;
 
+        // Note: fade equations in util.
+
         prim.fade = {
 
             startAlpha: 0.0,
 
-            endAlpha: 1.0,
-
-            eq: ( a ) => { return a + 0.03; }
+            endAlpha: 1.0
 
         };
 
@@ -919,7 +924,7 @@ class PrimFactory {
 
         prim.materials = [];
 
-        // Set default material.
+        // Set default material for the Prim (similar to OBJ format).
 
         prim.setMaterial( this.util.DEFAULT_KEY );
 

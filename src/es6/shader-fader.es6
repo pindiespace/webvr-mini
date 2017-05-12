@@ -221,13 +221,7 @@ class ShaderFader extends Shader {
 
         vr = arr[ 13 ];
 
-        // We received webgl in the constructor, and gl above is referenced from it.
-
-        // Make additional locals references.
-
-        // TODO: MAKE THEM, AND CHECK IF PERFORMANCE IS IMPROVED....
-
-        // Attach objects.
+        // Attach our VBO program.
 
         let shaderProgram = program.shaderProgram;
 
@@ -240,11 +234,38 @@ class ShaderFader extends Shader {
         }
 
         /** 
-         * POLYMORPHIC METHODS
+         * POLYMORPHIC PROPERTIES AND METHODS.
          */
 
         // Shorten names of attributes, uniforms for rendering.
 
+        let aVertexPosition = vsVars.attribute.vec3.aVertexPosition,
+
+        aVertexColor = vsVars.attribute.vec4.aVertexColor,
+
+        aTextureCoord = vsVars.attribute.vec2.aTextureCoord,
+
+        aVertexNormal = vsVars.attribute.vec3.aVertexNormal,
+
+        uAlpha = fsVars.uniform.float.uAlpha,
+
+        uUseLighting = fsVars.uniform.bool.uUseLighting,
+
+        uUseColor = fsVars.uniform.bool.uUseColor,
+
+        uUseTexture = fsVars.uniform.bool.uUseTexture,
+
+        uSampler = fsVars.uniform.sampler2D.uSampler,
+
+        uAmbientColor = vsVars.uniform.vec3.uAmbientColor,
+
+        uLightingDirection = vsVars.uniform.vec3.uLightingDirection, 
+
+        uDirectionalColor = vsVars.uniform.vec3.uDirectionalColor,
+
+        uPMatrix = vsVars.uniform.mat4.uPMatrix,
+
+        uMVMatrix = vsVars.uniform.mat4.uMVMatrix;
 
         // Local link to easing function
 
@@ -252,7 +273,7 @@ class ShaderFader extends Shader {
 
         let easeType = 0;
 
-        // Use just the primary World light (see lights.es6 for defaults).
+        // Set up directional lighting with the primary World light (see lights.es6 for defaults).
 
         let lighting = false;
 
@@ -276,7 +297,7 @@ class ShaderFader extends Shader {
 
                 let dir = fade.endAlpha - fade.startAlpha;
 
-                let inc = 0.01;
+                let inc = 0.005;
 
                 if ( dir > 0 ) {
 
@@ -285,6 +306,8 @@ class ShaderFader extends Shader {
                     if ( prim.alpha >= fade.endAlpha ) {
 
                         prim.alpha = fade.endAlpha;
+
+                        // This turns off this Shader!
 
                         prim.shader.movePrim( prim, prim.defaultShader );
 
@@ -297,6 +320,8 @@ class ShaderFader extends Shader {
                     if ( prim.alpha <= fade.endAlpha ) {
 
                         prim.alpha = fade.endAlpha;
+
+                        // This turns off this Shader!
 
                         prim.shader.movePrim( prim, prim.defaultShader );
 
@@ -349,39 +374,39 @@ class ShaderFader extends Shader {
                 // Bind vertex buffer.
 
                 gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.vertices.buffer );
-                gl.enableVertexAttribArray( vsVars.attribute.vec3.aVertexPosition );
-                gl.vertexAttribPointer( vsVars.attribute.vec3.aVertexPosition, prim.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0 );
+                gl.enableVertexAttribArray( aVertexPosition );
+                gl.vertexAttribPointer( aVertexPosition, 3, gl.FLOAT, false, 0, 0 );
 
                 // NOTE: We always bind the color buffer, even if we don't draw with it (prevents 'out of range' errors).
 
                 gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.colors.buffer );
-                gl.enableVertexAttribArray( vsVars.attribute.vec4.aVertexColor );
-                gl.vertexAttribPointer( vsVars.attribute.vec4.aVertexColor, prim.geometry.colors.itemSize, gl.FLOAT, false, 0, 0 );
+                gl.enableVertexAttribArray( aVertexColor );
+                gl.vertexAttribPointer( aVertexColor, 4, gl.FLOAT, false, 0, 0 ); // NOTE: prim.geometry.colors.itemSize for param 2
 
                 // NOTE: we always bind the texture buffer, even if we don't used it (prevent 'out of range' errors).
 
                 gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.texCoords.buffer );
-                gl.enableVertexAttribArray( vsVars.attribute.vec2.aTextureCoord );
-                gl.vertexAttribPointer( vsVars.attribute.vec2.aTextureCoord, prim.geometry.texCoords.itemSize, gl.FLOAT, false, 0, 0 );
+                gl.enableVertexAttribArray( aTextureCoord );
+                gl.vertexAttribPointer( aTextureCoord, 2, gl.FLOAT, false, 0, 0 );
 
                 gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.normals.buffer );
-                gl.enableVertexAttribArray( vsVars.attribute.vec3.aVertexNormal );
-                gl.vertexAttribPointer( vsVars.attribute.vec3.aVertexNormal, prim.geometry.normals.itemSize, gl.FLOAT, false, 0, 0 );
+                gl.enableVertexAttribArray( aVertexNormal );
+                gl.vertexAttribPointer( aVertexNormal, 3, gl.FLOAT, false, 0, 0 );
 
-                // Set our alpha - NOTE: easing animation specified
+                // Alpha, with easing animation (in this.util).
 
-                gl.uniform1f( fsVars.uniform.float.uAlpha, easeIn( prim.alpha, 0 ) );
+                gl.uniform1f( uAlpha, easeIn( prim.alpha, 0 ) );
 
-                // Conditionally set lighting based on default Shader the Prim was assigned to.
+                // Conditionally set lighting, based on default Shader the Prim was assigned to.
 
                 if ( prim.defaultShader.required.lights > 0 ) {
 
-                    gl.uniform1i( fsVars.uniform.bool.uUseLighting, 1 );
+                    gl.uniform1i( uUseLighting, 1 );
 
                 } else {
 
-                    gl.uniform1i( fsVars.uniform.bool.uUseLighting, 0 );
-                       
+                    gl.uniform1i( uUseLighting, 0 );
+
                 }
 
                 // Draw using either the texture[0] or color array.
@@ -390,8 +415,8 @@ class ShaderFader extends Shader {
 
                     // Conditionally set use of color and texture arrays.
 
-                    gl.uniform1i( fsVars.uniform.bool.uUseColor, 0 );
-                    gl.uniform1i( fsVars.uniform.bool.uUseTexture, 1 );
+                    gl.uniform1i( uUseColor, 0 );
+                    gl.uniform1i( uUseTexture, 1 );
 
                    // Bind the first texture.
 
@@ -403,14 +428,14 @@ class ShaderFader extends Shader {
 
                     // Set fragment shader sampler uniform.
 
-                    gl.uniform1i( fsVars.uniform.sampler2D.uSampler, 0 );
+                    gl.uniform1i( uSampler, 0 );
 
                 } else {
 
                     // Conditionally set use of color and texture array.
 
-                    gl.uniform1i( fsVars.uniform.bool.uUseColor, 1 );
-                    gl.uniform1i( fsVars.uniform.bool.uUseTexture, 0 );
+                    gl.uniform1i( uUseColor, 1 );
+                    gl.uniform1i( uUseTexture, 0 );
 
                 }
 
@@ -420,29 +445,14 @@ class ShaderFader extends Shader {
 
                 // Lighting (always bound)
 
-                    gl.uniform3f(
-                        vsVars.uniform.vec3.uAmbientColor,
-                        ambient[ 0 ],
-                        ambient[ 1 ],
-                        ambient[ 2 ]
-                    );
-
-                    gl.uniform3fv( 
-                        vsVars.uniform.vec3.uLightingDirection, 
-                        adjustedLD 
-                    );
-
-                    gl.uniform3f(
-                        vsVars.uniform.vec3.uDirectionalColor,
-                        directionalColor[ 0 ],
-                        directionalColor[ 1 ],
-                        directionalColor[ 2 ]
-                    );
+                gl.uniform3f( uAmbientColor, ambient[ 0 ], ambient[ 1 ], ambient[ 2 ] );
+                gl.uniform3fv( uLightingDirection, adjustedLD );
+                gl.uniform3f( uDirectionalColor, directionalColor[ 0 ], directionalColor[ 1 ], directionalColor[ 2 ] );
 
                 // Bind perspective and model-view matrix uniforms.
 
-                gl.uniformMatrix4fv( vsVars.uniform.mat4.uPMatrix, false, PM );
-                gl.uniformMatrix4fv( vsVars.uniform.mat4.uMVMatrix, false, MVM );
+                gl.uniformMatrix4fv( uPMatrix, false, PM );
+                gl.uniformMatrix4fv( uMVMatrix, false, MVM );
 
                 // Bind indices buffer.
 
@@ -469,7 +479,7 @@ class ShaderFader extends Shader {
 
             } // end of renderList for Prims
 
-            // Disable buffers that might cause problems in another Shader.
+            // Don't have to disable buffers that might cause problems in another Shader.
 
             //gl.bindBuffer( gl.ARRAY_BUFFER, null );
             //gl.disableVertexAttribArray( vsVars.attribute.vec4.aVertexColor );

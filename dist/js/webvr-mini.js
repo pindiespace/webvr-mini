@@ -4756,7 +4756,7 @@
 
 	                if (lights) {
 
-	                        /////////////console.log("ADDING LIGHT TO SHADER:" + this.name )
+	                        console.log("ADDING LIGHT TO SHADER:" + this.name);
 
 	                        this.lights = lights;
 	                }
@@ -4850,7 +4850,7 @@
 
 	                                if (this.primInList(prim) === this.NOT_IN_LIST) {
 
-	                                        //////////console.warn( 'Shader::addPrim():prim:'  + prim.name + ' not in list, adding to Shader::' + this.name );
+	                                        ///console.warn( 'Shader::addPrim():prim:'  + prim.name + ' not in list, adding to Shader::' + this.name );
 
 	                                        // Add the Prim to the Shader program's renderList. If a nulled position is present, use it.
 
@@ -4858,17 +4858,17 @@
 
 	                                        if (pos !== this.NOT_IN_LIST) {
 
-	                                                ///////////console.log( 'Shader::addPrim():filling NULL with:' + prim.name + ' to:' + this.name );
+	                                                console.log('Shader::addPrim():filling NULL with:' + prim.name + ' to:' + this.name);
 
 	                                                this.program.renderList[pos] = prim;
 	                                        } else {
 
-	                                                //////////console.log( 'Shader::addPrim():appending prim:' + prim.name + ' to:' + this.name )
+	                                                console.log('Shader::addPrim():appending prim:' + prim.name + ' to:' + this.name);
 
 	                                                this.program.renderList.push(prim);
 	                                        }
 
-	                                        // Sort by distance
+	                                        // Sort by distance for translucent objects.
 
 	                                        if (this.sortByDistance) {
 
@@ -4877,7 +4877,7 @@
 
 	                                        if (prim.shader && prim.shader !== this) {
 
-	                                                /////////console.log( 'Shader::addPrim(): removing prim:' + prim.name + ' from old Shader:' + prim.shader.name)
+	                                                //console.log( 'Shader::addPrim(): removing prim:' + prim.name + ' from old Shader:' + prim.shader.name)
 
 	                                                prim.shader.removePrim(prim, emit);
 	                                        }
@@ -4896,15 +4896,16 @@
 	                                        return true;
 	                                } else {
 
-	                                        console.warn('Shader::addPrim():' + prim.name + ' already added to Shader::' + this.name);
+	                                        ////////console.warn( 'Shader::addPrim():' + prim.name + ' already added to Shader::' + this.name );
+
 	                                }
 	                        } else {
 
-	                                //TODO: REMOVE THIS OPTION:
+	                                        //TODO: REMOVE THIS OPTION:
 
-	                                //////////console.log( 'Shader::addPrim():' + prim.name + ' did not pass Shader test for ' + this.name )
+	                                        //console.warn( 'Shader::addPrim():' + prim.name + ' did not pass Shader test for ' + this.name )
 
-	                        }
+	                                }
 
 	                        return false;
 	                }
@@ -4926,15 +4927,13 @@
 
 	                        if (pos !== this.NOT_IN_LIST) {
 
-	                                // Remove a Prim from the Shader program's renderList (still referenced in PrimList and World).
+	                                // Remove a Prim from the Shader program's renderList (still in PrimList and World).
 
-	                                ///////////console.warn( 'Shader::removePrim():removing prim:' + prim.name );
+	                                console.warn('Shader::removePrim():removing prim:' + prim.name);
+
+	                                //////////////////////this.program.renderList.splice( pos, 1 );
 
 	                                this.program.renderList[pos] = null;
-
-	                                // TODO:
-	                                // TODO: null at the end of the redraw, then callback to switch the Prim.
-	                                // TODO:
 
 	                                // Emit a Prim removal event.
 
@@ -4968,7 +4967,7 @@
 	                                 * NOTE: emit MUST be false to prevent a race condition.
 	                                 */
 
-	                                //////////console.log("Shader::movePrim():" + prim.name )
+	                                console.log("Shader::movePrim():" + prim.name);
 
 	                                return newShader.addPrim(prim, false);
 	                        }
@@ -5733,16 +5732,34 @@
 	                            far = arr[12],
 	                            vr = arr[13];
 
-	                        // Shorter reference.
+	                        // Attach our VBO program.
 
 	                        var shaderProgram = program.shaderProgram;
 
-	                        // If we init with object, add them here.
+	                        // If we init with a primList, add them here.
 
 	                        if (primList) {
 
 	                                program.renderList = this.util.concatArr(program.renderList, primList);
 	                        }
+
+	                        /** 
+	                         * POLYMORPHIC PROPERTIES AND METHODS.
+	                         */
+
+	                        var aVertexPosition = vsVars.attribute.vec3.aVertexPosition,
+	                            aTextureCoord = vsVars.attribute.vec2.aTextureCoord,
+	                            aVertexNormal = vsVars.attribute.vec3.aVertexNormal,
+	                            uSampler = fsVars.uniform.sampler2D.uSampler,
+	                            uUseLighting = vsVars.uniform.bool.uUseLighting,
+	                            uAmbientColor = vsVars.uniform.vec3.uAmbientColor,
+	                            uLightingDirection = vsVars.uniform.vec3.uLightingDirection,
+	                            uDirectionalColor = vsVars.uniform.vec3.uDirectionalColor,
+	                            uNMatrix = vsVars.uniform.mat3.uNMatrix,
+	                            uPMatrix = vsVars.uniform.mat4.uPMatrix,
+	                            uMVMatrix = vsVars.uniform.mat4.uMVMatrix;
+
+	                        // Set up directional lighting with the primary World light.
 
 	                        var lighting = true;
 
@@ -5759,14 +5776,6 @@
 	                        var nMatrix = mat3.create(); // TODO: ADD MAT3 TO PASSED VARIABLES
 
 	                        var adjustedLD = vec3.create(); // TODO: redo
-
-	                        // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
-	                        // TODO: https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/TechniquesforWorkingwithVertexData/TechniquesforWorkingwithVertexData.html
-	                        // TODO: http://max-limper.de/tech/batchedrendering.html
-
-	                        /** 
-	                         * POLYMORPHIC METHODS
-	                         */
 
 	                        // Update prim position, motion - given to World object.
 
@@ -5816,20 +5825,20 @@
 	                                        // Bind vertex buffer.
 
 	                                        gl.bindBuffer(gl.ARRAY_BUFFER, prim.geometry.vertices.buffer);
-	                                        gl.enableVertexAttribArray(vsVars.attribute.vec3.aVertexPosition);
-	                                        gl.vertexAttribPointer(vsVars.attribute.vec3.aVertexPosition, prim.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0);
+	                                        gl.enableVertexAttribArray(aVertexPosition);
+	                                        gl.vertexAttribPointer(aVertexPosition, 3, gl.FLOAT, false, 0, 0);
 
 	                                        // Bind textures buffer (could have multiple bindings here).
 
 	                                        gl.bindBuffer(gl.ARRAY_BUFFER, prim.geometry.texCoords.buffer);
-	                                        gl.enableVertexAttribArray(vsVars.attribute.vec2.aTextureCoord);
-	                                        gl.vertexAttribPointer(vsVars.attribute.vec2.aTextureCoord, prim.geometry.texCoords.itemSize, gl.FLOAT, false, 0, 0);
+	                                        gl.enableVertexAttribArray(aTextureCoord);
+	                                        gl.vertexAttribPointer(aTextureCoord, 2, gl.FLOAT, false, 0, 0);
 
 	                                        // Bind normals buffer.
 
 	                                        gl.bindBuffer(gl.ARRAY_BUFFER, prim.geometry.normals.buffer);
-	                                        gl.enableVertexAttribArray(vsVars.attribute.vec3.aVertexNormal);
-	                                        gl.vertexAttribPointer(vsVars.attribute.vec3.aVertexNormal, prim.geometry.normals.itemSize, gl.FLOAT, false, 0, 0);
+	                                        gl.enableVertexAttribArray(aVertexNormal);
+	                                        gl.vertexAttribPointer(aVertexNormal, 3, gl.FLOAT, false, 0, 0);
 
 	                                        gl.activeTexture(gl.TEXTURE0);
 	                                        gl.bindTexture(gl.TEXTURE_2D, null);
@@ -5839,29 +5848,27 @@
 
 	                                        // Set fragment shader sampler uniform.
 
-	                                        gl.uniform1i(fsVars.uniform.sampler2D.uSampler, 0);
+	                                        gl.uniform1i(uSampler, 0);
 
 	                                        // Lighting flag.
 
-	                                        gl.uniform1i(vsVars.uniform.bool.uUseLighting, lighting);
+	                                        gl.uniform1i(uUseLighting, lighting);
 
 	                                        if (lighting) {
 
-	                                                gl.uniform3f(vsVars.uniform.vec3.uAmbientColor, ambient[0], ambient[1], ambient[2]);
-
-	                                                gl.uniform3fv(vsVars.uniform.vec3.uLightingDirection, adjustedLD);
-
-	                                                gl.uniform3f(vsVars.uniform.vec3.uDirectionalColor, directionalColor[0], directionalColor[1], directionalColor[2]);
+	                                                gl.uniform3f(uAmbientColor, ambient[0], ambient[1], ambient[2]);
+	                                                gl.uniform3fv(uLightingDirection, adjustedLD);
+	                                                gl.uniform3f(uDirectionalColor, directionalColor[0], directionalColor[1], directionalColor[2]);
 	                                        }
 
 	                                        // Set normals matrix uniform.
 
-	                                        gl.uniformMatrix3fv(vsVars.uniform.mat3.uNMatrix, false, nMatrix);
+	                                        gl.uniformMatrix3fv(uNMatrix, false, nMatrix);
 
 	                                        // Set perspective and model-view matrix uniforms.
 
-	                                        gl.uniformMatrix4fv(vsVars.uniform.mat4.uPMatrix, false, PM);
-	                                        gl.uniformMatrix4fv(vsVars.uniform.mat4.uMVMatrix, false, MVM);
+	                                        gl.uniformMatrix4fv(uPMatrix, false, PM);
+	                                        gl.uniformMatrix4fv(uMVMatrix, false, MVM);
 
 	                                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, prim.geometry.indices.buffer);
 
@@ -24836,8 +24843,6 @@
 
 	                this.util.emitter.on(this.util.emitter.events.PRIM_ADDED_TO_SHADER, function (prim) {
 
-	                        //////console.log( 'PrimFactory::constructor():' + prim.name + ' added to Shader ' + prim.shader.name );
-
 	                        // post-addition events.
 
 	                        prim.alpha = 0.0;
@@ -24852,6 +24857,9 @@
 	         * When a Prim is made, we store a reference in the this.prims[] 
 	         * array. So, to make one, we just concatenate their  
 	         * vertices. Use to send multiple prims sharing the same Shader.
+	        // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
+	        // TODO: https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/TechniquesforWorkingwithVertexData/TechniquesforWorkingwithVertexData.html
+	        // TODO: http://max-limper.de/tech/batchedrendering.html
 	         * @param {glMatrix.vec3[]} vertices
 	         * @returns {glMatrix.vec3[]} vertices
 	         */
@@ -25448,7 +25456,11 @@
 
 	                        // Shader after the Prim has initialized.
 
-	                        prim.shader = prim.defaultShader = shader;
+	                        ///////////////////////prim.shader = prim.defaultShader = shader;
+
+	                        prim.shader = this.world.s0; // Fadein shader
+
+	                        prim.defaultShader = shader;
 
 	                        // Name (arbitrary).
 
@@ -25494,7 +25506,7 @@
 
 	                        prim.scale = [1.0, 1.0, 1.0];
 
-	                        // Set prim lighting (use Shader-defined lighting).
+	                        // Set Prim lighting (use Shader-defined lighting).
 
 	                        prim.light = new _lights2.default(this.glMatrix);
 
@@ -25502,15 +25514,13 @@
 
 	                        prim.alpha = 1.0;
 
+	                        // Note: fade equations in util.
+
 	                        prim.fade = {
 
 	                                startAlpha: 0.0,
 
-	                                endAlpha: 1.0,
-
-	                                eq: function eq(a) {
-	                                        return a + 0.03;
-	                                }
+	                                endAlpha: 1.0
 
 	                        };
 
@@ -25545,7 +25555,7 @@
 
 	                        prim.materials = [];
 
-	                        // Set default material.
+	                        // Set default material for the Prim (similar to OBJ format).
 
 	                        prim.setMaterial(this.util.DEFAULT_KEY);
 
@@ -25802,13 +25812,7 @@
 	                            far = arr[12],
 	                            vr = arr[13];
 
-	                        // We received webgl in the constructor, and gl above is referenced from it.
-
-	                        // Make additional locals references.
-
-	                        // TODO: MAKE THEM, AND CHECK IF PERFORMANCE IS IMPROVED....
-
-	                        // Attach objects.
+	                        // Attach our VBO program.
 
 	                        var shaderProgram = program.shaderProgram;
 
@@ -25820,11 +25824,25 @@
 	                        }
 
 	                        /** 
-	                         * POLYMORPHIC METHODS
+	                         * POLYMORPHIC PROPERTIES AND METHODS.
 	                         */
 
 	                        // Shorten names of attributes, uniforms for rendering.
 
+	                        var aVertexPosition = vsVars.attribute.vec3.aVertexPosition,
+	                            aVertexColor = vsVars.attribute.vec4.aVertexColor,
+	                            aTextureCoord = vsVars.attribute.vec2.aTextureCoord,
+	                            aVertexNormal = vsVars.attribute.vec3.aVertexNormal,
+	                            uAlpha = fsVars.uniform.float.uAlpha,
+	                            uUseLighting = fsVars.uniform.bool.uUseLighting,
+	                            uUseColor = fsVars.uniform.bool.uUseColor,
+	                            uUseTexture = fsVars.uniform.bool.uUseTexture,
+	                            uSampler = fsVars.uniform.sampler2D.uSampler,
+	                            uAmbientColor = vsVars.uniform.vec3.uAmbientColor,
+	                            uLightingDirection = vsVars.uniform.vec3.uLightingDirection,
+	                            uDirectionalColor = vsVars.uniform.vec3.uDirectionalColor,
+	                            uPMatrix = vsVars.uniform.mat4.uPMatrix,
+	                            uMVMatrix = vsVars.uniform.mat4.uMVMatrix;
 
 	                        // Local link to easing function
 
@@ -25832,7 +25850,7 @@
 
 	                        var easeType = 0;
 
-	                        // Use just the primary World light (see lights.es6 for defaults).
+	                        // Set up directional lighting with the primary World light (see lights.es6 for defaults).
 
 	                        var lighting = false;
 
@@ -25856,7 +25874,7 @@
 
 	                                var dir = fade.endAlpha - fade.startAlpha;
 
-	                                var inc = 0.01;
+	                                var inc = 0.005;
 
 	                                if (dir > 0) {
 
@@ -25865,6 +25883,8 @@
 	                                        if (prim.alpha >= fade.endAlpha) {
 
 	                                                prim.alpha = fade.endAlpha;
+
+	                                                // This turns off this Shader!
 
 	                                                prim.shader.movePrim(prim, prim.defaultShader);
 	                                        }
@@ -25875,6 +25895,8 @@
 	                                        if (prim.alpha <= fade.endAlpha) {
 
 	                                                prim.alpha = fade.endAlpha;
+
+	                                                // This turns off this Shader!
 
 	                                                prim.shader.movePrim(prim, prim.defaultShader);
 	                                        }
@@ -25924,37 +25946,37 @@
 	                                        // Bind vertex buffer.
 
 	                                        gl.bindBuffer(gl.ARRAY_BUFFER, prim.geometry.vertices.buffer);
-	                                        gl.enableVertexAttribArray(vsVars.attribute.vec3.aVertexPosition);
-	                                        gl.vertexAttribPointer(vsVars.attribute.vec3.aVertexPosition, prim.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0);
+	                                        gl.enableVertexAttribArray(aVertexPosition);
+	                                        gl.vertexAttribPointer(aVertexPosition, 3, gl.FLOAT, false, 0, 0);
 
 	                                        // NOTE: We always bind the color buffer, even if we don't draw with it (prevents 'out of range' errors).
 
 	                                        gl.bindBuffer(gl.ARRAY_BUFFER, prim.geometry.colors.buffer);
-	                                        gl.enableVertexAttribArray(vsVars.attribute.vec4.aVertexColor);
-	                                        gl.vertexAttribPointer(vsVars.attribute.vec4.aVertexColor, prim.geometry.colors.itemSize, gl.FLOAT, false, 0, 0);
+	                                        gl.enableVertexAttribArray(aVertexColor);
+	                                        gl.vertexAttribPointer(aVertexColor, 4, gl.FLOAT, false, 0, 0); // NOTE: prim.geometry.colors.itemSize for param 2
 
 	                                        // NOTE: we always bind the texture buffer, even if we don't used it (prevent 'out of range' errors).
 
 	                                        gl.bindBuffer(gl.ARRAY_BUFFER, prim.geometry.texCoords.buffer);
-	                                        gl.enableVertexAttribArray(vsVars.attribute.vec2.aTextureCoord);
-	                                        gl.vertexAttribPointer(vsVars.attribute.vec2.aTextureCoord, prim.geometry.texCoords.itemSize, gl.FLOAT, false, 0, 0);
+	                                        gl.enableVertexAttribArray(aTextureCoord);
+	                                        gl.vertexAttribPointer(aTextureCoord, 2, gl.FLOAT, false, 0, 0);
 
 	                                        gl.bindBuffer(gl.ARRAY_BUFFER, prim.geometry.normals.buffer);
-	                                        gl.enableVertexAttribArray(vsVars.attribute.vec3.aVertexNormal);
-	                                        gl.vertexAttribPointer(vsVars.attribute.vec3.aVertexNormal, prim.geometry.normals.itemSize, gl.FLOAT, false, 0, 0);
+	                                        gl.enableVertexAttribArray(aVertexNormal);
+	                                        gl.vertexAttribPointer(aVertexNormal, 3, gl.FLOAT, false, 0, 0);
 
-	                                        // Set our alpha - NOTE: easing animation specified
+	                                        // Alpha, with easing animation (in this.util).
 
-	                                        gl.uniform1f(fsVars.uniform.float.uAlpha, easeIn(prim.alpha, 0));
+	                                        gl.uniform1f(uAlpha, easeIn(prim.alpha, 0));
 
-	                                        // Conditionally set lighting based on default Shader the Prim was assigned to.
+	                                        // Conditionally set lighting, based on default Shader the Prim was assigned to.
 
 	                                        if (prim.defaultShader.required.lights > 0) {
 
-	                                                gl.uniform1i(fsVars.uniform.bool.uUseLighting, 1);
+	                                                gl.uniform1i(uUseLighting, 1);
 	                                        } else {
 
-	                                                gl.uniform1i(fsVars.uniform.bool.uUseLighting, 0);
+	                                                gl.uniform1i(uUseLighting, 0);
 	                                        }
 
 	                                        // Draw using either the texture[0] or color array.
@@ -25963,8 +25985,8 @@
 
 	                                                // Conditionally set use of color and texture arrays.
 
-	                                                gl.uniform1i(fsVars.uniform.bool.uUseColor, 0);
-	                                                gl.uniform1i(fsVars.uniform.bool.uUseTexture, 1);
+	                                                gl.uniform1i(uUseColor, 0);
+	                                                gl.uniform1i(uUseTexture, 1);
 
 	                                                // Bind the first texture.
 
@@ -25976,13 +25998,13 @@
 
 	                                                // Set fragment shader sampler uniform.
 
-	                                                gl.uniform1i(fsVars.uniform.sampler2D.uSampler, 0);
+	                                                gl.uniform1i(uSampler, 0);
 	                                        } else {
 
 	                                                // Conditionally set use of color and texture array.
 
-	                                                gl.uniform1i(fsVars.uniform.bool.uUseColor, 1);
-	                                                gl.uniform1i(fsVars.uniform.bool.uUseTexture, 0);
+	                                                gl.uniform1i(uUseColor, 1);
+	                                                gl.uniform1i(uUseTexture, 0);
 	                                        }
 
 	                                        // Normals matrix uniform
@@ -25991,16 +26013,14 @@
 
 	                                        // Lighting (always bound)
 
-	                                        gl.uniform3f(vsVars.uniform.vec3.uAmbientColor, ambient[0], ambient[1], ambient[2]);
-
-	                                        gl.uniform3fv(vsVars.uniform.vec3.uLightingDirection, adjustedLD);
-
-	                                        gl.uniform3f(vsVars.uniform.vec3.uDirectionalColor, directionalColor[0], directionalColor[1], directionalColor[2]);
+	                                        gl.uniform3f(uAmbientColor, ambient[0], ambient[1], ambient[2]);
+	                                        gl.uniform3fv(uLightingDirection, adjustedLD);
+	                                        gl.uniform3f(uDirectionalColor, directionalColor[0], directionalColor[1], directionalColor[2]);
 
 	                                        // Bind perspective and model-view matrix uniforms.
 
-	                                        gl.uniformMatrix4fv(vsVars.uniform.mat4.uPMatrix, false, PM);
-	                                        gl.uniformMatrix4fv(vsVars.uniform.mat4.uMVMatrix, false, MVM);
+	                                        gl.uniformMatrix4fv(uPMatrix, false, PM);
+	                                        gl.uniformMatrix4fv(uMVMatrix, false, MVM);
 
 	                                        // Bind indices buffer.
 
@@ -26023,7 +26043,7 @@
 	                                        mat4.copy(MVM, saveMV, MVM);
 	                                } // end of renderList for Prims
 
-	                                // Disable buffers that might cause problems in another Shader.
+	                                // Don't have to disable buffers that might cause problems in another Shader.
 
 	                                //gl.bindBuffer( gl.ARRAY_BUFFER, null );
 	                                //gl.disableVertexAttribArray( vsVars.attribute.vec4.aVertexColor );

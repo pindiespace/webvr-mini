@@ -67,7 +67,7 @@ class Shader {
 
         if ( lights ) {
 
-            /////////////console.log("ADDING LIGHT TO SHADER:" + this.name )
+            console.log("ADDING LIGHT TO SHADER:" + this.name )
 
             this.lights = lights;
 
@@ -115,7 +115,6 @@ class Shader {
 
         this.NOT_IN_LIST = util.NOT_IN_LIST;
 
-
         // Get the WebGL program we will use to render.
 
         this.createProgram();
@@ -156,7 +155,7 @@ class Shader {
 
             if ( this.primInList( prim ) === this.NOT_IN_LIST ) {
 
-                //////////console.warn( 'Shader::addPrim():prim:'  + prim.name + ' not in list, adding to Shader::' + this.name );
+                ///console.warn( 'Shader::addPrim():prim:'  + prim.name + ' not in list, adding to Shader::' + this.name );
 
                 // Add the Prim to the Shader program's renderList. If a nulled position is present, use it.
 
@@ -164,19 +163,19 @@ class Shader {
 
                 if ( pos !== this.NOT_IN_LIST ) {
 
-                    ///////////console.log( 'Shader::addPrim():filling NULL with:' + prim.name + ' to:' + this.name );
+                    console.log( 'Shader::addPrim():filling NULL with:' + prim.name + ' to:' + this.name );
 
                     this.program.renderList[ pos ] = prim ;
 
                 } else {
 
-                    //////////console.log( 'Shader::addPrim():appending prim:' + prim.name + ' to:' + this.name )
+                    console.log( 'Shader::addPrim():appending prim:' + prim.name + ' to:' + this.name )
 
                     this.program.renderList.push( prim );
 
                 }
 
-                // Sort by distance
+                // Sort by distance for translucent objects.
 
                 if ( this.sortByDistance ) {
 
@@ -186,7 +185,7 @@ class Shader {
 
                 if ( prim.shader && prim.shader !== this ) {
 
-                    /////////console.log( 'Shader::addPrim(): removing prim:' + prim.name + ' from old Shader:' + prim.shader.name)
+                    //console.log( 'Shader::addPrim(): removing prim:' + prim.name + ' from old Shader:' + prim.shader.name)
 
                     prim.shader.removePrim( prim, emit );
 
@@ -208,7 +207,7 @@ class Shader {
 
             } else {
 
-                console.warn( 'Shader::addPrim():' + prim.name + ' already added to Shader::' + this.name );
+                ////////console.warn( 'Shader::addPrim():' + prim.name + ' already added to Shader::' + this.name );
 
             }
 
@@ -216,7 +215,7 @@ class Shader {
 
             //TODO: REMOVE THIS OPTION:
 
-            //////////console.log( 'Shader::addPrim():' + prim.name + ' did not pass Shader test for ' + this.name )
+            //console.warn( 'Shader::addPrim():' + prim.name + ' did not pass Shader test for ' + this.name )
 
         }
 
@@ -236,15 +235,13 @@ class Shader {
 
         if ( pos !== this.NOT_IN_LIST ) {
 
-            // Remove a Prim from the Shader program's renderList (still referenced in PrimList and World).
+            // Remove a Prim from the Shader program's renderList (still in PrimList and World).
 
-            ///////////console.warn( 'Shader::removePrim():removing prim:' + prim.name );
+            console.warn( 'Shader::removePrim():removing prim:' + prim.name );
+
+            //////////////////////this.program.renderList.splice( pos, 1 );
 
             this.program.renderList[ pos ] = null;
-
-            // TODO:
-            // TODO: null at the end of the redraw, then callback to switch the Prim.
-            // TODO:
 
             // Emit a Prim removal event.
 
@@ -279,7 +276,7 @@ class Shader {
              * NOTE: emit MUST be false to prevent a race condition.
              */
 
-            //////////console.log("Shader::movePrim():" + prim.name )
+            console.log("Shader::movePrim():" + prim.name )
 
             return newShader.addPrim( prim, false );
 

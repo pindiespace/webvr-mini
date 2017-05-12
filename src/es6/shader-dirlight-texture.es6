@@ -185,17 +185,45 @@ class shaderDirLightTexture extends Shader {
 
         vr = arr[ 13 ];
 
-        // Shorter reference.
+        // Attach our VBO program.
 
         let shaderProgram = program.shaderProgram;
 
-        // If we init with object, add them here.
+        // If we init with a primList, add them here.
 
         if ( primList ) {
 
             program.renderList = this.util.concatArr( program.renderList, primList );
 
         }
+
+        /** 
+         * POLYMORPHIC PROPERTIES AND METHODS.
+         */
+
+        let aVertexPosition = vsVars.attribute.vec3.aVertexPosition,
+
+        aTextureCoord = vsVars.attribute.vec2.aTextureCoord,
+
+        aVertexNormal = vsVars.attribute.vec3.aVertexNormal, 
+
+        uSampler = fsVars.uniform.sampler2D.uSampler,
+
+        uUseLighting = vsVars.uniform.bool.uUseLighting,
+
+        uAmbientColor = vsVars.uniform.vec3.uAmbientColor,
+
+        uLightingDirection = vsVars.uniform.vec3.uLightingDirection, 
+
+        uDirectionalColor = vsVars.uniform.vec3.uDirectionalColor,
+
+        uNMatrix = vsVars.uniform.mat3.uNMatrix,
+
+        uPMatrix = vsVars.uniform.mat4.uPMatrix,
+
+        uMVMatrix = vsVars.uniform.mat4.uMVMatrix;
+
+        // Set up directional lighting with the primary World light.
 
         let lighting = true;
 
@@ -212,14 +240,6 @@ class shaderDirLightTexture extends Shader {
         let nMatrix = mat3.create(); // TODO: ADD MAT3 TO PASSED VARIABLES
 
         let adjustedLD = vec3.create(); // TODO: redo
-
-        // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
-        // TODO: https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/TechniquesforWorkingwithVertexData/TechniquesforWorkingwithVertexData.html
-        // TODO: http://max-limper.de/tech/batchedrendering.html
-
-        /** 
-         * POLYMORPHIC METHODS
-         */
 
         // Update prim position, motion - given to World object.
 
@@ -270,20 +290,20 @@ class shaderDirLightTexture extends Shader {
                 // Bind vertex buffer.
 
                 gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.vertices.buffer );
-                gl.enableVertexAttribArray( vsVars.attribute.vec3.aVertexPosition );
-                gl.vertexAttribPointer( vsVars.attribute.vec3.aVertexPosition, prim.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0 );
+                gl.enableVertexAttribArray( aVertexPosition );
+                gl.vertexAttribPointer( aVertexPosition, 3, gl.FLOAT, false, 0, 0 );
 
                 // Bind textures buffer (could have multiple bindings here).
 
                 gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.texCoords.buffer );
-                gl.enableVertexAttribArray( vsVars.attribute.vec2.aTextureCoord );
-                gl.vertexAttribPointer( vsVars.attribute.vec2.aTextureCoord, prim.geometry.texCoords.itemSize, gl.FLOAT, false, 0, 0 );
+                gl.enableVertexAttribArray( aTextureCoord );
+                gl.vertexAttribPointer( aTextureCoord, 2, gl.FLOAT, false, 0, 0 );
 
                 // Bind normals buffer.
 
                 gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.normals.buffer );
-                gl.enableVertexAttribArray( vsVars.attribute.vec3.aVertexNormal );
-                gl.vertexAttribPointer( vsVars.attribute.vec3.aVertexNormal, prim.geometry.normals.itemSize, gl.FLOAT, false, 0, 0);
+                gl.enableVertexAttribArray( aVertexNormal );
+                gl.vertexAttribPointer( aVertexNormal, 3, gl.FLOAT, false, 0, 0);
 
                 gl.activeTexture( gl.TEXTURE0 );
                 gl.bindTexture( gl.TEXTURE_2D, null );
@@ -293,43 +313,28 @@ class shaderDirLightTexture extends Shader {
 
                 // Set fragment shader sampler uniform.
 
-                gl.uniform1i( fsVars.uniform.sampler2D.uSampler, 0 );
+                gl.uniform1i( uSampler, 0 );
 
                 // Lighting flag.
 
-                gl.uniform1i( vsVars.uniform.bool.uUseLighting, lighting );
+                gl.uniform1i( uUseLighting, lighting );
 
                 if ( lighting ) {
 
-                    gl.uniform3f(
-                        vsVars.uniform.vec3.uAmbientColor,
-                        ambient[ 0 ],
-                        ambient[ 1 ],
-                        ambient[ 2 ]
-                    );
-
-                    gl.uniform3fv( 
-                        vsVars.uniform.vec3.uLightingDirection, 
-                        adjustedLD 
-                    );
-
-                    gl.uniform3f(
-                        vsVars.uniform.vec3.uDirectionalColor,
-                        directionalColor[ 0 ],
-                        directionalColor[ 1 ],
-                        directionalColor[ 2 ]
-                    );
+                    gl.uniform3f( uAmbientColor, ambient[ 0 ], ambient[ 1 ], ambient[ 2 ] );
+                    gl.uniform3fv( uLightingDirection, adjustedLD );
+                    gl.uniform3f( uDirectionalColor, directionalColor[ 0 ], directionalColor[ 1 ], directionalColor[ 2 ] );
 
                 }
 
                 // Set normals matrix uniform.
 
-                gl.uniformMatrix3fv( vsVars.uniform.mat3.uNMatrix, false, nMatrix );
+                gl.uniformMatrix3fv( uNMatrix, false, nMatrix );
 
                 // Set perspective and model-view matrix uniforms.
 
-                gl.uniformMatrix4fv( vsVars.uniform.mat4.uPMatrix, false, PM );
-                gl.uniformMatrix4fv( vsVars.uniform.mat4.uMVMatrix, false, MVM );
+                gl.uniformMatrix4fv( uPMatrix, false, PM );
+                gl.uniformMatrix4fv( uMVMatrix, false, MVM );
 
                 gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, prim.geometry.indices.buffer );
 
