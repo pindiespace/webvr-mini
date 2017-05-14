@@ -120,15 +120,7 @@ class ModelPool extends AssetPool {
 
         if ( vs ) {
 
-            if ( numReturned === 3 ) {
-
                 arr.push( parseFloat( vs[ 1 ] ), parseFloat( vs[ 3 ] ), parseFloat( vs[ 5 ] ) );
-
-            } else if ( numReturned === 2 ) {
-
-                arr.push( parseFloat( vs[ 1 ] ), parseFloat( vs[ 3 ] ) );
-
-            }
 
             return true;
 
@@ -151,7 +143,7 @@ class ModelPool extends AssetPool {
 
         if ( uvs ) {
 
-            arr.push( parseFloat( uvs[ 1 ] ), parseFloat( uvs[ 2 ] ) );
+            arr.push( parseFloat( uvs[ 1 ] ), parseFloat( uvs[ 3 ] ) );
 
             return true;
 
@@ -169,25 +161,129 @@ class ModelPool extends AssetPool {
      * @param {Array} normals array for vertex normals.
      * @returns {Array} Array with extra indices.
      */
-    computeFan ( arr ) {
+    computeFan ( indices, texCoords, normals ) {
 
-        if ( arr.length ) {
+        if ( indices.length ) {
 
-            let nArr = [];
+            let nIdx = [], nTexCoords = [], nNormals = [];
 
-            for ( let i = 1; i < arr.length - 1; i++ ) {
+            for ( let i = 1; i < indices.length - 1; i++ ) {
 
-                nArr.push( arr[ 0 ], arr[ i ], arr[ i + 1 ] );
+                nIdx.push( indices[ 0 ], indices[ i ], indices[ i + 1 ] );
+
+                if ( texCoords.length > 0 ) { 
+
+                    nTexCoords.push( texCoords[ 0 ], texCoords[ i ] );
+
+                }
+
+                if ( normals.length > 0 ) {
+
+                    nNormals.push( normals[ 0 ], normals[ i ], normals[ i +  1 ] );
+
+                }
 
             }
 
-            return nArr;
+            return [ nIdx, nTexCoords, nNormals ];
 
         }
 
-        return arr;
+        return [ indices, texCoords, normals ]; // no fan needed
 
     }
+
+    /** 
+     * Compute index, with fallback for missing index.
+     * @param {Number} num the number to test.
+     * @returns {Number} the number, or an error number (-1).
+     */
+    computeFaceIndex ( num ) {
+
+        if ( ! Number.isFinite( num ) ) {
+
+            iNormal = this.NOT_IN_STRING;
+
+        }
+
+        return num;
+
+    }
+
+/////////////////////////////////////////////
+
+    computeObjFaces ( data, faces, lineNum ) {
+
+        let parts = data.match( /[^\s]+/g );
+
+        let NOT_IN_STRING = this.NOT_IN_LIST;
+
+        let idxs, iVert, iTexCoord, iNormal, iVerts = [], iTexCoords = [], iNormals = [];
+
+        // Each map should refer to one point.
+
+        parts.map( ( fs ) => {
+
+            //console.log("fs:" + fs)
+
+            // Split indices, normals and texture coordinates if they are present.
+
+            if ( fs.indexOf( '//' ) !== NOT_IN_STRING ) { // no texture coordinates
+
+                idxs = fs.split( '//' );
+
+                iVerts.push( this.computeFaceIndex( parseInt( idxs[ 0 ] ) - 1 ) )
+
+                iTexCoords.push( this.NOT_IN_STRING );
+
+                iNormals.push( this.computeFaceIndex( parseInt( idxs[ 1 ] ) - 1 ) );
+
+            } else if ( fs.indexOf ( '/' ) !== NOT_IN_STRING ) {
+
+                idxs = fs.split( '/' );
+
+                iVerts.push( this.computeFaceIndex( parseInt( idxs[ 0 ] ) - 1 ) );
+
+                iTexCoords.push( this.computeFaceIndex( parseInt( idxs[ 1 ] ) - 1 ) );
+
+                iNormals.push( this.computeFaceIndex( parseInt( idxs[ 2 ] ) - 1 ) );
+
+            } else { // Has indices only
+
+                iVerts.push( this.computeFaceIndex( parseInt( fs ) - 1 ) ); 
+
+            }
+
+        } );
+
+        /* 
+         * If we have more than 3 indices (face is NOT a triangle), 
+         * manually create triangle fan by inserting more indices, since we only use GL_TRIANGLES in Shader rendering.
+         */
+
+        if ( iVerts.length > 3 ) {
+
+            let fan = this.computeFan( iVerts, iNormals, iTexCoords );
+
+            iVerts = fan[ 0 ];
+
+            iNormals = fan[ 1 ];
+
+            iTexCoords = fan[ 2 ];
+
+        }
+
+        // Append to faces array.
+
+        for ( let i = 0; i < iVerts.length; i++ ) {
+
+            faces.push( [ iVerts[ i ], iNormals[ i ], iTexCoords[ i ] ] )
+
+        }
+
+    }
+
+//////////////////////////////////////////////////
 
     /** 
      * Extract index data from a string. At present, indexing of vertices, 
@@ -221,10 +317,9 @@ class ModelPool extends AssetPool {
 
             //console.log("fs:" + fs)
 
-            // Split indices with and without normals and texture coordinates.
-            // NOTE: need to RE-MAP TEXCOORDS AND NORMALS!!!!!
+            // Split indices, and normals and texture coordinates if they are present.
 
-            if ( fs.indexOf( '//' ) !== NOT_IN_STRING ) { // No texture coordinates
+            if ( fs.indexOf( '//' ) !== NOT_IN_STRING ) { // no texture coordinates
 
                 idxs = fs.split( '//' );
 
@@ -250,39 +345,38 @@ class ModelPool extends AssetPool {
 
             }
 
-
-            //console.log(' iIndices:' + idx + ' texCoord:' + texCoord + ' normal:' + normal)
-
             // push indices, conditionally push texture coordinates and normals.
 
             if ( Number.isFinite( idx ) ) iIndices.push( idx );
 
-            if ( Number.isFinite( texCoord ) ) texCoords.push( texCoord );
+            // Texture coordinates.
 
-            if ( Number.isFinite( texCoord ) ) iTexCoords.push( texCoord ); /// NEW!!!!!!!!!!!!!!!!!!  
+            if ( Number.isFinite( texCoord ) ) iTexCoords.push( texCoord );
 
-            if ( Number.isFinite( normal ) ) normals.push( normal );
+            // Normals.
 
-            if ( Number.isFinite( normal ) ) iNormals.push( normal ); ///// NEW!!!!!!!!!!!!!!!!!
+            if ( Number.isFinite( normal ) ) iNormals.push( normal ); 
 
         } );
 
         /* 
          * If we have more than 3 indices (face is NOT a triangle), 
-         * manually create triangle fan, since we only use GL_TRIANGLES in Shader rendering.
+         * manually create triangle fan by inserting more indices, since we only use GL_TRIANGLES in Shader rendering.
          */
 
         if ( iIndices.length > 3 ) {
 
-            iIndices = this.computeFan( iIndices );
+            let fan = this.computeFan( iIndices, iNormals, iTexCoords );
 
-            iTexCoords = this.computeFan( iTexCoords );
+            iIndices = fan[ 0 ];
 
-            iNormals = this.computeFan( iNormals );
+            iNormals = fan[ 1 ];
+
+            iTexCoords = fan[ 2 ];
+
+            //console.log('iIndices' + iIndices + ' iNormals:' + iNormals + ' iTexCoords:' + iTexCoords)
 
         }
-
-        // TODO: have to do the same for the normals and texCoords
 
         /* 
          * Re-work texture and normal coordinates
@@ -303,14 +397,16 @@ class ModelPool extends AssetPool {
          * verts = [(vec3f, vec3f, vec2f), (vec3f, vec3f, vec2f), ...]
          */
 
-
-
         /* 
          * Concat without disturbing our array references (unlike Array.concat).
          * @link https://davidwalsh.name/merge-arrays-javascript
          */
 
         Array.prototype.push.apply( indices, iIndices );
+
+        Array.prototype.push.apply( texCoords, iTexCoords );
+
+        Array.prototype.push.apply( normals, iNormals );
 
     }
 
@@ -346,19 +442,43 @@ class ModelPool extends AssetPool {
 
         smoothingGroups = m.options.smoothingGroups, 
 
-        materials = m.options.materials;
+        materials = m.options.materials,
+
+        // temp arrays needed to flatten OBJ multi-index format to WebGL format.
+
+        tIndices = [],
+
+        tVertices = [],
+
+        tNormals = [],
+
+        tTexCoords = [],
+
+        iIndices = [],
+
+        iTexCoords = [],
+
+        iNormals = [],
+
+        iHash = [], // associative lookup table for faces (vertices, indices, texCoords);
+
+        fVertices = [],
+
+        fIndices = [],
+
+        fTexCoords = [],
+
+        fNormals = [],
+
+        faces = [];
 
         let dir = this.util.getFilePath( path );
 
         // Get the lines of the file.
 
-        let lineNum = 0;
+        let lineNum = 0,
 
-        let lines = data.split( '\n' );
-
-        let iTexCoords = [];
-
-        let iNormals = [];
+        lines = data.split( '\n' );
 
         lines.forEach( ( line ) => {
 
@@ -384,35 +504,39 @@ class ModelPool extends AssetPool {
 
                         }
 
-                        objects[ data ] = indices.length; // start position in final flattened array
+                        objects[ data ] = indices.length; // start position in final flattened array 
+
+                        // TODO: re-write for additional vertices
 
                         break;
 
                     case 'v': // vertices
 
-                        this.computeObj3d( data, vertices, lineNum );
+                        this.computeObj3d( data, tVertices, lineNum );
 
                         break;
 
                     case 'f': // face, indices, convert polygons to triangles
 
-                        this.computeObjIndices( data, indices, lineNum, iTexCoords, iNormals );
+                        this.computeObjIndices( data, tIndices, lineNum, iTexCoords, iNormals );
+
+                        this.computeObjFaces( data, faces, lineNum ); ///////////////////
 
                         break;
 
                     case 'vn': // normals
 
-                        this.computeObj3d( data, normals, lineNum );
+                        this.computeObj3d( data, tNormals, lineNum );
 
                         break;
 
                     case 'vt': // texture uvs
 
-                        if ( ! this.computeObj2d( data, texCoords, lineNum ) ) {
+                        if ( ! this.computeObj2d( data, tTexCoords, lineNum ) ) {
 
                             console.warn( '3D texture encountered:'+ data );
 
-                            this.computeObj3d( data, texCoords, lineNum, 2 );
+                            this.computeObj3d( data, tTexCoords, lineNum, 2 );
 
                         }
 
@@ -433,8 +557,6 @@ class ModelPool extends AssetPool {
                         break;
 
                     case 'usemtl': // use material (by name, loaded as .mtl file elsewhere)
-
-                        //////////////console.log("::::::::::::GOTTA USEMTL in OBJ file: " + data + ' at:' + indices.length );
 
                         if ( ! materials[ data ] ) {
 
@@ -514,12 +636,46 @@ class ModelPool extends AssetPool {
 
         } );
 
+        console.log( 'initial tVertices.length:' + tVertices.length + ' tTexCoords.length:' + tTexCoords.length + ' tNormals.length' + tNormals.length )
 
-        // NOTE: Colors and tangents are not part of the Wavefront .obj format
+        // Rewrite indices to fold texCoords and normals under the same index.
 
-        //////////console.log("ModelPool::computeObjMesh(): v:" + (vertices.length /3) + " i:" + (indices.length /3 )+ " t:" + (texCoords.length /2) + " n:" + (normals.length /3))
+        // TODO: may have to re-write start of 'o' tags.
 
-        // Model object format.
+/*
+        window.iHash = iHash;
+        window.fVertices = fVertices;
+        window.fIndices = fIndices;
+        window.fTexCoords = fTexCoords;
+        window.fNormals = fNormals;
+*/
+
+        window.faces = faces;
+
+        window.vertices = tVertices;
+        window.indices = tIndices;
+        window.normals = tNormals;
+        window.texCoords = tTexCoords;
+
+        m.vertices = tVertices;
+
+        m.indices = tIndices;
+
+        m.texCoords = tTexCoords;
+
+        m.normals = tNormals;
+
+//////////////////////////////////
+
+        //m.vertices = fVertices;
+
+        //m.indices = fIndices;
+
+        //m.texCoords = fTexCoords;
+
+        //m.normals = fNormals;
+
+        // NOTE: Color arrays and tangents are not part of the Wavefront .obj format (in .mtl data).
 
         return m;
 

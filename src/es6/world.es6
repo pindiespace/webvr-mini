@@ -485,7 +485,7 @@ class World extends AssetPool {
 
             // NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
             // TODO: INVALID TEXTURING
-
+/*
             this.primFactory.createPrim(
 
                 this.s1,                               // callback function
@@ -503,6 +503,8 @@ class World extends AssetPool {
                 [ 'obj/capsule/capsule.obj' ] // object files (.obj, .mtl)
 
             );
+*/
+
 
             this.primFactory.createPrim(
 
@@ -566,7 +568,7 @@ class World extends AssetPool {
             );
 
 
-
+/*
             this.primFactory.createPrim(
 
                 this.s2,                               // callback function
@@ -584,7 +586,7 @@ class World extends AssetPool {
                 [ 'obj/teapot/teapot.obj' ] // object files (.obj, .mtl)
 
             );
-
+*/
 
 //////////////////////////////////
 // LIT TEXTURE SHADER.

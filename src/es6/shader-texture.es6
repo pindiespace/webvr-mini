@@ -173,13 +173,21 @@ class ShaderTexture extends Shader {
 
         }
 
-        // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
-        // TODO: https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/TechniquesforWorkingwithVertexData/TechniquesforWorkingwithVertexData.html
-        // TODO: http://max-limper.de/tech/batchedrendering.html
-
         /** 
-         * POLYMORPHIC METHODS
+         * POLYMORPHIC PROPERTIES AND METHODS.
          */
+
+        // Shorten names of attributes, uniforms for rendering.
+
+        let aVertexPosition = vsVars.attribute.vec3.aVertexPosition,
+
+        aTextureCoord = vsVars.attribute.vec2.aTextureCoord,
+
+        uSampler = fsVars.uniform.sampler2D.uSampler,
+
+        uPMatrix = vsVars.uniform.mat4.uPMatrix,
+
+        uMVMatrix = vsVars.uniform.mat4.uMVMatrix;
 
         // Update Prim position, motion - given to World object.
 
@@ -216,14 +224,14 @@ class ShaderTexture extends Shader {
                 // Bind vertex buffer.
 
                 gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.vertices.buffer );
-                gl.enableVertexAttribArray( vsVars.attribute.vec3.aVertexPosition );
-                gl.vertexAttribPointer( vsVars.attribute.vec3.aVertexPosition, prim.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0 );
+                gl.enableVertexAttribArray( aVertexPosition );
+                gl.vertexAttribPointer( aVertexPosition, 3, gl.FLOAT, false, 0, 0 );
 
                 // Bind Textures buffer (could have multiple bindings here).
 
                 gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.texCoords.buffer );
-                gl.enableVertexAttribArray( vsVars.attribute.vec2.aTextureCoord );
-                gl.vertexAttribPointer( vsVars.attribute.vec2.aTextureCoord, prim.geometry.texCoords.itemSize, gl.FLOAT, false, 0, 0 );
+                gl.enableVertexAttribArray( aTextureCoord );
+                gl.vertexAttribPointer( aTextureCoord, 2, gl.FLOAT, false, 0, 0 );
 
                 gl.activeTexture( gl.TEXTURE0 );
                 gl.bindTexture( gl.TEXTURE_2D, null );
@@ -233,12 +241,12 @@ class ShaderTexture extends Shader {
 
                 // Set fragment shader sampler uniform.
 
-                gl.uniform1i( fsVars.uniform.sampler2D.uSampler, 0 ); //STRANGE
+                gl.uniform1i( uSampler, 0 ); //STRANGE
 
                 // Set perspective and model-view matrix uniforms.
 
-                gl.uniformMatrix4fv( vsVars.uniform.mat4.uPMatrix, false, PM );
-                gl.uniformMatrix4fv( vsVars.uniform.mat4.uMVMatrix, false, MVM );
+                gl.uniformMatrix4fv( uPMatrix, false, PM );
+                gl.uniformMatrix4fv( uMVMatrix, false, MVM );
 
                 // Bind index buffer.
 

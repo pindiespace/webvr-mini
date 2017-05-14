@@ -62,9 +62,11 @@ class WebVR {
 
         let stats = this.stats;
 
+        
+
          if ( navigator.getVRDisplays ) {
 
-            navigator.getVRDisplays().then ( ( displays ) => {
+            navigator.getVRDisplays().then( ( displays ) => {
 
                 console.log( 'WebVR::init(): webvr is available' );
 
@@ -72,9 +74,11 @@ class WebVR {
 
                 if ( this.frameData ) {
 
-                    console.log( 'WebVR::init(): vr frame data is available' );
+                    console.log( 'WebVR::init(): vr frameData is available for ' + displays.length + ' headsets' );
 
                     if ( displays.length > 0 )  {
+
+                        console.log( 'WebVR::init(): ' + displays.length + ' displays are available' );
 
                         let display = displays[ 0 ];
 
@@ -138,7 +142,11 @@ class WebVR {
 
                         } // display is valid
 
-                    } // displays.length > 0
+                    } else { // displays.length == 0
+
+                        console.warn( 'WebVR::init(): no VR displays found' );
+
+                    } 
 
                 } // valid VRFrameData
 
@@ -148,7 +156,7 @@ class WebVR {
 
             // We check for support prior to loading this module, so we shouldn't go here if not supported.
 
-            console.error( 'WebVR::init(): webgl not present, or obsolete version' );
+            console.error( 'WebVR::init(): WebVR API not present, or obsolete version' );
 
         }
 

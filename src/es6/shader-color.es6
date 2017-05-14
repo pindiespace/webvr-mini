@@ -157,12 +157,6 @@ class ShaderColor extends Shader {
 
         vr = arr[ 13 ];
 
-        // We received webgl in the constructor, and gl above is referenced from it.
-
-        // Make additional locals references.
-
-        // TODO: MAKE THEM, AND CHECK IF PERFORMANCE IS IMPROVED....
-
         // Attach objects.
 
         let shaderProgram = program.shaderProgram;
@@ -176,8 +170,19 @@ class ShaderColor extends Shader {
         }
 
         /** 
-         * POLYMORPHIC METHODS
+         * POLYMORPHIC PROPERTIES AND METHODS
          */
+
+        // Shorten names of attributes, uniforms for rendering.
+
+        let aVertexPosition = vsVars.attribute.vec3.aVertexPosition,
+
+        aVertexColor = vsVars.attribute.vec4.aVertexColor,
+
+        uPMatrix = uPMatrix = vsVars.uniform.mat4.uPMatrix,
+
+        uMVMatrix = uMVMatrix = vsVars.uniform.mat4.uMVMatrix;
+
 
         // Check if Prim is ready to be rendered using this Shader.
 
@@ -235,23 +240,19 @@ class ShaderColor extends Shader {
                 // Bind vertex buffer.
 
                 gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.vertices.buffer );
-                gl.enableVertexAttribArray( vsVars.attribute.vec3.aVertexPosition );
-                gl.vertexAttribPointer( vsVars.attribute.vec3.aVertexPosition, prim.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0 );
+                gl.enableVertexAttribArray( aVertexPosition );
+                gl.vertexAttribPointer( aVertexPosition, 3, gl.FLOAT, false, 0, 0 );
 
                 // Bind color buffer.
 
                 gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.colors.buffer );
-                gl.enableVertexAttribArray( vsVars.attribute.vec4.aVertexColor );
-                gl.vertexAttribPointer( vsVars.attribute.vec4.aVertexColor, prim.geometry.colors.itemSize, gl.FLOAT, false, 0, 0 );
-
-//                gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.texCoords.buffer );
-//                gl.enableVertexAttribArray( vsVars.attribute.vec2.aTextureCoord );
-//                gl.vertexAttribPointer( vsVars.attribute.vec2.aTextureCoord, prim.geometry.texCoords.itemSize, gl.FLOAT, false, 0, 0 );
+                gl.enableVertexAttribArray( aVertexColor );
+                gl.vertexAttribPointer( aVertexColor, 4, gl.FLOAT, false, 0, 0 );
 
                 // Bind perspective and model-view matrix uniforms.
 
-                gl.uniformMatrix4fv( vsVars.uniform.mat4.uPMatrix, false, PM );
-                gl.uniformMatrix4fv( vsVars.uniform.mat4.uMVMatrix, false, MVM );
+                gl.uniformMatrix4fv( uPMatrix, false, PM );
+                gl.uniformMatrix4fv( uMVMatrix, false, MVM );
 
                 // Bind indices buffer.
 

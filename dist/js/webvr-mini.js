@@ -83,47 +83,47 @@
 
 	var _ui2 = _interopRequireDefault(_ui);
 
-	var _shaderFader = __webpack_require__(43);
+	var _shaderFader = __webpack_require__(9);
 
 	var _shaderFader2 = _interopRequireDefault(_shaderFader);
 
-	var _shaderTexture = __webpack_require__(9);
+	var _shaderTexture = __webpack_require__(11);
 
 	var _shaderTexture2 = _interopRequireDefault(_shaderTexture);
 
-	var _shaderColor = __webpack_require__(11);
+	var _shaderColor = __webpack_require__(12);
 
 	var _shaderColor2 = _interopRequireDefault(_shaderColor);
 
-	var _shaderDirlightTexture = __webpack_require__(12);
+	var _shaderDirlightTexture = __webpack_require__(13);
 
 	var _shaderDirlightTexture2 = _interopRequireDefault(_shaderDirlightTexture);
 
-	var _shaderTerrain = __webpack_require__(44);
+	var _shaderTerrain = __webpack_require__(14);
 
 	var _shaderTerrain2 = _interopRequireDefault(_shaderTerrain);
 
-	var _shaderWater = __webpack_require__(13);
+	var _shaderWater = __webpack_require__(15);
 
 	var _shaderWater2 = _interopRequireDefault(_shaderWater);
 
-	var _shaderMetal = __webpack_require__(14);
+	var _shaderMetal = __webpack_require__(16);
 
 	var _shaderMetal2 = _interopRequireDefault(_shaderMetal);
 
-	var _lights = __webpack_require__(15);
+	var _lights = __webpack_require__(17);
 
 	var _lights2 = _interopRequireDefault(_lights);
 
-	var _shaderPool = __webpack_require__(16);
+	var _shaderPool = __webpack_require__(18);
 
 	var _shaderPool2 = _interopRequireDefault(_shaderPool);
 
-	var _primFactory = __webpack_require__(42);
+	var _primFactory = __webpack_require__(20);
 
 	var _primFactory2 = _interopRequireDefault(_primFactory);
 
-	var _world = __webpack_require__(28);
+	var _world = __webpack_require__(30);
 
 	var _world2 = _interopRequireDefault(_world);
 
@@ -139,7 +139,7 @@
 
 	// WebGL matrix math library.
 
-	var glMatrix = __webpack_require__(29);
+	var glMatrix = __webpack_require__(32);
 
 	if (!glMatrix) {
 
@@ -178,7 +178,7 @@
 	        // require kronos webgl debug from node_modules
 	        // https://github.com/vorg/webgl-debug
 
-	        var debug = __webpack_require__(39);
+	        var debug = __webpack_require__(42);
 
 	        exports.webgl = webgl = new _webgl2.default(false, glMatrix, util, debug);
 
@@ -821,7 +821,7 @@
 	                }
 
 	                /** 
-	                 * Basic easing operations.
+	                 * Basic easing in operations.
 	                 * @link https://gist.github.com/gre/1650294
 	                 * @link https://github.com/gre/bezier-easing
 	                 * @param {Number} a a number between 0-1
@@ -855,6 +855,15 @@
 
 	                        return a;
 	                }
+
+	                /** 
+	                 * Basic easing out operations.
+	                 * @link https://gist.github.com/gre/1650294
+	                 * @link https://github.com/gre/bezier-easing
+	                 * @param {Number} a a number between 0-1
+	                 * @param {Number} type the type of easing.
+	                 */
+
 	        }, {
 	                key: 'easeOut',
 	                value: function easeOut(a, type) {
@@ -3186,9 +3195,11 @@
 
 	                                        if (_this.frameData) {
 
-	                                                console.log('WebVR::init(): vr frame data is available');
+	                                                console.log('WebVR::init(): vr frameData is available for ' + displays.length + ' headsets');
 
 	                                                if (displays.length > 0) {
+
+	                                                        console.log('WebVR::init(): ' + displays.length + ' displays are available');
 
 	                                                        var display = displays[0];
 
@@ -3245,14 +3256,18 @@
 
 	                                                                window.addEventListener('vrdisplaydeactivate', _this.exitPresent.bind(_this), false);
 	                                                        } // display is valid
-	                                                } // displays.length > 0
+	                                                } else {
+	                                                        // displays.length == 0
+
+	                                                        console.warn('WebVR::init(): no VR displays found');
+	                                                }
 	                                        } // valid VRFrameData
 	                                }); // getVRDisplays returned a value
 	                        } else {
 
 	                                // We check for support prior to loading this module, so we shouldn't go here if not supported.
 
-	                                console.error('WebVR::init(): webgl not present, or obsolete version');
+	                                console.error('WebVR::init(): WebVR API not present, or obsolete version');
 	                        }
 	                }
 
@@ -4446,13 +4461,13 @@
 
 	'use strict';
 
-	var ShaderTexture = function (_Shader) {
-	        _inherits(ShaderTexture, _Shader);
+	var ShaderFader = function (_Shader) {
+	        _inherits(ShaderFader, _Shader);
 
 	        /** 
 	         * --------------------------------------------------------------------
-	         * VERTEX SHADER 1
-	         * textured, no lighting.
+	         * VERTEX SHADER 0
+	         * Prims with varying alpha values during creation and deletion.
 	         * @link http://learningwebgl.com/blog/?p=684
 	         * StackGL
 	         * @link https://github.com/stackgl
@@ -4464,14 +4479,16 @@
 	         * - projection matrix
 	         * --------------------------------------------------------------------
 	         */
-	        function ShaderTexture(init, util, glMatrix, webgl, webvr, shaderName) {
-	                _classCallCheck(this, ShaderTexture);
+	        function ShaderFader(init, util, glMatrix, webgl, webvr, shaderName, lights) {
+	                _classCallCheck(this, ShaderFader);
 
-	                var _this = _possibleConstructorReturn(this, (ShaderTexture.__proto__ || Object.getPrototypeOf(ShaderTexture)).call(this, init, util, glMatrix, webgl, webvr, shaderName));
+	                var _this = _possibleConstructorReturn(this, (ShaderFader.__proto__ || Object.getPrototypeOf(ShaderFader)).call(this, init, util, glMatrix, webgl, webvr, shaderName, lights));
 
-	                _this.required.buffer.indices = true, _this.required.buffer.colors = true, _this.required.buffer.normals = true, _this.required.lights = 0, _this.required.textures = 1;
+	                _this.required.buffer.indices = true, _this.required.buffer.colors = true, _this.required.buffer.normals = false, _this.required.lights = 0, _this.required.textures = 0;
 
-	                console.log('In ShaderTexture class');
+	                _this.sortByDistance = true;
+
+	                console.log('In ShaderFader class');
 
 	                return _this;
 	        }
@@ -4485,18 +4502,27 @@
 	         */
 
 
-	        _createClass(ShaderTexture, [{
+	        _createClass(ShaderFader, [{
 	                key: 'vsSrc',
 	                value: function vsSrc() {
 
 	                        var s = [
 
-	                        /* 
-	                         * Attribute names are hard-coded in the WebGL object, with rigid indices.
-	                         * vertex, textureX coordinates, colors, normals, tangents.
-	                         */
+	                        // Note: ALWAYS name the vertex attribute using the default!
 
-	                        'attribute vec3 ' + this.webgl.attributeNames.aVertexPosition[0] + ';', 'attribute vec2 ' + this.webgl.attributeNames.aTextureCoord[0] + ';', 'uniform mat4 uMVMatrix;', 'uniform mat4 uPMatrix;', 'varying vec2 vTextureCoord;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vTextureCoord = aTextureCoord;', '}'];
+	                        'attribute vec3 ' + this.webgl.attributeNames.aVertexPosition[0] + ';', 'attribute vec4 ' + this.webgl.attributeNames.aVertexColor[0] + ';', 'attribute vec2 ' + this.webgl.attributeNames.aTextureCoord[0] + ';', 'attribute vec3 ' + this.webgl.attributeNames.aVertexNormal[0] + ';',
+
+	                        // render flags
+
+	                        'uniform bool uUseLighting;', 'uniform bool uUseTexture;', 'uniform bool uUseColor;', 'uniform mat4 uMVMatrix;', 'uniform mat4 uPMatrix;', 'uniform mat3 uNMatrix;', 'uniform vec3 uAmbientColor;', 'uniform vec3 uLightingDirection;', 'uniform vec3 uDirectionalColor;', 'varying vec2 vTextureCoord;', 'varying lowp vec4 vColor;', 'varying vec3 vLightWeighting;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vLightWeighting = vec3(1.0, 1.0, 1.0);', '    if (uUseTexture) { ', '      vTextureCoord = aTextureCoord;', '    } else { ', '      vTextureCoord = vec2(0.0, 0.0);', // Prim has no textures
+
+	                        '    }', '    vColor = aVertexColor;', // we always read this, so always bind it
+
+	                        '    if(uUseLighting) {', '       vec3 transformedNormal = uNMatrix * aVertexNormal;',
+
+	                        // TODO: experiment until we get a good value here...
+
+	                        '       float directionalLightWeighting = max(dot(transformedNormal, uLightingDirection), 0.0);', '       vLightWeighting = uAmbientColor + uDirectionalColor * directionalLightWeighting;', '    } else {', '       vLightWeighting = vec3(1.0, 1.0, 1.0);', '    }', '}'];
 
 	                        return {
 
@@ -4506,22 +4532,15 @@
 
 	                        };
 	                }
-
-	                /** 
-	                 * a default-lighting textured object fragment shader.
-	                 * - varying texture coordinate
-	                 * - texture 2D sampler
-	                 */
-
 	        }, {
 	                key: 'fsSrc',
 	                value: function fsSrc() {
 
-	                        var s = [
+	                        var s = [this.floatp, 'uniform bool uUseLighting;', 'uniform bool uUseTexture;', 'uniform bool uUseColor;', 'uniform sampler2D uSampler;', 'uniform float uAlpha;', 'varying vec2 vTextureCoord;', 'varying lowp vec4 vColor;', 'varying vec3 vLightWeighting;', 'void main(void) {', 'if (uUseColor) {',
 
-	                        // 'precision mediump float;',
+	                        // TODO: ADD LIGHTING HERE
 
-	                        this.floatp, 'varying vec2 vTextureCoord;', 'uniform sampler2D uSampler;', 'void main(void) {', '    gl_FragColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));', '}'];
+	                        'gl_FragColor = vec4(vColor.rgb * vLightWeighting, uAlpha);', '}', 'else if(uUseTexture) {', 'vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));', 'gl_FragColor = vec4(textureColor.rgb * vLightWeighting, textureColor.a * uAlpha);', '}', '}'];
 
 	                        return {
 
@@ -4534,7 +4553,7 @@
 
 	                /** 
 	                 * --------------------------------------------------------------------
-	                 * Vertex Shader 1, using texture buffer.
+	                 * Vertex Shader 2, using color buffer but not texture.
 	                 * --------------------------------------------------------------------
 	                 */
 
@@ -4566,7 +4585,7 @@
 	                            far = arr[12],
 	                            vr = arr[13];
 
-	                        // Attach objects.
+	                        // Attach our VBO program.
 
 	                        var shaderProgram = program.shaderProgram;
 
@@ -4577,24 +4596,101 @@
 	                                program.renderList = this.util.concatArr(program.renderList, primList);
 	                        }
 
-	                        // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
-	                        // TODO: https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/TechniquesforWorkingwithVertexData/TechniquesforWorkingwithVertexData.html
-	                        // TODO: http://max-limper.de/tech/batchedrendering.html
-
 	                        /** 
-	                         * POLYMORPHIC METHODS
+	                         * POLYMORPHIC PROPERTIES AND METHODS.
 	                         */
+
+	                        // Shorten names of attributes, uniforms for rendering.
+
+	                        var aVertexPosition = vsVars.attribute.vec3.aVertexPosition,
+	                            aVertexColor = vsVars.attribute.vec4.aVertexColor,
+	                            aTextureCoord = vsVars.attribute.vec2.aTextureCoord,
+	                            aVertexNormal = vsVars.attribute.vec3.aVertexNormal,
+	                            uAlpha = fsVars.uniform.float.uAlpha,
+	                            uUseLighting = fsVars.uniform.bool.uUseLighting,
+	                            uUseColor = fsVars.uniform.bool.uUseColor,
+	                            uUseTexture = fsVars.uniform.bool.uUseTexture,
+	                            uSampler = fsVars.uniform.sampler2D.uSampler,
+	                            uAmbientColor = vsVars.uniform.vec3.uAmbientColor,
+	                            uLightingDirection = vsVars.uniform.vec3.uLightingDirection,
+	                            uDirectionalColor = vsVars.uniform.vec3.uDirectionalColor,
+	                            uPMatrix = vsVars.uniform.mat4.uPMatrix,
+	                            uMVMatrix = vsVars.uniform.mat4.uMVMatrix;
+
+	                        // Local link to easing function
+
+	                        var easeIn = this.util.easeIn;
+
+	                        var easeType = 0;
+
+	                        // Set up directional lighting with the primary World light (see lights.es6 for defaults).
+
+	                        var lighting = false;
+
+	                        var light0 = this.lights.getLight(this.lights.lightTypes.LIGHT_0);
+
+	                        var ambient = light0.ambient;
+
+	                        var lightingDirection = light0.lightingDirection;
+
+	                        var directionalColor = light0.directionalColor;
+
+	                        var nMatrix = mat3.create(); // TODO: ADD MAT3 TO PASSED VARIABLES
+
+	                        var adjustedLD = vec3.create(); // TODO: redo
 
 	                        // Update Prim position, motion - given to World object.
 
 	                        program.update = function (prim, MVM) {
 
+	                                var fade = prim.fade;
+
+	                                var dir = fade.endAlpha - fade.startAlpha;
+
+	                                var inc = 0.005;
+
+	                                if (dir > 0) {
+
+	                                        prim.alpha += inc;
+
+	                                        if (prim.alpha >= fade.endAlpha) {
+
+	                                                prim.alpha = fade.endAlpha;
+
+	                                                // This turns off this Shader!
+
+	                                                prim.shader.movePrim(prim, prim.defaultShader);
+	                                        }
+	                                } else if (dir < 0) {
+
+	                                        prim.alpha -= inc;
+
+	                                        if (prim.alpha <= fade.endAlpha) {
+
+	                                                prim.alpha = fade.endAlpha;
+
+	                                                // This turns off this Shader!
+
+	                                                prim.shader.movePrim(prim, prim.defaultShader);
+	                                        }
+	                                }
+
+	                                // Compute lighting normals.
+
+	                                vec3.normalize(adjustedLD, lightingDirection);
+
+	                                vec3.scale(adjustedLD, adjustedLD, -1);
+
 	                                // Update the model-view matrix using current Prim position, rotation, etc.
 
 	                                prim.setMV(MVM);
+
+	                                // Calculates a 3x3 normal matrix (transpose inverse) from the 4x4 matrix.
+
+	                                mat3.normalFromMat4(nMatrix, MVM);
 	                        };
 
-	                        // Rendering.
+	                        // Prim rendering - Shader in ShaderPool, rendered by World.
 
 	                        program.render = function (PM, MVM) {
 
@@ -4604,50 +4700,104 @@
 
 	                                var saveMV = mat4.clone(MVM);
 
+	                                // Reset perspective matrix.
+
+	                                //mat4.perspective( PM, Math.PI*0.4, canvas.width / canvas.height, near, far ); // right
+
 	                                for (var i = 0, len = program.renderList.length; i < len; i++) {
 
 	                                        var prim = program.renderList[i];
 
 	                                        // Only render if we have at least one texture loaded.
 
-	                                        if (!prim || !prim.textures[0] || !prim.textures[0].texture) continue;
+	                                        if (!prim) continue; // could be null
 
-	                                        // Individual Prim update.
+	                                        // Individual prim update
 
 	                                        program.update(prim, MVM);
 
 	                                        // Bind vertex buffer.
 
 	                                        gl.bindBuffer(gl.ARRAY_BUFFER, prim.geometry.vertices.buffer);
-	                                        gl.enableVertexAttribArray(vsVars.attribute.vec3.aVertexPosition);
-	                                        gl.vertexAttribPointer(vsVars.attribute.vec3.aVertexPosition, prim.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0);
+	                                        gl.enableVertexAttribArray(aVertexPosition);
+	                                        gl.vertexAttribPointer(aVertexPosition, 3, gl.FLOAT, false, 0, 0);
 
-	                                        // Bind Textures buffer (could have multiple bindings here).
+	                                        // NOTE: We always bind the color buffer, even if we don't draw with it (prevents 'out of range' errors).
+
+	                                        gl.bindBuffer(gl.ARRAY_BUFFER, prim.geometry.colors.buffer);
+	                                        gl.enableVertexAttribArray(aVertexColor);
+	                                        gl.vertexAttribPointer(aVertexColor, 4, gl.FLOAT, false, 0, 0); // NOTE: prim.geometry.colors.itemSize for param 2
+
+	                                        // NOTE: we always bind the texture buffer, even if we don't used it (prevent 'out of range' errors).
 
 	                                        gl.bindBuffer(gl.ARRAY_BUFFER, prim.geometry.texCoords.buffer);
-	                                        gl.enableVertexAttribArray(vsVars.attribute.vec2.aTextureCoord);
-	                                        gl.vertexAttribPointer(vsVars.attribute.vec2.aTextureCoord, prim.geometry.texCoords.itemSize, gl.FLOAT, false, 0, 0);
+	                                        gl.enableVertexAttribArray(aTextureCoord);
+	                                        gl.vertexAttribPointer(aTextureCoord, 2, gl.FLOAT, false, 0, 0);
 
-	                                        gl.activeTexture(gl.TEXTURE0);
-	                                        gl.bindTexture(gl.TEXTURE_2D, null);
-	                                        gl.bindTexture(gl.TEXTURE_2D, prim.textures[0].texture);
+	                                        gl.bindBuffer(gl.ARRAY_BUFFER, prim.geometry.normals.buffer);
+	                                        gl.enableVertexAttribArray(aVertexNormal);
+	                                        gl.vertexAttribPointer(aVertexNormal, 3, gl.FLOAT, false, 0, 0);
 
-	                                        // Bind additional texture units.
+	                                        // Alpha, with easing animation (in this.util).
 
-	                                        // Set fragment shader sampler uniform.
+	                                        gl.uniform1f(uAlpha, easeIn(prim.alpha, 0));
 
-	                                        gl.uniform1i(fsVars.uniform.sampler2D.uSampler, 0); //STRANGE
+	                                        // Conditionally set lighting, based on default Shader the Prim was assigned to.
 
-	                                        // Set perspective and model-view matrix uniforms.
+	                                        if (prim.defaultShader.required.lights > 0) {
 
-	                                        gl.uniformMatrix4fv(vsVars.uniform.mat4.uPMatrix, false, PM);
-	                                        gl.uniformMatrix4fv(vsVars.uniform.mat4.uMVMatrix, false, MVM);
+	                                                gl.uniform1i(uUseLighting, 1);
+	                                        } else {
 
-	                                        // Bind index buffer.
+	                                                gl.uniform1i(uUseLighting, 0);
+	                                        }
+
+	                                        // Draw using either the texture[0] or color array.
+
+	                                        if (prim.defaultShader.required.textures > 0 && prim.textures[0] && prim.textures[0].texture) {
+
+	                                                // Conditionally set use of color and texture arrays.
+
+	                                                gl.uniform1i(uUseColor, 0);
+	                                                gl.uniform1i(uUseTexture, 1);
+
+	                                                // Bind the first texture.
+
+	                                                gl.activeTexture(gl.TEXTURE0);
+
+	                                                gl.bindTexture(gl.TEXTURE_2D, prim.textures[0].texture);
+
+	                                                // Other texture units below.
+
+	                                                // Set fragment shader sampler uniform.
+
+	                                                gl.uniform1i(uSampler, 0);
+	                                        } else {
+
+	                                                // Conditionally set use of color and texture array.
+
+	                                                gl.uniform1i(uUseColor, 1);
+	                                                gl.uniform1i(uUseTexture, 0);
+	                                        }
+
+	                                        // Normals matrix uniform
+
+	                                        gl.uniformMatrix3fv(vsVars.uniform.mat3.uNMatrix, false, nMatrix);
+
+	                                        // Lighting (always bound)
+
+	                                        gl.uniform3f(uAmbientColor, ambient[0], ambient[1], ambient[2]);
+	                                        gl.uniform3fv(uLightingDirection, adjustedLD);
+	                                        gl.uniform3f(uDirectionalColor, directionalColor[0], directionalColor[1], directionalColor[2]);
+
+	                                        // Bind perspective and model-view matrix uniforms.
+
+	                                        gl.uniformMatrix4fv(uPMatrix, false, PM);
+	                                        gl.uniformMatrix4fv(uMVMatrix, false, MVM);
+
+	                                        // Bind indices buffer.
 
 	                                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, prim.geometry.indices.buffer);
-
-	                                        // Draw elements.
 
 	                                        if (stats.uint32) {
 
@@ -4666,10 +4816,12 @@
 	                                        mat4.copy(MVM, saveMV, MVM);
 	                                } // end of renderList for Prims
 
-	                                // Disable buffers that might cause problems in another Prim.
+	                                // Don't have to disable buffers that might cause problems in another Shader.
 
 	                                //gl.bindBuffer( gl.ARRAY_BUFFER, null );
+	                                //gl.disableVertexAttribArray( vsVars.attribute.vec4.aVertexColor );
 	                                //gl.disableVertexAttribArray( vsVars.attribute.vec2.aTextureCoord );
+	                                //gl.disableVertexAttribArray( vsVars.attribute.vec3.aVertexNormal );
 	                        }; // end of program.render()
 
 	                        return program;
@@ -4677,10 +4829,10 @@
 
 	        }]);
 
-	        return ShaderTexture;
+	        return ShaderFader;
 	}(_shader2.default);
 
-	exports.default = ShaderTexture;
+	exports.default = ShaderFader;
 
 /***/ }),
 /* 10 */
@@ -4863,7 +5015,7 @@
 	                                                this.program.renderList[pos] = prim;
 	                                        } else {
 
-	                                                console.log('Shader::addPrim():appending prim:' + prim.name + ' to:' + this.name);
+	                                                //console.log( 'Shader::addPrim():appending prim:' + prim.name + ' to:' + this.name )
 
 	                                                this.program.renderList.push(prim);
 	                                        }
@@ -4929,7 +5081,7 @@
 
 	                                // Remove a Prim from the Shader program's renderList (still in PrimList and World).
 
-	                                console.warn('Shader::removePrim():removing prim:' + prim.name);
+	                                ////////console.warn( 'Shader::removePrim():removing prim:' + prim.name );
 
 	                                //////////////////////this.program.renderList.splice( pos, 1 );
 
@@ -4967,7 +5119,7 @@
 	                                 * NOTE: emit MUST be false to prevent a race condition.
 	                                 */
 
-	                                console.log("Shader::movePrim():" + prim.name);
+	                                //////console.log("Shader::movePrim():" + prim.name )
 
 	                                return newShader.addPrim(prim, false);
 	                        }
@@ -5350,6 +5502,272 @@
 
 	'use strict';
 
+	var ShaderTexture = function (_Shader) {
+	        _inherits(ShaderTexture, _Shader);
+
+	        /** 
+	         * --------------------------------------------------------------------
+	         * VERTEX SHADER 1
+	         * textured, no lighting.
+	         * @link http://learningwebgl.com/blog/?p=684
+	         * StackGL
+	         * @link https://github.com/stackgl
+	         * phong lighting
+	         * @link https://github.com/stackgl/glsl-lighting-walkthrough
+	         * - vertex position
+	         * - texture coordinate
+	         * - model-view matrix
+	         * - projection matrix
+	         * --------------------------------------------------------------------
+	         */
+	        function ShaderTexture(init, util, glMatrix, webgl, webvr, shaderName) {
+	                _classCallCheck(this, ShaderTexture);
+
+	                var _this = _possibleConstructorReturn(this, (ShaderTexture.__proto__ || Object.getPrototypeOf(ShaderTexture)).call(this, init, util, glMatrix, webgl, webvr, shaderName));
+
+	                _this.required.buffer.indices = true, _this.required.buffer.colors = true, _this.required.buffer.normals = true, _this.required.lights = 0, _this.required.textures = 1;
+
+	                console.log('In ShaderTexture class');
+
+	                return _this;
+	        }
+
+	        /* 
+	         * Vertex and Fragment Shaders. We use the internal 'program' object from the webgl object to compile these. 
+	         * Alternatively, They may be defined to load from HTML or and external file.
+	         * @return {Object{code, varList}} an object, with internal elements
+	         * code: The shader code.
+	         * varList: A scanned list of all the variables in the shader code (created by webgl object).
+	         */
+
+
+	        _createClass(ShaderTexture, [{
+	                key: 'vsSrc',
+	                value: function vsSrc() {
+
+	                        var s = [
+
+	                        /* 
+	                         * Attribute names are hard-coded in the WebGL object, with rigid indices.
+	                         * vertex, textureX coordinates, colors, normals, tangents.
+	                         */
+
+	                        'attribute vec3 ' + this.webgl.attributeNames.aVertexPosition[0] + ';', 'attribute vec2 ' + this.webgl.attributeNames.aTextureCoord[0] + ';', 'uniform mat4 uMVMatrix;', 'uniform mat4 uPMatrix;', 'varying vec2 vTextureCoord;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vTextureCoord = aTextureCoord;', '}'];
+
+	                        return {
+
+	                                code: s.join('\n'),
+
+	                                varList: this.webgl.createVarList(s)
+
+	                        };
+	                }
+
+	                /** 
+	                 * a default-lighting textured object fragment shader.
+	                 * - varying texture coordinate
+	                 * - texture 2D sampler
+	                 */
+
+	        }, {
+	                key: 'fsSrc',
+	                value: function fsSrc() {
+
+	                        var s = [
+
+	                        // 'precision mediump float;',
+
+	                        this.floatp, 'varying vec2 vTextureCoord;', 'uniform sampler2D uSampler;', 'void main(void) {', '    gl_FragColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));', '}'];
+
+	                        return {
+
+	                                code: s.join('\n'),
+
+	                                varList: this.webgl.createVarList(s)
+
+	                        };
+	                }
+
+	                /** 
+	                 * --------------------------------------------------------------------
+	                 * Vertex Shader 1, using texture buffer.
+	                 * --------------------------------------------------------------------
+	                 */
+
+	                /** 
+	                 * initialize the update() and render() methods for this shader.
+	                 * @param{Prim[]} primList a list of initializing Prims (optional).
+	                 */
+
+	        }, {
+	                key: 'init',
+	                value: function init(primList) {
+
+	                        // DESTRUCTING DID NOT WORK!
+	                        //[gl, canvas, mat4, vec3, pMatrix, mvMatrix, program ] = this.setup();
+
+	                        var arr = this.setup(),
+	                            gl = arr[0],
+	                            canvas = arr[1],
+	                            mat4 = arr[2],
+	                            mat3 = arr[3],
+	                            vec3 = arr[4],
+	                            pMatrix = arr[5],
+	                            mvMatrix = arr[6],
+	                            program = arr[7],
+	                            vsVars = arr[8],
+	                            fsVars = arr[9],
+	                            stats = arr[10],
+	                            near = arr[11],
+	                            far = arr[12],
+	                            vr = arr[13];
+
+	                        // Attach objects.
+
+	                        var shaderProgram = program.shaderProgram;
+
+	                        // If we init with a primList, add them here.
+
+	                        if (primList) {
+
+	                                program.renderList = this.util.concatArr(program.renderList, primList);
+	                        }
+
+	                        /** 
+	                         * POLYMORPHIC PROPERTIES AND METHODS.
+	                         */
+
+	                        // Shorten names of attributes, uniforms for rendering.
+
+	                        var aVertexPosition = vsVars.attribute.vec3.aVertexPosition,
+	                            aTextureCoord = vsVars.attribute.vec2.aTextureCoord,
+	                            uSampler = fsVars.uniform.sampler2D.uSampler,
+	                            uPMatrix = vsVars.uniform.mat4.uPMatrix,
+	                            uMVMatrix = vsVars.uniform.mat4.uMVMatrix;
+
+	                        // Update Prim position, motion - given to World object.
+
+	                        program.update = function (prim, MVM) {
+
+	                                // Update the model-view matrix using current Prim position, rotation, etc.
+
+	                                prim.setMV(MVM);
+	                        };
+
+	                        // Rendering.
+
+	                        program.render = function (PM, MVM) {
+
+	                                gl.useProgram(shaderProgram);
+
+	                                // Save the model-view supplied by the shader. Mono and VR return different MV matrices.
+
+	                                var saveMV = mat4.clone(MVM);
+
+	                                for (var i = 0, len = program.renderList.length; i < len; i++) {
+
+	                                        var prim = program.renderList[i];
+
+	                                        // Only render if we have at least one texture loaded.
+
+	                                        if (!prim || !prim.textures[0] || !prim.textures[0].texture) continue;
+
+	                                        // Individual Prim update.
+
+	                                        program.update(prim, MVM);
+
+	                                        // Bind vertex buffer.
+
+	                                        gl.bindBuffer(gl.ARRAY_BUFFER, prim.geometry.vertices.buffer);
+	                                        gl.enableVertexAttribArray(aVertexPosition);
+	                                        gl.vertexAttribPointer(aVertexPosition, 3, gl.FLOAT, false, 0, 0);
+
+	                                        // Bind Textures buffer (could have multiple bindings here).
+
+	                                        gl.bindBuffer(gl.ARRAY_BUFFER, prim.geometry.texCoords.buffer);
+	                                        gl.enableVertexAttribArray(aTextureCoord);
+	                                        gl.vertexAttribPointer(aTextureCoord, 2, gl.FLOAT, false, 0, 0);
+
+	                                        gl.activeTexture(gl.TEXTURE0);
+	                                        gl.bindTexture(gl.TEXTURE_2D, null);
+	                                        gl.bindTexture(gl.TEXTURE_2D, prim.textures[0].texture);
+
+	                                        // Bind additional texture units.
+
+	                                        // Set fragment shader sampler uniform.
+
+	                                        gl.uniform1i(uSampler, 0); //STRANGE
+
+	                                        // Set perspective and model-view matrix uniforms.
+
+	                                        gl.uniformMatrix4fv(uPMatrix, false, PM);
+	                                        gl.uniformMatrix4fv(uMVMatrix, false, MVM);
+
+	                                        // Bind index buffer.
+
+	                                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, prim.geometry.indices.buffer);
+
+	                                        // Draw elements.
+
+	                                        if (stats.uint32) {
+
+	                                                // Draw elements, 0 -> 2e9
+
+	                                                gl.drawElements(gl.TRIANGLES, prim.geometry.indices.numItems, gl.UNSIGNED_INT, 0);
+	                                        } else {
+
+	                                                // Draw elements, 0 -> 65k (old platforms).
+
+	                                                gl.drawElements(gl.TRIANGLES, prim.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
+	                                        }
+
+	                                        // Copy back the original for the next Prim. 
+
+	                                        mat4.copy(MVM, saveMV, MVM);
+	                                } // end of renderList for Prims
+
+	                                // Disable buffers that might cause problems in another Prim.
+
+	                                //gl.bindBuffer( gl.ARRAY_BUFFER, null );
+	                                //gl.disableVertexAttribArray( vsVars.attribute.vec2.aTextureCoord );
+	                        }; // end of program.render()
+
+	                        return program;
+	                } // end of init()
+
+	        }]);
+
+	        return ShaderTexture;
+	}(_shader2.default);
+
+	exports.default = ShaderTexture;
+
+/***/ }),
+/* 12 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	        value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _shader = __webpack_require__(10);
+
+	var _shader2 = _interopRequireDefault(_shader);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	'use strict';
+
 	var ShaderColor = function (_Shader) {
 	        _inherits(ShaderColor, _Shader);
 
@@ -5466,12 +5884,6 @@
 	                            far = arr[12],
 	                            vr = arr[13];
 
-	                        // We received webgl in the constructor, and gl above is referenced from it.
-
-	                        // Make additional locals references.
-
-	                        // TODO: MAKE THEM, AND CHECK IF PERFORMANCE IS IMPROVED....
-
 	                        // Attach objects.
 
 	                        var shaderProgram = program.shaderProgram;
@@ -5484,8 +5896,15 @@
 	                        }
 
 	                        /** 
-	                         * POLYMORPHIC METHODS
+	                         * POLYMORPHIC PROPERTIES AND METHODS
 	                         */
+
+	                        // Shorten names of attributes, uniforms for rendering.
+
+	                        var aVertexPosition = vsVars.attribute.vec3.aVertexPosition,
+	                            aVertexColor = vsVars.attribute.vec4.aVertexColor,
+	                            uPMatrix = uPMatrix = vsVars.uniform.mat4.uPMatrix,
+	                            uMVMatrix = uMVMatrix = vsVars.uniform.mat4.uMVMatrix;
 
 	                        // Check if Prim is ready to be rendered using this Shader.
 
@@ -5539,23 +5958,19 @@
 	                                        // Bind vertex buffer.
 
 	                                        gl.bindBuffer(gl.ARRAY_BUFFER, prim.geometry.vertices.buffer);
-	                                        gl.enableVertexAttribArray(vsVars.attribute.vec3.aVertexPosition);
-	                                        gl.vertexAttribPointer(vsVars.attribute.vec3.aVertexPosition, prim.geometry.vertices.itemSize, gl.FLOAT, false, 0, 0);
+	                                        gl.enableVertexAttribArray(aVertexPosition);
+	                                        gl.vertexAttribPointer(aVertexPosition, 3, gl.FLOAT, false, 0, 0);
 
 	                                        // Bind color buffer.
 
 	                                        gl.bindBuffer(gl.ARRAY_BUFFER, prim.geometry.colors.buffer);
-	                                        gl.enableVertexAttribArray(vsVars.attribute.vec4.aVertexColor);
-	                                        gl.vertexAttribPointer(vsVars.attribute.vec4.aVertexColor, prim.geometry.colors.itemSize, gl.FLOAT, false, 0, 0);
-
-	                                        //                gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.texCoords.buffer );
-	                                        //                gl.enableVertexAttribArray( vsVars.attribute.vec2.aTextureCoord );
-	                                        //                gl.vertexAttribPointer( vsVars.attribute.vec2.aTextureCoord, prim.geometry.texCoords.itemSize, gl.FLOAT, false, 0, 0 );
+	                                        gl.enableVertexAttribArray(aVertexColor);
+	                                        gl.vertexAttribPointer(aVertexColor, 4, gl.FLOAT, false, 0, 0);
 
 	                                        // Bind perspective and model-view matrix uniforms.
 
-	                                        gl.uniformMatrix4fv(vsVars.uniform.mat4.uPMatrix, false, PM);
-	                                        gl.uniformMatrix4fv(vsVars.uniform.mat4.uMVMatrix, false, MVM);
+	                                        gl.uniformMatrix4fv(uPMatrix, false, PM);
+	                                        gl.uniformMatrix4fv(uMVMatrix, false, MVM);
 
 	                                        // Bind indices buffer.
 
@@ -5595,7 +6010,7 @@
 	exports.default = ShaderColor;
 
 /***/ }),
-/* 12 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -5908,7 +6323,205 @@
 	exports.default = shaderDirLightTexture;
 
 /***/ }),
-/* 13 */
+/* 14 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	        value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _shader = __webpack_require__(10);
+
+	var _shader2 = _interopRequireDefault(_shader);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	'use strict';
+
+	var ShaderTerrain = function (_Shader) {
+	        _inherits(ShaderTerrain, _Shader);
+
+	        /** 
+	         * --------------------------------------------------------------------
+	         * VERTEX SHADER 5
+	         * For semi-transparent object in fading animation only. Objects placed  
+	         * here are moved to their regular shader when alpha = 1.0. It 
+	         * draws the object with the first texture defined in its texture array, 
+	         * dropping back to the color array if the texture isn't defined.
+	         * --------------------------------------------------------------------
+	         */
+	        function ShaderTerrain(init, util, glMatrix, webgl, webvr, shaderName) {
+	                _classCallCheck(this, ShaderTerrain);
+
+	                var _this = _possibleConstructorReturn(this, (ShaderTerrain.__proto__ || Object.getPrototypeOf(ShaderTerrain)).call(this, init, util, glMatrix, webgl, webvr, shaderName));
+
+	                console.log('In ShaderFader class');
+
+	                _this.required.buffer.indices = true, _this.required.buffer.texCoords = true, _this.required.buffer.normals = true, _this.required.lights = 1, _this.required.textures = 1;
+
+	                return _this;
+	        }
+
+	        /* 
+	         * Vertex and Fragment Shaders. We use the internal 'program' object from the webgl object to compile these. 
+	         * Alternatively, They may be defined to load from HTML or and external file.
+	         * @return {Object{code, varList}} an object, with internal elements
+	         * code: The shader code.
+	         * varList: A scanned list of all the variables in the shader code (created by webgl object).
+	         */
+
+
+	        _createClass(ShaderTerrain, [{
+	                key: 'vsSrc',
+	                value: function vsSrc() {
+
+	                        var s = [];
+
+	                        return {
+
+	                                code: s.join('\n'),
+
+	                                varList: this.webgl.createVarList(s)
+
+	                        };
+	                }
+
+	                /** 
+	                 * a textured terrain, (with lighting computed in shader) fragment shader.
+	                 * - varying texture coordinate
+	                 * - texture 2D sampler
+	                 */
+
+	        }, {
+	                key: 'fsSrc',
+	                value: function fsSrc() {
+
+	                        var s = [];
+
+	                        return {
+
+	                                code: s.join('\n'),
+
+	                                varList: this.webgl.createVarList(s)
+
+	                        };
+	                }
+
+	                /** 
+	                 * initialize the update() and render() methods for this shader.
+	                 * @param{Prim[]} primList a list of initializing Prims (optional).
+	                 */
+
+	        }, {
+	                key: 'init',
+	                value: function init(primList) {
+
+	                        var arr = this.setup(),
+	                            gl = arr[0],
+	                            canvas = arr[1],
+	                            mat4 = arr[2],
+	                            mat3 = arr[3],
+	                            vec3 = arr[4],
+	                            pMatrix = arr[5],
+	                            mvMatrix = arr[6],
+	                            program = arr[7],
+	                            vsVars = arr[8],
+	                            fsVars = arr[9],
+	                            stats = arr[10],
+	                            near = arr[11],
+	                            far = arr[12],
+	                            vr = arr[13];
+
+	                        // Shorter reference.
+
+	                        var shaderProgram = program.shaderProgram;
+
+	                        // If we init with primList, add them here.
+
+	                        if (primList) {
+
+	                                program.renderList = this.util.concatArr(program.renderList, primList);
+	                        }
+
+	                        /** 
+	                         * POLYMORPHIC METHODS
+	                         */
+
+	                        // Update Prim position, motion - given to World object.
+
+	                        program.update = function (prim, MVM) {
+
+	                                // Update the model-view matrix using current Prim position, rotation, etc.
+
+	                                prim.setMV(mvMatrix);
+
+	                                // Compute lighting normals.
+
+	                                vec3.normalize(adjustedLD, lightingDirection);
+
+	                                vec3.scale(adjustedLD, adjustedLD, -1);
+
+	                                // Calculates a 3x3 normal matrix (transpose inverse) from the 4x4 matrix.
+
+	                                mat3.normalFromMat4(nMatrix, mvMatrix);
+	                        };
+
+	                        // Prim rendering - Shader in ShaderPool, rendered by World.
+
+	                        program.render = function (PM, MVM) {
+
+	                                gl.useProgram(shaderProgram);
+
+	                                // Save the model-view supplied by the shader. Mono and VR return different MV matrices.
+
+	                                var saveMV = mat4.clone(MVM);
+
+	                                // Begin program loop
+
+	                                for (var i = 0, len = program.renderList.length; i < len; i++) {
+
+	                                        var prim = program.renderList[i];
+
+	                                        // Only render if we have at least one texture loaded.
+
+	                                        if (!prim || !prim.textures[0] || !prim.textures[0].texture) continue;
+
+	                                        // Update Model-View matrix with standard Prim values.
+
+	                                        program.update(prim, MVM);
+
+	                                        // TODO: bind buffers
+
+	                                        // TODO: Set fragment shader sampler uniform.
+
+	                                        // TODO: drawElements()
+
+	                                        // Copy back the original for the next Prim. 
+
+	                                        mat4.copy(MVM, saveMV, MVM);
+	                                } // end of renderList for Prims.
+	                        }; // end of program.render()
+	                } // end of init()
+
+	        }]);
+
+	        return ShaderTerrain;
+	}(_shader2.default);
+
+	exports.default = ShaderTerrain;
+
+/***/ }),
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -6112,7 +6725,7 @@
 	exports.default = ShaderWater;
 
 /***/ }),
-/* 14 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -6312,7 +6925,7 @@
 	exports.default = ShaderMetal;
 
 /***/ }),
-/* 15 */
+/* 17 */
 /***/ (function(module, exports) {
 
 	
@@ -6399,7 +7012,7 @@
 	exports.default = Lights;
 
 /***/ }),
-/* 16 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -6410,7 +7023,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _assetPool = __webpack_require__(24);
+	var _assetPool = __webpack_require__(19);
 
 	var _assetPool2 = _interopRequireDefault(_assetPool);
 
@@ -6494,8 +7107,505 @@
 	exports.default = ShaderPool;
 
 /***/ }),
-/* 17 */,
-/* 18 */
+/* 19 */
+/***/ (function(module, exports) {
+
+	
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	        value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var AssetPool = function () {
+
+	        /** 
+	         * Load a set of URLs to grab, and run parallel, queued requests until 
+	         * complete or timed out. Also provide a callback so the requesting object 
+	         * can check if their load is complete.
+	         * Inspired by:
+	         * @link https://blog.hospodarets.com/fetch_in_action
+	         */
+	        function AssetPool(util) {
+	                _classCallCheck(this, AssetPool);
+
+	                this.util = util, this.emitter = util.emitter, this.MIN_WAIT_TIME = 100, this.MAX_TRIES = 6, this.NOT_IN_LIST = this.util.NOT_IN_LIST,
+
+	                // Store assets as a pool, with two arrays referencing them (numeric and key-based).
+
+	                this.keyList = [], this.defaultKey = null;
+	        }
+
+	        /*
+	         * ---------------------------------------
+	         * ASSET POOL OPERATIONS
+	         * ---------------------------------------
+	         */
+
+	        /** 
+	         * Get the default asset, if it is defined.
+	         * @returns {Object} default object in the pool.
+	         */
+
+
+	        _createClass(AssetPool, [{
+	                key: 'getDefault',
+	                value: function getDefault() {
+
+	                        if (this.defaultKey) {
+
+	                                return this.keyList[this.defaultKey];
+	                        }
+
+	                        return null;
+	                }
+
+	                /** 
+	                 * Find an asset by its path, if the path was not used as the key.
+	                 * @param {String} path the URL of the texture file.
+	                 * @returns {Boolean} if found in current textureList, return true, else false.
+	                 */
+
+	        }, {
+	                key: 'pathInList',
+	                value: function pathInList(path) {
+
+	                        if (path) {
+
+	                                for (var i in this.keyList) {
+
+	                                        var obj = this.keyList[i];
+
+	                                        //////////////////////////console.log( '^^^^obj.path:' + obj.path + ' path:' + path )
+
+	                                        if (obj.path && obj.path === path) {
+
+	                                                return obj;
+	                                        }
+	                                }
+	                        }
+
+	                        return null;
+	                }
+
+	                /** 
+	                 * Find a texture by its key (numeric or string)
+	                 */
+
+	        }, {
+	                key: 'getAssetByKey',
+	                value: function getAssetByKey(key) {
+
+	                        if (key) {
+
+	                                if (this.keyList[key]) {
+
+	                                        return this.keyList[key];
+	                                }
+	                        } else {
+
+	                                console.error('AssetPool::getAssetByKey(): undefined key');
+	                        }
+
+	                        return null;
+	                }
+
+	                /** 
+	                 * Find an asset by its name
+	                 */
+
+	        }, {
+	                key: 'getAssetByName',
+	                value: function getAssetByName(name) {
+
+	                        if (name) {
+
+	                                for (var i in this.keyList) {
+
+	                                        var o = this.keyList[i];
+
+	                                        if (o.name && o.name === name) {
+
+	                                                return o;
+	                                        }
+	                                }
+	                        }
+
+	                        return null;
+	                }
+
+	                /** 
+	                 * Check if the actual object (not a clone) has already been added to the list.
+	                 * @param {Object} the test object.
+	                 * @returns {Object|null} if found, return the object, else null.
+	                 */
+
+	        }, {
+	                key: 'assetInList',
+	                value: function assetInList(obj) {
+
+	                        if (obj) {
+
+	                                for (var i in this.keyList) {
+
+	                                        var o = this.keyList[i];
+
+	                                        if (o === obj) {
+
+	                                                return o;
+	                                        }
+	                                }
+	                        }
+
+	                        return null;
+	                }
+
+	                /*
+	                 * add an asset to the pool.
+	                 * @param {String|Number} key the key of the object, either a number or a guid style key.
+	                 * @param {Object} the asset.
+	                 * @returns {Object} the stored object.
+	                */
+
+	        }, {
+	                key: 'addAsset',
+	                value: function addAsset(obj, key) {
+
+	                        if (obj) {
+
+	                                if (key) {
+
+	                                        // Object saves its associative key.
+
+	                                        obj.key = key;
+
+	                                        if (this.keyList[key]) {
+
+	                                                if (this.keyList[key] === obj) {
+
+	                                                        ///////////console.warn( 'AssetPool::addAsset(): asset ' + key + ' already added to pool' );
+
+	                                                        return obj;
+	                                                } else {
+
+	                                                        /////////console.warn( 'AssetPool::addAsset(): replacing asset at key:' + key );
+
+	                                                }
+	                                        }
+	                                } else {
+
+	                                        obj.key = this.util.computeId();
+
+	                                        // Undefined path ok for procedural geometry.
+
+	                                        ///////////console.log( '^^ adding obj:' + obj.key + ' path:' + obj.path );
+
+	                                        // Add the key to the object, just added to the AssetPool
+
+	                                        this.keyList[obj.key] = obj;
+	                                }
+	                        }
+
+	                        // Return the asset
+
+	                        return obj;
+	                }
+	        }, {
+	                key: 'removeAsset',
+	                value: function removeAsset(key) {
+
+	                        var obj = null;
+
+	                        if (this.keyList[key]) {
+
+	                                obj = this.keyList[key];
+
+	                                if (obj) {
+
+	                                        delete this.keyList[key];
+	                                }
+	                        } else {
+
+	                                console.warn('AssetPool::removeAsset(): key not found in assetList');
+	                        }
+
+	                        return obj;
+	                }
+
+	                /*
+	                 * ---------------------------------------
+	                 * FETCH API (WRAPPED)
+	                 * ---------------------------------------
+	                 */
+
+	                /** 
+	                 * Wrap a Promise in an object.
+	                 */
+
+	        }, {
+	                key: 'getWrappedPromise',
+	                value: function getWrappedPromise() {
+
+	                        var wrappedPromise = {},
+	                            promise = new Promise(function (resolve, reject) {
+
+	                                wrappedPromise.resolve = resolve, wrappedPromise.reject = reject;
+	                        });
+
+	                        wrappedPromise.then = promise.then.bind(promise);
+
+	                        wrappedPromise.catch = promise.catch.bind(promise);
+
+	                        wrappedPromise.promise = promise;
+
+	                        return wrappedPromise;
+	                }
+
+	                /** 
+	                 * get fetch wrapped into a wrapped Promise.
+	                 * @link http://stackoverflow.com/questions/35520790/error-handling-for-fetch-in-aurelia
+	                 */
+
+	        }, {
+	                key: 'getWrappedFetch',
+	                value: function getWrappedFetch(url, params, tries, pos) {
+	                        var _this = this;
+
+	                        var wrappedPromise = this.getWrappedPromise();
+
+	                        var req = new Request(url, params);
+
+	                        wrappedPromise.url = url;
+
+	                        wrappedPromise.params = params;
+
+	                        wrappedPromise.tries = tries;
+
+	                        wrappedPromise.pos = pos;
+
+	                        // Start the timeout, which lengthens with each attempt.
+
+	                        wrappedPromise.timeoutId = setTimeout(function () {
+
+	                                console.warn('AssetPool::getWrappedFetch(): TIMEOUT' + ' for ' + (_this.MIN_WAIT_TIME * wrappedPromise.tries + 1) + 'msec ' + wrappedPromise.url);
+
+	                                wrappedPromise.catch(0);
+	                        }, this.MIN_WAIT_TIME * wrappedPromise.tries);
+
+	                        // Apply arguments to fetch.
+
+	                        fetch(req).then(function (response) {
+
+	                                if (!response.ok) {
+	                                        // catch 404 errors
+
+	                                        throw new Error('Network response was not ok for ' + wrappedPromise.url);
+	                                } else {
+
+	                                        return response; // send to the next '.then'
+	                                }
+	                        }).then(function (response) {
+
+	                                //console.warn( 'AssetPool::getWrappedFetch(): OK, RESOLVE ' + wrappedPromise.url );
+
+	                                clearTimeout(wrappedPromise.timeoutId);
+
+	                                return wrappedPromise.resolve(response);
+	                        }, function (error) {
+
+	                                console.warn('AssetPool::getWrappedFetch(): NOT OK, REJECT ' + wrappedPromise.url);
+
+	                                clearTimeout(wrappedPromise.timeoutId);
+
+	                                return wrappedPromise.reject(error); // TODO: using Error causes a strange fail here(!)
+	                        }).catch(function (error) {
+
+	                                console.warn('AssetPool::getWrappedFetch(): NOT OK, CATCH ' + wrappedPromise.url);
+
+	                                clearTimeout(wrappedPromise.timeoutId);
+
+	                                return wrappedPromise.catch(error);
+	                        });
+
+	                        return wrappedPromise;
+	                }
+
+	                /** 
+	                 * Get an individual file from the server.
+	                 * @param {String} requestURL the file path for our asset.
+	                 * @param {String} pos position identifier for the asset, so the requesting object can put it in the right place.
+	                 * @param {Function} updateFn callback function when an asset loads or fails
+	                 * @param {Boolean} cacheBust if true, add a random query string to avoid caching
+	                 * @param {String} mimeType the MIME type of the expected data
+	                 * @param {Number} tries. If load fails, try to load again with a longer timeout. Load until 
+	                 *        number of 'tries' = this.MAX_TRIES. Lengthen the timeout with each try.
+	                 */
+
+	        }, {
+	                key: 'doRequest',
+	                value: function doRequest(requestURL, pos, updateFn) {
+	                        var cacheBust = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : true;
+
+	                        var _this2 = this;
+
+	                        var mimeType = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : 'text/plain';
+	                        var tries = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : 0;
+
+
+	                        var headers = new Headers({
+
+	                                'Content-Type': mimeType
+
+	                        });
+
+	                        var ft = this.getWrappedFetch(cacheBust ? requestURL + '?' + new Date().getTime() : requestURL, {
+
+	                                method: 'get', // optional, "GET" is default value
+
+	                                mode: 'cors',
+
+	                                redirect: 'follow',
+
+	                                headers: headers
+
+	                        }, tries, // attach some additional variables to this fetch
+
+	                        pos // position identifier for object requested, from the calling requestor object.
+
+	                        );
+
+	                        // Return the Promise.
+
+	                        return ft.promise.then(function (response) {
+
+	                                //console.warn( '1. AssetPool::doRequest(): ft.promise FIRST .then OK, response.status:' + response.status + ' for ' + ft.url );
+
+	                                //console.warn( '1. AssetPool::doRequest(): ft.promise FIRST .then OK, response:' + response + ' for ' + ft.url );
+
+	                                //console.warn( '1. AssetPool::doRequest(): ft.promise FIRST .then OK, tries:' + ft.tries + ' for ' + ft.url );
+
+	                                //console.warn( '1. AssetPool::doRequest(): ft.promise FIRST .then OK, mimeType:' + mimeType + ' for ' + ft.url );
+
+	                                var data = null;
+
+	                                // Check response.status ('0' is ok if we are serving from desktop os).
+
+	                                if (response.status === 200 || response.status === 0) {
+
+	                                        if (mimeType === 'application/json') {
+
+	                                                data = response.json();
+	                                        } else if (mimeType.indexOf('text') !== _this2.util.NOT_IN_LIST) {
+
+	                                                data = response.text();
+	                                        } else if (mimeType === 'application/xml') {
+
+	                                                data = response.formData();
+	                                        } else if (mimeType.indexOf('image') !== _this2.util.NOT_IN_LIST) {
+
+	                                                data = response.blob();
+
+	                                                // TODO: data = arraybufferview type
+	                                                ///TODO: data = response.arrayBuffer(); // NEED ARRAYBUFFERVIEW
+	                                        } else {
+	                                                // all other mime types (e.g. audio, video)
+
+	                                                data = response.blob();
+	                                        }
+
+	                                        // Return a resolved Promise to the next '.then'.
+
+	                                        return Promise.resolve(data);
+	                                } else {
+
+	                                        return Promise.reject(response);
+	                                }
+	                        }, function (error) {
+	                                // Triggered by setTimeout(). Try up to this.MAX_TRIES before giving up.
+
+	                                //console.warn( '2. AssetPool::doRequest(): ft.promise FIRST .then error, error:' + error + ' for ' + ft.url );
+
+	                                //console.warn( '2. AssetPool::doRequest(): ft.promise FIRST .then error, tries:' + ft.tries + ' for ' + ft.url );
+
+	                                ft.tries++;
+
+	                                if (ft.tries < _this2.MAX_TRIES) {
+
+	                                        console.warn('AssetPool::doRequest(): ft.promise .then error, TRYING AGAIN:' + error + ' for ' + ft.url);
+
+	                                        _this2.doRequest(requestURL, pos, updateFn, cacheBust = true, mimeType, ft.tries);
+	                                }
+
+	                                return Promise.resolve(error);
+	                        }).then(function (response) {
+
+	                                if (response instanceof Error) {
+
+	                                        // Run the callback with error values.
+
+	                                        updateFn({ pos: pos, path: requestURL, data: null, error: response }); // Send a wrapped error object
+	                                } else {
+
+	                                        // Run the callback we got in the original request, return received file in data.
+
+	                                        //console.log('>>>>>>>>>>>>>>about to call update function!!!!!!')
+
+	                                        updateFn({ pos: pos, path: requestURL, data: response, error: false }); // Send the data to the caller.
+	                                }
+	                        }, function (error) {
+
+	                                // Unknown error?
+
+	                                return Promise.reject(0);
+	                        });
+	                }
+
+	                /** 
+	                 * Add fetch() url requests for resolve, with a timeout for fails. 
+	                 * when individual fetch()es are complete, run a callback.
+	                 * when all fetch()es are complete, run a final callback
+	                 * usage: addRequests( requestor, '/first.jpg', 'second.jpg',...);
+	                 * @param {Object} requestor the name of the requestor.
+	                 *         - requestor.name = the name of the requestor
+	                 *         - requestor.updateFn = the function receiving data from the fetch() call
+	                 *         - requestor.cacheBust = if true, randomize URL query string to prevent caching
+	                 *         - requestor.mimeType = if present, set to a specific MIME type. Default = text/text
+	                 * @param {Function} updateFn the function to call after each fetch completes. The 
+	                 * calling program is responsible for handing determining if it has enough fetch() 
+	                 * operations to complete. 
+	                 */
+	                /*
+	                    addRequests ( requestor ) {
+	                
+	                        let paths = requestor.files;
+	                
+	                        for ( let i = 0; i < paths.length; i++ ) {
+	                
+	                            let path = paths[ i ];
+	                
+	                            console.log("AssetPool::addRequests(): " +  path, ", " + typeof requestor.updateFn + ", " + requestor.cacheBust + ", " + requestor.mimeType )
+	                
+	                            this.doRequest( path, i, requestor.updateFn, requestor.cacheBust, requestor.mimeType, 0 ); // initial request at 0 tries
+	                
+	                        } // end of request loop
+	                
+	                    } // end of addRequests()
+	                
+	                */
+
+	        }]);
+
+	        return AssetPool;
+	}();
+
+	exports.default = AssetPool;
+
+/***/ }),
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -6506,7 +7616,1029 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _mapd = __webpack_require__(19);
+	var _map2d = __webpack_require__(21);
+
+	var _map2d2 = _interopRequireDefault(_map2d);
+
+	var _map3d = __webpack_require__(23);
+
+	var _map3d2 = _interopRequireDefault(_map3d);
+
+	var _mesh = __webpack_require__(24);
+
+	var _mesh2 = _interopRequireDefault(_mesh);
+
+	var _lights = __webpack_require__(17);
+
+	var _lights2 = _interopRequireDefault(_lights);
+
+	var _geometryPool = __webpack_require__(25);
+
+	var _geometryPool2 = _interopRequireDefault(_geometryPool);
+
+	var _texturePool = __webpack_require__(27);
+
+	var _texturePool2 = _interopRequireDefault(_texturePool);
+
+	var _modelPool = __webpack_require__(26);
+
+	var _modelPool2 = _interopRequireDefault(_modelPool);
+
+	var _audioPool = __webpack_require__(28);
+
+	var _audioPool2 = _interopRequireDefault(_audioPool);
+
+	var _geometryBuffer = __webpack_require__(29);
+
+	var _geometryBuffer2 = _interopRequireDefault(_geometryBuffer);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	'use strict';
+
+	var PrimFactory = function () {
+
+	        /** 
+	         * @class
+	         * Object Factory for Prims, and return vertex and index data 
+	         * suitable for creating a VBO and IBO.
+	         * 
+	         * Because objects can vary widely in composition and have lots of 
+	         * properties, we use an Object-Factory pattern here instead of an ES6 class, and 
+	         * don't use 'new' operator to create individual Prims.
+	         *
+	         * Members of the manufactured Prim (values are units, with 1.0 being normalized size).
+	         *
+	         * Elements of Prims:
+	         * 
+	         * prim.position      = (glMatrix.vec5) [ x, y, z, rounding, | startSlice, endSlice,  ]
+	         * prim.dimensions    = (glMatrix.vec4) [ x, y, z ]
+	         * prim.divisions     = (glMatrix.vec5) [ x, y, z ]
+	         * prim.acceleration  = (glMatrix.vec3) [ x, y, z ]
+	         * prim.rotation      = (glMatrix.vec3) [ x, y, z ]
+	         * prim.angular       = (glMatrix.vec3) [ x, y, z ]
+	         * 
+	         * prim.geometry      = GeometryBuffer flattened arrays plus WebGL objects with the following datatypes:
+	         *
+	         *  { 
+	         *    vertices:  [],   // Float32Array
+	         *    indices:   [],   // Uint32Array (Uint16Array if 32-bit indices not supported)
+	         *    texCoords: [],   // Float32Array
+	         *    normals:   [],   // Float32Array
+	         *    tangents:  [],   // Float32Array
+	         *    colors:    []    // Float32Array
+	         *  }
+	         * 
+	         * prim.shader        = Shader used by this prim.
+	         * prim.textures      = array of textures used by this prim.
+	         * prim.materials     = materials used by this prim.
+	         * prim.audio         = array of audio files use by this prim.
+	         * prim.video         = array of video files used by this prim.
+	         *
+	         * Array optimization
+	         * https://gamealchemist.wordpress.com/2013/05/01/lets-get-those-javascript-arrays-to-work-fast/
+	         *
+	         * @constructor
+	         * Note don't call anything in World that requires World.init() in constructor.
+	         *
+	         * @param {Boolean} init if true, initialize immediately.
+	         * @param {Util} util shared utility methods, patches, polyfills.
+	         * @param {glMatrix} glMatrix fast array manipulation object.
+	         * @param {WebGL} webgl object holding the WebGLRenderingContext.
+	         * @param {TexturePool} a TexturePool object for accessing textures.
+	         * @param {ModelPool} a ModelPool for reading OBJ WaveFront and similar 3d object files.
+	         * @param {GeometryPool} Creates geometry, procedural or Mesh (by invoking ModelPool).
+	         */
+	        function PrimFactory(init, world) {
+	                var _this = this;
+
+	                _classCallCheck(this, PrimFactory);
+
+	                console.log('in PrimFactory class');
+
+	                // Keep a copy of the World for up-communication.
+
+	                this.world = world, this.util = world.util, this.webgl = world.webgl, this.glMatrix = world.glMatrix,
+
+	                // Attach 1 copy of the Texture loader to this Factory.
+
+	                this.texturePool = world.texturePool, // new TexturePool( init, util, webgl );
+
+	                // Attach 1 copy of the Model loader to this Factory.
+
+	                this.modelPool = world.modelPool, // new ModelPool( init, util, webgl );
+
+	                // Attach 1 copy of GeometryPool to this Factory (itself loading a reference to world.modelPool.
+
+	                this.geometryPool = world.geometryPool,
+
+	                // Attach 1 copy of MaterialPool to this Factory.
+
+	                this.materialPool = world.materialPool;
+
+	                // Keep a list of all created Prims here.
+
+	                this.prims = [];
+
+	                /** 
+	                 * ---------------------------------------
+	                 * EMITTER CALLBACKS
+	                 * ---------------------------------------
+	                 */
+
+	                // Bind the callback for geometry initialization applied to individual prims (GeometryPool, Mesh, and ModelPool).
+
+	                this.util.emitter.on(this.util.emitter.events.GEOMETRY_READY, function (prim, key, pos) {
+
+	                        _this.initPrimGeometry(prim, _this.modelPool.keyList[key], pos);
+
+	                        // Check if complete, add if it is...
+
+	                        prim.shader.addPrim(prim);
+	                });
+
+	                // Bind Prim callback for a new material applied to individual Prims.
+
+	                this.util.emitter.on(this.util.emitter.events.MATERIAL_READY, function (prim, key, materialName) {
+
+	                        _this.initPrimMaterial(prim, _this.materialPool.keyList[key], materialName); // associative array
+
+	                        // Check if complete, add if it is...
+
+	                        prim.shader.addPrim(prim);
+	                });
+
+	                // Bind Prim callback for a new texture loaded .(TexturePool).
+
+	                this.util.emitter.on(this.util.emitter.events.TEXTURE_2D_READY, function (prim, key, pos) {
+
+	                        _this.initPrimTexture(prim, _this.texturePool.keyList[key], pos);
+
+	                        // Check if complete, add if it is...
+
+	                        prim.shader.addPrim(prim);
+	                });
+
+	                // Bind Prim callback for a new texture loaded .(TexturePool).
+
+	                this.util.emitter.on(this.util.emitter.events.TEXTURE_3D_READY, function (prim, key) {
+
+	                        _this.initPrimTexture3d(prim, _this.texturePool.keyList[key], pos);
+
+	                        // Check if complete, add if it is...
+
+	                        prim.shader.addPrim(prim);
+	                });
+
+	                // Bind Prim callback for a new texture loaded .(TexturePool).
+
+	                this.util.emitter.on(this.util.emitter.events.TEXTURE_CUBE_MAP_READY, function (prim, key) {
+
+	                        _this.initPrimTextureCubeMap(prim, _this.texturePool.keyList[key], pos);
+
+	                        // Check if complete, add if it is...
+
+	                        prim.shader.addPrim(prim);
+	                });
+
+	                // Bind Prim callback for a Shader accepting a Prim for rendering.
+
+	                this.util.emitter.on(this.util.emitter.events.PRIM_ADDED_TO_SHADER, function (prim) {
+
+	                        // post-addition events.
+
+	                        prim.alpha = 0.0;
+
+	                        prim.setFade(0, 1);
+	                });
+	        } // end of constructor
+
+
+	        /** 
+	         * Create a large coordinate data array with data for multiple Prims.
+	         * When a Prim is made, we store a reference in the this.prims[] 
+	         * array. So, to make one, we just concatenate their  
+	         * vertices. Use to send multiple prims sharing the same Shader.
+	        // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
+	        // TODO: https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/TechniquesforWorkingwithVertexData/TechniquesforWorkingwithVertexData.html
+	        // TODO: http://max-limper.de/tech/batchedrendering.html
+	         * @param {glMatrix.vec3[]} vertices
+	         * @returns {glMatrix.vec3[]} vertices
+	         */
+
+
+	        _createClass(PrimFactory, [{
+	                key: 'setVertexData',
+	                value: function setVertexData(vertices) {
+
+	                        vertices = [];
+
+	                        for (var _i in this.prims) {
+
+	                                vertices = vertices.concat(this.prims[_i].geometry.vertices.data);
+	                        }
+
+	                        return vertices;
+	                }
+
+	                /** 
+	                 * get the big array with all index data. Use to 
+	                 * send multiple prims sharing the same Shader.
+	                 * @param {Array} indices the indices to add to the larger array.
+	                 * @returns {Array} the indices.
+	                 */
+
+	        }, {
+	                key: 'setIndexData',
+	                value: function setIndexData(indices) {
+
+	                        indices = [];
+
+	                        for (var _i2 in this.prims) {
+
+	                                indices = indices.concat(this.prims[_i2].geometry.indices.data);
+	                        }
+
+	                        return indices;
+	                }
+
+	                /** 
+	                 * Add a new texture to the Prim (callback for TEXTURE_2D_READY event).
+	                 * @param {Prim} prim the prim to be updated.
+	                 * @param {TextureObj} textureObj the texture object returned from TexturePool.
+	                 * @param {Number} pos a position to write the texture to.
+	                 */
+
+	        }, {
+	                key: 'initPrimTexture',
+	                value: function initPrimTexture(prim, textureObj, pos) {
+
+	                        prim.textures[pos] = textureObj;
+
+	                        /* 
+	                         * Check materials files, and link texture to the files. We do the reverse in initPrimMaterial()
+	                         * NOTE: prim.materials[ i ] initially has the FILE PATH of the texture. If we fail to find a 
+	                         * WebGL texture the file path will remain as a debugging string.
+	                         */
+
+	                        for (var _i3 in prim.materials) {
+
+	                                var material = prim.materials[_i3];
+
+	                                var tex = material[textureObj.textureUse];
+
+	                                //////////console.log( 'PrimFactory::initPrimTexture():finding texture for:' + material.name + ' to:' + prim.name );
+	                                ////////console.log( 'TEX:' + tex + ' instanceof WebGLTexture:' + ( tex instanceof WebGLTexture) )
+
+	                                if (!(tex instanceof WebGLTexture)) {
+
+	                                        //////////console.log( 'PrimFactory::initPrimTexture():matching texture ' + material.name + ' to:' + prim.name );
+
+	                                        material[textureObj.textureUse] = textureObj.texture;
+	                                }
+	                        }
+	                }
+
+	                /** 
+	                 * Add a new 3d texture to the Prim.
+	                 */
+
+	        }, {
+	                key: 'initPrimTexture3d',
+	                value: function initPrimTexture3d(prim, textureObj, pos) {
+
+	                        prim.textures[pos] = textureObj;
+	                }
+
+	                /** 
+	                 * Add a new cubemap texture to the Prim
+	                 */
+
+	        }, {
+	                key: 'initPrimTextureCubeMap',
+	                value: function initPrimTextureCubeMap(prim, textureObj, pos) {
+
+	                        prim.textures[pos] = textureObj;
+	                }
+
+	                /** 
+	                 * Add ma material description to the Prim.
+	                 * Note: a single .mtl file may add multiple materials.
+	                 * @param {Prim} prim the prim.
+	                 * @param {Material} material the material object.
+	                 * @param {Number} pos starting position in array (usually 0).
+	                 */
+
+	        }, {
+	                key: 'initPrimMaterial',
+	                value: function initPrimMaterial(prim, material, materialName) {
+
+	                        // Material is returned as an associative array, since multiple materials may be found in one .mtl file.
+
+	                        /* 
+	                         * If the material already has an entry, it was put there parsing the 
+	                         * OBJ file. so pull the 'start' value from it, and replace with 
+	                         * the full material data. Otherwise, add material - this.initPrim() 
+	                         * will add the start position for the material later.
+	                         */
+
+	                        if (prim.materials[materialName]) {
+
+	                                ///////console.log('initPrimMaterial():found existing material ' + materialName + ' with start:' + prim.materials[ materialName ].starts )
+
+	                                material.starts = prim.materials[materialName].starts;
+	                        }
+
+	                        ///////////console.log( 'initPrimMaterial():adding material:' + materialName + ' for prim:' + prim.name )
+
+	                        prim.materials[materialName] = material;
+
+	                        /* 
+	                         * Check the texture files to see if we can map a texture to a material declaration.
+	                         * We use the list of possible texture use types in MaterialPool. 
+	                         * NOTE: unlikely, since material file is read for textures!
+	                         *
+	                         * NOTE: Prim.setMaterial() is used to create a default material in Prim.createPrim();
+	                         */
+
+	                        for (var key in this.materialPool.texturePositions) {
+
+	                                // Get the keys, map_Kd, map_Ka, map_Ks 
+
+	                                //console.log( 'PrimFactory::initPrimMaterial(): material texture ' + key + ' for prim:' + prim.name + ' present...' );
+	                                //console.log( 'PRIM.TEXTURES LENGTH IS A:' + prim.textures.length )
+
+	                                for (var j = 0; j < prim.textures.length; j++) {
+
+	                                        if (prim.textures[j][key] && prim.textures[j][key].texture instanceof WebGLTexture) {
+
+	                                                console.log('PrimFactory::initPrimMaterial(): matching material:' + material.name + ' texture type:' + key + ' with prim.textures:' + j);
+
+	                                                material[i] = prim.textures[j][key].texture;
+	                                        }
+	                                }
+	                        }
+	                }
+
+	                /** 
+	                 * Initialize Prim geometry from proceedural geometry routines or OBJ wavefront files.
+	                 * @param {prim} prim the Prim.
+	                 * @param {String} key the identifying the geometry in the ModelPool.
+	                 * @param {Object} coords coordinates object returned by procedural, Mesh, or ModelPool. Added 
+	                 * to the ModelPool. The method gets the coords object from ModelPool via a key (see constructor).
+	                 * { 
+	                 *   vertices: vertices, 
+	                 *   indices: indices,
+	                 *   normals: normals, 
+	                 *   texCoords: texCoords, 
+	                 *   tangents: tangents
+	                 *   type: type.
+	                 *   path: file path.
+	                 *   options: grouping of vertices under objects, groups, materials, smoothinGroups...
+	                 * };
+	                 */
+
+	        }, {
+	                key: 'initPrimGeometry',
+	                value: function initPrimGeometry(prim, coords, pos) {
+
+	                        /* 
+	                         * Options contain material name declarations, groups, smoothing groups, etc. 
+	                         * Their value is their start in coords.vertices.
+	                         */
+
+	                        /////////////if ( coords.material ) console.log('coords.material found for:' + prim.name + ' mat:' + coords.material)
+
+	                        if (coords.options) {
+
+	                                /////////console.log("initPrimGeometry():COORDS.options:" + coords.options + ' for:' + prim.name)
+
+	                                for (var i in coords.options.materials) {
+
+	                                        /* 
+	                                         * If the material exists in prim.materials under its name (meaning that it was loaded 
+	                                         * by MaterialPool, add the position start in coords.options.materials[i] to it.
+	                                         * Otherwise, create a empty object with the information.
+	                                         * NOTE: Prim.setMaterial() is used to create a default material in Prim.createPrim();
+	                                         */
+
+	                                        if (!prim.materials[i]) {
+
+	                                                console.log('initPrimGeometry():creating new material for ' + i);
+
+	                                                prim.materials[i] = { starts: [] };
+	                                        }
+
+	                                        // Add the start position for this material.
+
+	                                        /////////console.log( "initPrimGeometry():coords options.materials[" + i + "]: adding start:" + coords.options.materials[i] )
+
+	                                        prim.materials[i].starts = coords.options.materials[i];
+
+	                                        // TODO: see if we can bind a texture to it.
+	                                }
+	                        }
+
+	                        // Update vertices if they were supplied.
+
+	                        prim.updateVertices(coords.vertices);
+
+	                        // Compute bounding box.
+
+	                        prim.computeBoundingBox(prim.geometry.vertices.data);
+
+	                        /* 
+	                         * Procedural geometry is already at scale = 1, so bounding box should be computed 
+	                         * automatically.
+	                         * 
+	                         * For a Mesh, look at dimensions supplied in the initial Prim call, 
+	                         * relative to topleft and bottomright of bounding box
+	                         * and determine a scale. Use this to scale in the MV matrix
+	                         *
+	                         */
+
+	                        var scale = prim.dimensions[0] / prim.boundingBox.dimensions[0];
+
+	                        scale = Math.max(scale, prim.dimensions[1] / prim.boundingBox.dimensions[1]);
+
+	                        scale = Math.max(prim.dimensions[2] / prim.boundingBox.dimensions[2]);
+
+	                        prim.scale = [scale, scale, scale];
+
+	                        // Update indices if they were supplied.
+
+	                        prim.updateIndices(coords.indices);
+
+	                        // If normals are used, re-compute.
+
+	                        prim.updateNormals(coords.normals);
+
+	                        // If texcoords are used, re-compute.
+
+	                        prim.updateTexCoords(coords.texCoords);
+
+	                        // Tangents aren't supplied by OBJ format, so re-compute.
+
+	                        prim.updateTangents();
+
+	                        // Colors aren't supplied by OBJ format, so re-compute.
+
+	                        prim.updateColors();
+
+	                        // If a usemtl was specified by a file load
+
+	                        // Check our buffers for consistency.
+
+	                        //////////prim.geometry.checkBufferData();
+
+	                        //if ( prim.name === 'cubesphere' ) {
+	                        //if ( prim.name === 'TestCapsule' ) {
+	                        //if ( prim.name === 'colored cube' ) {
+	                        //if ( prim.name === 'texsphere' ) {
+
+	                        var mesh = new _mesh2.default(prim);
+
+	                        // SUBDIVIDE TEST
+
+	                        //mesh.subdivide( true );
+	                        //mesh.subdivide( true );
+	                        //mesh.subdivide( true );
+	                        //mesh.subdivide( true );
+	                        //mesh.subdivide( true );
+	                        //mesh.subdivide( true );
+	                        //mesh.subdivide( true );
+	                        //mesh.subdivide( true );
+	                        //mesh.subdivide( true ); // this one zaps from low-vertex < 10 prim
+
+	                        //}
+
+	                        //console.log("checking buffer data for " + prim.name );
+
+	                        /////////prim.geometry.checkBufferData();
+	                }
+
+	                /** 
+	                 * Create an standard 3d object.
+	                 * @param {Function} shader Shader-derived object that can add and remove this Prim from rendering list.
+	                 * @param {String} type assigned type of object (required for prim generation)
+	                 * @param {String} name assigned name of object (not necessarily unique).
+	                 * @param {vec5} dimensions object dimensions (width, height, depth, (plus additional info for some Prims)
+	                 * @param {vec5} divisions number of divisions in the x, y, z surface, (plus additional info for some Prims)
+	                 * @param {glMatrix.vec3} position location of center of object.
+	                 * @param {glMatrix.vec3} acceleration movement vector (acceleration) of object.
+	                 * @param {glMatrix.vec3} rotation rotation vector (spin) around center of object.
+	                 * @param {glMatrix.vec3} angular orbital rotation around a defined point ///TODO!!!!! DEFINE########
+	                 * @param {String[]} textureImagea array of the paths to images used to create a texture (one Prim can have several).
+	                 * @param {glMatrix.vec4[]|glMatrix.vec4} color the default color(s) of the object, either a single color or color array.
+	                 * @param {Boolean} applyTexToFace if true, apply texture to each face, else apply texture to the entire object.
+	                 * @param {String[]} modelFiles path to model OBJ (and indirectly, material files ) used to define non-procedural Mesh Prims.
+	                 */
+
+	        }, {
+	                key: 'createPrim',
+	                value: function createPrim(shader, // Shader which attaches/detaches this Prim from display list
+
+	                type) // heightMap file (HEIGHTMAP) or array of coordinate and material files (MESH)
+
+	                {
+	                        var name = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'unknown';
+	                        var dimensions = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [1, 1, 1, 0, 0];
+	                        var divisions = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : [1, 1, 1, 0, 0];
+	                        var position = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : this.glMatrix.vec3.create();
+	                        var acceleration = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : this.glMatrix.vec3.create();
+	                        var rotation = arguments.length > 7 && arguments[7] !== undefined ? arguments[7] : this.glMatrix.vec3.create();
+	                        var angular = arguments.length > 8 && arguments[8] !== undefined ? arguments[8] : this.glMatrix.vec3.create();
+	                        var textureImages = arguments.length > 9 && arguments[9] !== undefined ? arguments[9] : [];
+	                        var colors = arguments.length > 10 && arguments[10] !== undefined ? arguments[10] : null;
+
+	                        var _this2 = this;
+
+	                        var applyTexToFace = arguments.length > 11 && arguments[11] !== undefined ? arguments[11] : false;
+	                        var modelFiles = arguments.length > 12 && arguments[12] !== undefined ? arguments[12] : [];
+	                        // function to execute when prim is done (e.g. attach to drawing list shader).
+
+	                        var vec3 = this.glMatrix.vec3;
+
+	                        var mat4 = this.glMatrix.mat4;
+
+	                        if (!this.geometryPool.checkType(type)) {
+
+	                                console.error('Prim::createPrim(): unsupported Prim type:' + type);
+
+	                                return null;
+	                        }
+
+	                        // Start the object factory.
+
+	                        var prim = {};
+
+	                        var p = prim;
+
+	                        /** 
+	                         * Update the model-view matrix with position, translation, rotation, and orbital motion for individual Prims.
+	                         * @param {glMatrix.mat4} mvMatrix model-view matrix.
+	                         * @returns {glMatrix.mat4} the altered model-view matrix.
+	                         */
+	                        prim.setMV = function (mvMatrix) {
+
+	                                // TODO: translate everything.
+
+	                                var z = -5; // TODO: default position relative to camera! !!! CHANGE??????
+
+	                                // Translate.
+
+	                                vec3.add(p.position, p.position, p.acceleration);
+
+	                                // Translate to default position.
+
+	                                mat4.translate(mvMatrix, mvMatrix, [p.position[0], p.position[1], z + p.position[2]]);
+
+	                                // Rotate.
+
+	                                vec3.add(p.rotation, p.rotation, p.angular);
+
+	                                mat4.rotate(mvMatrix, mvMatrix, p.rotation[0], [1, 0, 0]);
+
+	                                mat4.rotate(mvMatrix, mvMatrix, p.rotation[1], [0, 1, 0]);
+
+	                                mat4.rotate(mvMatrix, mvMatrix, p.rotation[2], [0, 0, 1]);
+
+	                                mat4.scale(mvMatrix, mvMatrix, p.scale);
+
+	                                // TODO: rotate second for orbiting.
+	                                // TODO: rotate (internal), translate, rotate (orbit)
+	                                // TODO: orbit
+
+	                                return mvMatrix;
+	                        };
+
+	                        /** 
+	                         * Set the Prim as a glowing object. Global Lights 
+	                         * are handled by the World.
+	                         * @param {glMatrix.vec3} direction the direction of the light.
+	                         * @param {glMatrix.vec4} color light color
+	                         */
+	                        prim.setLight = function () {
+	                                var direction = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [1, 1, 1];
+	                                var color = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [255, 255, 255];
+
+
+	                                p.light.direction = direction, p.light.color = color;
+	                        };
+
+	                        /** 
+	                         * Set Prim material, with defaults available from MaterialPoo.
+	                         */
+	                        prim.setMaterial = function () {
+	                                var name = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : _this2.util.DEFAULT_KEY;
+	                                var ambient = arguments[1];
+	                                var diffuse = arguments[2];
+	                                var specular = arguments[3];
+	                                var specularExponent = arguments[4];
+	                                var sharpness = arguments[5];
+	                                var refraction = arguments[6];
+	                                var transparency = arguments[7];
+	                                var illum = arguments[8];
+	                                var map_Kd = arguments[9];
+
+
+	                                //p.materials[ name ] = this.materialPool.default( name, ambient, diffuse, specular, 
+
+	                                //    specularExponent, sharpness, refraction, transparency, illum, map_Kd );
+
+	                                var material = _this2.materialPool.default(name, ambient, diffuse, specular, specularExponent, sharpness, refraction, transparency, illum, map_Kd);
+
+	                                // Check for links in Prim.textures.
+
+	                                _this2.initPrimMaterial(prim, material, material.name);
+	                        };
+
+	                        // We don't have a .setMaterial - set directly in loadModel.updateMateria()
+
+	                        // Update vertices (no re-compute available).
+
+	                        prim.updateVertices = function (vertices) {
+
+	                                var geo = p.geometry;
+
+	                                if (vertices && vertices.length) {
+
+	                                        geo.setVertices(vertices);
+	                                }
+	                        };
+
+	                        // update indices (no re-compute available).
+
+	                        prim.updateIndices = function (indices) {
+
+	                                var geo = p.geometry;
+
+	                                if (indices && indices.length) {
+
+	                                        geo.setIndices(indices);
+	                                }
+	                        };
+
+	                        // Update or re-compute normals.
+
+	                        prim.updateNormals = function (normals) {
+
+	                                var geo = p.geometry;
+
+	                                if (normals && normals.length) {
+
+	                                        geo.setNormals(normals);
+	                                } else {
+
+	                                        //////////console.log("Prim::updateNormals():" + p.name + ' recalculating normal coordinates' );
+
+	                                        geo.setNormals(_this2.geometryPool.computeNormals(geo.vertices.data, geo.indices.data, [], p.useFaceNormals));
+	                                }
+	                        };
+
+	                        // Update or re-compute texture coordinates.
+
+	                        prim.updateTexCoords = function (texCoords) {
+
+	                                var geo = p.geometry;
+
+	                                if (texCoords && texCoords.length > 0) {
+
+	                                        geo.setTexCoords(texCoords);
+	                                } else if (geo.numTexCoords() !== geo.numVertices()) {
+
+	                                        //////////console.log("Prim::updateTexCoords():" + p.name + ' recalculating texture coordinates' );
+
+	                                        geo.setTexCoords(_this2.geometryPool.computeTexCoords(geo.vertices.data));
+	                                }
+	                        };
+
+	                        // Update or re-compute tangents.
+
+	                        prim.updateTangents = function (tangents) {
+
+	                                var geo = p.geometry;
+
+	                                if (tangents && tangents.length) {
+
+	                                        geo.setTangents(tangents);
+	                                } else {
+
+	                                        /////////console.log("Prim::updateTangents():" + p.name + ' recalculating tangent coordinates' );
+
+	                                        geo.setTangents(_this2.geometryPool.computeTangents(geo.vertices.data, geo.indices.data, geo.normals.data, geo.texCoords.data, []));
+	                                }
+	                        };
+
+	                        // Update or re-compute colors.
+
+	                        prim.updateColors = function (colors) {
+
+	                                var geo = p.geometry;
+
+	                                if (colors && colors.length) {
+
+	                                        geo.setColors(colors);
+	                                } else {
+
+	                                        ////////console.log("Prim::updateColors():" + p.name + ' recalculating color coordinates' );
+
+	                                        geo.setColors(_this2.geometryPool.computeColors(geo.normals.data, []));
+	                                }
+	                        };
+
+	                        // Compute the bounding box.
+
+	                        prim.computeBoundingBox = function () {
+
+	                                prim.boundingBox = _this2.geometryPool.computeBoundingBox(prim.geometry.vertices.data);
+	                        };
+
+	                        // Compute the bounding sphere (could be used for auto-computation of texture coordinates).
+
+	                        prim.computeBoundingSphere = function () {
+
+	                                _this2.geometryPool.computeBoundingSphere(prim.geometry.vertices.data);
+	                        };
+
+	                        // Scale. Normally, we use matrix transforms to accomplish this.
+
+	                        prim.scale = function (scale) {
+
+	                                _this2.geometryPool.scale(scale, prim.geometry.vertices.data);
+	                        };
+
+	                        // Move. Normally, we use matrix transforms to accomplish this.
+
+	                        prim.move = function (pos) {
+
+	                                _this2.geometryPool.computeMove(scale, prim.geometry.vertices.data);
+	                        };
+
+	                        // Move to a specificed coordinate.
+
+	                        prim.moveTo = function (pos) {
+
+	                                _this2.geometryPool.move([_this2.position[0] - pos[0], _this2.position[1] - pos[1], _this2.position[2] - pos[2]]);
+	                        };
+
+	                        /** 
+	                         * Fade the Prim in or out, optionally using a define equation.
+	                         * @param {Boolean} direction if true, fade in, else fade out.
+	                         * @param {Number} start starting alpha.
+	                         * @param {Number} end ending alpha.
+	                         * @param {Function} eq (optional) fading equation.
+	                         */
+
+	                        prim.setFade = function (start, end, eq) {
+
+	                                prim.fade.startAlpha = start;
+
+	                                prim.fade.endAlpha = end;
+
+	                                prim.alpha = start;
+
+	                                if (eq) prim.fade.eq = eq;
+
+	                                // Save our current Shader as a default (swapped back by s0).
+
+	                                if (prim.shader !== _this2.world.s0) {
+
+	                                        prim.defaultShader = prim.shader;
+
+	                                        // Move the Prim WITHOUT emitting a Prim add/remove event.
+
+	                                        prim.shader.movePrim(prim, _this2.world.s0);
+	                                }
+	                        };
+
+	                        // Give the Prim a unique Id.
+
+	                        prim.id = this.util.computeId();
+
+	                        // Shader after the Prim has initialized.
+
+	                        ///////////////////////prim.shader = prim.defaultShader = shader;
+
+	                        prim.shader = this.world.s0; // Fadein shader
+
+	                        prim.defaultShader = shader;
+
+	                        // Name (arbitrary).
+
+	                        prim.name = name;
+
+	                        // Type (must match type defined in Prim.typeList).
+
+	                        prim.type = type;
+
+	                        // Size in world coordinates.
+
+	                        prim.dimensions = dimensions || this.vec5(1, 1, 1, 0, 0, 0, 0);
+
+	                        // Amount of division of the Prim along each axis.
+
+	                        prim.divisions = divisions || this.vec5(1, 1, 1, 0, 0, 0);
+
+	                        // Prim position in World coordinates.
+
+	                        prim.position = position || vec3.create();
+
+	                        // Prim speed in World coordinates.
+
+	                        prim.acceleration = acceleration || vec3.create();
+
+	                        // Prim rotation on x, y, z axis.
+
+	                        prim.rotation = rotation || vec3.create();
+
+	                        // Prim angular rotation indicates circular velocity in x, y, z
+
+	                        prim.angular = angular || vec3.create();
+
+	                        // If orbiting, the radius to orbit around.
+
+	                        prim.orbitRadius = 0.0;
+
+	                        // Angular velocity in an orbit.
+
+	                        prim.orbitAngular = 0.0;
+
+	                        // Prim scale, default in World coordinates (adjusted after Geometry created).
+
+	                        prim.scale = [1.0, 1.0, 1.0];
+
+	                        // Set Prim lighting (use Shader-defined lighting).
+
+	                        prim.light = new _lights2.default(this.glMatrix);
+
+	                        // Prim's overall opacity at creation (default is invisible).
+
+	                        prim.alpha = 1.0;
+
+	                        // Note: fade equations in util.
+
+	                        prim.fade = {
+
+	                                startAlpha: 0.0,
+
+	                                endAlpha: 1.0
+
+	                        };
+
+	                        // Visible from outside (counterclockwise winding) or inside (clockwise winding).
+
+	                        prim.visibleFrom = this.geometryPool.OUTSIDE;
+
+	                        /* 
+	                         * Repeatedly apply the texture to each defined Face of the Prim (instead of wrapping around the Mesh).
+	                         * If we have multiple textures, apply in succession.
+	                         */
+
+	                        prim.applyTexToFace = applyTexToFace;
+
+	                        // Whether to use face normals for a Face of the prim.
+
+	                        prim.useFaceNormals = false; //////////////////CHANGE SHOULD BE SET OPTIONALLY !!!!!!!!!!!!!!!!!!!!!
+
+	                        // Whether to include tangents 
+
+	                        prim.useTangents = false; // TODO:///////CHANGE!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+	                        // Waypoints for scripted motion or timelines.
+
+	                        prim.waypoints = [];
+
+	                        // Store multiple textures for one Prim (must be defined for prim.materials to work).
+
+	                        prim.textures = [];
+
+	                        // Material array.
+
+	                        prim.materials = [];
+
+	                        // Set default material for the Prim (similar to OBJ format).
+
+	                        prim.setMaterial(this.util.DEFAULT_KEY);
+
+	                        // Store multiple sounds for one Prim.
+
+	                        prim.audio = [];
+
+	                        // Store multiple videos for one Prim.
+
+	                        prim.video = [];
+
+	                        // Parent Node.
+
+	                        prim.parentNode = null;
+
+	                        // Child Prim array.
+
+	                        prim.children = [];
+
+	                        // Execute geometry creation routine (which may be a file load).
+
+	                        console.log('Generating Prim:' + prim.name + '(' + prim.type + ')');
+
+	                        // Geometry factory function, create empty WebGL Buffers.
+
+	                        prim.geometry = new _geometryBuffer2.default(prim.name, this.util, this.webgl);
+
+	                        // Create Geometry data, or load Mesh data (may alter some of the above default properties).
+
+	                        this.geometryPool.getGeometries(prim, modelFiles);
+
+	                        /* 
+	                         * Add a default texture to all Prims so Shaders always have something to 
+	                         * bind, even if they are not used. On slower systems, WebGL can generate errors 
+	                         * due to finite time needed to generate mipmaps after the WebGL texture is first created.
+	                         */
+
+	                        prim.textures[0] = this.texturePool.getDefault();
+
+	                        // Get textures assigned directly ( .mtl files may assign others ) in the createPrim() call.
+
+	                        this.texturePool.getTextures(prim, textureImages, true, false, this.materialPool.defaultTextureMap); // assume cacheBust === true, mimeType determined by file extension.
+
+	                        // Push into our list of all Prims. Shaders keep a local list of Prims they are rendering.
+
+	                        // TODO: DEBUG REMOVE
+	                        if (prim.name === 'capsule') {
+
+	                                window.capsule = prim; //////////////TODO: remove
+	                        }
+
+	                        if (prim.name === 'TORUS1') {
+
+	                                window.torus = prim;
+	                        }
+
+	                        if (prim.name === 'teapot') {
+
+	                                window.teapot = prim;
+	                        }
+
+	                        if (prim.name === 'objfile') {
+
+	                                window.objfile = prim;
+	                        }
+
+	                        if (prim.name === 'cubespheretransparent') {
+
+	                                window.cubetrans = prim;
+	                        }
+
+	                        if (prim.name === 'TestTearDrop') {
+
+	                                window.teardrop = prim;
+	                        }
+
+	                        if (prim.name === 'skydome') {
+
+	                                window.skydome = prim;
+	                        }
+
+	                        this.prims.push(prim);
+
+	                        return prim;
+	                }
+
+	                /** 
+	                 * Convert a Prim to its JSON equivalent
+	                 * @param {Prim} prim the object to stringify.
+	                 */
+
+	        }, {
+	                key: 'toJSON',
+	                value: function toJSON(prim) {
+
+	                        return JSON.stringify(prim);
+	                }
+	        }]);
+
+	        return PrimFactory;
+	}(); // End of class.
+
+	// We put this here because of JSDoc(!).
+
+	exports.default = PrimFactory;
+
+/***/ }),
+/* 21 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	        value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _mapd = __webpack_require__(22);
 
 	var _mapd2 = _interopRequireDefault(_mapd);
 
@@ -7199,7 +9331,7 @@
 	exports.default = Map2d;
 
 /***/ }),
-/* 19 */
+/* 22 */
 /***/ (function(module, exports) {
 
 	'use strict';
@@ -7224,7 +9356,7 @@
 	exports.default = Mapd;
 
 /***/ }),
-/* 20 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -7235,7 +9367,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _mapd = __webpack_require__(19);
+	var _mapd = __webpack_require__(22);
 
 	var _mapd2 = _interopRequireDefault(_mapd);
 
@@ -7399,7 +9531,7 @@
 	exports.default = Map3d;
 
 /***/ }),
-/* 21 */
+/* 24 */
 /***/ (function(module, exports) {
 
 	'use strict';
@@ -8860,7 +10992,7 @@
 	exports.default = Mesh;
 
 /***/ }),
-/* 22 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -8871,19 +11003,19 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _map2d = __webpack_require__(18);
+	var _map2d = __webpack_require__(21);
 
 	var _map2d2 = _interopRequireDefault(_map2d);
 
-	var _map3d = __webpack_require__(20);
+	var _map3d = __webpack_require__(23);
 
 	var _map3d2 = _interopRequireDefault(_map3d);
 
-	var _mesh = __webpack_require__(21);
+	var _mesh = __webpack_require__(24);
 
 	var _mesh2 = _interopRequireDefault(_mesh);
 
-	var _modelPool = __webpack_require__(23);
+	var _modelPool = __webpack_require__(26);
 
 	var _modelPool2 = _interopRequireDefault(_modelPool);
 
@@ -12552,7 +14684,7 @@
 	exports.default = GeometryPool;
 
 /***/ }),
-/* 23 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -12563,7 +14695,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _assetPool = __webpack_require__(24);
+	var _assetPool = __webpack_require__(19);
 
 	var _assetPool2 = _interopRequireDefault(_assetPool);
 
@@ -12704,13 +14836,7 @@
 
 	                        if (vs) {
 
-	                                if (numReturned === 3) {
-
-	                                        arr.push(parseFloat(vs[1]), parseFloat(vs[3]), parseFloat(vs[5]));
-	                                } else if (numReturned === 2) {
-
-	                                        arr.push(parseFloat(vs[1]), parseFloat(vs[3]));
-	                                }
+	                                arr.push(parseFloat(vs[1]), parseFloat(vs[3]), parseFloat(vs[5]));
 
 	                                return true;
 	                        }
@@ -12734,7 +14860,7 @@
 
 	                        if (uvs) {
 
-	                                arr.push(parseFloat(uvs[1]), parseFloat(uvs[2]));
+	                                arr.push(parseFloat(uvs[1]), parseFloat(uvs[3]));
 
 	                                return true;
 	                        }
@@ -12753,22 +14879,131 @@
 
 	        }, {
 	                key: 'computeFan',
-	                value: function computeFan(arr) {
+	                value: function computeFan(indices, texCoords, normals) {
 
-	                        if (arr.length) {
+	                        if (indices.length) {
 
-	                                var nArr = [];
+	                                var nIdx = [],
+	                                    nTexCoords = [],
+	                                    nNormals = [];
 
-	                                for (var i = 1; i < arr.length - 1; i++) {
+	                                for (var i = 1; i < indices.length - 1; i++) {
 
-	                                        nArr.push(arr[0], arr[i], arr[i + 1]);
+	                                        nIdx.push(indices[0], indices[i], indices[i + 1]);
+
+	                                        if (texCoords.length > 0) {
+
+	                                                nTexCoords.push(texCoords[0], texCoords[i]);
+	                                        }
+
+	                                        if (normals.length > 0) {
+
+	                                                nNormals.push(normals[0], normals[i], normals[i + 1]);
+	                                        }
 	                                }
 
-	                                return nArr;
+	                                return [nIdx, nTexCoords, nNormals];
 	                        }
 
-	                        return arr;
+	                        return [indices, texCoords, normals]; // no fan needed
 	                }
+
+	                /** 
+	                 * Compute index, with fallback for missing index.
+	                 * @param {Number} num the number to test.
+	                 * @returns {Number} the number, or an error number (-1).
+	                 */
+
+	        }, {
+	                key: 'computeFaceIndex',
+	                value: function computeFaceIndex(num) {
+
+	                        if (!Number.isFinite(num)) {
+
+	                                iNormal = this.NOT_IN_STRING;
+	                        }
+
+	                        return num;
+	                }
+
+	                /////////////////////////////////////////////
+
+	        }, {
+	                key: 'computeObjFaces',
+	                value: function computeObjFaces(data, faces, lineNum) {
+	                        var _this2 = this;
+
+	                        var parts = data.match(/[^\s]+/g);
+
+	                        var NOT_IN_STRING = this.NOT_IN_LIST;
+
+	                        var idxs = void 0,
+	                            iVert = void 0,
+	                            iTexCoord = void 0,
+	                            iNormal = void 0,
+	                            iVerts = [],
+	                            iTexCoords = [],
+	                            iNormals = [];
+
+	                        // Each map should refer to one point.
+
+	                        parts.map(function (fs) {
+
+	                                //console.log("fs:" + fs)
+
+	                                // Split indices, normals and texture coordinates if they are present.
+
+	                                if (fs.indexOf('//') !== NOT_IN_STRING) {
+	                                        // no texture coordinates
+
+	                                        idxs = fs.split('//');
+
+	                                        iVerts.push(_this2.computeFaceIndex(parseInt(idxs[0]) - 1));
+
+	                                        iTexCoords.push(_this2.NOT_IN_STRING);
+
+	                                        iNormals.push(_this2.computeFaceIndex(parseInt(idxs[1]) - 1));
+	                                } else if (fs.indexOf('/') !== NOT_IN_STRING) {
+
+	                                        idxs = fs.split('/');
+
+	                                        iVerts.push(_this2.computeFaceIndex(parseInt(idxs[0]) - 1));
+
+	                                        iTexCoords.push(_this2.computeFaceIndex(parseInt(idxs[1]) - 1));
+
+	                                        iNormals.push(_this2.computeFaceIndex(parseInt(idxs[2]) - 1));
+	                                } else {
+	                                        // Has indices only
+
+	                                        iVerts.push(_this2.computeFaceIndex(parseInt(fs) - 1));
+	                                }
+	                        });
+
+	                        /* 
+	                         * If we have more than 3 indices (face is NOT a triangle), 
+	                         * manually create triangle fan by inserting more indices, since we only use GL_TRIANGLES in Shader rendering.
+	                         */
+
+	                        if (iVerts.length > 3) {
+
+	                                var fan = this.computeFan(iVerts, iNormals, iTexCoords);
+
+	                                iVerts = fan[0];
+
+	                                iNormals = fan[1];
+
+	                                iTexCoords = fan[2];
+	                        }
+
+	                        // Append to faces array.
+
+	                        for (var i = 0; i < iVerts.length; i++) {
+
+	                                faces.push([iVerts[i], iNormals[i], iTexCoords[i]]);
+	                        }
+	                }
+
+	                //////////////////////////////////////////////////
 
 	                /** 
 	                 * Extract index data from a string. At present, indexing of vertices, 
@@ -12808,11 +15043,10 @@
 
 	                                //console.log("fs:" + fs)
 
-	                                // Split indices with and without normals and texture coordinates.
-	                                // NOTE: need to RE-MAP TEXCOORDS AND NORMALS!!!!!
+	                                // Split indices, and normals and texture coordinates if they are present.
 
 	                                if (fs.indexOf('//') !== NOT_IN_STRING) {
-	                                        // No texture coordinates
+	                                        // no texture coordinates
 
 	                                        idxs = fs.split('//');
 
@@ -12836,36 +15070,36 @@
 	                                        idx = parseInt(fs) - 1;
 	                                }
 
-	                                //console.log(' iIndices:' + idx + ' texCoord:' + texCoord + ' normal:' + normal)
-
 	                                // push indices, conditionally push texture coordinates and normals.
 
 	                                if (Number.isFinite(idx)) iIndices.push(idx);
 
-	                                if (Number.isFinite(texCoord)) texCoords.push(texCoord);
+	                                // Texture coordinates.
 
-	                                if (Number.isFinite(texCoord)) iTexCoords.push(texCoord); /// NEW!!!!!!!!!!!!!!!!!!  
+	                                if (Number.isFinite(texCoord)) iTexCoords.push(texCoord);
 
-	                                if (Number.isFinite(normal)) normals.push(normal);
+	                                // Normals.
 
-	                                if (Number.isFinite(normal)) iNormals.push(normal); ///// NEW!!!!!!!!!!!!!!!!!
+	                                if (Number.isFinite(normal)) iNormals.push(normal);
 	                        });
 
 	                        /* 
 	                         * If we have more than 3 indices (face is NOT a triangle), 
-	                         * manually create triangle fan, since we only use GL_TRIANGLES in Shader rendering.
+	                         * manually create triangle fan by inserting more indices, since we only use GL_TRIANGLES in Shader rendering.
 	                         */
 
 	                        if (iIndices.length > 3) {
 
-	                                iIndices = this.computeFan(iIndices);
+	                                var fan = this.computeFan(iIndices, iNormals, iTexCoords);
 
-	                                iTexCoords = this.computeFan(iTexCoords);
+	                                iIndices = fan[0];
 
-	                                iNormals = this.computeFan(iNormals);
+	                                iNormals = fan[1];
+
+	                                iTexCoords = fan[2];
+
+	                                //console.log('iIndices' + iIndices + ' iNormals:' + iNormals + ' iTexCoords:' + iTexCoords)
 	                        }
-
-	                        // TODO: have to do the same for the normals and texCoords
 
 	                        /* 
 	                         * Re-work texture and normal coordinates
@@ -12892,6 +15126,10 @@
 	                         */
 
 	                        Array.prototype.push.apply(indices, iIndices);
+
+	                        Array.prototype.push.apply(texCoords, iTexCoords);
+
+	                        Array.prototype.push.apply(normals, iNormals);
 	                }
 
 	                /** 
@@ -12906,7 +15144,7 @@
 	        }, {
 	                key: 'computeObjMesh',
 	                value: function computeObjMesh(data, prim, path) {
-	                        var _this2 = this;
+	                        var _this3 = this;
 
 	                        console.log('ModelPool::computeObjMesh(): loading a new file:' + path + ' for ' + prim.name);
 
@@ -12921,19 +15159,33 @@
 	                            objects = m.options.objects,
 	                            groups = m.options.groups,
 	                            smoothingGroups = m.options.smoothingGroups,
-	                            materials = m.options.materials;
+	                            materials = m.options.materials,
+
+
+	                        // temp arrays needed to flatten OBJ multi-index format to WebGL format.
+
+	                        tIndices = [],
+	                            tVertices = [],
+	                            tNormals = [],
+	                            tTexCoords = [],
+	                            iIndices = [],
+	                            iTexCoords = [],
+	                            iNormals = [],
+	                            iHash = [],
+	                            // associative lookup table for faces (vertices, indices, texCoords);
+
+	                        fVertices = [],
+	                            fIndices = [],
+	                            fTexCoords = [],
+	                            fNormals = [],
+	                            faces = [];
 
 	                        var dir = this.util.getFilePath(path);
 
 	                        // Get the lines of the file.
 
-	                        var lineNum = 0;
-
-	                        var lines = data.split('\n');
-
-	                        var iTexCoords = [];
-
-	                        var iNormals = [];
+	                        var lineNum = 0,
+	                            lines = data.split('\n');
 
 	                        lines.forEach(function (line) {
 
@@ -12959,39 +15211,43 @@
 	                                                                prim.name = data;
 	                                                        }
 
-	                                                        objects[data] = indices.length; // start position in final flattened array
+	                                                        objects[data] = indices.length; // start position in final flattened array 
+
+	                                                        // TODO: re-write for additional vertices
 
 	                                                        break;
 
 	                                                case 'v':
 	                                                        // vertices
 
-	                                                        _this2.computeObj3d(data, vertices, lineNum);
+	                                                        _this3.computeObj3d(data, tVertices, lineNum);
 
 	                                                        break;
 
 	                                                case 'f':
 	                                                        // face, indices, convert polygons to triangles
 
-	                                                        _this2.computeObjIndices(data, indices, lineNum, iTexCoords, iNormals);
+	                                                        _this3.computeObjIndices(data, tIndices, lineNum, iTexCoords, iNormals);
+
+	                                                        _this3.computeObjFaces(data, faces, lineNum); ///////////////////
 
 	                                                        break;
 
 	                                                case 'vn':
 	                                                        // normals
 
-	                                                        _this2.computeObj3d(data, normals, lineNum);
+	                                                        _this3.computeObj3d(data, tNormals, lineNum);
 
 	                                                        break;
 
 	                                                case 'vt':
 	                                                        // texture uvs
 
-	                                                        if (!_this2.computeObj2d(data, texCoords, lineNum)) {
+	                                                        if (!_this3.computeObj2d(data, tTexCoords, lineNum)) {
 
 	                                                                console.warn('3D texture encountered:' + data);
 
-	                                                                _this2.computeObj3d(data, texCoords, lineNum, 2);
+	                                                                _this3.computeObj3d(data, tTexCoords, lineNum, 2);
 	                                                        }
 
 	                                                        break;
@@ -13005,15 +15261,13 @@
 
 	                                                        for (var i = 0; i < mtls.length; i++) {
 
-	                                                                _this2.materialPool.getMaterials(prim, [dir + data], true);
+	                                                                _this3.materialPool.getMaterials(prim, [dir + data], true);
 	                                                        }
 
 	                                                        break;
 
 	                                                case 'usemtl':
 	                                                        // use material (by name, loaded as .mtl file elsewhere)
-
-	                                                        //////////////console.log("::::::::::::GOTTA USEMTL in OBJ file: " + data + ' at:' + indices.length );
 
 	                                                        if (!materials[data]) {
 
@@ -13092,11 +15346,46 @@
 	                                lineNum++;
 	                        });
 
-	                        // NOTE: Colors and tangents are not part of the Wavefront .obj format
+	                        console.log('initial tVertices.length:' + tVertices.length + ' tTexCoords.length:' + tTexCoords.length + ' tNormals.length' + tNormals.length);
 
-	                        //////////console.log("ModelPool::computeObjMesh(): v:" + (vertices.length /3) + " i:" + (indices.length /3 )+ " t:" + (texCoords.length /2) + " n:" + (normals.length /3))
+	                        // Rewrite indices to fold texCoords and normals under the same index.
 
-	                        // Model object format.
+	                        // TODO: may have to re-write start of 'o' tags.
+
+	                        /*
+	                                window.iHash = iHash;
+	                                window.fVertices = fVertices;
+	                                window.fIndices = fIndices;
+	                                window.fTexCoords = fTexCoords;
+	                                window.fNormals = fNormals;
+	                        */
+
+	                        window.faces = faces;
+
+	                        window.vertices = tVertices;
+	                        window.indices = tIndices;
+	                        window.normals = tNormals;
+	                        window.texCoords = tTexCoords;
+
+	                        m.vertices = tVertices;
+
+	                        m.indices = tIndices;
+
+	                        m.texCoords = tTexCoords;
+
+	                        m.normals = tNormals;
+
+	                        //////////////////////////////////
+
+	                        //m.vertices = fVertices;
+
+	                        //m.indices = fIndices;
+
+	                        //m.texCoords = fTexCoords;
+
+	                        //m.normals = fNormals;
+
+	                        // NOTE: Color arrays and tangents are not part of the Wavefront .obj format (in .mtl data).
 
 	                        return m;
 	                }
@@ -13209,7 +15498,7 @@
 	        }, {
 	                key: 'getModels',
 	                value: function getModels(prim, pathList) {
-	                        var _this3 = this;
+	                        var _this4 = this;
 
 	                        var cacheBust = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
 
@@ -13227,11 +15516,11 @@
 
 	                                // Could have an empty path.
 
-	                                if (!_this3.util.isWhitespace(path)) {
+	                                if (!_this4.util.isWhitespace(path)) {
 
 	                                        // See if the 'path' is actually a key for our ModelPool.
 
-	                                        var poolModel = _this3.pathInList(path);
+	                                        var poolModel = _this4.pathInList(path);
 
 	                                        if (poolModel) {
 
@@ -13240,13 +15529,13 @@
 
 	                                                // Get the image mimeType.
 
-	                                                var mimeType = _this3.modelMimeTypes[_this3.util.getFileExtension(path)];
+	                                                var mimeType = _this4.modelMimeTypes[_this4.util.getFileExtension(path)];
 
 	                                                // check if mimeType is OK.
 
 	                                                if (mimeType) {
 
-	                                                        _this3.doRequest(path, i, function (updateObj) {
+	                                                        _this4.doRequest(path, i, function (updateObj) {
 
 	                                                                /* 
 	                                                                 * updateObj returned from GetAssets has the following structure:
@@ -13262,7 +15551,7 @@
 
 	                                                                if (updateObj.data) {
 
-	                                                                        var modelObj = _this3.addModel(prim, updateObj.data, updateObj.path, updateObj.pos, mimeType, prim.type);
+	                                                                        var modelObj = _this4.addModel(prim, updateObj.data, updateObj.path, updateObj.pos, mimeType, prim.type);
 
 	                                                                        if (modelObj) {
 
@@ -13273,7 +15562,7 @@
 	                                                                                 * See this.addModel() above for more information.
 	                                                                                 */
 
-	                                                                                _this3.util.emitter.emit(modelObj.emits, prim, modelObj.key, modelObj.pos);
+	                                                                                _this4.util.emitter.emit(modelObj.emits, prim, modelObj.key, modelObj.pos);
 	                                                                        } else {
 
 	                                                                                console.error('TexturePool::getModels(): file:' + path + ' could not be parsed');
@@ -13285,7 +15574,7 @@
 	                                                        }, cacheBust, mimeType, 0); // end of this.doRequest(), initial request at 0 tries
 	                                                } else {
 
-	                                                        console.error('ModelPool::getModels(): file type "' + _this3.util.getFileExtension(path) + '" in:' + path + ' not supported, not loading');
+	                                                        console.error('ModelPool::getModels(): file type "' + _this4.util.getFileExtension(path) + '" in:' + path + ' not supported, not loading');
 	                                                }
 	                                        }
 	                                } else {
@@ -13306,505 +15595,7 @@
 	exports.default = ModelPool;
 
 /***/ }),
-/* 24 */
-/***/ (function(module, exports) {
-
-	
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	        value: true
-	});
-
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	var AssetPool = function () {
-
-	        /** 
-	         * Load a set of URLs to grab, and run parallel, queued requests until 
-	         * complete or timed out. Also provide a callback so the requesting object 
-	         * can check if their load is complete.
-	         * Inspired by:
-	         * @link https://blog.hospodarets.com/fetch_in_action
-	         */
-	        function AssetPool(util) {
-	                _classCallCheck(this, AssetPool);
-
-	                this.util = util, this.emitter = util.emitter, this.MIN_WAIT_TIME = 100, this.MAX_TRIES = 6, this.NOT_IN_LIST = this.util.NOT_IN_LIST,
-
-	                // Store assets as a pool, with two arrays referencing them (numeric and key-based).
-
-	                this.keyList = [], this.defaultKey = null;
-	        }
-
-	        /*
-	         * ---------------------------------------
-	         * ASSET POOL OPERATIONS
-	         * ---------------------------------------
-	         */
-
-	        /** 
-	         * Get the default asset, if it is defined.
-	         * @returns {Object} default object in the pool.
-	         */
-
-
-	        _createClass(AssetPool, [{
-	                key: 'getDefault',
-	                value: function getDefault() {
-
-	                        if (this.defaultKey) {
-
-	                                return this.keyList[this.defaultKey];
-	                        }
-
-	                        return null;
-	                }
-
-	                /** 
-	                 * Find an asset by its path, if the path was not used as the key.
-	                 * @param {String} path the URL of the texture file.
-	                 * @returns {Boolean} if found in current textureList, return true, else false.
-	                 */
-
-	        }, {
-	                key: 'pathInList',
-	                value: function pathInList(path) {
-
-	                        if (path) {
-
-	                                for (var i in this.keyList) {
-
-	                                        var obj = this.keyList[i];
-
-	                                        //////////////////////////console.log( '^^^^obj.path:' + obj.path + ' path:' + path )
-
-	                                        if (obj.path && obj.path === path) {
-
-	                                                return obj;
-	                                        }
-	                                }
-	                        }
-
-	                        return null;
-	                }
-
-	                /** 
-	                 * Find a texture by its key (numeric or string)
-	                 */
-
-	        }, {
-	                key: 'getAssetByKey',
-	                value: function getAssetByKey(key) {
-
-	                        if (key) {
-
-	                                if (this.keyList[key]) {
-
-	                                        return this.keyList[key];
-	                                }
-	                        } else {
-
-	                                console.error('AssetPool::getAssetByKey(): undefined key');
-	                        }
-
-	                        return null;
-	                }
-
-	                /** 
-	                 * Find an asset by its name
-	                 */
-
-	        }, {
-	                key: 'getAssetByName',
-	                value: function getAssetByName(name) {
-
-	                        if (name) {
-
-	                                for (var i in this.keyList) {
-
-	                                        var o = this.keyList[i];
-
-	                                        if (o.name && o.name === name) {
-
-	                                                return o;
-	                                        }
-	                                }
-	                        }
-
-	                        return null;
-	                }
-
-	                /** 
-	                 * Check if the actual object (not a clone) has already been added to the list.
-	                 * @param {Object} the test object.
-	                 * @returns {Object|null} if found, return the object, else null.
-	                 */
-
-	        }, {
-	                key: 'assetInList',
-	                value: function assetInList(obj) {
-
-	                        if (obj) {
-
-	                                for (var i in this.keyList) {
-
-	                                        var o = this.keyList[i];
-
-	                                        if (o === obj) {
-
-	                                                return o;
-	                                        }
-	                                }
-	                        }
-
-	                        return null;
-	                }
-
-	                /*
-	                 * add an asset to the pool.
-	                 * @param {String|Number} key the key of the object, either a number or a guid style key.
-	                 * @param {Object} the asset.
-	                 * @returns {Object} the stored object.
-	                */
-
-	        }, {
-	                key: 'addAsset',
-	                value: function addAsset(obj, key) {
-
-	                        if (obj) {
-
-	                                if (key) {
-
-	                                        // Object saves its associative key.
-
-	                                        obj.key = key;
-
-	                                        if (this.keyList[key]) {
-
-	                                                if (this.keyList[key] === obj) {
-
-	                                                        ///////////console.warn( 'AssetPool::addAsset(): asset ' + key + ' already added to pool' );
-
-	                                                        return obj;
-	                                                } else {
-
-	                                                        /////////console.warn( 'AssetPool::addAsset(): replacing asset at key:' + key );
-
-	                                                }
-	                                        }
-	                                } else {
-
-	                                        obj.key = this.util.computeId();
-
-	                                        // Undefined path ok for procedural geometry.
-
-	                                        ///////////console.log( '^^ adding obj:' + obj.key + ' path:' + obj.path );
-
-	                                        // Add the key to the object, just added to the AssetPool
-
-	                                        this.keyList[obj.key] = obj;
-	                                }
-	                        }
-
-	                        // Return the asset
-
-	                        return obj;
-	                }
-	        }, {
-	                key: 'removeAsset',
-	                value: function removeAsset(key) {
-
-	                        var obj = null;
-
-	                        if (this.keyList[key]) {
-
-	                                obj = this.keyList[key];
-
-	                                if (obj) {
-
-	                                        delete this.keyList[key];
-	                                }
-	                        } else {
-
-	                                console.warn('AssetPool::removeAsset(): key not found in assetList');
-	                        }
-
-	                        return obj;
-	                }
-
-	                /*
-	                 * ---------------------------------------
-	                 * FETCH API (WRAPPED)
-	                 * ---------------------------------------
-	                 */
-
-	                /** 
-	                 * Wrap a Promise in an object.
-	                 */
-
-	        }, {
-	                key: 'getWrappedPromise',
-	                value: function getWrappedPromise() {
-
-	                        var wrappedPromise = {},
-	                            promise = new Promise(function (resolve, reject) {
-
-	                                wrappedPromise.resolve = resolve, wrappedPromise.reject = reject;
-	                        });
-
-	                        wrappedPromise.then = promise.then.bind(promise);
-
-	                        wrappedPromise.catch = promise.catch.bind(promise);
-
-	                        wrappedPromise.promise = promise;
-
-	                        return wrappedPromise;
-	                }
-
-	                /** 
-	                 * get fetch wrapped into a wrapped Promise.
-	                 * @link http://stackoverflow.com/questions/35520790/error-handling-for-fetch-in-aurelia
-	                 */
-
-	        }, {
-	                key: 'getWrappedFetch',
-	                value: function getWrappedFetch(url, params, tries, pos) {
-	                        var _this = this;
-
-	                        var wrappedPromise = this.getWrappedPromise();
-
-	                        var req = new Request(url, params);
-
-	                        wrappedPromise.url = url;
-
-	                        wrappedPromise.params = params;
-
-	                        wrappedPromise.tries = tries;
-
-	                        wrappedPromise.pos = pos;
-
-	                        // Start the timeout, which lengthens with each attempt.
-
-	                        wrappedPromise.timeoutId = setTimeout(function () {
-
-	                                console.warn('AssetPool::getWrappedFetch(): TIMEOUT' + ' for ' + (_this.MIN_WAIT_TIME * wrappedPromise.tries + 1) + 'msec ' + wrappedPromise.url);
-
-	                                wrappedPromise.catch(0);
-	                        }, this.MIN_WAIT_TIME * wrappedPromise.tries);
-
-	                        // Apply arguments to fetch.
-
-	                        fetch(req).then(function (response) {
-
-	                                if (!response.ok) {
-	                                        // catch 404 errors
-
-	                                        throw new Error('Network response was not ok for ' + wrappedPromise.url);
-	                                } else {
-
-	                                        return response; // send to the next '.then'
-	                                }
-	                        }).then(function (response) {
-
-	                                //console.warn( 'AssetPool::getWrappedFetch(): OK, RESOLVE ' + wrappedPromise.url );
-
-	                                clearTimeout(wrappedPromise.timeoutId);
-
-	                                return wrappedPromise.resolve(response);
-	                        }, function (error) {
-
-	                                console.warn('AssetPool::getWrappedFetch(): NOT OK, REJECT ' + wrappedPromise.url);
-
-	                                clearTimeout(wrappedPromise.timeoutId);
-
-	                                return wrappedPromise.reject(error); // TODO: using Error causes a strange fail here(!)
-	                        }).catch(function (error) {
-
-	                                console.warn('AssetPool::getWrappedFetch(): NOT OK, CATCH ' + wrappedPromise.url);
-
-	                                clearTimeout(wrappedPromise.timeoutId);
-
-	                                return wrappedPromise.catch(error);
-	                        });
-
-	                        return wrappedPromise;
-	                }
-
-	                /** 
-	                 * Get an individual file from the server.
-	                 * @param {String} requestURL the file path for our asset.
-	                 * @param {String} pos position identifier for the asset, so the requesting object can put it in the right place.
-	                 * @param {Function} updateFn callback function when an asset loads or fails
-	                 * @param {Boolean} cacheBust if true, add a random query string to avoid caching
-	                 * @param {String} mimeType the MIME type of the expected data
-	                 * @param {Number} tries. If load fails, try to load again with a longer timeout. Load until 
-	                 *        number of 'tries' = this.MAX_TRIES. Lengthen the timeout with each try.
-	                 */
-
-	        }, {
-	                key: 'doRequest',
-	                value: function doRequest(requestURL, pos, updateFn) {
-	                        var cacheBust = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : true;
-
-	                        var _this2 = this;
-
-	                        var mimeType = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : 'text/plain';
-	                        var tries = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : 0;
-
-
-	                        var headers = new Headers({
-
-	                                'Content-Type': mimeType
-
-	                        });
-
-	                        var ft = this.getWrappedFetch(cacheBust ? requestURL + '?' + new Date().getTime() : requestURL, {
-
-	                                method: 'get', // optional, "GET" is default value
-
-	                                mode: 'cors',
-
-	                                redirect: 'follow',
-
-	                                headers: headers
-
-	                        }, tries, // attach some additional variables to this fetch
-
-	                        pos // position identifier for object requested, from the calling requestor object.
-
-	                        );
-
-	                        // Return the Promise.
-
-	                        return ft.promise.then(function (response) {
-
-	                                //console.warn( '1. AssetPool::doRequest(): ft.promise FIRST .then OK, response.status:' + response.status + ' for ' + ft.url );
-
-	                                //console.warn( '1. AssetPool::doRequest(): ft.promise FIRST .then OK, response:' + response + ' for ' + ft.url );
-
-	                                //console.warn( '1. AssetPool::doRequest(): ft.promise FIRST .then OK, tries:' + ft.tries + ' for ' + ft.url );
-
-	                                //console.warn( '1. AssetPool::doRequest(): ft.promise FIRST .then OK, mimeType:' + mimeType + ' for ' + ft.url );
-
-	                                var data = null;
-
-	                                // Check response.status ('0' is ok if we are serving from desktop os).
-
-	                                if (response.status === 200 || response.status === 0) {
-
-	                                        if (mimeType === 'application/json') {
-
-	                                                data = response.json();
-	                                        } else if (mimeType.indexOf('text') !== _this2.util.NOT_IN_LIST) {
-
-	                                                data = response.text();
-	                                        } else if (mimeType === 'application/xml') {
-
-	                                                data = response.formData();
-	                                        } else if (mimeType.indexOf('image') !== _this2.util.NOT_IN_LIST) {
-
-	                                                data = response.blob();
-
-	                                                // TODO: data = arraybufferview type
-	                                                ///TODO: data = response.arrayBuffer(); // NEED ARRAYBUFFERVIEW
-	                                        } else {
-	                                                // all other mime types (e.g. audio, video)
-
-	                                                data = response.blob();
-	                                        }
-
-	                                        // Return a resolved Promise to the next '.then'.
-
-	                                        return Promise.resolve(data);
-	                                } else {
-
-	                                        return Promise.reject(response);
-	                                }
-	                        }, function (error) {
-	                                // Triggered by setTimeout(). Try up to this.MAX_TRIES before giving up.
-
-	                                //console.warn( '2. AssetPool::doRequest(): ft.promise FIRST .then error, error:' + error + ' for ' + ft.url );
-
-	                                //console.warn( '2. AssetPool::doRequest(): ft.promise FIRST .then error, tries:' + ft.tries + ' for ' + ft.url );
-
-	                                ft.tries++;
-
-	                                if (ft.tries < _this2.MAX_TRIES) {
-
-	                                        console.warn('AssetPool::doRequest(): ft.promise .then error, TRYING AGAIN:' + error + ' for ' + ft.url);
-
-	                                        _this2.doRequest(requestURL, pos, updateFn, cacheBust = true, mimeType, ft.tries);
-	                                }
-
-	                                return Promise.resolve(error);
-	                        }).then(function (response) {
-
-	                                if (response instanceof Error) {
-
-	                                        // Run the callback with error values.
-
-	                                        updateFn({ pos: pos, path: requestURL, data: null, error: response }); // Send a wrapped error object
-	                                } else {
-
-	                                        // Run the callback we got in the original request, return received file in data.
-
-	                                        //console.log('>>>>>>>>>>>>>>about to call update function!!!!!!')
-
-	                                        updateFn({ pos: pos, path: requestURL, data: response, error: false }); // Send the data to the caller.
-	                                }
-	                        }, function (error) {
-
-	                                // Unknown error?
-
-	                                return Promise.reject(0);
-	                        });
-	                }
-
-	                /** 
-	                 * Add fetch() url requests for resolve, with a timeout for fails. 
-	                 * when individual fetch()es are complete, run a callback.
-	                 * when all fetch()es are complete, run a final callback
-	                 * usage: addRequests( requestor, '/first.jpg', 'second.jpg',...);
-	                 * @param {Object} requestor the name of the requestor.
-	                 *         - requestor.name = the name of the requestor
-	                 *         - requestor.updateFn = the function receiving data from the fetch() call
-	                 *         - requestor.cacheBust = if true, randomize URL query string to prevent caching
-	                 *         - requestor.mimeType = if present, set to a specific MIME type. Default = text/text
-	                 * @param {Function} updateFn the function to call after each fetch completes. The 
-	                 * calling program is responsible for handing determining if it has enough fetch() 
-	                 * operations to complete. 
-	                 */
-	                /*
-	                    addRequests ( requestor ) {
-	                
-	                        let paths = requestor.files;
-	                
-	                        for ( let i = 0; i < paths.length; i++ ) {
-	                
-	                            let path = paths[ i ];
-	                
-	                            console.log("AssetPool::addRequests(): " +  path, ", " + typeof requestor.updateFn + ", " + requestor.cacheBust + ", " + requestor.mimeType )
-	                
-	                            this.doRequest( path, i, requestor.updateFn, requestor.cacheBust, requestor.mimeType, 0 ); // initial request at 0 tries
-	                
-	                        } // end of request loop
-	                
-	                    } // end of addRequests()
-	                
-	                */
-
-	        }]);
-
-	        return AssetPool;
-	}();
-
-	exports.default = AssetPool;
-
-/***/ }),
-/* 25 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -13815,7 +15606,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _assetPool = __webpack_require__(24);
+	var _assetPool = __webpack_require__(19);
 
 	var _assetPool2 = _interopRequireDefault(_assetPool);
 
@@ -14374,7 +16165,7 @@
 	exports.default = TexturePool;
 
 /***/ }),
-/* 26 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -14383,7 +16174,7 @@
 	    value: true
 	});
 
-	var _assetPool = __webpack_require__(24);
+	var _assetPool = __webpack_require__(19);
 
 	var _assetPool2 = _interopRequireDefault(_assetPool);
 
@@ -14429,8 +16220,1107 @@
 	exports.default = AudioPool;
 
 /***/ }),
-/* 27 */,
-/* 28 */
+/* 29 */
+/***/ (function(module, exports) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	        value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var GeometryBuffer = function () {
+
+	        /** 
+	         * @class
+	         * Create an object from a Prim which may be used by our Shader objects.
+	         * Create WebGL buffers from flattened vertex, index, texture and other coordinate data.
+	         * @constructor
+	         * @param {Util} util shared utility methods, patches, polyfills.
+	         * @param {WebGL} webgl object holding the WebGLRenderingContext.
+	         */
+	        function GeometryBuffer(name, util, webgl, type) {
+	                _classCallCheck(this, GeometryBuffer);
+
+	                this.primName = name, this.webgl = webgl, this.util = util, this.FLOAT32 = 'float32', this.UINT = 'uint';
+
+	                this.UINT32 = 'uint32';
+
+	                this.UINT16 = 'uint16';
+
+	                this.makeBuffers = true, this.vertices = {
+
+	                        data: [],
+
+	                        buffer: null,
+
+	                        itemSize: 3,
+
+	                        numItems: 0
+
+	                }, this.indices = { // where to start drawing GL_TRIANGLES.
+
+	                        data: [],
+
+	                        buffer: null,
+
+	                        itemSize: 1,
+
+	                        numItems: 0
+
+	                }, this.sides = { // a collection of triangles creating a side on the shape.
+
+	                        data: [],
+
+	                        buffer: null,
+
+	                        itemSize: 3,
+
+	                        numItems: 0
+
+	                }, this.normals = {
+
+	                        data: [],
+
+	                        buffer: null,
+
+	                        itemSize: 3,
+
+	                        numItems: 0
+
+	                }, this.tangents = {
+
+	                        data: [],
+
+	                        buffer: null,
+
+	                        itemSize: 4,
+
+	                        numItems: 0
+
+	                }, this.texCoords = {
+
+	                        data: [],
+
+	                        buffer: null,
+
+	                        itemSize: 2,
+
+	                        numItems: 0
+
+	                }, this.colors = {
+
+	                        data: [],
+
+	                        buffer: null,
+
+	                        itemSize: 4,
+
+	                        numItems: 0
+
+	                };
+
+	                this.valid = false;
+
+	                // Save the max allowed drawing size. For WebGL 1.0 with extension, vertices must be < 65k.
+
+	                this.MAX_DRAWELEMENTS = this.webgl.MAX_DRAWELEMENTS;
+
+	                this.mName = this.primName + ' GeometryBuffer::';
+	        } // end of constructor
+
+	        /** 
+	         * Confirm that data is a number.
+	         * @param {Array} data the data array
+	         * @param {String} dataType the type (FLOAT32, UINT16, UINT32, UINT)
+	         * @param {String} arrName the name of the array.
+	         */
+
+
+	        _createClass(GeometryBuffer, [{
+	                key: 'confirmNumericalData',
+	                value: function confirmNumericalData(data, dataType, arrName) {
+
+	                        var len = data.length;
+
+	                        for (var i = 0; i < len; i++) {
+
+	                                var d = data[i];
+
+	                                switch (dataType) {
+
+	                                        case this.FLOAT32:
+
+	                                                if (!Number.isFinite(parseFloat(d))) {
+
+	                                                        console.error(this.mName + 'confirmNumericalData(): invalid float32 in ' + arrName + ' at pos:' + i + ' = ' + d);
+
+	                                                        return false;
+	                                                }
+
+	                                                break;
+
+	                                        case this.UINT16:
+	                                        case this.UINT32:
+	                                        case this.UINT:
+
+	                                                if (!Number.isFinite(parseInt(d))) {
+
+	                                                        console.error(this.mName + 'confirmNumericalData(): invalid Uint in ' + arrName + ' at pos:' + i + ' = ' + d);
+
+	                                                        return false;
+	                                                }
+
+	                                                break;
+
+	                                        default:
+
+	                                                console.error(this.mName + ' confirmNumericalData(): unknown data type ' + dataType + ' for:' + arrName);
+
+	                                                return false;
+
+	                                                break;
+
+	                                }
+	                        }
+
+	                        return true;
+	                }
+
+	                /** 
+	                 * Check integrity of vertex data
+	                 * @param {Boolean} complete it true, do all the tests.
+	                 */
+
+	        }, {
+	                key: 'checkVertexData',
+	                value: function checkVertexData(complete) {
+
+	                        var fnName = this.mName + ' checkVertexData():'; // so many error messages we use this.
+
+	                        var len = this.vertices.data.length;
+
+	                        var numVertices = this.numVertices();
+
+	                        if (len < this.vertices.itemSize || this.util.frac(numVertices) !== 0) {
+
+	                                console.error(fnName + ' invalid vertex size, ' + numVertices);
+
+	                                return false;
+	                        } else if (len > this.MAX_DRAWELEMENTS) {
+
+	                                console.error(fnName + ' vertex size exceeds 64k on hardware not supporting it');
+
+	                                return false;
+	                        }
+
+	                        if (complete) {
+
+	                                if (!this.confirmNumericalData(this.vertices.data, this.FLOAT32, 'vertices')) {
+
+	                                        return false;
+	                                }
+	                        }
+
+	                        return numVertices; // number of vertices (not array length)
+	                }
+
+	                /** 
+	                 * Check integrity of index data.
+	                 * @param {Boolean} complete it true, do all the tests.
+	                 */
+
+	        }, {
+	                key: 'checkIndexData',
+	                value: function checkIndexData(complete) {
+
+	                        var fnName = this.mName + ' checkIndexData():'; // so many error messages we use this.
+
+	                        var len = this.numIndices(),
+	                            vLen = this.numVertices();
+
+	                        if (len < this.indices.itemSize) {
+	                                // can be fractional
+
+	                                console.error(fnName + ' invalid index size, ' + len);
+
+	                                return false;
+	                        }
+
+	                        if (complete) {
+
+	                                // Make sure we have a valid number
+
+	                                if (!this.confirmNumericalData(this.indices.data, this.UINT, 'indices')) {
+
+	                                        return false;
+	                                }
+
+	                                // Make sure indices point to valid vertex.
+
+	                                var d = this.indices.data;
+
+	                                for (var i = 0; i < len; i++) {
+
+	                                        var di = d[i];
+
+	                                        if (di < 0 || di > vLen) {
+
+	                                                console.error(fnName + ' index at ' + i + ' points to invalid postion in vertices ' + di + ', max:' + vLen);
+
+	                                                return false;
+	                                        }
+	                                }
+	                        }
+
+	                        return len; // number of indices
+	                }
+
+	                /** 
+	                 * Check the number of sides (triangles) 
+	                 * @param {Boolean} complete it true, do all the tests.
+	                 */
+
+	        }, {
+	                key: 'checkFacesData',
+	                value: function checkFacesData(complete) {
+
+	                        // TODO: first check 3-sided faces (triangles).
+
+	                        // TODO: then check non-triangle larger drawing faces defined on the object.
+
+	                        // Make sure we have a valid number of Faces (triangles)
+
+	                        var len = this.numFaces();
+
+	                        if (!len) {
+
+	                                console.error(fnName + ' number of sides (triangles) is invalid');
+
+	                                return false;
+	                        }
+
+	                        return len;
+	                }
+
+	                /** 
+	                 * Normals check (assumed always present for drawing).
+	                 * @param {Boolean} complete it true, do all the tests.
+	                 */
+
+	        }, {
+	                key: 'checkNormalsData',
+	                value: function checkNormalsData(complete) {
+
+	                        var fnName = this.mName + ' checkNormalsData():'; // so many error messages we use this.
+
+	                        var numVertices = this.numVertices(),
+	                            len = this.numNormals();
+
+	                        if (len < this.normals.itemSize || this.util.frac(len) !== 0) {
+
+	                                console.error(fnName + ' invalid normals size, ' + len);
+
+	                                return false;
+	                        } else if (len !== numVertices) {
+
+	                                console.error(fnName + ' normals length: ' + this.numNormals() + ' does not match vertices length: ' + this.numVertices());
+
+	                                return false;
+	                        }
+
+	                        if (complete) {
+
+	                                if (!this.confirmNumericalData(this.normals.data, this.FLOAT32, 'normals')) {
+
+	                                        return false;
+	                                }
+	                        }
+
+	                        return len;
+	                }
+
+	                /** 
+	                 * Check texture coordinate data.
+	                 * @param {Boolean} complete it true, do all the tests.
+	                 */
+
+	        }, {
+	                key: 'checkTexCoordsData',
+	                value: function checkTexCoordsData(complete, texCoords) {
+
+	                        var fnName = this.mName + ' checkTexCoordsData():'; // so many error messages we use this.
+
+	                        var numVertices = this.numVertices(),
+	                            tc = texCoords || this.texCoords,
+	                            // allows handling multiple texCoord buffers.
+
+	                        len = this.numTexCoords(tc);
+
+	                        if (len > 0) {
+
+	                                if (len < tc.itemSize || this.util.frac(len) !== 0) {
+
+	                                        console.error(fnName + ' invalid texCoords size, ' + tc.data.length);
+
+	                                        return false;
+	                                } else if (len !== numVertices) {
+
+	                                        console.error(fnName + ' texCoords length: ' + this.numTexCoords(tc) + ' does not match vertices length: ' + this.numVertices());
+
+	                                        return false;
+	                                }
+	                        } else {
+
+	                                console.warn(fnName + ' no texCoords data defined.');
+	                        }
+
+	                        if (complete) {
+
+	                                if (!this.confirmNumericalData(tc.data, this.FLOAT32, 'texCoords')) {
+
+	                                        return false;
+	                                }
+	                        }
+
+	                        return len;
+	                }
+
+	                /** 
+	                 * Check tangent data.
+	                 * @param {Boolean} complete it true, do all the tests.
+	                 */
+
+	        }, {
+	                key: 'checkTangentsData',
+	                value: function checkTangentsData(complete) {
+
+	                        var fnName = this.mName + ' checkTangentsData():'; // so many error messages we use this.
+
+	                        var numVertices = this.numVertices(),
+	                            len = this.numTangents();
+
+	                        if (len > 0) {
+
+	                                if (len < this.tangents.itemSize || this.util.frac(len) !== 0) {
+
+	                                        console.error(fnName + ' invalid tangents size, ' + len);
+
+	                                        return false;
+	                                } else if (len !== numVertices) {
+
+	                                        console.error(fnName + ' tangents length ' + this.numTangents() + ' does not match vertices length: ' + this.numVertices());
+
+	                                        return false;
+	                                }
+	                        } else {
+
+	                                console.warn(fnName + ' no tangents data defined.');
+	                        }
+
+	                        if (complete) {
+
+	                                if (!this.confirmNumericalData(this.tangents.data, this.FLOAT32, 'tangents')) {
+
+	                                        return false;
+	                                }
+	                        }
+
+	                        return len;
+	                }
+
+	                /**
+	                 * Check color data.
+	                 * @param {Boolean} complete it true, do all the tests.
+	                 */
+
+	        }, {
+	                key: 'checkColorsData',
+	                value: function checkColorsData(complete) {
+
+	                        var fnName = this.mName + ' checkColorsData():'; // so many error messages we use this.
+
+	                        var numVertices = this.numVertices(),
+	                            len = this.numColors();
+
+	                        if (len > 0) {
+
+	                                if (len < this.colors.itemSize || this.util.frac(len) !== 0) {
+
+	                                        console.error(fnName + ' invalid colors size, ' + this.colors.data.length);
+
+	                                        return false;
+	                                } else if (len !== numVertices) {
+
+	                                        console.error(fnName + ' colors length: ' + this.numColors() + ' does not match vertices length:' + this.numVertices());
+
+	                                        return false;
+	                                }
+	                        } else {
+
+	                                console.warn(fnName + ' no colors data defined.');
+	                        }
+
+	                        if (complete) {
+
+	                                if (!this.confirmNumericalData(this.colors.data, this.FLOAT32, 'colors')) {
+
+	                                        return false;
+	                                }
+	                        }
+
+	                        return len;
+	                }
+
+	                /** 
+	                 * Check validity of buffer data.
+	                 * @param {Boolean} complete if true, do extra checks.
+	                 * @returns {Boolean} if buffers ok to use, return true, else false.
+	                 */
+
+	        }, {
+	                key: 'checkBufferData',
+	                value: function checkBufferData(complete) {
+
+	                        var valid = this.valid = true;
+
+	                        var len = this.vertices.data.length;
+
+	                        var vLen = len; // used in indices checks
+
+	                        var fnName = this.mName + ' checkBufferData():'; // so many error messages we use this.
+
+	                        // Vertex check.
+
+	                        if (this.checkVertexData(true) && this.checkIndexData(true) && this.checkNormalsData(true) && this.checkTexCoordsData(true) && this.checkTangentsData(true) && this.checkColorsData(true)) {
+
+	                                return true;
+	                        }
+
+	                        console.warn(this.mName + 'checkBufferData() buffers not ok');
+
+	                        return false;
+	                }
+
+	                /** 
+	                 * Returns the number of vertex points.
+	                 * @returns {Number} the number of vertices.
+	                 */
+
+	        }, {
+	                key: 'numVertices',
+	                value: function numVertices() {
+
+	                        return this.vertices.data.length / this.vertices.itemSize;
+	                }
+
+	                /** 
+	                 * Returns the number of indices.
+	                 * @returns {Number} the number of indices.
+	                 */
+
+	        }, {
+	                key: 'numIndices',
+	                value: function numIndices() {
+
+	                        return this.indices.data.length;
+	                }
+
+	                /** 
+	                 * Returns the number of normals.
+	                 * @returns {Number} the number of normals.
+	                 */
+
+	        }, {
+	                key: 'numNormals',
+	                value: function numNormals() {
+
+	                        return this.normals.data.length / this.normals.itemSize;
+	                }
+
+	                /** 
+	                 * Returns the number of texture coordinates.
+	                 * @param {glMatrix.vec2[] texCoords} use if defined, else default to this.texCoords buffer.
+	                 * @returns {Number} the number of texture coordinates.
+	                 */
+
+	        }, {
+	                key: 'numTexCoords',
+	                value: function numTexCoords(texCoords) {
+
+	                        // Since we can have multiple texCoords, condtional.
+
+	                        var tc = texCoords || this.texCoords;
+
+	                        return tc.data.length / tc.itemSize;
+	                }
+
+	                /** 
+	                 * Returns the number of tangents.
+	                 * @returns {Number} the number of texture coordinates.
+	                 */
+
+	        }, {
+	                key: 'numTangents',
+	                value: function numTangents() {
+
+	                        return this.tangents.data.length / this.tangents.itemSize;
+	                }
+	        }, {
+	                key: 'numColors',
+	                value: function numColors() {
+
+	                        return this.colors.data.length / this.colors.itemSize;
+	                }
+
+	                /** 
+	                 * Returns the number of faces (triangles).
+	                 * @returns {Number} the number of faces.
+	                 */
+
+	        }, {
+	                key: 'numFaces',
+	                value: function numFaces() {
+
+	                        var len = this.indices.length / 3;
+
+	                        if (this.util.frac(len / this.tangents.itemSize !== 0)) {
+
+	                                console.error(this.mName + 'numFaces(): fractional number of faces');
+	                        }
+
+	                        return len;
+	                }
+
+	                /** 
+	                 * Returns the number of sides (many Prims have only one).
+	                 * @returns {Number} the number of sides.
+	                 */
+
+	        }, {
+	                key: 'numSides',
+	                value: function numSides() {
+
+	                        console.warn(this.mName + 'numSides(): sides not implemented yet');
+
+	                        return 0;
+	                }
+
+	                /** 
+	                 * Returns the number of coordinates for ALL buffers as a sum.
+	                 * use to compute if we are 'dirty' and need to run this.createGLBuffers();
+	                 * @returns {Number} total size of ALL buffers.
+	                 */
+
+	        }, {
+	                key: 'numCoords',
+	                value: function numCoords() {
+
+	                        return this.numVertices() + this.numIndices() + this.numNormals() + this.numTangents() + this.numColors();
+	                }
+
+	                /** 
+	                 * Set or reset the vertices.
+	                 * @param {glMatrix.vec3[]} vertices a flattened vertex array.
+	                 */
+
+	        }, {
+	                key: 'setVertices',
+	                value: function setVertices(vertices) {
+
+	                        var o = this.vertices;
+
+	                        if (this.util.isArray(vertices)) {
+
+	                                o.data = new Float32Array(vertices);
+
+	                                o.numItems = vertices.length / o.itemSize;
+
+	                                this.bindGLBuffer(o, this.FLOAT32);
+	                        } else {
+
+	                                console.warn(this.mName + 'setVertices() invalid input, not Array, nothing set');
+	                        }
+	                }
+
+	                /** 
+	                 * Set or reset the indices.
+	                 * @param {Array} indices a flattened index array.
+	                 */
+
+	        }, {
+	                key: 'setIndices',
+	                value: function setIndices(indices) {
+
+	                        var o = this.indices;
+
+	                        if (this.util.isArray(indices)) {
+
+	                                if (this.webgl.stats.uint32) {
+
+	                                        o.data = new Uint32Array(indices);
+
+	                                        this.bindGLBuffer(o, this.UINT32);
+	                                } else {
+
+	                                        o.data = new Uint16Array(indices);
+
+	                                        this.bindGLBuffer(o, this.UINT16);
+	                                }
+	                        } else {
+
+	                                console.warn(this.mName + 'setIndices() invalid input, not Array, nothing set');
+	                        }
+	                }
+
+	                /** 
+	                 * Set or reset the normals.
+	                 * @param {glMatrix.vec3[]} normals a flattened normals array.
+	                 */
+
+	        }, {
+	                key: 'setNormals',
+	                value: function setNormals(normals) {
+
+	                        var o = this.normals;
+
+	                        if (this.util.isArray(normals)) {
+
+	                                o.data = new Float32Array(normals);
+
+	                                o.numItems = normals.length / o.itemSize;
+
+	                                this.bindGLBuffer(o, this.FLOAT32);
+	                        } else {
+
+	                                console.error(this.mName + 'setNormals() invalid input, not Array');
+	                        }
+	                }
+
+	                /** 
+	                 * Set or reset the texture coordinates.
+	                 * @param {glMatrix.vec3[]} texCoords a flattened texture coordinate array.
+	                 */
+
+	        }, {
+	                key: 'setTexCoords',
+	                value: function setTexCoords(texCoords) {
+
+	                        var o = this.texCoords;
+
+	                        if (this.util.isArray(texCoords)) {
+
+	                                o.data = new Float32Array(texCoords);
+
+	                                o.numItems = texCoords.length / o.itemSize;
+
+	                                this.bindGLBuffer(o, this.FLOAT32);
+	                        } else {
+
+	                                console.error(this.mName + 'setTexCoords() invalid input, not Array');
+	                        }
+	                }
+
+	                /** 
+	                 * Set or reset the colors.
+	                 * @param {glMatrix.vec4[]} vertices a flattened color array.
+	                 */
+
+	        }, {
+	                key: 'setColors',
+	                value: function setColors(colors) {
+
+	                        var o = this.colors;
+
+	                        if (this.util.isArray(colors)) {
+
+	                                o.data = new Float32Array(colors);
+
+	                                o.numItems = colors.length / o.itemSize;
+
+	                                this.bindGLBuffer(o, this.FLOAT32);
+	                        } else {
+
+	                                console.error(this.mName + 'setTangents() invalid input, not Array');
+	                        }
+	                }
+
+	                /** 
+	                 * Set or reset the tangents.
+	                 * @param {glMatrix.vec3[]} vertices a flattened tangent array.
+	                 */
+
+	        }, {
+	                key: 'setTangents',
+	                value: function setTangents(tangents) {
+
+	                        var o = this.tangents;
+
+	                        if (this.util.isArray(tangents)) {
+
+	                                o.data = new Float32Array(tangents);
+
+	                                o.numItems = tangents.length / o.itemSize;
+
+	                                this.bindGLBuffer(o, this.FLOAT32);
+	                        } else {
+
+	                                console.error(this.mName + 'setTangents() invalid input, not Array');
+	                        }
+	                }
+	        }, {
+	                key: 'setBufferData',
+	                value: function setBufferData() {
+	                        var vertices = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+	                        var indices = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
+	                        var normals = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [];
+	                        var texCoords = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
+	                        var tangents = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : [];
+	                        var colors = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : [];
+
+
+	                        if (vertices.length > 0) {
+
+	                                this.setVertices(vertices);
+
+	                                console.log('numVertices is now:' + this.numVertices());
+	                        }
+
+	                        if (indices.length > 0) {
+
+	                                this.setIndices(indices);
+
+	                                console.log('numIndices is now:' + this.numIndices());
+	                        }
+
+	                        if (normals.length > 0) {
+
+	                                this.setNormals(normals);
+
+	                                console.log('numNormals is now:' + this.numNormals());
+	                        }
+
+	                        if (texCoords.length > 0) {
+
+	                                this.setTexCoords(texCoords);
+
+	                                console.log('numTexCoords is now:' + this.numTexCoords());
+	                        }
+
+	                        if (tangents.length > 0) {
+
+	                                this.setTangents(tangents);
+
+	                                console.log('numTangents is now:' + this.numTangents());
+	                        }
+
+	                        if (colors.length > 0) {
+
+	                                this.setColors(colors);
+
+	                                console.log('numColors is now:' + this.numColors());
+	                        }
+
+	                        if (this.vertices.data.length > this.webgl.MAX_DRAWELEMENTS) {
+
+	                                this.ssz = true;
+	                        } else {
+
+	                                this.ssz = false;
+	                        }
+	                }
+
+	                /** 
+	                 * Add data to existing data (e.g. combine two Prims into one).
+	                 * @param {glMatrix.vec3[]} vertices the position data.
+	                 * @param {Number} indices the index array for the vertices.
+	                 * @param {glMatrix.vec3[]} the normals array for the vertices.
+	                 * @param {glMatrix.vec2[]} the texture coordinates for the vertices.
+	                 * @param {glMatrix.vec4[]} the tangent coordinates for the vertices.
+	                 * @param {glMatrix.vec4[]} colors the colors array for the vertices.
+	                 * @param {Boolean} check if true, check the data for consistency, else do not.
+	                 */
+
+	        }, {
+	                key: 'addBufferData',
+	                value: function addBufferData() {
+	                        var vertices = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+	                        var indices = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
+	                        var normals = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [];
+	                        var texCoords = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
+	                        var tangents = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : [];
+	                        var colors = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : [];
+	                        var check = arguments[6];
+
+
+	                        // Local reference to utility function.
+
+	                        var concat = this.util.concatArr;
+
+	                        // Current buffer size.
+
+	                        var currBufferSize = this.numCoords();
+
+	                        // Concat data, if present.
+
+	                        this.vertices.data = concat(this.vertices.data, vertices);
+
+	                        this.indices.data = concat(this.indices.data, indices), this.normals.data = concat(this.normals.data, normals), this.texCoords.data = concat(this.texCoords.data, texCoords), this.tangents.data = concat(this.tangents.data, tangents), this.colors.data = concat(this.colors.data, colors);
+
+	                        if (this.vertices.data.length > this.webgl.MAX_DRAWELEMENTS) {
+
+	                                this.ssz = true;
+	                        } else {
+
+	                                this.ssz = false;
+	                        }
+
+	                        // Reset WebGL buffers if size has changed.
+
+	                        if (currBufferSize !== this.numCoords()) {
+
+	                                this.createGLBuffers();
+	                        }
+
+	                        // If check flagged, make sure the data is valid for drawing by a Shader.
+
+	                        if (check) {
+
+	                                return this.checkBufferData();
+	                        }
+
+	                        return true;
+	                }
+	        }, {
+	                key: 'clearData',
+	                value: function clearData(c) {
+
+	                        c.data = [];
+	                }
+	        }, {
+	                key: 'clearBuffer',
+	                value: function clearBuffer(c) {
+
+	                        this.clearData(c), c.buffer = null, c.numItems = 0;
+	                }
+	        }, {
+	                key: 'clear',
+	                value: function clear() {
+
+	                        this.clearBuffer(this.vertices), this.clearBuffer(this.indices), this.clearBuffer(this.normals), this.clearBuffer(this.texCoords), this.clearBuffer(this.colors);
+	                }
+
+	                /** 
+	                 * Bind a WebGL buffer
+	                 * @param {Object} o the bufferObj for for particular array (e.g. vertex, tangent).
+	                 * @param {String} type the typed-array type.
+	                 */
+
+	        }, {
+	                key: 'bindGLBuffer',
+	                value: function bindGLBuffer(o, type) {
+
+	                        var gl = this.webgl.getContext();
+
+	                        o.buffer = gl.createBuffer();
+
+	                        gl.bindBuffer(gl.ARRAY_BUFFER, o.buffer);
+
+	                        switch (type) {
+
+	                                case this.FLOAT32:
+
+	                                        if (o.data instanceof Float32Array) {
+
+	                                                gl.bufferData(gl.ARRAY_BUFFER, o.data, gl.STATIC_DRAW);
+	                                        } else {
+
+	                                                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(o.data), gl.STATIC_DRAW);
+	                                        }
+
+	                                        o.numItems = o.data.length / o.itemSize;
+
+	                                        break;
+
+	                                case this.UINT32:
+
+	                                        o.buffer = gl.createBuffer();
+
+	                                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, o.buffer);
+
+	                                        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(o.data), gl.STATIC_DRAW);
+
+	                                        o.numItems = o.data.length / o.itemSize;
+
+	                                        break;
+
+	                                case this.UINT16:
+
+	                                        o.buffer = gl.createBuffer();
+
+	                                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, o.buffer);
+
+	                                        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(o.data), gl.STATIC_DRAW);
+
+	                                        o.numItems = o.data.length / o.itemSize;
+
+	                                        break;
+
+	                                default:
+
+	                                        console.error(this.mName + 'bindGLBuffer(): invalid WebGL buffer type ' + type);
+
+	                                        break;
+
+	                        }
+	                }
+
+	                /** 
+	                 * Create (empty) WebGL buffers using geometry data. Note that the 
+	                 * size is for flattened arrays.
+	                 * an array of vertices, in glMatrix.vec3 objects.
+	                 * an array of indices for the vertices.
+	                 * an array of texture coordinates, in glMatrix.vec2 format.
+	                 * an array of normals, in glMatrix.vec3 format.
+	                 * an array of tangents, in glMatrix.vec3 format.
+	                 * an array of colors, in glMatrix.vec4 format.
+	                 */
+
+	        }, {
+	                key: 'createGLBuffers',
+	                value: function createGLBuffers() {
+
+	                        var gl = this.webgl.getContext();
+
+	                        var fnName = this.mName + 'createGLBuffers():';
+
+	                        // Vertex Buffer Object.
+
+	                        var o = this.vertices;
+
+	                        if (!o.data.length) {
+
+	                                // console.log( fnName + ' no vertices present, creating default' );
+
+	                                o.data = new Float32Array();
+	                        }
+
+	                        this.bindGLBuffer(o, this.FLOAT32);
+
+	                        // Create the Index buffer.
+
+	                        o = this.indices;
+
+	                        /* 
+	                         * Conditionally create a UINT16 or UINT32 buffer for the index values, based 
+	                         * on whether this is WebGL 2.0, or the WebGL extension is available
+	                         */
+	                        if (this.webgl.stats.uint32) {
+
+	                                if (!o.data.length) {
+
+	                                        // console.log( fnName + ' no indices present, creating default' );
+
+	                                        o.data = new Uint32Array();
+	                                }
+
+	                                this.bindGLBuffer(o, this.UINT32);
+	                        } else {
+
+	                                if (!o.data.length) {
+
+	                                        // console.log( fnName + ' no indices present, creating default' );
+
+	                                        o.data = new Uint16Array();
+	                                }
+
+	                                this.bindGLBuffer(o, this.UINT16);
+	                        }
+
+	                        // Create the Sides buffer, a kind of indices buffer.
+
+	                        o = this.sides;
+
+	                        if (!o.data.length) {
+
+	                                // console.warn( fnName + ' no sides present, creating default' );
+
+	                                o.data = new Uint16Array();
+	                        }
+
+	                        this.bindGLBuffer(o, this.UINT16);
+
+	                        // create the Normals buffer.
+
+	                        o = this.normals;
+
+	                        if (!o.data.length) {
+
+	                                // console.log( fnName + ': no normals, present, creating default' );
+
+	                                o.data = new Float32Array();
+	                        }
+
+	                        this.bindGLBuffer(o, this.FLOAT32);
+
+	                        // Create the primary Texture buffer.
+
+	                        o = this.texCoords;
+
+	                        if (!o.data.length) {
+
+	                                // console.warn( fnName + ' no texture present, creating default' );
+
+	                                o.data = new Float32Array();
+	                        }
+
+	                        this.bindGLBuffer(o, this.FLOAT32);
+
+	                        // create the Tangents Buffer.
+
+	                        o = this.tangents;
+
+	                        if (!o.data.length) {
+
+	                                // console.warn( fnName + ' no tangents present, creating default' );
+
+	                                o.data = new Float32Array();
+	                        }
+
+	                        this.bindGLBuffer(o, this.FLOAT32);
+
+	                        // Create the Colors buffer.
+
+	                        o = this.colors;
+
+	                        if (!o.data.length || o.data.length < 4 * this.vertices.length / 3) {
+
+	                                // console.warn( fnName + ' no colors present, creating default color' );
+
+	                                o.data = new Float32Array();
+	                        }
+
+	                        this.bindGLBuffer(o, this.FLOAT32);
+
+	                        // Set the flag.
+
+	                        this.makeBuffers = false;
+
+	                        return this;
+	                }
+	        }]);
+
+	        return GeometryBuffer;
+	}();
+
+	exports.default = GeometryBuffer;
+
+/***/ }),
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -14441,35 +17331,35 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _assetPool = __webpack_require__(24);
+	var _assetPool = __webpack_require__(19);
 
 	var _assetPool2 = _interopRequireDefault(_assetPool);
 
-	var _geometryPool = __webpack_require__(22);
+	var _geometryPool = __webpack_require__(25);
 
 	var _geometryPool2 = _interopRequireDefault(_geometryPool);
 
-	var _texturePool = __webpack_require__(25);
+	var _texturePool = __webpack_require__(27);
 
 	var _texturePool2 = _interopRequireDefault(_texturePool);
 
-	var _materialPool = __webpack_require__(40);
+	var _materialPool = __webpack_require__(31);
 
 	var _materialPool2 = _interopRequireDefault(_materialPool);
 
-	var _modelPool = __webpack_require__(23);
+	var _modelPool = __webpack_require__(26);
 
 	var _modelPool2 = _interopRequireDefault(_modelPool);
 
-	var _audioPool = __webpack_require__(26);
+	var _audioPool = __webpack_require__(28);
 
 	var _audioPool2 = _interopRequireDefault(_audioPool);
 
-	var _lights = __webpack_require__(15);
+	var _lights = __webpack_require__(17);
 
 	var _lights2 = _interopRequireDefault(_lights);
 
-	var _primFactory = __webpack_require__(42);
+	var _primFactory = __webpack_require__(20);
 
 	var _primFactory2 = _interopRequireDefault(_primFactory);
 
@@ -14890,20 +17780,25 @@
 
 	                        // NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
 	                        // TODO: INVALID TEXTURING
-
-	                        this.primFactory.createPrim(this.s1, // callback function
-	                        typeList.MESH, 'capsule', vec5(2, 2, 2), // dimensions (4th dimension doesn't exist for cylinder)
-	                        vec5(40, 40, 0), // divisions MAKE SMALLER
-	                        vec3.fromValues(0.0, 0.0, 0.0), // position (absolute)
-	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                        vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                        ['obj/capsule/capsule1.png'], // texture present. TODO::: FIGURE OUT NUMBERING.
-	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0), // color,
-	                        true, // if true, apply texture to each face,
-	                        ['obj/capsule/capsule.obj'] // object files (.obj, .mtl)
-
-	                        );
+	                        /*
+	                                    this.primFactory.createPrim(
+	                        
+	                                        this.s1,                               // callback function
+	                                        typeList.MESH,
+	                                        'capsule',
+	                                        vec5( 2, 2, 2 ),                       // dimensions (4th dimension doesn't exist for cylinder)
+	                                        vec5( 40, 40, 0  ),                    // divisions MAKE SMALLER
+	                                        vec3.fromValues( 0.0, 0.0, 0.0 ),      // position (absolute)
+	                                        vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+	                                        vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+	                                        vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+	                                        [ 'obj/capsule/capsule1.png' ],               // texture present. TODO::: FIGURE OUT NUMBERING.
+	                                        vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color,
+	                                        true,                                   // if true, apply texture to each face,
+	                                        [ 'obj/capsule/capsule.obj' ] // object files (.obj, .mtl)
+	                        
+	                                    );
+	                        */
 
 	                        this.primFactory.createPrim(this.s1, // callback function
 	                        typeList.REGULARTETRAHEDRON, 'regulartetrahedron', vec5(3, 3, 3, 0), // dimensions
@@ -14951,19 +17846,25 @@
 	                        ['img/webvr-logo3.png'], // texture present, NOT USED
 	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0));
 
-	                        this.primFactory.createPrim(this.s2, // callback function
-	                        typeList.MESH, 'teapot', vec5(1, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
-	                        vec5(40, 40, 40), // divisions MAKE SMALLER
-	                        vec3.fromValues(0.0, 1.0, 2.0), // position (absolute)
-	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                        vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                        [], // no texture present
-	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0), // color,
-	                        false, // if true, apply texture to each face,
-	                        ['obj/teapot/teapot.obj'] // object files (.obj, .mtl)
-
-	                        );
+	                        /*
+	                                    this.primFactory.createPrim(
+	                        
+	                                        this.s2,                               // callback function
+	                                        typeList.MESH,
+	                                        'teapot',
+	                                        vec5( 1, 1, 1 ),                       // dimensions (4th dimension doesn't exist for cylinder)
+	                                        vec5( 40, 40, 40  ),                    // divisions MAKE SMALLER
+	                                        vec3.fromValues( 0.0, 1.0, 2.0 ),      // position (absolute)
+	                                        vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+	                                        vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+	                                        vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+	                                        [],               // no texture present
+	                                        vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ), // color,
+	                                        false,                                 // if true, apply texture to each face,
+	                                        [ 'obj/teapot/teapot.obj' ] // object files (.obj, .mtl)
+	                        
+	                                    );
+	                        */
 
 	                        //////////////////////////////////
 	                        // LIT TEXTURE SHADER.
@@ -15262,7 +18163,799 @@
 	exports.default = World;
 
 /***/ }),
-/* 29 */
+/* 31 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	                        value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _assetPool = __webpack_require__(19);
+
+	var _assetPool2 = _interopRequireDefault(_assetPool);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	'use strict';
+
+	var MaterialPool = function (_AssetPool) {
+	                        _inherits(MaterialPool, _AssetPool);
+
+	                        function MaterialPool(init, util, webgl, texturePool) {
+	                                                _classCallCheck(this, MaterialPool);
+
+	                                                console.log('in MaterialPool');
+
+	                                                // Initialize superclass.
+
+	                                                var _this = _possibleConstructorReturn(this, (MaterialPool.__proto__ || Object.getPrototypeOf(MaterialPool)).call(this, util));
+
+	                                                _this.util = util, _this.webgl = webgl, _this.texturePool = texturePool;
+
+	                                                _this.materialMimeTypes = {
+
+	                                                                        'mtl': 'text/plain'
+
+	                                                };
+
+	                                                _this.defaultTextureMap = 'map_Kd'; // also pos zero for texturePositions
+
+	                                                // Map textureMap types to position in prim.textures array
+
+	                                                _this.texturePositions = {
+
+	                                                                        'map_Kd': 0, // diffuse map, an image file (e.g. file.jpg)
+
+	                                                                        'map_Ks': 1, // specular map
+
+	                                                                        'map_Ka': 2, // ambient map
+
+	                                                                        'map_d': 3, // alpha map
+
+	                                                                        'bump': 4, // bumpmap
+
+	                                                                        'map_bump': 4, // bumpmap
+
+	                                                                        'disp': 5 // displacement map
+
+	                                                };
+
+	                                                if (init) {
+
+	                                                                        // Create and store a default Material asset.
+
+	                                                                        _this.defaultKey = _this.addAsset(_this.default()).key;
+	                                                }
+
+	                                                return _this;
+	                        }
+
+	                        /** 
+	                         * Create the default MaterialPool object.
+	                         * @param {String} name the name of the material, either 'defaul' in .mtl file.
+	                         * @param {Array} ambient ambient color.
+	                         * @param {Array} diffuse diffuse color.
+	                         * @param {Array} specular specular color.
+	                         * @param {Number} specularExponent the shininess of the object.
+	                         * @param {Number} sharpness of reflection map.
+	                         * @param {Number} refraction light-bending of transparent objects.
+	                         * @param {Number} transparency.
+	                         * @param {Number} enumerated list of lighting modes.
+	                         * @param {String} map_Kd the default texture for diffuse mapping.
+	                         */
+
+
+	                        _createClass(MaterialPool, [{
+	                                                key: 'default',
+	                                                value: function _default() {
+	                                                                        var name = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.util.DEFAULT_KEY;
+	                                                                        var ambient = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [1, 1, 1];
+	                                                                        var diffuse = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [1, 1, 1];
+	                                                                        var specular = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [0, 0, 0];
+	                                                                        var specularExponent = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : 0;
+	                                                                        var emissive = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : [0, 0, 0];
+	                                                                        var sharpness = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : 60;
+	                                                                        var refraction = arguments.length > 7 && arguments[7] !== undefined ? arguments[7] : 1;
+	                                                                        var transparency = arguments.length > 8 && arguments[8] !== undefined ? arguments[8] : 0;
+	                                                                        var illum = arguments.length > 9 && arguments[9] !== undefined ? arguments[9] : 1;
+	                                                                        var map_Kd = arguments.length > 10 && arguments[10] !== undefined ? arguments[10] : null;
+
+
+	                                                                        return {
+
+	                                                                                                name: name,
+
+	                                                                                                key: null, // key in MaterialPool
+
+	                                                                                                path: null, // path to file
+
+	                                                                                                ambient: ambient, // Ka ambient color, white
+
+	                                                                                                diffuse: diffuse, // Kd diffuse color, white
+
+	                                                                                                specular: specular, // Ks specular color, black (off)
+
+	                                                                                                specularExponent: specularExponent, // Ns specular exponent, ranges between 0 and 1000
+
+	                                                                                                emissive: emissive,
+
+	                                                                                                sharpness: sharpness, // sharpness of reflection map (0-1000)
+
+	                                                                                                refraction: refraction, // refraction, 1.0 = no refraction
+
+	                                                                                                transparency: transparency, // d | Tr = transparency 1.0 = transparent
+
+	                                                                                                illum: illum, // illium, color and ambient on
+
+	                                                                                                map_Kd: map_Kd, // diffuse map, an image file (other maps not in default)
+
+	                                                                                                map_Ks: null, // specular map
+
+	                                                                                                map_Ka: null, // ambient map
+
+	                                                                                                map_d: null, // alpha map
+
+	                                                                                                map_bump: null, // bumpmap
+
+	                                                                                                disp: null, // displacement map
+
+	                                                                                                starts: [0] // Starting position in vertices to apply material
+
+	                                                                        };
+	                                                }
+
+	                                                /** 
+	                                                 * extract additional options for texture maps in OBJ format. Assumes that 
+	                                                 * a texture file was specified as the last data item in the line. Only the 
+	                                                 * options specified in the file are added (so calling program must test for them).
+	                                                 * @param {Array} data the line of the file for a texture map.
+	                                                 */
+
+	                        }, {
+	                                                key: 'computeTextureMapOptions',
+	                                                value: function computeTextureMapOptions(data) {
+
+	                                                                        var options = {};
+
+	                                                                        ///////console.log('computeTextureMapOptions data:' + data + ' length:' + data.length )
+
+	                                                                        // If there there are no options, return an empty object.
+
+	                                                                        if (data.length < 4) {
+
+	                                                                                                return options;
+	                                                                        }
+
+	                                                                        ///////console.log('...analyzing TextureMapOptions:' + data);
+
+	                                                                        /* 
+	                                                                         * Texturemap format:
+	                                                                         * -s 1 1 1 -o 0 0 0 -mm 0 1 filename.png
+	                                                                         * 
+	                                                                         * Copy the data string, sans filename.
+	                                                                         */
+
+	                                                                        var p = [];
+
+	                                                                        for (var i = 0; i < data.length - 1; i++) {
+
+	                                                                                                p[i] = data[i];
+	                                                                        }
+
+	                                                                        var pp = p.join(' ').split('-');
+
+	                                                                        for (var _i = 0; _i < pp.length; _i++) {
+
+	                                                                                                var ppp = pp[_i].split(' ');
+
+	                                                                                                if (ppp.length > 1) {
+
+	                                                                                                                        ////////console.log( 'ppp[0]:' + ppp[0] )
+
+	                                                                                                                        var d = ppp[0],
+	                                                                                                                            d1 = ppp[1];
+
+	                                                                                                                        switch (d) {
+
+	                                                                                                                                                case 'blenu': // texture blends in horizontal direction
+	                                                                                                                                                case 'blenv': // texture blends in vertical direction
+	                                                                                                                                                case 'cc': // color correction, only with color maps (map_Ka, map_Kd, and map_Ks)
+	                                                                                                                                                case 'clamp':
+	                                                                                                                                                                        // restrict textures to 0-1 range
+
+	                                                                                                                                                                        if (d1 === 'off') options[d] = false;else options[d] = true;
+
+	                                                                                                                                                                        break;
+
+	                                                                                                                                                case 'bm': // bump map multiplier, should be 0-1
+	                                                                                                                                                case 'mm':
+	                                                                                                                                                                        // base gain multiplier (makes brighter, 0-1)
+
+	                                                                                                                                                                        if (Number.isFinite(parseFloat(d1))) {
+
+	                                                                                                                                                                                                options[d] = parseFloat(d1);
+	                                                                                                                                                                        }
+
+	                                                                                                                                                                        break;
+
+	                                                                                                                                                case 'boost':
+	                                                                                                                                                                        // sharpen, any non-negative number
+
+	                                                                                                                                                                        if (Number.isFinite(parseFloat(d1)) && d1 >= 0) {
+
+	                                                                                                                                                                                                options[d] = parseFloat(d1);
+	                                                                                                                                                                        }
+
+	                                                                                                                                                                        break;
+
+	                                                                                                                                                case 'imfchan': // channel used to create scalar or bump texture, (r | g | b | m | l | z)
+	                                                                                                                                                case 'texres':
+	                                                                                                                                                                        // scale up images to the next power of 2.
+
+	                                                                                                                                                                        options[d] = d1;
+
+	                                                                                                                                                                        break;
+
+	                                                                                                                                                case 'o': // offset texture map origin x, y z
+	                                                                                                                                                case 's': // scales the size of the texture pattern, default 1,1,1
+	                                                                                                                                                case 't':
+	                                                                                                                                                                        // turn on texture turbulence (u, v, w )
+
+	                                                                                                                                                                        // Remove anything that isn't a number.
+
+	                                                                                                                                                                        var ct = 0;
+
+	                                                                                                                                                                        options[d] = [];
+
+	                                                                                                                                                                        for (var j = 1; j < ppp.length; j++) {
+
+	                                                                                                                                                                                                var pi = ppp[j];
+
+	                                                                                                                                                                                                if (Number.isFinite(parseFloat(pi))) {
+
+	                                                                                                                                                                                                                        options[d][ct++] = parseFloat(pi);
+	                                                                                                                                                                                                }
+	                                                                                                                                                                        }
+
+	                                                                                                                                                                        if (options[d].length !== 3) {
+
+	                                                                                                                                                                                                console.warn('MaterialPool::computeTextureMapOptions(): in valid texture param for:' + d);
+
+	                                                                                                                                                                                                options[d] = [0, 0, 0];
+	                                                                                                                                                                        }
+
+	                                                                                                                                                                        break;
+
+	                                                                                                                                                default:
+
+	                                                                                                                                                                        console.error('unknown texture map option: ' + data);
+
+	                                                                                                                                                                        break;
+
+	                                                                                                                        }
+	                                                                                                }
+	                                                                        }
+
+	                                                                        // Options could be empty.
+
+	                                                                        return options;
+	                                                }
+
+	                                                /** 
+	                                                 * Compute material properties for a model.
+	                                                 * Similar to:
+	                                                 * @link https://github.com/tiansijie/ObjLoader/blob/master/src/objLoader.js
+	                                                 * 
+	                                                 * Reference:
+	                                                 * @link http://paulbourke.net/dataformats/mtl/
+	                                                 * 
+	                                                 * @param {String} data the incoming data from the file.
+	                                                 * @param {Prim} prim the Prim object defined in prim.es6
+	                                                 * @param {String} path the path to the file. MTL files may reference other files in their directory.
+	                                                 */
+
+	                        }, {
+	                                                key: 'computeObjMaterials',
+	                                                value: function computeObjMaterials(data, prim, path) {
+	                                                                        var _this2 = this;
+
+	                                                                        ////////console.log( 'MaterialPool::computeObjMaterials(): loading model:' + path + ' for:' + prim.name );
+
+	                                                                        var lineNum = 0;
+
+	                                                                        var materials = [];
+
+	                                                                        var currName = null;
+
+	                                                                        var dir = this.util.getFilePath(path);
+
+	                                                                        var lines = data.split('\n');
+
+	                                                                        lines.forEach(function (line) {
+
+	                                                                                                line = line.trim();
+
+	                                                                                                // First value, the directive.
+
+	                                                                                                var type = line.split(' ')[0].trim();
+
+	                                                                                                // All other values as an array.
+
+	                                                                                                var data = line.substr(type.length).trim().split(' ');
+
+	                                                                                                // If there's no data, don't process.
+
+	                                                                                                if (data !== '') {
+
+	                                                                                                                        switch (type) {
+
+	                                                                                                                                                case 'newmtl':
+	                                                                                                                                                                        // name of material.
+
+	                                                                                                                                                                        currName = data[0].trim();
+
+	                                                                                                                                                                        // Apply file data to our default Material.
+
+	                                                                                                                                                                        materials[currName] = _this2.default(currName);
+
+	                                                                                                                                                                        break;
+
+	                                                                                                                                                case 'Ka':
+	                                                                                                                                                                        // ambient
+
+	                                                                                                                                                                        if (data.length < 3) {
+
+	                                                                                                                                                                                                console.error('MaterialPool::computeObjMaterials(): error in ambient material array at line:' + lineNum);
+	                                                                                                                                                                        } else {
+
+	                                                                                                                                                                                                data[0] = parseFloat(data[0]), data[1] = parseFloat(data[1]), data[2] = parseFloat(data[2]);
+
+	                                                                                                                                                                                                if (currName && Number.isFinite(data[0]) && Number.isFinite(data[1]) && Number.isFinite(data[2])) {
+
+	                                                                                                                                                                                                                        materials[currName].ambient = [data[0], data[1], data[2]];
+	                                                                                                                                                                                                } else {
+
+	                                                                                                                                                                                                                        console.error('MaterialPool::computerObjMaterials(): invalid ambient data at line:' + lineNum);
+	                                                                                                                                                                                                }
+	                                                                                                                                                                        }
+
+	                                                                                                                                                                        break;
+
+	                                                                                                                                                case 'Kd':
+	                                                                                                                                                                        // diffuse (usually the same as ambient)
+
+	                                                                                                                                                                        if (data.length < 3) {
+
+	                                                                                                                                                                                                console.error('MaterialPool::computeObjMaterials(): error in diffuse material array at line:' + lineNum);
+	                                                                                                                                                                        } else {
+
+	                                                                                                                                                                                                data[0] = parseFloat(data[0]), data[1] = parseFloat(data[1]), data[2] = parseFloat(data[2]);
+
+	                                                                                                                                                                                                if (currName && Number.isFinite(data[0]) && Number.isFinite(data[1]) && Number.isFinite(data[2])) {
+
+	                                                                                                                                                                                                                        materials[currName].diffuse = [data[0], data[1], data[2]];
+	                                                                                                                                                                                                } else {
+
+	                                                                                                                                                                                                                        console.error('MaterialPool::computeObjMaterials(): invalid diffuse array at line:' + lineNum);
+	                                                                                                                                                                                                }
+	                                                                                                                                                                        }
+
+	                                                                                                                                                                        break;
+
+	                                                                                                                                                case 'Ks':
+	                                                                                                                                                                        // specular
+
+	                                                                                                                                                                        if (data.length < 3) {
+
+	                                                                                                                                                                                                console.error('MaterialPool::computeObjMaterials(): error in specular array at line:' + lineNum);
+	                                                                                                                                                                        } else {
+
+	                                                                                                                                                                                                data[0] = parseFloat(data[0]), data[1] = parseFloat(data[1]), data[2] = parseFloat(data[2]);
+
+	                                                                                                                                                                                                if (currName && Number.isFinite(data[0]) && Number.isFinite(data[1]) && Number.isFinite(data[2])) {
+
+	                                                                                                                                                                                                                        materials[currName].specular = [data[0], data[1], data[2]];
+	                                                                                                                                                                                                } else {
+
+	                                                                                                                                                                                                                        console.error('MaterialPool::computeObjMaterials(): invalid specular array at line:' + lineNum);
+	                                                                                                                                                                                                }
+	                                                                                                                                                                        }
+
+	                                                                                                                                                                        break;
+
+	                                                                                                                                                case 'Ns':
+	                                                                                                                                                                        // specular exponent
+
+	                                                                                                                                                                        if (data.length < 1) {
+
+	                                                                                                                                                                                                console.error('MaterialPool::computeObjMaterials(): error in specular exponent array at line:' + lineNum);
+	                                                                                                                                                                        } else {
+
+	                                                                                                                                                                                                data[0] = parseFloat(data[0]);
+
+	                                                                                                                                                                                                if (currName && Number.isFinite(data[0]) && data[0] >= 0 && data[0] < 1001) {
+
+	                                                                                                                                                                                                                        materials[currName].specularExponent = data[0];
+	                                                                                                                                                                                                } else {
+
+	                                                                                                                                                                                                                        console.error('MaterialPool::computeObjMaterials(): invalid specular exponent array at line:' + lineNum);
+	                                                                                                                                                                                                }
+	                                                                                                                                                                        }
+
+	                                                                                                                                                                        break;
+
+	                                                                                                                                                case 'Ke':
+	                                                                                                                                                                        // emissive coefficient
+
+	                                                                                                                                                                        if (data.length < 3) {
+
+	                                                                                                                                                                                                console.error('MaterialPool::computeObjMaterials(): error in specular array at line:' + lineNum);
+	                                                                                                                                                                        } else {
+
+	                                                                                                                                                                                                data[0] = parseFloat(data[0]), data[1] = parseFloat(data[1]), data[2] = parseFloat(data[2]);
+
+	                                                                                                                                                                                                if (currName && Number.isFinite(data[0]) && Number.isFinite(data[1]) && Number.isFinite(data[2])) {
+
+	                                                                                                                                                                                                                        materials[currName].emissive = [data[0], data[1], data[2]];
+	                                                                                                                                                                                                } else {
+
+	                                                                                                                                                                                                                        console.error('MaterialPool::computeObjMaterials(): invalid specular array at line:' + lineNum);
+	                                                                                                                                                                                                }
+	                                                                                                                                                                        }
+
+	                                                                                                                                                                        break;
+
+	                                                                                                                                                case 'sharpness':
+	                                                                                                                                                                        // sharpness, 0-1000, default 60, for reflection maps
+
+	                                                                                                                                                                        data[0] = parseFloat(data[0]);
+
+	                                                                                                                                                                        if (currName && Number.isFinite(data[0]) && data[0] >= 0 && data[0] < 1001) {
+
+	                                                                                                                                                                                                materials[currName].sharpness = data[0];
+	                                                                                                                                                                        }
+
+	                                                                                                                                                                        break;
+
+	                                                                                                                                                case 'Ni':
+	                                                                                                                                                                        // optical density (refraction index, 1.0 = no refraction)
+
+	                                                                                                                                                                        data[0] = parseFloat(data[0]);
+
+	                                                                                                                                                                        if (currName && Number.isFinite(data[0]) && data[0] >= 0 && data[0] < 1001) {
+
+	                                                                                                                                                                                                materials[currName].refraction = data[0];
+	                                                                                                                                                                        }
+
+	                                                                                                                                                                        break;
+
+	                                                                                                                                                case 'd': // opacity
+	                                                                                                                                                case 'Tr':
+	                                                                                                                                                                        // transparent
+
+	                                                                                                                                                                        // TODO: handle -halo parameter  d -halo factor
+
+	                                                                                                                                                                        if (data.length < 1) {
+
+	                                                                                                                                                                                                console.error('MaterialPool::computeObjMaterials(): error in transparency value at line:' + lineNum);
+	                                                                                                                                                                        } else {
+
+	                                                                                                                                                                                                data[0] = parseFloat(data[0]);
+
+	                                                                                                                                                                                                if (currName && Number.isFinite(data[0])) {
+
+	                                                                                                                                                                                                                        if (type === 'Tr') data[0] = 1.0 - data[0]; // Invert
+
+	                                                                                                                                                                                                                        materials[currName].transparency = parseFloat(data[0]); // single value, 0.0 - 1.0
+	                                                                                                                                                                                                } else {
+
+	                                                                                                                                                                                                                        console.error('MaterialPool::computeObjMaterials(): invalid transparency value at line:' + lineNum);
+	                                                                                                                                                                                                }
+	                                                                                                                                                                        }
+
+	                                                                                                                                                                        break;
+
+	                                                                                                                                                case 'illum':
+	                                                                                                                                                                        // illumination mode
+
+	                                                                                                                                                                        if (data.length < 1) {
+
+	                                                                                                                                                                                                console.error('MaterialPool::computeObjMaterials(): error in illumination value at line:' + lineNum);
+	                                                                                                                                                                        } else {
+
+	                                                                                                                                                                                                data[0] = parseInt(data[0]);
+
+	                                                                                                                                                                                                if (currName && Number.isFinite(data[0]) && data[0] > 0 && data[0] < 11) {
+
+	                                                                                                                                                                                                                        /* 
+	                                                                                                                                                                                                                         * VALUES:
+	                                                                                                                                                                                                                         * 0. Color on and Ambient off
+	                                                                                                                                                                                                                         * 1. Color on and Ambient on (DEFAULT FOR THIS APP)
+	                                                                                                                                                                                                                         * 2. Highlight on
+	                                                                                                                                                                                                                         * 3. Reflection on and Ray trace on
+	                                                                                                                                                                                                                         * 4. Transparency: Glass on, Reflection: Ray trace on
+	                                                                                                                                                                                                                         * 5. Reflection: Fresnel on and Ray trace on
+	                                                                                                                                                                                                                         * 6. Transparency: Refraction on, Reflection: Fresnel off and Ray trace on
+	                                                                                                                                                                                                                         * 7. Transparency: Refraction on, Reflection: Fresnel on and Ray trace on
+	                                                                                                                                                                                                                         * 8. Reflection on and Ray trace off
+	                                                                                                                                                                                                                         * 9. Transparency: Glass on, Reflection: Ray trace off
+	                                                                                                                                                                                                                         * 10. Casts shadows onto invisible surfaces
+	                                                                                                                                                                                                                         */
+
+	                                                                                                                                                                                                                        materials[currName].illum = data[0];
+	                                                                                                                                                                                                }
+	                                                                                                                                                                        }
+
+	                                                                                                                                                                        break;
+
+	                                                                                                                                                case 'map_Kd': // diffuse map, an image file (e.g. file.jpg)
+	                                                                                                                                                case 'map_Ks': // specular map
+	                                                                                                                                                case 'map_Ka': // ambient map
+	                                                                                                                                                case 'map_d': // alpha map
+	                                                                                                                                                case 'bump': // bumpmap
+	                                                                                                                                                case 'map_bump': // bumpmap
+	                                                                                                                                                case 'disp':
+	                                                                                                                                                                        // displacement map
+
+	                                                                                                                                                                        /* 
+	                                                                                                                                                                         * These commands all load single image files, and append to Prim texture list 
+	                                                                                                                                                                         * after being emitted with a TEXTURE_2D_READY in PrimFactory.
+	                                                                                                                                                                         * @link  "filename" is the name of a color texture or image file.
+	                                                                                                                                                                         * @link http://paulbourke.net/dataformats/mtl/
+	                                                                                                                                                                         * Additional texture parameters go in texture.options
+	                                                                                                                                                                         * map_Ka -s 1 1 1 -o 0 0 0 -mm 0 1 file.png
+	                                                                                                                                                                         */
+
+	                                                                                                                                                                        var tPath = data[data.length - 1].trim();
+
+	                                                                                                                                                                        //////////console.log('path:' + path + ' data:' + data + ' tPath:' + tPath)
+
+	                                                                                                                                                                        if (currName) {
+	                                                                                                                                                                                                // if not, file is corrupt.
+
+	                                                                                                                                                                                                // Convert 'bump' to 'map_bump'.
+
+	                                                                                                                                                                                                if (type === 'bump') type = 'map_bump';
+
+	                                                                                                                                                                                                // Set the materials value to texture path.
+
+	                                                                                                                                                                                                materials[currName][type] = tPath;
+
+	                                                                                                                                                                                                /* 
+	                                                                                                                                                                                                 * get (hyphenated) texture options, if present, and add them to the getTextures() call.
+	                                                                                                                                                                                                 * Each texture has a list of materials it belongs to. Material objects may query 
+	                                                                                                                                                                                                 * for the texture they need.
+	                                                                                                                                                                                                 */
+
+	                                                                                                                                                                                                var options = _this2.computeTextureMapOptions(data);
+
+	                                                                                                                                                                                                // This lets us associate materials associated with this texture
+
+	                                                                                                                                                                                                if (!options.materials) {
+
+	                                                                                                                                                                                                                        options.materials = [currName];
+	                                                                                                                                                                                                } else {
+
+	                                                                                                                                                                                                                        options.materials.push(currName);
+	                                                                                                                                                                                                }
+
+	                                                                                                                                                                                                /* 
+	                                                                                                                                                                                                 * multiple textures have a defined order in the textures array.
+	                                                                                                                                                                                                 */
+
+	                                                                                                                                                                                                options.pos = _this2.texturePositions[type];
+
+	                                                                                                                                                                                                /*
+	                                                                                                                                                                                                 * NOTE: the texture attaches to prim.textures, so the fourth parmeter is the texture type (map_Kd, map_Ks...).
+	                                                                                                                                                                                                 * NOTE: the sixth paramater, is NULL since it defines a specific WebGL texture type (we want the default).
+	                                                                                                                                                                                                 * NOTE: thex seventh paramater, options, if present, we pass those in as well.
+	                                                                                                                                                                                                 */
+
+	                                                                                                                                                                                                _this2.texturePool.getTextures(prim, [dir + tPath], true, false, type, null, options);
+	                                                                                                                                                                        }
+
+	                                                                                                                                                                        break;
+
+	                                                                                                                                                case 'Tf': // transmission filter
+	                                                                                                                                                case '#': // comment
+	                                                                                                                                                case '':
+	                                                                                                                                                                        // no parameter
+
+	                                                                                                                                                                        break;
+
+	                                                                                                                                                default:
+
+	                                                                                                                                                                        console.warn('MaterialPool::computeObjMaterials(): unknown property:' + type + ' in file');
+
+	                                                                                                                                                                        break;
+
+	                                                                                                                        } // end of switch
+	                                                                                                } // end of if data !== ''
+
+	                                                                                                lineNum++;
+	                                                                        });
+
+	                                                                        return materials;
+	                                                }
+
+	                                                /** 
+	                                                 * Add a model
+	                                                 * @param {Prim} prim the requesting Prim object.
+	                                                 * @param {Object} data data to construct the Prim GeoBuffer.
+	                                                 * @param {String} path the file path to the object.
+	                                                 * @param {Number} pos the index of the object in the calling Prim's array.
+	                                                 * @param {String} mimeType the MIME type of the file.
+	                                                 * @param {String} type the GeometryPool.typeList type of the object, e.g. MESH, SPHERE...
+	                                                 */
+
+	                        }, {
+	                                                key: 'addMaterial',
+	                                                value: function addMaterial(prim, data, path, pos, mimeType, type) {
+
+	                                                                        if (pos === undefined) {
+
+	                                                                                                console.error('TextureObj::addTexture(): undefined pos');
+
+	                                                                                                return null;
+	                                                                        }
+
+	                                                                        var m = void 0;
+
+	                                                                        var fType = this.util.getFileExtension(path);
+
+	                                                                        switch (fType) {
+
+	                                                                                                case 'mtl':
+
+	                                                                                                                        /////////////console.log("MTL file for prim:" + prim.name + " loaded, parsing....")
+
+	                                                                                                                        // Returns an array with one or more materials.
+
+	                                                                                                                        m = this.computeObjMaterials(data, prim, path);
+
+	                                                                                                                        break;
+
+	                                                                                                default:
+
+	                                                                                                                        console.warn('MaterialPool::addModel(): unknown material file:' + path + ' MIME type:' + mimeType);
+
+	                                                                                                                        break;
+
+	                                                                        }
+
+	                                                                        // Set up the Material object(s).
+
+	                                                                        if (m) {
+
+	                                                                                                for (var i in m) {
+
+	                                                                                                                        var mi = m[i];
+
+	                                                                                                                        mi.type = type, mi.path = path, mi.emits = this.util.emitter.events.MATERIAL_READY;
+
+	                                                                                                                        ///////////console.log("MaterialPool::addMaterial(): adding:" + mi.name + " to Prim:" + prim.name )
+
+	                                                                                                                        this.addAsset(mi);
+	                                                                                                }
+	                                                                        }
+
+	                                                                        return m;
+	                                                }
+
+	                                                /** 
+	                                                 * Load models, using a list of paths. If a Model already exists, 
+	                                                 * just return it. Otherwise, do the load.
+	                                                 * @param {Prim} prim the calling Prim.
+	                                                 * @param {Array[String]} pathList a list of URL paths to load, or a key for a material in our pool.
+	                                                 * @param {Boolean} cacheBust if true, add a http://url?random query string to request.
+	                                                 */
+
+	                        }, {
+	                                                key: 'getMaterials',
+	                                                value: function getMaterials(prim, pathList) {
+	                                                                        var _this3 = this;
+
+	                                                                        var cacheBust = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+
+
+	                                                                        // Wrap single strings in an Array.
+
+	                                                                        if (this.util.isString(pathList)) {
+
+	                                                                                                pathList = [pathList];
+	                                                                        }
+
+	                                                                        for (var i = 0; i < pathList.length; i++) {
+
+	                                                                                                var path = pathList[i];
+
+	                                                                                                // Could have an empty path.
+
+	                                                                                                if (!this.util.isWhitespace(path)) {
+
+	                                                                                                                        // See if the 'path' is actually a key for our MaterialPool.
+
+	                                                                                                                        var poolMaterial = this.pathInList(path);
+
+	                                                                                                                        if (poolMaterial) {
+
+	                                                                                                                                                prim.materials.push(poolMaterial); // just reference an existing texture in this pool.
+	                                                                                                                        } else {
+	                                                                                                                                                (function () {
+
+	                                                                                                                                                                        // Get the image mimeType.
+
+	                                                                                                                                                                        var mimeType = _this3.materialMimeTypes[_this3.util.getFileExtension(path)];
+
+	                                                                                                                                                                        // check if mimeType is OK.
+
+	                                                                                                                                                                        if (mimeType) {
+
+	                                                                                                                                                                                                _this3.doRequest(path, i, function (updateObj) {
+
+	                                                                                                                                                                                                                        /* 
+	                                                                                                                                                                                                                         * updateObj returned from GetAssets has the following structure:
+	                                                                                                                                                                                                                         * { 
+	                                                                                                                                                                                                                         *   pos: pos, 
+	                                                                                                                                                                                                                         *   path: requestURL, 
+	                                                                                                                                                                                                                         *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
+	                                                                                                                                                                                                                         *   error: false|response 
+	                                                                                                                                                                                                                         * } 
+	                                                                                                                                                                                                                         */
+
+	                                                                                                                                                                                                                        if (updateObj.data) {
+
+	                                                                                                                                                                                                                                                var materialObj = _this3.addMaterial(prim, updateObj.data, updateObj.path, updateObj.pos, mimeType, prim.type);
+
+	                                                                                                                                                                                                                                                // Multiple materials may be present in one .mtl file.
+
+	                                                                                                                                                                                                                                                if (materialObj) {
+
+	                                                                                                                                                                                                                                                                        for (var _i2 in materialObj) {
+
+	                                                                                                                                                                                                                                                                                                ////////////console.log("MaterialPool sending:" + materialObj[ i ].emits + ' key:' + materialObj[ i ].key + ' i:' + i )
+
+	                                                                                                                                                                                                                                                                                                // Note that 'i' is the name of the material, instead of a numerical index (which it is in ModelPool and TexturePool).
+
+	                                                                                                                                                                                                                                                                                                _this3.util.emitter.emit(materialObj[_i2].emits, prim, materialObj[_i2].key, _i2);
+	                                                                                                                                                                                                                                                                        }
+	                                                                                                                                                                                                                                                } // end of material addition.
+	                                                                                                                                                                                                                        } else {
+
+	                                                                                                                                                                                                                                                console.error('MaterialPool::getMaterials(): no data found for:' + updateObj.path);
+	                                                                                                                                                                                                                        }
+	                                                                                                                                                                                                }, cacheBust, mimeType, 0); // end of this.doRequest(), initial request at 0 tries
+	                                                                                                                                                                        } else {
+
+	                                                                                                                                                                                                console.error('MaterialPool::getModels(): file type "' + _this3.util.getFileExtension(path) + ' not supported, not loading');
+	                                                                                                                                                                        }
+	                                                                                                                                                })();
+	                                                                                                                        }
+	                                                                                                } else {
+
+	                                                                                                                        console.warn('MaterialPool::getMaterials(): no path supplied for position ' + i);
+	                                                                                                } // end of valid path
+	                                                                        } // end of for loop
+	                                                }
+	                        }]);
+
+	                        return MaterialPool;
+	}(_assetPool2.default);
+
+	exports.default = MaterialPool;
+
+/***/ }),
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/**
@@ -15293,18 +18986,18 @@
 	THE SOFTWARE. */
 	// END HEADER
 
-	exports.glMatrix = __webpack_require__(30);
-	exports.mat2 = __webpack_require__(31);
-	exports.mat2d = __webpack_require__(32);
-	exports.mat3 = __webpack_require__(33);
-	exports.mat4 = __webpack_require__(34);
-	exports.quat = __webpack_require__(35);
-	exports.vec2 = __webpack_require__(38);
-	exports.vec3 = __webpack_require__(36);
-	exports.vec4 = __webpack_require__(37);
+	exports.glMatrix = __webpack_require__(33);
+	exports.mat2 = __webpack_require__(34);
+	exports.mat2d = __webpack_require__(35);
+	exports.mat3 = __webpack_require__(36);
+	exports.mat4 = __webpack_require__(37);
+	exports.quat = __webpack_require__(38);
+	exports.vec2 = __webpack_require__(41);
+	exports.vec3 = __webpack_require__(39);
+	exports.vec4 = __webpack_require__(40);
 
 /***/ }),
-/* 30 */
+/* 33 */
 /***/ (function(module, exports) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -15380,7 +19073,7 @@
 
 
 /***/ }),
-/* 31 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -15403,7 +19096,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(30);
+	var glMatrix = __webpack_require__(33);
 
 	/**
 	 * @class 2x2 Matrix
@@ -15822,7 +19515,7 @@
 
 
 /***/ }),
-/* 32 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -15845,7 +19538,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(30);
+	var glMatrix = __webpack_require__(33);
 
 	/**
 	 * @class 2x3 Matrix
@@ -16297,7 +19990,7 @@
 
 
 /***/ }),
-/* 33 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -16320,7 +20013,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(30);
+	var glMatrix = __webpack_require__(33);
 
 	/**
 	 * @class 3x3 Matrix
@@ -17049,7 +20742,7 @@
 
 
 /***/ }),
-/* 34 */
+/* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -17072,7 +20765,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(30);
+	var glMatrix = __webpack_require__(33);
 
 	/**
 	 * @class 4x4 Matrix
@@ -19191,7 +22884,7 @@
 
 
 /***/ }),
-/* 35 */
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -19214,10 +22907,10 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(30);
-	var mat3 = __webpack_require__(33);
-	var vec3 = __webpack_require__(36);
-	var vec4 = __webpack_require__(37);
+	var glMatrix = __webpack_require__(33);
+	var mat3 = __webpack_require__(36);
+	var vec3 = __webpack_require__(39);
+	var vec4 = __webpack_require__(40);
 
 	/**
 	 * @class Quaternion
@@ -19797,7 +23490,7 @@
 
 
 /***/ }),
-/* 36 */
+/* 39 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -19820,7 +23513,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(30);
+	var glMatrix = __webpack_require__(33);
 
 	/**
 	 * @class 3 Dimensional Vector
@@ -20580,7 +24273,7 @@
 
 
 /***/ }),
-/* 37 */
+/* 40 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -20603,7 +24296,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(30);
+	var glMatrix = __webpack_require__(33);
 
 	/**
 	 * @class 4 Dimensional Vector
@@ -21195,7 +24888,7 @@
 
 
 /***/ }),
-/* 38 */
+/* 41 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -21218,7 +24911,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(30);
+	var glMatrix = __webpack_require__(33);
 
 	/**
 	 * @class 2 Dimensional Vector
@@ -21788,7 +25481,7 @@
 
 
 /***/ }),
-/* 39 */
+/* 42 */
 /***/ (function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {/*
@@ -22747,3517 +26440,6 @@
 	module.exports = WebGLDebugUtils;
 
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
-
-/***/ }),
-/* 40 */
-/***/ (function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	                        value: true
-	});
-
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-	var _assetPool = __webpack_require__(24);
-
-	var _assetPool2 = _interopRequireDefault(_assetPool);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-	'use strict';
-
-	var MaterialPool = function (_AssetPool) {
-	                        _inherits(MaterialPool, _AssetPool);
-
-	                        function MaterialPool(init, util, webgl, texturePool) {
-	                                                _classCallCheck(this, MaterialPool);
-
-	                                                console.log('in MaterialPool');
-
-	                                                // Initialize superclass.
-
-	                                                var _this = _possibleConstructorReturn(this, (MaterialPool.__proto__ || Object.getPrototypeOf(MaterialPool)).call(this, util));
-
-	                                                _this.util = util, _this.webgl = webgl, _this.texturePool = texturePool;
-
-	                                                _this.materialMimeTypes = {
-
-	                                                                        'mtl': 'text/plain'
-
-	                                                };
-
-	                                                _this.defaultTextureMap = 'map_Kd'; // also pos zero for texturePositions
-
-	                                                // Map textureMap types to position in prim.textures array
-
-	                                                _this.texturePositions = {
-
-	                                                                        'map_Kd': 0, // diffuse map, an image file (e.g. file.jpg)
-
-	                                                                        'map_Ks': 1, // specular map
-
-	                                                                        'map_Ka': 2, // ambient map
-
-	                                                                        'map_d': 3, // alpha map
-
-	                                                                        'bump': 4, // bumpmap
-
-	                                                                        'map_bump': 4, // bumpmap
-
-	                                                                        'disp': 5 // displacement map
-
-	                                                };
-
-	                                                if (init) {
-
-	                                                                        // Create and store a default Material asset.
-
-	                                                                        _this.defaultKey = _this.addAsset(_this.default()).key;
-	                                                }
-
-	                                                return _this;
-	                        }
-
-	                        /** 
-	                         * Create the default MaterialPool object.
-	                         * @param {String} name the name of the material, either 'defaul' in .mtl file.
-	                         * @param {Array} ambient ambient color.
-	                         * @param {Array} diffuse diffuse color.
-	                         * @param {Array} specular specular color.
-	                         * @param {Number} specularExponent the shininess of the object.
-	                         * @param {Number} sharpness of reflection map.
-	                         * @param {Number} refraction light-bending of transparent objects.
-	                         * @param {Number} transparency.
-	                         * @param {Number} enumerated list of lighting modes.
-	                         * @param {String} map_Kd the default texture for diffuse mapping.
-	                         */
-
-
-	                        _createClass(MaterialPool, [{
-	                                                key: 'default',
-	                                                value: function _default() {
-	                                                                        var name = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.util.DEFAULT_KEY;
-	                                                                        var ambient = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [1, 1, 1];
-	                                                                        var diffuse = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [1, 1, 1];
-	                                                                        var specular = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [0, 0, 0];
-	                                                                        var specularExponent = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : 0;
-	                                                                        var emissive = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : [0, 0, 0];
-	                                                                        var sharpness = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : 60;
-	                                                                        var refraction = arguments.length > 7 && arguments[7] !== undefined ? arguments[7] : 1;
-	                                                                        var transparency = arguments.length > 8 && arguments[8] !== undefined ? arguments[8] : 0;
-	                                                                        var illum = arguments.length > 9 && arguments[9] !== undefined ? arguments[9] : 1;
-	                                                                        var map_Kd = arguments.length > 10 && arguments[10] !== undefined ? arguments[10] : null;
-
-
-	                                                                        return {
-
-	                                                                                                name: name,
-
-	                                                                                                key: null, // key in MaterialPool
-
-	                                                                                                path: null, // path to file
-
-	                                                                                                ambient: ambient, // Ka ambient color, white
-
-	                                                                                                diffuse: diffuse, // Kd diffuse color, white
-
-	                                                                                                specular: specular, // Ks specular color, black (off)
-
-	                                                                                                specularExponent: specularExponent, // Ns specular exponent, ranges between 0 and 1000
-
-	                                                                                                emissive: emissive,
-
-	                                                                                                sharpness: sharpness, // sharpness of reflection map (0-1000)
-
-	                                                                                                refraction: refraction, // refraction, 1.0 = no refraction
-
-	                                                                                                transparency: transparency, // d | Tr = transparency 1.0 = transparent
-
-	                                                                                                illum: illum, // illium, color and ambient on
-
-	                                                                                                map_Kd: map_Kd, // diffuse map, an image file (other maps not in default)
-
-	                                                                                                map_Ks: null, // specular map
-
-	                                                                                                map_Ka: null, // ambient map
-
-	                                                                                                map_d: null, // alpha map
-
-	                                                                                                map_bump: null, // bumpmap
-
-	                                                                                                disp: null, // displacement map
-
-	                                                                                                starts: [0] // Starting position in vertices to apply material
-
-	                                                                        };
-	                                                }
-
-	                                                /** 
-	                                                 * extract additional options for texture maps in OBJ format. Assumes that 
-	                                                 * a texture file was specified as the last data item in the line. Only the 
-	                                                 * options specified in the file are added (so calling program must test for them).
-	                                                 * @param {Array} data the line of the file for a texture map.
-	                                                 */
-
-	                        }, {
-	                                                key: 'computeTextureMapOptions',
-	                                                value: function computeTextureMapOptions(data) {
-
-	                                                                        var options = {};
-
-	                                                                        ///////console.log('computeTextureMapOptions data:' + data + ' length:' + data.length )
-
-	                                                                        // If there there are no options, return an empty object.
-
-	                                                                        if (data.length < 4) {
-
-	                                                                                                return options;
-	                                                                        }
-
-	                                                                        ///////console.log('...analyzing TextureMapOptions:' + data);
-
-	                                                                        /* 
-	                                                                         * Texturemap format:
-	                                                                         * -s 1 1 1 -o 0 0 0 -mm 0 1 filename.png
-	                                                                         * 
-	                                                                         * Copy the data string, sans filename.
-	                                                                         */
-
-	                                                                        var p = [];
-
-	                                                                        for (var i = 0; i < data.length - 1; i++) {
-
-	                                                                                                p[i] = data[i];
-	                                                                        }
-
-	                                                                        var pp = p.join(' ').split('-');
-
-	                                                                        for (var _i = 0; _i < pp.length; _i++) {
-
-	                                                                                                var ppp = pp[_i].split(' ');
-
-	                                                                                                if (ppp.length > 1) {
-
-	                                                                                                                        ////////console.log( 'ppp[0]:' + ppp[0] )
-
-	                                                                                                                        var d = ppp[0],
-	                                                                                                                            d1 = ppp[1];
-
-	                                                                                                                        switch (d) {
-
-	                                                                                                                                                case 'blenu': // texture blends in horizontal direction
-	                                                                                                                                                case 'blenv': // texture blends in vertical direction
-	                                                                                                                                                case 'cc': // color correction, only with color maps (map_Ka, map_Kd, and map_Ks)
-	                                                                                                                                                case 'clamp':
-	                                                                                                                                                                        // restrict textures to 0-1 range
-
-	                                                                                                                                                                        if (d1 === 'off') options[d] = false;else options[d] = true;
-
-	                                                                                                                                                                        break;
-
-	                                                                                                                                                case 'bm': // bump map multiplier, should be 0-1
-	                                                                                                                                                case 'mm':
-	                                                                                                                                                                        // base gain multiplier (makes brighter, 0-1)
-
-	                                                                                                                                                                        if (Number.isFinite(parseFloat(d1))) {
-
-	                                                                                                                                                                                                options[d] = parseFloat(d1);
-	                                                                                                                                                                        }
-
-	                                                                                                                                                                        break;
-
-	                                                                                                                                                case 'boost':
-	                                                                                                                                                                        // sharpen, any non-negative number
-
-	                                                                                                                                                                        if (Number.isFinite(parseFloat(d1)) && d1 >= 0) {
-
-	                                                                                                                                                                                                options[d] = parseFloat(d1);
-	                                                                                                                                                                        }
-
-	                                                                                                                                                                        break;
-
-	                                                                                                                                                case 'imfchan': // channel used to create scalar or bump texture, (r | g | b | m | l | z)
-	                                                                                                                                                case 'texres':
-	                                                                                                                                                                        // scale up images to the next power of 2.
-
-	                                                                                                                                                                        options[d] = d1;
-
-	                                                                                                                                                                        break;
-
-	                                                                                                                                                case 'o': // offset texture map origin x, y z
-	                                                                                                                                                case 's': // scales the size of the texture pattern, default 1,1,1
-	                                                                                                                                                case 't':
-	                                                                                                                                                                        // turn on texture turbulence (u, v, w )
-
-	                                                                                                                                                                        // Remove anything that isn't a number.
-
-	                                                                                                                                                                        var ct = 0;
-
-	                                                                                                                                                                        options[d] = [];
-
-	                                                                                                                                                                        for (var j = 1; j < ppp.length; j++) {
-
-	                                                                                                                                                                                                var pi = ppp[j];
-
-	                                                                                                                                                                                                if (Number.isFinite(parseFloat(pi))) {
-
-	                                                                                                                                                                                                                        options[d][ct++] = parseFloat(pi);
-	                                                                                                                                                                                                }
-	                                                                                                                                                                        }
-
-	                                                                                                                                                                        if (options[d].length !== 3) {
-
-	                                                                                                                                                                                                console.warn('MaterialPool::computeTextureMapOptions(): in valid texture param for:' + d);
-
-	                                                                                                                                                                                                options[d] = [0, 0, 0];
-	                                                                                                                                                                        }
-
-	                                                                                                                                                                        break;
-
-	                                                                                                                                                default:
-
-	                                                                                                                                                                        console.error('unknown texture map option: ' + data);
-
-	                                                                                                                                                                        break;
-
-	                                                                                                                        }
-	                                                                                                }
-	                                                                        }
-
-	                                                                        // Options could be empty.
-
-	                                                                        return options;
-	                                                }
-
-	                                                /** 
-	                                                 * Compute material properties for a model.
-	                                                 * Similar to:
-	                                                 * @link https://github.com/tiansijie/ObjLoader/blob/master/src/objLoader.js
-	                                                 * 
-	                                                 * Reference:
-	                                                 * @link http://paulbourke.net/dataformats/mtl/
-	                                                 * 
-	                                                 * @param {String} data the incoming data from the file.
-	                                                 * @param {Prim} prim the Prim object defined in prim.es6
-	                                                 * @param {String} path the path to the file. MTL files may reference other files in their directory.
-	                                                 */
-
-	                        }, {
-	                                                key: 'computeObjMaterials',
-	                                                value: function computeObjMaterials(data, prim, path) {
-	                                                                        var _this2 = this;
-
-	                                                                        ////////console.log( 'MaterialPool::computeObjMaterials(): loading model:' + path + ' for:' + prim.name );
-
-	                                                                        var lineNum = 0;
-
-	                                                                        var materials = [];
-
-	                                                                        var currName = null;
-
-	                                                                        var dir = this.util.getFilePath(path);
-
-	                                                                        var lines = data.split('\n');
-
-	                                                                        lines.forEach(function (line) {
-
-	                                                                                                line = line.trim();
-
-	                                                                                                // First value, the directive.
-
-	                                                                                                var type = line.split(' ')[0].trim();
-
-	                                                                                                // All other values as an array.
-
-	                                                                                                var data = line.substr(type.length).trim().split(' ');
-
-	                                                                                                // If there's no data, don't process.
-
-	                                                                                                if (data !== '') {
-
-	                                                                                                                        switch (type) {
-
-	                                                                                                                                                case 'newmtl':
-	                                                                                                                                                                        // name of material.
-
-	                                                                                                                                                                        currName = data[0].trim();
-
-	                                                                                                                                                                        // Apply file data to our default Material.
-
-	                                                                                                                                                                        materials[currName] = _this2.default(currName);
-
-	                                                                                                                                                                        break;
-
-	                                                                                                                                                case 'Ka':
-	                                                                                                                                                                        // ambient
-
-	                                                                                                                                                                        if (data.length < 3) {
-
-	                                                                                                                                                                                                console.error('MaterialPool::computeObjMaterials(): error in ambient material array at line:' + lineNum);
-	                                                                                                                                                                        } else {
-
-	                                                                                                                                                                                                data[0] = parseFloat(data[0]), data[1] = parseFloat(data[1]), data[2] = parseFloat(data[2]);
-
-	                                                                                                                                                                                                if (currName && Number.isFinite(data[0]) && Number.isFinite(data[1]) && Number.isFinite(data[2])) {
-
-	                                                                                                                                                                                                                        materials[currName].ambient = [data[0], data[1], data[2]];
-	                                                                                                                                                                                                } else {
-
-	                                                                                                                                                                                                                        console.error('MaterialPool::computerObjMaterials(): invalid ambient data at line:' + lineNum);
-	                                                                                                                                                                                                }
-	                                                                                                                                                                        }
-
-	                                                                                                                                                                        break;
-
-	                                                                                                                                                case 'Kd':
-	                                                                                                                                                                        // diffuse (usually the same as ambient)
-
-	                                                                                                                                                                        if (data.length < 3) {
-
-	                                                                                                                                                                                                console.error('MaterialPool::computeObjMaterials(): error in diffuse material array at line:' + lineNum);
-	                                                                                                                                                                        } else {
-
-	                                                                                                                                                                                                data[0] = parseFloat(data[0]), data[1] = parseFloat(data[1]), data[2] = parseFloat(data[2]);
-
-	                                                                                                                                                                                                if (currName && Number.isFinite(data[0]) && Number.isFinite(data[1]) && Number.isFinite(data[2])) {
-
-	                                                                                                                                                                                                                        materials[currName].diffuse = [data[0], data[1], data[2]];
-	                                                                                                                                                                                                } else {
-
-	                                                                                                                                                                                                                        console.error('MaterialPool::computeObjMaterials(): invalid diffuse array at line:' + lineNum);
-	                                                                                                                                                                                                }
-	                                                                                                                                                                        }
-
-	                                                                                                                                                                        break;
-
-	                                                                                                                                                case 'Ks':
-	                                                                                                                                                                        // specular
-
-	                                                                                                                                                                        if (data.length < 3) {
-
-	                                                                                                                                                                                                console.error('MaterialPool::computeObjMaterials(): error in specular array at line:' + lineNum);
-	                                                                                                                                                                        } else {
-
-	                                                                                                                                                                                                data[0] = parseFloat(data[0]), data[1] = parseFloat(data[1]), data[2] = parseFloat(data[2]);
-
-	                                                                                                                                                                                                if (currName && Number.isFinite(data[0]) && Number.isFinite(data[1]) && Number.isFinite(data[2])) {
-
-	                                                                                                                                                                                                                        materials[currName].specular = [data[0], data[1], data[2]];
-	                                                                                                                                                                                                } else {
-
-	                                                                                                                                                                                                                        console.error('MaterialPool::computeObjMaterials(): invalid specular array at line:' + lineNum);
-	                                                                                                                                                                                                }
-	                                                                                                                                                                        }
-
-	                                                                                                                                                                        break;
-
-	                                                                                                                                                case 'Ns':
-	                                                                                                                                                                        // specular exponent
-
-	                                                                                                                                                                        if (data.length < 1) {
-
-	                                                                                                                                                                                                console.error('MaterialPool::computeObjMaterials(): error in specular exponent array at line:' + lineNum);
-	                                                                                                                                                                        } else {
-
-	                                                                                                                                                                                                data[0] = parseFloat(data[0]);
-
-	                                                                                                                                                                                                if (currName && Number.isFinite(data[0]) && data[0] >= 0 && data[0] < 1001) {
-
-	                                                                                                                                                                                                                        materials[currName].specularExponent = data[0];
-	                                                                                                                                                                                                } else {
-
-	                                                                                                                                                                                                                        console.error('MaterialPool::computeObjMaterials(): invalid specular exponent array at line:' + lineNum);
-	                                                                                                                                                                                                }
-	                                                                                                                                                                        }
-
-	                                                                                                                                                                        break;
-
-	                                                                                                                                                case 'Ke':
-	                                                                                                                                                                        // emissive coefficient
-
-	                                                                                                                                                                        if (data.length < 3) {
-
-	                                                                                                                                                                                                console.error('MaterialPool::computeObjMaterials(): error in specular array at line:' + lineNum);
-	                                                                                                                                                                        } else {
-
-	                                                                                                                                                                                                data[0] = parseFloat(data[0]), data[1] = parseFloat(data[1]), data[2] = parseFloat(data[2]);
-
-	                                                                                                                                                                                                if (currName && Number.isFinite(data[0]) && Number.isFinite(data[1]) && Number.isFinite(data[2])) {
-
-	                                                                                                                                                                                                                        materials[currName].emissive = [data[0], data[1], data[2]];
-	                                                                                                                                                                                                } else {
-
-	                                                                                                                                                                                                                        console.error('MaterialPool::computeObjMaterials(): invalid specular array at line:' + lineNum);
-	                                                                                                                                                                                                }
-	                                                                                                                                                                        }
-
-	                                                                                                                                                                        break;
-
-	                                                                                                                                                case 'sharpness':
-	                                                                                                                                                                        // sharpness, 0-1000, default 60, for reflection maps
-
-	                                                                                                                                                                        data[0] = parseFloat(data[0]);
-
-	                                                                                                                                                                        if (currName && Number.isFinite(data[0]) && data[0] >= 0 && data[0] < 1001) {
-
-	                                                                                                                                                                                                materials[currName].sharpness = data[0];
-	                                                                                                                                                                        }
-
-	                                                                                                                                                                        break;
-
-	                                                                                                                                                case 'Ni':
-	                                                                                                                                                                        // optical density (refraction index, 1.0 = no refraction)
-
-	                                                                                                                                                                        data[0] = parseFloat(data[0]);
-
-	                                                                                                                                                                        if (currName && Number.isFinite(data[0]) && data[0] >= 0 && data[0] < 1001) {
-
-	                                                                                                                                                                                                materials[currName].refraction = data[0];
-	                                                                                                                                                                        }
-
-	                                                                                                                                                                        break;
-
-	                                                                                                                                                case 'd': // opacity
-	                                                                                                                                                case 'Tr':
-	                                                                                                                                                                        // transparent
-
-	                                                                                                                                                                        // TODO: handle -halo parameter  d -halo factor
-
-	                                                                                                                                                                        if (data.length < 1) {
-
-	                                                                                                                                                                                                console.error('MaterialPool::computeObjMaterials(): error in transparency value at line:' + lineNum);
-	                                                                                                                                                                        } else {
-
-	                                                                                                                                                                                                data[0] = parseFloat(data[0]);
-
-	                                                                                                                                                                                                if (currName && Number.isFinite(data[0])) {
-
-	                                                                                                                                                                                                                        if (type === 'Tr') data[0] = 1.0 - data[0]; // Invert
-
-	                                                                                                                                                                                                                        materials[currName].transparency = parseFloat(data[0]); // single value, 0.0 - 1.0
-	                                                                                                                                                                                                } else {
-
-	                                                                                                                                                                                                                        console.error('MaterialPool::computeObjMaterials(): invalid transparency value at line:' + lineNum);
-	                                                                                                                                                                                                }
-	                                                                                                                                                                        }
-
-	                                                                                                                                                                        break;
-
-	                                                                                                                                                case 'illum':
-	                                                                                                                                                                        // illumination mode
-
-	                                                                                                                                                                        if (data.length < 1) {
-
-	                                                                                                                                                                                                console.error('MaterialPool::computeObjMaterials(): error in illumination value at line:' + lineNum);
-	                                                                                                                                                                        } else {
-
-	                                                                                                                                                                                                data[0] = parseInt(data[0]);
-
-	                                                                                                                                                                                                if (currName && Number.isFinite(data[0]) && data[0] > 0 && data[0] < 11) {
-
-	                                                                                                                                                                                                                        /* 
-	                                                                                                                                                                                                                         * VALUES:
-	                                                                                                                                                                                                                         * 0. Color on and Ambient off
-	                                                                                                                                                                                                                         * 1. Color on and Ambient on (DEFAULT FOR THIS APP)
-	                                                                                                                                                                                                                         * 2. Highlight on
-	                                                                                                                                                                                                                         * 3. Reflection on and Ray trace on
-	                                                                                                                                                                                                                         * 4. Transparency: Glass on, Reflection: Ray trace on
-	                                                                                                                                                                                                                         * 5. Reflection: Fresnel on and Ray trace on
-	                                                                                                                                                                                                                         * 6. Transparency: Refraction on, Reflection: Fresnel off and Ray trace on
-	                                                                                                                                                                                                                         * 7. Transparency: Refraction on, Reflection: Fresnel on and Ray trace on
-	                                                                                                                                                                                                                         * 8. Reflection on and Ray trace off
-	                                                                                                                                                                                                                         * 9. Transparency: Glass on, Reflection: Ray trace off
-	                                                                                                                                                                                                                         * 10. Casts shadows onto invisible surfaces
-	                                                                                                                                                                                                                         */
-
-	                                                                                                                                                                                                                        materials[currName].illum = data[0];
-	                                                                                                                                                                                                }
-	                                                                                                                                                                        }
-
-	                                                                                                                                                                        break;
-
-	                                                                                                                                                case 'map_Kd': // diffuse map, an image file (e.g. file.jpg)
-	                                                                                                                                                case 'map_Ks': // specular map
-	                                                                                                                                                case 'map_Ka': // ambient map
-	                                                                                                                                                case 'map_d': // alpha map
-	                                                                                                                                                case 'bump': // bumpmap
-	                                                                                                                                                case 'map_bump': // bumpmap
-	                                                                                                                                                case 'disp':
-	                                                                                                                                                                        // displacement map
-
-	                                                                                                                                                                        /* 
-	                                                                                                                                                                         * These commands all load single image files, and append to Prim texture list 
-	                                                                                                                                                                         * after being emitted with a TEXTURE_2D_READY in PrimFactory.
-	                                                                                                                                                                         * @link  "filename" is the name of a color texture or image file.
-	                                                                                                                                                                         * @link http://paulbourke.net/dataformats/mtl/
-	                                                                                                                                                                         * Additional texture parameters go in texture.options
-	                                                                                                                                                                         * map_Ka -s 1 1 1 -o 0 0 0 -mm 0 1 file.png
-	                                                                                                                                                                         */
-
-	                                                                                                                                                                        var tPath = data[data.length - 1].trim();
-
-	                                                                                                                                                                        //////////console.log('path:' + path + ' data:' + data + ' tPath:' + tPath)
-
-	                                                                                                                                                                        if (currName) {
-	                                                                                                                                                                                                // if not, file is corrupt.
-
-	                                                                                                                                                                                                // Convert 'bump' to 'map_bump'.
-
-	                                                                                                                                                                                                if (type === 'bump') type = 'map_bump';
-
-	                                                                                                                                                                                                // Set the materials value to texture path.
-
-	                                                                                                                                                                                                materials[currName][type] = tPath;
-
-	                                                                                                                                                                                                /* 
-	                                                                                                                                                                                                 * get (hyphenated) texture options, if present, and add them to the getTextures() call.
-	                                                                                                                                                                                                 * Each texture has a list of materials it belongs to. Material objects may query 
-	                                                                                                                                                                                                 * for the texture they need.
-	                                                                                                                                                                                                 */
-
-	                                                                                                                                                                                                var options = _this2.computeTextureMapOptions(data);
-
-	                                                                                                                                                                                                // This lets us associate materials associated with this texture
-
-	                                                                                                                                                                                                if (!options.materials) {
-
-	                                                                                                                                                                                                                        options.materials = [currName];
-	                                                                                                                                                                                                } else {
-
-	                                                                                                                                                                                                                        options.materials.push(currName);
-	                                                                                                                                                                                                }
-
-	                                                                                                                                                                                                /* 
-	                                                                                                                                                                                                 * multiple textures have a defined order in the textures array.
-	                                                                                                                                                                                                 */
-
-	                                                                                                                                                                                                options.pos = _this2.texturePositions[type];
-
-	                                                                                                                                                                                                /*
-	                                                                                                                                                                                                 * NOTE: the texture attaches to prim.textures, so the fourth parmeter is the texture type (map_Kd, map_Ks...).
-	                                                                                                                                                                                                 * NOTE: the sixth paramater, is NULL since it defines a specific WebGL texture type (we want the default).
-	                                                                                                                                                                                                 * NOTE: thex seventh paramater, options, if present, we pass those in as well.
-	                                                                                                                                                                                                 */
-
-	                                                                                                                                                                                                _this2.texturePool.getTextures(prim, [dir + tPath], true, false, type, null, options);
-	                                                                                                                                                                        }
-
-	                                                                                                                                                                        break;
-
-	                                                                                                                                                case 'Tf': // transmission filter
-	                                                                                                                                                case '#': // comment
-	                                                                                                                                                case '':
-	                                                                                                                                                                        // no parameter
-
-	                                                                                                                                                                        break;
-
-	                                                                                                                                                default:
-
-	                                                                                                                                                                        console.warn('MaterialPool::computeObjMaterials(): unknown property:' + type + ' in file');
-
-	                                                                                                                                                                        break;
-
-	                                                                                                                        } // end of switch
-	                                                                                                } // end of if data !== ''
-
-	                                                                                                lineNum++;
-	                                                                        });
-
-	                                                                        return materials;
-	                                                }
-
-	                                                /** 
-	                                                 * Add a model
-	                                                 * @param {Prim} prim the requesting Prim object.
-	                                                 * @param {Object} data data to construct the Prim GeoBuffer.
-	                                                 * @param {String} path the file path to the object.
-	                                                 * @param {Number} pos the index of the object in the calling Prim's array.
-	                                                 * @param {String} mimeType the MIME type of the file.
-	                                                 * @param {String} type the GeometryPool.typeList type of the object, e.g. MESH, SPHERE...
-	                                                 */
-
-	                        }, {
-	                                                key: 'addMaterial',
-	                                                value: function addMaterial(prim, data, path, pos, mimeType, type) {
-
-	                                                                        if (pos === undefined) {
-
-	                                                                                                console.error('TextureObj::addTexture(): undefined pos');
-
-	                                                                                                return null;
-	                                                                        }
-
-	                                                                        var m = void 0;
-
-	                                                                        var fType = this.util.getFileExtension(path);
-
-	                                                                        switch (fType) {
-
-	                                                                                                case 'mtl':
-
-	                                                                                                                        /////////////console.log("MTL file for prim:" + prim.name + " loaded, parsing....")
-
-	                                                                                                                        // Returns an array with one or more materials.
-
-	                                                                                                                        m = this.computeObjMaterials(data, prim, path);
-
-	                                                                                                                        break;
-
-	                                                                                                default:
-
-	                                                                                                                        console.warn('MaterialPool::addModel(): unknown material file:' + path + ' MIME type:' + mimeType);
-
-	                                                                                                                        break;
-
-	                                                                        }
-
-	                                                                        // Set up the Material object(s).
-
-	                                                                        if (m) {
-
-	                                                                                                for (var i in m) {
-
-	                                                                                                                        var mi = m[i];
-
-	                                                                                                                        mi.type = type, mi.path = path, mi.emits = this.util.emitter.events.MATERIAL_READY;
-
-	                                                                                                                        ///////////console.log("MaterialPool::addMaterial(): adding:" + mi.name + " to Prim:" + prim.name )
-
-	                                                                                                                        this.addAsset(mi);
-	                                                                                                }
-	                                                                        }
-
-	                                                                        return m;
-	                                                }
-
-	                                                /** 
-	                                                 * Load models, using a list of paths. If a Model already exists, 
-	                                                 * just return it. Otherwise, do the load.
-	                                                 * @param {Prim} prim the calling Prim.
-	                                                 * @param {Array[String]} pathList a list of URL paths to load, or a key for a material in our pool.
-	                                                 * @param {Boolean} cacheBust if true, add a http://url?random query string to request.
-	                                                 */
-
-	                        }, {
-	                                                key: 'getMaterials',
-	                                                value: function getMaterials(prim, pathList) {
-	                                                                        var _this3 = this;
-
-	                                                                        var cacheBust = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
-
-
-	                                                                        // Wrap single strings in an Array.
-
-	                                                                        if (this.util.isString(pathList)) {
-
-	                                                                                                pathList = [pathList];
-	                                                                        }
-
-	                                                                        for (var i = 0; i < pathList.length; i++) {
-
-	                                                                                                var path = pathList[i];
-
-	                                                                                                // Could have an empty path.
-
-	                                                                                                if (!this.util.isWhitespace(path)) {
-
-	                                                                                                                        // See if the 'path' is actually a key for our MaterialPool.
-
-	                                                                                                                        var poolMaterial = this.pathInList(path);
-
-	                                                                                                                        if (poolMaterial) {
-
-	                                                                                                                                                prim.materials.push(poolMaterial); // just reference an existing texture in this pool.
-	                                                                                                                        } else {
-	                                                                                                                                                (function () {
-
-	                                                                                                                                                                        // Get the image mimeType.
-
-	                                                                                                                                                                        var mimeType = _this3.materialMimeTypes[_this3.util.getFileExtension(path)];
-
-	                                                                                                                                                                        // check if mimeType is OK.
-
-	                                                                                                                                                                        if (mimeType) {
-
-	                                                                                                                                                                                                _this3.doRequest(path, i, function (updateObj) {
-
-	                                                                                                                                                                                                                        /* 
-	                                                                                                                                                                                                                         * updateObj returned from GetAssets has the following structure:
-	                                                                                                                                                                                                                         * { 
-	                                                                                                                                                                                                                         *   pos: pos, 
-	                                                                                                                                                                                                                         *   path: requestURL, 
-	                                                                                                                                                                                                                         *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
-	                                                                                                                                                                                                                         *   error: false|response 
-	                                                                                                                                                                                                                         * } 
-	                                                                                                                                                                                                                         */
-
-	                                                                                                                                                                                                                        if (updateObj.data) {
-
-	                                                                                                                                                                                                                                                var materialObj = _this3.addMaterial(prim, updateObj.data, updateObj.path, updateObj.pos, mimeType, prim.type);
-
-	                                                                                                                                                                                                                                                // Multiple materials may be present in one .mtl file.
-
-	                                                                                                                                                                                                                                                if (materialObj) {
-
-	                                                                                                                                                                                                                                                                        for (var _i2 in materialObj) {
-
-	                                                                                                                                                                                                                                                                                                ////////////console.log("MaterialPool sending:" + materialObj[ i ].emits + ' key:' + materialObj[ i ].key + ' i:' + i )
-
-	                                                                                                                                                                                                                                                                                                // Note that 'i' is the name of the material, instead of a numerical index (which it is in ModelPool and TexturePool).
-
-	                                                                                                                                                                                                                                                                                                _this3.util.emitter.emit(materialObj[_i2].emits, prim, materialObj[_i2].key, _i2);
-	                                                                                                                                                                                                                                                                        }
-	                                                                                                                                                                                                                                                } // end of material addition.
-	                                                                                                                                                                                                                        } else {
-
-	                                                                                                                                                                                                                                                console.error('MaterialPool::getMaterials(): no data found for:' + updateObj.path);
-	                                                                                                                                                                                                                        }
-	                                                                                                                                                                                                }, cacheBust, mimeType, 0); // end of this.doRequest(), initial request at 0 tries
-	                                                                                                                                                                        } else {
-
-	                                                                                                                                                                                                console.error('MaterialPool::getModels(): file type "' + _this3.util.getFileExtension(path) + ' not supported, not loading');
-	                                                                                                                                                                        }
-	                                                                                                                                                })();
-	                                                                                                                        }
-	                                                                                                } else {
-
-	                                                                                                                        console.warn('MaterialPool::getMaterials(): no path supplied for position ' + i);
-	                                                                                                } // end of valid path
-	                                                                        } // end of for loop
-	                                                }
-	                        }]);
-
-	                        return MaterialPool;
-	}(_assetPool2.default);
-
-	exports.default = MaterialPool;
-
-/***/ }),
-/* 41 */
-/***/ (function(module, exports) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	        value: true
-	});
-
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	var GeometryBuffer = function () {
-
-	        /** 
-	         * @class
-	         * Create an object from a Prim which may be used by our Shader objects.
-	         * Create WebGL buffers from flattened vertex, index, texture and other coordinate data.
-	         * @constructor
-	         * @param {Util} util shared utility methods, patches, polyfills.
-	         * @param {WebGL} webgl object holding the WebGLRenderingContext.
-	         */
-	        function GeometryBuffer(name, util, webgl, type) {
-	                _classCallCheck(this, GeometryBuffer);
-
-	                this.primName = name, this.webgl = webgl, this.util = util, this.FLOAT32 = 'float32', this.UINT = 'uint';
-
-	                this.UINT32 = 'uint32';
-
-	                this.UINT16 = 'uint16';
-
-	                this.makeBuffers = true, this.vertices = {
-
-	                        data: [],
-
-	                        buffer: null,
-
-	                        itemSize: 3,
-
-	                        numItems: 0
-
-	                }, this.indices = { // where to start drawing GL_TRIANGLES.
-
-	                        data: [],
-
-	                        buffer: null,
-
-	                        itemSize: 1,
-
-	                        numItems: 0
-
-	                }, this.sides = { // a collection of triangles creating a side on the shape.
-
-	                        data: [],
-
-	                        buffer: null,
-
-	                        itemSize: 3,
-
-	                        numItems: 0
-
-	                }, this.normals = {
-
-	                        data: [],
-
-	                        buffer: null,
-
-	                        itemSize: 3,
-
-	                        numItems: 0
-
-	                }, this.tangents = {
-
-	                        data: [],
-
-	                        buffer: null,
-
-	                        itemSize: 4,
-
-	                        numItems: 0
-
-	                }, this.texCoords = {
-
-	                        data: [],
-
-	                        buffer: null,
-
-	                        itemSize: 2,
-
-	                        numItems: 0
-
-	                }, this.colors = {
-
-	                        data: [],
-
-	                        buffer: null,
-
-	                        itemSize: 4,
-
-	                        numItems: 0
-
-	                };
-
-	                this.valid = false;
-
-	                // Save the max allowed drawing size. For WebGL 1.0 with extension, vertices must be < 65k.
-
-	                this.MAX_DRAWELEMENTS = this.webgl.MAX_DRAWELEMENTS;
-
-	                this.mName = this.primName + ' GeometryBuffer::';
-	        } // end of constructor
-
-	        /** 
-	         * Confirm that data is a number.
-	         * @param {Array} data the data array
-	         * @param {String} dataType the type (FLOAT32, UINT16, UINT32, UINT)
-	         * @param {String} arrName the name of the array.
-	         */
-
-
-	        _createClass(GeometryBuffer, [{
-	                key: 'confirmNumericalData',
-	                value: function confirmNumericalData(data, dataType, arrName) {
-
-	                        var len = data.length;
-
-	                        for (var i = 0; i < len; i++) {
-
-	                                var d = data[i];
-
-	                                switch (dataType) {
-
-	                                        case this.FLOAT32:
-
-	                                                if (!Number.isFinite(parseFloat(d))) {
-
-	                                                        console.error(this.mName + 'confirmNumericalData(): invalid float32 in ' + arrName + ' at pos:' + i + ' = ' + d);
-
-	                                                        return false;
-	                                                }
-
-	                                                break;
-
-	                                        case this.UINT16:
-	                                        case this.UINT32:
-	                                        case this.UINT:
-
-	                                                if (!Number.isFinite(parseInt(d))) {
-
-	                                                        console.error(this.mName + 'confirmNumericalData(): invalid Uint in ' + arrName + ' at pos:' + i + ' = ' + d);
-
-	                                                        return false;
-	                                                }
-
-	                                                break;
-
-	                                        default:
-
-	                                                console.error(this.mName + ' confirmNumericalData(): unknown data type ' + dataType + ' for:' + arrName);
-
-	                                                return false;
-
-	                                                break;
-
-	                                }
-	                        }
-
-	                        return true;
-	                }
-
-	                /** 
-	                 * Check integrity of vertex data
-	                 * @param {Boolean} complete it true, do all the tests.
-	                 */
-
-	        }, {
-	                key: 'checkVertexData',
-	                value: function checkVertexData(complete) {
-
-	                        var fnName = this.mName + ' checkVertexData():'; // so many error messages we use this.
-
-	                        var len = this.vertices.data.length;
-
-	                        var numVertices = this.numVertices();
-
-	                        if (len < this.vertices.itemSize || this.util.frac(numVertices) !== 0) {
-
-	                                console.error(fnName + ' invalid vertex size, ' + numVertices);
-
-	                                return false;
-	                        } else if (len > this.MAX_DRAWELEMENTS) {
-
-	                                console.error(fnName + ' vertex size exceeds 64k on hardware not supporting it');
-
-	                                return false;
-	                        }
-
-	                        if (complete) {
-
-	                                if (!this.confirmNumericalData(this.vertices.data, this.FLOAT32, 'vertices')) {
-
-	                                        return false;
-	                                }
-	                        }
-
-	                        return numVertices; // number of vertices (not array length)
-	                }
-
-	                /** 
-	                 * Check integrity of index data.
-	                 * @param {Boolean} complete it true, do all the tests.
-	                 */
-
-	        }, {
-	                key: 'checkIndexData',
-	                value: function checkIndexData(complete) {
-
-	                        var fnName = this.mName + ' checkIndexData():'; // so many error messages we use this.
-
-	                        var len = this.numIndices(),
-	                            vLen = this.numVertices();
-
-	                        if (len < this.indices.itemSize) {
-	                                // can be fractional
-
-	                                console.error(fnName + ' invalid index size, ' + len);
-
-	                                return false;
-	                        }
-
-	                        if (complete) {
-
-	                                // Make sure we have a valid number
-
-	                                if (!this.confirmNumericalData(this.indices.data, this.UINT, 'indices')) {
-
-	                                        return false;
-	                                }
-
-	                                // Make sure indices point to valid vertex.
-
-	                                var d = this.indices.data;
-
-	                                for (var i = 0; i < len; i++) {
-
-	                                        var di = d[i];
-
-	                                        if (di < 0 || di > vLen) {
-
-	                                                console.error(fnName + ' index at ' + i + ' points to invalid postion in vertices ' + di + ', max:' + vLen);
-
-	                                                return false;
-	                                        }
-	                                }
-	                        }
-
-	                        return len; // number of indices
-	                }
-
-	                /** 
-	                 * Check the number of sides (triangles) 
-	                 * @param {Boolean} complete it true, do all the tests.
-	                 */
-
-	        }, {
-	                key: 'checkFacesData',
-	                value: function checkFacesData(complete) {
-
-	                        // TODO: first check 3-sided faces (triangles).
-
-	                        // TODO: then check non-triangle larger drawing faces defined on the object.
-
-	                        // Make sure we have a valid number of Faces (triangles)
-
-	                        var len = this.numFaces();
-
-	                        if (!len) {
-
-	                                console.error(fnName + ' number of sides (triangles) is invalid');
-
-	                                return false;
-	                        }
-
-	                        return len;
-	                }
-
-	                /** 
-	                 * Normals check (assumed always present for drawing).
-	                 * @param {Boolean} complete it true, do all the tests.
-	                 */
-
-	        }, {
-	                key: 'checkNormalsData',
-	                value: function checkNormalsData(complete) {
-
-	                        var fnName = this.mName + ' checkNormalsData():'; // so many error messages we use this.
-
-	                        var numVertices = this.numVertices(),
-	                            len = this.numNormals();
-
-	                        if (len < this.normals.itemSize || this.util.frac(len) !== 0) {
-
-	                                console.error(fnName + ' invalid normals size, ' + len);
-
-	                                return false;
-	                        } else if (len !== numVertices) {
-
-	                                console.error(fnName + ' normals length: ' + this.numNormals() + ' does not match vertices length: ' + this.numVertices());
-
-	                                return false;
-	                        }
-
-	                        if (complete) {
-
-	                                if (!this.confirmNumericalData(this.normals.data, this.FLOAT32, 'normals')) {
-
-	                                        return false;
-	                                }
-	                        }
-
-	                        return len;
-	                }
-
-	                /** 
-	                 * Check texture coordinate data.
-	                 * @param {Boolean} complete it true, do all the tests.
-	                 */
-
-	        }, {
-	                key: 'checkTexCoordsData',
-	                value: function checkTexCoordsData(complete, texCoords) {
-
-	                        var fnName = this.mName + ' checkTexCoordsData():'; // so many error messages we use this.
-
-	                        var numVertices = this.numVertices(),
-	                            tc = texCoords || this.texCoords,
-	                            // allows handling multiple texCoord buffers.
-
-	                        len = this.numTexCoords(tc);
-
-	                        if (len > 0) {
-
-	                                if (len < tc.itemSize || this.util.frac(len) !== 0) {
-
-	                                        console.error(fnName + ' invalid texCoords size, ' + tc.data.length);
-
-	                                        return false;
-	                                } else if (len !== numVertices) {
-
-	                                        console.error(fnName + ' texCoords length: ' + this.numTexCoords(tc) + ' does not match vertices length: ' + this.numVertices());
-
-	                                        return false;
-	                                }
-	                        } else {
-
-	                                console.warn(fnName + ' no texCoords data defined.');
-	                        }
-
-	                        if (complete) {
-
-	                                if (!this.confirmNumericalData(tc.data, this.FLOAT32, 'texCoords')) {
-
-	                                        return false;
-	                                }
-	                        }
-
-	                        return len;
-	                }
-
-	                /** 
-	                 * Check tangent data.
-	                 * @param {Boolean} complete it true, do all the tests.
-	                 */
-
-	        }, {
-	                key: 'checkTangentsData',
-	                value: function checkTangentsData(complete) {
-
-	                        var fnName = this.mName + ' checkTangentsData():'; // so many error messages we use this.
-
-	                        var numVertices = this.numVertices(),
-	                            len = this.numTangents();
-
-	                        if (len > 0) {
-
-	                                if (len < this.tangents.itemSize || this.util.frac(len) !== 0) {
-
-	                                        console.error(fnName + ' invalid tangents size, ' + len);
-
-	                                        return false;
-	                                } else if (len !== numVertices) {
-
-	                                        console.error(fnName + ' tangents length ' + this.numTangents() + ' does not match vertices length: ' + this.numVertices());
-
-	                                        return false;
-	                                }
-	                        } else {
-
-	                                console.warn(fnName + ' no tangents data defined.');
-	                        }
-
-	                        if (complete) {
-
-	                                if (!this.confirmNumericalData(this.tangents.data, this.FLOAT32, 'tangents')) {
-
-	                                        return false;
-	                                }
-	                        }
-
-	                        return len;
-	                }
-
-	                /**
-	                 * Check color data.
-	                 * @param {Boolean} complete it true, do all the tests.
-	                 */
-
-	        }, {
-	                key: 'checkColorsData',
-	                value: function checkColorsData(complete) {
-
-	                        var fnName = this.mName + ' checkColorsData():'; // so many error messages we use this.
-
-	                        var numVertices = this.numVertices(),
-	                            len = this.numColors();
-
-	                        if (len > 0) {
-
-	                                if (len < this.colors.itemSize || this.util.frac(len) !== 0) {
-
-	                                        console.error(fnName + ' invalid colors size, ' + this.colors.data.length);
-
-	                                        return false;
-	                                } else if (len !== numVertices) {
-
-	                                        console.error(fnName + ' colors length: ' + this.numColors() + ' does not match vertices length:' + this.numVertices());
-
-	                                        return false;
-	                                }
-	                        } else {
-
-	                                console.warn(fnName + ' no colors data defined.');
-	                        }
-
-	                        if (complete) {
-
-	                                if (!this.confirmNumericalData(this.colors.data, this.FLOAT32, 'colors')) {
-
-	                                        return false;
-	                                }
-	                        }
-
-	                        return len;
-	                }
-
-	                /** 
-	                 * Check validity of buffer data.
-	                 * @param {Boolean} complete if true, do extra checks.
-	                 * @returns {Boolean} if buffers ok to use, return true, else false.
-	                 */
-
-	        }, {
-	                key: 'checkBufferData',
-	                value: function checkBufferData(complete) {
-
-	                        var valid = this.valid = true;
-
-	                        var len = this.vertices.data.length;
-
-	                        var vLen = len; // used in indices checks
-
-	                        var fnName = this.mName + ' checkBufferData():'; // so many error messages we use this.
-
-	                        // Vertex check.
-
-	                        if (this.checkVertexData(true) && this.checkIndexData(true) && this.checkNormalsData(true) && this.checkTexCoordsData(true) && this.checkTangentsData(true) && this.checkColorsData(true)) {
-
-	                                return true;
-	                        }
-
-	                        console.warn(this.mName + 'checkBufferData() buffers not ok');
-
-	                        return false;
-	                }
-
-	                /** 
-	                 * Returns the number of vertex points.
-	                 * @returns {Number} the number of vertices.
-	                 */
-
-	        }, {
-	                key: 'numVertices',
-	                value: function numVertices() {
-
-	                        return this.vertices.data.length / this.vertices.itemSize;
-	                }
-
-	                /** 
-	                 * Returns the number of indices.
-	                 * @returns {Number} the number of indices.
-	                 */
-
-	        }, {
-	                key: 'numIndices',
-	                value: function numIndices() {
-
-	                        return this.indices.data.length;
-	                }
-
-	                /** 
-	                 * Returns the number of normals.
-	                 * @returns {Number} the number of normals.
-	                 */
-
-	        }, {
-	                key: 'numNormals',
-	                value: function numNormals() {
-
-	                        return this.normals.data.length / this.normals.itemSize;
-	                }
-
-	                /** 
-	                 * Returns the number of texture coordinates.
-	                 * @param {glMatrix.vec2[] texCoords} use if defined, else default to this.texCoords buffer.
-	                 * @returns {Number} the number of texture coordinates.
-	                 */
-
-	        }, {
-	                key: 'numTexCoords',
-	                value: function numTexCoords(texCoords) {
-
-	                        // Since we can have multiple texCoords, condtional.
-
-	                        var tc = texCoords || this.texCoords;
-
-	                        return tc.data.length / tc.itemSize;
-	                }
-
-	                /** 
-	                 * Returns the number of tangents.
-	                 * @returns {Number} the number of texture coordinates.
-	                 */
-
-	        }, {
-	                key: 'numTangents',
-	                value: function numTangents() {
-
-	                        return this.tangents.data.length / this.tangents.itemSize;
-	                }
-	        }, {
-	                key: 'numColors',
-	                value: function numColors() {
-
-	                        return this.colors.data.length / this.colors.itemSize;
-	                }
-
-	                /** 
-	                 * Returns the number of faces (triangles).
-	                 * @returns {Number} the number of faces.
-	                 */
-
-	        }, {
-	                key: 'numFaces',
-	                value: function numFaces() {
-
-	                        var len = this.indices.length / 3;
-
-	                        if (this.util.frac(len / this.tangents.itemSize !== 0)) {
-
-	                                console.error(this.mName + 'numFaces(): fractional number of faces');
-	                        }
-
-	                        return len;
-	                }
-
-	                /** 
-	                 * Returns the number of sides (many Prims have only one).
-	                 * @returns {Number} the number of sides.
-	                 */
-
-	        }, {
-	                key: 'numSides',
-	                value: function numSides() {
-
-	                        console.warn(this.mName + 'numSides(): sides not implemented yet');
-
-	                        return 0;
-	                }
-
-	                /** 
-	                 * Returns the number of coordinates for ALL buffers as a sum.
-	                 * use to compute if we are 'dirty' and need to run this.createGLBuffers();
-	                 * @returns {Number} total size of ALL buffers.
-	                 */
-
-	        }, {
-	                key: 'numCoords',
-	                value: function numCoords() {
-
-	                        return this.numVertices() + this.numIndices() + this.numNormals() + this.numTangents() + this.numColors();
-	                }
-
-	                /** 
-	                 * Set or reset the vertices.
-	                 * @param {glMatrix.vec3[]} vertices a flattened vertex array.
-	                 */
-
-	        }, {
-	                key: 'setVertices',
-	                value: function setVertices(vertices) {
-
-	                        var o = this.vertices;
-
-	                        if (this.util.isArray(vertices)) {
-
-	                                o.data = new Float32Array(vertices);
-
-	                                o.numItems = vertices.length / o.itemSize;
-
-	                                this.bindGLBuffer(o, this.FLOAT32);
-	                        } else {
-
-	                                console.warn(this.mName + 'setVertices() invalid input, not Array, nothing set');
-	                        }
-	                }
-
-	                /** 
-	                 * Set or reset the indices.
-	                 * @param {Array} indices a flattened index array.
-	                 */
-
-	        }, {
-	                key: 'setIndices',
-	                value: function setIndices(indices) {
-
-	                        var o = this.indices;
-
-	                        if (this.util.isArray(indices)) {
-
-	                                if (this.webgl.stats.uint32) {
-
-	                                        o.data = new Uint32Array(indices);
-
-	                                        this.bindGLBuffer(o, this.UINT32);
-	                                } else {
-
-	                                        o.data = new Uint16Array(indices);
-
-	                                        this.bindGLBuffer(o, this.UINT16);
-	                                }
-	                        } else {
-
-	                                console.warn(this.mName + 'setIndices() invalid input, not Array, nothing set');
-	                        }
-	                }
-
-	                /** 
-	                 * Set or reset the normals.
-	                 * @param {glMatrix.vec3[]} normals a flattened normals array.
-	                 */
-
-	        }, {
-	                key: 'setNormals',
-	                value: function setNormals(normals) {
-
-	                        var o = this.normals;
-
-	                        if (this.util.isArray(normals)) {
-
-	                                o.data = new Float32Array(normals);
-
-	                                o.numItems = normals.length / o.itemSize;
-
-	                                this.bindGLBuffer(o, this.FLOAT32);
-	                        } else {
-
-	                                console.error(this.mName + 'setNormals() invalid input, not Array');
-	                        }
-	                }
-
-	                /** 
-	                 * Set or reset the texture coordinates.
-	                 * @param {glMatrix.vec3[]} texCoords a flattened texture coordinate array.
-	                 */
-
-	        }, {
-	                key: 'setTexCoords',
-	                value: function setTexCoords(texCoords) {
-
-	                        var o = this.texCoords;
-
-	                        if (this.util.isArray(texCoords)) {
-
-	                                o.data = new Float32Array(texCoords);
-
-	                                o.numItems = texCoords.length / o.itemSize;
-
-	                                this.bindGLBuffer(o, this.FLOAT32);
-	                        } else {
-
-	                                console.error(this.mName + 'setTexCoords() invalid input, not Array');
-	                        }
-	                }
-
-	                /** 
-	                 * Set or reset the colors.
-	                 * @param {glMatrix.vec4[]} vertices a flattened color array.
-	                 */
-
-	        }, {
-	                key: 'setColors',
-	                value: function setColors(colors) {
-
-	                        var o = this.colors;
-
-	                        if (this.util.isArray(colors)) {
-
-	                                o.data = new Float32Array(colors);
-
-	                                o.numItems = colors.length / o.itemSize;
-
-	                                this.bindGLBuffer(o, this.FLOAT32);
-	                        } else {
-
-	                                console.error(this.mName + 'setTangents() invalid input, not Array');
-	                        }
-	                }
-
-	                /** 
-	                 * Set or reset the tangents.
-	                 * @param {glMatrix.vec3[]} vertices a flattened tangent array.
-	                 */
-
-	        }, {
-	                key: 'setTangents',
-	                value: function setTangents(tangents) {
-
-	                        var o = this.tangents;
-
-	                        if (this.util.isArray(tangents)) {
-
-	                                o.data = new Float32Array(tangents);
-
-	                                o.numItems = tangents.length / o.itemSize;
-
-	                                this.bindGLBuffer(o, this.FLOAT32);
-	                        } else {
-
-	                                console.error(this.mName + 'setTangents() invalid input, not Array');
-	                        }
-	                }
-	        }, {
-	                key: 'setBufferData',
-	                value: function setBufferData() {
-	                        var vertices = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
-	                        var indices = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
-	                        var normals = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [];
-	                        var texCoords = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
-	                        var tangents = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : [];
-	                        var colors = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : [];
-
-
-	                        if (vertices.length > 0) {
-
-	                                this.setVertices(vertices);
-
-	                                console.log('numVertices is now:' + this.numVertices());
-	                        }
-
-	                        if (indices.length > 0) {
-
-	                                this.setIndices(indices);
-
-	                                console.log('numIndices is now:' + this.numIndices());
-	                        }
-
-	                        if (normals.length > 0) {
-
-	                                this.setNormals(normals);
-
-	                                console.log('numNormals is now:' + this.numNormals());
-	                        }
-
-	                        if (texCoords.length > 0) {
-
-	                                this.setTexCoords(texCoords);
-
-	                                console.log('numTexCoords is now:' + this.numTexCoords());
-	                        }
-
-	                        if (tangents.length > 0) {
-
-	                                this.setTangents(tangents);
-
-	                                console.log('numTangents is now:' + this.numTangents());
-	                        }
-
-	                        if (colors.length > 0) {
-
-	                                this.setColors(colors);
-
-	                                console.log('numColors is now:' + this.numColors());
-	                        }
-
-	                        if (this.vertices.data.length > this.webgl.MAX_DRAWELEMENTS) {
-
-	                                this.ssz = true;
-	                        } else {
-
-	                                this.ssz = false;
-	                        }
-	                }
-
-	                /** 
-	                 * Add data to existing data (e.g. combine two Prims into one).
-	                 * @param {glMatrix.vec3[]} vertices the position data.
-	                 * @param {Number} indices the index array for the vertices.
-	                 * @param {glMatrix.vec3[]} the normals array for the vertices.
-	                 * @param {glMatrix.vec2[]} the texture coordinates for the vertices.
-	                 * @param {glMatrix.vec4[]} the tangent coordinates for the vertices.
-	                 * @param {glMatrix.vec4[]} colors the colors array for the vertices.
-	                 * @param {Boolean} check if true, check the data for consistency, else do not.
-	                 */
-
-	        }, {
-	                key: 'addBufferData',
-	                value: function addBufferData() {
-	                        var vertices = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
-	                        var indices = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
-	                        var normals = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [];
-	                        var texCoords = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
-	                        var tangents = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : [];
-	                        var colors = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : [];
-	                        var check = arguments[6];
-
-
-	                        // Local reference to utility function.
-
-	                        var concat = this.util.concatArr;
-
-	                        // Current buffer size.
-
-	                        var currBufferSize = this.numCoords();
-
-	                        // Concat data, if present.
-
-	                        this.vertices.data = concat(this.vertices.data, vertices);
-
-	                        this.indices.data = concat(this.indices.data, indices), this.normals.data = concat(this.normals.data, normals), this.texCoords.data = concat(this.texCoords.data, texCoords), this.tangents.data = concat(this.tangents.data, tangents), this.colors.data = concat(this.colors.data, colors);
-
-	                        if (this.vertices.data.length > this.webgl.MAX_DRAWELEMENTS) {
-
-	                                this.ssz = true;
-	                        } else {
-
-	                                this.ssz = false;
-	                        }
-
-	                        // Reset WebGL buffers if size has changed.
-
-	                        if (currBufferSize !== this.numCoords()) {
-
-	                                this.createGLBuffers();
-	                        }
-
-	                        // If check flagged, make sure the data is valid for drawing by a Shader.
-
-	                        if (check) {
-
-	                                return this.checkBufferData();
-	                        }
-
-	                        return true;
-	                }
-	        }, {
-	                key: 'clearData',
-	                value: function clearData(c) {
-
-	                        c.data = [];
-	                }
-	        }, {
-	                key: 'clearBuffer',
-	                value: function clearBuffer(c) {
-
-	                        this.clearData(c), c.buffer = null, c.numItems = 0;
-	                }
-	        }, {
-	                key: 'clear',
-	                value: function clear() {
-
-	                        this.clearBuffer(this.vertices), this.clearBuffer(this.indices), this.clearBuffer(this.normals), this.clearBuffer(this.texCoords), this.clearBuffer(this.colors);
-	                }
-
-	                /** 
-	                 * Bind a WebGL buffer
-	                 * @param {Object} o the bufferObj for for particular array (e.g. vertex, tangent).
-	                 * @param {String} type the typed-array type.
-	                 */
-
-	        }, {
-	                key: 'bindGLBuffer',
-	                value: function bindGLBuffer(o, type) {
-
-	                        var gl = this.webgl.getContext();
-
-	                        o.buffer = gl.createBuffer();
-
-	                        gl.bindBuffer(gl.ARRAY_BUFFER, o.buffer);
-
-	                        switch (type) {
-
-	                                case this.FLOAT32:
-
-	                                        if (o.data instanceof Float32Array) {
-
-	                                                gl.bufferData(gl.ARRAY_BUFFER, o.data, gl.STATIC_DRAW);
-	                                        } else {
-
-	                                                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(o.data), gl.STATIC_DRAW);
-	                                        }
-
-	                                        o.numItems = o.data.length / o.itemSize;
-
-	                                        break;
-
-	                                case this.UINT32:
-
-	                                        o.buffer = gl.createBuffer();
-
-	                                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, o.buffer);
-
-	                                        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(o.data), gl.STATIC_DRAW);
-
-	                                        o.numItems = o.data.length / o.itemSize;
-
-	                                        break;
-
-	                                case this.UINT16:
-
-	                                        o.buffer = gl.createBuffer();
-
-	                                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, o.buffer);
-
-	                                        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(o.data), gl.STATIC_DRAW);
-
-	                                        o.numItems = o.data.length / o.itemSize;
-
-	                                        break;
-
-	                                default:
-
-	                                        console.error(this.mName + 'bindGLBuffer(): invalid WebGL buffer type ' + type);
-
-	                                        break;
-
-	                        }
-	                }
-
-	                /** 
-	                 * Create (empty) WebGL buffers using geometry data. Note that the 
-	                 * size is for flattened arrays.
-	                 * an array of vertices, in glMatrix.vec3 objects.
-	                 * an array of indices for the vertices.
-	                 * an array of texture coordinates, in glMatrix.vec2 format.
-	                 * an array of normals, in glMatrix.vec3 format.
-	                 * an array of tangents, in glMatrix.vec3 format.
-	                 * an array of colors, in glMatrix.vec4 format.
-	                 */
-
-	        }, {
-	                key: 'createGLBuffers',
-	                value: function createGLBuffers() {
-
-	                        var gl = this.webgl.getContext();
-
-	                        var fnName = this.mName + 'createGLBuffers():';
-
-	                        // Vertex Buffer Object.
-
-	                        var o = this.vertices;
-
-	                        if (!o.data.length) {
-
-	                                // console.log( fnName + ' no vertices present, creating default' );
-
-	                                o.data = new Float32Array();
-	                        }
-
-	                        this.bindGLBuffer(o, this.FLOAT32);
-
-	                        // Create the Index buffer.
-
-	                        o = this.indices;
-
-	                        /* 
-	                         * Conditionally create a UINT16 or UINT32 buffer for the index values, based 
-	                         * on whether this is WebGL 2.0, or the WebGL extension is available
-	                         */
-	                        if (this.webgl.stats.uint32) {
-
-	                                if (!o.data.length) {
-
-	                                        // console.log( fnName + ' no indices present, creating default' );
-
-	                                        o.data = new Uint32Array();
-	                                }
-
-	                                this.bindGLBuffer(o, this.UINT32);
-	                        } else {
-
-	                                if (!o.data.length) {
-
-	                                        // console.log( fnName + ' no indices present, creating default' );
-
-	                                        o.data = new Uint16Array();
-	                                }
-
-	                                this.bindGLBuffer(o, this.UINT16);
-	                        }
-
-	                        // Create the Sides buffer, a kind of indices buffer.
-
-	                        o = this.sides;
-
-	                        if (!o.data.length) {
-
-	                                // console.warn( fnName + ' no sides present, creating default' );
-
-	                                o.data = new Uint16Array();
-	                        }
-
-	                        this.bindGLBuffer(o, this.UINT16);
-
-	                        // create the Normals buffer.
-
-	                        o = this.normals;
-
-	                        if (!o.data.length) {
-
-	                                // console.log( fnName + ': no normals, present, creating default' );
-
-	                                o.data = new Float32Array();
-	                        }
-
-	                        this.bindGLBuffer(o, this.FLOAT32);
-
-	                        // Create the primary Texture buffer.
-
-	                        o = this.texCoords;
-
-	                        if (!o.data.length) {
-
-	                                // console.warn( fnName + ' no texture present, creating default' );
-
-	                                o.data = new Float32Array();
-	                        }
-
-	                        this.bindGLBuffer(o, this.FLOAT32);
-
-	                        // create the Tangents Buffer.
-
-	                        o = this.tangents;
-
-	                        if (!o.data.length) {
-
-	                                // console.warn( fnName + ' no tangents present, creating default' );
-
-	                                o.data = new Float32Array();
-	                        }
-
-	                        this.bindGLBuffer(o, this.FLOAT32);
-
-	                        // Create the Colors buffer.
-
-	                        o = this.colors;
-
-	                        if (!o.data.length || o.data.length < 4 * this.vertices.length / 3) {
-
-	                                // console.warn( fnName + ' no colors present, creating default color' );
-
-	                                o.data = new Float32Array();
-	                        }
-
-	                        this.bindGLBuffer(o, this.FLOAT32);
-
-	                        // Set the flag.
-
-	                        this.makeBuffers = false;
-
-	                        return this;
-	                }
-	        }]);
-
-	        return GeometryBuffer;
-	}();
-
-	exports.default = GeometryBuffer;
-
-/***/ }),
-/* 42 */
-/***/ (function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	        value: true
-	});
-
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-	var _map2d = __webpack_require__(18);
-
-	var _map2d2 = _interopRequireDefault(_map2d);
-
-	var _map3d = __webpack_require__(20);
-
-	var _map3d2 = _interopRequireDefault(_map3d);
-
-	var _mesh = __webpack_require__(21);
-
-	var _mesh2 = _interopRequireDefault(_mesh);
-
-	var _lights = __webpack_require__(15);
-
-	var _lights2 = _interopRequireDefault(_lights);
-
-	var _geometryPool = __webpack_require__(22);
-
-	var _geometryPool2 = _interopRequireDefault(_geometryPool);
-
-	var _texturePool = __webpack_require__(25);
-
-	var _texturePool2 = _interopRequireDefault(_texturePool);
-
-	var _modelPool = __webpack_require__(23);
-
-	var _modelPool2 = _interopRequireDefault(_modelPool);
-
-	var _audioPool = __webpack_require__(26);
-
-	var _audioPool2 = _interopRequireDefault(_audioPool);
-
-	var _geometryBuffer = __webpack_require__(41);
-
-	var _geometryBuffer2 = _interopRequireDefault(_geometryBuffer);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	'use strict';
-
-	var PrimFactory = function () {
-
-	        /** 
-	         * @class
-	         * Object Factory for Prims, and return vertex and index data 
-	         * suitable for creating a VBO and IBO.
-	         * 
-	         * Because objects can vary widely in composition and have lots of 
-	         * properties, we use an Object-Factory pattern here instead of an ES6 class, and 
-	         * don't use 'new' operator to create individual Prims.
-	         *
-	         * Members of the manufactured Prim (values are units, with 1.0 being normalized size).
-	         *
-	         * Elements of Prims:
-	         * 
-	         * prim.position      = (glMatrix.vec5) [ x, y, z, rounding, | startSlice, endSlice,  ]
-	         * prim.dimensions    = (glMatrix.vec4) [ x, y, z ]
-	         * prim.divisions     = (glMatrix.vec5) [ x, y, z ]
-	         * prim.acceleration  = (glMatrix.vec3) [ x, y, z ]
-	         * prim.rotation      = (glMatrix.vec3) [ x, y, z ]
-	         * prim.angular       = (glMatrix.vec3) [ x, y, z ]
-	         * 
-	         * prim.geometry      = GeometryBuffer flattened arrays plus WebGL objects with the following datatypes:
-	         *
-	         *  { 
-	         *    vertices:  [],   // Float32Array
-	         *    indices:   [],   // Uint32Array (Uint16Array if 32-bit indices not supported)
-	         *    texCoords: [],   // Float32Array
-	         *    normals:   [],   // Float32Array
-	         *    tangents:  [],   // Float32Array
-	         *    colors:    []    // Float32Array
-	         *  }
-	         * 
-	         * prim.shader        = Shader used by this prim.
-	         * prim.textures      = array of textures used by this prim.
-	         * prim.materials     = materials used by this prim.
-	         * prim.audio         = array of audio files use by this prim.
-	         * prim.video         = array of video files used by this prim.
-	         *
-	         * Array optimization
-	         * https://gamealchemist.wordpress.com/2013/05/01/lets-get-those-javascript-arrays-to-work-fast/
-	         *
-	         * @constructor
-	         * Note don't call anything in World that requires World.init() in constructor.
-	         *
-	         * @param {Boolean} init if true, initialize immediately.
-	         * @param {Util} util shared utility methods, patches, polyfills.
-	         * @param {glMatrix} glMatrix fast array manipulation object.
-	         * @param {WebGL} webgl object holding the WebGLRenderingContext.
-	         * @param {TexturePool} a TexturePool object for accessing textures.
-	         * @param {ModelPool} a ModelPool for reading OBJ WaveFront and similar 3d object files.
-	         * @param {GeometryPool} Creates geometry, procedural or Mesh (by invoking ModelPool).
-	         */
-	        function PrimFactory(init, world) {
-	                var _this = this;
-
-	                _classCallCheck(this, PrimFactory);
-
-	                console.log('in PrimFactory class');
-
-	                // Keep a copy of the World for up-communication.
-
-	                this.world = world, this.util = world.util, this.webgl = world.webgl, this.glMatrix = world.glMatrix,
-
-	                // Attach 1 copy of the Texture loader to this Factory.
-
-	                this.texturePool = world.texturePool, // new TexturePool( init, util, webgl );
-
-	                // Attach 1 copy of the Model loader to this Factory.
-
-	                this.modelPool = world.modelPool, // new ModelPool( init, util, webgl );
-
-	                // Attach 1 copy of GeometryPool to this Factory (itself loading a reference to world.modelPool.
-
-	                this.geometryPool = world.geometryPool,
-
-	                // Attach 1 copy of MaterialPool to this Factory.
-
-	                this.materialPool = world.materialPool;
-
-	                // Keep a list of all created Prims here.
-
-	                this.prims = [];
-
-	                /** 
-	                 * ---------------------------------------
-	                 * EMITTER CALLBACKS
-	                 * ---------------------------------------
-	                 */
-
-	                // Bind the callback for geometry initialization applied to individual prims (GeometryPool, Mesh, and ModelPool).
-
-	                this.util.emitter.on(this.util.emitter.events.GEOMETRY_READY, function (prim, key, pos) {
-
-	                        _this.initPrimGeometry(prim, _this.modelPool.keyList[key], pos);
-
-	                        // Check if complete, add if it is...
-
-	                        prim.shader.addPrim(prim);
-	                });
-
-	                // Bind Prim callback for a new material applied to individual Prims.
-
-	                this.util.emitter.on(this.util.emitter.events.MATERIAL_READY, function (prim, key, materialName) {
-
-	                        _this.initPrimMaterial(prim, _this.materialPool.keyList[key], materialName); // associative array
-
-	                        // Check if complete, add if it is...
-
-	                        prim.shader.addPrim(prim);
-	                });
-
-	                // Bind Prim callback for a new texture loaded .(TexturePool).
-
-	                this.util.emitter.on(this.util.emitter.events.TEXTURE_2D_READY, function (prim, key, pos) {
-
-	                        _this.initPrimTexture(prim, _this.texturePool.keyList[key], pos);
-
-	                        // Check if complete, add if it is...
-
-	                        prim.shader.addPrim(prim);
-	                });
-
-	                // Bind Prim callback for a new texture loaded .(TexturePool).
-
-	                this.util.emitter.on(this.util.emitter.events.TEXTURE_3D_READY, function (prim, key) {
-
-	                        _this.initPrimTexture3d(prim, _this.texturePool.keyList[key], pos);
-
-	                        // Check if complete, add if it is...
-
-	                        prim.shader.addPrim(prim);
-	                });
-
-	                // Bind Prim callback for a new texture loaded .(TexturePool).
-
-	                this.util.emitter.on(this.util.emitter.events.TEXTURE_CUBE_MAP_READY, function (prim, key) {
-
-	                        _this.initPrimTextureCubeMap(prim, _this.texturePool.keyList[key], pos);
-
-	                        // Check if complete, add if it is...
-
-	                        prim.shader.addPrim(prim);
-	                });
-
-	                // Bind Prim callback for a Shader accepting a Prim for rendering.
-
-	                this.util.emitter.on(this.util.emitter.events.PRIM_ADDED_TO_SHADER, function (prim) {
-
-	                        // post-addition events.
-
-	                        prim.alpha = 0.0;
-
-	                        prim.setFade(0, 1);
-	                });
-	        } // end of constructor
-
-
-	        /** 
-	         * Create a large coordinate data array with data for multiple Prims.
-	         * When a Prim is made, we store a reference in the this.prims[] 
-	         * array. So, to make one, we just concatenate their  
-	         * vertices. Use to send multiple prims sharing the same Shader.
-	        // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
-	        // TODO: https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/TechniquesforWorkingwithVertexData/TechniquesforWorkingwithVertexData.html
-	        // TODO: http://max-limper.de/tech/batchedrendering.html
-	         * @param {glMatrix.vec3[]} vertices
-	         * @returns {glMatrix.vec3[]} vertices
-	         */
-
-
-	        _createClass(PrimFactory, [{
-	                key: 'setVertexData',
-	                value: function setVertexData(vertices) {
-
-	                        vertices = [];
-
-	                        for (var _i in this.prims) {
-
-	                                vertices = vertices.concat(this.prims[_i].geometry.vertices.data);
-	                        }
-
-	                        return vertices;
-	                }
-
-	                /** 
-	                 * get the big array with all index data. Use to 
-	                 * send multiple prims sharing the same Shader.
-	                 * @param {Array} indices the indices to add to the larger array.
-	                 * @returns {Array} the indices.
-	                 */
-
-	        }, {
-	                key: 'setIndexData',
-	                value: function setIndexData(indices) {
-
-	                        indices = [];
-
-	                        for (var _i2 in this.prims) {
-
-	                                indices = indices.concat(this.prims[_i2].geometry.indices.data);
-	                        }
-
-	                        return indices;
-	                }
-
-	                /** 
-	                 * Add a new texture to the Prim (callback for TEXTURE_2D_READY event).
-	                 * @param {Prim} prim the prim to be updated.
-	                 * @param {TextureObj} textureObj the texture object returned from TexturePool.
-	                 * @param {Number} pos a position to write the texture to.
-	                 */
-
-	        }, {
-	                key: 'initPrimTexture',
-	                value: function initPrimTexture(prim, textureObj, pos) {
-
-	                        prim.textures[pos] = textureObj;
-
-	                        /* 
-	                         * Check materials files, and link texture to the files. We do the reverse in initPrimMaterial()
-	                         * NOTE: prim.materials[ i ] initially has the FILE PATH of the texture. If we fail to find a 
-	                         * WebGL texture the file path will remain as a debugging string.
-	                         */
-
-	                        for (var _i3 in prim.materials) {
-
-	                                var material = prim.materials[_i3];
-
-	                                var tex = material[textureObj.textureUse];
-
-	                                //////////console.log( 'PrimFactory::initPrimTexture():finding texture for:' + material.name + ' to:' + prim.name );
-	                                ////////console.log( 'TEX:' + tex + ' instanceof WebGLTexture:' + ( tex instanceof WebGLTexture) )
-
-	                                if (!(tex instanceof WebGLTexture)) {
-
-	                                        //////////console.log( 'PrimFactory::initPrimTexture():matching texture ' + material.name + ' to:' + prim.name );
-
-	                                        material[textureObj.textureUse] = textureObj.texture;
-	                                }
-	                        }
-	                }
-
-	                /** 
-	                 * Add a new 3d texture to the Prim.
-	                 */
-
-	        }, {
-	                key: 'initPrimTexture3d',
-	                value: function initPrimTexture3d(prim, textureObj, pos) {
-
-	                        prim.textures[pos] = textureObj;
-	                }
-
-	                /** 
-	                 * Add a new cubemap texture to the Prim
-	                 */
-
-	        }, {
-	                key: 'initPrimTextureCubeMap',
-	                value: function initPrimTextureCubeMap(prim, textureObj, pos) {
-
-	                        prim.textures[pos] = textureObj;
-	                }
-
-	                /** 
-	                 * Add ma material description to the Prim.
-	                 * Note: a single .mtl file may add multiple materials.
-	                 * @param {Prim} prim the prim.
-	                 * @param {Material} material the material object.
-	                 * @param {Number} pos starting position in array (usually 0).
-	                 */
-
-	        }, {
-	                key: 'initPrimMaterial',
-	                value: function initPrimMaterial(prim, material, materialName) {
-
-	                        // Material is returned as an associative array, since multiple materials may be found in one .mtl file.
-
-	                        /* 
-	                         * If the material already has an entry, it was put there parsing the 
-	                         * OBJ file. so pull the 'start' value from it, and replace with 
-	                         * the full material data. Otherwise, add material - this.initPrim() 
-	                         * will add the start position for the material later.
-	                         */
-
-	                        if (prim.materials[materialName]) {
-
-	                                ///////console.log('initPrimMaterial():found existing material ' + materialName + ' with start:' + prim.materials[ materialName ].starts )
-
-	                                material.starts = prim.materials[materialName].starts;
-	                        }
-
-	                        ///////////console.log( 'initPrimMaterial():adding material:' + materialName + ' for prim:' + prim.name )
-
-	                        prim.materials[materialName] = material;
-
-	                        /* 
-	                         * Check the texture files to see if we can map a texture to a material declaration.
-	                         * We use the list of possible texture use types in MaterialPool. 
-	                         * NOTE: unlikely, since material file is read for textures!
-	                         *
-	                         * NOTE: Prim.setMaterial() is used to create a default material in Prim.createPrim();
-	                         */
-
-	                        for (var key in this.materialPool.texturePositions) {
-
-	                                // Get the keys, map_Kd, map_Ka, map_Ks 
-
-	                                //console.log( 'PrimFactory::initPrimMaterial(): material texture ' + key + ' for prim:' + prim.name + ' present...' );
-	                                //console.log( 'PRIM.TEXTURES LENGTH IS A:' + prim.textures.length )
-
-	                                for (var j = 0; j < prim.textures.length; j++) {
-
-	                                        if (prim.textures[j][key] && prim.textures[j][key].texture instanceof WebGLTexture) {
-
-	                                                console.log('PrimFactory::initPrimMaterial(): matching material:' + material.name + ' texture type:' + key + ' with prim.textures:' + j);
-
-	                                                material[i] = prim.textures[j][key].texture;
-	                                        }
-	                                }
-	                        }
-	                }
-
-	                /** 
-	                 * Initialize Prim geometry from proceedural geometry routines or OBJ wavefront files.
-	                 * @param {prim} prim the Prim.
-	                 * @param {String} key the identifying the geometry in the ModelPool.
-	                 * @param {Object} coords coordinates object returned by procedural, Mesh, or ModelPool. Added 
-	                 * to the ModelPool. The method gets the coords object from ModelPool via a key (see constructor).
-	                 * { 
-	                 *   vertices: vertices, 
-	                 *   indices: indices,
-	                 *   normals: normals, 
-	                 *   texCoords: texCoords, 
-	                 *   tangents: tangents
-	                 *   type: type.
-	                 *   path: file path.
-	                 *   options: grouping of vertices under objects, groups, materials, smoothinGroups...
-	                 * };
-	                 */
-
-	        }, {
-	                key: 'initPrimGeometry',
-	                value: function initPrimGeometry(prim, coords, pos) {
-
-	                        /* 
-	                         * Options contain material name declarations, groups, smoothing groups, etc. 
-	                         * Their value is their start in coords.vertices.
-	                         */
-
-	                        /////////////if ( coords.material ) console.log('coords.material found for:' + prim.name + ' mat:' + coords.material)
-
-	                        if (coords.options) {
-
-	                                /////////console.log("initPrimGeometry():COORDS.options:" + coords.options + ' for:' + prim.name)
-
-	                                for (var i in coords.options.materials) {
-
-	                                        /* 
-	                                         * If the material exists in prim.materials under its name (meaning that it was loaded 
-	                                         * by MaterialPool, add the position start in coords.options.materials[i] to it.
-	                                         * Otherwise, create a empty object with the information.
-	                                         * NOTE: Prim.setMaterial() is used to create a default material in Prim.createPrim();
-	                                         */
-
-	                                        if (!prim.materials[i]) {
-
-	                                                console.log('initPrimGeometry():creating new material for ' + i);
-
-	                                                prim.materials[i] = { starts: [] };
-	                                        }
-
-	                                        // Add the start position for this material.
-
-	                                        /////////console.log( "initPrimGeometry():coords options.materials[" + i + "]: adding start:" + coords.options.materials[i] )
-
-	                                        prim.materials[i].starts = coords.options.materials[i];
-
-	                                        // TODO: see if we can bind a texture to it.
-	                                }
-	                        }
-
-	                        // Update vertices if they were supplied.
-
-	                        prim.updateVertices(coords.vertices);
-
-	                        // Compute bounding box.
-
-	                        prim.computeBoundingBox(prim.geometry.vertices.data);
-
-	                        /* 
-	                         * Procedural geometry is already at scale = 1, so bounding box should be computed 
-	                         * automatically.
-	                         * 
-	                         * For a Mesh, look at dimensions supplied in the initial Prim call, 
-	                         * relative to topleft and bottomright of bounding box
-	                         * and determine a scale. Use this to scale in the MV matrix
-	                         *
-	                         */
-
-	                        var scale = prim.dimensions[0] / prim.boundingBox.dimensions[0];
-
-	                        scale = Math.max(scale, prim.dimensions[1] / prim.boundingBox.dimensions[1]);
-
-	                        scale = Math.max(prim.dimensions[2] / prim.boundingBox.dimensions[2]);
-
-	                        prim.scale = [scale, scale, scale];
-
-	                        // Update indices if they were supplied.
-
-	                        prim.updateIndices(coords.indices);
-
-	                        // If normals are used, re-compute.
-
-	                        prim.updateNormals(coords.normals);
-
-	                        // If texcoords are used, re-compute.
-
-	                        prim.updateTexCoords(coords.texCoords);
-
-	                        // Tangents aren't supplied by OBJ format, so re-compute.
-
-	                        prim.updateTangents();
-
-	                        // Colors aren't supplied by OBJ format, so re-compute.
-
-	                        prim.updateColors();
-
-	                        // If a usemtl was specified by a file load
-
-	                        // Check our buffers for consistency.
-
-	                        //////////prim.geometry.checkBufferData();
-
-	                        //if ( prim.name === 'cubesphere' ) {
-	                        //if ( prim.name === 'TestCapsule' ) {
-	                        //if ( prim.name === 'colored cube' ) {
-	                        //if ( prim.name === 'texsphere' ) {
-
-	                        var mesh = new _mesh2.default(prim);
-
-	                        // SUBDIVIDE TEST
-
-	                        //mesh.subdivide( true );
-	                        //mesh.subdivide( true );
-	                        //mesh.subdivide( true );
-	                        //mesh.subdivide( true );
-	                        //mesh.subdivide( true );
-	                        //mesh.subdivide( true );
-	                        //mesh.subdivide( true );
-	                        //mesh.subdivide( true );
-	                        //mesh.subdivide( true ); // this one zaps from low-vertex < 10 prim
-
-	                        //}
-
-	                        //console.log("checking buffer data for " + prim.name );
-
-	                        /////////prim.geometry.checkBufferData();
-	                }
-
-	                /** 
-	                 * Create an standard 3d object.
-	                 * @param {Function} shader Shader-derived object that can add and remove this Prim from rendering list.
-	                 * @param {String} type assigned type of object (required for prim generation)
-	                 * @param {String} name assigned name of object (not necessarily unique).
-	                 * @param {vec5} dimensions object dimensions (width, height, depth, (plus additional info for some Prims)
-	                 * @param {vec5} divisions number of divisions in the x, y, z surface, (plus additional info for some Prims)
-	                 * @param {glMatrix.vec3} position location of center of object.
-	                 * @param {glMatrix.vec3} acceleration movement vector (acceleration) of object.
-	                 * @param {glMatrix.vec3} rotation rotation vector (spin) around center of object.
-	                 * @param {glMatrix.vec3} angular orbital rotation around a defined point ///TODO!!!!! DEFINE########
-	                 * @param {String[]} textureImagea array of the paths to images used to create a texture (one Prim can have several).
-	                 * @param {glMatrix.vec4[]|glMatrix.vec4} color the default color(s) of the object, either a single color or color array.
-	                 * @param {Boolean} applyTexToFace if true, apply texture to each face, else apply texture to the entire object.
-	                 * @param {String[]} modelFiles path to model OBJ (and indirectly, material files ) used to define non-procedural Mesh Prims.
-	                 */
-
-	        }, {
-	                key: 'createPrim',
-	                value: function createPrim(shader, // Shader which attaches/detaches this Prim from display list
-
-	                type) // heightMap file (HEIGHTMAP) or array of coordinate and material files (MESH)
-
-	                {
-	                        var name = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'unknown';
-	                        var dimensions = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [1, 1, 1, 0, 0];
-	                        var divisions = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : [1, 1, 1, 0, 0];
-	                        var position = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : this.glMatrix.vec3.create();
-	                        var acceleration = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : this.glMatrix.vec3.create();
-	                        var rotation = arguments.length > 7 && arguments[7] !== undefined ? arguments[7] : this.glMatrix.vec3.create();
-	                        var angular = arguments.length > 8 && arguments[8] !== undefined ? arguments[8] : this.glMatrix.vec3.create();
-	                        var textureImages = arguments.length > 9 && arguments[9] !== undefined ? arguments[9] : [];
-	                        var colors = arguments.length > 10 && arguments[10] !== undefined ? arguments[10] : null;
-
-	                        var _this2 = this;
-
-	                        var applyTexToFace = arguments.length > 11 && arguments[11] !== undefined ? arguments[11] : false;
-	                        var modelFiles = arguments.length > 12 && arguments[12] !== undefined ? arguments[12] : [];
-	                        // function to execute when prim is done (e.g. attach to drawing list shader).
-
-	                        var vec3 = this.glMatrix.vec3;
-
-	                        var mat4 = this.glMatrix.mat4;
-
-	                        if (!this.geometryPool.checkType(type)) {
-
-	                                console.error('Prim::createPrim(): unsupported Prim type:' + type);
-
-	                                return null;
-	                        }
-
-	                        // Start the object factory.
-
-	                        var prim = {};
-
-	                        var p = prim;
-
-	                        /** 
-	                         * Update the model-view matrix with position, translation, rotation, and orbital motion for individual Prims.
-	                         * @param {glMatrix.mat4} mvMatrix model-view matrix.
-	                         * @returns {glMatrix.mat4} the altered model-view matrix.
-	                         */
-	                        prim.setMV = function (mvMatrix) {
-
-	                                // TODO: translate everything.
-
-	                                var z = -5; // TODO: default position relative to camera! !!! CHANGE??????
-
-	                                // Translate.
-
-	                                vec3.add(p.position, p.position, p.acceleration);
-
-	                                // Translate to default position.
-
-	                                mat4.translate(mvMatrix, mvMatrix, [p.position[0], p.position[1], z + p.position[2]]);
-
-	                                // Rotate.
-
-	                                vec3.add(p.rotation, p.rotation, p.angular);
-
-	                                mat4.rotate(mvMatrix, mvMatrix, p.rotation[0], [1, 0, 0]);
-
-	                                mat4.rotate(mvMatrix, mvMatrix, p.rotation[1], [0, 1, 0]);
-
-	                                mat4.rotate(mvMatrix, mvMatrix, p.rotation[2], [0, 0, 1]);
-
-	                                mat4.scale(mvMatrix, mvMatrix, p.scale);
-
-	                                // TODO: rotate second for orbiting.
-	                                // TODO: rotate (internal), translate, rotate (orbit)
-	                                // TODO: orbit
-
-	                                return mvMatrix;
-	                        };
-
-	                        /** 
-	                         * Set the Prim as a glowing object. Global Lights 
-	                         * are handled by the World.
-	                         * @param {glMatrix.vec3} direction the direction of the light.
-	                         * @param {glMatrix.vec4} color light color
-	                         */
-	                        prim.setLight = function () {
-	                                var direction = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [1, 1, 1];
-	                                var color = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [255, 255, 255];
-
-
-	                                p.light.direction = direction, p.light.color = color;
-	                        };
-
-	                        /** 
-	                         * Set Prim material, with defaults available from MaterialPoo.
-	                         */
-	                        prim.setMaterial = function () {
-	                                var name = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : _this2.util.DEFAULT_KEY;
-	                                var ambient = arguments[1];
-	                                var diffuse = arguments[2];
-	                                var specular = arguments[3];
-	                                var specularExponent = arguments[4];
-	                                var sharpness = arguments[5];
-	                                var refraction = arguments[6];
-	                                var transparency = arguments[7];
-	                                var illum = arguments[8];
-	                                var map_Kd = arguments[9];
-
-
-	                                //p.materials[ name ] = this.materialPool.default( name, ambient, diffuse, specular, 
-
-	                                //    specularExponent, sharpness, refraction, transparency, illum, map_Kd );
-
-	                                var material = _this2.materialPool.default(name, ambient, diffuse, specular, specularExponent, sharpness, refraction, transparency, illum, map_Kd);
-
-	                                // Check for links in Prim.textures.
-
-	                                _this2.initPrimMaterial(prim, material, material.name);
-	                        };
-
-	                        // We don't have a .setMaterial - set directly in loadModel.updateMateria()
-
-	                        // Update vertices (no re-compute available).
-
-	                        prim.updateVertices = function (vertices) {
-
-	                                var geo = p.geometry;
-
-	                                if (vertices && vertices.length) {
-
-	                                        geo.setVertices(vertices);
-	                                }
-	                        };
-
-	                        // update indices (no re-compute available).
-
-	                        prim.updateIndices = function (indices) {
-
-	                                var geo = p.geometry;
-
-	                                if (indices && indices.length) {
-
-	                                        geo.setIndices(indices);
-	                                }
-	                        };
-
-	                        // Update or re-compute normals.
-
-	                        prim.updateNormals = function (normals) {
-
-	                                var geo = p.geometry;
-
-	                                if (normals && normals.length) {
-
-	                                        geo.setNormals(normals);
-	                                } else {
-
-	                                        //////////console.log("Prim::updateNormals():" + p.name + ' recalculating normal coordinates' );
-
-	                                        geo.setNormals(_this2.geometryPool.computeNormals(geo.vertices.data, geo.indices.data, [], p.useFaceNormals));
-	                                }
-	                        };
-
-	                        // Update or re-compute texture coordinates.
-
-	                        prim.updateTexCoords = function (texCoords) {
-
-	                                var geo = p.geometry;
-
-	                                if (texCoords && texCoords.length > 0) {
-
-	                                        geo.setTexCoords(texCoords);
-	                                } else if (geo.numTexCoords() !== geo.numVertices()) {
-
-	                                        //////////console.log("Prim::updateTexCoords():" + p.name + ' recalculating texture coordinates' );
-
-	                                        geo.setTexCoords(_this2.geometryPool.computeTexCoords(geo.vertices.data));
-	                                }
-	                        };
-
-	                        // Update or re-compute tangents.
-
-	                        prim.updateTangents = function (tangents) {
-
-	                                var geo = p.geometry;
-
-	                                if (tangents && tangents.length) {
-
-	                                        geo.setTangents(tangents);
-	                                } else {
-
-	                                        /////////console.log("Prim::updateTangents():" + p.name + ' recalculating tangent coordinates' );
-
-	                                        geo.setTangents(_this2.geometryPool.computeTangents(geo.vertices.data, geo.indices.data, geo.normals.data, geo.texCoords.data, []));
-	                                }
-	                        };
-
-	                        // Update or re-compute colors.
-
-	                        prim.updateColors = function (colors) {
-
-	                                var geo = p.geometry;
-
-	                                if (colors && colors.length) {
-
-	                                        geo.setColors(colors);
-	                                } else {
-
-	                                        ////////console.log("Prim::updateColors():" + p.name + ' recalculating color coordinates' );
-
-	                                        geo.setColors(_this2.geometryPool.computeColors(geo.normals.data, []));
-	                                }
-	                        };
-
-	                        // Compute the bounding box.
-
-	                        prim.computeBoundingBox = function () {
-
-	                                prim.boundingBox = _this2.geometryPool.computeBoundingBox(prim.geometry.vertices.data);
-	                        };
-
-	                        // Compute the bounding sphere (could be used for auto-computation of texture coordinates).
-
-	                        prim.computeBoundingSphere = function () {
-
-	                                _this2.geometryPool.computeBoundingSphere(prim.geometry.vertices.data);
-	                        };
-
-	                        // Scale. Normally, we use matrix transforms to accomplish this.
-
-	                        prim.scale = function (scale) {
-
-	                                _this2.geometryPool.scale(scale, prim.geometry.vertices.data);
-	                        };
-
-	                        // Move. Normally, we use matrix transforms to accomplish this.
-
-	                        prim.move = function (pos) {
-
-	                                _this2.geometryPool.computeMove(scale, prim.geometry.vertices.data);
-	                        };
-
-	                        // Move to a specificed coordinate.
-
-	                        prim.moveTo = function (pos) {
-
-	                                _this2.geometryPool.move([_this2.position[0] - pos[0], _this2.position[1] - pos[1], _this2.position[2] - pos[2]]);
-	                        };
-
-	                        /** 
-	                         * Fade the Prim in or out, optionally using a define equation.
-	                         * @param {Boolean} direction if true, fade in, else fade out.
-	                         * @param {Number} start starting alpha.
-	                         * @param {Number} end ending alpha.
-	                         * @param {Function} eq (optional) fading equation.
-	                         */
-
-	                        prim.setFade = function (start, end, eq) {
-
-	                                prim.fade.startAlpha = start;
-
-	                                prim.fade.endAlpha = end;
-
-	                                prim.alpha = start;
-
-	                                if (eq) prim.fade.eq = eq;
-
-	                                // Save our current Shader as a default (swapped back by s0).
-
-	                                if (prim.shader !== _this2.world.s0) {
-
-	                                        prim.defaultShader = prim.shader;
-
-	                                        // Move the Prim WITHOUT emitting a Prim add/remove event.
-
-	                                        prim.shader.movePrim(prim, _this2.world.s0);
-	                                }
-	                        };
-
-	                        // Give the Prim a unique Id.
-
-	                        prim.id = this.util.computeId();
-
-	                        // Shader after the Prim has initialized.
-
-	                        ///////////////////////prim.shader = prim.defaultShader = shader;
-
-	                        prim.shader = this.world.s0; // Fadein shader
-
-	                        prim.defaultShader = shader;
-
-	                        // Name (arbitrary).
-
-	                        prim.name = name;
-
-	                        // Type (must match type defined in Prim.typeList).
-
-	                        prim.type = type;
-
-	                        // Size in world coordinates.
-
-	                        prim.dimensions = dimensions || this.vec5(1, 1, 1, 0, 0, 0, 0);
-
-	                        // Amount of division of the Prim along each axis.
-
-	                        prim.divisions = divisions || this.vec5(1, 1, 1, 0, 0, 0);
-
-	                        // Prim position in World coordinates.
-
-	                        prim.position = position || vec3.create();
-
-	                        // Prim speed in World coordinates.
-
-	                        prim.acceleration = acceleration || vec3.create();
-
-	                        // Prim rotation on x, y, z axis.
-
-	                        prim.rotation = rotation || vec3.create();
-
-	                        // Prim angular rotation indicates circular velocity in x, y, z
-
-	                        prim.angular = angular || vec3.create();
-
-	                        // If orbiting, the radius to orbit around.
-
-	                        prim.orbitRadius = 0.0;
-
-	                        // Angular velocity in an orbit.
-
-	                        prim.orbitAngular = 0.0;
-
-	                        // Prim scale, default in World coordinates (adjusted after Geometry created).
-
-	                        prim.scale = [1.0, 1.0, 1.0];
-
-	                        // Set Prim lighting (use Shader-defined lighting).
-
-	                        prim.light = new _lights2.default(this.glMatrix);
-
-	                        // Prim's overall opacity at creation (default is invisible).
-
-	                        prim.alpha = 1.0;
-
-	                        // Note: fade equations in util.
-
-	                        prim.fade = {
-
-	                                startAlpha: 0.0,
-
-	                                endAlpha: 1.0
-
-	                        };
-
-	                        // Visible from outside (counterclockwise winding) or inside (clockwise winding).
-
-	                        prim.visibleFrom = this.geometryPool.OUTSIDE;
-
-	                        /* 
-	                         * Repeatedly apply the texture to each defined Face of the Prim (instead of wrapping around the Mesh).
-	                         * If we have multiple textures, apply in succession.
-	                         */
-
-	                        prim.applyTexToFace = applyTexToFace;
-
-	                        // Whether to use face normals for a Face of the prim.
-
-	                        prim.useFaceNormals = false; //////////////////CHANGE SHOULD BE SET OPTIONALLY !!!!!!!!!!!!!!!!!!!!!
-
-	                        // Whether to include tangents 
-
-	                        prim.useTangents = true; // TODO:///////CHANGE!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-	                        // Waypoints for scripted motion or timelines.
-
-	                        prim.waypoints = [];
-
-	                        // Store multiple textures for one Prim (must be defined for prim.materials to work).
-
-	                        prim.textures = [];
-
-	                        // Material array.
-
-	                        prim.materials = [];
-
-	                        // Set default material for the Prim (similar to OBJ format).
-
-	                        prim.setMaterial(this.util.DEFAULT_KEY);
-
-	                        // Store multiple sounds for one Prim.
-
-	                        prim.audio = [];
-
-	                        // Store multiple videos for one Prim.
-
-	                        prim.video = [];
-
-	                        // Parent Node.
-
-	                        prim.parentNode = null;
-
-	                        // Child Prim array.
-
-	                        prim.children = [];
-
-	                        // Execute geometry creation routine (which may be a file load).
-
-	                        console.log('Generating Prim:' + prim.name + '(' + prim.type + ')');
-
-	                        // Geometry factory function, create empty WebGL Buffers.
-
-	                        prim.geometry = new _geometryBuffer2.default(prim.name, this.util, this.webgl);
-
-	                        // Create Geometry data, or load Mesh data (may alter some of the above default properties).
-
-	                        this.geometryPool.getGeometries(prim, modelFiles);
-
-	                        /* 
-	                         * Add a default texture to all Prims so Shaders always have something to 
-	                         * bind, even if they are not used. On slower systems, WebGL can generate errors 
-	                         * due to finite time needed to generate mipmaps after the WebGL texture is first created.
-	                         */
-
-	                        prim.textures[0] = this.texturePool.getDefault();
-
-	                        // Get textures assigned directly ( .mtl files may assign others ) in the createPrim() call.
-
-	                        this.texturePool.getTextures(prim, textureImages, true, false, this.materialPool.defaultTextureMap); // assume cacheBust === true, mimeType determined by file extension.
-
-	                        // Push into our list of all Prims. Shaders keep a local list of Prims they are rendering.
-
-	                        // TODO: DEBUG REMOVE
-	                        if (prim.name === 'capsule') {
-
-	                                window.capsule = prim; //////////////TODO: remove
-	                        }
-
-	                        if (prim.name === 'TORUS1') {
-
-	                                window.torus = prim;
-	                        }
-
-	                        if (prim.name === 'teapot') {
-
-	                                window.teapot = prim;
-	                        }
-
-	                        if (prim.name === 'objfile') {
-
-	                                window.objfile = prim;
-	                        }
-
-	                        if (prim.name === 'cubespheretransparent') {
-
-	                                window.cubetrans = prim;
-	                        }
-
-	                        if (prim.name === 'TestTearDrop') {
-
-	                                window.teardrop = prim;
-	                        }
-
-	                        if (prim.name === 'skydome') {
-
-	                                window.skydome = prim;
-	                        }
-
-	                        this.prims.push(prim);
-
-	                        return prim;
-	                }
-
-	                /** 
-	                 * Convert a Prim to its JSON equivalent
-	                 * @param {Prim} prim the object to stringify.
-	                 */
-
-	        }, {
-	                key: 'toJSON',
-	                value: function toJSON(prim) {
-
-	                        return JSON.stringify(prim);
-	                }
-	        }]);
-
-	        return PrimFactory;
-	}(); // End of class.
-
-	// We put this here because of JSDoc(!).
-
-	exports.default = PrimFactory;
-
-/***/ }),
-/* 43 */
-/***/ (function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	        value: true
-	});
-
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-	var _shader = __webpack_require__(10);
-
-	var _shader2 = _interopRequireDefault(_shader);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-	'use strict';
-
-	var ShaderFader = function (_Shader) {
-	        _inherits(ShaderFader, _Shader);
-
-	        /** 
-	         * --------------------------------------------------------------------
-	         * VERTEX SHADER 0
-	         * Prims with varying alpha values during creation and deletion.
-	         * @link http://learningwebgl.com/blog/?p=684
-	         * StackGL
-	         * @link https://github.com/stackgl
-	         * phong lighting
-	         * @link https://github.com/stackgl/glsl-lighting-walkthrough
-	         * - vertex position
-	         * - texture coordinate
-	         * - model-view matrix
-	         * - projection matrix
-	         * --------------------------------------------------------------------
-	         */
-	        function ShaderFader(init, util, glMatrix, webgl, webvr, shaderName, lights) {
-	                _classCallCheck(this, ShaderFader);
-
-	                var _this = _possibleConstructorReturn(this, (ShaderFader.__proto__ || Object.getPrototypeOf(ShaderFader)).call(this, init, util, glMatrix, webgl, webvr, shaderName, lights));
-
-	                _this.required.buffer.indices = true, _this.required.buffer.colors = true, _this.required.buffer.normals = false, _this.required.lights = 0, _this.required.textures = 0;
-
-	                _this.sortByDistance = true;
-
-	                console.log('In ShaderFader class');
-
-	                return _this;
-	        }
-
-	        /* 
-	         * Vertex and Fragment Shaders. We use the internal 'program' object from the webgl object to compile these. 
-	         * Alternatively, They may be defined to load from HTML or and external file.
-	         * @return {Object{code, varList}} an object, with internal elements
-	         * code: The shader code.
-	         * varList: A scanned list of all the variables in the shader code (created by webgl object).
-	         */
-
-
-	        _createClass(ShaderFader, [{
-	                key: 'vsSrc',
-	                value: function vsSrc() {
-
-	                        var s = [
-
-	                        // Note: ALWAYS name the vertex attribute using the default!
-
-	                        'attribute vec3 ' + this.webgl.attributeNames.aVertexPosition[0] + ';', 'attribute vec4 ' + this.webgl.attributeNames.aVertexColor[0] + ';', 'attribute vec2 ' + this.webgl.attributeNames.aTextureCoord[0] + ';', 'attribute vec3 ' + this.webgl.attributeNames.aVertexNormal[0] + ';',
-
-	                        // render flags
-
-	                        'uniform bool uUseLighting;', 'uniform bool uUseTexture;', 'uniform bool uUseColor;', 'uniform mat4 uMVMatrix;', 'uniform mat4 uPMatrix;', 'uniform mat3 uNMatrix;', 'uniform vec3 uAmbientColor;', 'uniform vec3 uLightingDirection;', 'uniform vec3 uDirectionalColor;', 'varying vec2 vTextureCoord;', 'varying lowp vec4 vColor;', 'varying vec3 vLightWeighting;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vLightWeighting = vec3(1.0, 1.0, 1.0);', '    if (uUseTexture) { ', '      vTextureCoord = aTextureCoord;', '    } else { ', '      vTextureCoord = vec2(0.0, 0.0);', // Prim has no textures
-
-	                        '    }', '    vColor = aVertexColor;', // we always read this, so always bind it
-
-	                        '    if(uUseLighting) {', '       vec3 transformedNormal = uNMatrix * aVertexNormal;',
-
-	                        // TODO: experiment until we get a good value here...
-
-	                        '       float directionalLightWeighting = max(dot(transformedNormal, uLightingDirection), 0.0);', '       vLightWeighting = uAmbientColor + uDirectionalColor * directionalLightWeighting;', '    } else {', '       vLightWeighting = vec3(1.0, 1.0, 1.0);', '    }', '}'];
-
-	                        return {
-
-	                                code: s.join('\n'),
-
-	                                varList: this.webgl.createVarList(s)
-
-	                        };
-	                }
-	        }, {
-	                key: 'fsSrc',
-	                value: function fsSrc() {
-
-	                        var s = [this.floatp, 'uniform bool uUseLighting;', 'uniform bool uUseTexture;', 'uniform bool uUseColor;', 'uniform sampler2D uSampler;', 'uniform float uAlpha;', 'varying vec2 vTextureCoord;', 'varying lowp vec4 vColor;', 'varying vec3 vLightWeighting;', 'void main(void) {', 'if (uUseColor) {',
-
-	                        // TODO: ADD LIGHTING HERE
-
-	                        'gl_FragColor = vec4(vColor.rgb * vLightWeighting, uAlpha);', '}', 'else if(uUseTexture) {', 'vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));', 'gl_FragColor = vec4(textureColor.rgb * vLightWeighting, textureColor.a * uAlpha);', '}', '}'];
-
-	                        return {
-
-	                                code: s.join('\n'),
-
-	                                varList: this.webgl.createVarList(s)
-
-	                        };
-	                }
-
-	                /** 
-	                 * --------------------------------------------------------------------
-	                 * Vertex Shader 2, using color buffer but not texture.
-	                 * --------------------------------------------------------------------
-	                 */
-
-	                /** 
-	                 * initialize the update() and render() methods for this shader.
-	                 * @param{Prim[]} primList a list of initializing Prims (optional).
-	                 */
-
-	        }, {
-	                key: 'init',
-	                value: function init(primList) {
-
-	                        // DESTRUCTING DID NOT WORK!
-	                        //[gl, canvas, mat4, vec3, pMatrix, mvMatrix, program ] = this.setup();
-
-	                        var arr = this.setup(),
-	                            gl = arr[0],
-	                            canvas = arr[1],
-	                            mat4 = arr[2],
-	                            mat3 = arr[3],
-	                            vec3 = arr[4],
-	                            pMatrix = arr[5],
-	                            mvMatrix = arr[6],
-	                            program = arr[7],
-	                            vsVars = arr[8],
-	                            fsVars = arr[9],
-	                            stats = arr[10],
-	                            near = arr[11],
-	                            far = arr[12],
-	                            vr = arr[13];
-
-	                        // Attach our VBO program.
-
-	                        var shaderProgram = program.shaderProgram;
-
-	                        // If we init with a primList, add them here.
-
-	                        if (primList) {
-
-	                                program.renderList = this.util.concatArr(program.renderList, primList);
-	                        }
-
-	                        /** 
-	                         * POLYMORPHIC PROPERTIES AND METHODS.
-	                         */
-
-	                        // Shorten names of attributes, uniforms for rendering.
-
-	                        var aVertexPosition = vsVars.attribute.vec3.aVertexPosition,
-	                            aVertexColor = vsVars.attribute.vec4.aVertexColor,
-	                            aTextureCoord = vsVars.attribute.vec2.aTextureCoord,
-	                            aVertexNormal = vsVars.attribute.vec3.aVertexNormal,
-	                            uAlpha = fsVars.uniform.float.uAlpha,
-	                            uUseLighting = fsVars.uniform.bool.uUseLighting,
-	                            uUseColor = fsVars.uniform.bool.uUseColor,
-	                            uUseTexture = fsVars.uniform.bool.uUseTexture,
-	                            uSampler = fsVars.uniform.sampler2D.uSampler,
-	                            uAmbientColor = vsVars.uniform.vec3.uAmbientColor,
-	                            uLightingDirection = vsVars.uniform.vec3.uLightingDirection,
-	                            uDirectionalColor = vsVars.uniform.vec3.uDirectionalColor,
-	                            uPMatrix = vsVars.uniform.mat4.uPMatrix,
-	                            uMVMatrix = vsVars.uniform.mat4.uMVMatrix;
-
-	                        // Local link to easing function
-
-	                        var easeIn = this.util.easeIn;
-
-	                        var easeType = 0;
-
-	                        // Set up directional lighting with the primary World light (see lights.es6 for defaults).
-
-	                        var lighting = false;
-
-	                        var light0 = this.lights.getLight(this.lights.lightTypes.LIGHT_0);
-
-	                        var ambient = light0.ambient;
-
-	                        var lightingDirection = light0.lightingDirection;
-
-	                        var directionalColor = light0.directionalColor;
-
-	                        var nMatrix = mat3.create(); // TODO: ADD MAT3 TO PASSED VARIABLES
-
-	                        var adjustedLD = vec3.create(); // TODO: redo
-
-	                        // Update Prim position, motion - given to World object.
-
-	                        program.update = function (prim, MVM) {
-
-	                                var fade = prim.fade;
-
-	                                var dir = fade.endAlpha - fade.startAlpha;
-
-	                                var inc = 0.005;
-
-	                                if (dir > 0) {
-
-	                                        prim.alpha += inc;
-
-	                                        if (prim.alpha >= fade.endAlpha) {
-
-	                                                prim.alpha = fade.endAlpha;
-
-	                                                // This turns off this Shader!
-
-	                                                prim.shader.movePrim(prim, prim.defaultShader);
-	                                        }
-	                                } else if (dir < 0) {
-
-	                                        prim.alpha -= inc;
-
-	                                        if (prim.alpha <= fade.endAlpha) {
-
-	                                                prim.alpha = fade.endAlpha;
-
-	                                                // This turns off this Shader!
-
-	                                                prim.shader.movePrim(prim, prim.defaultShader);
-	                                        }
-	                                }
-
-	                                // Compute lighting normals.
-
-	                                vec3.normalize(adjustedLD, lightingDirection);
-
-	                                vec3.scale(adjustedLD, adjustedLD, -1);
-
-	                                // Update the model-view matrix using current Prim position, rotation, etc.
-
-	                                prim.setMV(MVM);
-
-	                                // Calculates a 3x3 normal matrix (transpose inverse) from the 4x4 matrix.
-
-	                                mat3.normalFromMat4(nMatrix, MVM);
-	                        };
-
-	                        // Prim rendering - Shader in ShaderPool, rendered by World.
-
-	                        program.render = function (PM, MVM) {
-
-	                                gl.useProgram(shaderProgram);
-
-	                                // Save the model-view supplied by the shader. Mono and VR return different MV matrices.
-
-	                                var saveMV = mat4.clone(MVM);
-
-	                                // Reset perspective matrix.
-
-	                                //mat4.perspective( PM, Math.PI*0.4, canvas.width / canvas.height, near, far ); // right
-
-	                                for (var i = 0, len = program.renderList.length; i < len; i++) {
-
-	                                        var prim = program.renderList[i];
-
-	                                        // Only render if we have at least one texture loaded.
-
-	                                        if (!prim) continue; // could be null
-
-	                                        // Individual prim update
-
-	                                        program.update(prim, MVM);
-
-	                                        // Bind vertex buffer.
-
-	                                        gl.bindBuffer(gl.ARRAY_BUFFER, prim.geometry.vertices.buffer);
-	                                        gl.enableVertexAttribArray(aVertexPosition);
-	                                        gl.vertexAttribPointer(aVertexPosition, 3, gl.FLOAT, false, 0, 0);
-
-	                                        // NOTE: We always bind the color buffer, even if we don't draw with it (prevents 'out of range' errors).
-
-	                                        gl.bindBuffer(gl.ARRAY_BUFFER, prim.geometry.colors.buffer);
-	                                        gl.enableVertexAttribArray(aVertexColor);
-	                                        gl.vertexAttribPointer(aVertexColor, 4, gl.FLOAT, false, 0, 0); // NOTE: prim.geometry.colors.itemSize for param 2
-
-	                                        // NOTE: we always bind the texture buffer, even if we don't used it (prevent 'out of range' errors).
-
-	                                        gl.bindBuffer(gl.ARRAY_BUFFER, prim.geometry.texCoords.buffer);
-	                                        gl.enableVertexAttribArray(aTextureCoord);
-	                                        gl.vertexAttribPointer(aTextureCoord, 2, gl.FLOAT, false, 0, 0);
-
-	                                        gl.bindBuffer(gl.ARRAY_BUFFER, prim.geometry.normals.buffer);
-	                                        gl.enableVertexAttribArray(aVertexNormal);
-	                                        gl.vertexAttribPointer(aVertexNormal, 3, gl.FLOAT, false, 0, 0);
-
-	                                        // Alpha, with easing animation (in this.util).
-
-	                                        gl.uniform1f(uAlpha, easeIn(prim.alpha, 0));
-
-	                                        // Conditionally set lighting, based on default Shader the Prim was assigned to.
-
-	                                        if (prim.defaultShader.required.lights > 0) {
-
-	                                                gl.uniform1i(uUseLighting, 1);
-	                                        } else {
-
-	                                                gl.uniform1i(uUseLighting, 0);
-	                                        }
-
-	                                        // Draw using either the texture[0] or color array.
-
-	                                        if (prim.defaultShader.required.textures > 0 && prim.textures[0] && prim.textures[0].texture) {
-
-	                                                // Conditionally set use of color and texture arrays.
-
-	                                                gl.uniform1i(uUseColor, 0);
-	                                                gl.uniform1i(uUseTexture, 1);
-
-	                                                // Bind the first texture.
-
-	                                                gl.activeTexture(gl.TEXTURE0);
-
-	                                                gl.bindTexture(gl.TEXTURE_2D, prim.textures[0].texture);
-
-	                                                // Other texture units below.
-
-	                                                // Set fragment shader sampler uniform.
-
-	                                                gl.uniform1i(uSampler, 0);
-	                                        } else {
-
-	                                                // Conditionally set use of color and texture array.
-
-	                                                gl.uniform1i(uUseColor, 1);
-	                                                gl.uniform1i(uUseTexture, 0);
-	                                        }
-
-	                                        // Normals matrix uniform
-
-	                                        gl.uniformMatrix3fv(vsVars.uniform.mat3.uNMatrix, false, nMatrix);
-
-	                                        // Lighting (always bound)
-
-	                                        gl.uniform3f(uAmbientColor, ambient[0], ambient[1], ambient[2]);
-	                                        gl.uniform3fv(uLightingDirection, adjustedLD);
-	                                        gl.uniform3f(uDirectionalColor, directionalColor[0], directionalColor[1], directionalColor[2]);
-
-	                                        // Bind perspective and model-view matrix uniforms.
-
-	                                        gl.uniformMatrix4fv(uPMatrix, false, PM);
-	                                        gl.uniformMatrix4fv(uMVMatrix, false, MVM);
-
-	                                        // Bind indices buffer.
-
-	                                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, prim.geometry.indices.buffer);
-
-	                                        if (stats.uint32) {
-
-	                                                // Draw elements, 0 -> 2e9
-
-	                                                gl.drawElements(gl.TRIANGLES, prim.geometry.indices.numItems, gl.UNSIGNED_INT, 0);
-	                                        } else {
-
-	                                                // Draw elements, 0 -> 65k (old platforms).
-
-	                                                gl.drawElements(gl.TRIANGLES, prim.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
-	                                        }
-
-	                                        // Copy back the original for the next Prim. 
-
-	                                        mat4.copy(MVM, saveMV, MVM);
-	                                } // end of renderList for Prims
-
-	                                // Don't have to disable buffers that might cause problems in another Shader.
-
-	                                //gl.bindBuffer( gl.ARRAY_BUFFER, null );
-	                                //gl.disableVertexAttribArray( vsVars.attribute.vec4.aVertexColor );
-	                                //gl.disableVertexAttribArray( vsVars.attribute.vec2.aTextureCoord );
-	                                //gl.disableVertexAttribArray( vsVars.attribute.vec3.aVertexNormal );
-	                        }; // end of program.render()
-
-	                        return program;
-	                } // end of init()
-
-	        }]);
-
-	        return ShaderFader;
-	}(_shader2.default);
-
-	exports.default = ShaderFader;
-
-/***/ }),
-/* 44 */
-/***/ (function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	        value: true
-	});
-
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-	var _shader = __webpack_require__(10);
-
-	var _shader2 = _interopRequireDefault(_shader);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-	'use strict';
-
-	var ShaderTerrain = function (_Shader) {
-	        _inherits(ShaderTerrain, _Shader);
-
-	        /** 
-	         * --------------------------------------------------------------------
-	         * VERTEX SHADER 5
-	         * For semi-transparent object in fading animation only. Objects placed  
-	         * here are moved to their regular shader when alpha = 1.0. It 
-	         * draws the object with the first texture defined in its texture array, 
-	         * dropping back to the color array if the texture isn't defined.
-	         * --------------------------------------------------------------------
-	         */
-	        function ShaderTerrain(init, util, glMatrix, webgl, webvr, shaderName) {
-	                _classCallCheck(this, ShaderTerrain);
-
-	                var _this = _possibleConstructorReturn(this, (ShaderTerrain.__proto__ || Object.getPrototypeOf(ShaderTerrain)).call(this, init, util, glMatrix, webgl, webvr, shaderName));
-
-	                console.log('In ShaderFader class');
-
-	                _this.required.buffer.indices = true, _this.required.buffer.texCoords = true, _this.required.buffer.normals = true, _this.required.lights = 1, _this.required.textures = 1;
-
-	                return _this;
-	        }
-
-	        /* 
-	         * Vertex and Fragment Shaders. We use the internal 'program' object from the webgl object to compile these. 
-	         * Alternatively, They may be defined to load from HTML or and external file.
-	         * @return {Object{code, varList}} an object, with internal elements
-	         * code: The shader code.
-	         * varList: A scanned list of all the variables in the shader code (created by webgl object).
-	         */
-
-
-	        _createClass(ShaderTerrain, [{
-	                key: 'vsSrc',
-	                value: function vsSrc() {
-
-	                        var s = [];
-
-	                        return {
-
-	                                code: s.join('\n'),
-
-	                                varList: this.webgl.createVarList(s)
-
-	                        };
-	                }
-
-	                /** 
-	                 * a textured terrain, (with lighting computed in shader) fragment shader.
-	                 * - varying texture coordinate
-	                 * - texture 2D sampler
-	                 */
-
-	        }, {
-	                key: 'fsSrc',
-	                value: function fsSrc() {
-
-	                        var s = [];
-
-	                        return {
-
-	                                code: s.join('\n'),
-
-	                                varList: this.webgl.createVarList(s)
-
-	                        };
-	                }
-
-	                /** 
-	                 * initialize the update() and render() methods for this shader.
-	                 * @param{Prim[]} primList a list of initializing Prims (optional).
-	                 */
-
-	        }, {
-	                key: 'init',
-	                value: function init(primList) {
-
-	                        var arr = this.setup(),
-	                            gl = arr[0],
-	                            canvas = arr[1],
-	                            mat4 = arr[2],
-	                            mat3 = arr[3],
-	                            vec3 = arr[4],
-	                            pMatrix = arr[5],
-	                            mvMatrix = arr[6],
-	                            program = arr[7],
-	                            vsVars = arr[8],
-	                            fsVars = arr[9],
-	                            stats = arr[10],
-	                            near = arr[11],
-	                            far = arr[12],
-	                            vr = arr[13];
-
-	                        // Shorter reference.
-
-	                        var shaderProgram = program.shaderProgram;
-
-	                        // If we init with primList, add them here.
-
-	                        if (primList) {
-
-	                                program.renderList = this.util.concatArr(program.renderList, primList);
-	                        }
-
-	                        /** 
-	                         * POLYMORPHIC METHODS
-	                         */
-
-	                        // Update Prim position, motion - given to World object.
-
-	                        program.update = function (prim, MVM) {
-
-	                                // Update the model-view matrix using current Prim position, rotation, etc.
-
-	                                prim.setMV(mvMatrix);
-
-	                                // Compute lighting normals.
-
-	                                vec3.normalize(adjustedLD, lightingDirection);
-
-	                                vec3.scale(adjustedLD, adjustedLD, -1);
-
-	                                // Calculates a 3x3 normal matrix (transpose inverse) from the 4x4 matrix.
-
-	                                mat3.normalFromMat4(nMatrix, mvMatrix);
-	                        };
-
-	                        // Prim rendering - Shader in ShaderPool, rendered by World.
-
-	                        program.render = function (PM, MVM) {
-
-	                                gl.useProgram(shaderProgram);
-
-	                                // Save the model-view supplied by the shader. Mono and VR return different MV matrices.
-
-	                                var saveMV = mat4.clone(MVM);
-
-	                                // Begin program loop
-
-	                                for (var i = 0, len = program.renderList.length; i < len; i++) {
-
-	                                        var prim = program.renderList[i];
-
-	                                        // Only render if we have at least one texture loaded.
-
-	                                        if (!prim || !prim.textures[0] || !prim.textures[0].texture) continue;
-
-	                                        // Update Model-View matrix with standard Prim values.
-
-	                                        program.update(prim, MVM);
-
-	                                        // TODO: bind buffers
-
-	                                        // TODO: Set fragment shader sampler uniform.
-
-	                                        // TODO: drawElements()
-
-	                                        // Copy back the original for the next Prim. 
-
-	                                        mat4.copy(MVM, saveMV, MVM);
-	                                } // end of renderList for Prims.
-	                        }; // end of program.render()
-	                } // end of init()
-
-	        }]);
-
-	        return ShaderTerrain;
-	}(_shader2.default);
-
-	exports.default = ShaderTerrain;
 
 /***/ })
 /******/ ]);

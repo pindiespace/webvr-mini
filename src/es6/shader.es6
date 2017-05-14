@@ -169,7 +169,7 @@ class Shader {
 
                 } else {
 
-                    console.log( 'Shader::addPrim():appending prim:' + prim.name + ' to:' + this.name )
+                    //console.log( 'Shader::addPrim():appending prim:' + prim.name + ' to:' + this.name )
 
                     this.program.renderList.push( prim );
 
@@ -237,7 +237,7 @@ class Shader {
 
             // Remove a Prim from the Shader program's renderList (still in PrimList and World).
 
-            console.warn( 'Shader::removePrim():removing prim:' + prim.name );
+            ////////console.warn( 'Shader::removePrim():removing prim:' + prim.name );
 
             //////////////////////this.program.renderList.splice( pos, 1 );
 
@@ -276,7 +276,7 @@ class Shader {
              * NOTE: emit MUST be false to prevent a race condition.
              */
 
-            console.log("Shader::movePrim():" + prim.name )
+            //////console.log("Shader::movePrim():" + prim.name )
 
             return newShader.addPrim( prim, false );
 

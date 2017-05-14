@@ -910,7 +910,7 @@ class PrimFactory {
 
         // Whether to include tangents 
 
-        prim.useTangents = true; // TODO:///////CHANGE!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        prim.useTangents = false; // TODO:///////CHANGE!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         // Waypoints for scripted motion or timelines.
 

@@ -314,7 +314,7 @@ class Util {
     }
 
     /** 
-     * Basic easing operations.
+     * Basic easing in operations.
      * @link https://gist.github.com/gre/1650294
      * @link https://github.com/gre/bezier-easing
      * @param {Number} a a number between 0-1
@@ -342,6 +342,13 @@ class Util {
 
     }
 
+    /** 
+     * Basic easing out operations.
+     * @link https://gist.github.com/gre/1650294
+     * @link https://github.com/gre/bezier-easing
+     * @param {Number} a a number between 0-1
+     * @param {Number} type the type of easing.
+     */
     easeOut ( a, type ) {
 
         let t = a;
