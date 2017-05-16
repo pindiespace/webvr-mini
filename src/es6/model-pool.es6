@@ -692,41 +692,53 @@ class ModelPool extends AssetPool {
 
                 //console.log(key, ':', faces[i]); 
 
-                if ( iHash[ key ] ) {
+                //if ( iHash[ key ] ) {
 
-                    // write an index only to indices
+                    // Write an index only to indices, since we re-use vertices, texCoords, normals.
 
                     console.log('found a key:' + key)
 
-                    nIndices.push( parseInt( key ) ); // should grab first number only!
+                    nIndices.push( parseInt( iHash[ key ] ) ); // should grab first number only!
 
-                } else {
+                //} else {
 
-                    // write a new index to indices, new vertex, texcoord, normal
+                    // write a new index to indices, new vertex, texcoord, normal.
 
-                    //console.log('pushing new key:' + key); 
+                    //TODO: somehow, this is generating out of range indices!!!!!!!!
 
-                    let v = f[ 0 ], t = f[ 1 ], n = f[ 2 ];
+                    let v = f[ 0 ], t = f[ 1 ], n = f[ 2 ], idx = parseInt( nVertices.length / 3 );
 
-                    nIndices.push( nVertices.length ); // position of index
+                    console.log('pushing new key:' + key + ' to position:' + idx );
 
-                    //nVertices.push( f[ 0 ] );
+                    iHash[ key ] = idx;
 
-                    nVertices.push( v, v + 1, v + 2 );
+                    // Push values to flattened arrays.
 
-                    //nTexCoords.push( f[ 1 ] );
+                    nIndices.push( idx ); // position of index
 
-                    if ( t !== this.NOT_IN_LIST ) nTexCoords.push( t, t + 1 );
+                    //nVertices.push( f[ 0 ] ); 
+
+                    nVertices.push( tVertices[ v ], tVertices[ v + 1 ], tVertices[ v + 2 ] );
+
+                    //nTexCoords.push( f[ 1 ] ); 
+
+                    if ( t !== this.NOT_IN_LIST ) nTexCoords.push( tTexCoords[ t ], tTexCoords[ t + 1 ] );
 
                     //nNormals.push( f[ 2 ] );
 
-                    if ( n !== this.NOT_IN_LIST ) nNormals.push( n, n + 1, n + 2 );
+                    if ( n !== this.NOT_IN_LIST ) nNormals.push( tNormals[ n ], tNormals[ n + 1 ], tNormals[ n + 2 ] );
 
-                }
+               // }
 
             }
 
             console.log('after unrolling, faces is:' + nVertices.length)
+
+            for ( let i = 0; i < nIndices.length; i++ ) {
+
+                if ( nIndices[ i ] * 3 >= tVertices.length ) console.error( 'index at:' + i + ' references pos:' + nIndices[ i ] + 3 + ' length:' + tVertices.length)
+
+            }
 
             window.faces = faces;
             window.nIndices = nIndices;
@@ -735,10 +747,10 @@ class ModelPool extends AssetPool {
             window.nNormals = nNormals;
             window.iHash = iHash;
 
-            //tIndices = nIndices;
-            //tVertices = nVertices;
-           // tTexCoords = nTexCoords;
-            //tNormals = nNormals;
+            tIndices = nIndices;
+            tVertices = nVertices;
+            tTexCoords = nTexCoords;
+            tNormals = nNormals;
 
 
         }
