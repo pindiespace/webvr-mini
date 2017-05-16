@@ -194,6 +194,32 @@ class ModelPool extends AssetPool {
     }
 
     /** 
+     * Compute triangles for Quads and higher polygons (all tris share the 1st vertex).
+     * Use when the number of faces on a line is > 3 (usually a quad).
+     */
+    computeFaceFan ( vertices, texCoords, normals ) {
+
+        let nVertices = [], nTexCoords = [], nNormals = [];
+
+        // For quad, this gives 0, 1, 2, 0, 2, 3.
+
+        for ( let i = 1; i < vertices.length -1; i++ ) {
+
+            nVertices.push( vertices[ 0 ], vertices[ i ], vertices[ i + 1 ] );
+
+            nTexCoords.push( texCoords[ 0 ], texCoords[ i ], texCoords[ i + 1 ] );
+
+            nNormals.push( normals[ 0 ], normals[ i ], normals[ i + 1 ] );
+
+            return [ nVertices, nTexCoords, nNormals ];
+
+        }
+
+        return [ vertices, texCoords, normals ];
+
+    }
+
+    /** 
      * Compute index, with fallback for missing index.
      * @param {Number} num the number to test.
      * @returns {Number} the number, or an error number (-1).
@@ -202,7 +228,9 @@ class ModelPool extends AssetPool {
 
         if ( ! Number.isFinite( num ) ) {
 
-            iNormal = this.NOT_IN_STRING;
+            console.warn("WEIRD NUM:" + num)
+
+            return this.NOT_IN_STRING;
 
         }
 
@@ -232,25 +260,27 @@ class ModelPool extends AssetPool {
 
                 idxs = fs.split( '//' );
 
-                iVerts.push( this.computeFaceIndex( parseInt( idxs[ 0 ] ) - 1 ) )
+                iVerts.push( this.computeFaceIndex( parseFloat( idxs[ 0 ] ) - 1 ) )
 
                 iTexCoords.push( this.NOT_IN_STRING );
 
-                iNormals.push( this.computeFaceIndex( parseInt( idxs[ 1 ] ) - 1 ) );
+                iNormals.push( this.computeFaceIndex( parseFloat( idxs[ 1 ] ) - 1 ) );
 
             } else if ( fs.indexOf ( '/' ) !== NOT_IN_STRING ) {
 
                 idxs = fs.split( '/' );
 
-                iVerts.push( this.computeFaceIndex( parseInt( idxs[ 0 ] ) - 1 ) );
+                ///////console.log("IDXs:" + idxs)
 
-                iTexCoords.push( this.computeFaceIndex( parseInt( idxs[ 1 ] ) - 1 ) );
+                iVerts.push( this.computeFaceIndex( parseFloat( idxs[ 0 ] ) - 1 ) );
 
-                iNormals.push( this.computeFaceIndex( parseInt( idxs[ 2 ] ) - 1 ) );
+                iTexCoords.push( this.computeFaceIndex( parseFloat( idxs[ 1 ] ) - 1 ) );
+
+                iNormals.push( this.computeFaceIndex( parseFloat( idxs[ 2 ] ) - 1 ) );
 
             } else { // Has indices only
 
-                iVerts.push( this.computeFaceIndex( parseInt( fs ) - 1 ) ); 
+                iVerts.push( this.computeFaceIndex( parseFloat( fs ) - 1 ) ); 
 
             }
 
@@ -261,9 +291,11 @@ class ModelPool extends AssetPool {
          * manually create triangle fan by inserting more indices, since we only use GL_TRIANGLES in Shader rendering.
          */
 
+        //console.log('iVerts:' + iVerts + ' iNormals:' + iNormals + ' iTexCoords:' + iTexCoords)
+
         if ( iVerts.length > 3 ) {
 
-            let fan = this.computeFan( iVerts, iNormals, iTexCoords );
+            let fan = this.computeFaceFan( iVerts, iTexCoords, iNormals );
 
             iVerts = fan[ 0 ];
 
@@ -277,7 +309,7 @@ class ModelPool extends AssetPool {
 
         for ( let i = 0; i < iVerts.length; i++ ) {
 
-            faces.push( [ iVerts[ i ], iNormals[ i ], iTexCoords[ i ] ] )
+             faces.push( [ iVerts[ i ], iNormals[ i ], iTexCoords[ i ] ] );
 
         }
 
@@ -636,21 +668,81 @@ class ModelPool extends AssetPool {
 
         } );
 
-        console.log( 'initial tVertices.length:' + tVertices.length + ' tTexCoords.length:' + tTexCoords.length + ' tNormals.length' + tNormals.length )
-
+/////////////////////////
         // Rewrite indices to fold texCoords and normals under the same index.
 
         // TODO: may have to re-write start of 'o' tags.
 
-/*
-        window.iHash = iHash;
-        window.fVertices = fVertices;
-        window.fIndices = fIndices;
-        window.fTexCoords = fTexCoords;
-        window.fNormals = fNormals;
-*/
+        // If faces were defined, re-write vertices, indices, normals, texCoords according to the face indices
+////////////////////////
 
-        window.faces = faces;
+        //console.log( 'initial tVertices.length:' + tVertices.length + ' tTexCoords.length:' + tTexCoords.length + ' tNormals.length' + tNormals.length )
+
+        console.log("faces.length:" + faces.length);
+
+        if ( faces.length ) {
+
+            let nIndices = [], nVertices = [], nTexCoords = [], nNormals = [];
+
+            for ( let i = 0; i < faces.length; i++ ) {
+
+                let f = faces[ i ];
+
+                let key = f[ 0 ] + '_' + f[ 1 ] + '_' + f[ 2 ];
+
+                //console.log(key, ':', faces[i]); 
+
+                if ( iHash[ key ] ) {
+
+                    // write an index only to indices
+
+                    console.log('found a key:' + key)
+
+                    nIndices.push( parseInt( key ) ); // should grab first number only!
+
+                } else {
+
+                    // write a new index to indices, new vertex, texcoord, normal
+
+                    //console.log('pushing new key:' + key); 
+
+                    let v = f[ 0 ], t = f[ 1 ], n = f[ 2 ];
+
+                    nIndices.push( nVertices.length ); // position of index
+
+                    //nVertices.push( f[ 0 ] );
+
+                    nVertices.push( v, v + 1, v + 2 );
+
+                    //nTexCoords.push( f[ 1 ] );
+
+                    if ( t !== this.NOT_IN_LIST ) nTexCoords.push( t, t + 1 );
+
+                    //nNormals.push( f[ 2 ] );
+
+                    if ( n !== this.NOT_IN_LIST ) nNormals.push( n, n + 1, n + 2 );
+
+                }
+
+            }
+
+            console.log('after unrolling, faces is:' + nVertices.length)
+
+            window.faces = faces;
+            window.nIndices = nIndices;
+            window.nVertices = nVertices;
+            window.nTexCoords = nTexCoords;
+            window.nNormals = nNormals;
+            window.iHash = iHash;
+
+            //tIndices = nIndices;
+            //tVertices = nVertices;
+           // tTexCoords = nTexCoords;
+            //tNormals = nNormals;
+
+
+        }
+
 
         window.vertices = tVertices;
         window.indices = tIndices;
