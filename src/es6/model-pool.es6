@@ -377,9 +377,9 @@ class ModelPool extends AssetPool {
 
                         }
 
-                        objects[ data ] = indices.length; // start position in final flattened array 
+                        objects[ data ] = faces.length; // start position in final flattened array
 
-                        // TODO: re-write for additional vertices
+                        console.log('objects[' + data + '] = ' + faces.length)
 
                         break;
 
@@ -435,20 +435,22 @@ class ModelPool extends AssetPool {
 
                         }
 
-                        materials[ data ].push( indices.length );
+                        materials[ data ].push( faces.length );
+
+                        console.log('materials[' + data + '] = ' + faces.length)
 
                         break;
 
 
                     case 'g': // group name, store hierarchy
 
-                        groups[ data ] = indices.length; // starting position in final flattened array
+                        groups[ data ] = faces.length; // starting position in final flattened array
 
                         break;
 
                     case 's': // smoothing group (related to 'g')
 
-                        smoothingGroups[ data ] = indices.length; // starting position in final flattened array
+                        smoothingGroups[ data ] = faces.length; // starting position in final flattened array
 
                         // @link https://people.cs.clemson.edu/~dhouse/courses/405/docs/brief-obj-file-format.html
 
@@ -517,7 +519,7 @@ class ModelPool extends AssetPool {
 
         //console.log( 'initial tVertices.length:' + tVertices.length + ' tTexCoords.length:' + tTexCoords.length + ' tNormals.length' + tNormals.length )
 
-        console.log("faces.length:" + faces.length);
+        ////console.log("faces.length:" + faces.length);
 
         if ( faces.length ) {
 
@@ -529,53 +531,103 @@ class ModelPool extends AssetPool {
 
                 let key = f[ 0 ] + '_' + f[ 1 ] + '_' + f[ 2 ];
 
-                let vIdx = f[ 0 ];
+                if ( iHash[ key ] !== undefined ) {
 
-                let tIdx, nIdx;
+                    nIndices.push( iHash[ key ] );
 
-                // Push the new Index.
+                } else {
 
-                nIndices.push( parseInt( nVertices.length / 3 ) );
+                    let vIdx = f[ 0 ]; // old index
 
-                // Push the vertex values.
+                    let tIdx, nIdx, iIdx = parseInt( nVertices.length / 3 );
 
-                vIdx *= 3;
+                    // Push the new Index.
 
-                nVertices.push( tVertices[ vIdx ], tVertices[ vIdx + 1 ], tVertices[ vIdx + 2 ] );
+                    nIndices.push( iIdx );
 
-                iHash[ key ] = vIdx;
+                    iHash[ key ] = iIdx; // new index
 
-                if ( f[ 1 ] !== null ) { 
+                    // If vIdx !== iIdx, we need to adjust our positioning data for materials, groups, etc.
 
-                    tIdx = f[ 1 ] * 2;
+                    ///////////////////////////////
+                    ///////////////////////////////
+                    // TODO: THIS IS NASTY. 
+                    // TODO: first, adjust for increase in points when Quad is used.
+                    // TODO: then, look for a case where we change vIdx to iIdx, and adjust
+                    // TODO: YEOW!
+                    if ( vIdx !== iIdx ) {
 
-                    console.log('pushing:', tIdx, tIdx+ 1 )
+                        for ( let i in objects ) {
 
-                    nTexCoords.push( tTexCoords[ tIdx ], tTexCoords[ tIdx + 1 ] );
+                            if ( objects[ i ] === i ) {
 
-                }
+                                objects[ i ] = iIdx;
 
-                if ( f[ 2 ] !== null ) { 
+                                console.log('object index:' + vIdx + ' changed to:' + iIdx );
 
-                    nIdx = f[ 2 ] * 3;
+                            }
 
-                    nNormals.push( tNormals[ nIdx ], tNormals[ nIdx + 1 ], tNormals[ nIdx + 2 ] );
+                        }
+
+                        for ( let i in materials ) {
+
+                            //console.log('testing materials[' + i + '] =' + materials[ i ] + ' vIdx:' + vIdx + ' iIdx:' + iIdx )
+
+                            if ( materials[ i ] === i ) {
+
+                                materials[ i ] = iIdx;
+
+                                console.log('materials index:' + vIdx + ' changed to:' + iIdx );
+
+                            }
+
+                        }
+
+                    }
+                    ///////////////////////////////
+                    ///////////////////////////////
+                    ///////////////////////////////
+
+                    // Push the flattened vertex, texCoord, normal values.
+
+                    vIdx *= 3;
+
+                    nVertices.push( tVertices[ vIdx ], tVertices[ vIdx + 1 ], tVertices[ vIdx + 2 ] );
+
+                    if ( f[ 1 ] !== null ) { 
+
+                        tIdx = f[ 1 ] * 2;
+
+                        nTexCoords.push( tTexCoords[ tIdx ], tTexCoords[ tIdx + 1 ] );
+
+                    }
+
+                    if ( f[ 2 ] !== null ) { 
+
+                        nIdx = f[ 2 ] * 3;
+
+                        nNormals.push( tNormals[ nIdx ], tNormals[ nIdx + 1 ], tNormals[ nIdx + 2 ] );
+
+                    }
 
                 }
 
             }
 
-            console.log('after unrolling, faces is:' + nVertices.length / 9)
+            // Replace raw vertex, index, texCoord, normal data with face-adjusted data.
 
             tVertices = nVertices;
             tIndices = nIndices;
             tTexCoords = nTexCoords;
             tNormals = nNormals;
 
-        window.tTexCoords = tTexCoords;
-        window.nTexCoords = nTexCoords;
+        } else {
+
+            console.error( 'ModelPool::computeObjMesh(): no faces data in file!' );
 
         }
+
+        // If there was no faces in the OBJ file, use the raw data.
 
         m.vertices = tVertices;
 

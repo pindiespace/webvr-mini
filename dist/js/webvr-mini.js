@@ -15082,9 +15082,9 @@
 	                                prim.name = data;
 	                            }
 
-	                            objects[data] = indices.length; // start position in final flattened array 
+	                            objects[data] = faces.length; // start position in final flattened array
 
-	                            // TODO: re-write for additional vertices
+	                            console.log('objects[' + data + '] = ' + faces.length);
 
 	                            break;
 
@@ -15143,21 +15143,23 @@
 	                                materials[data] = [];
 	                            }
 
-	                            materials[data].push(indices.length);
+	                            materials[data].push(faces.length);
+
+	                            console.log('materials[' + data + '] = ' + faces.length);
 
 	                            break;
 
 	                        case 'g':
 	                            // group name, store hierarchy
 
-	                            groups[data] = indices.length; // starting position in final flattened array
+	                            groups[data] = faces.length; // starting position in final flattened array
 
 	                            break;
 
 	                        case 's':
 	                            // smoothing group (related to 'g')
 
-	                            smoothingGroups[data] = indices.length; // starting position in final flattened array
+	                            smoothingGroups[data] = faces.length; // starting position in final flattened array
 
 	                            // @link https://people.cs.clemson.edu/~dhouse/courses/405/docs/brief-obj-file-format.html
 
@@ -15225,7 +15227,7 @@
 
 	            //console.log( 'initial tVertices.length:' + tVertices.length + ' tTexCoords.length:' + tTexCoords.length + ' tNormals.length' + tNormals.length )
 
-	            console.log("faces.length:" + faces.length);
+	            ////console.log("faces.length:" + faces.length);
 
 	            if (faces.length) {
 
@@ -15240,50 +15242,93 @@
 
 	                    var key = f[0] + '_' + f[1] + '_' + f[2];
 
-	                    var vIdx = f[0];
+	                    if (iHash[key] !== undefined) {
 
-	                    var tIdx = void 0,
-	                        nIdx = void 0;
+	                        nIndices.push(iHash[key]);
+	                    } else {
 
-	                    // Push the new Index.
+	                        var vIdx = f[0]; // old index
 
-	                    nIndices.push(parseInt(nVertices.length / 3));
+	                        var tIdx = void 0,
+	                            nIdx = void 0,
+	                            iIdx = parseInt(nVertices.length / 3);
 
-	                    // Push the vertex values.
+	                        // Push the new Index.
 
-	                    vIdx *= 3;
+	                        nIndices.push(iIdx);
 
-	                    nVertices.push(tVertices[vIdx], tVertices[vIdx + 1], tVertices[vIdx + 2]);
+	                        iHash[key] = iIdx; // new index
 
-	                    iHash[key] = vIdx;
+	                        // If vIdx !== iIdx, we need to adjust our positioning data for materials, groups, etc.
 
-	                    if (f[1] !== null) {
+	                        ///////////////////////////////
+	                        ///////////////////////////////
+	                        // TODO: THIS IS NASTY. 
+	                        // TODO: first, adjust for increase in points when Quad is used.
+	                        // TODO: then, look for a case where we change vIdx to iIdx, and adjust
+	                        // TODO: YEOW!
+	                        if (vIdx !== iIdx) {
 
-	                        tIdx = f[1] * 2;
+	                            for (var _i in objects) {
 
-	                        console.log('pushing:', tIdx, tIdx + 1);
+	                                if (objects[_i] === _i) {
 
-	                        nTexCoords.push(tTexCoords[tIdx], tTexCoords[tIdx + 1]);
-	                    }
+	                                    objects[_i] = iIdx;
 
-	                    if (f[2] !== null) {
+	                                    console.log('object index:' + vIdx + ' changed to:' + iIdx);
+	                                }
+	                            }
 
-	                        nIdx = f[2] * 3;
+	                            for (var _i2 in materials) {
 
-	                        nNormals.push(tNormals[nIdx], tNormals[nIdx + 1], tNormals[nIdx + 2]);
+	                                //console.log('testing materials[' + i + '] =' + materials[ i ] + ' vIdx:' + vIdx + ' iIdx:' + iIdx )
+
+	                                if (materials[_i2] === _i2) {
+
+	                                    materials[_i2] = iIdx;
+
+	                                    console.log('materials index:' + vIdx + ' changed to:' + iIdx);
+	                                }
+	                            }
+	                        }
+	                        ///////////////////////////////
+	                        ///////////////////////////////
+	                        ///////////////////////////////
+
+	                        // Push the flattened vertex, texCoord, normal values.
+
+	                        vIdx *= 3;
+
+	                        nVertices.push(tVertices[vIdx], tVertices[vIdx + 1], tVertices[vIdx + 2]);
+
+	                        if (f[1] !== null) {
+
+	                            tIdx = f[1] * 2;
+
+	                            nTexCoords.push(tTexCoords[tIdx], tTexCoords[tIdx + 1]);
+	                        }
+
+	                        if (f[2] !== null) {
+
+	                            nIdx = f[2] * 3;
+
+	                            nNormals.push(tNormals[nIdx], tNormals[nIdx + 1], tNormals[nIdx + 2]);
+	                        }
 	                    }
 	                }
 
-	                console.log('after unrolling, faces is:' + nVertices.length / 9);
+	                // Replace raw vertex, index, texCoord, normal data with face-adjusted data.
 
 	                tVertices = nVertices;
 	                tIndices = nIndices;
 	                tTexCoords = nTexCoords;
 	                tNormals = nNormals;
+	            } else {
 
-	                window.tTexCoords = tTexCoords;
-	                window.nTexCoords = nTexCoords;
+	                console.error('ModelPool::computeObjMesh(): no faces data in file!');
 	            }
+
+	            // If there was no faces in the OBJ file, use the raw data.
 
 	            m.vertices = tVertices;
 
