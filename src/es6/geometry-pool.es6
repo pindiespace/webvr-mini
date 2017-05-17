@@ -1009,6 +1009,8 @@ class GeometryPool {
 
         // Assume y is vertical, x and z are horizontal.
 
+        console.log("VERTICES LENGTH:" + vertices.length)
+
         let texCoords = [];
 
         for ( let i = 0; i < vertices.length; i += 3 ) {

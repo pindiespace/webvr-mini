@@ -112,7 +112,7 @@ class ModelPool extends AssetPool {
      * @param {Number} numReturned number of values to returned. In some 
      *                 OBJ files, 3 numbers are written for 2d texture.
      */
-    computeObj3d ( data, arr, lineNum, numReturned = 3 ) {
+    computeObj3d ( data, arr, lineNum ) {
 
         // TODO: replace with .split() and .parseFloat()????
 
@@ -146,6 +146,18 @@ class ModelPool extends AssetPool {
             arr.push( parseFloat( uvs[ 1 ] ), parseFloat( uvs[ 3 ] ) );
 
             return true;
+
+        } else { // check if 2d texture written in 3d(!)
+
+            let uv2 = [];
+
+            if ( this.computeObj3d( data, uv2, lineNum ) ) {
+
+                arr.push( uv2[ 0 ], uv2[ 1 ] );  // only copy the first 2 coordinates          
+
+                return true;
+
+            }
 
         }
 
@@ -335,14 +347,6 @@ class ModelPool extends AssetPool {
 
         iHash = [], // associative lookup table for faces (vertices, indices, texCoords);
 
-        fVertices = [],
-
-        fIndices = [],
-
-        fTexCoords = [],
-
-        fNormals = [],
-
         faces = [];
 
         let dir = this.util.getFilePath( path );
@@ -405,7 +409,7 @@ class ModelPool extends AssetPool {
 
                         if ( ! this.computeObj2d( data, tTexCoords, lineNum ) ) {
 
-                            console.warn( '3D texture encountered:'+ data );
+                            //console.warn( '3D texture encountered:'+ data );
 
                             this.computeObj3d( data, tTexCoords, lineNum, 2 );
 
@@ -446,11 +450,15 @@ class ModelPool extends AssetPool {
 
                         groups[ data ] = faces.length; // starting position in final flattened array
 
+                        console.log('groups[' + data + '] = ' + faces.length );
+
                         break;
 
                     case 's': // smoothing group (related to 'g')
 
                         smoothingGroups[ data ] = faces.length; // starting position in final flattened array
+
+                        console.log('smoothingGroups[' + data + '] = ' + faces.length );
 
                         // @link https://people.cs.clemson.edu/~dhouse/courses/405/docs/brief-obj-file-format.html
 
@@ -509,17 +517,8 @@ class ModelPool extends AssetPool {
 
         } );
 
-/////////////////////////
-        // Rewrite indices to fold texCoords and normals under the same index.
 
-        // TODO: may have to re-write start of 'o' tags.
-
-        // If faces were defined, re-write vertices, indices, normals, texCoords according to the face indices
-////////////////////////
-
-        //console.log( 'initial tVertices.length:' + tVertices.length + ' tTexCoords.length:' + tTexCoords.length + ' tNormals.length' + tNormals.length )
-
-        ////console.log("faces.length:" + faces.length);
+        // Rewrite indices to fold texCoords and normals under the same index as the vertices (needed for WebGL).
 
         if ( faces.length ) {
 
@@ -537,7 +536,7 @@ class ModelPool extends AssetPool {
 
                 } else {
 
-                    let vIdx = f[ 0 ]; // old index
+                    let vIdx = f[ 0 ]; // old face index
 
                     let tIdx, nIdx, iIdx = parseInt( nVertices.length / 3 );
 
@@ -549,12 +548,6 @@ class ModelPool extends AssetPool {
 
                     // If vIdx !== iIdx, we need to adjust our positioning data for materials, groups, etc.
 
-                    ///////////////////////////////
-                    ///////////////////////////////
-                    // TODO: THIS IS NASTY. 
-                    // TODO: first, adjust for increase in points when Quad is used.
-                    // TODO: then, look for a case where we change vIdx to iIdx, and adjust
-                    // TODO: YEOW!
                     if ( vIdx !== iIdx ) {
 
                         for ( let i in objects ) {
@@ -583,11 +576,20 @@ class ModelPool extends AssetPool {
 
                         }
 
-                    }
-                    ///////////////////////////////
-                    ///////////////////////////////
-                    ///////////////////////////////
+                        for ( let i in groups ) {
 
+                            if ( groups[ i ] === i ) {
+
+                                groups[ i ] = iIdx;
+
+                                console.log('groups index:' + vIdx + ' changed to:' + iIdx );
+
+                            }
+
+                        }
+
+                    }
+ 
                     // Push the flattened vertex, texCoord, normal values.
 
                     vIdx *= 3;
@@ -600,6 +602,10 @@ class ModelPool extends AssetPool {
 
                         nTexCoords.push( tTexCoords[ tIdx ], tTexCoords[ tIdx + 1 ] );
 
+                    } else {
+
+                        nTexCoords.push( 0, 0 );
+
                     }
 
                     if ( f[ 2 ] !== null ) { 
@@ -607,6 +613,10 @@ class ModelPool extends AssetPool {
                         nIdx = f[ 2 ] * 3;
 
                         nNormals.push( tNormals[ nIdx ], tNormals[ nIdx + 1 ], tNormals[ nIdx + 2 ] );
+
+                    } else {
+
+                        nNormals.push( 0, 0, 0 );
 
                     }
 
@@ -616,26 +626,39 @@ class ModelPool extends AssetPool {
 
             // Replace raw vertex, index, texCoord, normal data with face-adjusted data.
 
-            tVertices = nVertices;
-            tIndices = nIndices;
-            tTexCoords = nTexCoords;
+            tVertices = nVertices,
+
+            tIndices = nIndices,
+
+            tTexCoords = nTexCoords,
+
             tNormals = nNormals;
 
         } else {
 
             console.error( 'ModelPool::computeObjMesh(): no faces data in file!' );
 
+            return m; // return an empty object
+
         }
 
         // If there was no faces in the OBJ file, use the raw data.
 
-        m.vertices = tVertices;
+        m.vertices = tVertices,
 
-        m.indices = tIndices;
+        m.indices = tIndices,
 
-        m.texCoords = tTexCoords;
+        m.texCoords = tTexCoords,
 
-        m.normals = tNormals;
+        m.normals = tNormals,
+
+        m.objects = objects,
+
+        m.groups = groups,
+
+        m.materials = materials,
+
+        m.smoothingGroups = smoothingGroups;
 
         // NOTE: Color arrays and tangents are not part of the Wavefront .obj format (in .mtl data).
 

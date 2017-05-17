@@ -527,7 +527,7 @@ class World extends AssetPool {
 
             this.primFactory.createPrim(
 
-                this.s1,                               // callback function
+                this.s3,                               // callback function
                 typeList.MESH,
                 'objfile',
                 vec5( 2, 2, 2 ),                       // dimensions (4th dimension doesn't exist for cylinder)
@@ -540,11 +540,11 @@ class World extends AssetPool {
                 '', // texture loaded directly
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color,
                 true,                                   // if true, apply texture to each face,
-                //[ 'obj/mountains/mountains.obj' ] // object files (.obj, .mtl)
+                //[ 'obj/mountains/mountains.obj' ] // BAD COORDINATES
                 //[ 'obj/landscape/landscape.obj'] // ok?
-                //[ 'obj/toilet/toilet.obj' ] // no texture
-                //[ 'obj/naboo/naboo.obj' ] // needs to be shrunk
-                //[ 'obj/star/star.obj']
+                //[ 'obj/toilet/toilet.obj' ] // works with texture, multiple groups wrap texture!
+                //[ 'obj/naboo/naboo.obj' ] // works fine, but needs to load additional images.
+                //[ 'obj/star/star.obj'] // ok, gets generic grey texture
                 //[ 'obj/basketball/basketball.obj'] // needs TGA translation
                 //[ 'obj/rock1/rock1.obj'] // rock plus surface, works
                 [ 'obj/banana/banana.obj' ]
