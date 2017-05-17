@@ -376,11 +376,32 @@ class PrimFactory {
          * Their value is their start in coords.vertices.
          */
 
-       /////////////if ( coords.material ) console.log('coords.material found for:' + prim.name + ' mat:' + coords.material)
-
          if ( coords.options ) {
 
-            /////////console.log("initPrimGeometry():COORDS.options:" + coords.options + ' for:' + prim.name)
+            window.coords = coords.options;
+
+            // Object starts.
+
+            for ( var i in coords.options.objects ) {
+
+                console.log('have object:' + i );
+
+                // TODO: complete.
+
+                // TODO: WHY DO WE HAVE A DEFAULT OBJECT?????
+            }
+
+            // Group starts.
+
+            for ( var i in coords.options.groups ) {
+
+                console.log('have group:' + i );
+
+                // TODO: complete.
+                
+            }
+
+            // Material starts.
 
             for ( var i in coords.options.materials ) {
 
@@ -401,13 +422,14 @@ class PrimFactory {
 
                 // Add the start position for this material.
 
-                /////////console.log( "initPrimGeometry():coords options.materials[" + i + "]: adding start:" + coords.options.materials[i] )
-
-                prim.materials[ i ].starts = coords.options.materials[ i ];
+                console.log("i:" + i + ' coords.options.materials[i]:' + coords.options.materials[i])
+                prim.materials[ i ].starts.push( coords.options.materials[ i ] );
 
                 // TODO: see if we can bind a texture to it.
 
             }
+
+
 
          }
 
