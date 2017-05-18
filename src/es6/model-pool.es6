@@ -70,9 +70,9 @@ class ModelPool extends AssetPool {
      * @param {Array[Number]} smoothingGroups a list of starts in the index array for smoothing groups.
      * @param {Array[Number]} materials a list of starts for materials in the index array.
      */
-    default ( vertices = [], indices = [], texCoords = [], normals = [], objects = [ 0 ], 
+    default ( vertices = [], indices = [], texCoords = [], normals = [], objects = [], 
 
-        groups = [ 0 ], smoothingGroups = [ 0 ], materials = [] ) {
+        groups = [], smoothingGroups = [], materials = [] ) {
 
         return {
 
@@ -383,7 +383,7 @@ class ModelPool extends AssetPool {
 
                         objects[ data ] = faces.length; // start position in final flattened array
 
-                        console.log('objects[' + data + '] = ' + faces.length)
+                        console.log('>objects[' + data + '] = ' + faces.length)
 
                         break;
 
@@ -441,7 +441,7 @@ class ModelPool extends AssetPool {
 
                         materials[ data ].push( faces.length );
 
-                        console.log('materials[' + data + '] = ' + faces.length)
+                        console.log('>materials[' + data + '] = ' + faces.length)
 
                         break;
 
@@ -450,7 +450,7 @@ class ModelPool extends AssetPool {
 
                         groups[ data ] = faces.length; // starting position in final flattened array
 
-                        console.log('groups[' + data + '] = ' + faces.length );
+                        console.log('>groups[' + data + '] = ' + faces.length );
 
                         break;
 
@@ -458,7 +458,7 @@ class ModelPool extends AssetPool {
 
                         smoothingGroups[ data ] = faces.length; // starting position in final flattened array
 
-                        console.log('smoothingGroups[' + data + '] = ' + faces.length );
+                        console.log('>smoothingGroups[' + data + '] = ' + faces.length );
 
                         // @link https://people.cs.clemson.edu/~dhouse/courses/405/docs/brief-obj-file-format.html
 

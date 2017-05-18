@@ -707,7 +707,7 @@ class MaterialPool extends AssetPool {
      * @param {Array[String]} pathList a list of URL paths to load, or a key for a material in our pool.
      * @param {Boolean} cacheBust if true, add a http://url?random query string to request.
      */
-    getMaterials ( prim, pathList, cacheBust = true ) {
+    getMaterials ( prim, pathList, cacheBust = true, start = 0 ) {
 
         // Wrap single strings in an Array.
 

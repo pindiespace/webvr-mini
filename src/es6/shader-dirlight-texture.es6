@@ -51,7 +51,6 @@ class shaderDirLightTexture extends Shader {
 
             'attribute vec3 ' + this.webgl.attributeNames.aVertexPosition[ 0 ] + ';',
             //'attribute vec4 ' + this.webgl.attributeNames.aVertexColor[ 0 ] + ';',
-
             'attribute vec2 ' + this.webgl.attributeNames.aTextureCoord[ 0 ] + ';',
             'attribute vec3 ' + this.webgl.attributeNames.aVertexNormal[ 0 ] + ';',
 
@@ -59,14 +58,33 @@ class shaderDirLightTexture extends Shader {
             'uniform mat4 uPMatrix;',
             'uniform mat3 uNMatrix;',
 
+            // Global lighting  (from the World) independent of directional light).
+
+            'uniform vec3 globalAmbientColor;', //////
+
+            // Directional lighting (from the World).
+
             'uniform bool uUseLighting;',
 
             'uniform vec3 uAmbientColor;',
             'uniform vec3 uLightingDirection;',
             'uniform vec3 uDirectionalColor;',
 
-            'varying vec2 vTextureCoord;',
+            // Material ambient, diffuse, specular
+
+            'uniform vec3 uMatAmbient;',
+            'uniform vec3 uMatDiffuse;',
+            'uniform vec3 uMatSpecular;',
+            'uniform float uMatSpecExp;',
+
+            // Holds result of lighting computations.
+
             'varying vec3 vLightWeighting;',
+
+            // Texture coordinates.
+
+            'varying vec2 vTextureCoord;',
+
 
             'void main(void) {',
 
@@ -82,9 +100,28 @@ class shaderDirLightTexture extends Shader {
 
             '       vec3 transformedNormal = uNMatrix * aVertexNormal;',
 
-            '       float directionalLightWeighting = max(dot(transformedNormal, uLightingDirection), 0.0);',
+/////////////////////////////
+            '       vec4 vertPos4 = uMVMatrix * vec4(aVertexPosition, 1.0);',
+            '       vec3 vertPos = vec3(vertPos4) / vertPos4.w;',
+            '       vec3 lightDir = normalize(uLightingDirection - vertPos);',
+            '       vec3 reflectDir = reflect(-lightDir, transformedNormal);',
+            '       vec3 viewDir = normalize(-vertPos);',
 
-            '       vLightWeighting = uAmbientColor + uDirectionalColor * directionalLightWeighting;',
+            '       float lambertian = max(dot(lightDir, transformedNormal), 0.0);',
+            '       float specular = 0.0;',
+
+            '       if(lambertian > 0.0) {',
+            '           float specAngle = max(dot(reflectDir, viewDir), 0.0);',
+            '           specular = pow(specAngle, uMatSpecExp);', // SPECULAR EXPONENT here
+            '       }',
+
+            '       vLightWeighting = vec3(lambertian*uMatDiffuse + specular*uMatSpecular);',
+
+/////////////////////////////
+
+            //'       float directionalLightWeighting = max(dot(transformedNormal, uLightingDirection), 0.0);',
+
+            //'       vLightWeighting = uAmbientColor + uDirectionalColor * directionalLightWeighting;',
 
             '   }',
 
@@ -223,6 +260,8 @@ class shaderDirLightTexture extends Shader {
 
         uMVMatrix = vsVars.uniform.mat4.uMVMatrix;
 
+        window.vsVars = vsVars;
+
         // Set up directional lighting with the primary World light.
 
         let lighting = true;
@@ -311,6 +350,15 @@ class shaderDirLightTexture extends Shader {
 
                 // Bind additional texture units.
 
+                // Send the DEFAULT material to the Shader (other Shaders might use multiple materials).
+
+                let m = prim.defaultMaterial;
+
+                gl.uniform3fv( vsVars.uniform.vec3.uMatAmbient, m.ambient );
+                gl.uniform3fv( vsVars.uniform.vec3.uMatDiffuse, m.diffuse );
+                gl.uniform3fv( vsVars.uniform.vec3.uMatSpecular,m.specular );
+                gl.uniform1f( vsVars.uniform.float.uMatSpecExp, prim.defaultMaterial.specularExponent );
+
                 // Set fragment shader sampler uniform.
 
                 gl.uniform1i( uSampler, 0 );
@@ -319,13 +367,19 @@ class shaderDirLightTexture extends Shader {
 
                 gl.uniform1i( uUseLighting, lighting );
 
+                // World lighting
+
                 if ( lighting ) {
 
-                    gl.uniform3f( uAmbientColor, ambient[ 0 ], ambient[ 1 ], ambient[ 2 ] );
+                    gl.uniform3fv( uAmbientColor, ambient );
                     gl.uniform3fv( uLightingDirection, adjustedLD );
-                    gl.uniform3f( uDirectionalColor, directionalColor[ 0 ], directionalColor[ 1 ], directionalColor[ 2 ] );
+                    gl.uniform3fv( uDirectionalColor, directionalColor );
 
                 }
+
+                // Prim ambient, diffuse, specular.
+
+
 
                 // Set normals matrix uniform.
 

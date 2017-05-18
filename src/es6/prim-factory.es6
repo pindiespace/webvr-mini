@@ -302,6 +302,14 @@ class PrimFactory {
 
         // Material is returned as an associative array, since multiple materials may be found in one .mtl file.
 
+        // If we have a default, remove it, since we have a non-default material.
+
+        if( prim.materials [ this.util.DEFAULT_KEY ] ) {
+
+            this.util.removeObjMember( prim.materials, this.util.DEFAULT_KEY );
+
+        }
+
         /* 
          * If the material already has an entry, it was put there parsing the 
          * OBJ file. so pull the 'start' value from it, and replace with 
@@ -350,6 +358,24 @@ class PrimFactory {
 
         }
 
+        // Finally, set a default material for Shaders that only use one material. Pick the material with the smallest 'start'.
+
+        let firstMat = 0;
+
+        for ( let i in prim.materials ) {
+
+            let mat = prim.materials[ i ];
+
+            if ( mat.starts[ 0 ] < firstMat ) {
+
+                firstMat = mat.starts[ 0 ];
+
+                prim.defaultMaterial = mat;
+
+            }
+
+        }
+
     }
 
     /** 
@@ -380,26 +406,11 @@ class PrimFactory {
 
             window.coords = coords.options;
 
-            // Object starts.
+            // Object, Group, SmoothingGroup starts.
 
-            for ( var i in coords.options.objects ) {
+            prim.objects = coords.options.objects;
 
-                console.log('have object:' + i );
-
-                // TODO: complete.
-
-                // TODO: WHY DO WE HAVE A DEFAULT OBJECT?????
-            }
-
-            // Group starts.
-
-            for ( var i in coords.options.groups ) {
-
-                console.log('have group:' + i );
-
-                // TODO: complete.
-                
-            }
+            prim.groups = coords.options.groups;
 
             // Material starts.
 
@@ -428,8 +439,6 @@ class PrimFactory {
                 // TODO: see if we can bind a texture to it.
 
             }
-
-
 
          }
 
@@ -630,7 +639,7 @@ class PrimFactory {
         };
 
         /** 
-         * Set Prim material, with defaults available from MaterialPoo.
+         * Set Prim material, with defaults available from MaterialPool.
          */
         prim.setMaterial = ( name = this.util.DEFAULT_KEY, ambient, diffuse, specular, 
 
@@ -638,7 +647,7 @@ class PrimFactory {
 
             //p.materials[ name ] = this.materialPool.default( name, ambient, diffuse, specular, 
 
-            //    specularExponent, sharpness, refraction, transparency, illum, map_Kd );
+            // specularExponent, sharpness, refraction, transparency, illum, map_Kd );
 
             let material = this.materialPool.default( name, ambient, diffuse, specular, 
 
@@ -648,6 +657,7 @@ class PrimFactory {
 
             this.initPrimMaterial ( prim, material, material.name );
 
+            return material; // use to set default material.
 
         };
 
@@ -948,7 +958,7 @@ class PrimFactory {
 
         // Set default material for the Prim (similar to OBJ format).
 
-        prim.setMaterial( this.util.DEFAULT_KEY );
+        prim.defaultMaterial = prim.setMaterial( this.util.DEFAULT_KEY );
 
         // Store multiple sounds for one Prim.
 

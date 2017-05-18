@@ -806,6 +806,37 @@ class Util {
 
     }
 
+    /* 
+     * ---------------------------------------
+     * Objects
+     * ---------------------------------------
+     */
+
+    /** 
+     * Remove a member from a JS object, ensuring that 
+     * values returned are consistent with deletion.
+     * @param {String} key the key identifying the object
+     */ 
+    removeObjMember ( obj, key ) {
+
+        if ( ! obj.hasOwnProperty( key ) ) {
+
+            return;
+
+        }
+        if ( isNaN( parseInt( key ) ) || ! ( this instanceof Array ) ) {
+
+            delete obj[ key ];
+
+        }
+        else {
+
+            obj.splice( key, 1 );
+
+        }
+
+    }
+
     /*
      * ---------------------------------------
      * OS AND UI OPERATIONS
