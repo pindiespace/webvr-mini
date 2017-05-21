@@ -497,9 +497,17 @@ class Shader {
 
         this.pMatrix = glMatrix.mat4.create(); // projection matrix (defaults to mono view)
 
+        this.mMatrix = glMatrix.mat4.create(); // Model only (no view)
+
+        this.vMatrix = glMatrix.mat4.create();
+
         this.mvMatrix = glMatrix.mat4.create(); // model-view matrix
 
         let pMatrix = this.pMatrix;
+
+        let mMatrix = this.mMatrix;
+
+        let vMatrix = this.vMatrix;
 
         let mvMatrix = this.mvMatrix;
 
@@ -511,11 +519,12 @@ class Shader {
 
         let far = this.webgl.far;
 
-        // Rendering mono view.
-
+        /**
+         * Rendering mono view.
+         */
         program.renderMono = () => {
 
-            mat4.identity( mvMatrix );
+            mat4.identity( mvMatrix ); // Model-View
 
             mat4.perspective( pMatrix, Math.PI*0.4, canvas.width / canvas.height, near, far );
 
@@ -523,37 +532,38 @@ class Shader {
 
         }
 
-        // Rendering left and right eye for VR. Called once for each Shader by World.
-
+        /** 
+         *  Rendering left and right eye for VR. Called once for each Shader by World.
+         */
         program.renderVR = ( vr, display, frameData ) => {
 
-                // Framedata provided by calling function.
+            // Framedata provided by calling function.
 
-                // Left eye.
+            // Left eye.
 
-                mat4.identity( mvMatrix );
+            mat4.identity( mvMatrix ); // Model-View
 
-                gl.viewport( 0, 0, canvas.width * 0.5, canvas.height );
+            gl.viewport( 0, 0, canvas.width * 0.5, canvas.height );
 
-                // Multiply mvMatrix by our eye.leftViewMatrix, and adjust for height of VR viewer.
+            // Multiply mvMatrix by our eye.leftViewMatrix, and adjust for height of VR viewer.
 
-                vr.getStandingViewMatrix( mvMatrix, frameData.leftViewMatrix, frameData.pose );
+            vr.getStandingViewMatrix( mvMatrix, frameData.leftViewMatrix, frameData.pose );
 
-                program.render( frameData.leftProjectionMatrix, mvMatrix );
+            program.render( frameData.leftProjectionMatrix, mvMatrix );
 
-                // Right eye.
+            // Right eye.
 
-                mat4.identity( mvMatrix );
+            mat4.identity( mvMatrix );
 
-                gl.viewport( canvas.width * 0.5, 0, canvas.width * 0.5, canvas.height );
+            gl.viewport( canvas.width * 0.5, 0, canvas.width * 0.5, canvas.height );
 
-                // Multiply mvMatrix by our eye.rightViewMatrix, and adjust for height of VR viewer.
+            // Multiply mvMatrix by our eye.rightViewMatrix, and adjust for height of VR viewer.
 
-                vr.getStandingViewMatrix( mvMatrix, frameData.rightViewMatrix, frameData.pose ); // after Toji
+            vr.getStandingViewMatrix( mvMatrix, frameData.rightViewMatrix, frameData.pose ); // after Toji
 
-                program.render( frameData.rightProjectionMatrix, mvMatrix );
+            program.render( frameData.rightProjectionMatrix, mvMatrix );
 
-                // Calling function submits rendered stereo view to device.
+            // Calling function submits rendered stereo view to device.
 
         }
 

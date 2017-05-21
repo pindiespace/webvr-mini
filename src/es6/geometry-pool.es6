@@ -864,11 +864,11 @@ class GeometryPool {
 
             // NOTE: added negative (-) to x, z to match our lighting model.
 
-            normals[ idx * 3 ] = -faceNormalx;
+            normals[ idx * 3 ] = faceNormalx;
 
             normals[ idx * 3 + 1 ] = faceNormaly;
 
-            normals[ idx * 3 + 2 ] = -faceNormalz;
+            normals[ idx * 3 + 2 ] = faceNormalz;
 
         }
 

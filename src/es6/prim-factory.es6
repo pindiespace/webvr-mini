@@ -306,6 +306,8 @@ class PrimFactory {
 
         if( prim.materials [ this.util.DEFAULT_KEY ] ) {
 
+            console.log("REMOVING DEFAULT MATERIAL")
+
             this.util.removeObjMember( prim.materials, this.util.DEFAULT_KEY );
 
         }
@@ -360,21 +362,7 @@ class PrimFactory {
 
         // Finally, set a default material for Shaders that only use one material. Pick the material with the smallest 'start'.
 
-        let firstMat = 0;
-
-        for ( let i in prim.materials ) {
-
-            let mat = prim.materials[ i ];
-
-            if ( mat.starts[ 0 ] < firstMat ) {
-
-                firstMat = mat.starts[ 0 ];
-
-                prim.defaultMaterial = mat;
-
-            }
-
-        }
+        prim.defaultMaterial = material;
 
     }
 
@@ -594,15 +582,30 @@ class PrimFactory {
 
             // TODO: translate everything.
 
-            let z = -5; // TODO: default position relative to camera! !!! CHANGE??????
+            let pov = this.world.getPOV();
 
-            // Translate.
+            // Adds View - Translate to World default POV (position).
+
+            mat4.translate( mvMatrix, mvMatrix, [ pov[ 0 ] + p.position[ 0 ], pov[ 1 ] + p.position[ 1 ], pov[ 2 ] + p.position[ 2 ] ] );
+
+            // Set the Model matrix.
+
+            prim.setM( mvMatrix );
+
+            return mvMatrix;
+
+        };
+
+        /** 
+         * Back out the translation from the Model-View matrix, when we need just the Model.
+         * @param {glMatrix.mat4} mvMatrix model-view matrix.
+         * @returns {glMatrix.mat4} the altered model-view matrix.
+         */
+        prim.setM = ( mvMatrix ) => {
+
+            // Internal Prim Translate.
 
             vec3.add( p.position, p.position, p.acceleration );
-
-            // Translate to default position.
-
-            mat4.translate( mvMatrix, mvMatrix, [ p.position[ 0 ], p.position[ 1 ], z + p.position[ 2 ] ] );
 
             // Rotate.
 
@@ -616,13 +619,9 @@ class PrimFactory {
 
             mat4.scale( mvMatrix, mvMatrix, p.scale );
 
-            // TODO: rotate second for orbiting.
-            // TODO: rotate (internal), translate, rotate (orbit)
-            // TODO: orbit
-
             return mvMatrix;
 
-        };
+        }
 
         /** 
          * Set the Prim as a glowing object. Global Lights 

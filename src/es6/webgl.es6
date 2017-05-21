@@ -48,7 +48,7 @@ class WebGL {
         // Default shader name for vertices (must always use in vertex and fragment shader).
 
         /*
-         * All the Shaders MUST use the followin names for common shader attributes. They are 
+         * All the Shaders MUST use the following names for common shader attributes. They are 
          * hard-coded to improve positioning.
          */
 
@@ -336,7 +336,7 @@ class WebGL {
 
             gl.enable( gl.DEPTH_TEST );
 
-            //gl.enable( gl.CULL_FACE );
+            gl.enable( gl.CULL_FACE );
 
             gl.clearDepth( 1.0 );             // Clear everything
 
@@ -348,24 +348,7 @@ class WebGL {
             //http://www.geeks3d.com/20100228/fog-in-glsl-webgl/
             // http://in2gpu.com/2014/07/22/create-fog-shader/
 
-            //gl.enable( gl.FOG );
-
-            // set this for individual objects 
-            //gl.blendFunc( gl.SRC_ALPHA, gl.ONE );
-
-            //gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-            // partly transparent to grey opaque
-
             gl.blendFunc( gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA );
-
-            //gl.blendFunc( gl.ONE, gl.ONE);
-            //gl.blendFunc(gl.SRC_COLOR, gl.ONE_MINUS_SRC_ALPHA);
-
-            //gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-
-            // bright, partly transparent
-            //gl.blendEquationSeparate(gl.FUNC_ADD,gl.FUNC_ADD);
-            //gl.blendFuncSeparate(gl.ONE,gl.ONE_MINUS_SRC_ALPHA,gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
 
             /* 
              * IMPORTANT: tells WebGL to premultiply alphas for <canvas>
@@ -396,8 +379,30 @@ class WebGL {
      */
 
     /** 
-     * Add vertex buffer support to WebGL 1.0
-     * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only)l
+     * Give the Shaders the ability to take derivatives.
+     * @link https://developer.mozilla.org/en-US/docs/Web/API/OES_standard_derivatives
+     * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only).
+     */
+    addDerivativeSupport( gl ) {
+
+        return gl.getExtension('GL_OES_standard_derivatives');
+
+    }
+
+    /** 
+     * Add LOD (Level of Detail) support, reducing texturing artifacts.
+     * @link https://developer.mozilla.org/en-US/docs/Web/API/EXT_shader_texture_lod
+     * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only).
+     */
+    addLODSupport( gl ) {
+
+        return gl.getExtension('EXT_shader_texture_lod');
+
+    }
+
+    /** 
+     * Add vertex buffer support to WebGL 1.0.
+     * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only).
      */
     addVertexBufferSupport ( gl ) {
 
@@ -758,10 +763,6 @@ class WebGL {
 
                         this.glVers = 1.0;
 
-                        this.addVertexBufferSupport( gl ); // vertex buffers
-
-                        this.stats.uint32 = this.addIndex32Support( gl ); // vertices > 64k
-
                         break;
 
                     default:
@@ -771,6 +772,18 @@ class WebGL {
                 }
 
             }
+
+        // Enable some extensions if we have a WebGL context. We do it here to record capabilities.
+
+        this.stats.LOD = this.addLODSupport( gl ); // Level of Detail avoid texturing artifacts
+
+        this.stats.derivatives = this.addDerivativeSupport( gl );
+
+        this.stats.vertexBuffers = this.addVertexBufferSupport( gl ); // vertex buffers
+
+        this.stats.uint32 = this.addIndex32Support( gl ); // vertices > 64k
+
+        // Set the maximum draw elements, based on card capabilities.
 
         if ( ! this.stats.uint32) { 
 

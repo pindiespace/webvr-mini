@@ -71,6 +71,10 @@ class World extends AssetPool {
 
         this.primFactory = new PrimFactory ( true, this );
 
+        // Add a simple point of view, instead of Camera.
+
+        this.pov = [ 0, 0, -5 ];
+
         // Add World Lights (Prims may have their own).
 
         this.lights = lights;
@@ -104,6 +108,27 @@ class World extends AssetPool {
         // Bind the render loop (best current method)
 
         this.render = this.render.bind( this );
+
+    }
+
+    /** 
+     * Set the POV (simple camera).
+     * @param {Number} x coordinate in World space.
+     * @param {Number} y coordinate in World space.
+     * @param {Number} z coordinate in World space.
+     */
+    setPOV ( x, y, z ) {
+
+        this.pov = [ x, y, z ];
+
+    }
+
+    /** 
+     * Get the POV (simple camera).
+     */
+    getPOV () {
+
+        return this.pov;
 
     }
 

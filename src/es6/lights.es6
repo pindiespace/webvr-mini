@@ -3,9 +3,9 @@
 
 class Lights {
     
-    constructor ( glMatrix, ambient = [ 0.1, 0.1, 0.1 ], lightingDirection = [ -0.25, -0.5, -0.1 ], 
+    constructor ( glMatrix, ambient = [ 0.3, 0.3, 0.3 ], lightingDirection = [ 0.0, 100000.0, -0.1 ], 
 
-        directionalColor = [ 0.7, 0.7, 0.7 ] ) {
+        directionalColor = [ 1, 1, 1 ] ) {
 
         this.glMatrix = glMatrix;
 
@@ -25,12 +25,16 @@ class Lights {
 
         this.lightList[ this.lightTypes.LIGHT_0 ] = {
 
-            ambient: ambient,          
+            ambient: ambient,
 
-            lightingDirection: lightingDirection,
+            lightingDirection: [ lightingDirection[ 0 ], lightingDirection[ 1 ], lightingDirection[ 2 ] ],
 
-            directionalColor: directionalColor
-                    
+            directionalColor: directionalColor,
+
+            attenuation: 1.0,
+
+            radius: 1.0
+
         };
 
     }
@@ -48,7 +52,7 @@ class Lights {
      */
     setPos ( id, x, y, z ) {
 
-        // TODO:
+        this.lightList[ id ] = [ -x, -y, z ];
 
     }
 
