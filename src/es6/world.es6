@@ -71,9 +71,11 @@ class World extends AssetPool {
 
         this.primFactory = new PrimFactory ( true, this );
 
-        // Add a simple point of view, instead of Camera.
+        // Add a simple point of view, instead of Cameram 1st 3 values = postion, 2nd 3 values = rotation.
 
-        this.pov = [ 0, 0, -5 ];
+        this.position = [ 0, 0, -5 ];
+
+        this.rotation = [ 0, 0, 0 ];
 
         // Add World Lights (Prims may have their own).
 
@@ -117,18 +119,27 @@ class World extends AssetPool {
      * @param {Number} y coordinate in World space.
      * @param {Number} z coordinate in World space.
      */
-    setPOV ( x, y, z ) {
+    setPosition ( x, y, z ) {
 
-        this.pov = [ x, y, z ];
+        this.position = [ x, y, z ];
 
     }
 
-    /** 
-     * Get the POV (simple camera).
-     */
+    setRotation ( rx, ry, rz ) {
+
+        this.rotation = [ rx, ry, rz ];
+
+    }
+
     getPOV () {
 
-        return this.pov;
+        return { 
+
+            position: this.position, 
+
+            rotation: this.rotation 
+
+        };
 
     }
 
@@ -937,7 +948,7 @@ class World extends AssetPool {
 
         this.webgl.clear();
 
-        let vr = this.vr;
+        let vr = this.vr, pov = this.getPOV();
 
         let display = vr.getDisplay();
 
@@ -945,13 +956,13 @@ class World extends AssetPool {
 
             let frameData = this.vr.getFrameData();
 
-            this.r3.renderVR( vr, display, frameData );  // directional light texture
+            this.r3.renderVR( vr, display, frameData, pov );  // directional light texture
 
-            this.r2.renderVR( vr, display, frameData );  // color
+            this.r2.renderVR( vr, display, frameData, pov );  // color
 
-            this.r1.renderVR( vr, display, frameData );  // textured, no lighting
+            this.r1.renderVR( vr, display, frameData, pov );  // textured, no lighting
 
-            this.r0.renderVR( vr, display, frameData );  // REQUIRED alpha (Prim appearing or disappearing), drawn in front
+            this.r0.renderVR( vr, display, frameData, pov );  // REQUIRED alpha (Prim appearing or disappearing), drawn in front
 
             display.submitFrame();
 
@@ -961,13 +972,13 @@ class World extends AssetPool {
 
             // Render mono view.
 
-            this.r3.renderMono(); // directional light texture
+            this.r3.renderMono( pov ); // directional light texture
 
-            this.r2.renderMono(); // color
+            this.r2.renderMono( pov ); // color
 
-            this.r1.renderMono(); // textured, no lighting
+            this.r1.renderMono( pov ); // textured, no lighting
 
-            this.r0.renderMono(); // REQUIRED alpha (Prim appearing or disappearing), drawn in front
+            this.r0.renderMono( pov ); // REQUIRED alpha (Prim appearing or disappearing), drawn in front
 
             requestAnimationFrame( this.render );
 

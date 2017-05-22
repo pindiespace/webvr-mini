@@ -586,7 +586,13 @@ class PrimFactory {
 
             // Adds View - Translate to World default POV (position).
 
-            mat4.translate( mvMatrix, mvMatrix, [ pov[ 0 ] + p.position[ 0 ], pov[ 1 ] + p.position[ 1 ], pov[ 2 ] + p.position[ 2 ] ] );
+            // NOTE: THIS WORLD TRANSLATION WAS FORMERLY HERE. TEST ON VIVE!!!!!!!!
+
+            //mat4.translate( mvMatrix, mvMatrix, pov.position );
+
+            mat4.translate( mvMatrix, mvMatrix, p.position );
+
+            //mat4.translate( mvMatrix, mvMatrix, [ pov.position[ 0 ] + p.position[ 0 ], pov.position[ 1 ] + p.position[ 1 ], pov.position[ 2 ] + p.position[ 2 ] ] );
 
             // Set the Model matrix.
 

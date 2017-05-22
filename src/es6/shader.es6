@@ -522,9 +522,18 @@ class Shader {
         /**
          * Rendering mono view.
          */
-        program.renderMono = () => {
+        program.renderMono = ( pov ) => {
 
             mat4.identity( mvMatrix ); // Model-View
+
+            // POV position (common to all renderings in a frame).
+
+            mat4.translate( mvMatrix, mvMatrix, pov.position );
+
+            // POV rotation (common to all renderings in a frame).
+
+
+            // Perspective (common for all renderings in a frame).
 
             mat4.perspective( pMatrix, Math.PI*0.4, canvas.width / canvas.height, near, far );
 
@@ -535,7 +544,7 @@ class Shader {
         /** 
          *  Rendering left and right eye for VR. Called once for each Shader by World.
          */
-        program.renderVR = ( vr, display, frameData ) => {
+        program.renderVR = ( vr, display, frameData, pov ) => {
 
             // Framedata provided by calling function.
 
@@ -543,11 +552,19 @@ class Shader {
 
             mat4.identity( mvMatrix ); // Model-View
 
+            // Adjust viewport to VR canvas width and height.
+
             gl.viewport( 0, 0, canvas.width * 0.5, canvas.height );
 
             // Multiply mvMatrix by our eye.leftViewMatrix, and adjust for height of VR viewer.
 
             vr.getStandingViewMatrix( mvMatrix, frameData.leftViewMatrix, frameData.pose );
+
+            // World position and rotation.
+
+            mat4.translate( mvMatrix, mvMatrix, pov.position );
+
+            // Render the World.
 
             program.render( frameData.leftProjectionMatrix, mvMatrix );
 
@@ -555,11 +572,19 @@ class Shader {
 
             mat4.identity( mvMatrix );
 
+            // Adjust Canvas to VR width and height.
+
             gl.viewport( canvas.width * 0.5, 0, canvas.width * 0.5, canvas.height );
 
             // Multiply mvMatrix by our eye.rightViewMatrix, and adjust for height of VR viewer.
 
             vr.getStandingViewMatrix( mvMatrix, frameData.rightViewMatrix, frameData.pose ); // after Toji
+
+            // World position and rotation.
+
+            mat4.translate( mvMatrix, mvMatrix, pov.position );
+
+            // Render the World.
 
             program.render( frameData.rightProjectionMatrix, mvMatrix );
 
