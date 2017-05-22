@@ -526,41 +526,27 @@ class Shader {
 
             mat4.identity( vMatrix );
 
-            mat4.rotate( vMatrix, vMatrix, pov.rotation[ 1 ], [ 0, 1, 0 ] ); // rotate on Y axis only.
+            mat4.rotate( vMatrix, vMatrix, pov.rotation[ 1 ], [ 0, 1, 0 ] ); // rotate on Y axis only (for mouselook).
+
+            mat4.rotate( vMatrix, vMatrix, pov.rotation[ 0 ], [ 1, 0 , 0 ] ); // rotate on X axis only (for mouselook).
 
             // POV position (common to all renderings in a frame).
 
             mat4.translate( vMatrix, vMatrix, pov.position );
 
-////////////////////////
+            // Copy vMatrix to mvMatrix (so we have vMatrix separately for Shader).            
 
             mat4.copy( mvMatrix, vMatrix );
 
-
-            //mat4.identity( mvMatrix ); // Model-View
-
-            // This order of applications gives us a rotation around our point of view for "mouselook".
-
-            // NOTE: reverse the order, and the World spins like a top around its center.
-
-            // POV rotation (common to all renderings in a frame).
-
-            //mat4.rotate( mvMatrix, mvMatrix, pov.rotation[ 1 ], [ 0, 1, 0 ] ); // rotate on Y axis only.
-
-            // POV position (common to all renderings in a frame).
-
-            //mat4.translate( mvMatrix, mvMatrix, pov.position );
-
             // TODO: DEBUG TEMPORARY.
-
-            ///////////pov.rotation[ 1 ] += 0.001;
-
+//pov.rotation[ 0 ] += 0.001;
+//pov.rotation[ 1 ] += 0.001;
 
             // Perspective (common for all renderings in a frame).
 
             mat4.perspective( pMatrix, Math.PI*0.4, canvas.width / canvas.height, near, far );
 
-            program.render( pMatrix, mvMatrix );
+            program.render( pMatrix, mvMatrix, vMatrix );
 
         }
 
@@ -585,9 +571,14 @@ class Shader {
 
             vr.getStandingViewMatrix( vMatrix, frameData.leftViewMatrix, frameData.pose );
 
+            // !!!!!!!!!!!!!!!!!!
+            // NOTE: THIS WORKS PERFECTLY IN SIMULATION. TEST ON VIVE!!!!!!!!!!
+            // !!!!!!!!!!!!!!!!!!
+
+
             // World position and rotation.
 
-            ///////mat4.rotate( vMatrix, vMatrix, pov.rotation[ 1 ], [ 0, 1, 0 ] ); // rotate on Y axis only.
+            mat4.rotate( vMatrix, vMatrix, pov.rotation[ 1 ], [ 0, 1, 0 ] ); // rotate on Y axis only.
 
             mat4.translate( vMatrix, vMatrix, pov.position );
 
@@ -597,10 +588,13 @@ class Shader {
 
             // Render the World.
 
+            // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             // TODO: IF WE COLLECT THE PROGRAM.RENDERS, WE CAN RENDER WITH ONE STARTING World position and rotation.
             // TODO: PROMOTE THIS INTO WORLD ABOVE THIS LINE.
 
-            program.render( frameData.leftProjectionMatrix, mvMatrix );
+            // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+            program.render( frameData.leftProjectionMatrix, mvMatrix, vMatrix );
 
             // Right eye.
 
@@ -618,7 +612,7 @@ class Shader {
 
             // World position and rotation.
 
-            /////////mat4.rotate( vMatrix, vMatrix, pov.rotation[ 1 ], [ 0, 1, 0 ] ); // rotate on Y axis only.
+            mat4.rotate( vMatrix, vMatrix, pov.rotation[ 1 ], [ 0, 1, 0 ] ); // rotate on Y axis only.
 
             mat4.translate( vMatrix, vMatrix, pov.position );
 
@@ -628,7 +622,7 @@ class Shader {
 
             // Render the World.
 
-            program.render( frameData.rightProjectionMatrix, mvMatrix );
+            program.render( frameData.rightProjectionMatrix, mvMatrix, vMatrix );
 
             // Calling function submits rendered stereo view to device.
 

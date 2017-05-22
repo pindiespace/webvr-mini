@@ -5411,40 +5411,27 @@
 
 	                mat4.identity(vMatrix);
 
-	                mat4.rotate(vMatrix, vMatrix, pov.rotation[1], [0, 1, 0]); // rotate on Y axis only.
+	                mat4.rotate(vMatrix, vMatrix, pov.rotation[1], [0, 1, 0]); // rotate on Y axis only (for mouselook).
+
+	                mat4.rotate(vMatrix, vMatrix, pov.rotation[0], [1, 0, 0]); // rotate on X axis only (for mouselook).
 
 	                // POV position (common to all renderings in a frame).
 
 	                mat4.translate(vMatrix, vMatrix, pov.position);
 
-	                ////////////////////////
+	                // Copy vMatrix to mvMatrix (so we have vMatrix separately for Shader).            
 
 	                mat4.copy(mvMatrix, vMatrix);
 
-	                //mat4.identity( mvMatrix ); // Model-View
-
-	                // This order of applications gives us a rotation around our point of view for "mouselook".
-
-	                // NOTE: reverse the order, and the World spins like a top around its center.
-
-	                // POV rotation (common to all renderings in a frame).
-
-	                //mat4.rotate( mvMatrix, mvMatrix, pov.rotation[ 1 ], [ 0, 1, 0 ] ); // rotate on Y axis only.
-
-	                // POV position (common to all renderings in a frame).
-
-	                //mat4.translate( mvMatrix, mvMatrix, pov.position );
-
 	                // TODO: DEBUG TEMPORARY.
-
-	                ///////////pov.rotation[ 1 ] += 0.001;
-
+	                //pov.rotation[ 0 ] += 0.001;
+	                //pov.rotation[ 1 ] += 0.001;
 
 	                // Perspective (common for all renderings in a frame).
 
 	                mat4.perspective(pMatrix, Math.PI * 0.4, canvas.width / canvas.height, near, far);
 
-	                program.render(pMatrix, mvMatrix);
+	                program.render(pMatrix, mvMatrix, vMatrix);
 	            };
 
 	            /** 
@@ -5468,9 +5455,14 @@
 
 	                vr.getStandingViewMatrix(vMatrix, frameData.leftViewMatrix, frameData.pose);
 
+	                // !!!!!!!!!!!!!!!!!!
+	                // NOTE: THIS WORKS PERFECTLY IN SIMULATION. TEST ON VIVE!!!!!!!!!!
+	                // !!!!!!!!!!!!!!!!!!
+
+
 	                // World position and rotation.
 
-	                ///////mat4.rotate( vMatrix, vMatrix, pov.rotation[ 1 ], [ 0, 1, 0 ] ); // rotate on Y axis only.
+	                mat4.rotate(vMatrix, vMatrix, pov.rotation[1], [0, 1, 0]); // rotate on Y axis only.
 
 	                mat4.translate(vMatrix, vMatrix, pov.position);
 
@@ -5480,10 +5472,13 @@
 
 	                // Render the World.
 
+	                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	                // TODO: IF WE COLLECT THE PROGRAM.RENDERS, WE CAN RENDER WITH ONE STARTING World position and rotation.
 	                // TODO: PROMOTE THIS INTO WORLD ABOVE THIS LINE.
 
-	                program.render(frameData.leftProjectionMatrix, mvMatrix);
+	                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+	                program.render(frameData.leftProjectionMatrix, mvMatrix, vMatrix);
 
 	                // Right eye.
 
@@ -5501,7 +5496,7 @@
 
 	                // World position and rotation.
 
-	                /////////mat4.rotate( vMatrix, vMatrix, pov.rotation[ 1 ], [ 0, 1, 0 ] ); // rotate on Y axis only.
+	                mat4.rotate(vMatrix, vMatrix, pov.rotation[1], [0, 1, 0]); // rotate on Y axis only.
 
 	                mat4.translate(vMatrix, vMatrix, pov.position);
 
@@ -5511,7 +5506,7 @@
 
 	                // Render the World.
 
-	                program.render(frameData.rightProjectionMatrix, mvMatrix);
+	                program.render(frameData.rightProjectionMatrix, mvMatrix, vMatrix);
 
 	                // Calling function submits rendered stereo view to device.
 	            };
@@ -6206,6 +6201,7 @@
 	            'uniform mat4 uMVMatrix;', // Model-View matrix
 	            'uniform mat4 uPMatrix;', // Perspective matrix
 	            'uniform mat3 uNMatrix;', // Inverse-transpose of Model-View matrix
+	            'uniform mat4 uVMatrix;', // View matrix
 
 	            // Directional lighting (from the World).
 
@@ -6219,22 +6215,15 @@
 	            //'uniform float uMatSpecExp;',
 
 	            'varying vec3 vAmbientColor;', 'varying vec3 vLightingDirection;', 'varying vec3 vDirectionalColor;', 'varying vec4 vPositionW;', 'varying vec4 vNormalW;', 'varying vec4 transformedNormal;', 'varying mat4 vMVMatrix;', /////////////////////////////////////////////////
+	            'varying vec3 vPosition;',
 
 	            // Holds result of lighting computations.
 
 	            'varying vec3 vLightWeighting;',
 
-	            ////////////'varying float VLW;',
-
 	            // Texture coordinates.
 
-	            'varying vec2 vTextureCoord;',
-
-	            //////////////////////////////// Data structures
-
-	            ////////////////////////////////// main
-
-	            'void main(void) {', '    vAmbientColor = uAmbientColor;', '    vLightingDirection = uLightingDirection;', '    vDirectionalColor = uDirectionalColor;',
+	            'varying vec2 vTextureCoord;', 'void main(void) {', '    vAmbientColor = uAmbientColor;', '    vLightingDirection = uLightingDirection;', '    vDirectionalColor = uDirectionalColor;',
 
 	            // View-Model-Position-Projection matrix.
 
@@ -6242,9 +6231,11 @@
 
 	            // Texture coordinate.
 
-	            '    vTextureCoord = aTextureCoord;', '    vPositionW = uMVMatrix * vec4(aVertexPosition, 1.0);', // Model-View Matrix rotates position.
+	            '    vTextureCoord = aTextureCoord;',
 
-	            //'    vPositionW.z += 5.0;', // account for translation, move specular up object surface//////////////////////////////////////////////
+	            // NOTE: CHANGED BELOW FROM MODEL-VIEW MATRIX TO VIEW MATRIX!!!!!!!!
+
+	            '    vPositionW = uVMatrix * vec4(aVertexPosition, 1.0);', // Model-View Matrix (including POV/ camera).
 
 	            '    vNormalW =  normalize(vec4(uNMatrix*aVertexNormal, 0.0));', // Inverse-transpose-normal matrix rotates object normals.
 
@@ -6286,7 +6277,9 @@
 
 	            // Varying.
 
-	            'varying mat4 vMVMatrix;', 'varying vec4 vPositionW;', 'varying vec4 vNormalW;', 'varying vec3 vAmbientColor;', 'varying vec3 vLightingDirection;', // uLightingDirection
+	            'varying mat4 vMVMatrix;', // Model-View matrix.
+
+	            'varying vec4 vPositionW;', 'varying vec4 vNormalW;', 'varying vec3 vAmbientColor;', 'varying vec3 vLightingDirection;', // uLightingDirection
 	            'varying vec3 vDirectionalColor;', 'varying vec2 vTextureCoord;', 'varying vec3 vLightWeighting;', 'uniform sampler2D uSampler;', 'vec3 fn ( vec3 invec ) {', ' return invec;', '}',
 
 	            // Main program.
@@ -6305,25 +6298,27 @@
 
 	            '    vec4 Ambient = vec4(vAmbientColor, 1.0);',
 
-	            ////////////////////////////
-
-	            'vec3 transformedPointLocation;', 'vec3 normal = vNormalW.xyz;', 'vec3 eyeDirection = normalize(-vPositionW.xyz);', 'vec3 reflectionDirection;',
-
-	            ////////////////////////////
-
 	            // Diffuse.
 
 	            '    vec4 N = normalize( vNormalW );', '    vec4 L = normalize( vec4(vLightingDirection, 1.0) - vPositionW );', // if we include vPosition, lighting centers. If we don't we lose specular
 	            '    vec4 LL = normalize( vec4(vLightingDirection, 1.0));', '    float NdotL = max( dot( N, LL ), 0.0 );', '    vec4 Diffuse =  NdotL * vec4( vDirectionalColor * uMatDiffuse, 1.0);',
 
 	            // Specular.
-
-	            '   vec4 EyePosW = vec4( 0.0, 0.0, -5.0, 1.0 );', // positive Y pushes it up!
+	            //Providing the NEGATIVES of the Light coords here seem to resolve position.
+	            // ORIGINAL LIGHTING
+	            //  -100000.0, 0.0, -0.1
+	            '   vec4 EyePosW = vec4( 10000.0, -0.0, 0.0, 1.0 );', // positive Y pushes it up!
+	            // THIS WORKS, but...
+	            // BUT THIS DOESN'T WORK!!!!!
+	            //'   vec4 EyePosW = vec4( -vLightingDirection, 1.0 );',
 	            // TODO: WHY DOESN"T THIS WORK WHEN WE TRYING TO PROVIDE vLightingDirection??????
+	            // THIS CAUSES THE LIGHT TO MOVE BACK AND FORTH ON THE SURFACE.
+	            //'  vec4 EyePosW = normalize( vec4(-vLightingDirection, 1.0));',
 
 	            '   vec4 V = normalize( EyePosW - vPositionW  );', // if this is just vPositionW we get a highlight around edges in right place
 
 	            '   vec4 H = normalize( L + V );', '   vec4 R = reflect( -L, N );', // -L needed to bring to center. +L gives edges highlighted
+
 	            '   float RdotV = max( dot( R, V ), 0.0 );', '   float NdotH = max( dot( N, H ), 0.0 );', '   vec4 Specular = pow( RdotV, uMatSpecExp ) * pow(NdotH, uMatSpecExp) * vec4(vDirectionalColor * uMatSpecular, 1.0);',
 
 	            // Final fragment color.
@@ -6399,8 +6394,15 @@
 	                uLightingDirection = vsVars.uniform.vec3.uLightingDirection,
 	                uDirectionalColor = vsVars.uniform.vec3.uDirectionalColor,
 	                uNMatrix = vsVars.uniform.mat3.uNMatrix,
-	                uPMatrix = vsVars.uniform.mat4.uPMatrix,
-	                uMVMatrix = vsVars.uniform.mat4.uMVMatrix;
+	                // Inverse-transpose normal matrix
+
+	            uPMatrix = vsVars.uniform.mat4.uPMatrix,
+	                // Projection
+
+	            uMVMatrix = vsVars.uniform.mat4.uMVMatrix,
+	                // Model-View
+
+	            uVMatrix = vsVars.uniform.mat4.uVMatrix; // View, Used on fragment shader only
 
 	            window.vsVars = vsVars;
 	            window.fsVars = fsVars;
@@ -6446,7 +6448,7 @@
 
 	            // Prim rendering - Shader in ShaderPool, rendered by World. Light uses the Model matrix as well as Model-View matrix.
 
-	            program.render = function (PM, MVM) {
+	            program.render = function (PM, MVM, VM) {
 
 	                gl.useProgram(shaderProgram);
 
@@ -6516,13 +6518,6 @@
 	                    if (lighting) {
 
 	                        gl.uniform3fv(uAmbientColor, ambient);
-
-	                        if (prim.name === 'objfile') {
-
-	                            ////////////console.log(ambient)
-
-	                        }
-
 	                        gl.uniform3fv(uLightingDirection, adjustedLD);
 	                        gl.uniform3fv(uDirectionalColor, directionalColor);
 	                    }
@@ -6531,10 +6526,19 @@
 
 	                    gl.uniformMatrix3fv(uNMatrix, false, nMatrix);
 
-	                    // Set perspective and model-view matrix uniforms.
+	                    // Set Perspective uniform.
 
 	                    gl.uniformMatrix4fv(uPMatrix, false, PM);
+
+	                    // Model-View matrix uniform.
+
 	                    gl.uniformMatrix4fv(uMVMatrix, false, MVM);
+
+	                    // Set View matrix uniform.
+
+	                    gl.uniformMatrix4fv(uVMatrix, false, VM);
+
+	                    // Bind indices buffer.
 
 	                    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, prim.geometry.indices.buffer);
 
@@ -6550,7 +6554,7 @@
 	                        gl.drawElements(gl.TRIANGLES, prim.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
 	                    }
 
-	                    // Copy back the original for the next Prim. 
+	                    // Copy back the original MVM (with no local Prim transforms) for the next Prim. 
 
 	                    mat4.copy(MVM, saveMV, MVM);
 	                } // end of renderList for Prims
@@ -6558,10 +6562,6 @@
 	                // Disable buffers that might cause problems in another Prim.
 
 	            }; // end of program.render()
-
-	            //gl.bindBuffer( gl.ARRAY_BUFFER, null );
-	            //gl.disableVertexAttribArray( vsVars.attribute.vec3.aVertexNormal );
-	            //gl.disableVertexAttribArray( vsVars.attribute.vec2.aTextureCoord );
 
 	            return program;
 	        } // end if init()
@@ -7193,7 +7193,7 @@
 	var Lights = function () {
 	    function Lights(glMatrix) {
 	        var ambient = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [0.3, 0.3, 0.3];
-	        var lightingDirection = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [0.0, 100000.0, -0.1];
+	        var lightingDirection = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [-100000.0, 0.0, -0.1];
 	        var directionalColor = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [1, 1, 1];
 
 	        _classCallCheck(this, Lights);

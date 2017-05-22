@@ -58,6 +58,7 @@ class shaderDirLightTexture extends Shader {
             'uniform mat4 uMVMatrix;',  // Model-View matrix
             'uniform mat4 uPMatrix;',   // Perspective matrix
             'uniform mat3 uNMatrix;',   // Inverse-transpose of Model-View matrix
+            'uniform mat4 uVMatrix;',  // View matrix
 
             // Directional lighting (from the World).
 
@@ -85,20 +86,16 @@ class shaderDirLightTexture extends Shader {
             'varying vec4 transformedNormal;',
 
             'varying mat4 vMVMatrix;', /////////////////////////////////////////////////
+            'varying vec3 vPosition;',
 
             // Holds result of lighting computations.
 
             'varying vec3 vLightWeighting;',
 
-            ////////////'varying float VLW;',
 
             // Texture coordinates.
 
             'varying vec2 vTextureCoord;',
-
-            //////////////////////////////// Data structures
-
-            ////////////////////////////////// main
 
             'void main(void) {',
 
@@ -114,9 +111,9 @@ class shaderDirLightTexture extends Shader {
 
             '    vTextureCoord = aTextureCoord;',
 
-            '    vPositionW = uMVMatrix * vec4(aVertexPosition, 1.0);', // Model-View Matrix rotates position.
+            // NOTE: CHANGED BELOW FROM MODEL-VIEW MATRIX TO VIEW MATRIX!!!!!!!!
 
-            //'    vPositionW.z += 5.0;', // account for translation, move specular up object surface//////////////////////////////////////////////
+            '    vPositionW = uVMatrix * vec4(aVertexPosition, 1.0);', // Model-View Matrix (including POV/ camera).
 
             '    vNormalW =  normalize(vec4(uNMatrix*aVertexNormal, 0.0));', // Inverse-transpose-normal matrix rotates object normals.
 
@@ -177,7 +174,7 @@ class shaderDirLightTexture extends Shader {
 
             // Varying.
 
-            'varying mat4 vMVMatrix;',
+            'varying mat4 vMVMatrix;', // Model-View matrix.
 
             'varying vec4 vPositionW;',
             'varying vec4 vNormalW;',
@@ -212,16 +209,6 @@ class shaderDirLightTexture extends Shader {
 
             '    vec4 Ambient = vec4(vAmbientColor, 1.0);',
 
-            ////////////////////////////
-
-            'vec3 transformedPointLocation;',
-            'vec3 normal = vNormalW.xyz;',
-            'vec3 eyeDirection = normalize(-vPositionW.xyz);',
-            'vec3 reflectionDirection;',
-
-
-
-            ////////////////////////////
 
             // Diffuse.
 
@@ -235,15 +222,23 @@ class shaderDirLightTexture extends Shader {
             '    vec4 Diffuse =  NdotL * vec4( vDirectionalColor * uMatDiffuse, 1.0);',
 
             // Specular.
-
-            '   vec4 EyePosW = vec4( 0.0, 0.0, -5.0, 1.0 );', // positive Y pushes it up!
+            //Providing the NEGATIVES of the Light coords here seem to resolve position.
+            // ORIGINAL LIGHTING
+            //  -100000.0, 0.0, -0.1
+            '   vec4 EyePosW = vec4( 10000.0, -0.0, 0.0, 1.0 );', // positive Y pushes it up!
+            // THIS WORKS, but...
+            // BUT THIS DOESN'T WORK!!!!!
+            //'   vec4 EyePosW = vec4( -vLightingDirection, 1.0 );',
             // TODO: WHY DOESN"T THIS WORK WHEN WE TRYING TO PROVIDE vLightingDirection??????
+            // THIS CAUSES THE LIGHT TO MOVE BACK AND FORTH ON THE SURFACE.
+            //'  vec4 EyePosW = normalize( vec4(-vLightingDirection, 1.0));',
 
             '   vec4 V = normalize( EyePosW - vPositionW  );', // if this is just vPositionW we get a highlight around edges in right place
 
             '   vec4 H = normalize( L + V );',
 
             '   vec4 R = reflect( -L, N );', // -L needed to bring to center. +L gives edges highlighted
+
             '   float RdotV = max( dot( R, V ), 0.0 );',
             '   float NdotH = max( dot( N, H ), 0.0 );',
             '   vec4 Specular = pow( RdotV, uMatSpecExp ) * pow(NdotH, uMatSpecExp) * vec4(vDirectionalColor * uMatSpecular, 1.0);',
@@ -345,11 +340,13 @@ class shaderDirLightTexture extends Shader {
 
         uDirectionalColor = vsVars.uniform.vec3.uDirectionalColor,
 
-        uNMatrix = vsVars.uniform.mat3.uNMatrix,
+        uNMatrix = vsVars.uniform.mat3.uNMatrix, // Inverse-transpose normal matrix
 
-        uPMatrix = vsVars.uniform.mat4.uPMatrix,
+        uPMatrix = vsVars.uniform.mat4.uPMatrix, // Projection
 
-        uMVMatrix = vsVars.uniform.mat4.uMVMatrix;
+        uMVMatrix = vsVars.uniform.mat4.uMVMatrix, // Model-View
+
+        uVMatrix = vsVars.uniform.mat4.uVMatrix; // View, Used on fragment shader only
 
         window.vsVars = vsVars;
         window.fsVars = fsVars;
@@ -396,7 +393,7 @@ class shaderDirLightTexture extends Shader {
 
         // Prim rendering - Shader in ShaderPool, rendered by World. Light uses the Model matrix as well as Model-View matrix.
 
-        program.render = ( PM, MVM ) => {
+        program.render = ( PM, MVM, VM ) => {
 
             gl.useProgram( shaderProgram );
 
@@ -466,13 +463,6 @@ class shaderDirLightTexture extends Shader {
                 if ( lighting ) {
 
                     gl.uniform3fv( uAmbientColor, ambient );
-
-                    if(prim.name === 'objfile') {
-
-                        ////////////console.log(ambient)
-
-                    }
-
                     gl.uniform3fv( uLightingDirection, adjustedLD );
                     gl.uniform3fv( uDirectionalColor, directionalColor );
 
@@ -482,10 +472,19 @@ class shaderDirLightTexture extends Shader {
 
                 gl.uniformMatrix3fv( uNMatrix, false, nMatrix );
 
-                // Set perspective and model-view matrix uniforms.
+                // Set Perspective uniform.
 
                 gl.uniformMatrix4fv( uPMatrix, false, PM );
+
+                // Model-View matrix uniform.
+
                 gl.uniformMatrix4fv( uMVMatrix, false, MVM );
+
+                // Set View matrix uniform.
+
+                gl.uniformMatrix4fv( uVMatrix, false, VM );
+
+                // Bind indices buffer.
 
                 gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, prim.geometry.indices.buffer );
 
@@ -504,7 +503,7 @@ class shaderDirLightTexture extends Shader {
 
                 }
 
-                // Copy back the original for the next Prim. 
+                // Copy back the original MVM (with no local Prim transforms) for the next Prim. 
 
                 mat4.copy( MVM, saveMV, MVM );
 
@@ -513,12 +512,7 @@ class shaderDirLightTexture extends Shader {
             // Disable buffers that might cause problems in another Prim.
 
 
-
         } // end of program.render()
-
-        //gl.bindBuffer( gl.ARRAY_BUFFER, null );
-        //gl.disableVertexAttribArray( vsVars.attribute.vec3.aVertexNormal );
-        //gl.disableVertexAttribArray( vsVars.attribute.vec2.aTextureCoord );
 
         return program;
 
