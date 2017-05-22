@@ -54,10 +54,10 @@ class shaderDirLightTexture extends Shader {
             'attribute vec2 ' + this.webgl.attributeNames.aTextureCoord[ 0 ] + ';',
             'attribute vec3 ' + this.webgl.attributeNames.aVertexNormal[ 0 ] + ';',
 
-            'uniform mat4 uMMatrix;',   // Model matrix.
-            'uniform mat4 uMVMatrix;',
-            'uniform mat4 uPMatrix;',
-            'uniform mat3 uNMatrix;',
+            'uniform mat4 uMMatrix;',   // Model matrix
+            'uniform mat4 uMVMatrix;',  // Model-View matrix
+            'uniform mat4 uPMatrix;',   // Perspective matrix
+            'uniform mat3 uNMatrix;',   // Inverse-transpose of Model-View matrix
 
             // Directional lighting (from the World).
 
@@ -78,8 +78,11 @@ class shaderDirLightTexture extends Shader {
             'varying vec3 vLightingDirection;',
             'varying vec3 vDirectionalColor;',
 
+
             'varying vec4 vPositionW;',
             'varying vec4 vNormalW;',
+
+            'varying vec4 transformedNormal;',
 
             'varying mat4 vMVMatrix;', /////////////////////////////////////////////////
 
@@ -208,6 +211,17 @@ class shaderDirLightTexture extends Shader {
             // Ambient.
 
             '    vec4 Ambient = vec4(vAmbientColor, 1.0);',
+
+            ////////////////////////////
+
+            'vec3 transformedPointLocation;',
+            'vec3 normal = vNormalW.xyz;',
+            'vec3 eyeDirection = normalize(-vPositionW.xyz);',
+            'vec3 reflectionDirection;',
+
+
+
+            ////////////////////////////
 
             // Diffuse.
 
@@ -362,7 +376,7 @@ class shaderDirLightTexture extends Shader {
 
         program.update = ( prim, MVM ) => {
 
-            // Update the model-view matrix using current Prim position, rotation, etc.
+            // Update the model-view matrix for current Prim position, rotation, etc.
 
             prim.setMV( MVM ); // Model-View
 
@@ -372,7 +386,7 @@ class shaderDirLightTexture extends Shader {
 
             vec3.scale( adjustedLD, adjustedLD, -1 );
 
-            // Calculates a 3x3 normal matrix (transpose inverse) from the 4x4 matrix, so we don't have to in the Shader.
+            // Calculates a 3x3 normal matrix (transpose inverse) from the Model-View matrix, so we don't have to in the Shader.
 
             mat3.normalFromMat4( nMatrix, MVM );
 

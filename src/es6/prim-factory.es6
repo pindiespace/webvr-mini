@@ -582,7 +582,7 @@ class PrimFactory {
 
             // TODO: translate everything.
 
-            let pov = this.world.getPOV();
+            //let pov = this.world.getPOV();
 
             // Adds View - Translate to World default POV (position).
 
@@ -607,7 +607,7 @@ class PrimFactory {
          * @param {glMatrix.mat4} mvMatrix model-view matrix.
          * @returns {glMatrix.mat4} the altered model-view matrix.
          */
-        prim.setM = ( mvMatrix ) => {
+        prim.setM = ( mMatrix ) => {
 
             // Internal Prim Translate.
 
@@ -617,15 +617,15 @@ class PrimFactory {
 
             vec3.add( p.rotation, p.rotation, p.angular );
 
-            mat4.rotate( mvMatrix, mvMatrix, p.rotation[ 0 ], [ 1, 0, 0 ] );
+            mat4.rotate( mMatrix, mMatrix, p.rotation[ 0 ], [ 1, 0, 0 ] );
 
-            mat4.rotate( mvMatrix, mvMatrix, p.rotation[ 1 ], [ 0, 1, 0 ] );
+            mat4.rotate( mMatrix, mMatrix, p.rotation[ 1 ], [ 0, 1, 0 ] );
 
-            mat4.rotate( mvMatrix, mvMatrix, p.rotation[ 2 ], [ 0, 0, 1 ] );
+            mat4.rotate( mMatrix, mMatrix, p.rotation[ 2 ], [ 0, 0, 1 ] );
 
-            mat4.scale( mvMatrix, mvMatrix, p.scale );
+            mat4.scale( mMatrix, mMatrix, p.scale );
 
-            return mvMatrix;
+            return mMatrix;
 
         }
 

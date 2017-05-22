@@ -114,7 +114,7 @@ class World extends AssetPool {
     }
 
     /** 
-     * Set the POV (simple camera).
+     * Set the POV position (simple camera).
      * @param {Number} x coordinate in World space.
      * @param {Number} y coordinate in World space.
      * @param {Number} z coordinate in World space.
@@ -125,12 +125,22 @@ class World extends AssetPool {
 
     }
 
+    /**  
+     * Set the POV rotation (simple camera).
+     * @param {Number} x coordinate in World space.
+     * @param {Number} y coordinate in World space.
+     * @param {Number} z coordinate in World space.
+     */
     setRotation ( rx, ry, rz ) {
 
         this.rotation = [ rx, ry, rz ];
 
     }
 
+    /** 
+     * Get the POV (simple camera).
+     * @returns {Object} an object containing vec3 position and rotation arrays.
+     */
     getPOV () {
 
         return { 

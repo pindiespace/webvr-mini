@@ -499,7 +499,7 @@ class Shader {
 
         this.mMatrix = glMatrix.mat4.create(); // Model only (no view)
 
-        this.vMatrix = glMatrix.mat4.create();
+        this.vMatrix = glMatrix.mat4.create(); // View only
 
         this.mvMatrix = glMatrix.mat4.create(); // model-view matrix
 
@@ -524,13 +524,36 @@ class Shader {
          */
         program.renderMono = ( pov ) => {
 
-            mat4.identity( mvMatrix ); // Model-View
+            mat4.identity( vMatrix );
+
+            mat4.rotate( vMatrix, vMatrix, pov.rotation[ 1 ], [ 0, 1, 0 ] ); // rotate on Y axis only.
 
             // POV position (common to all renderings in a frame).
 
-            mat4.translate( mvMatrix, mvMatrix, pov.position );
+            mat4.translate( vMatrix, vMatrix, pov.position );
+
+////////////////////////
+
+            mat4.copy( mvMatrix, vMatrix );
+
+
+            //mat4.identity( mvMatrix ); // Model-View
+
+            // This order of applications gives us a rotation around our point of view for "mouselook".
+
+            // NOTE: reverse the order, and the World spins like a top around its center.
 
             // POV rotation (common to all renderings in a frame).
+
+            //mat4.rotate( mvMatrix, mvMatrix, pov.rotation[ 1 ], [ 0, 1, 0 ] ); // rotate on Y axis only.
+
+            // POV position (common to all renderings in a frame).
+
+            //mat4.translate( mvMatrix, mvMatrix, pov.position );
+
+            // TODO: DEBUG TEMPORARY.
+
+            ///////////pov.rotation[ 1 ] += 0.001;
 
 
             // Perspective (common for all renderings in a frame).
@@ -550,39 +573,58 @@ class Shader {
 
             // Left eye.
 
-            mat4.identity( mvMatrix ); // Model-View
+            // View Matrix. 
+
+            mat4.identity( vMatrix );
 
             // Adjust viewport to VR canvas width and height.
 
             gl.viewport( 0, 0, canvas.width * 0.5, canvas.height );
 
-            // Multiply mvMatrix by our eye.leftViewMatrix, and adjust for height of VR viewer.
+            // Multiply vMatrix by our eye.leftViewMatrix, and adjust for height of VR viewer.
 
-            vr.getStandingViewMatrix( mvMatrix, frameData.leftViewMatrix, frameData.pose );
+            vr.getStandingViewMatrix( vMatrix, frameData.leftViewMatrix, frameData.pose );
 
             // World position and rotation.
 
-            mat4.translate( mvMatrix, mvMatrix, pov.position );
+            ///////mat4.rotate( vMatrix, vMatrix, pov.rotation[ 1 ], [ 0, 1, 0 ] ); // rotate on Y axis only.
+
+            mat4.translate( vMatrix, vMatrix, pov.position );
+
+            // Copy vMatrix to mvMatrix (so we have vMatrix separately for Shader).
+
+            mat4.copy( mvMatrix, vMatrix ); //////////////////////
 
             // Render the World.
+
+            // TODO: IF WE COLLECT THE PROGRAM.RENDERS, WE CAN RENDER WITH ONE STARTING World position and rotation.
+            // TODO: PROMOTE THIS INTO WORLD ABOVE THIS LINE.
 
             program.render( frameData.leftProjectionMatrix, mvMatrix );
 
             // Right eye.
 
-            mat4.identity( mvMatrix );
+            mat4.identity( vMatrix );
+
+            ///mat4.identity( mvMatrix );
 
             // Adjust Canvas to VR width and height.
 
             gl.viewport( canvas.width * 0.5, 0, canvas.width * 0.5, canvas.height );
 
-            // Multiply mvMatrix by our eye.rightViewMatrix, and adjust for height of VR viewer.
+            // Multiply vMatrix by our eye.rightViewMatrix, and adjust for height of VR viewer.
 
-            vr.getStandingViewMatrix( mvMatrix, frameData.rightViewMatrix, frameData.pose ); // after Toji
+            vr.getStandingViewMatrix( vMatrix, frameData.rightViewMatrix, frameData.pose ); // after Toji
 
             // World position and rotation.
 
-            mat4.translate( mvMatrix, mvMatrix, pov.position );
+            /////////mat4.rotate( vMatrix, vMatrix, pov.rotation[ 1 ], [ 0, 1, 0 ] ); // rotate on Y axis only.
+
+            mat4.translate( vMatrix, vMatrix, pov.position );
+
+            // cCopy vMatrix to mvMatrix (so we have vMatrix separately for Shader).
+
+            mat4.copy( mvMatrix, vMatrix );
 
             // Render the World.
 

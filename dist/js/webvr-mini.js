@@ -5384,7 +5384,7 @@
 
 	            this.mMatrix = glMatrix.mat4.create(); // Model only (no view)
 
-	            this.vMatrix = glMatrix.mat4.create();
+	            this.vMatrix = glMatrix.mat4.create(); // View only
 
 	            this.mvMatrix = glMatrix.mat4.create(); // model-view matrix
 
@@ -5409,13 +5409,35 @@
 	             */
 	            program.renderMono = function (pov) {
 
-	                mat4.identity(mvMatrix); // Model-View
+	                mat4.identity(vMatrix);
+
+	                mat4.rotate(vMatrix, vMatrix, pov.rotation[1], [0, 1, 0]); // rotate on Y axis only.
 
 	                // POV position (common to all renderings in a frame).
 
-	                mat4.translate(mvMatrix, mvMatrix, pov.position);
+	                mat4.translate(vMatrix, vMatrix, pov.position);
+
+	                ////////////////////////
+
+	                mat4.copy(mvMatrix, vMatrix);
+
+	                //mat4.identity( mvMatrix ); // Model-View
+
+	                // This order of applications gives us a rotation around our point of view for "mouselook".
+
+	                // NOTE: reverse the order, and the World spins like a top around its center.
 
 	                // POV rotation (common to all renderings in a frame).
+
+	                //mat4.rotate( mvMatrix, mvMatrix, pov.rotation[ 1 ], [ 0, 1, 0 ] ); // rotate on Y axis only.
+
+	                // POV position (common to all renderings in a frame).
+
+	                //mat4.translate( mvMatrix, mvMatrix, pov.position );
+
+	                // TODO: DEBUG TEMPORARY.
+
+	                ///////////pov.rotation[ 1 ] += 0.001;
 
 
 	                // Perspective (common for all renderings in a frame).
@@ -5434,39 +5456,58 @@
 
 	                // Left eye.
 
-	                mat4.identity(mvMatrix); // Model-View
+	                // View Matrix. 
+
+	                mat4.identity(vMatrix);
 
 	                // Adjust viewport to VR canvas width and height.
 
 	                gl.viewport(0, 0, canvas.width * 0.5, canvas.height);
 
-	                // Multiply mvMatrix by our eye.leftViewMatrix, and adjust for height of VR viewer.
+	                // Multiply vMatrix by our eye.leftViewMatrix, and adjust for height of VR viewer.
 
-	                vr.getStandingViewMatrix(mvMatrix, frameData.leftViewMatrix, frameData.pose);
+	                vr.getStandingViewMatrix(vMatrix, frameData.leftViewMatrix, frameData.pose);
 
 	                // World position and rotation.
 
-	                mat4.translate(mvMatrix, mvMatrix, pov.position);
+	                ///////mat4.rotate( vMatrix, vMatrix, pov.rotation[ 1 ], [ 0, 1, 0 ] ); // rotate on Y axis only.
+
+	                mat4.translate(vMatrix, vMatrix, pov.position);
+
+	                // Copy vMatrix to mvMatrix (so we have vMatrix separately for Shader).
+
+	                mat4.copy(mvMatrix, vMatrix); //////////////////////
 
 	                // Render the World.
+
+	                // TODO: IF WE COLLECT THE PROGRAM.RENDERS, WE CAN RENDER WITH ONE STARTING World position and rotation.
+	                // TODO: PROMOTE THIS INTO WORLD ABOVE THIS LINE.
 
 	                program.render(frameData.leftProjectionMatrix, mvMatrix);
 
 	                // Right eye.
 
-	                mat4.identity(mvMatrix);
+	                mat4.identity(vMatrix);
+
+	                ///mat4.identity( mvMatrix );
 
 	                // Adjust Canvas to VR width and height.
 
 	                gl.viewport(canvas.width * 0.5, 0, canvas.width * 0.5, canvas.height);
 
-	                // Multiply mvMatrix by our eye.rightViewMatrix, and adjust for height of VR viewer.
+	                // Multiply vMatrix by our eye.rightViewMatrix, and adjust for height of VR viewer.
 
-	                vr.getStandingViewMatrix(mvMatrix, frameData.rightViewMatrix, frameData.pose); // after Toji
+	                vr.getStandingViewMatrix(vMatrix, frameData.rightViewMatrix, frameData.pose); // after Toji
 
 	                // World position and rotation.
 
-	                mat4.translate(mvMatrix, mvMatrix, pov.position);
+	                /////////mat4.rotate( vMatrix, vMatrix, pov.rotation[ 1 ], [ 0, 1, 0 ] ); // rotate on Y axis only.
+
+	                mat4.translate(vMatrix, vMatrix, pov.position);
+
+	                // cCopy vMatrix to mvMatrix (so we have vMatrix separately for Shader).
+
+	                mat4.copy(mvMatrix, vMatrix);
 
 	                // Render the World.
 
@@ -6161,8 +6202,10 @@
 
 	            var s = ['attribute vec3 ' + this.webgl.attributeNames.aVertexPosition[0] + ';',
 	            //'attribute vec4 ' + this.webgl.attributeNames.aVertexColor[ 0 ] + ';',
-	            'attribute vec2 ' + this.webgl.attributeNames.aTextureCoord[0] + ';', 'attribute vec3 ' + this.webgl.attributeNames.aVertexNormal[0] + ';', 'uniform mat4 uMMatrix;', // Model matrix.
-	            'uniform mat4 uMVMatrix;', 'uniform mat4 uPMatrix;', 'uniform mat3 uNMatrix;',
+	            'attribute vec2 ' + this.webgl.attributeNames.aTextureCoord[0] + ';', 'attribute vec3 ' + this.webgl.attributeNames.aVertexNormal[0] + ';', 'uniform mat4 uMMatrix;', // Model matrix
+	            'uniform mat4 uMVMatrix;', // Model-View matrix
+	            'uniform mat4 uPMatrix;', // Perspective matrix
+	            'uniform mat3 uNMatrix;', // Inverse-transpose of Model-View matrix
 
 	            // Directional lighting (from the World).
 
@@ -6175,7 +6218,7 @@
 	            //'uniform vec3 uMatSpecular;',
 	            //'uniform float uMatSpecExp;',
 
-	            'varying vec3 vAmbientColor;', 'varying vec3 vLightingDirection;', 'varying vec3 vDirectionalColor;', 'varying vec4 vPositionW;', 'varying vec4 vNormalW;', 'varying mat4 vMVMatrix;', /////////////////////////////////////////////////
+	            'varying vec3 vAmbientColor;', 'varying vec3 vLightingDirection;', 'varying vec3 vDirectionalColor;', 'varying vec4 vPositionW;', 'varying vec4 vNormalW;', 'varying vec4 transformedNormal;', 'varying mat4 vMVMatrix;', /////////////////////////////////////////////////
 
 	            // Holds result of lighting computations.
 
@@ -6261,6 +6304,12 @@
 	            // Ambient.
 
 	            '    vec4 Ambient = vec4(vAmbientColor, 1.0);',
+
+	            ////////////////////////////
+
+	            'vec3 transformedPointLocation;', 'vec3 normal = vNormalW.xyz;', 'vec3 eyeDirection = normalize(-vPositionW.xyz);', 'vec3 reflectionDirection;',
+
+	            ////////////////////////////
 
 	            // Diffuse.
 
@@ -6378,7 +6427,7 @@
 
 	            program.update = function (prim, MVM) {
 
-	                // Update the model-view matrix using current Prim position, rotation, etc.
+	                // Update the model-view matrix for current Prim position, rotation, etc.
 
 	                prim.setMV(MVM); // Model-View
 
@@ -6388,7 +6437,7 @@
 
 	                vec3.scale(adjustedLD, adjustedLD, -1);
 
-	                // Calculates a 3x3 normal matrix (transpose inverse) from the 4x4 matrix, so we don't have to in the Shader.
+	                // Calculates a 3x3 normal matrix (transpose inverse) from the Model-View matrix, so we don't have to in the Shader.
 
 	                mat3.normalFromMat4(nMatrix, MVM);
 
@@ -8410,7 +8459,7 @@
 
 	                // TODO: translate everything.
 
-	                var pov = _this2.world.getPOV();
+	                //let pov = this.world.getPOV();
 
 	                // Adds View - Translate to World default POV (position).
 
@@ -8434,7 +8483,7 @@
 	             * @param {glMatrix.mat4} mvMatrix model-view matrix.
 	             * @returns {glMatrix.mat4} the altered model-view matrix.
 	             */
-	            prim.setM = function (mvMatrix) {
+	            prim.setM = function (mMatrix) {
 
 	                // Internal Prim Translate.
 
@@ -8444,15 +8493,15 @@
 
 	                vec3.add(p.rotation, p.rotation, p.angular);
 
-	                mat4.rotate(mvMatrix, mvMatrix, p.rotation[0], [1, 0, 0]);
+	                mat4.rotate(mMatrix, mMatrix, p.rotation[0], [1, 0, 0]);
 
-	                mat4.rotate(mvMatrix, mvMatrix, p.rotation[1], [0, 1, 0]);
+	                mat4.rotate(mMatrix, mMatrix, p.rotation[1], [0, 1, 0]);
 
-	                mat4.rotate(mvMatrix, mvMatrix, p.rotation[2], [0, 0, 1]);
+	                mat4.rotate(mMatrix, mMatrix, p.rotation[2], [0, 0, 1]);
 
-	                mat4.scale(mvMatrix, mvMatrix, p.scale);
+	                mat4.scale(mMatrix, mMatrix, p.scale);
 
-	                return mvMatrix;
+	                return mMatrix;
 	            };
 
 	            /** 
@@ -17670,7 +17719,7 @@
 	    }
 
 	    /** 
-	     * Set the POV (simple camera).
+	     * Set the POV position (simple camera).
 	     * @param {Number} x coordinate in World space.
 	     * @param {Number} y coordinate in World space.
 	     * @param {Number} z coordinate in World space.
@@ -17683,12 +17732,26 @@
 
 	            this.position = [x, y, z];
 	        }
+
+	        /**  
+	         * Set the POV rotation (simple camera).
+	         * @param {Number} x coordinate in World space.
+	         * @param {Number} y coordinate in World space.
+	         * @param {Number} z coordinate in World space.
+	         */
+
 	    }, {
 	        key: 'setRotation',
 	        value: function setRotation(rx, ry, rz) {
 
 	            this.rotation = [rx, ry, rz];
 	        }
+
+	        /** 
+	         * Get the POV (simple camera).
+	         * @returns {Object} an object containing vec3 position and rotation arrays.
+	         */
+
 	    }, {
 	        key: 'getPOV',
 	        value: function getPOV() {
