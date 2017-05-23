@@ -864,11 +864,11 @@ class GeometryPool {
 
             // NOTE: added negative (-) to x, z to match our lighting model.
 
-            normals[ idx * 3 ] = faceNormalx;
+            normals[ idx * 3 ] = -faceNormalx;
 
             normals[ idx * 3 + 1 ] = faceNormaly;
 
-            normals[ idx * 3 + 2 ] = faceNormalz;
+            normals[ idx * 3 + 2 ] = -faceNormalz;
 
         }
 
@@ -1770,18 +1770,26 @@ class GeometryPool {
 
                 let n = vec3.normalize( [ 0, 0, 0 ], [ x, y, z ] );
 
-                normals.push( n[ 0 ], n[ 1 ], n[ 2 ] );
+
 
                 // Push vertices.
 
                 vertices.push( x * l, y * w, z * h );
 
-                // These were wrapped bottom->top, so reverse y on normals.
+                /* 
+                 * These were wrapped bottom->top, so reverse y on normals.
+                 * Also reverse the normals so the works looking inside a skydome, bottomcone, bottomcone.
+                 */
 
                 if ( prim.type === list.BOTTOMDOME || prim.type === list.BOTTOMCONE || prim.type === list.SKYDOME ) {
 
                     y = -y; // the y value (have to flip indices backwards for SKYDOME for it to work).
 
+                    normals.push( -n[ 0 ], -n[ 1 ], -n[ 2 ] );
+
+                } else {
+
+                    normals.push( n[ 0 ], n[ 1 ], n[ 2 ] );                    
                 }
 
                 // Sphere indices.
@@ -2183,17 +2191,17 @@ class GeometryPool {
 
             case list.CUBESPHERE:
 
-                computeSquare( 0, 1, 2, sx, sy, nx, ny,  sz / 2,  1, -1, side.FRONT );  //front
+                computeSquare( 0, 1, 2, sx, sy, nx, ny,  sz / 2,  1, -1, side.FRONT, side );  //front
 
-                computeSquare( 0, 1, 2, sx, sy, nx, ny, -sz / 2, -1, -1, side.BACK );   //back
+                computeSquare( 0, 1, 2, sx, sy, nx, ny, -sz / 2, -1, -1, side.BACK, side );   //back
 
-                computeSquare( 2, 1, 0, sz, sy, nz, ny, -sx / 2,  1, -1, side.LEFT );   //left
+                computeSquare( 2, 1, 0, sz, sy, nz, ny, -sx / 2,  1, -1, side.LEFT, side );   //left
 
-                computeSquare( 2, 1, 0, sz, sy, nz, ny,  sx / 2, -1, -1, side.RIGHT );  //right
+                computeSquare( 2, 1, 0, sz, sy, nz, ny,  sx / 2, -1, -1, side.RIGHT, side );  //right
 
-                computeSquare( 0, 2, 1, sx, sz, nx, nz,  sy / 2,  1,  1, side.TOP );    //top
+                computeSquare( 0, 2, 1, sx, sz, nx, nz,  sy / 2,  1,  1, side.TOP, side );    //top
 
-                computeSquare( 0, 2, 1, sx, sz, nx, nz, -sy / 2,  1, -1, side.BOTTOM ); //bottom
+                computeSquare( 0, 2, 1, sx, sz, nx, nz, -sy / 2,  1, -1, side.BOTTOM, side ); //bottom
 
                 break;
 
@@ -2288,6 +2296,15 @@ class GeometryPool {
 
                     texCoords.push( i / nu, 1.0 - j / nv );
 
+                    // Normals.
+
+                    /////////////////let norm = normals[ vertexIndex ];
+
+
+
+
+                    // Advance Vertex pointer.
+
                     ++vertexIndex;
 
                 }
@@ -2346,8 +2363,6 @@ class GeometryPool {
 
                 let pos = positions[ i ];
 
-                let normal = normals[ i ];
-
                 let inner = [ pos[ 0 ], pos[ 1 ], pos[ 2 ] ];
 
                 if ( pos[ 0 ] < -rx + radius ) {
@@ -2386,15 +2401,15 @@ class GeometryPool {
 
                 }
 
-                // Re-compute position of moved vertex via normals.
+                // Re-compute position on sphere via taking the normal of the position..
 
-                normal = [ pos[ 0 ], pos[ 1 ], pos[ 2 ] ];
+                let normal = [ pos[ 0 ], pos[ 1 ], pos[ 2 ] ];
 
                 vec3.sub( normal, normal, inner );
 
                 vec3.normalize( normal, normal );
 
-                //normals[ i ] = normal;
+                normals[ i ] = normal;
 
                 pos = [ inner[ 0 ], inner[ 1 ], inner[ 2 ] ];
 
@@ -2500,6 +2515,14 @@ class GeometryPool {
         // Flatten vertices, which were created using 2D array.
 
         vertices = flatten( positions, false );
+
+        // Normals are only computed for cubesphere.
+
+        if ( normals.length ) {
+
+            normals = flatten( normals, false );
+
+        }
 
         // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 

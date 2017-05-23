@@ -54,11 +54,11 @@ class shaderDirLightTexture extends Shader {
             'attribute vec2 ' + this.webgl.attributeNames.aTextureCoord[ 0 ] + ';',
             'attribute vec3 ' + this.webgl.attributeNames.aVertexNormal[ 0 ] + ';',
 
-            'uniform mat4 uMMatrix;',   // Model matrix
+            //'uniform mat4 uMMatrix;',   // Model matrix
             'uniform mat4 uMVMatrix;',  // Model-View matrix
             'uniform mat4 uPMatrix;',   // Perspective matrix
             'uniform mat3 uNMatrix;',   // Inverse-transpose of Model-View matrix
-            'uniform mat4 uVMatrix;',  // View matrix
+            //'uniform mat4 uVMatrix;',  // View matrix
 
             // Directional lighting (from the World).
 
@@ -68,7 +68,11 @@ class shaderDirLightTexture extends Shader {
             'uniform vec3 uLightingDirection;',
             'uniform vec3 uDirectionalColor;',
 
-            // Material ambient, diffuse, specular
+            // World position.
+
+            'uniform vec3 uPOV;',
+
+            // Material ambient, diffuse, specular (added in Fragment shader)
 
             //'uniform vec3 uMatAmbient;',
             //'uniform vec3 uMatDiffuse;',
@@ -79,13 +83,12 @@ class shaderDirLightTexture extends Shader {
             'varying vec3 vLightingDirection;',
             'varying vec3 vDirectionalColor;',
 
+            'varying vec3 vPOV;',
 
             'varying vec4 vPositionW;',
             'varying vec4 vNormalW;',
 
-            'varying vec4 transformedNormal;',
-
-            'varying mat4 vMVMatrix;', /////////////////////////////////////////////////
+            'varying mat4 vMVMatrix;',
             'varying vec3 vPosition;',
 
             // Holds result of lighting computations.
@@ -111,9 +114,7 @@ class shaderDirLightTexture extends Shader {
 
             '    vTextureCoord = aTextureCoord;',
 
-            // NOTE: CHANGED BELOW FROM MODEL-VIEW MATRIX TO VIEW MATRIX!!!!!!!!
-
-            '    vPositionW = uVMatrix * vec4(aVertexPosition, 1.0);', // Model-View Matrix (including POV/ camera).
+            '    vPositionW = uMVMatrix * vec4(aVertexPosition, 1.0);', // Model-View Matrix (including POV / camera).
 
             '    vNormalW =  normalize(vec4(uNMatrix*aVertexNormal, 0.0));', // Inverse-transpose-normal matrix rotates object normals.
 
@@ -183,6 +184,8 @@ class shaderDirLightTexture extends Shader {
             'varying vec3 vLightingDirection;', // uLightingDirection
             'varying vec3 vDirectionalColor;',
 
+            'varying vec3 vPOV;', // world point of view (camera)
+
             'varying vec2 vTextureCoord;',
 
             'varying vec3 vLightWeighting;',
@@ -214,7 +217,7 @@ class shaderDirLightTexture extends Shader {
 
             '    vec4 N = normalize( vNormalW );',
 
-            '    vec4 L = normalize( vec4(vLightingDirection, 1.0) - vPositionW );', // if we include vPosition, lighting centers. If we don't we lose specular
+            '    vec4 L = normalize( vec4(vLightingDirection, 1.0) - vPositionW );',
             '    vec4 LL = normalize( vec4(vLightingDirection, 1.0));',
 
             '    float NdotL = max( dot( N, LL ), 0.0 );',
@@ -222,16 +225,8 @@ class shaderDirLightTexture extends Shader {
             '    vec4 Diffuse =  NdotL * vec4( vDirectionalColor * uMatDiffuse, 1.0);',
 
             // Specular.
-            //Providing the NEGATIVES of the Light coords here seem to resolve position.
-            // ORIGINAL LIGHTING
-            //  -100000.0, 0.0, -0.1
-            '   vec4 EyePosW = vec4( 10000.0, -0.0, 0.0, 1.0 );', // positive Y pushes it up!
-            // THIS WORKS, but...
-            // BUT THIS DOESN'T WORK!!!!!
-            //'   vec4 EyePosW = vec4( -vLightingDirection, 1.0 );',
-            // TODO: WHY DOESN"T THIS WORK WHEN WE TRYING TO PROVIDE vLightingDirection??????
-            // THIS CAUSES THE LIGHT TO MOVE BACK AND FORTH ON THE SURFACE.
-            //'  vec4 EyePosW = normalize( vec4(-vLightingDirection, 1.0));',
+
+            '  vec4 EyePosW = vec4( vPOV, 1.0);', // world = eye = camera position.
 
             '   vec4 V = normalize( EyePosW - vPositionW  );', // if this is just vPositionW we get a highlight around edges in right place
 
@@ -278,6 +273,9 @@ class shaderDirLightTexture extends Shader {
         // DESTRUCTING DID NOT WORK!
         //[gl, canvas, mat4, vec3, pMatrix, mvMatrix, program ] = this.setup();
 
+        // TODO: since we are in Shader, we should be able to make local copies upon init.
+        // TODO: don't pass in the shader-specific stuff, make local here.
+
         let arr = this.setup(),
 
         gl = arr[ 0 ],
@@ -290,23 +288,19 @@ class shaderDirLightTexture extends Shader {
 
         vec3 = arr[ 4 ],
 
-        pMatrix = arr[ 5 ],
+        program = arr[ 5 ],
 
-        mvMatrix = arr[ 6 ],
+        vsVars = arr[ 6 ],
 
-        program = arr[ 7 ],
+        fsVars = arr[ 7 ], 
 
-        vsVars = arr[ 8 ],
+        stats = arr[ 8 ],
 
-        fsVars = arr[ 9 ], 
+        near = arr[ 9 ],
 
-        stats = arr[ 10 ],
+        far = arr[ 10 ],
 
-        near = arr[ 11 ],
-
-        far = arr[ 12 ],
-
-        vr = arr[ 13 ];
+        vr = arr[ 11 ];
 
         // Attach our VBO program.
 
@@ -319,6 +313,16 @@ class shaderDirLightTexture extends Shader {
             program.renderList = this.util.concatArr( program.renderList, primList );
 
         }
+
+        // Local reference to our matrices.
+
+        //let pMatrix = this.pMatrix,
+
+        let mvMatrix = this.mvMatrix,
+        
+        vMatrix = this.vMatrix,
+
+        mMatrix = this.mMatrix;
 
         /** 
          * POLYMORPHIC PROPERTIES AND METHODS.
@@ -346,14 +350,15 @@ class shaderDirLightTexture extends Shader {
 
         uMVMatrix = vsVars.uniform.mat4.uMVMatrix, // Model-View
 
-        uVMatrix = vsVars.uniform.mat4.uVMatrix; // View, Used on fragment shader only
+        //uMMatrix = vsVars.uniform.mat4.uMMatrix, // Model matrix
 
-        window.vsVars = vsVars;
-        window.fsVars = fsVars;
+        //uVMatrix = vsVars.uniform.mat4.uVMatrix, // View matrix
+
+        uPOV = vsVars.uniform.vec3.uPOV; // World Position (also position of camera/POV)
 
         // Set up directional lighting with the primary World light.
 
-        let lighting = true;
+        let lighting = !! this.required.lights;
 
         // Use just one light, diffuse illumination from World ( see lights.es6 for defaults).
 
@@ -365,9 +370,11 @@ class shaderDirLightTexture extends Shader {
 
         let directionalColor = light0.directionalColor;
 
+        // Inverse transpose matrix, created from Model-View matrix for lighting.
+
         let nMatrix = mat3.create(); // TODO: ADD MAT3 TO PASSED VARIABLES
 
-        let adjustedLD = vec3.create(); // TODO: redo
+        let adjustedLD = lightingDirection;
 
         // Update prim position, motion - given to World object.
 
@@ -377,11 +384,9 @@ class shaderDirLightTexture extends Shader {
 
             prim.setMV( MVM ); // Model-View
 
-            // Compute lighting normals.
+            // Copy and adjust the World light.
 
-            vec3.normalize( adjustedLD, lightingDirection );
-
-            vec3.scale( adjustedLD, adjustedLD, -1 );
+            vec3.copy( adjustedLD, lightingDirection );
 
             // Calculates a 3x3 normal matrix (transpose inverse) from the Model-View matrix, so we don't have to in the Shader.
 
@@ -391,15 +396,20 @@ class shaderDirLightTexture extends Shader {
 
         }
 
-        // Prim rendering - Shader in ShaderPool, rendered by World. Light uses the Model matrix as well as Model-View matrix.
+        /*
+         * Prim rendering. We pass in a the Projection Matrix so we can render in mono and stereo, and 
+         * the position of the camera/eye (POV) for some kinds of rendering (e.g. specular).
+         * @param {glMatrix.mat4} PM projection matrix, either mono or stereo.
+         * @param {glMatrix.vec3} pov the position of the camera in World space.
+         */
 
-        program.render = ( PM, MVM, VM ) => {
+        program.render = ( PM, pov ) => {
 
             gl.useProgram( shaderProgram );
 
             // Save the model-view supplied by the shader. Mono and VR return different MV matrices.
 
-            let saveMV = mat4.clone( MVM );
+            let saveMV = mat4.clone( mvMatrix );
 
             // Begin program loop
 
@@ -413,7 +423,7 @@ class shaderDirLightTexture extends Shader {
 
                 // Update Model-View matrix with standard Prim values.
 
-                program.update( prim, MVM );
+                program.update( prim, mvMatrix );
 
                 // Bind vertex buffer.
 
@@ -464,7 +474,10 @@ class shaderDirLightTexture extends Shader {
 
                     gl.uniform3fv( uAmbientColor, ambient );
                     gl.uniform3fv( uLightingDirection, adjustedLD );
+                    /////gl.uniform3fv( uLightingDirection, lightingDirection );
                     gl.uniform3fv( uDirectionalColor, directionalColor );
+
+                    gl.uniform3fv( uPOV, pov.position ); /////////ADDED POV POSITON TO SHADER.
 
                 }
 
@@ -478,11 +491,15 @@ class shaderDirLightTexture extends Shader {
 
                 // Model-View matrix uniform.
 
-                gl.uniformMatrix4fv( uMVMatrix, false, MVM );
+                gl.uniformMatrix4fv( uMVMatrix, false, mvMatrix );
 
                 // Set View matrix uniform.
 
-                gl.uniformMatrix4fv( uVMatrix, false, VM );
+                //gl.uniformMatrix4fv( uVMatrix, false, vMatrix );
+
+                // Set Model matrix uniform.
+
+                //gl.uniformMatrix4fv( uMMatrix, false, mMatrix );
 
                 // Bind indices buffer.
 
@@ -505,7 +522,7 @@ class shaderDirLightTexture extends Shader {
 
                 // Copy back the original MVM (with no local Prim transforms) for the next Prim. 
 
-                mat4.copy( MVM, saveMV, MVM );
+                mat4.copy( mvMatrix, saveMV, mvMatrix );
 
             } // end of renderList for Prims
 

@@ -3,7 +3,7 @@
 
 class Lights {
     
-    constructor ( glMatrix, ambient = [ 0.3, 0.3, 0.3 ], lightingDirection = [ -100000.0, 0.0, -0.1 ], 
+    constructor ( glMatrix, ambient = [ 0.3, 0.3, 0.3 ], lightingDirection = [ -1000.0, 0.0, 1000.1 ], 
 
         directionalColor = [ 1, 1, 1 ] ) {
 

@@ -542,11 +542,12 @@ class Shader {
 //pov.rotation[ 0 ] += 0.001;
 //pov.rotation[ 1 ] += 0.001;
 
-            // Perspective (common for all renderings in a frame).
+            // mono Perspective (common for all renderings in a frame).
 
             mat4.perspective( pMatrix, Math.PI*0.4, canvas.width / canvas.height, near, far );
 
-            program.render( pMatrix, mvMatrix, vMatrix );
+            //program.render( pMatrix, mvMatrix, vMatrix, pov );
+            program.render( pMatrix, pov );
 
         }
 
@@ -571,10 +572,7 @@ class Shader {
 
             vr.getStandingViewMatrix( vMatrix, frameData.leftViewMatrix, frameData.pose );
 
-            // !!!!!!!!!!!!!!!!!!
-            // NOTE: THIS WORKS PERFECTLY IN SIMULATION. TEST ON VIVE!!!!!!!!!!
-            // !!!!!!!!!!!!!!!!!!
-
+            // !!!!!! TODO: ORIENTATION IS NOT RIGHT (90 degress off) in HTC Vive.
 
             // World position and rotation.
 
@@ -592,9 +590,9 @@ class Shader {
             // TODO: IF WE COLLECT THE PROGRAM.RENDERS, WE CAN RENDER WITH ONE STARTING World position and rotation.
             // TODO: PROMOTE THIS INTO WORLD ABOVE THIS LINE.
 
-            // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            // Use left Projection matrix provided by WebVR FrameData object to render.
 
-            program.render( frameData.leftProjectionMatrix, mvMatrix, vMatrix );
+            program.render( frameData.leftProjectionMatrix, pov );
 
             // Right eye.
 
@@ -620,9 +618,9 @@ class Shader {
 
             mat4.copy( mvMatrix, vMatrix );
 
-            // Render the World.
+            // Use right Projection matrix provided by WebVR FrameData object to render.
 
-            program.render( frameData.rightProjectionMatrix, mvMatrix, vMatrix );
+            program.render( frameData.rightProjectionMatrix, pov );
 
             // Calling function submits rendered stereo view to device.
 
@@ -645,10 +643,6 @@ class Shader {
             this.glMatrix.mat3,
 
             this.glMatrix.vec3,
-
-            this.pMatrix,
-
-            this.mvMatrix,
 
             program,
 

@@ -73,7 +73,7 @@ class World extends AssetPool {
 
         // Add a simple point of view, instead of Cameram 1st 3 values = postion, 2nd 3 values = rotation.
 
-        this.position = [ 0, 0, -5 ];
+        this.position = [ 0, 0, -5 ]; // TODO: X and Z MOVE CORRECTLY. Y MOVES IN REVERSE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         this.rotation = [ 0, 0, 0 ];
 
@@ -209,6 +209,7 @@ class World extends AssetPool {
         // Put some media into our asset pools.
 
         // Get the shaders (not initialized with update() and render() yet!).
+        // NOTE: pass 'world' in so we can get the World POV.
 
         this.s0 = this.shaderPool.getAssetByName( 'shaderFader' );
 
@@ -310,10 +311,11 @@ class World extends AssetPool {
 
             );
 
+/*
             this.primFactory.createPrim(
 
-                this.s1,                      // callback function
-                typeList.CUBESPHERE,
+                this.s3,                      // callback function
+                typeList.BOTTOMDOME,
                 'cubespheretransparent',
                 vec5( 5, 5, 5 ),            // dimensions
                 vec5( 10, 10, 10, 0 ),         // divisions 4th parameter is degree of rounding.
@@ -325,6 +327,7 @@ class World extends AssetPool {
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
 
             ); 
+*/
 
              //DIMENSIONS INDICATE ANY X or Y CURVATURE.
              //DIVISIONS FOR CUBED AND CURVED PLANE INDICATE SIDE TO DRAW
@@ -895,9 +898,6 @@ class World extends AssetPool {
      */
     housekeep () {
 
-// TODO: TEXTURE LOADING IN MODEL - wrong tcoords, or processing (RGB vs RGBA)
-
-// TODO: no bound texture in Shader - check
 
 // TODO: ANIMATION CLASS FOR PRIM IN UPDATEMV ROUTINE.
 
@@ -909,11 +909,7 @@ class World extends AssetPool {
 
 // TODO: DEFAULT MINI WORLD IF NO JSON FILE (just a skybox and ground grid)
 
-// TODO: TEST REMOVING PRIM DURING RUNTIME
-
 // TODO: FADEIN/FADEOUT ANIMATION FOR PRIM
-
-// TODO: PRIM LIGHTING MODEL IN PRIM
 
     }
 

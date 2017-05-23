@@ -148,8 +148,6 @@ class ShaderFader extends Shader {
 
                 'if (uUseColor) {',
 
-                // TODO: ADD LIGHTING HERE
-
                     'gl_FragColor = vec4(vColor.rgb * vLightWeighting, uAlpha);',
 
                 '}',
@@ -203,23 +201,19 @@ class ShaderFader extends Shader {
 
         vec3 = arr[ 4 ],
 
-        pMatrix = arr[ 5 ],
+        program = arr[ 5 ],
 
-        mvMatrix = arr[ 6 ],
+        vsVars = arr[ 6 ],
 
-        program = arr[ 7 ],
+        fsVars = arr[ 7 ], 
 
-        vsVars = arr[ 8 ],
+        stats = arr[ 8 ],
 
-        fsVars = arr[ 9 ],
+        near = arr[ 9 ],
 
-        stats = arr[ 10 ],
+        far = arr[ 10 ],
 
-        near = arr[ 11 ],
-
-        far = arr[ 12 ],
-
-        vr = arr[ 13 ];
+        vr = arr[ 11 ];
 
         // Attach our VBO program.
 
@@ -232,6 +226,16 @@ class ShaderFader extends Shader {
             program.renderList = this.util.concatArr( program.renderList, primList );
 
         }
+
+        // Local reference to our matrices.
+
+        //let pMatrix = this.pMatrix,
+
+        let mvMatrix = this.mvMatrix,
+        
+        vMatrix = this.vMatrix,
+
+        mMatrix = this.mMatrix;
 
         /** 
          * POLYMORPHIC PROPERTIES AND METHODS.
@@ -329,11 +333,11 @@ class ShaderFader extends Shader {
 
                 }
 
-            // Compute lighting normals.
+            // Compute lighting normals from World lighting.
 
             vec3.normalize( adjustedLD, lightingDirection );
 
-            vec3.scale( adjustedLD, adjustedLD, -1 );
+            //vec3.scale( adjustedLD, adjustedLD, -1 );
 
             // Update the model-view matrix using current Prim position, rotation, etc.
 
@@ -345,15 +349,20 @@ class ShaderFader extends Shader {
 
         }
 
-       // Prim rendering - Shader in ShaderPool, rendered by World.
+        /*
+         * Prim rendering. We pass in a the Projection Matrix so we can render in mono and stereo, and 
+         * the position of the camera/eye (POV) for some kinds of rendering (e.g. specular).
+         * @param {glMatrix.mat4} PM projection matrix, either mono or stereo.
+         * @param {glMatrix.vec3} pov the position of the camera in World space.
+         */
 
-        program.render = ( PM, MVM ) => {
+        program.render = ( PM, pov ) => {
 
             gl.useProgram( shaderProgram );
 
             // Save the model-view supplied by the shader. Mono and VR return different MV matrices.
 
-            let saveMV = mat4.clone( MVM );
+            let saveMV = mat4.clone( mvMatrix );
 
             // Reset perspective matrix.
 
@@ -369,7 +378,7 @@ class ShaderFader extends Shader {
 
                 // Individual prim update
 
-                program.update( prim, MVM );
+                program.update( prim, mvMatrix );
 
                 // Bind vertex buffer.
 
@@ -452,7 +461,7 @@ class ShaderFader extends Shader {
                 // Bind perspective and model-view matrix uniforms.
 
                 gl.uniformMatrix4fv( uPMatrix, false, PM );
-                gl.uniformMatrix4fv( uMVMatrix, false, MVM );
+                gl.uniformMatrix4fv( uMVMatrix, false, mvMatrix );
 
                 // Bind indices buffer.
 
@@ -475,7 +484,7 @@ class ShaderFader extends Shader {
 
                 // Copy back the original for the next Prim. 
 
-                mat4.copy( MVM, saveMV, MVM );
+                mat4.copy( mvMatrix, saveMV, mvMatrix );
 
             } // end of renderList for Prims
 
