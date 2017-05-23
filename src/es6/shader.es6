@@ -91,6 +91,8 @@ class Shader {
 
             colors: false,
 
+            transparent: false, // transparent objects put in special Shader
+
             normals: false,
 
             tangents: false,
@@ -538,7 +540,7 @@ class Shader {
 
             mat4.copy( mvMatrix, vMatrix );
 
-            // TODO: DEBUG TEMPORARY.
+// TODO: DEBUG TEMPORARY.
 //pov.rotation[ 0 ] += 0.001;
 //pov.rotation[ 1 ] += 0.001;
 
@@ -546,7 +548,7 @@ class Shader {
 
             mat4.perspective( pMatrix, Math.PI*0.4, canvas.width / canvas.height, near, far );
 
-            //program.render( pMatrix, mvMatrix, vMatrix, pov );
+
             program.render( pMatrix, pov );
 
         }
@@ -598,8 +600,6 @@ class Shader {
 
             mat4.identity( vMatrix );
 
-            ///mat4.identity( mvMatrix );
-
             // Adjust Canvas to VR width and height.
 
             gl.viewport( canvas.width * 0.5, 0, canvas.width * 0.5, canvas.height );
@@ -614,7 +614,7 @@ class Shader {
 
             mat4.translate( vMatrix, vMatrix, pov.position );
 
-            // cCopy vMatrix to mvMatrix (so we have vMatrix separately for Shader).
+            // Copy vMatrix to mvMatrix (so we have vMatrix separately for Shader).
 
             mat4.copy( mvMatrix, vMatrix );
 

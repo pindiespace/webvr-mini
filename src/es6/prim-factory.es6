@@ -830,6 +830,14 @@ class PrimFactory {
 
             prim.fade.endAlpha = end;
 
+            // Can only fade up or down to the Prim's material transparency.
+
+            if( prim.fade.endAlpha >= 1.0 - prim.defaultMaterial.transparency ) {
+
+                prim.fade.endAlpha = 1.0 - prim.defaultMaterial.transparency;
+
+            }                
+
             prim.alpha = start;
 
             if ( eq ) prim.fade.eq = eq;

@@ -47,6 +47,10 @@ class ShaderColor extends Shader {
 
         let s = [
 
+            // Set precision.
+
+            this.floatp,
+
             /* 
              * Attribute names are hard-coded in the WebGL object, with rigid indices.
              * vertex, textureX coordinates, colors, normals, tangents.
@@ -86,7 +90,16 @@ class ShaderColor extends Shader {
 
         let s = [
 
+            // Set precision.
+
             this.floatp,
+
+            /* 
+             * Attribute names are hard-coded in the WebGL object, with rigid indices.
+             * vertex, textureX coordinates, colors, normals, tangents.
+             */
+
+            'uniform vec3 uMatEmissive;', // no lighting, but can glow...
 
             'varying lowp vec4 vColor;',
 
@@ -96,7 +109,9 @@ class ShaderColor extends Shader {
 
                 'float vLightWeighting = 1.0;',
 
-                'gl_FragColor = vec4(vColor.rgb * vLightWeighting, uAlpha);',
+                //'gl_FragColor = vec4(vColor.rgb * vLightWeighting, uAlpha);',
+
+                'gl_FragColor = vec4( vColor.r + uMatEmissive.r, vColor.g + uMatEmissive.g, vColor.b + uMatEmissive.b, uAlpha);',
 
             '}'
 
@@ -187,9 +202,13 @@ class ShaderColor extends Shader {
 
         uPMatrix = uPMatrix = vsVars.uniform.mat4.uPMatrix,
 
-        uMVMatrix = uMVMatrix = vsVars.uniform.mat4.uMVMatrix;
+        uMVMatrix = uMVMatrix = vsVars.uniform.mat4.uMVMatrix,
 
-        
+        uMatEmissive = fsVars.uniform.vec3.uMatEmissive;
+
+        // No transparency, always opaque.
+
+        // Lights not used, but material may have ambient and emissive lighting.
 
         // Update Prim position, motion - given to World object.
 
@@ -243,6 +262,14 @@ class ShaderColor extends Shader {
                 gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.colors.buffer );
                 gl.enableVertexAttribArray( aVertexColor );
                 gl.vertexAttribPointer( aVertexColor, 4, gl.FLOAT, false, 0, 0 );
+
+                // default material (other Shaders might use multiple materials).
+
+                let m = prim.defaultMaterial;
+
+                // Set the emissive quality of the Prim.
+
+                gl.uniform3fv( uMatEmissive, m.emissive ); // NOTE: transparent objects go in their own Shader.
 
                 // Bind perspective and model-view matrix uniforms.
 

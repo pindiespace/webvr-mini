@@ -15,9 +15,9 @@ class ShaderTerrain extends Shader {
      * dropping back to the color array if the texture isn't defined.
      * --------------------------------------------------------------------
      */
-    constructor ( init, util, glMatrix, webgl, webvr, shaderName ) {
+    constructor ( init, util, glMatrix, webgl, webvr, shaderName, lights ) {
 
-        super( init, util, glMatrix, webgl, webvr, shaderName );
+        super( init, util, glMatrix, webgl, webvr, shaderName, lights );
 
         console.log( 'In ShaderFader class' );
 
@@ -42,7 +42,32 @@ class ShaderTerrain extends Shader {
      */
     vsSrc () {
 
-        let s = [];
+        let s = [
+
+            // Set precision.
+
+            this.floatp,
+
+            /* 
+             * Attribute names are hard-coded in the WebGL object, with rigid indices.
+             * vertex, textureX coordinates, colors, normals, tangents.
+             */
+
+            'attribute vec3 ' + this.webgl.attributeNames.aVertexPosition[ 0 ] + ';',
+            //'attribute vec4 ' + this.webgl.attributeNames.aVertexColor[ 0 ] + ';',
+            'attribute vec2 ' + this.webgl.attributeNames.aTextureCoord[ 0 ] + ';',
+            'attribute vec3 ' + this.webgl.attributeNames.aVertexNormal[ 0 ] + ';',
+
+            'void main(void) {',
+
+            // View-Model-Position-Projection matrix.
+
+            '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);',
+
+
+            '}'
+
+        ];
 
         return {
 
@@ -56,13 +81,30 @@ class ShaderTerrain extends Shader {
 
 
     /** 
-     * a textured terrain, (with lighting computed in shader) fragment shader.
+     * terrain fragment shader.
      * - varying texture coordinate
      * - texture 2D sampler
      */
     fsSrc () {
 
-        let s =  [];
+        let s = [
+
+            // Set precision.
+
+            this.floatp,
+
+            /* 
+             * Attribute names are hard-coded in the WebGL object, with rigid indices.
+             * vertex, textureX coordinates, colors, normals, tangents.
+             */
+
+            'void main(void) {',
+
+                'gl_FragColor = vec4(0.5, 0.5, 0.5, 1.0);',
+
+            '}'
+
+        ];
 
         return {
 

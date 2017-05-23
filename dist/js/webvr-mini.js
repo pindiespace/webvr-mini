@@ -199,7 +199,7 @@
 	var webvr = void 0,
 	    ui = void 0,
 	    shaderPool = void 0,
-	    light = void 0,
+	    lights = void 0,
 	    world = void 0;
 
 	// WebGL can take some time to init.
@@ -218,7 +218,7 @@
 
 	        // Add shaders to ShaderPool.
 
-	        light = new _lights2.default(glMatrix);
+	        lights = new _lights2.default(glMatrix);
 
 	        shaderPool = new _shaderPool2.default(true, util, glMatrix, webgl);
 
@@ -226,7 +226,7 @@
 
 	        // REQUIRED Shader, used for fadeins on Prim creation.
 
-	        shaderPool.addAsset(new _shaderFader2.default(true, util, glMatrix, webgl, webvr, 'shaderFader', light));
+	        shaderPool.addAsset(new _shaderFader2.default(true, util, glMatrix, webgl, webvr, 'shaderFader', lights));
 
 	        // Basic one-texture Shader, without lighting.
 
@@ -238,11 +238,11 @@
 
 	        // One texture Shader with directional lighting.
 
-	        shaderPool.addAsset(new _shaderDirlightTexture2.default(true, util, glMatrix, webgl, webvr, 'shaderDirLightTexture', light));
+	        shaderPool.addAsset(new _shaderDirlightTexture2.default(true, util, glMatrix, webgl, webvr, 'shaderDirLightTexture', lights));
 
 	        // Create the world, which needs WebGL, WebVR, the Shader list and world Lights.
 
-	        exports.world = world = new _world2.default(true, glMatrix, webgl, webvr, shaderPool, light);
+	        exports.world = world = new _world2.default(true, glMatrix, webgl, webvr, shaderPool, lights);
 
 	        // Initialize our Ui.
 
@@ -4554,6 +4554,15 @@
 
 	            var s = [
 
+	            // Set precision.
+
+	            this.floatp,
+
+	            /* 
+	             * Attribute names are hard-coded in the WebGL object, with rigid indices.
+	             * vertex, textureX coordinates, colors, normals, tangents.
+	             */
+
 	            // Note: ALWAYS name the vertex attribute using the default!
 
 	            'attribute vec3 ' + this.webgl.attributeNames.aVertexPosition[0] + ';', 'attribute vec4 ' + this.webgl.attributeNames.aVertexColor[0] + ';', 'attribute vec2 ' + this.webgl.attributeNames.aTextureCoord[0] + ';', 'attribute vec3 ' + this.webgl.attributeNames.aVertexNormal[0] + ';',
@@ -4582,7 +4591,24 @@
 	        key: 'fsSrc',
 	        value: function fsSrc() {
 
-	            var s = [this.floatp, 'uniform bool uUseLighting;', 'uniform bool uUseTexture;', 'uniform bool uUseColor;', 'uniform sampler2D uSampler;', 'uniform float uAlpha;', 'varying vec2 vTextureCoord;', 'varying lowp vec4 vColor;', 'varying vec3 vLightWeighting;', 'void main(void) {', 'if (uUseColor) {', 'gl_FragColor = vec4(vColor.rgb * vLightWeighting, uAlpha);', '}', 'else if(uUseTexture) {', 'vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));', 'gl_FragColor = vec4(textureColor.rgb * vLightWeighting, textureColor.a * uAlpha);', '}', '}'];
+	            var s = [
+
+	            // Set precision.
+
+	            this.floatp,
+
+	            /* 
+	             * Attribute names are hard-coded in the WebGL object, with rigid indices.
+	             * vertex, textureX coordinates, colors, normals, tangents.
+	             */
+
+	            'uniform bool uUseLighting;', 'uniform bool uUseTexture;', 'uniform bool uUseColor;', 'uniform sampler2D uSampler;', 'uniform float uAlpha;', 'uniform vec3 uMatEmissive;', // no lighting, but can glow...
+
+	            'varying vec2 vTextureCoord;', 'varying lowp vec4 vColor;', 'varying vec3 vLightWeighting;', 'void main(void) {', 'if (uUseColor) {', 'gl_FragColor = vec4(vColor.rgb * vLightWeighting, uAlpha);', '}', 'else if(uUseTexture) {', 'vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));',
+
+	            // NOTE: If you try to add and multiple all at once you get a vec4 constructor error...
+
+	            'textureColor.r += uMatEmissive.r;', 'textureColor.g += uMatEmissive.g;', 'textureColor.b += uMatEmissive.b;', 'gl_FragColor = vec4(textureColor.rgb * vLightWeighting, textureColor.a * uAlpha);', '}', '}'];
 
 	            return {
 
@@ -4663,7 +4689,8 @@
 	                uLightingDirection = vsVars.uniform.vec3.uLightingDirection,
 	                uDirectionalColor = vsVars.uniform.vec3.uDirectionalColor,
 	                uPMatrix = vsVars.uniform.mat4.uPMatrix,
-	                uMVMatrix = vsVars.uniform.mat4.uMVMatrix;
+	                uMVMatrix = vsVars.uniform.mat4.uMVMatrix,
+	                uMatEmissive = fsVars.uniform.vec3.uMatEmissive;
 
 	            // Local link to easing function
 
@@ -4833,11 +4860,17 @@
 	                        gl.uniform1i(uUseTexture, 0);
 	                    }
 
-	                    // Normals matrix uniform
+	                    // Normals matrix (transpose inverse) uniform.
 
 	                    gl.uniformMatrix3fv(vsVars.uniform.mat3.uNMatrix, false, nMatrix);
 
-	                    // Lighting (always bound)
+	                    // default material (other Shaders might use multiple materials).
+
+	                    var m = prim.defaultMaterial;
+
+	                    // Lighting (always bound).
+
+	                    gl.uniform3fv(uMatEmissive, m.emissive); // NOTE: transparent objects go in their own Shader.
 
 	                    gl.uniform3f(uAmbientColor, ambient[0], ambient[1], ambient[2]);
 	                    gl.uniform3fv(uLightingDirection, adjustedLD);
@@ -4983,6 +5016,8 @@
 	            bumpMap: false,
 
 	            colors: false,
+
+	            transparent: false, // transparent objects put in special Shader
 
 	            normals: false,
 
@@ -5438,7 +5473,6 @@
 
 	                mat4.perspective(pMatrix, Math.PI * 0.4, canvas.width / canvas.height, near, far);
 
-	                //program.render( pMatrix, mvMatrix, vMatrix, pov );
 	                program.render(pMatrix, pov);
 	            };
 
@@ -5489,8 +5523,6 @@
 
 	                mat4.identity(vMatrix);
 
-	                ///mat4.identity( mvMatrix );
-
 	                // Adjust Canvas to VR width and height.
 
 	                gl.viewport(canvas.width * 0.5, 0, canvas.width * 0.5, canvas.height);
@@ -5505,7 +5537,7 @@
 
 	                mat4.translate(vMatrix, vMatrix, pov.position);
 
-	                // cCopy vMatrix to mvMatrix (so we have vMatrix separately for Shader).
+	                // Copy vMatrix to mvMatrix (so we have vMatrix separately for Shader).
 
 	                mat4.copy(mvMatrix, vMatrix);
 
@@ -5669,6 +5701,10 @@
 
 	            var s = [
 
+	            // Set precision.
+
+	            this.floatp,
+
 	            /* 
 	             * Attribute names are hard-coded in the WebGL object, with rigid indices.
 	             * vertex, textureX coordinates, colors, normals, tangents.
@@ -5697,9 +5733,18 @@
 
 	            var s = [
 
-	            // 'precision mediump float;',
+	            // Set precision.
 
-	            this.floatp, 'varying vec2 vTextureCoord;', 'uniform sampler2D uSampler;', 'void main(void) {', '    gl_FragColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));', '}'];
+	            this.floatp,
+
+	            /* 
+	             * Attribute names are hard-coded in the WebGL object, with rigid indices.
+	             * vertex, textureX coordinates, colors, normals, tangents.
+	             */
+
+	            'uniform vec3 uMatEmissive;', // no lighting, but can glow...
+
+	            'varying vec2 vTextureCoord;', 'uniform sampler2D uSampler;', 'void main(void) {', '    vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));', '    gl_FragColor =  vec4(textureColor.r + uMatEmissive.r, textureColor.g + uMatEmissive.g, textureColor.b + uMatEmissive.b, textureColor.a);', '}'];
 
 	            return {
 
@@ -5771,7 +5816,10 @@
 	                aTextureCoord = vsVars.attribute.vec2.aTextureCoord,
 	                uSampler = fsVars.uniform.sampler2D.uSampler,
 	                uPMatrix = vsVars.uniform.mat4.uPMatrix,
-	                uMVMatrix = vsVars.uniform.mat4.uMVMatrix;
+	                uMVMatrix = vsVars.uniform.mat4.uMVMatrix,
+	                uMatEmissive = fsVars.uniform.vec3.uMatEmissive;
+
+	            // No transparency, always opaque.
 
 	            // Update Prim position, motion - given to World object.
 
@@ -5829,12 +5877,17 @@
 
 	                    // Set fragment shader sampler uniform.
 
-	                    gl.uniform1i(uSampler, 0); //STRANGE
+	                    gl.uniform1i(uSampler, 0);
+
+	                    // Default material (other Shaders might use multiple materials).
+
+	                    var m = prim.defaultMaterial;
+
+	                    // Set the emissive quality of the Prim.
+
+	                    gl.uniform3fv(uMatEmissive, m.emissive); // NOTE: transparent objects go in their own Shader.
 
 	                    // Set perspective and model-view matrix uniforms.
-
-	                    //gl.uniformMatrix4fv( uPMatrix, false, PM );
-	                    //gl.uniformMatrix4fv( uMVMatrix, false, MVM );
 
 	                    gl.uniformMatrix4fv(uPMatrix, false, PM);
 	                    gl.uniformMatrix4fv(uMVMatrix, false, mvMatrix);
@@ -5952,6 +6005,10 @@
 
 	            var s = [
 
+	            // Set precision.
+
+	            this.floatp,
+
 	            /* 
 	             * Attribute names are hard-coded in the WebGL object, with rigid indices.
 	             * vertex, textureX coordinates, colors, normals, tangents.
@@ -5975,7 +6032,24 @@
 	        key: 'fsSrc',
 	        value: function fsSrc() {
 
-	            var s = [this.floatp, 'varying lowp vec4 vColor;', 'void main(void) {', 'float uAlpha = 1.0;', 'float vLightWeighting = 1.0;', 'gl_FragColor = vec4(vColor.rgb * vLightWeighting, uAlpha);', '}'];
+	            var s = [
+
+	            // Set precision.
+
+	            this.floatp,
+
+	            /* 
+	             * Attribute names are hard-coded in the WebGL object, with rigid indices.
+	             * vertex, textureX coordinates, colors, normals, tangents.
+	             */
+
+	            'uniform vec3 uMatEmissive;', // no lighting, but can glow...
+
+	            'varying lowp vec4 vColor;', 'void main(void) {', 'float uAlpha = 1.0;', 'float vLightWeighting = 1.0;',
+
+	            //'gl_FragColor = vec4(vColor.rgb * vLightWeighting, uAlpha);',
+
+	            'gl_FragColor = vec4( vColor.r + uMatEmissive.r, vColor.g + uMatEmissive.g, vColor.b + uMatEmissive.b, uAlpha);', '}'];
 
 	            return {
 
@@ -6046,7 +6120,12 @@
 	            var aVertexPosition = vsVars.attribute.vec3.aVertexPosition,
 	                aVertexColor = vsVars.attribute.vec4.aVertexColor,
 	                uPMatrix = uPMatrix = vsVars.uniform.mat4.uPMatrix,
-	                uMVMatrix = uMVMatrix = vsVars.uniform.mat4.uMVMatrix;
+	                uMVMatrix = uMVMatrix = vsVars.uniform.mat4.uMVMatrix,
+	                uMatEmissive = fsVars.uniform.vec3.uMatEmissive;
+
+	            // No transparency, always opaque.
+
+	            // Lights not used, but material may have ambient and emissive lighting.
 
 	            // Update Prim position, motion - given to World object.
 
@@ -6099,6 +6178,14 @@
 	                    gl.bindBuffer(gl.ARRAY_BUFFER, prim.geometry.colors.buffer);
 	                    gl.enableVertexAttribArray(aVertexColor);
 	                    gl.vertexAttribPointer(aVertexColor, 4, gl.FLOAT, false, 0, 0);
+
+	                    // default material (other Shaders might use multiple materials).
+
+	                    var m = prim.defaultMaterial;
+
+	                    // Set the emissive quality of the Prim.
+
+	                    gl.uniform3fv(uMatEmissive, m.emissive); // NOTE: transparent objects go in their own Shader.
 
 	                    // Bind perspective and model-view matrix uniforms.
 
@@ -6211,15 +6298,26 @@
 	        key: 'vsSrc',
 	        value: function vsSrc() {
 
-	            var s = ['attribute vec3 ' + this.webgl.attributeNames.aVertexPosition[0] + ';',
+	            var s = [
+
+	            // Set precision.
+
+	            this.floatp,
+
+	            /* 
+	             * Attribute names are hard-coded in the WebGL object, with rigid indices.
+	             * vertex, textureX coordinates, colors, normals, tangents.
+	             */
+
+	            'attribute vec3 ' + this.webgl.attributeNames.aVertexPosition[0] + ';',
 	            //'attribute vec4 ' + this.webgl.attributeNames.aVertexColor[ 0 ] + ';',
 	            'attribute vec2 ' + this.webgl.attributeNames.aTextureCoord[0] + ';', 'attribute vec3 ' + this.webgl.attributeNames.aVertexNormal[0] + ';',
 
 	            //'uniform mat4 uMMatrix;',   // Model matrix
+	            //'uniform mat4 uVMatrix;',  // View matrix
 	            'uniform mat4 uMVMatrix;', // Model-View matrix
 	            'uniform mat4 uPMatrix;', // Perspective matrix
 	            'uniform mat3 uNMatrix;', // Inverse-transpose of Model-View matrix
-	            //'uniform mat4 uVMatrix;',  // View matrix
 
 	            // Directional lighting (from the World).
 
@@ -6279,14 +6377,14 @@
 
 	            var s = [
 
-	            // Enables some extensions in WebGL 1.0 (default in 2.0).
-
-	            //'#extension GL_EXT_shader_texture_lod : enable',
-	            //'#extension GL_OES_standard_derivatives : enable',
-
 	            // Set precision.
 
 	            this.floatp,
+
+	            /* 
+	             * Attribute names are hard-coded in the WebGL object, with rigid indices.
+	             * vertex, textureX coordinates, colors, normals, tangents.
+	             */
 
 	            // Uniforms.
 
@@ -6331,9 +6429,9 @@
 
 	            '   float RdotV = max( dot( R, V ), 0.0 );', '   float NdotH = max( dot( N, H ), 0.0 );', '   vec4 Specular = pow( RdotV, uMatSpecExp ) * pow(NdotH, uMatSpecExp) * vec4(vDirectionalColor * uMatSpecular, 1.0);',
 
-	            // Final fragment color.
+	            // TODO: specular surround.
 
-	            //'    gl_FragColor = vec4(textureColor.rgb * vLightWeighting, textureColor.a);',
+	            // Final fragment color.
 
 	            '    gl_FragColor =  ( Emissive + Ambient + Diffuse + Specular ) * vec4(textureColor.rgb, textureColor.a);', '}'];
 
@@ -6519,35 +6617,34 @@
 
 	                    // Bind additional texture units.
 
-	                    // Send the DEFAULT material to the Shader (other Shaders might use multiple materials).
-
-	                    var m = prim.defaultMaterial;
-
-	                    gl.uniform3fv(fsVars.uniform.vec3.uMatEmissive, m.emissive);
-	                    gl.uniform3fv(fsVars.uniform.vec3.uMatAmbient, m.ambient);
-	                    gl.uniform3fv(fsVars.uniform.vec3.uMatDiffuse, m.diffuse);
-	                    gl.uniform3fv(fsVars.uniform.vec3.uMatSpecular, m.specular);
-	                    gl.uniform1f(fsVars.uniform.float.uMatSpecExp, m.specularExponent);
-	                    //console.log('prim.defaultMaterial.specularExponent:' + prim.defaultMaterial.specularExponent)
-
 	                    // Set fragment shader sampler uniform.
 
 	                    gl.uniform1i(uSampler, 0);
+
+	                    // Default material (other Shaders might use multiple materials).
+
+	                    var m = prim.defaultMaterial;
 
 	                    // Lighting flag.
 
 	                    gl.uniform1i(uUseLighting, lighting);
 
-	                    // World lighting
+	                    // Material lighting properties.
+
+	                    gl.uniform3fv(fsVars.uniform.vec3.uMatEmissive, m.emissive);
+	                    gl.uniform3fv(fsVars.uniform.vec3.uMatAmbient, m.ambient); // NOTE: transparent objects go in their own Shader
+	                    gl.uniform3fv(fsVars.uniform.vec3.uMatDiffuse, m.diffuse);
+	                    gl.uniform3fv(fsVars.uniform.vec3.uMatSpecular, m.specular);
+	                    gl.uniform1f(fsVars.uniform.float.uMatSpecExp, m.specularExponent);
+
+	                    // World lighting (if used).
 
 	                    if (lighting) {
 
 	                        gl.uniform3fv(uAmbientColor, ambient);
 	                        gl.uniform3fv(uLightingDirection, adjustedLD);
-	                        /////gl.uniform3fv( uLightingDirection, lightingDirection );
 	                        gl.uniform3fv(uDirectionalColor, directionalColor);
-
-	                        gl.uniform3fv(uPOV, pov.position); /////////ADDED POV POSITON TO SHADER.
+	                        gl.uniform3fv(uPOV, pov.position); // used for specular highlight
 	                    }
 
 	                    // Set normals matrix uniform (inverse transpose matrix).
@@ -6561,14 +6658,6 @@
 	                    // Model-View matrix uniform.
 
 	                    gl.uniformMatrix4fv(uMVMatrix, false, mvMatrix);
-
-	                    // Set View matrix uniform.
-
-	                    //gl.uniformMatrix4fv( uVMatrix, false, vMatrix );
-
-	                    // Set Model matrix uniform.
-
-	                    //gl.uniformMatrix4fv( uMMatrix, false, mMatrix );
 
 	                    // Bind indices buffer.
 
@@ -6643,10 +6732,10 @@
 	     * dropping back to the color array if the texture isn't defined.
 	     * --------------------------------------------------------------------
 	     */
-	    function ShaderTerrain(init, util, glMatrix, webgl, webvr, shaderName) {
+	    function ShaderTerrain(init, util, glMatrix, webgl, webvr, shaderName, lights) {
 	        _classCallCheck(this, ShaderTerrain);
 
-	        var _this = _possibleConstructorReturn(this, (ShaderTerrain.__proto__ || Object.getPrototypeOf(ShaderTerrain)).call(this, init, util, glMatrix, webgl, webvr, shaderName));
+	        var _this = _possibleConstructorReturn(this, (ShaderTerrain.__proto__ || Object.getPrototypeOf(ShaderTerrain)).call(this, init, util, glMatrix, webgl, webvr, shaderName, lights));
 
 	        console.log('In ShaderFader class');
 
@@ -6668,7 +6757,24 @@
 	        key: 'vsSrc',
 	        value: function vsSrc() {
 
-	            var s = [];
+	            var s = [
+
+	            // Set precision.
+
+	            this.floatp,
+
+	            /* 
+	             * Attribute names are hard-coded in the WebGL object, with rigid indices.
+	             * vertex, textureX coordinates, colors, normals, tangents.
+	             */
+
+	            'attribute vec3 ' + this.webgl.attributeNames.aVertexPosition[0] + ';',
+	            //'attribute vec4 ' + this.webgl.attributeNames.aVertexColor[ 0 ] + ';',
+	            'attribute vec2 ' + this.webgl.attributeNames.aTextureCoord[0] + ';', 'attribute vec3 ' + this.webgl.attributeNames.aVertexNormal[0] + ';', 'void main(void) {',
+
+	            // View-Model-Position-Projection matrix.
+
+	            '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '}'];
 
 	            return {
 
@@ -6680,7 +6786,7 @@
 	        }
 
 	        /** 
-	         * a textured terrain, (with lighting computed in shader) fragment shader.
+	         * terrain fragment shader.
 	         * - varying texture coordinate
 	         * - texture 2D sampler
 	         */
@@ -6689,7 +6795,18 @@
 	        key: 'fsSrc',
 	        value: function fsSrc() {
 
-	            var s = [];
+	            var s = [
+
+	            // Set precision.
+
+	            this.floatp,
+
+	            /* 
+	             * Attribute names are hard-coded in the WebGL object, with rigid indices.
+	             * vertex, textureX coordinates, colors, normals, tangents.
+	             */
+
+	            'void main(void) {', 'gl_FragColor = vec4(0.5, 0.5, 0.5, 1.0);', '}'];
 
 	            return {
 
@@ -6854,10 +6971,10 @@
 	     * @link http://madebyevan.com/webgl-water/
 	     * --------------------------------------------------------------------
 	     */
-	    function ShaderWater(init, util, glMatrix, webgl, webvr, shaderName) {
+	    function ShaderWater(init, util, glMatrix, webgl, webvr, shaderName, lights) {
 	        _classCallCheck(this, ShaderWater);
 
-	        var _this = _possibleConstructorReturn(this, (ShaderWater.__proto__ || Object.getPrototypeOf(ShaderWater)).call(this, init, util, glMatrix, webgl, webvr, shaderName));
+	        var _this = _possibleConstructorReturn(this, (ShaderWater.__proto__ || Object.getPrototypeOf(ShaderWater)).call(this, init, util, glMatrix, webgl, webvr, shaderName, lights));
 
 	        console.log('In ShaderWater class');
 
@@ -6881,7 +6998,24 @@
 	        key: 'vsSrc',
 	        value: function vsSrc() {
 
-	            var s = [];
+	            var s = [
+
+	            // Set precision.
+
+	            this.floatp,
+
+	            /* 
+	             * Attribute names are hard-coded in the WebGL object, with rigid indices.
+	             * vertex, textureX coordinates, colors, normals, tangents.
+	             */
+
+	            'attribute vec3 ' + this.webgl.attributeNames.aVertexPosition[0] + ';',
+	            //'attribute vec4 ' + this.webgl.attributeNames.aVertexColor[ 0 ] + ';',
+	            'attribute vec2 ' + this.webgl.attributeNames.aTextureCoord[0] + ';', 'attribute vec3 ' + this.webgl.attributeNames.aVertexNormal[0] + ';', 'void main(void) {',
+
+	            // View-Model-Position-Projection matrix.
+
+	            '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '}'];
 
 	            return {
 
@@ -6902,7 +7036,18 @@
 	        key: 'fsSrc',
 	        value: function fsSrc() {
 
-	            var s = [];
+	            var s = [
+
+	            // Set precision.
+
+	            this.floatp,
+
+	            /* 
+	             * Attribute names are hard-coded in the WebGL object, with rigid indices.
+	             * vertex, textureX coordinates, colors, normals, tangents.
+	             */
+
+	            'void main(void) {', 'gl_FragColor = vec4(0.5, 0.5, 0.5, 1.0);', '}'];
 
 	            return {
 
@@ -7073,10 +7218,10 @@
 	     * - projection matrix
 	     * --------------------------------------------------------------------
 	     */
-	    function ShaderMetal(init, util, glMatrix, webgl, webvr, shaderName) {
+	    function ShaderMetal(init, util, glMatrix, webgl, webvr, shaderName, lights) {
 	        _classCallCheck(this, ShaderMetal);
 
-	        var _this = _possibleConstructorReturn(this, (ShaderMetal.__proto__ || Object.getPrototypeOf(ShaderMetal)).call(this, init, util, glMatrix, webgl, webvr, shaderName));
+	        var _this = _possibleConstructorReturn(this, (ShaderMetal.__proto__ || Object.getPrototypeOf(ShaderMetal)).call(this, init, util, glMatrix, webgl, webvr, shaderName, lights));
 
 	        console.log('In ShaderMetal class');
 
@@ -7098,7 +7243,24 @@
 	        key: 'vsSrc',
 	        value: function vsSrc() {
 
-	            var s = [];
+	            var s = [
+
+	            // Set precision.
+
+	            this.floatp,
+
+	            /* 
+	             * Attribute names are hard-coded in the WebGL object, with rigid indices.
+	             * vertex, textureX coordinates, colors, normals, tangents.
+	             */
+
+	            'attribute vec3 ' + this.webgl.attributeNames.aVertexPosition[0] + ';',
+	            //'attribute vec4 ' + this.webgl.attributeNames.aVertexColor[ 0 ] + ';',
+	            'attribute vec2 ' + this.webgl.attributeNames.aTextureCoord[0] + ';', 'attribute vec3 ' + this.webgl.attributeNames.aVertexNormal[0] + ';', 'void main(void) {',
+
+	            // View-Model-Position-Projection matrix.
+
+	            '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '}'];
 
 	            return {
 
@@ -7110,7 +7272,7 @@
 	        }
 
 	        /** 
-	         * water fragment shader.
+	         * metal fragment shader.
 	         * - varying texture coordinate
 	         * - texture 2D sampler
 	         */
@@ -7119,7 +7281,18 @@
 	        key: 'fsSrc',
 	        value: function fsSrc() {
 
-	            var s = [];
+	            var s = [
+
+	            // Set precision.
+
+	            this.floatp,
+
+	            /* 
+	             * Attribute names are hard-coded in the WebGL object, with rigid indices.
+	             * vertex, textureX coordinates, colors, normals, tangents.
+	             */
+
+	            'void main(void) {', 'gl_FragColor = vec4(0.5, 0.5, 0.5, 1.0);', '}'];
 
 	            return {
 
@@ -7271,7 +7444,7 @@
 
 	        this.lightTypes = {
 
-	            LIGHT_0: 'light0',
+	            LIGHT_0: 'light0', // World Directional (default)
 
 	            LIGHT_1: 'light1',
 
@@ -7291,7 +7464,9 @@
 
 	            directionalColor: directionalColor,
 
-	            attenuation: 1.0,
+	            attenuation: 0.0,
+
+	            emissive: 1.0,
 
 	            radius: 1.0
 
@@ -7302,9 +7477,23 @@
 	        key: 'getLight',
 	        value: function getLight(id) {
 
-	            window.lightList = this.lightList;
+	            if (!id) {
+
+	                id = this.lightTypes.LIGHT_0;
+	            }
 
 	            return this.lightList[id];
+	        }
+	    }, {
+	        key: 'getPos',
+	        value: function getPos(id) {
+
+	            if (!id) {
+
+	                id = this.lightTypes.LIGHT_0;
+	            }
+
+	            return this.lightList[id].lightingDirection;
 	        }
 
 	        /** 
@@ -7315,7 +7504,12 @@
 	        key: 'setPos',
 	        value: function setPos(id, x, y, z) {
 
-	            this.lightList[id] = [-x, -y, z];
+	            if (!id) {
+
+	                id = this.lightTypes.LIGHT_0;
+	            }
+
+	            this.lightList[id].lightingDirection = [-x, -y, z];
 	        }
 
 	        /**
@@ -7326,8 +7520,12 @@
 	        key: 'setPolar',
 	        value: function setPolar(id, u, v) {
 
-	            // TODO:
+	            if (!id) {
 
+	                id = this.lightTypes.LIGHT_0;
+	            }
+
+	            // TODO:
 	        }
 	    }]);
 
@@ -8750,6 +8948,13 @@
 	                prim.fade.startAlpha = start;
 
 	                prim.fade.endAlpha = end;
+
+	                // Can only fade up or down to the Prim's material transparency.
+
+	                if (prim.fade.endAlpha >= 1.0 - prim.defaultMaterial.transparency) {
+
+	                    prim.fade.endAlpha = 1.0 - prim.defaultMaterial.transparency;
+	                }
 
 	                prim.alpha = start;
 
@@ -18119,7 +18324,7 @@
 
 	            );
 
-	            this.primFactory.createPrim(this.s1, // callback function
+	            this.primFactory.createPrim(this.s3, // callback function
 	            typeList.CAPSULE, 'TestCapsule', vec5(0.5, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
 	            vec5(40, 40, 0), // divisions MAKE SMALLER
 	            vec3.fromValues(-2.0, -1.5, 2.0), // position (absolute)
@@ -18145,7 +18350,7 @@
 
 	            // TODO: DOES THIS ACTUALLY BECOME TRANSPARENT????
 
-	            this.primFactory.createPrim(this.s1, // callback function
+	            this.primFactory.createPrim(this.s3, // callback function
 	            typeList.DODECAHEDRON, 'Dodecahedron', vec5(1, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
 	            vec5(40, 40, 0), // divisions MAKE SMALLER
 	            vec3.fromValues(-1.0, 0.5, 3.0), // position (absolute)
@@ -18384,6 +18589,8 @@
 
 	            window.prims = this.primFactory.prims;
 
+	            window.lights = this.lights.getPos();
+
 	            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	            // NOTE: the init() method sets up the update() and render() methods for the Shader.
@@ -18470,6 +18677,8 @@
 	        key: 'housekeep',
 	        value: function housekeep() {}
 
+	        // TODO: make camera work in mouselook only.
+
 	        // TODO: ANIMATION CLASS FOR PRIM IN UPDATEMV ROUTINE.
 
 	        // TODO: PRIM CONCATENATE SEVERAL PRIMS TOGETHER INTO ONE ARRAY??? CHECK HOW TO DO
@@ -18508,6 +18717,18 @@
 
 	                /////////console.log( 'delta:' + parseInt( 1000 / delta ) + ' fps' );
 	            }
+
+	            // Update Lights
+
+	            var lightPos = this.lights.getPos();
+
+	            //this.glMatrix.vec3.rotateX( lightPos, lightPos, [ 0, 0, 0 ], 0.01 );
+
+	            //this.glMatrix.vec3.rotateY( lightPos, lightPos, [ 0, 0, 0 ], 0.01 );
+
+	            // Update atmosphere
+
+	            // Update Skydome/Stardome
 	        }
 
 	        /** 
@@ -18669,7 +18890,7 @@
 	            var ambient = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [0.1, 0.1, 0.1];
 	            var diffuse = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [1, 1, 1];
 	            var specular = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [1.0, 1.0, 1.0];
-	            var specularExponent = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : 32.0;
+	            var specularExponent = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : 64.0;
 	            var emissive = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : [0, 0, 0];
 	            var sharpness = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : 60;
 	            var refraction = arguments.length > 7 && arguments[7] !== undefined ? arguments[7] : 1;

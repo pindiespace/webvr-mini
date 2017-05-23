@@ -48,6 +48,10 @@ class ShaderTexture extends Shader {
 
         let s = [
 
+            // Set precision.
+
+            this.floatp,
+
             /* 
              * Attribute names are hard-coded in the WebGL object, with rigid indices.
              * vertex, textureX coordinates, colors, normals, tangents.
@@ -89,9 +93,16 @@ class ShaderTexture extends Shader {
 
         let s =  [
 
-            // 'precision mediump float;',
+            // Set precision.
 
             this.floatp,
+
+            /* 
+             * Attribute names are hard-coded in the WebGL object, with rigid indices.
+             * vertex, textureX coordinates, colors, normals, tangents.
+             */
+
+            'uniform vec3 uMatEmissive;', // no lighting, but can glow...
 
             'varying vec2 vTextureCoord;',
 
@@ -99,7 +110,9 @@ class ShaderTexture extends Shader {
 
             'void main(void) {',
 
-            '    gl_FragColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));',
+            '    vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));',
+
+            '    gl_FragColor =  vec4(textureColor.r + uMatEmissive.r, textureColor.g + uMatEmissive.g, textureColor.b + uMatEmissive.b, textureColor.a);',
 
             '}'
 
@@ -193,7 +206,11 @@ class ShaderTexture extends Shader {
 
         uPMatrix = vsVars.uniform.mat4.uPMatrix,
 
-        uMVMatrix = vsVars.uniform.mat4.uMVMatrix;
+        uMVMatrix = vsVars.uniform.mat4.uMVMatrix,
+
+        uMatEmissive = fsVars.uniform.vec3.uMatEmissive;
+
+        // No transparency, always opaque.
 
         // Update Prim position, motion - given to World object.
 
@@ -252,12 +269,17 @@ class ShaderTexture extends Shader {
 
                 // Set fragment shader sampler uniform.
 
-                gl.uniform1i( uSampler, 0 ); //STRANGE
+                gl.uniform1i( uSampler, 0 );
+
+                // Default material (other Shaders might use multiple materials).
+
+                let m = prim.defaultMaterial;
+
+                // Set the emissive quality of the Prim.
+
+                gl.uniform3fv( uMatEmissive, m.emissive ); // NOTE: transparent objects go in their own Shader.
 
                 // Set perspective and model-view matrix uniforms.
-
-                //gl.uniformMatrix4fv( uPMatrix, false, PM );
-                //gl.uniformMatrix4fv( uMVMatrix, false, MVM );
 
                 gl.uniformMatrix4fv( uPMatrix, false, PM );
                 gl.uniformMatrix4fv( uMVMatrix, false, mvMatrix );

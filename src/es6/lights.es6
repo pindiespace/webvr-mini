@@ -11,7 +11,7 @@ class Lights {
 
         this.lightTypes = {
 
-            LIGHT_0: 'light0',
+            LIGHT_0: 'light0',  // World Directional (default)
 
             LIGHT_1: 'light1',
 
@@ -31,7 +31,9 @@ class Lights {
 
             directionalColor: directionalColor,
 
-            attenuation: 1.0,
+            attenuation: 0.0,
+
+            emissive: 1.0,
 
             radius: 1.0
 
@@ -41,9 +43,25 @@ class Lights {
 
     getLight( id ) {
 
-        window.lightList = this.lightList;
+        if ( ! id ) {
+
+            id = this.lightTypes.LIGHT_0;
+
+        }
 
         return this.lightList[ id ];
+
+    }
+
+    getPos ( id ) {
+
+        if ( ! id ) {
+
+            id = this.lightTypes.LIGHT_0;
+
+        }
+
+        return this.lightList[ id ].lightingDirection;
 
     }
 
@@ -52,7 +70,13 @@ class Lights {
      */
     setPos ( id, x, y, z ) {
 
-        this.lightList[ id ] = [ -x, -y, z ];
+        if ( ! id ) {
+
+            id = this.lightTypes.LIGHT_0;
+
+        }        
+
+        this.lightList[ id ].lightingDirection = [ -x, -y, z ];
 
     }
 
@@ -60,6 +84,12 @@ class Lights {
      * Set Light by Polar coordinates.
      */
     setPolar ( id, u, v ) {
+
+        if ( ! id ) {
+
+            id = this.lightTypes.LIGHT_0;
+
+        }
 
         // TODO:
 

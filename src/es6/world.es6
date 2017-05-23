@@ -479,7 +479,7 @@ class World extends AssetPool {
 
             this.primFactory.createPrim(
             
-                this.s1,                      // callback function
+                this.s3,                      // callback function
                 typeList.CAPSULE,
                 'TestCapsule',
                 vec5( 0.5, 1, 1 ),       // dimensions (4th dimension doesn't exist for cylinder)
@@ -513,7 +513,7 @@ class World extends AssetPool {
 
             this.primFactory.createPrim(
             
-                this.s1,                      // callback function
+                this.s3,                      // callback function
                 typeList.DODECAHEDRON,
                 'Dodecahedron',
                 vec5( 1, 1, 1 ),       // dimensions (4th dimension doesn't exist for cylinder)
@@ -810,6 +810,8 @@ class World extends AssetPool {
 
     window.prims = this.primFactory.prims;
 
+    window.lights = this.lights.getPos();
+
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         // NOTE: the init() method sets up the update() and render() methods for the Shader.
@@ -898,6 +900,7 @@ class World extends AssetPool {
      */
     housekeep () {
 
+// TODO: make camera work in mouselook only.
 
 // TODO: ANIMATION CLASS FOR PRIM IN UPDATEMV ROUTINE.
 
@@ -937,6 +940,18 @@ class World extends AssetPool {
             /////////console.log( 'delta:' + parseInt( 1000 / delta ) + ' fps' );
 
         }
+
+        // Update Lights
+
+        let lightPos = this.lights.getPos();
+
+        //this.glMatrix.vec3.rotateX( lightPos, lightPos, [ 0, 0, 0 ], 0.01 );
+
+        //this.glMatrix.vec3.rotateY( lightPos, lightPos, [ 0, 0, 0 ], 0.01 );
+
+        // Update atmosphere
+
+        // Update Skydome/Stardome
 
     }
 

@@ -109,7 +109,7 @@ if ( __DEV__ === 'true' ) {
 
 }
 
-let webvr, ui, shaderPool, light, world;
+let webvr, ui, shaderPool, lights, world;
 
 // WebGL can take some time to init.
 
@@ -127,7 +127,7 @@ var promise = new Promise( ( resolve, reject ) => {
 
         // Add shaders to ShaderPool.
 
-        light = new Lights( glMatrix );
+        lights = new Lights( glMatrix );
 
         shaderPool = new ShaderPool ( true, util, glMatrix, webgl );
 
@@ -135,7 +135,7 @@ var promise = new Promise( ( resolve, reject ) => {
 
         // REQUIRED Shader, used for fadeins on Prim creation.
 
-        shaderPool.addAsset( new ShaderFader ( true, util, glMatrix, webgl, webvr, 'shaderFader', light ) );
+        shaderPool.addAsset( new ShaderFader ( true, util, glMatrix, webgl, webvr, 'shaderFader', lights ) );
 
         // Basic one-texture Shader, without lighting.
 
@@ -147,11 +147,11 @@ var promise = new Promise( ( resolve, reject ) => {
 
         // One texture Shader with directional lighting.
 
-        shaderPool.addAsset( new shaderDirLightTexture( true, util, glMatrix, webgl, webvr, 'shaderDirLightTexture', light ) );
+        shaderPool.addAsset( new shaderDirLightTexture( true, util, glMatrix, webgl, webvr, 'shaderDirLightTexture', lights ) );
 
         // Create the world, which needs WebGL, WebVR, the Shader list and world Lights.
 
-        world = new World( true, glMatrix, webgl, webvr, shaderPool, light );
+        world = new World( true, glMatrix, webgl, webvr, shaderPool, lights );
 
         // Initialize our Ui.
 

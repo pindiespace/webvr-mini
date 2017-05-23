@@ -51,6 +51,15 @@ class ShaderFader extends Shader {
 
         let s = [
 
+            // Set precision.
+
+            this.floatp,
+
+            /* 
+             * Attribute names are hard-coded in the WebGL object, with rigid indices.
+             * vertex, textureX coordinates, colors, normals, tangents.
+             */
+
             // Note: ALWAYS name the vertex attribute using the default!
 
             'attribute vec3 ' + this.webgl.attributeNames.aVertexPosition[ 0 ] + ';',
@@ -130,7 +139,14 @@ class ShaderFader extends Shader {
 
         let s = [
 
+            // Set precision.
+
             this.floatp,
+
+            /* 
+             * Attribute names are hard-coded in the WebGL object, with rigid indices.
+             * vertex, textureX coordinates, colors, normals, tangents.
+             */
 
             'uniform bool uUseLighting;',
             'uniform bool uUseTexture;',
@@ -138,6 +154,7 @@ class ShaderFader extends Shader {
 
             'uniform sampler2D uSampler;',
             'uniform float uAlpha;',
+            'uniform vec3 uMatEmissive;', // no lighting, but can glow...
 
             'varying vec2 vTextureCoord;',
             'varying lowp vec4 vColor;',
@@ -155,6 +172,14 @@ class ShaderFader extends Shader {
                 'else if(uUseTexture) {',
 
                     'vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));',
+
+                    // NOTE: If you try to add and multiple all at once you get a vec4 constructor error...
+
+                    'textureColor.r += uMatEmissive.r;',
+
+                    'textureColor.g += uMatEmissive.g;',
+
+                    'textureColor.b += uMatEmissive.b;',                    
 
                     'gl_FragColor = vec4(textureColor.rgb * vLightWeighting, textureColor.a * uAlpha);',
 
@@ -269,7 +294,9 @@ class ShaderFader extends Shader {
 
         uPMatrix = vsVars.uniform.mat4.uPMatrix,
 
-        uMVMatrix = vsVars.uniform.mat4.uMVMatrix;
+        uMVMatrix = vsVars.uniform.mat4.uMVMatrix,
+
+        uMatEmissive = fsVars.uniform.vec3.uMatEmissive;
 
         // Local link to easing function
 
@@ -448,11 +475,17 @@ class ShaderFader extends Shader {
 
                 }
 
-                // Normals matrix uniform
+                // Normals matrix (transpose inverse) uniform.
 
                 gl.uniformMatrix3fv( vsVars.uniform.mat3.uNMatrix, false, nMatrix );
 
-                // Lighting (always bound)
+                // default material (other Shaders might use multiple materials).
+
+                let m = prim.defaultMaterial;
+
+                // Lighting (always bound).
+
+                gl.uniform3fv( uMatEmissive, m.emissive ); // NOTE: transparent objects go in their own Shader.
 
                 gl.uniform3f( uAmbientColor, ambient[ 0 ], ambient[ 1 ], ambient[ 2 ] );
                 gl.uniform3fv( uLightingDirection, adjustedLD );

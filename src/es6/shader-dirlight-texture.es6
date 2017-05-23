@@ -49,16 +49,25 @@ class shaderDirLightTexture extends Shader {
 
         let s = [
 
+            // Set precision.
+
+            this.floatp,
+
+            /* 
+             * Attribute names are hard-coded in the WebGL object, with rigid indices.
+             * vertex, textureX coordinates, colors, normals, tangents.
+             */
+
             'attribute vec3 ' + this.webgl.attributeNames.aVertexPosition[ 0 ] + ';',
             //'attribute vec4 ' + this.webgl.attributeNames.aVertexColor[ 0 ] + ';',
             'attribute vec2 ' + this.webgl.attributeNames.aTextureCoord[ 0 ] + ';',
             'attribute vec3 ' + this.webgl.attributeNames.aVertexNormal[ 0 ] + ';',
 
             //'uniform mat4 uMMatrix;',   // Model matrix
+            //'uniform mat4 uVMatrix;',  // View matrix
             'uniform mat4 uMVMatrix;',  // Model-View matrix
             'uniform mat4 uPMatrix;',   // Perspective matrix
             'uniform mat3 uNMatrix;',   // Inverse-transpose of Model-View matrix
-            //'uniform mat4 uVMatrix;',  // View matrix
 
             // Directional lighting (from the World).
 
@@ -156,14 +165,14 @@ class shaderDirLightTexture extends Shader {
 
         let s =  [
 
-            // Enables some extensions in WebGL 1.0 (default in 2.0).
-
-            //'#extension GL_EXT_shader_texture_lod : enable',
-            //'#extension GL_OES_standard_derivatives : enable',
-
             // Set precision.
 
             this.floatp,
+
+            /* 
+             * Attribute names are hard-coded in the WebGL object, with rigid indices.
+             * vertex, textureX coordinates, colors, normals, tangents.
+             */
 
             // Uniforms.
 
@@ -212,7 +221,6 @@ class shaderDirLightTexture extends Shader {
 
             '    vec4 Ambient = vec4(vAmbientColor, 1.0);',
 
-
             // Diffuse.
 
             '    vec4 N = normalize( vNormalW );',
@@ -235,12 +243,14 @@ class shaderDirLightTexture extends Shader {
             '   vec4 R = reflect( -L, N );', // -L needed to bring to center. +L gives edges highlighted
 
             '   float RdotV = max( dot( R, V ), 0.0 );',
+
             '   float NdotH = max( dot( N, H ), 0.0 );',
+
             '   vec4 Specular = pow( RdotV, uMatSpecExp ) * pow(NdotH, uMatSpecExp) * vec4(vDirectionalColor * uMatSpecular, 1.0);',
 
-            // Final fragment color.
+            // TODO: specular surround.
 
-            //'    gl_FragColor = vec4(textureColor.rgb * vLightWeighting, textureColor.a);',
+            // Final fragment color.
 
             '    gl_FragColor =  ( Emissive + Ambient + Diffuse + Specular ) * vec4(textureColor.rgb, textureColor.a);',
 
@@ -449,35 +459,34 @@ class shaderDirLightTexture extends Shader {
 
                 // Bind additional texture units.
 
-                // Send the DEFAULT material to the Shader (other Shaders might use multiple materials).
-
-                let m = prim.defaultMaterial;
-
-                gl.uniform3fv( fsVars.uniform.vec3.uMatEmissive, m.emissive );
-                gl.uniform3fv( fsVars.uniform.vec3.uMatAmbient, m.ambient );
-                gl.uniform3fv( fsVars.uniform.vec3.uMatDiffuse, m.diffuse );
-                gl.uniform3fv( fsVars.uniform.vec3.uMatSpecular, m.specular );
-                gl.uniform1f( fsVars.uniform.float.uMatSpecExp, m.specularExponent )
-                //console.log('prim.defaultMaterial.specularExponent:' + prim.defaultMaterial.specularExponent)
-
                 // Set fragment shader sampler uniform.
 
                 gl.uniform1i( uSampler, 0 );
+
+                // Default material (other Shaders might use multiple materials).
+
+                let m = prim.defaultMaterial;
 
                 // Lighting flag.
 
                 gl.uniform1i( uUseLighting, lighting );
 
-                // World lighting
+                // Material lighting properties.
+
+                gl.uniform3fv( fsVars.uniform.vec3.uMatEmissive, m.emissive );
+                gl.uniform3fv( fsVars.uniform.vec3.uMatAmbient, m.ambient ); // NOTE: transparent objects go in their own Shader
+                gl.uniform3fv( fsVars.uniform.vec3.uMatDiffuse, m.diffuse );
+                gl.uniform3fv( fsVars.uniform.vec3.uMatSpecular, m.specular );
+                gl.uniform1f( fsVars.uniform.float.uMatSpecExp, m.specularExponent )
+
+                // World lighting (if used).
 
                 if ( lighting ) {
 
                     gl.uniform3fv( uAmbientColor, ambient );
                     gl.uniform3fv( uLightingDirection, adjustedLD );
-                    /////gl.uniform3fv( uLightingDirection, lightingDirection );
                     gl.uniform3fv( uDirectionalColor, directionalColor );
-
-                    gl.uniform3fv( uPOV, pov.position ); /////////ADDED POV POSITON TO SHADER.
+                    gl.uniform3fv( uPOV, pov.position ); // used for specular highlight
 
                 }
 
@@ -492,14 +501,6 @@ class shaderDirLightTexture extends Shader {
                 // Model-View matrix uniform.
 
                 gl.uniformMatrix4fv( uMVMatrix, false, mvMatrix );
-
-                // Set View matrix uniform.
-
-                //gl.uniformMatrix4fv( uVMatrix, false, vMatrix );
-
-                // Set Model matrix uniform.
-
-                //gl.uniformMatrix4fv( uMMatrix, false, mMatrix );
 
                 // Bind indices buffer.
 
