@@ -177,7 +177,7 @@ class Shader {
 
                 }
 
-                // Sort by distance for translucent objects.
+                // Sort the program.renderList by distance for translucent objects.
 
                 if ( this.sortByDistance ) {
 
@@ -524,30 +524,25 @@ class Shader {
         /**
          * Rendering mono view.
          */
-        program.renderMono = ( pov ) => {
+        program.renderMono = ( vMatrix, pov ) => {
 
-            mat4.identity( vMatrix );
+            //mat4.identity( vMatrix );
 
-            mat4.rotate( vMatrix, vMatrix, pov.rotation[ 1 ], [ 0, 1, 0 ] ); // rotate on Y axis only (for mouselook).
+            //mat4.rotate( vMatrix, vMatrix, pov.rotation[ 1 ], [ 0, 1, 0 ] ); // rotate on Y axis only (for mouselook).
 
-            mat4.rotate( vMatrix, vMatrix, pov.rotation[ 0 ], [ 1, 0 , 0 ] ); // rotate on X axis only (for mouselook).
+            //mat4.rotate( vMatrix, vMatrix, pov.rotation[ 0 ], [ 1, 0 , 0 ] ); // rotate on X axis only (for mouselook).
 
             // POV position (common to all renderings in a frame).
 
-            mat4.translate( vMatrix, vMatrix, pov.position );
+            //mat4.translate( vMatrix, vMatrix, pov.position );
 
             // Copy vMatrix to mvMatrix (so we have vMatrix separately for Shader).            
 
             mat4.copy( mvMatrix, vMatrix );
 
-// TODO: DEBUG TEMPORARY.
-//pov.rotation[ 0 ] += 0.001;
-//pov.rotation[ 1 ] += 0.001;
-
             // mono Perspective (common for all renderings in a frame).
 
             mat4.perspective( pMatrix, Math.PI*0.4, canvas.width / canvas.height, near, far );
-
 
             program.render( pMatrix, pov );
 
@@ -556,17 +551,15 @@ class Shader {
         /** 
          *  Rendering left and right eye for VR. Called once for each Shader by World.
          */
-        program.renderVR = ( vr, display, frameData, pov ) => {
+        program.renderVR = ( vr, display, frameData, vvMatrix, pov ) => {
 
             // Framedata provided by calling function.
 
-            // Left eye.
+            // ----------------------- Left eye. ----------------------------------
 
-            // View Matrix. 
+            mat4.identity( vMatrix ); // ???????????REALLY NEEDED??????????????????? TEST ON HTC VIVE
 
-            mat4.identity( vMatrix );
-
-            // Adjust viewport to VR canvas width and height.
+            // Adjust viewport to render on LEFT side of VR canvas, using current width and height.
 
             gl.viewport( 0, 0, canvas.width * 0.5, canvas.height );
 
@@ -574,33 +567,19 @@ class Shader {
 
             vr.getStandingViewMatrix( vMatrix, frameData.leftViewMatrix, frameData.pose );
 
-            // !!!!!! TODO: ORIENTATION IS NOT RIGHT (90 degress off) in HTC Vive.
-
-            // World position and rotation.
-
-            mat4.rotate( vMatrix, vMatrix, pov.rotation[ 1 ], [ 0, 1, 0 ] ); // rotate on Y axis only.
-
-            mat4.translate( vMatrix, vMatrix, pov.position );
-
             // Copy vMatrix to mvMatrix (so we have vMatrix separately for Shader).
 
-            mat4.copy( mvMatrix, vMatrix ); //////////////////////
+            mat4.copy( mvMatrix, vvMatrix );       
 
-            // Render the World.
-
-            // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            // TODO: IF WE COLLECT THE PROGRAM.RENDERS, WE CAN RENDER WITH ONE STARTING World position and rotation.
-            // TODO: PROMOTE THIS INTO WORLD ABOVE THIS LINE.
-
-            // Use left Projection matrix provided by WebVR FrameData object to render.
+            // Use left Projection matrix provided by WebVR FrameData object to render the World.
 
             program.render( frameData.leftProjectionMatrix, pov );
 
-            // Right eye.
+            // ----------------------- Right eye. ----------------------------------
 
-            mat4.identity( vMatrix );
+            mat4.identity( vMatrix ); // ????????????REALLY NEEDED????????????? TEST ON HTC VIVE
 
-            // Adjust Canvas to VR width and height.
+            // Adjust viewport to render on RIGHT side of VR canvas, using current width and height.
 
             gl.viewport( canvas.width * 0.5, 0, canvas.width * 0.5, canvas.height );
 
@@ -608,17 +587,11 @@ class Shader {
 
             vr.getStandingViewMatrix( vMatrix, frameData.rightViewMatrix, frameData.pose ); // after Toji
 
-            // World position and rotation.
-
-            mat4.rotate( vMatrix, vMatrix, pov.rotation[ 1 ], [ 0, 1, 0 ] ); // rotate on Y axis only.
-
-            mat4.translate( vMatrix, vMatrix, pov.position );
-
             // Copy vMatrix to mvMatrix (so we have vMatrix separately for Shader).
 
-            mat4.copy( mvMatrix, vMatrix );
+            mat4.copy( mvMatrix, vvMatrix );
 
-            // Use right Projection matrix provided by WebVR FrameData object to render.
+            // Use right Projection matrix provided by WebVR FrameData object to render the World.
 
             program.render( frameData.rightProjectionMatrix, pov );
 
@@ -682,7 +655,7 @@ class Shader {
      * Get the perspective matrix.
      * @returns {glMatrix.mat4} the perspective matrix used in the Shader.
      */
-    getpMatrix () {
+    getPMatrix () {
 
         return this.pMatrix;
 
@@ -692,7 +665,7 @@ class Shader {
      * Get the model-view matrix.
      * @returns {glMatrix.mat4} the model-view matrix used in the Shader.
      */
-    getmvMatrix () {
+    getmMVMatrix () {
 
         return this.mvMatrix;
 

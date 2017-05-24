@@ -79,6 +79,7 @@ class ShaderFader extends Shader {
             'uniform mat3 uNMatrix;',
 
             'uniform vec3 uAmbientColor;',
+            'uniform vec3 uDiffuseColor;',
             'uniform vec3 uLightingDirection;',
             'uniform vec3 uDirectionalColor;',
 
@@ -154,6 +155,11 @@ class ShaderFader extends Shader {
 
             'uniform sampler2D uSampler;',
             'uniform float uAlpha;',
+
+            // NOTE: ambient and diffuse were computed in Vertex Shader.
+
+            'uniform vec3 uMatAmbient;',
+            'uniform vec3 uMatDiffuse;',
             'uniform vec3 uMatEmissive;', // no lighting, but can glow...
 
             'varying vec2 vTextureCoord;',
@@ -165,7 +171,11 @@ class ShaderFader extends Shader {
 
                 'if (uUseColor) {',
 
-                    'gl_FragColor = vec4(vColor.rgb * vLightWeighting, uAlpha);',
+                    'vec4 color = vColor;',
+
+                    'color.rgb *= (uMatAmbient.rgb + uMatDiffuse.rgb + uMatEmissive.rgb);',
+
+                    'gl_FragColor = vec4(color.rgb * vLightWeighting, uAlpha);',
 
                 '}',
 
@@ -173,13 +183,9 @@ class ShaderFader extends Shader {
 
                     'vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));',
 
-                    // NOTE: If you try to add and multiple all at once you get a vec4 constructor error...
+                    'textureColor.rgb *= (uMatAmbient.rgb + uMatDiffuse.rgb + uMatEmissive.rgb);',
 
-                    'textureColor.r += uMatEmissive.r;',
-
-                    'textureColor.g += uMatEmissive.g;',
-
-                    'textureColor.b += uMatEmissive.b;',                    
+                    // NOTE: the uAlpha works here because this Shader requires back-to-front-sorting when a Prim is added.
 
                     'gl_FragColor = vec4(textureColor.rgb * vLightWeighting, textureColor.a * uAlpha);',
 
@@ -286,17 +292,21 @@ class ShaderFader extends Shader {
 
         uSampler = fsVars.uniform.sampler2D.uSampler,
 
-        uAmbientColor = vsVars.uniform.vec3.uAmbientColor,
+        uMatAmbient = fsVars.uniform.vec3.uMatAmbient,
+
+        uMatDiffuse = fsVars.uniform.vec3.uMatDiffuse,
+
+        uMatEmissive = fsVars.uniform.vec3.uMatEmissive,
+
+        uAmbientColor = vsVars.uniform.vec3.uAmbientColor, // ambient light color
 
         uLightingDirection = vsVars.uniform.vec3.uLightingDirection, 
 
-        uDirectionalColor = vsVars.uniform.vec3.uDirectionalColor,
+        uDirectionalColor = vsVars.uniform.vec3.uDirectionalColor, // directional light color
 
         uPMatrix = vsVars.uniform.mat4.uPMatrix,
 
-        uMVMatrix = vsVars.uniform.mat4.uMVMatrix,
-
-        uMatEmissive = fsVars.uniform.vec3.uMatEmissive;
+        uMVMatrix = vsVars.uniform.mat4.uMVMatrix;
 
         // Local link to easing function
 
@@ -324,41 +334,41 @@ class ShaderFader extends Shader {
 
         program.update = ( prim, MVM ) => {
 
-                let fade = prim.fade;
+            let fade = prim.fade;
 
-                let dir = fade.endAlpha - fade.startAlpha;
+            let dir = fade.endAlpha - fade.startAlpha;
 
-                let inc = 0.005;
+            let inc = 0.005;
 
-                if ( dir > 0 ) {
+            if ( dir > 0 ) {
 
-                    prim.alpha += inc;
+                prim.alpha += inc;
 
-                    if ( prim.alpha >= fade.endAlpha ) {
+                if ( prim.alpha >= fade.endAlpha ) {
 
-                        prim.alpha = fade.endAlpha;
+                    prim.alpha = fade.endAlpha;
 
-                        // This turns off this Shader!
+                    // This turns off this Shader!
 
-                        prim.shader.movePrim( prim, prim.defaultShader );
-
-                    }
-
-                } else if ( dir < 0 ) {
-
-                    prim.alpha -= inc;
-
-                    if ( prim.alpha <= fade.endAlpha ) {
-
-                        prim.alpha = fade.endAlpha;
-
-                        // This turns off this Shader!
-
-                        prim.shader.movePrim( prim, prim.defaultShader );
-
-                    }
+                    prim.shader.movePrim( prim, prim.defaultShader );
 
                 }
+
+            } else if ( dir < 0 ) {
+
+                prim.alpha -= inc;
+
+                if ( prim.alpha <= fade.endAlpha ) {
+
+                    prim.alpha = fade.endAlpha;
+
+                    // This turns off this Shader!
+
+                    prim.shader.movePrim( prim, prim.defaultShader );
+
+                }
+
+            }
 
             // Compute lighting normals from World lighting.
 
@@ -384,6 +394,8 @@ class ShaderFader extends Shader {
          */
 
         program.render = ( PM, pov ) => {
+
+            if ( ! program.renderList.length ) return;
 
             gl.useProgram( shaderProgram );
 
@@ -484,7 +496,8 @@ class ShaderFader extends Shader {
                 let m = prim.defaultMaterial;
 
                 // Lighting (always bound).
-
+                gl.uniform3fv( uMatAmbient, m.ambient );
+                gl.uniform3fv( uMatDiffuse, m.diffuse );
                 gl.uniform3fv( uMatEmissive, m.emissive ); // NOTE: transparent objects go in their own Shader.
 
                 gl.uniform3f( uAmbientColor, ambient[ 0 ], ambient[ 1 ], ambient[ 2 ] );

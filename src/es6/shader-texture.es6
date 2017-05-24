@@ -102,6 +102,8 @@ class ShaderTexture extends Shader {
              * vertex, textureX coordinates, colors, normals, tangents.
              */
 
+            'uniform vec3 uMatAmbient;',  // default material brightness
+            'uniform vec3 uMatDiffuse;',  // diffuse color
             'uniform vec3 uMatEmissive;', // no lighting, but can glow...
 
             'varying vec2 vTextureCoord;',
@@ -112,7 +114,9 @@ class ShaderTexture extends Shader {
 
             '    vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));',
 
-            '    gl_FragColor =  vec4(textureColor.r + uMatEmissive.r, textureColor.g + uMatEmissive.g, textureColor.b + uMatEmissive.b, textureColor.a);',
+            '   textureColor.rgb *= (uMatAmbient.rgb + uMatDiffuse.rgb + uMatEmissive.rgb);',
+
+            '    gl_FragColor =  vec4(textureColor.r, textureColor.g, textureColor.b, textureColor.a);',
 
             '}'
 
@@ -208,6 +212,10 @@ class ShaderTexture extends Shader {
 
         uMVMatrix = vsVars.uniform.mat4.uMVMatrix,
 
+        uMatAmbient = fsVars.uniform.vec3.uMatAmbient,
+
+        uMatDiffuse = fsVars.uniform.vec3.uMatDiffuse,
+
         uMatEmissive = fsVars.uniform.vec3.uMatEmissive;
 
         // No transparency, always opaque.
@@ -230,6 +238,8 @@ class ShaderTexture extends Shader {
          */
 
         program.render = ( PM, pov ) => {
+
+            if ( ! program.renderList.length ) return;
 
             gl.useProgram( shaderProgram );
 
@@ -275,8 +285,10 @@ class ShaderTexture extends Shader {
 
                 let m = prim.defaultMaterial;
 
-                // Set the emissive quality of the Prim.
+                // Set the material quality of the Prim.
 
+                gl.uniform3fv( uMatAmbient, m.ambient );
+                gl.uniform3fv( uMatDiffuse, m.diffuse );
                 gl.uniform3fv( uMatEmissive, m.emissive ); // NOTE: transparent objects go in their own Shader.
 
                 // Set perspective and model-view matrix uniforms.

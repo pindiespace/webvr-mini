@@ -1299,6 +1299,28 @@
 	        }
 
 	        /** 
+	         * Some objects NULL their arrays to remove elements, rather than deleting elements. This method
+	         * provides housekeeping to remove those nulls.
+	         * @param {Array} arr the Array to remove null values from.
+	         */
+
+	    }, {
+	        key: 'clearFalsy',
+	        value: function clearFalsy(arr) {
+	            // clear null positions when Prims are removed from a rendering list
+
+	            return arr.filter(function (elem) {
+	                return elem;
+	            });
+	        }
+
+	        /* 
+	         * ---------------------------------------
+	         * RANDOM NUMBERS
+	         * ---------------------------------------
+	         */
+
+	        /** 
 	         * Random seed.
 	         */
 
@@ -4569,7 +4591,7 @@
 
 	            // render flags
 
-	            'uniform bool uUseLighting;', 'uniform bool uUseTexture;', 'uniform bool uUseColor;', 'uniform mat4 uMVMatrix;', 'uniform mat4 uPMatrix;', 'uniform mat3 uNMatrix;', 'uniform vec3 uAmbientColor;', 'uniform vec3 uLightingDirection;', 'uniform vec3 uDirectionalColor;', 'varying vec2 vTextureCoord;', 'varying lowp vec4 vColor;', 'varying vec3 vLightWeighting;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vLightWeighting = vec3(1.0, 1.0, 1.0);', '    if (uUseTexture) { ', '      vTextureCoord = aTextureCoord;', '    } else { ', '      vTextureCoord = vec2(0.0, 0.0);', // Prim has no textures
+	            'uniform bool uUseLighting;', 'uniform bool uUseTexture;', 'uniform bool uUseColor;', 'uniform mat4 uMVMatrix;', 'uniform mat4 uPMatrix;', 'uniform mat3 uNMatrix;', 'uniform vec3 uAmbientColor;', 'uniform vec3 uDiffuseColor;', 'uniform vec3 uLightingDirection;', 'uniform vec3 uDirectionalColor;', 'varying vec2 vTextureCoord;', 'varying lowp vec4 vColor;', 'varying vec3 vLightWeighting;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vLightWeighting = vec3(1.0, 1.0, 1.0);', '    if (uUseTexture) { ', '      vTextureCoord = aTextureCoord;', '    } else { ', '      vTextureCoord = vec2(0.0, 0.0);', // Prim has no textures
 
 	            '    }', '    vColor = aVertexColor;', // we always read this, so always bind it
 
@@ -4602,13 +4624,17 @@
 	             * vertex, textureX coordinates, colors, normals, tangents.
 	             */
 
-	            'uniform bool uUseLighting;', 'uniform bool uUseTexture;', 'uniform bool uUseColor;', 'uniform sampler2D uSampler;', 'uniform float uAlpha;', 'uniform vec3 uMatEmissive;', // no lighting, but can glow...
+	            'uniform bool uUseLighting;', 'uniform bool uUseTexture;', 'uniform bool uUseColor;', 'uniform sampler2D uSampler;', 'uniform float uAlpha;',
 
-	            'varying vec2 vTextureCoord;', 'varying lowp vec4 vColor;', 'varying vec3 vLightWeighting;', 'void main(void) {', 'if (uUseColor) {', 'gl_FragColor = vec4(vColor.rgb * vLightWeighting, uAlpha);', '}', 'else if(uUseTexture) {', 'vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));',
+	            // NOTE: ambient and diffuse were computed in Vertex Shader.
 
-	            // NOTE: If you try to add and multiple all at once you get a vec4 constructor error...
+	            'uniform vec3 uMatAmbient;', 'uniform vec3 uMatDiffuse;', 'uniform vec3 uMatEmissive;', // no lighting, but can glow...
 
-	            'textureColor.r += uMatEmissive.r;', 'textureColor.g += uMatEmissive.g;', 'textureColor.b += uMatEmissive.b;', 'gl_FragColor = vec4(textureColor.rgb * vLightWeighting, textureColor.a * uAlpha);', '}', '}'];
+	            'varying vec2 vTextureCoord;', 'varying lowp vec4 vColor;', 'varying vec3 vLightWeighting;', 'void main(void) {', 'if (uUseColor) {', 'vec4 color = vColor;', 'color.rgb *= (uMatAmbient.rgb + uMatDiffuse.rgb + uMatEmissive.rgb);', 'gl_FragColor = vec4(color.rgb * vLightWeighting, uAlpha);', '}', 'else if(uUseTexture) {', 'vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));', 'textureColor.rgb *= (uMatAmbient.rgb + uMatDiffuse.rgb + uMatEmissive.rgb);',
+
+	            // NOTE: the uAlpha works here because this Shader requires back-to-front-sorting when a Prim is added.
+
+	            'gl_FragColor = vec4(textureColor.rgb * vLightWeighting, textureColor.a * uAlpha);', '}', '}'];
 
 	            return {
 
@@ -4685,12 +4711,18 @@
 	                uUseColor = fsVars.uniform.bool.uUseColor,
 	                uUseTexture = fsVars.uniform.bool.uUseTexture,
 	                uSampler = fsVars.uniform.sampler2D.uSampler,
+	                uMatAmbient = fsVars.uniform.vec3.uMatAmbient,
+	                uMatDiffuse = fsVars.uniform.vec3.uMatDiffuse,
+	                uMatEmissive = fsVars.uniform.vec3.uMatEmissive,
 	                uAmbientColor = vsVars.uniform.vec3.uAmbientColor,
-	                uLightingDirection = vsVars.uniform.vec3.uLightingDirection,
+	                // ambient light color
+
+	            uLightingDirection = vsVars.uniform.vec3.uLightingDirection,
 	                uDirectionalColor = vsVars.uniform.vec3.uDirectionalColor,
-	                uPMatrix = vsVars.uniform.mat4.uPMatrix,
-	                uMVMatrix = vsVars.uniform.mat4.uMVMatrix,
-	                uMatEmissive = fsVars.uniform.vec3.uMatEmissive;
+	                // directional light color
+
+	            uPMatrix = vsVars.uniform.mat4.uPMatrix,
+	                uMVMatrix = vsVars.uniform.mat4.uMVMatrix;
 
 	            // Local link to easing function
 
@@ -4773,6 +4805,8 @@
 	             */
 
 	            program.render = function (PM, pov) {
+
+	                if (!program.renderList.length) return;
 
 	                gl.useProgram(shaderProgram);
 
@@ -4869,7 +4903,8 @@
 	                    var m = prim.defaultMaterial;
 
 	                    // Lighting (always bound).
-
+	                    gl.uniform3fv(uMatAmbient, m.ambient);
+	                    gl.uniform3fv(uMatDiffuse, m.diffuse);
 	                    gl.uniform3fv(uMatEmissive, m.emissive); // NOTE: transparent objects go in their own Shader.
 
 	                    gl.uniform3f(uAmbientColor, ambient[0], ambient[1], ambient[2]);
@@ -5108,7 +5143,7 @@
 	                        this.program.renderList.push(prim);
 	                    }
 
-	                    // Sort by distance for translucent objects.
+	                    // Sort the program.renderList by distance for translucent objects.
 
 	                    if (this.sortByDistance) {
 
@@ -5449,25 +5484,21 @@
 	            /**
 	             * Rendering mono view.
 	             */
-	            program.renderMono = function (pov) {
+	            program.renderMono = function (vMatrix, pov) {
 
-	                mat4.identity(vMatrix);
+	                //mat4.identity( vMatrix );
 
-	                mat4.rotate(vMatrix, vMatrix, pov.rotation[1], [0, 1, 0]); // rotate on Y axis only (for mouselook).
+	                //mat4.rotate( vMatrix, vMatrix, pov.rotation[ 1 ], [ 0, 1, 0 ] ); // rotate on Y axis only (for mouselook).
 
-	                mat4.rotate(vMatrix, vMatrix, pov.rotation[0], [1, 0, 0]); // rotate on X axis only (for mouselook).
+	                //mat4.rotate( vMatrix, vMatrix, pov.rotation[ 0 ], [ 1, 0 , 0 ] ); // rotate on X axis only (for mouselook).
 
 	                // POV position (common to all renderings in a frame).
 
-	                mat4.translate(vMatrix, vMatrix, pov.position);
+	                //mat4.translate( vMatrix, vMatrix, pov.position );
 
 	                // Copy vMatrix to mvMatrix (so we have vMatrix separately for Shader).            
 
 	                mat4.copy(mvMatrix, vMatrix);
-
-	                // TODO: DEBUG TEMPORARY.
-	                //pov.rotation[ 0 ] += 0.001;
-	                //pov.rotation[ 1 ] += 0.001;
 
 	                // mono Perspective (common for all renderings in a frame).
 
@@ -5479,17 +5510,15 @@
 	            /** 
 	             *  Rendering left and right eye for VR. Called once for each Shader by World.
 	             */
-	            program.renderVR = function (vr, display, frameData, pov) {
+	            program.renderVR = function (vr, display, frameData, vvMatrix, pov) {
 
 	                // Framedata provided by calling function.
 
-	                // Left eye.
+	                // ----------------------- Left eye. ----------------------------------
 
-	                // View Matrix. 
+	                mat4.identity(vMatrix); // ???????????REALLY NEEDED??????????????????? TEST ON HTC VIVE
 
-	                mat4.identity(vMatrix);
-
-	                // Adjust viewport to VR canvas width and height.
+	                // Adjust viewport to render on LEFT side of VR canvas, using current width and height.
 
 	                gl.viewport(0, 0, canvas.width * 0.5, canvas.height);
 
@@ -5497,33 +5526,19 @@
 
 	                vr.getStandingViewMatrix(vMatrix, frameData.leftViewMatrix, frameData.pose);
 
-	                // !!!!!! TODO: ORIENTATION IS NOT RIGHT (90 degress off) in HTC Vive.
-
-	                // World position and rotation.
-
-	                mat4.rotate(vMatrix, vMatrix, pov.rotation[1], [0, 1, 0]); // rotate on Y axis only.
-
-	                mat4.translate(vMatrix, vMatrix, pov.position);
-
 	                // Copy vMatrix to mvMatrix (so we have vMatrix separately for Shader).
 
-	                mat4.copy(mvMatrix, vMatrix); //////////////////////
+	                mat4.copy(mvMatrix, vvMatrix);
 
-	                // Render the World.
-
-	                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	                // TODO: IF WE COLLECT THE PROGRAM.RENDERS, WE CAN RENDER WITH ONE STARTING World position and rotation.
-	                // TODO: PROMOTE THIS INTO WORLD ABOVE THIS LINE.
-
-	                // Use left Projection matrix provided by WebVR FrameData object to render.
+	                // Use left Projection matrix provided by WebVR FrameData object to render the World.
 
 	                program.render(frameData.leftProjectionMatrix, pov);
 
-	                // Right eye.
+	                // ----------------------- Right eye. ----------------------------------
 
-	                mat4.identity(vMatrix);
+	                mat4.identity(vMatrix); // ????????????REALLY NEEDED????????????? TEST ON HTC VIVE
 
-	                // Adjust Canvas to VR width and height.
+	                // Adjust viewport to render on RIGHT side of VR canvas, using current width and height.
 
 	                gl.viewport(canvas.width * 0.5, 0, canvas.width * 0.5, canvas.height);
 
@@ -5531,17 +5546,11 @@
 
 	                vr.getStandingViewMatrix(vMatrix, frameData.rightViewMatrix, frameData.pose); // after Toji
 
-	                // World position and rotation.
-
-	                mat4.rotate(vMatrix, vMatrix, pov.rotation[1], [0, 1, 0]); // rotate on Y axis only.
-
-	                mat4.translate(vMatrix, vMatrix, pov.position);
-
 	                // Copy vMatrix to mvMatrix (so we have vMatrix separately for Shader).
 
-	                mat4.copy(mvMatrix, vMatrix);
+	                mat4.copy(mvMatrix, vvMatrix);
 
-	                // Use right Projection matrix provided by WebVR FrameData object to render.
+	                // Use right Projection matrix provided by WebVR FrameData object to render the World.
 
 	                program.render(frameData.rightProjectionMatrix, pov);
 
@@ -5583,8 +5592,8 @@
 	         */
 
 	    }, {
-	        key: 'getpMatrix',
-	        value: function getpMatrix() {
+	        key: 'getPMatrix',
+	        value: function getPMatrix() {
 
 	            return this.pMatrix;
 	        }
@@ -5595,8 +5604,8 @@
 	         */
 
 	    }, {
-	        key: 'getmvMatrix',
-	        value: function getmvMatrix() {
+	        key: 'getmMVMatrix',
+	        value: function getmMVMatrix() {
 
 	            return this.mvMatrix;
 	        }
@@ -5742,9 +5751,11 @@
 	             * vertex, textureX coordinates, colors, normals, tangents.
 	             */
 
+	            'uniform vec3 uMatAmbient;', // default material brightness
+	            'uniform vec3 uMatDiffuse;', // diffuse color
 	            'uniform vec3 uMatEmissive;', // no lighting, but can glow...
 
-	            'varying vec2 vTextureCoord;', 'uniform sampler2D uSampler;', 'void main(void) {', '    vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));', '    gl_FragColor =  vec4(textureColor.r + uMatEmissive.r, textureColor.g + uMatEmissive.g, textureColor.b + uMatEmissive.b, textureColor.a);', '}'];
+	            'varying vec2 vTextureCoord;', 'uniform sampler2D uSampler;', 'void main(void) {', '    vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));', '   textureColor.rgb *= (uMatAmbient.rgb + uMatDiffuse.rgb + uMatEmissive.rgb);', '    gl_FragColor =  vec4(textureColor.r, textureColor.g, textureColor.b, textureColor.a);', '}'];
 
 	            return {
 
@@ -5817,6 +5828,8 @@
 	                uSampler = fsVars.uniform.sampler2D.uSampler,
 	                uPMatrix = vsVars.uniform.mat4.uPMatrix,
 	                uMVMatrix = vsVars.uniform.mat4.uMVMatrix,
+	                uMatAmbient = fsVars.uniform.vec3.uMatAmbient,
+	                uMatDiffuse = fsVars.uniform.vec3.uMatDiffuse,
 	                uMatEmissive = fsVars.uniform.vec3.uMatEmissive;
 
 	            // No transparency, always opaque.
@@ -5838,6 +5851,8 @@
 	             */
 
 	            program.render = function (PM, pov) {
+
+	                if (!program.renderList.length) return;
 
 	                gl.useProgram(shaderProgram);
 
@@ -5883,8 +5898,10 @@
 
 	                    var m = prim.defaultMaterial;
 
-	                    // Set the emissive quality of the Prim.
+	                    // Set the material quality of the Prim.
 
+	                    gl.uniform3fv(uMatAmbient, m.ambient);
+	                    gl.uniform3fv(uMatDiffuse, m.diffuse);
 	                    gl.uniform3fv(uMatEmissive, m.emissive); // NOTE: transparent objects go in their own Shader.
 
 	                    // Set perspective and model-view matrix uniforms.
@@ -6043,13 +6060,13 @@
 	             * vertex, textureX coordinates, colors, normals, tangents.
 	             */
 
-	            'uniform vec3 uMatEmissive;', // no lighting, but can glow...
+	            'uniform vec3 uMatAmbient;', // ambient can override default color (darken)
+	            'uniform vec3 uMatDiffuse;', // diffuse color, typically 1.0 with lighting.
+	            'uniform vec3 uMatEmissive;', // no lighting, but can glow (brighten)
 
-	            'varying lowp vec4 vColor;', 'void main(void) {', 'float uAlpha = 1.0;', 'float vLightWeighting = 1.0;',
+	            'varying lowp vec4 vColor;', 'void main(void) {', 'float uAlpha = 1.0;', // NOTE: low alpha will create black hole unless drawn back to front!
 
-	            //'gl_FragColor = vec4(vColor.rgb * vLightWeighting, uAlpha);',
-
-	            'gl_FragColor = vec4( vColor.r + uMatEmissive.r, vColor.g + uMatEmissive.g, vColor.b + uMatEmissive.b, uAlpha);', '}'];
+	            'vec4 color = vColor;', 'color.rgb *= (uMatAmbient.rgb + uMatDiffuse.rgb + uMatEmissive.rgb);', 'gl_FragColor = vec4( color.r , color.g , color.b, uAlpha);', '}'];
 
 	            return {
 
@@ -6121,6 +6138,8 @@
 	                aVertexColor = vsVars.attribute.vec4.aVertexColor,
 	                uPMatrix = uPMatrix = vsVars.uniform.mat4.uPMatrix,
 	                uMVMatrix = uMVMatrix = vsVars.uniform.mat4.uMVMatrix,
+	                uMatAmbient = fsVars.uniform.vec3.uMatAmbient,
+	                uMatDiffuse = fsVars.uniform.vec3.uMatDiffuse,
 	                uMatEmissive = fsVars.uniform.vec3.uMatEmissive;
 
 	            // No transparency, always opaque.
@@ -6144,6 +6163,8 @@
 	             */
 
 	            program.render = function (PM, pov) {
+
+	                if (!program.renderList.length) return;
 
 	                gl.useProgram(shaderProgram);
 
@@ -6183,9 +6204,11 @@
 
 	                    var m = prim.defaultMaterial;
 
-	                    // Set the emissive quality of the Prim.
+	                    // Set the material quality of the Prim.
 
-	                    gl.uniform3fv(uMatEmissive, m.emissive); // NOTE: transparent objects go in their own Shader.
+	                    gl.uniform3fv(uMatAmbient, m.ambient);
+	                    gl.uniform3fv(uMatDiffuse, m.diffuse);
+	                    gl.uniform3fv(uMatEmissive, m.emissive);
 
 	                    // Bind perspective and model-view matrix uniforms.
 
@@ -6327,18 +6350,17 @@
 
 	            'uniform vec3 uPOV;',
 
-	            // Material ambient, diffuse, specular (added in Fragment shader)
+	            // Material ambient, diffuse, specular (added in Fragment shader).
 
-	            //'uniform vec3 uMatAmbient;',
-	            //'uniform vec3 uMatDiffuse;',
-	            //'uniform vec3 uMatSpecular;',
-	            //'uniform float uMatSpecExp;',
+	            'varying vec3 vAmbientColor;', 'varying vec3 vLightingDirection;', 'varying vec3 vDirectionalColor;', 'varying vec3 vPOV;',
 
-	            'varying vec3 vAmbientColor;', 'varying vec3 vLightingDirection;', 'varying vec3 vDirectionalColor;', 'varying vec3 vPOV;', 'varying vec4 vPositionW;', 'varying vec4 vNormalW;', 'varying mat4 vMVMatrix;', 'varying vec3 vPosition;',
+	            // Adjusted positions and normals.
 
-	            // Holds result of lighting computations.
+	            'varying vec4 vPositionW;', 'varying vec4 vNormalW;',
 
-	            'varying vec3 vLightWeighting;',
+	            // Vertex coordinate.
+
+	            'varying vec3 vPosition;',
 
 	            // Texture coordinates.
 
@@ -6348,13 +6370,17 @@
 
 	            '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);',
 
+	            // NOTE: Our Shader wants this POV NEGATIVE!!!!!!
+
+	            '    vPOV = -uPOV;',
+
 	            // Texture coordinate.
 
 	            '    vTextureCoord = aTextureCoord;', '    vPositionW = uMVMatrix * vec4(aVertexPosition, 1.0);', // Model-View Matrix (including POV / camera).
 
 	            '    vNormalW =  normalize(vec4(uNMatrix*aVertexNormal, 0.0));', // Inverse-transpose-normal matrix rotates object normals.
 
-	            '   if(!uUseLighting) {', '       vLightWeighting = vec3(1.0, 1.0, 1.0);', '   } else {', '       vec3 transformedNormal = uNMatrix * aVertexNormal;', '       float directionalLightWeighting = max(dot(transformedNormal, uLightingDirection), 0.0);', '       vLightWeighting = uAmbientColor + uDirectionalColor * directionalLightWeighting;', '   }', '}'];
+	            '}'];
 
 	            return {
 
@@ -6388,16 +6414,26 @@
 
 	            // Uniforms.
 
+	            // Lighting values.
+
+	            'varying vec3 vAmbientColor;', 'varying vec3 vLightingDirection;', // uLightingDirection
+	            'varying vec3 vDirectionalColor;',
+
+	            // Material properties (includes specular highlights).
+
 	            'uniform vec3 uMatEmissive;', 'uniform vec3 uMatAmbient;', 'uniform vec3 uMatDiffuse;', 'uniform vec3 uMatSpecular;', 'uniform float uMatSpecExp;',
 
 	            // Varying.
 
-	            'varying mat4 vMVMatrix;', // Model-View matrix.
+	            'varying vec4 vPositionW;', 'varying vec4 vNormalW;',
 
-	            'varying vec4 vPositionW;', 'varying vec4 vNormalW;', 'varying vec3 vAmbientColor;', 'varying vec3 vLightingDirection;', // uLightingDirection
-	            'varying vec3 vDirectionalColor;', 'varying vec3 vPOV;', // world point of view (camera)
+	            // World Point of View (camera).
 
-	            'varying vec2 vTextureCoord;', 'varying vec3 vLightWeighting;', 'uniform sampler2D uSampler;', 'vec3 fn ( vec3 invec ) {', ' return invec;', '}',
+	            'varying vec3 vPOV;', 'varying vec2 vTextureCoord;',
+
+	            // Texture sampler.
+
+	            'uniform sampler2D uSampler;',
 
 	            // Main program.
 
@@ -6409,7 +6445,7 @@
 
 	            // Emissive.
 
-	            '    vec4 Emissive = vec4( uMatEmissive, 1.0);',
+	            '    vec4 Emissive = vec4(uMatEmissive, 1.0);',
 
 	            // Ambient.
 
@@ -6417,23 +6453,25 @@
 
 	            // Diffuse.
 
-	            '    vec4 N = normalize( vNormalW );', '    vec4 L = normalize( vec4(vLightingDirection, 1.0) - vPositionW );', '    vec4 LL = normalize( vec4(vLightingDirection, 1.0));', '    float NdotL = max( dot( N, LL ), 0.0 );', '    vec4 Diffuse =  NdotL * vec4( vDirectionalColor * uMatDiffuse, 1.0);',
+	            '    vec4 N = normalize(vNormalW);', '    vec4 LL = normalize(vec4(vLightingDirection, 1.0));', '    float NdotL = max( dot(N, LL), 0.0);', '    vec4 Diffuse =  NdotL * vec4(vDirectionalColor * uMatDiffuse, 1.0);',
 
 	            // Specular.
 
-	            '  vec4 EyePosW = vec4( vPOV, 1.0);', // world = eye = camera position.
+	            // Changing 4th parameter to 0.0 instead of 1.0 improved results.
 
-	            '   vec4 V = normalize( EyePosW - vPositionW  );', // if this is just vPositionW we get a highlight around edges in right place
+	            '    vec4 L = normalize(vec4(vLightingDirection, 1.0) - vPositionW);', '    vec4 EyePosW = vec4(vPOV, 0.0);', // world = eye = camera position
 
-	            '   vec4 H = normalize( L + V );', '   vec4 R = reflect( -L, N );', // -L needed to bring to center. +L gives edges highlighted
+	            '    vec4 V = normalize(EyePosW - vPositionW );', // if this is just vPositionW we get a highlight around edges in right place
 
-	            '   float RdotV = max( dot( R, V ), 0.0 );', '   float NdotH = max( dot( N, H ), 0.0 );', '   vec4 Specular = pow( RdotV, uMatSpecExp ) * pow(NdotH, uMatSpecExp) * vec4(vDirectionalColor * uMatSpecular, 1.0);',
+	            '    vec4 H = normalize(L + V);', '    vec4 R = reflect(-L, N);', // -L needed to bring to center. +L gives edges highlighted
+
+	            '    float RdotV = max(dot(R, V), 0.0);', '    float NdotH = max(dot(N, H), 0.0);', '    vec4 Specular = pow(RdotV, uMatSpecExp) * pow(NdotH, uMatSpecExp) * vec4(vDirectionalColor * uMatSpecular, 1.0);',
 
 	            // TODO: specular surround.
 
 	            // Final fragment color.
 
-	            '    gl_FragColor =  ( Emissive + Ambient + Diffuse + Specular ) * vec4(textureColor.rgb, textureColor.a);', '}'];
+	            '    gl_FragColor =  (Emissive + Ambient + Diffuse + Specular) * vec4(textureColor.rgb, textureColor.a);', '}'];
 
 	            return {
 
@@ -6573,6 +6611,10 @@
 
 	            program.render = function (PM, pov) {
 
+	                if (!program.renderList.length) return;
+
+	                // We have something to render!
+
 	                gl.useProgram(shaderProgram);
 
 	                // Save the model-view supplied by the shader. Mono and VR return different MV matrices.
@@ -6681,7 +6723,6 @@
 	                } // end of renderList for Prims
 
 	                // Disable buffers that might cause problems in another Prim.
-
 	            }; // end of program.render()
 
 	            return program;
@@ -6888,6 +6929,8 @@
 	             */
 
 	            program.render = function (PM, pov) {
+
+	                if (!program.renderList.length) return;
 
 	                gl.useProgram(shaderProgram);
 
@@ -7138,6 +7181,8 @@
 
 	            program.render = function (PM, pov) {
 
+	                if (!program.renderList.length) return;
+
 	                gl.useProgram(shaderProgram);
 
 	                // Save the model-view supplied by the shader. Mono and VR return different MV matrices.
@@ -7376,6 +7421,8 @@
 	             */
 
 	            program.render = function (PM, pov) {
+
+	                if (!program.renderList.length) return;
 
 	                gl.useProgram(shaderProgram);
 
@@ -17987,6 +18034,8 @@
 
 	        _this.glMatrix = webgl.glMatrix;
 
+	        _this.vMatrix = glMatrix.mat4.create();
+
 	        _this.pMatrix = _this.glMatrix.mat4.create();
 
 	        _this.mvMatrix = _this.glMatrix.mat4.create();
@@ -18744,6 +18793,9 @@
 	        key: 'render',
 	        value: function render() {
 
+	            var mat4 = this.glMatrix.mat4,
+	                vMatrix = this.vMatrix;
+
 	            this.update();
 
 	            this.webgl.clear();
@@ -18751,19 +18803,35 @@
 	            var vr = this.vr,
 	                pov = this.getPOV();
 
+	            // TODO: DEBUG TEMPORARY.
+	            //pov.rotation[ 0 ] += 0.003;
+	            //pov.rotation[ 1 ] += 0.003;
+
+	            // Set the World View.
+
+	            mat4.identity(vMatrix);
+
+	            mat4.rotate(vMatrix, vMatrix, pov.rotation[1], [0, 1, 0]); // rotate on Y axis only (for mouselook).
+
+	            mat4.rotate(vMatrix, vMatrix, pov.rotation[0], [1, 0, 0]); // rotate on X axis only (for mouselook).
+
+	            mat4.translate(vMatrix, vMatrix, pov.position); // putting this first rotates around world center!
+
+	            // Render for mono or WebVR stereo.
+
 	            var display = vr.getDisplay();
 
 	            if (display && display.isPresenting) {
 
 	                var frameData = this.vr.getFrameData();
 
-	                this.r3.renderVR(vr, display, frameData, pov); // directional light texture
+	                this.r3.renderVR(vr, display, frameData, vMatrix, pov); // directional light texture
 
-	                this.r2.renderVR(vr, display, frameData, pov); // color
+	                this.r2.renderVR(vr, display, frameData, vMatrix, pov); // color
 
-	                this.r1.renderVR(vr, display, frameData, pov); // textured, no lighting
+	                this.r1.renderVR(vr, display, frameData, vMatrix, pov); // textured, no lighting
 
-	                this.r0.renderVR(vr, display, frameData, pov); // REQUIRED alpha (Prim appearing or disappearing), drawn in front
+	                this.r0.renderVR(vr, display, frameData, vMatrix, pov); // REQUIRED alpha (Prim appearing or disappearing), drawn in front
 
 	                display.submitFrame();
 
@@ -18772,13 +18840,13 @@
 
 	                // Render mono view.
 
-	                this.r3.renderMono(pov); // directional light texture
+	                this.r3.renderMono(vMatrix, pov); // directional light texture
 
-	                this.r2.renderMono(pov); // color
+	                this.r2.renderMono(vMatrix, pov); // color
 
-	                this.r1.renderMono(pov); // textured, no lighting
+	                this.r1.renderMono(vMatrix, pov); // textured, no lighting
 
-	                this.r0.renderMono(pov); // REQUIRED alpha (Prim appearing or disappearing), drawn in front
+	                this.r0.renderMono(vMatrix, pov); // REQUIRED alpha (Prim appearing or disappearing), drawn in front
 
 	                requestAnimationFrame(this.render);
 	            }
@@ -18888,7 +18956,7 @@
 	        value: function _default() {
 	            var name = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.util.DEFAULT_KEY;
 	            var ambient = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [0.1, 0.1, 0.1];
-	            var diffuse = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [1, 1, 1];
+	            var diffuse = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [0.9, 0.9, 0.9];
 	            var specular = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [1.0, 1.0, 1.0];
 	            var specularExponent = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : 64.0;
 	            var emissive = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : [0, 0, 0];

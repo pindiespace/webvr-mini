@@ -770,6 +770,24 @@ class Util {
     }
 
     /** 
+     * Some objects NULL their arrays to remove elements, rather than deleting elements. This method
+     * provides housekeeping to remove those nulls.
+     * @param {Array} arr the Array to remove null values from.
+     */
+    clearFalsy ( arr ) { // clear null positions when Prims are removed from a rendering list
+
+        return arr.filter( ( elem ) => { return elem; } );
+
+    }
+
+
+    /* 
+     * ---------------------------------------
+     * RANDOM NUMBERS
+     * ---------------------------------------
+     */
+
+    /** 
      * Random seed.
      */
     getSeed () {

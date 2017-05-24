@@ -202,6 +202,8 @@ class ShaderSky extends Shader {
 
         program.render = ( PM, pov ) => {
 
+            if ( ! program.renderList.length ) return;
+
             gl.useProgram( shaderProgram );
 
             // Save the model-view supplied by the shader. Mono and VR return different MV matrices.

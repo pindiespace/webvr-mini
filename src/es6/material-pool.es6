@@ -71,7 +71,7 @@ class MaterialPool extends AssetPool {
      * @param {Number} enumerated list of lighting modes.
      * @param {String} map_Kd the default texture for diffuse mapping.
      */
-    default ( name = this.util.DEFAULT_KEY, ambient = [ 0.1, 0.1, 0.1 ], diffuse = [ 1, 1, 1 ], specular = [ 1.0, 1.0, 1.0 ], 
+    default ( name = this.util.DEFAULT_KEY, ambient = [ 0.1, 0.1, 0.1 ], diffuse = [ 0.9, 0.9, 0.9 ], specular = [ 1.0, 1.0, 1.0 ], 
 
         specularExponent = 64.0, emissive = [ 0, 0, 0 ], sharpness = 60, refraction = 1, transparency = 0, illum = 1, map_Kd = null ) {
 

@@ -99,19 +99,21 @@ class ShaderColor extends Shader {
              * vertex, textureX coordinates, colors, normals, tangents.
              */
 
-            'uniform vec3 uMatEmissive;', // no lighting, but can glow...
+            'uniform vec3 uMatAmbient;',  // ambient can override default color (darken)
+            'uniform vec3 uMatDiffuse;',  // diffuse color, typically 1.0 with lighting.
+            'uniform vec3 uMatEmissive;', // no lighting, but can glow (brighten)
 
             'varying lowp vec4 vColor;',
 
             'void main(void) {',
 
-                'float uAlpha = 1.0;',
+                'float uAlpha = 1.0;', // NOTE: low alpha will create black hole unless drawn back to front!
 
-                'float vLightWeighting = 1.0;',
+                'vec4 color = vColor;',
 
-                //'gl_FragColor = vec4(vColor.rgb * vLightWeighting, uAlpha);',
+                'color.rgb *= (uMatAmbient.rgb + uMatDiffuse.rgb + uMatEmissive.rgb);',
 
-                'gl_FragColor = vec4( vColor.r + uMatEmissive.r, vColor.g + uMatEmissive.g, vColor.b + uMatEmissive.b, uAlpha);',
+                'gl_FragColor = vec4( color.r , color.g , color.b, uAlpha);',
 
             '}'
 
@@ -204,6 +206,10 @@ class ShaderColor extends Shader {
 
         uMVMatrix = uMVMatrix = vsVars.uniform.mat4.uMVMatrix,
 
+        uMatAmbient = fsVars.uniform.vec3.uMatAmbient,
+
+        uMatDiffuse = fsVars.uniform.vec3.uMatDiffuse,
+
         uMatEmissive = fsVars.uniform.vec3.uMatEmissive;
 
         // No transparency, always opaque.
@@ -228,6 +234,8 @@ class ShaderColor extends Shader {
          */
 
         program.render = ( PM, pov ) => {
+
+            if ( ! program.renderList.length ) return;
 
             gl.useProgram( shaderProgram );
 
@@ -267,9 +275,11 @@ class ShaderColor extends Shader {
 
                 let m = prim.defaultMaterial;
 
-                // Set the emissive quality of the Prim.
+                // Set the material quality of the Prim.
 
-                gl.uniform3fv( uMatEmissive, m.emissive ); // NOTE: transparent objects go in their own Shader.
+                gl.uniform3fv( uMatAmbient, m.ambient );
+                gl.uniform3fv( uMatDiffuse, m.diffuse );
+                gl.uniform3fv( uMatEmissive, m.emissive ); 
 
                 // Bind perspective and model-view matrix uniforms.
 

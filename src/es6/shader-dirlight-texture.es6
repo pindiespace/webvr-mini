@@ -72,7 +72,6 @@ class shaderDirLightTexture extends Shader {
             // Directional lighting (from the World).
 
             'uniform bool uUseLighting;',
-
             'uniform vec3 uAmbientColor;',
             'uniform vec3 uLightingDirection;',
             'uniform vec3 uDirectionalColor;',
@@ -81,12 +80,7 @@ class shaderDirLightTexture extends Shader {
 
             'uniform vec3 uPOV;',
 
-            // Material ambient, diffuse, specular (added in Fragment shader)
-
-            //'uniform vec3 uMatAmbient;',
-            //'uniform vec3 uMatDiffuse;',
-            //'uniform vec3 uMatSpecular;',
-            //'uniform float uMatSpecExp;',
+            // Material ambient, diffuse, specular (added in Fragment shader).
 
             'varying vec3 vAmbientColor;',
             'varying vec3 vLightingDirection;',
@@ -94,16 +88,14 @@ class shaderDirLightTexture extends Shader {
 
             'varying vec3 vPOV;',
 
+            // Adjusted positions and normals.
+
             'varying vec4 vPositionW;',
             'varying vec4 vNormalW;',
 
-            'varying mat4 vMVMatrix;',
+            // Vertex coordinate.
+
             'varying vec3 vPosition;',
-
-            // Holds result of lighting computations.
-
-            'varying vec3 vLightWeighting;',
-
 
             // Texture coordinates.
 
@@ -119,6 +111,10 @@ class shaderDirLightTexture extends Shader {
 
             '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);',
 
+            // NOTE: Our Shader wants this POV NEGATIVE!!!!!!
+
+            '    vPOV = -uPOV;',
+
             // Texture coordinate.
 
             '    vTextureCoord = aTextureCoord;',
@@ -126,20 +122,6 @@ class shaderDirLightTexture extends Shader {
             '    vPositionW = uMVMatrix * vec4(aVertexPosition, 1.0);', // Model-View Matrix (including POV / camera).
 
             '    vNormalW =  normalize(vec4(uNMatrix*aVertexNormal, 0.0));', // Inverse-transpose-normal matrix rotates object normals.
-
-            '   if(!uUseLighting) {',
-
-            '       vLightWeighting = vec3(1.0, 1.0, 1.0);',
-
-            '   } else {',
-
-            '       vec3 transformedNormal = uNMatrix * aVertexNormal;',
-
-            '       float directionalLightWeighting = max(dot(transformedNormal, uLightingDirection), 0.0);',
-
-            '       vLightWeighting = uAmbientColor + uDirectionalColor * directionalLightWeighting;',
-
-            '   }',
 
             '}'
 
@@ -176,6 +158,14 @@ class shaderDirLightTexture extends Shader {
 
             // Uniforms.
 
+            // Lighting values.
+
+            'varying vec3 vAmbientColor;',
+            'varying vec3 vLightingDirection;', // uLightingDirection
+            'varying vec3 vDirectionalColor;',
+
+            // Material properties (includes specular highlights).
+
             'uniform vec3 uMatEmissive;',
             'uniform vec3 uMatAmbient;',
             'uniform vec3 uMatDiffuse;',
@@ -184,26 +174,18 @@ class shaderDirLightTexture extends Shader {
 
             // Varying.
 
-            'varying mat4 vMVMatrix;', // Model-View matrix.
-
             'varying vec4 vPositionW;',
             'varying vec4 vNormalW;',
 
-            'varying vec3 vAmbientColor;',
-            'varying vec3 vLightingDirection;', // uLightingDirection
-            'varying vec3 vDirectionalColor;',
+            // World Point of View (camera).
 
-            'varying vec3 vPOV;', // world point of view (camera)
+            'varying vec3 vPOV;',
 
             'varying vec2 vTextureCoord;',
 
-            'varying vec3 vLightWeighting;',
+            // Texture sampler.
 
             'uniform sampler2D uSampler;',
-
-            'vec3 fn ( vec3 invec ) {',
-            ' return invec;',
-            '}',
 
             // Main program.
 
@@ -215,7 +197,7 @@ class shaderDirLightTexture extends Shader {
 
             // Emissive.
 
-            '    vec4 Emissive = vec4( uMatEmissive, 1.0);',
+            '    vec4 Emissive = vec4(uMatEmissive, 1.0);',
 
             // Ambient.
 
@@ -223,36 +205,39 @@ class shaderDirLightTexture extends Shader {
 
             // Diffuse.
 
-            '    vec4 N = normalize( vNormalW );',
+            '    vec4 N = normalize(vNormalW);',
 
-            '    vec4 L = normalize( vec4(vLightingDirection, 1.0) - vPositionW );',
-            '    vec4 LL = normalize( vec4(vLightingDirection, 1.0));',
+            '    vec4 LL = normalize(vec4(vLightingDirection, 1.0));',
 
-            '    float NdotL = max( dot( N, LL ), 0.0 );',
+            '    float NdotL = max( dot(N, LL), 0.0);',
 
-            '    vec4 Diffuse =  NdotL * vec4( vDirectionalColor * uMatDiffuse, 1.0);',
+            '    vec4 Diffuse =  NdotL * vec4(vDirectionalColor * uMatDiffuse, 1.0);',
 
             // Specular.
 
-            '  vec4 EyePosW = vec4( vPOV, 1.0);', // world = eye = camera position.
+            // Changing 4th parameter to 0.0 instead of 1.0 improved results.
 
-            '   vec4 V = normalize( EyePosW - vPositionW  );', // if this is just vPositionW we get a highlight around edges in right place
+            '    vec4 L = normalize(vec4(vLightingDirection, 1.0) - vPositionW);',
 
-            '   vec4 H = normalize( L + V );',
+            '    vec4 EyePosW = vec4(vPOV, 0.0);', // world = eye = camera position
 
-            '   vec4 R = reflect( -L, N );', // -L needed to bring to center. +L gives edges highlighted
+            '    vec4 V = normalize(EyePosW - vPositionW );', // if this is just vPositionW we get a highlight around edges in right place
 
-            '   float RdotV = max( dot( R, V ), 0.0 );',
+            '    vec4 H = normalize(L + V);',
 
-            '   float NdotH = max( dot( N, H ), 0.0 );',
+            '    vec4 R = reflect(-L, N);', // -L needed to bring to center. +L gives edges highlighted
 
-            '   vec4 Specular = pow( RdotV, uMatSpecExp ) * pow(NdotH, uMatSpecExp) * vec4(vDirectionalColor * uMatSpecular, 1.0);',
+            '    float RdotV = max(dot(R, V), 0.0);',
+
+            '    float NdotH = max(dot(N, H), 0.0);',
+
+            '    vec4 Specular = pow(RdotV, uMatSpecExp) * pow(NdotH, uMatSpecExp) * vec4(vDirectionalColor * uMatSpecular, 1.0);',
 
             // TODO: specular surround.
 
             // Final fragment color.
 
-            '    gl_FragColor =  ( Emissive + Ambient + Diffuse + Specular ) * vec4(textureColor.rgb, textureColor.a);',
+            '    gl_FragColor =  (Emissive + Ambient + Diffuse + Specular) * vec4(textureColor.rgb, textureColor.a);',
 
             '}'
 
@@ -415,6 +400,10 @@ class shaderDirLightTexture extends Shader {
 
         program.render = ( PM, pov ) => {
 
+            if ( ! program.renderList.length ) return;
+
+            // We have something to render!
+
             gl.useProgram( shaderProgram );
 
             // Save the model-view supplied by the shader. Mono and VR return different MV matrices.
@@ -528,7 +517,6 @@ class shaderDirLightTexture extends Shader {
             } // end of renderList for Prims
 
             // Disable buffers that might cause problems in another Prim.
-
 
         } // end of program.render()
 
