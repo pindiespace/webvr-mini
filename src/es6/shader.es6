@@ -567,9 +567,13 @@ class Shader {
 
             vr.getStandingViewMatrix( vMatrix, frameData.leftViewMatrix, frameData.pose );
 
+            // Combine with the initial World viewMatrix.
+
+            mat4.multiply( mvMatrix, vMatrix, vvMatrix );
+
             // Copy vMatrix to mvMatrix (so we have vMatrix separately for Shader).
 
-            mat4.copy( mvMatrix, vvMatrix );       
+            /////////////mat4.copy( mvMatrix, vvMatrix );       
 
             // Use left Projection matrix provided by WebVR FrameData object to render the World.
 
@@ -587,9 +591,13 @@ class Shader {
 
             vr.getStandingViewMatrix( vMatrix, frameData.rightViewMatrix, frameData.pose ); // after Toji
 
+            // Combine with the initial World viewMatrix.
+
+            mat4.multiply( mvMatrix, vMatrix, vvMatrix );
+
             // Copy vMatrix to mvMatrix (so we have vMatrix separately for Shader).
 
-            mat4.copy( mvMatrix, vvMatrix );
+            ////////////mat4.copy( mvMatrix, vvMatrix );
 
             // Use right Projection matrix provided by WebVR FrameData object to render the World.
 

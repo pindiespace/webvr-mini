@@ -32,15 +32,15 @@ class MaterialPool extends AssetPool {
 
             'map_Kd': 0,   // diffuse map, an image file (e.g. file.jpg)
 
-            'map_Ks': 1,   // specular map
+            'map_Ka': 1,   // ambient map
 
-            'map_Ka': 2,   // ambient map
+            'bump': 2,     // bumpmap
 
-            'map_d': 3,    // alpha map
+            'map_bump': 2, // bumpmap
 
-            'bump': 4,     // bumpmap
+            'map_Ks': 3,   // specular map
 
-            'map_bump': 4, // bumpmap
+            'map_d': 4,    // alpha map
 
             'disp': 5      // displacement map
 

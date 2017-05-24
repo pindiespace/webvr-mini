@@ -244,7 +244,7 @@ class WebVR {
 
     /** 
      * Pose matrix for standing roomscale view (move point of view up). Also multiply our 
-     * current model-view matrix by the left and right eye view matrix.
+     * current model-view matrix by the left and right eye view matrix. After Toji.
      *
      * @param {glMatrix.vec4} mvMatrix the current model-view matrix.
      * @param {glmatrix.vec4} eyeView the frameData.leftViewMatrix or frameData.rightViewMatrix.

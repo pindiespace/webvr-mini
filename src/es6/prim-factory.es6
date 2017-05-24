@@ -244,6 +244,8 @@ class PrimFactory {
      */
     initPrimTexture ( prim, textureObj, pos ) {
 
+        // NOTE: this method of assignment means that the prim.textures array may have UNDEFINED elements!
+
         prim.textures[ pos ] = textureObj;
 
         /* 
@@ -398,7 +400,13 @@ class PrimFactory {
 
             prim.objects = coords.options.objects;
 
+            // Start of section of a model, typically with a new material.
+
             prim.groups = coords.options.groups;
+
+            // Use the list to 
+
+            prim.smoothingGroups = coords.options.smoothingGroups;
 
             // Material starts.
 
@@ -421,7 +429,8 @@ class PrimFactory {
 
                 // Add the start position for this material.
 
-                console.log("i:" + i + ' coords.options.materials[i]:' + coords.options.materials[i])
+                console.log(' coords.options.materials[' + i + ']:' + coords.options.materials[i]);
+
                 prim.materials[ i ].starts.push( coords.options.materials[ i ] );
 
                 // TODO: see if we can bind a texture to it.
@@ -622,7 +631,7 @@ class PrimFactory {
         }
 
         /** 
-         * Set the Prim as a glowing object. Global Lights 
+         * Set the Prim as a emissive glowing object. Global Lights 
          * are handled by the World.
          * @param {glMatrix.vec3} direction the direction of the light.
          * @param {glMatrix.vec4} color light color

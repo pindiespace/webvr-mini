@@ -313,6 +313,24 @@ class Util {
 
     }
 
+    getRandInt ( range ) {
+
+        return Math.floor( Math.random() * range );
+
+    }
+
+    /*
+     * ---------------------------------------
+     * NUMBER UI OPERATIONS
+     * ---------------------------------------
+     */    
+
+    randomColor () {
+
+        return [ Math.abs( Math.random() ) , Math.abs( Math.random() ) , Math.abs( Math.random() ) ];
+
+    }
+
     /** 
      * Basic easing in operations.
      * @link https://gist.github.com/gre/1650294
@@ -371,24 +389,6 @@ class Util {
 
     }
 
-    /*
-     * ---------------------------------------
-     * RANDOMIZERS
-     * ---------------------------------------
-     */
-
-    getRandInt ( range ) {
-
-        return Math.floor( Math.random() * range );
-
-    }
-
-    randomColor () {
-
-        return [ Math.abs( Math.random() ) , Math.abs( Math.random() ) , Math.abs( Math.random() ) ];
-
-    }
-
     /* 
      * ---------------------------------------
      * ASSOCIATIVE ARRAY (OBJECT) OPTIONS
@@ -416,6 +416,21 @@ class Util {
         }
 
         return this.NOT_IN_LIST;
+
+    }
+
+    /** 
+     * Given an associative arry of Number values, sort by those values, 
+     * and returns the keys. Used to sort Obj file groups, obj, and material 
+     * starts by their start positions in the overall arrays.
+     * @param {Object} obj the associative array. Values MUST be numbers.
+     * @returns {Array} a set of keys, sorted in order.
+     */
+    getSortedKeys ( obj ) {
+
+        let keys = Object.keys( obj );
+
+        return keys.sort( function( a, b ) { return obj[ b ] - obj[ a ] } );
 
     }
 

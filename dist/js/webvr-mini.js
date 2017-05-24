@@ -819,6 +819,25 @@
 
 	            return min + (Math.random() + 1 / (1 + this.getSeed())) % 1 * (max - min);
 	        }
+	    }, {
+	        key: 'getRandInt',
+	        value: function getRandInt(range) {
+
+	            return Math.floor(Math.random() * range);
+	        }
+
+	        /*
+	         * ---------------------------------------
+	         * NUMBER UI OPERATIONS
+	         * ---------------------------------------
+	         */
+
+	    }, {
+	        key: 'randomColor',
+	        value: function randomColor() {
+
+	            return [Math.abs(Math.random()), Math.abs(Math.random()), Math.abs(Math.random())];
+	        }
 
 	        /** 
 	         * Basic easing in operations.
@@ -892,25 +911,6 @@
 	            return a;
 	        }
 
-	        /*
-	         * ---------------------------------------
-	         * RANDOMIZERS
-	         * ---------------------------------------
-	         */
-
-	    }, {
-	        key: 'getRandInt',
-	        value: function getRandInt(range) {
-
-	            return Math.floor(Math.random() * range);
-	        }
-	    }, {
-	        key: 'randomColor',
-	        value: function randomColor() {
-
-	            return [Math.abs(Math.random()), Math.abs(Math.random()), Math.abs(Math.random())];
-	        }
-
 	        /* 
 	         * ---------------------------------------
 	         * ASSOCIATIVE ARRAY (OBJECT) OPTIONS
@@ -941,6 +941,25 @@
 	            }
 
 	            return this.NOT_IN_LIST;
+	        }
+
+	        /** 
+	         * Given an associative arry of Number values, sort by those values, 
+	         * and returns the keys. Used to sort Obj file groups, obj, and material 
+	         * starts by their start positions in the overall arrays.
+	         * @param {Object} obj the associative array. Values MUST be numbers.
+	         * @returns {Array} a set of keys, sorted in order.
+	         */
+
+	    }, {
+	        key: 'getSortedKeys',
+	        value: function getSortedKeys(obj) {
+
+	            var keys = Object.keys(obj);
+
+	            return keys.sort(function (a, b) {
+	                return obj[b] - obj[a];
+	            });
 	        }
 
 	        /*
@@ -3421,7 +3440,7 @@
 
 	        /** 
 	         * Pose matrix for standing roomscale view (move point of view up). Also multiply our 
-	         * current model-view matrix by the left and right eye view matrix.
+	         * current model-view matrix by the left and right eye view matrix. After Toji.
 	         *
 	         * @param {glMatrix.vec4} mvMatrix the current model-view matrix.
 	         * @param {glmatrix.vec4} eyeView the frameData.leftViewMatrix or frameData.rightViewMatrix.
@@ -5526,9 +5545,13 @@
 
 	                vr.getStandingViewMatrix(vMatrix, frameData.leftViewMatrix, frameData.pose);
 
+	                // Combine with the initial World viewMatrix.
+
+	                mat4.multiply(mvMatrix, vMatrix, vvMatrix);
+
 	                // Copy vMatrix to mvMatrix (so we have vMatrix separately for Shader).
 
-	                mat4.copy(mvMatrix, vvMatrix);
+	                /////////////mat4.copy( mvMatrix, vvMatrix );       
 
 	                // Use left Projection matrix provided by WebVR FrameData object to render the World.
 
@@ -5546,9 +5569,13 @@
 
 	                vr.getStandingViewMatrix(vMatrix, frameData.rightViewMatrix, frameData.pose); // after Toji
 
+	                // Combine with the initial World viewMatrix.
+
+	                mat4.multiply(mvMatrix, vMatrix, vvMatrix);
+
 	                // Copy vMatrix to mvMatrix (so we have vMatrix separately for Shader).
 
-	                mat4.copy(mvMatrix, vvMatrix);
+	                ////////////mat4.copy( mvMatrix, vvMatrix );
 
 	                // Use right Projection matrix provided by WebVR FrameData object to render the World.
 
@@ -8445,6 +8472,8 @@
 	        key: 'initPrimTexture',
 	        value: function initPrimTexture(prim, textureObj, pos) {
 
+	            // NOTE: this method of assignment means that the prim.textures array may have UNDEFINED elements!
+
 	            prim.textures[pos] = textureObj;
 
 	            /* 
@@ -8600,7 +8629,13 @@
 
 	                prim.objects = coords.options.objects;
 
+	                // Start of section of a model, typically with a new material.
+
 	                prim.groups = coords.options.groups;
+
+	                // Use the list to 
+
+	                prim.smoothingGroups = coords.options.smoothingGroups;
 
 	                // Material starts.
 
@@ -8622,7 +8657,8 @@
 
 	                    // Add the start position for this material.
 
-	                    console.log("i:" + i + ' coords.options.materials[i]:' + coords.options.materials[i]);
+	                    console.log(' coords.options.materials[' + i + ']:' + coords.options.materials[i]);
+
 	                    prim.materials[i].starts.push(coords.options.materials[i]);
 
 	                    // TODO: see if we can bind a texture to it.
@@ -8811,7 +8847,7 @@
 	            };
 
 	            /** 
-	             * Set the Prim as a glowing object. Global Lights 
+	             * Set the Prim as a emissive glowing object. Global Lights 
 	             * are handled by the World.
 	             * @param {glMatrix.vec3} direction the direction of the light.
 	             * @param {glMatrix.vec4} color light color
@@ -15718,6 +15754,51 @@
 
 	                            break;
 
+	                        case 'g':
+	                            // group name, store hierarchy
+
+	                            groups[data] = faces.length; // starting position in final flattened array
+
+	                            console.log('>groups[' + data + '] = ' + faces.length);
+
+	                            break;
+
+	                        case 's':
+	                            // smoothing group (related to 'g')
+
+	                            var gKey = data + 's';
+
+	                            if (!smoothingGroups[gKey]) smoothingGroups[gKey] = [];
+
+	                            /* 
+	                             * TODO: we would need to process lines[ lineNum ] into just the vertices positions here.
+	                             * TODO: need to store the smoothing groups, then...
+	                             * Scan completed files for vertex groups.
+	                             * NOTE: since we are already taking a group of faces, we're just tagging these sets of 
+	                             * vertices as being smoothed in a specific way. So. smoothing group starts and finishes 
+	                             * for the final array should be sufficient.
+	                             *
+	                             * Our format for a group is: smoothingGroups[ namedGroup ][ individual groups ][ original line number, face data ]
+	                             */
+
+	                            var sLine = lines[lineNum + 1];
+
+	                            var sType = sLine.split(' ')[0].trim();
+
+	                            var sData = sLine.substr(sType.length).trim();
+
+	                            var sStarts = [];
+
+	                            _this2.computeObjFaces(sData, sStarts, lineNum);
+
+	                            smoothingGroups[gKey].push([lineNum + 1, sStarts]);
+
+	                            console.log('>smoothingGroup[' + gKey + '] at:' + lineNum + 1);
+
+	                            //////////console.log('>smoothingGroups[' + gKey + '] = ' + ' had ' + faces.length + ' added' + ' sData:' + sData );
+
+	                            break;
+
 	                        case 'v':
 	                            // vertices
 
@@ -15776,26 +15857,6 @@
 	                            materials[data].push(faces.length);
 
 	                            console.log('>materials[' + data + '] = ' + faces.length);
-
-	                            break;
-
-	                        case 'g':
-	                            // group name, store hierarchy
-
-	                            groups[data] = faces.length; // starting position in final flattened array
-
-	                            console.log('>groups[' + data + '] = ' + faces.length);
-
-	                            break;
-
-	                        case 's':
-	                            // smoothing group (related to 'g')
-
-	                            smoothingGroups[data] = faces.length; // starting position in final flattened array
-
-	                            console.log('>smoothingGroups[' + data + '] = ' + faces.length);
-
-	                            // @link https://people.cs.clemson.edu/~dhouse/courses/405/docs/brief-obj-file-format.html
 
 	                            break;
 
@@ -15875,7 +15936,7 @@
 
 	                        var tIdx = void 0,
 	                            nIdx = void 0,
-	                            iIdx = parseInt(nVertices.length / 3);
+	                            iIdx = parseInt(nVertices.length / 3); // new face index
 
 	                        // Push the new Index.
 
@@ -15897,6 +15958,12 @@
 	                                }
 	                            }
 
+	                            /* 
+	                             * Save the start of Materials in the flattened array. 
+	                             * 1. This information would be used to chop up the big array into a set of smaller ones in the Shader.init() method.
+	                             * 2. The renderer would need to loop through the sub-arrays, switching material properties at the start of each array.
+	                             */
+
 	                            for (var _i2 in materials) {
 
 	                                //console.log('testing materials[' + i + '] =' + materials[ i ] + ' vIdx:' + vIdx + ' iIdx:' + iIdx )
@@ -15909,6 +15976,9 @@
 	                                }
 	                            }
 
+	                            /* 
+	                             * Save the start of Groups in the flattened array. Typically no effect.
+	                             */
 	                            for (var _i3 in groups) {
 
 	                                if (groups[_i3] === _i3) {
@@ -15916,6 +15986,30 @@
 	                                    groups[_i3] = iIdx;
 
 	                                    console.log('groups index:' + vIdx + ' changed to:' + iIdx);
+	                                }
+	                            }
+
+	                            /* 
+	                             * Save Smoothing group starts in the flattened arrays. The values
+	                             * stored are the original starts for each vertex. The Normals smoother routine
+	                             * is responsible for using the data to re-map to the flattened arrays when 
+	                             * computing normals.
+	                             * TODO: make alternate smoothingGroups normals computations.
+	                             */
+	                            for (var _i4 in smoothingGroups) {
+
+	                                // Named smoothing groups.
+
+	                                var sm = smoothingGroups[_i4];
+
+	                                for (var j = 0; j < sm.length; j++) {
+
+	                                    var smg = sm[j]; // one smoothing group.
+
+	                                    if (smg[0] === vIdx) {
+
+	                                        smg[0] = iIdx;
+	                                    }
 	                                }
 	                            }
 	                        }
@@ -18469,7 +18563,9 @@
 	            //[ 'obj/star/star.obj'] // ok, gets generic grey texture
 	            //[ 'obj/basketball/basketball.obj'] // needs TGA translation
 	            //[ 'obj/rock1/rock1.obj'] // rock plus surface, works
-	            ['obj/banana/banana.obj']);
+	            ['obj/cherries/cherries.obj']
+	            //[ 'obj/banana/banana.obj' ]
+	            );
 
 	            /*
 	                        this.primFactory.createPrim(
@@ -18728,17 +18824,23 @@
 
 	        // TODO: make camera work in mouselook only.
 
+	        // TODO: SUPPORT FOR SMOOTHING GROUPS. STARTED IN MODELPOOL DIRECTORY.
+
+	        // TODO: make shader-texture and shader-color handle basic materials. But use shader-dirlight-texture 
+
+	        // TODO: be choosen if there are multiple materials in the file.
+
 	        // TODO: ANIMATION CLASS FOR PRIM IN UPDATEMV ROUTINE.
 
 	        // TODO: PRIM CONCATENATE SEVERAL PRIMS TOGETHER INTO ONE ARRAY??? CHECK HOW TO DO
 
-	        // NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
+	        // NOTE: WebWorker for OBJ file parsing
 
 	        // TODO: JSON FILE FOR PRIMS (loadable) use this.load(), this.save()
 
 	        // TODO: DEFAULT MINI WORLD IF NO JSON FILE (just a skybox and ground grid)
 
-	        // TODO: FADEIN/FADEOUT ANIMATION FOR PRIM
+	        // TODO: PRIM ORBIT FUNCTION
 
 	        /** 
 	         * Update the World, called with each animation frame.
@@ -18781,6 +18883,24 @@
 	        }
 
 	        /** 
+	         * Get the World view matrix.
+	         */
+
+	    }, {
+	        key: 'getWorldViewMatrix',
+	        value: function getWorldViewMatrix(vMatrix) {
+
+	            var mat4 = this.glMatrix.mat4,
+	                pov = this.getPOV();
+
+	            mat4.rotate(vMatrix, vMatrix, pov.rotation[1], [0, 1, 0]); // rotate on Y axis only (for mouselook).
+
+	            mat4.rotate(vMatrix, vMatrix, pov.rotation[0], [1, 0, 0]); // rotate on X axis only (for mouselook).
+
+	            mat4.translate(vMatrix, vMatrix, pov.position); // putting this first rotates around world center!
+	        }
+
+	        /** 
 	         * Render the World for a mono or a VR display.
 	         * Update Prims locally, then call Shader. objects to do rendering. Individual renderers 
 	         * (this.r#) were bound (ES5 method) in the constructor. 
@@ -18806,24 +18926,25 @@
 	            // TODO: DEBUG TEMPORARY.
 	            //pov.rotation[ 0 ] += 0.003;
 	            //pov.rotation[ 1 ] += 0.003;
-
-	            // Set the World View.
-
-	            mat4.identity(vMatrix);
-
-	            mat4.rotate(vMatrix, vMatrix, pov.rotation[1], [0, 1, 0]); // rotate on Y axis only (for mouselook).
-
-	            mat4.rotate(vMatrix, vMatrix, pov.rotation[0], [1, 0, 0]); // rotate on X axis only (for mouselook).
-
-	            mat4.translate(vMatrix, vMatrix, pov.position); // putting this first rotates around world center!
-
 	            // Render for mono or WebVR stereo.
 
 	            var display = vr.getDisplay();
 
+	            // Clear the View matrix for the World.
+
+	            mat4.identity(vMatrix);
+
+	            // Toggle between VR and mono view modes.
+
 	            if (display && display.isPresenting) {
 
+	                // Get FrameData (with matrices for left and right eye).
+
 	                var frameData = this.vr.getFrameData();
+
+	                // Get any world transforms (translation, rotation).
+
+	                this.getWorldViewMatrix(vMatrix);
 
 	                this.r3.renderVR(vr, display, frameData, vMatrix, pov); // directional light texture
 
@@ -18839,6 +18960,8 @@
 	            } else {
 
 	                // Render mono view.
+
+	                this.getWorldViewMatrix(vMatrix);
 
 	                this.r3.renderMono(vMatrix, pov); // directional light texture
 
@@ -18912,15 +19035,15 @@
 
 	            'map_Kd': 0, // diffuse map, an image file (e.g. file.jpg)
 
-	            'map_Ks': 1, // specular map
+	            'map_Ka': 1, // ambient map
 
-	            'map_Ka': 2, // ambient map
+	            'bump': 2, // bumpmap
 
-	            'map_d': 3, // alpha map
+	            'map_bump': 2, // bumpmap
 
-	            'bump': 4, // bumpmap
+	            'map_Ks': 3, // specular map
 
-	            'map_bump': 4, // bumpmap
+	            'map_d': 4, // alpha map
 
 	            'disp': 5 // displacement map
 

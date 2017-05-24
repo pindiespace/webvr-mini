@@ -387,6 +387,49 @@ class ModelPool extends AssetPool {
 
                         break;
 
+                    case 'g': // group name, store hierarchy
+
+                        groups[ data ] = faces.length; // starting position in final flattened array
+
+                        console.log('>groups[' + data + '] = ' + faces.length );
+
+                        break;
+
+                    case 's': // smoothing group (related to 'g')
+
+                        let gKey = data + 's';
+
+                        if ( ! smoothingGroups[ gKey ] ) smoothingGroups[ gKey ] = [];
+
+                        /* 
+                         * TODO: we would need to process lines[ lineNum ] into just the vertices positions here.
+                         * TODO: need to store the smoothing groups, then...
+                         * Scan completed files for vertex groups.
+                         * NOTE: since we are already taking a group of faces, we're just tagging these sets of 
+                         * vertices as being smoothed in a specific way. So. smoothing group starts and finishes 
+                         * for the final array should be sufficient.
+                         *
+                         * Our format for a group is: smoothingGroups[ namedGroup ][ individual groups ][ original line number, face data ]
+                         */
+
+                        let sLine = lines[ lineNum + 1 ];
+
+                        let sType = sLine.split( ' ' )[ 0 ].trim();
+
+                        let sData = sLine.substr( sType.length ).trim();
+
+                        let sStarts = [];
+
+                        this.computeObjFaces( sData, sStarts, lineNum );
+
+                        smoothingGroups[ gKey ].push( [ lineNum + 1, sStarts ] );
+
+                        console.log('>smoothingGroup[' + gKey + '] at:' + lineNum + 1 );
+
+                        //////////console.log('>smoothingGroups[' + gKey + '] = ' + ' had ' + faces.length + ' added' + ' sData:' + sData );
+
+                        break;
+
                     case 'v': // vertices
 
                         this.computeObj3d( data, tVertices, lineNum );
@@ -442,25 +485,6 @@ class ModelPool extends AssetPool {
                         materials[ data ].push( faces.length );
 
                         console.log('>materials[' + data + '] = ' + faces.length)
-
-                        break;
-
-
-                    case 'g': // group name, store hierarchy
-
-                        groups[ data ] = faces.length; // starting position in final flattened array
-
-                        console.log('>groups[' + data + '] = ' + faces.length );
-
-                        break;
-
-                    case 's': // smoothing group (related to 'g')
-
-                        smoothingGroups[ data ] = faces.length; // starting position in final flattened array
-
-                        console.log('>smoothingGroups[' + data + '] = ' + faces.length );
-
-                        // @link https://people.cs.clemson.edu/~dhouse/courses/405/docs/brief-obj-file-format.html
 
                         break;
 
@@ -538,7 +562,7 @@ class ModelPool extends AssetPool {
 
                     let vIdx = f[ 0 ]; // old face index
 
-                    let tIdx, nIdx, iIdx = parseInt( nVertices.length / 3 );
+                    let tIdx, nIdx, iIdx = parseInt( nVertices.length / 3 ); // new face index
 
                     // Push the new Index.
 
@@ -562,6 +586,12 @@ class ModelPool extends AssetPool {
 
                         }
 
+                        /* 
+                         * Save the start of Materials in the flattened array. 
+                         * 1. This information would be used to chop up the big array into a set of smaller ones in the Shader.init() method.
+                         * 2. The renderer would need to loop through the sub-arrays, switching material properties at the start of each array.
+                         */
+
                         for ( let i in materials ) {
 
                             //console.log('testing materials[' + i + '] =' + materials[ i ] + ' vIdx:' + vIdx + ' iIdx:' + iIdx )
@@ -576,6 +606,9 @@ class ModelPool extends AssetPool {
 
                         }
 
+                        /* 
+                         * Save the start of Groups in the flattened array. Typically no effect.
+                         */
                         for ( let i in groups ) {
 
                             if ( groups[ i ] === i ) {
@@ -583,6 +616,33 @@ class ModelPool extends AssetPool {
                                 groups[ i ] = iIdx;
 
                                 console.log('groups index:' + vIdx + ' changed to:' + iIdx );
+
+                            }
+
+                        }
+
+                        /* 
+                         * Save Smoothing group starts in the flattened arrays. The values
+                         * stored are the original starts for each vertex. The Normals smoother routine
+                         * is responsible for using the data to re-map to the flattened arrays when 
+                         * computing normals.
+                         * TODO: make alternate smoothingGroups normals computations.
+                         */
+                        for ( let i in smoothingGroups ) {
+
+                            // Named smoothing groups.
+
+                            let sm = smoothingGroups[ i ];
+
+                            for ( let j = 0; j < sm.length; j++ ) {
+
+                                let smg = sm[ j ]; // one smoothing group.
+
+                                if ( smg[ 0 ] === vIdx ) {
+
+                                    smg[ 0 ] = iIdx;
+
+                                }
 
                             }
 

@@ -598,7 +598,8 @@ class World extends AssetPool {
                 //[ 'obj/star/star.obj'] // ok, gets generic grey texture
                 //[ 'obj/basketball/basketball.obj'] // needs TGA translation
                 //[ 'obj/rock1/rock1.obj'] // rock plus surface, works
-                [ 'obj/banana/banana.obj' ]
+                [ 'obj/cherries/cherries.obj']
+                //[ 'obj/banana/banana.obj' ]
             );
 
 
@@ -904,17 +905,23 @@ class World extends AssetPool {
 
 // TODO: make camera work in mouselook only.
 
+// TODO: SUPPORT FOR SMOOTHING GROUPS. STARTED IN MODELPOOL DIRECTORY.
+
+// TODO: make shader-texture and shader-color handle basic materials. But use shader-dirlight-texture 
+
+// TODO: be choosen if there are multiple materials in the file.
+
 // TODO: ANIMATION CLASS FOR PRIM IN UPDATEMV ROUTINE.
 
 // TODO: PRIM CONCATENATE SEVERAL PRIMS TOGETHER INTO ONE ARRAY??? CHECK HOW TO DO
 
-// NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
+// NOTE: WebWorker for OBJ file parsing
 
 // TODO: JSON FILE FOR PRIMS (loadable) use this.load(), this.save()
 
 // TODO: DEFAULT MINI WORLD IF NO JSON FILE (just a skybox and ground grid)
 
-// TODO: FADEIN/FADEOUT ANIMATION FOR PRIM
+// TODO: PRIM ORBIT FUNCTION
 
     }
 
@@ -958,6 +965,23 @@ class World extends AssetPool {
     }
 
     /** 
+     * Get the World view matrix.
+     */
+    getWorldViewMatrix ( vMatrix ) {
+
+        let mat4 = this.glMatrix.mat4,
+
+        pov = this.getPOV();
+
+        mat4.rotate( vMatrix, vMatrix, pov.rotation[ 1 ], [ 0, 1, 0 ] ); // rotate on Y axis only (for mouselook).
+
+        mat4.rotate( vMatrix, vMatrix, pov.rotation[ 0 ], [ 1, 0 , 0 ] ); // rotate on X axis only (for mouselook).
+
+        mat4.translate( vMatrix, vMatrix, pov.position ); // putting this first rotates around world center!
+
+    }
+
+    /** 
      * Render the World for a mono or a VR display.
      * Update Prims locally, then call Shader. objects to do rendering. Individual renderers 
      * (this.r#) were bound (ES5 method) in the constructor. 
@@ -982,24 +1006,25 @@ class World extends AssetPool {
 // TODO: DEBUG TEMPORARY.
 //pov.rotation[ 0 ] += 0.003;
 //pov.rotation[ 1 ] += 0.003;
-
-            // Set the World View.
-
-            mat4.identity( vMatrix );
-
-            mat4.rotate( vMatrix, vMatrix, pov.rotation[ 1 ], [ 0, 1, 0 ] ); // rotate on Y axis only (for mouselook).
-
-            mat4.rotate( vMatrix, vMatrix, pov.rotation[ 0 ], [ 1, 0 , 0 ] ); // rotate on X axis only (for mouselook).
-
-            mat4.translate( vMatrix, vMatrix, pov.position ); // putting this first rotates around world center!
-
         // Render for mono or WebVR stereo.
 
         let display = vr.getDisplay();
 
+        // Clear the View matrix for the World.
+
+        mat4.identity( vMatrix );
+
+        // Toggle between VR and mono view modes.
+            
         if ( display && display.isPresenting ) {
 
+            // Get FrameData (with matrices for left and right eye).
+
             let frameData = this.vr.getFrameData();
+
+            // Get any world transforms (translation, rotation).
+
+            this.getWorldViewMatrix( vMatrix );
 
             this.r3.renderVR( vr, display, frameData, vMatrix, pov );  // directional light texture
 
@@ -1016,6 +1041,8 @@ class World extends AssetPool {
         } else {
 
             // Render mono view.
+
+            this.getWorldViewMatrix( vMatrix );
 
             this.r3.renderMono( vMatrix, pov ); // directional light texture
 
