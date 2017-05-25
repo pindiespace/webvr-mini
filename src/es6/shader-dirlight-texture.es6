@@ -203,7 +203,7 @@ class shaderDirLightTexture extends Shader {
 
             // Ambient.
 
-            '    vec4 Ambient = vec4(vAmbientColor, 1.0);',
+            '    vec4 Ambient = vec4(vAmbientColor, 1.0) + vec4(uMatAmbient, 1.0);',
 
             // Diffuse.
 
@@ -463,6 +463,8 @@ class shaderDirLightTexture extends Shader {
                 gl.uniform1i( uUseLighting, lighting );
 
                 // Material lighting properties.
+
+                if ( prim.name === 'objfile2' ) window.mm = m //console.log("emissive:" +  m.emissive + " ambient:" + m.ambient + " diffuse:" + m.diffuse + " specular:" + m.specular)
 
                 gl.uniform3fv( fsVars.uniform.vec3.uMatEmissive, m.emissive );
                 gl.uniform3fv( fsVars.uniform.vec3.uMatAmbient, m.ambient ); // NOTE: transparent objects go in their own Shader

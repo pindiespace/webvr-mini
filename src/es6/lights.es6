@@ -33,8 +33,6 @@ class Lights {
 
             attenuation: 0.0,
 
-            emissive: 1.0,
-
             radius: 1.0
 
         };

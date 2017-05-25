@@ -108,11 +108,10 @@ class ModelPool extends AssetPool {
      * Extract 3d vertex data (vertices, normals) from a string.
      * @param {String} data string to be parsed for 3d coordinate values.
      * @param {Array} arr the array to add the coordinate values to.
-     * @param {Number} lineNum the current line in the file.
      * @param {Number} numReturned number of values to returned. In some 
-     *                 OBJ files, 3 numbers are written for 2d texture.
+     * OBJ files, 3 numbers are written for 2d texture.
      */
-    computeObj3d ( data, arr, lineNum ) {
+    computeObj3d ( data, arr ) {
 
         // TODO: replace with .split() and .parseFloat()????
 
@@ -135,9 +134,8 @@ class ModelPool extends AssetPool {
      * use the 'return' while others do not.
      * @param {String} data string to be parsed for 3d coordinate values.
      * @param {Array} arr the array to add the coordinate values to.
-     * @param {Number} lineNum the current line in the file.
      */
-    computeObj2d ( data, arr, lineNum ) {
+    computeObj2d ( data, arr ) {
 
         let uvs = data.match( /^(-?\d+(\.\d+)?)\s+(-?\d+(\.\d+)?)$/ );
 
@@ -151,7 +149,7 @@ class ModelPool extends AssetPool {
 
             let uv2 = [];
 
-            if ( this.computeObj3d( data, uv2, lineNum ) ) {
+            if ( this.computeObj3d( data, uv2 ) ) {
 
                 arr.push( uv2[ 0 ], uv2[ 1 ] );  // only copy the first 2 coordinates          
 
@@ -220,9 +218,8 @@ class ModelPool extends AssetPool {
      *
      * @param {String} data the data for an individual face.
      * @param {Array} the face array to append the data to.
-     * @param {Number} lineNum the current line number in the OBJ file.
      */
-    computeObjFaces ( data, faces, lineNum ) {
+    computeObjFaces ( data, faces, lastType ) {
 
         let parts = data.match( /[^\s]+/g );
 
@@ -275,6 +272,14 @@ class ModelPool extends AssetPool {
             }
 
         } );
+
+        // if lastType === smoothing group, flag in the face at 4th position
+
+        if ( lastType === 's' ) {
+
+            console.log('points are part of smoothing group...');
+
+        }
 
         // Now, convert quads and higher polygons to a set of triangles.
 
@@ -397,7 +402,7 @@ class ModelPool extends AssetPool {
 
                         break;
 
-                    case 's': // smoothing group (related to 'g')
+                    case 's': // smoothing group (related to 'g') applies to next line.
 
                         let gKey = data + 's';
 
@@ -434,29 +439,29 @@ class ModelPool extends AssetPool {
 
                     case 'v': // vertices
 
-                        this.computeObj3d( data, tVertices, lineNum );
+                        this.computeObj3d( data, tVertices );
 
                         break;
 
                     case 'f': // line of faces, indices, convert polygons to triangles
 
-                        this.computeObjFaces( data, faces, lineNum );
+                        this.computeObjFaces( data, faces, lastType );
 
                         break;
 
                     case 'vn': // normals
 
-                        this.computeObj3d( data, tNormals, lineNum );
+                        this.computeObj3d( data, tNormals );
 
                         break;
 
                     case 'vt': // texture uvs
 
-                        if ( ! this.computeObj2d( data, tTexCoords, lineNum ) ) {
+                        if ( ! this.computeObj2d( data, tTexCoords ) ) {
 
                             //console.warn( '3D texture encountered:'+ data );
 
-                            this.computeObj3d( data, tTexCoords, lineNum, 2 );
+                            this.computeObj3d( data, tTexCoords );
 
                         }
 
@@ -480,13 +485,17 @@ class ModelPool extends AssetPool {
 
                         if ( ! materials[ data ] ) {
 
-                            materials[ data ] = [];
+                            materials[ data ] = {
+
+                                starts: []
+
+                            };
 
                         }
 
-                        materials[ data ].push( faces.length );
+                        materials[ data ].starts.push( faces.length );
 
-                        console.log('>materials[' + data + '] = ' + faces.length)
+                        console.log('>materials[' + data + '] starts at:' + materials[ data ].starts );
 
                         break;
 
@@ -693,6 +702,12 @@ class ModelPool extends AssetPool {
                 }
 
             } // end of else
+
+            if ( nVertices.length > this.webgl.MAX_DRAWELEMENTS) {
+
+                console.error( 'ModelPool::computeObjMesh(): size of prim ' + prim.name + ' (' + nVertices.length + ') exceeds max buffer:' + this.webgl.MAX_DRAWELEMENTS );
+
+            }
 
             // Replace raw vertex, index, texCoord, normal data with face-adjusted data.
 

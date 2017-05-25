@@ -264,8 +264,6 @@ class World extends AssetPool {
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0) // color
             );
 
-/*
-
             this.primFactory.createPrim(
 
                 this.s1,                      // callback function
@@ -537,7 +535,6 @@ class World extends AssetPool {
 // TEXTURED MESH
 ///////////////////////////////////////
 
-
             // NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
             // TODO: INVALID TEXTURING
 
@@ -558,7 +555,7 @@ class World extends AssetPool {
                 [ 'obj/capsule/capsule.obj' ] // object files (.obj, .mtl)
 
             );
-*/
+
 
 
             this.primFactory.createPrim(
@@ -577,7 +574,7 @@ class World extends AssetPool {
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color,
                 true,                                   // if true, apply texture to each face,
                 //[ 'obj/mountains/mountains.obj' ] // ok
-                [ 'obj/landscape/landscape.obj'] // ok?
+                //[ 'obj/landscape/landscape.obj'] // ok?
                 //[ 'obj/toilet/toilet.obj' ] // works with texture, multiple groups wrap texture!
                 //[ 'obj/naboo/naboo.obj' ] // works fine, but needs to load additional images.
                 //[ 'obj/star/star.obj'] // ok, gets generic grey texture
@@ -586,11 +583,36 @@ class World extends AssetPool {
                 //[ 'obj/basketball/basketball.obj'] // needs TGA translation
                 //[ 'obj/rock1/rock1.obj'] // rock plus surface, works
                 //[ 'obj/cherries/cherries.obj'] // rendering indices error
-                //[ 'obj/banana/banana.obj' ] // works great
+                [ 'obj/banana/banana.obj' ] // works great
             );
 
+            this.primFactory.createPrim(
 
-
+                this.s3,                               // callback function
+                typeList.MESH,
+                'objfile2',
+                vec5( 2, 2, 2 ),                       // dimensions (4th dimension doesn't exist for cylinder)
+                vec5( 40, 40, 40  ),                    // divisions MAKE SMALLER
+                vec3.fromValues( -6.5, 2, -1.0 ),      // position (absolute)
+                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+                vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+                //[ 'img/crate.png' ],               // texture present. TODO::: FIGURE OUT NUMBERING.
+                '', // texture loaded directly
+                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color,
+                true,                                   // if true, apply texture to each face,
+                //[ 'obj/mountains/mountains.obj' ] // ok
+                //[ 'obj/landscape/landscape.obj'] // ok?
+                //[ 'obj/toilet/toilet.obj' ] // works with texture, multiple groups wrap texture!
+                //[ 'obj/naboo/naboo.obj' ] // works fine, but needs to load additional images.
+                //[ 'obj/star/star.obj'] // ok, gets generic grey texture
+                //[ 'obj/robhead/robhead.obj'] // no texcoords or normals
+                //[ 'obj/soccerball/soccerball.obj'] // no texcoords or normals
+                //[ 'obj/basketball/basketball.obj'] // needs TGA translation
+                //[ 'obj/rock1/rock1.obj'] // rock plus surface, works
+                [ 'obj/cherries/cherries.obj'] // rendering indices error > 64k
+                // 'obj/banana/banana.obj' ] // works great
+            );
 
 
 //////////////////////////////////
@@ -612,7 +634,7 @@ class World extends AssetPool {
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color
 
             );
-
+*/
             this.primFactory.createPrim(
 
                 this.s2,                               // callback function
@@ -631,12 +653,10 @@ class World extends AssetPool {
 
             );
 
-*/
-
 //////////////////////////////////
 // LIT TEXTURE SHADER.
 //////////////////////////////////
-/*
+
 
             this.primFactory.createPrim(
 
@@ -770,7 +790,7 @@ class World extends AssetPool {
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
 
             );
-*/
+
 
     window.prims = this.primFactory.prims;
 
@@ -863,6 +883,19 @@ class World extends AssetPool {
      * Update the World. Called occsionally.
      */
     housekeep () {
+
+// TODO: initPrimMaterial is just picking the first material as default. Find the material with the lowest start.
+
+// TODO: sort materials by starting position using object.keys function
+
+// TODO: detect if a texture is too big, and try to load a smaller one!
+// Error: WebGL: texImage2D: Requested size at this level is unsupported.
+
+// TODO: make light ambient and material ambient consistent!!!!!!!!!!!!!!!!
+
+// TODO: investigate why >64k isn't working on windows system
+
+// TODO: smoothing groups
 
 // TODO: make camera work in mouselook only.
 

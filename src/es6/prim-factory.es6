@@ -308,8 +308,6 @@ class PrimFactory {
 
         if( prim.materials [ this.util.DEFAULT_KEY ] ) {
 
-            console.log("REMOVING DEFAULT MATERIAL")
-
             this.util.removeObjMember( prim.materials, this.util.DEFAULT_KEY );
 
         }
@@ -363,8 +361,12 @@ class PrimFactory {
         }
 
         // Finally, set a default material for Shaders that only use one material. Pick the material with the smallest 'start'.
+        
+        if ( prim.defaultMaterial && prim.defaultMaterial.name === this.util.DEFAULT_KEY ) {
 
-        prim.defaultMaterial = material;
+            prim.defaultMaterial = material;
+
+        }
 
     }
 
@@ -1037,6 +1039,12 @@ class PrimFactory {
             if ( prim.name === 'objfile' ) {
 
                 window.objfile = prim;
+
+            }
+
+            if ( prim.name === 'objfile2' ) {
+
+                window.objfile2 = prim;
 
             }
 

@@ -203,7 +203,7 @@ class WebGL {
 
                     // Max texture size, for gl.texImage2D.                
 
-                    stats.maxTexSize = gl.getParameter( gl.MAX_TEXTURE_SIZE );
+                    stats.maxTextureSize = gl.getParameter( gl.MAX_TEXTURE_SIZE );
 
                     // Max cubemap size, for gl.texImage2D.
 
@@ -774,6 +774,8 @@ class WebGL {
             }
 
         // Enable some extensions if we have a WebGL context. We do it here to record capabilities.
+
+        this.stats.supported = gl.getSupportedExtensions();
 
         this.stats.LOD = this.addLODSupport( gl ); // Level of Detail avoid texturing artifacts
 

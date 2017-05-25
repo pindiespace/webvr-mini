@@ -79,7 +79,6 @@ class ShaderFader extends Shader {
             'uniform mat3 uNMatrix;',
 
             'uniform vec3 uAmbientColor;',
-            'uniform vec3 uDiffuseColor;',
             'uniform vec3 uLightingDirection;',
             'uniform vec3 uDirectionalColor;',
 
@@ -113,7 +112,7 @@ class ShaderFader extends Shader {
 
             '       float directionalLightWeighting = max(dot(transformedNormal, uLightingDirection), 0.0);',
 
-            '       vLightWeighting = uAmbientColor + uDirectionalColor * directionalLightWeighting;',
+            '       vLightWeighting = (uAmbientColor + uDirectionalColor) * directionalLightWeighting;',
 
 
             '    } else {',
@@ -172,6 +171,8 @@ class ShaderFader extends Shader {
                 'if (uUseColor) {',
 
                     'vec4 color = vColor;',
+
+                    // Ambient , diffuse were computed against Light in vertex Shader.
 
                     'color.rgb *= (uMatAmbient.rgb + uMatDiffuse.rgb + uMatEmissive.rgb);',
 
