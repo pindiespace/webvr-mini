@@ -41,6 +41,8 @@ class shaderDirLightTexture extends Shader {
     /* 
      * Vertex and Fragment Shaders. We use the internal 'program' object from the webgl object to compile these. 
      * Alternatively, They may be defined to load from HTML or and external file.
+     * Lighting reference:
+     * @link http://in2gpu.com/2014/06/19/lighting-vertex-fragment-shader/
      * @return {Object{code, varList}} an object, with internal elements
      * code: The shader code.
      * varList: A scanned list of all the variables in the shader code (created by webgl object).

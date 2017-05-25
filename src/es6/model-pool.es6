@@ -201,7 +201,7 @@ class ModelPool extends AssetPool {
             for ( let i = 1; i < idxs.length - 1; i++ ) {
 
                 nIdxs.push( idxs[ 0 ], idxs[ i ], idxs[ i + 1 ] );
-    
+
             }
 
             return nIdxs;
@@ -248,7 +248,7 @@ class ModelPool extends AssetPool {
 
                 iNormals.push( parseFloat( idxs[ 1 ] ) - 1 );
 
-            } else if ( fs.indexOf ( '/' ) !== NOT_IN_STRING ) {
+            } else if ( fs.indexOf ( '/' ) !== NOT_IN_STRING ) { // texCoords present
 
                 idxs = fs.split( '/' );
 
@@ -355,7 +355,9 @@ class ModelPool extends AssetPool {
 
         let lineNum = 0,
 
-        lines = data.split( '\n' );
+        lines = data.split( '\n' ),
+
+        lastType = this.NOT_IN_STRING;
 
         lines.forEach( ( line ) => {
 
@@ -412,15 +414,15 @@ class ModelPool extends AssetPool {
                          * Our format for a group is: smoothingGroups[ namedGroup ][ individual groups ][ original line number, face data ]
                          */
 
-                        let sLine = lines[ lineNum + 1 ];
+                       // let sLine = lines[ lineNum + 1 ];
 
-                        let sType = sLine.split( ' ' )[ 0 ].trim();
+                       // let sType = sLine.split( ' ' )[ 0 ].trim();
 
-                        let sData = sLine.substr( sType.length ).trim();
+                       // let sData = sLine.substr( sType.length ).trim();
 
                         let sStarts = [];
 
-                        this.computeObjFaces( sData, sStarts, lineNum );
+                        //this.computeObjFaces( sData, sStarts, lineNum );
 
                         smoothingGroups[ gKey ].push( [ lineNum + 1, sStarts ] );
 
@@ -436,7 +438,7 @@ class ModelPool extends AssetPool {
 
                         break;
 
-                    case 'f': // face, indices, convert polygons to triangles
+                    case 'f': // line of faces, indices, convert polygons to triangles
 
                         this.computeObjFaces( data, faces, lineNum );
 
@@ -535,6 +537,8 @@ class ModelPool extends AssetPool {
 
                 } // end of switch
 
+                lastType = type; // use to catch smoothing groups
+
             } // end of data !== ''
 
             lineNum++;
@@ -550,31 +554,37 @@ class ModelPool extends AssetPool {
 
             for ( let i = 0; i < faces.length; i++ ) {
 
+                // i is the index in the faces array.
+
                 let f = faces[ i ];
 
-                let key = f[ 0 ] + '_' + f[ 1 ] + '_' + f[ 2 ];
+                let key = f[ 0 ] + '_' + f[ 1 ] + '_' + f[ 2 ]; // point key (vertex, index, normals)
 
                 if ( iHash[ key ] !== undefined ) {
 
-                    nIndices.push( iHash[ key ] );
+                    nIndices.push( iHash[ key ] ); // push the starting index in the new arrays
 
                 } else {
 
-                    let vIdx = f[ 0 ]; // old face index
+                    let vIdx = f[ 0 ]; // old face index within OBJ file
 
-                    let tIdx, nIdx, iIdx = parseInt( nVertices.length / 3 ); // new face index
+                    let tIdx, nIdx, iIdx = parseInt( nVertices.length / 3 ); // new face index in the new arrays
 
                     // Push the new Index.
 
                     nIndices.push( iIdx );
 
-                    iHash[ key ] = iIdx; // new index
+                    // Save the new index under the hash key
+
+                    iHash[ key ] = iIdx;
 
                     // If vIdx !== iIdx, we need to adjust our positioning data for materials, groups, etc.
 
                     if ( vIdx !== iIdx ) {
 
                         for ( let i in objects ) {
+
+                            // if the start stored in an object equals the current position in faces array...
 
                             if ( objects[ i ] === i ) {
 
@@ -586,11 +596,11 @@ class ModelPool extends AssetPool {
 
                         }
 
-                        /* 
-                         * Save the start of Materials in the flattened array. 
-                         * 1. This information would be used to chop up the big array into a set of smaller ones in the Shader.init() method.
-                         * 2. The renderer would need to loop through the sub-arrays, switching material properties at the start of each array.
-                         */
+
+                        // Save the start of Materials in the flattened array. 
+                        // * 1. This information would be used to chop up the big array into a set of smaller ones in the Shader.init() method.
+                        // * 2. The renderer would need to loop through the sub-arrays, switching material properties at the start of each array.
+                        //
 
                         for ( let i in materials ) {
 
@@ -606,9 +616,8 @@ class ModelPool extends AssetPool {
 
                         }
 
-                        /* 
-                         * Save the start of Groups in the flattened array. Typically no effect.
-                         */
+                        // * Save the start of Groups in the flattened array. Typically no effect.
+
                         for ( let i in groups ) {
 
                             if ( groups[ i ] === i ) {
@@ -621,13 +630,8 @@ class ModelPool extends AssetPool {
 
                         }
 
-                        /* 
-                         * Save Smoothing group starts in the flattened arrays. The values
-                         * stored are the original starts for each vertex. The Normals smoother routine
-                         * is responsible for using the data to re-map to the flattened arrays when 
-                         * computing normals.
-                         * TODO: make alternate smoothingGroups normals computations.
-                         */
+                        // Smoothing GROUPS _ REDO....
+
                         for ( let i in smoothingGroups ) {
 
                             // Named smoothing groups.
@@ -654,7 +658,11 @@ class ModelPool extends AssetPool {
 
                     vIdx *= 3;
 
+                    // Push vertices.
+
                     nVertices.push( tVertices[ vIdx ], tVertices[ vIdx + 1 ], tVertices[ vIdx + 2 ] );
+
+                    // Push texture coords.
 
                     if ( f[ 1 ] !== null ) { 
 
@@ -667,6 +675,8 @@ class ModelPool extends AssetPool {
                         nTexCoords.push( 0, 0 );
 
                     }
+
+                    // Push normals.
 
                     if ( f[ 2 ] !== null ) { 
 
@@ -682,7 +692,7 @@ class ModelPool extends AssetPool {
 
                 }
 
-            }
+            } // end of else
 
             // Replace raw vertex, index, texCoord, normal data with face-adjusted data.
 
