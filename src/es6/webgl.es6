@@ -379,77 +379,85 @@ class WebGL {
      */
 
     /** 
-     * Give the Shaders the ability to take derivatives.
-     * @link https://developer.mozilla.org/en-US/docs/Web/API/OES_standard_derivatives
+     * Support indexed vertex drawing when there are more than 
+     * 64k vertices in WebGL 1.0. Enabled by default in WebGL 2.0. No constant, so 
+     * this should only be called in 1.0 context.
      * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only).
      */
-    addDerivativeSupport( gl ) {
+    index32Support ( gl ) {
 
-        return gl.getExtension('GL_OES_standard_derivatives');
+        return !! gl.getExtension( 'OES_element_index_uint' );
 
     }
 
     /** 
-     * Add LOD (Level of Detail) support, reducing texturing artifacts.
-     * @link https://developer.mozilla.org/en-US/docs/Web/API/EXT_shader_texture_lod
+     * Add support for Shaders to use derivatives.
+     * Have to add the following to the Shaders
+     * #extension GL_EXT_shader_texture_lod : enable
+     * #extension GL_OES_standard_derivatives : enable
+     * @link https://developer.mozilla.org/en-US/docs/Web/API/OES_standard_derivatives
      * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only).
      */
-    addLODSupport( gl ) {
+    derivativeSupport( gl ) {
 
-        return gl.getExtension('EXT_shader_texture_lod');
+        let s = !! gl.FRAGMENT_SHADER_DERIVATIVE_HINT; // Should be present in WebGL 2.0
+
+        if ( ! s ) {
+
+            let ext = gl.getExtension( 'GL_OES_standard_derivatives' );
+
+            if ( ext ) {
+
+                s = true;
+
+                gl.FRAGMENT_SHADER_DERIVATIVE_HINT = ext.FRAGMENT_SHADER_DERIVATIVE_HINT_OES;
+
+            }
+
+            if ( gl.FRAGMENT_SHADER_DERIVATIVE_HINT ) {
+
+                this.stats.lodSupport = !! gl.getExtension( 'EXT_shader_texture_lod' );
+
+            }
+
+        }
+
+        return s;
 
     }
+
 
     /** 
      * Add vertex buffer support to WebGL 1.0.
      * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only).
      */
-    addVertexBufferSupport ( gl ) {
+    vertexArraySupport ( gl ) {
 
-         const ext = gl.getExtension( 'OES_vertex_array_object' );
+        let s = !! gl.VERTEX_ARRAY_BINDING;  // Should be present in WebGL 2.0
 
-        if ( ext ) {
+        if ( ! s ) {
 
-            gl.createVertexArray = () => {
+            let ext = gl.getExtension( 'OES_vertex_array_object' );
 
-                return ext.createVertexArrayOES();
+            if ( ext ) {
 
-            };
+                s = true;
 
-            gl.deleteVertexArray = ( v ) => {
+                gl.VERTEX_ARRAY_BINDING = ext.VERTEX_ARRAY_BINDING_OES;
 
-                ext.deleteVertexArrayOES( v );
+                gl.createVertexArray = () => { return ext.createVertexArrayOES(); }
 
-            };
+                gl.deleteVertexArray = ( v ) => { ext.deleteVertexArrayOES( v ); }
 
-            gl.isVertexArray = ( v ) => {
+                gl.isVertexArray = ( v ) => { return ext.isVertexArrayOES( v ); }
 
-                return ext.isVertexArrayOES( v );
+                gl.bindVertexArray = ( v ) => { ext.bindVertexArrayOES( v ); }
 
-            };
+            }
 
-            gl.bindVertexArray = (v) => {
+        }
 
-                ext.bindVertexArrayOES( v );
-
-            };
-
-            gl.VERTEX_ARRAY_BINDING = ext.VERTEX_ARRAY_BINDING_OES;
-
-         }
-
-         return ext;
-
-    }
-
-    /** 
-     * Support indexed vertex drawing when there are more than 
-     * 64k vertices in WebGL 1.0. Enabled by default in WebGL 2.0.
-     * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only).
-     */
-    addIndex32Support ( gl ) {
-
-        return gl.getExtension( 'OES_element_index_uint' );
+        return s;
 
     }
 
@@ -460,54 +468,169 @@ class WebGL {
      * @link https://developer.mozilla.org/en-US/docs/Web/API/WEBGL_depth_texture
      * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only).
      */
-    addDepthTextureSupport ( gl ) {
+    depthTextureSupport ( gl ) {
 
-        return ( gl.getExtension( 'WEBGL_depth_texture' ) || gl.getExtension( 'MOZ_WEBGL_depth_texture' ) || gl.getExtension( 'WEBKIT_WEBGL_depth_texture' ) );
+        let s = !! ( gl.DEPTH_COMPONENT && gl.DEPTH_STENCIL );
+
+        if ( ! s ) {
+
+            let ext = ( gl.getExtension( 'WEBGL_depth_texture' ) || 
+
+            gl.getExtension( 'MOZ_WEBGL_depth_texture' ) || 
+
+            gl.getExtension( 'WEBKIT_WEBGL_depth_texture' ) );
+
+            if ( ext ) {
+
+                s = true;
+
+                gl.DEPTH_COMPONENT = ext.DEPTH_COMPONENT;
+
+                gl.DEPTH_STENCIL = ext.DEPTH_STENCIL;
+
+            }
+
+        }
+
+        return s;
 
     }
 
     /** 
-     * Add support for anisotrophic texture filtering, improving mipmap quality.
+     * Add support for anisotrophic texture filtering, improving mipmap quality. Used by 
+     * both WebGL 1.0 and WebGL 2.0 contexts.
      * gl.texParameterf(gl.TEXTURE_2D, ext.TEXTURE_MAX_ANISOTROPY_EXT, 4);
      * @link http://blog.tojicode.com/2012/03/anisotropic-filtering-in-webgl.html
      * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only).
      */
-    addAnisotropicSupport ( gl ) {
+    anisotropicSupport ( gl ) {
 
-        return ( gl.getExtension('EXT_texture_filter_anisotropic') || gl.getExtension( 'MOZ_EXT_texture_filter_anisotropic' ) || gl.getExtension( 'WEBKIT_EXT_texture_filter_anisotropic' ) );
+        let s = !! gl.TEXTURE_MAX_ANISOTROPY_EXT;
+
+        if ( ! s ) {
+
+            let ext = ( gl.getExtension('EXT_texture_filter_anisotropic') || 
+
+            gl.getExtension( 'MOZ_EXT_texture_filter_anisotropic' ) || 
+
+            gl.getExtension( 'WEBKIT_EXT_texture_filter_anisotropic' ) );
+
+            if ( ext ) {
+
+                s = true;
+
+                gl.TEXTURE_MAX_ANISOTROPY_EXT = ext.TEXTURE_MAX_ANISOTROPY_EXT;
+
+            }
+
+        }
+
+        return s;
 
     }
 
     /** 
      * Add support for S3 compressed textures.
      * @link http://blog.tojicode.com/2011/12/compressed-textures-in-webgl.html
+     * @link https://en.wikipedia.org/wiki/S3_Texture_Compression
      * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only).
      */
-    addS3TextureSupport ( gl ) {
+    S3TCTextureSupport ( gl ) {
 
-        return ( gl.getExtension( 'WEBGL_compressed_texture_s3tc' ) || gl.getExtension( 'MOZ_WEBGL_compressed_texture_s3tc' ) || gl.getExtension( 'WEBKIT_WEBGL_compressed_texture_s3tc' ) );
+        let s = !! gl.COMPRESSED_RGB_S3TC_DXT1_EXT;
+
+        if ( ! s ) {
+
+            let ext = ( gl.getExtension( 'WEBGL_compressed_texture_s3tc' ) || 
+
+            gl.getExtension( 'MOZ_WEBGL_compressed_texture_s3tc' ) || 
+
+            gl.getExtension( 'WEBKIT_WEBGL_compressed_texture_s3tc' ) );
+
+            if ( ext ) {
+
+                s = true,
+
+                gl.COMPRESSED_RGB_S3TC_DXT1_EXT = ext.COMPRESSED_RGB_S3TC_DXT1_EXT,
+
+                gl.COMPRESSED_RGBA_S3TC_DXT1_EXT = ext.COMPRESSED_RGBA_S3TC_DXT1_EXT,
+
+                gl.COMPRESSED_RGBA_S3TC_DXT3_EXT = ext.COMPRESSED_RGBA_S3TC_DXT3_EXT,
+
+                gl.COMPRESSED_RGBA_S3TC_DXT5_EXT = ext.COMPRESSED_RGBA_S3TC_DXT5_EXT;
+
+            }
+
+        }
+
+        return s;
 
     }
 
     /** 
-     * Add support for PVR compressed textures.
+     * Add support for PVR compressed textures. 
+     * Available in both WebGL 1.0 and WebGL 2.0 contexts.
+     * Used on mobile devices, e.g.iPhone, iPod Touch and iPad and supported on certain Android devices 
+     * using a PowerVR GPU.
      * @link http://blog.tojicode.com/2011/12/compressed-textures-in-webgl.html
      * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only).
      */
-    addPVRTextureSupport ( gl ) {
+    PVRTCTextureSupport ( gl ) {
 
-        return ( gl.getExtension('WEBGL_compressed_texture_pvrtc ') || gl.getExtension( 'WEBKIT_WEBGL_compressed_texture_pvrtc' ) );
+        let s = !! gl.COMPRESSED_RGB_PVRTC_4BPPV1_IMG;
+
+        if ( ! s ) {
+
+            let ext = ( gl.getExtension('WEBGL_compressed_texture_pvrtc ') || 
+
+                gl.getExtension( 'WEBKIT_WEBGL_compressed_texture_pvrtc' ) );
+
+            if ( ext ) {
+
+                s = true,
+
+                gl.COMPRESSED_RGB_PVRTC_4BPPV1_IMG = ext.COMPRESSED_RGB_PVRTC_4BPPV1_IMG,
+
+                gl.COMPRESSED_RGBA_PVRTC_4BPPV1_IMG = ext.COMPRESSED_RGBA_PVRTC_4BPPV1_IMG,
+
+                gl.COMPRESSED_RGB_PVRTC_2BPPV1_IMG = ext.COMPRESSED_RGB_PVRTC_2BPPV1_IMG,
+
+                gl.COMPRESSED_RGBA_PVRTC_2BPPV1_IMG = ext.COMPRESSED_RGBA_PVRTC_2BPPV1_IMG;
+
+            }
+
+        }
+
+        return s;
 
     }
 
     /** 
-     * Add support for ETC compressed textures.
+     * Add support for Ericsson ETC1 compressed textures, RGB only, 6x compression of 24-bit data.
+     * Can be used with gl.compressedTexImage2D() 
      * @link http://blog.tojicode.com/2011/12/compressed-textures-in-webgl.html
+     * @link https://en.wikipedia.org/wiki/Ericsson_Texture_Compression
      * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only).
      */
-    addETCTextureSupport( gl ) {
+    ETC1TextureSupport( gl ) {
 
-        return ( gl.getExtension('WEBGL_compressed_texture_etc1' ) );
+        let s = !! ( gl.COMPRESSED_RGB_ETC1_WEBGL || gl.COMPRESSED_RGB_ETC1 );
+
+        if ( ! s ) {
+
+            let ext = gl.getExtension( 'WEBGL_compressed_texture_etc1' );
+
+            if ( ext ) {
+
+                s = true;
+
+                gl.COMPRESSED_RGB_ETC1_WEBGL = ext.COMPRESSED_RGB_ETC1_WEBGL;
+
+            }
+
+        }
+
+        return s;
 
     }
 
@@ -738,52 +861,59 @@ class WebGL {
 
             console.log( 'version:' + gl.getParameter( gl.VERSION));
 
+            // Supported extensions.
+
+            this.stats.uint32 = true; // by default, but check if we have WebGL 1.0.
+
+            this.stats.supported = gl.getSupportedExtensions();
+
             // Take action, depending on version (identified by pos in our test array n).
 
             switch ( i ) {
+
+                // WebGL 2.0
 
                 case 0:
 
                 case 1:
 
-                        //if ( ! gl.TRANSFORM_FEEDBACK ) {
-                        // revert to 1.0
-                        //    console.log('TRANSFORM FEEDBACK NOT SUPPORTED')
-                        //}
-
-                        this.glVers = 2.0;
-
-                        this.stats.uint32 = true;
+                    this.glVers = 2.0;
 
                     break;
 
-                    case 2:
+                // WebGL 1.0 
 
-                    case 3:
+                case 2:
 
-                        this.glVers = 1.0;
+                case 3:
 
-                        break;
+                default:
 
-                    default:
+                    this.glVers = 1.0;
 
-                        break;
+                    this.stats.uint32 = this.index32Support( gl ); // vertices > 64k, no constant exported. WebGL 1.0 only.
 
-                }
+                    break;
 
             }
 
-        // Enable some extensions if we have a WebGL context. We do it here to record capabilities.
+        }
 
-        this.stats.supported = gl.getSupportedExtensions();
+        // These extensions expose constants, so we can test here.
 
-        this.stats.LOD = this.addLODSupport( gl ); // Level of Detail avoid texturing artifacts
+        this.stats.anisotrophic = this.anisotropicSupport( gl );
 
-        this.stats.derivatives = this.addDerivativeSupport( gl );
+        this.stats.vertexArrays = this.vertexArraySupport( gl ); // vertex buffers
 
-        this.stats.vertexBuffers = this.addVertexBufferSupport( gl ); // vertex buffers
+        this.stats.derivatives = this.derivativeSupport( gl ); // shader derivatives
 
-        this.stats.uint32 = this.addIndex32Support( gl ); // vertices > 64k
+        this.stats.depthTextures = this.depthTextureSupport( gl ); // depth textures
+
+        this.stats.pvrtcTextures = this.PVRTCTextureSupport( gl ); // PVRTC compressed texture support
+
+        this.stats.etc1Textures = this.ETC1TextureSupport( gl ); // ETC1 compress texture support
+
+        this.stats.setcTextures = this.S3TCTextureSupport( gl ); // S3 compressed texture support
 
         // Set the maximum draw elements, based on card capabilities.
 

@@ -203,7 +203,7 @@ class shaderDirLightTexture extends Shader {
 
             // Ambient.
 
-            '    vec4 Ambient = vec4(vAmbientColor, 1.0) + vec4(uMatAmbient, 1.0);',
+            '    vec4 Ambient = vec4(vAmbientColor, 1.0) * vec4(uMatAmbient, 1.0);',
 
             // Diffuse.
 

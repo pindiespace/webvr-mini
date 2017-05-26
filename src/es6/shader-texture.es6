@@ -102,8 +102,8 @@ class ShaderTexture extends Shader {
              * vertex, textureX coordinates, colors, normals, tangents.
              */
 
-            'uniform vec3 uMatAmbient;',  // default material brightness
-            'uniform vec3 uMatDiffuse;',  // diffuse color
+            //'uniform vec3 uMatAmbient;',  // default material brightness
+            //'uniform vec3 uMatDiffuse;',  // diffuse color
             'uniform vec3 uMatEmissive;', // no lighting, but can glow...
 
             'varying vec2 vTextureCoord;',
@@ -112,9 +112,9 @@ class ShaderTexture extends Shader {
 
             'void main(void) {',
 
-            '    vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));',
+            '   vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));',
 
-            '   textureColor.rgb *= (uMatAmbient.rgb + uMatDiffuse.rgb + uMatEmissive.rgb);',
+            '   textureColor.rgb *= (1.0 + uMatEmissive.rgb);',
 
             '    gl_FragColor =  vec4(textureColor.r, textureColor.g, textureColor.b, textureColor.a);',
 

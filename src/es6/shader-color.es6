@@ -99,8 +99,8 @@ class ShaderColor extends Shader {
              * vertex, textureX coordinates, colors, normals, tangents.
              */
 
-            'uniform vec3 uMatAmbient;',  // ambient can override default color (darken)
-            'uniform vec3 uMatDiffuse;',  // diffuse color, typically 1.0 with lighting.
+            //'uniform vec3 uMatAmbient;',  // ambient can override default color (darken)
+            //'uniform vec3 uMatDiffuse;',  // diffuse color, typically 1.0 with lighting.
             'uniform vec3 uMatEmissive;', // no lighting, but can glow (brighten)
 
             'varying lowp vec4 vColor;',
@@ -111,7 +111,7 @@ class ShaderColor extends Shader {
 
                 'vec4 color = vColor;',
 
-                'color.rgb *= (uMatAmbient.rgb + uMatDiffuse.rgb + uMatEmissive.rgb);',
+                'color.rgb *= (1.0 + uMatEmissive.rgb);',
 
                 'gl_FragColor = vec4( color.r , color.g , color.b, uAlpha);',
 
