@@ -69,9 +69,9 @@ class ShaderFader extends Shader {
 
             // Adjusted positions and normals.
 
-            'varying vec3 vPOV;',
-            'varying vec4 vPositionW;',
-            'varying vec4 vNormalW;',
+            'varying vec3 vPOV;',       // user point of view (camera)
+            'varying vec4 vPositionW;', // adjusted position
+            'varying vec4 vNormalW;',   // adjusted normal
 
             // Texture coordinates.
 
@@ -128,7 +128,7 @@ class ShaderFader extends Shader {
              * vertex, textureX coordinates, colors, normals, tangents.
              */
 
-            // Uniforms.
+            // Lighting flags.
 
             'uniform bool uUseLighting;',
             'uniform bool uUseTexture;',
@@ -182,55 +182,65 @@ class ShaderFader extends Shader {
 
                 '}',
 
-                // Emissive.
+                //  Set light compontents by Light x Material.
 
                 'vec4 Emissive = vec4(uMatEmissive, 1.0);',
 
-                // Ambient.
+                'vec4 Ambient = vec4(uAmbientColor * uMatAmbient, uAlpha);',
 
-                'vec4 Ambient = vec4(uAmbientColor, 1.0) * vec4(uMatAmbient, 1.0);',
+                'vec4 Diffuse = vec4(uDirectionalColor * uMatDiffuse, uAlpha);',
 
-                'vec4 Diffuse = vec4(uDirectionalColor * uMatDiffuse, 1.0);',
+                // Specular should be zero if we aren't lighting.
 
-                'vec4 Specular = vec4(uDirectionalColor * uMatSpecular, 1.0);',
+                'vec4 Specular = vec4(0.0, 0.0, 0.0, uAlpha);',
 
-                // Diffuse.
+               'if(uUseLighting) {',
 
-                'if (uUseLighting) {',
+                    'Ambient.rgb *= uAlpha;', // ??????? CHECK SORTING OF NON-DIRLIGHTEXTURE
+
+                    'Diffuse.rgb *= uAlpha;',
+
+                    // Add lighting direction to Diffuse.
 
                     'vec4 N = normalize(vNormalW);',
 
-                    'vec4 LL = normalize(vec4(uLightingDirection, 1.0));',
+                    'vec4 LL = normalize(vec4(uLightingDirection, uAlpha));',
 
                     'float NdotL = max( dot(N, LL), 0.0);',
 
-                    'Diffuse =  NdotL * Diffuse;',
+                    'Diffuse = NdotL * Diffuse;',
 
-                    // Specular. Changing 4th parameter to 0.0 instead of 1.0 improved results.
+                    // Compute specular dot. Changing 4th parameter to 0.0 instead of 1.0 improved results.
 
-                    'vec4 L = normalize(vec4(uLightingDirection, 1.0) - vPositionW);',
+                    'vec4 L = normalize(vec4(uLightingDirection, uAlpha) - vPositionW);',
+
+                    /////////////'vec4 L = normalize(vec4(0.0, 0.0, 0.0, 0.0));', // bright, everything illuminated.
 
                     'vec4 EyePosW = vec4(vPOV, 0.0);', // world = eye = camera position
 
-                    'vec4 V = normalize(EyePosW - vPositionW);', // if this is just vPositionW we get a highlight around edges in right place
+                    'vec4 V = normalize(EyePosW - vPositionW );',
 
                     'vec4 H = normalize(L + V);',
 
-                    'vec4 R = reflect(-L, N);', // -L needed to bring to center. +L gives edges highlighted
+                    'vec4 R = reflect(-L, N);', // -L computes side facing Light, +L computes shadow component
 
                     'float RdotV = max(dot(R, V), 0.0);',
 
                     'float NdotH = max(dot(N, H), 0.0);',
 
-                    'Specular = pow(RdotV, uMatSpecExp) * pow(NdotH, uMatSpecExp) * Specular;',
+                    'float spec = 64.0;', //uMatSpecExp;', TODO: TODO: ??????? WHY NOT uMatSpecExp?????????????????
 
-                    // TODO: Specular isn't focused to a dot - it is everywhere!!!!
+                    /////////////'float spec = uMatSpecExp;',
 
-                '}', 
+                    // Multiply Specular by global uAlpha here.
+
+                    'Specular = pow(RdotV, spec) * pow(NdotH, spec) * vec4(uDirectionalColor * uMatSpecular, uAlpha);',
+
+                '}',
 
                 // Final fragment color.
 
-                'gl_FragColor = (Emissive + Ambient + Diffuse) * vec4(vColor.rgb, uAlpha);',
+                'gl_FragColor = (Emissive + Ambient + Diffuse + Specular) * vec4(vColor.rgb, vColor.a * uAlpha);',
 
             '}'
 
@@ -323,6 +333,8 @@ class ShaderFader extends Shader {
 
         aVertexNormal = vsVars.attribute.vec3.aVertexNormal,
 
+        uSampler = fsVars.uniform.sampler2D.uSampler,
+
         uAlpha = fsVars.uniform.float.uAlpha,
 
         uUseLighting = fsVars.uniform.bool.uUseLighting,
@@ -330,8 +342,6 @@ class ShaderFader extends Shader {
         uUseTexture = fsVars.uniform.bool.uUseTexture,
 
         uUseColor = fsVars.uniform.bool.uUseColor,
-
-        uSampler = fsVars.uniform.sampler2D.uSampler,
 
         uMatEmissive = fsVars.uniform.vec3.uMatEmissive,
 
@@ -423,7 +433,7 @@ class ShaderFader extends Shader {
 
             prim.setMV( MVM );
 
-            vec3.copy( adjustedLD, lightingDirection );
+            //vec3.copy( adjustedLD, lightingDirection );
 
             // Calculates a 3x3 normal matrix (transpose inverse) from the 4x4 matrix.
 
@@ -519,7 +529,6 @@ class ShaderFader extends Shader {
                    // Bind the first texture.
 
                     gl.activeTexture( gl.TEXTURE0 );
-
                     gl.bindTexture( gl.TEXTURE_2D, prim.textures[ 0 ].texture );
 
                     // Other texture units below.
@@ -539,17 +548,21 @@ class ShaderFader extends Shader {
 
                 // Normals matrix (transpose inverse) uniform.
 
-                gl.uniformMatrix3fv( vsVars.uniform.mat3.uNMatrix, false, nMatrix );
+                gl.uniformMatrix3fv( uNMatrix, false, nMatrix );
 
                 // default material (other Shaders might use multiple materials).
 
                 let m = prim.defaultMaterial;
+
+                // Material Reflectance properties.
 
                 gl.uniform3fv( uMatEmissive, m.emissive );
                 gl.uniform3fv( uMatAmbient, m.ambient ); // NOTE: transparent objects go in their own Shader
                 gl.uniform3fv( uMatDiffuse, m.diffuse );
                 gl.uniform3fv( uMatSpecular, m.specular );
                 gl.uniform1f( uMatSpecExp, m.specularExponent );
+
+                ////if ( prim.name === 'TORUS1') console.log('uMatSpecExp:' + m.specularExponent)
 
                 // Set normals matrix uniform (inverse transpose matrix).
 
