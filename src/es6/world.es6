@@ -586,6 +586,7 @@ class World extends AssetPool {
                 [ 'obj/banana/banana.obj' ] // works great
             );
 
+/*
             this.primFactory.createPrim(
 
                 this.s3,                               // callback function
@@ -613,7 +614,7 @@ class World extends AssetPool {
                 [ 'obj/cherries/cherries.obj'] // rendering indices error > 64k
                 // 'obj/banana/banana.obj' ] // works great
             );
-
+*/
 
 //////////////////////////////////
 // COLOR SHADER.

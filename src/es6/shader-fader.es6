@@ -39,14 +39,6 @@ class ShaderFader extends Shader {
 
     }
 
- 
-    /* 
-     * Vertex and Fragment Shaders. We use the internal 'program' object from the webgl object to compile these. 
-     * Alternatively, They may be defined to load from HTML or and external file.
-     * @return {Object{code, varList}} an object, with internal elements
-     * code: The shader code.
-     * varList: A scanned list of all the variables in the shader code (created by webgl object).
-     */
     vsSrc () {
 
         let s = [
@@ -60,74 +52,56 @@ class ShaderFader extends Shader {
              * vertex, textureX coordinates, colors, normals, tangents.
              */
 
-            // Note: ALWAYS name the vertex attribute using the default!
-
             'attribute vec3 ' + this.webgl.attributeNames.aVertexPosition[ 0 ] + ';',
             'attribute vec4 ' + this.webgl.attributeNames.aVertexColor[ 0 ] + ';',
-
             'attribute vec2 ' + this.webgl.attributeNames.aTextureCoord[ 0 ] + ';',
             'attribute vec3 ' + this.webgl.attributeNames.aVertexNormal[ 0 ] + ';',
 
-            // render flags
+            //'uniform mat4 uMMatrix;',   // Model matrix
+            //'uniform mat4 uVMatrix;',  // View matrix
+            'uniform mat4 uMVMatrix;',  // Model-View matrix
+            'uniform mat4 uPMatrix;',   // Perspective matrix
+            'uniform mat3 uNMatrix;',   // Inverse-transpose of Model-View matrix
 
-            'uniform bool uUseLighting;',
-            'uniform bool uUseTexture;',
-            'uniform bool uUseColor;',
+            // World position.
 
-            'uniform mat4 uMVMatrix;',
-            'uniform mat4 uPMatrix;',
-            'uniform mat3 uNMatrix;',
+            'uniform vec3 uPOV;',
 
-            'uniform vec3 uAmbientColor;',
-            'uniform vec3 uLightingDirection;',
-            'uniform vec3 uDirectionalColor;',
+            // Adjusted positions and normals.
+
+            'varying vec3 vPOV;',
+            'varying vec4 vPositionW;',
+            'varying vec4 vNormalW;',
+
+            // Texture coordinates.
 
             'varying vec2 vTextureCoord;',
-            'varying lowp vec4 vColor;',
-            'varying vec3 vLightWeighting;',
+
+            'varying vec4 vVertexColor;',
 
             'void main(void) {',
 
-            '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);',
+            // View-Model-Position-Projection matrix.
 
-            '    vLightWeighting = vec3(1.0, 1.0, 1.0);',
+                'gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);',
 
-            '    if (uUseTexture) { ',
+                'vTextureCoord = aTextureCoord;',
 
-            '      vTextureCoord = aTextureCoord;',
+                'vVertexColor = aVertexColor;',
 
-            '    } else { ',
+                'vPOV = -uPOV;',
 
-            '      vTextureCoord = vec2(0.0, 0.0);', // Prim has no textures
+                'vPositionW = uMVMatrix * vec4(aVertexPosition, 1.0);', // Model-View Matrix (including POV / camera).
 
-            '    }',
-
-            '    vColor = aVertexColor;', // we always read this, so always bind it
-
-            '    if(uUseLighting) {',
-
-            '       vec3 transformedNormal = uNMatrix * aVertexNormal;',
-
-            // TODO: experiment until we get a good value here...
-
-            '       float directionalLightWeighting = max(dot(transformedNormal, uLightingDirection), 0.0);',
-
-            '       vLightWeighting = (uAmbientColor + uDirectionalColor) * directionalLightWeighting;',
-
-
-            '    } else {',
-
-            '       vLightWeighting = vec3(1.0, 1.0, 1.0);',
-
-            '    }',
+                'vNormalW =  normalize(vec4(uNMatrix*aVertexNormal, 0.0));', // Inverse-transpose-normal matrix rotates object normals.
 
             '}'
 
-        ];
+            ];
 
         return {
 
-            code: s.join('\n'),
+            code: s.join( '\n' ),
 
             varList: this.webgl.createVarList( s )
 
@@ -135,9 +109,15 @@ class ShaderFader extends Shader {
 
     }
 
+
+    /** 
+     * a default-lighting textured object fragment shader.
+     * - varying texture coordinate
+     * - texture 2D sampler
+     */
     fsSrc () {
 
-        let s = [
+        let s =  [
 
             // Set precision.
 
@@ -148,53 +128,113 @@ class ShaderFader extends Shader {
              * vertex, textureX coordinates, colors, normals, tangents.
              */
 
+            // Uniforms.
+
             'uniform bool uUseLighting;',
             'uniform bool uUseTexture;',
             'uniform bool uUseColor;',
 
-            'uniform sampler2D uSampler;',
-            'uniform float uAlpha;',
+            // Lighting values.
 
-            // NOTE: ambient and diffuse were computed in Vertex Shader.
+            'uniform vec3 uAmbientColor;',
+            'uniform vec3 uLightingDirection;', // uLightingDirection
+            'uniform vec3 uDirectionalColor;',
 
+            // Material properties (includes specular highlights).
+
+            'uniform vec3 uMatEmissive;',
             'uniform vec3 uMatAmbient;',
             'uniform vec3 uMatDiffuse;',
-            'uniform vec3 uMatEmissive;', // no lighting, but can glow...
+            'uniform vec3 uMatSpecular;',
+            'uniform float uMatSpecExp;',
+
+            // Alpha value
+
+            'uniform float uAlpha;',
+
+            // Varying.
+
+            'varying vec3 vPOV;', // World point of view (camera)
+            'varying vec4 vPositionW;',
+            'varying vec4 vNormalW;',
 
             'varying vec2 vTextureCoord;',
-            'varying lowp vec4 vColor;',
 
-            'varying vec3 vLightWeighting;',
+            'varying vec4 vVertexColor;',
+
+            // Texture sampler.
+
+            'uniform sampler2D uSampler;',
+
+            // Main program.
 
             'void main(void) {',
 
-                'if (uUseColor) {',
+                'vec4 vColor;',
 
-                    'vec4 color = vColor;',
+                'if(uUseTexture) {',
 
-                    // Ambient , diffuse were computed against Light in vertex Shader.
+                    'vColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));',
 
-                    'color.rgb *= (uMatAmbient.rgb + uMatDiffuse.rgb + uMatEmissive.rgb);',
+                '} else {',
 
-                    'gl_FragColor = vec4(color.rgb * vLightWeighting, uAlpha);',
-
-                '}',
-
-                'else if(uUseTexture) {',
-
-                    'vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));',
-
-                    'textureColor.rgb *= (uMatAmbient.rgb + uMatDiffuse.rgb + uMatEmissive.rgb);',
-
-                    // NOTE: the uAlpha works here because this Shader requires back-to-front-sorting when a Prim is added.
-
-                    'gl_FragColor = vec4(textureColor.rgb * vLightWeighting, textureColor.a * uAlpha);',
+                    'vColor = vVertexColor;', // we always read this, so always bind it
 
                 '}',
+
+                // Emissive.
+
+                'vec4 Emissive = vec4(uMatEmissive, 1.0);',
+
+                // Ambient.
+
+                'vec4 Ambient = vec4(uAmbientColor, 1.0) * vec4(uMatAmbient, 1.0);',
+
+                'vec4 Diffuse = vec4(uDirectionalColor * uMatDiffuse, 1.0);',
+
+                'vec4 Specular = vec4(uDirectionalColor * uMatSpecular, 1.0);',
+
+                // Diffuse.
+
+                'if (uUseLighting) {',
+
+                    'vec4 N = normalize(vNormalW);',
+
+                    'vec4 LL = normalize(vec4(uLightingDirection, 1.0));',
+
+                    'float NdotL = max( dot(N, LL), 0.0);',
+
+                    'Diffuse =  NdotL * Diffuse;',
+
+                    // Specular. Changing 4th parameter to 0.0 instead of 1.0 improved results.
+
+                    'vec4 L = normalize(vec4(uLightingDirection, 1.0) - vPositionW);',
+
+                    'vec4 EyePosW = vec4(vPOV, 0.0);', // world = eye = camera position
+
+                    'vec4 V = normalize(EyePosW - vPositionW);', // if this is just vPositionW we get a highlight around edges in right place
+
+                    'vec4 H = normalize(L + V);',
+
+                    'vec4 R = reflect(-L, N);', // -L needed to bring to center. +L gives edges highlighted
+
+                    'float RdotV = max(dot(R, V), 0.0);',
+
+                    'float NdotH = max(dot(N, H), 0.0);',
+
+                    'Specular = pow(RdotV, uMatSpecExp) * pow(NdotH, uMatSpecExp) * Specular;',
+
+                    // TODO: Specular isn't focused to a dot - it is everywhere!!!!
+
+                '}', 
+
+                // Final fragment color.
+
+                'gl_FragColor = (Emissive + Ambient + Diffuse) * vec4(vColor.rgb, uAlpha);',
 
             '}'
 
-        ];
+            ];
 
         return {
 
@@ -287,27 +327,35 @@ class ShaderFader extends Shader {
 
         uUseLighting = fsVars.uniform.bool.uUseLighting,
 
-        uUseColor = fsVars.uniform.bool.uUseColor,
-
         uUseTexture = fsVars.uniform.bool.uUseTexture,
 
+        uUseColor = fsVars.uniform.bool.uUseColor,
+
         uSampler = fsVars.uniform.sampler2D.uSampler,
+
+        uMatEmissive = fsVars.uniform.vec3.uMatEmissive,
 
         uMatAmbient = fsVars.uniform.vec3.uMatAmbient,
 
         uMatDiffuse = fsVars.uniform.vec3.uMatDiffuse,
 
-        uMatEmissive = fsVars.uniform.vec3.uMatEmissive,
+        uMatSpecular = fsVars.uniform.vec3.uMatSpecular,
 
-        uAmbientColor = vsVars.uniform.vec3.uAmbientColor, // ambient light color
+        uMatSpecExp = fsVars.uniform.vec3.uMatSpecExp,
 
-        uLightingDirection = vsVars.uniform.vec3.uLightingDirection, 
+        uAmbientColor = fsVars.uniform.vec3.uAmbientColor, // ambient light color
 
-        uDirectionalColor = vsVars.uniform.vec3.uDirectionalColor, // directional light color
+        uLightingDirection = fsVars.uniform.vec3.uLightingDirection, 
+
+        uDirectionalColor = fsVars.uniform.vec3.uDirectionalColor, // directional light color
+
+        uPOV = vsVars.uniform.vec3.uPOV, // World Position (also position of camera/POV)
 
         uPMatrix = vsVars.uniform.mat4.uPMatrix,
 
-        uMVMatrix = vsVars.uniform.mat4.uMVMatrix;
+        uMVMatrix = vsVars.uniform.mat4.uMVMatrix,
+
+        uNMatrix = vsVars.uniform.mat3.uNMatrix; // Inverse-transpose normal matrix
 
         // Local link to easing function
 
@@ -317,8 +365,6 @@ class ShaderFader extends Shader {
 
         // Set up directional lighting with the primary World light (see lights.es6 for defaults).
 
-        let lighting = false;
-
         let light0 = this.lights.getLight( this.lights.lightTypes.LIGHT_0 );
 
         let ambient = light0.ambient;
@@ -327,9 +373,11 @@ class ShaderFader extends Shader {
 
         let directionalColor = light0.directionalColor;
 
+        // Inverse transpose matrix, created from Model-View matrix for lighting.
+
         let nMatrix = mat3.create(); // TODO: ADD MAT3 TO PASSED VARIABLES
 
-        let adjustedLD = vec3.create(); // TODO: redo
+        let adjustedLD = lightingDirection;
 
         // Update Prim position, motion - given to World object.
 
@@ -339,7 +387,7 @@ class ShaderFader extends Shader {
 
             let dir = fade.endAlpha - fade.startAlpha;
 
-            let inc = 0.005;
+            let inc = 0.002;
 
             if ( dir > 0 ) {
 
@@ -371,15 +419,11 @@ class ShaderFader extends Shader {
 
             }
 
-            // Compute lighting normals from World lighting.
-
-            vec3.normalize( adjustedLD, lightingDirection );
-
-            //vec3.scale( adjustedLD, adjustedLD, -1 );
-
             // Update the model-view matrix using current Prim position, rotation, etc.
 
             prim.setMV( MVM );
+
+            vec3.copy( adjustedLD, lightingDirection );
 
             // Calculates a 3x3 normal matrix (transpose inverse) from the 4x4 matrix.
 
@@ -452,6 +496,11 @@ class ShaderFader extends Shader {
 
                     gl.uniform1i( uUseLighting, 1 );
 
+                    gl.uniform3fv( uAmbientColor, ambient );
+                    gl.uniform3fv( uLightingDirection, adjustedLD );
+                    gl.uniform3fv( uDirectionalColor, directionalColor );
+                    gl.uniform3fv( uPOV, pov.position ); // used for specular highlight
+
                 } else {
 
                     gl.uniform1i( uUseLighting, 0 );
@@ -496,18 +545,22 @@ class ShaderFader extends Shader {
 
                 let m = prim.defaultMaterial;
 
-                // Lighting (always bound).
-                gl.uniform3fv( uMatAmbient, m.ambient );
+                gl.uniform3fv( uMatEmissive, m.emissive );
+                gl.uniform3fv( uMatAmbient, m.ambient ); // NOTE: transparent objects go in their own Shader
                 gl.uniform3fv( uMatDiffuse, m.diffuse );
-                gl.uniform3fv( uMatEmissive, m.emissive ); // NOTE: transparent objects go in their own Shader.
+                gl.uniform3fv( uMatSpecular, m.specular );
+                gl.uniform1f( uMatSpecExp, m.specularExponent );
 
-                gl.uniform3f( uAmbientColor, ambient[ 0 ], ambient[ 1 ], ambient[ 2 ] );
-                gl.uniform3fv( uLightingDirection, adjustedLD );
-                gl.uniform3f( uDirectionalColor, directionalColor[ 0 ], directionalColor[ 1 ], directionalColor[ 2 ] );
+                // Set normals matrix uniform (inverse transpose matrix).
 
-                // Bind perspective and model-view matrix uniforms.
+                gl.uniformMatrix3fv( uNMatrix, false, nMatrix );
+
+                // Set Perspective uniform.
 
                 gl.uniformMatrix4fv( uPMatrix, false, PM );
+
+                // Model-View matrix uniform.
+
                 gl.uniformMatrix4fv( uMVMatrix, false, mvMatrix );
 
                 // Bind indices buffer.

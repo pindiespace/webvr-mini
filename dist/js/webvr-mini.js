@@ -4677,15 +4677,6 @@
 	                return _this;
 	        }
 
-	        /* 
-	         * Vertex and Fragment Shaders. We use the internal 'program' object from the webgl object to compile these. 
-	         * Alternatively, They may be defined to load from HTML or and external file.
-	         * @return {Object{code, varList}} an object, with internal elements
-	         * code: The shader code.
-	         * varList: A scanned list of all the variables in the shader code (created by webgl object).
-	         */
-
-
 	        _createClass(ShaderFader, [{
 	                key: 'vsSrc',
 	                value: function vsSrc() {
@@ -4701,21 +4692,33 @@
 	                         * vertex, textureX coordinates, colors, normals, tangents.
 	                         */
 
-	                        // Note: ALWAYS name the vertex attribute using the default!
-
 	                        'attribute vec3 ' + this.webgl.attributeNames.aVertexPosition[0] + ';', 'attribute vec4 ' + this.webgl.attributeNames.aVertexColor[0] + ';', 'attribute vec2 ' + this.webgl.attributeNames.aTextureCoord[0] + ';', 'attribute vec3 ' + this.webgl.attributeNames.aVertexNormal[0] + ';',
 
-	                        // render flags
+	                        //'uniform mat4 uMMatrix;',   // Model matrix
+	                        //'uniform mat4 uVMatrix;',  // View matrix
+	                        'uniform mat4 uMVMatrix;', // Model-View matrix
+	                        'uniform mat4 uPMatrix;', // Perspective matrix
+	                        'uniform mat3 uNMatrix;', // Inverse-transpose of Model-View matrix
 
-	                        'uniform bool uUseLighting;', 'uniform bool uUseTexture;', 'uniform bool uUseColor;', 'uniform mat4 uMVMatrix;', 'uniform mat4 uPMatrix;', 'uniform mat3 uNMatrix;', 'uniform vec3 uAmbientColor;', 'uniform vec3 uLightingDirection;', 'uniform vec3 uDirectionalColor;', 'varying vec2 vTextureCoord;', 'varying lowp vec4 vColor;', 'varying vec3 vLightWeighting;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vLightWeighting = vec3(1.0, 1.0, 1.0);', '    if (uUseTexture) { ', '      vTextureCoord = aTextureCoord;', '    } else { ', '      vTextureCoord = vec2(0.0, 0.0);', // Prim has no textures
+	                        // World position.
 
-	                        '    }', '    vColor = aVertexColor;', // we always read this, so always bind it
+	                        'uniform vec3 uPOV;',
 
-	                        '    if(uUseLighting) {', '       vec3 transformedNormal = uNMatrix * aVertexNormal;',
+	                        // Adjusted positions and normals.
 
-	                        // TODO: experiment until we get a good value here...
+	                        'varying vec3 vPOV;', 'varying vec4 vPositionW;', 'varying vec4 vNormalW;',
 
-	                        '       float directionalLightWeighting = max(dot(transformedNormal, uLightingDirection), 0.0);', '       vLightWeighting = (uAmbientColor + uDirectionalColor) * directionalLightWeighting;', '    } else {', '       vLightWeighting = vec3(1.0, 1.0, 1.0);', '    }', '}'];
+	                        // Texture coordinates.
+
+	                        'varying vec2 vTextureCoord;', 'varying vec4 vVertexColor;', 'void main(void) {',
+
+	                        // View-Model-Position-Projection matrix.
+
+	                        'gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', 'vTextureCoord = aTextureCoord;', 'vVertexColor = aVertexColor;', 'vPOV = -uPOV;', 'vPositionW = uMVMatrix * vec4(aVertexPosition, 1.0);', // Model-View Matrix (including POV / camera).
+
+	                        'vNormalW =  normalize(vec4(uNMatrix*aVertexNormal, 0.0));', // Inverse-transpose-normal matrix rotates object normals.
+
+	                        '}'];
 
 	                        return {
 
@@ -4725,6 +4728,13 @@
 
 	                        };
 	                }
+
+	                /** 
+	                 * a default-lighting textured object fragment shader.
+	                 * - varying texture coordinate
+	                 * - texture 2D sampler
+	                 */
+
 	        }, {
 	                key: 'fsSrc',
 	                value: function fsSrc() {
@@ -4740,21 +4750,67 @@
 	                         * vertex, textureX coordinates, colors, normals, tangents.
 	                         */
 
-	                        'uniform bool uUseLighting;', 'uniform bool uUseTexture;', 'uniform bool uUseColor;', 'uniform sampler2D uSampler;', 'uniform float uAlpha;',
+	                        // Uniforms.
 
-	                        // NOTE: ambient and diffuse were computed in Vertex Shader.
+	                        'uniform bool uUseLighting;', 'uniform bool uUseTexture;', 'uniform bool uUseColor;',
 
-	                        'uniform vec3 uMatAmbient;', 'uniform vec3 uMatDiffuse;', 'uniform vec3 uMatEmissive;', // no lighting, but can glow...
+	                        // Lighting values.
 
-	                        'varying vec2 vTextureCoord;', 'varying lowp vec4 vColor;', 'varying vec3 vLightWeighting;', 'void main(void) {', 'if (uUseColor) {', 'vec4 color = vColor;',
+	                        'uniform vec3 uAmbientColor;', 'uniform vec3 uLightingDirection;', // uLightingDirection
+	                        'uniform vec3 uDirectionalColor;',
 
-	                        // Ambient , diffuse were computed against Light in vertex Shader.
+	                        // Material properties (includes specular highlights).
 
-	                        'color.rgb *= (uMatAmbient.rgb + uMatDiffuse.rgb + uMatEmissive.rgb);', 'gl_FragColor = vec4(color.rgb * vLightWeighting, uAlpha);', '}', 'else if(uUseTexture) {', 'vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));', 'textureColor.rgb *= (uMatAmbient.rgb + uMatDiffuse.rgb + uMatEmissive.rgb);',
+	                        'uniform vec3 uMatEmissive;', 'uniform vec3 uMatAmbient;', 'uniform vec3 uMatDiffuse;', 'uniform vec3 uMatSpecular;', 'uniform float uMatSpecExp;',
 
-	                        // NOTE: the uAlpha works here because this Shader requires back-to-front-sorting when a Prim is added.
+	                        // Alpha value
 
-	                        'gl_FragColor = vec4(textureColor.rgb * vLightWeighting, textureColor.a * uAlpha);', '}', '}'];
+	                        'uniform float uAlpha;',
+
+	                        // Varying.
+
+	                        'varying vec3 vPOV;', // World point of view (camera)
+	                        'varying vec4 vPositionW;', 'varying vec4 vNormalW;', 'varying vec2 vTextureCoord;', 'varying vec4 vVertexColor;',
+
+	                        // Texture sampler.
+
+	                        'uniform sampler2D uSampler;',
+
+	                        // Main program.
+
+	                        'void main(void) {', 'vec4 vColor;', 'if(uUseTexture) {', 'vColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));', '} else {', 'vColor = vVertexColor;', // we always read this, so always bind it
+
+	                        '}',
+
+	                        // Emissive.
+
+	                        'vec4 Emissive = vec4(uMatEmissive, 1.0);',
+
+	                        // Ambient.
+
+	                        'vec4 Ambient = vec4(uAmbientColor, 1.0) * vec4(uMatAmbient, 1.0);', 'vec4 Diffuse = vec4(uDirectionalColor * uMatDiffuse, 1.0);', 'vec4 Specular = vec4(uDirectionalColor * uMatSpecular, 1.0);',
+
+	                        // Diffuse.
+
+	                        'if (uUseLighting) {', 'vec4 N = normalize(vNormalW);', 'vec4 LL = normalize(vec4(uLightingDirection, 1.0));', 'float NdotL = max( dot(N, LL), 0.0);', 'Diffuse =  NdotL * Diffuse;',
+
+	                        // Specular. Changing 4th parameter to 0.0 instead of 1.0 improved results.
+
+	                        'vec4 L = normalize(vec4(uLightingDirection, 1.0) - vPositionW);', 'vec4 EyePosW = vec4(vPOV, 0.0);', // world = eye = camera position
+
+	                        'vec4 V = normalize(EyePosW - vPositionW);', // if this is just vPositionW we get a highlight around edges in right place
+
+	                        'vec4 H = normalize(L + V);', 'vec4 R = reflect(-L, N);', // -L needed to bring to center. +L gives edges highlighted
+
+	                        'float RdotV = max(dot(R, V), 0.0);', 'float NdotH = max(dot(N, H), 0.0);', 'Specular = pow(RdotV, uMatSpecExp) * pow(NdotH, uMatSpecExp) * Specular;',
+
+	                        // TODO: Specular isn't focused to a dot - it is everywhere!!!!
+
+	                        '}',
+
+	                        // Final fragment color.
+
+	                        'gl_FragColor = (Emissive + Ambient + Diffuse) * vec4(vColor.rgb, uAlpha);', '}'];
 
 	                        return {
 
@@ -4828,21 +4884,27 @@
 	                            aVertexNormal = vsVars.attribute.vec3.aVertexNormal,
 	                            uAlpha = fsVars.uniform.float.uAlpha,
 	                            uUseLighting = fsVars.uniform.bool.uUseLighting,
-	                            uUseColor = fsVars.uniform.bool.uUseColor,
 	                            uUseTexture = fsVars.uniform.bool.uUseTexture,
+	                            uUseColor = fsVars.uniform.bool.uUseColor,
 	                            uSampler = fsVars.uniform.sampler2D.uSampler,
+	                            uMatEmissive = fsVars.uniform.vec3.uMatEmissive,
 	                            uMatAmbient = fsVars.uniform.vec3.uMatAmbient,
 	                            uMatDiffuse = fsVars.uniform.vec3.uMatDiffuse,
-	                            uMatEmissive = fsVars.uniform.vec3.uMatEmissive,
-	                            uAmbientColor = vsVars.uniform.vec3.uAmbientColor,
+	                            uMatSpecular = fsVars.uniform.vec3.uMatSpecular,
+	                            uMatSpecExp = fsVars.uniform.vec3.uMatSpecExp,
+	                            uAmbientColor = fsVars.uniform.vec3.uAmbientColor,
 	                            // ambient light color
 
-	                        uLightingDirection = vsVars.uniform.vec3.uLightingDirection,
-	                            uDirectionalColor = vsVars.uniform.vec3.uDirectionalColor,
+	                        uLightingDirection = fsVars.uniform.vec3.uLightingDirection,
+	                            uDirectionalColor = fsVars.uniform.vec3.uDirectionalColor,
 	                            // directional light color
 
+	                        uPOV = vsVars.uniform.vec3.uPOV,
+	                            // World Position (also position of camera/POV)
+
 	                        uPMatrix = vsVars.uniform.mat4.uPMatrix,
-	                            uMVMatrix = vsVars.uniform.mat4.uMVMatrix;
+	                            uMVMatrix = vsVars.uniform.mat4.uMVMatrix,
+	                            uNMatrix = vsVars.uniform.mat3.uNMatrix; // Inverse-transpose normal matrix
 
 	                        // Local link to easing function
 
@@ -4852,8 +4914,6 @@
 
 	                        // Set up directional lighting with the primary World light (see lights.es6 for defaults).
 
-	                        var lighting = false;
-
 	                        var light0 = this.lights.getLight(this.lights.lightTypes.LIGHT_0);
 
 	                        var ambient = light0.ambient;
@@ -4862,9 +4922,11 @@
 
 	                        var directionalColor = light0.directionalColor;
 
+	                        // Inverse transpose matrix, created from Model-View matrix for lighting.
+
 	                        var nMatrix = mat3.create(); // TODO: ADD MAT3 TO PASSED VARIABLES
 
-	                        var adjustedLD = vec3.create(); // TODO: redo
+	                        var adjustedLD = lightingDirection;
 
 	                        // Update Prim position, motion - given to World object.
 
@@ -4874,7 +4936,7 @@
 
 	                                var dir = fade.endAlpha - fade.startAlpha;
 
-	                                var inc = 0.005;
+	                                var inc = 0.002;
 
 	                                if (dir > 0) {
 
@@ -4902,15 +4964,11 @@
 	                                        }
 	                                }
 
-	                                // Compute lighting normals from World lighting.
-
-	                                vec3.normalize(adjustedLD, lightingDirection);
-
-	                                //vec3.scale( adjustedLD, adjustedLD, -1 );
-
 	                                // Update the model-view matrix using current Prim position, rotation, etc.
 
 	                                prim.setMV(MVM);
+
+	                                vec3.copy(adjustedLD, lightingDirection);
 
 	                                // Calculates a 3x3 normal matrix (transpose inverse) from the 4x4 matrix.
 
@@ -4981,6 +5039,11 @@
 	                                        if (prim.defaultShader.required.lights > 0) {
 
 	                                                gl.uniform1i(uUseLighting, 1);
+
+	                                                gl.uniform3fv(uAmbientColor, ambient);
+	                                                gl.uniform3fv(uLightingDirection, adjustedLD);
+	                                                gl.uniform3fv(uDirectionalColor, directionalColor);
+	                                                gl.uniform3fv(uPOV, pov.position); // used for specular highlight
 	                                        } else {
 
 	                                                gl.uniform1i(uUseLighting, 0);
@@ -5022,18 +5085,22 @@
 
 	                                        var m = prim.defaultMaterial;
 
-	                                        // Lighting (always bound).
-	                                        gl.uniform3fv(uMatAmbient, m.ambient);
+	                                        gl.uniform3fv(uMatEmissive, m.emissive);
+	                                        gl.uniform3fv(uMatAmbient, m.ambient); // NOTE: transparent objects go in their own Shader
 	                                        gl.uniform3fv(uMatDiffuse, m.diffuse);
-	                                        gl.uniform3fv(uMatEmissive, m.emissive); // NOTE: transparent objects go in their own Shader.
+	                                        gl.uniform3fv(uMatSpecular, m.specular);
+	                                        gl.uniform1f(uMatSpecExp, m.specularExponent);
 
-	                                        gl.uniform3f(uAmbientColor, ambient[0], ambient[1], ambient[2]);
-	                                        gl.uniform3fv(uLightingDirection, adjustedLD);
-	                                        gl.uniform3f(uDirectionalColor, directionalColor[0], directionalColor[1], directionalColor[2]);
+	                                        // Set normals matrix uniform (inverse transpose matrix).
 
-	                                        // Bind perspective and model-view matrix uniforms.
+	                                        gl.uniformMatrix3fv(uNMatrix, false, nMatrix);
+
+	                                        // Set Perspective uniform.
 
 	                                        gl.uniformMatrix4fv(uPMatrix, false, PM);
+
+	                                        // Model-View matrix uniform.
+
 	                                        gl.uniformMatrix4fv(uMVMatrix, false, mvMatrix);
 
 	                                        // Bind indices buffer.
@@ -6387,7 +6454,7 @@
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
-	            value: true
+	                value: true
 	});
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -6407,462 +6474,440 @@
 	'use strict';
 
 	var shaderDirLightTexture = function (_Shader) {
-	            _inherits(shaderDirLightTexture, _Shader);
+	                _inherits(shaderDirLightTexture, _Shader);
 
-	            /** 
-	             * --------------------------------------------------------------------
-	             * VERTEX SHADER 3
-	             * a directionally-lit textured object vertex shader.
-	             * @link http://learningwebgl.com/blog/?p=684
-	             * StackGL
-	             * @link https://github.com/stackgl
-	             * phong lighting
-	             * @link https://github.com/stackgl/glsl-lighting-walkthrough
-	             * - vertex position
-	             * - texture coordinate
-	             * - model-view matrix
-	             * - projection matrix
-	             * --------------------------------------------------------------------
-	             */
-	            function shaderDirLightTexture(init, util, glMatrix, webgl, webvr, shaderName, lights) {
-	                        _classCallCheck(this, shaderDirLightTexture);
+	                /** 
+	                 * --------------------------------------------------------------------
+	                 * VERTEX SHADER 3
+	                 * a directionally-lit textured object vertex shader.
+	                 * @link http://learningwebgl.com/blog/?p=684
+	                 * StackGL
+	                 * @link https://github.com/stackgl
+	                 * phong lighting
+	                 * @link https://github.com/stackgl/glsl-lighting-walkthrough
+	                 * - vertex position
+	                 * - texture coordinate
+	                 * - model-view matrix
+	                 * - projection matrix
+	                 * --------------------------------------------------------------------
+	                 */
+	                function shaderDirLightTexture(init, util, glMatrix, webgl, webvr, shaderName, lights) {
+	                                _classCallCheck(this, shaderDirLightTexture);
 
-	                        var _this = _possibleConstructorReturn(this, (shaderDirLightTexture.__proto__ || Object.getPrototypeOf(shaderDirLightTexture)).call(this, init, util, glMatrix, webgl, webvr, shaderName, lights));
+	                                var _this = _possibleConstructorReturn(this, (shaderDirLightTexture.__proto__ || Object.getPrototypeOf(shaderDirLightTexture)).call(this, init, util, glMatrix, webgl, webvr, shaderName, lights));
 
-	                        _this.required.buffer.indices = true, _this.required.buffer.texCoords = true, _this.required.buffer.normals = true, _this.required.textures = 1, _this.required.lights = 1;
+	                                _this.required.buffer.indices = true, _this.required.buffer.texCoords = true, _this.required.buffer.normals = true, _this.required.textures = 1, _this.required.lights = 1;
 
-	                        console.log('In ShaderDirLightTexture class');
+	                                console.log('In ShaderDirLightTexture class');
 
-	                        return _this;
-	            }
+	                                return _this;
+	                }
 
-	            /* 
-	             * Vertex and Fragment Shaders. We use the internal 'program' object from the webgl object to compile these. 
-	             * Alternatively, They may be defined to load from HTML or and external file.
-	             * Lighting reference:
-	             * @link http://in2gpu.com/2014/06/19/lighting-vertex-fragment-shader/
-	             * @return {Object{code, varList}} an object, with internal elements
-	             * code: The shader code.
-	             * varList: A scanned list of all the variables in the shader code (created by webgl object).
-	             */
+	                /* 
+	                 * Vertex and Fragment Shaders. We use the internal 'program' object from the webgl object to compile these. 
+	                 * Alternatively, They may be defined to load from HTML or and external file.
+	                 * Lighting reference:
+	                 * @link http://in2gpu.com/2014/06/19/lighting-vertex-fragment-shader/
+	                 * @return {Object{code, varList}} an object, with internal elements
+	                 * code: The shader code.
+	                 * varList: A scanned list of all the variables in the shader code (created by webgl object).
+	                 */
 
 
-	            _createClass(shaderDirLightTexture, [{
-	                        key: 'vsSrc',
-	                        value: function vsSrc() {
+	                _createClass(shaderDirLightTexture, [{
+	                                key: 'vsSrc',
+	                                value: function vsSrc() {
 
-	                                    var s = [
+	                                                var s = [
 
-	                                    // Set precision.
+	                                                // Set precision.
 
-	                                    this.floatp,
+	                                                this.floatp,
 
-	                                    /* 
-	                                     * Attribute names are hard-coded in the WebGL object, with rigid indices.
-	                                     * vertex, textureX coordinates, colors, normals, tangents.
-	                                     */
+	                                                /* 
+	                                                 * Attribute names are hard-coded in the WebGL object, with rigid indices.
+	                                                 * vertex, textureX coordinates, colors, normals, tangents.
+	                                                 */
 
-	                                    'attribute vec3 ' + this.webgl.attributeNames.aVertexPosition[0] + ';',
-	                                    //'attribute vec4 ' + this.webgl.attributeNames.aVertexColor[ 0 ] + ';',
-	                                    'attribute vec2 ' + this.webgl.attributeNames.aTextureCoord[0] + ';', 'attribute vec3 ' + this.webgl.attributeNames.aVertexNormal[0] + ';',
+	                                                'attribute vec3 ' + this.webgl.attributeNames.aVertexPosition[0] + ';',
+	                                                //'attribute vec4 ' + this.webgl.attributeNames.aVertexColor[ 0 ] + ';',
+	                                                'attribute vec2 ' + this.webgl.attributeNames.aTextureCoord[0] + ';', 'attribute vec3 ' + this.webgl.attributeNames.aVertexNormal[0] + ';',
 
-	                                    //'uniform mat4 uMMatrix;',   // Model matrix
-	                                    //'uniform mat4 uVMatrix;',  // View matrix
-	                                    'uniform mat4 uMVMatrix;', // Model-View matrix
-	                                    'uniform mat4 uPMatrix;', // Perspective matrix
-	                                    'uniform mat3 uNMatrix;', // Inverse-transpose of Model-View matrix
+	                                                //'uniform mat4 uMMatrix;',   // Model matrix
+	                                                //'uniform mat4 uVMatrix;',  // View matrix
+	                                                'uniform mat4 uMVMatrix;', // Model-View matrix
+	                                                'uniform mat4 uPMatrix;', // Perspective matrix
+	                                                'uniform mat3 uNMatrix;', // Inverse-transpose of Model-View matrix
 
-	                                    // Directional lighting (from the World).
+	                                                // Directional lighting (from the World).
 
-	                                    'uniform bool uUseLighting;', 'uniform vec3 uAmbientColor;', 'uniform vec3 uLightingDirection;', 'uniform vec3 uDirectionalColor;',
+	                                                'uniform bool uUseLighting;', 'uniform vec3 uAmbientColor;', 'uniform vec3 uLightingDirection;', 'uniform vec3 uDirectionalColor;',
 
-	                                    // World position.
+	                                                // World position.
 
-	                                    'uniform vec3 uPOV;',
+	                                                'uniform vec3 uPOV;',
 
-	                                    // Material ambient, diffuse, specular (added in Fragment shader).
+	                                                // Material ambient, diffuse, specular (added in Fragment shader).
 
-	                                    'varying vec3 vAmbientColor;', 'varying vec3 vLightingDirection;', 'varying vec3 vDirectionalColor;', 'varying vec3 vPOV;',
+	                                                'varying vec3 vAmbientColor;', 'varying vec3 vLightingDirection;', 'varying vec3 vDirectionalColor;', 'varying vec3 vPOV;',
 
-	                                    // Adjusted positions and normals.
+	                                                // Adjusted positions and normals.
 
-	                                    'varying vec4 vPositionW;', 'varying vec4 vNormalW;',
+	                                                'varying vec4 vPositionW;', 'varying vec4 vNormalW;',
 
-	                                    // Vertex coordinate.
+	                                                // Texture coordinates.
 
-	                                    'varying vec3 vPosition;',
+	                                                'varying vec2 vTextureCoord;', 'void main(void) {', 'vAmbientColor = uAmbientColor;', 'vLightingDirection = uLightingDirection;', 'vDirectionalColor = uDirectionalColor;',
 
-	                                    // Texture coordinates.
+	                                                // View-Model-Position-Projection matrix.
 
-	                                    'varying vec2 vTextureCoord;', 'void main(void) {', '    vAmbientColor = uAmbientColor;', '    vLightingDirection = uLightingDirection;', '    vDirectionalColor = uDirectionalColor;',
+	                                                'gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', 'vTextureCoord = aTextureCoord;', 'vPOV = -uPOV;', // Shader wants this negative
 
-	                                    // View-Model-Position-Projection matrix.
+	                                                'vPositionW = uMVMatrix * vec4(aVertexPosition, 1.0);', // Model-View Matrix (including POV / camera).
 
-	                                    '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);',
+	                                                'vNormalW =  normalize(vec4(uNMatrix*aVertexNormal, 0.0));', // Inverse-transpose-normal matrix rotates object normals.
 
-	                                    // NOTE: Our Shader wants this POV NEGATIVE!!!!!!
+	                                                '}'];
 
-	                                    '    vPOV = -uPOV;',
+	                                                return {
 
-	                                    // Texture coordinate.
+	                                                                code: s.join('\n'),
 
-	                                    '    vTextureCoord = aTextureCoord;', '    vPositionW = uMVMatrix * vec4(aVertexPosition, 1.0);', // Model-View Matrix (including POV / camera).
+	                                                                varList: this.webgl.createVarList(s)
 
-	                                    '    vNormalW =  normalize(vec4(uNMatrix*aVertexNormal, 0.0));', // Inverse-transpose-normal matrix rotates object normals.
+	                                                };
+	                                }
 
-	                                    '}'];
+	                                /** 
+	                                 * a default-lighting textured object fragment shader.
+	                                 * - varying texture coordinate
+	                                 * - texture 2D sampler
+	                                 */
 
-	                                    return {
+	                }, {
+	                                key: 'fsSrc',
+	                                value: function fsSrc() {
 
-	                                                code: s.join('\n'),
+	                                                var s = [
 
-	                                                varList: this.webgl.createVarList(s)
+	                                                // Set precision.
 
-	                                    };
-	                        }
+	                                                this.floatp,
 
-	                        /** 
-	                         * a default-lighting textured object fragment shader.
-	                         * - varying texture coordinate
-	                         * - texture 2D sampler
-	                         */
+	                                                /* 
+	                                                 * Attribute names are hard-coded in the WebGL object, with rigid indices.
+	                                                 * vertex, textureX coordinates, colors, normals, tangents.
+	                                                 */
 
-	            }, {
-	                        key: 'fsSrc',
-	                        value: function fsSrc() {
+	                                                // Uniforms.
 
-	                                    var s = [
+	                                                // Lighting values.
 
-	                                    // Set precision.
+	                                                'varying vec3 vAmbientColor;', 'varying vec3 vLightingDirection;', // uLightingDirection
+	                                                'varying vec3 vDirectionalColor;',
 
-	                                    this.floatp,
+	                                                // Material properties (includes specular highlights).
 
-	                                    /* 
-	                                     * Attribute names are hard-coded in the WebGL object, with rigid indices.
-	                                     * vertex, textureX coordinates, colors, normals, tangents.
-	                                     */
+	                                                'uniform vec3 uMatEmissive;', 'uniform vec3 uMatAmbient;', 'uniform vec3 uMatDiffuse;', 'uniform vec3 uMatSpecular;', 'uniform float uMatSpecExp;',
 
-	                                    // Uniforms.
+	                                                // Varying.
 
-	                                    // Lighting values.
+	                                                'varying vec3 vPOV;', 'varying vec4 vPositionW;', 'varying vec4 vNormalW;', 'varying vec2 vTextureCoord;', 'uniform sampler2D uSampler;',
 
-	                                    'varying vec3 vAmbientColor;', 'varying vec3 vLightingDirection;', // uLightingDirection
-	                                    'varying vec3 vDirectionalColor;',
+	                                                // Main program.
 
-	                                    // Material properties (includes specular highlights).
+	                                                'void main(void) {',
 
-	                                    'uniform vec3 uMatEmissive;', 'uniform vec3 uMatAmbient;', 'uniform vec3 uMatDiffuse;', 'uniform vec3 uMatSpecular;', 'uniform float uMatSpecExp;',
+	                                                // Default texture color.
 
-	                                    // Varying.
+	                                                'vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));',
 
-	                                    'varying vec4 vPositionW;', 'varying vec4 vNormalW;',
+	                                                // Emissive.
 
-	                                    // World Point of View (camera).
+	                                                'vec4 Emissive = vec4(uMatEmissive, 1.0);',
 
-	                                    'varying vec3 vPOV;', 'varying vec2 vTextureCoord;',
+	                                                // Ambient.
 
-	                                    // Texture sampler.
+	                                                'vec4 Ambient = vec4(vAmbientColor, 1.0) * vec4(uMatAmbient, 1.0);',
 
-	                                    'uniform sampler2D uSampler;',
+	                                                // Diffuse.
 
-	                                    // Main program.
+	                                                'vec4 N = normalize(vNormalW);', 'vec4 LL = normalize(vec4(vLightingDirection, 1.0));', 'float NdotL = max( dot(N, LL), 0.0);', 'vec4 Diffuse =  NdotL * vec4(vDirectionalColor * uMatDiffuse, 1.0);',
 
-	                                    'void main(void) {',
+	                                                // Specular.
 
-	                                    // Default texture color.
+	                                                // Changing 4th parameter to 0.0 instead of 1.0 improved results.
 
-	                                    '    vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));',
+	                                                'vec4 L = normalize(vec4(vLightingDirection, 1.0) - vPositionW);', 'vec4 EyePosW = vec4(vPOV, 0.0);', // world = eye = camera position
 
-	                                    // Emissive.
+	                                                'vec4 V = normalize(EyePosW - vPositionW );', // if this is just vPositionW we get a highlight around edges in right place
 
-	                                    '    vec4 Emissive = vec4(uMatEmissive, 1.0);',
+	                                                'vec4 H = normalize(L + V);', 'vec4 R = reflect(-L, N);', // -L needed to bring to center. +L gives edges highlighted
 
-	                                    // Ambient.
+	                                                'float RdotV = max(dot(R, V), 0.0);', 'float NdotH = max(dot(N, H), 0.0);', 'vec4 Specular = pow(RdotV, uMatSpecExp) * pow(NdotH, uMatSpecExp) * vec4(vDirectionalColor * uMatSpecular, 1.0);',
 
-	                                    '    vec4 Ambient = vec4(vAmbientColor, 1.0) * vec4(uMatAmbient, 1.0);',
+	                                                // Final fragment color.
 
-	                                    // Diffuse.
+	                                                'gl_FragColor =  (Emissive + Ambient + Diffuse + Specular) * vec4(textureColor.rgb, textureColor.a);', '}'];
 
-	                                    '    vec4 N = normalize(vNormalW);', '    vec4 LL = normalize(vec4(vLightingDirection, 1.0));', '    float NdotL = max( dot(N, LL), 0.0);', '    vec4 Diffuse =  NdotL * vec4(vDirectionalColor * uMatDiffuse, 1.0);',
+	                                                return {
 
-	                                    // Specular.
+	                                                                code: s.join('\n'),
 
-	                                    // Changing 4th parameter to 0.0 instead of 1.0 improved results.
+	                                                                varList: this.webgl.createVarList(s)
 
-	                                    '    vec4 L = normalize(vec4(vLightingDirection, 1.0) - vPositionW);', '    vec4 EyePosW = vec4(vPOV, 0.0);', // world = eye = camera position
+	                                                };
+	                                }
 
-	                                    '    vec4 V = normalize(EyePosW - vPositionW );', // if this is just vPositionW we get a highlight around edges in right place
+	                                /** 
+	                                 * --------------------------------------------------------------------
+	                                 * Vertex Shader 3, using texture buffer and lighting.
+	                                 * --------------------------------------------------------------------
+	                                 */
 
-	                                    '    vec4 H = normalize(L + V);', '    vec4 R = reflect(-L, N);', // -L needed to bring to center. +L gives edges highlighted
+	                                /** 
+	                                 * initialize the update() and render() methods for this shader.
+	                                 * @param{Prim[]} primList a list of initializing Prims (optional).
+	                                 */
 
-	                                    '    float RdotV = max(dot(R, V), 0.0);', '    float NdotH = max(dot(N, H), 0.0);', '    vec4 Specular = pow(RdotV, uMatSpecExp) * pow(NdotH, uMatSpecExp) * vec4(vDirectionalColor * uMatSpecular, 1.0);',
+	                }, {
+	                                key: 'init',
+	                                value: function init(primList) {
 
-	                                    // TODO: specular surround.
+	                                                // DESTRUCTING DID NOT WORK!
+	                                                //[gl, canvas, mat4, vec3, pMatrix, mvMatrix, program ] = this.setup();
 
-	                                    // Final fragment color.
+	                                                // TODO: since we are in Shader, we should be able to make local copies upon init.
+	                                                // TODO: don't pass in the shader-specific stuff, make local here.
 
-	                                    '    gl_FragColor =  (Emissive + Ambient + Diffuse + Specular) * vec4(textureColor.rgb, textureColor.a);', '}'];
+	                                                var arr = this.setup(),
+	                                                    gl = arr[0],
+	                                                    canvas = arr[1],
+	                                                    mat4 = arr[2],
+	                                                    mat3 = arr[3],
+	                                                    vec3 = arr[4],
+	                                                    program = arr[5],
+	                                                    vsVars = arr[6],
+	                                                    fsVars = arr[7],
+	                                                    stats = arr[8],
+	                                                    near = arr[9],
+	                                                    far = arr[10],
+	                                                    vr = arr[11];
 
-	                                    return {
+	                                                // Attach our VBO program.
 
-	                                                code: s.join('\n'),
+	                                                var shaderProgram = program.shaderProgram;
 
-	                                                varList: this.webgl.createVarList(s)
+	                                                // If we init with a primList, add them here.
 
-	                                    };
-	                        }
+	                                                if (primList) {
 
-	                        /** 
-	                         * --------------------------------------------------------------------
-	                         * Vertex Shader 3, using texture buffer and lighting.
-	                         * --------------------------------------------------------------------
-	                         */
+	                                                                program.renderList = this.util.concatArr(program.renderList, primList);
+	                                                }
 
-	                        /** 
-	                         * initialize the update() and render() methods for this shader.
-	                         * @param{Prim[]} primList a list of initializing Prims (optional).
-	                         */
+	                                                // Local reference to our matrices.
 
-	            }, {
-	                        key: 'init',
-	                        value: function init(primList) {
+	                                                //let pMatrix = this.pMatrix,
 
-	                                    // DESTRUCTING DID NOT WORK!
-	                                    //[gl, canvas, mat4, vec3, pMatrix, mvMatrix, program ] = this.setup();
+	                                                var mvMatrix = this.mvMatrix,
+	                                                    vMatrix = this.vMatrix,
+	                                                    mMatrix = this.mMatrix;
 
-	                                    // TODO: since we are in Shader, we should be able to make local copies upon init.
-	                                    // TODO: don't pass in the shader-specific stuff, make local here.
+	                                                /** 
+	                                                 * POLYMORPHIC PROPERTIES AND METHODS.
+	                                                 */
 
-	                                    var arr = this.setup(),
-	                                        gl = arr[0],
-	                                        canvas = arr[1],
-	                                        mat4 = arr[2],
-	                                        mat3 = arr[3],
-	                                        vec3 = arr[4],
-	                                        program = arr[5],
-	                                        vsVars = arr[6],
-	                                        fsVars = arr[7],
-	                                        stats = arr[8],
-	                                        near = arr[9],
-	                                        far = arr[10],
-	                                        vr = arr[11];
+	                                                var aVertexPosition = vsVars.attribute.vec3.aVertexPosition,
+	                                                    aTextureCoord = vsVars.attribute.vec2.aTextureCoord,
+	                                                    aVertexNormal = vsVars.attribute.vec3.aVertexNormal,
+	                                                    uSampler = fsVars.uniform.sampler2D.uSampler,
+	                                                    uUseLighting = vsVars.uniform.bool.uUseLighting,
+	                                                    uAmbientColor = vsVars.uniform.vec3.uAmbientColor,
+	                                                    uLightingDirection = vsVars.uniform.vec3.uLightingDirection,
+	                                                    uDirectionalColor = vsVars.uniform.vec3.uDirectionalColor,
+	                                                    uNMatrix = vsVars.uniform.mat3.uNMatrix,
+	                                                    // Inverse-transpose normal matrix
 
-	                                    // Attach our VBO program.
+	                                                uPMatrix = vsVars.uniform.mat4.uPMatrix,
+	                                                    // Projection
 
-	                                    var shaderProgram = program.shaderProgram;
+	                                                uMVMatrix = vsVars.uniform.mat4.uMVMatrix,
+	                                                    // Model-View
 
-	                                    // If we init with a primList, add them here.
+	                                                //uMMatrix = vsVars.uniform.mat4.uMMatrix, // Model matrix
 
-	                                    if (primList) {
+	                                                //uVMatrix = vsVars.uniform.mat4.uVMatrix, // View matrix
 
-	                                                program.renderList = this.util.concatArr(program.renderList, primList);
-	                                    }
+	                                                uPOV = vsVars.uniform.vec3.uPOV; // World Position (also position of camera/POV)
 
-	                                    // Local reference to our matrices.
+	                                                // Set up directional lighting with the primary World light.
 
-	                                    //let pMatrix = this.pMatrix,
+	                                                var lighting = !!this.required.lights;
 
-	                                    var mvMatrix = this.mvMatrix,
-	                                        vMatrix = this.vMatrix,
-	                                        mMatrix = this.mMatrix;
+	                                                // Use just one light, diffuse illumination from World ( see lights.es6 for defaults).
 
-	                                    /** 
-	                                     * POLYMORPHIC PROPERTIES AND METHODS.
-	                                     */
+	                                                var light0 = this.lights.getLight(this.lights.lightTypes.LIGHT_0);
 
-	                                    var aVertexPosition = vsVars.attribute.vec3.aVertexPosition,
-	                                        aTextureCoord = vsVars.attribute.vec2.aTextureCoord,
-	                                        aVertexNormal = vsVars.attribute.vec3.aVertexNormal,
-	                                        uSampler = fsVars.uniform.sampler2D.uSampler,
-	                                        uUseLighting = vsVars.uniform.bool.uUseLighting,
-	                                        uAmbientColor = vsVars.uniform.vec3.uAmbientColor,
-	                                        uLightingDirection = vsVars.uniform.vec3.uLightingDirection,
-	                                        uDirectionalColor = vsVars.uniform.vec3.uDirectionalColor,
-	                                        uNMatrix = vsVars.uniform.mat3.uNMatrix,
-	                                        // Inverse-transpose normal matrix
+	                                                var ambient = light0.ambient;
 
-	                                    uPMatrix = vsVars.uniform.mat4.uPMatrix,
-	                                        // Projection
+	                                                var lightingDirection = light0.lightingDirection;
 
-	                                    uMVMatrix = vsVars.uniform.mat4.uMVMatrix,
-	                                        // Model-View
+	                                                var directionalColor = light0.directionalColor;
 
-	                                    //uMMatrix = vsVars.uniform.mat4.uMMatrix, // Model matrix
+	                                                // Inverse transpose matrix, created from Model-View matrix for lighting.
 
-	                                    //uVMatrix = vsVars.uniform.mat4.uVMatrix, // View matrix
+	                                                var nMatrix = mat3.create(); // TODO: ADD MAT3 TO PASSED VARIABLES
 
-	                                    uPOV = vsVars.uniform.vec3.uPOV; // World Position (also position of camera/POV)
+	                                                var adjustedLD = lightingDirection;
 
-	                                    // Set up directional lighting with the primary World light.
+	                                                // Update prim position, motion - given to World object.
 
-	                                    var lighting = !!this.required.lights;
+	                                                program.update = function (prim, MVM) {
 
-	                                    // Use just one light, diffuse illumination from World ( see lights.es6 for defaults).
+	                                                                // Update the model-view matrix for current Prim position, rotation, etc.
 
-	                                    var light0 = this.lights.getLight(this.lights.lightTypes.LIGHT_0);
+	                                                                prim.setMV(MVM); // Model-View
 
-	                                    var ambient = light0.ambient;
+	                                                                // Copy and adjust the World light.
 
-	                                    var lightingDirection = light0.lightingDirection;
+	                                                                vec3.copy(adjustedLD, lightingDirection);
 
-	                                    var directionalColor = light0.directionalColor;
+	                                                                // Calculates a 3x3 normal matrix (transpose inverse) from the Model-View matrix, so we don't have to in the Shader.
 
-	                                    // Inverse transpose matrix, created from Model-View matrix for lighting.
+	                                                                mat3.normalFromMat4(nMatrix, MVM);
 
-	                                    var nMatrix = mat3.create(); // TODO: ADD MAT3 TO PASSED VARIABLES
+	                                                                // Custom updates go here, make local references to vsVars and fsVars.
+	                                                };
 
-	                                    var adjustedLD = lightingDirection;
+	                                                /*
+	                                                 * Prim rendering. We pass in a the Projection Matrix so we can render in mono and stereo, and 
+	                                                 * the position of the camera/eye (POV) for some kinds of rendering (e.g. specular).
+	                                                 * @param {glMatrix.mat4} PM projection matrix, either mono or stereo.
+	                                                 * @param {glMatrix.vec3} pov the position of the camera in World space.
+	                                                 */
 
-	                                    // Update prim position, motion - given to World object.
+	                                                program.render = function (PM, pov) {
 
-	                                    program.update = function (prim, MVM) {
+	                                                                if (!program.renderList.length) return;
 
-	                                                // Update the model-view matrix for current Prim position, rotation, etc.
+	                                                                // We have something to render!
 
-	                                                prim.setMV(MVM); // Model-View
+	                                                                gl.useProgram(shaderProgram);
 
-	                                                // Copy and adjust the World light.
+	                                                                // Save the model-view supplied by the shader. Mono and VR return different MV matrices.
 
-	                                                vec3.copy(adjustedLD, lightingDirection);
+	                                                                var saveMV = mat4.clone(mvMatrix);
 
-	                                                // Calculates a 3x3 normal matrix (transpose inverse) from the Model-View matrix, so we don't have to in the Shader.
+	                                                                // Begin program loop
 
-	                                                mat3.normalFromMat4(nMatrix, MVM);
+	                                                                for (var i = 0, len = program.renderList.length; i < len; i++) {
 
-	                                                // Custom updates go here, make local references to vsVars and fsVars.
-	                                    };
+	                                                                                var prim = program.renderList[i];
 
-	                                    /*
-	                                     * Prim rendering. We pass in a the Projection Matrix so we can render in mono and stereo, and 
-	                                     * the position of the camera/eye (POV) for some kinds of rendering (e.g. specular).
-	                                     * @param {glMatrix.mat4} PM projection matrix, either mono or stereo.
-	                                     * @param {glMatrix.vec3} pov the position of the camera in World space.
-	                                     */
+	                                                                                // Only render if we have at least one texture loaded.
 
-	                                    program.render = function (PM, pov) {
+	                                                                                if (!prim || !prim.textures[0] || !prim.textures[0].texture) continue;
 
-	                                                if (!program.renderList.length) return;
+	                                                                                // Update Model-View matrix with standard Prim values.
 
-	                                                // We have something to render!
+	                                                                                program.update(prim, mvMatrix);
 
-	                                                gl.useProgram(shaderProgram);
+	                                                                                // Bind vertex buffer.
 
-	                                                // Save the model-view supplied by the shader. Mono and VR return different MV matrices.
+	                                                                                gl.bindBuffer(gl.ARRAY_BUFFER, prim.geometry.vertices.buffer);
+	                                                                                gl.enableVertexAttribArray(aVertexPosition);
+	                                                                                gl.vertexAttribPointer(aVertexPosition, 3, gl.FLOAT, false, 0, 0);
 
-	                                                var saveMV = mat4.clone(mvMatrix);
+	                                                                                // Bind textures buffer (could have multiple bindings here).
 
-	                                                // Begin program loop
+	                                                                                gl.bindBuffer(gl.ARRAY_BUFFER, prim.geometry.texCoords.buffer);
+	                                                                                gl.enableVertexAttribArray(aTextureCoord);
+	                                                                                gl.vertexAttribPointer(aTextureCoord, 2, gl.FLOAT, false, 0, 0);
 
-	                                                for (var i = 0, len = program.renderList.length; i < len; i++) {
+	                                                                                // Bind normals buffer.
 
-	                                                            var prim = program.renderList[i];
+	                                                                                gl.bindBuffer(gl.ARRAY_BUFFER, prim.geometry.normals.buffer);
+	                                                                                gl.enableVertexAttribArray(aVertexNormal);
+	                                                                                gl.vertexAttribPointer(aVertexNormal, 3, gl.FLOAT, false, 0, 0);
 
-	                                                            // Only render if we have at least one texture loaded.
+	                                                                                gl.activeTexture(gl.TEXTURE0);
+	                                                                                gl.bindTexture(gl.TEXTURE_2D, null);
+	                                                                                gl.bindTexture(gl.TEXTURE_2D, prim.textures[0].texture);
 
-	                                                            if (!prim || !prim.textures[0] || !prim.textures[0].texture) continue;
+	                                                                                // Bind additional texture units.
 
-	                                                            // Update Model-View matrix with standard Prim values.
+	                                                                                // Set fragment shader sampler uniform.
 
-	                                                            program.update(prim, mvMatrix);
+	                                                                                gl.uniform1i(uSampler, 0);
 
-	                                                            // Bind vertex buffer.
+	                                                                                // Default material (other Shaders might use multiple materials).
 
-	                                                            gl.bindBuffer(gl.ARRAY_BUFFER, prim.geometry.vertices.buffer);
-	                                                            gl.enableVertexAttribArray(aVertexPosition);
-	                                                            gl.vertexAttribPointer(aVertexPosition, 3, gl.FLOAT, false, 0, 0);
+	                                                                                var m = prim.defaultMaterial;
 
-	                                                            // Bind textures buffer (could have multiple bindings here).
+	                                                                                // Lighting flag.
 
-	                                                            gl.bindBuffer(gl.ARRAY_BUFFER, prim.geometry.texCoords.buffer);
-	                                                            gl.enableVertexAttribArray(aTextureCoord);
-	                                                            gl.vertexAttribPointer(aTextureCoord, 2, gl.FLOAT, false, 0, 0);
+	                                                                                gl.uniform1i(uUseLighting, lighting);
 
-	                                                            // Bind normals buffer.
+	                                                                                // Material lighting properties.
 
-	                                                            gl.bindBuffer(gl.ARRAY_BUFFER, prim.geometry.normals.buffer);
-	                                                            gl.enableVertexAttribArray(aVertexNormal);
-	                                                            gl.vertexAttribPointer(aVertexNormal, 3, gl.FLOAT, false, 0, 0);
+	                                                                                gl.uniform3fv(fsVars.uniform.vec3.uMatEmissive, m.emissive);
+	                                                                                gl.uniform3fv(fsVars.uniform.vec3.uMatAmbient, m.ambient); // NOTE: transparent objects go in their own Shader
+	                                                                                gl.uniform3fv(fsVars.uniform.vec3.uMatDiffuse, m.diffuse);
+	                                                                                gl.uniform3fv(fsVars.uniform.vec3.uMatSpecular, m.specular);
+	                                                                                gl.uniform1f(fsVars.uniform.float.uMatSpecExp, m.specularExponent);
 
-	                                                            gl.activeTexture(gl.TEXTURE0);
-	                                                            gl.bindTexture(gl.TEXTURE_2D, null);
-	                                                            gl.bindTexture(gl.TEXTURE_2D, prim.textures[0].texture);
+	                                                                                // World lighting (if used).
 
-	                                                            // Bind additional texture units.
+	                                                                                if (lighting) {
 
-	                                                            // Set fragment shader sampler uniform.
+	                                                                                                gl.uniform3fv(uAmbientColor, ambient);
+	                                                                                                gl.uniform3fv(uLightingDirection, adjustedLD);
+	                                                                                                gl.uniform3fv(uDirectionalColor, directionalColor);
+	                                                                                                gl.uniform3fv(uPOV, pov.position); // used for specular highlight
+	                                                                                }
 
-	                                                            gl.uniform1i(uSampler, 0);
+	                                                                                // Set normals matrix uniform (inverse transpose matrix).
 
-	                                                            // Default material (other Shaders might use multiple materials).
+	                                                                                gl.uniformMatrix3fv(uNMatrix, false, nMatrix);
 
-	                                                            var m = prim.defaultMaterial;
+	                                                                                // Set Perspective uniform.
 
-	                                                            // Lighting flag.
+	                                                                                gl.uniformMatrix4fv(uPMatrix, false, PM);
 
-	                                                            gl.uniform1i(uUseLighting, lighting);
+	                                                                                // Model-View matrix uniform.
 
-	                                                            // Material lighting properties.
+	                                                                                gl.uniformMatrix4fv(uMVMatrix, false, mvMatrix);
 
-	                                                            if (prim.name === 'objfile2') window.mm = m; //console.log("emissive:" +  m.emissive + " ambient:" + m.ambient + " diffuse:" + m.diffuse + " specular:" + m.specular)
+	                                                                                // Bind indices buffer.
 
-	                                                            gl.uniform3fv(fsVars.uniform.vec3.uMatEmissive, m.emissive);
-	                                                            gl.uniform3fv(fsVars.uniform.vec3.uMatAmbient, m.ambient); // NOTE: transparent objects go in their own Shader
-	                                                            gl.uniform3fv(fsVars.uniform.vec3.uMatDiffuse, m.diffuse);
-	                                                            gl.uniform3fv(fsVars.uniform.vec3.uMatSpecular, m.specular);
-	                                                            gl.uniform1f(fsVars.uniform.float.uMatSpecExp, m.specularExponent);
+	                                                                                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, prim.geometry.indices.buffer);
 
-	                                                            // World lighting (if used).
+	                                                                                if (stats.uint32) {
 
-	                                                            if (lighting) {
+	                                                                                                // Draw elements, 0 -> 2e9
 
-	                                                                        gl.uniform3fv(uAmbientColor, ambient);
-	                                                                        gl.uniform3fv(uLightingDirection, adjustedLD);
-	                                                                        gl.uniform3fv(uDirectionalColor, directionalColor);
-	                                                                        gl.uniform3fv(uPOV, pov.position); // used for specular highlight
-	                                                            }
+	                                                                                                gl.drawElements(gl.TRIANGLES, prim.geometry.indices.numItems, gl.UNSIGNED_INT, 0);
+	                                                                                } else {
 
-	                                                            // Set normals matrix uniform (inverse transpose matrix).
+	                                                                                                // Draw elements, 0 -> 65k (old platforms).
 
-	                                                            gl.uniformMatrix3fv(uNMatrix, false, nMatrix);
+	                                                                                                gl.drawElements(gl.TRIANGLES, prim.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
+	                                                                                }
 
-	                                                            // Set Perspective uniform.
+	                                                                                // Copy back the original MVM (with no local Prim transforms) for the next Prim. 
 
-	                                                            gl.uniformMatrix4fv(uPMatrix, false, PM);
+	                                                                                mat4.copy(mvMatrix, saveMV, mvMatrix);
+	                                                                } // end of renderList for Prims
 
-	                                                            // Model-View matrix uniform.
+	                                                                // Disable buffers that might cause problems in another Prim.
+	                                                }; // end of program.render()
 
-	                                                            gl.uniformMatrix4fv(uMVMatrix, false, mvMatrix);
+	                                                return program;
+	                                } // end if init()
 
-	                                                            // Bind indices buffer.
+	                }]);
 
-	                                                            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, prim.geometry.indices.buffer);
-
-	                                                            if (stats.uint32) {
-
-	                                                                        // Draw elements, 0 -> 2e9
-
-	                                                                        gl.drawElements(gl.TRIANGLES, prim.geometry.indices.numItems, gl.UNSIGNED_INT, 0);
-	                                                            } else {
-
-	                                                                        // Draw elements, 0 -> 65k (old platforms).
-
-	                                                                        gl.drawElements(gl.TRIANGLES, prim.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0);
-	                                                            }
-
-	                                                            // Copy back the original MVM (with no local Prim transforms) for the next Prim. 
-
-	                                                            mat4.copy(mvMatrix, saveMV, mvMatrix);
-	                                                } // end of renderList for Prims
-
-	                                                // Disable buffers that might cause problems in another Prim.
-	                                    }; // end of program.render()
-
-	                                    return program;
-	                        } // end if init()
-
-	            }]);
-
-	            return shaderDirLightTexture;
+	                return shaderDirLightTexture;
 	}(_shader2.default);
 
 	exports.default = shaderDirLightTexture;
@@ -18676,29 +18721,35 @@
 	                        ['obj/banana/banana.obj'] // works great
 	                        );
 
-	                        this.primFactory.createPrim(this.s3, // callback function
-	                        typeList.MESH, 'objfile2', vec5(2, 2, 2), // dimensions (4th dimension doesn't exist for cylinder)
-	                        vec5(40, 40, 40), // divisions MAKE SMALLER
-	                        vec3.fromValues(-6.5, 2, -1.0), // position (absolute)
-	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
-	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
-	                        vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
-	                        //[ 'img/crate.png' ],               // texture present. TODO::: FIGURE OUT NUMBERING.
-	                        '', // texture loaded directly
-	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0), // color,
-	                        true, // if true, apply texture to each face,
-	                        //[ 'obj/mountains/mountains.obj' ] // ok
-	                        //[ 'obj/landscape/landscape.obj'] // ok?
-	                        //[ 'obj/toilet/toilet.obj' ] // works with texture, multiple groups wrap texture!
-	                        //[ 'obj/naboo/naboo.obj' ] // works fine, but needs to load additional images.
-	                        //[ 'obj/star/star.obj'] // ok, gets generic grey texture
-	                        //[ 'obj/robhead/robhead.obj'] // no texcoords or normals
-	                        //[ 'obj/soccerball/soccerball.obj'] // no texcoords or normals
-	                        //[ 'obj/basketball/basketball.obj'] // needs TGA translation
-	                        //[ 'obj/rock1/rock1.obj'] // rock plus surface, works
-	                        ['obj/cherries/cherries.obj'] // rendering indices error > 64k
-	                        // 'obj/banana/banana.obj' ] // works great
-	                        );
+	                        /*
+	                                    this.primFactory.createPrim(
+	                        
+	                                        this.s3,                               // callback function
+	                                        typeList.MESH,
+	                                        'objfile2',
+	                                        vec5( 2, 2, 2 ),                       // dimensions (4th dimension doesn't exist for cylinder)
+	                                        vec5( 40, 40, 40  ),                    // divisions MAKE SMALLER
+	                                        vec3.fromValues( -6.5, 2, -1.0 ),      // position (absolute)
+	                                        vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+	                                        vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+	                                        vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+	                                        //[ 'img/crate.png' ],               // texture present. TODO::: FIGURE OUT NUMBERING.
+	                                        '', // texture loaded directly
+	                                        vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color,
+	                                        true,                                   // if true, apply texture to each face,
+	                                        //[ 'obj/mountains/mountains.obj' ] // ok
+	                                        //[ 'obj/landscape/landscape.obj'] // ok?
+	                                        //[ 'obj/toilet/toilet.obj' ] // works with texture, multiple groups wrap texture!
+	                                        //[ 'obj/naboo/naboo.obj' ] // works fine, but needs to load additional images.
+	                                        //[ 'obj/star/star.obj'] // ok, gets generic grey texture
+	                                        //[ 'obj/robhead/robhead.obj'] // no texcoords or normals
+	                                        //[ 'obj/soccerball/soccerball.obj'] // no texcoords or normals
+	                                        //[ 'obj/basketball/basketball.obj'] // needs TGA translation
+	                                        //[ 'obj/rock1/rock1.obj'] // rock plus surface, works
+	                                        [ 'obj/cherries/cherries.obj'] // rendering indices error > 64k
+	                                        // 'obj/banana/banana.obj' ] // works great
+	                                    );
+	                        */
 
 	                        //////////////////////////////////
 	                        // COLOR SHADER.

@@ -95,35 +95,29 @@ class shaderDirLightTexture extends Shader {
             'varying vec4 vPositionW;',
             'varying vec4 vNormalW;',
 
-            // Vertex coordinate.
-
-            'varying vec3 vPosition;',
-
             // Texture coordinates.
 
             'varying vec2 vTextureCoord;',
 
             'void main(void) {',
 
-            '    vAmbientColor = uAmbientColor;',
-            '    vLightingDirection = uLightingDirection;',
-            '    vDirectionalColor = uDirectionalColor;',
+                'vAmbientColor = uAmbientColor;',
 
-            // View-Model-Position-Projection matrix.
+                'vLightingDirection = uLightingDirection;',
 
-            '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);',
+                'vDirectionalColor = uDirectionalColor;',
 
-            // NOTE: Our Shader wants this POV NEGATIVE!!!!!!
+                // View-Model-Position-Projection matrix.
 
-            '    vPOV = -uPOV;',
+                'gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);',
 
-            // Texture coordinate.
+                'vTextureCoord = aTextureCoord;',
 
-            '    vTextureCoord = aTextureCoord;',
+                'vPOV = -uPOV;', // Shader wants this negative
 
-            '    vPositionW = uMVMatrix * vec4(aVertexPosition, 1.0);', // Model-View Matrix (including POV / camera).
+                'vPositionW = uMVMatrix * vec4(aVertexPosition, 1.0);', // Model-View Matrix (including POV / camera).
 
-            '    vNormalW =  normalize(vec4(uNMatrix*aVertexNormal, 0.0));', // Inverse-transpose-normal matrix rotates object normals.
+                'vNormalW =  normalize(vec4(uNMatrix*aVertexNormal, 0.0));', // Inverse-transpose-normal matrix rotates object normals.
 
             '}'
 
@@ -176,16 +170,11 @@ class shaderDirLightTexture extends Shader {
 
             // Varying.
 
+            'varying vec3 vPOV;',
             'varying vec4 vPositionW;',
             'varying vec4 vNormalW;',
 
-            // World Point of View (camera).
-
-            'varying vec3 vPOV;',
-
             'varying vec2 vTextureCoord;',
-
-            // Texture sampler.
 
             'uniform sampler2D uSampler;',
 
@@ -193,53 +182,51 @@ class shaderDirLightTexture extends Shader {
 
             'void main(void) {',
 
-            // Default texture color.
+                // Default texture color.
 
-            '    vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));',
+                'vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));',
 
-            // Emissive.
+                // Emissive.
 
-            '    vec4 Emissive = vec4(uMatEmissive, 1.0);',
+                'vec4 Emissive = vec4(uMatEmissive, 1.0);',
 
-            // Ambient.
+                // Ambient.
 
-            '    vec4 Ambient = vec4(vAmbientColor, 1.0) * vec4(uMatAmbient, 1.0);',
+                'vec4 Ambient = vec4(vAmbientColor, 1.0) * vec4(uMatAmbient, 1.0);',
 
-            // Diffuse.
+                // Diffuse.
 
-            '    vec4 N = normalize(vNormalW);',
+                'vec4 N = normalize(vNormalW);',
 
-            '    vec4 LL = normalize(vec4(vLightingDirection, 1.0));',
+                'vec4 LL = normalize(vec4(vLightingDirection, 1.0));',
 
-            '    float NdotL = max( dot(N, LL), 0.0);',
+                'float NdotL = max( dot(N, LL), 0.0);',
 
-            '    vec4 Diffuse =  NdotL * vec4(vDirectionalColor * uMatDiffuse, 1.0);',
+                'vec4 Diffuse =  NdotL * vec4(vDirectionalColor * uMatDiffuse, 1.0);',
 
-            // Specular.
+                // Specular.
 
-            // Changing 4th parameter to 0.0 instead of 1.0 improved results.
+                // Changing 4th parameter to 0.0 instead of 1.0 improved results.
 
-            '    vec4 L = normalize(vec4(vLightingDirection, 1.0) - vPositionW);',
+                'vec4 L = normalize(vec4(vLightingDirection, 1.0) - vPositionW);',
 
-            '    vec4 EyePosW = vec4(vPOV, 0.0);', // world = eye = camera position
+                'vec4 EyePosW = vec4(vPOV, 0.0);', // world = eye = camera position
 
-            '    vec4 V = normalize(EyePosW - vPositionW );', // if this is just vPositionW we get a highlight around edges in right place
+                'vec4 V = normalize(EyePosW - vPositionW );', // if this is just vPositionW we get a highlight around edges in right place
 
-            '    vec4 H = normalize(L + V);',
+                'vec4 H = normalize(L + V);',
 
-            '    vec4 R = reflect(-L, N);', // -L needed to bring to center. +L gives edges highlighted
+                'vec4 R = reflect(-L, N);', // -L needed to bring to center. +L gives edges highlighted
 
-            '    float RdotV = max(dot(R, V), 0.0);',
+                'float RdotV = max(dot(R, V), 0.0);',
 
-            '    float NdotH = max(dot(N, H), 0.0);',
+                'float NdotH = max(dot(N, H), 0.0);',
 
-            '    vec4 Specular = pow(RdotV, uMatSpecExp) * pow(NdotH, uMatSpecExp) * vec4(vDirectionalColor * uMatSpecular, 1.0);',
+                'vec4 Specular = pow(RdotV, uMatSpecExp) * pow(NdotH, uMatSpecExp) * vec4(vDirectionalColor * uMatSpecular, 1.0);',
 
-            // TODO: specular surround.
+                // Final fragment color.
 
-            // Final fragment color.
-
-            '    gl_FragColor =  (Emissive + Ambient + Diffuse + Specular) * vec4(textureColor.rgb, textureColor.a);',
+                'gl_FragColor =  (Emissive + Ambient + Diffuse + Specular) * vec4(textureColor.rgb, textureColor.a);',
 
             '}'
 
@@ -464,13 +451,11 @@ class shaderDirLightTexture extends Shader {
 
                 // Material lighting properties.
 
-                if ( prim.name === 'objfile2' ) window.mm = m //console.log("emissive:" +  m.emissive + " ambient:" + m.ambient + " diffuse:" + m.diffuse + " specular:" + m.specular)
-
                 gl.uniform3fv( fsVars.uniform.vec3.uMatEmissive, m.emissive );
                 gl.uniform3fv( fsVars.uniform.vec3.uMatAmbient, m.ambient ); // NOTE: transparent objects go in their own Shader
                 gl.uniform3fv( fsVars.uniform.vec3.uMatDiffuse, m.diffuse );
                 gl.uniform3fv( fsVars.uniform.vec3.uMatSpecular, m.specular );
-                gl.uniform1f( fsVars.uniform.float.uMatSpecExp, m.specularExponent )
+                gl.uniform1f( fsVars.uniform.float.uMatSpecExp, m.specularExponent );
 
                 // World lighting (if used).
 
