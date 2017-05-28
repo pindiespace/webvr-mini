@@ -851,66 +851,84 @@
 	                // ease-in quad 
 
 	        }, {
-	                key: 'easeInQuad',
-	                value: function easeInQuad(t) {
-	                        return t * t;
+	                key: 'easeLinearIn',
+	                value: function easeLinearIn(t) {
+	                        return t + 0.002;
 	                }
 	        }, {
-	                key: 'easeOutQuad',
-	                value: function easeOutQuad(t) {
-	                        return t * (2.0 - t);
+	                key: 'easeLinearOut',
+	                value: function easeLinearOut(t) {
+	                        return t - 0.002;
+	                }
+
+	                // TODO: these functions have to be adjusted for 0-1, computing what to return by current position on 0, 1 axis
+
+	        }, {
+	                key: 'easeQuadIn',
+	                value: function easeQuadIn(t) {
+	                        return t + Math.pow(t, 2);
 	                }
 	        }, {
-	                key: 'easeInCubic',
-	                value: function easeInCubic(t) {
+	                key: 'easeQuadOut',
+	                value: function easeQuadOut(t) {
+	                        return t - (Math.pow(t - 1, 2) - 1);
+	                }
+	        }, {
+	                key: 'easeCubicIn',
+	                value: function easeCubicIn(t) {
 	                        return Math.pow(t, 3);
 	                }
 	        }, {
-	                key: 'easeOutCubic',
-	                value: function easeOutCubic(t) {
+	                key: 'easeCubicOut',
+	                value: function easeCubicOut(t) {
 	                        return 1 - Math.pow(1 - t, 3);
 	                }
 	        }, {
-	                key: 'easeInQuart',
-	                value: function easeInQuart(t) {
+	                key: 'easeQuartIn',
+	                value: function easeQuartIn(t) {
 	                        return Math.pow(t, 4.0);
 	                }
 	        }, {
-	                key: 'easeOutQuart',
-	                value: function easeOutQuart(t) {
+	                key: 'easeQuartOut',
+	                value: function easeQuartOut(t) {
 	                        return Math.pow(t - 1.0, 3.0) * (1.0 - t) + 1.0;
 	                }
 	        }, {
-	                key: 'easeInQuint',
-	                value: function easeInQuint(t) {
+	                key: 'easeQuintIn',
+	                value: function easeQuintIn(t) {
 	                        return Math.pow(t, 5.0);
 	                }
 	        }, {
-	                key: 'easeOutQuint',
-	                value: function easeOutQuint(t) {
+	                key: 'easeQuintOut',
+	                value: function easeQuintOut(t) {
 	                        return Math.pow(t - 1, 5) + 1;
 	                }
 	        }, {
-	                key: 'easeInExp',
-	                value: function easeInExp(t) {
+	                key: 'easeExpIn',
+	                value: function easeExpIn(t) {
 	                        return Math.pow(t - 1, 5) + 1;
 	                }
 	        }, {
-	                key: 'easeOutExp',
-	                value: function easeOutExp(t) {
+	                key: 'easeExpOut',
+	                value: function easeExpOut(t) {
 	                        return t === 1 ? 1 : -Math.pow(2, -10 * t) + 1;
 	                }
+
+	                /** 
+	                 * pulse, using an easein/easeout combo.
+	                 */
+
 	        }, {
-	                key: 'easeInOutExp',
-	                value: function easeInOutExp(t) {
+	                key: 'pulse',
+	                value: function pulse(t, min, max, infn, outfn) {
 
-	                        if (t === 0) return 0;
+	                        if (t > max) {
 
-	                        if (t === 1) return 1;
+	                                this.outfn(t);
+	                        } else if (t < min) {
 
-	                        if ((t /= 0.5) < 1) return 0.5 * Math.pow(2, 10 * (t - 1));
-
-	                        return 0.5 * (-Math.pow(2, -10 * --t) + 2);
+	                                this.infn(t);
+	                        }
 	                }
 
 	                /* 
@@ -4922,7 +4940,7 @@
 
 	                        // Default Local link to easing function. Individual Prims can override.
 
-	                        var easeIn = this.util.easeInQuad;
+	                        var easeIn = this.util.easeQuadIn;
 
 	                        var easeType = 0;
 
@@ -4942,19 +4960,18 @@
 
 	                        var adjustedLD = lightingDirection;
 
-	                        // Update Prim position, motion - given to World object.
-
-	                        program.update = function (prim, MVM) {
+	                        /** 
+	                         * Simple fadein/fadeout
+	                         */
+	                        var fade = function fade(prim) {
 
 	                                var fade = prim.fade;
 
 	                                var dir = fade.endAlpha - fade.startAlpha;
 
-	                                var inc = prim.inc; //0.002;
-
 	                                if (dir > 0) {
 
-	                                        prim.alpha += inc;
+	                                        prim.alpha = prim.fade.eq(prim.alpha);
 
 	                                        if (prim.alpha >= fade.endAlpha) {
 
@@ -4966,7 +4983,11 @@
 	                                        }
 	                                } else if (dir < 0) {
 
-	                                        prim.alpha -= inc;
+	                                        prim.alpha = prim.fade.eq(prim.alpha);
+
+	                                        console.log('fadeout:' + prim.fade.eq(prim.alpha));
+
+	                                        //prim.alpha = prim.fade.eq( prim.alpha );
 
 	                                        if (prim.alpha <= fade.endAlpha) {
 
@@ -4977,12 +4998,22 @@
 	                                                prim.shader.movePrim(prim, prim.defaultShader);
 	                                        }
 	                                }
+	                        };
+
+	                        /** 
+	                         * simple pulse function
+	                         */
+	                        var pulse = function pulse(prim) {};
+
+	                        // Update Prim position, motion - given to World object.
+
+	                        program.update = function (prim, MVM) {
+
+	                                fade(prim);
 
 	                                // Update the model-view matrix using current Prim position, rotation, etc.
 
 	                                prim.setMV(MVM);
-
-	                                //vec3.copy( adjustedLD, lightingDirection );
 
 	                                // Calculates a 3x3 normal matrix (transpose inverse) from the 4x4 matrix.
 
@@ -4991,7 +5022,7 @@
 
 	                        /*
 	                         * Prim rendering. We pass in a the Projection Matrix so we can render in mono and stereo, and 
-	                         * the position of the camera/eye (POV) for some kinds of rendering (e.g. specular).
+	                         * the position of the camera/eye (POV) for some kinds of rendering (e.g. specular lighting).
 	                         * @param {glMatrix.mat4} PM projection matrix, either mono or stereo.
 	                         * @param {glMatrix.vec3} pov the position of the camera in World space.
 	                         */
@@ -5046,13 +5077,7 @@
 
 	                                        // Alpha, with easing animation (in this.util).
 
-	                                        if (prim.fade.eq) {
-
-	                                                gl.uniform1f(uAlpha, prim.fade.eq(prim.alpha));
-	                                        } else {
-
-	                                                gl.uniform1f(uAlpha, easeIn(prim.alpha));
-	                                        }
+	                                        gl.uniform1f(uAlpha, prim.alpha);
 
 	                                        // Conditionally set lighting, based on default Shader the Prim was assigned to.
 
@@ -8587,7 +8612,7 @@
 
 	                        prim.alpha = 0.0;
 
-	                        prim.setFade(0, 1);
+	                        prim.setFade(0, 1, 'easeLinear');
 	                });
 	        } // end of constructor
 
@@ -9200,10 +9225,10 @@
 	                         * @param {Boolean} direction if true, fade in, else fade out.
 	                         * @param {Number} start starting alpha.
 	                         * @param {Number} end ending alpha.
-	                         * @param {Function} eq (optional) fading equation.
+	                         * @param {Function} eq (optional) fading equation (optional).
 	                         */
 
-	                        prim.setFade = function (start, end, inc, eq) {
+	                        prim.setFade = function (start, end, eq) {
 
 	                                prim.fade.startAlpha = start;
 
@@ -9218,15 +9243,23 @@
 
 	                                prim.alpha = start;
 
-	                                if (inc) {
+	                                // Fade equation.
 
-	                                        prim.inc = inc;
+	                                if (eq) {
+
+	                                        if (end > start) {
+	                                                // fadein
+
+	                                                prim.fade.eq = _this2.util[eq + 'In'];
+	                                        } else {
+	                                                // fadeout
+
+	                                                prim.fade.eq = _this2.util[eq + 'Out'];
+	                                        }
 	                                } else {
 
-	                                        prim.inc = 0.004;
+	                                        prim.fade.eq = _this2.util['easeLinearIn'];
 	                                }
-
-	                                if (eq) prim.fade.eq = eq;
 
 	                                // Save our current Shader as a default (automatically swapped back by s0).
 

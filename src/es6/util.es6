@@ -342,35 +342,46 @@ class Util {
 
     // ease-in quad 
 
-    easeInQuad ( t ) { return t * t; }
+    easeLinearIn ( t ) { return t + 0.002; }
 
-    easeOutQuad ( t ) { return t * ( 2.0 - t ); }
+    easeLinearOut ( t ) { return t - 0.002; }
 
-    easeInCubic( t ) { return Math.pow( t, 3 ); }
+    // TODO: these functions have to be adjusted for 0-1, computing what to return by current position on 0, 1 axis
 
-    easeOutCubic ( t ) { return 1 - Math.pow( 1 - t, 3 ); }
+    easeQuadIn ( t ) { return t + Math.pow( t, 2 ); }
 
-    easeInQuart ( t ) { return Math.pow( t, 4.0 ); }
+    easeQuadOut ( t ) { return t - (Math.pow( ( t - 1), 2 ) -1 ); }
 
-    easeOutQuart ( t ) { return Math.pow( t - 1.0, 3.0 ) * ( 1.0 - t ) + 1.0; }
+    easeCubicIn ( t ) { return Math.pow( t, 3 ); }
 
-    easeInQuint ( t ) { return Math.pow( t, 5.0 ); }
+    easeCubicOut ( t ) { return 1 - Math.pow( 1 - t, 3 ); }
 
-    easeOutQuint ( t ) { return ( Math.pow( ( t - 1 ), 5 ) + 1 ); }
+    easeQuartIn ( t ) { return Math.pow( t, 4.0 ); }
 
-    easeInExp( t ) { return ( Math.pow(  ( t - 1 ), 5 ) + 1 ); }
+    easeQuartOut ( t ) { return Math.pow( t - 1.0, 3.0 ) * ( 1.0 - t ) + 1.0; }
 
-    easeOutExp ( t ) { return ( t === 1 ) ? 1 : -Math.pow( 2, -10 * t ) + 1; }
+    easeQuintIn ( t ) { return Math.pow( t, 5.0 ); }
 
-    easeInOutExp ( t ) {
+    easeQuintOut ( t ) { return ( Math.pow( ( t - 1 ), 5 ) + 1 ); }
 
-        if( t ===0 ) return 0;
+    easeExpIn ( t ) { return ( Math.pow(  ( t - 1 ), 5 ) + 1 ); }
 
-        if( t ===1 ) return 1;
+    easeExpOut ( t ) { return ( t === 1 ) ? 1 : -Math.pow( 2, -10 * t ) + 1; }
 
-        if( ( t /= 0.5 ) < 1 ) return 0.5 * Math.pow( 2, 10 * ( t - 1 ) );
+    /** 
+     * pulse, using an easein/easeout combo.
+     */
+    pulse ( t, min, max, infn, outfn ) {
 
-        return 0.5 * (-Math.pow( 2, -10 * --t ) + 2 );
+        if ( t > max ) {
+
+            this.outfn( t );
+
+        } else if ( t < min ) {
+
+            this.infn( t );
+
+        }
 
     }
 

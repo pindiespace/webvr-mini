@@ -184,7 +184,7 @@ class PrimFactory {
 
                 prim.alpha = 0.0;
 
-                prim.setFade( 0, 1 );
+                prim.setFade( 0, 1, 'easeLinear' );
 
         } );
 
@@ -829,10 +829,10 @@ class PrimFactory {
          * @param {Boolean} direction if true, fade in, else fade out.
          * @param {Number} start starting alpha.
          * @param {Number} end ending alpha.
-         * @param {Function} eq (optional) fading equation.
+         * @param {Function} eq (optional) fading equation (optional).
          */
 
-        prim.setFade = ( start, end, inc, eq ) => {
+        prim.setFade = ( start, end, eq ) => {
 
             prim.fade.startAlpha = start;
 
@@ -848,17 +848,25 @@ class PrimFactory {
 
             prim.alpha = start;
 
-            if ( inc ) {
+            // Fade equation.
 
-                prim.inc = inc;
+            if ( eq ) {
+
+                if ( end > start ) { // fadein
+
+                    prim.fade.eq = this.util[ eq + 'In' ];
+
+                } else { // fadeout
+
+                    prim.fade.eq = this.util[ eq + 'Out' ];
+
+                }
 
             } else {
 
-                prim.inc = 0.004;
+                prim.fade.eq = this.util[ 'easeLinearIn' ];
 
             }
-
-            if ( eq ) prim.fade.eq = eq;
 
             // Save our current Shader as a default (automatically swapped back by s0).
 

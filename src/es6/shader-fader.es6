@@ -371,7 +371,7 @@ class ShaderFader extends Shader {
 
         // Default Local link to easing function. Individual Prims can override.
 
-        let easeIn = this.util.easeInQuad;
+        let easeIn = this.util.easeQuadIn;
 
         let easeType = 0;
 
@@ -391,19 +391,18 @@ class ShaderFader extends Shader {
 
         let adjustedLD = lightingDirection;
 
-        // Update Prim position, motion - given to World object.
-
-        program.update = ( prim, MVM ) => {
+        /** 
+         * Simple fadein/fadeout
+         */
+        let fade = ( prim ) => {
 
             let fade = prim.fade;
 
             let dir = fade.endAlpha - fade.startAlpha;
 
-            let inc = prim.inc; //0.002;
-
             if ( dir > 0 ) {
 
-                prim.alpha += inc;
+                prim.alpha = prim.fade.eq( prim.alpha );
 
                 if ( prim.alpha >= fade.endAlpha ) {
 
@@ -417,7 +416,11 @@ class ShaderFader extends Shader {
 
             } else if ( dir < 0 ) {
 
-                prim.alpha -= inc;
+                prim.alpha = prim.fade.eq( prim.alpha );
+
+                console.log('fadeout:' + prim.fade.eq( prim.alpha ) );
+
+                //prim.alpha = prim.fade.eq( prim.alpha );
 
                 if ( prim.alpha <= fade.endAlpha ) {
 
@@ -431,11 +434,24 @@ class ShaderFader extends Shader {
 
             }
 
+        }
+
+        /** 
+         * simple pulse function
+         */
+        let pulse = ( prim ) => {
+
+        }
+
+        // Update Prim position, motion - given to World object.
+
+        program.update = ( prim, MVM ) => {
+
+            fade( prim );
+
             // Update the model-view matrix using current Prim position, rotation, etc.
 
             prim.setMV( MVM );
-
-            //vec3.copy( adjustedLD, lightingDirection );
 
             // Calculates a 3x3 normal matrix (transpose inverse) from the 4x4 matrix.
 
@@ -445,7 +461,7 @@ class ShaderFader extends Shader {
 
         /*
          * Prim rendering. We pass in a the Projection Matrix so we can render in mono and stereo, and 
-         * the position of the camera/eye (POV) for some kinds of rendering (e.g. specular).
+         * the position of the camera/eye (POV) for some kinds of rendering (e.g. specular lighting).
          * @param {glMatrix.mat4} PM projection matrix, either mono or stereo.
          * @param {glMatrix.vec3} pov the position of the camera in World space.
          */
@@ -500,15 +516,7 @@ class ShaderFader extends Shader {
 
                 // Alpha, with easing animation (in this.util).
 
-                if ( prim.fade.eq ) {
-
-                    gl.uniform1f( uAlpha, prim.fade.eq( prim.alpha ) );
-
-                } else {
-
-                    gl.uniform1f( uAlpha, easeIn( prim.alpha ) );
-
-                }
+                gl.uniform1f( uAlpha, prim.alpha );
 
                 // Conditionally set lighting, based on default Shader the Prim was assigned to.
 
