@@ -4765,7 +4765,7 @@
 
 	                        'uniform vec3 uMatEmissive;', 'uniform vec3 uMatAmbient;', 'uniform vec3 uMatDiffuse;', 'uniform vec3 uMatSpecular;', 'uniform float uMatSpecExp;',
 
-	                        // Alpha value
+	                        // Alpha value.
 
 	                        'uniform float uAlpha;',
 
@@ -4786,17 +4786,15 @@
 
 	                        //  Set light compontents by Light x Material.
 
-	                        'vec4 Emissive = vec4(uMatEmissive, 1.0);', 'vec4 Ambient = vec4(uAmbientColor * uMatAmbient, uAlpha);', 'vec4 Diffuse = vec4(uDirectionalColor * uMatDiffuse, uAlpha);',
+	                        'vec4 Emissive = vec4(uMatEmissive, uAlpha);', 'vec4 Ambient = vec4(uAmbientColor * uMatAmbient, uAlpha);', 'vec4 Diffuse = vec4(uDirectionalColor * uMatDiffuse, uAlpha);',
 
 	                        // Specular should be zero if we aren't lighting.
 
-	                        'vec4 Specular = vec4(0.0, 0.0, 0.0, uAlpha);', 'if(uUseLighting) {', 'Ambient.rgb *= uAlpha;', // ??????? CHECK SORTING OF NON-DIRLIGHTEXTURE
-
-	                        'Diffuse.rgb *= uAlpha;',
+	                        'vec4 Specular = vec4(0.0, 0.0, 0.0, uAlpha);', 'if(uUseLighting) {',
 
 	                        // Add lighting direction to Diffuse.
 
-	                        'vec4 N = normalize(vNormalW);', 'vec4 LL = normalize(vec4(uLightingDirection, uAlpha));', 'float NdotL = max( dot(N, LL), 0.0);', 'Diffuse = NdotL * Diffuse;',
+	                        'vec4 N = normalize(vNormalW);', 'vec4 LL = normalize(vec4(uLightingDirection, 1.0));', 'float NdotL = max( dot(N, LL), 0.0);', 'Diffuse = NdotL * Diffuse;',
 
 	                        // Compute specular dot. Changing 4th parameter to 0.0 instead of 1.0 improved results.
 
@@ -4808,13 +4806,19 @@
 
 	                        'vec4 V = normalize(EyePosW - vPositionW );', 'vec4 H = normalize(L + V);', 'vec4 R = reflect(-L, N);', // -L computes side facing Light, +L computes shadow component
 
-	                        'float RdotV = max(dot(R, V), 0.0);', 'float NdotH = max(dot(N, H), 0.0);', 'float spec = 64.0;', //uMatSpecExp;', TODO: TODO: ??????? WHY NOT uMatSpecExp?????????????????
-
-	                        /////////////'float spec = uMatSpecExp;',
+	                        'float RdotV = max(dot(R, V), 0.0);', 'float NdotH = max(dot(N, H), 0.0);', 'float spec = uMatSpecExp;',
 
 	                        // Multiply Specular by global uAlpha here.
 
-	                        'Specular = pow(RdotV, spec) * pow(NdotH, spec) * vec4(uDirectionalColor * uMatSpecular, uAlpha);', '}',
+	                        'Specular = pow(RdotV, spec) * pow(NdotH, spec) * vec4(uDirectionalColor * uMatSpecular, uAlpha);', '} else {',
+
+	                        // Somewhat arbitrary, but gives the best fade up for non-lighted objects.
+
+	                        'Ambient.rgb *= uAlpha;',
+
+	                        //'Diffuse.rgb *= uAlpha;',
+
+	                        '}',
 
 	                        // Final fragment color.
 
@@ -4899,7 +4903,7 @@
 	                            uMatAmbient = fsVars.uniform.vec3.uMatAmbient,
 	                            uMatDiffuse = fsVars.uniform.vec3.uMatDiffuse,
 	                            uMatSpecular = fsVars.uniform.vec3.uMatSpecular,
-	                            uMatSpecExp = fsVars.uniform.vec3.uMatSpecExp,
+	                            uMatSpecExp = fsVars.uniform.float.uMatSpecExp,
 	                            uAmbientColor = fsVars.uniform.vec3.uAmbientColor,
 	                            // ambient light color
 
@@ -5099,8 +5103,9 @@
 	                                        gl.uniform3fv(uMatDiffuse, m.diffuse);
 	                                        gl.uniform3fv(uMatSpecular, m.specular);
 	                                        gl.uniform1f(uMatSpecExp, m.specularExponent);
+	                                        ////////////gl.uniform1f( uMatSpecExp, 64.0 );
 
-	                                        ////if ( prim.name === 'TORUS1') console.log('uMatSpecExp:' + m.specularExponent)
+	                                        ///////////if ( prim.name === 'TORUS1') console.log('uMatSpecExp:' + m.specularExponent)
 
 	                                        // Set normals matrix uniform (inverse transpose matrix).
 
@@ -5217,7 +5222,7 @@
 
 	                if (this.webgl.stats.highp) {
 
-	                        this.floatp = 'precision highp float;';
+	                        this.floatp = 'precision highp float;'; // TODO: don't make the switch on mobile
 	                } else {
 
 	                        this.floatp = 'precision mediump float;';

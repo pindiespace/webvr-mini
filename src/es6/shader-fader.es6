@@ -148,7 +148,7 @@ class ShaderFader extends Shader {
             'uniform vec3 uMatSpecular;',
             'uniform float uMatSpecExp;',
 
-            // Alpha value
+            // Alpha value.
 
             'uniform float uAlpha;',
 
@@ -184,7 +184,7 @@ class ShaderFader extends Shader {
 
                 //  Set light compontents by Light x Material.
 
-                'vec4 Emissive = vec4(uMatEmissive, 1.0);',
+                'vec4 Emissive = vec4(uMatEmissive, uAlpha);',
 
                 'vec4 Ambient = vec4(uAmbientColor * uMatAmbient, uAlpha);',
 
@@ -196,15 +196,11 @@ class ShaderFader extends Shader {
 
                'if(uUseLighting) {',
 
-                    'Ambient.rgb *= uAlpha;', // ??????? CHECK SORTING OF NON-DIRLIGHTEXTURE
-
-                    'Diffuse.rgb *= uAlpha;',
-
                     // Add lighting direction to Diffuse.
 
                     'vec4 N = normalize(vNormalW);',
 
-                    'vec4 LL = normalize(vec4(uLightingDirection, uAlpha));',
+                    'vec4 LL = normalize(vec4(uLightingDirection, 1.0));',
 
                     'float NdotL = max( dot(N, LL), 0.0);',
 
@@ -228,13 +224,19 @@ class ShaderFader extends Shader {
 
                     'float NdotH = max(dot(N, H), 0.0);',
 
-                    'float spec = 64.0;', //uMatSpecExp;', TODO: TODO: ??????? WHY NOT uMatSpecExp?????????????????
-
-                    /////////////'float spec = uMatSpecExp;',
+                    'float spec = uMatSpecExp;',
 
                     // Multiply Specular by global uAlpha here.
 
                     'Specular = pow(RdotV, spec) * pow(NdotH, spec) * vec4(uDirectionalColor * uMatSpecular, uAlpha);',
+
+                '} else {',
+
+                    // Somewhat arbitrary, but gives the best fade up for non-lighted objects.
+
+                    'Ambient.rgb *= uAlpha;',
+
+                    //'Diffuse.rgb *= uAlpha;',
 
                 '}',
 
@@ -351,7 +353,7 @@ class ShaderFader extends Shader {
 
         uMatSpecular = fsVars.uniform.vec3.uMatSpecular,
 
-        uMatSpecExp = fsVars.uniform.vec3.uMatSpecExp,
+        uMatSpecExp = fsVars.uniform.float.uMatSpecExp,
 
         uAmbientColor = fsVars.uniform.vec3.uAmbientColor, // ambient light color
 
@@ -561,8 +563,9 @@ class ShaderFader extends Shader {
                 gl.uniform3fv( uMatDiffuse, m.diffuse );
                 gl.uniform3fv( uMatSpecular, m.specular );
                 gl.uniform1f( uMatSpecExp, m.specularExponent );
+                ////////////gl.uniform1f( uMatSpecExp, 64.0 );
 
-                ////if ( prim.name === 'TORUS1') console.log('uMatSpecExp:' + m.specularExponent)
+                ///////////if ( prim.name === 'TORUS1') console.log('uMatSpecExp:' + m.specularExponent)
 
                 // Set normals matrix uniform (inverse transpose matrix).
 

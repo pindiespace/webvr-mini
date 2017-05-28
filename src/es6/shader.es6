@@ -55,7 +55,7 @@ class Shader {
 
         if ( this.webgl.stats.highp ) {
 
-            this.floatp = 'precision highp float;';
+            this.floatp = 'precision highp float;'; // TODO: don't make the switch on mobile
 
         } else {
 
