@@ -840,75 +840,77 @@
 	                }
 
 	                /** 
-	                 * Basic easing in operations.
+	                 * Basic easing operations.
 	                 * @link https://gist.github.com/gre/1650294
 	                 * @link https://github.com/gre/bezier-easing
+	                 * @link https://github.com/danro/easing-js/blob/master/easing.js
 	                 * @param {Number} a a number between 0-1
 	                 * @param {Number} type the type of easing.
 	                 */
 
+	                // ease-in quad 
+
 	        }, {
-	                key: 'easeIn',
-	                value: function easeIn(a, type) {
-
-	                        var t = a;
-
-	                        switch (type) {
-
-	                                case 0:
-	                                        return t * t; // ease-in quad
-
-	                                case 1:
-	                                        return Math.pow(t, 3); // ease-in cubic
-
-	                                case 2:
-	                                        return t * t * t * t * t; // ease-in quint
-
-	                                case 3:
-	                                        return t < 0.5 ? 8 * t * t * t * t : 1 - 8 * --t * t * t * t; // in-out quart
-
-	                                case 4:
-	                                        return t < 0.5 ? 16 * t * t * t * t * t : 1 + 16 * --t * t * t * t * t; // in-out quint
-
-	                        }
-
-	                        return a;
+	                key: 'easeInQuad',
+	                value: function easeInQuad(t) {
+	                        return t * t;
 	                }
-
-	                /** 
-	                 * Basic easing out operations.
-	                 * @link https://gist.github.com/gre/1650294
-	                 * @link https://github.com/gre/bezier-easing
-	                 * @param {Number} a a number between 0-1
-	                 * @param {Number} type the type of easing.
-	                 */
-
 	        }, {
-	                key: 'easeOut',
-	                value: function easeOut(a, type) {
+	                key: 'easeOutQuad',
+	                value: function easeOutQuad(t) {
+	                        return t * (2.0 - t);
+	                }
+	        }, {
+	                key: 'easeInCubic',
+	                value: function easeInCubic(t) {
+	                        return Math.pow(t, 3);
+	                }
+	        }, {
+	                key: 'easeOutCubic',
+	                value: function easeOutCubic(t) {
+	                        return 1 - Math.pow(1 - t, 3);
+	                }
+	        }, {
+	                key: 'easeInQuart',
+	                value: function easeInQuart(t) {
+	                        return Math.pow(t, 4.0);
+	                }
+	        }, {
+	                key: 'easeOutQuart',
+	                value: function easeOutQuart(t) {
+	                        return Math.pow(t - 1.0, 3.0) * (1.0 - t) + 1.0;
+	                }
+	        }, {
+	                key: 'easeInQuint',
+	                value: function easeInQuint(t) {
+	                        return Math.pow(t, 5.0);
+	                }
+	        }, {
+	                key: 'easeOutQuint',
+	                value: function easeOutQuint(t) {
+	                        return Math.pow(t - 1, 5) + 1;
+	                }
+	        }, {
+	                key: 'easeInExp',
+	                value: function easeInExp(t) {
+	                        return Math.pow(t - 1, 5) + 1;
+	                }
+	        }, {
+	                key: 'easeOutExp',
+	                value: function easeOutExp(t) {
+	                        return t === 1 ? 1 : -Math.pow(2, -10 * t) + 1;
+	                }
+	        }, {
+	                key: 'easeInOutExp',
+	                value: function easeInOutExp(t) {
 
-	                        var t = a;
+	                        if (t === 0) return 0;
 
-	                        switch (type) {
+	                        if (t === 1) return 1;
 
-	                                case 0:
-	                                        return t * (2 - t); // ease-out quad
+	                        if ((t /= 0.5) < 1) return 0.5 * Math.pow(2, 10 * (t - 1));
 
-	                                case 1:
-	                                        return 1 - Math.pow(1 - t, 3); // ease-out cubic
-
-	                                case 2:
-	                                        return 1 + --t * t * t * t * t; // ease-out quint
-
-	                                case 3:
-	                                        return 1 + --t * (t < 0.5 ? 8 * t * t * t * t : 1 - 8 * --t * t * t * t); // in-out quart
-
-	                                case 4:
-	                                        return 1 + --t * (t < 0.5 ? 16 * t * t * t * t * t : 1 + 16 * --t * t * t * t * t); // out-in quint
-
-	                        }
-
-	                        return a;
+	                        return 0.5 * (-Math.pow(2, -10 * --t) + 2);
 	                }
 
 	                /* 
@@ -4835,7 +4837,7 @@
 
 	                /** 
 	                 * --------------------------------------------------------------------
-	                 * Vertex Shader 2, using color buffer but not texture.
+	                 * Vertex Shader 0, fades in/out colored/textured objects.
 	                 * --------------------------------------------------------------------
 	                 */
 
@@ -4918,9 +4920,9 @@
 	                            uMVMatrix = vsVars.uniform.mat4.uMVMatrix,
 	                            uNMatrix = vsVars.uniform.mat3.uNMatrix; // Inverse-transpose normal matrix
 
-	                        // Local link to easing function
+	                        // Default Local link to easing function. Individual Prims can override.
 
-	                        var easeIn = this.util.easeIn;
+	                        var easeIn = this.util.easeInQuad;
 
 	                        var easeType = 0;
 
@@ -4948,7 +4950,7 @@
 
 	                                var dir = fade.endAlpha - fade.startAlpha;
 
-	                                var inc = 0.002;
+	                                var inc = prim.inc; //0.002;
 
 	                                if (dir > 0) {
 
@@ -5044,7 +5046,13 @@
 
 	                                        // Alpha, with easing animation (in this.util).
 
-	                                        gl.uniform1f(uAlpha, easeIn(prim.alpha, 0));
+	                                        if (prim.fade.eq) {
+
+	                                                gl.uniform1f(uAlpha, prim.fade.eq(prim.alpha));
+	                                        } else {
+
+	                                                gl.uniform1f(uAlpha, easeIn(prim.alpha));
+	                                        }
 
 	                                        // Conditionally set lighting, based on default Shader the Prim was assigned to.
 
@@ -9048,10 +9056,6 @@
 	                                var map_Kd = arguments[9];
 
 
-	                                //p.materials[ name ] = this.materialPool.default( name, ambient, diffuse, specular, 
-
-	                                // specularExponent, sharpness, refraction, transparency, illum, map_Kd );
-
 	                                var material = _this2.materialPool.default(name, ambient, diffuse, specular, specularExponent, sharpness, refraction, transparency, illum, map_Kd);
 
 	                                // Check for links in Prim.textures.
@@ -9191,14 +9195,15 @@
 	                        };
 
 	                        /** 
-	                         * Fade the Prim in or out, optionally using a define equation.
+	                         * Fade the Prim in or out, optionally using a define equation. Note that 
+	                         * We have to sort Prims back to front to get the fade to be 'transparent'.
 	                         * @param {Boolean} direction if true, fade in, else fade out.
 	                         * @param {Number} start starting alpha.
 	                         * @param {Number} end ending alpha.
 	                         * @param {Function} eq (optional) fading equation.
 	                         */
 
-	                        prim.setFade = function (start, end, eq) {
+	                        prim.setFade = function (start, end, inc, eq) {
 
 	                                prim.fade.startAlpha = start;
 
@@ -9213,9 +9218,17 @@
 
 	                                prim.alpha = start;
 
+	                                if (inc) {
+
+	                                        prim.inc = inc;
+	                                } else {
+
+	                                        prim.inc = 0.004;
+	                                }
+
 	                                if (eq) prim.fade.eq = eq;
 
-	                                // Save our current Shader as a default (swapped back by s0).
+	                                // Save our current Shader as a default (automatically swapped back by s0).
 
 	                                if (prim.shader !== _this2.world.s0) {
 
@@ -18993,6 +19006,8 @@
 	        }, {
 	                key: 'housekeep',
 	                value: function housekeep() {}
+
+	                // TODO: change webvr sitting to standing matrix so we reduce matrix multiplys.
 
 	                // TODO: check if webvr.presenting when first rebooting. If so, toggle Ui to that mode.
 

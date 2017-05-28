@@ -885,6 +885,8 @@ class World extends AssetPool {
      */
     housekeep () {
 
+// TODO: change webvr sitting to standing matrix so we reduce matrix multiplys.
+
 // TODO: check if webvr.presenting when first rebooting. If so, toggle Ui to that mode.
 
 // TODO: initPrimMaterial is just picking the first material as default. Find the material with the lowest start.

@@ -323,7 +323,7 @@ class Util {
      * ---------------------------------------
      * NUMBER UI OPERATIONS
      * ---------------------------------------
-     */    
+     */
 
     randomColor () {
 
@@ -332,60 +332,45 @@ class Util {
     }
 
     /** 
-     * Basic easing in operations.
+     * Basic easing operations.
      * @link https://gist.github.com/gre/1650294
      * @link https://github.com/gre/bezier-easing
+     * @link https://github.com/danro/easing-js/blob/master/easing.js
      * @param {Number} a a number between 0-1
      * @param {Number} type the type of easing.
      */
-    easeIn ( a, type ) {
 
-        let t = a;
+    // ease-in quad 
 
-        switch( type ) {
+    easeInQuad ( t ) { return t * t; }
 
-            case 0: return t * t; // ease-in quad
+    easeOutQuad ( t ) { return t * ( 2.0 - t ); }
 
-            case 1: return Math.pow( t, 3 ); // ease-in cubic
+    easeInCubic( t ) { return Math.pow( t, 3 ); }
 
-            case 2: return t * t * t * t * t; // ease-in quint
+    easeOutCubic ( t ) { return 1 - Math.pow( 1 - t, 3 ); }
 
-            case 3: return t < 0.5 ? 8 * t * t * t * t : 1 - 8 * ( --t ) * t * t * t; // in-out quart
+    easeInQuart ( t ) { return Math.pow( t, 4.0 ); }
 
-            case 4: return t < 0.5 ? 16 * t * t * t * t * t : 1 + 16 * ( --t ) * t * t * t * t ; // in-out quint
+    easeOutQuart ( t ) { return Math.pow( t - 1.0, 3.0 ) * ( 1.0 - t ) + 1.0; }
 
-        }
+    easeInQuint ( t ) { return Math.pow( t, 5.0 ); }
 
-        return a;
+    easeOutQuint ( t ) { return ( Math.pow( ( t - 1 ), 5 ) + 1 ); }
 
-    }
+    easeInExp( t ) { return ( Math.pow(  ( t - 1 ), 5 ) + 1 ); }
 
-    /** 
-     * Basic easing out operations.
-     * @link https://gist.github.com/gre/1650294
-     * @link https://github.com/gre/bezier-easing
-     * @param {Number} a a number between 0-1
-     * @param {Number} type the type of easing.
-     */
-    easeOut ( a, type ) {
+    easeOutExp ( t ) { return ( t === 1 ) ? 1 : -Math.pow( 2, -10 * t ) + 1; }
 
-        let t = a;
+    easeInOutExp ( t ) {
 
-        switch( type ) {
+        if( t ===0 ) return 0;
 
-            case 0: return t * ( 2 - t ); // ease-out quad
+        if( t ===1 ) return 1;
 
-            case 1: return 1 - Math.pow( 1 - t, 3 ); // ease-out cubic
+        if( ( t /= 0.5 ) < 1 ) return 0.5 * Math.pow( 2, 10 * ( t - 1 ) );
 
-            case 2: return 1 + (--t ) * t * t * t * t; // ease-out quint
-
-            case 3: return 1 + (--t ) * ( t < 0.5 ? 8  * t * t * t * t : 1 - 8 * ( --t ) * t * t * t ); // in-out quart
-
-            case 4: return 1 + (--t ) * ( t < 0.5 ? 16 * t * t * t * t * t : 1 + 16 * ( --t ) * t * t * t * t ); // out-in quint
-
-        }
-
-        return a;
+        return 0.5 * (-Math.pow( 2, -10 * --t ) + 2 );
 
     }
 

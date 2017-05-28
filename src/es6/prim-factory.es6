@@ -653,10 +653,6 @@ class PrimFactory {
 
             specularExponent, sharpness, refraction, transparency, illum, map_Kd ) => {
 
-            //p.materials[ name ] = this.materialPool.default( name, ambient, diffuse, specular, 
-
-            // specularExponent, sharpness, refraction, transparency, illum, map_Kd );
-
             let material = this.materialPool.default( name, ambient, diffuse, specular, 
 
                 specularExponent, sharpness, refraction, transparency, illum, map_Kd );
@@ -828,14 +824,15 @@ class PrimFactory {
         }
 
         /** 
-         * Fade the Prim in or out, optionally using a define equation.
+         * Fade the Prim in or out, optionally using a define equation. Note that 
+         * We have to sort Prims back to front to get the fade to be 'transparent'.
          * @param {Boolean} direction if true, fade in, else fade out.
          * @param {Number} start starting alpha.
          * @param {Number} end ending alpha.
          * @param {Function} eq (optional) fading equation.
          */
 
-        prim.setFade = ( start, end, eq ) => {
+        prim.setFade = ( start, end, inc, eq ) => {
 
             prim.fade.startAlpha = start;
 
@@ -847,13 +844,23 @@ class PrimFactory {
 
                 prim.fade.endAlpha = 1.0 - prim.defaultMaterial.transparency;
 
-            }                
+            }
 
             prim.alpha = start;
 
+            if ( inc ) {
+
+                prim.inc = inc;
+
+            } else {
+
+                prim.inc = 0.004;
+
+            }
+
             if ( eq ) prim.fade.eq = eq;
 
-            // Save our current Shader as a default (swapped back by s0).
+            // Save our current Shader as a default (automatically swapped back by s0).
 
             if ( prim.shader !== this.world.s0 ) {
 

@@ -260,7 +260,7 @@ class ShaderFader extends Shader {
 
     /** 
      * --------------------------------------------------------------------
-     * Vertex Shader 2, using color buffer but not texture.
+     * Vertex Shader 0, fades in/out colored/textured objects.
      * --------------------------------------------------------------------
      */
 
@@ -369,9 +369,9 @@ class ShaderFader extends Shader {
 
         uNMatrix = vsVars.uniform.mat3.uNMatrix; // Inverse-transpose normal matrix
 
-        // Local link to easing function
+        // Default Local link to easing function. Individual Prims can override.
 
-        let easeIn = this.util.easeIn;
+        let easeIn = this.util.easeInQuad;
 
         let easeType = 0;
 
@@ -399,7 +399,7 @@ class ShaderFader extends Shader {
 
             let dir = fade.endAlpha - fade.startAlpha;
 
-            let inc = 0.002;
+            let inc = prim.inc; //0.002;
 
             if ( dir > 0 ) {
 
@@ -500,7 +500,15 @@ class ShaderFader extends Shader {
 
                 // Alpha, with easing animation (in this.util).
 
-                gl.uniform1f( uAlpha, easeIn( prim.alpha, 0 ) );
+                if ( prim.fade.eq ) {
+
+                    gl.uniform1f( uAlpha, prim.fade.eq( prim.alpha ) );
+
+                } else {
+
+                    gl.uniform1f( uAlpha, easeIn( prim.alpha ) );
+
+                }
 
                 // Conditionally set lighting, based on default Shader the Prim was assigned to.
 
