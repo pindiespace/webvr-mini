@@ -251,9 +251,9 @@ class ShaderColor extends Shader {
 
                 let prim = program.renderList[ i ];
 
-                // Only render if we have at least one texture loaded.
+                // Only render if we are visible.
 
-                if ( ! prim ) continue; // could be null
+                if ( ! prim || prim.alpha === 0 ) continue; // could be null
 
                 // Individual prim update
 

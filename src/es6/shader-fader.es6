@@ -396,17 +396,21 @@ class ShaderFader extends Shader {
          */
         let fade = ( prim ) => {
 
-            let fade = prim.fade;
+            let f = prim.fade;
 
-            let dir = fade.endAlpha - fade.startAlpha;
+            let dir = f.endAlpha - f.startAlpha;
 
             if ( dir > 0 ) {
 
-                prim.alpha = prim.fade.eq( prim.alpha );
+                // Use a fade equation.
 
-                if ( prim.alpha >= fade.endAlpha ) {
+                f.incr = f.eq( f.incr );
 
-                    prim.alpha = fade.endAlpha;
+                prim.alpha += f.incr;
+
+                if ( prim.alpha >= f.endAlpha ) {
+
+                    prim.alpha = f.endAlpha;
 
                     // This turns off this Shader!
 
@@ -416,15 +420,17 @@ class ShaderFader extends Shader {
 
             } else if ( dir < 0 ) {
 
-                prim.alpha = prim.fade.eq( prim.alpha );
+                // Use a fade equation.
 
-                console.log('fadeout:' + prim.fade.eq( prim.alpha ) );
+                f.incr = f.eq( f.incr );
 
-                //prim.alpha = prim.fade.eq( prim.alpha );
+                prim.alpha -= f.incr;
 
-                if ( prim.alpha <= fade.endAlpha ) {
+                if ( prim.alpha <= f.endAlpha ) {
 
-                    prim.alpha = fade.endAlpha;
+                    prim.alpha = f.endAlpha;
+
+                    console.log("prim.alpha is now:" + prim.alpha)
 
                     // This turns off this Shader!
 
@@ -433,13 +439,6 @@ class ShaderFader extends Shader {
                 }
 
             }
-
-        }
-
-        /** 
-         * simple pulse function
-         */
-        let pulse = ( prim ) => {
 
         }
 

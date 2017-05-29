@@ -251,9 +251,9 @@ class ShaderTexture extends Shader {
 
                 let prim = program.renderList[ i ];
 
-                // Only render if we have at least one texture loaded.
+                // Only render if we are visible, and have at least one texture loaded.
 
-                if ( ! prim || ! prim.textures[ 0 ] || ! prim.textures[ 0 ].texture ) continue;
+                if ( ! prim || prim.alpha === 0 || ! prim.textures[ 0 ] || ! prim.textures[ 0 ].texture ) continue;
 
                 // Individual Prim update.
 

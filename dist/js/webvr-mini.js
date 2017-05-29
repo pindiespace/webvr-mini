@@ -853,66 +853,29 @@
 	        }, {
 	                key: 'easeLinearIn',
 	                value: function easeLinearIn(t) {
-	                        return t + 0.002;
+	                        var inc = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0.002;
+	                        return t + inc;
 	                }
 	        }, {
 	                key: 'easeLinearOut',
 	                value: function easeLinearOut(t) {
-	                        return t - 0.002;
+	                        var inc = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0.002;
+	                        return t - inc;
+	                }
+	        }, {
+	                key: 'easeQuadIn',
+	                value: function easeQuadIn(t) {
+	                        var inc = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0.001;
+	                        return t + t * t;
+	                }
+	        }, {
+	                key: 'easeQuadOut',
+	                value: function easeQuadOut(t, inc) {
+	                        return t + t * t;
 	                }
 
 	                // TODO: these functions have to be adjusted for 0-1, computing what to return by current position on 0, 1 axis
 
-	        }, {
-	                key: 'easeQuadIn',
-	                value: function easeQuadIn(t) {
-	                        return t + Math.pow(t, 2);
-	                }
-	        }, {
-	                key: 'easeQuadOut',
-	                value: function easeQuadOut(t) {
-	                        return t - (Math.pow(t - 1, 2) - 1);
-	                }
-	        }, {
-	                key: 'easeCubicIn',
-	                value: function easeCubicIn(t) {
-	                        return Math.pow(t, 3);
-	                }
-	        }, {
-	                key: 'easeCubicOut',
-	                value: function easeCubicOut(t) {
-	                        return 1 - Math.pow(1 - t, 3);
-	                }
-	        }, {
-	                key: 'easeQuartIn',
-	                value: function easeQuartIn(t) {
-	                        return Math.pow(t, 4.0);
-	                }
-	        }, {
-	                key: 'easeQuartOut',
-	                value: function easeQuartOut(t) {
-	                        return Math.pow(t - 1.0, 3.0) * (1.0 - t) + 1.0;
-	                }
-	        }, {
-	                key: 'easeQuintIn',
-	                value: function easeQuintIn(t) {
-	                        return Math.pow(t, 5.0);
-	                }
-	        }, {
-	                key: 'easeQuintOut',
-	                value: function easeQuintOut(t) {
-	                        return Math.pow(t - 1, 5) + 1;
-	                }
-	        }, {
-	                key: 'easeExpIn',
-	                value: function easeExpIn(t) {
-	                        return Math.pow(t - 1, 5) + 1;
-	                }
-	        }, {
-	                key: 'easeExpOut',
-	                value: function easeExpOut(t) {
-	                        return t === 1 ? 1 : -Math.pow(2, -10 * t) + 1;
-	                }
 
 	                /** 
 	                 * pulse, using an easein/easeout combo.
@@ -4965,17 +4928,21 @@
 	                         */
 	                        var fade = function fade(prim) {
 
-	                                var fade = prim.fade;
+	                                var f = prim.fade;
 
-	                                var dir = fade.endAlpha - fade.startAlpha;
+	                                var dir = f.endAlpha - f.startAlpha;
 
 	                                if (dir > 0) {
 
-	                                        prim.alpha = prim.fade.eq(prim.alpha);
+	                                        // Use a fade equation.
 
-	                                        if (prim.alpha >= fade.endAlpha) {
+	                                        f.incr = f.eq(f.incr);
 
-	                                                prim.alpha = fade.endAlpha;
+	                                        prim.alpha += f.incr;
+
+	                                        if (prim.alpha >= f.endAlpha) {
+
+	                                                prim.alpha = f.endAlpha;
 
 	                                                // This turns off this Shader!
 
@@ -4983,15 +4950,17 @@
 	                                        }
 	                                } else if (dir < 0) {
 
-	                                        prim.alpha = prim.fade.eq(prim.alpha);
+	                                        // Use a fade equation.
 
-	                                        console.log('fadeout:' + prim.fade.eq(prim.alpha));
+	                                        f.incr = f.eq(f.incr);
 
-	                                        //prim.alpha = prim.fade.eq( prim.alpha );
+	                                        prim.alpha -= f.incr;
 
-	                                        if (prim.alpha <= fade.endAlpha) {
+	                                        if (prim.alpha <= f.endAlpha) {
 
-	                                                prim.alpha = fade.endAlpha;
+	                                                prim.alpha = f.endAlpha;
+
+	                                                console.log("prim.alpha is now:" + prim.alpha);
 
 	                                                // This turns off this Shader!
 
@@ -4999,11 +4968,6 @@
 	                                        }
 	                                }
 	                        };
-
-	                        /** 
-	                         * simple pulse function
-	                         */
-	                        var pulse = function pulse(prim) {};
 
 	                        // Update Prim position, motion - given to World object.
 
@@ -6108,9 +6072,9 @@
 
 	                                        var prim = program.renderList[i];
 
-	                                        // Only render if we have at least one texture loaded.
+	                                        // Only render if we are visible, and have at least one texture loaded.
 
-	                                        if (!prim || !prim.textures[0] || !prim.textures[0].texture) continue;
+	                                        if (!prim || prim.alpha === 0 || !prim.textures[0] || !prim.textures[0].texture) continue;
 
 	                                        // Individual Prim update.
 
@@ -6424,9 +6388,9 @@
 
 	                                        var prim = program.renderList[i];
 
-	                                        // Only render if we have at least one texture loaded.
+	                                        // Only render if we are visible.
 
-	                                        if (!prim) continue; // could be null
+	                                        if (!prim || prim.alpha === 0) continue; // could be null
 
 	                                        // Individual prim update
 
@@ -6861,9 +6825,9 @@
 
 	                                        var prim = program.renderList[i];
 
-	                                        // Only render if we have at least one texture loaded.
+	                                        // Only render if we are visible, and have at least one texture loaded.
 
-	                                        if (!prim || !prim.textures[0] || !prim.textures[0].texture) continue;
+	                                        if (!prim || prim.alpha === 0 || !prim.textures[0] || !prim.textures[0].texture) continue;
 
 	                                        // Update Model-View matrix with standard Prim values.
 
@@ -7177,9 +7141,9 @@
 
 	                                        var prim = program.renderList[i];
 
-	                                        // Only render if we have at least one texture loaded.
+	                                        // Only render if we are visible, and have at least one texture loaded.
 
-	                                        if (!prim || !prim.textures[0] || !prim.textures[0].texture) continue;
+	                                        if (!prim || prim.alpha === 0 || !prim.textures[0] || !prim.textures[0].texture) continue;
 
 	                                        // Update Model-View matrix with standard Prim values.
 
@@ -7428,9 +7392,9 @@
 
 	                                        var prim = program.renderList[i];
 
-	                                        // Only render if we have at least one texture loaded.
+	                                        // Only render if we are visible, and have at least one texture loaded.
 
-	                                        if (!prim || !prim.textures[0] || !prim.textures[0].texture) continue;
+	                                        if (!prim || prim.alpha === 0 || !prim.textures[0] || !prim.textures[0].texture) continue;
 
 	                                        // Update Model-View matrix with standard Prim values.
 
@@ -7669,9 +7633,9 @@
 
 	                                        var prim = program.renderList[i];
 
-	                                        // Only render if we have at least one texture loaded.
+	                                        // Only render if we are visible, and have at least one texture loaded.
 
-	                                        if (!prim || !prim.textures[0] || !prim.textures[0].texture) continue;
+	                                        if (!prim || prim.alpha === 0 || !prim.textures[0] || !prim.textures[0].texture) continue;
 
 	                                        // Update Model-View matrix with standard Prim values.
 
@@ -8612,7 +8576,7 @@
 
 	                        prim.alpha = 0.0;
 
-	                        prim.setFade(0, 1, 'easeLinear');
+	                        prim.setFade(0, 1, 0.004, 'easeQuad');
 	                });
 	        } // end of constructor
 
@@ -9225,10 +9189,11 @@
 	                         * @param {Boolean} direction if true, fade in, else fade out.
 	                         * @param {Number} start starting alpha.
 	                         * @param {Number} end ending alpha.
+	                         * @param {Number} inc the incremental fade value.
 	                         * @param {Function} eq (optional) fading equation (optional).
 	                         */
 
-	                        prim.setFade = function (start, end, eq) {
+	                        prim.setFade = function (start, end, inc, eq) {
 
 	                                prim.fade.startAlpha = start;
 
@@ -9242,6 +9207,16 @@
 	                                }
 
 	                                prim.alpha = start;
+
+	                                // Increment.
+
+	                                if (Number.isFinite(inc)) {
+
+	                                        prim.fade.incr = inc;
+	                                } else {
+
+	                                        prim.fade.incr = 0.002;
+	                                }
 
 	                                // Fade equation.
 
@@ -9272,6 +9247,16 @@
 	                                        prim.shader.movePrim(prim, _this2.world.s0);
 	                                }
 	                        };
+
+	                        /** 
+	                         * Pulse a Prim's properties.
+	                         * - transparency
+	                         * - color
+	                         * - size
+	                         */
+	                        prim.setPulse = function (start, end, inc, eq) {};
+
+	                        prim.endPulse = function () {};
 
 	                        // Give the Prim a unique Id.
 
@@ -19053,7 +19038,7 @@
 
 	                // TODO: make light ambient and material ambient consistent!!!!!!!!!!!!!!!!
 
-	                // TODO: investigate why >64k isn't working on windows system
+	                // TODO: PULSE routine for multiple properties
 
 	                // TODO: smoothing groups
 
@@ -19068,6 +19053,10 @@
 	                // TODO: ANIMATION CLASS FOR PRIM IN UPDATEMV ROUTINE.
 
 	                // TODO: PRIM CONCATENATE SEVERAL PRIMS TOGETHER INTO ONE ARRAY??? CHECK HOW TO DO
+
+	                // TODO: SPLIT PRIMS IF SEVERAL MATERIALS ARE INVOLVED?
+
+	                // TODO: SPLIT PRIMS IF < 64k support?
 
 	                // NOTE: WebWorker for OBJ file parsing
 

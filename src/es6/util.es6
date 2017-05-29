@@ -342,31 +342,16 @@ class Util {
 
     // ease-in quad 
 
-    easeLinearIn ( t ) { return t + 0.002; }
+    easeLinearIn ( t, inc = 0.002 ) { return t + inc; }
 
-    easeLinearOut ( t ) { return t - 0.002; }
+    easeLinearOut ( t, inc = 0.002 ) { return t - inc; }
+
+    easeQuadIn ( t, inc = 0.001 ) { return t + ( t * t ); }
+
+    easeQuadOut ( t, inc ) { return t + ( t * t ); }
 
     // TODO: these functions have to be adjusted for 0-1, computing what to return by current position on 0, 1 axis
 
-    easeQuadIn ( t ) { return t + Math.pow( t, 2 ); }
-
-    easeQuadOut ( t ) { return t - (Math.pow( ( t - 1), 2 ) -1 ); }
-
-    easeCubicIn ( t ) { return Math.pow( t, 3 ); }
-
-    easeCubicOut ( t ) { return 1 - Math.pow( 1 - t, 3 ); }
-
-    easeQuartIn ( t ) { return Math.pow( t, 4.0 ); }
-
-    easeQuartOut ( t ) { return Math.pow( t - 1.0, 3.0 ) * ( 1.0 - t ) + 1.0; }
-
-    easeQuintIn ( t ) { return Math.pow( t, 5.0 ); }
-
-    easeQuintOut ( t ) { return ( Math.pow( ( t - 1 ), 5 ) + 1 ); }
-
-    easeExpIn ( t ) { return ( Math.pow(  ( t - 1 ), 5 ) + 1 ); }
-
-    easeExpOut ( t ) { return ( t === 1 ) ? 1 : -Math.pow( 2, -10 * t ) + 1; }
 
     /** 
      * pulse, using an easein/easeout combo.

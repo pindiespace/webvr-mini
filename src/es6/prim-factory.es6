@@ -184,7 +184,7 @@ class PrimFactory {
 
                 prim.alpha = 0.0;
 
-                prim.setFade( 0, 1, 'easeLinear' );
+                prim.setFade( 0, 1, 0.004, 'easeQuad' );
 
         } );
 
@@ -829,10 +829,11 @@ class PrimFactory {
          * @param {Boolean} direction if true, fade in, else fade out.
          * @param {Number} start starting alpha.
          * @param {Number} end ending alpha.
+         * @param {Number} inc the incremental fade value.
          * @param {Function} eq (optional) fading equation (optional).
          */
 
-        prim.setFade = ( start, end, eq ) => {
+        prim.setFade = ( start, end, inc, eq ) => {
 
             prim.fade.startAlpha = start;
 
@@ -847,6 +848,18 @@ class PrimFactory {
             }
 
             prim.alpha = start;
+
+            // Increment.
+
+            if ( Number.isFinite( inc ) ) {
+
+                prim.fade.incr = inc;
+
+            } else {
+
+                prim.fade.incr = 0.002;
+
+            }
 
             // Fade equation.
 
@@ -879,6 +892,21 @@ class PrimFactory {
                 prim.shader.movePrim( prim, this.world.s0 );
 
             }
+
+        }
+
+        /** 
+         * Pulse a Prim's properties.
+         * - transparency
+         * - color
+         * - size
+         */
+        prim.setPulse = ( start, end, inc, eq ) => {
+
+        }
+
+        prim.endPulse = () => {
+
 
         }
 

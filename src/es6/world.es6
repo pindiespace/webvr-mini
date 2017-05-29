@@ -898,7 +898,7 @@ class World extends AssetPool {
 
 // TODO: make light ambient and material ambient consistent!!!!!!!!!!!!!!!!
 
-// TODO: investigate why >64k isn't working on windows system
+// TODO: PULSE routine for multiple properties
 
 // TODO: smoothing groups
 
@@ -913,6 +913,10 @@ class World extends AssetPool {
 // TODO: ANIMATION CLASS FOR PRIM IN UPDATEMV ROUTINE.
 
 // TODO: PRIM CONCATENATE SEVERAL PRIMS TOGETHER INTO ONE ARRAY??? CHECK HOW TO DO
+
+// TODO: SPLIT PRIMS IF SEVERAL MATERIALS ARE INVOLVED?
+
+// TODO: SPLIT PRIMS IF < 64k support?
 
 // NOTE: WebWorker for OBJ file parsing
 
