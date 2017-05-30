@@ -319,13 +319,13 @@ class PrimFactory {
          * will add the start position for the material later.
          */
 
-        if ( prim.materials[ materialName ] ) {
+        //if ( prim.materials[ materialName ] ) {
 
             ///////console.log('initPrimMaterial():found existing material ' + materialName + ' with start:' + prim.materials[ materialName ].starts )
 
-            material.starts = prim.materials[ materialName ].starts;
+            //material.starts = prim.materials[ materialName ].starts;
 
-        }
+        //}
 
         ///////////console.log( 'initPrimMaterial():adding material:' + materialName + ' for prim:' + prim.name )
 
@@ -396,8 +396,6 @@ class PrimFactory {
 
          if ( coords.options ) {
 
-            window.coords = coords.options;
-
             // Object, Group, SmoothingGroup starts.
 
             prim.objects = coords.options.objects;
@@ -409,6 +407,10 @@ class PrimFactory {
             // Use the list to 
 
             prim.smoothingGroups = coords.options.smoothingGroups;
+
+            // Material start array.
+
+            prim.matStarts = coords.options.matStarts;
 
             // Material starts.
 
@@ -425,17 +427,21 @@ class PrimFactory {
 
                     console.log('initPrimGeometry():creating new material for ' + i )
 
-                    prim.materials[ i ] = { starts: [] };
+                    //prim.materials[ i ] = { starts: [] };
+
+                    prim.materials[ i ] = {};
 
                 }
 
-                // Add the start position for this material.
+            }
 
-                console.log(' coords.options.materials[' + i + ']:' + coords.options.materials[i]);
+         } else {
 
-                prim.materials[ i ].starts.push( coords.options.materials[ i ] );
+            // No material was supplied.
 
-                // TODO: see if we can bind a texture to it.
+            if ( ! prim.matStarts ) {
+
+                prim.matStarts = [ [ this.util.DEFAULT_KEY, 0, coords.vertices.length ] ];
 
             }
 

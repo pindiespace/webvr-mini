@@ -582,8 +582,8 @@ class World extends AssetPool {
                 //[ 'obj/soccerball/soccerball.obj'] // no texcoords or normals
                 //[ 'obj/basketball/basketball.obj'] // needs TGA translation
                 //[ 'obj/rock1/rock1.obj'] // rock plus surface, works
-                //[ 'obj/cherries/cherries.obj'] // rendering indices error
-                [ 'obj/banana/banana.obj' ] // works great
+                [ 'obj/cherries/cherries.obj'] // rendering indices error
+                //[ 'obj/banana/banana.obj' ] // works great
             );
 
 /*
@@ -885,6 +885,14 @@ class World extends AssetPool {
      */
     housekeep () {
 
+// TODO: TGA Loader?
+
+// Jank optimization - http://jankfree.org/
+
+// Cross-platform - http://codeflow.org/entries/2013/feb/22/how-to-write-portable-webgl/
+
+// TODO: splitBuffers() in geometry-buffer.es6 for old distributions using gl.UNSIGNED_SHORT
+
 // TODO: change webvr sitting to standing matrix so we reduce matrix multiplys.
 
 // TODO: check if webvr.presenting when first rebooting. If so, toggle Ui to that mode.
@@ -1058,6 +1066,8 @@ class World extends AssetPool {
             requestAnimationFrame( this.render );
 
         }
+
+        ////////////////////////////console.log( this.webgl.glError() );
 
     }
 

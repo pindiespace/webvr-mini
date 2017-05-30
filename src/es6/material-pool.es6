@@ -26,7 +26,7 @@ class MaterialPool extends AssetPool {
 
         this.defaultTextureMap = 'map_Kd'; // also pos zero for texturePositions
 
-        // Map textureMap types to position in prim.textures array
+        // Map textureMap types to position in prim.textures array. If new positions added, update this.computeObjectMaterials();
 
         this.texturePositions = {
 
@@ -38,7 +38,13 @@ class MaterialPool extends AssetPool {
 
             'map_bump': 2, // bumpmap
 
+            'map_Km': 2,   // bumpmap
+
             'map_Ks': 3,   // specular map
+
+            'map_refl': 4, // environment Map Path 
+
+            'refl': 4,     // environment Map Path 
 
             'map_d': 4,    // alpha map
 
@@ -107,13 +113,15 @@ class MaterialPool extends AssetPool {
 
             map_Ka: null,                 // ambient map
 
+            map_refl: null,               // environment map
+
             map_d: null,                  // alpha map
 
             map_bump: null,               // bumpmap
 
             disp: null,                   // displacement map
 
-            starts: [ 0 ]                 // Starting position in vertices to apply material
+            ///starts: [ 0 ]                 // Starting position in vertices to apply material
 
         }
 
@@ -543,6 +551,8 @@ class MaterialPool extends AssetPool {
                     case 'map_d':    // alpha map
                     case 'bump':     // bumpmap
                     case 'map_bump': // bumpmap
+                    case 'map_refl': // environment map
+                    case 'refl':     // environment map
                     case 'disp':     // displacement map
 
                         /* 

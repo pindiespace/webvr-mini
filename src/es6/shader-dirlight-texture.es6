@@ -497,6 +497,8 @@ class shaderDirLightTexture extends Shader {
 
                 } else {
 
+                    let start = 0, num = 0;
+
                     // Draw elements, 0 -> 65k (old platforms).
 
                     gl.drawElements( gl.TRIANGLES, prim.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0 );

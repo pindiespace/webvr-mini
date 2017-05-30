@@ -266,7 +266,7 @@ class WebVR {
              * origin.
              */
 
-            // This pulls us off the floor, and rotates the view on HTC Vive 90 degres clockwise in the xz direction.
+            // This pulls us off the floor, and rotates the view on HTC Vive 180 degres clockwise in the xz direction.
 
             mat4.invert( mvMatrix, display.stageParameters.sittingToStandingTransform );
 

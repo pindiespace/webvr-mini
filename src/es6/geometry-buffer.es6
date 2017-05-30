@@ -122,6 +122,22 @@ class GeometryBuffer {
 
     } // end of constructor
 
+
+    /* 
+     * If we are limited to 65k drawing, split up our arrays, and re-index our index array
+     * so the indices are always gl.UNSIGNED_SHORT. Use on old WebGL distributions.
+     */
+    splitBuffers () {
+
+
+        // TODO: split buffers
+
+        // TODO: create multiple indices
+
+        // TODO: package in new WebGL buffer structure.
+
+    }
+
     /** 
      * Confirm that data is a number.
      * @param {Array} data the data array

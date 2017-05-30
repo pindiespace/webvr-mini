@@ -217,6 +217,13 @@ class GeometryPool {
 
     }
 
+
+    /** 
+     * ---------------------------------------
+     * UTILITY
+     * ---------------------------------------
+     */
+
     /** 
      * See if supplied Prim type is supported via a method. 
      * Individual Prim factory methods may do more detailed checking.

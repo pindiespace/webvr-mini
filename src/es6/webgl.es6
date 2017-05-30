@@ -636,6 +636,95 @@ class WebGL {
 
     /*
      * ---------------------------------------
+     * OTHER WEBGL TESTS
+     * ---------------------------------------
+     */
+
+    /** 
+     * Report a WebGL error.
+     * @link https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/getError
+     */
+    glError ( ) {
+
+        let fnName = 'webgl.glError():',
+
+        gl = this.getContext();
+
+        switch ( gl.getError() ) {
+
+            case gl.NO_ERROR: // No error has been recorded. The value of this constant is 0.
+
+                return fnName + 'gl.NO_ERROR';
+
+            case gl.INVALID_ENUM: // An unacceptable value has been specified for an enumerated argument. The command is ignored and the error flag is set.
+
+                return fnName + 'gl.INVALID_ENUM';
+  
+            case gl.INVALID_VALUE: // A numeric argument is out of range. The command is ignored and the error flag is set.
+
+                return fnName + 'gl.INVALID_VALUE';
+  
+            case gl.INVALID_OPERATION: // The specified command is not allowed for the current state. The command is ignored and the error flag is set.
+
+                return fnName + 'gl.INVALID_OPERATION';
+
+            case gl.INVALID_FRAMEBUFFER_OPERATION: // The currently bound framebuffer is not framebuffer complete when trying to render to or to read from it.
+
+                return fnName + 'gl.INVALID_FRAMEBUFFER_OPERATION';
+
+            case gl.OUT_OF_MEMORY: //Not enough memory is left to execute the command.
+
+                return fnName + 'gl.OUT_OF_MEMORY';
+
+            case gl.CONTEXT_LOST_WEBGL:
+
+                return fnName + 'gl.CONTEXT_LOST_WEBGL';    
+
+        }
+
+    }
+
+     /** 
+      * Check to see if the framebuffer is valid, must bind a frameBuffer 
+      * first, using gl.createFramebuffer() with valid offscreen texture.
+      * @param {WebGLRenderingContext} gl the WebGL rendering context.
+      * @param {WebGLFrameBuffer} the bound frameBuffer.
+      * @returns {String} error message.
+      */
+    checkFramebuffer ( gl, framebuffer ) {
+
+        // assumes the framebuffer is bound
+
+        let valid = gl.checkFramebufferStatus( gl.FRAMEBUFFER );
+
+        switch ( valid ) {
+
+            case gl.FRAMEBUFFER_UNSUPPORTED:
+
+                return 'Framebuffer is unsupported';
+
+            case gl.FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
+
+                return 'Framebuffer incomplete attachment';
+
+            case gl.FRAMEBUFFER_INCOMPLETE_DIMENSIONS:
+
+                return 'Framebuffer incomplete dimensions';
+
+            case gl.FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
+
+                return 'Framebuffer incomplete missing attachment';
+
+        default:
+
+            return true;
+
+        }
+
+    }
+
+    /*
+     * ---------------------------------------
      * WEBGL STATE TOGGLES
      * ---------------------------------------
      */

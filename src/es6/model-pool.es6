@@ -72,7 +72,7 @@ class ModelPool extends AssetPool {
      */
     default ( vertices = [], indices = [], texCoords = [], normals = [], objects = [], 
 
-        groups = [], smoothingGroups = [], materials = [] ) {
+        groups = [], smoothingGroups = [], materials = [], matStarts = [] ) {
 
         return {
 
@@ -96,7 +96,9 @@ class ModelPool extends AssetPool {
 
                 smoothingGroups: smoothingGroups, 
 
-                materials: materials
+                materials: materials,
+
+                matStarts: matStarts
 
             }
 
@@ -219,7 +221,7 @@ class ModelPool extends AssetPool {
      * @param {String} data the data for an individual face.
      * @param {Array} the face array to append the data to.
      */
-    computeObjFaces ( data, faces, lastType ) {
+    computeObjFaces ( data, faces, lineNum ) {
 
         let parts = data.match( /[^\s]+/g );
 
@@ -273,14 +275,6 @@ class ModelPool extends AssetPool {
 
         } );
 
-        // if lastType === smoothing group, flag in the face at 4th position
-
-        if ( lastType === 's' ) {
-
-            console.log('points are part of smoothing group...');
-
-        }
-
         // Now, convert quads and higher polygons to a set of triangles.
 
         iVerts = this.computeFaceFan( iVerts );
@@ -333,6 +327,8 @@ class ModelPool extends AssetPool {
         smoothingGroups = m.options.smoothingGroups, 
 
         materials = m.options.materials,
+
+        matStarts = m.options.matStarts,
 
         // temp arrays needed to flatten OBJ multi-index format to WebGL format.
 
@@ -388,25 +384,21 @@ class ModelPool extends AssetPool {
 
                         }
 
-                        objects[ data ] = faces.length; // start position in final flattened array
+                        objects.push( [ data, faces.length ] ); // start position in final flattened array
 
-                        console.log('>objects[' + data + '] = ' + faces.length)
+                        ///////////////////console.log('>objects[' + data + '] = ' + faces.length)
 
                         break;
 
                     case 'g': // group name, store hierarchy
 
-                        groups[ data ] = faces.length; // starting position in final flattened array
+                        groups.push ( [ data, faces.length ] ); // starting position in final flattened array
 
-                        console.log('>groups[' + data + '] = ' + faces.length );
+                        ///////////////////////console.log('>groups[' + data + '] = ' + faces.length );
 
                         break;
 
                     case 's': // smoothing group (related to 'g') applies to next line.
-
-                        let gKey = data + 's';
-
-                        if ( ! smoothingGroups[ gKey ] ) smoothingGroups[ gKey ] = [];
 
                         /* 
                          * TODO: we would need to process lines[ lineNum ] into just the vertices positions here.
@@ -416,24 +408,12 @@ class ModelPool extends AssetPool {
                          * vertices as being smoothed in a specific way. So. smoothing group starts and finishes 
                          * for the final array should be sufficient.
                          *
-                         * Our format for a group is: smoothingGroups[ namedGroup ][ individual groups ][ original line number, face data ]
+                         * Our format for a group is: smoothingGroups[ i ][ name, start, length ]
                          */
 
-                       // let sLine = lines[ lineNum + 1 ];
+                        smoothingGroups.push( [ data + 's' ] );
 
-                       // let sType = sLine.split( ' ' )[ 0 ].trim();
-
-                       // let sData = sLine.substr( sType.length ).trim();
-
-                        let sStarts = [];
-
-                        //this.computeObjFaces( sData, sStarts, lineNum );
-
-                        smoothingGroups[ gKey ].push( [ lineNum + 1, sStarts ] );
-
-                        console.log('>smoothingGroup[' + gKey + '] at:' + lineNum + 1 );
-
-                        //////////console.log('>smoothingGroups[' + gKey + '] = ' + ' had ' + faces.length + ' added' + ' sData:' + sData );
+                        //////////////////////////////console.log('>smoothingGroup:' + gKey + ' at:' + lineNum + 1 );
 
                         break;
 
@@ -445,7 +425,31 @@ class ModelPool extends AssetPool {
 
                     case 'f': // line of faces, indices, convert polygons to triangles
 
-                        this.computeObjFaces( data, faces, lastType );
+                        // If our previous line was a smoothing group, add the start.
+
+                        let sg, oldLen;
+
+                        if ( lastType === 's' ) {
+
+                            sg = smoothingGroups[ smoothingGroups.length - 1 ];
+
+                            oldLen = faces.length;
+
+                            sg.push( oldLen )
+
+                        }
+
+                        // Get the faces
+
+                        this.computeObjFaces( data, faces, lineNum );
+
+                        // If our previous line was a smoothing group, add the length.
+
+                        if ( lastType === 's' ) {
+
+                            sg.push( faces.length - oldLen );
+
+                        }
 
                         break;
 
@@ -483,19 +487,11 @@ class ModelPool extends AssetPool {
 
                     case 'usemtl': // use material (by name, loaded as .mtl file elsewhere)
 
-                        if ( ! materials[ data ] ) {
+                        let start = [ data, faces.length ];
 
-                            materials[ data ] = {
+                        matStarts.push( start ); // store material and start position.
 
-                                starts: []
-
-                            };
-
-                        }
-
-                        materials[ data ].starts.push( faces.length );
-
-                        console.log('>materials[' + data + '] starts at:' + materials[ data ].starts );
+                        console.log('>materials[' + data + '] starts at:' + faces.length )
 
                         break;
 
@@ -554,6 +550,42 @@ class ModelPool extends AssetPool {
 
         } );
 
+    
+        // Redo starts when necessary.
+
+        // TODO: check if this is correct!!!!
+
+        let redoStarts = ( vIdx, iIdx, startArr ) => {
+
+            let len = startArr.length;
+
+            let vvIdx = vIdx * 3; // NEED TO FLATTEN!
+
+            for ( let i = 0; i < len; i++ ) {
+
+                if ( startArr[ i ][ 1 ] === vIdx ) {
+
+                    startArr[ i ][ 1 ] = iIdx;
+
+                    let diff = iIdx - vIdx;
+
+                    // Compute changes starts after this position.
+
+                    for ( let j = i + 1; i < len; j++ ) {
+
+                        if ( startArr[ j ][ 1 ] > iIdx ) {
+
+                            startArr[ j ][ 1 ] += diff; // adjust the difference! 
+                                                   
+                        }
+
+                    }
+
+                }
+
+            }
+
+        }
 
         // Rewrite indices to fold texCoords and normals under the same index as the vertices (needed for WebGL).
 
@@ -567,17 +599,27 @@ class ModelPool extends AssetPool {
 
                 let f = faces[ i ];
 
+                // Construct a hash key for this face.
+
                 let key = f[ 0 ] + '_' + f[ 1 ] + '_' + f[ 2 ]; // point key (vertex, index, normals)
+
+                let vIdx, iIdx;
+
+                // Hash lookup.
 
                 if ( iHash[ key ] !== undefined ) {
 
-                    nIndices.push( iHash[ key ] ); // push the starting index in the new arrays
+                    // Push the existing, revised value for the face key.
+
+                    nIndices.push( iHash[ key ] );
 
                 } else {
 
-                    let vIdx = f[ 0 ]; // old face index within OBJ file
+                    vIdx = f[ 0 ]; // old face index within OBJ file
 
-                    let tIdx, nIdx, iIdx = parseInt( nVertices.length / 3 ); // new face index in the new arrays
+                    iIdx = parseInt( nVertices.length / 3 ); // new face index in the new arrays
+
+                    let tIdx, nIdx;
 
                     // Push the new Index.
 
@@ -591,77 +633,33 @@ class ModelPool extends AssetPool {
 
                     if ( vIdx !== iIdx ) {
 
-                        for ( let i in objects ) {
+                        if ( vIdx === 0 ) {
 
-                            // if the start stored in an object equals the current position in faces array...
-
-                            if ( objects[ i ] === i ) {
-
-                                objects[ i ] = iIdx;
-
-                                console.log('object index:' + vIdx + ' changed to:' + iIdx );
-
-                            }
+                            console.log("at vIdx = 0, iIdx is: " + iIdx);
 
                         }
 
+                        if ( iIdx === 0 ) {
 
-                        // Save the start of Materials in the flattened array. 
-                        // * 1. This information would be used to chop up the big array into a set of smaller ones in the Shader.init() method.
-                        // * 2. The renderer would need to loop through the sub-arrays, switching material properties at the start of each array.
-                        //
-
-                        for ( let i in materials ) {
-
-                            //console.log('testing materials[' + i + '] =' + materials[ i ] + ' vIdx:' + vIdx + ' iIdx:' + iIdx )
-
-                            if ( materials[ i ] === i ) {
-
-                                materials[ i ] = iIdx;
-
-                                console.log('materials index:' + vIdx + ' changed to:' + iIdx );
-
-                            }
+                            console.log("at iIdx = 0, vIdx is:" + vIdx );
 
                         }
 
-                        // * Save the start of Groups in the flattened array. Typically no effect.
+                        //redoStarts( vIdx, iIdx, matStarts );
 
-                        for ( let i in groups ) {
+                        //redoStarts( vIdx, iIdx, groups );
 
-                            if ( groups[ i ] === i ) {
+                        //redoStarts( vIdx, iIdx, objects );
 
-                                groups[ i ] = iIdx;
+                        //redoStarts( vIdx, iIdx, smoothingGroups );
 
-                                console.log('groups index:' + vIdx + ' changed to:' + iIdx );
 
-                            }
+                    } // finished index swap
 
-                        }
+                    // Re-index our groups, objects, material starts, smoothing groups.
 
-                        // Smoothing GROUPS _ REDO....
+                    // TODO:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-                        for ( let i in smoothingGroups ) {
-
-                            // Named smoothing groups.
-
-                            let sm = smoothingGroups[ i ];
-
-                            for ( let j = 0; j < sm.length; j++ ) {
-
-                                let smg = sm[ j ]; // one smoothing group.
-
-                                if ( smg[ 0 ] === vIdx ) {
-
-                                    smg[ 0 ] = iIdx;
-
-                                }
-
-                            }
-
-                        }
-
-                    }
  
                     // Push the flattened vertex, texCoord, normal values.
 
@@ -699,7 +697,7 @@ class ModelPool extends AssetPool {
 
                     }
 
-                }
+                } // end of re-index a new face
 
             } // end of else
 
@@ -708,6 +706,18 @@ class ModelPool extends AssetPool {
                 console.error( 'ModelPool::computeObjMesh(): size of prim ' + prim.name + ' (' + nVertices.length + ') exceeds max buffer:' + this.webgl.MAX_DRAWELEMENTS );
 
             }
+
+            // If there were no materials, create a default one.
+
+            if ( matStarts.length === 0 ) {
+
+                matStarts.push( [ this.util.DEFAULT_KEY, 0, nVertices.length ] );
+
+            }
+
+            // Compute the length of each matStarts position.
+
+            // TODO:::::::::::::::::::::::
 
             // Replace raw vertex, index, texCoord, normal data with face-adjusted data.
 
@@ -727,6 +737,24 @@ class ModelPool extends AssetPool {
 
         }
 
+        // Sort our material starts by the second column value (revised starting position of material).
+
+        //matStarts = matStarts.sort( ( a, b ) => {
+
+        //    return a[ 1 ] - b[ 1 ];
+
+        //} );
+
+        // Final computation for matStarts. Compute the length of each material block.
+
+        for ( let i = 0; i < matStarts.length - 1; i++ ) {
+
+            matStarts[ i ][ 2 ] = matStarts[ i + 1 ] [ 1 ] - matStarts[ i ][ 1 ];
+
+        }
+
+        matStarts[ matStarts.length - 1 ][ 2 ] = tVertices.length;
+
         // If there was no faces in the OBJ file, use the raw data.
 
         m.vertices = tVertices,
@@ -742,6 +770,8 @@ class ModelPool extends AssetPool {
         m.groups = groups,
 
         m.materials = materials,
+
+        m.matStarts = matStarts,
 
         m.smoothingGroups = smoothingGroups;
 

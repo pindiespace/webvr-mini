@@ -49,13 +49,17 @@ class Shader {
 
         this.mvMatrixStack = this.glMatrix.mat4.create();
 
-        // Floating precision (determined by WebGL object).
+        /* 
+         * Floating precision (determined by WebGL object). WebGL best practice
+         * says use highp whenever possible.
+         * @link https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_best_practices
+         */
 
         this.floatp = ''
 
         if ( this.webgl.stats.highp ) {
 
-            this.floatp = 'precision highp float;'; // TODO: don't make the switch on mobile
+            this.floatp = 'precision highp float;';
 
         } else {
 
@@ -63,7 +67,7 @@ class Shader {
 
         }
 
-        // Add Lights, if present.
+        // Add (global to prims) Lights, if present.
 
         if ( lights ) {
 
@@ -477,6 +481,12 @@ class Shader {
         return this.program;
 
     }
+
+    /*
+     * ---------------------------------------
+     * RENDERING OPERATIONS
+     * ---------------------------------------
+     */
 
     /** 
      * set up our program object, using WebGL. We wrap the 'naked' WebGL 

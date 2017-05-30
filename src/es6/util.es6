@@ -346,9 +346,9 @@ class Util {
 
     easeLinearOut ( t, inc = 0.002 ) { return t - inc; }
 
-    easeQuadIn ( t, inc = 0.001 ) { return t + ( t * t ); }
+    easeQuadIn ( t ) { return t + ( t * t ); }
 
-    easeQuadOut ( t, inc ) { return t + ( t * t ); }
+    easeQuadOut ( t ) { return t + ( t * t ); }
 
     // TODO: these functions have to be adjusted for 0-1, computing what to return by current position on 0, 1 axis
 

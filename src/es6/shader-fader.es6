@@ -375,7 +375,10 @@ class ShaderFader extends Shader {
 
         let easeType = 0;
 
-        // Set up directional lighting with the primary World light (see lights.es6 for defaults).
+        /* 
+         * Set up directional lighting with the primary World light passed to the 
+         * parent Shader class (see lights.es6 for defaults).
+         */
 
         let light0 = this.lights.getLight( this.lights.lightTypes.LIGHT_0 );
 
