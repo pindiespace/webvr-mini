@@ -24,19 +24,17 @@ class MaterialPool extends AssetPool {
 
         };
 
-        this.defaultTextureMap = 'map_Kd'; // also pos zero for texturePositions
-
         // Map textureMap types to position in prim.textures array. If new positions added, update this.computeObjectMaterials();
 
-        this.texturePositions = {
+        this.textureRoles = {
 
             'map_Kd': 0,   // diffuse map, an image file (e.g. file.jpg)
 
             'map_Ka': 1,   // ambient map
 
-            'bump': 2,     // bumpmap
-
             'map_bump': 2, // bumpmap
+
+            'bump': 2,     // bumpmap
 
             'map_Km': 2,   // bumpmap
 
@@ -48,11 +46,17 @@ class MaterialPool extends AssetPool {
 
             'map_d': 5,    // alpha map
 
+            'map_disp': 6, // displacement map
+
             'disp': 6      // displacement map
 
         };
 
-      
+        // Reverse map for texture Roles (due to redundancy, don't use Object.keys()).
+
+        this.texturePositions = [ 'map_Kd', 'map_Ka', 'map_bump', 'map_Ks', 'map_refl', 'map_d', 'disp' ];
+
+        this.defaultTextureRole = 'map_Kd'; // also pos zero for texturePositions
 
         if ( init ) {
 
@@ -584,7 +588,7 @@ class MaterialPool extends AssetPool {
 
                                 let options = this.computeTextureMapOptions( data );
 
-                                // This lets us associate materials associated with this texture
+                                // Give each texture a list of materials it is associated with.
 
                                 if ( ! options.materials ) {
 
@@ -606,7 +610,7 @@ class MaterialPool extends AssetPool {
 
                             if ( type === 'refl' ) type = 'map_refl';
 
-                             options.pos = this.texturePositions[ type ];
+                             options.pos = this.textureRoles[ type ];
 
                              // Save the string version of type to pass to the called texture.
 
@@ -618,7 +622,7 @@ class MaterialPool extends AssetPool {
                              * NOTE: thex seventh paramater, options, if present, we pass those in as well.
                              */
 
-                            this.texturePool.getTextures( prim, [ dir + tPath ], true, false, type, null, options );
+                            this.texturePool.getTextures( prim, [ dir + tPath ], true, false, null, options );
 
                         }
 
@@ -649,7 +653,7 @@ class MaterialPool extends AssetPool {
     }
 
     /** 
-     * Add a model
+     * Add a material.
      * @param {Prim} prim the requesting Prim object.
      * @param {Object} data data to construct the Prim GeoBuffer.
      * @param {String} path the file path to the object.
@@ -747,6 +751,8 @@ class MaterialPool extends AssetPool {
                 let poolMaterial = this.pathInList( path );
 
                 if ( poolMaterial ) {
+
+                    console.log("REFERENCING EXISTING MATERIAL...")
 
                     prim.materials.push( poolMaterial ); // just reference an existing texture in this pool.
 

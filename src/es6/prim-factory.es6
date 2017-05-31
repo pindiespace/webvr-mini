@@ -135,9 +135,9 @@ class PrimFactory {
 
         this.util.emitter.on( this.util.emitter.events.TEXTURE_2D_READY, 
 
-            ( prim, key, pos, options ) => {
+            ( prim, key, options ) => {
 
-                this.initPrimTexture( prim, this.texturePool.keyList[ key ], pos, options );
+                this.initPrimTexture( prim, this.texturePool.keyList[ key ], options );
 
                 // Check if complete, add if it is...
 
@@ -242,9 +242,9 @@ class PrimFactory {
      * @param {TextureObj} textureObj the texture object returned from TexturePool.
      * @param {Number} pos a position to write the texture to.
      */
-    initPrimTexture ( prim, textureObj, pos, options ) {
+    initPrimTexture ( prim, textureObj, options ) {
 
-        console.log("initing texture for prim:" + prim.name + ', textureObj.options:' + textureObj.options);
+        console.log("initing texture for prim:" + prim.name + ', options:' + options);
 
         // NOTE: we always have a default texture assigned in the default material.
 
@@ -254,11 +254,16 @@ class PrimFactory {
 
         // Failed texture loads have the default 'grey pixel' texture substituted from texturePool.
 
-
         ////////////////////////////////////
         ////////////////////////////////////
 
-        if ( options && options.materials ) { // should always be true
+        for ( let i in prim.materials ) {
+
+            console.log("this prim:" + prim.name + ' has a material at:' + i)
+
+        }
+
+        if ( options.materials ) { // 'options' should always be true, but options.materials only if .OBJ file
 
             for ( let i = 0; i < options.materials.length; i++ ) {
 
@@ -272,26 +277,72 @@ class PrimFactory {
 
                     // We have a specified material, but it is not present (yet)
 
-                    // So, create a dummy material.
+                    // So, create a dummy material which will be fill in when the material inits.
 
                     prim.materials[ options.materials[ i ] ] = {};
 
-                    prim.materials[ options.materials[ i ] ].type = textureObj.texture;
+                    let m = prim.materials[ options.materials[ i ] ];
+
+                    m.name = options.materials[ i ];
+
+                    m[ options.type ] = textureObj.texture;
 
                 }
 
             }
 
+        } else {
+
+            // Texture was loaded directly by prim.create() instead of through a .mtl file.
+
+            for ( let i in prim.materials ) {
+
+                let m = prim.materials[ i ];
+
+                if ( ! m ) console.log("NO MATERIAL FOR:" +  prim.name + " at:" + i ) // TODO: NEVER HAPPENS
+
+                if ( textureObj.path === null ) console.log("NULL texture for:" + prim.name); // TODO: HAPPENS FOR TORUS1
+
+                console.log("direct load textureUse for " + prim.name + " is:" + textureObj.textureUse + " and options.type:" + options.type );
+
+                //let tex = m[ textureObj.textureUse ];
+
+                //if ( ! ( tex instanceof WebGLTexture ) ) {
+
+                if ( options.type ) {
+
+                    ///if ( options.type !== textureObj.textureUse ) console.log(prim.name + " mismatch for " + options.type + ',' + textureObj.textureUse)
+
+                    //m[ textureObj.textureUse ] = textureObj.texture;
+
+                    if ( prim.name === 'toji cube') console.log("TOJI options.type:" + options.type + " textureObj.textureUse:" + textureObj.textureUse)
+
+                    // NOTE: THIS IS NOT WORKING EVERYWHERE!!!!!!!!!!!!!!!!
+                    m[ options.type ] = textureObj.texture;
+
+                    // TODO: TOJI CUBE SEEMS IDENTICAL BUT IS NOT!!!!!!!!
+
+
+
+                }
+
+
+
+                //}
+
+            }
+
         }
 
+        let pos = options.pos;
+
         ////////////////////////////////////
         ////////////////////////////////////
 
-
-
-        if ( ! prim.textures[ pos ] || prim.textures[ pos ].mimeType === null ) {
+        if ( ! prim.textures[ pos ] || prim.textures[ pos ].path === null ) {
 
             prim.textures[ pos ] = textureObj;
+
 
         } else {
 
@@ -309,21 +360,7 @@ class PrimFactory {
 
         // TODO: MAKE SURE WE ARE NOT MAKING A REDUNDANT ASSIGNMENT !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-        for ( let i in prim.materials ) {
 
-            let m = prim.materials[ i ];
-
-            let tex = m[ textureObj.textureUse ];
-
-            if ( ! ( tex instanceof WebGLTexture ) ) {
-
-                //////////console.log( 'PrimFactory::initPrimTexture():matching texture ' + material.name + ' to:' + prim.name );
-
-                m[ textureObj.textureUse ] = textureObj.texture;
-
-            }
-
-        }
 
     }
 
@@ -364,6 +401,14 @@ class PrimFactory {
 
         }
 
+        // TODO:
+
+        // HAVE TO INITIALIZE THIS DIFFERENTLY. EACH MATERIAL SHOULD BIND TO THE DEFAULT TEXTURE
+        // WHEN IT IS CREATED. TEXTURE LOADING SHOULD NOT BEGIN UNTIL TEXTURE INITALIZED.
+        // SWAP IN TEXTURES AS NECESSARY.
+        // MATERIAL LOADING = SWAP IN ANY TEXTURES ALREADY THERE
+        // TEXTURE LOADING = SCAN MATERIALS AND LOAD THERE.
+
         /* 
          * If the material already has an entry, it was put there parsing the 
          * OBJ file. so pull the 'start' value from it, and replace with 
@@ -371,7 +416,7 @@ class PrimFactory {
          * will add the start position for the material later.
          */
 
-        // A texture loaded, and defined a 'skeleton' material until we could arrive. 
+        // A texture loaded, and defined a 'skeleton' material until we could arrive, so overwrite. 
 
         if ( prim.materials[ materialName ] ) {
 
@@ -392,37 +437,6 @@ class PrimFactory {
         }
 
         prim.materials[ materialName ] = material;
-
-        /* 
-         * Check the texture files to see if we can map a texture to a material declaration.
-         * We use the list of possible texture use types in MaterialPool. 
-         * NOTE: unlikely, since material file is read for textures!
-         *
-         * NOTE: Prim.setMaterial() is used to create a default material in Prim.createPrim();
-         */
-/*
-        for ( let key in this.materialPool.texturePositions ) {
-
-            // Get the keys, map_Kd, map_Ka, map_Ks 
-
-            //console.log( 'PrimFactory::initPrimMaterial(): material texture ' + key + ' for prim:' + prim.name + ' present...' );
-            //console.log( 'PRIM.TEXTURES LENGTH IS A:' + prim.textures.length )
-
-            for ( let  j = 0; j < prim.textures.length; j++ ) {
-
-                if ( prim.textures[ j ][ key ] && ( prim.textures[ j ][ key ].texture instanceof WebGLTexture ) ) {
-
-                    console.log( 'PrimFactory::initPrimMaterial(): matching material:' + material.name + ' texture type:' + key + ' with prim.textures:' + j );
-
-                    material[ i ] = prim.textures[ j ][ key ].texture;
-
-                }
-
-            }
-
-        }
-
-*/
 
         // Finally, set a default material for Shaders that only use one material. Pick the material with the smallest 'start'.
         
@@ -1127,7 +1141,7 @@ class PrimFactory {
 
         // Get textures assigned directly ( .mtl files may assign others ) in the createPrim() call.
 
-        this.texturePool.getTextures( prim, textureImages, true, false, this.materialPool.defaultTextureMap ); // assume cacheBust === true, mimeType determined by file extension.
+        this.texturePool.getTextures( prim, textureImages, true, false ); // assume cacheBust === true, mimeType determined by file extension.
 
         // Push into our list of all Prims. Shaders keep a local list of Prims they are rendering.
 
@@ -1176,6 +1190,12 @@ class PrimFactory {
             if ( prim.name === 'skydome' ) {
 
                 window.skydome = prim;
+
+            }
+
+            if ( prim.name === 'toji cube' ) {
+
+                window.toji = prim;
 
             }
 

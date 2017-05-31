@@ -550,50 +550,6 @@ class ModelPool extends AssetPool {
 
         } );
 
-    
-        // Redo starts when necessary.
-
-        // TODO: check if this is correct!!!!
-
-        let redoStarts = ( vIdx, iIdx, startArr ) => {
-
-            //console.log('vIdx:' + vIdx + ' iIdx:' + iIdx)
-
-            let len = startArr.length;
-
-            for ( let i = 0; i < len; i++ ) {
-
-                if ( startArr[ i ][ 1 ] === vIdx ) {
-
-                    startArr[ i ][ 1 ] = iIdx;
-
-                    let diff = iIdx - vIdx;
-
-                    if ( diff ) {
-
-                        // Compute changes to starts after this position.
-
-                        console.log("found a diff")
-
-                        for ( let j = i + 1; j < len - 1; j++ ) {
-
-                            if ( startArr[ j ][ 1 ] > iIdx ) {
-
-                                startArr[ j ][ 1 ] += diff; // adjust the difference! 
-                                                   
-                            }
-
-                        }
-
-                    }
-
-
-                }
-
-            }
-
-        }
-
         // Rewrite indices to fold texCoords and normals under the same index as the vertices (needed for WebGL).
 
         if ( faces.length ) {

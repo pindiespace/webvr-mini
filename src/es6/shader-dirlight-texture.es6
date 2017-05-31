@@ -505,6 +505,7 @@ class shaderDirLightTexture extends Shader {
                             gl.activeTexture( gl.TEXTURE0 );
                             gl.bindTexture( gl.TEXTURE_2D, null );
                             gl.bindTexture( gl.TEXTURE_2D, m[ 'map_Kd' ] );
+
                             gl.drawElements( gl.TRIANGLES, st[ 2 ], gl.UNSIGNED_INT, st[ 1 ] );
 
                         }
@@ -515,6 +516,7 @@ class shaderDirLightTexture extends Shader {
                         gl.bindTexture( gl.TEXTURE_2D, null );
                         //gl.bindTexture( gl.TEXTURE_2D, prim.textures[ 0 ].texture );
                         gl.bindTexture( gl.TEXTURE_2D, prim.defaultMaterial.map_Kd );
+                        
                         gl.drawElements( gl.TRIANGLES, prim.geometry.indices.numItems, gl.UNSIGNED_INT, 0 );
 
                     }

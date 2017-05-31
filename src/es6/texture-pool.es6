@@ -59,6 +59,8 @@ class TexturePool extends AssetPool {
 
         }
 
+        // NOTE: World adds a reference to the MaterialPool, needed for default texture loading!
+
     }
 
     /** 
@@ -83,11 +85,7 @@ class TexturePool extends AssetPool {
 
             path: path,         // URL of object
 
-            // options: {},     // only present for some textures
-
             texture: texture,   // WebGLTexture
-
-            textureUse: null,   // Texture use
 
             emits: emitEvent    // emitted event
 
@@ -405,13 +403,21 @@ class TexturePool extends AssetPool {
      * @param {WebGL.TEXTURE} textureType a WebGL-enumerated texture type (TEXTURE_2D, TEXTURE_3D...), default TEXTURE_2D.
      * @param {Object} options if present, additional options for rendering the texture (e.g. scaling, sharpening, brightening).
      */
-    getTextures ( prim, pathList, cacheBust = true, keepDOMImage = false, textureUse = 'map_Kd', glTextureType, options = {} ) {
+    getTextures ( prim, pathList, cacheBust = true, keepDOMImage = false, glTextureType, options = {} ) {
 
         // Wrap single strings in an Array.
 
         if ( this.util.isString( pathList ) ) {
 
             pathList = [ pathList ];
+
+        }
+
+        // If no textureType defined, default to 2D texture.
+
+        if ( ! glTextureType ) {
+
+            glTextureType = this.webgl.gl.TEXTURE_2D;
 
         }
 
@@ -501,21 +507,20 @@ class TexturePool extends AssetPool {
 
                                         // Save the texture usage, either 'default' or a key from calling .mtl file (map_Kd, map_Ks...).
 
-                                        textureObj.textureUse = textureUse,
-
-                                        // Additional options (defined in calling .mtl or .obj file), associated with textureUse.
-
-                                        textureObj.options = options;
-
                                         /* 
-                                         * If the texture returned a position to assign itself, use it. Otherwise use default.
-                                         * This can happen when the texture is defined by an .mtl file, and the 'options' object 
-                                         * is passed through. Definitions for assined texture positions are in the MaterialPool constructor.
+                                         * If the texture was part of a material, it returned a position to assign
+                                         * in the prim.textures array. Otherwise, use the input position to assign.
                                          */
 
-                                        if ( textureObj.options.pos !== undefined ) {
+                                        if ( options.pos === undefined ) {
 
-                                            updateObj.pos = textureObj.options.pos;
+                                            // NOTE: we added MaterialPool as a referenced object in the World constructor.
+
+                                            options.type = this.materialPool.texturePositions[ i ];
+
+                                            options.pos = i;
+
+                                            options.materials = [ this.util.DEFAULT_KEY ];
 
                                         }
 
@@ -525,11 +530,11 @@ class TexturePool extends AssetPool {
                                          * NOTE: in PrimFactory, we recover textureObj by its key in TexturePool.
                                          */
 
-                                        this.util.emitter.emit( textureObj.emits, prim, textureObj.key, updateObj.pos, options );
+                                        this.util.emitter.emit( textureObj.emits, prim, textureObj.key, options );
 
                                     } else {
 
-                                        this.util.emitter.emit( textureObj.emits, prim, textureObj.key, this.defaultKey, i, options );
+                                        this.util.emitter.emit( textureObj.emits, prim, textureObj.key, options );
 
                                         console.error( 'TexturePool::getTextures(): file:' + path + ' could not be parsed' );
 
@@ -547,7 +552,7 @@ class TexturePool extends AssetPool {
 
                                     // Put a single-pixel texture in its place.
 
-                                    this.util.emitter.emit( this.util.emitter.events.TEXTURE_2D_READY, prim, this.defaultKey, i, options );                                    
+                                    this.util.emitter.emit( this.util.emitter.events.TEXTURE_2D_READY, prim, this.defaultKey, options );                                    
 
                                     console.error( 'TexturePool::getTextures(): invalid image data:' + updateObj.path + ' data:' + updateObj.data );
 
@@ -561,7 +566,7 @@ class TexturePool extends AssetPool {
 
                         // Put a single-pixel texture in its place.
 
-                        this.util.emitter.emit( this.util.emitter.events.TEXTURE_2D_READY, prim, this.defaultKey, i, options );
+                        this.util.emitter.emit( this.util.emitter.events.TEXTURE_2D_READY, prim, this.defaultKey, options );
 
                     }
 

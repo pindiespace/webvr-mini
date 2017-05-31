@@ -59,6 +59,10 @@ class World extends AssetPool {
 
         this.materialPool = new MaterialPool( init, this.util, webgl, this.texturePool );
 
+        // Give the texturePool a link to the textureType lookup table.
+
+        this.texturePool.materialPool = this.materialPool;
+
         // Attach 1 copy of the Model loader. NOTE: passing in TexturePool and MaterialPool.
 
         this.modelPool = new ModelPool( init, this.util, webgl, this.texturePool, this.materialPool );
