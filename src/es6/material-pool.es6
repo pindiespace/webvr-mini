@@ -46,9 +46,9 @@ class MaterialPool extends AssetPool {
 
             'refl': 4,     // environment Map Path 
 
-            'map_d': 4,    // alpha map
+            'map_d': 5,    // alpha map
 
-            'disp': 5      // displacement map
+            'disp': 6      // displacement map
 
         };
 
@@ -580,8 +580,6 @@ class MaterialPool extends AssetPool {
 
                                 /* 
                                  * get (hyphenated) texture options, if present, and add them to the getTextures() call.
-                                 * Each texture has a list of materials it belongs to. Material objects may query 
-                                 * for the texture they need.
                                  */
 
                                 let options = this.computeTextureMapOptions( data );
@@ -602,8 +600,17 @@ class MaterialPool extends AssetPool {
                              * multiple textures have a defined order in the textures array.
                              */
 
+                            // Convert equivalent types.
+
+                            if ( type === 'bump' || type === 'map_Km' ) type = 'map_bump';
+
+                            if ( type === 'refl' ) type = 'map_refl';
+
                              options.pos = this.texturePositions[ type ];
 
+                             // Save the string version of type to pass to the called texture.
+
+                             options.type = type;
 
                             /*
                              * NOTE: the texture attaches to prim.textures, so the fourth parmeter is the texture type (map_Kd, map_Ks...).

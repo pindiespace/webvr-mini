@@ -273,7 +273,8 @@ class ShaderTexture extends Shader {
 
                 gl.activeTexture( gl.TEXTURE0 );
                 gl.bindTexture( gl.TEXTURE_2D, null );
-                gl.bindTexture( gl.TEXTURE_2D, prim.textures[ 0 ].texture );
+                //gl.bindTexture( gl.TEXTURE_2D, prim.textures[ 0 ].texture );
+                gl.bindTexture( gl.TEXTURE_2D, prim.defaultMaterial.map_Kd );
 
                 // Bind additional texture units.
 

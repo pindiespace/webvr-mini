@@ -437,9 +437,9 @@ class shaderDirLightTexture extends Shader {
                 gl.enableVertexAttribArray( aVertexNormal );
                 gl.vertexAttribPointer( aVertexNormal, 3, gl.FLOAT, false, 0, 0);
 
-                gl.activeTexture( gl.TEXTURE0 );
-                gl.bindTexture( gl.TEXTURE_2D, null );
-                gl.bindTexture( gl.TEXTURE_2D, prim.textures[ 0 ].texture );
+                //gl.activeTexture( gl.TEXTURE0 );
+                //gl.bindTexture( gl.TEXTURE_2D, null );
+                //gl.bindTexture( gl.TEXTURE_2D, prim.textures[ 0 ].texture );
 
                 // Bind additional texture units.
 
@@ -492,8 +492,34 @@ class shaderDirLightTexture extends Shader {
 
                     // Draw elements, 0 -> 2e9
 
-                    gl.drawElements( gl.TRIANGLES, prim.geometry.indices.numItems, gl.UNSIGNED_INT, 0 );
+                    let ms = prim.matStarts;
 
+                    if ( ms.length > 1 ) {
+
+                        for ( let j = 0; j < ms.length; j++ ) {
+
+                            let st = ms[ j ];
+
+                            m = prim.materials[ st[ 0 ] ]; // bind the material
+
+                            gl.activeTexture( gl.TEXTURE0 );
+                            gl.bindTexture( gl.TEXTURE_2D, null );
+                            gl.bindTexture( gl.TEXTURE_2D, m[ 'map_Kd' ] );
+                            gl.drawElements( gl.TRIANGLES, st[ 2 ], gl.UNSIGNED_INT, st[ 1 ] );
+
+                        }
+
+                    } else {
+
+                        gl.activeTexture( gl.TEXTURE0 );
+                        gl.bindTexture( gl.TEXTURE_2D, null );
+                        //gl.bindTexture( gl.TEXTURE_2D, prim.textures[ 0 ].texture );
+                        gl.bindTexture( gl.TEXTURE_2D, prim.defaultMaterial.map_Kd );
+                        gl.drawElements( gl.TRIANGLES, prim.geometry.indices.numItems, gl.UNSIGNED_INT, 0 );
+
+                    }
+
+                    //gl.drawElements(draw_mode, num_items, indices.type, offset * 2);
 
                 } else {
 
@@ -502,6 +528,8 @@ class shaderDirLightTexture extends Shader {
                     // Draw elements, 0 -> 65k (old platforms).
 
                     gl.drawElements( gl.TRIANGLES, prim.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0 );
+
+                    //gl.drawElements(draw_mode, num_items, indices.type, offset);
 
                 }
 

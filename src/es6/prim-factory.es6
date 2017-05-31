@@ -135,9 +135,9 @@ class PrimFactory {
 
         this.util.emitter.on( this.util.emitter.events.TEXTURE_2D_READY, 
 
-            ( prim, key, pos ) => {
+            ( prim, key, pos, options ) => {
 
-                this.initPrimTexture( prim, this.texturePool.keyList[ key ], pos );
+                this.initPrimTexture( prim, this.texturePool.keyList[ key ], pos, options );
 
                 // Check if complete, add if it is...
 
@@ -150,9 +150,9 @@ class PrimFactory {
 
         this.util.emitter.on( this.util.emitter.events.TEXTURE_3D_READY, 
 
-            ( prim, key ) => {
+            ( prim, key, pos, options ) => {
 
-                this.initPrimTexture3d( prim, this.texturePool.keyList[ key ], pos );
+                this.initPrimTexture3d( prim, this.texturePool.keyList[ key ], pos, options );
 
                 // Check if complete, add if it is...
 
@@ -164,9 +164,9 @@ class PrimFactory {
 
         this.util.emitter.on( this.util.emitter.events.TEXTURE_CUBE_MAP_READY, 
 
-            ( prim, key ) => {
+            ( prim, key, pos, options ) => {
 
-                this.initPrimTextureCubeMap( prim, this.texturePool.keyList[ key ], pos );
+                this.initPrimTextureCubeMap( prim, this.texturePool.keyList[ key ], pos, options );
 
                 // Check if complete, add if it is...
 
@@ -242,11 +242,64 @@ class PrimFactory {
      * @param {TextureObj} textureObj the texture object returned from TexturePool.
      * @param {Number} pos a position to write the texture to.
      */
-    initPrimTexture ( prim, textureObj, pos ) {
+    initPrimTexture ( prim, textureObj, pos, options ) {
+
+        console.log("initing texture for prim:" + prim.name + ', textureObj.options:' + textureObj.options);
+
+        // NOTE: we always have a default texture assigned in the default material.
+
+        // NOTE: so, we only need to assign if we have a valid texture
 
         // NOTE: this method of assignment means that the prim.textures array may have UNDEFINED elements!
 
-        prim.textures[ pos ] = textureObj;
+        // Failed texture loads have the default 'grey pixel' texture substituted from texturePool.
+
+
+        ////////////////////////////////////
+        ////////////////////////////////////
+
+        if ( options && options.materials ) { // should always be true
+
+            for ( let i = 0; i < options.materials.length; i++ ) {
+
+                let m = prim.materials[ options.materials[ i ] ];
+
+                if ( m ) {
+
+                    m[ options.type ] = textureObj.texture;
+
+                } else {
+
+                    // We have a specified material, but it is not present (yet)
+
+                    // So, create a dummy material.
+
+                    prim.materials[ options.materials[ i ] ] = {};
+
+                    prim.materials[ options.materials[ i ] ].type = textureObj.texture;
+
+                }
+
+            }
+
+        }
+
+        ////////////////////////////////////
+        ////////////////////////////////////
+
+
+
+        if ( ! prim.textures[ pos ] || prim.textures[ pos ].mimeType === null ) {
+
+            prim.textures[ pos ] = textureObj;
+
+        } else {
+
+            prim.textures.push( textureObj ); // replace the default
+
+        }
+
+        // First, look for any 'default' textures (a single grey pixel) and replace them.
 
         /* 
          * Check materials files, and link texture to the files. We do the reverse in initPrimMaterial()
@@ -254,20 +307,19 @@ class PrimFactory {
          * WebGL texture the file path will remain as a debugging string.
          */
 
+        // TODO: MAKE SURE WE ARE NOT MAKING A REDUNDANT ASSIGNMENT !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
         for ( let i in prim.materials ) {
 
-            let material = prim.materials[ i ];
+            let m = prim.materials[ i ];
 
-            let tex = material[ textureObj.textureUse ];
-
-            //////////console.log( 'PrimFactory::initPrimTexture():finding texture for:' + material.name + ' to:' + prim.name );
-            ////////console.log( 'TEX:' + tex + ' instanceof WebGLTexture:' + ( tex instanceof WebGLTexture) )
+            let tex = m[ textureObj.textureUse ];
 
             if ( ! ( tex instanceof WebGLTexture ) ) {
 
                 //////////console.log( 'PrimFactory::initPrimTexture():matching texture ' + material.name + ' to:' + prim.name );
 
-                material[ textureObj.textureUse ] = textureObj.texture;
+                m[ textureObj.textureUse ] = textureObj.texture;
 
             }
 
@@ -278,7 +330,7 @@ class PrimFactory {
     /** 
      * Add a new 3d texture to the Prim.
      */
-    initPrimTexture3d( prim, textureObj, pos ) {
+    initPrimTexture3d( prim, textureObj, pos, options ) {
 
         prim.textures[ pos ] = textureObj;
 
@@ -319,15 +371,25 @@ class PrimFactory {
          * will add the start position for the material later.
          */
 
-        //if ( prim.materials[ materialName ] ) {
+        // A texture loaded, and defined a 'skeleton' material until we could arrive. 
 
-            ///////console.log('initPrimMaterial():found existing material ' + materialName + ' with start:' + prim.materials[ materialName ].starts )
+        if ( prim.materials[ materialName ] ) {
 
-            //material.starts = prim.materials[ materialName ].starts;
+           let m = prim.materials[ materialName ];
 
-        //}
+           if ( m.map_Ka ) material.map_Ka = m.map_Ka;
 
-        ///////////console.log( 'initPrimMaterial():adding material:' + materialName + ' for prim:' + prim.name )
+           if ( m.map_Kd ) material.map_Kd = m.map_Kd;
+
+           if ( m.map_Ks ) material.map_Ks = m.map_Ks;
+
+           if ( m.map_bump ) material.map_bump = m.map_bump;
+
+           if ( m.map_d ) material.map_d = m.map_d;
+
+           if ( m.map_refl ) material.map_refl = m.map_refl;
+
+        }
 
         prim.materials[ materialName ] = material;
 
@@ -338,7 +400,7 @@ class PrimFactory {
          *
          * NOTE: Prim.setMaterial() is used to create a default material in Prim.createPrim();
          */
-
+/*
         for ( let key in this.materialPool.texturePositions ) {
 
             // Get the keys, map_Kd, map_Ka, map_Ks 
@@ -359,6 +421,8 @@ class PrimFactory {
             }
 
         }
+
+*/
 
         // Finally, set a default material for Shaders that only use one material. Pick the material with the smallest 'start'.
         

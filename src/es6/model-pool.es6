@@ -435,7 +435,7 @@ class ModelPool extends AssetPool {
 
                             oldLen = faces.length;
 
-                            sg.push( oldLen )
+                            sg.push( oldLen );
 
                         }
 
@@ -557,9 +557,9 @@ class ModelPool extends AssetPool {
 
         let redoStarts = ( vIdx, iIdx, startArr ) => {
 
-            let len = startArr.length;
+            //console.log('vIdx:' + vIdx + ' iIdx:' + iIdx)
 
-            let vvIdx = vIdx * 3; // NEED TO FLATTEN!
+            let len = startArr.length;
 
             for ( let i = 0; i < len; i++ ) {
 
@@ -569,17 +569,24 @@ class ModelPool extends AssetPool {
 
                     let diff = iIdx - vIdx;
 
-                    // Compute changes starts after this position.
+                    if ( diff ) {
 
-                    for ( let j = i + 1; i < len; j++ ) {
+                        // Compute changes to starts after this position.
 
-                        if ( startArr[ j ][ 1 ] > iIdx ) {
+                        console.log("found a diff")
 
-                            startArr[ j ][ 1 ] += diff; // adjust the difference! 
+                        for ( let j = i + 1; j < len - 1; j++ ) {
+
+                            if ( startArr[ j ][ 1 ] > iIdx ) {
+
+                                startArr[ j ][ 1 ] += diff; // adjust the difference! 
                                                    
+                            }
+
                         }
 
                     }
+
 
                 }
 
@@ -629,33 +636,6 @@ class ModelPool extends AssetPool {
 
                     iHash[ key ] = iIdx;
 
-                    // If vIdx !== iIdx, we need to adjust our positioning data for materials, groups, etc.
-
-                    if ( vIdx !== iIdx ) {
-
-                        if ( vIdx === 0 ) {
-
-                            console.log("at vIdx = 0, iIdx is: " + iIdx);
-
-                        }
-
-                        if ( iIdx === 0 ) {
-
-                            console.log("at iIdx = 0, vIdx is:" + vIdx );
-
-                        }
-
-                        //redoStarts( vIdx, iIdx, matStarts );
-
-                        //redoStarts( vIdx, iIdx, groups );
-
-                        //redoStarts( vIdx, iIdx, objects );
-
-                        //redoStarts( vIdx, iIdx, smoothingGroups );
-
-
-                    } // finished index swap
-
                     // Re-index our groups, objects, material starts, smoothing groups.
 
                     // TODO:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -700,6 +680,9 @@ class ModelPool extends AssetPool {
                 } // end of re-index a new face
 
             } // end of else
+
+            // Should be the same.
+            /////////////console.log('nIndices.length:' + nIndices.length + ' faces.length:' + faces.length)
 
             if ( nVertices.length > this.webgl.MAX_DRAWELEMENTS) {
 

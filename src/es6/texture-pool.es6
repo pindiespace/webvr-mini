@@ -477,6 +477,8 @@ class TexturePool extends AssetPool {
 
                                     // Create a WebGLTexture from the Image (left off 'type' for gl.TEXTURE type).
 
+                                    // Add the texture.
+
                                     let textureObj = this.addTexture( prim, image, updateObj.path, updateObj.pos, mimeType, glTextureType );
 
                                     if ( textureObj ) {
@@ -508,7 +510,7 @@ class TexturePool extends AssetPool {
                                         /* 
                                          * If the texture returned a position to assign itself, use it. Otherwise use default.
                                          * This can happen when the texture is defined by an .mtl file, and the 'options' object 
-                                         * is passed through. Definitions for positions are in the MaterialPool constructor.
+                                         * is passed through. Definitions for assined texture positions are in the MaterialPool constructor.
                                          */
 
                                         if ( textureObj.options.pos !== undefined ) {
@@ -523,9 +525,11 @@ class TexturePool extends AssetPool {
                                          * NOTE: in PrimFactory, we recover textureObj by its key in TexturePool.
                                          */
 
-                                        this.util.emitter.emit( textureObj.emits, prim, textureObj.key, updateObj.pos );
+                                        this.util.emitter.emit( textureObj.emits, prim, textureObj.key, updateObj.pos, options );
 
                                     } else {
+
+                                        this.util.emitter.emit( textureObj.emits, prim, textureObj.key, this.defaultKey, i, options );
 
                                         console.error( 'TexturePool::getTextures(): file:' + path + ' could not be parsed' );
 
@@ -541,6 +545,10 @@ class TexturePool extends AssetPool {
 
                                 } else {
 
+                                    // Put a single-pixel texture in its place.
+
+                                    this.util.emitter.emit( this.util.emitter.events.TEXTURE_2D_READY, prim, this.defaultKey, i, options );                                    
+
                                     console.error( 'TexturePool::getTextures(): invalid image data:' + updateObj.path + ' data:' + updateObj.data );
 
                                 }
@@ -553,7 +561,7 @@ class TexturePool extends AssetPool {
 
                         // Put a single-pixel texture in its place.
 
-                        this.util.emitter.emit( this.util.emitter.events.TEXTURE_2D_READY, prim, this.defaultKey, i );
+                        this.util.emitter.emit( this.util.emitter.events.TEXTURE_2D_READY, prim, this.defaultKey, i, options );
 
                     }
 
