@@ -269,6 +269,22 @@ class World extends AssetPool {
 // TEXTURED SHADER.
 //////////////////////////////////
 
+            this.primFactory.createPrim(
+
+                this.s1,                      // callback function
+                typeList.CUBE,
+                'first cube',                                        // name
+                vec5( 1, 1, 1 ),            // dimensions
+                vec5( 10, 10, 10, 0 ),            // divisions, pass curving of edges as 4th parameter
+                vec3.fromValues( 1, 0, 2 ),            // position (absolute)
+                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+                vec3.fromValues( util.degToRad( 1 ), util.degToRad( 1 ), util.degToRad( 1 ) ), // angular velocity in x, y, x
+                [ 'img/crate.png', 'img/webvr-logo1.png' ],          // texture image
+                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ), // RGBA color
+
+            );
+
 /*
 
         // Create a UV skydome.
@@ -287,23 +303,6 @@ class World extends AssetPool {
                 [ 'img/panorama_01.png' ],           // texture present
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0) // color
             );
-
-            this.primFactory.createPrim(
-
-                this.s1,                      // callback function
-                typeList.CUBE,
-                'first cube',                                        // name
-                vec5( 1, 1, 1 ),            // dimensions
-                vec5( 10, 10, 10, 0 ),            // divisions, pass curving of edges as 4th parameter
-                vec3.fromValues( 1, 0, 2 ),            // position (absolute)
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 1 ), util.degToRad( 1 ), util.degToRad( 1 ) ), // angular velocity in x, y, x
-                [ 'img/crate.png', 'img/webvr-logo1.png' ],          // texture image
-                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ), // RGBA color
-
-            );
-
 
             this.primFactory.createPrim(
 
@@ -864,6 +863,16 @@ class World extends AssetPool {
      */
     housekeep () {
 
+// TODO: Just make the ShaderTexture use light. Remove ShaderDirLightTexture.
+
+// TODO: IF A MATERIAL HAS A COLOR, OVERRIDE THE DEFAULT COLOR ARRAY (by re-writing it in that color).
+// TODO: use the texture pixel in prim.defaultMaterial - set it to the value of the diffuse color.
+// TODO: or, study if textures actually list color independently from ambient color.
+// TODO: set ambient, and diffuse color to the same color, and assign to the texture array.
+// TODO: or, ignore color array? WHAT WOULD THAT LOOK LIKE?????????
+// TODO: some wavefront files have x, y, z, r, g, b for 'v' - PROCESS!!!!!!
+
+
 // TODO: TGA Loader?
 
 // TODO: Push and Pop mvMatrix (in Shader) to better organize sequence (research if we can get a speedup)
@@ -1048,7 +1057,7 @@ class World extends AssetPool {
 
         }
 
-        ////////////////////////////console.log( this.webgl.glError() );
+        ////////////////////////////console.log( this.webgl.getError() );
 
     }
 

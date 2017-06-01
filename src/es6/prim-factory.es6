@@ -475,6 +475,8 @@ class PrimFactory {
 
             for ( var i in coords.options.materials ) {
 
+                console.log("PrimFactory::initPrimGeometry(): NEW MATERIAL SUPPLIED")
+
                 /* 
                  * If the material exists in prim.materials under its name (meaning that it was loaded 
                  * by MaterialPool, add the position start in coords.options.materials[i] to it.
@@ -482,6 +484,7 @@ class PrimFactory {
                  * NOTE: Prim.setMaterial() is used to create a default material in Prim.createPrim();
                  */
 
+/*
                 if ( ! prim.materials[ i ] ) {
 
                     console.log('initPrimGeometry():creating new material for ' + i )
@@ -492,11 +495,13 @@ class PrimFactory {
 
                 }
 
+*/
+
             }
 
          } else {
 
-            // No material was supplied.
+            // No matStarts were defined, so do a default.
 
             if ( ! prim.matStarts ) {
 
@@ -920,10 +925,6 @@ class PrimFactory {
 
                 prim.fade.incr = inc;
 
-            } else {
-
-                prim.fade.incr = 0.002;
-
             }
 
             // Fade equation.
@@ -981,11 +982,9 @@ class PrimFactory {
 
         // Shader after the Prim has initialized.
 
-        ///////////////////////prim.shader = prim.defaultShader = shader;
+        prim.shader = this.world.s0; // Fadein Shader
 
-        prim.shader = this.world.s0; // Fadein shader
-
-        prim.defaultShader = shader;
+        prim.defaultShader = shader; // Our post-fadein Shader
 
         // Name (arbitrary).
 
@@ -1031,23 +1030,29 @@ class PrimFactory {
 
         prim.scale = [ 1.0, 1.0, 1.0 ];
 
-        // Set Prim lighting (use Shader-defined lighting).
+        // By default Prims don't use directional Lighting.
 
-        prim.light = new Lights( this.glMatrix );
+        prim.useLighting = true;
 
-        // Prim's overall opacity at creation (default is invisible).
+        // So the Prim can emit light.
 
-        prim.alpha = 1.0;
+        prim.glow = new Lights( this.glMatrix );
 
         // Note: fade equations in util.
 
         prim.fade = {
 
-            startAlpha: 0.0,
+            startAlpha: 0.0, // starting opacity value
+ 
+            endAlpha: 1.0, // ending opacity value
 
-            endAlpha: 1.0
+            incr: 0.002 // animation fade increment
 
         };
+
+        // Use textures. If textures are loaded (either via images or OBJ files) this is reset to true.
+
+        prim.useTextures = false;
 
         // Visible from outside (counterclockwise winding) or inside (clockwise winding).
 
@@ -1080,6 +1085,14 @@ class PrimFactory {
 
         prim.defaultMaterial = this.materialPool.getPlaceholder();
 
+        // Set this to default.
+
+        prim.materials[ prim.defaultMaterial.name ] = prim.defaultMaterial;
+
+        // Set Prim alpha from the active Material.
+
+        prim.alpha = prim.defaultMaterial.transparency;
+
         // Store multiple sounds for one Prim.
 
         prim.audio = [];
@@ -1100,6 +1113,17 @@ class PrimFactory {
 
        console.log( 'Generating Prim:' + prim.name + '(' + prim.type + ')' );
 
+       // TODO:
+
+       // TODO:
+       // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+       // If we have a list of images, provide them to getGeometries
+       // In getGeometries, include material file.
+       // Have getGeometries call MaterialPool to in turn call TexturePool to load textures
+       // Modify the material file to include textures, according to their position in the 
+       // input array
+       // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
         // Geometry factory function, create empty WebGL Buffers.
 
         prim.geometry = new GeometryBuffer( prim.name, this.util, this.webgl );
@@ -1107,8 +1131,6 @@ class PrimFactory {
         // Create Geometry data, or load Mesh data (may alter some of the above default properties).
 
         this.geometryPool.getGeometries( prim, modelFiles );
-
-
 
         /////////////////////////this.texturePool.getTextures( prim, textureImages, true, false ); // assume cacheBust === true, mimeType determined by file extension.
 

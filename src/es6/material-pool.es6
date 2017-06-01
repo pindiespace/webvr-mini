@@ -87,6 +87,14 @@ class MaterialPool extends AssetPool {
 
         map_Kd = null ) {
 
+        if ( ! map_Kd ) {
+
+            // Add a default, 1-pixel texture.
+
+            map_Kd = this.texturePool.getPlaceholder().texture;
+
+        }
+
         return {
 
             name: name,
@@ -94,6 +102,8 @@ class MaterialPool extends AssetPool {
             key: null,           // key in MaterialPool
 
             path: null,          // path to file
+
+            override: false,     // NOTE: override color array with a single color, as shown here.
 
             ambient: ambient,    // Ka ambient color, white
 

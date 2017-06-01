@@ -143,7 +143,7 @@ var promise = new Promise( ( resolve, reject ) => {
 
         // Basic color array Shader, without lighting.
 
-        shaderPool.addAsset( new ShaderColor( true, util, glMatrix, webgl, webvr, 'shaderColor' ) );
+        shaderPool.addAsset( new ShaderColor( true, util, glMatrix, webgl, webvr, 'shaderColor', lights ) );
 
         // One texture Shader with directional lighting.
 

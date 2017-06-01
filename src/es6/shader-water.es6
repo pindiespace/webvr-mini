@@ -158,7 +158,9 @@ class ShaderWater extends Shader {
 
         far = arr[ 10 ],
 
-        vr = arr[ 11 ];
+        vr = arr[ 11 ],
+
+        iSize = arr[ 12 ];
 
         // Shorter reference.
 

@@ -20,17 +20,15 @@ class ShaderColor extends Shader {
      * --------------------------------------------------------------------
      */
 
-    constructor ( init, util, glMatrix, webgl, webvr, shaderName ) {
+    constructor ( init, util, glMatrix, webgl, webvr, shaderName, lights ) {
 
-        super( init, util, glMatrix, webgl, webvr, shaderName );
+        super( init, util, glMatrix, webgl, webvr, shaderName, lights );
 
         // Define arrays that are needed for this shader.
 
         this.required.buffer.indices = true,
 
         this.required.buffer.colors = true,
-
-        this.required.textures = 0;
 
         console.log( 'In ShaderColor class' );
 
@@ -58,19 +56,39 @@ class ShaderColor extends Shader {
 
             'attribute vec3 ' + this.webgl.attributeNames.aVertexPosition[ 0 ] + ';',
             'attribute vec4 ' + this.webgl.attributeNames.aVertexColor[ 0 ] + ';',
-
+            'attribute vec3 ' + this.webgl.attributeNames.aVertexNormal[ 0 ] + ';',
             //'attribute vec2 ' + this.webgl.attributeNames.aTextureCoord[ 0 ] + ';',
 
             'uniform mat4 uMVMatrix;',
             'uniform mat4 uPMatrix;',
+            'uniform mat3 uNMatrix;',   // Inverse-transpose of Model-View matrix
 
-            'varying lowp vec4 vColor;',
+            // World position.
+
+            'uniform vec3 uPOV;',
+
+            // Adjusted positions and normals.
+
+            'varying vec3 vPOV;',       // user point of view (camera)
+            'varying vec4 vPositionW;', // adjusted position
+            'varying vec4 vNormalW;',   // adjusted normal
+
+            //'varying vec2 vTextureCoord;',
+
+            'varying vec4 vVertexColor;',
+
 
             'void main(void) {',
 
             '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);',
 
-            '    vColor = aVertexColor;',
+            '    vVertexColor = aVertexColor;',
+
+                'vPOV = -uPOV;',
+
+                'vPositionW = uMVMatrix * vec4(aVertexPosition, 1.0);', // Model-View Matrix (including POV / camera).
+
+                'vNormalW =  normalize(vec4(uNMatrix*aVertexNormal, 0.0));', // Inverse-transpose-normal matrix rotates object normals.
 
             '}'
 
@@ -99,21 +117,84 @@ class ShaderColor extends Shader {
              * vertex, textureX coordinates, colors, normals, tangents.
              */
 
-            //'uniform vec3 uMatAmbient;',  // ambient can override default color (darken)
-            //'uniform vec3 uMatDiffuse;',  // diffuse color, typically 1.0 with lighting.
-            'uniform vec3 uMatEmissive;', // no lighting, but can glow (brighten)
+            // Lighting flags.
 
-            'varying lowp vec4 vColor;',
+            'uniform bool uUseLighting;',
+            'uniform bool uUseColor;',
+
+            // Lighting values.
+
+            'uniform vec3 uAmbientColor;',
+            'uniform vec3 uLightingDirection;', // uLightingDirection
+            'uniform vec3 uDirectionalColor;',
+
+            // Material properties (includes specular highlights).
+
+            'uniform vec3 uMatEmissive;',
+            'uniform vec3 uMatAmbient;',
+            'uniform vec3 uMatDiffuse;',
+            'uniform vec3 uMatSpecular;',
+            'uniform float uMatSpecExp;',
+
+            'varying vec3 vPOV;', // World point of view (camera)
+            'varying vec4 vPositionW;',
+            'varying vec4 vNormalW;',
+
+            'varying lowp vec4 vVertexColor;',
 
             'void main(void) {',
 
-                'float uAlpha = 1.0;', // NOTE: low alpha will create black hole unless drawn back to front!
+                'vec4 vColor = vVertexColor;',
 
-                'vec4 color = vColor;',
+                //  Set light components by Light x Material.
 
-                'color.rgb *= (1.0 + uMatEmissive.rgb);',
+                'vec4 Emissive = vec4(uMatEmissive, 1.0);',
 
-                'gl_FragColor = vec4( color.r , color.g , color.b, uAlpha);',
+                'vec4 Ambient = vec4(uAmbientColor * uMatAmbient, 1.0);',
+
+                'vec4 Diffuse = vec4(uDirectionalColor * uMatDiffuse, 1.0);',
+
+                'vec4 Specular = vec4(0.0, 0.0, 0.0, 1.0);',
+
+               'if(uUseLighting) {',
+
+                    // Add lighting direction to Diffuse.
+
+                    'vec4 N = normalize(vNormalW);',
+
+                    'vec4 LL = normalize(vec4(uLightingDirection, 1.0));',
+
+                    'float NdotL = max( dot(N, LL), 0.0);',
+
+                    'Diffuse = NdotL * Diffuse;',
+
+                    // Compute specular dot. Changing 4th parameter to 0.0 instead of 1.0 improved results.
+
+                    'vec4 L = normalize(vec4(uLightingDirection, 1.0) - vPositionW);',
+
+                    'vec4 EyePosW = vec4(vPOV, 0.0);', // world = eye = camera position
+
+                    'vec4 V = normalize(EyePosW - vPositionW );',
+
+                    'vec4 H = normalize(L + V);',
+
+                    'vec4 R = reflect(-L, N);', // -L computes side facing Light, +L computes shadow component
+
+                    'float RdotV = max(dot(R, V), 0.0);',
+
+                    'float NdotH = max(dot(N, H), 0.0);',
+
+                    'float spec = uMatSpecExp;',
+
+                    // Multiply Specular by global uAlpha here.
+
+                    'Specular = pow(RdotV, spec) * pow(NdotH, spec) * vec4(uDirectionalColor * uMatSpecular, 1.0);',
+
+                '}',
+
+                // Final color.
+
+                'gl_FragColor = (Emissive + Ambient + Diffuse + Specular) * vec4(vColor.rgb, vColor.a);',
 
             '}'
 
@@ -168,7 +249,9 @@ class ShaderColor extends Shader {
 
         far = arr[ 10 ],
 
-        vr = arr[ 11 ];
+        vr = arr[ 11 ],
+
+        iSize = arr[ 12 ];
 
         // Attach objects.
 
@@ -202,19 +285,55 @@ class ShaderColor extends Shader {
 
         aVertexColor = vsVars.attribute.vec4.aVertexColor,
 
-        uPMatrix = uPMatrix = vsVars.uniform.mat4.uPMatrix,
+        aVertexNormal = vsVars.attribute.vec3.aVertexNormal,
 
-        uMVMatrix = uMVMatrix = vsVars.uniform.mat4.uMVMatrix,
+        // Lighting
+
+        uUseLighting = fsVars.uniform.bool.uUseLighting,
+
+        uAmbientColor = fsVars.uniform.vec3.uAmbientColor, // ambient light color
+
+        uDirectionalColor = fsVars.uniform.vec3.uDirectionalColor, // directional light color
+
+        uLightingDirection = fsVars.uniform.vec3.uLightingDirection, 
+
+        // Material properties.
+
+        uMatEmissive = fsVars.uniform.vec3.uMatEmissive,
 
         uMatAmbient = fsVars.uniform.vec3.uMatAmbient,
 
         uMatDiffuse = fsVars.uniform.vec3.uMatDiffuse,
 
-        uMatEmissive = fsVars.uniform.vec3.uMatEmissive;
+        uMatSpecular = fsVars.uniform.vec3.uMatSpecular,
 
-        // No transparency, always opaque.
+        uMatSpecExp = fsVars.uniform.float.uMatSpecExp,
 
-        // Lights not used, but material may have ambient and emissive lighting.
+        // Model-view, Perspective and inverse-transpose matrix.
+
+        uPMatrix = uPMatrix = vsVars.uniform.mat4.uPMatrix,
+
+        uMVMatrix = uMVMatrix = vsVars.uniform.mat4.uMVMatrix,
+
+        uNMatrix = vsVars.uniform.mat3.uNMatrix; // Inverse-transpose normal matrix
+
+        // Lighting.
+
+        let light0 = this.lights.getLight( this.lights.lightTypes.LIGHT_0 ), // 'this.lights' loaded in parent Shader class
+
+        ambient = light0.ambient,
+
+        lightingDirection = light0.lightingDirection,
+
+        directionalColor = light0.directionalColor,
+
+        uPOV = vsVars.uniform.vec3.uPOV; // World Position (also position of camera/POV)
+
+        // Initialize some local variables.
+
+        let nMatrix = mat3.create(); // TODO: ADD MAT3 TO PASSED VARIABLES
+
+        let adjustedLD = lightingDirection;
 
         // Update Prim position, motion - given to World object.
 
@@ -223,6 +342,10 @@ class ShaderColor extends Shader {
             // Update the model-view matrix using current Prim position, rotation, etc.
 
             prim.setMV( MVM );
+
+            // Calculates a 3x3 normal matrix (transpose inverse) from the 4x4 matrix.
+
+            mat3.normalFromMat4( nMatrix, MVM );
 
         }
 
@@ -253,11 +376,15 @@ class ShaderColor extends Shader {
 
                 // Only render if we are visible.
 
-                if ( ! prim || prim.alpha === 0 ) continue; // could be null
+                if ( ! prim || prim.alpha === 0 ) continue; // could be null or invisible
 
                 // Individual prim update
 
                 program.update( prim, mvMatrix );
+
+                // Look for (multiple) materials.
+
+                let ms = prim.matStarts;
 
                 // Bind vertex buffer.
 
@@ -271,50 +398,112 @@ class ShaderColor extends Shader {
                 gl.enableVertexAttribArray( aVertexColor );
                 gl.vertexAttribPointer( aVertexColor, 4, gl.FLOAT, false, 0, 0 );
 
-                // default material (other Shaders might use multiple materials).
+                // Bind lighting.
 
-                let m = prim.defaultMaterial;
+                gl.uniform3fv( uAmbientColor, ambient );
+                gl.uniform3fv( uLightingDirection, adjustedLD );
+                gl.uniform3fv( uDirectionalColor, directionalColor );
+                gl.uniform3fv( uPOV, pov.position ); // used for specular highlight
 
-                // Set the material quality of the Prim.
+                if ( prim.useLighting ) {
 
-                gl.uniform3fv( uMatAmbient, m.ambient );
-                gl.uniform3fv( uMatDiffuse, m.diffuse );
-                gl.uniform3fv( uMatEmissive, m.emissive ); 
+                    gl.uniform1i( uUseLighting, 1 );
 
-                // Bind perspective and model-view matrix uniforms.
+                    // Bind normals for lighting.
+
+                    gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.normals.buffer );
+                    gl.enableVertexAttribArray( aVertexNormal );
+                    gl.vertexAttribPointer( aVertexNormal, 3, gl.FLOAT, false, 0, 0 );
+
+                } else {
+
+                    // Turn off lighting in the Shader.
+
+                    gl.uniform1i( uUseLighting, 0 );
+
+                }
+
+                // Set normals matrix uniform (inverse transpose matrix).
+
+                gl.uniformMatrix3fv( uNMatrix, false, nMatrix );
+
+                // Set Perspective uniform.
 
                 gl.uniformMatrix4fv( uPMatrix, false, PM );
+
+                // Model-View matrix uniform.
+
                 gl.uniformMatrix4fv( uMVMatrix, false, mvMatrix );
 
                 // Bind indices buffer.
 
                 gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, prim.geometry.indices.buffer );
 
-                if ( stats.uint32 ) {
+                // Loop through materials
 
-                    // Draw elements, 0 -> 2e9
+                // default material (other Shaders might use multiple materials).
 
-                    gl.drawElements( gl.TRIANGLES, prim.geometry.indices.numItems, gl.UNSIGNED_INT, 0 );
+                let m = prim.defaultMaterial;
 
+                /* 
+                 * iSize is either gl.UNSIGNED_INT (0 -> 2e9) or gl.UNSIGNED_SHORT (0 -> 65535)
+                 * GeometryPool and ModelPool routines are expected to "chop"
+                 */
+
+                 // TODO: m.override says use material color instead of Prim color array.
+                 // TODO: could re-do color array when a Prim material is encountered.
+                 // TODO: create Geometry
+
+                if ( ms.length === 1 ) {
+
+                    // default material (other Shaders might use multiple materials).
+
+                    // Set the material quality of the Prim.
+
+                    gl.uniform3fv( uMatAmbient, m.ambient );
+                    gl.uniform3fv( uMatDiffuse, m.diffuse );
+                    gl.uniform3fv( uMatEmissive, m.emissive );
+                    gl.uniform3fv( uMatSpecular, m.specular );
+                    gl.uniform1f( uMatSpecExp, m.specularExponent );
+
+                    gl.drawElements( gl.TRIANGLES, prim.geometry.indices.numItems, iSize, 0 );
 
                 } else {
 
-                    // Draw elements, 0 -> 65k (old platforms).
+                    // Loop through materials, and regions of Prim they apply to.
 
-                    gl.drawElements( gl.TRIANGLES, prim.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0 );
+                    for ( let j = 0; j < ms.length; j++ ) {
 
-                }
+                        let st = ms[ j ];
+
+                           // Get the next material from prim.matStarts
+
+                        m = prim.materials[ st[ 0 ] ]; // bind the material
+
+                        // Set the material quality of the Prim.
+
+                        gl.uniform3fv( uMatAmbient, m.ambient );
+                        gl.uniform3fv( uMatDiffuse, m.diffuse );
+                        gl.uniform3fv( uMatEmissive, m.emissive );
+                        gl.uniform3fv( uMatSpecular, m.specular );
+                        gl.uniform1f( uMatSpecExp, m.specularExponent );
+
+                        //gl.activeTexture( gl.TEXTURE0 );
+                        //gl.bindTexture( gl.TEXTURE_2D, null );
+                        ///////gl.bindTexture( gl.TEXTURE_2D, m[ 'map_Kd' ] );
+                        //gl.bindTexture( gl.TEXTURE_2D, m.map_Kd );
+
+                        gl.drawElements( gl.TRIANGLES, st[ 2 ], iSize, st[ 1 ] );
+
+                    }
+
+                } 
 
                 // Copy back the original for the next Prim. 
 
                 mat4.copy( mvMatrix, saveMV, mvMatrix );
 
             } // end of renderList for Prims
-
-            // Disable buffers that might cause problems in another Shader.
-
-            //gl.bindBuffer( gl.ARRAY_BUFFER, null );
-            //gl.disableVertexAttribArray( vsVars.attribute.vec4.aVertexColor ); 
 
         } // end of program.render()
 

@@ -641,10 +641,10 @@ class WebGL {
      */
 
     /** 
-     * Report a WebGL error.
+     * Wrapper for WebGL error reporting.
      * @link https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/getError
      */
-    glError ( ) {
+    getError ( ) {
 
         let fnName = 'webgl.glError():',
 

@@ -15,6 +15,7 @@ class Shader {
      * 
      * Some shaders
      * https://github.com/jwagner/terrain
+     * http://shadertoy.com
      * 
      * Superfast Advanced Batch Processing
      * http://max-limper.de/tech/batchedrendering.html
@@ -99,23 +100,29 @@ class Shader {
 
             textures: {
 
-                map_Kd: false,               // diffuse map, an image file (other maps not in default)
+                map_Kd: false,                 // diffuse map, an image file (other maps not in default)
 
                 map_Ks: false,                 // specular map
 
                 map_Ka: false,                 // ambient map
 
-                map_bump: null,               // bumpmap
+                map_bump: false,               // bumpmap
 
                 map_refl: false,               // environment map
 
                 map_d: false,                  // alpha map
 
-                map_disp: null,                   // displacement map
+                map_disp: false,               // displacement map
 
             },
 
-            lights: 0, // Internal or positional (not World) light.
+            lights: {
+
+                world: false,                 // World illumination
+
+                internal: false               // Shader expects Prims to glow
+
+            }
 
         };
 
@@ -507,6 +514,8 @@ class Shader {
     /** 
      * set up our program object, using WebGL. We wrap the 'naked' WebGL 
      * program object, and add additional properties to the wrapper. 
+     *
+     * This method is called by polymorphic .init() methods in derived Shaders.
      * 
      * Individual shaders use these variables to construct a program wrapper 
      * object containing the GLProgram, plus properties, plus update() and 
@@ -517,11 +526,11 @@ class Shader {
         // The program is created by decorating an object provided by the WebGL object 
         // with additional methods.
 
-        let program = this.program;
+        let program = this.program,
 
-        let glMatrix = this.glMatrix;
+        glMatrix = this.glMatrix,
 
-        let mat4 = glMatrix.mat4;
+        mat4 = glMatrix.mat4;
 
         this.pMatrix = glMatrix.mat4.create(); // projection matrix (defaults to mono view)
 
@@ -531,21 +540,35 @@ class Shader {
 
         this.mvMatrix = glMatrix.mat4.create(); // model-view matrix
 
-        let pMatrix = this.pMatrix;
+        let pMatrix = this.pMatrix,
 
-        let mMatrix = this.mMatrix;
+        mMatrix = this.mMatrix,
 
-        let vMatrix = this.vMatrix;
+        vMatrix = this.vMatrix,
 
-        let mvMatrix = this.mvMatrix;
+        mvMatrix = this.mvMatrix,
 
-        let canvas = this.webgl.getCanvas();
+        canvas = this.webgl.getCanvas(),
 
-        let gl = this.webgl.getContext();
+        gl = this.webgl.getContext(),
 
-        let near = this.webgl.near;
+        near = this.webgl.near,
 
-        let far = this.webgl.far;
+        far = this.webgl.far;
+
+        // Set the index size, based on WebGL capabilities.
+
+        let iSize;
+
+        if ( this.webgl.stats.uint32 ) {
+
+            iSize = gl.UNSIGNED_INT; // > 64k indices references
+
+        } else {
+
+            iSize = gl.UNSIGNED_SHORT; // <= 16-bit indices references
+
+        }
 
         /**
          * Rendering mono view.
@@ -673,7 +696,9 @@ class Shader {
 
             this.webgl.far,
 
-            this.vr
+            this.vr,
+
+            iSize
 
         ];
 

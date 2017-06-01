@@ -554,7 +554,7 @@ class ModelPool extends AssetPool {
 
         if ( faces.length ) {
 
-            let nIndices = [], nVertices = [], nTexCoords = [], nNormals = [];
+            let nIndices = [], nVertices = [], nTexCoords = [], nNormals = [], nMatStarts = [], nSmoothingGroups = [];
 
             for ( let i = 0; i < faces.length; i++ ) {
 
@@ -595,6 +595,22 @@ class ModelPool extends AssetPool {
                     // Re-index our groups, objects, material starts, smoothing groups.
 
                     // TODO:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+                    for ( let j = 0; j < matStarts.length; j++ ) {
+
+                        if ( j == i ) { // our current face number is the same as a face number in the faces array
+
+                            nMatStars[ j ] = [ matStarts[ j ][ 0 ], iIdx ]; // write the new index to that position
+
+                        }
+
+                    }
+
+                    // TODO: Have to re-compute!!!!!
+
+                    // TODO: for smoothing groups!!!!!!
+
+                    ///////////////////////::::::::::::::::::::::::::::::::::::::::::::::::::::
 
  
                     // Push the flattened vertex, texCoord, normal values.
@@ -654,6 +670,7 @@ class ModelPool extends AssetPool {
 
             }
 
+
             // Compute the length of each matStarts position.
 
             // TODO:::::::::::::::::::::::
@@ -676,13 +693,7 @@ class ModelPool extends AssetPool {
 
         }
 
-        // Sort our material starts by the second column value (revised starting position of material).
-
-        //matStarts = matStarts.sort( ( a, b ) => {
-
-        //    return a[ 1 ] - b[ 1 ];
-
-        //} );
+        // TODO: do we every have to sort matStarts?
 
         // Final computation for matStarts. Compute the length of each material block.
 
