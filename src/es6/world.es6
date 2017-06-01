@@ -271,26 +271,6 @@ class World extends AssetPool {
 
 /*
 
-            // TODO: MAKE SURE CAP IS ACTUALLY BEING DRAWN!!!!
-
-            this.primFactory.createPrim(
-            
-                this.s1,                      // callback function
-                typeList.CAP, // CAP DEFAULT, AT WORLD CENTER (also a UV polygon)
-                'CAP',
-                vec5( 3, 3, 3, 0 ),         // dimensions INCLUDING start radius or torus radius(last value)
-                vec5( 15, 15, 15 ),         // divisions MUST BE CONTROLLED TO < 5
-                //vec3.fromValues(-3.5, -3.5, -1 ),    // position (absolute)
-                vec3.fromValues(-0.0, 0, 2.0),
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [ 'img/mozvr-logo1.png' ],               // texture present
-                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
-        
-            ); 
-
-
         // Create a UV skydome.
 
             this.primFactory.createPrim(
@@ -768,6 +748,27 @@ class World extends AssetPool {
 
             );
 
+*/
+
+/*
+            // TODO: MAKE SURE CAP IS ACTUALLY BEING DRAWN!!!!
+
+            this.primFactory.createPrim(
+            
+                this.s1,                      // callback function
+                typeList.CAP, // CAP DEFAULT, AT WORLD CENTER (also a UV polygon)
+                'CAP',
+                vec5( 3, 3, 3, 0 ),         // dimensions INCLUDING start radius or torus radius(last value)
+                vec5( 15, 15, 15 ),         // divisions MUST BE CONTROLLED TO < 5
+                //vec3.fromValues(-3.5, -3.5, -1 ),    // position (absolute)
+                vec3.fromValues(-0.0, 0, 2.0),
+                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+                vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+                [ 'img/mozvr-logo1.png' ],               // texture present
+                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
+        
+            );
 */
 
 

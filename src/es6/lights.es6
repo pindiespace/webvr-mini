@@ -3,9 +3,7 @@
 
 class Lights {
     
-    constructor ( glMatrix, ambient = [ 0.3, 0.3, 0.3 ], lightingDirection = [ -1000.0, 0.0, 1000.1 ], 
-
-        directionalColor = [ 1, 1, 1 ] ) {
+    constructor ( glMatrix ) {
 
         this.glMatrix = glMatrix;
 
@@ -23,19 +21,9 @@ class Lights {
 
         this.lightList = [];
 
-        this.lightList[ this.lightTypes.LIGHT_0 ] = {
+        // Set a default Light.
 
-            ambient: ambient,
-
-            lightingDirection: [ lightingDirection[ 0 ], lightingDirection[ 1 ], lightingDirection[ 2 ] ],
-
-            directionalColor: directionalColor,
-
-            attenuation: 0.0,
-
-            radius: 1.0
-
-        };
+        this.setLight( this.lightTypes.LIGHT_0 );
 
     }
 
@@ -60,6 +48,35 @@ class Lights {
         }
 
         return this.lightList[ id ].lightingDirection;
+
+    }
+
+    /** 
+     * Set a Light.
+     * @param {String} lightType the type of light to use (pre-defined in constructor).
+     * @param {glMatrix.vec3} ambient the ambient (nondirectional) lighting from the light. 
+     * usually zero if this isn't a World light.
+     * @param {GlMatrix.vec3} lightingDireciton the direction of the light, also its apparent position.
+     * @param {GlMatrix.vec3} directionalColor the color of the light.
+     * @param {Boolean} active if true, the light is on, else false.
+     */
+    setLight ( lightType, ambient = [ 0.3, 0.3, 0.3 ], lightingDirection = [ -1000.0, 0.0, 1000.1 ], 
+
+        directionalColor = [ 1, 1, 1 ], active = false ) {
+
+        this.lightList[ lightType ] = {
+
+            ambient: ambient,
+
+            lightingDirection: lightingDirection,
+
+            directionalColor: directionalColor,
+
+            attenuation: 0.0,
+
+            radius: 1.0
+
+        };
 
     }
 

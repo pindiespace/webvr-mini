@@ -182,13 +182,17 @@ class ShaderFader extends Shader {
 
                 '}',
 
-                //  Set light compontents by Light x Material.
+                //  Set light components by Light x Material.
 
                 'vec4 Emissive = vec4(uMatEmissive, uAlpha);',
 
-                'vec4 Ambient = vec4(uAmbientColor * uMatAmbient, uAlpha);',
+                // We do a quad fadein of our Ambient so near-transparent objects don't have the Ambient color.
+
+                'vec4 Ambient = vec4(uAmbientColor * uMatAmbient, uAlpha * uAlpha);',
 
                 'vec4 Diffuse = vec4(uDirectionalColor * uMatDiffuse, uAlpha);',
+
+                //'vec4 Diffuse = vec4(0.4, 1.0, 0.2, uAlpha);',
 
                 // Specular should be zero if we aren't lighting.
 
@@ -506,19 +510,16 @@ class ShaderFader extends Shader {
                 gl.enableVertexAttribArray( aVertexColor );
                 gl.vertexAttribPointer( aVertexColor, 4, gl.FLOAT, false, 0, 0 ); // NOTE: prim.geometry.colors.itemSize for param 2
 
-                // NOTE: we always bind the texture buffer, even if we don't used it (prevent 'out of range' errors).
-
-                gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.texCoords.buffer );
-                gl.enableVertexAttribArray( aTextureCoord );
-                gl.vertexAttribPointer( aTextureCoord, 2, gl.FLOAT, false, 0, 0 );
-
-                gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.normals.buffer );
-                gl.enableVertexAttribArray( aVertexNormal );
-                gl.vertexAttribPointer( aVertexNormal, 3, gl.FLOAT, false, 0, 0 );
-
                 // Alpha, with easing animation (in this.util).
 
                 gl.uniform1f( uAlpha, prim.alpha );
+
+                    // Bind lighting.
+
+                    gl.uniform3fv( uAmbientColor, ambient );
+                    gl.uniform3fv( uLightingDirection, adjustedLD );
+                    gl.uniform3fv( uDirectionalColor, directionalColor );
+                    gl.uniform3fv( uPOV, pov.position ); // used for specular highlight
 
                 // Conditionally set lighting, based on default Shader the Prim was assigned to.
 
@@ -526,10 +527,11 @@ class ShaderFader extends Shader {
 
                     gl.uniform1i( uUseLighting, 1 );
 
-                    gl.uniform3fv( uAmbientColor, ambient );
-                    gl.uniform3fv( uLightingDirection, adjustedLD );
-                    gl.uniform3fv( uDirectionalColor, directionalColor );
-                    gl.uniform3fv( uPOV, pov.position ); // used for specular highlight
+                    // Bind normals for lighting.
+
+                    gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.normals.buffer );
+                    gl.enableVertexAttribArray( aVertexNormal );
+                    gl.vertexAttribPointer( aVertexNormal, 3, gl.FLOAT, false, 0, 0 );
 
                 } else {
 
@@ -543,10 +545,12 @@ class ShaderFader extends Shader {
 
                     if ( ! prim.defaultMaterial || ! prim.defaultMaterial.map_Kd ) continue;
 
-                    // Conditionally set use of color and texture arrays.
-
                     gl.uniform1i( uUseColor, 0 );
                     gl.uniform1i( uUseTexture, 1 );
+
+                    gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.texCoords.buffer );
+                    gl.enableVertexAttribArray( aTextureCoord );
+                    gl.vertexAttribPointer( aTextureCoord, 2, gl.FLOAT, false, 0, 0 );
 
                    // Bind the first texture.
 
