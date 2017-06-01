@@ -44,8 +44,7 @@ class PrimFactory {
      *  }
      * 
      * prim.shader        = Shader used by this prim.
-     * prim.textures      = array of textures used by this prim.
-     * prim.materials     = materials used by this prim.
+     * prim.materials     = materials used by this prim, may contain textures.
      * prim.audio         = array of audio files use by this prim.
      * prim.video         = array of video files used by this prim.
      *
@@ -244,18 +243,13 @@ class PrimFactory {
      */
     initPrimTexture ( prim, textureObj, options ) {
 
-        console.log("initing texture for prim:" + prim.name + ', options:' + options);
-
-        // NOTE: we always have a default texture assigned in the default material.
-
-        // NOTE: so, we only need to assign if we have a valid texture
-
-        // NOTE: this method of assignment means that the prim.textures array may have UNDEFINED elements!
+        console.log("Prim::initPrimTexture(): new texture for prim:" + prim.name + ', options:' + options );
 
         // Failed texture loads have the default 'grey pixel' texture substituted from texturePool.
 
         ////////////////////////////////////
         ////////////////////////////////////
+    /*
 
         for ( let i in prim.materials ) {
 
@@ -322,11 +316,7 @@ class PrimFactory {
 
                     // TODO: TOJI CUBE SEEMS IDENTICAL BUT IS NOT!!!!!!!!
 
-
-
                 }
-
-
 
                 //}
 
@@ -336,19 +326,7 @@ class PrimFactory {
 
         let pos = options.pos;
 
-        ////////////////////////////////////
-        ////////////////////////////////////
-
-        if ( ! prim.textures[ pos ] || prim.textures[ pos ].path === null ) {
-
-            prim.textures[ pos ] = textureObj;
-
-
-        } else {
-
-            prim.textures.push( textureObj ); // replace the default
-
-        }
+        */
 
         // First, look for any 'default' textures (a single grey pixel) and replace them.
 
@@ -360,25 +338,23 @@ class PrimFactory {
 
         // TODO: MAKE SURE WE ARE NOT MAKING A REDUNDANT ASSIGNMENT !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-
-
     }
 
     /** 
      * Add a new 3d texture to the Prim.
      */
-    initPrimTexture3d( prim, textureObj, pos, options ) {
+    initPrimTexture3d( prim, textureObj, options ) {
 
-        prim.textures[ pos ] = textureObj;
+        console.log("Prim::initPrimTexture(): new 3D texture for prim:" + prim.name + ', options:' + options);
 
     }
 
     /** 
      * Add a new cubemap texture to the Prim
      */
-    initPrimTextureCubeMap( prim, textureObj, pos ) {
+    initPrimTextureCubeMap( prim, textureObj, options ) {
 
-        prim.textures[ pos ] = textureObj;
+        console.log("Prim::initPrimTexture(): new CubeMap texture for prim:" + prim.name + ', options:' + options);
 
     }
 
@@ -391,6 +367,9 @@ class PrimFactory {
      */
     initPrimMaterial ( prim, material, materialName ) {
 
+        console.log('Prim::initMaterial(): new material ' + materialName + ' for prim:' + prim.name );
+
+/*
         // Material is returned as an associative array, since multiple materials may be found in one .mtl file.
 
         // If we have a default, remove it, since we have a non-default material.
@@ -409,12 +388,12 @@ class PrimFactory {
         // MATERIAL LOADING = SWAP IN ANY TEXTURES ALREADY THERE
         // TEXTURE LOADING = SCAN MATERIALS AND LOAD THERE.
 
-        /* 
-         * If the material already has an entry, it was put there parsing the 
-         * OBJ file. so pull the 'start' value from it, and replace with 
-         * the full material data. Otherwise, add material - this.initPrim() 
-         * will add the start position for the material later.
-         */
+
+        // If the material already has an entry, it was put there parsing the 
+        // OBJ file. so pull the 'start' value from it, and replace with 
+        // the full material data. Otherwise, add material - this.initPrim() 
+        // will add the start position for the material later.
+
 
         // A texture loaded, and defined a 'skeleton' material until we could arrive, so overwrite. 
 
@@ -445,6 +424,8 @@ class PrimFactory {
             prim.defaultMaterial = material;
 
         }
+
+*/
 
     }
 
@@ -737,15 +718,15 @@ class PrimFactory {
 
             specularExponent, sharpness, refraction, transparency, illum, map_Kd ) => {
 
-            let material = this.materialPool.default( name, ambient, diffuse, specular, 
+            console.log('Prim::setMaterial(): to name:' + name );
 
-                specularExponent, sharpness, refraction, transparency, illum, map_Kd );
+            // Default material.
 
-            // Check for links in Prim.textures.
+            // TODO: IF NAME IS DEFAULT, GET THE DEFAULT MATERIAL FROM THE POOL.
 
-            this.initPrimMaterial ( prim, material, material.name );
+            return this.initPrimMaterial( prim, this.materialPool.default( name, ambient, diffuse, specular, 
 
-            return material; // use to set default material.
+                specularExponent, sharpness, refraction, transparency, illum, map_Kd ), name );
 
         };
 
@@ -1091,17 +1072,13 @@ class PrimFactory {
 
         prim.waypoints = [];
 
-        // Store multiple textures for one Prim (must be defined for prim.materials to work).
-
-        prim.textures = [];
-
-        // Material array.
+        // Material array (stores textures as well).
 
         prim.materials = [];
 
         // Set default material for the Prim (similar to OBJ format).
 
-        prim.defaultMaterial = prim.setMaterial( this.util.DEFAULT_KEY );
+        prim.defaultMaterial = this.materialPool.getPlaceholder();
 
         // Store multiple sounds for one Prim.
 
@@ -1131,17 +1108,9 @@ class PrimFactory {
 
         this.geometryPool.getGeometries( prim, modelFiles );
 
-        /* 
-         * Add a default texture to all Prims so Shaders always have something to 
-         * bind, even if they are not used. On slower systems, WebGL can generate errors 
-         * due to finite time needed to generate mipmaps after the WebGL texture is first created.
-         */
 
-        prim.textures[ 0 ] = this.texturePool.getDefault();
 
-        // Get textures assigned directly ( .mtl files may assign others ) in the createPrim() call.
-
-        this.texturePool.getTextures( prim, textureImages, true, false ); // assume cacheBust === true, mimeType determined by file extension.
+        /////////////////////////this.texturePool.getTextures( prim, textureImages, true, false ); // assume cacheBust === true, mimeType determined by file extension.
 
         // Push into our list of all Prims. Shaders keep a local list of Prims they are rendering.
 

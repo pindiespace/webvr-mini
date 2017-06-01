@@ -40,7 +40,7 @@ class AssetPool {
      * Get the default asset, if it is defined.
      * @returns {Object} default object in the pool.
      */
-    getDefault () {
+    getPlaceholder () {
 
         if ( this.defaultKey ) {
 

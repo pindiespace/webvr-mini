@@ -253,7 +253,7 @@ class ShaderTexture extends Shader {
 
                 // Only render if we are visible, and have at least one texture loaded.
 
-                if ( ! prim || prim.alpha === 0 || ! prim.textures[ 0 ] || ! prim.textures[ 0 ].texture ) continue;
+                if ( ! prim || prim.alpha === 0 || ! prim.defaultMaterial || ! prim.defaultMaterial.map_Kd ) continue;
 
                 // Individual Prim update.
 
@@ -273,7 +273,9 @@ class ShaderTexture extends Shader {
 
                 gl.activeTexture( gl.TEXTURE0 );
                 gl.bindTexture( gl.TEXTURE_2D, null );
-                //gl.bindTexture( gl.TEXTURE_2D, prim.textures[ 0 ].texture );
+
+                // Bind the default (diffuse) texture.
+
                 gl.bindTexture( gl.TEXTURE_2D, prim.defaultMaterial.map_Kd );
 
                 // Bind additional texture units.

@@ -539,7 +539,9 @@ class ShaderFader extends Shader {
 
                 // Draw using either the texture[0] or color array.
 
-                if ( prim.defaultShader.required.textures > 0 && prim.textures[ 0 ] && prim.textures[ 0 ].texture ) {
+                if ( prim.defaultShader.required.textures > 0 && prim.defaultMaterial && prim.defaultMaterial.map_Kd ) {
+
+                    if ( ! prim.defaultMaterial || ! prim.defaultMaterial.map_Kd ) continue;
 
                     // Conditionally set use of color and texture arrays.
 
@@ -549,12 +551,7 @@ class ShaderFader extends Shader {
                    // Bind the first texture.
 
                     gl.activeTexture( gl.TEXTURE0 );
-                    gl.bindTexture( gl.TEXTURE_2D, prim.textures[ 0 ].texture );
-                    //gl.bindTexture( gl.TEXTURE_2D, prim.defaultMaterial.map_Kd );
-
-                    if ( prim.textures[ 0 ].texture !== prim.defaultMaterial.map_Kd ) console.log("NOT EQUIVALENT for:" + prim.name)
-
-                    // TODO: THIS SHOULD WORK!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    gl.bindTexture( gl.TEXTURE_2D, prim.defaultMaterial.map_Kd );
 
                     // Other texture units below.
 
@@ -564,7 +561,7 @@ class ShaderFader extends Shader {
 
                 } else {
 
-                    // Conditionally set use of color and texture array.
+                    // Conditionally set use of color array.
 
                     gl.uniform1i( uUseColor, 1 );
                     gl.uniform1i( uUseTexture, 0 );
@@ -586,9 +583,6 @@ class ShaderFader extends Shader {
                 gl.uniform3fv( uMatDiffuse, m.diffuse );
                 gl.uniform3fv( uMatSpecular, m.specular );
                 gl.uniform1f( uMatSpecExp, m.specularExponent );
-                ////////////gl.uniform1f( uMatSpecExp, 64.0 );
-
-                ///////////if ( prim.name === 'TORUS1') console.log('uMatSpecExp:' + m.specularExponent)
 
                 // Set normals matrix uniform (inverse transpose matrix).
 

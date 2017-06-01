@@ -225,6 +225,46 @@ class World extends AssetPool {
 
         this.s3 = this.shaderPool.getAssetByName( 'shaderDirLightTexture' );
 
+
+//////////////////////////////////
+// COLOR SHADER.
+//////////////////////////////////
+
+            this.primFactory.createPrim(
+
+                this.s2,                      // callback function
+                typeList.CUBE,
+                'colored cube',
+                vec5( 0.7, 0.7, 0.7, 0 ),            // dimensions
+                vec5( 3, 3, 3 ),            // divisions
+                vec3.fromValues( 3.2, -0.3, 2 ),          // position (absolute)
+                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+                vec3.fromValues( util.degToRad( 20 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 1 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+                [ 'img/webvr-logo3.png' ],               // texture present, NOT USED
+                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color
+
+            );
+
+            this.primFactory.createPrim(
+
+                this.s2,                               // callback function
+                typeList.MESH,
+                'teapot',
+                vec5( 1, 1, 1 ),                       // dimensions (4th dimension doesn't exist for cylinder)
+                vec5( 40, 40, 40  ),                    // divisions MAKE SMALLER
+                vec3.fromValues( 0.0, 1.0, 2.0 ),      // position (absolute)
+                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+                vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+                [],               // no texture present
+                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ), // color,
+                false,                                 // if true, apply texture to each face,
+                [ 'obj/teapot/teapot.obj' ] // object files (.obj, .mtl)
+
+            );
+
+
 //////////////////////////////////
 // TEXTURED SHADER.
 //////////////////////////////////
@@ -249,7 +289,7 @@ class World extends AssetPool {
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
         
             ); 
-*/
+
 
         // Create a UV skydome.
 
@@ -590,74 +630,6 @@ class World extends AssetPool {
                 //[ 'obj/banana/banana.obj' ] // works great
             );
 
-/*
-            this.primFactory.createPrim(
-
-                this.s3,                               // callback function
-                typeList.MESH,
-                'objfile2',
-                vec5( 2, 2, 2 ),                       // dimensions (4th dimension doesn't exist for cylinder)
-                vec5( 40, 40, 40  ),                    // divisions MAKE SMALLER
-                vec3.fromValues( -6.5, 2, -1.0 ),      // position (absolute)
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                //[ 'img/crate.png' ],               // texture present. TODO::: FIGURE OUT NUMBERING.
-                '', // texture loaded directly
-                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color,
-                true,                                   // if true, apply texture to each face,
-                //[ 'obj/mountains/mountains.obj' ] // ok
-                //[ 'obj/landscape/landscape.obj'] // ok?
-                //[ 'obj/toilet/toilet.obj' ] // works with texture, multiple groups wrap texture!
-                //[ 'obj/naboo/naboo.obj' ] // works fine, but needs to load additional images.
-                //[ 'obj/star/star.obj'] // ok, gets generic grey texture
-                //[ 'obj/robhead/robhead.obj'] // no texcoords or normals
-                //[ 'obj/soccerball/soccerball.obj'] // no texcoords or normals
-                //[ 'obj/basketball/basketball.obj'] // needs TGA translation
-                //[ 'obj/rock1/rock1.obj'] // rock plus surface, works
-                [ 'obj/cherries/cherries.obj'] // rendering indices error > 64k
-                // 'obj/banana/banana.obj' ] // works great
-            );
-*/
-
-//////////////////////////////////
-// COLOR SHADER.
-//////////////////////////////////
-
-            this.primFactory.createPrim(
-
-                this.s2,                      // callback function
-                typeList.CUBE,
-                'colored cube',
-                vec5( 0.7, 0.7, 0.7, 0 ),            // dimensions
-                vec5( 3, 3, 3 ),            // divisions
-                vec3.fromValues( 3.2, -0.3, 2 ),          // position (absolute)
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 20 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 1 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [ 'img/webvr-logo3.png' ],               // texture present, NOT USED
-                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color
-
-            );
-
-            this.primFactory.createPrim(
-
-                this.s2,                               // callback function
-                typeList.MESH,
-                'teapot',
-                vec5( 1, 1, 1 ),                       // dimensions (4th dimension doesn't exist for cylinder)
-                vec5( 40, 40, 40  ),                    // divisions MAKE SMALLER
-                vec3.fromValues( 0.0, 1.0, 2.0 ),      // position (absolute)
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [],               // no texture present
-                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ), // color,
-                false,                                 // if true, apply texture to each face,
-                [ 'obj/teapot/teapot.obj' ] // object files (.obj, .mtl)
-
-            );
-
 //////////////////////////////////
 // LIT TEXTURE SHADER.
 //////////////////////////////////
@@ -796,6 +768,8 @@ class World extends AssetPool {
 
             );
 
+*/
+
 
     window.prims = this.primFactory.prims;
 
@@ -890,6 +864,8 @@ class World extends AssetPool {
     housekeep () {
 
 // TODO: TGA Loader?
+
+// TODO: Push and Pop mvMatrix (in Shader) to better organize sequence (research if we can get a speedup)
 
 // Jank optimization - http://jankfree.org/
 

@@ -500,11 +500,14 @@ class shaderDirLightTexture extends Shader {
 
                             let st = ms[ j ];
 
+                            // Get the next material from prim.matStarts
+
                             m = prim.materials[ st[ 0 ] ]; // bind the material
 
                             gl.activeTexture( gl.TEXTURE0 );
                             gl.bindTexture( gl.TEXTURE_2D, null );
-                            gl.bindTexture( gl.TEXTURE_2D, m[ 'map_Kd' ] );
+                            ///////gl.bindTexture( gl.TEXTURE_2D, m[ 'map_Kd' ] );
+                            gl.bindTexture( gl.TEXTURE_2D, m.map_Kd );
 
                             gl.drawElements( gl.TRIANGLES, st[ 2 ], gl.UNSIGNED_INT, st[ 1 ] );
 
@@ -514,7 +517,6 @@ class shaderDirLightTexture extends Shader {
 
                         gl.activeTexture( gl.TEXTURE0 );
                         gl.bindTexture( gl.TEXTURE_2D, null );
-                        //gl.bindTexture( gl.TEXTURE_2D, prim.textures[ 0 ].texture );
                         gl.bindTexture( gl.TEXTURE_2D, prim.defaultMaterial.map_Kd );
                         
                         gl.drawElements( gl.TRIANGLES, prim.geometry.indices.numItems, gl.UNSIGNED_INT, 0 );
@@ -528,6 +530,8 @@ class shaderDirLightTexture extends Shader {
                     let start = 0, num = 0;
 
                     // Draw elements, 0 -> 65k (old platforms).
+
+                    // TODO: need to split up materials so this works.
 
                     gl.drawElements( gl.TRIANGLES, prim.geometry.indices.numItems, gl.UNSIGNED_SHORT, 0 );
 

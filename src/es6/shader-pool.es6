@@ -53,7 +53,8 @@ class ShaderPool extends AssetPool {
 
         for ( let i in this.keyList ) {
 
-            keyList[ i ].renderVR( vr, display, frameData );
+            keyList[ i ].program.renderVR( vr, display, frameData );
+
         }
 
     }

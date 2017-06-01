@@ -83,17 +83,19 @@ class MaterialPool extends AssetPool {
      */
     default ( name = this.util.DEFAULT_KEY, ambient = [ 1, 1, 1 ], diffuse = [ 0.7, 0.7, 0.7 ], specular = [ 1.0, 1.0, 1.0 ], 
 
-        specularExponent = 64.0, emissive = [ 0, 0, 0 ], sharpness = 60, refraction = 1, transparency = 0, illum = 1, map_Kd = null ) {
+        specularExponent = 64.0, emissive = [ 0, 0, 0 ], sharpness = 60, refraction = 1, transparency = 0, illum = 1, 
+
+        map_Kd = null ) {
 
         return {
 
             name: name,
 
-            key: null,          // key in MaterialPool
+            key: null,           // key in MaterialPool
 
-            path: null,         // path to file
+            path: null,          // path to file
 
-            ambient: ambient,   // Ka ambient color, white
+            ambient: ambient,    // Ka ambient color, white
 
             diffuse: diffuse,    // Kd diffuse color, white
 
@@ -103,9 +105,9 @@ class MaterialPool extends AssetPool {
 
             emissive: emissive,
 
-            sharpness: sharpness,                // sharpness of reflection map (0-1000)
+            sharpness: sharpness,         // sharpness of reflection map (0-1000)
 
-            refraction: refraction,              // refraction, 1.0 = no refraction
+            refraction: refraction,       // refraction, 1.0 = no refraction
 
             transparency: transparency,   // d | Tr = transparency 1.0 = transparent
 
@@ -124,8 +126,6 @@ class MaterialPool extends AssetPool {
             map_bump: null,               // bumpmap
 
             disp: null,                   // displacement map
-
-            ///starts: [ 0 ]                 // Starting position in vertices to apply material
 
         }
 

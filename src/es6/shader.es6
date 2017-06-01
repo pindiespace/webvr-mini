@@ -87,23 +87,35 @@ class Shader {
 
                 indices: false,
 
-                texCoords: false
+                texCoords: false,
+
+                normals: false,
+
+                tangents: false
 
             },
 
-            bumpMap: false,
+            colors: true,
 
-            colors: false,
+            textures: {
 
-            transparent: false, // transparent objects put in special Shader
+                map_Kd: false,               // diffuse map, an image file (other maps not in default)
 
-            normals: false,
+                map_Ks: false,                 // specular map
 
-            tangents: false,
+                map_Ka: false,                 // ambient map
 
-            lights: 0,
+                map_bump: null,               // bumpmap
 
-            textures: 0
+                map_refl: false,               // environment map
+
+                map_d: false,                  // alpha map
+
+                map_disp: null,                   // displacement map
+
+            },
+
+            lights: 0, // Internal or positional (not World) light.
 
         };
 
@@ -111,7 +123,10 @@ class Shader {
 
         this.sortByDistance = false;
 
-        // If we need to load a vertex and fragment shader files (in text format), put their paths in derived classes.
+        /* 
+         * By default, each derived Shader has explicit vertex and fragment shaders 
+         * written into it. If we need to load a vertex and fragment shader files (in text format), put their paths in derived classes.
+         */
 
         this.vertexShaderFile = null;
 
@@ -348,6 +363,8 @@ class Shader {
      */
     checkPrimMaterial ( prim ) {
 
+        // TODO: What special material properties needed for texture?
+
         console.log( 'Shader::checkPrimMaterial(): event MATERIAL_READY fired' );
 
         return true;
@@ -360,24 +377,23 @@ class Shader {
      */
     checkPrimTextures ( prim ) {
 
-        if ( prim.textures.length < this.required.textures ) {
+        // check the material designated as 'defaultMaterial'.
 
-            return false;
+        let tex = this.required.textures;
 
-        }
+        console.log('Shader::checkPrimTextures()');
 
-        /* 
-         * Loop through required number of textures. Textures are assigned sequentially. 
-         * Textures added sequentially; 
-         * prim.textures[0] corresponds to GeometryBuffer.textureCoords, 
-         * prim.textures[1] corresponds to GeometryBuffer.textureCoords1...
-         */
+        let m = prim.defaultMaterial;
 
-        for ( let i = 0; i < prim.textures.length; i++ ) {
+        for ( let i in tex ) {
 
-            if (! prim.textures[ i ] || ! prim.textures[ i ].texture ) { // WebGL texture buffer created
+            if ( tex[ i ] ) { // true condition
 
-                return false;
+                if ( ! m[ i ] instanceof WebGLTexture ) {
+
+                    return false;
+
+                }
 
             }
 
@@ -689,18 +705,22 @@ class Shader {
 
     }
 
-    mvPushMatrix () {
+    /**
+     * Organize our matrix transforms in specific order.
+     */
+    mvPushMatrix ( matrix ) {
 
         let mat4 = this.glMatrix.mat4;
 
-        let copy = mat4.create();
+        let copy = mat4.clone( matrix );
 
-        mat4.set( this.mvMatrix, copy );
-
-        mvMatrixStack.push( copy );
+        this.mvMatrixStack.push( copy );
 
     }
 
+    /** 
+     * Get the next matrix transform in a sequence.
+     */
     mvPopMatrix () {
 
         if ( this.mvMatrixStack.length == 0 ) {
