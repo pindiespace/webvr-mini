@@ -114,25 +114,30 @@ class TexturePool extends AssetPool {
         // Flip the image's Y axis to match the WebGL texture coordinate space.
 
         // TODO: FF says this is deprecated!
+
         gl.pixelStorei( gl.UNPACK_FLIP_Y_WEBGL, true );
+
+        // gl.pixelStorei( gl.UNPACK_ALIGNMENT, true );
 
         // Bind the texture data to the videocard, receive a WebGL texture in our textureObject.
 
         gl.bindTexture( gl.TEXTURE_2D, texture );
 
-        // Use JS Image object, or default to single-color texture if image is not present.
-
-        if ( image instanceof HTMLImageElement ) {
+        if ( image instanceof HTMLImageElement ) { // Standard image
 
             gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image ); // HASN'T LOADED YET
 
-        } else if ( image instanceof Uint8Array && image.length % 4 === 0) { // texture defined by an array (e.g. one-pixel texture)
+        } else if ( image instanceof Uint8Array && image.length ) { 
 
-            console.log("IMAGE:LENGTH:" + image.length)
+           let sz = Math.sqrt( image.length / 4 );
 
-            gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, image );
+           if ( sz % 1 === 0 ) { // texture defined by an array, 1x1, 2x2, etc.
 
-        } else {
+                gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, sz, sz, 0, gl.RGBA, gl.UNSIGNED_BYTE, image );
+
+           }
+
+        } else { // Default to single-pixel texture
 
             console.warn( 'TexturePool::create2DTexture(): no image (' + image + '), using default pixel texture' );
 

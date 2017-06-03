@@ -536,8 +536,6 @@ class PrimFactory {
 
         textureImages = [], // textures (may be blank)
 
-        colors = null,  // color array (may be blank)
-
         applyTexToFace = false,
 
         modelFiles = [] // heightMap file (HEIGHTMAP) or array of coordinate and material files (MESH)
@@ -921,8 +919,6 @@ class PrimFactory {
         // Prim scale, default in World coordinates (adjusted after Geometry created).
 
         prim.scale = [ 1.0, 1.0, 1.0 ];
-
-        // By default Prims don't use directional Lighting.
 
         // Use textures. If at least 1 texture file is loaded (either via images or OBJ files) this is also reset to true.
 

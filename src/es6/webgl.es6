@@ -37,7 +37,7 @@ class WebGL {
 
         this.contextCount = 0;
 
-        this.glVers = 0; 
+        this.version = 0; 
 
         this.glMatrix = glMatrix;
 
@@ -940,7 +940,7 @@ class WebGL {
 
             // Check if this is a full WebGL2 stack
 
-            this.glVers = gl.getParameter( gl.VERSION ).toLowerCase();
+            this.version = gl.getParameter( gl.VERSION ).toLowerCase();
 
             if ( i == 1 || i == 3 ) {
 
@@ -966,7 +966,7 @@ class WebGL {
 
                 case 1:
 
-                    this.glVers = 2.0;
+                    this.version = 2.0;
 
                     break;
 
@@ -978,7 +978,7 @@ class WebGL {
 
                 default:
 
-                    this.glVers = 1.0;
+                    this.version = 1.0;
 
                     this.stats.uint32 = this.index32Support( gl ); // vertices > 64k, no constant exported. WebGL 1.0 only.
 

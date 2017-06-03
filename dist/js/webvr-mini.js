@@ -1754,7 +1754,7 @@
 
 	                this.contextCount = 0;
 
-	                this.glVers = 0;
+	                this.version = 0;
 
 	                this.glMatrix = glMatrix;
 
@@ -2627,7 +2627,7 @@
 
 	                                // Check if this is a full WebGL2 stack
 
-	                                this.glVers = gl.getParameter(gl.VERSION).toLowerCase();
+	                                this.version = gl.getParameter(gl.VERSION).toLowerCase();
 
 	                                if (i == 1 || i == 3) {
 
@@ -2652,7 +2652,7 @@
 
 	                                        case 1:
 
-	                                                this.glVers = 2.0;
+	                                                this.version = 2.0;
 
 	                                                break;
 
@@ -2664,7 +2664,7 @@
 
 	                                        default:
 
-	                                                this.glVers = 1.0;
+	                                                this.version = 1.0;
 
 	                                                this.stats.uint32 = this.index32Support(gl); // vertices > 64k, no constant exported. WebGL 1.0 only.
 
@@ -9345,12 +9345,11 @@
 	                        var rotation = arguments.length > 7 && arguments[7] !== undefined ? arguments[7] : this.glMatrix.vec3.create();
 	                        var angular = arguments.length > 8 && arguments[8] !== undefined ? arguments[8] : this.glMatrix.vec3.create();
 	                        var textureImages = arguments.length > 9 && arguments[9] !== undefined ? arguments[9] : [];
-	                        var colors = arguments.length > 10 && arguments[10] !== undefined ? arguments[10] : null;
 
 	                        var _this2 = this;
 
-	                        var applyTexToFace = arguments.length > 11 && arguments[11] !== undefined ? arguments[11] : false;
-	                        var modelFiles = arguments.length > 12 && arguments[12] !== undefined ? arguments[12] : [];
+	                        var applyTexToFace = arguments.length > 10 && arguments[10] !== undefined ? arguments[10] : false;
+	                        var modelFiles = arguments.length > 11 && arguments[11] !== undefined ? arguments[11] : [];
 	                        // function to execute when prim is done (e.g. attach to drawing list shader).
 
 	                        var vec3 = this.glMatrix.vec3;
@@ -9699,8 +9698,6 @@
 	                        // Prim scale, default in World coordinates (adjusted after Geometry created).
 
 	                        prim.scale = [1.0, 1.0, 1.0];
-
-	                        // By default Prims don't use directional Lighting.
 
 	                        // Use textures. If at least 1 texture file is loaded (either via images or OBJ files) this is also reset to true.
 
@@ -17061,24 +17058,30 @@
 	                        // Flip the image's Y axis to match the WebGL texture coordinate space.
 
 	                        // TODO: FF says this is deprecated!
+
 	                        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+
+	                        // gl.pixelStorei( gl.UNPACK_ALIGNMENT, true );
 
 	                        // Bind the texture data to the videocard, receive a WebGL texture in our textureObject.
 
 	                        gl.bindTexture(gl.TEXTURE_2D, texture);
 
-	                        // Use JS Image object, or default to single-color texture if image is not present.
-
 	                        if (image instanceof HTMLImageElement) {
+	                                // Standard image
 
 	                                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image); // HASN'T LOADED YET
-	                        } else if (image instanceof Uint8Array && image.length % 4 === 0) {
-	                                // texture defined by an array (e.g. one-pixel texture)
+	                        } else if (image instanceof Uint8Array && image.length) {
 
-	                                console.log("IMAGE:LENGTH:" + image.length);
+	                                var sz = Math.sqrt(image.length / 4);
 
-	                                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, image);
+	                                if (sz % 1 === 0) {
+	                                        // texture defined by an array, 1x1, 2x2, etc.
+
+	                                        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, sz, sz, 0, gl.RGBA, gl.UNSIGNED_BYTE, image);
+	                                }
 	                        } else {
+	                                // Default to single-pixel texture
 
 	                                console.warn('TexturePool::create2DTexture(): no image (' + image + '), using default pixel texture');
 
@@ -18798,7 +18801,7 @@
 
 	                _this.lights = lights;
 
-	                // default dimensions.
+	                // default World dimensions, Open/WebGL units.
 
 	                _this.dimensions = {
 
@@ -18966,8 +18969,7 @@
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	                        vec3.fromValues(util.degToRad(20), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
 	                        vec3.fromValues(util.degToRad(0), util.degToRad(1), util.degToRad(0)), // angular velocity in x, y, x
-	                        ['img/webvr-logo3.png'], // texture present, NOT USED
-	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0));
+	                        ['img/webvr-logo3.png']);
 
 	                        this.primFactory.createPrim(this.s2, // callback function
 	                        typeList.MESH, 'teapot', vec5(1, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
@@ -18977,7 +18979,6 @@
 	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
 	                        vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
 	                        [], // no texture present
-	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0), // color,
 	                        false, // if true, apply texture to each face,
 	                        ['obj/teapot/teapot.obj'] // object files (.obj, .mtl)
 
@@ -18995,8 +18996,7 @@
 	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
 	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
 	                        vec3.fromValues(util.degToRad(1), util.degToRad(1), util.degToRad(1)), // angular velocity in x, y, x
-	                        ['img/crate.png', 'img/webvr-logo1.png'], // texture image
-	                        vec4.fromValues(0.5, 1.0, 0.2, 1.0));
+	                        ['img/crate.png', 'img/webvr-logo1.png']);
 
 	                        /*
 	                        

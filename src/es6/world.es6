@@ -85,7 +85,7 @@ class World extends AssetPool {
 
         this.lights = lights;
 
-        // default dimensions.
+        // default World dimensions, Open/WebGL units.
 
         this.dimensions = {
 
@@ -242,7 +242,6 @@ class World extends AssetPool {
                 vec3.fromValues( util.degToRad( 20 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
                 vec3.fromValues( util.degToRad( 0 ), util.degToRad( 1 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
                 [ 'img/webvr-logo3.png' ],               // texture present, NOT USED
-                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color
 
             );
 
@@ -258,7 +257,6 @@ class World extends AssetPool {
                 vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
                 vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
                 [],               // no texture present
-                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ), // color,
                 false,                                 // if true, apply texture to each face,
                 [ 'obj/teapot/teapot.obj' ] // object files (.obj, .mtl)
 
@@ -281,7 +279,6 @@ class World extends AssetPool {
                 vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
                 vec3.fromValues( util.degToRad( 1 ), util.degToRad( 1 ), util.degToRad( 1 ) ), // angular velocity in x, y, x
                 [ 'img/crate.png', 'img/webvr-logo1.png' ],          // texture image
-                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ), // RGBA color
 
             );
 
