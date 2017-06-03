@@ -179,11 +179,9 @@ class PrimFactory {
 
             ( prim ) => {
 
-                // post-addition events.
+                // Fade in from invisible to our assigned alpha value.
 
-                prim.alpha = 0.0;
-
-                prim.setFade( 0, 1, 0.004, 'easeQuad' );
+                prim.setFade( 0, prim.alpha, 0.004, 'easeQuad' );
 
         } );
 
@@ -246,97 +244,6 @@ class PrimFactory {
         console.log("Prim::initPrimTexture(): new texture for prim:" + prim.name + ', options:' + options );
 
         // Failed texture loads have the default 'grey pixel' texture substituted from texturePool.
-
-        ////////////////////////////////////
-        ////////////////////////////////////
-    /*
-
-        for ( let i in prim.materials ) {
-
-            console.log("this prim:" + prim.name + ' has a material at:' + i)
-
-        }
-
-        if ( options.materials ) { // 'options' should always be true, but options.materials only if .OBJ file
-
-            for ( let i = 0; i < options.materials.length; i++ ) {
-
-                let m = prim.materials[ options.materials[ i ] ];
-
-                if ( m ) {
-
-                    m[ options.type ] = textureObj.texture;
-
-                } else {
-
-                    // We have a specified material, but it is not present (yet)
-
-                    // So, create a dummy material which will be fill in when the material inits.
-
-                    prim.materials[ options.materials[ i ] ] = {};
-
-                    let m = prim.materials[ options.materials[ i ] ];
-
-                    m.name = options.materials[ i ];
-
-                    m[ options.type ] = textureObj.texture;
-
-                }
-
-            }
-
-        } else {
-
-            // Texture was loaded directly by prim.create() instead of through a .mtl file.
-
-            for ( let i in prim.materials ) {
-
-                let m = prim.materials[ i ];
-
-                if ( ! m ) console.log("NO MATERIAL FOR:" +  prim.name + " at:" + i ) // TODO: NEVER HAPPENS
-
-                if ( textureObj.path === null ) console.log("NULL texture for:" + prim.name); // TODO: HAPPENS FOR TORUS1
-
-                console.log("direct load textureUse for " + prim.name + " is:" + textureObj.textureUse + " and options.type:" + options.type );
-
-                //let tex = m[ textureObj.textureUse ];
-
-                //if ( ! ( tex instanceof WebGLTexture ) ) {
-
-                if ( options.type ) {
-
-                    ///if ( options.type !== textureObj.textureUse ) console.log(prim.name + " mismatch for " + options.type + ',' + textureObj.textureUse)
-
-                    //m[ textureObj.textureUse ] = textureObj.texture;
-
-                    if ( prim.name === 'toji cube') console.log("TOJI options.type:" + options.type + " textureObj.textureUse:" + textureObj.textureUse)
-
-                    // NOTE: THIS IS NOT WORKING EVERYWHERE!!!!!!!!!!!!!!!!
-                    m[ options.type ] = textureObj.texture;
-
-                    // TODO: TOJI CUBE SEEMS IDENTICAL BUT IS NOT!!!!!!!!
-
-                }
-
-                //}
-
-            }
-
-        }
-
-        let pos = options.pos;
-
-        */
-
-        // First, look for any 'default' textures (a single grey pixel) and replace them.
-
-        /* 
-         * Check materials files, and link texture to the files. We do the reverse in initPrimMaterial()
-         * NOTE: prim.materials[ i ] initially has the FILE PATH of the texture. If we fail to find a 
-         * WebGL texture the file path will remain as a debugging string.
-         */
-
-        // TODO: MAKE SURE WE ARE NOT MAKING A REDUNDANT ASSIGNMENT !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     }
 
@@ -961,21 +868,6 @@ class PrimFactory {
 
         }
 
-        /** 
-         * Pulse a Prim's properties.
-         * - transparency
-         * - color
-         * - size
-         */
-        prim.setPulse = ( start, end, inc, eq ) => {
-
-        }
-
-        prim.endPulse = () => {
-
-
-        }
-
         // Give the Prim a unique Id.
 
         prim.id = this.util.computeId();
@@ -1032,27 +924,23 @@ class PrimFactory {
 
         // By default Prims don't use directional Lighting.
 
-        prim.useLighting = true;
+        // Use textures. If at least 1 texture file is loaded (either via images or OBJ files) this is also reset to true.
 
-        // So the Prim can emit light.
+        if ( prim.defaultShader.required.textures.map_Kd ) {
 
-        prim.glow = new Lights( this.glMatrix );
+            prim.useTextures = true;
 
-        // Note: fade equations in util.
+            if ( ! modelFiles && ! textureImages ) {
 
-        prim.fade = {
+                console.error( 'PrimFactory::create(): prim ' + prim.name + ' attached to Shader:' + prim.defaultShader + ' but no textures supplied' );
 
-            startAlpha: 0.0, // starting opacity value
- 
-            endAlpha: 1.0, // ending opacity value
+            }
 
-            incr: 0.002 // animation fade increment
+        } else {
 
-        };
+            prim.useTextures = false;
 
-        // Use textures. If textures are loaded (either via images or OBJ files) this is reset to true.
-
-        prim.useTextures = false;
+        }
 
         // Visible from outside (counterclockwise winding) or inside (clockwise winding).
 
@@ -1083,15 +971,33 @@ class PrimFactory {
 
         // Set default material for the Prim (similar to OBJ format).
 
-        prim.defaultMaterial = this.materialPool.getPlaceholder();
+        prim.defaultMaterial = this.materialPool.default();
 
         // Set this to default.
 
         prim.materials[ prim.defaultMaterial.name ] = prim.defaultMaterial;
 
-        // Set Prim alpha from the active Material.
+        // Set Prim alpha from the active Material's transparency (opposite of prim.alpha === opacity).
 
-        prim.alpha = prim.defaultMaterial.transparency;
+        prim.alpha = 1.0 - prim.defaultMaterial.transparency;
+
+        prim.useLighting = true;
+
+        // So the Prim can emit light.
+
+        prim.glow = new Lights( this.glMatrix );
+
+        // Note: fade equations in util.
+
+        prim.fade = {
+
+            startAlpha: 0.0, // starting opacity value
+ 
+            endAlpha: prim.alpha, // ending opacity value
+
+            incr: 0.002 // animation fade increment
+
+        };
 
         // Store multiple sounds for one Prim.
 
@@ -1151,6 +1057,18 @@ class PrimFactory {
             if ( prim.name === 'teapot' ) {
 
                 window.teapot = prim;
+
+            }
+
+            if ( prim.name == 'first cube' ) {
+
+                window.firstcube = prim;
+
+            }
+
+            if ( prim.name = 'colored cube' ) {
+
+                window.coloredcube = prim;
 
             }
 

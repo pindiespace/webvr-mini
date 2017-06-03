@@ -81,17 +81,21 @@ class MaterialPool extends AssetPool {
      * @param {Number} enumerated list of lighting modes.
      * @param {String} map_Kd the default texture for diffuse mapping.
      */
-    default ( name = this.util.DEFAULT_KEY, ambient = [ 1, 1, 1 ], diffuse = [ 0.7, 0.7, 0.7 ], specular = [ 1.0, 1.0, 1.0 ], 
+    default ( name = this.util.DEFAULT_KEY, ambient = [ 1, 1, 1 ], diffuse = [ 0.1, 0.7, 0.7 ], specular = [ 1.0, 1.0, 1.0 ], 
 
         specularExponent = 64.0, emissive = [ 0, 0, 0 ], sharpness = 60, refraction = 1, transparency = 0, illum = 1, 
 
         map_Kd = null ) {
 
+        // Add a default one-pixel texture corresponding to the diffuse color (makes us valid most Shaders).
+
         if ( ! map_Kd ) {
 
-            // Add a default, 1-pixel texture.
+            map_Kd = this.texturePool.create2dTexture( 
 
-            map_Kd = this.texturePool.getPlaceholder().texture;
+                new Uint8Array( [ diffuse[ 0 ] * 255 , diffuse[ 1 ] * 255, diffuse[ 2 ] * 255, 255 ] )
+
+            );
 
         }
 
@@ -102,8 +106,6 @@ class MaterialPool extends AssetPool {
             key: null,           // key in MaterialPool
 
             path: null,          // path to file
-
-            override: false,     // NOTE: override color array with a single color, as shown here.
 
             ambient: ambient,    // Ka ambient color, white
 
@@ -119,7 +121,7 @@ class MaterialPool extends AssetPool {
 
             refraction: refraction,       // refraction, 1.0 = no refraction
 
-            transparency: transparency,   // d | Tr = transparency 1.0 = transparent
+            transparency: transparency,   // d | Tr = transparency 1.0 = transparent (1.0 - transparency for prim.alpha)
 
             illum: illum,                 // illium, color and ambient on
 

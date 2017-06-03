@@ -408,7 +408,7 @@ class ShaderFader extends Shader {
 
             if ( dir > 0 ) {
 
-                // Use a fade equation.
+                // Fadein. Use a fade equation.
 
                 f.incr = f.eq( f.incr );
 
@@ -426,7 +426,7 @@ class ShaderFader extends Shader {
 
             } else if ( dir < 0 ) {
 
-                // Use a fade equation.
+                // Fadeout. Use a fade equation.
 
                 f.incr = f.eq( f.incr );
 
@@ -451,6 +451,9 @@ class ShaderFader extends Shader {
         // Update Prim position, motion - given to World object.
 
         program.update = ( prim, MVM ) => {
+
+            //let f = prim.fade;
+            //console.log(prim.name + ' alpha:' + f.incr + ' endAlpha:' + f.endAlpha + ' startAlpha:' + f.startAlpha)
 
             fade( prim );
 

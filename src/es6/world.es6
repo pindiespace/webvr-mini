@@ -872,8 +872,15 @@ class World extends AssetPool {
 // TODO: or, ignore color array? WHAT WOULD THAT LOOK LIKE?????????
 // TODO: some wavefront files have x, y, z, r, g, b for 'v' - PROCESS!!!!!!
 
+// TODO: I noticed that FF now puts out "Error: WebGL warning: texImage2D: Alpha-premult 
+//and y-flip are deprecated for non-DOM-Element uploads." for something like  
+//gl.pixelStorei( gl.UNPACK_FLIP_Y_WEBGL, true ); What IS the best practice here?
 
 // TODO: TGA Loader?
+
+// COLOR SHADER NEEDS TO USE PRIM.ALPHA
+
+// PrimFactory needs to do the sorting of Prims.
 
 // TODO: Push and Pop mvMatrix (in Shader) to better organize sequence (research if we can get a speedup)
 
@@ -1029,9 +1036,9 @@ class World extends AssetPool {
 
             this.r3.renderVR( vr, display, frameData, vMatrix, pov );  // directional light texture
 
-            this.r2.renderVR( vr, display, frameData, vMatrix, pov );  // color
-
             this.r1.renderVR( vr, display, frameData, vMatrix, pov );  // textured, no lighting
+
+            this.r2.renderVR( vr, display, frameData, vMatrix, pov );  // color
 
             this.r0.renderVR( vr, display, frameData, vMatrix, pov );  // REQUIRED alpha (Prim appearing or disappearing), drawn in front
 
@@ -1047,9 +1054,9 @@ class World extends AssetPool {
 
             this.r3.renderMono( vMatrix, pov ); // directional light texture
 
-            this.r2.renderMono( vMatrix, pov ); // color
-
             this.r1.renderMono( vMatrix, pov ); // textured, no lighting
+
+            this.r2.renderMono( vMatrix, pov ); // color
 
             this.r0.renderMono( vMatrix, pov ); // REQUIRED alpha (Prim appearing or disappearing), drawn in front
 

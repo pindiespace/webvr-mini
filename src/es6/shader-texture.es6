@@ -31,7 +31,7 @@ class ShaderTexture extends Shader {
 
         this.required.lights = 0,
 
-        this.required.textures = 1;
+        this.required.textures.map_Kd = true;
 
         console.log( 'In ShaderTexture class' );
 
@@ -254,6 +254,8 @@ class ShaderTexture extends Shader {
                 let prim = program.renderList[ i ];
 
                 // Only render if we are visible, and have at least one texture loaded.
+
+                ////////////////////////////////////console.log("prim.defaultMaterial.map_Kd:" + prim.defaultMaterial.map_Kd )
 
                 if ( ! prim || prim.alpha === 0 || ! prim.defaultMaterial || ! prim.defaultMaterial.map_Kd ) continue;
 

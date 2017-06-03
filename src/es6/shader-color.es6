@@ -136,6 +136,10 @@ class ShaderColor extends Shader {
             'uniform vec3 uMatSpecular;',
             'uniform float uMatSpecExp;',
 
+            // Alpha value.
+
+            'uniform float uAlpha;',
+
             'varying vec3 vPOV;', // World point of view (camera)
             'varying vec4 vPositionW;',
             'varying vec4 vNormalW;',
@@ -148,13 +152,13 @@ class ShaderColor extends Shader {
 
                 //  Set light components by Light x Material.
 
-                'vec4 Emissive = vec4(uMatEmissive, 1.0);',
+                'vec4 Emissive = vec4(uMatEmissive, uAlpha);',
 
-                'vec4 Ambient = vec4(uAmbientColor * uMatAmbient, 1.0);',
+                'vec4 Ambient = vec4(uAmbientColor * uMatAmbient, uAlpha);',
 
-                'vec4 Diffuse = vec4(uDirectionalColor * uMatDiffuse, 1.0);',
+                'vec4 Diffuse = vec4(uDirectionalColor * uMatDiffuse, uAlpha);',
 
-                'vec4 Specular = vec4(0.0, 0.0, 0.0, 1.0);',
+                'vec4 Specular = vec4(0.0, 0.0, 0.0, uAlpha);',
 
                'if(uUseLighting) {',
 
@@ -194,7 +198,7 @@ class ShaderColor extends Shader {
 
                 // Final color.
 
-                'gl_FragColor = (Emissive + Ambient + Diffuse + Specular) * vec4(vColor.rgb, vColor.a);',
+                'gl_FragColor = (Emissive + Ambient + Diffuse + Specular) * vec4(vColor.rgb, vColor.a * uAlpha);',
 
             '}'
 
@@ -296,6 +300,10 @@ class ShaderColor extends Shader {
         uDirectionalColor = fsVars.uniform.vec3.uDirectionalColor, // directional light color
 
         uLightingDirection = fsVars.uniform.vec3.uLightingDirection, 
+
+        // Overall Alpha value (individual colors may have their own).
+
+        uAlpha = fsVars.uniform.float.uAlpha,
 
         // Material properties.
 
@@ -404,6 +412,10 @@ class ShaderColor extends Shader {
                 gl.uniform3fv( uLightingDirection, adjustedLD );
                 gl.uniform3fv( uDirectionalColor, directionalColor );
                 gl.uniform3fv( uPOV, pov.position ); // used for specular highlight
+
+                // Alpha, with easing animation (in this.util).
+
+                gl.uniform1f( uAlpha, prim.alpha );
 
                 if ( prim.useLighting ) {
 
