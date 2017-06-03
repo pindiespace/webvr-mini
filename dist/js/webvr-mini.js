@@ -3512,9 +3512,6 @@
 
 	                                                                _this.util.emitter.emit('vrdisplayready', display.displayName);
 
-	                                                                window.disp = _this.display; // TODO: abstract out, then try to load....
-	                                                                window.fd = _this.frameData;
-
 	                                                                // Listen for WebVR events.
 
 	                                                                window.addEventListener('vrdisplaypresentchange', _this.presentChange.bind(_this), false);
@@ -9352,12 +9349,12 @@
 	                        var modelFiles = arguments.length > 11 && arguments[11] !== undefined ? arguments[11] : [];
 	                        // function to execute when prim is done (e.g. attach to drawing list shader).
 
-	                        var vec3 = this.glMatrix.vec3;
+	                        var vec3 = this.glMatrix.vec3,
+	                            mat4 = this.glMatrix.mat4;
 
-	                        var mat4 = this.glMatrix.mat4;
+	                        // Check to see if the Prim type is defined.
 
 	                        if (!this.geometryPool.checkType(type)) {
-
 	                                console.error('Prim::createPrim(): unsupported Prim type:' + type);
 
 	                                return null;
@@ -9749,9 +9746,30 @@
 
 	                        prim.materials[prim.defaultMaterial.name] = prim.defaultMaterial;
 
+	                        // If we have image files, load them and assign to prim.defaultMaterial.
+
+	                        if (textureImages && textureImages.length) {
+
+	                                /* 
+	                                 * textureImages is a list of paths associated with the default material. We assign each 
+	                                 * texture a key for its associated material. 
+	                                   Material key has to be a random token we generate now, since OBJ files can't provide an 
+	                                 AssetPool key during loads.
+	                                   So, we need a random token system to identify textures and materials and models to each other!
+	                                   */
+
+	                                console.log("assplying ");
+
+	                                //this.texturePool.getTextures( prim, textureImages, true, false, 
+
+	                                //    this.webgl.getContext().TEXTURE_2D, { materials: [ prim.defaultMaterial.name ] } );
+	                        }
+
 	                        // Set Prim alpha from the active Material's transparency (opposite of prim.alpha === opacity).
 
 	                        prim.alpha = 1.0 - prim.defaultMaterial.transparency;
+
+	                        // Use lighting in Shader.
 
 	                        prim.useLighting = true;
 
@@ -17026,7 +17044,7 @@
 
 	                                type: type, // gl.TEXTURE_2D, gl.TEXTURE_3D...
 
-	                                path: path, // URL of object
+	                                path: path, // URL of object, should uniquely identify the texture.
 
 	                                texture: texture, // WebGLTexture
 
@@ -18793,9 +18811,9 @@
 
 	                // Add a simple point of view, instead of Cameram 1st 3 values = postion, 2nd 3 values = rotation.
 
-	                _this.position = [0, 0, -5]; // TODO: X and Z MOVE CORRECTLY. Y MOVES IN REVERSE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	                _this.position = [0, 0, -5]; // TODO: check this positioning in greater detail on FF vs  Chrome
 
-	                _this.rotation = [0, 0, 0];
+	                _this.rotation = [0, 0, 0]; // World rotation
 
 	                // Add World Lights (Prims may have their own).
 
@@ -19659,14 +19677,16 @@
 
 	                        this.last = now;
 
-	                        this.counter++;
+	                        //this.counter++;
 
-	                        if (this.counter > 300) {
+	                        //if ( this.counter > 300 ) {
 
-	                                this.counter = 0;
+	                        //    this.counter = 0;
 
-	                                /////////console.log( 'delta:' + parseInt( 1000 / delta ) + ' fps' );
-	                        }
+	                        //    console.log( 'delta:' + parseInt( 1000 / delta ) + ' fps' );
+
+	                        //}
+
 
 	                        // Update Lights
 
@@ -19720,7 +19740,9 @@
 	                        this.webgl.clear();
 
 	                        var vr = this.vr,
-	                            pov = this.getPOV();
+	                            // wrapped
+
+	                        pov = this.getPOV();
 
 	                        // TODO: DEBUG TEMPORARY.
 	                        //pov.rotation[ 0 ] += 0.003;
@@ -19739,9 +19761,13 @@
 
 	                                // Get FrameData (with matrices for left and right eye).
 
+	                                /////////////////////////////////////////console.log("countervr:" + this.counter); this.counter++;
+
 	                                var frameData = this.vr.getFrameData();
 
 	                                // Get any world transforms (translation, rotation).
+
+	                                // This is blowing up on Chrome, but not FF.
 
 	                                this.getWorldViewMatrix(vMatrix);
 
@@ -19759,6 +19785,8 @@
 	                        } else {
 
 	                                // Render mono view.
+
+	                                //////////////////////////console.log("countermono:" + this.counter); this.counter++;
 
 	                                this.getWorldViewMatrix(vMatrix);
 
@@ -20366,7 +20394,7 @@
 
 	                                                                                                                                                                                                if (type === 'bump') type = 'map_bump';
 
-	                                                                                                                                                                                                // Set the materials value to texture path.
+	                                                                                                                                                                                                // Set the materials texture value to texture path.
 
 	                                                                                                                                                                                                materials[currName][type] = tPath;
 

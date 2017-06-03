@@ -590,7 +590,7 @@ class MaterialPool extends AssetPool {
 
                             if ( type === 'bump' ) type = 'map_bump';
 
-                                // Set the materials value to texture path.
+                                // Set the materials texture value to texture path.
 
                                 materials[ currName ][ type ] = tPath;
 

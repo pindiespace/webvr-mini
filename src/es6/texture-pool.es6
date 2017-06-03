@@ -83,7 +83,7 @@ class TexturePool extends AssetPool {
 
             type: type,         // gl.TEXTURE_2D, gl.TEXTURE_3D...
 
-            path: path,         // URL of object
+            path: path,         // URL of object, should uniquely identify the texture.
 
             texture: texture,   // WebGLTexture
 

@@ -130,9 +130,6 @@ class WebVR {
 
                             this.util.emitter.emit( 'vrdisplayready', display.displayName );
 
-window.disp = this.display; // TODO: abstract out, then try to load....
-window.fd = this.frameData;
-
                             // Listen for WebVR events.
 
                             window.addEventListener( 'vrdisplaypresentchange', this.presentChange.bind( this ), false );

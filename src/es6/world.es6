@@ -77,9 +77,9 @@ class World extends AssetPool {
 
         // Add a simple point of view, instead of Cameram 1st 3 values = postion, 2nd 3 values = rotation.
 
-        this.position = [ 0, 0, -5 ]; // TODO: X and Z MOVE CORRECTLY. Y MOVES IN REVERSE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        this.position = [ 0, 0, -5 ]; // TODO: check this positioning in greater detail on FF vs  Chrome
 
-        this.rotation = [ 0, 0, 0 ];
+        this.rotation = [ 0, 0, 0 ]; // World rotation
 
         // Add World Lights (Prims may have their own).
 
@@ -945,15 +945,17 @@ class World extends AssetPool {
 
         this.last = now;
 
-        this.counter++;
 
-        if ( this.counter > 300 ) {
+        //this.counter++;
 
-            this.counter = 0;
+        //if ( this.counter > 300 ) {
 
-            /////////console.log( 'delta:' + parseInt( 1000 / delta ) + ' fps' );
+        //    this.counter = 0;
 
-        }
+        //    console.log( 'delta:' + parseInt( 1000 / delta ) + ' fps' );
+
+        //}
+
 
         // Update Lights
 
@@ -1004,7 +1006,7 @@ class World extends AssetPool {
 
         this.webgl.clear();
 
-        let vr = this.vr, 
+        let vr = this.vr, // wrapped
 
         pov = this.getPOV();
 
@@ -1025,9 +1027,13 @@ class World extends AssetPool {
 
             // Get FrameData (with matrices for left and right eye).
 
+            /////////////////////////////////////////console.log("countervr:" + this.counter); this.counter++;
+
             let frameData = this.vr.getFrameData();
 
             // Get any world transforms (translation, rotation).
+
+            // This is blowing up on Chrome, but not FF.
 
             this.getWorldViewMatrix( vMatrix );
 
@@ -1046,6 +1052,8 @@ class World extends AssetPool {
         } else {
 
             // Render mono view.
+
+            //////////////////////////console.log("countermono:" + this.counter); this.counter++;
 
             this.getWorldViewMatrix( vMatrix );
 
