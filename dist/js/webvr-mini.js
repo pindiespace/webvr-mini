@@ -244,7 +244,7 @@
 
 	                exports.world = world = new _world2.default(true, glMatrix, webgl, webvr, shaderPool, lights);
 
-	                // Initialize our Ui.
+	                // Initialize our Ui after other elements.
 
 	                ui.init();
 
@@ -252,6 +252,12 @@
 	        } else {
 
 	                reject(Error('It broke'));
+
+	                // TODO: Write 'WebGL not available across canvas';
+
+	                ui = new _ui2.default(false, util, glMatrix, webgl);
+
+	                ui.initBadGL();
 	        }
 	}).then(function (result) {
 
@@ -1709,7 +1715,7 @@
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
-	        value: true
+	            value: true
 	});
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1718,1657 +1724,1663 @@
 
 	var WebGL = function () {
 
-	        /**
-	         * References:
-	         * LiteGL
-	         * @link https://github.com/jagenjo/litegl.js/tree/master/src
-	         * GL Tutorial: http://webglfundamentals.org
-	         * HTML5 Games code: http://www.wiley.com/WileyCDA/WileyTitle/productCd-1119975085.html
-	         * Best Practices
-	         * @link https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_best_practices
-	         * WebGL tests:
-	         * @link https://www.browserleaks.com/webgl
-	         * WebGL cross-browser:
-	         * @link http://codeflow.org/entries/2013/feb/22/how-to-write-portable-webgl/
-	         * Great WebGL Examples:
-	         * http://alteredqualia.com/
-	         * Toji: https://github.com/toji/webvr-samples
-	         * https://github.com/toji/webvr.info/blob/master/samples/05-room-scale.html
-	         * TWGL: @link http://twgljs.org/
-	         * perspective Matrix
-	         * @link http://www.rozengain.com/blog/2010/02/22/beginning-webgl-step-by-step-tutorial/ 
-	         * 
-	         * Google demos for kronos (including webworkers and particle systems)
-	         * https://www.khronos.org/registry/webgl/sdk/demos/google/
-	         * 
-	         * @constructor
-	         * @param {Object} config a configuration object, set in app.js.
-	         */
-
-	        function WebGL(init, glMatrix, util, debug) {
-	                _classCallCheck(this, WebGL);
-
-	                console.log('in webGL class');
-
-	                this.gl = null;
-
-	                this.contextCount = 0;
-
-	                this.version = 0;
-
-	                this.glMatrix = glMatrix;
-
-	                this.util = util;
-
-	                this.NOT_IN_LIST = util.NOT_IN_LIST; // -1 value for .indexOf()
-
-	                // Default shader name for vertices (must always use in vertex and fragment shader).
-
-	                /*
-	                 * All the Shaders MUST use the following names for common shader attributes. They are 
-	                 * hard-coded to improve positioning.
-	                 */
-
-	                this.attributeNames = {
-
-	                        aVertexPosition: ['aVertexPosition', 0],
-
-	                        aVertexColor: ['aVertexColor', 1],
-
-	                        aTextureCoord: ['aTextureCoord', 2],
-
-	                        aTextureCoord1: ['aTextureCoord1', 3],
-
-	                        aTextureCoord2: ['aTextureCoord2', 4],
-
-	                        aTextureCoord3: ['aTextureCoord3', 5],
-
-	                        aTextureCoord4: ['aTextureCoord4', 6],
-
-	                        aTextureCoord5: ['aTextureCoord5', 7],
-
-	                        aVertexNormal: ['aVertexNormal', 8],
-
-	                        aVertexTangent: ['aVertexTangent', 9]
-
-	                };
-
-	                //TODO: hard-code the attribute bindings, so they always have the same index.
-	                //TODO: use the above array.
-	                //TODO: otherwise, getting confusing errors when we try to assign arrays.
-	                //https://www.khronos.org/webgl/public-mailing-list/public_webgl/1003/msg00068.php
-	                //TODO:
-	                //TODO:
-
-	                // Perspective matrix in Shaders.
-
-	                this.near = 0.1;
-
-	                this.far = 100;
-
-	                // Statistics object.
-
-	                this.stats = {};
-
-	                if (init === true) {
-
-	                        this.init(document.getElementById('webvr-mini-canvas')); // Normally not called this way
-	                }
-
-	                // If we are running in debug mode, save the debug utils into this object.
-
-	                if (debug) {
-
-	                        this.debug = debug;
-	                }
-	        }
-
-	        /**
-	         * initialize with a canvas context
-	         * @param {HTMLCanvasElement|String|undefined} canvas a HTML5 <canvas>, id for canvas, or undefined, 
-	         * in which case a <canvas> object is 
-	         * created and added to document.body, an ID value for a tag, or a CanvasDOMobject.
-	         * @param {Function} lostContext callback when WebGL context is lost.
-	         * @param {Function} restoredContext callback when WebGL context is restored.
-	         * @returns {WebGLContext} the WebGL context of the <canvas> object.
-	         */
-
-
-	        _createClass(WebGL, [{
-	                key: 'init',
-	                value: function init(canvas, lostContext, restoredContext) {
-	                        var _this = this;
-
-	                        if (!canvas) {
-
-	                                /* 
-	                                 * Create the minimal player wraparound.
-	                                 * <div class="webvr-mini-player">
-	                                 *     <nav class="webvr-mini-controls"></nav>
-	                                 *     <canvas id="webvr-mini-canvas" ></canvas>
-	                                 * </div>
-	                                 */
-
-	                                canvas = document.createElement('canvas');
-
-	                                canvas.width = 480;
-
-	                                canvas.height = 320;
-
-	                                var player = document.createElement('div');
-
-	                                player.className = 'webvr-mini-player';
-
-	                                var controls = document.createElement('div');
-
-	                                controls.className = 'webvr-mini-controls';
-
-	                                player.appendChild(controls);
-
-	                                player.appendChild(canvas);
-
-	                                // This seems to fix a bug in IE 11. TODO: remove extra empty <canvas>.
-
-	                                document.body.appendChild(player);
-	                        } else if (this.util.isString(canvas)) {
-
-	                                canvas = document.getElementById(canvas);
-	                        } else {
-
-	                                canvas = canvas;
-	                        }
-
-	                        if (canvas) {
-
-	                                // This line will make the <canvas> element work for focus events.
-
-	                                // canvas.addAttribute( 'tabindex', '1' );
-
-	                                // NOTE: IE10 needs canvas bound to DOM for the following command to work.
-
-	                                var r = canvas.getBoundingClientRect();
-
-	                                canvas.width = r.width;
-
-	                                canvas.height = r.height;
-
-	                                // Save current window width and height (used in window resize).
-
-	                                this.oldWidth = this.util.getWindowWidth();
-
-	                                this.oldHeight = this.util.getWindowHeight();
-
-	                                // Create the WebGL context for the <canvas>, trying to get the most recent version.
-
-	                                this.gl = this.createContext(canvas);
-
-	                                if (this.gl) {
-
-	                                        var gl = this.gl;
-
-	                                        // Default WebGL initializtion and stats, can be over-ridden in your world file.
-
-	                                        if (gl.getParameter && gl.getShaderPrecisionFormat) {
-
-	                                                var stats = this.stats;
-
-	                                                // Check if high precision supported in fragment shader.
-
-	                                                stats.highp = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT).precision;
-
-	                                                // Max texture size, for gl.texImage2D.                
-
-	                                                stats.maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
-
-	                                                // Max cubemap size, for gl.texImage2D.
-
-	                                                stats.maxCubeSize = gl.getParameter(gl.MAX_CUBE_MAP_TEXTURE_SIZE);
-
-	                                                // Max texture size, for gl.renderbufferStorage and canvas width/height.
-
-	                                                stats.maxRenderbufferSize = gl.getParameter(gl.MAX_RENDERBUFFER_SIZE);
-
-	                                                // Max texture units.
-
-	                                                stats.combinedUnits = gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS);
-
-	                                                // Max vertex buffers.
-
-	                                                stats.maxVSattribs = gl.getParameter(gl.MAX_VERTEX_ATTRIBS);
-
-	                                                // Max 4-byte uniforms.
-
-	                                                stats.maxVertexShader = gl.getParameter(gl.MAX_VERTEX_UNIFORM_VECTORS);
-
-	                                                // Max 4-byte uniforms.
-
-	                                                stats.maxFragmentShader = gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS);
-	                                        } else {
-
-	                                                this.stats = false;
-	                                        }
-
-	                                        /* 
-	                                         * Set up listeners for context lost and regained.
-	                                         * @link https://www.khronos.org/webgl/wiki/HandlingContextLost
-	                                         * Simulate lost and restored context events with:
-	                                         * @link https://developer.mozilla.org/en-US/docs/Web/API/WEBGL_lose_context/restoreContext
-	                                         * @link http://codeflow.org/entries/2013/feb/22/how-to-write-portable-webgl/
-	                                         * gl.isContextLost() also works to check
-	                                         */
-
-	                                        canvas.addEventListener('webglcontextlost', function (e) {
-
-	                                                console.error('error: webglcontextlost event, context count:' + _this.contextCount);
-
-	                                                if (lostContext) {
-
-	                                                        _this.gl = null;
-
-	                                                        lostContext(e);
-	                                                }
-
-	                                                e.preventDefault();
-	                                        }, false);
-
-	                                        canvas.addEventListener('webglcontextrestored', function (e) {
-
-	                                                console.error('error: webglcontextrestored event, context count:' + _this.contextCount);
-
-	                                                if (restoredContext) {
-
-	                                                        restoredContext(e);
-	                                                }
-
-	                                                e.preventDefault();
-	                                        }, false);
-
-	                                        // Do an initial set of our viewport width and height.
-
-	                                        gl.viewportWidth = canvas.width;
-
-	                                        gl.viewportHeight = canvas.height;
-
-	                                        // listen for <canvas> resize event.
-
-	                                        window.addEventListener('resize', function (e) {
-
-	                                                _this.resizeCanvas();
-
-	                                                e.preventDefault();
-	                                        }, false);
-
-	                                        // If we're reloading, clear all current textures in the texture buffers.
-
-	                                        this.clearTextures();
-
-	                                        // Set our default rendering values.
-
-	                                        this.glDefaults();
-
-	                                        // Clear the screen to the clearColor by default.
-
-	                                        this.clear();
-
-	                                        return this.gl;
-	                                } else {
-
-	                                        // We check prior to loading this module, so we shouldn't go here if not supported.
-
-	                                        console.error('no WebGL context');
-	                                } // end of have a gl context
-
-	                        } else {
-
-	                                console.error(' no WebGL canvas');
-	                        } // end of if have a <canvas>
-
-	                        return null;
-	                }
-
-	                /**
-	                 * (re)set the defaults we draw with.
-	                 */
-
-	        }, {
-	                key: 'glDefaults',
-	                value: function glDefaults() {
-
-	                        var gl = this.getContext();
-
-	                        if (gl) {
-
-	                                // Default 3D enables.
-
-	                                gl.enable(gl.DEPTH_TEST);
-
-	                                gl.enable(gl.CULL_FACE);
-
-	                                gl.clearDepth(1.0); // Clear everything
-
-	                                gl.depthFunc(gl.LEQUAL); // Near things obscure far things
-
-	                                gl.enable(gl.BLEND); // Allow blending
-
-	                                // Fog NOT in Webgl use shader
-	                                //http://www.geeks3d.com/20100228/fog-in-glsl-webgl/
-	                                // http://in2gpu.com/2014/07/22/create-fog-shader/
-
-	                                gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-
-	                                /* 
-	                                 * IMPORTANT: tells WebGL to premultiply alphas for <canvas>
-	                                 * @link http://stackoverflow.com/questions/39251254/avoid-cpu-side-conversion-with-teximage2d-in-firefox
-	                                 */
-	                                gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
-
-	                                gl.clearColor(0.1, 0.1, 0.1, 1.0);
-	                        }
-	                }
-
-	                /** 
-	                 * Flag for supporting WebGL.
-	                 * @returns {Boolean} if WebGL context is present, return true, else false.s
-	                 */
-
-	        }, {
-	                key: 'hasWebGL',
-	                value: function hasWebGL() {
-
-	                        return !!this.getContext();
-	                }
-
-	                /* 
-	                 * ---------------------------------------
-	                 * WEBGL EXTENSIONS
-	                 * ---------------------------------------
-	                 */
-
-	                /** 
-	                 * Support indexed vertex drawing when there are more than 
-	                 * 64k vertices in WebGL 1.0. Enabled by default in WebGL 2.0. No constant, so 
-	                 * this should only be called in 1.0 context.
-	                 * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only).
-	                 */
-
-	        }, {
-	                key: 'index32Support',
-	                value: function index32Support(gl) {
-
-	                        return !!gl.getExtension('OES_element_index_uint');
-	                }
-
-	                /** 
-	                 * Add support for Shaders to use derivatives.
-	                 * Have to add the following to the Shaders
-	                 * #extension GL_EXT_shader_texture_lod : enable
-	                 * #extension GL_OES_standard_derivatives : enable
-	                 * @link https://developer.mozilla.org/en-US/docs/Web/API/OES_standard_derivatives
-	                 * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only).
-	                 */
-
-	        }, {
-	                key: 'derivativeSupport',
-	                value: function derivativeSupport(gl) {
-
-	                        var s = !!gl.FRAGMENT_SHADER_DERIVATIVE_HINT; // Should be present in WebGL 2.0
-
-	                        if (!s) {
-
-	                                var ext = gl.getExtension('GL_OES_standard_derivatives');
-
-	                                if (ext) {
-
-	                                        s = true;
-
-	                                        gl.FRAGMENT_SHADER_DERIVATIVE_HINT = ext.FRAGMENT_SHADER_DERIVATIVE_HINT_OES;
-	                                }
-
-	                                if (gl.FRAGMENT_SHADER_DERIVATIVE_HINT) {
-
-	                                        this.stats.lodSupport = !!gl.getExtension('EXT_shader_texture_lod');
-	                                }
-	                        }
-
-	                        return s;
-	                }
-
-	                /** 
-	                 * Add vertex buffer support to WebGL 1.0.
-	                 * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only).
-	                 */
-
-	        }, {
-	                key: 'vertexArraySupport',
-	                value: function vertexArraySupport(gl) {
-
-	                        var s = !!gl.VERTEX_ARRAY_BINDING; // Should be present in WebGL 2.0
-
-	                        if (!s) {
-
-	                                var ext = gl.getExtension('OES_vertex_array_object');
-
-	                                if (ext) {
-
-	                                        s = true;
-
-	                                        gl.VERTEX_ARRAY_BINDING = ext.VERTEX_ARRAY_BINDING_OES;
-
-	                                        gl.createVertexArray = function () {
-	                                                return ext.createVertexArrayOES();
-	                                        };
-
-	                                        gl.deleteVertexArray = function (v) {
-	                                                ext.deleteVertexArrayOES(v);
-	                                        };
-
-	                                        gl.isVertexArray = function (v) {
-	                                                return ext.isVertexArrayOES(v);
-	                                        };
-
-	                                        gl.bindVertexArray = function (v) {
-	                                                ext.bindVertexArrayOES(v);
-	                                        };
-	                                }
-	                        }
-
-	                        return s;
-	                }
-
-	                /** 
-	                 * Add support for depth textures, allows WebGLRenderingContext.texImage2D() format and internalformat parameters 
-	                 * to accept accept gl.DEPTH_COMPONENT and gl.DEPTH_STENCIL. The type parameter now accepts gl.UNSIGNED_SHORT, 
-	                 * gl.UNSIGNED_INT, and ext.UNSIGNED_INT_24_8_WEBGL. The pixels parameter now accepts an ArrayBufferView of type Uint16Array and Uint32Array.
-	                 * @link https://developer.mozilla.org/en-US/docs/Web/API/WEBGL_depth_texture
-	                 * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only).
-	                 */
-
-	        }, {
-	                key: 'depthTextureSupport',
-	                value: function depthTextureSupport(gl) {
-
-	                        var s = !!(gl.DEPTH_COMPONENT && gl.DEPTH_STENCIL);
-
-	                        if (!s) {
-
-	                                var ext = gl.getExtension('WEBGL_depth_texture') || gl.getExtension('MOZ_WEBGL_depth_texture') || gl.getExtension('WEBKIT_WEBGL_depth_texture');
-
-	                                if (ext) {
-
-	                                        s = true;
-
-	                                        gl.DEPTH_COMPONENT = ext.DEPTH_COMPONENT;
-
-	                                        gl.DEPTH_STENCIL = ext.DEPTH_STENCIL;
-	                                }
-	                        }
-
-	                        return s;
-	                }
-
-	                /** 
-	                 * Add support for anisotrophic texture filtering, improving mipmap quality. Used by 
-	                 * both WebGL 1.0 and WebGL 2.0 contexts.
-	                 * gl.texParameterf(gl.TEXTURE_2D, ext.TEXTURE_MAX_ANISOTROPY_EXT, 4);
-	                 * @link http://blog.tojicode.com/2012/03/anisotropic-filtering-in-webgl.html
-	                 * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only).
-	                 */
-
-	        }, {
-	                key: 'anisotropicSupport',
-	                value: function anisotropicSupport(gl) {
-
-	                        var s = !!gl.TEXTURE_MAX_ANISOTROPY_EXT;
-
-	                        if (!s) {
-
-	                                var ext = gl.getExtension('EXT_texture_filter_anisotropic') || gl.getExtension('MOZ_EXT_texture_filter_anisotropic') || gl.getExtension('WEBKIT_EXT_texture_filter_anisotropic');
-
-	                                if (ext) {
-
-	                                        s = true;
-
-	                                        gl.TEXTURE_MAX_ANISOTROPY_EXT = ext.TEXTURE_MAX_ANISOTROPY_EXT;
-	                                }
-	                        }
-
-	                        return s;
-	                }
-
-	                /** 
-	                 * Add support for S3 compressed textures.
-	                 * @link http://blog.tojicode.com/2011/12/compressed-textures-in-webgl.html
-	                 * @link https://en.wikipedia.org/wiki/S3_Texture_Compression
-	                 * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only).
-	                 */
-
-	        }, {
-	                key: 'S3TCTextureSupport',
-	                value: function S3TCTextureSupport(gl) {
-
-	                        var s = !!gl.COMPRESSED_RGB_S3TC_DXT1_EXT;
-
-	                        if (!s) {
-
-	                                var ext = gl.getExtension('WEBGL_compressed_texture_s3tc') || gl.getExtension('MOZ_WEBGL_compressed_texture_s3tc') || gl.getExtension('WEBKIT_WEBGL_compressed_texture_s3tc');
-
-	                                if (ext) {
-
-	                                        s = true, gl.COMPRESSED_RGB_S3TC_DXT1_EXT = ext.COMPRESSED_RGB_S3TC_DXT1_EXT, gl.COMPRESSED_RGBA_S3TC_DXT1_EXT = ext.COMPRESSED_RGBA_S3TC_DXT1_EXT, gl.COMPRESSED_RGBA_S3TC_DXT3_EXT = ext.COMPRESSED_RGBA_S3TC_DXT3_EXT, gl.COMPRESSED_RGBA_S3TC_DXT5_EXT = ext.COMPRESSED_RGBA_S3TC_DXT5_EXT;
-	                                }
-	                        }
-
-	                        return s;
-	                }
-
-	                /** 
-	                 * Add support for PVR compressed textures. 
-	                 * Available in both WebGL 1.0 and WebGL 2.0 contexts.
-	                 * Used on mobile devices, e.g.iPhone, iPod Touch and iPad and supported on certain Android devices 
-	                 * using a PowerVR GPU.
-	                 * @link http://blog.tojicode.com/2011/12/compressed-textures-in-webgl.html
-	                 * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only).
-	                 */
-
-	        }, {
-	                key: 'PVRTCTextureSupport',
-	                value: function PVRTCTextureSupport(gl) {
-
-	                        var s = !!gl.COMPRESSED_RGB_PVRTC_4BPPV1_IMG;
-
-	                        if (!s) {
-
-	                                var ext = gl.getExtension('WEBGL_compressed_texture_pvrtc ') || gl.getExtension('WEBKIT_WEBGL_compressed_texture_pvrtc');
-
-	                                if (ext) {
-
-	                                        s = true, gl.COMPRESSED_RGB_PVRTC_4BPPV1_IMG = ext.COMPRESSED_RGB_PVRTC_4BPPV1_IMG, gl.COMPRESSED_RGBA_PVRTC_4BPPV1_IMG = ext.COMPRESSED_RGBA_PVRTC_4BPPV1_IMG, gl.COMPRESSED_RGB_PVRTC_2BPPV1_IMG = ext.COMPRESSED_RGB_PVRTC_2BPPV1_IMG, gl.COMPRESSED_RGBA_PVRTC_2BPPV1_IMG = ext.COMPRESSED_RGBA_PVRTC_2BPPV1_IMG;
-	                                }
-	                        }
-
-	                        return s;
-	                }
-
-	                /** 
-	                 * Add support for Ericsson ETC1 compressed textures, RGB only, 6x compression of 24-bit data.
-	                 * Can be used with gl.compressedTexImage2D() 
-	                 * @link http://blog.tojicode.com/2011/12/compressed-textures-in-webgl.html
-	                 * @link https://en.wikipedia.org/wiki/Ericsson_Texture_Compression
-	                 * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only).
-	                 */
-
-	        }, {
-	                key: 'ETC1TextureSupport',
-	                value: function ETC1TextureSupport(gl) {
-
-	                        var s = !!(gl.COMPRESSED_RGB_ETC1_WEBGL || gl.COMPRESSED_RGB_ETC1);
-
-	                        if (!s) {
-
-	                                var ext = gl.getExtension('WEBGL_compressed_texture_etc1');
-
-	                                if (ext) {
-
-	                                        s = true;
-
-	                                        gl.COMPRESSED_RGB_ETC1_WEBGL = ext.COMPRESSED_RGB_ETC1_WEBGL;
-	                                }
-	                        }
-
-	                        return s;
-	                }
-
-	                /*
-	                 * ---------------------------------------
-	                 * OTHER WEBGL TESTS
-	                 * ---------------------------------------
-	                 */
-
-	                /** 
-	                 * Wrapper for WebGL error reporting.
-	                 * @link https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/getError
-	                 */
-
-	        }, {
-	                key: 'getError',
-	                value: function getError() {
-
-	                        var fnName = 'webgl.glError():',
-	                            gl = this.getContext();
-
-	                        switch (gl.getError()) {
-
-	                                case gl.NO_ERROR:
-	                                        // No error has been recorded. The value of this constant is 0.
-
-	                                        return fnName + 'gl.NO_ERROR';
-
-	                                case gl.INVALID_ENUM:
-	                                        // An unacceptable value has been specified for an enumerated argument. The command is ignored and the error flag is set.
-
-	                                        return fnName + 'gl.INVALID_ENUM';
-
-	                                case gl.INVALID_VALUE:
-	                                        // A numeric argument is out of range. The command is ignored and the error flag is set.
-
-	                                        return fnName + 'gl.INVALID_VALUE';
-
-	                                case gl.INVALID_OPERATION:
-	                                        // The specified command is not allowed for the current state. The command is ignored and the error flag is set.
-
-	                                        return fnName + 'gl.INVALID_OPERATION';
-
-	                                case gl.INVALID_FRAMEBUFFER_OPERATION:
-	                                        // The currently bound framebuffer is not framebuffer complete when trying to render to or to read from it.
-
-	                                        return fnName + 'gl.INVALID_FRAMEBUFFER_OPERATION';
-
-	                                case gl.OUT_OF_MEMORY:
-	                                        //Not enough memory is left to execute the command.
-
-	                                        return fnName + 'gl.OUT_OF_MEMORY';
-
-	                                case gl.CONTEXT_LOST_WEBGL:
-
-	                                        return fnName + 'gl.CONTEXT_LOST_WEBGL';
-
-	                        }
-	                }
-
-	                /** 
-	                 * Check to see if the framebuffer is valid, must bind a frameBuffer 
-	                 * first, using gl.createFramebuffer() with valid offscreen texture.
-	                 * @param {WebGLRenderingContext} gl the WebGL rendering context.
-	                 * @param {WebGLFrameBuffer} the bound frameBuffer.
-	                 * @returns {String} error message.
-	                 */
-
-	        }, {
-	                key: 'checkFramebuffer',
-	                value: function checkFramebuffer(gl, framebuffer) {
-
-	                        // assumes the framebuffer is bound
-
-	                        var valid = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
-
-	                        switch (valid) {
-
-	                                case gl.FRAMEBUFFER_UNSUPPORTED:
-
-	                                        return 'Framebuffer is unsupported';
-
-	                                case gl.FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
-
-	                                        return 'Framebuffer incomplete attachment';
-
-	                                case gl.FRAMEBUFFER_INCOMPLETE_DIMENSIONS:
-
-	                                        return 'Framebuffer incomplete dimensions';
-
-	                                case gl.FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
-
-	                                        return 'Framebuffer incomplete missing attachment';
-
-	                                default:
-
-	                                        return true;
-
-	                        }
-	                }
-
-	                /*
-	                 * ---------------------------------------
-	                 * WEBGL STATE TOGGLES
-	                 * ---------------------------------------
-	                 */
-
-	        }, {
-	                key: 'enableBlending',
-	                value: function enableBlending(source, dest, eq) {
-
-	                        var gl = this.getContext();
-
-	                        if (eq) {
-
-	                                gl.blendEquation(gl[eq]);
-	                        }
-
-	                        if (source && dest) {
-
-	                                gl.blendFunc(gl[source], gl[dest]);
-	                        }
-
-	                        gl.enable(gl.BLEND);
-
-	                        gl.depthMask(false);
-	                }
-	        }, {
-	                key: 'disableBlending',
-	                value: function disableBlending() {
-
-	                        var gl = this.getContext();
-
-	                        gl.disable(gl.BLEND);
-
-	                        gl.depthMask(true);
-	                }
-
-	                /* 
-	                 * ---------------------------------------
-	                 * CANVAS OPERATIONS
-	                 * ---------------------------------------
-	                 */
-
-	                /** 
-	                 * Get WebGL canvas only if we've created a gl context.
-	                 * @returns {HTMLCanvasElement} canvas the rendering <canvas>.
-	                 */
-
-	        }, {
-	                key: 'getCanvas',
-	                value: function getCanvas() {
-
-	                        return this.gl ? this.gl.canvas : null;
-	                }
-
-	                /** 
-	                 * Resize the canvas if the window changes size. 
-	                 * @param {Boolean} force force a resize, even if window size has not changed. Use 
-	                 * when exiting VR.
-	                 */
-
-	        }, {
-	                key: 'resizeCanvas',
-	                value: function resizeCanvas(force) {
-
-	                        if (this.ready()) {
-
-	                                console.log('resize');
-
-	                                var wWidth = this.util.getWindowWidth();
-
-	                                var wHeight = this.util.getWindowHeight();
-
-	                                if (force || wWidth !== this.oldWidth) {
-
-	                                        var f = Math.max(window.devicePixelRatio, 1);
-
-	                                        var gl = this.getContext();
-
-	                                        var c = this.getCanvas();
-
-	                                        // Get the current size of the <canvas>
-
-	                                        var width = c.clientWidth * f | 0;
-
-	                                        var height = c.clientHeight * f | 0;
-
-	                                        // Set the <canvas> width and height property.
-
-	                                        c.width = width;
-
-	                                        c.height = height;
-
-	                                        // Set the WebGL viewport.
-
-	                                        gl.viewportWidth = width;
-
-	                                        gl.viewportHeight = height;
-
-	                                        gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
-	                                }
-
-	                                // Save the values.
-
-	                                this.oldWidth = wWidth;
-
-	                                this.oldHeight = wHeight;
-	                        }
-
-	                        return false;
-	                }
-
-	                /*
-	                 * ---------------------------------------
-	                 * WEBGL CONTEXT OPERATIONS
-	                 * ---------------------------------------
-	                 */
-
-	                /** 
-	                 * get HTML5 canvas, and a WebGL context. We also scan for multiple 
-	                 * contexts being created ( > 1 ) and delete if one is already present.
-	                 * @param {Canvas} canvas the HTML5 <canvas> DOM element.
-	                 * TODO: PROBLEM IF THERE ARE MULTIPLE CONTEXES ON THE PAGE???????
-	                 * @param {HTMLCanvasElement} canvas the rendering <canvas>.
-	                 * @returns {WebGLRenderingContext} gl a WebGLRenderingContext.
-	                 */
-
-	        }, {
-	                key: 'createContext',
-	                value: function createContext(canvas) {
-
-	                        if (!window.WebGLRenderingContext) {
-
-	                                console.error('this browser does not support webgl');
-
-	                                return null;
-	                        }
-
-	                        var gl = null;
-
-	                        if (gl && this.contextCount > 0) {
-
-	                                // Contexts are normally in garbage, can't be deleted without this!
-
-	                                console.warn('killing context');
-
-	                                this.killContext();
-
-	                                this.contextCount--;
-
-	                                this.gl = null; // just in case
-	                        }
-
-	                        var n = ['webgl2', 'experimental-webgl2', 'webgl', 'experimental-webgl'];
-
-	                        var i = 0;
-
-	                        while (i < n.length) {
-
-	                                try {
-
-	                                        if (this.debug) {
-
-	                                                gl = this.debug.makeDebugContext(canvas.getContext(n[i]));
-
-	                                                if (gl) {
-
-	                                                        console.warn('using debug context');
-
-	                                                        if (gl.getParameter !== 'function') {
-
-	                                                                gl = canvas.getContext(n[i]);
-
-	                                                                console.warn('unable to use debug context, trying release:' + n[i], ' getParameter:' + gl.getParameter);
-	                                                        }
-
-	                                                        break;
-	                                                }
-	                                        } else {
-
-	                                                gl = canvas.getContext(n[i]);
-
-	                                                if (gl) {
-
-	                                                        console.warn('using release context mode:' + n[i]);
-
-	                                                        break;
-	                                                }
-	                                        }
-	                                } catch (e) {
-
-	                                        console.warn('failed to load context:' + n[i]);
-	                                }
-
-	                                i++;
-	                        } // end of while loop
-
+	            /**
+	             * References:
+	             * LiteGL
+	             * @link https://github.com/jagenjo/litegl.js/tree/master/src
+	             * GL Tutorial: http://webglfundamentals.org
+	             * HTML5 Games code: http://www.wiley.com/WileyCDA/WileyTitle/productCd-1119975085.html
+	             * Best Practices
+	             * @link https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_best_practices
+	             * WebGL tests:
+	             * @link https://www.browserleaks.com/webgl
+	             * WebGL cross-browser:
+	             * @link http://codeflow.org/entries/2013/feb/22/how-to-write-portable-webgl/
+	             * Great WebGL Examples:
+	             * http://alteredqualia.com/
+	             * Toji: https://github.com/toji/webvr-samples
+	             * https://github.com/toji/webvr.info/blob/master/samples/05-room-scale.html
+	             * TWGL: @link http://twgljs.org/
+	             * perspective Matrix
+	             * @link http://www.rozengain.com/blog/2010/02/22/beginning-webgl-step-by-step-tutorial/ 
+	             * 
+	             * Google demos for kronos (including webworkers and particle systems)
+	             * https://www.khronos.org/registry/webgl/sdk/demos/google/
+	             * 
+	             * @constructor
+	             * @param {Object} config a configuration object, set in app.js.
+	             */
+
+	            function WebGL(init, glMatrix, util, debug) {
+	                        _classCallCheck(this, WebGL);
+
+	                        console.log('in webGL class');
+
+	                        this.gl = null;
+
+	                        this.contextCount = 0;
+
+	                        this.version = 0;
+
+	                        this.glMatrix = glMatrix;
+
+	                        this.util = util;
+
+	                        this.NOT_IN_LIST = util.NOT_IN_LIST; // -1 value for .indexOf()
+
+	                        // Default shader name for vertices (must always use in vertex and fragment shader).
 
 	                        /*
-	                         * If we got a context, assign WebGL version. Note that some 
-	                         * experimental versions don't have .getParameter
+	                         * All the Shaders MUST use the following names for common shader attributes. They are 
+	                         * hard-coded to improve positioning.
 	                         */
 
-	                        if (gl && typeof gl.getParameter == 'function') {
+	                        this.attributeNames = {
 
-	                                this.contextCount++;
+	                                    aVertexPosition: ['aVertexPosition', 0],
 
-	                                this.gl = gl;
+	                                    aVertexColor: ['aVertexColor', 1],
 
-	                                // Check if this is a full WebGL2 stack
+	                                    aTextureCoord: ['aTextureCoord', 2],
 
-	                                this.version = gl.getParameter(gl.VERSION).toLowerCase();
+	                                    aTextureCoord1: ['aTextureCoord1', 3],
 
-	                                if (i == 1 || i == 3) {
+	                                    aTextureCoord2: ['aTextureCoord2', 4],
 
-	                                        console.warn('experimental context, .getParameter() may not work');
-	                                }
+	                                    aTextureCoord3: ['aTextureCoord3', 5],
 
-	                                console.log('version:' + gl.getParameter(gl.VERSION));
+	                                    aTextureCoord4: ['aTextureCoord4', 6],
 
-	                                // Supported extensions.
+	                                    aTextureCoord5: ['aTextureCoord5', 7],
 
-	                                this.stats.uint32 = true; // by default, but check if we have WebGL 1.0.
+	                                    aVertexNormal: ['aVertexNormal', 8],
 
-	                                this.stats.supported = gl.getSupportedExtensions();
+	                                    aVertexTangent: ['aVertexTangent', 9]
 
-	                                // Take action, depending on version (identified by pos in our test array n).
+	                        };
 
-	                                switch (i) {
+	                        //TODO: hard-code the attribute bindings, so they always have the same index.
+	                        //TODO: use the above array.
+	                        //TODO: otherwise, getting confusing errors when we try to assign arrays.
+	                        //https://www.khronos.org/webgl/public-mailing-list/public_webgl/1003/msg00068.php
+	                        //TODO:
+	                        //TODO:
 
-	                                        // WebGL 2.0
+	                        // Perspective matrix in Shaders.
 
-	                                        case 0:
+	                        this.near = 0.1;
 
-	                                        case 1:
+	                        this.far = 100;
 
-	                                                this.version = 2.0;
+	                        // Statistics object.
 
-	                                                break;
+	                        this.stats = {};
 
-	                                        // WebGL 1.0 
+	                        if (init === true) {
 
-	                                        case 2:
-
-	                                        case 3:
-
-	                                        default:
-
-	                                                this.version = 1.0;
-
-	                                                this.stats.uint32 = this.index32Support(gl); // vertices > 64k, no constant exported. WebGL 1.0 only.
-
-	                                                break;
-
-	                                }
+	                                    this.init(document.getElementById('webvr-mini-canvas')); // Normally not called this way
 	                        }
 
-	                        // These extensions expose constants, so we can test here.
+	                        // If we are running in debug mode, save the debug utils into this object.
 
-	                        this.stats.anisotrophic = this.anisotropicSupport(gl);
+	                        if (debug) {
 
-	                        this.stats.vertexArrays = this.vertexArraySupport(gl); // vertex buffers
+	                                    this.debug = debug;
+	                        }
+	            }
 
-	                        this.stats.derivatives = this.derivativeSupport(gl); // shader derivatives
+	            /**
+	             * initialize with a canvas context
+	             * @param {HTMLCanvasElement|String|undefined} canvas a HTML5 <canvas>, id for canvas, or undefined, 
+	             * in which case a <canvas> object is 
+	             * created and added to document.body, an ID value for a tag, or a CanvasDOMobject.
+	             * @param {Function} lostContext callback when WebGL context is lost.
+	             * @param {Function} restoredContext callback when WebGL context is restored.
+	             * @returns {WebGLContext} the WebGL context of the <canvas> object.
+	             */
 
-	                        this.stats.depthTextures = this.depthTextureSupport(gl); // depth textures
 
-	                        this.stats.pvrtcTextures = this.PVRTCTextureSupport(gl); // PVRTC compressed texture support
+	            _createClass(WebGL, [{
+	                        key: 'init',
+	                        value: function init(canvas, lostContext, restoredContext) {
+	                                    var _this = this;
 
-	                        this.stats.etc1Textures = this.ETC1TextureSupport(gl); // ETC1 compress texture support
+	                                    if (!canvas) {
 
-	                        this.stats.setcTextures = this.S3TCTextureSupport(gl); // S3 compressed texture support
+	                                                /* 
+	                                                 * Create the minimal player wraparound.
+	                                                 * <div class="webvr-mini-player">
+	                                                 *     <nav class="webvr-mini-controls"></nav>
+	                                                 *     <canvas id="webvr-mini-canvas" ></canvas>
+	                                                 * </div>
+	                                                 */
 
-	                        // Set the maximum draw elements, based on card capabilities.
+	                                                canvas = document.createElement('canvas');
 
-	                        if (!this.stats.uint32) {
+	                                                canvas.width = 480;
 
-	                                this.MAX_DRAWELEMENTS = 65534;
-	                        } else {
+	                                                canvas.height = 320;
 
-	                                this.MAX_DRAWELEMENTS = 2e9;
+	                                                var player = document.createElement('div');
+
+	                                                player.className = 'webvr-mini-player';
+
+	                                                var controls = document.createElement('div');
+
+	                                                controls.className = 'webvr-mini-controls';
+
+	                                                player.appendChild(controls);
+
+	                                                player.appendChild(canvas);
+
+	                                                // This seems to fix a bug in IE 11. TODO: remove extra empty <canvas>.
+
+	                                                document.body.appendChild(player);
+	                                    } else if (this.util.isString(canvas)) {
+
+	                                                canvas = document.getElementById(canvas);
+	                                    } else {
+
+	                                                canvas = canvas;
+	                                    }
+
+	                                    if (canvas) {
+
+	                                                // This line will make the <canvas> element work for focus events.
+
+	                                                // canvas.addAttribute( 'tabindex', '1' );
+
+	                                                // NOTE: IE10 needs canvas bound to DOM for the following command to work.
+
+	                                                var r = canvas.getBoundingClientRect();
+
+	                                                canvas.width = r.width;
+
+	                                                canvas.height = r.height;
+
+	                                                // Save current window width and height (used in window resize).
+
+	                                                this.oldWidth = this.util.getWindowWidth();
+
+	                                                this.oldHeight = this.util.getWindowHeight();
+
+	                                                // Create the WebGL context for the <canvas>, trying to get the most recent version.
+
+	                                                this.gl = this.createContext(canvas);
+
+	                                                if (this.gl) {
+
+	                                                            var gl = this.gl;
+
+	                                                            // Default WebGL initializtion and stats, can be over-ridden in your world file.
+
+	                                                            if (gl.getParameter && gl.getShaderPrecisionFormat) {
+
+	                                                                        var stats = this.stats;
+
+	                                                                        // Check if high precision supported in fragment shader.
+
+	                                                                        stats.highp = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT).precision;
+
+	                                                                        // Max texture size, for gl.texImage2D.                
+
+	                                                                        stats.maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+
+	                                                                        // Max cubemap size, for gl.texImage2D.
+
+	                                                                        stats.maxCubeSize = gl.getParameter(gl.MAX_CUBE_MAP_TEXTURE_SIZE);
+
+	                                                                        // Max texture size, for gl.renderbufferStorage and canvas width/height.
+
+	                                                                        stats.maxRenderbufferSize = gl.getParameter(gl.MAX_RENDERBUFFER_SIZE);
+
+	                                                                        // Max texture units.
+
+	                                                                        stats.combinedUnits = gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS);
+
+	                                                                        // Max vertex buffers.
+
+	                                                                        stats.maxVSattribs = gl.getParameter(gl.MAX_VERTEX_ATTRIBS);
+
+	                                                                        // Max 4-byte uniforms.
+
+	                                                                        stats.maxVertexShader = gl.getParameter(gl.MAX_VERTEX_UNIFORM_VECTORS);
+
+	                                                                        // Max 4-byte uniforms.
+
+	                                                                        stats.maxFragmentShader = gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS);
+	                                                            } else {
+
+	                                                                        this.stats = false;
+	                                                            }
+
+	                                                            /* 
+	                                                             * Set up listeners for context lost and regained.
+	                                                             * @link https://www.khronos.org/webgl/wiki/HandlingContextLost
+	                                                             * Simulate lost and restored context events with:
+	                                                             * @link https://developer.mozilla.org/en-US/docs/Web/API/WEBGL_lose_context/restoreContext
+	                                                             * @link http://codeflow.org/entries/2013/feb/22/how-to-write-portable-webgl/
+	                                                             * gl.isContextLost() also works to check
+	                                                             */
+
+	                                                            canvas.addEventListener('webglcontextlost', function (e) {
+
+	                                                                        console.error('error: webglcontextlost event, context count:' + _this.contextCount);
+
+	                                                                        if (lostContext) {
+
+	                                                                                    _this.gl = null;
+
+	                                                                                    lostContext(e);
+	                                                                        }
+
+	                                                                        e.preventDefault();
+	                                                            }, false);
+
+	                                                            canvas.addEventListener('webglcontextrestored', function (e) {
+
+	                                                                        console.error('error: webglcontextrestored event, context count:' + _this.contextCount);
+
+	                                                                        if (restoredContext) {
+
+	                                                                                    restoredContext(e);
+	                                                                        }
+
+	                                                                        e.preventDefault();
+	                                                            }, false);
+
+	                                                            // Do an initial set of our viewport width and height.
+
+	                                                            gl.viewportWidth = canvas.width;
+
+	                                                            gl.viewportHeight = canvas.height;
+
+	                                                            // listen for <canvas> resize event.
+
+	                                                            window.addEventListener('resize', function (e) {
+
+	                                                                        _this.resizeCanvas();
+
+	                                                                        e.preventDefault();
+	                                                            }, false);
+
+	                                                            // If we're reloading, clear all current textures in the texture buffers.
+
+	                                                            this.clearTextures();
+
+	                                                            // Set our default rendering values.
+
+	                                                            this.glDefaults();
+
+	                                                            // Clear the screen to the clearColor by default.
+
+	                                                            this.clear();
+
+	                                                            return this.gl;
+	                                                } else {
+
+	                                                            // We check prior to loading this module, so we shouldn't go here if not supported.
+
+	                                                            console.error('no WebGL context');
+	                                                } // end of have a gl context
+
+	                                    } else {
+
+	                                                console.error(' no WebGL canvas');
+	                                    } // end of if have a <canvas>
+
+	                                    return null;
 	                        }
 
-	                        return this.gl;
-	                }
+	                        /**
+	                         * (re)set the defaults we draw with.
+	                         */
 
-	                /** 
-	                 * Return the current context. Note that we don't store a 
-	                 * separate reference to the canvas.
-	                 * @returns {WebGLRenderingContext} gl a WebGLRenderingContext.
-	                 */
+	            }, {
+	                        key: 'glDefaults',
+	                        value: function glDefaults() {
 
-	        }, {
-	                key: 'getContext',
-	                value: function getContext() {
+	                                    var gl = this.getContext();
 
-	                        if (!this.gl) {
+	                                    if (gl) {
 
-	                                console.warn('warning webgl context not initialized');
+	                                                // Default 3D enables.
+
+	                                                gl.enable(gl.DEPTH_TEST);
+
+	                                                gl.enable(gl.CULL_FACE);
+
+	                                                gl.clearDepth(1.0); // Clear everything
+
+	                                                gl.depthFunc(gl.LEQUAL); // Near things obscure far things
+
+	                                                gl.enable(gl.BLEND); // Allow blending
+
+	                                                // Fog NOT in Webgl use shader
+	                                                //http://www.geeks3d.com/20100228/fog-in-glsl-webgl/
+	                                                // http://in2gpu.com/2014/07/22/create-fog-shader/
+
+	                                                gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+	                                                /* 
+	                                                 * IMPORTANT: tells WebGL to premultiply alphas for <canvas>
+	                                                 * @link http://stackoverflow.com/questions/39251254/avoid-cpu-side-conversion-with-teximage2d-in-firefox
+	                                                 */
+	                                                gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+
+	                                                gl.clearColor(0.1, 0.1, 0.1, 1.0);
+	                                    }
 	                        }
 
-	                        return this.gl;
-	                }
+	                        /** 
+	                         * Flag for supporting WebGL.
+	                         * @returns {Boolean} if WebGL context is present, return true, else false.s
+	                         */
 
-	                /** 
-	                 * Kill the current context (complete reset will be needed). Also use to debug 
-	                 * when context is lost, and has to be rebuilt.
-	                 * @link http://codeflow.org/entries/2013/feb/22/how-to-write-portable-webgl/
-	                 * @link https://developer.mozilla.org/en-US/docs/Web/API/WEBGL_lose_context/loseContext
-	                 */
+	            }, {
+	                        key: 'hasWebGL',
+	                        value: function hasWebGL() {
 
-	        }, {
-	                key: 'killContext',
-	                value: function killContext() {
-
-	                        console.log('in killcontext, count:' + this.contextCount);
-
-	                        if (this.contextCount) {
-
-	                                console.log('killing WebGL context, count before:' + this.contextCount);
-
-	                                this.gl.getExtension('WEBGL_lose_context').loseContext();
-
-	                                this.contextCount--;
-	                        }
-	                }
-
-	                /** 
-	                 * check if we have a contex and are ready to render.
-	                 */
-
-	        }, {
-	                key: 'ready',
-	                value: function ready() {
-
-	                        var gl = this.gl;
-
-	                        return !!(this.gl && this.glMatrix);
-	                }
-
-	                /*
-	                 * ---------------------------------------
-	                 * CLEAR/RESET OPERATIONS
-	                 * ---------------------------------------
-	                 */
-
-	                /** 
-	                 * Clear the screen prior to redraw.
-	                 */
-
-	        }, {
-	                key: 'clear',
-	                value: function clear() {
-
-	                        var gl = this.gl;
-
-	                        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-	                }
-
-	                /** 
-	                 * Clear textures from the videocard before the program starts.
-	                 */
-
-	        }, {
-	                key: 'clearTextures',
-	                value: function clearTextures() {
-
-	                        var gl = this.gl;
-
-	                        var len = gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
-
-	                        for (var i = 0; i < len; i++) {
-
-	                                gl.activeTexture(gl.TEXTURE0 + i);
-
-	                                gl.bindTexture(gl.TEXTURE_2D, null);
-
-	                                gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
+	                                    return !!this.getContext();
 	                        }
 
-	                        gl.bindBuffer(gl.ARRAY_BUFFER, null);
+	                        /* 
+	                         * ---------------------------------------
+	                         * WEBGL EXTENSIONS
+	                         * ---------------------------------------
+	                         */
 
-	                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+	                        /** 
+	                         * Support indexed vertex drawing when there are more than 
+	                         * 64k vertices in WebGL 1.0. Enabled by default in WebGL 2.0. No constant, so 
+	                         * this should only be called in 1.0 context.
+	                         * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only).
+	                         */
 
-	                        gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+	            }, {
+	                        key: 'index32Support',
+	                        value: function index32Support(gl) {
 
-	                        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-	                }
-
-	                /*
-	                 * ---------------------------------------
-	                 * SHADER VARIABLES AND UNIFORMS
-	                 * ---------------------------------------
-	                 */
-
-	                /** 
-	                 * create a WeGL shader object.
-	                 * @param {VERTEX_SHADER | FRAGMENT_SHADER} type type WebGL shader type.
-	                 * @param {String} source the shader source, as plain text.
-	                 * @returns {WebGLShader} a compiled WebGL shader object.
-	                 */
-
-	        }, {
-	                key: 'createShader',
-	                value: function createShader(type, source) {
-
-	                        var shader = null;
-
-	                        if (!type || !source) {
-
-	                                console.error('createShader: invalid params, type:' + type + ' source:' + source);
-	                        } else if (this.ready()) {
-
-	                                var gl = this.gl;
-
-	                                /*
-	                                 * remove first EOL, which might come from using <script>...</script> tags,
-	                                 * to handle GLSL ES 3.00 (TWGL)
-	                                 */
-	                                source.replace(/^[ \t]*\n/, '');
-
-	                                if (type === gl.VERTEX_SHADER) {
-
-	                                        shader = gl.createShader(type); // assigned VS
-	                                } else if (type === gl.FRAGMENT_SHADER) {
-
-	                                        shader = gl.createShader(type); // assigned FS
-	                                } else {
-
-	                                        console.error('createShader: type not recognized:' + type);
-	                                }
-
-	                                gl.shaderSource(shader, source);
-
-	                                gl.compileShader(shader);
-
-	                                // Detect shader compile errors.
-
-	                                if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-
-	                                        console.error('createShader:' + gl.getShaderInfoLog(shader));
-
-	                                        shader = null;
-	                                }
+	                                    return !!gl.getExtension('OES_element_index_uint');
 	                        }
 
-	                        return shader;
-	                }
-	        }, {
-	                key: 'createVertexShader',
-	                value: function createVertexShader(source) {
+	                        /** 
+	                         * Add support for Shaders to use derivatives.
+	                         * Have to add the following to the Shaders
+	                         * #extension GL_EXT_shader_texture_lod : enable
+	                         * #extension GL_OES_standard_derivatives : enable
+	                         * @link https://developer.mozilla.org/en-US/docs/Web/API/OES_standard_derivatives
+	                         * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only).
+	                         */
 
-	                        return this.createShader(this.gl.VERTEX_SHADER, source);
-	                }
-	        }, {
-	                key: 'createFragmentShader',
-	                value: function createFragmentShader(source) {
+	            }, {
+	                        key: 'derivativeSupport',
+	                        value: function derivativeSupport(gl) {
 
-	                        return this.createShader(this.gl.FRAGMENT_SHADER, source);
-	                }
+	                                    var s = !!gl.FRAGMENT_SHADER_DERIVATIVE_HINT; // Should be present in WebGL 2.0
 
-	                /** 
-	                 * Use the Fetch API to get a shader file
-	                 */
+	                                    if (!s) {
 
-	        }, {
-	                key: 'fetchShader',
-	                value: function fetchShader(type, sourceURL) {
-	                        var _this2 = this;
+	                                                var ext = gl.getExtension('GL_OES_standard_derivatives');
 
-	                        var self = this;
+	                                                if (ext) {
 
-	                        fetch(sourceURL, {
+	                                                            s = true;
 
-	                                method: 'POST',
-
-	                                mode: 'cors',
-
-	                                redirect: 'follow',
-
-	                                headers: new Headers({
-
-	                                        'Content-Type': 'text/plain'
-
-	                                })
-
-	                        }).then(function (response) {
-
-	                                console.log(text);
-
-	                                if (response.ok) {
-
-	                                        return response.text();
-	                                }
-
-	                                return false;
-	                        }).then(function (source) {
-
-	                                if (source) {
-
-	                                        return _this2.createShader(type, source);
-	                                }
-	                        });
-
-	                        return null;
-	                }
-	        }, {
-	                key: 'fetchVertexShader',
-	                value: function fetchVertexShader(sourceURL) {
-
-	                        return this.fetchShader(this.gl.VERTEX_SHADER, sourceURL);
-	                }
-	        }, {
-	                key: 'fetchFragmentShader',
-	                value: function fetchFragmentShader(sourceURL) {
-
-	                        return this.fetchShader(this.gl.FRAGMENT_SHADER, sourceURL);
-	                }
-
-	                /** 
-	                 * create shader form script element
-	                 * @param {String|DOMElement} tag the script element, or its id
-	                 */
-
-	        }, {
-	                key: 'createShaderFromTag',
-	                value: function createShaderFromTag(tag) {
-
-	                        if (this.util.isString(tag)) {
-
-	                                tag = document.getElementById(tag);
-	                        }
-
-	                        if (!tag) {
-
-	                                console.error('createShaderFromTag: not found (' + tag + ')');
-
-	                                return false;
-	                        }
-
-	                        var type = null;
-
-	                        if (tag.type == 'x-shader/x-vertex') {
-
-	                                type = this.gl.VERTEX_SHADER;
-	                        } else if (tag.type == 'x-shader/x-fragment') {
-
-	                                type = this.gl.FRAGMENT_SHADER;
-	                        } else {
-
-	                                console.error('createShaderFromTag: type not found:(' + tag.type + ')');
-
-	                                return null;
-	                        }
-
-	                        var source = "";
-
-	                        var c = tag.firstChild;
-
-	                        while (c) {
-
-	                                if (c.nodeType == 3) {
-
-	                                        source += c.textContent;
-	                                }
-
-	                                c = c.nextSibling;
-	                        }
-
-	                        return this.createShader(type, source);
-	                }
-
-	                /*
-	                 * ---------------------------------------
-	                 * COMPILE WEBGL PROGRAM
-	                 * ---------------------------------------
-	                 */
-
-	                /** 
-	                 * Create WebGL program with shaders. Program not used until 
-	                 * we apply gl.useProgram(program).
-	                 * @param {gl.VERTEX_SHADER} vShader the vertex shader.
-	                 * @param {gl.FRAGMENT_SHADER} fShader the fragment shader.
-	                 * @returns {Object} an object containing the compiled shaders, the 
-	                 * WebGL program, and a parsed list of all the varying and uniforms in 
-	                 * the shader source code.
-	                 * 
-	                 * prg.shaderProgram = program; // the WebGL program
-	                 * prg.vsVars = vs.varList,     // varying and uniform names in vertex shader.
-	                 * prg.fsVars = fs.varList      // varying and uniform names in fragment shader.
-	                 *
-	                 */
-
-	        }, {
-	                key: 'createProgram',
-	                value: function createProgram(vs, fs) {
-
-	                        if (!vs || !fs) {
-
-	                                console.error('createProgram: parameter error, vs:' + vs + ' fs:' + fs);
-
-	                                return null;
-	                        }
-
-	                        // Wrap the VBO program object to keep V8 JIT happy.
-
-	                        var prg = {};
-
-	                        if (this.ready()) {
-
-	                                var gl = this.gl;
-
-	                                var vso = this.createVertexShader(vs.code);
-
-	                                var fso = this.createFragmentShader(fs.code);
-
-	                                var program = gl.createProgram();
-
-	                                gl.attachShader(program, vso);
-
-	                                gl.attachShader(program, fso);
-
-	                                // Explicitly assign attribute names and indexes (0-32k) BEFORE linking.
-	                                // http://stackoverflow.com/questions/4635913/explicit-vs-automatic-attribute-location-binding-for-opengl-shaders
-
-	                                for (var j in this.attributeNames) {
-
-	                                        //console.log('gl.bindAttrib( shaderProgram, "' + this.attributeNames[ j ][ 1 ] + '", "' +  this.attributeNames[ j ][ 0 ] + '"' );
-
-	                                        gl.bindAttribLocation(program, this.attributeNames[j][1], this.attributeNames[j][0]);
-	                                }
-
-	                                gl.linkProgram(program);
-
-	                                if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-
-	                                        console.error('WebGL::createProgram():' + gl.getProgramInfoLog(program));
-
-	                                        this.checkShaders(vs, fs, program);
-	                                } else {
-
-	                                        prg.shaderProgram = program;
-
-	                                        prg.vsVars = vs.varList, prg.fsVars = fs.varList, prg.renderList = [];
-	                                }
-	                        }
-
-	                        return prg;
-	                }
-
-	                /** 
-	                 * Read shader code, and organize the variables in the shader 
-	                 * into an object. Abstracts some of the tedious work in setting 
-	                 * up shader variables.
-	                 *
-	                 * Called by individual Shader objects in vsSrc() and fsSrc().
-	                 * 
-	                 * @param {Array} sourceArr array of lines in the shader.
-	                 * @returns {Object} an object organizing attribute, uniform, and 
-	                 * varying variable names and datatypes.
-	                 */
-
-	        }, {
-	                key: 'createVarList',
-	                value: function createVarList(source) {
-
-	                        var len = source.length;
-
-	                        var NOT_IN_LIST = this.NOT_IN_LIST;
-
-	                        var sp = ' ';
-
-	                        var list = {};
-
-	                        var varTypes = ['attribute', 'uniform', 'varying'];
-
-	                        if (len) {
-
-	                                for (var i = 0; i < len; i++) {
-
-	                                        var s = source[i];
-
-	                                        if (s.indexOf('void main') !== NOT_IN_LIST) {
-
-	                                                break;
-	                                        } else {
-
-	                                                for (var j = 0; j < varTypes.length; j++) {
-
-	                                                        var type = varTypes[j];
-
-	                                                        if (!list[type]) list[type] = {};
-
-	                                                        if (s.indexOf(type) > NOT_IN_LIST) {
-
-	                                                                //////////////////////////////console.log("SSS1:" + s)
-
-	                                                                //s = s.slice(0, -1); // remove trailing ';'
-	                                                                s = s.replace(/;\s*$/, "");
-
-	                                                                ///////////////////////////////console.log("SSS:" + s)
-
-	                                                                s = s.split(sp);
-
-	                                                                //////////////////////////////console.log("FIRST: " + s)
-
-	                                                                var vType = s.shift(); // attribute, uniform, or varying
-
-	                                                                if (!list[vType]) {
-
-	                                                                        list[vType] = {};
-	                                                                }
-
-	                                                                /////////////////////////console.log("SECOND AFTER SHIFT:" + vType + " remainder:" + s)
-
-	                                                                var nType = s.shift(); // variable type
-
-	                                                                if (!list[vType][nType]) {
-
-	                                                                        list[vType][nType] = {};
-	                                                                }
-
-	                                                                var nName = s.shift(); // variable name
-
-	                                                                if (!list[vType][nType][nName]) {
-
-	                                                                        list[vType][nType][nName] = 'empty';
-	                                                                }
-
-	                                                                /////////////////////////console.log("THIRD AFTER SHIFT:" + nType + " remainder:" + s)
-	                                                        }
+	                                                            gl.FRAGMENT_SHADER_DERIVATIVE_HINT = ext.FRAGMENT_SHADER_DERIVATIVE_HINT_OES;
 	                                                }
-	                                        }
-	                                }
+
+	                                                if (gl.FRAGMENT_SHADER_DERIVATIVE_HINT) {
+
+	                                                            this.stats.lodSupport = !!gl.getExtension('EXT_shader_texture_lod');
+	                                                }
+	                                    }
+
+	                                    return s;
 	                        }
 
-	                        return list;
-	                }
+	                        /** 
+	                         * Add vertex buffer support to WebGL 1.0.
+	                         * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only).
+	                         */
 
-	                /** 
-	                 * Pass the pre-defined attribute indexes and names to individual Shader programs. 
-	                 * The names and indexes are defined in the constructor.
-	                 * @param {WebGLProgram} program a compiled WebGL program.
-	                 * @param {Object} attributes the attributes we want to extract.
-	                 */
+	            }, {
+	                        key: 'vertexArraySupport',
+	                        value: function vertexArraySupport(gl) {
 
-	        }, {
-	                key: 'setAttributeArrays',
-	                value: function setAttributeArrays(shaderProgram, attributes) {
+	                                    var s = !!gl.VERTEX_ARRAY_BINDING; // Should be present in WebGL 2.0
 
-	                        var gl = this.gl;
+	                                    if (!s) {
 
-	                        for (var i in attributes) {
+	                                                var ext = gl.getExtension('OES_vertex_array_object');
 
-	                                var attb = attributes[i];
+	                                                if (ext) {
 
-	                                for (var j in attb) {
+	                                                            s = true;
 
-	                                        //console.log('setAttributeNames for attb["' + j + '""],' + this.attributeNames[ j ][ 1 ] + '", "' +  this.attributeNames[ j ][ 0 ] + '"' );
+	                                                            gl.VERTEX_ARRAY_BINDING = ext.VERTEX_ARRAY_BINDING_OES;
 
-	                                        attb[j] = this.attributeNames[j][1];
-	                                }
+	                                                            gl.createVertexArray = function () {
+	                                                                        return ext.createVertexArrayOES();
+	                                                            };
+
+	                                                            gl.deleteVertexArray = function (v) {
+	                                                                        ext.deleteVertexArrayOES(v);
+	                                                            };
+
+	                                                            gl.isVertexArray = function (v) {
+	                                                                        return ext.isVertexArrayOES(v);
+	                                                            };
+
+	                                                            gl.bindVertexArray = function (v) {
+	                                                                        ext.bindVertexArrayOES(v);
+	                                                            };
+	                                                }
+	                                    }
+
+	                                    return s;
 	                        }
 
-	                        return attributes;
-	                }
+	                        /** 
+	                         * Add support for depth textures, allows WebGLRenderingContext.texImage2D() format and internalformat parameters 
+	                         * to accept accept gl.DEPTH_COMPONENT and gl.DEPTH_STENCIL. The type parameter now accepts gl.UNSIGNED_SHORT, 
+	                         * gl.UNSIGNED_INT, and ext.UNSIGNED_INT_24_8_WEBGL. The pixels parameter now accepts an ArrayBufferView of type Uint16Array and Uint32Array.
+	                         * @link https://developer.mozilla.org/en-US/docs/Web/API/WEBGL_depth_texture
+	                         * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only).
+	                         */
 
-	                /** 
-	                 * Store our uniform locations.
-	                 * @param {WebGLProgram} program a compiled WebGL program.
-	                 * @param {Object} uniforms array of uniforms.
-	                 */
+	            }, {
+	                        key: 'depthTextureSupport',
+	                        value: function depthTextureSupport(gl) {
 
-	        }, {
-	                key: 'setUniformLocations',
-	                value: function setUniformLocations(shaderProgram, uniforms) {
+	                                    var s = !!(gl.DEPTH_COMPONENT && gl.DEPTH_STENCIL);
 
-	                        var gl = this.gl;
+	                                    if (!s) {
 
-	                        for (var i in uniforms) {
+	                                                var ext = gl.getExtension('WEBGL_depth_texture') || gl.getExtension('MOZ_WEBGL_depth_texture') || gl.getExtension('WEBKIT_WEBGL_depth_texture');
 
-	                                var unif = uniforms[i];
+	                                                if (ext) {
 
-	                                for (var j in unif) {
+	                                                            s = true;
 
-	                                        unif[j] = gl.getUniformLocation(shaderProgram, j);
+	                                                            gl.DEPTH_COMPONENT = ext.DEPTH_COMPONENT;
 
-	                                        ////////console.log("gl.getUniformLocation( shaderProgram," + j + ") is:" + unif[ j ] );
-	                                }
+	                                                            gl.DEPTH_STENCIL = ext.DEPTH_STENCIL;
+	                                                }
+	                                    }
+
+	                                    return s;
 	                        }
 
-	                        return uniforms;
-	                }
+	                        /** 
+	                         * Add support for anisotrophic texture filtering, improving mipmap quality. Used by 
+	                         * both WebGL 1.0 and WebGL 2.0 contexts.
+	                         * gl.texParameterf(gl.TEXTURE_2D, ext.TEXTURE_MAX_ANISOTROPY_EXT, 4);
+	                         * @link http://blog.tojicode.com/2012/03/anisotropic-filtering-in-webgl.html
+	                         * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only).
+	                         */
 
-	                /** 
-	                 * Create associative array with shader attributes.
-	                 * NOTE: Only attributes actually used in the shader show.
-	                 * @param {WebGLProgram} program a compiled WebGL program.
-	                 * @returns {Object} a collection of attributes, with .count = number.
-	                 */
+	            }, {
+	                        key: 'anisotropicSupport',
+	                        value: function anisotropicSupport(gl) {
 
-	        }, {
-	                key: 'getAttributes',
-	                value: function getAttributes(program) {
+	                                    var s = !!gl.TEXTURE_MAX_ANISOTROPY_EXT;
 
-	                        var gl = this.gl;
+	                                    if (!s) {
 
-	                        var attrib = {};
+	                                                var ext = gl.getExtension('EXT_texture_filter_anisotropic') || gl.getExtension('MOZ_EXT_texture_filter_anisotropic') || gl.getExtension('WEBKIT_EXT_texture_filter_anisotropic');
 
-	                        var attribCount = gl.getProgramParameter(program, gl.ACTIVE_ATTRIBUTES);
+	                                                if (ext) {
 
-	                        for (var i = 0; i < attribCount; i++) {
+	                                                            s = true;
 
-	                                var attribInfo = gl.getActiveAttrib(program, i);
+	                                                            gl.TEXTURE_MAX_ANISOTROPY_EXT = ext.TEXTURE_MAX_ANISOTROPY_EXT;
+	                                                }
+	                                    }
 
-	                                /////////console.log("adding attribute:" + attribInfo.name );
-
-	                                attrib[attribInfo.name] = gl.getAttribLocation(program, attribInfo.name);
+	                                    return s;
 	                        }
 
-	                        // Store the number of attributes.
+	                        /** 
+	                         * Add support for S3 compressed textures.
+	                         * @link http://blog.tojicode.com/2011/12/compressed-textures-in-webgl.html
+	                         * @link https://en.wikipedia.org/wiki/S3_Texture_Compression
+	                         * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only).
+	                         */
 
-	                        attrib.count = attribCount;
+	            }, {
+	                        key: 'S3TCTextureSupport',
+	                        value: function S3TCTextureSupport(gl) {
 
-	                        return attrib;
-	                }
+	                                    var s = !!gl.COMPRESSED_RGB_S3TC_DXT1_EXT;
 
-	                /** 
-	                 * Create associative array with shader uniforms.
-	                 * NOTE: Only attributes actually used in the Shader show.
-	                 * @param {WebGLProgram} program a compiled WebGL program.
-	                 * @returns {Object} a collection of attributes, with .count = number.
-	                 */
+	                                    if (!s) {
 
-	        }, {
-	                key: 'getUniforms',
-	                value: function getUniforms(program) {
+	                                                var ext = gl.getExtension('WEBGL_compressed_texture_s3tc') || gl.getExtension('MOZ_WEBGL_compressed_texture_s3tc') || gl.getExtension('WEBKIT_WEBGL_compressed_texture_s3tc');
 
-	                        var gl = this.gl;
+	                                                if (ext) {
 
-	                        var uniform = {};
+	                                                            s = true, gl.COMPRESSED_RGB_S3TC_DXT1_EXT = ext.COMPRESSED_RGB_S3TC_DXT1_EXT, gl.COMPRESSED_RGBA_S3TC_DXT1_EXT = ext.COMPRESSED_RGBA_S3TC_DXT1_EXT, gl.COMPRESSED_RGBA_S3TC_DXT3_EXT = ext.COMPRESSED_RGBA_S3TC_DXT3_EXT, gl.COMPRESSED_RGBA_S3TC_DXT5_EXT = ext.COMPRESSED_RGBA_S3TC_DXT5_EXT;
+	                                                }
+	                                    }
 
-	                        var uniformCount = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
-
-	                        var uniformName = '';
-
-	                        for (var i = 0; i < uniformCount; i++) {
-
-	                                var uniformInfo = gl.getActiveUniform(program, i);
-
-	                                uniformName = uniformInfo.name.replace('[0]', '');
-
-	                                //console.log("adding uniform:" + uniformName );
-
-	                                uniform[uniformName] = gl.getUniformLocation(program, uniformName);
+	                                    return s;
 	                        }
 
-	                        // Store the number of uniforms.
+	                        /** 
+	                         * Add support for PVR compressed textures. 
+	                         * Available in both WebGL 1.0 and WebGL 2.0 contexts.
+	                         * Used on mobile devices, e.g.iPhone, iPod Touch and iPad and supported on certain Android devices 
+	                         * using a PowerVR GPU.
+	                         * @link http://blog.tojicode.com/2011/12/compressed-textures-in-webgl.html
+	                         * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only).
+	                         */
 
-	                        uniform.count = uniformCount;
+	            }, {
+	                        key: 'PVRTCTextureSupport',
+	                        value: function PVRTCTextureSupport(gl) {
 
-	                        return uniform;
-	                }
+	                                    var s = !!gl.COMPRESSED_RGB_PVRTC_4BPPV1_IMG;
 
-	                /** 
-	                 * Create associative array with shader varying variables.
-	                 * @param {WebGLProgram} program a compiled WebGL program.
-	                 */
+	                                    if (!s) {
 
-	        }, {
-	                key: 'getVarying',
-	                value: function getVarying(program) {}
+	                                                var ext = gl.getExtension('WEBGL_compressed_texture_pvrtc ') || gl.getExtension('WEBKIT_WEBGL_compressed_texture_pvrtc');
 
-	                /** 
-	                 * check to see if we're ready to run, after supplying 
-	                 * shaders.
-	                 * @param {WebGLShader} vs the vertex shader.
-	                 * @param {WebGLShader} fs the fragment shader.
-	                 * @param {WebGLProgram} program a compiled WebGL program.
-	                 */
+	                                                if (ext) {
 
-	        }, {
-	                key: 'checkShaders',
-	                value: function checkShaders(vs, fs, program) {
+	                                                            s = true, gl.COMPRESSED_RGB_PVRTC_4BPPV1_IMG = ext.COMPRESSED_RGB_PVRTC_4BPPV1_IMG, gl.COMPRESSED_RGBA_PVRTC_4BPPV1_IMG = ext.COMPRESSED_RGBA_PVRTC_4BPPV1_IMG, gl.COMPRESSED_RGB_PVRTC_2BPPV1_IMG = ext.COMPRESSED_RGB_PVRTC_2BPPV1_IMG, gl.COMPRESSED_RGBA_PVRTC_2BPPV1_IMG = ext.COMPRESSED_RGBA_PVRTC_2BPPV1_IMG;
+	                                                }
+	                                    }
 
-	                        var gl = this.gl;
-
-	                        if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-
-	                                // Test the vertex shader
-
-	                                if (vs && !gl.getShaderParameter(vs, gl.COMPILE_STATUS)) {
-
-	                                        console.error('error creating the vertex shader, ' + gl.getShaderInfoLog(vs));
-	                                } else if (fs && !gl.getShaderParameter(fs, gl.COMPILE_STATUS)) {
-
-	                                        console.error('error creating the fragment shader, ' + gl.getShaderInfoLog(fs));
-	                                } else {
-
-	                                        console.error('error in gl program linking');
-	                                }
-
-	                                gl.deleteProgram(program);
-
-	                                return false;
+	                                    return s;
 	                        }
 
-	                        return true;
-	                }
+	                        /** 
+	                         * Add support for Ericsson ETC1 compressed textures, RGB only, 6x compression of 24-bit data.
+	                         * Can be used with gl.compressedTexImage2D() 
+	                         * @link http://blog.tojicode.com/2011/12/compressed-textures-in-webgl.html
+	                         * @link https://en.wikipedia.org/wiki/Ericsson_Texture_Compression
+	                         * @param {WebGLRenderingContext} gl a WebGL rendering context (should be 1.x only).
+	                         */
 
-	                /** 
-	                 * Check if our VBO or IBO are ok.
-	                 */
+	            }, {
+	                        key: 'ETC1TextureSupport',
+	                        value: function ETC1TextureSupport(gl) {
 
-	        }, {
-	                key: 'checkBufferObjects',
-	                value: function checkBufferObjects(bo) {
+	                                    var s = !!(gl.COMPRESSED_RGB_ETC1_WEBGL || gl.COMPRESSED_RGB_ETC1);
 
-	                        return bo && bo instanceof ArrayBuffer;
-	                }
+	                                    if (!s) {
 
-	                /** 
-	                 * Convert WebGL ENUM to string.
-	                 */
+	                                                var ext = gl.getExtension('WEBGL_compressed_texture_etc1');
 
-	        }, {
-	                key: 'enumToString',
-	                value: function enumToString(gl, val) {
+	                                                if (ext) {
 
-	                        for (var i in gl) {
+	                                                            s = true;
 
-	                                if (gl[i] == val) {
+	                                                            gl.COMPRESSED_RGB_ETC1_WEBGL = ext.COMPRESSED_RGB_ETC1_WEBGL;
+	                                                }
+	                                    }
 
-	                                        return i;
-	                                }
+	                                    return s;
 	                        }
 
-	                        return '0x' + val.toString(16);
-	                }
+	                        /*
+	                         * ---------------------------------------
+	                         * OTHER WEBGL TESTS
+	                         * ---------------------------------------
+	                         */
 
-	                /** 
-	                 * Provide statistics for display as JSON data.
-	                 */
+	                        /** 
+	                         * Wrapper for WebGL error reporting.
+	                         * @link https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/getError
+	                         */
 
-	        }, {
-	                key: 'stats',
-	                value: function stats() {
+	            }, {
+	                        key: 'getError',
+	                        value: function getError() {
 
-	                        return JSON.stringify(this.stats);
-	                }
-	        }]);
+	                                    var fnName = 'webgl.glError():',
+	                                        gl = this.getContext();
 
-	        return WebGL;
+	                                    switch (gl.getError()) {
+
+	                                                case gl.NO_ERROR:
+	                                                            // No error has been recorded. The value of this constant is 0.
+
+	                                                            return fnName + 'gl.NO_ERROR';
+
+	                                                case gl.INVALID_ENUM:
+	                                                            // An unacceptable value has been specified for an enumerated argument. The command is ignored and the error flag is set.
+
+	                                                            return fnName + 'gl.INVALID_ENUM';
+
+	                                                case gl.INVALID_VALUE:
+	                                                            // A numeric argument is out of range. The command is ignored and the error flag is set.
+
+	                                                            return fnName + 'gl.INVALID_VALUE';
+
+	                                                case gl.INVALID_OPERATION:
+	                                                            // The specified command is not allowed for the current state. The command is ignored and the error flag is set.
+
+	                                                            return fnName + 'gl.INVALID_OPERATION';
+
+	                                                case gl.INVALID_FRAMEBUFFER_OPERATION:
+	                                                            // The currently bound framebuffer is not framebuffer complete when trying to render to or to read from it.
+
+	                                                            return fnName + 'gl.INVALID_FRAMEBUFFER_OPERATION';
+
+	                                                case gl.OUT_OF_MEMORY:
+	                                                            //Not enough memory is left to execute the command.
+
+	                                                            return fnName + 'gl.OUT_OF_MEMORY';
+
+	                                                case gl.CONTEXT_LOST_WEBGL:
+
+	                                                            return fnName + 'gl.CONTEXT_LOST_WEBGL';
+
+	                                    }
+	                        }
+
+	                        /** 
+	                         * Check to see if the framebuffer is valid, must bind a frameBuffer 
+	                         * first, using gl.createFramebuffer() with valid offscreen texture.
+	                         * @param {WebGLRenderingContext} gl the WebGL rendering context.
+	                         * @param {WebGLFrameBuffer} the bound frameBuffer.
+	                         * @returns {String} error message.
+	                         */
+
+	            }, {
+	                        key: 'checkFramebuffer',
+	                        value: function checkFramebuffer(gl, framebuffer) {
+
+	                                    // assumes the framebuffer is bound
+
+	                                    var valid = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+
+	                                    switch (valid) {
+
+	                                                case gl.FRAMEBUFFER_UNSUPPORTED:
+
+	                                                            return 'Framebuffer is unsupported';
+
+	                                                case gl.FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
+
+	                                                            return 'Framebuffer incomplete attachment';
+
+	                                                case gl.FRAMEBUFFER_INCOMPLETE_DIMENSIONS:
+
+	                                                            return 'Framebuffer incomplete dimensions';
+
+	                                                case gl.FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
+
+	                                                            return 'Framebuffer incomplete missing attachment';
+
+	                                                default:
+
+	                                                            return true;
+
+	                                    }
+	                        }
+
+	                        /*
+	                         * ---------------------------------------
+	                         * WEBGL STATE TOGGLES
+	                         * ---------------------------------------
+	                         */
+
+	            }, {
+	                        key: 'enableBlending',
+	                        value: function enableBlending(source, dest, eq) {
+
+	                                    var gl = this.getContext();
+
+	                                    if (eq) {
+
+	                                                gl.blendEquation(gl[eq]);
+	                                    }
+
+	                                    if (source && dest) {
+
+	                                                gl.blendFunc(gl[source], gl[dest]);
+	                                    }
+
+	                                    gl.enable(gl.BLEND);
+
+	                                    gl.depthMask(false);
+	                        }
+	            }, {
+	                        key: 'disableBlending',
+	                        value: function disableBlending() {
+
+	                                    var gl = this.getContext();
+
+	                                    gl.disable(gl.BLEND);
+
+	                                    gl.depthMask(true);
+	                        }
+
+	                        /* 
+	                         * ---------------------------------------
+	                         * CANVAS OPERATIONS
+	                         * ---------------------------------------
+	                         */
+
+	                        /** 
+	                         * Get WebGL canvas only if we've created a gl context.
+	                         * @returns {HTMLCanvasElement} canvas the rendering <canvas>.
+	                         */
+
+	            }, {
+	                        key: 'getCanvas',
+	                        value: function getCanvas() {
+
+	                                    return this.gl ? this.gl.canvas : null;
+	                        }
+
+	                        /** 
+	                         * Resize the canvas if the window changes size. 
+	                         * @param {Boolean} force force a resize, even if window size has not changed. Use 
+	                         * when exiting VR.
+	                         */
+
+	            }, {
+	                        key: 'resizeCanvas',
+	                        value: function resizeCanvas(force) {
+
+	                                    if (this.ready()) {
+
+	                                                console.log('resize');
+
+	                                                var wWidth = this.util.getWindowWidth();
+
+	                                                var wHeight = this.util.getWindowHeight();
+
+	                                                if (force || wWidth !== this.oldWidth) {
+
+	                                                            var f = Math.max(window.devicePixelRatio, 1);
+
+	                                                            var gl = this.getContext();
+
+	                                                            var c = this.getCanvas();
+
+	                                                            // Get the current size of the <canvas>
+
+	                                                            var width = c.clientWidth * f | 0;
+
+	                                                            var height = c.clientHeight * f | 0;
+
+	                                                            // Set the <canvas> width and height property.
+
+	                                                            c.width = width;
+
+	                                                            c.height = height;
+
+	                                                            // Set the WebGL viewport.
+
+	                                                            gl.viewportWidth = width;
+
+	                                                            gl.viewportHeight = height;
+
+	                                                            gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+	                                                }
+
+	                                                // Save the values.
+
+	                                                this.oldWidth = wWidth;
+
+	                                                this.oldHeight = wHeight;
+	                                    }
+
+	                                    return false;
+	                        }
+
+	                        /*
+	                         * ---------------------------------------
+	                         * WEBGL CONTEXT OPERATIONS
+	                         * ---------------------------------------
+	                         */
+
+	                        /** 
+	                         * get HTML5 canvas, and a WebGL context. We also scan for multiple 
+	                         * contexts being created ( > 1 ) and delete if one is already present.
+	                         * @param {Canvas} canvas the HTML5 <canvas> DOM element.
+	                         * TODO: PROBLEM IF THERE ARE MULTIPLE CONTEXES ON THE PAGE???????
+	                         * @param {HTMLCanvasElement} canvas the rendering <canvas>.
+	                         * @returns {WebGLRenderingContext} gl a WebGLRenderingContext.
+	                         */
+
+	            }, {
+	                        key: 'createContext',
+	                        value: function createContext(canvas) {
+
+	                                    if (!window.WebGLRenderingContext) {
+
+	                                                console.error('this browser does not support webgl');
+
+	                                                return null;
+	                                    }
+
+	                                    var gl = null;
+
+	                                    if (gl && this.contextCount > 0) {
+
+	                                                // Contexts are normally in garbage, can't be deleted without this!
+
+	                                                console.warn('killing context');
+
+	                                                this.killContext();
+
+	                                                this.contextCount--;
+
+	                                                this.gl = null; // just in case
+	                                    }
+
+	                                    var n = ['webgl2', 'experimental-webgl2', 'webgl', 'experimental-webgl'];
+
+	                                    var i = 0;
+
+	                                    while (i < n.length) {
+
+	                                                try {
+
+	                                                            if (this.debug) {
+
+	                                                                        gl = this.debug.makeDebugContext(canvas.getContext(n[i]));
+
+	                                                                        if (gl) {
+
+	                                                                                    console.warn('using debug context');
+
+	                                                                                    if (gl.getParameter !== 'function') {
+
+	                                                                                                gl = canvas.getContext(n[i]);
+
+	                                                                                                console.warn('unable to use debug context, trying release:' + n[i], ' getParameter:' + gl.getParameter);
+	                                                                                    }
+
+	                                                                                    break;
+	                                                                        }
+	                                                            } else {
+
+	                                                                        gl = canvas.getContext(n[i]);
+
+	                                                                        if (gl) {
+
+	                                                                                    console.warn('using release context mode:' + n[i]);
+
+	                                                                                    break;
+	                                                                        }
+	                                                            }
+	                                                } catch (e) {
+
+	                                                            console.warn('failed to load context:' + n[i]);
+	                                                }
+
+	                                                i++;
+	                                    } // end of while loop
+
+
+	                                    /*
+	                                     * If we got a context, assign WebGL version. Note that some 
+	                                     * experimental versions don't have .getParameter
+	                                     */
+
+	                                    if (gl && typeof gl.getParameter == 'function') {
+
+	                                                this.contextCount++;
+
+	                                                this.gl = gl;
+
+	                                                // Check if this is a full WebGL2 stack
+
+	                                                this.version = gl.getParameter(gl.VERSION).toLowerCase();
+
+	                                                if (i == 1 || i == 3) {
+
+	                                                            console.warn('experimental context, .getParameter() may not work');
+	                                                }
+
+	                                                console.log('version:' + gl.getParameter(gl.VERSION));
+
+	                                                // Supported extensions.
+
+	                                                this.stats.uint32 = true; // by default, but check if we have WebGL 1.0.
+
+	                                                this.stats.supported = gl.getSupportedExtensions();
+
+	                                                // Take action, depending on version (identified by pos in our test array n).
+
+	                                                switch (i) {
+
+	                                                            // WebGL 2.0
+
+	                                                            case 0:
+
+	                                                            case 1:
+
+	                                                                        this.version = 2.0;
+
+	                                                                        break;
+
+	                                                            // WebGL 1.0 
+
+	                                                            case 2:
+
+	                                                            case 3:
+
+	                                                            default:
+
+	                                                                        this.version = 1.0;
+
+	                                                                        this.stats.uint32 = this.index32Support(gl); // vertices > 64k, no constant exported. WebGL 1.0 only.
+
+	                                                                        break;
+
+	                                                }
+
+	                                                // These extensions expose constants, so we can test here.
+
+	                                                this.stats.anisotrophic = this.anisotropicSupport(gl);
+
+	                                                this.stats.vertexArrays = this.vertexArraySupport(gl); // vertex buffers
+
+	                                                this.stats.derivatives = this.derivativeSupport(gl); // shader derivatives
+
+	                                                this.stats.depthTextures = this.depthTextureSupport(gl); // depth textures
+
+	                                                this.stats.pvrtcTextures = this.PVRTCTextureSupport(gl); // PVRTC compressed texture support
+
+	                                                this.stats.etc1Textures = this.ETC1TextureSupport(gl); // ETC1 compress texture support
+
+	                                                this.stats.setcTextures = this.S3TCTextureSupport(gl); // S3 compressed texture support
+
+	                                                // Set the maximum draw elements, based on card capabilities.
+
+	                                                if (!this.stats.uint32) {
+
+	                                                            this.MAX_DRAWELEMENTS = 65534;
+	                                                } else {
+
+	                                                            this.MAX_DRAWELEMENTS = 2e9;
+	                                                }
+	                                    } else {
+	                                                // no WebGL
+
+	                                                console.error('WebGL::createContext(): no WebGL available');
+
+	                                                this.gl = null;
+	                                    }
+
+	                                    return this.gl;
+	                        }
+
+	                        /** 
+	                         * Return the current context. Note that we don't store a 
+	                         * separate reference to the canvas.
+	                         * @returns {WebGLRenderingContext} gl a WebGLRenderingContext.
+	                         */
+
+	            }, {
+	                        key: 'getContext',
+	                        value: function getContext() {
+
+	                                    if (!this.gl) {
+
+	                                                console.warn('warning webgl context not initialized');
+	                                    }
+
+	                                    return this.gl;
+	                        }
+
+	                        /** 
+	                         * Kill the current context (complete reset will be needed). Also use to debug 
+	                         * when context is lost, and has to be rebuilt.
+	                         * @link http://codeflow.org/entries/2013/feb/22/how-to-write-portable-webgl/
+	                         * @link https://developer.mozilla.org/en-US/docs/Web/API/WEBGL_lose_context/loseContext
+	                         */
+
+	            }, {
+	                        key: 'killContext',
+	                        value: function killContext() {
+
+	                                    console.log('in killcontext, count:' + this.contextCount);
+
+	                                    if (this.contextCount) {
+
+	                                                console.log('killing WebGL context, count before:' + this.contextCount);
+
+	                                                this.gl.getExtension('WEBGL_lose_context').loseContext();
+
+	                                                this.contextCount--;
+	                                    }
+	                        }
+
+	                        /** 
+	                         * check if we have a contex and are ready to render.
+	                         */
+
+	            }, {
+	                        key: 'ready',
+	                        value: function ready() {
+
+	                                    var gl = this.gl;
+
+	                                    return !!(this.gl && this.glMatrix);
+	                        }
+
+	                        /*
+	                         * ---------------------------------------
+	                         * CLEAR/RESET OPERATIONS
+	                         * ---------------------------------------
+	                         */
+
+	                        /** 
+	                         * Clear the screen prior to redraw.
+	                         */
+
+	            }, {
+	                        key: 'clear',
+	                        value: function clear() {
+
+	                                    var gl = this.gl;
+
+	                                    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+	                        }
+
+	                        /** 
+	                         * Clear textures from the videocard before the program starts.
+	                         */
+
+	            }, {
+	                        key: 'clearTextures',
+	                        value: function clearTextures() {
+
+	                                    var gl = this.gl;
+
+	                                    var len = gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
+
+	                                    for (var i = 0; i < len; i++) {
+
+	                                                gl.activeTexture(gl.TEXTURE0 + i);
+
+	                                                gl.bindTexture(gl.TEXTURE_2D, null);
+
+	                                                gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
+	                                    }
+
+	                                    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+
+	                                    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+
+	                                    gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+
+	                                    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+	                        }
+
+	                        /*
+	                         * ---------------------------------------
+	                         * SHADER VARIABLES AND UNIFORMS
+	                         * ---------------------------------------
+	                         */
+
+	                        /** 
+	                         * create a WeGL shader object.
+	                         * @param {VERTEX_SHADER | FRAGMENT_SHADER} type type WebGL shader type.
+	                         * @param {String} source the shader source, as plain text.
+	                         * @returns {WebGLShader} a compiled WebGL shader object.
+	                         */
+
+	            }, {
+	                        key: 'createShader',
+	                        value: function createShader(type, source) {
+
+	                                    var shader = null;
+
+	                                    if (!type || !source) {
+
+	                                                console.error('createShader: invalid params, type:' + type + ' source:' + source);
+	                                    } else if (this.ready()) {
+
+	                                                var gl = this.gl;
+
+	                                                /*
+	                                                 * remove first EOL, which might come from using <script>...</script> tags,
+	                                                 * to handle GLSL ES 3.00 (TWGL)
+	                                                 */
+	                                                source.replace(/^[ \t]*\n/, '');
+
+	                                                if (type === gl.VERTEX_SHADER) {
+
+	                                                            shader = gl.createShader(type); // assigned VS
+	                                                } else if (type === gl.FRAGMENT_SHADER) {
+
+	                                                            shader = gl.createShader(type); // assigned FS
+	                                                } else {
+
+	                                                            console.error('createShader: type not recognized:' + type);
+	                                                }
+
+	                                                gl.shaderSource(shader, source);
+
+	                                                gl.compileShader(shader);
+
+	                                                // Detect shader compile errors.
+
+	                                                if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+
+	                                                            console.error('createShader:' + gl.getShaderInfoLog(shader));
+
+	                                                            shader = null;
+	                                                }
+	                                    }
+
+	                                    return shader;
+	                        }
+	            }, {
+	                        key: 'createVertexShader',
+	                        value: function createVertexShader(source) {
+
+	                                    return this.createShader(this.gl.VERTEX_SHADER, source);
+	                        }
+	            }, {
+	                        key: 'createFragmentShader',
+	                        value: function createFragmentShader(source) {
+
+	                                    return this.createShader(this.gl.FRAGMENT_SHADER, source);
+	                        }
+
+	                        /** 
+	                         * Use the Fetch API to get a shader file
+	                         */
+
+	            }, {
+	                        key: 'fetchShader',
+	                        value: function fetchShader(type, sourceURL) {
+	                                    var _this2 = this;
+
+	                                    var self = this;
+
+	                                    fetch(sourceURL, {
+
+	                                                method: 'POST',
+
+	                                                mode: 'cors',
+
+	                                                redirect: 'follow',
+
+	                                                headers: new Headers({
+
+	                                                            'Content-Type': 'text/plain'
+
+	                                                })
+
+	                                    }).then(function (response) {
+
+	                                                console.log(text);
+
+	                                                if (response.ok) {
+
+	                                                            return response.text();
+	                                                }
+
+	                                                return false;
+	                                    }).then(function (source) {
+
+	                                                if (source) {
+
+	                                                            return _this2.createShader(type, source);
+	                                                }
+	                                    });
+
+	                                    return null;
+	                        }
+	            }, {
+	                        key: 'fetchVertexShader',
+	                        value: function fetchVertexShader(sourceURL) {
+
+	                                    return this.fetchShader(this.gl.VERTEX_SHADER, sourceURL);
+	                        }
+	            }, {
+	                        key: 'fetchFragmentShader',
+	                        value: function fetchFragmentShader(sourceURL) {
+
+	                                    return this.fetchShader(this.gl.FRAGMENT_SHADER, sourceURL);
+	                        }
+
+	                        /** 
+	                         * create shader form script element
+	                         * @param {String|DOMElement} tag the script element, or its id
+	                         */
+
+	            }, {
+	                        key: 'createShaderFromTag',
+	                        value: function createShaderFromTag(tag) {
+
+	                                    if (this.util.isString(tag)) {
+
+	                                                tag = document.getElementById(tag);
+	                                    }
+
+	                                    if (!tag) {
+
+	                                                console.error('createShaderFromTag: not found (' + tag + ')');
+
+	                                                return false;
+	                                    }
+
+	                                    var type = null;
+
+	                                    if (tag.type == 'x-shader/x-vertex') {
+
+	                                                type = this.gl.VERTEX_SHADER;
+	                                    } else if (tag.type == 'x-shader/x-fragment') {
+
+	                                                type = this.gl.FRAGMENT_SHADER;
+	                                    } else {
+
+	                                                console.error('createShaderFromTag: type not found:(' + tag.type + ')');
+
+	                                                return null;
+	                                    }
+
+	                                    var source = "";
+
+	                                    var c = tag.firstChild;
+
+	                                    while (c) {
+
+	                                                if (c.nodeType == 3) {
+
+	                                                            source += c.textContent;
+	                                                }
+
+	                                                c = c.nextSibling;
+	                                    }
+
+	                                    return this.createShader(type, source);
+	                        }
+
+	                        /*
+	                         * ---------------------------------------
+	                         * COMPILE WEBGL PROGRAM
+	                         * ---------------------------------------
+	                         */
+
+	                        /** 
+	                         * Create WebGL program with shaders. Program not used until 
+	                         * we apply gl.useProgram(program).
+	                         * @param {gl.VERTEX_SHADER} vShader the vertex shader.
+	                         * @param {gl.FRAGMENT_SHADER} fShader the fragment shader.
+	                         * @returns {Object} an object containing the compiled shaders, the 
+	                         * WebGL program, and a parsed list of all the varying and uniforms in 
+	                         * the shader source code.
+	                         * 
+	                         * prg.shaderProgram = program; // the WebGL program
+	                         * prg.vsVars = vs.varList,     // varying and uniform names in vertex shader.
+	                         * prg.fsVars = fs.varList      // varying and uniform names in fragment shader.
+	                         *
+	                         */
+
+	            }, {
+	                        key: 'createProgram',
+	                        value: function createProgram(vs, fs) {
+
+	                                    if (!vs || !fs) {
+
+	                                                console.error('createProgram: parameter error, vs:' + vs + ' fs:' + fs);
+
+	                                                return null;
+	                                    }
+
+	                                    // Wrap the VBO program object to keep V8 JIT happy.
+
+	                                    var prg = {};
+
+	                                    if (this.ready()) {
+
+	                                                var gl = this.gl;
+
+	                                                var vso = this.createVertexShader(vs.code);
+
+	                                                var fso = this.createFragmentShader(fs.code);
+
+	                                                var program = gl.createProgram();
+
+	                                                gl.attachShader(program, vso);
+
+	                                                gl.attachShader(program, fso);
+
+	                                                // Explicitly assign attribute names and indexes (0-32k) BEFORE linking.
+	                                                // http://stackoverflow.com/questions/4635913/explicit-vs-automatic-attribute-location-binding-for-opengl-shaders
+
+	                                                for (var j in this.attributeNames) {
+
+	                                                            //console.log('gl.bindAttrib( shaderProgram, "' + this.attributeNames[ j ][ 1 ] + '", "' +  this.attributeNames[ j ][ 0 ] + '"' );
+
+	                                                            gl.bindAttribLocation(program, this.attributeNames[j][1], this.attributeNames[j][0]);
+	                                                }
+
+	                                                gl.linkProgram(program);
+
+	                                                if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+
+	                                                            console.error('WebGL::createProgram():' + gl.getProgramInfoLog(program));
+
+	                                                            this.checkShaders(vs, fs, program);
+	                                                } else {
+
+	                                                            prg.shaderProgram = program;
+
+	                                                            prg.vsVars = vs.varList, prg.fsVars = fs.varList, prg.renderList = [];
+	                                                }
+	                                    }
+
+	                                    return prg;
+	                        }
+
+	                        /** 
+	                         * Read shader code, and organize the variables in the shader 
+	                         * into an object. Abstracts some of the tedious work in setting 
+	                         * up shader variables.
+	                         *
+	                         * Called by individual Shader objects in vsSrc() and fsSrc().
+	                         * 
+	                         * @param {Array} sourceArr array of lines in the shader.
+	                         * @returns {Object} an object organizing attribute, uniform, and 
+	                         * varying variable names and datatypes.
+	                         */
+
+	            }, {
+	                        key: 'createVarList',
+	                        value: function createVarList(source) {
+
+	                                    var len = source.length;
+
+	                                    var NOT_IN_LIST = this.NOT_IN_LIST;
+
+	                                    var sp = ' ';
+
+	                                    var list = {};
+
+	                                    var varTypes = ['attribute', 'uniform', 'varying'];
+
+	                                    if (len) {
+
+	                                                for (var i = 0; i < len; i++) {
+
+	                                                            var s = source[i];
+
+	                                                            if (s.indexOf('void main') !== NOT_IN_LIST) {
+
+	                                                                        break;
+	                                                            } else {
+
+	                                                                        for (var j = 0; j < varTypes.length; j++) {
+
+	                                                                                    var type = varTypes[j];
+
+	                                                                                    if (!list[type]) list[type] = {};
+
+	                                                                                    if (s.indexOf(type) > NOT_IN_LIST) {
+
+	                                                                                                //////////////////////////////console.log("SSS1:" + s)
+
+	                                                                                                //s = s.slice(0, -1); // remove trailing ';'
+	                                                                                                s = s.replace(/;\s*$/, "");
+
+	                                                                                                ///////////////////////////////console.log("SSS:" + s)
+
+	                                                                                                s = s.split(sp);
+
+	                                                                                                //////////////////////////////console.log("FIRST: " + s)
+
+	                                                                                                var vType = s.shift(); // attribute, uniform, or varying
+
+	                                                                                                if (!list[vType]) {
+
+	                                                                                                            list[vType] = {};
+	                                                                                                }
+
+	                                                                                                /////////////////////////console.log("SECOND AFTER SHIFT:" + vType + " remainder:" + s)
+
+	                                                                                                var nType = s.shift(); // variable type
+
+	                                                                                                if (!list[vType][nType]) {
+
+	                                                                                                            list[vType][nType] = {};
+	                                                                                                }
+
+	                                                                                                var nName = s.shift(); // variable name
+
+	                                                                                                if (!list[vType][nType][nName]) {
+
+	                                                                                                            list[vType][nType][nName] = 'empty';
+	                                                                                                }
+
+	                                                                                                /////////////////////////console.log("THIRD AFTER SHIFT:" + nType + " remainder:" + s)
+	                                                                                    }
+	                                                                        }
+	                                                            }
+	                                                }
+	                                    }
+
+	                                    return list;
+	                        }
+
+	                        /** 
+	                         * Pass the pre-defined attribute indexes and names to individual Shader programs. 
+	                         * The names and indexes are defined in the constructor.
+	                         * @param {WebGLProgram} program a compiled WebGL program.
+	                         * @param {Object} attributes the attributes we want to extract.
+	                         */
+
+	            }, {
+	                        key: 'setAttributeArrays',
+	                        value: function setAttributeArrays(shaderProgram, attributes) {
+
+	                                    var gl = this.gl;
+
+	                                    for (var i in attributes) {
+
+	                                                var attb = attributes[i];
+
+	                                                for (var j in attb) {
+
+	                                                            //console.log('setAttributeNames for attb["' + j + '""],' + this.attributeNames[ j ][ 1 ] + '", "' +  this.attributeNames[ j ][ 0 ] + '"' );
+
+	                                                            attb[j] = this.attributeNames[j][1];
+	                                                }
+	                                    }
+
+	                                    return attributes;
+	                        }
+
+	                        /** 
+	                         * Store our uniform locations.
+	                         * @param {WebGLProgram} program a compiled WebGL program.
+	                         * @param {Object} uniforms array of uniforms.
+	                         */
+
+	            }, {
+	                        key: 'setUniformLocations',
+	                        value: function setUniformLocations(shaderProgram, uniforms) {
+
+	                                    var gl = this.gl;
+
+	                                    for (var i in uniforms) {
+
+	                                                var unif = uniforms[i];
+
+	                                                for (var j in unif) {
+
+	                                                            unif[j] = gl.getUniformLocation(shaderProgram, j);
+
+	                                                            ////////console.log("gl.getUniformLocation( shaderProgram," + j + ") is:" + unif[ j ] );
+	                                                }
+	                                    }
+
+	                                    return uniforms;
+	                        }
+
+	                        /** 
+	                         * Create associative array with shader attributes.
+	                         * NOTE: Only attributes actually used in the shader show.
+	                         * @param {WebGLProgram} program a compiled WebGL program.
+	                         * @returns {Object} a collection of attributes, with .count = number.
+	                         */
+
+	            }, {
+	                        key: 'getAttributes',
+	                        value: function getAttributes(program) {
+
+	                                    var gl = this.gl;
+
+	                                    var attrib = {};
+
+	                                    var attribCount = gl.getProgramParameter(program, gl.ACTIVE_ATTRIBUTES);
+
+	                                    for (var i = 0; i < attribCount; i++) {
+
+	                                                var attribInfo = gl.getActiveAttrib(program, i);
+
+	                                                /////////console.log("adding attribute:" + attribInfo.name );
+
+	                                                attrib[attribInfo.name] = gl.getAttribLocation(program, attribInfo.name);
+	                                    }
+
+	                                    // Store the number of attributes.
+
+	                                    attrib.count = attribCount;
+
+	                                    return attrib;
+	                        }
+
+	                        /** 
+	                         * Create associative array with shader uniforms.
+	                         * NOTE: Only attributes actually used in the Shader show.
+	                         * @param {WebGLProgram} program a compiled WebGL program.
+	                         * @returns {Object} a collection of attributes, with .count = number.
+	                         */
+
+	            }, {
+	                        key: 'getUniforms',
+	                        value: function getUniforms(program) {
+
+	                                    var gl = this.gl;
+
+	                                    var uniform = {};
+
+	                                    var uniformCount = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
+
+	                                    var uniformName = '';
+
+	                                    for (var i = 0; i < uniformCount; i++) {
+
+	                                                var uniformInfo = gl.getActiveUniform(program, i);
+
+	                                                uniformName = uniformInfo.name.replace('[0]', '');
+
+	                                                //console.log("adding uniform:" + uniformName );
+
+	                                                uniform[uniformName] = gl.getUniformLocation(program, uniformName);
+	                                    }
+
+	                                    // Store the number of uniforms.
+
+	                                    uniform.count = uniformCount;
+
+	                                    return uniform;
+	                        }
+
+	                        /** 
+	                         * Create associative array with shader varying variables.
+	                         * @param {WebGLProgram} program a compiled WebGL program.
+	                         */
+
+	            }, {
+	                        key: 'getVarying',
+	                        value: function getVarying(program) {}
+
+	                        /** 
+	                         * check to see if we're ready to run, after supplying 
+	                         * shaders.
+	                         * @param {WebGLShader} vs the vertex shader.
+	                         * @param {WebGLShader} fs the fragment shader.
+	                         * @param {WebGLProgram} program a compiled WebGL program.
+	                         */
+
+	            }, {
+	                        key: 'checkShaders',
+	                        value: function checkShaders(vs, fs, program) {
+
+	                                    var gl = this.gl;
+
+	                                    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+
+	                                                // Test the vertex shader
+
+	                                                if (vs && !gl.getShaderParameter(vs, gl.COMPILE_STATUS)) {
+
+	                                                            console.error('error creating the vertex shader, ' + gl.getShaderInfoLog(vs));
+	                                                } else if (fs && !gl.getShaderParameter(fs, gl.COMPILE_STATUS)) {
+
+	                                                            console.error('error creating the fragment shader, ' + gl.getShaderInfoLog(fs));
+	                                                } else {
+
+	                                                            console.error('error in gl program linking');
+	                                                }
+
+	                                                gl.deleteProgram(program);
+
+	                                                return false;
+	                                    }
+
+	                                    return true;
+	                        }
+
+	                        /** 
+	                         * Check if our VBO or IBO are ok.
+	                         */
+
+	            }, {
+	                        key: 'checkBufferObjects',
+	                        value: function checkBufferObjects(bo) {
+
+	                                    return bo && bo instanceof ArrayBuffer;
+	                        }
+
+	                        /** 
+	                         * Convert WebGL ENUM to string.
+	                         */
+
+	            }, {
+	                        key: 'enumToString',
+	                        value: function enumToString(gl, val) {
+
+	                                    for (var i in gl) {
+
+	                                                if (gl[i] == val) {
+
+	                                                            return i;
+	                                                }
+	                                    }
+
+	                                    return '0x' + val.toString(16);
+	                        }
+
+	                        /** 
+	                         * Provide statistics for display as JSON data.
+	                         */
+
+	            }, {
+	                        key: 'stats',
+	                        value: function stats() {
+
+	                                    return JSON.stringify(this.stats);
+	                        }
+	            }]);
+
+	            return WebGL;
 	}();
 
 	exports.default = WebGL;
@@ -3467,9 +3479,9 @@
 
 	                                                        var display = displays[0];
 
-	                                                        _this.display = display;
-
 	                                                        if (display) {
+
+	                                                                _this.display = display;
 
 	                                                                console.log('WebVR::init(): valid vr display present');
 
@@ -3613,7 +3625,7 @@
 
 	                                // TODO: test early.
 
-	                                console.error('vr deviced did not report stage parameters');
+	                                console.error('vr device did not report stage parameters');
 	                        }
 	                }
 
@@ -3660,7 +3672,7 @@
 
 	                                mat4.identity(mvMatrix);
 
-	                                mat4.translate(mvMatrix, mvMatrix, [0, PLAYER_HEIGHT, 0]);
+	                                mat4.translate(mvMatrix, mvMatrix, [0, this.PLAYER_HEIGHT, 0]);
 
 	                                mat4.invert(mvMatrix, mvMatrix);
 
@@ -4009,11 +4021,46 @@
 	                                    this.createUi(); // starting configuration
 	                        }
 
+	                        /**
+	                         * Error Condition when there is no WebGL
+	                         */
+
+	            }, {
+	                        key: 'initNoGL',
+	                        value: function initNoGL() {
+
+	                                    this.modalMessage('WebGL is not present on your system');
+	                        }
+
+	                        /** 
+	                         * Error condition when WebGL failes.
+	                         */
+
+	            }, {
+	                        key: 'initBadGL',
+	                        value: function initBadGL() {
+
+	                                    this.modalMessage('WebGL is present, but failed to load');
+	                        }
+
 	                        /* 
 	                         * ---------------------------------------
 	                         * Ui SETUP AND CONFIGURATION
 	                         * ---------------------------------------
 	                         */
+
+	                        /** 
+	                         * Create a DOM-based modal dialog
+	                         */
+
+	            }, {
+	                        key: 'modalMessage',
+	                        value: function modalMessage(msg) {
+
+	                                    // TODO: create modal dialog
+
+	                                    console.error(msg);
+	                        }
 
 	                        /** 
 	                         * Set the Ui controls (visible, active, inactive) by the current mode.
@@ -5834,7 +5881,7 @@
 
 	                        this.mMatrix = glMatrix.mat4.create(); // Model only (no view)
 
-	                        this.vMatrix = glMatrix.mat4.create(); // View only
+	                        this.vMatrix = glMatrix.mat4.create(); // View only, create makes and an identity matrix
 
 	                        this.mvMatrix = glMatrix.mat4.create(); // model-view matrix
 
@@ -5902,7 +5949,7 @@
 
 	                                // Multiply vMatrix by our eye.leftViewMatrix, and adjust for height of VR viewer.
 
-	                                vr.getStandingViewMatrix(vMatrix, frameData.leftViewMatrix, frameData.pose);
+	                                vr.getStandingViewMatrix(vMatrix, frameData.leftViewMatrix, frameData.pose); // after Toji
 
 	                                // Combine with the initial World viewMatrix.
 
@@ -19519,7 +19566,9 @@
 
 	                        // Fire world update. 
 
-	                        this.render();
+	                        //////////////////////this.render();
+
+	                        window.requestAnimationFrame(this.render);
 	                }
 
 	                /** 
@@ -19590,6 +19639,8 @@
 	        }, {
 	                key: 'housekeep',
 	                value: function housekeep() {}
+
+	                // TODO: Modal DOM dialog for ui.es6
 
 	                // TODO: Just make the ShaderTexture use light. Remove ShaderDirLightTexture.
 
@@ -19749,7 +19800,10 @@
 	                        //pov.rotation[ 1 ] += 0.003;
 	                        // Render for mono or WebVR stereo.
 
+	                        // TODO: DEBUG
 	                        var display = vr.getDisplay();
+	                        console.log("display:" + display);
+	                        //let fd = vr.getFrameData();
 
 	                        // Clear the View matrix for the World.
 
@@ -19759,11 +19813,17 @@
 
 	                        if (display && display.isPresenting) {
 
-	                                // Get FrameData (with matrices for left and right eye).
+	                                // TODO: Break this up so we always use display.requestAnimationFrame if present
+	                                // TODO: but don't try to get frameData if we are not presenting.
+	                                // TODO: might have to move stuff out of Shader.
+	                                // TODO: NOTE MUST DO THIS WHEN USING FF NIGHTLY AND A HMD!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+	                                display.requestAnimationFrame(this.render);
 	                                /////////////////////////////////////////console.log("countervr:" + this.counter); this.counter++;
 
-	                                var frameData = this.vr.getFrameData();
+	                                // Get FrameData (with matrices for left and right eye).
+
+	                                var frameData = vr.getFrameData();
 
 	                                // Get any world transforms (translation, rotation).
 
@@ -19780,12 +19840,11 @@
 	                                this.r0.renderVR(vr, display, frameData, vMatrix, pov); // REQUIRED alpha (Prim appearing or disappearing), drawn in front
 
 	                                display.submitFrame();
-
-	                                display.requestAnimationFrame(this.render);
 	                        } else {
 
 	                                // Render mono view.
 
+	                                requestAnimationFrame(this.render);
 	                                //////////////////////////console.log("countermono:" + this.counter); this.counter++;
 
 	                                this.getWorldViewMatrix(vMatrix);
@@ -19798,7 +19857,6 @@
 
 	                                this.r0.renderMono(vMatrix, pov); // REQUIRED alpha (Prim appearing or disappearing), drawn in front
 
-	                                requestAnimationFrame(this.render);
 	                        }
 
 	                        ////////////////////////////console.log( this.webgl.getError() );

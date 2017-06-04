@@ -986,33 +986,39 @@ class WebGL {
 
             }
 
-        }
+            // These extensions expose constants, so we can test here.
 
-        // These extensions expose constants, so we can test here.
+            this.stats.anisotrophic = this.anisotropicSupport( gl );
 
-        this.stats.anisotrophic = this.anisotropicSupport( gl );
+            this.stats.vertexArrays = this.vertexArraySupport( gl ); // vertex buffers
 
-        this.stats.vertexArrays = this.vertexArraySupport( gl ); // vertex buffers
+            this.stats.derivatives = this.derivativeSupport( gl ); // shader derivatives
 
-        this.stats.derivatives = this.derivativeSupport( gl ); // shader derivatives
+            this.stats.depthTextures = this.depthTextureSupport( gl ); // depth textures
 
-        this.stats.depthTextures = this.depthTextureSupport( gl ); // depth textures
+            this.stats.pvrtcTextures = this.PVRTCTextureSupport( gl ); // PVRTC compressed texture support
 
-        this.stats.pvrtcTextures = this.PVRTCTextureSupport( gl ); // PVRTC compressed texture support
+            this.stats.etc1Textures = this.ETC1TextureSupport( gl ); // ETC1 compress texture support
 
-        this.stats.etc1Textures = this.ETC1TextureSupport( gl ); // ETC1 compress texture support
+            this.stats.setcTextures = this.S3TCTextureSupport( gl ); // S3 compressed texture support
 
-        this.stats.setcTextures = this.S3TCTextureSupport( gl ); // S3 compressed texture support
+            // Set the maximum draw elements, based on card capabilities.
 
-        // Set the maximum draw elements, based on card capabilities.
+            if ( ! this.stats.uint32) { 
 
-        if ( ! this.stats.uint32) { 
+                this.MAX_DRAWELEMENTS = 65534;
 
-            this.MAX_DRAWELEMENTS = 65534;
+            } else {
 
-        } else {
+                this.MAX_DRAWELEMENTS = 2e9;
 
-            this.MAX_DRAWELEMENTS = 2e9;
+            }
+
+        } else { // no WebGL
+
+            console.error( 'WebGL::createContext(): no WebGL available' );
+
+            this.gl = null;
 
         }
 

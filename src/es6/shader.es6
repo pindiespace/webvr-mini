@@ -536,7 +536,7 @@ class Shader {
 
         this.mMatrix = glMatrix.mat4.create(); // Model only (no view)
 
-        this.vMatrix = glMatrix.mat4.create(); // View only
+        this.vMatrix = glMatrix.mat4.create(); // View only, create makes and an identity matrix
 
         this.mvMatrix = glMatrix.mat4.create(); // model-view matrix
 
@@ -614,7 +614,7 @@ class Shader {
 
             // Multiply vMatrix by our eye.leftViewMatrix, and adjust for height of VR viewer.
 
-            vr.getStandingViewMatrix( vMatrix, frameData.leftViewMatrix, frameData.pose );
+            vr.getStandingViewMatrix( vMatrix, frameData.leftViewMatrix, frameData.pose ); // after Toji
 
             // Combine with the initial World viewMatrix.
 
@@ -636,7 +636,7 @@ class Shader {
 
             gl.viewport( canvas.width * 0.5, 0, canvas.width * 0.5, canvas.height );
 
-            // Multiply vMatrix by our eye.rightViewMatrix, and adjust for height of VR viewer.
+                // Multiply vMatrix by our eye.rightViewMatrix, and adjust for height of VR viewer.
 
             vr.getStandingViewMatrix( vMatrix, frameData.rightViewMatrix, frameData.pose ); // after Toji
 

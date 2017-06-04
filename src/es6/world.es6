@@ -786,7 +786,9 @@ class World extends AssetPool {
 
         // Fire world update. 
 
-        this.render();
+        //////////////////////this.render();
+
+        window.requestAnimationFrame( this.render );
 
     }
 
@@ -859,6 +861,8 @@ class World extends AssetPool {
      * Update the World. Called occsionally.
      */
     housekeep () {
+
+// TODO: Modal DOM dialog for ui.es6
 
 // TODO: Just make the ShaderTexture use light. Remove ShaderDirLightTexture.
 
@@ -1015,21 +1019,30 @@ class World extends AssetPool {
 //pov.rotation[ 1 ] += 0.003;
         // Render for mono or WebVR stereo.
 
+// TODO: DEBUG
         let display = vr.getDisplay();
+        console.log("display:" + display)
+        //let fd = vr.getFrameData();
 
         // Clear the View matrix for the World.
 
         mat4.identity( vMatrix );
 
         // Toggle between VR and mono view modes.
-            
+
         if ( display && display.isPresenting ) {
+
+            // TODO: Break this up so we always use display.requestAnimationFrame if present
+            // TODO: but don't try to get frameData if we are not presenting.
+            // TODO: might have to move stuff out of Shader.
+            // TODO: NOTE MUST DO THIS WHEN USING FF NIGHTLY AND A HMD!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+            display.requestAnimationFrame( this.render );
+            /////////////////////////////////////////console.log("countervr:" + this.counter); this.counter++;
 
             // Get FrameData (with matrices for left and right eye).
 
-            /////////////////////////////////////////console.log("countervr:" + this.counter); this.counter++;
-
-            let frameData = this.vr.getFrameData();
+            let frameData = vr.getFrameData();
 
             // Get any world transforms (translation, rotation).
 
@@ -1047,12 +1060,11 @@ class World extends AssetPool {
 
             display.submitFrame();
 
-            display.requestAnimationFrame( this.render );
-
         } else {
 
             // Render mono view.
 
+            requestAnimationFrame( this.render );
             //////////////////////////console.log("countermono:" + this.counter); this.counter++;
 
             this.getWorldViewMatrix( vMatrix );
@@ -1065,7 +1077,7 @@ class World extends AssetPool {
 
             this.r0.renderMono( vMatrix, pov ); // REQUIRED alpha (Prim appearing or disappearing), drawn in front
 
-            requestAnimationFrame( this.render );
+
 
         }
 

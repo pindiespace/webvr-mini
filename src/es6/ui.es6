@@ -132,11 +132,40 @@ class Ui {
 
     }
 
+    /**
+     * Error Condition when there is no WebGL
+     */
+    initNoGL () {
+
+        this.modalMessage( 'WebGL is not present on your system' );
+
+    }
+
+    /** 
+     * Error condition when WebGL failes.
+     */
+    initBadGL () {
+
+        this.modalMessage( 'WebGL is present, but failed to load' );
+
+    }
+
     /* 
      * ---------------------------------------
      * Ui SETUP AND CONFIGURATION
      * ---------------------------------------
      */
+
+    /** 
+     * Create a DOM-based modal dialog
+     */
+    modalMessage( msg ) {
+
+        // TODO: create modal dialog
+
+        console.error( msg );
+
+    }
 
     /** 
      * Set the Ui controls (visible, active, inactive) by the current mode.

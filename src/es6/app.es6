@@ -115,7 +115,7 @@ let webvr, ui, shaderPool, lights, world;
 
 var promise = new Promise( ( resolve, reject ) => {
 
-  // do a thing, possibly async, then…
+    // do a thing, possibly async, then…
 
     if ( webgl.init( 'webvr-mini-canvas' ) ) {
 
@@ -153,7 +153,7 @@ var promise = new Promise( ( resolve, reject ) => {
 
         world = new World( true, glMatrix, webgl, webvr, shaderPool, lights );
 
-        // Initialize our Ui.
+        // Initialize our Ui after other elements.
 
         ui.init();
 
@@ -164,6 +164,12 @@ var promise = new Promise( ( resolve, reject ) => {
     else {
 
         reject( Error( 'It broke' ) );
+
+        // TODO: Write 'WebGL not available across canvas';
+
+        ui = new Ui( false, util, glMatrix, webgl );
+
+        ui.initBadGL();
 
     }
 

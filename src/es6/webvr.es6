@@ -80,9 +80,9 @@ class WebVR {
 
                         let display = displays[ 0 ];
 
-                        this.display = display;
-
                         if ( display ) {
+
+                            this.display = display;
 
                             console.log( 'WebVR::init(): valid vr display present' );
 
@@ -236,7 +236,7 @@ class WebVR {
 
             // TODO: test early.
 
-            console.error( 'vr deviced did not report stage parameters' );
+            console.error( 'vr device did not report stage parameters' );
 
         }
 
@@ -284,7 +284,7 @@ class WebVR {
 
             mat4.identity( mvMatrix );
 
-            mat4.translate( mvMatrix, mvMatrix, [ 0, PLAYER_HEIGHT, 0 ] );
+            mat4.translate( mvMatrix, mvMatrix, [ 0, this.PLAYER_HEIGHT, 0 ] );
 
             mat4.invert( mvMatrix, mvMatrix );
 
