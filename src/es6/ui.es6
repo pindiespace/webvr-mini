@@ -916,6 +916,32 @@ class Ui {
 
     }
 
+    /** 
+     * Create a timeout spinner.
+     */
+    createSpinner () {
+
+        let spinner = document.createElement( 'img' );
+
+        spinner.className = 'webvr-mini-spinner';
+
+        let s = spinner.style;
+
+        spinner.show = () => {
+
+            s.display = 'inline-block';
+
+        }
+
+        spinner.hide = () => {
+
+            s.display = 'none';
+
+        }
+
+    }
+
+
 }
 
 // We put this here because of JSDoc(!).

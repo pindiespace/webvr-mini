@@ -28,6 +28,10 @@ class WebVR {
 
         this.PLAYER_HEIGHT = 1.75; // average player height.
 
+        // .requestAnimationFrame current Id
+
+        this.rafId = null;
+
         // Statistics object.
 
         this.stats = {};
@@ -155,6 +159,8 @@ class WebVR {
             // We check for support prior to loading this module, so we shouldn't go here if not supported.
 
             console.error( 'WebVR::init(): WebVR API not present, or obsolete version' );
+
+            // Default display to 'window'
 
         }
 
@@ -392,6 +398,14 @@ class WebVR {
 
                 // success
 
+                // TODO: KILL THE OLD REQUESTANIMATIONFRAME..........................
+                //window.cancelAnimationFrame( this.rafId );
+                // display.requestAnimationFrame( this.world.render )
+                // OR:
+                // this.world.cancelMono(); ?????????????????????????????
+                // TODO: reset display to webvr display so getDisplay() in World works
+                /////////////////////////////////////////////////////////////////////
+
                 /* 
                  * Note: the <canvas> size changes, but it is wrapped in our <div> so 
                  * doesn't change size. This makes it easier to see the whole stereo view onscreen.
@@ -446,6 +460,14 @@ class WebVR {
                  * window.resize event (handler: webgl.resize()) to set our <canvas> back to its DOM dimensions.
                  *
                  */
+
+                // TODO: KILL THE OLD REQUESTANIMATIONFRAME..........................
+                //display.cancelAnimationFrame( this.rafId );
+                // window.requestAnimationFrame( this.world.render )
+                // OR:
+                // THIS.WORLD.cancelVR()
+                // TODO: reset display to 'window' so 'getDisplay()' in World works
+                ////////////////////////////////////////////////
 
                 console.log( 'WebVR::exitPresent(): exited display presentation' );
 

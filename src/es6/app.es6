@@ -167,7 +167,7 @@ var promise = new Promise( ( resolve, reject ) => {
 
         // TODO: Write 'WebGL not available across canvas';
 
-        ui = new Ui( false, util, glMatrix, webgl );
+        ui = new Ui(  false, util, webgl, webvr );
 
         ui.initBadGL();
 

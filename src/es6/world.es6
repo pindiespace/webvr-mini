@@ -862,6 +862,8 @@ class World extends AssetPool {
      */
     housekeep () {
 
+// TODO: Spinner in Ui
+
 // TODO: Modal DOM dialog for ui.es6
 
 // TODO: Just make the ShaderTexture use light. Remove ShaderDirLightTexture.
@@ -1019,9 +1021,36 @@ class World extends AssetPool {
 //pov.rotation[ 1 ] += 0.003;
         // Render for mono or WebVR stereo.
 
+/*
+  Sean McBeth says....
+
+  Basically, I have a startup process:
+currentDisplay = window
+callbackID = currentDisplay.requestAnimationFrame(animationCallback)
+Then animationCallback has to make sure to always do `callbackID = currentDisplay.requestAnimationFrame(animationCallback)` to update the callbackID every frame.
+
+And then my "change display" process is:
+currentDisplay.cancelAnimationFrame(callbackID)
+if(userHasSelectedVRDisplay) 
+currentDisplay = userSelectedVRDisplay
+else currentDisplay = window
+callbackID = currentDisplay.requestAnimationFrame(animationCallback)
+
+You have to make sure you call cancelAnimationFrame from the same object from which requestAnimationFrame was called to create the callbackID, or else the cancel will not happen correctly.
+
+NOTE: THIS IMPLIES WE HAVE TO DO IT IN WORLD.
+
+*/
+
 // TODO: DEBUG
-        let display = vr.getDisplay();
-        console.log("display:" + display)
+        let disp = vr.getDisplay();
+
+
+        // TODO:
+        // TODO: return either 'window' or a vrDisplay object
+        // 
+
+        //console.log("display:" + disp)
         //let fd = vr.getFrameData();
 
         // Clear the View matrix for the World.
@@ -1030,14 +1059,15 @@ class World extends AssetPool {
 
         // Toggle between VR and mono view modes.
 
-        if ( display && display.isPresenting ) {
+        if ( disp && disp.isPresenting ) {
 
             // TODO: Break this up so we always use display.requestAnimationFrame if present
             // TODO: but don't try to get frameData if we are not presenting.
             // TODO: might have to move stuff out of Shader.
             // TODO: NOTE MUST DO THIS WHEN USING FF NIGHTLY AND A HMD!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            // TODO: NOTE THAT WE ARE GIVING OUR CURRENT ID TO WebVR object!!!!!
 
-            display.requestAnimationFrame( this.render );
+            vr.rafId = disp.requestAnimationFrame( this.render );
             /////////////////////////////////////////console.log("countervr:" + this.counter); this.counter++;
 
             // Get FrameData (with matrices for left and right eye).
@@ -1050,21 +1080,21 @@ class World extends AssetPool {
 
             this.getWorldViewMatrix( vMatrix );
 
-            this.r3.renderVR( vr, display, frameData, vMatrix, pov );  // directional light texture
+            this.r3.renderVR( vr, disp, frameData, vMatrix, pov );  // directional light texture
 
-            this.r1.renderVR( vr, display, frameData, vMatrix, pov );  // textured, no lighting
+            this.r1.renderVR( vr, disp, frameData, vMatrix, pov );  // textured, no lighting
 
-            this.r2.renderVR( vr, display, frameData, vMatrix, pov );  // color
+            this.r2.renderVR( vr, disp, frameData, vMatrix, pov );  // color
 
-            this.r0.renderVR( vr, display, frameData, vMatrix, pov );  // REQUIRED alpha (Prim appearing or disappearing), drawn in front
+            this.r0.renderVR( vr, disp, frameData, vMatrix, pov );  // REQUIRED alpha (Prim appearing or disappearing), drawn in front
 
-            display.submitFrame();
+            disp.submitFrame();
 
         } else {
 
             // Render mono view.
 
-            requestAnimationFrame( this.render );
+            vr.rafId = requestAnimationFrame( this.render );
             //////////////////////////console.log("countermono:" + this.counter); this.counter++;
 
             this.getWorldViewMatrix( vMatrix );
@@ -1076,7 +1106,6 @@ class World extends AssetPool {
             this.r2.renderMono( vMatrix, pov ); // color
 
             this.r0.renderMono( vMatrix, pov ); // REQUIRED alpha (Prim appearing or disappearing), drawn in front
-
 
 
         }
