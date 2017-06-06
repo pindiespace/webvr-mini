@@ -78,7 +78,7 @@ class ShaderFader extends Shader {
 
             'void main(void) {',
 
-            // View-Model-Position-Projection matrix.
+                // View-Model-Position-Projection matrix.
 
                 'gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);',
 
@@ -348,6 +348,8 @@ class ShaderFader extends Shader {
 
         uUseColor = fsVars.uniform.bool.uUseColor,
 
+        // Material.
+
         uMatEmissive = fsVars.uniform.vec3.uMatEmissive,
 
         uMatAmbient = fsVars.uniform.vec3.uMatAmbient,
@@ -358,13 +360,19 @@ class ShaderFader extends Shader {
 
         uMatSpecExp = fsVars.uniform.float.uMatSpecExp,
 
+        // Lighting.
+
         uAmbientColor = fsVars.uniform.vec3.uAmbientColor, // ambient light color
 
         uDirectionalColor = fsVars.uniform.vec3.uDirectionalColor, // directional light color
 
         uLightingDirection = fsVars.uniform.vec3.uLightingDirection, 
 
-        uPOV = vsVars.uniform.vec3.uPOV, // World Position (also position of camera/POV)
+        // World position, also position of camera.
+
+        uPOV = vsVars.uniform.vec3.uPOV,
+
+        // Transform arrays
 
         uPMatrix = vsVars.uniform.mat4.uPMatrix,
 
@@ -500,6 +508,10 @@ class ShaderFader extends Shader {
 
                 program.update( prim, mvMatrix );
 
+                // default material (other Shaders might use multiple materials).
+
+                let m = prim.defaultMaterial;
+
                 // Look for (multiple) materials.
 
                 let ms = prim.matStarts;
@@ -584,10 +596,6 @@ class ShaderFader extends Shader {
 
                 gl.uniformMatrix3fv( uNMatrix, false, nMatrix );
 
-                // Set normals matrix uniform (inverse transpose matrix).
-
-                gl.uniformMatrix3fv( uNMatrix, false, nMatrix );
-
                 // Set Perspective uniform.
 
                 gl.uniformMatrix4fv( uPMatrix, false, PM );
@@ -602,11 +610,9 @@ class ShaderFader extends Shader {
 
                 // Loop through materials
 
-                // default material (other Shaders might use multiple materials).
-
-                let m = prim.defaultMaterial;
-
                 /* 
+                 * ms (matStarts) gives the start of the material from the OBJ file. Direct loads default 
+                 * to position 0.
                  * iSize is either gl.UNSIGNED_INT (0 -> 2e9) or gl.UNSIGNED_SHORT (0 -> 65535)
                  * GeometryPool and ModelPool routines are expected to "chop"
                  */

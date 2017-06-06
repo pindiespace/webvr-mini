@@ -223,7 +223,7 @@ class World extends AssetPool {
 
         this.s2 = this.shaderPool.getAssetByName( 'shaderColor' );
 
-        this.s3 = this.shaderPool.getAssetByName( 'shaderDirLightTexture' );
+        //////////////this.s3 = this.shaderPool.getAssetByName( 'shaderDirLightTexture' );
 
 
 //////////////////////////////////
@@ -280,6 +280,23 @@ class World extends AssetPool {
                 vec3.fromValues( util.degToRad( 1 ), util.degToRad( 1 ), util.degToRad( 1 ) ), // angular velocity in x, y, x
                 [ 'img/crate.png', 'img/webvr-logo1.png' ],          // texture image
 
+            );
+
+
+            this.primFactory.createPrim(
+            
+                this.s1,                      // callback function
+                typeList.CYLINDER,
+                'ShortCylinder',
+                vec5( 1, 1, 1, 0.3, 0.7 ),       // dimensions (4th dimension doesn't exist for cylinder)
+                vec5( 40, 40, 40  ),        // divisions MAKE SMALLER
+                vec3.fromValues(-1.5, -1.5, 2.0 ),          // position (absolute)
+                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+                vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+                [ 'img/uv-test.png' ],               // texture present
+                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
+            
             );
 
 /*
@@ -465,21 +482,7 @@ class World extends AssetPool {
             
             );
 
-            this.primFactory.createPrim(
-            
-                this.s1,                      // callback function
-                typeList.CYLINDER,
-                'TestCylinder',
-                vec5( 1, 1, 1, 0.3, 0.7 ),       // dimensions (4th dimension doesn't exist for cylinder)
-                vec5( 40, 40, 40  ),        // divisions MAKE SMALLER
-                vec3.fromValues(-1.5, -1.5, 2.0 ),          // position (absolute)
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [ 'img/uv-test.png' ],               // texture present
-                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
-            
-            );
+
 
             this.primFactory.createPrim(
             
@@ -782,8 +785,6 @@ class World extends AssetPool {
 
         this.r2 = this.s2.init();
 
-        this.r3 = this.s3.init();
-
         // Fire world update. 
 
         //////////////////////this.render();
@@ -1012,7 +1013,7 @@ class World extends AssetPool {
 
         this.webgl.clear();
 
-        let vr = this.vr, // wrapped
+        let vr = this.vr, // wrapped WebVR object
 
         pov = this.getPOV();
 
@@ -1042,71 +1043,71 @@ NOTE: THIS IMPLIES WE HAVE TO DO IT IN WORLD.
 
 */
 
-// TODO: DEBUG
         let disp = vr.getDisplay();
 
-
-        // TODO:
-        // TODO: return either 'window' or a vrDisplay object
-        // 
-
-        //console.log("display:" + disp)
-        //let fd = vr.getFrameData();
 
         // Clear the View matrix for the World.
 
         mat4.identity( vMatrix );
 
-        // Toggle between VR and mono view modes.
+        /* 
+         * Toggle between VR and mono view modes.
+         * If we found a VRDisplay, we use VRDisplay.requestAnimationFrame for both mono and stereo.
+         * If there is noVRDisplay, we use window.requestAnimationFrame
+         */
 
-        if ( disp && disp.isPresenting ) {
+        if ( disp ) {
 
-            // TODO: Break this up so we always use display.requestAnimationFrame if present
-            // TODO: but don't try to get frameData if we are not presenting.
-            // TODO: might have to move stuff out of Shader.
-            // TODO: NOTE MUST DO THIS WHEN USING FF NIGHTLY AND A HMD!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            // TODO: NOTE THAT WE ARE GIVING OUR CURRENT ID TO WebVR object!!!!!
+            if ( disp.isPresenting ) {
 
-            vr.rafId = disp.requestAnimationFrame( this.render );
-            /////////////////////////////////////////console.log("countervr:" + this.counter); this.counter++;
+                // We can only go here if VRDisplay exists.
 
-            // Get FrameData (with matrices for left and right eye).
+                vr.rafId = disp.requestAnimationFrame( this.render );
 
-            let frameData = vr.getFrameData();
+                // Get FrameData (with matrices for left and right eye).
 
-            // Get any world transforms (translation, rotation).
+                let frameData = vr.getFrameData();
 
-            // This is blowing up on Chrome, but not FF.
+                // Get any world transforms (translation, rotation).
 
-            this.getWorldViewMatrix( vMatrix );
+                this.getWorldViewMatrix( vMatrix );
 
-            this.r3.renderVR( vr, disp, frameData, vMatrix, pov );  // directional light texture
+                /* 
+                 * These routines set the canvas viewport to left and right stereo, and 
+                 * draw left or right view using the frameDat left and right view matrix.
+                 */
 
-            this.r1.renderVR( vr, disp, frameData, vMatrix, pov );  // textured, no lighting
+                this.r1.renderVR( vr, frameData, vMatrix, pov );  // textured, no lighting
 
-            this.r2.renderVR( vr, disp, frameData, vMatrix, pov );  // color
+                this.r2.renderVR( vr, frameData, vMatrix, pov );  // color
 
-            this.r0.renderVR( vr, disp, frameData, vMatrix, pov );  // REQUIRED alpha (Prim appearing or disappearing), drawn in front
+                this.r0.renderVR( vr, frameData, vMatrix, pov );  // REQUIRED alpha (Prim appearing or disappearing), drawn in front
 
-            disp.submitFrame();
+                disp.submitFrame();
 
-        } else {
+            } else {
 
-            // Render mono view.
+                /* 
+                 * Render mono view, using either disp === VRDisplay, or disp === window.
+                 * webvr.vrResize() calls webgl.resize(), which converts the canvas viewport back to 
+                 * mono view if we are using VRDisplay. 
+                 *
+                 * If we are using disp === window then the viewport always fills the canvas.
+                 */
 
-            vr.rafId = requestAnimationFrame( this.render );
-            //////////////////////////console.log("countermono:" + this.counter); this.counter++;
+                vr.rafId = disp.requestAnimationFrame( this.render );
 
-            this.getWorldViewMatrix( vMatrix );
+                // Get any world transforms (translation, rotation).
 
-            this.r3.renderMono( vMatrix, pov ); // directional light texture
+                this.getWorldViewMatrix( vMatrix );
 
-            this.r1.renderMono( vMatrix, pov ); // textured, no lighting
+                this.r1.renderMono( vMatrix, pov ); // textured, no lighting
 
-            this.r2.renderMono( vMatrix, pov ); // color
+                this.r2.renderMono( vMatrix, pov ); // color
 
-            this.r0.renderMono( vMatrix, pov ); // REQUIRED alpha (Prim appearing or disappearing), drawn in front
+                this.r0.renderMono( vMatrix, pov ); // REQUIRED alpha (Prim appearing or disappearing), drawn in front
 
+            }
 
         }
 

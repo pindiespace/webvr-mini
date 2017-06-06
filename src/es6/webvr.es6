@@ -144,9 +144,11 @@ class WebVR {
 
                         } // display is valid
 
-                    } else { // displays.length == 0
+                    } else { // WebVR is present, but displays.length == 0
 
                         console.warn( 'WebVR::init(): no VR displays found' );
+
+                        this.display = window; // TODO: TEST ON SMARTPHONE???????????????
 
                     } 
 
@@ -158,9 +160,11 @@ class WebVR {
 
             // We check for support prior to loading this module, so we shouldn't go here if not supported.
 
-            console.error( 'WebVR::init(): WebVR API not present, or obsolete version' );
+            console.warn( 'WebVR::init(): WebVR API not present, or obsolete version' );
 
-            // Default display to 'window'
+            // Default display to 'window' if there is no WebVR.
+
+            this.display = window;
 
         }
 
@@ -373,7 +377,10 @@ class WebVR {
 
             p.style.height = '';
 
-            // Force a canvas resize, even if our window size did not change.
+            /* 
+             * Force a canvas resize, even if our window size did not change. 
+             * NOTE: This changes the viewport to fill the canvas, instead of 2 stereo regions.
+             */
 
             this.webgl.resizeCanvas( true );
 

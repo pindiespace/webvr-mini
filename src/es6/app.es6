@@ -47,8 +47,6 @@ import ShaderTexture from './shader-texture';
 
 import ShaderColor from './shader-color';
 
-import shaderDirLightTexture from './shader-dirlight-texture';
-
 import ShaderTerrain from './shader-terrain';
 
 import ShaderWater from './shader-water';
@@ -139,15 +137,11 @@ var promise = new Promise( ( resolve, reject ) => {
 
         // Basic one-texture Shader, without lighting.
 
-        shaderPool.addAsset( new ShaderTexture( true, util, glMatrix, webgl, webvr, 'shaderTexture' ) );        
+        shaderPool.addAsset( new ShaderTexture( true, util, glMatrix, webgl, webvr, 'shaderTexture', lights ) );        
 
         // Basic color array Shader, without lighting.
 
         shaderPool.addAsset( new ShaderColor( true, util, glMatrix, webgl, webvr, 'shaderColor', lights ) );
-
-        // One texture Shader with directional lighting.
-
-        shaderPool.addAsset( new shaderDirLightTexture( true, util, glMatrix, webgl, webvr, 'shaderDirLightTexture', lights ) );
 
         // Create the world, which needs WebGL, WebVR, the Shader list and world Lights.
 

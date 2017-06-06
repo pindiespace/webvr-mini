@@ -142,7 +142,7 @@ class Ui {
     }
 
     /** 
-     * Error condition when WebGL failes.
+     * Error condition when WebGL fails.
      */
     initBadGL () {
 

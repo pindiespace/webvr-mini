@@ -600,7 +600,7 @@ class Shader {
         /** 
          *  Rendering left and right eye for VR. Called once for each Shader by World.
          */
-        program.renderVR = ( vr, display, frameData, vvMatrix, pov ) => {
+        program.renderVR = ( vr, frameData, vvMatrix, pov ) => {
 
             // Framedata provided by calling function.
 
