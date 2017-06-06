@@ -187,12 +187,6 @@ class ShaderMetal extends Shader {
 
             prim.setMV( mvMatrix );
 
-            // Compute lighting normals.
-
-            vec3.normalize( adjustedLD, lightingDirection );
-
-            vec3.scale( adjustedLD, adjustedLD, -1 );
-
             // Calculates a 3x3 normal matrix (transpose inverse) from the 4x4 matrix.
 
             mat3.normalFromMat4( nMatrix, mvMatrix );

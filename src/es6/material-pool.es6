@@ -331,7 +331,7 @@ class MaterialPool extends AssetPool {
 
                         currName = data[ 0 ].trim();
 
-                        // Apply file data to our default Material.
+                        // Apply file data to a default Material.
 
                         materials[ currName ] = this.default( currName );
 
@@ -707,7 +707,7 @@ class MaterialPool extends AssetPool {
 
         }
 
-        // Set up the Material object(s).
+        // Add extra properties to all the Materials we generate.
 
         if ( m ) {
 
@@ -730,6 +730,29 @@ class MaterialPool extends AssetPool {
         }
 
         return m ;
+
+    }
+
+    /** 
+     * Get a default material when we don't have a .mtl file.
+     */
+    setDefaultMaterial ( prim, materialName, textureImages ) {
+
+        let mi = this.addAsset( this.default( prim.name + '-' + this.DEFAULT_KEY ) );
+
+        mi.type = prim.type,
+
+        mi.path = prim.path,
+
+        mi.emits = this.util.emitter.events.MATERIAL_READY;
+
+        // We don't emit a MATERIAL_READY event for the default
+
+        // If we have textures, load them.
+
+        this.texturePool.getTextures( prim, textureImages, true, false, this.webgl.getContext().TEXTURE_2D, { materialKey: mi.key } );
+
+        return mi;
 
     }
 
@@ -796,7 +819,7 @@ class MaterialPool extends AssetPool {
 
                                     let materialObj = this.addMaterial( prim, updateObj.data, updateObj.path, updateObj.pos, mimeType, prim.type );
 
-                                    // Multiple materials may be present in one .mtl file.
+                                    // Multiple materials may be returned from one .mtl file.
 
                                     if ( materialObj ) {
 

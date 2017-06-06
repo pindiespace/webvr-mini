@@ -7829,12 +7829,6 @@
 
 	                prim.setMV(mvMatrix);
 
-	                // Compute lighting normals.
-
-	                vec3.normalize(adjustedLD, lightingDirection);
-
-	                vec3.scale(adjustedLD, adjustedLD, -1);
-
 	                // Calculates a 3x3 normal matrix (transpose inverse) from the 4x4 matrix.
 
 	                mat3.normalFromMat4(nMatrix, mvMatrix);
@@ -8807,9 +8801,9 @@
 
 	        // Bind Prim callback for a new texture loaded .(TexturePool).
 
-	        this.util.emitter.on(this.util.emitter.events.TEXTURE_3D_READY, function (prim, key, pos, options) {
+	        this.util.emitter.on(this.util.emitter.events.TEXTURE_3D_READY, function (prim, key, options) {
 
-	            _this.initPrimTexture3d(prim, _this.texturePool.keyList[key], pos, options);
+	            _this.initPrimTexture3d(prim, _this.texturePool.keyList[key], options);
 
 	            // Check if complete, add if it is...
 
@@ -8818,9 +8812,9 @@
 
 	        // Bind Prim callback for a new texture loaded .(TexturePool).
 
-	        this.util.emitter.on(this.util.emitter.events.TEXTURE_CUBE_MAP_READY, function (prim, key, pos, options) {
+	        this.util.emitter.on(this.util.emitter.events.TEXTURE_CUBE_MAP_READY, function (prim, key, options) {
 
-	            _this.initPrimTextureCubeMap(prim, _this.texturePool.keyList[key], pos, options);
+	            _this.initPrimTextureCubeMap(prim, _this.texturePool.keyList[key], options);
 
 	            // Check if complete, add if it is...
 
@@ -8899,7 +8893,23 @@
 
 	            console.log("Prim::initPrimTexture(): new texture for prim:" + prim.name + ', options:' + options);
 
-	            // Failed texture loads have the default 'grey pixel' texture substituted from texturePool.
+	            // Find the associated material from the material key given to the texture.
+
+	            window.textureObj = textureObj;
+
+	            for (var i in prim.materials) {
+
+	                var m = prim.materials[i];
+
+	                if (m.key === options.materialKey) {
+
+	                    m[options.type] = textureObj.texture;
+
+	                    m[options.type + '-key'] = textureObj.key;
+	                }
+	            }
+
+	            // Failed texture loads keep the default 'grey pixel' texture substituted from texturePool.
 	        }
 
 	        /** 
@@ -8937,64 +8947,6 @@
 	        value: function initPrimMaterial(prim, material, materialName) {
 
 	            console.log('Prim::initMaterial(): new material ' + materialName + ' for prim:' + prim.name);
-
-	            /*
-	                    // Material is returned as an associative array, since multiple materials may be found in one .mtl file.
-	            
-	                    // If we have a default, remove it, since we have a non-default material.
-	            
-	                    if( prim.materials [ this.util.DEFAULT_KEY ] ) {
-	            
-	                        this.util.removeObjMember( prim.materials, this.util.DEFAULT_KEY );
-	            
-	                    }
-	            
-	                    // TODO:
-	            
-	                    // HAVE TO INITIALIZE THIS DIFFERENTLY. EACH MATERIAL SHOULD BIND TO THE DEFAULT TEXTURE
-	                    // WHEN IT IS CREATED. TEXTURE LOADING SHOULD NOT BEGIN UNTIL TEXTURE INITALIZED.
-	                    // SWAP IN TEXTURES AS NECESSARY.
-	                    // MATERIAL LOADING = SWAP IN ANY TEXTURES ALREADY THERE
-	                    // TEXTURE LOADING = SCAN MATERIALS AND LOAD THERE.
-	            
-	            
-	                    // If the material already has an entry, it was put there parsing the 
-	                    // OBJ file. so pull the 'start' value from it, and replace with 
-	                    // the full material data. Otherwise, add material - this.initPrim() 
-	                    // will add the start position for the material later.
-	            
-	            
-	                    // A texture loaded, and defined a 'skeleton' material until we could arrive, so overwrite. 
-	            
-	                    if ( prim.materials[ materialName ] ) {
-	            
-	                       let m = prim.materials[ materialName ];
-	            
-	                       if ( m.map_Ka ) material.map_Ka = m.map_Ka;
-	            
-	                       if ( m.map_Kd ) material.map_Kd = m.map_Kd;
-	            
-	                       if ( m.map_Ks ) material.map_Ks = m.map_Ks;
-	            
-	                       if ( m.map_bump ) material.map_bump = m.map_bump;
-	            
-	                       if ( m.map_d ) material.map_d = m.map_d;
-	            
-	                       if ( m.map_refl ) material.map_refl = m.map_refl;
-	            
-	                    }
-	            
-	                    prim.materials[ materialName ] = material;
-	            
-	                    // Finally, set a default material for Shaders that only use one material. Pick the material with the smallest 'start'.
-	                    
-	                    if ( prim.defaultMaterial && prim.defaultMaterial.name === this.util.DEFAULT_KEY ) {
-	            
-	                        prim.defaultMaterial = material;
-	            
-	                    }
-	            
-	            */
 	        }
 
 	        /** 
@@ -9231,7 +9183,7 @@
 	            };
 
 	            /** 
-	             * Back out the translation from the Model-View matrix, when we need just the Model.
+	             * Update the Model part of the Model-View matrix, when we need just the Model.
 	             * @param {glMatrix.mat4} mvMatrix model-view matrix.
 	             * @returns {glMatrix.mat4} the altered model-view matrix.
 	             */
@@ -9249,9 +9201,13 @@
 	            };
 
 	            /** 
-	             * Update the position, rotation, and orbit of a Prim.
+	             * Update the position, rotation, and orbit of a Prim. Called 
+	             * in the Shader.program.update() routine, conditionally if mono (always) 
+	             * or stereo (called evern other render).
 	             */
 	            prim.updateCoords = function () {
+
+	                // Translate.
 
 	                vec3.add(p.position, p.position, p.acceleration);
 
@@ -9590,7 +9546,7 @@
 
 	            // Set default material for the Prim (similar to OBJ format).
 
-	            prim.defaultMaterial = this.materialPool.default();
+	            prim.defaultMaterial = this.materialPool.setDefaultMaterial(prim, prim.name + '-' + this.util.DEAULT_KEY, textureImages);
 
 	            // Set this to default.
 
@@ -9598,22 +9554,21 @@
 
 	            // If we have image files, load them and assign to prim.defaultMaterial.
 
-	            if (textureImages && textureImages.length) {
+	            //if ( textureImages && textureImages.length ) {
 
-	                /* 
-	                 * textureImages is a list of paths associated with the default material. We assign each 
-	                 * texture a key for its associated material. 
-	                  Material key has to be a random token we generate now, since OBJ files can't provide an 
-	                 AssetPool key during loads.
-	                  So, we need a random token system to identify textures and materials and models to each other!
-	                  */
+	            /* 
+	             * textureImages is a list of paths associated with the default material. We assign each 
+	             * texture a key for its associated material. 
+	              Material key has to be a random token we generate now, since OBJ files can't provide an 
+	             AssetPool key during loads.
+	              So, we need a random token system to identify textures and materials and models to each other!
+	              */
 
-	                console.log("assplying ");
+	            //  console.log("assplying prim.defaultMaterial.key: " + prim.defaultMaterial.key)
 
-	                //this.texturePool.getTextures( prim, textureImages, true, false, 
+	            // this.texturePool.getTextures( prim, textureImages, true, false, this.webgl.getContext().TEXTURE_2D, { materials: [ prim.defaultMaterial.key ] } );
 
-	                //    this.webgl.getContext().TEXTURE_2D, { materials: [ prim.defaultMaterial.name ] } );
-	            }
+	            //}
 
 	            // Set Prim alpha from the active Material's transparency (opposite of prim.alpha === opacity).
 
@@ -17301,23 +17256,14 @@
 	                                            // If you want to add to DOM, do so here.
 	                                        }
 
-	                                        // Save the texture usage, either 'default' or a key from calling .mtl file (map_Kd, map_Ks...).
-
 	                                        /* 
-	                                         * If the texture was part of a material, it returned a position to assign
-	                                         * in the prim.textures array. Otherwise, use the input position to assign.
+	                                         * Look up the type/usage of the texture (e.g., map_Kd, map_Ka...) 
+	                                         * in the materialPool lookup table by its array position in the pathList
 	                                         */
 
-	                                        if (options.pos === undefined) {
+	                                        options.type = _this2.materialPool.texturePositions[i];
 
-	                                            // NOTE: we added MaterialPool as a referenced object in the World constructor.
-
-	                                            options.type = _this2.materialPool.texturePositions[i];
-
-	                                            options.pos = i;
-
-	                                            options.materials = [_this2.util.DEFAULT_KEY];
-	                                        }
+	                                        // options.materials should already be set
 
 	                                        /*
 	                                         * Emit a 'texture ready event' with the key in the pool and path (intercepted by PrimFactory).
@@ -17328,11 +17274,11 @@
 	                                        _this2.util.emitter.emit(textureObj.emits, prim, textureObj.key, options);
 	                                    } else {
 
-	                                        _this2.util.emitter.emit(textureObj.emits, prim, textureObj.key, options);
-
 	                                        console.error('TexturePool::getTextures(): file:' + path + ' could not be parsed');
+
+	                                        _this2.util.emitter.emit(_this2.util.emitter.events.TEXTURE_2D_READY, prim, _this2.defaultKey, options);
 	                                    }
-	                                }; // end of image.onload
+	                                }; // end of image.onload callback
 
 	                                // Create a URL to the Blob, and fire the onload event (internal browser URL instead of network).
 
@@ -20055,7 +20001,7 @@
 
 	                            currName = data[0].trim();
 
-	                            // Apply file data to our default Material.
+	                            // Apply file data to a default Material.
 
 	                            materials[currName] = _this2.default(currName);
 
@@ -20394,7 +20340,7 @@
 
 	            }
 
-	            // Set up the Material object(s).
+	            // Add extra properties to all the Materials we generate.
 
 	            if (m) {
 
@@ -20411,6 +20357,27 @@
 	            }
 
 	            return m;
+	        }
+
+	        /** 
+	         * Get a default material when we don't have a .mtl file.
+	         */
+
+	    }, {
+	        key: 'setDefaultMaterial',
+	        value: function setDefaultMaterial(prim, materialName, textureImages) {
+
+	            var mi = this.addAsset(this.default(prim.name + '-' + this.DEFAULT_KEY));
+
+	            mi.type = prim.type, mi.path = prim.path, mi.emits = this.util.emitter.events.MATERIAL_READY;
+
+	            // We don't emit a MATERIAL_READY event for the default
+
+	            // If we have textures, load them.
+
+	            this.texturePool.getTextures(prim, textureImages, true, false, this.webgl.getContext().TEXTURE_2D, { materialKey: mi.key });
+
+	            return mi;
 	        }
 
 	        /** 
@@ -20481,7 +20448,7 @@
 
 	                                        var materialObj = _this3.addMaterial(prim, updateObj.data, updateObj.path, updateObj.pos, mimeType, prim.type);
 
-	                                        // Multiple materials may be present in one .mtl file.
+	                                        // Multiple materials may be returned from one .mtl file.
 
 	                                        if (materialObj) {
 

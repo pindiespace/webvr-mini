@@ -149,9 +149,9 @@ class PrimFactory {
 
         this.util.emitter.on( this.util.emitter.events.TEXTURE_3D_READY, 
 
-            ( prim, key, pos, options ) => {
+            ( prim, key, options ) => {
 
-                this.initPrimTexture3d( prim, this.texturePool.keyList[ key ], pos, options );
+                this.initPrimTexture3d( prim, this.texturePool.keyList[ key ], options );
 
                 // Check if complete, add if it is...
 
@@ -163,9 +163,9 @@ class PrimFactory {
 
         this.util.emitter.on( this.util.emitter.events.TEXTURE_CUBE_MAP_READY, 
 
-            ( prim, key, pos, options ) => {
+            ( prim, key, options ) => {
 
-                this.initPrimTextureCubeMap( prim, this.texturePool.keyList[ key ], pos, options );
+                this.initPrimTextureCubeMap( prim, this.texturePool.keyList[ key ], options );
 
                 // Check if complete, add if it is...
 
@@ -243,7 +243,25 @@ class PrimFactory {
 
         console.log("Prim::initPrimTexture(): new texture for prim:" + prim.name + ', options:' + options );
 
-        // Failed texture loads have the default 'grey pixel' texture substituted from texturePool.
+        // Find the associated material from the material key given to the texture.
+
+        window.textureObj = textureObj;
+
+        for ( let i in prim.materials ) {
+
+            let m = prim.materials[ i ];
+
+            if ( m.key === options.materialKey ) {
+
+                m[ options.type ] = textureObj.texture;
+
+                m[ options.type + '-key' ] = textureObj.key;
+
+            }
+
+        }
+
+        // Failed texture loads keep the default 'grey pixel' texture substituted from texturePool.
 
     }
 
@@ -275,64 +293,6 @@ class PrimFactory {
     initPrimMaterial ( prim, material, materialName ) {
 
         console.log('Prim::initMaterial(): new material ' + materialName + ' for prim:' + prim.name );
-
-/*
-        // Material is returned as an associative array, since multiple materials may be found in one .mtl file.
-
-        // If we have a default, remove it, since we have a non-default material.
-
-        if( prim.materials [ this.util.DEFAULT_KEY ] ) {
-
-            this.util.removeObjMember( prim.materials, this.util.DEFAULT_KEY );
-
-        }
-
-        // TODO:
-
-        // HAVE TO INITIALIZE THIS DIFFERENTLY. EACH MATERIAL SHOULD BIND TO THE DEFAULT TEXTURE
-        // WHEN IT IS CREATED. TEXTURE LOADING SHOULD NOT BEGIN UNTIL TEXTURE INITALIZED.
-        // SWAP IN TEXTURES AS NECESSARY.
-        // MATERIAL LOADING = SWAP IN ANY TEXTURES ALREADY THERE
-        // TEXTURE LOADING = SCAN MATERIALS AND LOAD THERE.
-
-
-        // If the material already has an entry, it was put there parsing the 
-        // OBJ file. so pull the 'start' value from it, and replace with 
-        // the full material data. Otherwise, add material - this.initPrim() 
-        // will add the start position for the material later.
-
-
-        // A texture loaded, and defined a 'skeleton' material until we could arrive, so overwrite. 
-
-        if ( prim.materials[ materialName ] ) {
-
-           let m = prim.materials[ materialName ];
-
-           if ( m.map_Ka ) material.map_Ka = m.map_Ka;
-
-           if ( m.map_Kd ) material.map_Kd = m.map_Kd;
-
-           if ( m.map_Ks ) material.map_Ks = m.map_Ks;
-
-           if ( m.map_bump ) material.map_bump = m.map_bump;
-
-           if ( m.map_d ) material.map_d = m.map_d;
-
-           if ( m.map_refl ) material.map_refl = m.map_refl;
-
-        }
-
-        prim.materials[ materialName ] = material;
-
-        // Finally, set a default material for Shaders that only use one material. Pick the material with the smallest 'start'.
-        
-        if ( prim.defaultMaterial && prim.defaultMaterial.name === this.util.DEFAULT_KEY ) {
-
-            prim.defaultMaterial = material;
-
-        }
-
-*/
 
     }
 
@@ -580,7 +540,7 @@ class PrimFactory {
         };
 
         /** 
-         * Back out the translation from the Model-View matrix, when we need just the Model.
+         * Update the Model part of the Model-View matrix, when we need just the Model.
          * @param {glMatrix.mat4} mvMatrix model-view matrix.
          * @returns {glMatrix.mat4} the altered model-view matrix.
          */
@@ -599,9 +559,13 @@ class PrimFactory {
         };
 
         /** 
-         * Update the position, rotation, and orbit of a Prim.
+         * Update the position, rotation, and orbit of a Prim. Called 
+         * in the Shader.program.update() routine, conditionally if mono (always) 
+         * or stereo (called evern other render).
          */
-        prim.updateCoords = ( ) => {
+        prim.updateCoords = () => {
+
+            // Translate.
 
             vec3.add( p.position, p.position, p.acceleration );
 
@@ -974,7 +938,7 @@ class PrimFactory {
 
         // Set default material for the Prim (similar to OBJ format).
 
-        prim.defaultMaterial = this.materialPool.default();
+        prim.defaultMaterial = this.materialPool.setDefaultMaterial( prim, prim.name + '-' + this.util.DEAULT_KEY, textureImages );
 
         // Set this to default.
 
@@ -982,7 +946,7 @@ class PrimFactory {
 
         // If we have image files, load them and assign to prim.defaultMaterial.
 
-        if ( textureImages && textureImages.length ) {
+        //if ( textureImages && textureImages.length ) {
 
             /* 
              * textureImages is a list of paths associated with the default material. We assign each 
@@ -995,13 +959,11 @@ class PrimFactory {
 
              */
 
-            console.log("assplying ")
+          //  console.log("assplying prim.defaultMaterial.key: " + prim.defaultMaterial.key)
 
-            //this.texturePool.getTextures( prim, textureImages, true, false, 
+           // this.texturePool.getTextures( prim, textureImages, true, false, this.webgl.getContext().TEXTURE_2D, { materials: [ prim.defaultMaterial.key ] } );
 
-            //    this.webgl.getContext().TEXTURE_2D, { materials: [ prim.defaultMaterial.name ] } );
-
-        }
+        //}
 
         // Set Prim alpha from the active Material's transparency (opposite of prim.alpha === opacity).
 

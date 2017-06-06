@@ -519,24 +519,15 @@ class TexturePool extends AssetPool {
 
                                         }
 
-                                        // Save the texture usage, either 'default' or a key from calling .mtl file (map_Kd, map_Ks...).
-
                                         /* 
-                                         * If the texture was part of a material, it returned a position to assign
-                                         * in the prim.textures array. Otherwise, use the input position to assign.
+                                         * Look up the type/usage of the texture (e.g., map_Kd, map_Ka...) 
+                                         * in the materialPool lookup table by its array position in the pathList
                                          */
 
-                                        if ( options.pos === undefined ) {
+                                        options.type = this.materialPool.texturePositions[ i ];
 
-                                            // NOTE: we added MaterialPool as a referenced object in the World constructor.
 
-                                            options.type = this.materialPool.texturePositions[ i ];
-
-                                            options.pos = i;
-
-                                            options.materials = [ this.util.DEFAULT_KEY ];
-
-                                        }
+                                        // options.materials should already be set
 
                                         /*
                                          * Emit a 'texture ready event' with the key in the pool and path (intercepted by PrimFactory).
@@ -548,13 +539,13 @@ class TexturePool extends AssetPool {
 
                                     } else {
 
-                                        this.util.emitter.emit( textureObj.emits, prim, textureObj.key, options );
-
                                         console.error( 'TexturePool::getTextures(): file:' + path + ' could not be parsed' );
+
+                                        this.util.emitter.emit( this.util.emitter.events.TEXTURE_2D_READY, prim, this.defaultKey, options );  
 
                                     }
 
-                                } // end of image.onload
+                                } // end of image.onload callback
 
                                 // Create a URL to the Blob, and fire the onload event (internal browser URL instead of network).
 
