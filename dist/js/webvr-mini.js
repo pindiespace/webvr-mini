@@ -5190,7 +5190,7 @@
 
 	            // Update Prim position, motion - given to World object.
 
-	            program.update = function (prim, MVM) {
+	            program.update = function (prim, MVM, updatePrim) {
 
 	                //let f = prim.fade;
 	                //console.log(prim.name + ' alpha:' + f.incr + ' endAlpha:' + f.endAlpha + ' startAlpha:' + f.startAlpha)
@@ -5204,16 +5204,26 @@
 	                // Calculates a 3x3 normal matrix (transpose inverse) from the 4x4 matrix.
 
 	                mat3.normalFromMat4(nMatrix, MVM);
+
+	                // Update coordinates every time for mono, but only one time for stereo.
+
+	                if (updatePrim) prim.updateCoords();
 	            };
+
+	            // Create a save matrix.
+
+	            var saveMV = mat4.create();
 
 	            /*
 	             * Prim rendering. We pass in a the Projection Matrix so we can render in mono and stereo, and 
 	             * the position of the camera/eye (POV) for some kinds of rendering (e.g. specular lighting).
 	             * @param {glMatrix.mat4} PM projection matrix, either mono or stereo.
 	             * @param {glMatrix.vec3} pov the position of the camera in World space.
+	             * @param {Boolean} updatePrim if true, adjust Prim coordinates. Do every time for mono, but only 
+	             * one time for stereo.
 	             */
 
-	            program.render = function (PM, pov) {
+	            program.render = function (PM, pov, updatePrim) {
 
 	                if (!program.renderList.length) return;
 
@@ -5221,7 +5231,7 @@
 
 	                // Save the model-view supplied by the shader. Mono and VR return different MV matrices.
 
-	                var saveMV = mat4.clone(mvMatrix);
+	                mat4.copy(saveMV, mvMatrix);
 
 	                // Reset perspective matrix.
 
@@ -5237,7 +5247,7 @@
 
 	                    // Individual prim update
 
-	                    program.update(prim, mvMatrix);
+	                    program.update(prim, mvMatrix, updatePrim);
 
 	                    // default material (other Shaders might use multiple materials).
 
@@ -5388,7 +5398,7 @@
 
 	                    // Copy back the original for the next Prim. 
 
-	                    mat4.copy(mvMatrix, saveMV, mvMatrix);
+	                    mat4.copy(mvMatrix, saveMV);
 	                } // end of renderList for Prims
 	            }; // end of program.render()
 
@@ -5964,6 +5974,8 @@
 	                iSize = gl.UNSIGNED_SHORT; // <= 16-bit indices references
 	            }
 
+	            var primUpdate = true;
+
 	            /**
 	             * Rendering mono view.
 	             */
@@ -5979,7 +5991,7 @@
 
 	                //mat4.translate( vMatrix, vMatrix, pov.position );
 
-	                // Copy vMatrix to mvMatrix (so we have vMatrix separately for Shader).            
+	                // Copy vMatrix to mvMatrix (so we have vMatrix separately for Shader).
 
 	                mat4.copy(mvMatrix, vMatrix);
 
@@ -5987,7 +5999,7 @@
 
 	                mat4.perspective(pMatrix, Math.PI * 0.4, canvas.width / canvas.height, near, far);
 
-	                program.render(pMatrix, pov);
+	                program.render(pMatrix, pov, true);
 	            };
 
 	            /** 
@@ -6019,7 +6031,7 @@
 
 	                // Use left Projection matrix provided by WebVR FrameData object to render the World.
 
-	                program.render(frameData.leftProjectionMatrix, pov);
+	                program.render(frameData.leftProjectionMatrix, pov, true);
 
 	                // ----------------------- Right eye. ----------------------------------
 
@@ -6043,7 +6055,7 @@
 
 	                // Use right Projection matrix provided by WebVR FrameData object to render the World.
 
-	                program.render(frameData.rightProjectionMatrix, pov);
+	                program.render(frameData.rightProjectionMatrix, pov, false); // DON'T UPDATE THE PRIM
 
 	                // Calling function submits rendered stereo view to device.
 	            };
@@ -6403,8 +6415,6 @@
 	                uSampler = fsVars.uniform.sampler2D.uSampler,
 	                uAlpha = fsVars.uniform.float.uAlpha,
 	                uUseLighting = fsVars.uniform.bool.uUseLighting,
-	                uUseTexture = fsVars.uniform.bool.uUseTexture,
-	                uUseColor = fsVars.uniform.bool.uUseColor,
 
 
 	            // Material.
@@ -6459,7 +6469,7 @@
 
 	            // Update Prim position, motion - given to World object.
 
-	            program.update = function (prim, MVM) {
+	            program.update = function (prim, MVM, updatePrim) {
 
 	                // Update the model-view matrix using current Prim position, rotation, etc.
 
@@ -6468,24 +6478,34 @@
 	                // Calculates a 3x3 normal matrix (transpose inverse) from the 4x4 matrix.
 
 	                mat3.normalFromMat4(nMatrix, MVM);
+
+	                // Update coordinates every time for mono, but only one time for stereo.
+
+	                if (updatePrim) prim.updateCoords();
 	            };
+
+	            // Create a save matrix.
+
+	            var saveMV = mat4.create();
 
 	            /*
 	             * Prim rendering. We pass in a the Projection Matrix so we can render in mono and stereo, and 
 	             * the position of the camera/eye (POV) for some kinds of rendering (e.g. specular).
 	             * @param {glMatrix.mat4} PM projection matrix, either mono or stereo.
 	             * @param {glMatrix.vec3} pov the position of the camera in World space.
+	             * @param {Boolean} updatePrim if true, adjust Prim coordinates. Do every time for mono, but only 
+	             * one time for stereo.
 	             */
 
-	            program.render = function (PM, pov) {
+	            program.render = function (PM, pov, updatePrim) {
 
 	                if (!program.renderList.length) return;
 
-	                gl.useProgram(shaderProgram);
+	                gl.useProgram(shaderProgram); // program.shaderProgram
 
 	                // Save the model-view supplied by the shader. Mono and VR return different MV matrices.
 
-	                var saveMV = mat4.clone(mvMatrix);
+	                mat4.copy(saveMV, mvMatrix);
 
 	                for (var i = 0, len = program.renderList.length; i < len; i++) {
 
@@ -6499,7 +6519,7 @@
 
 	                    // Individual Prim update.
 
-	                    program.update(prim, mvMatrix);
+	                    program.update(prim, mvMatrix, updatePrim);
 
 	                    // default material (other Shaders might use multiple materials).
 
@@ -6634,7 +6654,7 @@
 
 	                    // Copy back the original for the next Prim. 
 
-	                    mat4.copy(mvMatrix, saveMV, mvMatrix);
+	                    mat4.copy(mvMatrix, saveMV);
 	                } // end of renderList for Prims
 
 	                // Disable buffers that might cause problems in another Prim.
@@ -6944,7 +6964,7 @@
 
 	            // Update Prim position, motion - given to World object.
 
-	            program.update = function (prim, MVM) {
+	            program.update = function (prim, MVM, updatePrim) {
 
 	                // Update the model-view matrix using current Prim position, rotation, etc.
 
@@ -6953,24 +6973,34 @@
 	                // Calculates a 3x3 normal matrix (transpose inverse) from the 4x4 matrix.
 
 	                mat3.normalFromMat4(nMatrix, MVM);
+
+	                // Update coordinates every time for mono, but only one time for stereo.
+
+	                if (updatePrim) prim.updateCoords();
 	            };
+
+	            // Create a save matrix.
+
+	            var saveMV = mat4.create();
 
 	            /*
 	             * Prim rendering. We pass in a the Projection Matrix so we can render in mono and stereo, and 
 	             * the position of the camera/eye (POV) for some kinds of rendering (e.g. specular).
 	             * @param {glMatrix.mat4} PM projection matrix, either mono or stereo.
 	             * @param {glMatrix.vec3} pov the position of the camera in World space.
+	             * @param {Boolean} updatePrim if true, adjust Prim coordinates. Do every time for mono, but only 
+	             * one time for stereo.
 	             */
 
-	            program.render = function (PM, pov) {
+	            program.render = function (PM, pov, updatePrim) {
 
 	                if (!program.renderList.length) return;
 
 	                gl.useProgram(shaderProgram);
 
-	                // Save the model-view supplied by the shader. Mono and VR return different MV matrices.
+	                // Save the model-view supplied by the Shader. Mono and VR return different MV matrices.
 
-	                var saveMV = mat4.clone(mvMatrix);
+	                mat4.copy(saveMV, mvMatrix);
 
 	                // Reset perspective matrix.
 
@@ -6984,9 +7014,9 @@
 
 	                    if (!prim || prim.alpha === 0) continue; // could be null or invisible
 
-	                    // Individual prim update
+	                    // Individual prim update, using mvMatrix.
 
-	                    program.update(prim, mvMatrix);
+	                    program.update(prim, mvMatrix, updatePrim);
 
 	                    // Look for (multiple) materials.
 
@@ -7104,9 +7134,9 @@
 	                        }
 	                    }
 
-	                    // Copy back the original for the next Prim. 
+	                    // Copy back the original Model-View matrix for the next Prim. 
 
-	                    mat4.copy(mvMatrix, saveMV, mvMatrix);
+	                    mat4.copy(mvMatrix, saveMV);
 	                } // end of renderList for Prims
 	            }; // end of program.render()
 
@@ -7291,31 +7321,35 @@
 
 	            // Update Prim position, motion - given to World object.
 
-	            program.update = function (prim, MVM) {
+	            program.update = function (prim, MVM, updatePrim) {
 
 	                // Update the model-view matrix using current Prim position, rotation, etc.
 
 	                prim.setMV(mvMatrix);
 
-	                // Compute lighting normals.
-
-	                vec3.normalize(adjustedLD, lightingDirection);
-
-	                vec3.scale(adjustedLD, adjustedLD, -1);
-
 	                // Calculates a 3x3 normal matrix (transpose inverse) from the 4x4 matrix.
 
 	                mat3.normalFromMat4(nMatrix, mvMatrix);
+
+	                // Update coordinates every time for mono, but only one time for stereo.
+
+	                if (updatePrim) prim.updateCoords();
 	            };
+
+	            // Create a save matrix.
+
+	            var saveMV = mat4.create();
 
 	            /*
 	             * Prim rendering. We pass in a the Projection Matrix so we can render in mono and stereo, and 
 	             * the position of the camera/eye (POV) for some kinds of rendering (e.g. specular).
 	             * @param {glMatrix.mat4} PM projection matrix, either mono or stereo.
 	             * @param {glMatrix.vec3} pov the position of the camera in World space.
+	             * @param {Boolean} updatePrim if true, adjust Prim coordinates. Do every time for mono, but only 
+	             * one time for stereo.
 	             */
 
-	            program.render = function (PM, pov) {
+	            program.render = function (PM, pov, updatePrim) {
 
 	                if (!program.renderList.length) return;
 
@@ -7323,7 +7357,7 @@
 
 	                // Save the model-view supplied by the shader. Mono and VR return different MV matrices.
 
-	                var saveMV = mat4.clone(mvMatrix);
+	                mat4.copy(saveMV, mvMatrix);
 
 	                // Begin program loop
 
@@ -7337,7 +7371,7 @@
 
 	                    // Update Model-View matrix with standard Prim values.
 
-	                    program.update(prim, mvMatrix);
+	                    program.update(prim, mvMatrix, updatePrim);
 
 	                    // TODO: bind buffers
 
@@ -7347,7 +7381,7 @@
 
 	                    // Copy back the original for the next Prim. 
 
-	                    mat4.copy(mvMatrix, saveMV, mvMatrix);
+	                    mat4.copy(mvMatrix, saveMV);
 	                } // end of renderList for Prims.
 	            }; // end of program.render()
 	        } // end of init()
@@ -7543,31 +7577,35 @@
 
 	            // Update Prim position, motion - given to World object.
 
-	            program.update = function (prim, MVM) {
+	            program.update = function (prim, MVM, updatePrim) {
 
 	                // Update the model-view matrix using current Prim position, rotation, etc.
 
 	                prim.setMV(mvMatrix);
 
-	                // Compute lighting normals.
-
-	                vec3.normalize(adjustedLD, lightingDirection);
-
-	                vec3.scale(adjustedLD, adjustedLD, -1);
-
 	                // Calculates a 3x3 normal matrix (transpose inverse) from the 4x4 matrix.
 
 	                mat3.normalFromMat4(nMatrix, mvMatrix);
+
+	                // Update coordinates every time for mono, but only one time for stereo.
+
+	                if (updatePrim) prim.updateCoords();
 	            };
+
+	            // Create a save matrix.
+
+	            var saveMV = mat4.create();
 
 	            /*
 	             * Prim rendering. We pass in a the Projection Matrix so we can render in mono and stereo, and 
 	             * the position of the camera/eye (POV) for some kinds of rendering (e.g. specular).
 	             * @param {glMatrix.mat4} PM projection matrix, either mono or stereo.
 	             * @param {glMatrix.vec3} pov the position of the camera in World space.
+	             * @param {Boolean} updatePrim if true, adjust Prim coordinates. Do every time for mono, but only 
+	             * one time for stereo.
 	             */
 
-	            program.render = function (PM, pov) {
+	            program.render = function (PM, pov, updatePrim) {
 
 	                if (!program.renderList.length) return;
 
@@ -7575,7 +7613,7 @@
 
 	                // Save the model-view supplied by the shader. Mono and VR return different MV matrices.
 
-	                var saveMV = mat4.clone(mvMatrix);
+	                mat4.copy(saveMV, mvMatrix);
 
 	                // Begin program loop
 
@@ -7589,7 +7627,7 @@
 
 	                    // Update Model-View matrix with standard Prim values.
 
-	                    program.update(prim, mvMatrix);
+	                    program.update(prim, mvMatrix, updatePrim);
 
 	                    // TODO: bind buffers
 
@@ -7599,7 +7637,7 @@
 
 	                    // Copy back the original for the next Prim. 
 
-	                    mat4.copy(mvMatrix, saveMV, mvMatrix);
+	                    mat4.copy(mvMatrix, saveMV);
 	                } // end of renerList for Prims
 	            }; // end of program.render()
 	        } // end of init()
@@ -7785,7 +7823,7 @@
 
 	            // Update Prim position, motion - given to World object.
 
-	            program.update = function (prim, MVM) {
+	            program.update = function (prim, MVM, updatePrim) {
 
 	                // Update the model-view matrix using current Prim position, rotation, etc.
 
@@ -7800,16 +7838,26 @@
 	                // Calculates a 3x3 normal matrix (transpose inverse) from the 4x4 matrix.
 
 	                mat3.normalFromMat4(nMatrix, mvMatrix);
+
+	                // Update coordinates every time for mono, but only one time for stereo.
+
+	                if (updatePrim) prim.updateCoords();
 	            };
+
+	            // Create a save matrix.
+
+	            var saveMV = mat4.create();
 
 	            /*
 	             * Prim rendering. We pass in a the Projection Matrix so we can render in mono and stereo, and 
 	             * the position of the camera/eye (POV) for some kinds of rendering (e.g. specular).
 	             * @param {glMatrix.mat4} PM projection matrix, either mono or stereo.
 	             * @param {glMatrix.vec3} pov the position of the camera in World space.
+	             * @param {Boolean} updatePrim if true, adjust Prim coordinates. Do every time for mono, but only 
+	             * one time for stereo.
 	             */
 
-	            program.render = function (PM, pov) {
+	            program.render = function (PM, pov, updatePrim) {
 
 	                if (!program.renderList.length) return;
 
@@ -7817,7 +7865,7 @@
 
 	                // Save the model-view supplied by the shader. Mono and VR return different MV matrices.
 
-	                var saveMV = mat4.clone(mvMatrix);
+	                mat4.copy(saveMV, mvMatrix);
 
 	                // Begin program loop
 
@@ -7831,7 +7879,7 @@
 
 	                    // Update Model-View matrix with standard Prim values.
 
-	                    program.update(prim, mvMatrix);
+	                    program.update(prim, mvMatrix, updatePrim);
 
 	                    // TODO: bind buffers
 
@@ -7841,7 +7889,7 @@
 
 	                    // Copy back the original for the next Prim. 
 
-	                    mat4.copy(mvMatrix, saveMV, mvMatrix);
+	                    mat4.copy(mvMatrix, saveMV);
 	                } // end of renderList for Prims
 	            }; // end of program.render()
 	        } // end of init()
@@ -9175,8 +9223,6 @@
 
 	                mat4.translate(mvMatrix, mvMatrix, p.position);
 
-	                //mat4.translate( mvMatrix, mvMatrix, [ pov.position[ 0 ] + p.position[ 0 ], pov.position[ 1 ] + p.position[ 1 ], pov.position[ 2 ] + p.position[ 2 ] ] );
-
 	                // Set the Model matrix.
 
 	                prim.setM(mvMatrix);
@@ -9191,14 +9237,6 @@
 	             */
 	            prim.setM = function (mMatrix) {
 
-	                // Internal Prim Translate.
-
-	                vec3.add(p.position, p.position, p.acceleration);
-
-	                // Rotate.
-
-	                vec3.add(p.rotation, p.rotation, p.angular);
-
 	                mat4.rotate(mMatrix, mMatrix, p.rotation[0], [1, 0, 0]);
 
 	                mat4.rotate(mMatrix, mMatrix, p.rotation[1], [0, 1, 0]);
@@ -9208,6 +9246,20 @@
 	                mat4.scale(mMatrix, mMatrix, p.scale);
 
 	                return mMatrix;
+	            };
+
+	            /** 
+	             * Update the position, rotation, and orbit of a Prim.
+	             */
+	            prim.updateCoords = function () {
+
+	                vec3.add(p.position, p.position, p.acceleration);
+
+	                // Rotate.
+
+	                vec3.add(p.rotation, p.rotation, p.angular);
+
+	                // Scale doesn't need to be updated, just passed in the .setM and .setMV above.
 	            };
 
 	            /** 
@@ -18635,7 +18687,7 @@
 
 	        _this.glMatrix = webgl.glMatrix;
 
-	        _this.vMatrix = glMatrix.mat4.create();
+	        _this.wvMatrix = glMatrix.mat4.create();
 
 	        _this.pMatrix = _this.glMatrix.mat4.create();
 
@@ -19508,16 +19560,16 @@
 
 	    }, {
 	        key: 'getWorldViewMatrix',
-	        value: function getWorldViewMatrix(vMatrix) {
+	        value: function getWorldViewMatrix(wvMatrix) {
 
 	            var mat4 = this.glMatrix.mat4,
 	                pov = this.getPOV();
 
-	            mat4.rotate(vMatrix, vMatrix, pov.rotation[1], [0, 1, 0]); // rotate on Y axis only (for mouselook).
+	            mat4.rotate(wvMatrix, wvMatrix, pov.rotation[1], [0, 1, 0]); // rotate on Y axis only (for mouselook).
 
-	            mat4.rotate(vMatrix, vMatrix, pov.rotation[0], [1, 0, 0]); // rotate on X axis only (for mouselook).
+	            mat4.rotate(wvMatrix, wvMatrix, pov.rotation[0], [1, 0, 0]); // rotate on X axis only (for mouselook).
 
-	            mat4.translate(vMatrix, vMatrix, pov.position); // putting this first rotates around world center!
+	            mat4.translate(wvMatrix, wvMatrix, pov.position); // putting this first rotates around world center!
 	        }
 
 	        /** 
@@ -19534,7 +19586,7 @@
 	        value: function render() {
 
 	            var mat4 = this.glMatrix.mat4,
-	                vMatrix = this.vMatrix;
+	                wvMatrix = this.wvMatrix;
 
 	            this.update();
 
@@ -19575,7 +19627,7 @@
 
 	            // Clear the View matrix for the World.
 
-	            mat4.identity(vMatrix);
+	            mat4.identity(wvMatrix);
 
 	            /* 
 	             * Toggle between VR and mono view modes.
@@ -19595,20 +19647,20 @@
 
 	                    var frameData = vr.getFrameData();
 
-	                    // Get any world transforms (translation, rotation).
+	                    // Get any World transforms (translation, rotation).
 
-	                    this.getWorldViewMatrix(vMatrix);
+	                    this.getWorldViewMatrix(wvMatrix);
 
 	                    /* 
 	                     * These routines set the canvas viewport to left and right stereo, and 
 	                     * draw left or right view using the frameDat left and right view matrix.
 	                     */
 
-	                    this.r1.renderVR(vr, frameData, vMatrix, pov); // textured, no lighting
+	                    this.r1.renderVR(vr, frameData, wvMatrix, pov); // textured, no lighting
 
-	                    this.r2.renderVR(vr, frameData, vMatrix, pov); // color
+	                    this.r2.renderVR(vr, frameData, wvMatrix, pov); // color
 
-	                    this.r0.renderVR(vr, frameData, vMatrix, pov); // REQUIRED alpha (Prim appearing or disappearing), drawn in front
+	                    this.r0.renderVR(vr, frameData, wvMatrix, pov); // REQUIRED alpha (Prim appearing or disappearing), drawn in front
 
 	                    disp.submitFrame();
 	                } else {
@@ -19623,15 +19675,15 @@
 
 	                    vr.rafId = disp.requestAnimationFrame(this.render);
 
-	                    // Get any world transforms (translation, rotation).
+	                    // Get any World transforms (translation, rotation).
 
-	                    this.getWorldViewMatrix(vMatrix);
+	                    this.getWorldViewMatrix(wvMatrix);
 
-	                    this.r1.renderMono(vMatrix, pov); // textured, no lighting
+	                    this.r1.renderMono(wvMatrix, pov); // textured, no lighting
 
-	                    this.r2.renderMono(vMatrix, pov); // color
+	                    this.r2.renderMono(wvMatrix, pov); // color
 
-	                    this.r0.renderMono(vMatrix, pov); // REQUIRED alpha (Prim appearing or disappearing), drawn in front
+	                    this.r0.renderMono(wvMatrix, pov); // REQUIRED alpha (Prim appearing or disappearing), drawn in front
 	                }
 	            }
 

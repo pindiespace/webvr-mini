@@ -103,7 +103,7 @@ class World extends AssetPool {
 
         this.glMatrix = webgl.glMatrix;
 
-        this.vMatrix = glMatrix.mat4.create();
+        this.wvMatrix = glMatrix.mat4.create();
 
         this.pMatrix = this.glMatrix.mat4.create();
 
@@ -981,17 +981,17 @@ class World extends AssetPool {
     /** 
      * Get the World view matrix.
      */
-    getWorldViewMatrix ( vMatrix ) {
+    getWorldViewMatrix ( wvMatrix ) {
 
         let mat4 = this.glMatrix.mat4,
 
         pov = this.getPOV();
 
-        mat4.rotate( vMatrix, vMatrix, pov.rotation[ 1 ], [ 0, 1, 0 ] ); // rotate on Y axis only (for mouselook).
+        mat4.rotate( wvMatrix, wvMatrix, pov.rotation[ 1 ], [ 0, 1, 0 ] ); // rotate on Y axis only (for mouselook).
 
-        mat4.rotate( vMatrix, vMatrix, pov.rotation[ 0 ], [ 1, 0 , 0 ] ); // rotate on X axis only (for mouselook).
+        mat4.rotate( wvMatrix, wvMatrix, pov.rotation[ 0 ], [ 1, 0 , 0 ] ); // rotate on X axis only (for mouselook).
 
-        mat4.translate( vMatrix, vMatrix, pov.position ); // putting this first rotates around world center!
+        mat4.translate( wvMatrix, wvMatrix, pov.position ); // putting this first rotates around world center!
 
     }
 
@@ -1007,7 +1007,7 @@ class World extends AssetPool {
 
         let mat4 = this.glMatrix.mat4,
 
-        vMatrix = this.vMatrix;
+        wvMatrix = this.wvMatrix;
 
         this.update();
 
@@ -1048,7 +1048,7 @@ NOTE: THIS IMPLIES WE HAVE TO DO IT IN WORLD.
 
         // Clear the View matrix for the World.
 
-        mat4.identity( vMatrix );
+        mat4.identity( wvMatrix );
 
         /* 
          * Toggle between VR and mono view modes.
@@ -1068,20 +1068,20 @@ NOTE: THIS IMPLIES WE HAVE TO DO IT IN WORLD.
 
                 let frameData = vr.getFrameData();
 
-                // Get any world transforms (translation, rotation).
+                // Get any World transforms (translation, rotation).
 
-                this.getWorldViewMatrix( vMatrix );
+                this.getWorldViewMatrix( wvMatrix );
 
                 /* 
                  * These routines set the canvas viewport to left and right stereo, and 
                  * draw left or right view using the frameDat left and right view matrix.
                  */
 
-                this.r1.renderVR( vr, frameData, vMatrix, pov );  // textured, no lighting
+                this.r1.renderVR( vr, frameData, wvMatrix, pov );  // textured, no lighting
 
-                this.r2.renderVR( vr, frameData, vMatrix, pov );  // color
+                this.r2.renderVR( vr, frameData, wvMatrix, pov );  // color
 
-                this.r0.renderVR( vr, frameData, vMatrix, pov );  // REQUIRED alpha (Prim appearing or disappearing), drawn in front
+                this.r0.renderVR( vr, frameData, wvMatrix, pov );  // REQUIRED alpha (Prim appearing or disappearing), drawn in front
 
                 disp.submitFrame();
 
@@ -1097,15 +1097,15 @@ NOTE: THIS IMPLIES WE HAVE TO DO IT IN WORLD.
 
                 vr.rafId = disp.requestAnimationFrame( this.render );
 
-                // Get any world transforms (translation, rotation).
+                // Get any World transforms (translation, rotation).
 
-                this.getWorldViewMatrix( vMatrix );
+                this.getWorldViewMatrix( wvMatrix );
 
-                this.r1.renderMono( vMatrix, pov ); // textured, no lighting
+                this.r1.renderMono( wvMatrix, pov ); // textured, no lighting
 
-                this.r2.renderMono( vMatrix, pov ); // color
+                this.r2.renderMono( wvMatrix, pov ); // color
 
-                this.r0.renderMono( vMatrix, pov ); // REQUIRED alpha (Prim appearing or disappearing), drawn in front
+                this.r0.renderMono( wvMatrix, pov ); // REQUIRED alpha (Prim appearing or disappearing), drawn in front
 
             }
 

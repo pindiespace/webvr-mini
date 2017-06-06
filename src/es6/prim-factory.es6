@@ -571,8 +571,6 @@ class PrimFactory {
 
             mat4.translate( mvMatrix, mvMatrix, p.position );
 
-            //mat4.translate( mvMatrix, mvMatrix, [ pov.position[ 0 ] + p.position[ 0 ], pov.position[ 1 ] + p.position[ 1 ], pov.position[ 2 ] + p.position[ 2 ] ] );
-
             // Set the Model matrix.
 
             prim.setM( mvMatrix );
@@ -588,14 +586,6 @@ class PrimFactory {
          */
         prim.setM = ( mMatrix ) => {
 
-            // Internal Prim Translate.
-
-            vec3.add( p.position, p.position, p.acceleration );
-
-            // Rotate.
-
-            vec3.add( p.rotation, p.rotation, p.angular );
-
             mat4.rotate( mMatrix, mMatrix, p.rotation[ 0 ], [ 1, 0, 0 ] );
 
             mat4.rotate( mMatrix, mMatrix, p.rotation[ 1 ], [ 0, 1, 0 ] );
@@ -605,6 +595,22 @@ class PrimFactory {
             mat4.scale( mMatrix, mMatrix, p.scale );
 
             return mMatrix;
+
+        };
+
+        /** 
+         * Update the position, rotation, and orbit of a Prim.
+         */
+        prim.updateCoords = ( ) => {
+
+            vec3.add( p.position, p.position, p.acceleration );
+
+            // Rotate.
+
+            vec3.add( p.rotation, p.rotation, p.angular );
+
+
+            // Scale doesn't need to be updated, just passed in the .setM and .setMV above.
 
         }
 

@@ -187,22 +187,37 @@ class ShaderSky extends Shader {
 
         // Update Prim position, motion - given to World object.
 
-        program.update = ( prim, MVM ) => {
+        program.update = ( prim, MVM, updatePrim ) => {
 
             // Update the model-view matrix using current Prim position, rotation, etc.
 
             prim.setMV( mvMatrix );
 
+            // Calculates a 3x3 normal matrix (transpose inverse) from the 4x4 matrix.
+
+            mat3.normalFromMat4( nMatrix, mvMatrix );
+
+            // Update coordinates every time for mono, but only one time for stereo.
+
+            if ( updatePrim ) prim.updateCoords();
+
         }
+
+        // Create a save matrix.
+
+        let saveMV = mat4.create();
 
         /*
          * Prim rendering. We pass in a the Projection Matrix so we can render in mono and stereo, and 
          * the position of the camera/eye (POV) for some kinds of rendering (e.g. specular).
          * @param {glMatrix.mat4} PM projection matrix, either mono or stereo.
          * @param {glMatrix.vec3} pov the position of the camera in World space.
+         * @param {Boolean} if true, have the Prim update its position and rotation. If false, 
+         * compute the mvMatrix for the Prim without updating (e.g. for the second Stereo view in 
+         * vrDisplay).
          */
 
-        program.render = ( PM, pov ) => {
+        program.render = ( PM, pov, updatePrim ) => {
 
             if ( ! program.renderList.length ) return;
 
@@ -210,7 +225,7 @@ class ShaderSky extends Shader {
 
             // Save the model-view supplied by the shader. Mono and VR return different MV matrices.
 
-            let saveMV = mat4.clone( mvMatrix );
+            mat4.copy( saveMV, mvMatrix );
 
             // Begin program loop
 
@@ -224,7 +239,7 @@ class ShaderSky extends Shader {
 
                 // Update Model-View matrix with standard Prim values.
 
-                program.update( prim, mvMatrix );
+                program.update( prim, mvMatrix, updatePrim );
 
                 // TODO: bind buffers
 
@@ -234,7 +249,7 @@ class ShaderSky extends Shader {
 
                 // Copy back the original for the next Prim. 
 
-                mat4.copy( mvMatrix, saveMV, mvMatrix);
+                mat4.copy( mvMatrix, saveMV );
 
             } // end of renerList for Prims
 

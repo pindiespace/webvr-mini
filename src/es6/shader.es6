@@ -570,6 +570,8 @@ class Shader {
 
         }
 
+        let primUpdate = true;
+
         /**
          * Rendering mono view.
          */
@@ -585,7 +587,7 @@ class Shader {
 
             //mat4.translate( vMatrix, vMatrix, pov.position );
 
-            // Copy vMatrix to mvMatrix (so we have vMatrix separately for Shader).            
+            // Copy vMatrix to mvMatrix (so we have vMatrix separately for Shader).
 
             mat4.copy( mvMatrix, vMatrix );
 
@@ -593,7 +595,7 @@ class Shader {
 
             mat4.perspective( pMatrix, Math.PI*0.4, canvas.width / canvas.height, near, far );
 
-            program.render( pMatrix, pov );
+            program.render( pMatrix, pov, true );
 
         }
 
@@ -626,7 +628,7 @@ class Shader {
 
             // Use left Projection matrix provided by WebVR FrameData object to render the World.
 
-            program.render( frameData.leftProjectionMatrix, pov );
+            program.render( frameData.leftProjectionMatrix, pov, true );
 
             // ----------------------- Right eye. ----------------------------------
 
@@ -650,7 +652,7 @@ class Shader {
 
             // Use right Projection matrix provided by WebVR FrameData object to render the World.
 
-            program.render( frameData.rightProjectionMatrix, pov );
+            program.render( frameData.rightProjectionMatrix, pov, false ); // DON'T UPDATE THE PRIM
 
             // Calling function submits rendered stereo view to device.
 

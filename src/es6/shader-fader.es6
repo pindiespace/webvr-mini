@@ -458,7 +458,7 @@ class ShaderFader extends Shader {
 
         // Update Prim position, motion - given to World object.
 
-        program.update = ( prim, MVM ) => {
+        program.update = ( prim, MVM, updatePrim ) => {
 
             //let f = prim.fade;
             //console.log(prim.name + ' alpha:' + f.incr + ' endAlpha:' + f.endAlpha + ' startAlpha:' + f.startAlpha)
@@ -473,16 +473,26 @@ class ShaderFader extends Shader {
 
             mat3.normalFromMat4( nMatrix, MVM );
 
+            // Update coordinates every time for mono, but only one time for stereo.
+
+            if ( updatePrim ) prim.updateCoords();
+
         }
+
+        // Create a save matrix.
+
+        let saveMV = mat4.create();
 
         /*
          * Prim rendering. We pass in a the Projection Matrix so we can render in mono and stereo, and 
          * the position of the camera/eye (POV) for some kinds of rendering (e.g. specular lighting).
          * @param {glMatrix.mat4} PM projection matrix, either mono or stereo.
          * @param {glMatrix.vec3} pov the position of the camera in World space.
+         * @param {Boolean} updatePrim if true, adjust Prim coordinates. Do every time for mono, but only 
+         * one time for stereo.
          */
 
-        program.render = ( PM, pov ) => {
+        program.render = ( PM, pov, updatePrim ) => {
 
             if ( ! program.renderList.length ) return;
 
@@ -490,7 +500,7 @@ class ShaderFader extends Shader {
 
             // Save the model-view supplied by the shader. Mono and VR return different MV matrices.
 
-            let saveMV = mat4.clone( mvMatrix );
+            mat4.copy( saveMV, mvMatrix );
 
             // Reset perspective matrix.
 
@@ -506,7 +516,7 @@ class ShaderFader extends Shader {
 
                 // Individual prim update
 
-                program.update( prim, mvMatrix );
+                program.update( prim, mvMatrix, updatePrim );
 
                 // default material (other Shaders might use multiple materials).
 
@@ -664,7 +674,7 @@ class ShaderFader extends Shader {
 
                 // Copy back the original for the next Prim. 
 
-                mat4.copy( mvMatrix, saveMV, mvMatrix );
+                mat4.copy( mvMatrix, saveMV );
 
             } // end of renderList for Prims
 
