@@ -873,6 +873,8 @@ class World extends AssetPool {
      */
     housekeep () {
 
+// TODO: fullscreen doesn't work if we use VRDisplay.exitFullScreen()
+
 // TODO: Spinner in Ui
 
 // TODO: Modal DOM dialog for ui.es6

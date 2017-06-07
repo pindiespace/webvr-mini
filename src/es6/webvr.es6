@@ -154,11 +154,27 @@ class WebVR {
 
                         this.display = window; // TODO: TEST ON SMARTPHONE???????????????
 
-                    } 
+                    }  // no valid display
 
-                } // valid VRFrameData
+                } else { // valid VRFrameData
 
-            } ); // getVRDisplays returned a value
+                    console.warn( 'WebVR::init(): invalid VRFrameData' );
+
+                    this.display = window;
+
+                }
+
+            } ).catch (
+
+                ( error ) => {
+
+                    console.warn( 'WebVR::init(): navigator.getVRDisplays failed' );
+
+                    this.display = window;
+
+                }
+
+            ); // getVRDisplays returned a value
 
         } else {
 

@@ -3538,8 +3538,19 @@
 	                                                        console.warn('WebVR::init(): no VR displays found');
 
 	                                                        _this.display = window; // TODO: TEST ON SMARTPHONE???????????????
-	                                                }
-	                                        } // valid VRFrameData
+	                                                } // no valid display
+	                                        } else {
+	                                                // valid VRFrameData
+
+	                                                console.warn('WebVR::init(): invalid VRFrameData');
+
+	                                                _this.display = window;
+	                                        }
+	                                }).catch(function (error) {
+
+	                                        console.warn('WebVR::init(): navigator.getVRDisplays failed');
+
+	                                        _this.display = window;
 	                                }); // getVRDisplays returned a value
 	                        } else {
 
@@ -19392,6 +19403,8 @@
 	        }, {
 	                key: 'housekeep',
 	                value: function housekeep() {}
+
+	                // TODO: fullscreen doesn't work if we use VRDisplay.exitFullScreen()
 
 	                // TODO: Spinner in Ui
 
