@@ -117,6 +117,18 @@ class World extends AssetPool {
 
         this.render = this.render.bind( this );
 
+
+        // Listen for the display being ready.
+
+        this.util.emitter.on( 'vrdisplayready', 
+
+            ( deviceName ) => {
+
+                this.vr.getDisplay().requestAnimationFrame( this.render );
+
+            } );
+
+
     }
 
     /** 
@@ -787,9 +799,7 @@ class World extends AssetPool {
 
         // Fire world update. 
 
-        //////////////////////this.render();
 
-        window.requestAnimationFrame( this.render );
 
     }
 
@@ -1044,7 +1054,6 @@ NOTE: THIS IMPLIES WE HAVE TO DO IT IN WORLD.
 */
 
         let disp = vr.getDisplay();
-
 
         // Clear the View matrix for the World.
 

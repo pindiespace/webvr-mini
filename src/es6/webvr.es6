@@ -130,7 +130,11 @@ class WebVR {
 
                             this.setStageParameters( display );
 
-                            // Fire our pseudo-event 'vrdisplay' for webvr capability.
+                            /** 
+                             * Fire our pseudo-event 'vrdisplay' for webvr capability.
+                             * This is received by the UI to configure buttons, and World 
+                             * to start the rendering process.
+                             */
 
                             this.util.emitter.emit( 'vrdisplayready', display.displayName );
 
