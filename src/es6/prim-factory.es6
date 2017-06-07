@@ -253,6 +253,8 @@ class PrimFactory {
 
             if ( m.key === options.materialKey ) {
 
+                // e.g. material.map_Kd, material.map_Ka....
+
                 m[ options.type ] = textureObj.texture;
 
                 m[ options.type + '-key' ] = textureObj.key;
@@ -837,10 +839,6 @@ class PrimFactory {
 
         }
 
-        // Give the Prim a unique Id.
-
-        prim.id = this.util.computeId();
-
         // Shader after the Prim has initialized.
 
         prim.shader = this.world.s0; // Fadein Shader
@@ -854,6 +852,8 @@ class PrimFactory {
         // Type (must match type defined in Prim.typeList).
 
         prim.type = type;
+
+        prim.key = this.util.computeId();
 
         // Size in world coordinates.
 
@@ -1015,76 +1015,14 @@ class PrimFactory {
 
         // Create Geometry data, or load Mesh data (may alter some of the above default properties).
 
-        this.geometryPool.getGeometries( prim, modelFiles );
+        this.geometryPool.getGeometries( prim, modelFiles, true, { prim: prim } );
 
-        // Push into our list of all Prims. Shaders keep a local list of Prims they are rendering.
+        console.log('############prim.name:' + prim.name)
 
-            // TODO: DEBUG REMOVE
-            if ( prim.name === 'capsule' ) {
-
-                window.capsule = prim; //////////////TODO: remove
-            }
-
-            if ( prim.name === 'TORUS1' ) {
-
-                window.torus = prim;
-
-            }
-
-            if ( prim.name === 'teapot' ) {
-
-                window.teapot = prim;
-
-            }
-
-            if ( prim.name == 'first cube' ) {
-
-                window.firstcube = prim;
-
-            }
-
-            if ( prim.name = 'colored cube' ) {
-
-                window.coloredcube = prim;
-
-            }
-
-            if ( prim.name === 'objfile' ) {
-
-                window.objfile = prim;
-
-            }
-
-            if ( prim.name === 'objfile2' ) {
-
-                window.objfile2 = prim;
-
-            }
-
-            if ( prim.name === 'cubespheretransparent' ) {
-
-                window.cubetrans = prim;
-
-            }
-
-            if ( prim.name === 'TestTearDrop' ) {
-
-                window.teardrop = prim;
-
-            }
-
-            if ( prim.name === 'skydome' ) {
-
-                window.skydome = prim;
-
-            }
-
-            if ( prim.name === 'toji cube' ) {
-
-                window.toji = prim;
-
-            }
-
+        //////////////////////////////////////
+        window[ prim.name ] = prim;
+        //////////////////////////////////////
+    
         this.prims.push( prim );
 
         return prim;

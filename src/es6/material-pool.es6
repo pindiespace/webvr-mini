@@ -738,7 +738,7 @@ class MaterialPool extends AssetPool {
      */
     setDefaultMaterial ( prim, materialName, textureImages ) {
 
-        let mi = this.addAsset( this.default( prim.name + '-' + this.DEFAULT_KEY ) );
+        let mi = this.addAsset( this.default( prim.name + '-' + this.util.DEFAULT_KEY ) );
 
         mi.type = prim.type,
 
@@ -750,7 +750,11 @@ class MaterialPool extends AssetPool {
 
         // If we have textures, load them.
 
-        this.texturePool.getTextures( prim, textureImages, true, false, this.webgl.getContext().TEXTURE_2D, { materialKey: mi.key } );
+        for ( let i = 0; i < textureImages.length; i++ ) {
+
+            this.texturePool.getTextures( prim, textureImages[ i ], true, false, this.webgl.getContext().TEXTURE_2D, { materialKey: mi.key, pos: i } );   
+
+        }
 
         return mi;
 
@@ -763,7 +767,7 @@ class MaterialPool extends AssetPool {
      * @param {Array[String]} pathList a list of URL paths to load, or a key for a material in our pool.
      * @param {Boolean} cacheBust if true, add a http://url?random query string to request.
      */
-    getMaterials ( prim, pathList, cacheBust = true, start = 0 ) {
+    getMaterials ( prim, pathList, cacheBust = true ) {
 
         // Wrap single strings in an Array.
 
@@ -781,73 +785,62 @@ class MaterialPool extends AssetPool {
 
             if ( ! this.util.isWhitespace( path ) ) {
 
-                // See if the 'path' is actually a key for our MaterialPool.
+                // Get the image mimeType.
 
-                let poolMaterial = this.pathInList( path );
+                let mimeType = this.materialMimeTypes[ this.util.getFileExtension( path ) ];
 
-                if ( poolMaterial ) {
+                // check if mimeType is OK.
 
-                    console.log("REFERENCING EXISTING MATERIAL...")
+                if( mimeType ) {
 
-                    prim.materials.push( poolMaterial ); // just reference an existing texture in this pool.
+                    this.doRequest( path, i, 
+
+                        ( updateObj ) => {
+
+                            /* 
+                             * updateObj returned from GetAssets has the following structure:
+                             * { 
+                             *   pos: pos, 
+                             *   path: requestURL, 
+                             *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
+                             *   error: false|response 
+                             * } 
+                             */
+
+                            if ( updateObj.data ) {
+
+                                let materialObj = this.addMaterial( prim, updateObj.data, updateObj.path, updateObj.pos, mimeType, prim.type );
+
+                                // Multiple materials may be returned from one .mtl file.
+
+                                if ( materialObj ) {
+
+                                    for ( let j in materialObj ) {
+
+                                        ////////////console.log("MaterialPool sending:" + materialObj[ i ].emits + ' key:' + materialObj[ i ].key + ' i:' + i )
+
+                                        // Note that 'i' is the name of the material, instead of a numerical index (which it is in ModelPool and TexturePool).
+
+
+                                        console.log("==========emitting for materialObj:" + j)
+
+                                        this.util.emitter.emit( materialObj[ j ].emits, prim, materialObj[ j ].key, i );
+
+                                    }
+
+                                } // end of material addition.
+
+                            } else {
+
+                                console.error( 'MaterialPool::getMaterials(): no data found for:' + updateObj.path );
+
+                            }
+
+                        }, cacheBust, mimeType, 0 ); // end of this.doRequest(), initial request at 0 tries
 
                 } else {
 
-                    // Get the image mimeType.
-
-                    let mimeType = this.materialMimeTypes[ this.util.getFileExtension( path ) ];
-
-                    // check if mimeType is OK.
-
-                    if( mimeType ) {
-
-                        this.doRequest( path, i, 
-
-                            ( updateObj ) => {
-
-                                /* 
-                                 * updateObj returned from GetAssets has the following structure:
-                                 * { 
-                                 *   pos: pos, 
-                                 *   path: requestURL, 
-                                 *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
-                                 *   error: false|response 
-                                 * } 
-                                 */
-
-                                if ( updateObj.data ) {
-
-                                    let materialObj = this.addMaterial( prim, updateObj.data, updateObj.path, updateObj.pos, mimeType, prim.type );
-
-                                    // Multiple materials may be returned from one .mtl file.
-
-                                    if ( materialObj ) {
-
-                                        for ( let i in materialObj ) {
-
-                                            ////////////console.log("MaterialPool sending:" + materialObj[ i ].emits + ' key:' + materialObj[ i ].key + ' i:' + i )
-
-                                            // Note that 'i' is the name of the material, instead of a numerical index (which it is in ModelPool and TexturePool).
-
-                                            this.util.emitter.emit( materialObj[ i ].emits, prim, materialObj[ i ].key, i );
-
-                                        }
-
-                                    } // end of material addition.
-
-                                } else {
-
-                                    console.error( 'MaterialPool::getMaterials(): no data found for:' + updateObj.path );
-
-                                }
-
-                            }, cacheBust, mimeType, 0 ); // end of this.doRequest(), initial request at 0 tries
-
-                    } else {
-
-                        console.error( 'MaterialPool::getModels(): file type "' + this.util.getFileExtension( path ) + ' not supported, not loading' );
-
-                    }
+                    console.error( 'MaterialPool::getModels(): file type "' + this.util.getFileExtension( path ) + ' not supported, not loading' );
 
                 }
 

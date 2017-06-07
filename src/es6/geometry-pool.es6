@@ -3658,7 +3658,7 @@ class GeometryPool {
     /** 
      * Get multiple geometries.
      */
-    getGeometries( prim, pathList = [], cacheBust = true ) {
+    getGeometries( prim, pathList = [], cacheBust = true, options = {} ) {
 
         if( pathList && ( prim.type === this.typeList.MESH ) ) {
 
@@ -3682,27 +3682,15 @@ class GeometryPool {
 
                 if ( ! this.util.isWhitespace( path ) ) {
 
-                // See if the 'path' is actually a key in this.modelPool.
+                    // See if the 'path' is actually a key in this.modelPool.
 
-                let poolModel = this.modelPool.pathInList( path );
+                    // Load geometry from a file, with callback emitter GEOMETRY_READY in ModelPool, calling Prim.initPrim().
 
-                    if ( poolModel ) {
+                    ///////console.log( 'GeometryPool::getGeometries(): new model file ' + path + ' for ' + prim.name );
 
-                        // Reload from the asset file.
+                    console.log("--------getting model for:" + prim.name)
 
-                        console.log( 'GeometryPool::getGeometries(): model file ' + path + ' already in the pool for:' + prim.name)
-
-                        prim.models.push( poolModel ); // just reference an existing texture in this pool.
-
-                    } else {
-
-                        // Load geometry from a file, with callback emitter GEOMETRY_READY in ModelPool, calling Prim.initPrim().
-
-                        ///////console.log( 'GeometryPool::getGeometries(): new model file ' + path + ' for ' + prim.name );
-
-                        this.modelPool.getModels( prim, pathList, true );
-
-                    }
+                    this.modelPool.getModels( prim, pathList, true, options );
 
                 } else {
 

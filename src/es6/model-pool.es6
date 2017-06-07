@@ -479,6 +479,8 @@ class ModelPool extends AssetPool {
 
                         for ( let i = 0; i < mtls.length; i++ ) {
 
+                            console.log("========GET MATERIAL FOR PRIM:" + prim.name)
+
                             this.materialPool.getMaterials( prim, [ dir + data ], true );
 
                         }
@@ -600,7 +602,7 @@ class ModelPool extends AssetPool {
 
                         if ( j == i ) { // our current face number is the same as a face number in the faces array
 
-                            nMatStars[ j ] = [ matStarts[ j ][ 0 ], iIdx ]; // write the new index to that position
+                            nMatStarts[ j ] = [ matStarts[ j ][ 0 ], iIdx ]; // write the new index to that position
 
                         }
 
@@ -668,10 +670,7 @@ class ModelPool extends AssetPool {
 
             }
 
-
             // Compute the length of each matStarts position.
-
-            // TODO:::::::::::::::::::::::
 
             // Replace raw vertex, index, texCoord, normal data with face-adjusted data.
 
@@ -837,7 +836,7 @@ class ModelPool extends AssetPool {
      * @param {Array[String]} pathList a list of URL paths to load, or keys referencing our pool.
      * @param {Boolean} cacheBust if true, add a http://url?random query string to request.
      */
-    getModels ( prim, pathList, cacheBust = true ) {
+    getModels ( prim, pathList, cacheBust = true, options = {} ) {
 
         // Wrap single strings in an Array.
 
@@ -855,74 +854,66 @@ class ModelPool extends AssetPool {
 
             if ( ! this.util.isWhitespace( path ) ) {
 
-                // See if the 'path' is actually a key for our ModelPool.
+                // Get the file mimeType.
 
-                let poolModel = this.pathInList( path );
+                let mimeType = this.modelMimeTypes[ this.util.getFileExtension( path ) ];
 
-                if ( poolModel ) {
+                console.log("--------OBJ file doRequest model for:" + prim.name + ' pathList:' + pathList)
 
-                    prim.models.push( poolModel ); // just reference an existing texture in this pool.
+                // check if mimeType is OK.
 
-                } else {
+                if( mimeType ) {
 
-                    // Get the image mimeType.
+                    this.doRequest( path, i, 
 
-                    let mimeType = this.modelMimeTypes[ this.util.getFileExtension( path ) ];
+                        ( updateObj ) => {
 
-                    // check if mimeType is OK.
+                            /* 
+                             * updateObj returned from GetAssets has the following structure:
+                             * { 
+                             *   pos: pos, 
+                             *   path: requestURL, 
+                             *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
+                             *   error: false|response 
+                             * } 
+                             */
 
-                    if( mimeType ) {
+                            console.log("--------OBJ file returned model for:" + prim.name)
 
-                        this.doRequest( path, i, 
+                            // load a Model file. Only the first object in the file will be read.
 
-                            ( updateObj ) => {
+                            if ( updateObj.data ) {
 
-                                /* 
-                                 * updateObj returned from GetAssets has the following structure:
-                                 * { 
-                                 *   pos: pos, 
-                                 *   path: requestURL, 
-                                 *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
-                                 *   error: false|response 
-                                 * } 
-                                 */
+                                let modelObj = this.addModel( prim, updateObj.data, updateObj.path, updateObj.pos, mimeType, prim.type );
 
-                                // load a Model file. Only the first object in the file will be read.
+                                if ( modelObj ) {
 
-                                if ( updateObj.data ) {
+                                    /* 
+                                     * GEOMETRY_READY event, with additional data referencing sub-groups of the model.
+                                     * NOTE: options (e.g. starts of groups, materials, smoothing groups) are attached to modelObj.
+                                     * NOTE: we recover the modelObj by its key in PrimFactory.
+                                     * See this.addModel() above for more information.
+                                     */
 
-                                    let modelObj = this.addModel( prim, updateObj.data, updateObj.path, updateObj.pos, mimeType, prim.type );
-
-                                    if ( modelObj ) {
-
-                                        /* 
-                                         * GEOMETRY_READY event, with additional data referencing sub-groups of the model.
-                                         * NOTE: options (e.g. starts of groups, materials, smoothing groups) are attached to modelObj.
-                                         * NOTE: we recover the modelObj by its key in PrimFactory.
-                                         * See this.addModel() above for more information.
-                                         */
-
-                                        this.util.emitter.emit( modelObj.emits, prim, modelObj.key, modelObj.pos );
-
-                                    } else {
-
-                                        console.error( 'TexturePool::getModels(): file:' + path + ' could not be parsed' );
-
-                                    }
+                                    this.util.emitter.emit( modelObj.emits, prim, modelObj.key, modelObj.pos );
 
                                 } else {
 
-                                    console.error( 'ModelPool::getModels(): no data found for:' + updateObj.path );
+                                    console.error( 'TexturePool::getModels(): file:' + path + ' could not be parsed' );
 
                                 }
 
-                            }, cacheBust, mimeType, 0 ); // end of this.doRequest(), initial request at 0 tries
+                            } else {
 
-                    } else {
+                                console.error( 'ModelPool::getModels(): no data found for:' + updateObj.path );
 
-                        console.error( 'ModelPool::getModels(): file type "' + this.util.getFileExtension( path ) + '" in:' + path + ' not supported, not loading' );
+                            }
 
-                    }
+                    }, cacheBust, mimeType, 0 ); // end of this.doRequest(), initial request at 0 tries
+
+                } else {
+
+                    console.error( 'ModelPool::getModels(): file type "' + this.util.getFileExtension( path ) + '" in:' + path + ' not supported, not loading' );
 
                 }
 

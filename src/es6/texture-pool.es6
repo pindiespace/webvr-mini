@@ -417,15 +417,9 @@ class TexturePool extends AssetPool {
      * @param {WebGL.TEXTURE} textureType a WebGL-enumerated texture type (TEXTURE_2D, TEXTURE_3D...), default TEXTURE_2D.
      * @param {Object} options if present, additional options for rendering the texture (e.g. scaling, sharpening, brightening).
      */
-    getTextures ( prim, pathList, cacheBust = true, keepDOMImage = false, glTextureType, options = {} ) {
+    getTextures ( prim, path, cacheBust = true, keepDOMImage = false, glTextureType, options = {} ) {
 
         // Wrap single strings in an Array.
-
-        if ( this.util.isString( pathList ) ) {
-
-            pathList = [ pathList ];
-
-        }
 
         // If no textureType defined, default to 2D texture.
 
@@ -435,9 +429,11 @@ class TexturePool extends AssetPool {
 
         }
 
-        for ( let i = 0; i < pathList.length; i++ ) {
-
-            let path = pathList[ i ];
+///////////////
+// TODO: SHRINK THIS, AND USE WITH ALL THE OTHERS.
+// TODO: MAKE IT 'getTexture'
+            let i = options.pos;
+///////////////
 
             if ( path === null ) console.log( 'NULL AT: ' + i)
 
@@ -445,135 +441,128 @@ class TexturePool extends AssetPool {
 
             if ( ! this.util.isWhitespace( path ) ) {
 
-                // See if the 'path' is actually a key for our TexturePool.
+                // Get the image mimeType.
 
-                let poolTexture = this.pathInList( path );
+                let mimeType = this.textureMimeTypes[ this.util.getFileExtension( path ) ];
 
-                // If it's already in TexturePool, just use.
+                // check if mimeType is OK.
 
-                if ( poolTexture ) {
+                if( mimeType ) {
 
-                    console.log( ')))))))))))))) found pre-existing texture ' + poolTexture.id + ' at path:' + path );
+                    /* 
+                     * Use Fetch API to load the image, wrapped in a Promise timeout with 
+                     * multiple retries possible (in parent class GetAssets). Return a 
+                     * response.blob() for images, and add to DOM or WebGL texture here. 
+                     * We apply the Blob data to a JS image to decode. Since this may not 
+                     * be instant, we catch the .onload event to actually send the WebGL texture.
+                     */
 
-                    prim.textures.push( poolTexture ); // just reference an existing texture in this pool.
+                    this.doRequest( path, i, 
 
-                } else {
+                        ( updateObj ) => {
 
-                    // Get the image mimeType.
+                            /* 
+                             * updateObj returned from GetAssets has the following structure:
+                             * { 
+                             *   pos: pos, 
+                             *   path: requestURL, 
+                             *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
+                             *   error: false|response 
+                             * } 
+                             */
 
-                    let mimeType = this.textureMimeTypes[ this.util.getFileExtension( path ) ];
+                            let image = new Image();
 
-                    // check if mimeType is OK.
+                            // Blob data type requires Image .onload for processing.
 
-                    if( mimeType ) {
+                            image.onload = () => {
 
-                        /* 
-                         * Use Fetch API to load the image, wrapped in a Promise timeout with 
-                         * multiple retries possible (in parent class GetAssets). Return a 
-                         * response.blob() for images, and add to DOM or WebGL texture here. 
-                         * We apply the Blob data to a JS image to decode. Since this may not 
-                         * be insteant, we catch the .onload event to actually send the WebGL texture.
-                         */
+                                // Create a WebGLTexture from the Image (left off 'type' for gl.TEXTURE type).
 
-                        this.doRequest( path, i, 
+                                // Add the texture.
 
-                            ( updateObj ) => {
+                                console.log('-----------adding texture ' + path + ' to ' + prim.name)
 
-                                /* 
-                                 * updateObj returned from GetAssets has the following structure:
-                                 * { 
-                                 *   pos: pos, 
-                                 *   path: requestURL, 
-                                 *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
-                                 *   error: false|response 
-                                 * } 
-                                 */
+                                let textureObj = this.addTexture( prim, image, updateObj.path, options.pos, mimeType, glTextureType );
 
-                                let image = new Image();
+                                if ( textureObj ) {
 
-                                // Blob data type requires Image .onload for processing.
+                                    if( ! keepDOMImage ) {
 
-                                image.onload = () => {
+                                        //document.body.appendChild( image );
 
-                                    // Create a WebGLTexture from the Image (left off 'type' for gl.TEXTURE type).
+                                        // Remove the Blob URL
 
-                                    // Add the texture.
+                                        window.URL.revokeObjectURL( image.src );
 
-                                    let textureObj = this.addTexture( prim, image, updateObj.path, updateObj.pos, mimeType, glTextureType );
+                                        // Kill the reference to our local Image and its (Blob) data.
 
-                                    if ( textureObj ) {
-
-                                        if( ! keepDOMImage ) {
-
-                                            //document.body.appendChild( image );
-
-                                            // Remove the Blob URL
-
-                                            window.URL.revokeObjectURL( image.src );
-
-                                            // Kill the reference to our local Image and its (Blob) data.
-
-                                            textureObj.image = null;
+                                        textureObj.image = null;
 
                                         // If you want to add to DOM, do so here.
 
-                                        }
+                                    }
 
-                                        /* 
-                                         * Look up the type/usage of the texture (e.g., map_Kd, map_Ka...) 
-                                         * in the materialPool lookup table by its array position in the pathList
-                                         */
+                                    /* 
+                                     * Look up the type/usage of the texture (e.g., map_Kd, map_Ka...) 
+                                     * in the materialPool lookup table by its array position in the pathList
+                                     */
 
-                                        options.type = this.materialPool.texturePositions[ i ];
+                                    console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!options.type:" + options.type)
 
+                                    console.log("updateObj.pos:" + updateObj.pos)
 
-                                        // options.materials should already be set
+                                    if ( ! options.type ) {
 
-                                        /*
-                                         * Emit a 'texture ready event' with the key in the pool and path (intercepted by PrimFactory).
-                                         * NOTE: options for each texture's rendering are attached to textureObj.
-                                         * NOTE: in PrimFactory, we recover textureObj by its key in TexturePool.
-                                         */
-
-                                        this.util.emitter.emit( textureObj.emits, prim, textureObj.key, options );
-
-                                    } else {
-
-                                        console.error( 'TexturePool::getTextures(): file:' + path + ' could not be parsed' );
-
-                                        this.util.emitter.emit( this.util.emitter.events.TEXTURE_2D_READY, prim, this.defaultKey, options );  
+                                        options.type = this.materialPool.texturePositions[ updateObj.pos ];
 
                                     }
 
-                                } // end of image.onload callback
+                                    // options.materials should already be set
 
-                                // Create a URL to the Blob, and fire the onload event (internal browser URL instead of network).
+                                    /*
+                                     * Emit a 'texture ready event' with the key in the pool and path (intercepted by PrimFactory).
+                                     * NOTE: options for each texture's rendering are attached to textureObj.
+                                     * NOTE: in PrimFactory, we recover textureObj by its key in TexturePool.
+                                     */
 
-                                if ( updateObj.data ) {
-
-                                    image.src = window.URL.createObjectURL( updateObj.data );
+                                    this.util.emitter.emit( textureObj.emits, prim, textureObj.key, options );
 
                                 } else {
 
-                                    // Put a single-pixel texture in its place.
+                                    console.error( 'TexturePool::getTextures(): file:' + path + ' could not be parsed' );
 
-                                    this.util.emitter.emit( this.util.emitter.events.TEXTURE_2D_READY, prim, this.defaultKey, options );                                    
-
-                                    console.error( 'TexturePool::getTextures(): invalid image data:' + updateObj.path + ' data:' + updateObj.data );
+                                    this.util.emitter.emit( this.util.emitter.events.TEXTURE_2D_READY, prim, this.defaultKey, options );  
 
                                 }
 
+                            } // end of image.onload callback
+
+                            // Create a URL to the Blob, and fire the onload event (internal browser URL instead of network).
+
+                            if ( updateObj.data ) {
+
+                                image.src = window.URL.createObjectURL( updateObj.data );
+
+                            } else {
+
+                                // Put a single-pixel texture in its place.
+
+                                this.util.emitter.emit( this.util.emitter.events.TEXTURE_2D_READY, prim, this.defaultKey, options );                                    
+
+                                console.error( 'TexturePool::getTextures(): invalid image data for prim:' + prim.name + 'path:' + updateObj.path + ' data:' + updateObj.data );
+
+                            }
+
                         }, cacheBust, mimeType, 0 ); // end of this.doRequest(), initial request at 0 tries
 
-                    } else {
+                } else {
 
-                        console.error( 'TexturePool::getTextures(): file type "' + this.util.getFileExtension( path ) + '" in:' + path + ' not supported, not loading' );
+                    console.error( 'TexturePool::getTextures(): file type "' + this.util.getFileExtension( path ) + '" in:' + path + ' not supported, not loading' );
 
-                        // Put a single-pixel texture in its place.
+                    // Put a single-pixel texture in its place.
 
-                        this.util.emitter.emit( this.util.emitter.events.TEXTURE_2D_READY, prim, this.defaultKey, options );
-
-                    }
+                    this.util.emitter.emit( this.util.emitter.events.TEXTURE_2D_READY, prim, this.defaultKey, options );
 
                 }
 
@@ -583,7 +572,7 @@ class TexturePool extends AssetPool {
 
             } // end of valid path
 
-        } // end of for loop for texture paths
+        //} // end of for loop for texture paths
 
     }
 

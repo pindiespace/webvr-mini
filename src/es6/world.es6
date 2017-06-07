@@ -17,7 +17,6 @@ class World extends AssetPool {
      * Required functions:
      * getVS() - the vertex shader.
      * getFS() - get the fragment shader.
-     * rer() - update on rer of <canvas>.
      * render() - rendering loop.
      * init() - create the world for this first time.
      * constructor() - initialize, passing in WebVR-Mini object.
@@ -290,17 +289,17 @@ class World extends AssetPool {
 
                 this.s1,                      // callback function
                 typeList.CUBE,
-                'first cube',                                        // name
+                'toji',                                        // name
                 vec5( 1, 1, 1 ),            // dimensions
                 vec5( 10, 10, 10, 0 ),            // divisions, pass curving of edges as 4th parameter
                 vec3.fromValues( 1, 0, 2 ),            // position (absolute)
                 vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
                 vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
                 vec3.fromValues( util.degToRad( 1 ), util.degToRad( 1 ), util.degToRad( 1 ) ), // angular velocity in x, y, x
-                [ 'img/crate.png', 'img/webvr-logo1.png' ],          // texture image
-
+                [ 'img/crate.png', 'img/webvr-logo1.png', 'img/wood-planks-tiled.jpg' ],          // texture image
+                // applyTexToFace value
+                // modelfiles
             );
-
 
             this.primFactory.createPrim(
             
@@ -313,10 +312,41 @@ class World extends AssetPool {
                 vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
                 vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
                 vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [ 'img/uv-test.png' ],               // texture present
-                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
+                [ 'img/uv-test.png' ]               // texture present
+                // applyTexToFace value
+                // modelfiles
             
             );
+/*
+
+            this.primFactory.createPrim(
+
+                this.s1,                               // callback function
+                typeList.MESH,
+                'objfile',
+                vec5( 2, 2, 2 ),                       // dimensions (4th dimension doesn't exist for cylinder)
+                vec5( 40, 40, 40  ),                    // divisions MAKE SMALLER
+                vec3.fromValues( -6.5, -1, -1.0 ),      // position (absolute)
+                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+                vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+                [], // texture loaded directly
+                true,                                   // if true, apply texture to each face,
+                [ 'obj/capsule/capsule.obj' ] // object files (.obj, .mtl)
+                //[ 'obj/mountains/mountains.obj' ] // ok
+                //[ 'obj/landscape/landscape.obj'] // ok?
+                //[ 'obj/toilet/toilet.obj' ] // works with texture, multiple groups wrap texture!
+                //[ 'obj/naboo/naboo.obj' ] // works fine, but needs to load additional images.
+                //[ 'obj/star/star.obj'] // ok, gets generic grey texture
+                //[ 'obj/robhead/robhead.obj'] // no texcoords or normals
+                //[ 'obj/soccerball/soccerball.obj'] // no texcoords or normals
+                //[ 'obj/basketball/basketball.obj'] // needs TGA translation
+                //[ 'obj/rock1/rock1.obj'] // rock plus surface, works
+                //[ 'obj/cherries/cherries.obj'] // rendering indices error
+                //[ 'obj/banana/banana.obj' ] // works great
+            );
+
+*/
 
 /*
 

@@ -28,10 +28,6 @@ class WebVR {
 
         this.PLAYER_HEIGHT = 1.75; // average player height.
 
-        // .requestAnimationFrame current Id
-
-        this.rafId = null;
-
         // Statistics object.
 
         this.stats = {};
@@ -226,13 +222,13 @@ class WebVR {
 
               }
 
-              console.error( 'WebVR::getFrame(): display.getFrameData returned false' );
+              console.error( 'WebVR::getFrameData(): display.getFrameData returned:' + result );
 
               return null;
 
         }
 
-        console.error( 'WebVR::getFrame(): display does not hav VRFrameData' );
+        console.error( 'WebVR::getFrame(): display does not have VRFrameData' );
 
         return null;
 
