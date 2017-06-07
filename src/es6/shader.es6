@@ -72,10 +72,11 @@ class Shader {
 
         if ( lights ) {
 
-            console.log("ADDING LIGHT TO SHADER:" + this.name )
-
             this.lights = lights;
 
+        } else {
+
+            this.lights = null;
         }
 
         // Define the arrays needed for shaders to work. Subclasses override these values.
@@ -700,7 +701,7 @@ class Shader {
 
             this.vr,
 
-            iSize
+            iSize,
 
         ];
 

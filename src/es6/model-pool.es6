@@ -606,9 +606,7 @@ class ModelPool extends AssetPool {
 
                     }
 
-                    // TODO: Have to re-compute!!!!!
-
-                    // TODO: for smoothing groups!!!!!!
+                    // TODO: for smoothing groups
 
                     ///////////////////////::::::::::::::::::::::::::::::::::::::::::::::::::::
 

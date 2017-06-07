@@ -1033,7 +1033,7 @@ class GeometryPool {
     }
 
     // http://answers.unity3d.com/questions/64410/generating-uvs-for-a-scripted-mesh.html
-    // TODO: get valid results here!!!!!!!
+    // TODO: get valid results here
     computeTexCoords2 ( vertices, indices, scale = 1.0 ) {
 
         let util = this.util;
@@ -3215,8 +3215,6 @@ class GeometryPool {
     geometrySkyIcoDome ( prim ) {
 
         prim.visibleFrom = this.INSIDE;
-
-        // TODO: reverse winding order!!!!!!!!!!!!!!!!!!
 
         return this.geometryIcoSphere( prim, this.directions.TOP, prim.visibleFrom );
 

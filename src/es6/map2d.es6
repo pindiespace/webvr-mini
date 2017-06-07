@@ -160,9 +160,7 @@ class Map2d extends Mapd {
 
         if( this.high < val ) this.high = val;
 
-        ///////////////////////////////////console.log("SETPIXEL: x:" + x + " z:" + z + " val:" + val + ' size:' + this.squareSize )
-
-        this.map[ x + this.width * z ] = val; // NOTE: was squareSize!!!!!!!
+        this.map[ x + this.width * z ] = val; // Note: was this.squareSize
 
     }
 

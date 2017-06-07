@@ -368,7 +368,7 @@ class WebGL {
      */
     hasWebGL () {
 
-        return ( !! this.getContext() );
+        return !! this.getContext();
 
     }
 
@@ -894,7 +894,7 @@ class WebGL {
 
                             gl = canvas.getContext( n[ i ] );
 
-                            console.warn( 'unable to use debug context, trying release:' + n[ i ], ' getParameter:' + gl.getParameter );
+                            console.warn( 'unable to use debug context, trying release:' + n[ i ], ' getParameter:' + typeof gl.getParameter );
 
                         }
 

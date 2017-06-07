@@ -756,7 +756,7 @@ class Mesh {
         let valenceArr = vtx.e;
 
         /* 
-         * IMPORTANT!!!!!
+         * IMPORTANT
          * 
          * For 'seamless' Meshes, every Vertex has at least 6 other Vertices connected 
          * to it. However if the mesh is not continuous, some will have lower valency.
@@ -963,7 +963,7 @@ class Mesh {
 
         let indexArr = this.indexArr;
 
-        // Save a copy DEBUG !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        // TODO: saving extra copy, remove in final version.
 
         this.oldVertexArr = this.vertexArr.slice(); // make a copy
 

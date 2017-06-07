@@ -7,7 +7,7 @@ class WebVR {
      * render scenes to webvr devices
      * following toji's room-scale example:
      * @link https://github.com/toji/webvr.info/blob/master/samples/05-room-scale.html
-     * NOTE: significant webvr code in Shader parent object (sets left and right eye matrix).
+     * Note: significant webvr code in Shader parent object (sets left and right eye matrix).
      * @constructor
      */
     constructor ( init, util, glMatrix, webgl  ) {
@@ -36,6 +36,8 @@ class WebVR {
 
         this.stats = {};
 
+        // Listen for World init event.
+
         // Immediately initialize (for now).
 
         if ( init === true ) {
@@ -57,10 +59,14 @@ class WebVR {
      * https://webvr.rocks/firefox#download
      *
      * Chrome: turn on in chrome://flags/
-     * NOTE: in Mar 2017, FF only supported Oculus, 
+     * Note: in Mar 2017, FF only supported Oculus, 
      * needed Chromium WebVR build to support Vive.
      */
     init () {
+
+        // Default our display to 'window'
+
+        this.display = window;
 
         // Collect stats no matter what...
 
@@ -72,11 +78,15 @@ class WebVR {
 
                 console.log( 'WebVR::init(): webvr is available' );
 
-                this.frameData = new VRFrameData(); // Contains our current pose.
+                if ( 'VRFrameData' in window ) {
+
+                    this.frameData = new VRFrameData(); // Contains our current pose.
+
+                }
 
                 if ( this.frameData ) {
 
-                    console.log( 'WebVR::init(): vr frameData is available for ' + displays.length + ' headsets' );
+                    console.log( 'WebVR::init(): vr VRFrameData is available for ' + displays.length + ' headsets' );
 
                     if ( displays.length > 0 )  {
 
@@ -88,13 +98,19 @@ class WebVR {
 
                             this.display = display;
 
-                            console.log( 'WebVR::init(): valid vr display present' );
+                            if ( ! display.displayName ) {
+
+                                display.displayName = 'Generic WebVR device';
+
+                            }
+
+                            console.log( 'WebVR::init(): valid vr display (' + display.displayName + ') present' );
 
                             // Check if we are somehow already presenting.
 
                             if( display.isPresenting ) {
 
-                                console.warn( 'WebVR::init(): display was already presenting, exit first' );
+                                console.warn( 'WebVR::init(): ' + display.displayName + ' was already presenting, exit first' );
 
                                 this.exitPresent();
 
@@ -136,7 +152,7 @@ class WebVR {
                              * to start the rendering process.
                              */
 
-                            this.util.emitter.emit( 'vrdisplayready', display.displayName );
+                            this.util.emitter.emit( this.util.emitter.events.VR_DISPLAY_READY, display.displayName );
 
                             // Listen for WebVR events.
 
@@ -152,7 +168,7 @@ class WebVR {
 
                         console.warn( 'WebVR::init(): no VR displays found' );
 
-                        this.display = window; // TODO: TEST ON SMARTPHONE???????????????
+                        this.util.emitter.emit( this.util.emitter.events.VR_DISPLAY_FAIL, 'none' );
 
                     }  // no valid display
 
@@ -160,17 +176,23 @@ class WebVR {
 
                     console.warn( 'WebVR::init(): invalid VRFrameData' );
 
-                    this.display = window;
+                    this.util.emitter.emit( this.util.emitter.events.VR_DISPLAY_FAIL, 'none' );
 
                 }
+
+            }, ( error ) => {
+
+                console.warn( 'WebVR::init(): failed to access navigator.getVRDisplays' );
+
+                this.util.emitter.emit( this.util.emitter.events.VR_DISPLAY_FAIL, 'none' );
 
             } ).catch (
 
                 ( error ) => {
 
-                    console.warn( 'WebVR::init(): navigator.getVRDisplays failed' );
+                    console.warn( 'WebVR::init(): navigator.getVRDisplays access error' );
 
-                    this.display = window;
+                    this.util.emitter.emit( this.util.emitter.events.VR_DISPLAY_FAIL, 'none' );
 
                 }
 
@@ -182,9 +204,7 @@ class WebVR {
 
             console.warn( 'WebVR::init(): WebVR API not present, or obsolete version' );
 
-            // Default display to 'window' if there is no WebVR.
-
-            this.display = window;
+            this.util.emitter.emit( this.util.emitter.events.VR_DISPLAY_FAIL, 'none' );            
 
         }
 
@@ -196,7 +216,7 @@ class WebVR {
      */
     getFrameData () {
 
-        if ( this.display ) {
+        if ( this.display.getFrameData ) {
 
               let result = this.display.getFrameData( this.frameData );
 
@@ -218,9 +238,21 @@ class WebVR {
 
     }
 
+    /** 
+     * Check if we have WebVR
+     */
     hasWebVR () {
 
-        return ( !! ( this.frameData && this.display ) );
+        return !! ( ( 'VRFrameData' in window ) && navigator.getVRDisplays );
+
+    }
+
+    /** 
+     * Check if we have access to a WebVR display
+     */
+    hasWebVRDisplay () {
+
+        return !! ( this.hasWebVR() && this.display && this.display.getFrameData );
 
     }
 
@@ -399,7 +431,7 @@ class WebVR {
 
             /* 
              * Force a canvas resize, even if our window size did not change. 
-             * NOTE: This changes the viewport to fill the canvas, instead of 2 stereo regions.
+             * Note: This changes the viewport to fill the canvas, instead of 2 stereo regions.
              */
 
             this.webgl.resizeCanvas( true );
@@ -417,35 +449,25 @@ class WebVR {
 
         let display = this.display;
 
-        if ( display && display.capabilities.canPresent ) {
+        if ( display && display.capabilities && display.capabilities.canPresent ) {
 
             display.requestPresent( [ { source: this.webgl.getCanvas() } ] )
 
-            .then( () => {
+            .then( () => { // fufilled
 
                 // success
-
-                // TODO: KILL THE OLD REQUESTANIMATIONFRAME..........................
-                //window.cancelAnimationFrame( this.rafId );
-                // display.requestAnimationFrame( this.world.render )
-                // OR:
-                // this.world.cancelMono(); ?????????????????????????????
-                // TODO: reset display to webvr display so getDisplay() in World works
-                /////////////////////////////////////////////////////////////////////
 
                 /* 
                  * Note: the <canvas> size changes, but it is wrapped in our <div> so 
                  * doesn't change size. This makes it easier to see the whole stereo view onscreen.
                  * 
-                 * NOTE: this triggers this.vrResize(), but NOT a window resize (handler: webgl.resize() ) event;
-                 * 
-                 * TODO: fullscreen? Expand to window width???????
+                 * Note: this triggers this.vrResize(), but NOT a window resize (handler: webgl.resize() ) event;
                  *
                  */
 
                 console.log( 'WebVR::requestPresent(): present was successful' );
 
-            }, () => {
+            }, () => { // rejected
 
                 console.error( 'WebVR::requestPresent(): present failed' );
 
@@ -464,7 +486,7 @@ class WebVR {
       */
      exitPresent () {
 
-        console.log( 'WebVR::exitPresent():' );
+        console.log( 'WebVR::exitPresent(): event' );
 
         let display = this.display;
 
@@ -483,9 +505,7 @@ class WebVR {
                 /* 
                  * Success!
                  *
-                 * NOTE: this triggers this.vrResize(). The callcack also manually forces a
-                 * window.resize event (handler: webgl.resize()) to set our <canvas> back to its DOM dimensions.
-                 *
+                 * Note: this triggers this.vrResize().
                  */
 
                 // TODO: KILL THE OLD REQUESTANIMATIONFRAME..........................
@@ -523,7 +543,7 @@ class WebVR {
 
         this.vrResize();
 
-        console.log( 'WebVR::presentChange():' );
+        console.log( 'WebVR::presentChange(): event' );
 
         if ( display.isPresenting ) {
 
@@ -535,7 +555,7 @@ class WebVR {
 
         } else {
 
-          if ( display.capabilities.hasExternalDisplay ) {
+          if ( display.capabilities && display.capabilities.hasExternalDisplay ) {
 
             // Any changes needed when we leave VR presenting.
 

@@ -63,7 +63,7 @@ class World extends AssetPool {
 
         this.texturePool.materialPool = this.materialPool;
 
-        // Attach 1 copy of the Model loader. NOTE: passing in TexturePool and MaterialPool.
+        // Attach 1 copy of the Model loader. Note: passing in TexturePool and MaterialPool.
 
         this.modelPool = new ModelPool( init, this.util, webgl, this.texturePool, this.materialPool );
 
@@ -111,6 +111,8 @@ class World extends AssetPool {
 
         this.last = performance.now();
 
+        this.rafId = null;
+
         this.counter = 0;
 
         // Bind the render loop (best current method)
@@ -118,16 +120,21 @@ class World extends AssetPool {
         this.render = this.render.bind( this );
 
 
-        // Listen for the display being ready.
+        // Listen for the VR display being ready (initially bind to 'window').
 
-        this.util.emitter.on( 'vrdisplayready', 
+        this.util.emitter.on( this.util.emitter.events.VR_DISPLAY_READY, 
 
             ( deviceName ) => {
 
-                this.vr.getDisplay().requestAnimationFrame( this.render );
+                if ( this.rafId !== null ) {
+
+                    this.vr.getDisplay().cancelAnimationFrame( this.rafId );
+
+                    this.rafId = this.vr.getDisplay().requestAnimationFrame( this.render );
+
+                }
 
             } );
-
 
     }
 
@@ -227,7 +234,7 @@ class World extends AssetPool {
         // Put some media into our asset pools.
 
         // Get the shaders (not initialized with update() and render() yet!).
-        // NOTE: pass 'world' in so we can get the World POV.
+        // Note: pass 'world' in so we can get the World POV.
 
         this.s0 = this.shaderPool.getAssetByName( 'shaderFader' );
 
@@ -418,7 +425,7 @@ class World extends AssetPool {
                 this.s1,                      // callback function
                 typeList.CURVEDOUTERPLANE,
                 'CurvedPlaneOut',
-                vec5( 2, 1, 1, directions.RIGHT, 1 ),         // dimensions NOTE: pass radius for curvature (also creates orbit) 
+                vec5( 2, 1, 1, directions.RIGHT, 1 ),         // dimensions Note: pass radius for curvature (also creates orbit) 
                 vec3.fromValues( 10, 10, 10 ),        // divisions
                 vec3.fromValues(-1.2, 0.0, 2.0 ),          // position (absolute)
                 vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -570,7 +577,7 @@ class World extends AssetPool {
 // TEXTURED MESH
 ///////////////////////////////////////
 
-            // NOTE: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
+            // Note: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
             // TODO: INVALID TEXTURING
 
             this.primFactory.createPrim(
@@ -631,7 +638,7 @@ class World extends AssetPool {
                 this.s3,                      // callback function
                 typeList.TERRAIN,
                 'terrain',
-                vec5( 2, 2, 2, directions.TOP, 0.1 ),       // NOTE: ORIENTATION DESIRED vec5[3], waterline = vec5[4]
+                vec5( 2, 2, 2, directions.TOP, 0.1 ),       // Note: ORIENTATION DESIRED vec5[3], waterline = vec5[4]
                 vec5( 100, 100, 100 ),           // divisions
                 vec3.fromValues( 1.5, -1.5, 2 ),       // position (absolute)
                 vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
@@ -789,7 +796,7 @@ class World extends AssetPool {
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        // NOTE: the init() method sets up the update() and render() methods for the Shader.
+        // Note: the init() method sets up the update() and render() methods for the Shader.
 
         this.r0 = this.s0.init();
 
@@ -797,9 +804,32 @@ class World extends AssetPool {
 
         this.r2 = this.s2.init();
 
-        // Fire world update. 
+        /* 
+         * Fire world update (either window or WebVR display). Since we 
+         * do this directly, in most cases this will be the 'window' object. If the 
+         * VRDisplay becomes available, it emits an VR_DISPLAY_READY event, and we 
+         * dynamically switch to VRDisplay (see constructor emitter handler).
+         */
 
+        this.start();
 
+    }
+
+    /** 
+     * Start World animation and updating.
+     */
+    start () {
+
+        this.rafId = this.vr.getDisplay().requestAnimationFrame( this.render );
+
+    }
+
+    /** 
+     * Stop World animation and updating.
+     */
+    stop () {
+
+        this.vr.getDisplay().cancelAnimationFrame( this.rafId );
 
     }
 
@@ -873,6 +903,8 @@ class World extends AssetPool {
      */
     housekeep () {
 
+// TODO: geometryPool::computeTexCoords2
+
 // TODO: fullscreen doesn't work if we use VRDisplay.exitFullScreen()
 
 // TODO: Spinner in Ui
@@ -886,13 +918,15 @@ class World extends AssetPool {
 // TODO: or, study if textures actually list color independently from ambient color.
 // TODO: set ambient, and diffuse color to the same color, and assign to the texture array.
 // TODO: or, ignore color array? WHAT WOULD THAT LOOK LIKE?????????
-// TODO: some wavefront files have x, y, z, r, g, b for 'v' - PROCESS!!!!!!
+// TODO: some wavefront files have x, y, z, r, g, b for 'v' - PROCESS
 
 // TODO: I noticed that FF now puts out "Error: WebGL warning: texImage2D: Alpha-premult 
 //and y-flip are deprecated for non-DOM-Element uploads." for something like  
 //gl.pixelStorei( gl.UNPACK_FLIP_Y_WEBGL, true ); What IS the best practice here?
 
 // TODO: TGA Loader?
+
+// TODO: RANDOMIZE when Prims leave ShaderFader, so they don't all leave at once...
 
 // COLOR SHADER NEEDS TO USE PRIM.ALPHA
 
@@ -915,9 +949,8 @@ class World extends AssetPool {
 // TODO: sort materials by starting position using object.keys function
 
 // TODO: detect if a texture is too big, and try to load a smaller one!
-// Error: WebGL: texImage2D: Requested size at this level is unsupported.
 
-// TODO: make light ambient and material ambient consistent!!!!!!!!!!!!!!!!
+// Error: WebGL: texImage2D: Requested size at this level is unsupported.
 
 // TODO: PULSE routine for multiple properties
 
@@ -939,7 +972,7 @@ class World extends AssetPool {
 
 // TODO: SPLIT PRIMS IF < 64k support?
 
-// NOTE: WebWorker for OBJ file parsing
+// Note: WebWorker for OBJ file parsing
 
 // TODO: JSON FILE FOR PRIMS (loadable) use this.load(), this.save()
 
@@ -1011,8 +1044,8 @@ class World extends AssetPool {
      * Render the World for a mono or a VR display.
      * Update Prims locally, then call Shader. objects to do rendering. Individual renderers 
      * (this.r#) were bound (ES5 method) in the constructor. 
-     * NOTE: Our scene graph is just the rendering order shown here.
-     * NOTE: we can call Shaders indivdually, or use the global 
+     * Note: Our scene graph is just the rendering order shown here.
+     * Note: we can call Shaders indivdually, or use the global 
      * this.shaderPool.renderVR() or this.shaderPool.renderMono() will will render everything.
      */
     render () {
@@ -1051,7 +1084,7 @@ callbackID = currentDisplay.requestAnimationFrame(animationCallback)
 
 You have to make sure you call cancelAnimationFrame from the same object from which requestAnimationFrame was called to create the callbackID, or else the cancel will not happen correctly.
 
-NOTE: THIS IMPLIES WE HAVE TO DO IT IN WORLD.
+Note: THIS IMPLIES WE HAVE TO DO IT IN WORLD.
 
 */
 
@@ -1073,7 +1106,7 @@ NOTE: THIS IMPLIES WE HAVE TO DO IT IN WORLD.
 
                 // We can only go here if VRDisplay exists.
 
-                vr.rafId = disp.requestAnimationFrame( this.render );
+                this.rafId = disp.requestAnimationFrame( this.render );
 
                 // Get FrameData (with matrices for left and right eye).
 
@@ -1106,7 +1139,7 @@ NOTE: THIS IMPLIES WE HAVE TO DO IT IN WORLD.
                  * If we are using disp === window then the viewport always fills the canvas.
                  */
 
-                vr.rafId = disp.requestAnimationFrame( this.render );
+                this.rafId = disp.requestAnimationFrame( this.render );
 
                 // Get any World transforms (translation, rotation).
 
@@ -1119,6 +1152,10 @@ NOTE: THIS IMPLIES WE HAVE TO DO IT IN WORLD.
                 this.r0.renderMono( wvMatrix, pov ); // REQUIRED alpha (Prim appearing or disappearing), drawn in front
 
             }
+
+        } else {
+
+            console.error( 'World::render(): no display' );
 
         }
 

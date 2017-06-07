@@ -254,6 +254,54 @@ class Ui {
 
         }
 
+        // Create an information tooltip on mouse hover.
+
+        let tooltip = document.createElement( 'p' );
+
+        tooltip.className = 'webvr-mini-tooltip';
+
+        tooltip.setAttribute( 'status', 'invisible' );
+
+        let ts = tooltip.style;
+
+        ts.position = 'absolute',
+
+        ts.fontSize = '14px',
+
+        ts.fontFamily = 'sans-serif',
+
+        ts.padding = '2px',
+
+        ts.paddingTop = '6px',
+
+        ts.paddingLeft = '6px',
+
+        ts.paddingRight = '6px',
+
+        ts.paddingBottom = '0px',
+
+        ts.borderRadius = '9px',
+
+        ts.height = '18px',
+
+        ts.left = '0px',
+
+        ts.top = '0px',
+
+        ts.backgroundColor = 'rgba(248,255,164,0.8)', // light yellow
+
+        ts.zIndex = '10000',
+
+        ts.display = 'none',
+
+        tooltip.innerHTML = '',
+
+        controls.appendChild( tooltip );
+
+        this.controls.tooltip = tooltip;
+
+        // Ui for HTML5 canvas present.
+
         if ( c ) {
 
             // WebVR object methods to connect.
@@ -268,15 +316,21 @@ class Ui {
 
             let vrButton = this.createButton();
 
-            vrButton.style.top = '0px';
+            vrButton.style.top = '0px',
 
-            vrButton.style.left = '0px';
+            vrButton.style.left = '0px',
 
             vrButton.zIndex = '9999',
 
-            vrButton.activeSrc = this.icons.vr;
+            vrButton.activeSrc = this.icons.vr,
 
-            vrButton.inactiveSrc = this.icons.inactiveVR;
+            vrButton.inactiveSrc = this.icons.inactiveVR,
+
+            vrButton.tooltipActive = 'Go to VR mode',
+
+            vrButton.tooltipInactive = 'VR mode not available';
+
+            vrButton.show(); // initially .active === true
 
             if ( vr.hasWebVR() ) {
 
@@ -288,8 +342,6 @@ class Ui {
 
             }
 
-            vrButton.show();
-
             this.vrButton = vrButton;
 
             this.controls.vrButton = vrButton;
@@ -300,13 +352,13 @@ class Ui {
              * the inactive generic VR icon will be visible until the device initializess.
              */
 
-            this.util.emitter.on( 'vrdisplayready', 
+            this.util.emitter.on( this.util.emitter.events.VR_DISPLAY_READY, 
 
                 ( deviceName ) => {
 
-                    let dName = deviceName.toLowerCase();
-
                     if ( deviceName ) {
+
+                        let dName = deviceName.toLowerCase();
 
                         if ( dName.indexOf( 'vive') !== this.util.NOT_IN_LIST ) {
 
@@ -330,23 +382,39 @@ class Ui {
 
                 } );
 
+            // If the VR display initializes but crashes, also turn off.
+
+            this.util.emitter.on( this.util.emitter.events.VR_DISPLAY_FAIL, 
+
+                ( deviceName ) => {
+
+                    vrButton.inactivate();
+
+                } );
+
             // Fullscreen
 
             let fullscreenButton = this.createButton();
 
-            fullscreenButton.style.top = '4px';
+            fullscreenButton.style.top = '4px',
 
-            fullscreenButton.style.left = '60px';
+            fullscreenButton.style.left = '60px',
 
-            // Shrink this icon a bit TODO: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            // TODO: shrink this icon, and provide white outlines
 
-            fullscreenButton.style.width = '32px';
+            fullscreenButton.style.width = '32px',
 
-            fullscreenButton.style.height = '32px';
+            fullscreenButton.style.height = '32px',
 
-            fullscreenButton.activeSrc = this.icons.fullscreen;
+            fullscreenButton.activeSrc = this.icons.fullscreen,
 
-            fullscreenButton.inactiveSrc = this.icons.inactiveFullscreen;
+            fullscreenButton.inactiveSrc = this.icons.inactiveFullscreen,
+
+            fullscreenButton.tooltipActive = 'Go to Fullscreen mode',
+
+            fullscreenButton.tooltipInactive = 'Fullscreen mode not available';
+
+            fullscreenButton.show(); // initially .active === true
 
             if ( this.hasFullscreen() ) { 
 
@@ -357,8 +425,6 @@ class Ui {
                 fullscreenButton.inactivate();
 
             }
-
-            fullscreenButton.show();
 
             // Attach DOM element directly, and via controls DOM element;
 
@@ -380,6 +446,10 @@ class Ui {
 
             exitFullscreenButton.inactiveSrc = this.icons.inactiveBackArrow;
 
+            exitFullscreenButton.tooltipActive = 'Exit from Fullscreen',
+
+            exitFullscreenButton.tooltipInactive = '';
+
             if ( this.hasFullscreen() ) {
 
                 exitFullscreenButton.activate();
@@ -400,15 +470,19 @@ class Ui {
 
             let exitVRButton = this.createButton();
 
-            exitVRButton.style.top = '0px';
+            exitVRButton.style.top = '0px',
 
-            exitVRButton.style.left = '0px';
+            exitVRButton.style.left = '0px',
 
             exitVRButton.zIndex = '9999',
 
-            exitVRButton.activeSrc = this.icons.backArrow;
+            exitVRButton.activeSrc = this.icons.backArrow,
 
-            exitVRButton.inactiveSrc = this.icons.inactiveBackArrow;
+            exitVRButton.inactiveSrc = this.icons.inactiveBackArrow,
+
+            exitVRButton.tooltipActive = 'Exit from VR',
+
+            exitVRButton.tooltipInactive = '';
 
             if ( vr.hasWebVR() ) {
 
@@ -428,7 +502,7 @@ class Ui {
 
             // Bind our pseudo-event to activating the button (so it waits for the webvr display).
 
-            this.util.emitter.on( 'vrdisplayready', exitVRButton.activate );
+            this.util.emitter.on( this.util.emitter.events.VR_DISPLAY_READY, exitVRButton.activate );
 
             // Add event listeners.
 
@@ -436,9 +510,11 @@ class Ui {
 
             vrButton.addEventListener( 'click' , ( evt ) => {
 
-                console.log( 'clicked vr button...' );
-
                 evt.preventDefault();
+
+                if ( ! this.vrButton.active ) return; // don't process click if inactive
+
+                console.log( 'clicked vr button...' );
 
                 this.vrButton.hide();
 
@@ -458,7 +534,7 @@ class Ui {
 
                 // Request VR presentation.
 
-                // NOTE: THIS MAY TAKE A FEW SECONDS, PROVIDE A SPINNER
+                // Note: THIS MAY TAKE A FEW SECONDS, PROVIDE A SPINNER
 
                 vr.requestPresent();
 
@@ -468,9 +544,11 @@ class Ui {
 
             fullscreenButton.addEventListener( 'click', ( evt ) => {
 
-                console.log( 'clicked fullscreen button...' );
-
                 evt.preventDefault();
+
+                if ( ! this.fullscreenButton.active ) return; // don't process click if inactive
+
+                console.log( 'clicked fullscreen button...' );
 
                 const f = Math.max( window.devicePixelRatio, 1 );
 
@@ -490,13 +568,7 @@ class Ui {
 
                 this.mode = this.UI_DOM;
 
-                // Use global reference.
-
-                //this.vrButton.hide();
-                //this.fullscreenButton.hide();
-                //this.exitFullscreenButton.show();
-
-                // Fire the fullscreen command.
+                // Fire the request fullscreen command.
 
                 this.requestFullscreen();
 
@@ -506,15 +578,9 @@ class Ui {
 
             exitFullscreenButton.addEventListener( 'click' , ( evt ) => {
 
+                evt.preventDefault();                
+
                 console.log( 'clicked exit fullscreen button...' );
-
-                // TODO: exit fullscreen and/or VR.
-
-                evt.preventDefault();
-
-                //this.exitFullscreenButton.hide();
-                //this.vrButton.show();
-                //this.fullscreenButton.show();
 
                 // Fire the exit fullscreen event (also triggered by escape key).
 
@@ -526,9 +592,9 @@ class Ui {
 
             exitVRButton.addEventListener( 'click', ( evt ) => {
 
-                console.log( 'clicked exit vr button' );
-
                 evt.preventDefault();
+
+                console.log( 'clicked exit vr button' );
 
                 this.exitVRButton.hide();
 
@@ -570,6 +636,12 @@ class Ui {
 
     /* 
      * ---------------------------------------
+     * MOUSE MOVE EVENTS
+     * ---------------------------------------
+     */
+
+    /* 
+     * ---------------------------------------
      * KEYDOWN EVENTS
      * ---------------------------------------
      */
@@ -577,7 +649,7 @@ class Ui {
     /** 
      * Add an escape key handler for entry into VR, similar to fullscreen. 
      * 
-      * NOTE: we bind this 
+      * Note: we bind this 
      * sucker to itself(!) in the constructor, so that we can supply addEventListener with a named function, 
      * and remove it later. Otherwise, you can't remove handlers bound with addEventListener.
      */
@@ -633,7 +705,7 @@ class Ui {
      }
 
     /** 
-     * Cross-browser enter fullscreen mode. NOTE: this is called by an 
+     * Cross-browser enter fullscreen mode. Note: this is called by an 
      * anonymous function bound to the fullscreen button in init().
      * @param {Event} fullscreen event.
      */
@@ -691,7 +763,7 @@ class Ui {
 
     /** 
      * Handle a fullscreen transition.
-     * NOTE: used .bind() to bind to this object.s
+     * Note: used .bind() to bind to this object.s
      */
     fullscreenChange ( evt ) {
 
@@ -707,10 +779,6 @@ class Ui {
 
                 console.log( 'from vr to dom...' );
 
-                //this.exitVRButton.show();
-                //this.vrButton.hide();
-                //this.fullscreenButton.hide();
-
                 this.setControlsByMode( this.mode );
 
                 break;
@@ -723,8 +791,8 @@ class Ui {
                  * stylesheet. Additional resizing specific to exiting fullscreen has to be done here. 
                  * Removing the .style properties is particularly important.
                  *
-                 * NOTE: UI_FULLSCREEN mode is actually from fullscreen to DOM.
-                 * NOTE: UI_VR mode is from DOM to VR
+                 * Note: UI_FULLSCREEN mode is actually from fullscreen to DOM.
+                 * Note: UI_VR mode is from DOM to VR
                  */
 
                 console.log( 'from fullscreen to DOM...' );
@@ -760,10 +828,6 @@ class Ui {
                 // Hide the return button, if it wasn't already.
 
                 this.setControlsByMode( this.mode );
-
-                //this.exitFullscreenButton.hide();
-                //this.vrButton.show();
-                //this.fullscreenButton.show();
 
                 break;
 
@@ -830,6 +894,16 @@ class Ui {
 
         s.boxSizing = 'content-box';
 
+        // by default, button is active.
+
+        button.active = true;
+
+        // Button tooltip messages
+
+        button.tooltipActive = '',
+
+        button.tooltipInactive = '',
+
         // Prevent button from being selected and dragged.
 
         button.draggable = false;
@@ -840,17 +914,76 @@ class Ui {
 
         } );
 
+        window.button = button;
+
         // Style it on hover.
 
         button.addEventListener( 'mouseenter', ( evt ) => {
 
-            s.filter = s.webkitFilter = 'drop-shadow(0 0 6px rgba(255,255,255,1))';
+            let b = evt.target;
+
+            let st = b.style;
+
+            st.filter = st.webkitFilter = 'drop-shadow(0 0 6px rgba(255,255,255,1))';
+
+            let tt = b.parentNode.querySelector( '.webvr-mini-tooltip' );
+
+            let ts = tt.style;
+
+            tt.status = 'visible'; // Manage mousleave with setTimeout below
+
+            if ( b.src === b.inactiveSrc ) {
+
+                tt.innerHTML = b.tooltipInactive;
+
+            } else {
+
+                tt.innerHTML = b.tooltipActive;
+
+            }
+
+            // Delay appearance of tooltip.
+
+            tt.tid = setTimeout( () => {
+
+                if ( tt.status === 'visible' ) {
+
+                    ts.left = ( 16 + parseFloat( st.left ) + parseFloat( st.width ) ) + 'px',
+
+                    ts.top = ( 2 + parseFloat( st.top) ) + 'px';
+
+                    ts.display = 'inline-block';
+
+                }
+
+             }, 900);
+
 
         } );
 
         button.addEventListener( 'mouseleave', ( evt ) => {
 
-            s.filter = s.webkitFilter = '';
+            let b = evt.target;
+
+            let st = b.style;
+
+            st.filter = st.webkitFilter = '';
+
+            let tt = b.parentNode.querySelector( '.webvr-mini-tooltip' );
+
+            tt.status = 'invisible'; // flag compensating for setTimeout above
+
+            if ( tt.tid ) {
+
+                clearTimeout( tt.tid );
+
+                tt.tid = null;
+
+            }
+
+            tt.style.display = 'none';
+
+            tt.innerHTML = '';
 
         } );
 
@@ -900,6 +1033,8 @@ class Ui {
 
         button.activate = () => {
 
+            button.active = true;
+
             button.src = button.activeSrc; // swap active symbol
 
         }
@@ -907,6 +1042,8 @@ class Ui {
         // Display the button, but deactivate it.
 
         button.inactivate = () => {
+
+            button.active = false;
 
             button.src = button.inactiveSrc; // swap inactive symbol
 

@@ -39,7 +39,9 @@ class Emitter {
 
             PRIM_FAIL: 'prmfl',                           // a Prim couldn't load its assets
 
-            VR_DISPLAY_READY: 'vrdispready'               // the VR device is ready
+            VR_DISPLAY_READY: 'vrdispready',              // the VR device is ready (either a VRDevice or a window object)
+
+            VR_DISPLAY_FAIL: 'vrdispfail'                 // WebVR is present, but blew up
 
         };
 

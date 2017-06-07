@@ -922,11 +922,11 @@ class PrimFactory {
 
         // Whether to use face normals for a Face of the prim.
 
-        prim.useFaceNormals = false; //////////////////CHANGE SHOULD BE SET OPTIONALLY !!!!!!!!!!!!!!!!!!!!!
+        prim.useFaceNormals = false; // TODO: optional setting
 
         // Whether to include tangents 
 
-        prim.useTangents = false; // TODO:///////CHANGE!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        prim.useTangents = false; // TODO: optional setting
 
         // Waypoints for scripted motion or timelines.
 
@@ -1005,20 +1005,9 @@ class PrimFactory {
 
         prim.children = [];
 
-       // Execute geometry creation routine (which may be a file load).
+        // Execute geometry creation routine (which may be a file load).
 
-       console.log( 'Generating Prim:' + prim.name + '(' + prim.type + ')' );
-
-       // TODO:
-
-       // TODO:
-       // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-       // If we have a list of images, provide them to getGeometries
-       // In getGeometries, include material file.
-       // Have getGeometries call MaterialPool to in turn call TexturePool to load textures
-       // Modify the material file to include textures, according to their position in the 
-       // input array
-       // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        console.log( 'Generating Prim:' + prim.name + '(' + prim.type + ')' );
 
         // Geometry factory function, create empty WebGL Buffers.
 
@@ -1027,8 +1016,6 @@ class PrimFactory {
         // Create Geometry data, or load Mesh data (may alter some of the above default properties).
 
         this.geometryPool.getGeometries( prim, modelFiles );
-
-        /////////////////////////this.texturePool.getTextures( prim, textureImages, true, false ); // assume cacheBust === true, mimeType determined by file extension.
 
         // Push into our list of all Prims. Shaders keep a local list of Prims they are rendering.
 

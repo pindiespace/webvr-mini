@@ -494,7 +494,7 @@ class AssetPool {
 
                     // Run the callback we got in the original request, return received file in data.
 
-                    //console.log('>>>>>>>>>>>>>>about to call update function!!!!!!')
+                    //console.log('>>>>>>>>>>>>>>about to call update function')
 
                     updateFn( { pos: pos, path: requestURL, data: response, error: false } ); // Send the data to the caller.
 
