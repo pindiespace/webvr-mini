@@ -568,31 +568,20 @@
 	        key: 'setPerformance',
 	        value: function setPerformance() {
 
-	            if (!'performance' in window) {
-
-	                window.performance = {};
-	            }
-
 	            Date.now = Date.now || function () {
 	                // can't use () => here!
 
 	                return new Date().getTime();
 	            };
 
-	            if (!'now' in window.performance) {
+	            window.performance = window.performance || {};
+
+	            window.performance.now = window.performance.now || function () {
 
 	                var nowOffset = Date.now();
 
-	                if (performance.timing && performance.timing.navigationStart) {
-
-	                    nowOffset = performance.timing.navigationStart;
-	                }
-
-	                window.performance.now = function () {
-
-	                    return Date.now() - nowOffset;
-	                };
-	            }
+	                return Date.now() - nowOffset;
+	            };
 	        }
 
 	        /** 
@@ -3608,7 +3597,7 @@
 	                return null;
 	            }
 
-	            console.error('WebVR::getFrame(): display not available to get frameData');
+	            console.error('WebVR::getFrame(): display does not hav VRFrameData');
 
 	            return null;
 	        }
@@ -4225,7 +4214,13 @@
 
 	            var ts = tooltip.style;
 
-	            ts.position = 'absolute', ts.fontSize = '14px', ts.fontFamily = 'sans-serif', ts.padding = '2px', ts.paddingTop = '6px', ts.paddingLeft = '6px', ts.paddingRight = '6px', ts.paddingBottom = '0px', ts.borderRadius = '9px', ts.height = '18px', ts.left = '0px', ts.top = '0px', ts.backgroundColor = 'rgba(248,255,164,0.8)', // light yellow
+	            ts.position = 'absolute', ts.fontSize = '14px', ts.lineHeight = '16px', // vertically center
+
+	            ts.fontFamily = 'sans-serif', ts.padding = '4px', ts.padingBottom = '0px', ts.borderRadius = '9px',
+
+	            //ts.height = '17px',
+
+	            ts.left = '0px', ts.top = '0px', ts.backgroundColor = 'rgba(248,255,164,0.7)', // light yellow
 
 	            ts.zIndex = '10000', ts.display = 'none', tooltip.innerHTML = '', controls.appendChild(tooltip);
 
@@ -4247,7 +4242,7 @@
 
 	                var vrButton = this.createButton();
 
-	                vrButton.style.top = '0px', vrButton.style.left = '0px', vrButton.zIndex = '9999', vrButton.activeSrc = this.icons.vr, vrButton.inactiveSrc = this.icons.inactiveVR, vrButton.tooltipActive = 'Go to VR mode', vrButton.tooltipInactive = 'VR mode not available';
+	                vrButton.style.top = '0px', vrButton.style.left = '0px', vrButton.zIndex = '9999', vrButton.activeSrc = this.icons.vr, vrButton.inactiveSrc = this.icons.inactiveVR, vrButton.tooltipActive = 'go to vr mode', vrButton.tooltipInactive = 'vr mode not available';
 
 	                vrButton.show(); // initially .active === true
 
@@ -4307,7 +4302,7 @@
 
 	                // TODO: shrink this icon, and provide white outlines
 
-	                fullscreenButton.style.width = '32px', fullscreenButton.style.height = '32px', fullscreenButton.activeSrc = this.icons.fullscreen, fullscreenButton.inactiveSrc = this.icons.inactiveFullscreen, fullscreenButton.tooltipActive = 'Go to Fullscreen mode', fullscreenButton.tooltipInactive = 'Fullscreen mode not available';
+	                fullscreenButton.style.width = '32px', fullscreenButton.style.height = '32px', fullscreenButton.activeSrc = this.icons.fullscreen, fullscreenButton.inactiveSrc = this.icons.inactiveFullscreen, fullscreenButton.tooltipActive = 'go to fullscreen mode', fullscreenButton.tooltipInactive = 'fullscreen mode not available';
 
 	                fullscreenButton.show(); // initially .active === true
 
@@ -4337,7 +4332,7 @@
 
 	                exitFullscreenButton.inactiveSrc = this.icons.inactiveBackArrow;
 
-	                exitFullscreenButton.tooltipActive = 'Exit from Fullscreen', exitFullscreenButton.tooltipInactive = '';
+	                exitFullscreenButton.tooltipActive = 'exit from Fullscreen', exitFullscreenButton.tooltipInactive = '';
 
 	                if (this.hasFullscreen()) {
 
@@ -4357,7 +4352,7 @@
 
 	                var exitVRButton = this.createButton();
 
-	                exitVRButton.style.top = '0px', exitVRButton.style.left = '0px', exitVRButton.zIndex = '9999', exitVRButton.activeSrc = this.icons.backArrow, exitVRButton.inactiveSrc = this.icons.inactiveBackArrow, exitVRButton.tooltipActive = 'Exit from VR', exitVRButton.tooltipInactive = '';
+	                exitVRButton.style.top = '0px', exitVRButton.style.left = '0px', exitVRButton.zIndex = '9999', exitVRButton.activeSrc = this.icons.backArrow, exitVRButton.inactiveSrc = this.icons.inactiveBackArrow, exitVRButton.tooltipActive = 'exit from VR', exitVRButton.tooltipInactive = '';
 
 	                if (vr.hasWebVR()) {
 
@@ -4474,12 +4469,19 @@
 
 	                    // Call webvr presentation exit (which may fail).
 
-	                    vr.exitPresent(function () {
+	                    vr.exitPresent();
 
-	                        removeEventListener('keydown', _this.vrHandleEsc);
+	                    removeEventListener('keydown', _this.vrHandleKeys);
 
-	                        _this.setControlsByMode(_this.UI_DOM);
-	                    });
+	                    /////// () => { 
+
+	                    /////    removeEventListener( 'keydown', this.vrHandleKeys );
+
+	                    //////     this.setControlsByMode( this.UI_DOM ) 
+
+	                    //////    }
+
+	                    ////// );
 	                });
 
 	                // Reset pose button
@@ -4530,8 +4532,17 @@
 
 	                    this.mode = this.UI_DOM;
 
+	                    this.exitVRButton.hide();
+
+	                    this.vrButton.show();
+
+	                    this.fullscreenButton.show();
+
 	                    // this.webvr.exitPresent handles some of the resizing, we have to restore the Uis
 
+	                    // Remove the event listener
+
+	                    removeEventListener('keydown', this.vrHandleKeys);
 
 	                    // exit VR presentation
 
@@ -19510,9 +19521,11 @@
 
 	        // TODO: geometryPool::computeTexCoords2
 
-	        // TODO: fullscreen doesn't work if we use VRDisplay.exitFullScreen()
+	        // TODO: fullscreen doesn't work if we use VRDisplay.exitFullScreen() in Firefox (CANVAS NOT RESIZED)
 
 	        // TODO: Spinner in Ui
+
+	        // TODO: https://codepen.io/ionic/pen/GgwVON
 
 	        // TODO: Modal DOM dialog for ui.es6
 
@@ -19532,8 +19545,6 @@
 	        // TODO: TGA Loader?
 
 	        // TODO: RANDOMIZE when Prims leave ShaderFader, so they don't all leave at once...
-
-	        // COLOR SHADER NEEDS TO USE PRIM.ALPHA
 
 	        // PrimFactory needs to do the sorting of Prims.
 

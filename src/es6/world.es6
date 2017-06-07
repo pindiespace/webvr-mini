@@ -905,9 +905,11 @@ class World extends AssetPool {
 
 // TODO: geometryPool::computeTexCoords2
 
-// TODO: fullscreen doesn't work if we use VRDisplay.exitFullScreen()
+// TODO: fullscreen doesn't work if we use VRDisplay.exitFullScreen() in Firefox (CANVAS NOT RESIZED)
 
 // TODO: Spinner in Ui
+
+// TODO: https://codepen.io/ionic/pen/GgwVON
 
 // TODO: Modal DOM dialog for ui.es6
 
@@ -927,8 +929,6 @@ class World extends AssetPool {
 // TODO: TGA Loader?
 
 // TODO: RANDOMIZE when Prims leave ShaderFader, so they don't all leave at once...
-
-// COLOR SHADER NEEDS TO USE PRIM.ALPHA
 
 // PrimFactory needs to do the sorting of Prims.
 

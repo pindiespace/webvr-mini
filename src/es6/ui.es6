@@ -268,27 +268,23 @@ class Ui {
 
         ts.fontSize = '14px',
 
+        ts.lineHeight = '16px', // vertically center
+
         ts.fontFamily = 'sans-serif',
 
-        ts.padding = '2px',
+        ts.padding = '4px',
 
-        ts.paddingTop = '6px',
-
-        ts.paddingLeft = '6px',
-
-        ts.paddingRight = '6px',
-
-        ts.paddingBottom = '0px',
+        ts.padingBottom = '0px',
 
         ts.borderRadius = '9px',
 
-        ts.height = '18px',
+        //ts.height = '17px',
 
         ts.left = '0px',
 
         ts.top = '0px',
 
-        ts.backgroundColor = 'rgba(248,255,164,0.8)', // light yellow
+        ts.backgroundColor = 'rgba(248,255,164,0.7)', // light yellow
 
         ts.zIndex = '10000',
 
@@ -326,9 +322,9 @@ class Ui {
 
             vrButton.inactiveSrc = this.icons.inactiveVR,
 
-            vrButton.tooltipActive = 'Go to VR mode',
+            vrButton.tooltipActive = 'go to vr mode',
 
-            vrButton.tooltipInactive = 'VR mode not available';
+            vrButton.tooltipInactive = 'vr mode not available';
 
             vrButton.show(); // initially .active === true
 
@@ -410,9 +406,9 @@ class Ui {
 
             fullscreenButton.inactiveSrc = this.icons.inactiveFullscreen,
 
-            fullscreenButton.tooltipActive = 'Go to Fullscreen mode',
+            fullscreenButton.tooltipActive = 'go to fullscreen mode',
 
-            fullscreenButton.tooltipInactive = 'Fullscreen mode not available';
+            fullscreenButton.tooltipInactive = 'fullscreen mode not available';
 
             fullscreenButton.show(); // initially .active === true
 
@@ -446,7 +442,7 @@ class Ui {
 
             exitFullscreenButton.inactiveSrc = this.icons.inactiveBackArrow;
 
-            exitFullscreenButton.tooltipActive = 'Exit from Fullscreen',
+            exitFullscreenButton.tooltipActive = 'exit from Fullscreen',
 
             exitFullscreenButton.tooltipInactive = '';
 
@@ -480,7 +476,7 @@ class Ui {
 
             exitVRButton.inactiveSrc = this.icons.inactiveBackArrow,
 
-            exitVRButton.tooltipActive = 'Exit from VR',
+            exitVRButton.tooltipActive = 'exit from VR',
 
             exitVRButton.tooltipInactive = '';
 
@@ -604,15 +600,19 @@ class Ui {
 
                 // Call webvr presentation exit (which may fail).
 
-                vr.exitPresent( () => { 
+                vr.exitPresent();
 
-                    removeEventListener( 'keydown', this.vrHandleEsc );
+                removeEventListener( 'keydown', this.vrHandleKeys );
 
-                    this.setControlsByMode( this.UI_DOM ) 
+                /////// () => { 
 
-                    }
+                /////    removeEventListener( 'keydown', this.vrHandleKeys );
 
-                );
+               //////     this.setControlsByMode( this.UI_DOM ) 
+
+                //////    }
+
+               ////// );
 
             } );
 
@@ -663,8 +663,17 @@ class Ui {
 
                 this.mode = this.UI_DOM;
 
+                this.exitVRButton.hide();
+
+                this.vrButton.show();
+
+                this.fullscreenButton.show();
+
                 // this.webvr.exitPresent handles some of the resizing, we have to restore the Uis
 
+                // Remove the event listener
+
+                removeEventListener( 'keydown', this.vrHandleKeys );
 
                 // exit VR presentation
 

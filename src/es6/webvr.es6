@@ -232,7 +232,7 @@ class WebVR {
 
         }
 
-        console.error( 'WebVR::getFrame(): display not available to get frameData' );
+        console.error( 'WebVR::getFrame(): display does not hav VRFrameData' );
 
         return null;
 

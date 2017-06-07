@@ -76,35 +76,21 @@ class Util {
      */
     setPerformance () {
 
-        if ( ! 'performance' in window ) {
-
-            window.performance = {};
-
-        }
-
         Date.now = ( Date.now || function () {  // can't use () => here!
 
             return new Date().getTime();
 
         } );
 
-        if ( ! 'now' in window.performance ) {
+        window.performance = ( window.performance || {} );
+
+        window.performance.now = ( window.performance.now || function () {
 
             let nowOffset = Date.now();
 
-            if ( performance.timing && performance.timing.navigationStart ) {
+            return Date.now() - nowOffset;
 
-                nowOffset = performance.timing.navigationStart;
-
-            }
-
-            window.performance.now = () => {
-
-                return Date.now() - nowOffset;
-
-            }
-
-        }
+        } );
 
     }
 
