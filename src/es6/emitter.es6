@@ -41,6 +41,8 @@ class Emitter {
 
             VR_DISPLAY_READY: 'vrdispready',              // the VR device is ready (either a VRDevice or a window object)
 
+            VR_DISPLAY_CHANGE: 'virdispchange',           // the display we're using was changed
+
             VR_DISPLAY_FAIL: 'vrdispfail'                 // WebVR is present, but blew up
 
         };
@@ -54,7 +56,7 @@ class Emitter {
         if ( ! callbacks ) {
 
             return;
-
+ 
         }
 
         // Convert arguments to a useful Array.

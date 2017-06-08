@@ -110,8 +110,6 @@ class World extends AssetPool {
 
         this.last = performance.now();
 
-        this.rafId = null;
-
         this.counter = 0;
 
         // Bind the render loop (best current method)
@@ -125,11 +123,13 @@ class World extends AssetPool {
 
             ( deviceName ) => {
 
-                if ( this.rafId !== null ) {
+                if ( this.vr.rafId !== null ) {
 
-                    this.vr.getDisplay().cancelAnimationFrame( this.rafId );
+                    console.log("VR_DISPLAY_READY, display typeof:" + this.vr.getDisplay())
 
-                    this.rafId = this.vr.getDisplay().requestAnimationFrame( this.render );
+                    this.vr.getDisplay().cancelAnimationFrame( this.vr.rafId );
+
+                    this.vr.rafId = this.vr.getDisplay().requestAnimationFrame( this.render );
 
                 }
 
@@ -850,7 +850,7 @@ class World extends AssetPool {
      */
     start () {
 
-        this.rafId = this.vr.getDisplay().requestAnimationFrame( this.render );
+        this.vr.rafId = this.vr.getDisplay().requestAnimationFrame( this.render );
 
     }
 
@@ -859,7 +859,7 @@ class World extends AssetPool {
      */
     stop () {
 
-        this.vr.getDisplay().cancelAnimationFrame( this.rafId );
+        this.vr.getDisplay().cancelAnimationFrame( this.vr.rafId );
 
     }
 
@@ -1136,7 +1136,7 @@ Note: THIS IMPLIES WE HAVE TO DO IT IN WORLD.
 
                 // We can only go here if VRDisplay exists.
 
-                this.rafId = disp.requestAnimationFrame( this.render );
+                this.vr.rafId = disp.requestAnimationFrame( this.render );
 
                 // Get FrameData (with matrices for left and right eye).
 
@@ -1169,7 +1169,7 @@ Note: THIS IMPLIES WE HAVE TO DO IT IN WORLD.
                  * If we are using disp === window then the viewport always fills the canvas.
                  */
 
-                this.rafId = disp.requestAnimationFrame( this.render );
+                this.vr.rafId = disp.requestAnimationFrame( this.render );
 
                 // Get any World transforms (translation, rotation).
 
