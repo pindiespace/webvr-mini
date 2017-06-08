@@ -18,25 +18,25 @@ class WebVR {
 
         this.glMatrix = glMatrix,
 
-        this.webgl = webgl;
-
-        this.vrVers = 1.0,          // TODO: is there any way to get this?
+        this.webgl = webgl,
 
         window.displayName = 'window', // give it a display name
 
-        this.displays = [ window ], // display [ 0 ] is always 'window'
+        this.displays = [ window ],    // display [ 0 ] is always 'window'
 
         this.cDisplay = this.displays[ 0 ],  // pointer to the current display
 
-        this.frameData = null,      // VR frame data
+        this.frameData = null,         // VR frame data
 
-        this.PLAYER_HEIGHT = 1.75;  // average player height.
+        this.PLAYER_HEIGHT = 1.75;     // average player height.
 
         // Statistics object.
 
-        this.stats = {};
+        this.stats = {
 
-        console.log("DISPLAY STARTS AS:" + this.cDisplay)
+            vers: 1.0
+
+        };
 
         // Listen for World init event.
 
@@ -51,32 +51,12 @@ class WebVR {
     }
 
     /** 
-     * Switch displays.
+     * Set the World object (which has .requestAnimationFrame)
+     * @param {World} world the current world, including world.render() loop.
      */
-    switchDisplay ( displayNum ) {
+    setWorld ( world ) {
 
-        if ( this.displays[ displayNum ] !== undefined ) {
-
-            let od = this.cDisplay;
-
-            let nd = this.displays[ displayNum ];
-
-            if ( ( 'requestAnimationFrame' in nd ) === true ) {
-
-                this.cDisplay = this.displays[ displayNum ];
-
-                this.util.emitter.emit( this.util.emitter.events.VR_DISPLAY_CHANGED, oldDisplay, this.cDisplay );
-
-            } else {
-
-                console.error( 'WebVR::switchDisplays(): display:' + display.displayName + ' at position:' + displayNum + ' does not have .requestAnimationFrame' );
-
-            }
-
-        } else {
-
-            console.error( 'WebVR::switchDisplays(): display:' + displayNum + ' is not defined' );
-        }
+        this.world = world;
 
     }
 
@@ -100,7 +80,7 @@ class WebVR {
 
         let stats = this.stats,
 
-        disp = null;
+        d = null;
 
         this.cDisplay = this.displays[ 0 ]; // zeroth position always window
 
@@ -116,9 +96,11 @@ class WebVR {
 
                 }
 
+                // Only proceed if VRFrameData returned.
+
                 if ( this.frameData ) {
 
-                    console.log( 'WebVR::init(): vr VRFrameData is available for ' + displays.length + ' headsets' );
+                    console.log( 'WebVR::init(): VRFrameData is available for ' + displays.length + ' headsets' );
 
                     if ( displays.length > 0 )  {
 
@@ -128,65 +110,71 @@ class WebVR {
 
                         for ( let i = 0; i < displays.length; i++ ) {
 
-                            disp = displays[ i ];
+                            d = displays[ i ];
 
-                            if ( disp.displayName === undefined ) {
+                            if ( d.displayName === undefined ) {
 
-                                disp.displayName = 'Generic WebVR device';
+                                d.displayName = 'Generic WebVR device';
 
-                                console.log('*********************PUSHING DISPLAY' + display.displayName)
+                                console.log('*********************PUSHING DISPLAY' + d.displayName)
 
                             }
 
-                            this.displays.push( disp );
+                            // Add to our VRDisplay list.
+
+                            this.displays.push( d );
 
                         }
 
-                        disp = this.displays[ 1 ]; // first VR device
+                        // Grab the first VRDisplay.
 
-                        if ( disp ) {
+                        d = this.cDisplay = this.displays[ 1 ];
 
-                            console.log( 'WebVR::init(): valid vr display (' + disp.displayName + ') present' );
+                        // If VRDisplay is valid, set parameters.
+
+                        if ( d ) {
+
+                            console.log( 'WebVR::init(): valid vr display (' + d.displayName + ') present' );
 
                             // Check if we are somehow already presenting.
 
-                            if( disp.isPresenting ) {
+                            if( d.isPresenting ) {
 
-                                console.warn( 'WebVR::init(): ' + disp.displayName + ' was already presenting, exit first' );
+                                console.warn( 'WebVR::init(): (' + d.displayName + ') was already presenting, exit first' );
 
-                                this.exitPresent( disp );
+                                this.exitPresent( 1 );
 
                             }
 
                             // Adjust depthNear and depthFar to device info, or provide defaults.
 
-                            if ( disp.depthNear ) {
+                            if ( d.depthNear ) {
 
-                                this.webgl.near = disp.depthNear;
+                                this.webgl.near = d.depthNear;
 
                             } else {
 
-                                disp.depthNear = this.webgl.near;
+                                d.depthNear = this.webgl.near;
 
                             }
 
-                            if ( disp.depthFar ) {
+                            if ( d.depthFar ) {
 
-                                this.webgl.far = disp.depthFar;
+                                this.webgl.far = d.depthFar;
 
                             } else {
 
-                                    disp.depthFar = this.webgl.far;
+                                    d.depthFar = this.webgl.far;
 
                             }
 
                             // At present, the device name is the only static value in the display.
 
-                            stats.displayName = disp.displayName; // HMD name
+                            stats.displayName = d.displayName; // HMD name
 
                             // Set WebVR display stage parameters.
 
-                            this.setStageParameters( disp );
+                            this.setStageParameters( d );
 
                             /** 
                              * Fire our pseudo-event VR_DISPLAY_READY for webvr capability.
@@ -194,7 +182,7 @@ class WebVR {
                              * to start the rendering process.
                              */
 
-                            this.util.emitter.emit( this.util.emitter.events.VR_DISPLAY_READY, disp.displayName );
+                            this.util.emitter.emit( this.util.emitter.events.VR_DISPLAY_READY, d );
 
                             // Listen for WebVR events.
 
@@ -210,31 +198,31 @@ class WebVR {
 
                         console.warn( 'WebVR::init(): no VR displays found' );
 
-                        this.util.emitter.emit( this.util.emitter.events.VR_DISPLAY_FAIL, 'none' );
+                        this.util.emitter.emit( this.util.emitter.events.VR_DISPLAY_FAIL, d );
 
                     }  // no valid display
 
                 } else { // valid VRFrameData
 
-                    console.warn( 'WebVR::init(): invalid VRFrameData' );
+                    console.warn( 'WebVR::init(): invalid VRFrameData for ' + d );
 
-                    this.util.emitter.emit( this.util.emitter.events.VR_DISPLAY_FAIL, 'none' );
+                    this.util.emitter.emit( this.util.emitter.events.VR_DISPLAY_FAIL, d );
 
                 } // end of valid VRFrameData
 
-            }, ( error ) => {
+            }, ( reject ) => {
 
-                console.warn( 'WebVR::init(): failed to access navigator.getVRDisplays, error is:' + error + ' display is:' + disp );
+                console.warn( 'WebVR::init(): reject navigator.getVRDisplays, error is:' + reject + ' display is:' + d );
 
-                this.util.emitter.emit( this.util.emitter.events.VR_DISPLAY_FAIL, 'none' );
+                this.util.emitter.emit( this.util.emitter.events.VR_DISPLAY_FAIL, d );
 
             } ).catch (
 
                 ( error ) => {
 
-                    console.warn( '&&&&&&&&&&&&&&&&&&&&&&&&&WebVR::init(): navigator.getVRDisplays access error, error is:' + error + ' display is:' + disp );
+                    console.warn( '&&&&&&&&&&&&&&&&&&&&&&&&&WebVR::init(): error navigator.getVRDisplays:' + error + ' display is:' + d );
 
-                    this.util.emitter.emit( this.util.emitter.events.VR_DISPLAY_FAIL, 'none' );
+                    this.util.emitter.emit( this.util.emitter.events.VR_DISPLAY_FAIL, d );
 
                 }
 
@@ -246,7 +234,7 @@ class WebVR {
 
             console.warn( 'WebVR::init(): WebVR API not present, or obsolete version' );
 
-            this.util.emitter.emit( this.util.emitter.events.VR_DISPLAY_FAIL, 'none' );
+            this.util.emitter.emit( this.util.emitter.events.VR_DISPLAY_FAIL, d );
 
         }
 
@@ -258,23 +246,27 @@ class WebVR {
      */
     getFrameData () {
 
-        if ( this.cDisplay.getFrameData ) {
+        let d = this.cDisplay,
 
-              let result = this.cDisplay.getFrameData( this.frameData );
+        fd = this.frameData;
+
+        if ( d.getFrameData ) {
+
+              let result = d.getFrameData( fd );
 
               if ( result ) {
 
-                    return this.frameData;
+                    return fd;
 
               }
 
-              console.error( 'WebVR::getFrameData(): for display ' + this.cDisplay.displayName + ', display.getFrameData returned:' + result );
+              console.error( 'WebVR::getFrameData(): display (' + this.cDisplay.displayName + '), display.getFrameData returned:' + result );
 
               return null;
 
         }
 
-        console.error( 'WebVR::getFrame(): display ' + this.cDisplay.displayName + ' does not have VRFrameData' );
+        console.error( 'WebVR::getFrame(): display (' + this.cDisplay.displayName + ') does not have VRFrameData' );
 
         return null;
 
@@ -316,9 +308,11 @@ class WebVR {
      * size of 0.
      * @param {VRDisplay} the current VRDisplay object.
      */
-    setStageParameters ( disp ) {
+    setStageParameters ( display ) {
 
-        let sp = disp.stageParameters;
+        let d = display,
+
+        sp = d.stageParameters;
 
         if ( sp ) {
 
@@ -326,13 +320,13 @@ class WebVR {
 
             if ( sp.sizeX > 0 && sp.sizeZ > 0 ) {
 
-                console.log( 'WebVR::setStageParameters(): vr device ' + disp.displayName + ' stageParameters sizeX:' + sp.sizeX + ' and sizeZ:' + sp.sizeZ );
-                // TODO: trigger this in world.init();
-                // this.world.resize( disp.stageParameters.sizeX, disp.stageParameters.sizeZ );
+                console.log( 'WebVR::setStageParameters(): device (' + d.displayName + ') stageParameters sizeX:' + sp.sizeX + ' and sizeZ:' + sp.sizeZ );
+
+                // TODO: this.world.resize( d.stageParameters.sizeX, d.stageParameters.sizeZ );
 
             } else {
 
-                console.log( 'WebVR::setStageParameters(): vr device reported stateParameters without a size, using defaults (3000)' );
+                console.log( 'WebVR::setStageParameters(): device (' + d.displayName + ') reported stageParameters without a size, using defaults (3000)' );
 
             }
 
@@ -340,7 +334,7 @@ class WebVR {
 
             // TODO: test early.
 
-            console.error( 'vr device did not report stage parameters' );
+            console.error( 'vr device (' + d.displayName + ') did not report stage parameters' );
 
         }
 
@@ -358,9 +352,9 @@ class WebVR {
 
         let mat4 = this.glMatrix.mat4,
 
-        disp =  this.cDisplay;
+        d =  this.cDisplay;
 
-        if ( disp.stageParameters ) {
+        if ( d.stageParameters ) {
 
              /* 
              * After toji:
@@ -372,7 +366,7 @@ class WebVR {
 
             // This pulls us off the floor, and rotates the view on HTC Vive 180 degres clockwise in the xz direction.
 
-            mat4.invert( mvMatrix, disp.stageParameters.sittingToStandingTransform );
+            mat4.invert( mvMatrix, d.stageParameters.sittingToStandingTransform );
 
             mat4.multiply( mvMatrix, eyeView, mvMatrix );
 
@@ -415,7 +409,7 @@ class WebVR {
 
         console.log( 'WebVR::vrResize(): in vr resize' );
 
-        let disp = this.cDisplay,
+        let d = this.cDisplay,
 
         gl = this.webgl.getContext(),
 
@@ -431,13 +425,13 @@ class WebVR {
 
         const f = Math.max( window.devicePixelRatio, 1 );
 
-        if ( disp && disp.isPresenting ) {
+        if ( d && d.isPresenting ) {
 
-            console.log( 'WebVR::vrResize(): display ' + disp.displayName + ' presenting' );
+            console.log( 'WebVR::vrResize(): display (' + d.displayName + ') currently presenting' );
 
-            let leftEye = display.getEyeParameters( 'left' );
+            let leftEye = d.getEyeParameters( 'left' );
 
-            let rightEye = display.getEyeParameters( 'right' );
+            let rightEye = d.getEyeParameters( 'right' );
 
             // Resize to twice the width of the mono display.
 
@@ -491,15 +485,28 @@ class WebVR {
 
         console.log( 'WebVR::requestPresent(): display is a:' + this.cDisplay );
 
+        if ( this.world === null ) {
+
+            console.error( 'WebVR::requestPresent(): world not available' );
+
+            return false;
+        }
+
         // Default to first VR device.
 
-        if ( displayNum === undefined ) displayNum = 1;
+        if ( displayNum === undefined ) {
 
-        let disp = this.displays[ displayNum ];
+            displayNum = 1;
 
-        if ( disp && disp.capabilities && disp.capabilities.canPresent ) {
+        }
 
-            disp.requestPresent( [ { source: this.webgl.getCanvas() } ] )
+        let world = this.world,
+
+        d = this.displays[ displayNum ];
+
+        if ( d && d.capabilities && d.capabilities.canPresent ) {
+
+            d.requestPresent( [ { source: this.webgl.getCanvas() } ] )
 
             .then( () => { // fufilled
 
@@ -509,9 +516,9 @@ class WebVR {
 
                 world.stop();
 
-                // start the new .rAF
+                // start the new .rAF with our new display
 
-                this.cDisplay = disp;
+                this.cDisplay = d;
 
                 world.start();
 
@@ -525,17 +532,17 @@ class WebVR {
 
                 console.log( 'WebVR::requestPresent(): present was successful' );
 
-            }, () => { // rejected
+            }, ( reject ) => { // rejected
 
-                console.error( 'WebVR::requestPresent(): present failed' );
+                console.error( 'WebVR::requestPresent(): reject, error:' + reject + ' for display:' + d );
 
             } ).catch (
 
                 ( error ) => {
 
-                    console.warn( '&&&&&&&&&&&&&&&&&&&&&&&&&WebVR::requestPresent(): error, error is:' + error + ' display is:' + this.cDisplay );
+                    console.warn( '&&&&&&&&&&&&&&&&&&&&&&&&&WebVR::requestPresent(): catch, error is:' + error + ' for display:' + this.cDisplay );
 
-                    /////////////this.util.emitter.emit( this.util.emitter.events.VR_DISPLAY_FAIL, 'none' );
+                    /////////////this.util.emitter.emit( this.util.emitter.events.VR_DISPLAY_FAIL, d );
 
                 }
 
@@ -543,9 +550,11 @@ class WebVR {
 
         } else {
 
-            console.error( 'WebVR::requestPresent(): vrdisplay ' + disp.displayName + ' not a valid vr display' );
+            console.error( 'WebVR::requestPresent(): vrdisplay (' + d.displayName + ') is not a valid vr display' );
 
         }
+
+        return false;
 
      }
 
@@ -557,11 +566,28 @@ class WebVR {
 
         console.log( 'WebVR::exitPresent(): event' );
 
-        let disp = this.cDisplay;
+        if ( this.world === null ) {
 
-        if ( disp.exitPresent ) {
+            console.error( 'WebVR::requestPresent(): world not available' );
 
-            disp.exitPresent() // NO semicolon!
+            return false;
+        }
+
+        let d = this.cDisplay,
+
+        world = this.world;
+
+        if ( displayNum !== undefined ) {
+            
+            d = this.displays[ displayNum ];
+
+        }
+
+        // Confirm that this display has an .exitPresent method.
+
+        if ( d.exitPresent ) {
+
+            d.exitPresent() // NO semicolon!
 
             .then( () => {
 
@@ -577,17 +603,17 @@ class WebVR {
 
                  world.start();
 
-                console.log( 'WebVR::exitPresent(): exited display ' + disp.displayName + ' presentation' );
+                console.log( 'WebVR::exitPresent(): exited display ' + d.displayName + ' presentation' );
 
-            }, () => {
+            }, ( reject ) => {
 
-                console.error( 'WebVR::exitPresent(): failed to exit display ' + disp.displayName + ' presentation' );
+                console.error( 'WebVR::exitPresent(): reject for display: ' + d.displayName + ', error:' + reject );
 
             } ).catch (
 
                 ( error ) => {
 
-                    console.warn( '&&&&&&&&&&&&&&&&&&&&&&&&&WebVR::exitPresent(): error, error is:' + error + ' display is:' + this.cDisplay );
+                    console.warn( '&&&&&&&&&&&&&&&&&&&&&&&&&WebVR::exitPresent(): error:' + error + ' display is:' + this.cDisplay );
 
                     /////////////this.util.emitter.emit( this.util.emitter.events.VR_DISPLAY_FAIL, 'none' );
 
@@ -597,7 +623,7 @@ class WebVR {
 
         } else { 
 
-            console.error( 'WebVR::exitPresent(): display ' + display.displayName + ' not a vr display' );
+            console.error( 'WebVR::exitPresent(): display ' + d.displayName + ' not a vr display' );
 
         }
 
@@ -608,17 +634,17 @@ class WebVR {
      */
     presentChange () {
 
-        let disp = this.cDisplay;
+        let d = this.cDisplay;
 
         // Handle resizes in both directions.
 
         this.vrResize();
 
-        console.log( 'WebVR::presentChange(): event for ' + disp.displayName );
+        console.log( 'WebVR::presentChange(): event for ' + d.displayName );
 
-        if ( disp.isPresenting ) {
+        if ( d.isPresenting ) {
 
-          if ( disp.capabilities && disp.capabilities.hasExternalDisplay ) {
+          if ( d.capabilities && d.capabilities.hasExternalDisplay ) {
 
             // Any changes needed when we jump to VR presenting.
 
@@ -626,7 +652,7 @@ class WebVR {
 
         } else {
 
-          if ( disp.capabilities && disp.capabilities.hasExternalDisplay ) {
+          if ( d.capabilities && d.capabilities.hasExternalDisplay ) {
 
             // Any changes needed when we leave VR presenting.
 

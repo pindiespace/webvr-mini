@@ -350,11 +350,11 @@ class Ui {
 
             this.util.emitter.on( this.util.emitter.events.VR_DISPLAY_READY, 
 
-                ( deviceName ) => {
+                ( device ) => {
 
-                    if ( deviceName ) {
+                    if ( device.displayName ) {
 
-                        let dName = deviceName.toLowerCase();
+                        let dName = device.displayName.toLowerCase();
 
                         if ( dName.indexOf( 'vive') !== this.util.NOT_IN_LIST ) {
 
@@ -382,7 +382,7 @@ class Ui {
 
             this.util.emitter.on( this.util.emitter.events.VR_DISPLAY_FAIL, 
 
-                ( deviceName ) => {
+                ( device ) => {
 
                     vrButton.inactivate();
 

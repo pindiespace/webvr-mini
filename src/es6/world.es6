@@ -110,6 +110,8 @@ class World extends AssetPool {
 
         this.last = performance.now();
 
+        this.rafId = null;
+
         this.counter = 0;
 
         // Bind the render loop (best current method)
@@ -121,15 +123,15 @@ class World extends AssetPool {
 
         this.util.emitter.on( this.util.emitter.events.VR_DISPLAY_READY, 
 
-            ( deviceName ) => {
+            ( device ) => {
 
-                if ( this.vr.rafId !== null ) {
+                if ( this.rafId !== null ) {
 
-                    console.log("VR_DISPLAY_READY, display typeof:" + this.vr.getDisplay())
+                    console.log("VR_DISPLAY_READY, display typeof:" + this.vr.getDisplay());
 
-                    this.vr.getDisplay().cancelAnimationFrame( this.vr.rafId );
+                    this.stop();
 
-                    this.vr.rafId = this.vr.getDisplay().requestAnimationFrame( this.render );
+                    this.start();
 
                 }
 
@@ -850,7 +852,11 @@ class World extends AssetPool {
      */
     start () {
 
-        this.vr.rafId = this.vr.getDisplay().requestAnimationFrame( this.render );
+        console.log( 'World::start(): starting animation' );
+
+        this.vr.setWorld( this );
+
+        return ( this.rafId = this.vr.getDisplay().requestAnimationFrame( this.render ) );
 
     }
 
@@ -859,7 +865,11 @@ class World extends AssetPool {
      */
     stop () {
 
-        this.vr.getDisplay().cancelAnimationFrame( this.vr.rafId );
+        console.log( 'World::stop(): stopping animation' );
+
+        this.vr.getDisplay().cancelAnimationFrame( this.rafId );
+
+        return ( this.rafId = null );
 
     }
 
@@ -1082,16 +1092,15 @@ class World extends AssetPool {
 
         let mat4 = this.glMatrix.mat4,
 
-        wvMatrix = this.wvMatrix;
+        wvMatrix = this.wvMatrix,
+
+        vr = this.vr, // wrapped WebVR object
+
+        pov = this.getPOV();
 
         this.update();
 
         this.webgl.clear();
-
-        let vr = this.vr, // wrapped WebVR object
-
-        pov = this.getPOV();
-
 // TODO: DEBUG TEMPORARY.
 //pov.rotation[ 0 ] += 0.003;
 //pov.rotation[ 1 ] += 0.003;
@@ -1118,7 +1127,7 @@ Note: THIS IMPLIES WE HAVE TO DO IT IN WORLD.
 
 */
 
-        let disp = vr.getDisplay();
+        let d = vr.getDisplay();
 
         // Clear the View matrix for the World.
 
@@ -1130,34 +1139,43 @@ Note: THIS IMPLIES WE HAVE TO DO IT IN WORLD.
          * If there is noVRDisplay, we use window.requestAnimationFrame
          */
 
-        if ( disp ) {
+        if ( d ) {
 
-            if ( disp.isPresenting ) {
+            if ( d.isPresenting ) {
 
                 // We can only go here if VRDisplay exists.
 
-                this.vr.rafId = disp.requestAnimationFrame( this.render );
+                this.rafId = d.requestAnimationFrame( this.render );
 
                 // Get FrameData (with matrices for left and right eye).
 
-                let frameData = vr.getFrameData();
+                let fd = vr.getFrameData();
 
-                // Get any World transforms (translation, rotation).
+                if ( fd !== null ) {
 
-                this.getWorldViewMatrix( wvMatrix );
+                    // Get any World transforms (translation, rotation).
 
-                /* 
-                 * These routines set the canvas viewport to left and right stereo, and 
-                 * draw left or right view using the frameDat left and right view matrix.
-                 */
+                    this.getWorldViewMatrix( wvMatrix );
 
-                this.r1.renderVR( vr, frameData, wvMatrix, pov );  // textured, no lighting
+                    /* 
+                     * These routines set the canvas viewport to left and right stereo, and 
+                     * draw left or right view using the frameDat left and right view matrix.
+                     */
 
-                this.r2.renderVR( vr, frameData, wvMatrix, pov );  // color
+                    this.r1.renderVR( vr, fd, wvMatrix, pov );  // textured, no lighting
 
-                this.r0.renderVR( vr, frameData, wvMatrix, pov );  // REQUIRED alpha (Prim appearing or disappearing), drawn in front
+                    this.r2.renderVR( vr, fd, wvMatrix, pov );  // color
 
-                disp.submitFrame();
+                    this.r0.renderVR( vr, fd, wvMatrix, pov );  // REQUIRED alpha (Prim appearing or disappearing), drawn in front
+
+                    d.submitFrame();
+
+                } else {
+
+                    console.error( 'World::render(): invalid VRFrameData' );
+
+                }
+
 
             } else {
 
@@ -1169,7 +1187,7 @@ Note: THIS IMPLIES WE HAVE TO DO IT IN WORLD.
                  * If we are using disp === window then the viewport always fills the canvas.
                  */
 
-                this.vr.rafId = disp.requestAnimationFrame( this.render );
+                this.rafId = d.requestAnimationFrame( this.render );
 
                 // Get any World transforms (translation, rotation).
 
