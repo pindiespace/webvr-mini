@@ -251,6 +251,8 @@ class PrimFactory {
 
         // Find the associated material from the material key given to the texture.
 
+        // TODO: texture make come in before material. handle that case.
+
         for ( let i in prim.materials ) {
 
             let m = prim.materials[ i ];
