@@ -58,10 +58,6 @@ class World extends AssetPool {
 
         this.materialPool = new MaterialPool( init, this.util, webgl, this.texturePool );
 
-        // Give the texturePool a link to the textureType lookup table.
-
-        this.texturePool.materialPool = this.materialPool;
-
         // Attach 1 copy of the Model loader. Note: passing in TexturePool and MaterialPool.
 
         this.modelPool = new ModelPool( init, this.util, webgl, this.texturePool, this.materialPool );
@@ -917,7 +913,7 @@ class World extends AssetPool {
 
                         } else {
 
-                            console.error( 'ModelPool::getModels(): no data found for:' + updateObj.path );
+                            console.error( 'ModelPool::getModel(): no data found for:' + updateObj.path );
 
                         }
 

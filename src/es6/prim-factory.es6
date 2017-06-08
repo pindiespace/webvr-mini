@@ -944,27 +944,6 @@ class PrimFactory {
 
         prim.materials[ prim.defaultMaterial.name ] = prim.defaultMaterial;
 
-        // If we have image files, load them and assign to prim.defaultMaterial.
-
-        //if ( textureImages && textureImages.length ) {
-
-            /* 
-             * textureImages is a list of paths associated with the default material. We assign each 
-             * texture a key for its associated material. 
-
-             Material key has to be a random token we generate now, since OBJ files can't provide an 
-             AssetPool key during loads.
-
-             So, we need a random token system to identify textures and materials and models to each other!
-
-             */
-
-          //  console.log("assplying prim.defaultMaterial.key: " + prim.defaultMaterial.key)
-
-           // this.texturePool.getTextures( prim, textureImages, true, false, this.webgl.getContext().TEXTURE_2D, { materials: [ prim.defaultMaterial.key ] } );
-
-        //}
-
         // Set Prim alpha from the active Material's transparency (opposite of prim.alpha === opacity).
 
         prim.alpha = 1.0 - prim.defaultMaterial.transparency;
@@ -1015,7 +994,19 @@ class PrimFactory {
 
         // Create Geometry data, or load Mesh data (may alter some of the above default properties).
 
-        this.geometryPool.getGeometries( prim, modelFiles, true, { prim: prim } );
+        if ( modelFiles.length > 0 ) {
+
+            for ( let i = 0; i < modelFiles.length; i++ ) {
+
+                this.geometryPool.getGeometry( prim, modelFiles[ i ], true, { pos: i } );
+
+            }
+
+        } else {
+
+                this.geometryPool.getGeometry( prim, '', true, { pos: 0 } );
+
+        }
 
         console.log('############prim.name:' + prim.name)
 

@@ -260,13 +260,13 @@ class WebVR {
 
               }
 
-              console.error( 'WebVR::getFrameData(): display (' + this.cDisplay.displayName + '), display.getFrameData returned:' + result );
+              console.error( 'WebVR::getFrameData(): display (' + d.displayName + '), display.getFrameData returned:' + result );
 
               return null;
 
         }
 
-        console.error( 'WebVR::getFrame(): display (' + this.cDisplay.displayName + ') does not have VRFrameData' );
+        console.error( 'WebVR::getFrame(): display (' + d.displayName + ') does not have VRFrameData' );
 
         return null;
 
@@ -483,8 +483,7 @@ class WebVR {
       */
     requestPresent ( displayNum ) {
 
-        console.log( 'WebVR::requestPresent(): display is a:' + this.cDisplay );
-
+ 
         if ( this.world === null ) {
 
             console.error( 'WebVR::requestPresent(): world not available' );
@@ -499,6 +498,8 @@ class WebVR {
             displayNum = 1;
 
         }
+
+        console.log( 'WebVR::requestPresent(): display(' + this.cDisplay + ')' );
 
         let world = this.world,
 
@@ -540,7 +541,7 @@ class WebVR {
 
                 ( error ) => {
 
-                    console.warn( '&&&&&&&&&&&&&&&&&&&&&&&&&WebVR::requestPresent(): catch, error is:' + error + ' for display:' + this.cDisplay );
+                    console.warn( '&&&&&&&&&&&&&&&&&&&&&&&&&WebVR::requestPresent(): catch, error is:' + error + ' for display:' + d );
 
                     /////////////this.util.emitter.emit( this.util.emitter.events.VR_DISPLAY_FAIL, d );
 
@@ -603,19 +604,21 @@ class WebVR {
 
                  world.start();
 
-                console.log( 'WebVR::exitPresent(): exited display ' + d.displayName + ' presentation' );
+                console.log( 'WebVR::exitPresent(): exited display (' + d.displayName + ') presentation to (' + this.cDisplay + ')' );
 
             }, ( reject ) => {
 
-                console.error( 'WebVR::exitPresent(): reject for display: ' + d.displayName + ', error:' + reject );
+                console.error( 'WebVR::exitPresent(): reject for display(' + d.displayName + '), error:' + reject );
+
+                this.util.emitter.emit( this.util.emitter.events.VR_DISPLAY_FAIL, d );
 
             } ).catch (
 
                 ( error ) => {
 
-                    console.warn( '&&&&&&&&&&&&&&&&&&&&&&&&&WebVR::exitPresent(): error:' + error + ' display is:' + this.cDisplay );
+                    console.warn( '&&&&&&&&&&&&&&&&&&&&&&&&&WebVR::exitPresent(): error for display (' + d.displayName + '), error:' + error );
 
-                    /////////////this.util.emitter.emit( this.util.emitter.events.VR_DISPLAY_FAIL, 'none' );
+                    this.util.emitter.emit( this.util.emitter.events.VR_DISPLAY_FAIL, d );
 
                 }
 
@@ -623,7 +626,9 @@ class WebVR {
 
         } else { 
 
-            console.error( 'WebVR::exitPresent(): display ' + d.displayName + ' not a vr display' );
+            console.error( 'WebVR::exitPresent(): display (' + d.displayName + ') is not a vr display' );
+
+            this.util.emitter.emit( this.util.emitter.events.VR_DISPLAY_FAIL, d );
 
         }
 

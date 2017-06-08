@@ -481,7 +481,7 @@ class ModelPool extends AssetPool {
 
                             console.log("========GET MATERIAL FOR PRIM:" + prim.name)
 
-                            this.materialPool.getMaterials( prim, [ dir + data ], true );
+                            this.materialPool.getMaterial( prim, dir + data, true, { pos: i } );
 
                         }
 
@@ -822,7 +822,7 @@ class ModelPool extends AssetPool {
 
         } else {
 
-             console.warn( 'TexturePool::addTexture(): no texture returned by createTexture() + ' + mimeType + ' function' );
+             console.warn( 'ModelPool::addModel(): no model returned by addModel() + ' + mimeType + ' function' );
 
         }
 
@@ -833,97 +833,83 @@ class ModelPool extends AssetPool {
     /** 
      * Load models, using a list of paths. If a Model already exists, 
      * just return it. Otherwise, do the load.
-     * @param {Array[String]} pathList a list of URL paths to load, or keys referencing our pool.
+     * @param {String} path the URL to load.
      * @param {Boolean} cacheBust if true, add a http://url?random query string to request.
      */
-    getModels ( prim, pathList, cacheBust = true, options = {} ) {
+    getModel ( prim, path, cacheBust = true, options = { pos: 0 } ) {
 
-        // Wrap single strings in an Array.
+        // Could have an empty path.
 
-        if ( this.util.isString( pathList ) ) {
+        if ( ! this.util.isWhitespace( path ) ) {
 
-            pathList = [ pathList ];
+            // Get the file mimeType.
 
-        }
+            let mimeType = this.modelMimeTypes[ this.util.getFileExtension( path ) ];
 
-        for ( let i = 0; i < pathList.length; i++ ) {
+            console.log("--------OBJ file doRequest model for:" + prim.name + ' path:' + path)
 
-            let path = pathList[ i ];
+            // check if mimeType is OK.
 
-            // Could have an empty path.
+            if( mimeType ) {
 
-            if ( ! this.util.isWhitespace( path ) ) {
+                this.doRequest( path, options.pos, 
 
-                // Get the file mimeType.
+                    ( updateObj ) => {
 
-                let mimeType = this.modelMimeTypes[ this.util.getFileExtension( path ) ];
+                        /* 
+                         * updateObj returned from GetAssets has the following structure:
+                         * { 
+                         *   pos: pos, 
+                         *   path: requestURL, 
+                         *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
+                         *   error: false|response 
+                         * } 
+                         */
 
-                console.log("--------OBJ file doRequest model for:" + prim.name + ' pathList:' + pathList)
+                        console.log("--------OBJ file returned model for:" + prim.name)
 
-                // check if mimeType is OK.
+                        // load a Model file.
 
-                if( mimeType ) {
+                        if ( updateObj.data ) {
 
-                    this.doRequest( path, i, 
+                            let modelObj = this.addModel( prim, updateObj.data, updateObj.path, mimeType, prim.type );
 
-                        ( updateObj ) => {
+                            if ( modelObj ) {
 
-                            /* 
-                             * updateObj returned from GetAssets has the following structure:
-                             * { 
-                             *   pos: pos, 
-                             *   path: requestURL, 
-                             *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
-                             *   error: false|response 
-                             * } 
-                             */
+                                /* 
+                                 * GEOMETRY_READY event, with additional data referencing sub-groups of the model.
+                                 * NOTE: options (e.g. starts of groups, materials, smoothing groups) are attached to modelObj.
+                                 * NOTE: we recover the modelObj by its key in PrimFactory.
+                                 * See this.addModel() above for more information.
+                                 */
 
-                            console.log("--------OBJ file returned model for:" + prim.name)
-
-                            // load a Model file. Only the first object in the file will be read.
-
-                            if ( updateObj.data ) {
-
-                                let modelObj = this.addModel( prim, updateObj.data, updateObj.path, updateObj.pos, mimeType, prim.type );
-
-                                if ( modelObj ) {
-
-                                    /* 
-                                     * GEOMETRY_READY event, with additional data referencing sub-groups of the model.
-                                     * NOTE: options (e.g. starts of groups, materials, smoothing groups) are attached to modelObj.
-                                     * NOTE: we recover the modelObj by its key in PrimFactory.
-                                     * See this.addModel() above for more information.
-                                     */
-
-                                    this.util.emitter.emit( modelObj.emits, prim, modelObj.key, modelObj.pos );
-
-                                } else {
-
-                                    console.error( 'TexturePool::getModels(): file:' + path + ' could not be parsed' );
-
-                                }
+                                this.util.emitter.emit( modelObj.emits, prim, modelObj.key, modelObj.pos );
 
                             } else {
 
-                                console.error( 'ModelPool::getModels(): no data found for:' + updateObj.path );
+                                console.error( 'TexturePool::getModel(): file:' + path + ' could not be parsed' );
 
                             }
 
+                        } else {
+
+                            console.error( 'ModelPool::getModel(): no data found for:' + updateObj.path );
+
+                        }
+
                     }, cacheBust, mimeType, 0 ); // end of this.doRequest(), initial request at 0 tries
-
-                } else {
-
-                    console.error( 'ModelPool::getModels(): file type "' + this.util.getFileExtension( path ) + '" in:' + path + ' not supported, not loading' );
-
-                }
 
             } else {
 
-                console.warn( 'ModelPool::getModels(): no path supplied for position ' + i );
+                console.error( 'ModelPool::getModel(): file type "' + this.util.getFileExtension( path ) + '" in:' + path + ' not supported, not loading' );
 
-            } // end of valid path
+            }
 
-        } // end of for loop
+        } else {
+
+                console.warn( 'ModelPool::getModel(): no path supplied for position ' + i );
+
+        } // end of valid path
 
     }
 

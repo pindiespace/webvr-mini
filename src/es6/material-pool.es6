@@ -24,39 +24,9 @@ class MaterialPool extends AssetPool {
 
         };
 
-        // Map textureMap types to position in prim.textures array. If new positions added, update this.computeObjectMaterials();
-
-        this.textureRoles = {
-
-            'map_Kd': 0,   // diffuse map, an image file (e.g. file.jpg)
-
-            'map_Ka': 1,   // ambient map
-
-            'map_bump': 2, // bumpmap
-
-            'bump': 2,     // bumpmap
-
-            'map_Km': 2,   // bumpmap
-
-            'map_Ks': 3,   // specular map
-
-            'map_refl': 4, // environment Map Path 
-
-            'refl': 4,     // environment Map Path 
-
-            'map_d': 5,    // alpha map
-
-            'map_disp': 6, // displacement map
-
-            'disp': 6      // displacement map
-
-        };
-
         // Reverse map for texture Roles (due to redundancy, don't use Object.keys()).
 
-        this.texturePositions = [ 'map_Kd', 'map_Ka', 'map_bump', 'map_Ks', 'map_refl', 'map_d', 'disp' ];
-
-        this.defaultTextureRole = 'map_Kd'; // also pos zero for texturePositions
+        this.texturePositions = [ 'map_Kd', 'map_Ka', 'map_bump', 'map_Ks', 'map_refl', 'map_d', 'map_disp' ];
 
         if ( init ) {
 
@@ -71,9 +41,9 @@ class MaterialPool extends AssetPool {
     /** 
      * Create the default MaterialPool object.
      * @param {String} name the name of the material, either 'defaul' in .mtl file.
-     * @param {Array} ambient ambient color.
-     * @param {Array} diffuse diffuse color.
-     * @param {Array} specular specular color.
+     * @param {Array} ambient the ambient color.
+     * @param {Array} diffuse the diffuse color.
+     * @param {Array} specular the specular color.
      * @param {Number} specularExponent the shininess of the object.
      * @param {Number} sharpness of reflection map.
      * @param {Number} refraction light-bending of transparent objects.
@@ -87,15 +57,23 @@ class MaterialPool extends AssetPool {
 
         map_Kd = null ) {
 
-        // Add a default one-pixel texture corresponding to the diffuse color (makes us valid most Shaders).
+        // Add a default placeholder one-pixel texture corresponding to the diffuse color (makes us valid for most Shaders).
 
         if ( ! map_Kd ) {
 
-            map_Kd = this.texturePool.create2dTexture( 
+            if ( this.defaultKey ) {
 
-                new Uint8Array( [ diffuse[ 0 ] * 255 , diffuse[ 1 ] * 255, diffuse[ 2 ] * 255, 255 ] )
+                map_Kd = this.getAssetByKey( this.defaultKey ).map_Kd;
 
-            );
+            } else {
+
+                map_Kd = this.texturePool.create2dTexture( 
+
+                    new Uint8Array( [ diffuse[ 0 ] * 255 , diffuse[ 1 ] * 255, diffuse[ 2 ] * 255, 255 ] )
+
+                );
+
+            }
 
         }
 
@@ -137,7 +115,7 @@ class MaterialPool extends AssetPool {
 
             map_bump: null,               // bumpmap
 
-            disp: null,                   // displacement map
+            map_disp: null,                   // displacement map
 
         }
 
@@ -333,7 +311,11 @@ class MaterialPool extends AssetPool {
 
                         // Apply file data to a default Material.
 
-                        materials[ currName ] = this.default( currName );
+                        ///////////////materials[ currName ] = this.default( currName );
+
+                        // GET THE ASSET OBJECT WITH ITS KEY
+
+                        materials[ currName ] = this.addAsset( this.default( currName ) );
 
                         break;
 
@@ -576,7 +558,6 @@ class MaterialPool extends AssetPool {
                          * after being emitted with a TEXTURE_2D_READY in PrimFactory.
                          * @link  "filename" is the name of a color texture or image file.
                          * @link http://paulbourke.net/dataformats/mtl/
-                         * Additional texture parameters go in texture.options
                          * map_Ka -s 1 1 1 -o 0 0 0 -mm 0 1 file.png
                          */
 
@@ -586,35 +567,13 @@ class MaterialPool extends AssetPool {
 
                         if ( currName ) { // if not, file is corrupt.
 
-                            // Convert 'bump' to 'map_bump'.
+                            // Set the materials texture value to texture path.
 
-                            if ( type === 'bump' ) type = 'map_bump';
+                            materials[ currName ][ type ] = tPath;
 
-                                // Set the materials texture value to texture path.
+                            // get (hyphenated) texture options, if present, and add them to the getTexture() call.
 
-                                materials[ currName ][ type ] = tPath;
-
-                                /* 
-                                 * get (hyphenated) texture options, if present, and add them to the getTextures() call.
-                                 */
-
-                                let options = this.computeTextureMapOptions( data );
-
-                                // Give each texture a list of materials it is associated with.
-
-                                if ( ! options.materials ) {
-
-                                    options.materials = [ currName ];
-
-                                } else {
-
-                                    options.materials.push( currName );
-
-                                }
-
-                            /* 
-                             * multiple textures have a defined order in the textures array.
-                             */
+                            let options = this.computeTextureMapOptions( data );
 
                             // Convert equivalent types.
 
@@ -622,19 +581,22 @@ class MaterialPool extends AssetPool {
 
                             if ( type === 'refl' ) type = 'map_refl';
 
-                             options.pos = this.textureRoles[ type ];
+                            if ( type === 'disp' ) type = 'map_disp';
 
-                             // Save the string version of type to pass to the called texture.
+                            // the options object contains lots of additional entries here relative to defaultMaterial.
 
-                             options.type = type;
+                            options.materialKey = materials[ currName ].key;
+
+                            options.type = type;
 
                             /*
                              * NOTE: the texture attaches to prim.textures, so the fourth parmeter is the texture type (map_Kd, map_Ks...).
                              * NOTE: the sixth paramater, is NULL since it defines a specific WebGL texture type (we want the default).
                              * NOTE: thex seventh paramater, options, if present, we pass those in as well.
+                             * TODO: HOW DO WE KNOW IF WE ARE LOADING A CUBEMAP TEXTURE????????????
                              */
 
-                            this.texturePool.getTextures( prim, [ dir + tPath ], true, false, null, options );
+                            this.texturePool.getTexture( prim, ( dir + tPath ), true, false, null, options );
 
                         }
 
@@ -669,19 +631,10 @@ class MaterialPool extends AssetPool {
      * @param {Prim} prim the requesting Prim object.
      * @param {Object} data data to construct the Prim GeoBuffer.
      * @param {String} path the file path to the object.
-     * @param {Number} pos the index of the object in the calling Prim's array.
      * @param {String} mimeType the MIME type of the file.
      * @param {String} type the GeometryPool.typeList type of the object, e.g. MESH, SPHERE...
      */
-    addMaterial ( prim, data, path, pos, mimeType, type ) {
-
-        if ( pos === undefined ) {
-
-            console.error( 'TextureObj::addTexture(): undefined pos' );
-
-            return null;
-
-        }
+    addMaterial ( prim, data, path, mimeType, type ) {
 
         let m;
 
@@ -752,7 +705,7 @@ class MaterialPool extends AssetPool {
 
         for ( let i = 0; i < textureImages.length; i++ ) {
 
-            this.texturePool.getTextures( prim, textureImages[ i ], true, false, this.webgl.getContext().TEXTURE_2D, { materialKey: mi.key, pos: i } );   
+            this.texturePool.getTexture( prim, textureImages[ i ], true, false, this.webgl.getContext().TEXTURE_2D, { materialKey: mi.key, type: this.texturePositions[ i ] } );   
 
         }
 
@@ -764,95 +717,77 @@ class MaterialPool extends AssetPool {
      * Load models, using a list of paths. If a Model already exists, 
      * just return it. Otherwise, do the load.
      * @param {Prim} prim the calling Prim.
-     * @param {Array[String]} pathList a list of URL paths to load, or a key for a material in our pool.
+     * @param {Array[String]} path the URL to load.
      * @param {Boolean} cacheBust if true, add a http://url?random query string to request.
      */
-    getMaterials ( prim, pathList, cacheBust = true ) {
+    getMaterial ( prim, path, cacheBust = true, options = { pos: 0 } ) {
 
-        // Wrap single strings in an Array.
+        // Could have an empty path.
 
-        if ( this.util.isString( pathList ) ) {
+        if ( ! this.util.isWhitespace( path ) ) {
 
-            pathList = [ pathList ];
+            // Get the image mimeType.
 
-        }
+            let mimeType = this.materialMimeTypes[ this.util.getFileExtension( path ) ];
 
-        for ( let i = 0; i < pathList.length; i++ ) {
+            // check if mimeType is OK.
 
-            let path = pathList[ i ];
+            if( mimeType ) {
 
-            // Could have an empty path.
+                this.doRequest( path, options.pos, 
 
-            if ( ! this.util.isWhitespace( path ) ) {
+                    ( updateObj ) => {
 
-                // Get the image mimeType.
+                        /* 
+                         * updateObj returned from GetAssets has the following structure:
+                         * { 
+                         *   pos: pos, 
+                         *   path: requestURL, 
+                         *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
+                         *   error: false|response 
+                         * } 
+                         */
 
-                let mimeType = this.materialMimeTypes[ this.util.getFileExtension( path ) ];
+                        if ( updateObj.data ) {
 
-                // check if mimeType is OK.
+                            let materialObj = this.addMaterial( prim, updateObj.data, updateObj.path, mimeType, prim.type );
 
-                if( mimeType ) {
+                            // Multiple materials may be returned from one .mtl file.
 
-                    this.doRequest( path, i, 
+                            if ( materialObj ) {
 
-                        ( updateObj ) => {
+                                for ( let j in materialObj ) {
 
-                            /* 
-                             * updateObj returned from GetAssets has the following structure:
-                             * { 
-                             *   pos: pos, 
-                             *   path: requestURL, 
-                             *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
-                             *   error: false|response 
-                             * } 
-                             */
+                                    console.log("==========emitting for materialObj:" + j)
 
-                            if ( updateObj.data ) {
-
-                                let materialObj = this.addMaterial( prim, updateObj.data, updateObj.path, updateObj.pos, mimeType, prim.type );
-
-                                // Multiple materials may be returned from one .mtl file.
-
-                                if ( materialObj ) {
-
-                                    for ( let j in materialObj ) {
-
-                                        ////////////console.log("MaterialPool sending:" + materialObj[ i ].emits + ' key:' + materialObj[ i ].key + ' i:' + i )
-
-                                        // Note that 'i' is the name of the material, instead of a numerical index (which it is in ModelPool and TexturePool).
-
-
-                                        console.log("==========emitting for materialObj:" + j)
-
-                                        this.util.emitter.emit( materialObj[ j ].emits, prim, materialObj[ j ].key, i );
+                                    this.util.emitter.emit( materialObj[ j ].emits, prim, materialObj[ j ].key, i );
 
                                     }
 
                                 } // end of material addition.
 
-                            } else {
+                        } else {
 
-                                console.error( 'MaterialPool::getMaterials(): no data found for:' + updateObj.path );
+                            console.error( 'MaterialPool::getMaterials(): no data found for:' + updateObj.path );
 
-                            }
+                        }
 
-                        }, cacheBust, mimeType, 0 ); // end of this.doRequest(), initial request at 0 tries
-
-                } else {
-
-                    console.error( 'MaterialPool::getModels(): file type "' + this.util.getFileExtension( path ) + ' not supported, not loading' );
-
-                }
+                    }, cacheBust, mimeType, 0 ); // end of this.doRequest(), initial request at 0 tries
 
             } else {
 
-                console.warn( 'MaterialPool::getMaterials(): no path supplied for position ' + i );
+                console.error( 'MaterialPool::getMaterials(): file type "' + this.util.getFileExtension( path ) + ' not supported, not loading' );
 
-            } // end of valid path
+            }
 
-        } // end of for loop
+        } else {
 
-    }
+            console.warn( 'MaterialPool::getMaterials(): no path supplied for position ' + i );
+
+        } // end of valid path
+
+
+    } // end of function
 
 }
 

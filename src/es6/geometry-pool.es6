@@ -3612,7 +3612,11 @@ class GeometryPool {
 
         // TODO: FORWARD SEPARATE ARRAY HERE
 
-        this.modelPool.getModels( prim, prim.models, true );
+        for ( let i = 0; i < pathList.length; i++ ) {
+
+            this.modelPool.getModel( prim, pathList[ i ], true, { pos: i } );
+
+        }
 
     }
 
@@ -3656,54 +3660,37 @@ class GeometryPool {
     }
 
     /** 
-     * Get multiple geometries.
+     * Get a geometry, either procedural, or from a OBJ file.
+     * @param {Prim} prim the calling Prim.
+     * @param {String} path the URL to load.
      */
-    getGeometries( prim, pathList = [], cacheBust = true, options = {} ) {
+    getGeometry( prim, path, cacheBust = true, options = { pos: 0 } ) {
 
-        if( pathList && ( prim.type === this.typeList.MESH ) ) {
+        if( prim.type === this.typeList.MESH ) {
 
             /* 
              * Mesh geometry, uses data from a file in OBJ wavefront format.
              */
 
-            // Wrap single strings in an Array.
+            // Could have an empty path.
 
-            if ( this.util.isString( pathList ) ) {
+            if ( ! this.util.isWhitespace( path ) ) {
 
-                pathList = [ pathList ];
+                console.log("--------getting model for:" + prim.name)
 
-            }
 
-            for ( let i = 0; i < pathList.length; i++ ) {
+                this.modelPool.getModel( prim, path, true, options );
 
-                let path = pathList[ i ];
+            } else {
 
-                // Could have an empty path.
+                console.warn( 'GeometryPool::getGeometry(): no path supplied for position ' + i );
 
-                if ( ! this.util.isWhitespace( path ) ) {
-
-                    // See if the 'path' is actually a key in this.modelPool.
-
-                    // Load geometry from a file, with callback emitter GEOMETRY_READY in ModelPool, calling Prim.initPrim().
-
-                    ///////console.log( 'GeometryPool::getGeometries(): new model file ' + path + ' for ' + prim.name );
-
-                    console.log("--------getting model for:" + prim.name)
-
-                    this.modelPool.getModels( prim, pathList, true, options );
-
-                } else {
-
-                    console.warn( 'GeometryPool::getTextures(): no path supplied for position ' + i );
-
-                } // end of valid path
-
-            } // end of for loop
+            } // end of valid path
 
         } else { // NO PATHLIST (procedural instead)
 
             /* 
-             * Procedural geometry, returns the same structure as modelPool.getModels();
+             * Procedural geometry, returns the same structure as modelPool.getModel();
              *
              * Model format:
              * {
@@ -3718,7 +3705,7 @@ class GeometryPool {
              * }
              */
 
-            /////////////console.log( 'GeometryPool::getGeometries() new procedural geometry for:' + prim.name );
+            console.log( 'GeometryPool::getGeometry() new procedural geometry for:' + prim.name );
 
             let m = this.modelPool.addAsset( this[ prim.type ]( prim ) );
 

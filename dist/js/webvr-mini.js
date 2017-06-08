@@ -3629,12 +3629,12 @@
 	                    return fd;
 	                }
 
-	                console.error('WebVR::getFrameData(): display (' + this.cDisplay.displayName + '), display.getFrameData returned:' + result);
+	                console.error('WebVR::getFrameData(): display (' + d.displayName + '), display.getFrameData returned:' + result);
 
 	                return null;
 	            }
 
-	            console.error('WebVR::getFrame(): display (' + this.cDisplay.displayName + ') does not have VRFrameData');
+	            console.error('WebVR::getFrame(): display (' + d.displayName + ') does not have VRFrameData');
 
 	            return null;
 	        }
@@ -3852,8 +3852,6 @@
 	        value: function requestPresent(displayNum) {
 	            var _this2 = this;
 
-	            console.log('WebVR::requestPresent(): display is a:' + this.cDisplay);
-
 	            if (this.world === null) {
 
 	                console.error('WebVR::requestPresent(): world not available');
@@ -3867,6 +3865,8 @@
 
 	                displayNum = 1;
 	            }
+
+	            console.log('WebVR::requestPresent(): display(' + this.cDisplay + ')');
 
 	            var world = this.world,
 	                d = this.displays[displayNum];
@@ -3903,7 +3903,7 @@
 	                    console.error('WebVR::requestPresent(): reject, error:' + reject + ' for display:' + d);
 	                }).catch(function (error) {
 
-	                    console.warn('&&&&&&&&&&&&&&&&&&&&&&&&&WebVR::requestPresent(): catch, error is:' + error + ' for display:' + _this2.cDisplay);
+	                    console.warn('&&&&&&&&&&&&&&&&&&&&&&&&&WebVR::requestPresent(): catch, error is:' + error + ' for display:' + d);
 
 	                    /////////////this.util.emitter.emit( this.util.emitter.events.VR_DISPLAY_FAIL, d );
 	                });
@@ -3962,19 +3962,23 @@
 
 	                    world.start();
 
-	                    console.log('WebVR::exitPresent(): exited display ' + d.displayName + ' presentation');
+	                    console.log('WebVR::exitPresent(): exited display (' + d.displayName + ') presentation to (' + _this3.cDisplay + ')');
 	                }, function (reject) {
 
-	                    console.error('WebVR::exitPresent(): reject for display: ' + d.displayName + ', error:' + reject);
+	                    console.error('WebVR::exitPresent(): reject for display(' + d.displayName + '), error:' + reject);
+
+	                    _this3.util.emitter.emit(_this3.util.emitter.events.VR_DISPLAY_FAIL, d);
 	                }).catch(function (error) {
 
-	                    console.warn('&&&&&&&&&&&&&&&&&&&&&&&&&WebVR::exitPresent(): error:' + error + ' display is:' + _this3.cDisplay);
+	                    console.warn('&&&&&&&&&&&&&&&&&&&&&&&&&WebVR::exitPresent(): error for display (' + d.displayName + '), error:' + error);
 
-	                    /////////////this.util.emitter.emit( this.util.emitter.events.VR_DISPLAY_FAIL, 'none' );
+	                    _this3.util.emitter.emit(_this3.util.emitter.events.VR_DISPLAY_FAIL, d);
 	                });
 	            } else {
 
-	                console.error('WebVR::exitPresent(): display ' + d.displayName + ' not a vr display');
+	                console.error('WebVR::exitPresent(): display (' + d.displayName + ') is not a vr display');
+
+	                this.util.emitter.emit(this.util.emitter.events.VR_DISPLAY_FAIL, d);
 	            }
 	        }
 
@@ -9752,24 +9756,6 @@
 
 	            prim.materials[prim.defaultMaterial.name] = prim.defaultMaterial;
 
-	            // If we have image files, load them and assign to prim.defaultMaterial.
-
-	            //if ( textureImages && textureImages.length ) {
-
-	            /* 
-	             * textureImages is a list of paths associated with the default material. We assign each 
-	             * texture a key for its associated material. 
-	              Material key has to be a random token we generate now, since OBJ files can't provide an 
-	             AssetPool key during loads.
-	              So, we need a random token system to identify textures and materials and models to each other!
-	              */
-
-	            //  console.log("assplying prim.defaultMaterial.key: " + prim.defaultMaterial.key)
-
-	            // this.texturePool.getTextures( prim, textureImages, true, false, this.webgl.getContext().TEXTURE_2D, { materials: [ prim.defaultMaterial.key ] } );
-
-	            //}
-
 	            // Set Prim alpha from the active Material's transparency (opposite of prim.alpha === opacity).
 
 	            prim.alpha = 1.0 - prim.defaultMaterial.transparency;
@@ -9820,7 +9806,16 @@
 
 	            // Create Geometry data, or load Mesh data (may alter some of the above default properties).
 
-	            this.geometryPool.getGeometries(prim, modelFiles, true, { prim: prim });
+	            if (modelFiles.length > 0) {
+
+	                for (var i = 0; i < modelFiles.length; i++) {
+
+	                    this.geometryPool.getGeometry(prim, modelFiles[i], true, { pos: i });
+	                }
+	            } else {
+
+	                this.geometryPool.getGeometry(prim, '', true, { pos: 0 });
+	            }
 
 	            console.log('############prim.name:' + prim.name);
 
@@ -12681,9 +12676,9 @@
 
 	            var len = vertices.length;
 
-	            for (var i = 0; i < len; i++) {
+	            for (var _i = 0; _i < len; _i++) {
 
-	                var vertex = vertices[i];
+	                var vertex = vertices[_i];
 
 	                c[0] += vertex[0], c[1] += vertex[1], c[2] += vertex[2];
 	            }
@@ -12714,9 +12709,9 @@
 
 	            var p2 = vertices[1];
 
-	            for (var i = 2; i < vertices.length; i++) {
+	            for (var _i2 = 2; _i2 < vertices.length; _i2++) {
 
-	                var p3 = vertices[i];
+	                var p3 = vertices[_i2];
 
 	                var edge1 = vec3.subtract([0, 0, 0], p3, p1);
 
@@ -12817,11 +12812,11 @@
 
 	            // Find minimum topLeft and maximum bottomRight coordinates defining a cube.
 
-	            for (var i = 0; i < vertices.length; i += 3) {
+	            for (var _i3 = 0; _i3 < vertices.length; _i3 += 3) {
 
-	                var v0 = vertices[i],
-	                    v1 = vertices[i + 1],
-	                    v2 = vertices[i + 2];
+	                var v0 = vertices[_i3],
+	                    v1 = vertices[_i3 + 1],
+	                    v2 = vertices[_i3 + 2];
 
 	                tx = Math.min(tx, v0), ty = Math.min(ty, v1), tz = Math.min(tz, v2), bx = Math.max(bx, v0), by = Math.max(by, v1), bz = Math.max(bz, v2);
 
@@ -12962,13 +12957,13 @@
 
 	            var radius = sphere.radius;
 
-	            for (var i = 0; i < vertices.length; i += 3) {
+	            for (var _i4 = 0; _i4 < vertices.length; _i4 += 3) {
 
-	                var x = vertices[i];
+	                var x = vertices[_i4];
 
-	                var y = vertices[i + 1];
+	                var y = vertices[_i4 + 1];
 
-	                var z = vertices[i + 2];
+	                var z = vertices[_i4 + 2];
 
 	                var dist = Math.sqrt(cx * x + cy * y + cz * z);
 
@@ -13166,11 +13161,11 @@
 
 	            // For each Face (step through indices 3 by 3)
 
-	            for (var i = 0; i < numIndices; i += 3) {
+	            for (var _i5 = 0; _i5 < numIndices; _i5 += 3) {
 
-	                var i1 = indices[i],
-	                    i2 = indices[i + 1],
-	                    i3 = indices[i + 2];
+	                var i1 = indices[_i5],
+	                    i2 = indices[_i5 + 1],
+	                    i3 = indices[_i5 + 2];
 
 	                var j = i1 * 3;var v1x = vertices[j],
 	                    v1y = vertices[j + 1],
@@ -13239,13 +13234,13 @@
 
 	            // Loop through vertices.
 
-	            for (var _i = 0, i4 = 0; i4 < numVertices; _i += 3, i4 += 4) {
+	            for (var _i6 = 0, i4 = 0; i4 < numVertices; _i6 += 3, i4 += 4) {
 
-	                var n = [normals[_i], normals[_i + 1], normals[_i + 2]];
+	                var n = [normals[_i6], normals[_i6 + 1], normals[_i6 + 2]];
 
-	                var _t = [tan1[_i], tan1[_i + 1], tan1[_i + 2]];
+	                var _t = [tan1[_i6], tan1[_i6 + 1], tan1[_i6 + 2]];
 
-	                var _t2 = [tan2[_i], tan2[_i + 1], tan2[_i + 2]];
+	                var _t2 = [tan2[_i6], tan2[_i6 + 1], tan2[_i6 + 2]];
 
 	                // Gram-Schmidt orthogonalize, was const tmp  = subtract(t1, scale(dot(n, t1), n));
 
@@ -13289,9 +13284,9 @@
 
 	            var texCoords = [];
 
-	            for (var i = 0; i < vertices.length; i += 3) {
+	            for (var _i7 = 0; _i7 < vertices.length; _i7 += 3) {
 
-	                var t = this.computeSphericalCoords([vertices[i], vertices[i + 1], vertices[i + 2]]);
+	                var t = this.computeSphericalCoords([vertices[_i7], vertices[_i7 + 1], vertices[_i7 + 2]]);
 
 	                texCoords.push(t[0], t[1]);
 	            }
@@ -13329,13 +13324,13 @@
 
 	            var texCoords = new Array(vertices.length * 2 / 3);
 
-	            for (var i = 0; i < indices.length; i += 3) {
+	            for (var _i8 = 0; _i8 < indices.length; _i8 += 3) {
 
-	                var _i2 = i,
-	                    _i3 = i + 1,
-	                    _i4 = i + 2;
+	                var _i9 = _i8,
+	                    _i10 = _i8 + 1,
+	                    _i11 = _i8 + 2;
 
-	                v0 = this.util.getArr(vertices, _i2, 3), v1 = this.util.getArr(vertices, _i3, 3), v2 = this.util.getArr(vertices, _i4, 3);
+	                v0 = this.util.getArr(vertices, _i9, 3), v1 = this.util.getArr(vertices, _i10, 3), v2 = this.util.getArr(vertices, _i11, 3);
 
 	                side1 = vec3.sub([0, 0, 0], v1, v0);
 
@@ -13351,37 +13346,37 @@
 
 	                    case Facing.Forward:
 
-	                        texCoords[_i2] = scaledUV(v0[0], v0[1], scale);
+	                        texCoords[_i9] = scaledUV(v0[0], v0[1], scale);
 
-	                        texCoords[_i3] = scaledUV(v1[0], v1[1], scale);
+	                        texCoords[_i10] = scaledUV(v1[0], v1[1], scale);
 
-	                        texCoords[_i4] = scaledUV(v2[0], v2[1], scale);
+	                        texCoords[_i11] = scaledUV(v2[0], v2[1], scale);
 
 	                        break;
 
-	                        texCoords[_i2] = scaledUV(v0[0], v0[2], scale);
+	                        texCoords[_i9] = scaledUV(v0[0], v0[2], scale);
 
-	                        texCoords[_i3] = scaledUV(v1[0], v1[2], scale);
+	                        texCoords[_i10] = scaledUV(v1[0], v1[2], scale);
 
-	                        texCoords[_i4] = scaledUV(v2[0], v2[2], scale);
+	                        texCoords[_i11] = scaledUV(v2[0], v2[2], scale);
 
 	                    case Facing.up:
 
-	                        texCoords[_i2] = scaledUV(v0[1], v0[2], scale);
+	                        texCoords[_i9] = scaledUV(v0[1], v0[2], scale);
 
-	                        texCoords[_i3] = scaledUV(v1[1], v1[2], scale);
+	                        texCoords[_i10] = scaledUV(v1[1], v1[2], scale);
 
-	                        texCoords[_i4] = scaledUV(v2[1], v2[2], scale);
+	                        texCoords[_i11] = scaledUV(v2[1], v2[2], scale);
 
 	                        break;
 
 	                    case Facing.right:
 
-	                        texCoords[_i2] = scaledUV(v0[2], v0[1], scale);
+	                        texCoords[_i9] = scaledUV(v0[2], v0[1], scale);
 
-	                        texCoords[_i3] = scaledUV(v1[2], v1[1], scale);
+	                        texCoords[_i10] = scaledUV(v1[2], v1[1], scale);
 
-	                        texCoords[_i4] = scaledUV(v2[2], v2[1], scale);
+	                        texCoords[_i11] = scaledUV(v2[2], v2[1], scale);
 
 	                        break;
 	                }
@@ -13465,7 +13460,7 @@
 
 	            if (colors.length === 4) {
 
-	                for (var i = 0; i < coords.length; i += 3) {
+	                for (var _i12 = 0; _i12 < coords.length; _i12 += 3) {
 
 	                    c.push(colors[0], colors[1], colors[2], colors[3]);
 	                }
@@ -13473,9 +13468,9 @@
 
 	            // Otherwise, create colors as a normals map.
 
-	            for (var _i5 = 0; _i5 < coords.length; _i5 += 3) {
+	            for (var _i13 = 0; _i13 < coords.length; _i13 += 3) {
 
-	                c.push(coords[_i5], coords[_i5 + 1], coords[_i5 + 2], 1.0);
+	                c.push(coords[_i13], coords[_i13 + 1], coords[_i13 + 2], 1.0);
 	            }
 
 	            return c;
@@ -13498,9 +13493,9 @@
 
 	            // Get the subset of vertices we should take by following indices.
 
-	            for (var i = 0; i < indices.length; i++) {
+	            for (var _i14 = 0; _i14 < indices.length; _i14++) {
 
-	                vv.push(vertices[indices[i]]);
+	                vv.push(vertices[indices[_i14]]);
 	            }
 
 	            // Compute the central point of the triangle fan.
@@ -13524,13 +13519,13 @@
 
 	            var env = lenv - 1;
 
-	            for (var _i6 = 1; _i6 < lenv; _i6++) {
+	            for (var _i15 = 1; _i15 < lenv; _i15++) {
 
-	                var p1 = _i6 - 1;
+	                var p1 = _i15 - 1;
 
-	                var p2 = _i6;
+	                var p2 = _i15;
 
-	                if (_i6 === lenv - 1) {
+	                if (_i15 === lenv - 1) {
 
 	                    p2 = 0;
 	                }
@@ -13593,9 +13588,9 @@
 
 	            var oldPos = this.getCenter(vertices);
 
-	            for (var i = 0; i < vertices.length; i++) {
+	            for (var _i16 = 0; _i16 < vertices.length; _i16++) {
 
-	                vertices[i] *= scale;
+	                vertices[_i16] *= scale;
 	            }
 
 	            this.moveTo(oldPos);
@@ -13616,13 +13611,13 @@
 
 	            var delta = [center[0] - pos[0], center[1] - pos[1], center[2] - pos[2]];
 
-	            for (var i = 0; i < vertices.length; i += 3) {
+	            for (var _i17 = 0; _i17 < vertices.length; _i17 += 3) {
 
-	                vertices[i] = delta[0];
+	                vertices[_i17] = delta[0];
 
-	                vertices[i + 1] = delta[1];
+	                vertices[_i17 + 1] = delta[1];
 
-	                vertices[i + 2] = delta[2];
+	                vertices[_i17 + 2] = delta[2];
 	            }
 	        }
 
@@ -13686,15 +13681,15 @@
 
 	                var map = prim.sphereMap.map;
 
-	                for (var i = 0; i < map.length; i += 3) {
+	                for (var _i18 = 0; _i18 < map.length; _i18 += 3) {
 
-	                    map[i] *= w;
+	                    map[_i18] *= w;
 
-	                    map[i + 1] *= h;
+	                    map[_i18 + 1] *= h;
 
-	                    map[i + 2] *= d;
+	                    map[_i18 + 2] *= d;
 
-	                    indices.push[i];
+	                    indices.push[_i18];
 	                }
 
 	                // roughness 0.2 of 0-1, flatten = 1 of 0-1;
@@ -14517,11 +14512,11 @@
 
 	                for (var j = 0; j <= nv; j++) {
 
-	                    for (var i = 0; i <= nu; i++) {
+	                    for (var _i19 = 0; _i19 <= nu; _i19++) {
 
 	                        var vert = positions[vertexIndex] = [0, 0, 0];
 
-	                        vert[u] = (-su / 2 + i * su / nu) * flipu;
+	                        vert[u] = (-su / 2 + _i19 * su / nu) * flipu;
 
 	                        vert[v] = (-sv / 2 + j * sv / nv) * flipv;
 
@@ -14533,12 +14528,12 @@
 
 	                            // our 'y' for the TOP x/z MAY NEED TO CHANGE FOR EACH SIDE
 
-	                            vert[w] = prim.heightMap.getPixel(i, j);
+	                            vert[w] = prim.heightMap.getPixel(_i19, j);
 	                        }
 
 	                        // Texture coords.
 
-	                        texCoords.push(i / nu, 1.0 - j / nv);
+	                        texCoords.push(_i19 / nu, 1.0 - j / nv);
 
 	                        // Normals.
 
@@ -14557,9 +14552,9 @@
 
 	                for (var _j = 0; _j < nv; _j++) {
 
-	                    for (var _i7 = 0; _i7 < nu; _i7++) {
+	                    for (var _i20 = 0; _i20 < nu; _i20++) {
 
-	                        var n = vertShift + _j * (nu + 1) + _i7;
+	                        var n = vertShift + _j * (nu + 1) + _i20;
 
 	                        // Indices for entire prim.
 
@@ -14596,9 +14591,9 @@
 
 	                var rz = sz / 2.0;
 
-	                for (var i = 0; i < positions.length; i++) {
+	                for (var _i21 = 0; _i21 < positions.length; _i21++) {
 
-	                    var pos = positions[i];
+	                    var pos = positions[_i21];
 
 	                    var inner = [pos[0], pos[1], pos[2]];
 
@@ -14634,7 +14629,7 @@
 
 	                    vec3.normalize(normal, normal);
 
-	                    normals[i] = normal;
+	                    normals[_i21] = normal;
 
 	                    pos = [inner[0], inner[1], inner[2]];
 
@@ -14644,7 +14639,7 @@
 
 	                    vec3.add(pos, pos, tmp);
 
-	                    positions[i] = pos;
+	                    positions[_i21] = pos;
 	                }
 	            } else if ((prim.type === list.CURVEDOUTERPLANE || prim.type === list.CURVEDINNERPLANE) && prim.dimensions[4] && prim.dimensions[4] !== 0) {
 
@@ -14689,43 +14684,43 @@
 	                        break;
 	                }
 
-	                for (var _i8 = 0; _i8 < positions.length; _i8++) {
+	                for (var _i22 = 0; _i22 < positions.length; _i22++) {
 
 	                    switch (prim.dimensions[3]) {
 
 	                        case side.FRONT:
 
-	                            positions[_i8][2] = dSide * Math.cos(positions[_i8][0]) * prim.dimensions[4];
+	                            positions[_i22][2] = dSide * Math.cos(positions[_i22][0]) * prim.dimensions[4];
 
 	                            break;
 
 	                        case side.BACK:
 
-	                            positions[_i8][2] = dSide * Math.cos(positions[_i8][0]) * prim.dimensions[4];
+	                            positions[_i22][2] = dSide * Math.cos(positions[_i22][0]) * prim.dimensions[4];
 
 	                            break;
 
 	                        case side.LEFT:
 
-	                            positions[_i8][0] = dSide * Math.cos(positions[_i8][2]) * prim.dimensions[4];
+	                            positions[_i22][0] = dSide * Math.cos(positions[_i22][2]) * prim.dimensions[4];
 
 	                            break;
 
 	                        case side.RIGHT:
 
-	                            positions[_i8][0] = dSide * Math.cos(positions[_i8][2]) * prim.dimensions[4];
+	                            positions[_i22][0] = dSide * Math.cos(positions[_i22][2]) * prim.dimensions[4];
 
 	                            break;
 
 	                        case side.TOP:
 
-	                            positions[_i8][1] = dSide * Math.cos(positions[_i8][0]) * prim.dimensions[4];
+	                            positions[_i22][1] = dSide * Math.cos(positions[_i22][0]) * prim.dimensions[4];
 
 	                            break;
 
 	                        case side.BOTTOM:
 
-	                            positions[_i8][1] = -Math.cos(positions[_i8][0]) * prim.dimensions[4]; // SEEN FROM INSIDE< CORRECT
+	                            positions[_i22][1] = -Math.cos(positions[_i22][0]) * prim.dimensions[4]; // SEEN FROM INSIDE< CORRECT
 
 	                            break;
 
@@ -15228,9 +15223,9 @@
 
 	            function createVertexLine(from, to, steps, v, vertices) {
 
-	                for (var _i9 = 1; _i9 <= steps; _i9++) {
+	                for (var _i23 = 1; _i23 <= steps; _i23++) {
 
-	                    vertices[v++] = vec3.lerp([0, 0, 0], from, to, _i9 / steps);
+	                    vertices[v++] = vec3.lerp([0, 0, 0], from, to, _i23 / steps);
 	                }
 
 	                return v;
@@ -15240,7 +15235,7 @@
 
 	            function createLowerStrip(steps, vTop, vBottom, t, triangles) {
 
-	                for (var _i10 = 1; _i10 < steps; _i10++) {
+	                for (var _i24 = 1; _i24 < steps; _i24++) {
 
 	                    triangles[t++] = vBottom;
 
@@ -15274,7 +15269,7 @@
 
 	                triangles[t++] = ++vBottom;
 
-	                for (var _i11 = 1; _i11 <= steps; _i11++) {
+	                for (var _i25 = 1; _i25 <= steps; _i25++) {
 
 	                    triangles[t++] = vTop - 1;
 
@@ -15302,7 +15297,7 @@
 
 	                triangles[t++] = vTop - 1;
 
-	                for (var _i12 = 1; _i12 <= steps; _i12++) {
+	                for (var _i26 = 1; _i26 <= steps; _i26++) {
 
 	                    triangles[t++] = vTop;
 
@@ -15536,21 +15531,21 @@
 
 	            if (prim.applyTexToFace) {
 
-	                for (var i = 0; i < faces.length; i++) {
+	                for (var _i27 = 0; _i27 < faces.length; _i27++) {
 
 	                    var len = vertices.length;
 
 	                    // The fan is a flat polygon, constructed with face points, shared vertices.
 
-	                    var fan = this.computeFan(vtx, faces[i]);
+	                    var fan = this.computeFan(vtx, faces[_i27]);
 
 	                    vertices = vertices.concat(fan.vertices);
 
 	                    // Update the indices to reflect concatenation.
 
-	                    for (var _i13 = 0; _i13 < fan.indices.length; _i13++) {
+	                    for (var _i28 = 0; _i28 < fan.indices.length; _i28++) {
 
-	                        fan.indices[_i13] += len;
+	                        fan.indices[_i28] += len;
 	                    }
 
 	                    indices = indices.concat(fan.indices);
@@ -15561,9 +15556,9 @@
 	                }
 	            } else {
 
-	                for (var _i14 = 0; _i14 < faces.length; _i14++) {
+	                for (var _i29 = 0; _i29 < faces.length; _i29++) {
 
-	                    var vv = faces[_i14]; // indices to vertices
+	                    var vv = faces[_i29]; // indices to vertices
 
 	                    var vvv = []; // saved vertices
 
@@ -15576,13 +15571,13 @@
 
 	                    var center = this.geometry.computeCentroid(vvv);
 
-	                    for (var _i15 = 1; _i15 <= lenv; _i15++) {
+	                    for (var _i30 = 1; _i30 <= lenv; _i30++) {
 
-	                        var p1 = _i15 - 1;
+	                        var p1 = _i30 - 1;
 
-	                        var p2 = _i15;
+	                        var p2 = _i30;
 
-	                        if (_i15 === lenv) {
+	                        if (_i30 === lenv) {
 
 	                            p1 = p2 - 1;
 
@@ -15608,9 +15603,9 @@
 
 	            // Scale.
 
-	            for (var _i16 = 0; _i16 < vertices.length; _i16++) {
+	            for (var _i31 = 0; _i31 < vertices.length; _i31++) {
 
-	                var _vv = vertices[_i16];
+	                var _vv = vertices[_i31];
 
 	                _vv[0] *= w;
 
@@ -15784,7 +15779,10 @@
 
 	            // TODO: FORWARD SEPARATE ARRAY HERE
 
-	            this.modelPool.getModels(prim, prim.models, true);
+	            for (var _i32 = 0; _i32 < pathList.length; _i32++) {
+
+	                this.modelPool.getModel(prim, pathList[_i32], true, { pos: _i32 });
+	            }
 	        }
 
 	        /* 
@@ -15826,57 +15824,40 @@
 	        }
 
 	        /** 
-	         * Get multiple geometries.
+	         * Get a geometry, either procedural, or from a OBJ file.
+	         * @param {Prim} prim the calling Prim.
+	         * @param {String} path the URL to load.
 	         */
 
 	    }, {
-	        key: 'getGeometries',
-	        value: function getGeometries(prim) {
-	            var pathList = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
+	        key: 'getGeometry',
+	        value: function getGeometry(prim, path) {
 	            var cacheBust = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
-	            var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
+	            var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : { pos: 0 };
 
 
-	            if (pathList && prim.type === this.typeList.MESH) {
+	            if (prim.type === this.typeList.MESH) {
 
 	                /* 
 	                 * Mesh geometry, uses data from a file in OBJ wavefront format.
 	                 */
 
-	                // Wrap single strings in an Array.
+	                // Could have an empty path.
 
-	                if (this.util.isString(pathList)) {
+	                if (!this.util.isWhitespace(path)) {
 
-	                    pathList = [pathList];
-	                }
+	                    console.log("--------getting model for:" + prim.name);
 
-	                for (var i = 0; i < pathList.length; i++) {
+	                    this.modelPool.getModel(prim, path, true, options);
+	                } else {
 
-	                    var path = pathList[i];
-
-	                    // Could have an empty path.
-
-	                    if (!this.util.isWhitespace(path)) {
-
-	                        // See if the 'path' is actually a key in this.modelPool.
-
-	                        // Load geometry from a file, with callback emitter GEOMETRY_READY in ModelPool, calling Prim.initPrim().
-
-	                        ///////console.log( 'GeometryPool::getGeometries(): new model file ' + path + ' for ' + prim.name );
-
-	                        console.log("--------getting model for:" + prim.name);
-
-	                        this.modelPool.getModels(prim, pathList, true, options);
-	                    } else {
-
-	                        console.warn('GeometryPool::getTextures(): no path supplied for position ' + i);
-	                    } // end of valid path
-	                } // end of for loop
+	                    console.warn('GeometryPool::getGeometry(): no path supplied for position ' + i);
+	                } // end of valid path
 	            } else {
 	                // NO PATHLIST (procedural instead)
 
 	                /* 
-	                 * Procedural geometry, returns the same structure as modelPool.getModels();
+	                 * Procedural geometry, returns the same structure as modelPool.getModel();
 	                 *
 	                 * Model format:
 	                 * {
@@ -15891,7 +15872,7 @@
 	                 * }
 	                 */
 
-	                /////////////console.log( 'GeometryPool::getGeometries() new procedural geometry for:' + prim.name );
+	                console.log('GeometryPool::getGeometry() new procedural geometry for:' + prim.name);
 
 	                var m = this.modelPool.addAsset(this[prim.type](prim));
 
@@ -16155,9 +16136,9 @@
 
 	                // For quad, this gives 0, 1, 2, 0, 2, 3.
 
-	                for (var i = 1; i < idxs.length - 1; i++) {
+	                for (var _i = 1; _i < idxs.length - 1; _i++) {
 
-	                    nIdxs.push(idxs[0], idxs[i], idxs[i + 1]);
+	                    nIdxs.push(idxs[0], idxs[_i], idxs[_i + 1]);
 	                }
 
 	                return nIdxs;
@@ -16247,9 +16228,9 @@
 
 	            // Append to faces array.
 
-	            for (var i = 0; i < iVerts.length; i++) {
+	            for (var _i2 = 0; _i2 < iVerts.length; _i2++) {
 
-	                faces.push([iVerts[i], iTexCoords[i], iNormals[i]]);
+	                faces.push([iVerts[_i2], iTexCoords[_i2], iNormals[_i2]]);
 	            }
 	        }
 
@@ -16428,11 +16409,11 @@
 
 	                            var mtls = data.split(' ');
 
-	                            for (var i = 0; i < mtls.length; i++) {
+	                            for (var _i3 = 0; _i3 < mtls.length; _i3++) {
 
 	                                console.log("========GET MATERIAL FOR PRIM:" + prim.name);
 
-	                                _this2.materialPool.getMaterials(prim, [dir + data], true);
+	                                _this2.materialPool.getMaterial(prim, dir + data, true, { pos: _i3 });
 	                            }
 
 	                            break;
@@ -16513,11 +16494,11 @@
 	                    nMatStarts = [],
 	                    nSmoothingGroups = [];
 
-	                for (var i = 0; i < faces.length; i++) {
+	                for (var _i4 = 0; _i4 < faces.length; _i4++) {
 
 	                    // i is the index in the faces array.
 
-	                    var f = faces[i];
+	                    var f = faces[_i4];
 
 	                    // Construct a hash key for this face.
 
@@ -16556,7 +16537,7 @@
 
 	                        for (var j = 0; j < matStarts.length; j++) {
 
-	                            if (j == i) {
+	                            if (j == _i4) {
 	                                // our current face number is the same as a face number in the faces array
 
 	                                nMatStarts[j] = [matStarts[j][0], iIdx]; // write the new index to that position
@@ -16633,9 +16614,9 @@
 
 	            // Final computation for matStarts. Compute the length of each material block.
 
-	            for (var _i = 0; _i < matStarts.length - 1; _i++) {
+	            for (var _i5 = 0; _i5 < matStarts.length - 1; _i5++) {
 
-	                matStarts[_i][2] = matStarts[_i + 1][1] - matStarts[_i][1];
+	                matStarts[_i5][2] = matStarts[_i5 + 1][1] - matStarts[_i5][1];
 	            }
 
 	            matStarts[matStarts.length - 1][2] = tVertices.length;
@@ -16741,7 +16722,7 @@
 	                */
 	            } else {
 
-	                console.warn('TexturePool::addTexture(): no texture returned by createTexture() + ' + mimeType + ' function');
+	                console.warn('ModelPool::addModel(): no model returned by addModel() + ' + mimeType + ' function');
 	            }
 
 	            return this.addAsset(d);
@@ -16750,96 +16731,80 @@
 	        /** 
 	         * Load models, using a list of paths. If a Model already exists, 
 	         * just return it. Otherwise, do the load.
-	         * @param {Array[String]} pathList a list of URL paths to load, or keys referencing our pool.
+	         * @param {String} path the URL to load.
 	         * @param {Boolean} cacheBust if true, add a http://url?random query string to request.
 	         */
 
 	    }, {
-	        key: 'getModels',
-	        value: function getModels(prim, pathList) {
+	        key: 'getModel',
+	        value: function getModel(prim, path) {
 	            var _this3 = this;
 
 	            var cacheBust = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
-	            var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
+	            var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : { pos: 0 };
 
 
-	            // Wrap single strings in an Array.
+	            // Could have an empty path.
 
-	            if (this.util.isString(pathList)) {
+	            if (!this.util.isWhitespace(path)) {
 
-	                pathList = [pathList];
-	            }
+	                // Get the file mimeType.
 
-	            var _loop = function _loop(i) {
+	                var mimeType = this.modelMimeTypes[this.util.getFileExtension(path)];
 
-	                var path = pathList[i];
+	                console.log("--------OBJ file doRequest model for:" + prim.name + ' path:' + path);
 
-	                // Could have an empty path.
+	                // check if mimeType is OK.
 
-	                if (!_this3.util.isWhitespace(path)) {
+	                if (mimeType) {
 
-	                    // Get the file mimeType.
+	                    this.doRequest(path, options.pos, function (updateObj) {
 
-	                    var mimeType = _this3.modelMimeTypes[_this3.util.getFileExtension(path)];
+	                        /* 
+	                         * updateObj returned from GetAssets has the following structure:
+	                         * { 
+	                         *   pos: pos, 
+	                         *   path: requestURL, 
+	                         *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
+	                         *   error: false|response 
+	                         * } 
+	                         */
 
-	                    console.log("--------OBJ file doRequest model for:" + prim.name + ' pathList:' + pathList);
+	                        console.log("--------OBJ file returned model for:" + prim.name);
 
-	                    // check if mimeType is OK.
+	                        // load a Model file.
 
-	                    if (mimeType) {
+	                        if (updateObj.data) {
 
-	                        _this3.doRequest(path, i, function (updateObj) {
+	                            var modelObj = _this3.addModel(prim, updateObj.data, updateObj.path, mimeType, prim.type);
 
-	                            /* 
-	                             * updateObj returned from GetAssets has the following structure:
-	                             * { 
-	                             *   pos: pos, 
-	                             *   path: requestURL, 
-	                             *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
-	                             *   error: false|response 
-	                             * } 
-	                             */
+	                            if (modelObj) {
 
-	                            console.log("--------OBJ file returned model for:" + prim.name);
+	                                /* 
+	                                 * GEOMETRY_READY event, with additional data referencing sub-groups of the model.
+	                                 * NOTE: options (e.g. starts of groups, materials, smoothing groups) are attached to modelObj.
+	                                 * NOTE: we recover the modelObj by its key in PrimFactory.
+	                                 * See this.addModel() above for more information.
+	                                 */
 
-	                            // load a Model file. Only the first object in the file will be read.
-
-	                            if (updateObj.data) {
-
-	                                var modelObj = _this3.addModel(prim, updateObj.data, updateObj.path, updateObj.pos, mimeType, prim.type);
-
-	                                if (modelObj) {
-
-	                                    /* 
-	                                     * GEOMETRY_READY event, with additional data referencing sub-groups of the model.
-	                                     * NOTE: options (e.g. starts of groups, materials, smoothing groups) are attached to modelObj.
-	                                     * NOTE: we recover the modelObj by its key in PrimFactory.
-	                                     * See this.addModel() above for more information.
-	                                     */
-
-	                                    _this3.util.emitter.emit(modelObj.emits, prim, modelObj.key, modelObj.pos);
-	                                } else {
-
-	                                    console.error('TexturePool::getModels(): file:' + path + ' could not be parsed');
-	                                }
+	                                _this3.util.emitter.emit(modelObj.emits, prim, modelObj.key, modelObj.pos);
 	                            } else {
 
-	                                console.error('ModelPool::getModels(): no data found for:' + updateObj.path);
+	                                console.error('TexturePool::getModel(): file:' + path + ' could not be parsed');
 	                            }
-	                        }, cacheBust, mimeType, 0); // end of this.doRequest(), initial request at 0 tries
-	                    } else {
+	                        } else {
 
-	                        console.error('ModelPool::getModels(): file type "' + _this3.util.getFileExtension(path) + '" in:' + path + ' not supported, not loading');
-	                    }
+	                            console.error('ModelPool::getModel(): no data found for:' + updateObj.path);
+	                        }
+	                    }, cacheBust, mimeType, 0); // end of this.doRequest(), initial request at 0 tries
 	                } else {
 
-	                    console.warn('ModelPool::getModels(): no path supplied for position ' + i);
-	                } // end of valid path
-	            };
+	                    console.error('ModelPool::getModel(): file type "' + this.util.getFileExtension(path) + '" in:' + path + ' not supported, not loading');
+	                }
+	            } else {
 
-	            for (var i = 0; i < pathList.length; i++) {
-	                _loop(i);
-	            } // end of for loop
+	                console.warn('ModelPool::getModel(): no path supplied for position ' + i);
+	            } // end of valid path
 	        }
 	    }]);
 
@@ -16928,8 +16893,6 @@
 	            _this.defaultKey = _this.addAsset(_this.default(null, null, gl.TEXTURE_2D, null, _this.create2dTexture(), null)).key;
 	        }
 
-	        // NOTE: World adds a reference to the MaterialPool, needed for default texture loading!
-
 	        return _this;
 	    }
 
@@ -16988,7 +16951,7 @@
 
 	    }, {
 	        key: 'create2dTexture',
-	        value: function create2dTexture(image, key, compressed) {
+	        value: function create2dTexture(image, compressed) {
 
 	            var gl = this.webgl.getContext(),
 	                texture = gl.createTexture();
@@ -17065,7 +17028,7 @@
 
 	    }, {
 	        key: 'create3dTexture',
-	        value: function create3dTexture(data, key, compressed, size) {
+	        value: function create3dTexture(data, compressed, size) {
 
 	            console.log('creating 3D texture');
 
@@ -17137,7 +17100,7 @@
 
 	    }, {
 	        key: 'createCubeMapTexture',
-	        value: function createCubeMapTexture(images, key, compressed) {
+	        value: function createCubeMapTexture(images, compressed) {
 
 	            console.log('creating cubemap texture');
 
@@ -17173,7 +17136,6 @@
 	         * Create a WebGL texture from a JavaScript Image object, and add it to our texture list.
 	         * @param {Image} image a JS Image object with defined .src
 	         * @param {String} path the file URL for the texture.
-	         * @param {String|Number} pos the pos (index) for assigning the texture in the calling Prim .textures array
 	         * @param {String} mimeType the MIME type of the image
 	         * @param {Number} glTextureType the WebGL texture type (e.g. TEXTURE_2D, TEXTURE_CUBE_MAP).
 	         * @param {Object} any additional params.
@@ -17181,14 +17143,7 @@
 
 	    }, {
 	        key: 'addTexture',
-	        value: function addTexture(prim, image, path, pos, mimeType, glTextureType) {
-
-	            if (pos === undefined) {
-
-	                console.error('TextureObj::addTexture(): undefined pos');
-
-	                return null;
-	            }
+	        value: function addTexture(prim, image, path, mimeType, glTextureType) {
 
 	            var gl = this.webgl.getContext();
 
@@ -17204,7 +17159,7 @@
 
 	                case gl.TEXTURE_2D:
 
-	                    texture = this.create2dTexture(image, pos);
+	                    texture = this.create2dTexture(image);
 
 	                    emitEvent = this.util.emitter.events.TEXTURE_2D_READY;
 
@@ -17212,7 +17167,7 @@
 
 	                case gl.TEXTURE_3D:
 
-	                    texture = this.create3dTexture(image, pos);
+	                    texture = this.create3dTexture(image);
 
 	                    emitEvent = this.util.emitter.events.TEXTURE_3D_READY;
 
@@ -17220,7 +17175,7 @@
 
 	                case gl.TEXTURE_CUBE_MAP:
 
-	                    texture = this.createCubeMapTexture(image, pos); // NOTE: image is actually an array here
+	                    texture = this.createCubeMapTexture(image); // NOTE: image is actually an array here
 
 	                    emitEvent = this.util.emitter.events.TEXTURE_CUBE_MAP_MEMBER_READY;
 
@@ -17259,22 +17214,20 @@
 	         * @param {Array[String]} pathList a list of URL paths to load, or keys referencing our pool.
 	         * @param {Boolean} cacheBust if true, add a http://url?random query string to request.
 	         * @param {Boolean} keepDOMImage if true, keep the Image object we created the texture from (internal Blob).
-	         * @param {String} textureUse use the way to use the texture, default is just 2D ambient texture. Other options are borrowed from 
-	         *                 OBJ file format, e.g. map_Ks, bump...
 	         * @param {WebGL.TEXTURE} textureType a WebGL-enumerated texture type (TEXTURE_2D, TEXTURE_3D...), default TEXTURE_2D.
-	         * @param {Object} options if present, additional options for rendering the texture (e.g. scaling, sharpening, brightening).
+	         * @param {Object} options if present, additional options loading or rendering the texture.
 	         */
 
 	    }, {
-	        key: 'getTextures',
-	        value: function getTextures(prim, path) {
+	        key: 'getTexture',
+	        value: function getTexture(prim, path) {
 	            var cacheBust = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
 	            var keepDOMImage = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : false;
 
 	            var _this2 = this;
 
 	            var glTextureType = arguments[4];
-	            var options = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : {};
+	            var options = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : { pos: 0 };
 
 
 	            // Wrap single strings in an Array.
@@ -17285,14 +17238,6 @@
 
 	                glTextureType = this.webgl.gl.TEXTURE_2D;
 	            }
-
-	            ///////////////
-	            // TODO: SHRINK THIS, AND USE WITH ALL THE OTHERS.
-	            // TODO: MAKE IT 'getTexture'
-	            var i = options.pos;
-	            ///////////////
-
-	            if (path === null) console.log('NULL AT: ' + i);
 
 	            // Could have an empty path.
 
@@ -17314,7 +17259,7 @@
 	                     * be instant, we catch the .onload event to actually send the WebGL texture.
 	                     */
 
-	                    this.doRequest(path, i, function (updateObj) {
+	                    this.doRequest(path, options.pos, function (updateObj) {
 
 	                        /* 
 	                         * updateObj returned from GetAssets has the following structure:
@@ -17338,7 +17283,7 @@
 
 	                            console.log('-----------adding texture ' + path + ' to ' + prim.name);
 
-	                            var textureObj = _this2.addTexture(prim, image, updateObj.path, options.pos, mimeType, glTextureType);
+	                            var textureObj = _this2.addTexture(prim, image, updateObj.path, mimeType, glTextureType);
 
 	                            if (textureObj) {
 
@@ -17357,22 +17302,6 @@
 	                                    // If you want to add to DOM, do so here.
 	                                }
 
-	                                /* 
-	                                 * Look up the type/usage of the texture (e.g., map_Kd, map_Ka...) 
-	                                 * in the materialPool lookup table by its array position in the pathList
-	                                 */
-
-	                                console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!options.type:" + options.type);
-
-	                                console.log("updateObj.pos:" + updateObj.pos);
-
-	                                if (!options.type) {
-
-	                                    options.type = _this2.materialPool.texturePositions[updateObj.pos];
-	                                }
-
-	                                // options.materials should already be set
-
 	                                /*
 	                                 * Emit a 'texture ready event' with the key in the pool and path (intercepted by PrimFactory).
 	                                 * NOTE: options for each texture's rendering are attached to textureObj.
@@ -17382,7 +17311,7 @@
 	                                _this2.util.emitter.emit(textureObj.emits, prim, textureObj.key, options);
 	                            } else {
 
-	                                console.error('TexturePool::getTextures(): file:' + path + ' could not be parsed');
+	                                console.error('TexturePool::getTexture(): file:' + path + ' could not be parsed');
 
 	                                _this2.util.emitter.emit(_this2.util.emitter.events.TEXTURE_2D_READY, prim, _this2.defaultKey, options);
 	                            }
@@ -17399,12 +17328,12 @@
 
 	                            _this2.util.emitter.emit(_this2.util.emitter.events.TEXTURE_2D_READY, prim, _this2.defaultKey, options);
 
-	                            console.error('TexturePool::getTextures(): invalid image data for prim:' + prim.name + 'path:' + updateObj.path + ' data:' + updateObj.data);
+	                            console.error('TexturePool::getTexture(): invalid image data for prim:' + prim.name + 'path:' + updateObj.path + ' data:' + updateObj.data);
 	                        }
 	                    }, cacheBust, mimeType, 0); // end of this.doRequest(), initial request at 0 tries
 	                } else {
 
-	                    console.error('TexturePool::getTextures(): file type "' + this.util.getFileExtension(path) + '" in:' + path + ' not supported, not loading');
+	                    console.error('TexturePool::getTexture(): file type "' + this.util.getFileExtension(path) + '" in:' + path + ' not supported, not loading');
 
 	                    // Put a single-pixel texture in its place.
 
@@ -17412,7 +17341,7 @@
 	                }
 	            } else {
 
-	                console.warn('TexturePool::getTextures(): no path supplied for position ' + i);
+	                console.warn('TexturePool::getTexture(): no path supplied for position ' + i);
 	            } // end of valid path
 
 	            //} // end of for loop for texture paths
@@ -18692,10 +18621,6 @@
 
 	        _this.materialPool = new _materialPool2.default(init, _this.util, webgl, _this.texturePool);
 
-	        // Give the texturePool a link to the textureType lookup table.
-
-	        _this.texturePool.materialPool = _this.materialPool;
-
 	        // Attach 1 copy of the Model loader. Note: passing in TexturePool and MaterialPool.
 
 	        _this.modelPool = new _modelPool2.default(init, _this.util, webgl, _this.texturePool, _this.materialPool);
@@ -19544,7 +19469,7 @@
 
 	                        } else {
 
-	                            console.error('ModelPool::getModels(): no data found for:' + updateObj.path);
+	                            console.error('ModelPool::getModel(): no data found for:' + updateObj.path);
 	                        }
 	                    }, cacheBust, mimeType, 0); // end of this.doRequest(), initial request at 0 tries
 	                }
@@ -19883,39 +19808,9 @@
 
 	        };
 
-	        // Map textureMap types to position in prim.textures array. If new positions added, update this.computeObjectMaterials();
-
-	        _this.textureRoles = {
-
-	            'map_Kd': 0, // diffuse map, an image file (e.g. file.jpg)
-
-	            'map_Ka': 1, // ambient map
-
-	            'map_bump': 2, // bumpmap
-
-	            'bump': 2, // bumpmap
-
-	            'map_Km': 2, // bumpmap
-
-	            'map_Ks': 3, // specular map
-
-	            'map_refl': 4, // environment Map Path 
-
-	            'refl': 4, // environment Map Path 
-
-	            'map_d': 5, // alpha map
-
-	            'map_disp': 6, // displacement map
-
-	            'disp': 6 // displacement map
-
-	        };
-
 	        // Reverse map for texture Roles (due to redundancy, don't use Object.keys()).
 
-	        _this.texturePositions = ['map_Kd', 'map_Ka', 'map_bump', 'map_Ks', 'map_refl', 'map_d', 'disp'];
-
-	        _this.defaultTextureRole = 'map_Kd'; // also pos zero for texturePositions
+	        _this.texturePositions = ['map_Kd', 'map_Ka', 'map_bump', 'map_Ks', 'map_refl', 'map_d', 'map_disp'];
 
 	        if (init) {
 
@@ -19930,9 +19825,9 @@
 	    /** 
 	     * Create the default MaterialPool object.
 	     * @param {String} name the name of the material, either 'defaul' in .mtl file.
-	     * @param {Array} ambient ambient color.
-	     * @param {Array} diffuse diffuse color.
-	     * @param {Array} specular specular color.
+	     * @param {Array} ambient the ambient color.
+	     * @param {Array} diffuse the diffuse color.
+	     * @param {Array} specular the specular color.
 	     * @param {Number} specularExponent the shininess of the object.
 	     * @param {Number} sharpness of reflection map.
 	     * @param {Number} refraction light-bending of transparent objects.
@@ -19958,11 +19853,17 @@
 	            var map_Kd = arguments.length > 10 && arguments[10] !== undefined ? arguments[10] : null;
 
 
-	            // Add a default one-pixel texture corresponding to the diffuse color (makes us valid most Shaders).
+	            // Add a default placeholder one-pixel texture corresponding to the diffuse color (makes us valid for most Shaders).
 
 	            if (!map_Kd) {
 
-	                map_Kd = this.texturePool.create2dTexture(new Uint8Array([diffuse[0] * 255, diffuse[1] * 255, diffuse[2] * 255, 255]));
+	                if (this.defaultKey) {
+
+	                    map_Kd = this.getAssetByKey(this.defaultKey).map_Kd;
+	                } else {
+
+	                    map_Kd = this.texturePool.create2dTexture(new Uint8Array([diffuse[0] * 255, diffuse[1] * 255, diffuse[2] * 255, 255]));
+	                }
 	            }
 
 	            return {
@@ -20003,7 +19904,7 @@
 
 	                map_bump: null, // bumpmap
 
-	                disp: null };
+	                map_disp: null };
 	        }
 
 	        /** 
@@ -20039,16 +19940,16 @@
 
 	            var p = [];
 
-	            for (var i = 0; i < data.length - 1; i++) {
+	            for (var _i = 0; _i < data.length - 1; _i++) {
 
-	                p[i] = data[i];
+	                p[_i] = data[_i];
 	            }
 
 	            var pp = p.join(' ').split('-');
 
-	            for (var _i = 0; _i < pp.length; _i++) {
+	            for (var _i2 = 0; _i2 < pp.length; _i2++) {
 
-	                var ppp = pp[_i].split(' ');
+	                var ppp = pp[_i2].split(' ');
 
 	                if (ppp.length > 1) {
 
@@ -20198,7 +20099,11 @@
 
 	                            // Apply file data to a default Material.
 
-	                            materials[currName] = _this2.default(currName);
+	                            ///////////////materials[ currName ] = this.default( currName );
+
+	                            // GET THE ASSET OBJECT WITH ITS KEY
+
+	                            materials[currName] = _this2.addAsset(_this2.default(currName));
 
 	                            break;
 
@@ -20406,7 +20311,6 @@
 	                             * after being emitted with a TEXTURE_2D_READY in PrimFactory.
 	                             * @link  "filename" is the name of a color texture or image file.
 	                             * @link http://paulbourke.net/dataformats/mtl/
-	                             * Additional texture parameters go in texture.options
 	                             * map_Ka -s 1 1 1 -o 0 0 0 -mm 0 1 file.png
 	                             */
 
@@ -20417,33 +20321,13 @@
 	                            if (currName) {
 	                                // if not, file is corrupt.
 
-	                                // Convert 'bump' to 'map_bump'.
-
-	                                if (type === 'bump') type = 'map_bump';
-
 	                                // Set the materials texture value to texture path.
 
 	                                materials[currName][type] = tPath;
 
-	                                /* 
-	                                 * get (hyphenated) texture options, if present, and add them to the getTextures() call.
-	                                 */
+	                                // get (hyphenated) texture options, if present, and add them to the getTexture() call.
 
 	                                var options = _this2.computeTextureMapOptions(data);
-
-	                                // Give each texture a list of materials it is associated with.
-
-	                                if (!options.materials) {
-
-	                                    options.materials = [currName];
-	                                } else {
-
-	                                    options.materials.push(currName);
-	                                }
-
-	                                /* 
-	                                 * multiple textures have a defined order in the textures array.
-	                                 */
 
 	                                // Convert equivalent types.
 
@@ -20451,9 +20335,11 @@
 
 	                                if (type === 'refl') type = 'map_refl';
 
-	                                options.pos = _this2.textureRoles[type];
+	                                if (type === 'disp') type = 'map_disp';
 
-	                                // Save the string version of type to pass to the called texture.
+	                                // the options object contains lots of additional entries here relative to defaultMaterial.
+
+	                                options.materialKey = materials[currName].key;
 
 	                                options.type = type;
 
@@ -20461,9 +20347,10 @@
 	                                 * NOTE: the texture attaches to prim.textures, so the fourth parmeter is the texture type (map_Kd, map_Ks...).
 	                                 * NOTE: the sixth paramater, is NULL since it defines a specific WebGL texture type (we want the default).
 	                                 * NOTE: thex seventh paramater, options, if present, we pass those in as well.
+	                                 * TODO: HOW DO WE KNOW IF WE ARE LOADING A CUBEMAP TEXTURE????????????
 	                                 */
 
-	                                _this2.texturePool.getTextures(prim, [dir + tPath], true, false, null, options);
+	                                _this2.texturePool.getTexture(prim, dir + tPath, true, false, null, options);
 	                            }
 
 	                            break;
@@ -20495,21 +20382,13 @@
 	         * @param {Prim} prim the requesting Prim object.
 	         * @param {Object} data data to construct the Prim GeoBuffer.
 	         * @param {String} path the file path to the object.
-	         * @param {Number} pos the index of the object in the calling Prim's array.
 	         * @param {String} mimeType the MIME type of the file.
 	         * @param {String} type the GeometryPool.typeList type of the object, e.g. MESH, SPHERE...
 	         */
 
 	    }, {
 	        key: 'addMaterial',
-	        value: function addMaterial(prim, data, path, pos, mimeType, type) {
-
-	            if (pos === undefined) {
-
-	                console.error('TextureObj::addTexture(): undefined pos');
-
-	                return null;
-	            }
+	        value: function addMaterial(prim, data, path, mimeType, type) {
 
 	            var m = void 0;
 
@@ -20539,9 +20418,9 @@
 
 	            if (m) {
 
-	                for (var i in m) {
+	                for (var _i3 in m) {
 
-	                    var mi = m[i];
+	                    var mi = m[_i3];
 
 	                    mi.type = type, mi.path = path, mi.emits = this.util.emitter.events.MATERIAL_READY;
 
@@ -20570,9 +20449,9 @@
 
 	            // If we have textures, load them.
 
-	            for (var i = 0; i < textureImages.length; i++) {
+	            for (var _i4 = 0; _i4 < textureImages.length; _i4++) {
 
-	                this.texturePool.getTextures(prim, textureImages[i], true, false, this.webgl.getContext().TEXTURE_2D, { materialKey: mi.key, pos: i });
+	                this.texturePool.getTexture(prim, textureImages[_i4], true, false, this.webgl.getContext().TEXTURE_2D, { materialKey: mi.key, type: this.texturePositions[_i4] });
 	            }
 
 	            return mi;
@@ -20582,92 +20461,74 @@
 	         * Load models, using a list of paths. If a Model already exists, 
 	         * just return it. Otherwise, do the load.
 	         * @param {Prim} prim the calling Prim.
-	         * @param {Array[String]} pathList a list of URL paths to load, or a key for a material in our pool.
+	         * @param {Array[String]} path the URL to load.
 	         * @param {Boolean} cacheBust if true, add a http://url?random query string to request.
 	         */
 
 	    }, {
-	        key: 'getMaterials',
-	        value: function getMaterials(prim, pathList) {
+	        key: 'getMaterial',
+	        value: function getMaterial(prim, path) {
 	            var _this3 = this;
 
 	            var cacheBust = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+	            var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : { pos: 0 };
 
 
-	            // Wrap single strings in an Array.
+	            // Could have an empty path.
 
-	            if (this.util.isString(pathList)) {
+	            if (!this.util.isWhitespace(path)) {
 
-	                pathList = [pathList];
-	            }
+	                // Get the image mimeType.
 
-	            var _loop = function _loop(i) {
+	                var mimeType = this.materialMimeTypes[this.util.getFileExtension(path)];
 
-	                var path = pathList[i];
+	                // check if mimeType is OK.
 
-	                // Could have an empty path.
+	                if (mimeType) {
 
-	                if (!_this3.util.isWhitespace(path)) {
+	                    this.doRequest(path, options.pos, function (updateObj) {
 
-	                    // Get the image mimeType.
+	                        /* 
+	                         * updateObj returned from GetAssets has the following structure:
+	                         * { 
+	                         *   pos: pos, 
+	                         *   path: requestURL, 
+	                         *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
+	                         *   error: false|response 
+	                         * } 
+	                         */
 
-	                    var mimeType = _this3.materialMimeTypes[_this3.util.getFileExtension(path)];
+	                        if (updateObj.data) {
 
-	                    // check if mimeType is OK.
+	                            var materialObj = _this3.addMaterial(prim, updateObj.data, updateObj.path, mimeType, prim.type);
 
-	                    if (mimeType) {
+	                            // Multiple materials may be returned from one .mtl file.
 
-	                        _this3.doRequest(path, i, function (updateObj) {
+	                            if (materialObj) {
 
-	                            /* 
-	                             * updateObj returned from GetAssets has the following structure:
-	                             * { 
-	                             *   pos: pos, 
-	                             *   path: requestURL, 
-	                             *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
-	                             *   error: false|response 
-	                             * } 
-	                             */
+	                                for (var j in materialObj) {
 
-	                            if (updateObj.data) {
+	                                    console.log("==========emitting for materialObj:" + j);
 
-	                                var materialObj = _this3.addMaterial(prim, updateObj.data, updateObj.path, updateObj.pos, mimeType, prim.type);
+	                                    _this3.util.emitter.emit(materialObj[j].emits, prim, materialObj[j].key, i);
+	                                }
+	                            } // end of material addition.
+	                        } else {
 
-	                                // Multiple materials may be returned from one .mtl file.
-
-	                                if (materialObj) {
-
-	                                    for (var j in materialObj) {
-
-	                                        ////////////console.log("MaterialPool sending:" + materialObj[ i ].emits + ' key:' + materialObj[ i ].key + ' i:' + i )
-
-	                                        // Note that 'i' is the name of the material, instead of a numerical index (which it is in ModelPool and TexturePool).
-
-
-	                                        console.log("==========emitting for materialObj:" + j);
-
-	                                        _this3.util.emitter.emit(materialObj[j].emits, prim, materialObj[j].key, i);
-	                                    }
-	                                } // end of material addition.
-	                            } else {
-
-	                                console.error('MaterialPool::getMaterials(): no data found for:' + updateObj.path);
-	                            }
-	                        }, cacheBust, mimeType, 0); // end of this.doRequest(), initial request at 0 tries
-	                    } else {
-
-	                        console.error('MaterialPool::getModels(): file type "' + _this3.util.getFileExtension(path) + ' not supported, not loading');
-	                    }
+	                            console.error('MaterialPool::getMaterials(): no data found for:' + updateObj.path);
+	                        }
+	                    }, cacheBust, mimeType, 0); // end of this.doRequest(), initial request at 0 tries
 	                } else {
 
-	                    console.warn('MaterialPool::getMaterials(): no path supplied for position ' + i);
-	                } // end of valid path
-	            };
+	                    console.error('MaterialPool::getMaterials(): file type "' + this.util.getFileExtension(path) + ' not supported, not loading');
+	                }
+	            } else {
 
-	            for (var i = 0; i < pathList.length; i++) {
-	                _loop(i);
-	            } // end of for loop
-	        }
+	                console.warn('MaterialPool::getMaterials(): no path supplied for position ' + i);
+	            } // end of valid path
+
+	        } // end of function
+
 	    }]);
 
 	    return MaterialPool;

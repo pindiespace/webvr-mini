@@ -59,8 +59,6 @@ class TexturePool extends AssetPool {
 
         }
 
-        // NOTE: World adds a reference to the MaterialPool, needed for default texture loading!
-
     }
 
     /** 
@@ -105,7 +103,7 @@ class TexturePool extends AssetPool {
      * @param {String} key a numeric or text key referencing this texture in the load pool.
      * @param {Number} compressed the parameter identifying a compressed texture, e.g. gl.COMPRESSED_RGBA8_ETC2_EAC.
      */
-    create2dTexture ( image, key, compressed ) {
+    create2dTexture ( image, compressed ) {
 
         let gl = this.webgl.getContext(),
 
@@ -184,7 +182,7 @@ class TexturePool extends AssetPool {
      * @param {Number} compressed the parameter identifying a compressed texture, e.g. gl.COMPRESSED_RGBA8_ETC2_EAC.
      * @param {Number} size the size of the image, in bytes.
      */
-    create3dTexture ( data, key, compressed, size ) {
+    create3dTexture ( data, compressed, size ) {
 
         console.log( 'creating 3D texture' );
 
@@ -260,7 +258,7 @@ class TexturePool extends AssetPool {
      * @param {String} key the associative key for this texture in the pool.
      * @param {Number} compressed the parameter identifying a compressed texture, e.g. gl.COMPRESSED_RGBA8_ETC2_EAC.
      */
-    createCubeMapTexture ( images, key, compressed ) {
+    createCubeMapTexture ( images, compressed ) {
 
         console.log( 'creating cubemap texture' );
 
@@ -319,20 +317,11 @@ class TexturePool extends AssetPool {
      * Create a WebGL texture from a JavaScript Image object, and add it to our texture list.
      * @param {Image} image a JS Image object with defined .src
      * @param {String} path the file URL for the texture.
-     * @param {String|Number} pos the pos (index) for assigning the texture in the calling Prim .textures array
      * @param {String} mimeType the MIME type of the image
      * @param {Number} glTextureType the WebGL texture type (e.g. TEXTURE_2D, TEXTURE_CUBE_MAP).
      * @param {Object} any additional params.
      */
-    addTexture ( prim, image, path, pos, mimeType, glTextureType ) {
-
-        if ( pos === undefined ) {
-
-            console.error( 'TextureObj::addTexture(): undefined pos' );
-
-            return null;
-
-        }
+    addTexture ( prim, image, path, mimeType, glTextureType ) {
 
         let gl = this.webgl.getContext();
 
@@ -350,7 +339,7 @@ class TexturePool extends AssetPool {
 
             case gl.TEXTURE_2D:
 
-                texture = this.create2dTexture( image, pos );
+                texture = this.create2dTexture( image );
 
                 emitEvent = this.util.emitter.events.TEXTURE_2D_READY;
 
@@ -358,7 +347,7 @@ class TexturePool extends AssetPool {
 
             case gl.TEXTURE_3D:
 
-                texture = this.create3dTexture( image, pos );
+                texture = this.create3dTexture( image );
 
                 emitEvent = this.util.emitter.events.TEXTURE_3D_READY;
 
@@ -366,7 +355,7 @@ class TexturePool extends AssetPool {
 
             case gl.TEXTURE_CUBE_MAP:
 
-                texture = this.createCubeMapTexture( image, pos ); // NOTE: image is actually an array here
+                texture = this.createCubeMapTexture( image ); // NOTE: image is actually an array here
 
                 emitEvent = this.util.emitter.events.TEXTURE_CUBE_MAP_MEMBER_READY;
 
@@ -412,12 +401,10 @@ class TexturePool extends AssetPool {
      * @param {Array[String]} pathList a list of URL paths to load, or keys referencing our pool.
      * @param {Boolean} cacheBust if true, add a http://url?random query string to request.
      * @param {Boolean} keepDOMImage if true, keep the Image object we created the texture from (internal Blob).
-     * @param {String} textureUse use the way to use the texture, default is just 2D ambient texture. Other options are borrowed from 
-     *                 OBJ file format, e.g. map_Ks, bump...
      * @param {WebGL.TEXTURE} textureType a WebGL-enumerated texture type (TEXTURE_2D, TEXTURE_3D...), default TEXTURE_2D.
-     * @param {Object} options if present, additional options for rendering the texture (e.g. scaling, sharpening, brightening).
+     * @param {Object} options if present, additional options loading or rendering the texture.
      */
-    getTextures ( prim, path, cacheBust = true, keepDOMImage = false, glTextureType, options = {} ) {
+    getTexture ( prim, path, cacheBust = true, keepDOMImage = false, glTextureType, options = { pos: 0 } ) {
 
         // Wrap single strings in an Array.
 
@@ -429,17 +416,9 @@ class TexturePool extends AssetPool {
 
         }
 
-///////////////
-// TODO: SHRINK THIS, AND USE WITH ALL THE OTHERS.
-// TODO: MAKE IT 'getTexture'
-            let i = options.pos;
-///////////////
+        // Could have an empty path.
 
-            if ( path === null ) console.log( 'NULL AT: ' + i)
-
-            // Could have an empty path.
-
-            if ( ! this.util.isWhitespace( path ) ) {
+        if ( ! this.util.isWhitespace( path ) ) {
 
                 // Get the image mimeType.
 
@@ -457,7 +436,7 @@ class TexturePool extends AssetPool {
                      * be instant, we catch the .onload event to actually send the WebGL texture.
                      */
 
-                    this.doRequest( path, i, 
+                    this.doRequest( path, options.pos, 
 
                         ( updateObj ) => {
 
@@ -483,7 +462,7 @@ class TexturePool extends AssetPool {
 
                                 console.log('-----------adding texture ' + path + ' to ' + prim.name)
 
-                                let textureObj = this.addTexture( prim, image, updateObj.path, options.pos, mimeType, glTextureType );
+                                let textureObj = this.addTexture( prim, image, updateObj.path, mimeType, glTextureType );
 
                                 if ( textureObj ) {
 
@@ -503,23 +482,6 @@ class TexturePool extends AssetPool {
 
                                     }
 
-                                    /* 
-                                     * Look up the type/usage of the texture (e.g., map_Kd, map_Ka...) 
-                                     * in the materialPool lookup table by its array position in the pathList
-                                     */
-
-                                    console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!options.type:" + options.type)
-
-                                    console.log("updateObj.pos:" + updateObj.pos)
-
-                                    if ( ! options.type ) {
-
-                                        options.type = this.materialPool.texturePositions[ updateObj.pos ];
-
-                                    }
-
-                                    // options.materials should already be set
-
                                     /*
                                      * Emit a 'texture ready event' with the key in the pool and path (intercepted by PrimFactory).
                                      * NOTE: options for each texture's rendering are attached to textureObj.
@@ -530,7 +492,7 @@ class TexturePool extends AssetPool {
 
                                 } else {
 
-                                    console.error( 'TexturePool::getTextures(): file:' + path + ' could not be parsed' );
+                                    console.error( 'TexturePool::getTexture(): file:' + path + ' could not be parsed' );
 
                                     this.util.emitter.emit( this.util.emitter.events.TEXTURE_2D_READY, prim, this.defaultKey, options );  
 
@@ -550,7 +512,7 @@ class TexturePool extends AssetPool {
 
                                 this.util.emitter.emit( this.util.emitter.events.TEXTURE_2D_READY, prim, this.defaultKey, options );                                    
 
-                                console.error( 'TexturePool::getTextures(): invalid image data for prim:' + prim.name + 'path:' + updateObj.path + ' data:' + updateObj.data );
+                                console.error( 'TexturePool::getTexture(): invalid image data for prim:' + prim.name + 'path:' + updateObj.path + ' data:' + updateObj.data );
 
                             }
 
@@ -558,7 +520,7 @@ class TexturePool extends AssetPool {
 
                 } else {
 
-                    console.error( 'TexturePool::getTextures(): file type "' + this.util.getFileExtension( path ) + '" in:' + path + ' not supported, not loading' );
+                    console.error( 'TexturePool::getTexture(): file type "' + this.util.getFileExtension( path ) + '" in:' + path + ' not supported, not loading' );
 
                     // Put a single-pixel texture in its place.
 
@@ -568,7 +530,7 @@ class TexturePool extends AssetPool {
 
             } else {
 
-                console.warn( 'TexturePool::getTextures(): no path supplied for position ' + i );
+                console.warn( 'TexturePool::getTexture(): no path supplied for position ' + i );
 
             } // end of valid path
 
