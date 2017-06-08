@@ -3477,7 +3477,7 @@
 
 	                navigator.getVRDisplays().then(function (displays) {
 
-	                    console.log('=================WebVR::init(): webvr is available');
+	                    console.log('WebVR::init(): webvr is available');
 
 	                    if ('VRFrameData' in window) {
 
@@ -3503,11 +3503,11 @@
 	                                if (d.displayName === undefined) {
 
 	                                    d.displayName = 'Generic WebVR device';
-
-	                                    console.log('*********************PUSHING DISPLAY' + d.displayName);
 	                                }
 
 	                                // Add to our VRDisplay list.
+
+	                                console.log('WebVR::init(): pushing display (' + d.displayName + ')');
 
 	                                _this.displays.push(d);
 	                            }
@@ -6014,7 +6014,7 @@
 
 	            var tex = this.required.textures;
 
-	            console.log('Shader::checkPrimTextures()');
+	            ////////////////console.log('Shader::checkPrimTextures()');
 
 	            var m = prim.defaultMaterial;
 
@@ -9097,9 +9097,12 @@
 
 	            console.log("Prim::initPrimTexture(): new texture for prim:" + prim.name + ', options:' + options);
 
-	            // Find the associated material from the material key given to the texture.
+	            if (options.fromObj) {
 
-	            window.textureObj = textureObj;
+	                console.warn("TEXTURE COMING THROUGH FROM AN OBJ FILE FOR: " + prim.name + " WITH MATERIAL KEY:" + options.materialKey);
+	            }
+
+	            // Find the associated material from the material key given to the texture.
 
 	            for (var i in prim.materials) {
 
@@ -9153,6 +9156,12 @@
 	        value: function initPrimMaterial(prim, material, materialName) {
 
 	            console.log('Prim::initMaterial(): new material ' + materialName + ' for prim:' + prim.name);
+
+	            // TODO: if there is a default, and this is from an OBJ file, replace the default.
+
+	            // TODO: if materialName !== prim.name + '-default'
+
+	            // TODO: REPLACE
 	        }
 
 	        /** 
@@ -9817,7 +9826,7 @@
 	                this.geometryPool.getGeometry(prim, '', true, { pos: 0 });
 	            }
 
-	            console.log('############prim.name:' + prim.name);
+	            console.log('prim.name:' + prim.name);
 
 	            //////////////////////////////////////
 	            window[prim.name] = prim;
@@ -16411,9 +16420,11 @@
 
 	                            for (var _i3 = 0; _i3 < mtls.length; _i3++) {
 
-	                                console.log("========GET MATERIAL FOR PRIM:" + prim.name);
+	                                var _path = dir + mtls[_i3];
 
-	                                _this2.materialPool.getMaterial(prim, dir + data, true, { pos: _i3 });
+	                                console.log("========ModelPOO: GET MATERIAL FILE " + (dir + data) + " FOR PRIM:" + prim.name);
+
+	                                _this2.materialPool.getMaterial(prim, _path, true, { pos: _i3 });
 	                            }
 
 	                            break;
@@ -17239,6 +17250,8 @@
 	                glTextureType = this.webgl.gl.TEXTURE_2D;
 	            }
 
+	            if (options.fromObj) console.warn("GETTING TEXTURE FROM OBJ FILE for PRIM:" + prim.name);
+
 	            // Could have an empty path.
 
 	            if (!this.util.isWhitespace(path)) {
@@ -17281,7 +17294,9 @@
 
 	                            // Add the texture.
 
-	                            console.log('-----------adding texture ' + path + ' to ' + prim.name);
+	                            //console.log('-----------adding texture ' + path + ' to ' + prim.name)
+
+	                            if (options.fromObj) console.warn('============ adding OBJ texture ' + path + ' to ' + prim.name);
 
 	                            var textureObj = _this2.addTexture(prim, image, updateObj.path, mimeType, glTextureType);
 
@@ -18869,36 +18884,29 @@
 	            // modelfiles
 
 	            );
-	            /*
-	            
-	                        this.primFactory.createPrim(
-	            
-	                            this.s1,                               // callback function
-	                            typeList.MESH,
-	                            'objfile',
-	                            vec5( 2, 2, 2 ),                       // dimensions (4th dimension doesn't exist for cylinder)
-	                            vec5( 40, 40, 40  ),                    // divisions MAKE SMALLER
-	                            vec3.fromValues( -6.5, -1, -1.0 ),      // position (absolute)
-	                            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-	                            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-	                            vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-	                            [], // texture loaded directly
-	                            true,                                   // if true, apply texture to each face,
-	                            [ 'obj/capsule/capsule.obj' ] // object files (.obj, .mtl)
-	                            //[ 'obj/mountains/mountains.obj' ] // ok
-	                            //[ 'obj/landscape/landscape.obj'] // ok?
-	                            //[ 'obj/toilet/toilet.obj' ] // works with texture, multiple groups wrap texture!
-	                            //[ 'obj/naboo/naboo.obj' ] // works fine, but needs to load additional images.
-	                            //[ 'obj/star/star.obj'] // ok, gets generic grey texture
-	                            //[ 'obj/robhead/robhead.obj'] // no texcoords or normals
-	                            //[ 'obj/soccerball/soccerball.obj'] // no texcoords or normals
-	                            //[ 'obj/basketball/basketball.obj'] // needs TGA translation
-	                            //[ 'obj/rock1/rock1.obj'] // rock plus surface, works
-	                            //[ 'obj/cherries/cherries.obj'] // rendering indices error
-	                            //[ 'obj/banana/banana.obj' ] // works great
-	                        );
-	            
-	            */
+
+	            this.primFactory.createPrim(this.s1, // callback function
+	            typeList.MESH, 'objfile', vec5(2, 2, 2), // dimensions (4th dimension doesn't exist for cylinder)
+	            vec5(40, 40, 40), // divisions MAKE SMALLER
+	            vec3.fromValues(-6.5, -1, -1.0), // position (absolute)
+	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	            vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	            [], // texture loaded directly
+	            true, // if true, apply texture to each face,
+	            ['obj/capsule/capsule.obj'] // object files (.obj, .mtl)
+	            //[ 'obj/mountains/mountains.obj' ] // ok
+	            //[ 'obj/landscape/landscape.obj'] // ok?
+	            //[ 'obj/toilet/toilet.obj' ] // works with texture, multiple groups wrap texture!
+	            //[ 'obj/naboo/naboo.obj' ] // works fine, but needs to load additional images.
+	            //[ 'obj/star/star.obj'] // ok, gets generic grey texture
+	            //[ 'obj/robhead/robhead.obj'] // no texcoords or normals
+	            //[ 'obj/soccerball/soccerball.obj'] // no texcoords or normals
+	            //[ 'obj/basketball/basketball.obj'] // needs TGA translation
+	            //[ 'obj/rock1/rock1.obj'] // rock plus surface, works
+	            //[ 'obj/cherries/cherries.obj'] // rendering indices error
+	            //[ 'obj/banana/banana.obj' ] // works great
+	            );
 
 	            /*
 	            
@@ -20339,6 +20347,8 @@
 
 	                                // the options object contains lots of additional entries here relative to defaultMaterial.
 
+	                                options.fromObj = "OBJ"; ///???????/////////////////////////
+
 	                                options.materialKey = materials[currName].key;
 
 	                                options.type = type;
@@ -20510,7 +20520,7 @@
 
 	                                    console.log("==========emitting for materialObj:" + j);
 
-	                                    _this3.util.emitter.emit(materialObj[j].emits, prim, materialObj[j].key, i);
+	                                    _this3.util.emitter.emit(materialObj[j].emits, prim, materialObj[j].key, options);
 	                                }
 	                            } // end of material addition.
 	                        } else {

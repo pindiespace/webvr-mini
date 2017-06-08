@@ -88,7 +88,7 @@ class WebVR {
 
             navigator.getVRDisplays().then( ( displays ) => {
 
-                console.log( '=================WebVR::init(): webvr is available' );
+                console.log( 'WebVR::init(): webvr is available' );
 
                 if ( 'VRFrameData' in window ) {
 
@@ -116,11 +116,11 @@ class WebVR {
 
                                 d.displayName = 'Generic WebVR device';
 
-                                console.log('*********************PUSHING DISPLAY' + d.displayName)
-
                             }
 
                             // Add to our VRDisplay list.
+
+                            console.log( 'WebVR::init(): pushing display (' + d.displayName + ')' );
 
                             this.displays.push( d );
 

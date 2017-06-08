@@ -243,9 +243,13 @@ class PrimFactory {
 
         console.log("Prim::initPrimTexture(): new texture for prim:" + prim.name + ', options:' + options );
 
-        // Find the associated material from the material key given to the texture.
+        if ( options.fromObj ) {
 
-        window.textureObj = textureObj;
+            console.warn("TEXTURE COMING THROUGH FROM AN OBJ FILE FOR: " + prim.name + " WITH MATERIAL KEY:" + options.materialKey )
+
+        }
+
+        // Find the associated material from the material key given to the texture.
 
         for ( let i in prim.materials ) {
 
@@ -295,6 +299,12 @@ class PrimFactory {
     initPrimMaterial ( prim, material, materialName ) {
 
         console.log('Prim::initMaterial(): new material ' + materialName + ' for prim:' + prim.name );
+
+        // TODO: if there is a default, and this is from an OBJ file, replace the default.
+
+        // TODO: if materialName !== prim.name + '-default'
+
+        // TODO: REPLACE
 
     }
 
@@ -1008,7 +1018,7 @@ class PrimFactory {
 
         }
 
-        console.log('############prim.name:' + prim.name)
+        console.log('prim.name:' + prim.name)
 
         //////////////////////////////////////
         window[ prim.name ] = prim;

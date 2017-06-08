@@ -389,7 +389,7 @@ class Shader {
 
         let tex = this.required.textures;
 
-        console.log('Shader::checkPrimTextures()');
+        ////////////////console.log('Shader::checkPrimTextures()');
 
         let m = prim.defaultMaterial;
 

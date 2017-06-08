@@ -479,9 +479,11 @@ class ModelPool extends AssetPool {
 
                         for ( let i = 0; i < mtls.length; i++ ) {
 
-                            console.log("========GET MATERIAL FOR PRIM:" + prim.name)
+                            let path = dir + mtls[ i ];
 
-                            this.materialPool.getMaterial( prim, dir + data, true, { pos: i } );
+                            console.log("========ModelPOO: GET MATERIAL FILE " + (dir + data) + " FOR PRIM:" + prim.name)
+
+                            this.materialPool.getMaterial( prim, path, true, { pos: i } );
 
                         }
 

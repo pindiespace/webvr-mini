@@ -315,7 +315,7 @@ class World extends AssetPool {
                 // modelfiles
             
             );
-/*
+
 
             this.primFactory.createPrim(
 
@@ -343,8 +343,6 @@ class World extends AssetPool {
                 //[ 'obj/cherries/cherries.obj'] // rendering indices error
                 //[ 'obj/banana/banana.obj' ] // works great
             );
-
-*/
 
 /*
 

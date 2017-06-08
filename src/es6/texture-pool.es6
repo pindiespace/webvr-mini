@@ -416,6 +416,8 @@ class TexturePool extends AssetPool {
 
         }
 
+        if ( options.fromObj ) console.warn( "GETTING TEXTURE FROM OBJ FILE for PRIM:" + prim.name)
+
         // Could have an empty path.
 
         if ( ! this.util.isWhitespace( path ) ) {
@@ -460,7 +462,9 @@ class TexturePool extends AssetPool {
 
                                 // Add the texture.
 
-                                console.log('-----------adding texture ' + path + ' to ' + prim.name)
+                                //console.log('-----------adding texture ' + path + ' to ' + prim.name)
+
+                                if (options.fromObj ) console.warn( '============ adding OBJ texture ' + path + ' to ' + prim.name )
 
                                 let textureObj = this.addTexture( prim, image, updateObj.path, mimeType, glTextureType );
 

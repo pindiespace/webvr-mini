@@ -585,6 +585,8 @@ class MaterialPool extends AssetPool {
 
                             // the options object contains lots of additional entries here relative to defaultMaterial.
 
+                            options.fromObj = "OBJ" ///???????/////////////////////////
+
                             options.materialKey = materials[ currName ].key;
 
                             options.type = type;
@@ -760,7 +762,7 @@ class MaterialPool extends AssetPool {
 
                                     console.log("==========emitting for materialObj:" + j)
 
-                                    this.util.emitter.emit( materialObj[ j ].emits, prim, materialObj[ j ].key, i );
+                                    this.util.emitter.emit( materialObj[ j ].emits, prim, materialObj[ j ].key, options );
 
                                     }
 
