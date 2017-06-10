@@ -92,6 +92,8 @@ class World extends AssetPool {
 
         };
 
+        this.stats = { fps: 0 };
+
         // Matrix operations.
 
         this.canvas = webgl.getCanvas();
@@ -104,7 +106,7 @@ class World extends AssetPool {
 
         this.mvMatrix = this.glMatrix.mat4.create();
 
-        this.last = performance.now();
+        this.last = performance.now(); // initialize the counter
 
         this.rafId = null;
 
@@ -113,7 +115,6 @@ class World extends AssetPool {
         // Bind the render loop (best current method)
 
         this.render = this.render.bind( this );
-
 
         // Listen for the VR display being ready (initially bind to 'window').
 
@@ -246,11 +247,12 @@ class World extends AssetPool {
 // COLOR SHADER.
 //////////////////////////////////
 
+
             this.primFactory.createPrim(
 
                 this.s2,                      // callback function
                 typeList.CUBE,
-                'colored cube',
+                'coloredcube',
                 vec5( 0.7, 0.7, 0.7, 0 ),            // dimensions
                 vec5( 3, 3, 3 ),            // divisions
                 vec3.fromValues( 3.2, -0.3, 2 ),          // position (absolute)
@@ -258,8 +260,13 @@ class World extends AssetPool {
                 vec3.fromValues( util.degToRad( 20 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
                 vec3.fromValues( util.degToRad( 0 ), util.degToRad( 1 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
                 [ 'img/webvr-logo3.png' ],               // texture present, NOT USED
+                [],  // no obj file
+                true, // use color array
+                false // don't apply texture to each face
 
             );
+
+/*
 
             this.primFactory.createPrim(
 
@@ -273,8 +280,9 @@ class World extends AssetPool {
                 vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
                 vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
                 [],               // no texture present
-                false,                                 // if true, apply texture to each face,
                 [ 'obj/teapot/teapot.obj' ] // object files (.obj, .mtl)
+                false,                                 // if true, use the color array instead of texture array
+                false,                                 // if true, apply texture to each face,
 
             );
 
@@ -295,26 +303,34 @@ class World extends AssetPool {
                 vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
                 vec3.fromValues( util.degToRad( 1 ), util.degToRad( 1 ), util.degToRad( 1 ) ), // angular velocity in x, y, x
                 [ 'img/crate.png', 'img/webvr-logo1.png', 'img/wood-planks-tiled.jpg' ],          // texture image
-                // applyTexToFace value
-                // modelfiles
+                [] // no models present
+                // if true, use color array instead of texture array
+                // if true, apply textures to each face, not whole Prim.
             );
+
+
+
 
             this.primFactory.createPrim(
             
                 this.s1,                      // callback function
                 typeList.CYLINDER,
-                'ShortCylinder',
+                'shortcylinder',
                 vec5( 1, 1, 1, 0.3, 0.7 ),       // dimensions (4th dimension doesn't exist for cylinder)
                 vec5( 40, 40, 40  ),        // divisions MAKE SMALLER
                 vec3.fromValues(-1.5, -1.5, 2.0 ),          // position (absolute)
                 vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
                 vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
                 vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [ 'img/uv-test.png' ]               // texture present
-                // applyTexToFace value
-                // modelfiles
-            
+                [ 'img/uv-test.png' ],               // texture present
+                []// no models present
+                // if true, use color array instead of texture array
+                // if true, apply textures to each face, not whole Prim.
             );
+
+*/
+
+
 
 
             this.primFactory.createPrim(
@@ -324,12 +340,11 @@ class World extends AssetPool {
                 'objfile',
                 vec5( 2, 2, 2 ),                       // dimensions (4th dimension doesn't exist for cylinder)
                 vec5( 40, 40, 40  ),                    // divisions MAKE SMALLER
-                vec3.fromValues( -6.5, -1, -1.0 ),      // position (absolute)
+                vec3.fromValues( -3.5, -1, -0.0 ),      // position (absolute)
                 vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
                 vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
                 vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
                 [], // texture loaded directly
-                true,                                   // if true, apply texture to each face,
                 [ 'obj/capsule/capsule.obj' ] // object files (.obj, .mtl)
                 //[ 'obj/mountains/mountains.obj' ] // ok
                 //[ 'obj/landscape/landscape.obj'] // ok?
@@ -342,7 +357,39 @@ class World extends AssetPool {
                 //[ 'obj/rock1/rock1.obj'] // rock plus surface, works
                 //[ 'obj/cherries/cherries.obj'] // rendering indices error
                 //[ 'obj/banana/banana.obj' ] // works great
+                // if true, use color array instead of texture array
+                // if true, apply textures to each face, not whole Prim.
             );
+
+
+            this.primFactory.createPrim(
+
+                this.s1,                               // callback function
+                typeList.MESH,
+                'toilet',
+                vec5( 2, 2, 2 ),                       // dimensions (4th dimension doesn't exist for cylinder)
+                vec5( 40, 40, 40  ),                    // divisions MAKE SMALLER
+                vec3.fromValues( -1.5, -1, -0.0 ),      // position (absolute)
+                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+                vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+                [], // texture loaded directly
+                //[ 'obj/capsule/capsule.obj' ] // object files (.obj, .mtl)
+                //[ 'obj/mountains/mountains.obj' ] // ok
+                //[ 'obj/landscape/landscape.obj'] // ok?
+                [ 'obj/toilet/toilet.obj' ] // works with texture, multiple groups wrap texture!
+                //[ 'obj/naboo/naboo.obj' ] // works fine, but needs to load additional images.
+                //[ 'obj/star/star.obj'] // ok, gets generic grey texture
+                //[ 'obj/robhead/robhead.obj'] // no texcoords or normals
+                //[ 'obj/soccerball/soccerball.obj'] // no texcoords or normals
+                //[ 'obj/basketball/basketball.obj'] // needs TGA translation
+                //[ 'obj/rock1/rock1.obj'] // rock plus surface, works
+                //[ 'obj/cherries/cherries.obj'] // rendering indices error
+                //[ 'obj/banana/banana.obj' ] // works great
+                // if true, use color array instead of texture array
+                // if true, apply textures to each face, not whole Prim.
+            );
+
 
 /*
 
@@ -937,6 +984,24 @@ class World extends AssetPool {
      */
     housekeep () {
 
+// TODO: sum for lighting requires a nonzero specular to draw into the shadow!!!!
+
+// TODO: escape key needs to run correct resize image in fullscreen! (vr button returns correctly)
+
+// TODO: JIT - https://www.html5rocks.com/en/tutorials/speed/v8/
+
+// TODO: JIT - https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/JIT_Optimization_Strategies
+
+// TODO: JIT - https://developers.google.com/web/fundamentals/performance/rendering/optimize-javascript-execution
+
+// TODO: JIT - http://mrale.ph/irhydra/2/#
+
+// TODO: JIT - https://www.shivering-isles.com/javascript-performance-optimization/
+
+// TODO: JIT - https://news.ycombinator.com/item?id=7943303
+
+// TODO: JIT - http://webassembly.org/docs/web/
+
 // TODO: geometryPool::computeTexCoords2
 
 // TODO: fullscreen doesn't work if we use VRDisplay.exitFullScreen() in Firefox (CANVAS NOT RESIZED)
@@ -1025,23 +1090,23 @@ class World extends AssetPool {
 
         // fps calculation.
 
+        this.counter++;
+
         let now = performance.now();
 
         let delta = now - this.last;
 
-        this.last = now;
+        if ( this.counter > 300 ) {
 
+            //console.log('delta:' + delta)
 
-        //this.counter++;
+            this.stats.fps = parseInt( 1000 / ( delta / this.counter ) ) + ' fps';
 
-        //if ( this.counter > 300 ) {
+            this.last = now;
 
-        //    this.counter = 0;
+            this.counter = 0;
 
-        //    console.log( 'delta:' + parseInt( 1000 / delta ) + ' fps' );
-
-        //}
-
+        }
 
         // Update Lights
 
@@ -1141,7 +1206,7 @@ Note: THIS IMPLIES WE HAVE TO DO IT IN WORLD.
 
                 this.rafId = d.requestAnimationFrame( this.render );
 
-                // Get FrameData (with matrices for left and right eye).
+                // Get FrameData (with matrices for left and right eye) Can be NULL the first time.
 
                 let fd = vr.getFrameData();
 

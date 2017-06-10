@@ -491,11 +491,9 @@ class ModelPool extends AssetPool {
 
                     case 'usemtl': // use material (by name, loaded as .mtl file elsewhere)
 
-                        let start = [ data, faces.length ];
+                        matStarts.push( [ data, faces.length ] ); // store material and start position.
 
-                        matStarts.push( start ); // store material and start position.
-
-                        console.log('>materials[' + data + '] starts at:' + faces.length )
+                        console.log('>>>>>>>>>>>>>>>>>>materials[' + data + '] starts at:' + faces.length )
 
                         break;
 
@@ -599,14 +597,16 @@ class ModelPool extends AssetPool {
                     // Re-index our groups, objects, material starts, smoothing groups.
 
                     // TODO:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+                    //console.log('<<<<<<<<<<<MATSTARTS LENGTH:' + matStarts.length)
                     for ( let j = 0; j < matStarts.length; j++ ) {
 
-                        if ( j == i ) { // our current face number is the same as a face number in the faces array
+                        if ( matStarts[ j ][ 1 ] === i )  {
 
-                            nMatStarts[ j ] = [ matStarts[ j ][ 0 ], iIdx ]; // write the new index to that position
+                            matStarts[ j ][ 1 ] = nIndices.length - 1;
 
                         }
+
+                        //console.log( '>>>>>>>>>>>>matstarts:  ' + matStarts[ j ][1] + ', i:' + i );
 
                     }
 
@@ -664,13 +664,20 @@ class ModelPool extends AssetPool {
 
             }
 
-            // If there were no materials, create a default one.
+            // If there were no materials, create a default one. This can happen for an .OBJ file without any .mtl files associated.
 
             if ( matStarts.length === 0 ) {
 
-                matStarts.push( [ this.util.DEFAULT_KEY, 0, nVertices.length ] );
+                matStarts.push( [ this.materialPool.createDefaultName( prim ), 0, nIndices.length ] );
 
             }
+
+///////////////////////////////
+            // TODO: WE NEED A WAY TO DETERMINE IF WE'VE LOADED ANY MATERIAL FILE. Multiple files would mess up with the above code.
+            // TODO: WE NEED A WAY TO HAVE A PRIM VALIDATE BASED ON ITS OWN CONFIGURATION BEFORE GOING INTO THE SHADER.
+            // SO, NO ADD SHADER UNTIL VALIDATION MESSAGES ARE FINISHED.
+///////////////////////////////
+
 
             // Compute the length of each matStarts position.
 
@@ -702,7 +709,7 @@ class ModelPool extends AssetPool {
 
         }
 
-        matStarts[ matStarts.length - 1 ][ 2 ] = tVertices.length;
+        matStarts[ matStarts.length - 1 ][ 2 ] = tIndices.length;
 
         // If there was no faces in the OBJ file, use the raw data.
 
@@ -763,7 +770,7 @@ class ModelPool extends AssetPool {
 
                 // Return a Model object.
 
-                d = this.computeObjMesh( data, prim, path );
+                d = this.computeObjMesh( data, prim, path ); // ADDS LOTS OF STUFF TO 'd'
 
                 // Not supplied by OBJ format.
 
@@ -885,7 +892,7 @@ class ModelPool extends AssetPool {
                                  * See this.addModel() above for more information.
                                  */
 
-                                this.util.emitter.emit( modelObj.emits, prim, modelObj.key, modelObj.pos );
+                                this.util.emitter.emit( modelObj.emits, prim, modelObj.key, modelObj.pos ); ///////////TODO: COMPARE TO PROCEDUAR GEO EMIT
 
                             } else {
 

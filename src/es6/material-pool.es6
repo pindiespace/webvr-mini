@@ -50,6 +50,7 @@ class MaterialPool extends AssetPool {
      * @param {Number} transparency.
      * @param {Number} enumerated list of lighting modes.
      * @param {String} map_Kd the default texture for diffuse mapping.
+     * @returns {Material} a Material object.
      */
     default ( name = this.util.DEFAULT_KEY, ambient = [ 1, 1, 1 ], diffuse = [ 0.1, 0.7, 0.7 ], specular = [ 1.0, 1.0, 1.0 ], 
 
@@ -61,19 +62,21 @@ class MaterialPool extends AssetPool {
 
         if ( ! map_Kd ) {
 
-            if ( this.defaultKey ) {
+            //if ( this.defaultKey ) {
 
-                map_Kd = this.getAssetByKey( this.defaultKey ).map_Kd;
+                map_Kd = this.texturePool.getAssetByKey( this.texturePool.defaultKey ).texture;
 
-            } else {
+                //console.log('________________map_Kd:' + map_Kd)
 
-                map_Kd = this.texturePool.create2dTexture( 
+            //} else {
 
-                    new Uint8Array( [ diffuse[ 0 ] * 255 , diffuse[ 1 ] * 255, diffuse[ 2 ] * 255, 255 ] )
+            //    map_Kd = this.texturePool.create2dTexture( 
 
-                );
+           //         new Uint8Array( [ diffuse[ 0 ] * 255 , diffuse[ 1 ] * 255, diffuse[ 2 ] * 255, 255 ] )
 
-            }
+           //     );
+
+           // }
 
         }
 
@@ -85,15 +88,15 @@ class MaterialPool extends AssetPool {
 
             path: null,          // path to file
 
+            emissive: emissive,
+
             ambient: ambient,    // Ka ambient color, white
 
             diffuse: diffuse,    // Kd diffuse color, white
 
             specular: specular,  // Ks specular color, black (off)
-   
-            specularExponent: specularExponent,  // Ns specular exponent, ranges between 0 and 1000
 
-            emissive: emissive,
+            specularExponent: specularExponent,  // Ns specular exponent, ranges between 0 and 1000
 
             sharpness: sharpness,         // sharpness of reflection map (0-1000)
 
@@ -116,6 +119,75 @@ class MaterialPool extends AssetPool {
             map_bump: null,               // bumpmap
 
             map_disp: null,                   // displacement map
+
+        }
+
+    }
+
+    /** 
+     * In some cases, our default material may be replaced by another after it loads from a .mtl file, 
+     * so provide for merging. We merge down evernthing except map_xxx properties.
+     * @param {Material} 
+     */
+    mergeTo ( recMat, inputMat ) {
+
+        for ( let i in recMat ) {
+
+            // Explicit clone is MUCH faster!
+
+            console.log("MERGING:" + i)
+
+            switch( i ) {
+
+                case name:
+                case key:               // key in AssetPool
+                case path:              // path to file
+                case specularExponent:  // Ns specular exponent, ranges between 0 and 1000
+                case sharpness:         // sharpness of reflection map (0-1000)
+                case refraction:        // refraction, 1.0 = no refraction
+                case transparency:      // d | Tr = transparency 1.0 = transparent (1.0 - transparency for prim.alpha)
+                case illum:             // illium, color and ambient on
+
+                    recMat[ i ] = inputMat[ i ];
+
+                    break;
+
+                case emissive:  // Ke emissive color
+                case ambient:   // Ka ambient color
+                case diffuse:   // Kd diffuse color
+                case specular:  // Ks specular color
+
+                    recMat[ i ] = JSON.parse( JSON.stringify( inputMat[ i ] ) );
+
+                    break;
+
+                case map_Kd:                 // diffuse map, an image file (other maps not in default)
+                case map_Ks:                 // specular map
+                case map_Ka:                 // ambient map
+                case map_refl:               // environment map
+                case map_d:                  // alpha map
+                case map_bump:               // bumpmap
+                case map_disp:               // displacement map
+
+                console.log("INPUT:" + inputMat[ i ] + " RECEIVE:" + recMat[ i ] )
+
+                    if( inputMat[ i ] instanceof WebGLTexture ) {
+
+                        console.log( 'MaterialPool::mergeTo(): replacing ' + i + ' with new texture' );
+
+                        recMat[ i ] = inputMat[ i ];
+
+                    }
+
+                    break;
+
+                default:
+
+                    console.error( 'MaterialPool::mergeTo(): unknown object member (' + i + ')!' );
+
+                    break;
+
+            }
 
         }
 
@@ -573,7 +645,7 @@ class MaterialPool extends AssetPool {
 
                             // get (hyphenated) texture options, if present, and add them to the getTexture() call.
 
-                            let options = this.computeTextureMapOptions( data );
+                            let o = this.computeTextureMapOptions( data );
 
                             // Convert equivalent types.
 
@@ -583,13 +655,23 @@ class MaterialPool extends AssetPool {
 
                             if ( type === 'disp' ) type = 'map_disp';
 
-                            // the options object contains lots of additional entries here relative to defaultMaterial.
+                            // Save data for texture finding its material later.
 
-                            options.fromObj = "OBJ" ///???????/////////////////////////
+                            let options = {
 
-                            options.materialKey = materials[ currName ].key;
+                                fromObj: "OBJ",
 
-                            options.type = type;
+                                materialKey: materials[ currName ].key,
+
+                                type: type,
+
+                                materialName: currName
+
+                            }
+
+                            // Save options specific to use of this texture.
+
+                            options[ type + '_options' ] = o;
 
                             /*
                              * NOTE: the texture attaches to prim.textures, so the fourth parmeter is the texture type (map_Kd, map_Ks...).
@@ -597,6 +679,12 @@ class MaterialPool extends AssetPool {
                              * NOTE: thex seventh paramater, options, if present, we pass those in as well.
                              * TODO: HOW DO WE KNOW IF WE ARE LOADING A CUBEMAP TEXTURE????????????
                              */
+
+                            // The Prim uses textures to render, so toggle to true.
+
+                            prim.hasObjTextures = true;
+
+                            console.log("MaterialPool::computeObjMaterials(): setting prim:" + prim.name + ' .hasObjTextures to TRUE')
 
                             this.texturePool.getTexture( prim, ( dir + tPath ), true, false, null, options );
 
@@ -625,6 +713,52 @@ class MaterialPool extends AssetPool {
         } );
 
         return materials;
+
+    }
+
+    /** 
+     * create the default name for the Prim.
+     */
+    createDefaultName( prim ) {
+
+        return prim.name + '_' + this.util.DEFAULT_KEY;
+
+    }
+
+    /** 
+     * Get a default material when we don't have a .mtl file.
+     */
+    setDefaultMaterial ( prim, materialName, textureImages ) {
+
+        let defaultName = this.createDefaultName( prim );
+
+        let mi = this.addAsset( this.default ( defaultName ) );
+
+        mi.type = prim.type,
+
+        mi.path = prim.path,
+
+        mi.emits = this.util.emitter.events.MATERIAL_READY;
+
+        // We don't emit a MATERIAL_READY event for the default
+
+        // If we have textures, load them.
+
+        for ( let i = 0; i < textureImages.length; i++ ) {
+
+            let options = { materialKey: mi.key, materialName: defaultName, type: this.texturePositions[ i ] } 
+
+            this.texturePool.getTexture( prim, textureImages[ i ], true, false, 
+
+                this.webgl.getContext().TEXTURE_2D, 
+
+                options
+
+                );
+
+        }
+
+        return mi;
 
     }
 
@@ -685,33 +819,6 @@ class MaterialPool extends AssetPool {
         }
 
         return m ;
-
-    }
-
-    /** 
-     * Get a default material when we don't have a .mtl file.
-     */
-    setDefaultMaterial ( prim, materialName, textureImages ) {
-
-        let mi = this.addAsset( this.default( prim.name + '-' + this.util.DEFAULT_KEY ) );
-
-        mi.type = prim.type,
-
-        mi.path = prim.path,
-
-        mi.emits = this.util.emitter.events.MATERIAL_READY;
-
-        // We don't emit a MATERIAL_READY event for the default
-
-        // If we have textures, load them.
-
-        for ( let i = 0; i < textureImages.length; i++ ) {
-
-            this.texturePool.getTexture( prim, textureImages[ i ], true, false, this.webgl.getContext().TEXTURE_2D, { materialKey: mi.key, type: this.texturePositions[ i ] } );   
-
-        }
-
-        return mi;
 
     }
 

@@ -108,9 +108,14 @@ class PrimFactory {
 
             ( prim, key, pos ) => {
 
+                console.log( '+++++++GEOMETRY READY, prim:' + prim.name + ' matStarts:' + prim.matStarts + ' key:' + key + ' pos:' + pos)
+
                 this.initPrimGeometry( prim, this.modelPool.keyList[ key ], pos );
 
                 // Check if complete, add if it is...
+
+                // TODO: FROM EVENT, WE SHOULD BE ABLE TO DEFINE defaultMaterial matStarts
+                // TODO: NEED A WAY FOR OBJ load to "bump" defaultMaterial when it loads.....
 
                 prim.shader.addPrim ( prim );
 
@@ -181,7 +186,7 @@ class PrimFactory {
 
                 // Fade in from invisible to our assigned alpha value.
 
-                prim.setFade( 0, prim.alpha, 0.004, 'easeQuad' );
+                prim.setFade( 0, prim.alpha, 0.9, 'easeQuad' );
 
         } );
 
@@ -241,31 +246,43 @@ class PrimFactory {
      */
     initPrimTexture ( prim, textureObj, options ) {
 
-        console.log("Prim::initPrimTexture(): new texture for prim:" + prim.name + ', options:' + options );
+        console.log(">>Prim::initPrimTexture(): new texture for prim:" + prim.name + ', options:' + options );
 
         if ( options.fromObj ) {
 
-            console.warn("TEXTURE COMING THROUGH FROM AN OBJ FILE FOR: " + prim.name + " WITH MATERIAL KEY:" + options.materialKey )
+            console.warn(">>PrimFactory::initPrimTexture(): TEXTURE COMING THROUGH FROM AN OBJ FILE FOR: " + prim.name + " WITH NAME:" + options.materialName + " WITH MATERIAL KEY:" + options.materialKey )
+
+            window.options = options
 
         }
 
-        // Find the associated material from the material key given to the texture.
+        /* 
+         * Find the associated material from the material key given to the texture.
+         */
 
-        // TODO: texture make come in before material. handle that case.
+        let m = prim.materials[ options.materialName ];
 
         for ( let i in prim.materials ) {
 
-            let m = prim.materials[ i ];
+            console.log(">>PrimFactory::initPrimTexture(): current materials are:" + prim.materials[ i ].name)
 
-            if ( m.key === options.materialKey ) {
+        }
 
-                // e.g. material.map_Kd, material.map_Ka....
+        if ( m ) {
 
-                m[ options.type ] = textureObj.texture;
+            console.log( '>>PrimFactory::initPrimTexture(): found material:' + options.materialName );
 
-                m[ options.type + '-key' ] = textureObj.key;
+            m[ options.type ] = textureObj.texture,
 
-            }
+            m[ options.type + '_key' ] = textureObj.key,
+
+            m[ options.type + '_options' ] = options[ options.type + '_options' ];
+
+        } else {
+
+            console.log( '>>PrimFactory::initPrimTexture(): no material, creating placeholder:' + options.materialName );
+
+            prim.materials[ options.materialName ] = this.materialPool.default( options.materialName );
 
         }
 
@@ -298,15 +315,31 @@ class PrimFactory {
      * @param {Material} material the material object.
      * @param {Number} pos starting position in array (usually 0).
      */
-    initPrimMaterial ( prim, material, materialName ) {
+    initPrimMaterial ( prim, material, options ) {
 
-        console.log('Prim::initMaterial(): new material ' + materialName + ' for prim:' + prim.name );
+        console.log('<<Prim::initMaterial(): new material:' + material.name + ' for prim:' + prim.name );
 
-        // TODO: if there is a default, and this is from an OBJ file, replace the default.
+        console.log("KEY:" + material.key)
 
-        // TODO: if materialName !== prim.name + '-default'
+        let m = prim.materials[ material.name ];
 
-        // TODO: REPLACE
+        console.log('<<Prim::initMaterial(): current material: ' + m + ' with:' + material.name + ' for prim:' + prim.name );
+
+        if ( m && m.name === options.materialName ) { // merge over our values, except for textures and texture options.
+
+            console.log( '<<Prim::initMaterial(): found existing material:' + material.name + ' for prim:' + prim.name );
+
+           this.materialPool.mergeTo( m, material );
+
+        } else {
+
+            // Just add the material.
+
+            console.log( '<<Prim::initMaterial(): adding new material:' + material.name + ' for prim:' + prim.name );
+
+            prim.materials[ material.name ] = material;
+
+        }
 
     }
 
@@ -358,26 +391,6 @@ class PrimFactory {
 
                 console.log("PrimFactory::initPrimGeometry(): NEW MATERIAL SUPPLIED")
 
-                /* 
-                 * If the material exists in prim.materials under its name (meaning that it was loaded 
-                 * by MaterialPool, add the position start in coords.options.materials[i] to it.
-                 * Otherwise, create a empty object with the information.
-                 * NOTE: Prim.setMaterial() is used to create a default material in Prim.createPrim();
-                 */
-
-/*
-                if ( ! prim.materials[ i ] ) {
-
-                    console.log('initPrimGeometry():creating new material for ' + i )
-
-                    //prim.materials[ i ] = { starts: [] };
-
-                    prim.materials[ i ] = {};
-
-                }
-
-*/
-
             }
 
          } else {
@@ -386,7 +399,7 @@ class PrimFactory {
 
             if ( ! prim.matStarts ) {
 
-                prim.matStarts = [ [ this.util.DEFAULT_KEY, 0, coords.vertices.length ] ];
+                prim.matStarts = [ [ this.materialPool.createDefaultName( prim ), 0, coords.indices.length ] ];
 
             }
 
@@ -510,9 +523,11 @@ class PrimFactory {
 
         textureImages = [], // textures (may be blank)
 
-        applyTexToFace = false,
+        modelFiles = [], // heightMap file (HEIGHTMAP) or array of coordinate and material files (MESH)
 
-        modelFiles = [] // heightMap file (HEIGHTMAP) or array of coordinate and material files (MESH)
+        useColorArray = false, // if true, don't use the texture, use a modelFile instead
+
+        applyTexToFace = false // if true, apply textures to each face, not whole Prim
 
         ) { // function to execute when prim is done (e.g. attach to drawing list shader).
 
@@ -523,7 +538,15 @@ class PrimFactory {
         // Check to see if the Prim type is defined.
 
         if ( ! this.geometryPool.checkType( type ) ) {
-            console.error( 'Prim::createPrim(): unsupported Prim type:' + type );
+
+            console.error( 'Prim::createPrim(): unsupported Prim type:' + type + 'for:' + prim.name );
+
+            return null;
+        }
+
+        if ( modelFiles && modelFiles.length === 0 && type === this.geometryPool.typeList.MESH ) {
+
+            console.error( 'PrimFactory::createPrim(): type MESH does not have an defining file for Prim:' + prim.name );
 
             return null;
         }
@@ -865,6 +888,8 @@ class PrimFactory {
 
         prim.type = type;
 
+        // UUID key similar to other program objects.
+
         prim.key = this.util.computeId();
 
         // Size in world coordinates.
@@ -903,27 +928,17 @@ class PrimFactory {
 
         prim.scale = [ 1.0, 1.0, 1.0 ];
 
-        // Use textures. If at least 1 texture file is loaded (either via images or OBJ files) this is also reset to true.
-
-        if ( prim.defaultShader.required.textures.map_Kd ) {
-
-            prim.useTextures = true;
-
-            if ( ! modelFiles && ! textureImages ) {
-
-                console.error( 'PrimFactory::create(): prim ' + prim.name + ' attached to Shader:' + prim.defaultShader + ' but no textures supplied' );
-
-            }
-
-        } else {
-
-            prim.useTextures = false;
-
-        }
-
         // Visible from outside (counterclockwise winding) or inside (clockwise winding).
 
         prim.visibleFrom = this.geometryPool.OUTSIDE;
+
+        /* 
+         * If this is set to true, ignore the texture material and use 
+         * the Prim's color array to render.
+         */
+
+        prim.useColorArray = useColorArray;
+        console.log(">>>>>>>>>>>>>>>>>>>>>USECOLORARRAY:" + prim.useColorArray)
 
         /* 
          * Repeatedly apply the texture to each defined Face of the Prim (instead of wrapping around the Mesh).
@@ -950,7 +965,7 @@ class PrimFactory {
 
         // Set default material for the Prim (similar to OBJ format).
 
-        prim.defaultMaterial = this.materialPool.setDefaultMaterial( prim, prim.name + '-' + this.util.DEAULT_KEY, textureImages );
+        prim.defaultMaterial = this.materialPool.setDefaultMaterial( prim, this.materialPool.createDefaultName( prim ), textureImages );
 
         // Set this to default.
 
@@ -995,6 +1010,8 @@ class PrimFactory {
         // Child Prim array.
 
         prim.children = [];
+
+        console.log("++++++++++++++prim:" + prim.name + " matstarts:" + prim.matStarts)
 
         // Execute geometry creation routine (which may be a file load).
 

@@ -184,7 +184,7 @@ class Shader {
 
             if ( this.primInList( prim ) === this.NOT_IN_LIST ) {
 
-                ///console.warn( 'Shader::addPrim():prim:'  + prim.name + ' not in list, adding to Shader::' + this.name );
+                console.warn( 'Shader::addPrim():prim:'  + prim.name + ' not in list, adding to Shader::' + this.name );
 
                 // Add the Prim to the Shader program's renderList. If a nulled position is present, use it.
 
@@ -192,13 +192,13 @@ class Shader {
 
                 if ( pos !== this.NOT_IN_LIST ) {
 
-                    console.log( 'Shader::addPrim():filling NULL with:' + prim.name + ' to:' + this.name );
+                    console.warn( 'Shader::addPrim():filling NULL with:' + prim.name + ' to:' + this.name );
 
                     this.program.renderList[ pos ] = prim ;
 
                 } else {
 
-                    //console.log( 'Shader::addPrim():appending prim:' + prim.name + ' to:' + this.name )
+                    console.warn( 'Shader::addPrim():appending prim:' + prim.name + ' to:' + this.name )
 
                     this.program.renderList.push( prim );
 
@@ -389,25 +389,29 @@ class Shader {
 
         let tex = this.required.textures;
 
-        ////////////////console.log('Shader::checkPrimTextures()');
+        let st = prim.matStarts;
 
-        let m = prim.defaultMaterial;
+        for ( let i = 0; i < st.length; i++ ) {
 
-        for ( let i in tex ) {
+            let m = prim.materials[ st[ 0 ] ];
 
-            if ( tex[ i ] ) { // true condition
+            if ( m ) {
 
-                if ( ! m[ i ] instanceof WebGLTexture ) {
+                for ( let i in tex ) {
 
-                    return false;
+                    if ( ! m[ i ] instanceof WebGLTexture ) {
+
+                        return false;
+
+                    }
 
                 }
 
             }
 
-        }
+            return true;
 
-        return true;
+        }
 
     }
 

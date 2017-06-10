@@ -111,9 +111,13 @@ class TexturePool extends AssetPool {
 
         // Flip the image's Y axis to match the WebGL texture coordinate space.
 
-        // TODO: FF says this is deprecated!
+        // TODO: FF says this is deprecated! This flips our texture
+
+        // TODO: change our texture coords calculations!
 
         gl.pixelStorei( gl.UNPACK_FLIP_Y_WEBGL, true );
+
+        // gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
 
         // gl.pixelStorei( gl.UNPACK_ALIGNMENT, true );
 

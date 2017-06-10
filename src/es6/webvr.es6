@@ -188,9 +188,19 @@ class WebVR {
 
                             window.addEventListener( 'vrdisplaypresentchange', this.presentChange.bind( this ), false );
 
-                            window.addEventListener( 'vrdisplayactivate', this.requestPresent.bind( this ), false );
+                            window.addEventListener( 'vrdisplayconnected', this.displayConnected.bind( this ), false );
 
-                            window.addEventListener( 'vrdisplaydeactivate', this.exitPresent.bind( this ), false );
+                            window.addEventListener( 'vrdisplaydisconnected', this.displayDisconnected.bind( this ), false );
+
+                            // Not implemented in 2017.
+
+                            window.addEventListener( 'vrdisplayactivate', this.displayActivated.bind( this ), false );
+
+                            window.addEventListener( 'vrdisplaydeactivate', this.displayDeactivated.bind( this ), false );
+
+                            window.addEventListener( 'vrdisplayblur', this.displayBlur.bind( this ), false );
+
+                            window.addEventListener( 'vrdisplayfocus', this.displayFocus.bind( this ), false );
 
                         } // display is valid
 
@@ -396,86 +406,9 @@ class WebVR {
 
     /* 
      * ---------------------------------------
-     * VR EVENTS
+     * VR PRESENTATION
      * ---------------------------------------
      */
-
-     /** 
-      * resize event when in VR mode. Changes canvas 
-      * to hold stereo view. Since it mixes in WebVR display 
-      * objects, we put it here, instead of in Ui.
-      */
-    vrResize () {
-
-        console.log( 'WebVR::vrResize(): in vr resize' );
-
-        let d = this.cDisplay,
-
-        gl = this.webgl.getContext(),
-
-        c = this.webgl.getCanvas(),
-
-        p = c.parentNode;
-
-        // Get the current size of the parent <div> for the <canvas>.
-
-        this.oldWidth  = p.clientWidth  * f | 0;
-
-        this.oldHeight = p.clientHeight * f | 0;
-
-        const f = Math.max( window.devicePixelRatio, 1 );
-
-        if ( d && d.isPresenting ) {
-
-            console.log( 'WebVR::vrResize(): display (' + d.displayName + ') currently presenting' );
-
-            let leftEye = d.getEyeParameters( 'left' );
-
-            let rightEye = d.getEyeParameters( 'right' );
-
-            // Resize to twice the width of the mono display.
-
-            let width = Math.max( leftEye.renderWidth, rightEye.renderWidth ) * 2;
-
-            let height =  Math.max( leftEye.renderHeight, rightEye.renderHeight );
-
-            c.width = width;
-
-            c.height = height;
-
-           // p.style.width = c.width + 'px'; // let it get full sized
-
-           // p.style.height = c.height + 'px'; // let it get full-sized
-
-            gl.viewportWidth = width;
-
-            gl.viewportHeight = height;
-
-            gl.viewport( 0, 0, gl.viewportWidth, gl.viewportHeight );
-
-            // Force parent to the same size
-
-            console.log( 'WebVR::vrResize(): new width:' + c.width + ' height:' + c.height );
-
-         } else {
-
-            // Call the standard webgl object resize event.
-
-            p.style.width = '';
-
-            p.style.height = '';
-
-            /* 
-             * Force a canvas resize, even if our window size did not change. 
-             * Note: This changes the viewport to fill the canvas, instead of 2 stereo regions.
-             */
-
-            this.webgl.resizeCanvas( true );
-
-         }
-
-    }
-
 
      /** 
       * User requested VR mode, or display HMD was activated.
@@ -483,7 +416,6 @@ class WebVR {
       */
     requestPresent ( displayNum ) {
 
- 
         if ( this.world === null ) {
 
             console.error( 'WebVR::requestPresent(): world not available' );
@@ -499,7 +431,7 @@ class WebVR {
 
         }
 
-        console.log( 'WebVR::requestPresent(): display(' + this.cDisplay + ')' );
+        console.log( 'WebVR::requestPresent(): display(' + this.cDisplay.displayName + ')' );
 
         let world = this.world,
 
@@ -551,7 +483,7 @@ class WebVR {
 
         } else {
 
-            console.error( 'WebVR::requestPresent(): vrdisplay (' + d.displayName + ') is not a valid vr display' );
+            console.error( '&&&&&&&&&&&&&&&&WebVR::requestPresent(): vrdisplay (' + d.displayName + ') is not a valid vr display' );
 
         }
 
@@ -604,7 +536,7 @@ class WebVR {
 
                  world.start();
 
-                console.log( 'WebVR::exitPresent(): exited display (' + d.displayName + ') presentation to (' + this.cDisplay + ')' );
+                console.log( 'WebVR::exitPresent(): exited display (' + d.displayName + ') presentation to (' + this.cDisplay.displayName + ')' );
 
             }, ( reject ) => {
 
@@ -634,8 +566,93 @@ class WebVR {
 
      }
 
+    /* 
+     * ---------------------------------------
+     * VR EVENTS
+     * ---------------------------------------
+     */
+
+     /** 
+      * resize event when in VR mode. Changes canvas 
+      * to hold stereo view. Since it mixes in WebVR display 
+      * objects, we put it here, instead of in Ui.
+      */
+    vrResize () {
+
+        let d = this.cDisplay,
+
+        gl = this.webgl.getContext(),
+
+        c = this.webgl.getCanvas(),
+
+        p = c.parentNode;
+
+        console.log( 'WebVR::vrResize(): resize for display (' + d.displayName + ')' );
+
+        // Get the current size of the parent <div> for the <canvas>.
+
+        this.oldWidth  = p.clientWidth  * f | 0;
+
+        this.oldHeight = p.clientHeight * f | 0;
+
+        const f = Math.max( window.devicePixelRatio, 1 );
+
+        if ( d && d.isPresenting ) {
+
+            console.log( 'WebVR::vrResize(): display (' + d.displayName + ') currently presenting' );
+
+            let leftEye = d.getEyeParameters( 'left' );
+
+            let rightEye = d.getEyeParameters( 'right' );
+
+            // Resize to twice the width of the mono display.
+
+            let width = Math.max( leftEye.renderWidth, rightEye.renderWidth ) * 2;
+
+            let height =  Math.max( leftEye.renderHeight, rightEye.renderHeight );
+
+            c.width = width;
+
+            c.height = height;
+
+           // p.style.width = c.width + 'px'; // let it get full sized
+
+           // p.style.height = c.height + 'px'; // let it get full-sized
+
+            gl.viewportWidth = width;
+
+            gl.viewportHeight = height;
+
+            gl.viewport( 0, 0, gl.viewportWidth, gl.viewportHeight );
+
+            // Force parent to the same size
+
+            console.log( 'WebVR::vrResize(): new width:' + c.width + ' height:' + c.height );
+
+         } else {
+
+            // Call the standard webgl object resize event.
+
+            p.style.width = '';
+
+            p.style.height = '';
+
+            console.log( 'WebVR::vrResize(): calling standard window resize' );
+
+            /* 
+             * Force a canvas resize, even if our window size did not change. 
+             * Note: This changes the viewport to fill the canvas, instead of 2 stereo regions.
+             */
+
+            this.webgl.resizeCanvas( true );
+
+         }
+
+    }
+
     /** 
      * VR Presentation has changed.
+     * @link https://developer.mozilla.org/en-US/docs/Web/API/Window/onvrdisplaypresentchange
      */
     presentChange () {
 
@@ -664,6 +681,66 @@ class WebVR {
           }
 
         }
+
+    }
+
+    /** 
+     * Display was temporarily paused.
+     * @link https://developer.mozilla.org/en-US/docs/Web/API/Window/onvrdisplayblur
+     */
+    displayBlur () {
+
+        console.warn( 'WebVR::displayBlur(): display blur event' );
+
+    }
+
+    /** 
+     * Display was unpaused.
+     * @link https://developer.mozilla.org/en-US/docs/Web/API/Window/onvrdisplayfocus
+     */
+    displayFocus () {
+
+        console.warn( 'WebVR::displayFocus(): display focus event' );
+
+    }
+
+    /** 
+     * A display was activated (display is able to present).
+     * @link https://developer.mozilla.org/en-US/docs/Web/API/Window/onvrdisplayactivate
+     */
+    displayActivated () {
+
+        console.warn( 'WebVR::displayActivated(): display activation event' );
+
+    }
+
+    /** 
+     * A displays was deactivated (e.g. standby or sleep mode).
+     * @link https://developer.mozilla.org/en-US/docs/Web/API/Window/onvrdisplaydeactivate
+     */
+    displayDeactivated () {
+
+        console.warn( 'WebVR::displayDeactivated(): display deactivation event' );
+
+    }
+
+    /**
+     * A display was connected.
+     * @link https://developer.mozilla.org/en-US/docs/Web/API/Window/onvrdisplayconnected
+     */
+    displayConnected () {
+
+        console.warn( 'WebVR::displayConnected(): display connected event' );
+
+    }
+
+    /** 
+     * A display was disconnected.
+     * @link https://developer.mozilla.org/en-US/docs/Web/API/Window/onvrdisplaydisconnected
+     */
+    displayDisconnected () {
+
+        console.warn( 'WebVR::displayDisconnected(): display disconnected event' );
 
     }
 

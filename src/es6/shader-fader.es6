@@ -518,14 +518,6 @@ class ShaderFader extends Shader {
 
                 program.update( prim, mvMatrix, updatePrim );
 
-                // default material (other Shaders might use multiple materials).
-
-                let m = prim.defaultMaterial;
-
-                // Look for (multiple) materials.
-
-                let ms = prim.matStarts;
-
                 // Bind vertex buffer.
 
                 gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.vertices.buffer );
@@ -538,7 +530,7 @@ class ShaderFader extends Shader {
                 gl.enableVertexAttribArray( aVertexColor );
                 gl.vertexAttribPointer( aVertexColor, 4, gl.FLOAT, false, 0, 0 ); // NOTE: prim.geometry.colors.itemSize for param 2
 
-                // Texture coordinates. Shader complains if one is not bound (unlike some other uniforms).
+                // Bind texture coordinates. Shader complains if one is not bound (unlike some other uniforms).
 
                 gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.texCoords.buffer );
                 gl.enableVertexAttribArray( aTextureCoord );
@@ -580,28 +572,6 @@ class ShaderFader extends Shader {
 
                 }
 
-                // Conditionally bind the texture .
-
-                if ( prim.useTextures && prim.defaultMaterial.map_Kd ) {
-
-                    gl.uniform1i( uUseColor, 0 );
-                    gl.uniform1i( uUseTexture, 1 );
-
-                    // Bind Other texture units below.
-
-                    // Set fragment shader sampler uniform.
-
-                    gl.uniform1i( uSampler, 0 );
-
-                } else {
-
-                    // Conditionally set use of color array.
-
-                    gl.uniform1i( uUseColor, 1 );
-                    gl.uniform1i( uUseTexture, 0 );
-
-                }
-
                 // Normals matrix (transpose inverse) uniform.
 
                 gl.uniformMatrix3fv( uNMatrix, false, nMatrix );
@@ -627,23 +597,9 @@ class ShaderFader extends Shader {
                  * GeometryPool and ModelPool routines are expected to "chop"
                  */
 
-                if ( ms.length === 1 ) {
-
-                    // default material (other Shaders might use multiple materials).
-
-                    // Set the material quality of the Prim.
-
-                    gl.uniform3fv( uMatAmbient, m.ambient );
-                    gl.uniform3fv( uMatDiffuse, m.diffuse );
-                    gl.uniform3fv( uMatEmissive, m.emissive );
-                    gl.uniform3fv( uMatSpecular, m.specular );
-                    gl.uniform1f( uMatSpecExp, m.specularExponent );
-
-                    gl.drawElements( gl.TRIANGLES, prim.geometry.indices.numItems, iSize, 0 );
-
-                } else {
-
                     // Loop through materials, and regions of Prim they apply to.
+
+                    let ms = prim.matStarts;
 
                     for ( let j = 0; j < ms.length; j++ ) {
 
@@ -651,26 +607,49 @@ class ShaderFader extends Shader {
 
                            // Get the next material from prim.matStarts
 
-                        m = prim.materials[ st[ 0 ] ]; // bind the material
+                        let m = prim.materials[ st[ 0 ] ]; // bind the material (defaultmaterial still present)
 
                         // Set the material quality of the Prim.
 
-                        gl.uniform3fv( uMatAmbient, m.ambient );
-                        gl.uniform3fv( uMatDiffuse, m.diffuse );
-                        gl.uniform3fv( uMatEmissive, m.emissive );
-                        gl.uniform3fv( uMatSpecular, m.specular );
-                        gl.uniform1f( uMatSpecExp, m.specularExponent );
+                        if ( m !== undefined ) {
 
-                        //gl.activeTexture( gl.TEXTURE0 );
-                        //gl.bindTexture( gl.TEXTURE_2D, null );
-                        ///////gl.bindTexture( gl.TEXTURE_2D, m[ 'map_Kd' ] );
-                        //gl.bindTexture( gl.TEXTURE_2D, m.map_Kd );
+                            gl.uniform3fv( uMatAmbient, m.ambient );
+                            gl.uniform3fv( uMatDiffuse, m.diffuse );
+                            gl.uniform3fv( uMatEmissive, m.emissive );
+                            gl.uniform3fv( uMatSpecular, m.specular );
+                            gl.uniform1f( uMatSpecExp, m.specularExponent );
+
+                            // Conditionally draw colors instead of textures.
+
+                            if ( prim.useColorArray === true ) {
+
+                                gl.uniform1i( uUseColor, 1 );
+                                gl.uniform1i( uUseTexture, 0 );
+
+                            } else {
+
+                                gl.uniform1i( uUseColor, 0 );
+                                gl.uniform1i( uUseTexture, 1 );
+
+                                if ( m.map_Kd instanceof WebGLTexture ) {
+
+                                    // Set fragment shader sampler uniform.
+
+                                    gl.uniform1i( uSampler, 0 );
+
+                                    gl.activeTexture( gl.TEXTURE0 );
+                                    gl.bindTexture( gl.TEXTURE_2D, null );
+                                    gl.bindTexture( gl.TEXTURE_2D, m.map_Kd );
+
+                                }
+
+                            }
+
+                        }
 
                         gl.drawElements( gl.TRIANGLES, st[ 2 ], iSize, st[ 1 ] );
 
                     }
-
-                }
 
                 // Copy back the original for the next Prim. 
 

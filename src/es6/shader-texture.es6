@@ -163,7 +163,7 @@ class ShaderTexture extends Shader {
 
                 // We do a quad fadein of our Ambient so near-transparent objects don't have the Ambient color.
 
-                'vec4 Ambient = vec4(uAmbientColor * uMatAmbient, uAlpha * uAlpha);',
+                'vec4 Ambient = vec4(uAmbientColor * uMatAmbient, uAlpha);',
 
                 'vec4 Diffuse = vec4(uDirectionalColor * uMatDiffuse, uAlpha);',
 
@@ -205,7 +205,7 @@ class ShaderTexture extends Shader {
 
                     // Multiply Specular by global uAlpha here.
 
-                    'Specular = pow(RdotV, spec) * pow(NdotH, spec) * vec4(uDirectionalColor * uMatSpecular, uAlpha);',           
+                    'Specular = pow(RdotV, spec) * pow(NdotH, spec) * vec4(uDirectionalColor * uMatSpecular, uAlpha);',
 
                 '} else {',
 
@@ -215,7 +215,9 @@ class ShaderTexture extends Shader {
 
                 '}',
 
-                'gl_FragColor =  (Emissive + Ambient + Diffuse + Specular) * vec4(vColor.rgb, vColor.a * uAlpha);',
+                'Specular = vec4(0.3,0.3,0.3,1.0);', // TODO: SUM HERE NEEDS A RE-CALCULATION?????
+
+                'gl_FragColor =  (Emissive + Ambient + Diffuse + Specular) * vec4(vColor.rgb, vColor.a);',
 
             '}'
 
@@ -423,14 +425,6 @@ class ShaderTexture extends Shader {
 
                 program.update( prim, mvMatrix, updatePrim );
 
-                // default material (other Shaders might use multiple materials).
-
-                let m = prim.defaultMaterial;
-
-                // Look for (multiple) materials.
-
-                let ms = prim.matStarts;
-
                 // Bind vertex buffer.
 
                 gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.vertices.buffer );
@@ -442,13 +436,6 @@ class ShaderTexture extends Shader {
                 gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.texCoords.buffer );
                 gl.enableVertexAttribArray( aTextureCoord );
                 gl.vertexAttribPointer( aTextureCoord, 2, gl.FLOAT, false, 0, 0 );
-
-                // Bind the default (diffuse) texture.
-
-                gl.activeTexture( gl.TEXTURE0 );
-                gl.bindTexture( gl.TEXTURE_2D, prim.defaultMaterial.map_Kd );
-
-                // Bind additional texture units.
 
                 // Set fragment shader sampler uniform.
 
@@ -487,10 +474,6 @@ class ShaderTexture extends Shader {
 
                 // Set the material quality of the Prim.
 
-                gl.uniform3fv( uMatAmbient, m.ambient );
-                gl.uniform3fv( uMatDiffuse, m.diffuse );
-                gl.uniform3fv( uMatEmissive, m.emissive ); // NOTE: transparent objects go in their own Shader.
-
                 // Normals matrix (transpose inverse) uniform.
 
                 gl.uniformMatrix3fv( uNMatrix, false, nMatrix );
@@ -503,11 +486,9 @@ class ShaderTexture extends Shader {
 
                 gl.uniformMatrix4fv( uMVMatrix, false, mvMatrix );
 
-
                 // Bind index buffer.
 
                 gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, prim.geometry.indices.buffer );
-
 
                 /* 
                  * ms (matStarts) gives the start of the material from the OBJ file. Direct loads default 
@@ -516,9 +497,25 @@ class ShaderTexture extends Shader {
                  * GeometryPool and ModelPool routines are expected to "chop"
                  */
 
-                if ( ms.length === 1 ) {
+                // default material (other Shaders might use multiple materials).
 
-                    // default material (other Shaders might use multiple materials).
+                let m = prim.defaultMaterial;
+
+                // Look for (multiple) materials.
+
+                let ms = prim.matStarts;
+
+                for ( let j = 0; j < ms.length; j++ ) {
+
+                    let st = ms[ j ];
+
+                    // Get the next material from prim.matStarts
+
+                    m = prim.materials[ st[ 0 ] ]; // bind the material
+
+                    if ( m === undefined ) console.log("M undefined for prim:" + prim.name)
+
+                    // TODO: TEST WHY UNDEFINED. DETERMINE HOW TO FIX (promise for loading????)
 
                     // Set the material quality of the Prim.
 
@@ -528,36 +525,11 @@ class ShaderTexture extends Shader {
                     gl.uniform3fv( uMatSpecular, m.specular );
                     gl.uniform1f( uMatSpecExp, m.specularExponent );
 
-                    gl.drawElements( gl.TRIANGLES, prim.geometry.indices.numItems, iSize, 0 );
+                    gl.activeTexture( gl.TEXTURE0 );
+                    gl.bindTexture( gl.TEXTURE_2D, null );
+                    gl.bindTexture( gl.TEXTURE_2D, m.map_Kd );
 
-                } else {
-
-                    // Loop through materials, and regions of Prim they apply to.
-
-                    for ( let j = 0; j < ms.length; j++ ) {
-
-                        let st = ms[ j ];
-
-                           // Get the next material from prim.matStarts
-
-                        m = prim.materials[ st[ 0 ] ]; // bind the material
-
-                        // Set the material quality of the Prim.
-
-                        gl.uniform3fv( uMatAmbient, m.ambient );
-                        gl.uniform3fv( uMatDiffuse, m.diffuse );
-                        gl.uniform3fv( uMatEmissive, m.emissive );
-                        gl.uniform3fv( uMatSpecular, m.specular );
-                        gl.uniform1f( uMatSpecExp, m.specularExponent );
-
-                        //gl.activeTexture( gl.TEXTURE0 );
-                        //gl.bindTexture( gl.TEXTURE_2D, null );
-                        ///////gl.bindTexture( gl.TEXTURE_2D, m[ 'map_Kd' ] );
-                        //gl.bindTexture( gl.TEXTURE_2D, m.map_Kd );
-
-                        gl.drawElements( gl.TRIANGLES, st[ 2 ], iSize, st[ 1 ] );
-
-                    }
+                    gl.drawElements( gl.TRIANGLES, st[ 2 ], iSize, st[ 1 ] );
 
                 }
 
@@ -568,9 +540,6 @@ class ShaderTexture extends Shader {
             } // end of renderList for Prims
 
             // Disable buffers that might cause problems in another Prim.
-
-            //gl.bindBuffer( gl.ARRAY_BUFFER, null );
-            //gl.disableVertexAttribArray( vsVars.attribute.vec2.aTextureCoord );
 
         } // end of program.render()
 

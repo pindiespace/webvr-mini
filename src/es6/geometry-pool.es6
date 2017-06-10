@@ -3627,39 +3627,6 @@ class GeometryPool {
      */
 
     /** 
-     * Procedurally generate geometry coordinates, then emit a pseudo-event to the calling Prim.
-     * @param {String} type the type of procedural geometry type, also the name of the factory funciton.
-     * @param {Prim} prim the calling Prim.
-     * @param {String|number} key the key to assign the geometry model to in the prim.models array.
-     */
-    addGeometry ( type, prim, key ) {
-
-        if ( type === this.typeList.MESH ) {
-
-            // Load geometry from a file, with callback emitter GEOMETRY_READY in ModelPool, calling Prim.initPrim().
-
-            this.geometryMesh( prim );
-
-
-        } else {
-
-            // Procedural geometry.
-
-            let c = this[ type ]( prim );
-
-            // Colors not supplied by procedural geometry.
-
-            c.colors = [];
-
-            // Emit a GEOMETRY_READY event, calling Prim.initPrim().
-
-            this.util.emitter.emit( this.util.emitter.events.GEOMETRY_READY, prim, key, c );
-
-        }
-
-    }
-
-    /** 
      * Get a geometry, either procedural, or from a OBJ file.
      * @param {Prim} prim the calling Prim.
      * @param {String} path the URL to load.
@@ -3704,6 +3671,8 @@ class GeometryPool {
              *   usemtl: util.DEFAULT_KEY (always 'default')
              * }
              */
+
+             // THIS IS ALL NOT NEEDED!!!!!!!!
 
             console.log( 'GeometryPool::getGeometry() new procedural geometry for:' + prim.name );
 

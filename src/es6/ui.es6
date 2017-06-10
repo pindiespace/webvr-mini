@@ -669,15 +669,15 @@ class Ui {
 
                 this.fullscreenButton.show();
 
-                // this.webvr.exitPresent handles some of the resizing, we have to restore the Uis
+                // this.webvr.exitPresent handles some of the resizing, we have to restore the Uis.
+
+                // exit VR presentation (order may be important here).
+
+                this.webvr.exitPresent();
 
                 // Remove the event listener
 
                 removeEventListener( 'keydown', this.vrHandleKeys );
-
-                // exit VR presentation
-
-                this.webvr.exitPresent();
 
                 break;
 
