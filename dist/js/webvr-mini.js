@@ -6023,6 +6023,8 @@
 	                                return false;
 	                        }
 
+	                        console.log('Shader::checkPrim(): prim:' + prim.name + ' ready to be added to:' + this.name);
+
 	                        return true;
 	                }
 
@@ -6069,24 +6071,25 @@
 
 	                        if (prim.matStarts === undefined || prim.matStarts.length < 1) {
 
-	                                console.log(prim.name + ' does not have matStarts yet');
+	                                ////console.log(prim.name + ' does not have matStarts yet' )
 
 	                                return false;
 	                        }
 
 	                        // Check that 'matStarts' points to a defined material.
 
-	                        if (prim.materials[prim.matStarts[0][0]] === undefined) {
+	                        var matName = prim.matStarts[0][0];
 
-	                                console.log(prim.name + ' does not have first material (' + prim.matStarts[0][0] + ') yet');
+	                        if (prim.materials[matName] === undefined) {
+
+	                                ////console.log(prim.name + ' does not have first material (' + prim.matStarts[ 0 ][ 0 ] + ') yet' );
 
 	                                return false;
 	                        }
 
 	                        if (!this.checkPrimTextures(prim)) {
 
-	                                //return false; // THIS IS WHERE THE PROBLEM IS!!!!!!!
-
+	                                return false;
 	                        }
 
 	                        return true;
@@ -6107,30 +6110,40 @@
 
 	                        var st = prim.matStarts;
 
-	                        if (st.length === 0) console.log(prim.name + " does have ST IS ZERO in checkPrimTextures");
+	                        // if (st.length === 0 ) console.log(prim.name + " does have ST IS ZERO in checkPrimTextures")
 
 	                        for (var i = 0; i < st.length; i++) {
 
-	                                console.log(prim.name + " does have material name " + st[0] + ' in checkPrimtextures');
+	                                //console.log(prim.name + " does have material NAME " + st[ 0 ][ 0 ] + ' in matStarts in checkPrimtextures')
 
-	                                for (var j in prim.naterials) {
-	                                        console.log(prim.name + ' does have current material: ' + j);
-	                                }
+	                                //for ( let j in prim.materials ) {
 
-	                                var m = prim.materials[st[0]];
+	                                //    console.log(prim.name + ' does have LOOPO current material: ' + j + '===' +  st[ 0 ][ 0 ] )
+
+	                                //    if ( j === st[ 0 ][ 0 ] ) console.log(prim.name + ' does have st[0] matching ' + j )
+
+	                                //}
+
+	                                var matName = st[0][0];
+
+	                                var m = prim.materials[matName];
 
 	                                if (m === undefined) {
 
-	                                        console.log(prim.name + " does not have MATERIAL DEFINED IN checkPrimTextures");
+	                                        ////    console.log(prim.name + ' does not have MATERIAL ' + matName + ' DEFINED IN checkPrimTextures' )
 
 	                                        return false;
 	                                }
 
-	                                console.log(prim.name + ' does have MATERIAL DEFINED in checkPrimTextures');
+	                                ///console.log(prim.name + ' does have MATERIAL DEFINED in checkPrimTextures')
 
 	                                for (var _i in tex) {
 
+	                                        ////    console.log(prim.name + ' does check TEXTURE ' + i + ' in material:' + m.name + ', == ' + m[i])
+
 	                                        if (m[_i] && !(m[_i] instanceof WebGLTexture)) {
+
+	                                                ///        console.log(prim.name + ' does not have TEXTURE ' + i + ' defined in checkPrimTextures')
 
 	                                                return false;
 	                                        }
