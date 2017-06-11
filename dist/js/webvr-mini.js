@@ -1552,7 +1552,9 @@
 
 	                        this.events = {
 
-	                                    GEOMETRY_READY: 'grdy', // sends Prim reference. Not used for procedural geometry
+	                                    PROCEDURAL_GEOMETRY_READY: 'plgrdy', // Procedural geometry is ready
+
+	                                    OBJ_GEOMETRY_READY: 'ogrdy', // Use for .OBJ and .MTL file formats
 
 	                                    MATERIAL_READY: 'mrdy', // sends Prim reference. Not used for procedural geometry
 
@@ -1566,9 +1568,9 @@
 
 	                                    TEXTURE_REMOVE: 'trm', // texture removal event
 
-	                                    PRIM_ADDED_TO_SHADER: 'prdy', // Prim added to Shader
+	                                    PRIM_ADDED_TO_SHADER: 'prash', // Prim added to Shader
 
-	                                    PRIM_REMOVED_FROM_SHADER: 'prms', // a Prim was removed by a Shader
+	                                    PRIM_REMOVED_FROM_SHADER: 'prmsh', // a Prim was removed by a Shader
 
 	                                    PRIM_FAIL: 'prmfl', // a Prim couldn't load its assets
 
@@ -4929,8 +4931,6 @@
 	                                                evt.preventDefault();
 	                                    });
 
-	                                    window.button = button;
-
 	                                    // Style it on hover.
 
 	                                    button.addEventListener('mouseenter', function (evt) {
@@ -5619,6 +5619,8 @@
 
 	                                        // Loop through materials, and regions of Prim they apply to.
 
+	                                        // TODO: ShaderFader
+
 	                                        var ms = prim.matStarts;
 
 	                                        for (var j = 0; j < ms.length; j++) {
@@ -5661,9 +5663,9 @@
 	                                                                        gl.bindTexture(gl.TEXTURE_2D, m.map_Kd);
 	                                                                }
 	                                                        }
-	                                                }
 
-	                                                gl.drawElements(gl.TRIANGLES, st[2], iSize, st[1]);
+	                                                        gl.drawElements(gl.TRIANGLES, st[2], iSize, st[1]);
+	                                                }
 	                                        }
 
 	                                        // Copy back the original for the next Prim. 
@@ -6011,14 +6013,17 @@
 	                key: 'checkPrim',
 	                value: function checkPrim(prim) {
 
-	                        // Confirm Prim has WebGLBuffers and Textures needed to render.
+	                        if (!this.checkPrimBuffers(prim)) {
 
-	                        if (this.checkPrimTextures(prim) && this.checkPrimBuffers(prim)) {
-
-	                                return true;
+	                                return false;
 	                        }
 
-	                        return false;
+	                        if (!this.checkPrimMaterials(prim)) {
+
+	                                return false;
+	                        }
+
+	                        return true;
 	                }
 
 	                /**
@@ -6057,12 +6062,32 @@
 	                 */
 
 	        }, {
-	                key: 'checkPrimMaterial',
-	                value: function checkPrimMaterial(prim) {
+	                key: 'checkPrimMaterials',
+	                value: function checkPrimMaterials(prim) {
 
-	                        // TODO: What special material properties needed for texture?
+	                        // Check that 'matStarts' has been defined.
 
-	                        console.log('Shader::checkPrimMaterial(): event MATERIAL_READY fired');
+	                        if (prim.matStarts === undefined || prim.matStarts.length < 1) {
+
+	                                console.log(prim.name + ' does not have matStarts yet');
+
+	                                return false;
+	                        }
+
+	                        // Check that 'matStarts' points to a defined material.
+
+	                        if (prim.materials[prim.matStarts[0][0]] === undefined) {
+
+	                                console.log(prim.name + ' does not have first material (' + prim.matStarts[0][0] + ') yet');
+
+	                                return false;
+	                        }
+
+	                        if (!this.checkPrimTextures(prim)) {
+
+	                                //return false; // THIS IS WHERE THE PROBLEM IS!!!!!!!
+
+	                        }
 
 	                        return true;
 	                }
@@ -6082,23 +6107,37 @@
 
 	                        var st = prim.matStarts;
 
+	                        if (st.length === 0) console.log(prim.name + " does have ST IS ZERO in checkPrimTextures");
+
 	                        for (var i = 0; i < st.length; i++) {
+
+	                                console.log(prim.name + " does have material name " + st[0] + ' in checkPrimtextures');
+
+	                                for (var j in prim.naterials) {
+	                                        console.log(prim.name + ' does have current material: ' + j);
+	                                }
 
 	                                var m = prim.materials[st[0]];
 
-	                                if (m) {
+	                                if (m === undefined) {
 
-	                                        for (var _i in tex) {
+	                                        console.log(prim.name + " does not have MATERIAL DEFINED IN checkPrimTextures");
 
-	                                                if (!m[_i] instanceof WebGLTexture) {
-
-	                                                        return false;
-	                                                }
-	                                        }
+	                                        return false;
 	                                }
 
-	                                return true;
+	                                console.log(prim.name + ' does have MATERIAL DEFINED in checkPrimTextures');
+
+	                                for (var _i in tex) {
+
+	                                        if (m[_i] && !(m[_i] instanceof WebGLTexture)) {
+
+	                                                return false;
+	                                        }
+	                                }
 	                        }
+
+	                        return true;
 	                }
 
 	                /**
@@ -6638,6 +6677,7 @@
 	        }, {
 	                key: 'init',
 	                value: function init(primList) {
+	                        var _this2 = this;
 
 	                        // DESTRUCTING DID NOT WORK!
 	                        //[gl, canvas, mat4, vec3, pMatrix, mvMatrix, program ] = this.setup();
@@ -6882,9 +6922,9 @@
 
 	                                                m = prim.materials[st[0]]; // bind the material
 
-	                                                if (m === undefined) console.log("M undefined for prim:" + prim.name);
+	                                                if (m === undefined) console.log('M undefined for in Shader:' + _this2.name + ' prim:' + prim.name);
 
-	                                                // TODO: TEST WHY UNDEFINED. DETERMINE HOW TO FIX (promise for loading????)
+	                                                // TODO: ShaderTexture
 
 	                                                // Set the material quality of the Prim.
 
@@ -9013,16 +9053,20 @@
 
 	                // Bind the callback for geometry initialization applied to individual prims (GeometryPool, Mesh, and ModelPool).
 
-	                this.util.emitter.on(this.util.emitter.events.GEOMETRY_READY, function (prim, key, pos) {
+	                this.util.emitter.on(this.util.emitter.events.OBJ_GEOMETRY_READY, function (prim, key, options) {
 
-	                        console.log('+++++++GEOMETRY READY, prim:' + prim.name + ' matStarts:' + prim.matStarts + ' key:' + key + ' pos:' + pos);
+	                        console.log('+++++++OBJ GEOMETRY READY, prim:' + prim.name + ' matStarts:' + prim.matStarts + ' key:' + key + ' pos:' + options.pos);
 
-	                        _this.initPrimGeometry(prim, _this.modelPool.keyList[key], pos);
+	                        _this.initPrimGeometry(prim, _this.modelPool.keyList[key], options);
 
-	                        // Check if complete, add if it is...
+	                        prim.shader.addPrim(prim);
+	                });
 
-	                        // TODO: FROM EVENT, WE SHOULD BE ABLE TO DEFINE defaultMaterial matStarts
-	                        // TODO: NEED A WAY FOR OBJ load to "bump" defaultMaterial when it loads.....
+	                this.util.emitter.on(this.util.emitter.events.PROCEDURAL_GEOMETRY_READY, function (prim, key, options) {
+
+	                        console.log('+++++++PROCEDURAL GEOMETRY READY, prim:' + prim.name + ' matStarts:' + prim.matStarts + ' key:' + key + ' pos:' + options.pos);
+
+	                        _this.initPrimGeometry(prim, _this.modelPool.keyList[key], options);
 
 	                        prim.shader.addPrim(prim);
 	                });
@@ -9033,8 +9077,6 @@
 
 	                        _this.initPrimMaterial(prim, _this.materialPool.keyList[key], materialName); // associative array
 
-	                        // Check if complete, add if it is...
-
 	                        prim.shader.addPrim(prim);
 	                });
 
@@ -9043,8 +9085,6 @@
 	                this.util.emitter.on(this.util.emitter.events.TEXTURE_2D_READY, function (prim, key, options) {
 
 	                        _this.initPrimTexture(prim, _this.texturePool.keyList[key], options);
-
-	                        // Check if complete, add if it is...
 
 	                        prim.shader.addPrim(prim);
 	                });
@@ -9146,8 +9186,6 @@
 	                        if (options.fromObj) {
 
 	                                console.warn(">>PrimFactory::initPrimTexture(): TEXTURE COMING THROUGH FROM AN OBJ FILE FOR: " + prim.name + " WITH NAME:" + options.materialName + " WITH MATERIAL KEY:" + options.materialKey);
-
-	                                window.options = options;
 	                        }
 
 	                        /* 
@@ -9254,12 +9292,19 @@
 
 	        }, {
 	                key: 'initPrimGeometry',
-	                value: function initPrimGeometry(prim, coords, pos) {
+	                value: function initPrimGeometry(prim, coords, options) {
 
 	                        /* 
 	                         * Options contain material name declarations, groups, smoothing groups, etc. 
 	                         * Their value is their start in coords.vertices.
 	                         */
+
+	                        for (var i in coords.options) {
+
+	                                console.log('PrimFactory::initPrimGeometry(): prim:' + prim.name + ' new coord:' + i + ' + value:' + coords.options[i]);
+	                        }
+
+	                        window.options = coords.options;
 
 	                        if (coords.options) {
 
@@ -9278,13 +9323,6 @@
 	                                // Material start array.
 
 	                                prim.matStarts = coords.options.matStarts;
-
-	                                // Material starts.
-
-	                                for (var i in coords.options.materials) {
-
-	                                        console.log("PrimFactory::initPrimGeometry(): NEW MATERIAL SUPPLIED");
-	                                }
 	                        } else {
 
 	                                // No matStarts were defined, so do a default.
@@ -9786,7 +9824,6 @@
 	                         */
 
 	                        prim.useColorArray = useColorArray;
-	                        console.log(">>>>>>>>>>>>>>>>>>>>>USECOLORARRAY:" + prim.useColorArray);
 
 	                        /* 
 	                         * Repeatedly apply the texture to each defined Face of the Prim (instead of wrapping around the Mesh).
@@ -9858,8 +9895,6 @@
 	                        // Child Prim array.
 
 	                        prim.children = [];
-
-	                        console.log("++++++++++++++prim:" + prim.name + " matstarts:" + prim.matStarts);
 
 	                        // Execute geometry creation routine (which may be a file load).
 
@@ -15925,11 +15960,7 @@
 
 	                                // Add the emit event.
 
-	                                m.emits = this.util.emitter.events.GEOMETRY_READY;
-
-	                                // Procedural models ALWAYS go to position 0
-
-	                                this.util.emitter.emit(m.emits, prim, m.key, 0);
+	                                this.util.emitter.emit(this.util.emitter.events.PROCEDURAL_GEOMETRY_READY, prim, m.key, options);
 	                        }
 	                }
 	        }]);
@@ -16448,8 +16479,6 @@
 
 	                                                                var _path = dir + mtls[_i3];
 
-	                                                                console.log("========ModelPOO: GET MATERIAL FILE " + (dir + data) + " FOR PRIM:" + prim.name);
-
 	                                                                _this2.materialPool.getMaterial(prim, _path, true, { pos: _i3 });
 	                                                        }
 
@@ -16666,7 +16695,7 @@
 
 	                        // If there was no faces in the OBJ file, use the raw data.
 
-	                        m.vertices = tVertices, m.indices = tIndices, m.texCoords = tTexCoords, m.normals = tNormals, m.objects = objects, m.groups = groups, m.materials = materials, m.matStarts = matStarts, m.smoothingGroups = smoothingGroups;
+	                        m.vertices = tVertices, m.indices = tIndices, m.texCoords = tTexCoords, m.normals = tNormals;
 
 	                        // NOTE: Color arrays and tangents are not part of the Wavefront .obj format (in .mtl data).
 
@@ -16715,7 +16744,7 @@
 
 	                                        d.colors = [];
 
-	                                        emitEvent = this.util.emitter.events.GEOMETRY_READY;
+	                                        emitEvent = this.util.emitter.events.OBJ_GEOMETRY_READY;
 
 	                                        break;
 
@@ -16824,13 +16853,13 @@
 	                                                        if (modelObj) {
 
 	                                                                /* 
-	                                                                 * GEOMETRY_READY event, with additional data referencing sub-groups of the model.
+	                                                                 * XX_GEOMETRY_READY event, with additional data referencing sub-groups of the model.
 	                                                                 * NOTE: options (e.g. starts of groups, materials, smoothing groups) are attached to modelObj.
 	                                                                 * NOTE: we recover the modelObj by its key in PrimFactory.
 	                                                                 * See this.addModel() above for more information.
 	                                                                 */
 
-	                                                                _this3.util.emitter.emit(modelObj.emits, prim, modelObj.key, modelObj.pos); ///////////TODO: COMPARE TO PROCEDUAR GEO EMIT
+	                                                                _this3.util.emitter.emit(modelObj.emits, prim, modelObj.key, options); ///////////TODO: COMPARE TO PROCEDUAR GEO EMIT
 	                                                        } else {
 
 	                                                                console.error('TexturePool::getModel(): file:' + path + ' could not be parsed');
@@ -19471,10 +19500,6 @@
 	                                
 	                                    );
 	                        */
-
-	                        window.prims = this.primFactory.prims;
-
-	                        window.lights = this.lights.getPos();
 
 	                        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

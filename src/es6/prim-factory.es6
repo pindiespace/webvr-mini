@@ -104,22 +104,29 @@ class PrimFactory {
 
         // Bind the callback for geometry initialization applied to individual prims (GeometryPool, Mesh, and ModelPool).
 
-        this.util.emitter.on( this.util.emitter.events.GEOMETRY_READY, 
+        this.util.emitter.on( this.util.emitter.events.OBJ_GEOMETRY_READY, 
 
-            ( prim, key, pos ) => {
+            ( prim, key, options ) => {
 
-                console.log( '+++++++GEOMETRY READY, prim:' + prim.name + ' matStarts:' + prim.matStarts + ' key:' + key + ' pos:' + pos)
+                console.log( '+++++++OBJ GEOMETRY READY, prim:' + prim.name + ' matStarts:' + prim.matStarts + ' key:' + key + ' pos:' + options.pos)
 
-                this.initPrimGeometry( prim, this.modelPool.keyList[ key ], pos );
-
-                // Check if complete, add if it is...
-
-                // TODO: FROM EVENT, WE SHOULD BE ABLE TO DEFINE defaultMaterial matStarts
-                // TODO: NEED A WAY FOR OBJ load to "bump" defaultMaterial when it loads.....
+                this.initPrimGeometry( prim, this.modelPool.keyList[ key ], options );
 
                 prim.shader.addPrim ( prim );
 
         } );
+
+        this.util.emitter.on( this.util.emitter.events.PROCEDURAL_GEOMETRY_READY, 
+
+            ( prim, key, options ) => {
+
+                console.log( '+++++++PROCEDURAL GEOMETRY READY, prim:' + prim.name + ' matStarts:' + prim.matStarts + ' key:' + key + ' pos:' + options.pos)
+
+                this.initPrimGeometry( prim, this.modelPool.keyList[ key ], options );
+
+                prim.shader.addPrim ( prim );
+
+            })
 
          // Bind Prim callback for a new material applied to individual Prims.
 
@@ -128,8 +135,6 @@ class PrimFactory {
             ( prim, key, materialName ) => {
 
                 this.initPrimMaterial( prim, this.materialPool.keyList[ key ], materialName ); // associative array
-
-                // Check if complete, add if it is...
 
                 prim.shader.addPrim ( prim );
 
@@ -142,8 +147,6 @@ class PrimFactory {
             ( prim, key, options ) => {
 
                 this.initPrimTexture( prim, this.texturePool.keyList[ key ], options );
-
-                // Check if complete, add if it is...
 
                 prim.shader.addPrim( prim );
 
@@ -252,8 +255,6 @@ class PrimFactory {
 
             console.warn(">>PrimFactory::initPrimTexture(): TEXTURE COMING THROUGH FROM AN OBJ FILE FOR: " + prim.name + " WITH NAME:" + options.materialName + " WITH MATERIAL KEY:" + options.materialKey )
 
-            window.options = options
-
         }
 
         /* 
@@ -360,12 +361,20 @@ class PrimFactory {
      *   options: grouping of vertices under objects, groups, materials, smoothinGroups...
      * };
      */
-    initPrimGeometry ( prim, coords, pos ) {
+    initPrimGeometry ( prim, coords, options ) {
 
         /* 
          * Options contain material name declarations, groups, smoothing groups, etc. 
          * Their value is their start in coords.vertices.
          */
+
+            for ( var i in coords.options ) {
+
+                console.log( 'PrimFactory::initPrimGeometry(): prim:' + prim.name + ' new coord:' + i + ' + value:'  + coords.options[ i ])
+
+            }
+
+            window.options = coords.options;
 
          if ( coords.options ) {
 
@@ -384,14 +393,6 @@ class PrimFactory {
             // Material start array.
 
             prim.matStarts = coords.options.matStarts;
-
-            // Material starts.
-
-            for ( var i in coords.options.materials ) {
-
-                console.log("PrimFactory::initPrimGeometry(): NEW MATERIAL SUPPLIED")
-
-            }
 
          } else {
 
@@ -938,7 +939,6 @@ class PrimFactory {
          */
 
         prim.useColorArray = useColorArray;
-        console.log(">>>>>>>>>>>>>>>>>>>>>USECOLORARRAY:" + prim.useColorArray)
 
         /* 
          * Repeatedly apply the texture to each defined Face of the Prim (instead of wrapping around the Mesh).
@@ -1010,8 +1010,6 @@ class PrimFactory {
         // Child Prim array.
 
         prim.children = [];
-
-        console.log("++++++++++++++prim:" + prim.name + " matstarts:" + prim.matStarts)
 
         // Execute geometry creation routine (which may be a file load).
 

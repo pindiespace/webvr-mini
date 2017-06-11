@@ -3692,11 +3692,7 @@ class GeometryPool {
 
             // Add the emit event.
 
-            m.emits = this.util.emitter.events.GEOMETRY_READY;
-
-            // Procedural models ALWAYS go to position 0
-
-            this.util.emitter.emit( m.emits, prim, m.key, 0 );
+            this.util.emitter.emit( this.util.emitter.events.PROCEDURAL_GEOMETRY_READY, prim, m.key, options );
 
         }
 

@@ -599,6 +599,8 @@ class ShaderFader extends Shader {
 
                     // Loop through materials, and regions of Prim they apply to.
 
+                    // TODO: ShaderFader
+
                     let ms = prim.matStarts;
 
                     for ( let j = 0; j < ms.length; j++ ) {
@@ -645,9 +647,9 @@ class ShaderFader extends Shader {
 
                             }
 
-                        }
+                            gl.drawElements( gl.TRIANGLES, st[ 2 ], iSize, st[ 1 ] );
 
-                        gl.drawElements( gl.TRIANGLES, st[ 2 ], iSize, st[ 1 ] );
+                        }
 
                     }
 

@@ -321,15 +321,19 @@ class Shader {
      */
     checkPrim ( prim ) {
 
-        // Confirm Prim has WebGLBuffers and Textures needed to render.
+        if ( ! this.checkPrimBuffers( prim ) ) {
 
-        if ( this.checkPrimTextures( prim ) && this.checkPrimBuffers( prim ) ) {
-
-            return true;
+            return false;
 
         }
 
-        return false;
+        if ( ! this.checkPrimMaterials( prim ) ) {
+
+            return false;
+
+        }
+
+        return true;
 
     }
 
@@ -369,11 +373,33 @@ class Shader {
      * Check to see if any required material properties are available for the Shader.
      * TODO: 
      */
-    checkPrimMaterial ( prim ) {
+    checkPrimMaterials ( prim ) {
 
-        // TODO: What special material properties needed for texture?
+        // Check that 'matStarts' has been defined.
 
-        console.log( 'Shader::checkPrimMaterial(): event MATERIAL_READY fired' );
+        if ( prim.matStarts === undefined || prim.matStarts.length < 1 ) {
+
+            console.log(prim.name + ' does not have matStarts yet' )
+
+            return false;
+
+        }
+
+        // Check that 'matStarts' points to a defined material.
+
+        if ( prim.materials[ prim.matStarts[ 0 ][ 0 ] ] === undefined ) {
+
+            console.log(prim.name + ' does not have first material (' + prim.matStarts[ 0 ][ 0 ] + ') yet' );
+
+            return false; 
+
+        }
+
+        if ( ! this.checkPrimTextures( prim ) ) {
+
+            //return false; // THIS IS WHERE THE PROBLEM IS!!!!!!!
+
+        }
 
         return true;
 
@@ -391,27 +417,42 @@ class Shader {
 
         let st = prim.matStarts;
 
+        if (st.length === 0 ) console.log(prim.name + " does have ST IS ZERO in checkPrimTextures")
+
         for ( let i = 0; i < st.length; i++ ) {
 
-            let m = prim.materials[ st[ 0 ] ];
+            console.log(prim.name + " does have material name " + st[ 0 ] + ' in checkPrimtextures')
 
-            if ( m ) {
-
-                for ( let i in tex ) {
-
-                    if ( ! m[ i ] instanceof WebGLTexture ) {
-
-                        return false;
-
-                    }
-
-                }
+            for ( let j in prim.naterials ) {
+                console.log(prim.name + ' does have current material: ' + j )
 
             }
 
-            return true;
+            let m = prim.materials[ st[ 0 ] ];
+
+            if ( m === undefined ) {
+
+                console.log(prim.name + " does not have MATERIAL DEFINED IN checkPrimTextures")
+
+                return false;
+
+            }
+
+            console.log(prim.name + ' does have MATERIAL DEFINED in checkPrimTextures')
+
+            for ( let i in tex ) {
+
+                if ( m[ i ] && ! ( m[ i ] instanceof WebGLTexture ) ) {
+
+                    return false;
+
+                }
+
+            } 
 
         }
+
+        return true;
 
     }
 

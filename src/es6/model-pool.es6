@@ -481,8 +481,6 @@ class ModelPool extends AssetPool {
 
                             let path = dir + mtls[ i ];
 
-                            console.log("========ModelPOO: GET MATERIAL FILE " + (dir + data) + " FOR PRIM:" + prim.name)
-
                             this.materialPool.getMaterial( prim, path, true, { pos: i } );
 
                         }
@@ -719,17 +717,7 @@ class ModelPool extends AssetPool {
 
         m.texCoords = tTexCoords,
 
-        m.normals = tNormals,
-
-        m.objects = objects,
-
-        m.groups = groups,
-
-        m.materials = materials,
-
-        m.matStarts = matStarts,
-
-        m.smoothingGroups = smoothingGroups;
+        m.normals = tNormals;
 
         // NOTE: Color arrays and tangents are not part of the Wavefront .obj format (in .mtl data).
 
@@ -778,7 +766,7 @@ class ModelPool extends AssetPool {
 
                 d.colors = [];
 
-                emitEvent = this.util.emitter.events.GEOMETRY_READY;
+                emitEvent = this.util.emitter.events.OBJ_GEOMETRY_READY;
 
                 break;
 
@@ -886,13 +874,13 @@ class ModelPool extends AssetPool {
                             if ( modelObj ) {
 
                                 /* 
-                                 * GEOMETRY_READY event, with additional data referencing sub-groups of the model.
+                                 * XX_GEOMETRY_READY event, with additional data referencing sub-groups of the model.
                                  * NOTE: options (e.g. starts of groups, materials, smoothing groups) are attached to modelObj.
                                  * NOTE: we recover the modelObj by its key in PrimFactory.
                                  * See this.addModel() above for more information.
                                  */
 
-                                this.util.emitter.emit( modelObj.emits, prim, modelObj.key, modelObj.pos ); ///////////TODO: COMPARE TO PROCEDUAR GEO EMIT
+                                this.util.emitter.emit( modelObj.emits, prim, modelObj.key, options ); ///////////TODO: COMPARE TO PROCEDUAR GEO EMIT
 
                             } else {
 

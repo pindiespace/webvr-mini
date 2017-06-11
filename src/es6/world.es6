@@ -862,11 +862,6 @@ class World extends AssetPool {
             );
 */
 
-
-    window.prims = this.primFactory.prims;
-
-    window.lights = this.lights.getPos();
-
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         // Note: the init() method sets up the update() and render() methods for the Shader.

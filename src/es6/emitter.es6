@@ -19,7 +19,9 @@ class Emitter {
 
         this.events = {
 
-            GEOMETRY_READY: 'grdy',                       // sends Prim reference. Not used for procedural geometry
+            PROCEDURAL_GEOMETRY_READY: 'plgrdy',           // Procedural geometry is ready
+
+            OBJ_GEOMETRY_READY: 'ogrdy',                   // Use for .OBJ and .MTL file formats
 
             MATERIAL_READY: 'mrdy',                       // sends Prim reference. Not used for procedural geometry
 
@@ -33,9 +35,9 @@ class Emitter {
 
             TEXTURE_REMOVE: 'trm',                        // texture removal event
 
-            PRIM_ADDED_TO_SHADER: 'prdy',                 // Prim added to Shader
+            PRIM_ADDED_TO_SHADER: 'prash',                 // Prim added to Shader
 
-            PRIM_REMOVED_FROM_SHADER: 'prms',             // a Prim was removed by a Shader
+            PRIM_REMOVED_FROM_SHADER: 'prmsh',             // a Prim was removed by a Shader
 
             PRIM_FAIL: 'prmfl',                           // a Prim couldn't load its assets
 

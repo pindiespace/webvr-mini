@@ -923,8 +923,6 @@ class Ui {
 
         } );
 
-        window.button = button;
-
         // Style it on hover.
 
         button.addEventListener( 'mouseenter', ( evt ) => {
