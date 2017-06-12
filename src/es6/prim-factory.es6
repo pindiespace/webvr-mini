@@ -189,7 +189,7 @@ class PrimFactory {
 
                 // Fade in from invisible to our assigned alpha value.
 
-                prim.setFade( 0, prim.alpha, 0.9, 'easeQuad' );
+                prim.setFade( 0, prim.alpha, 0.001, 'easeQuad' );
 
         } );
 
@@ -274,6 +274,8 @@ class PrimFactory {
             console.log( 'PrimFactory::initPrimTexture(): adding texture ' + options.type + ' to material:' + options.materialName );
 
             m[ options.type ] = textureObj.texture,
+
+            m[ options.type + '_path' ] = textureObj.path,
 
             m[ options.type + '_key' ] = textureObj.key,
 
@@ -821,11 +823,14 @@ class PrimFactory {
 
             // Can only fade up or down to the Prim's material transparency.
 
-            if( prim.fade.endAlpha >= 1.0 - prim.defaultMaterial.transparency ) {
+            let defaultMaterial = prim.materials[ prim.matStarts[ 0 ][ 0 ] ];
 
-                prim.fade.endAlpha = 1.0 - prim.defaultMaterial.transparency;
+            if ( prim.fade.endAlpha >= 1.0 - defaultMaterial.transparency ) {
+
+                prim.fade.endAlpha = 1.0 - defaultMaterial.transparency;
 
             }
+
 
             prim.alpha = start;
 

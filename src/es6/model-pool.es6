@@ -660,14 +660,6 @@ class ModelPool extends AssetPool {
 
             }
 
-            // If there were no materials, create a default one. This can happen for an .OBJ file without any .mtl files associated.
-
-            if ( matStarts.length === 0 ) {
-
-                matStarts.push( [ this.materialPool.createDefaultName( prim ), 0, nIndices.length ] );
-
-            }
-
 ///////////////////////////////
             // TODO: WE NEED A WAY TO DETERMINE IF WE'VE LOADED ANY MATERIAL FILE. Multiple files would mess up with the above code.
             // TODO: WE NEED A WAY TO HAVE A PRIM VALIDATE BASED ON ITS OWN CONFIGURATION BEFORE GOING INTO THE SHADER.
@@ -695,17 +687,25 @@ class ModelPool extends AssetPool {
 
         }
 
-        // TODO: do we every have to sort matStarts?
 
-        // Final computation for matStarts. Compute the length of each material block.
+        // If there were no materials, create a default one. This can happen for an .OBJ file without any .mtl files associated.
 
-        for ( let i = 0; i < matStarts.length - 1; i++ ) {
+        if ( matStarts.length === 0 ) {
 
-            matStarts[ i ][ 2 ] = matStarts[ i + 1 ] [ 1 ] - matStarts[ i ][ 1 ];
+            matStarts.push( [ this.materialPool.createDefaultName( prim ), 0, nIndices.length ] );
 
         }
 
-        matStarts[ matStarts.length - 1 ][ 2 ] = tIndices.length;
+
+        // Compute matStarts length
+
+        for ( let i = 1; i < matStarts.length; i++ ) {
+
+            matStarts[ i - 1 ][ 2 ] = matStarts[ i ][ 1 ] - matStarts[ i - 1 ][ 1 ];
+
+        }
+
+        matStarts[ matStarts.length - 1 ][ 2 ] = tIndices.length - matStarts[ matStarts.length - 1 ][ 1 ];
 
         // If there was no faces in the OBJ file, use the raw data.
 

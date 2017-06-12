@@ -215,7 +215,7 @@ class ShaderTexture extends Shader {
 
                 '}',
 
-                'Specular = vec4(0.3,0.3,0.3,1.0);', // TODO: SUM HERE NEEDS A RE-CALCULATION?????
+                //'vColor.rgb *= 2.0;',  // STUFF SEEMS TOO DARK
 
                 'gl_FragColor =  (Emissive + Ambient + Diffuse + Specular) * vec4(vColor.rgb, vColor.a);',
 
@@ -512,8 +512,6 @@ class ShaderTexture extends Shader {
                     // Get the next material from prim.matStarts
 
                     m = prim.materials[ st[ 0 ] ]; // bind the material
-
-                    ///if ( m === undefined ) console.log('M undefined for in Shader:' + this.name + ' prim:' + prim.name)
 
                     // Set the material quality of the Prim.
 

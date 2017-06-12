@@ -26,7 +26,7 @@ class MaterialPool extends AssetPool {
 
         // Reverse map for texture Roles (due to redundancy, don't use Object.keys()).
 
-        this.texturePositions = [ 'map_Kd', 'map_Ka', 'map_bump', 'map_Ks', 'map_refl', 'map_d', 'map_disp' ];
+        this.texturePositions = [ 'map_Kd', 'map_Ka', 'map_bump', 'map_Ks', 'map_Ns', 'map_refl', 'map_d', 'map_disp' ];
 
         if ( init ) {
 
@@ -52,9 +52,9 @@ class MaterialPool extends AssetPool {
      * @param {String} map_Kd the default texture for diffuse mapping.
      * @returns {Material} a Material object.
      */
-    default ( name = this.util.DEFAULT_KEY, ambient = [ 1, 1, 1 ], diffuse = [ 0.1, 0.7, 0.7 ], specular = [ 1.0, 1.0, 1.0 ], 
+    default ( name = this.util.DEFAULT_KEY, ambient = [ 1.0, 1.0, 1.0 ], diffuse = [ 0.1, 0.7, 0.7 ], specular = [ 1.0, 1.0, 1.0 ], 
 
-        specularExponent = 64.0, emissive = [ 0, 0, 0 ], sharpness = 60, refraction = 1, transparency = 0, illum = 1, 
+        specularExponent = 64.0, emissive = [ 0, 0, 0 ], sharpness = 60, refraction = 1, transparency = 0, illum = 2, 
 
         map_Kd = null ) {
 
@@ -108,9 +108,11 @@ class MaterialPool extends AssetPool {
 
             map_Kd: map_Kd,               // diffuse map, an image file (other maps not in default)
 
-            map_Ks: null,                 // specular map
+            map_Ks: null,                 // specular reflectivity map
 
             map_Ka: null,                 // ambient map
+
+            map_Ns: null,                 // specular exponent map
 
             map_refl: null,               // environment map
 
@@ -126,7 +128,7 @@ class MaterialPool extends AssetPool {
 
     /** 
      * In some cases, our default material may be replaced by another after it loads from a .mtl file, 
-     * so provide for merging. We merge down evernthing except map_xxx properties.
+     * so provide for merging. We merge down everything except map_xxx properties.
      * @param {Material} 
      */
     mergeTo ( recMat, inputMat ) {

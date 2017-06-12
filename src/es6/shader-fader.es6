@@ -106,7 +106,6 @@ class ShaderFader extends Shader {
 
     }
 
-
     /** 
      * a default-lighting textured object fragment shader.
      * - varying texture coordinate
