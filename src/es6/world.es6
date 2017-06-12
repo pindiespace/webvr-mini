@@ -979,6 +979,41 @@ class World extends AssetPool {
      */
     housekeep () {
 
+// TODO: Safari hack to and from fullscreen - if (self.isIOS) { utils.forceCanvasResizeSafariMobile(this.canvas);
+/*
+
+module.exports = function forceCanvasResizeSafariMobile (canvasEl) {
+  var width = canvasEl.style.width;
+  var height = canvasEl.style.height;
+  // Taken from webvr-polyfill (https://github.com/borismus/webvr-polyfill/blob/85f657cd502ec9417bf26b87c3cb2afa6a70e079/src/util.js#L200)
+  // iOS only workaround for https://bugs.webkit.org/show_bug.cgi?id=152556
+  // By changing the size 1 pixel and restoring the previous value
+  // we trigger a size recalculation cycle.
+  canvasEl.style.width = (parseInt(width, 10) + 1) + 'px';
+  canvasEl.style.height = (parseInt(height, 10) + 1) + 'px';
+  setTimeout(function () {
+    canvasEl.style.width = width;
+    canvasEl.style.height = height;
+  }, 200);
+};
+
+*/
+
+
+// TODO: audit in https://www.npmjs.com/package/lighthouse
+
+// TODO: fog in shader
+
+// TODO: study debug system in a-frame
+
+// TODO: Webworker for file loads.
+// https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers
+
+// TODO: daydream controls
+// https://github.com/aframevr/aframe/blob/master/src/components/daydream-controls.js
+
+// TODO: check event being fired on tap in ios, google pixel. Make sure that tooltip is removed.
+
 // TODO: sum for lighting requires a nonzero specular to draw into the shadow!!!!
 
 // TODO: escape key needs to run correct resize image in fullscreen! (vr button returns correctly)

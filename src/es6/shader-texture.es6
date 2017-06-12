@@ -513,9 +513,7 @@ class ShaderTexture extends Shader {
 
                     m = prim.materials[ st[ 0 ] ]; // bind the material
 
-                    if ( m === undefined ) console.log('M undefined for in Shader:' + this.name + ' prim:' + prim.name)
-
-                    // TODO: ShaderTexture
+                    ///if ( m === undefined ) console.log('M undefined for in Shader:' + this.name + ' prim:' + prim.name)
 
                     // Set the material quality of the Prim.
 

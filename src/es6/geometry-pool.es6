@@ -3650,7 +3650,7 @@ class GeometryPool {
 
             } else {
 
-                console.warn( 'GeometryPool::getGeometry(): no path supplied for position ' + i );
+                console.warn( 'GeometryPool::getGeometry(): no path supplied for prim ' + prim.name );
 
             } // end of valid path
 

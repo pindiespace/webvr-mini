@@ -108,11 +108,11 @@ class PrimFactory {
 
             ( prim, key, options ) => {
 
-                console.log( '+++++++OBJ GEOMETRY READY, prim:' + prim.name + ' matStarts:' + prim.matStarts + ' key:' + key + ' pos:' + options.pos)
+                ////console.log( 'PrimFactory::' + prim.name + ' OBJ geometry ready, key:' + key + ' pos:' + options.pos );
 
                 this.initPrimGeometry( prim, this.modelPool.keyList[ key ], options );
 
-                prim.shader.addPrim ( prim );
+                prim.shader.addPrim ( prim ); // TRY to add it
 
         } );
 
@@ -120,11 +120,11 @@ class PrimFactory {
 
             ( prim, key, options ) => {
 
-                console.log( '+++++++PROCEDURAL GEOMETRY READY, prim:' + prim.name + ' matStarts:' + prim.matStarts + ' key:' + key + ' pos:' + options.pos)
+                ////console.log( 'PrimFactory::' + prim.name + ' Procedural geometry ready, key:' + key + ' pos:' + options.pos );
 
                 this.initPrimGeometry( prim, this.modelPool.keyList[ key ], options );
 
-                prim.shader.addPrim ( prim );
+                prim.shader.addPrim ( prim ); // TRY to add it
 
             })
 
@@ -136,7 +136,7 @@ class PrimFactory {
 
                 this.initPrimMaterial( prim, this.materialPool.keyList[ key ], materialName ); // associative array
 
-                prim.shader.addPrim ( prim );
+                prim.shader.addPrim ( prim ); // TRY to add it
 
         } );
 
@@ -148,7 +148,7 @@ class PrimFactory {
 
                 this.initPrimTexture( prim, this.texturePool.keyList[ key ], options );
 
-                prim.shader.addPrim( prim );
+                prim.shader.addPrim( prim ); // TRY to add its
 
         } );
 
@@ -249,13 +249,13 @@ class PrimFactory {
      */
     initPrimTexture ( prim, textureObj, options ) {
 
-        console.log(">>Prim::initPrimTexture(): new texture for prim:" + prim.name + ', options:' + options );
+        ///console.log("Prim::initPrimTexture(): new texture for prim:" + prim.name + ', options:' + options );
 
-        if ( options.fromObj ) {
+        //if ( options.fromObj ) {
 
-            console.warn(">>PrimFactory::initPrimTexture(): TEXTURE COMING THROUGH FROM AN OBJ FILE FOR: " + prim.name + " WITH NAME:" + options.materialName + " WITH MATERIAL KEY:" + options.materialKey )
+        //    console.warn(">>PrimFactory::initPrimTexture(): TEXTURE COMING THROUGH FROM AN OBJ FILE FOR: " + prim.name + " WITH NAME:" + options.materialName + " WITH MATERIAL KEY:" + options.materialKey )
 
-        }
+        //}
 
         /* 
          * Find the associated material from the material key given to the texture.
@@ -263,15 +263,15 @@ class PrimFactory {
 
         let m = prim.materials[ options.materialName ];
 
-        for ( let i in prim.materials ) {
+        //for ( let i in prim.materials ) {
 
-            console.log(">>PrimFactory::initPrimTexture(): current materials are:" + prim.materials[ i ].name)
+        //    console.log(">>PrimFactory::initPrimTexture(): current materials are:" + prim.materials[ i ].name)
 
-        }
+        //}
 
         if ( m ) {
 
-            console.log( '>>PrimFactory::initPrimTexture(): found material:' + options.materialName );
+            console.log( 'PrimFactory::initPrimTexture(): adding texture ' + options.type + ' to material:' + options.materialName );
 
             m[ options.type ] = textureObj.texture,
 
@@ -281,13 +281,11 @@ class PrimFactory {
 
         } else {
 
-            console.log( '>>PrimFactory::initPrimTexture(): no material, creating placeholder:' + options.materialName );
+            console.log( 'PrimFactory::initPrimTexture(): no material, creating placeholder for material:' + options.materialName );
 
             prim.materials[ options.materialName ] = this.materialPool.default( options.materialName );
 
         }
-
-        // Failed texture loads keep the default 'grey pixel' texture substituted from texturePool.
 
     }
 
@@ -318,17 +316,15 @@ class PrimFactory {
      */
     initPrimMaterial ( prim, material, options ) {
 
-        console.log('<<Prim::initMaterial(): new material:' + material.name + ' for prim:' + prim.name );
-
-        console.log("KEY:" + material.key)
+        /////console.log('Prim::initMaterial(): new material:' + material.name + ' for prim:' + prim.name + ' key:' + material.key );
 
         let m = prim.materials[ material.name ];
 
-        console.log('<<Prim::initMaterial(): current material: ' + m + ' with:' + material.name + ' for prim:' + prim.name );
+        ////console.log('<<Prim::initMaterial(): current material: ' + m + ' with:' + material.name + ' for prim:' + prim.name );
 
         if ( m && m.name === options.materialName ) { // merge over our values, except for textures and texture options.
 
-            console.log( '<<Prim::initMaterial(): found existing material:' + material.name + ' for prim:' + prim.name );
+            console.log( 'Prim::initMaterial(): found existing material:' + material.name + ' for prim:' + prim.name );
 
            this.materialPool.mergeTo( m, material );
 
@@ -336,7 +332,7 @@ class PrimFactory {
 
             // Just add the material.
 
-            console.log( '<<Prim::initMaterial(): adding new material:' + material.name + ' for prim:' + prim.name );
+            console.log( 'Prim::initMaterial(): adding new material:' + material.name + ' for prim:' + prim.name );
 
             prim.materials[ material.name ] = material;
 
@@ -368,15 +364,15 @@ class PrimFactory {
          * Their value is their start in coords.vertices.
          */
 
-            for ( var i in coords.options ) {
+            //for ( var i in coords.options ) {
 
-                console.log( 'PrimFactory::initPrimGeometry(): prim:' + prim.name + ' new coord:' + i + ' + value:'  + coords.options[ i ])
+            //    console.log( 'PrimFactory::initPrimGeometry(): prim:' + prim.name + ' new coord:' + i + ' + value:'  + coords.options[ i ])
 
-            }
+            //}
 
-            window.options = coords.options;
+         if ( coords.options ) { // OBJ files
 
-         if ( coords.options ) {
+            console.log( 'PrimFactory::initPrimGeometry(): assigning options for OBJ geometry' );
 
             // Object, Group, SmoothingGroup starts.
 
@@ -394,7 +390,7 @@ class PrimFactory {
 
             prim.matStarts = coords.options.matStarts;
 
-         } else {
+         } else { // Procedural geometry
 
             // No matStarts were defined, so do a default.
 

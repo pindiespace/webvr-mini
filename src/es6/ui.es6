@@ -526,7 +526,7 @@ class Ui {
 
                 // Add a keydown event to make VR entry and exit like fullscreen.
 
-                addEventListener( 'keydown', this.vrHandleKeys ); ////////////////////////////////////////////////////////////////////
+                addEventListener( 'keydown', this.vrHandleKeys );
 
                 // Request VR presentation.
 
@@ -603,16 +603,6 @@ class Ui {
                 vr.exitPresent();
 
                 removeEventListener( 'keydown', this.vrHandleKeys );
-
-                /////// () => { 
-
-                /////    removeEventListener( 'keydown', this.vrHandleKeys );
-
-               //////     this.setControlsByMode( this.UI_DOM ) 
-
-                //////    }
-
-               ////// );
 
             } );
 
@@ -923,7 +913,7 @@ class Ui {
 
         } );
 
-        // Style it on hover.
+        // Style it on hover for desktops.
 
         button.addEventListener( 'mouseenter', ( evt ) => {
 
@@ -949,7 +939,7 @@ class Ui {
 
             }
 
-            // Delay appearance of tooltip.
+            // Delay appearance of tooltip after mouse hover starts.
 
             tt.tid = setTimeout( () => {
 
@@ -960,6 +950,16 @@ class Ui {
                     ts.top = ( 2 + parseFloat( st.top) ) + 'px';
 
                     ts.display = 'inline-block';
+
+                    // Make the tooltip disappear after a time limit (needed for mobile).
+
+                    tt.t2id = setTimeout( () => {
+
+                        let evt = new Event( 'mouseleave' );
+
+                        button.dispatchEvent( evt );
+
+                    }, 3000 );
 
                 }
 
@@ -985,6 +985,12 @@ class Ui {
                 clearTimeout( tt.tid );
 
                 tt.tid = null;
+
+            }
+
+            if ( tt.t2id ) {
+
+                tt.t2id = null;
 
             }
 

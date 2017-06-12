@@ -682,9 +682,9 @@ class MaterialPool extends AssetPool {
 
                             // The Prim uses textures to render, so toggle to true.
 
-                            prim.hasObjTextures = true;
+                            //////prim.hasObjTextures = true;
 
-                            console.log("MaterialPool::computeObjMaterials(): setting prim:" + prim.name + ' .hasObjTextures to TRUE')
+                            //////console.log("MaterialPool::computeObjMaterials(): setting prim:" + prim.name + ' .hasObjTextures to TRUE')
 
                             this.texturePool.getTexture( prim, ( dir + tPath ), true, false, null, options );
 
@@ -867,7 +867,7 @@ class MaterialPool extends AssetPool {
 
                                 for ( let j in materialObj ) {
 
-                                    console.log("==========emitting for materialObj:" + j)
+                                    console.log("MaterialPool::getMaterial(): emitting new material :" + j + ' for prim:' + prim.name );
 
                                     this.util.emitter.emit( materialObj[ j ].emits, prim, materialObj[ j ].key, options );
 
@@ -877,7 +877,7 @@ class MaterialPool extends AssetPool {
 
                         } else {
 
-                            console.error( 'MaterialPool::getMaterials(): no data found for:' + updateObj.path );
+                            console.error( 'MaterialPool::getMaterials(): no data found for material file:' + updateObj.path );
 
                         }
 
@@ -891,7 +891,7 @@ class MaterialPool extends AssetPool {
 
         } else {
 
-            console.warn( 'MaterialPool::getMaterials(): no path supplied for position ' + i );
+            console.warn( 'MaterialPool::getMaterials(): empty path supplied for prim ' + prim.name );
 
         } // end of valid path
 

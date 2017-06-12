@@ -153,9 +153,7 @@ var promise = new Promise( ( resolve, reject ) => {
 
         resolve( 'Stuff worked!' );
 
-    }
-
-    else {
+    } else {
 
         reject( Error( 'It broke' ) );
 

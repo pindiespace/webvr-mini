@@ -304,7 +304,7 @@ class ModelPool extends AssetPool {
      */
     computeObjMesh ( data, prim, path ) {
 
-        console.log( 'ModelPool::computeObjMesh(): loading a new file:' + path + ' for ' + prim.name );
+        //////console.log( 'ModelPool::computeObjMesh(): loading a new file:' + path + ' for ' + prim.name );
 
         let m = this.default();
 
@@ -491,7 +491,7 @@ class ModelPool extends AssetPool {
 
                         matStarts.push( [ data, faces.length ] ); // store material and start position.
 
-                        console.log('>>>>>>>>>>>>>>>>>>materials[' + data + '] starts at:' + faces.length )
+                        /////console.log('ModelPool::computeObjMesh(): material start for material[' + data + '] at:' + faces.length );
 
                         break;
 
@@ -594,8 +594,6 @@ class ModelPool extends AssetPool {
 
                     // Re-index our groups, objects, material starts, smoothing groups.
 
-                    // TODO:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-                    //console.log('<<<<<<<<<<<MATSTARTS LENGTH:' + matStarts.length)
                     for ( let j = 0; j < matStarts.length; j++ ) {
 
                         if ( matStarts[ j ][ 1 ] === i )  {
@@ -843,7 +841,7 @@ class ModelPool extends AssetPool {
 
             let mimeType = this.modelMimeTypes[ this.util.getFileExtension( path ) ];
 
-            console.log("--------OBJ file doRequest model for:" + prim.name + ' path:' + path)
+            /////console.log("--------OBJ file doRequest model for:" + prim.name + ' path:' + path)
 
             // check if mimeType is OK.
 
@@ -863,7 +861,8 @@ class ModelPool extends AssetPool {
                          * } 
                          */
 
-                        console.log("--------OBJ file returned model for:" + prim.name)
+
+                        ////////console.log( 'ModelPool::getModel(): OBJ file:' + path + ' returned model for:' + prim.name );
 
                         // load a Model file.
 
@@ -884,13 +883,13 @@ class ModelPool extends AssetPool {
 
                             } else {
 
-                                console.error( 'TexturePool::getModel(): file:' + path + ' could not be parsed' );
+                                console.error( 'ModelPool::getModel(): OBJ file:' + path + ' could not be parsed' );
 
                             }
 
                         } else {
 
-                            console.error( 'ModelPool::getModel(): no data found for:' + updateObj.path );
+                            console.error( 'ModelPool::getModel(): OBJ file, no data found for:' + updateObj.path );
 
                         }
 
@@ -904,7 +903,7 @@ class ModelPool extends AssetPool {
 
         } else {
 
-                console.warn( 'ModelPool::getModel(): no path supplied for position ' + i );
+                console.warn( 'ModelPool::getModel(): no path supplied for prim:' + prim.name );
 
         } // end of valid path
 

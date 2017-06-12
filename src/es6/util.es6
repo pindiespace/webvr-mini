@@ -924,9 +924,96 @@ class Util {
 
     /*
      * ---------------------------------------
-     * WINDOW AND SCREEN DIMENSIONS
+     * BROWSER AND DEVICE FEATURES
      * ---------------------------------------
      */
+
+    /** 
+     * Compatible mobiles (as of 2017)
+     */
+    isCompatMobile () {
+
+        return ( this.hasTouch() && this.hasDeviceOriention() ( this.isIOS() || this.isGearVR() || this.isGooglePixel() ) )
+
+    }
+
+    /** 
+     * Detect if we support touch. If so, don't show hover tooltips.
+     */
+    hasTouch () {
+
+        return !! ( 'ontouchstart' in window || navigator.msMaxTouchPoints );
+
+    }
+
+    hasDeviceOrientation () {
+
+        return !! ( window.DeviceOrientationEvent );
+
+    }
+
+    /** 
+     * Check to see if we are on a mobile, or desktop.
+     */
+     isStandalone () {
+
+        return !! ( window.matchMedia( '(display-mode: standalone)' ).matches );
+
+     }
+
+    /** 
+     * Check if device is in landscape orientation.
+     */
+    isLandscape () {
+
+        return ( window.orientation === 90 || window.orientation === -90 );
+
+    }
+
+    /** 
+     * Check to see if we're running under iOS
+     * @returns {false|Number} if not iOS, return false, else return the iOS version number.
+     */
+    isIOS () {
+
+        //return ( /iPad|iPhone|iPod/.test( navigator.platform ) );
+
+        let result = navigator.userAgent.match( /(iPad|iPhone|iphone|iPod).*?(OS |os |OS\_)(\d+((_|\.)\d)?((_|\.)\d)?)/ );
+
+        if ( result === null ) result = false;
+
+        return result; // return iOS number
+
+    }
+
+    /** 
+     * Test for Google Pixel chrome platform on Pixel phones, which means that 
+     * Google Daydream will be active. 
+     * @link https://github.com/faisalman/ua-parser-js/blob/master/src/ua-parser.js
+     */
+    isGooglePixel () {
+
+        return (  /android.+;\s(pixel xl|pixel)\s/i.test( navigator.userAgent ) );
+
+    }
+
+    /** 
+     * Test for Samsung Internet browser / GearVR. Note that you can install on 
+     * a Pixel, but incompatible with Google Daydream.
+     * Chrome remote debugging for Samsung Internet for GearVR. 
+     * Connect adb through wifi (GearVR USB won't work, it's charging only), 
+     * open chrome://inspect in the desktop chrome and when the headset is active, 
+     * the page should be visible on the list. All active webkit instances are on that list, not only Chrome. 
+     * For this to work, you have to have the headset's screen active
+     * use some paper sticky tape to cover the sensor that is between the lenses.
+     * Setting up ADB over wifi
+     * @link https://developer.android.com/studio/command-line/adb.html
+     */
+    isGearVR () {
+
+        return ( /SamsungBrowser.+Mobile VR/i.test( navigator.userAgent ) );
+
+    }
 
     /** 
      * Get the width of the entire screen (excluding OS taskbars)

@@ -78,7 +78,7 @@ class WebVR {
 
         // Collect stats no matter what...
 
-        let stats = this.stats,
+        let stats = this.stats, 
 
         d = null;
 
@@ -301,6 +301,15 @@ class WebVR {
     }
 
     /** 
+     * Check if we can support roomscale VR.
+     */
+    hasRoomscale () {
+
+        return ( this.cDisplay && this.cDisplay.capabilities && cDisplay.capabilities.hasPosition );
+
+    }
+
+    /** 
      * Getter for the display.
      * @returns {VRDisplay} the found vr display.
      */
@@ -310,12 +319,13 @@ class WebVR {
 
     }
 
+
+
     /** 
      * Set the stage parameters.
      * The check for size > 0 is necessary because some devices, like the
      * Oculus Rift, can give you a standing space coordinate but don't
-     * have a configured play area. These devices will return a stage
-     * size of 0.
+     * have a configured play area. These devices will return a stage size of 0.
      * @param {VRDisplay} the current VRDisplay object.
      */
     setStageParameters ( display ) {
@@ -344,7 +354,7 @@ class WebVR {
 
             // TODO: test early.
 
-            console.error( 'vr device (' + d.displayName + ') did not report stage parameters' );
+            console.error( 'WebVR::setStageParameters(): device (' + d.displayName + ') did not report stage parameters' );
 
         }
 

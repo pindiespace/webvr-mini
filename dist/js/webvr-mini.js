@@ -1463,9 +1463,112 @@
 
 	                /*
 	                 * ---------------------------------------
-	                 * WINDOW AND SCREEN DIMENSIONS
+	                 * BROWSER AND DEVICE FEATURES
 	                 * ---------------------------------------
 	                 */
+
+	                /** 
+	                 * Compatible mobiles (as of 2017)
+	                 */
+
+	        }, {
+	                key: 'isCompatMobile',
+	                value: function isCompatMobile() {
+
+	                        return this.hasTouch() && this.hasDeviceOriention()(this.isIOS() || this.isGearVR() || this.isGooglePixel());
+	                }
+
+	                /** 
+	                 * Detect if we support touch. If so, don't show hover tooltips.
+	                 */
+
+	        }, {
+	                key: 'hasTouch',
+	                value: function hasTouch() {
+
+	                        return !!('ontouchstart' in window || navigator.msMaxTouchPoints);
+	                }
+	        }, {
+	                key: 'hasDeviceOrientation',
+	                value: function hasDeviceOrientation() {
+
+	                        return !!window.DeviceOrientationEvent;
+	                }
+
+	                /** 
+	                 * Check to see if we are on a mobile, or desktop.
+	                 */
+
+	        }, {
+	                key: 'isStandalone',
+	                value: function isStandalone() {
+
+	                        return !!window.matchMedia('(display-mode: standalone)').matches;
+	                }
+
+	                /** 
+	                 * Check if device is in landscape orientation.
+	                 */
+
+	        }, {
+	                key: 'isLandscape',
+	                value: function isLandscape() {
+
+	                        return window.orientation === 90 || window.orientation === -90;
+	                }
+
+	                /** 
+	                 * Check to see if we're running under iOS
+	                 * @returns {false|Number} if not iOS, return false, else return the iOS version number.
+	                 */
+
+	        }, {
+	                key: 'isIOS',
+	                value: function isIOS() {
+
+	                        //return ( /iPad|iPhone|iPod/.test( navigator.platform ) );
+
+	                        var result = navigator.userAgent.match(/(iPad|iPhone|iphone|iPod).*?(OS |os |OS\_)(\d+((_|\.)\d)?((_|\.)\d)?)/);
+
+	                        if (result === null) result = false;
+
+	                        return result; // return iOS number
+	                }
+
+	                /** 
+	                 * Test for Google Pixel chrome platform on Pixel phones, which means that 
+	                 * Google Daydream will be active. 
+	                 * @link https://github.com/faisalman/ua-parser-js/blob/master/src/ua-parser.js
+	                 */
+
+	        }, {
+	                key: 'isGooglePixel',
+	                value: function isGooglePixel() {
+
+	                        return (/android.+;\s(pixel xl|pixel)\s/i.test(navigator.userAgent)
+	                        );
+	                }
+
+	                /** 
+	                 * Test for Samsung Internet browser / GearVR. Note that you can install on 
+	                 * a Pixel, but incompatible with Google Daydream.
+	                 * Chrome remote debugging for Samsung Internet for GearVR. 
+	                 * Connect adb through wifi (GearVR USB won't work, it's charging only), 
+	                 * open chrome://inspect in the desktop chrome and when the headset is active, 
+	                 * the page should be visible on the list. All active webkit instances are on that list, not only Chrome. 
+	                 * For this to work, you have to have the headset's screen active
+	                 * use some paper sticky tape to cover the sensor that is between the lenses.
+	                 * Setting up ADB over wifi
+	                 * @link https://developer.android.com/studio/command-line/adb.html
+	                 */
+
+	        }, {
+	                key: 'isGearVR',
+	                value: function isGearVR() {
+
+	                        return (/SamsungBrowser.+Mobile VR/i.test(navigator.userAgent)
+	                        );
+	                }
 
 	                /** 
 	                 * Get the width of the entire screen (excluding OS taskbars)
@@ -1565,8 +1668,6 @@
 	                                    TEXTURE_CUBEMAP_MEMBER_READY: 'trcmpmbrdy', // one file in a cubemap is ready
 
 	                                    TEXTURE_CUBEMAP_READY: 'tcmprdy', // all files for cubemap loaded
-
-	                                    TEXTURE_REMOVE: 'trm', // texture removal event
 
 	                                    PRIM_ADDED_TO_SHADER: 'prash', // Prim added to Shader
 
@@ -3670,6 +3771,17 @@
 	                }
 
 	                /** 
+	                 * Check if we can support roomscale VR.
+	                 */
+
+	        }, {
+	                key: 'hasRoomscale',
+	                value: function hasRoomscale() {
+
+	                        return this.cDisplay && this.cDisplay.capabilities && cDisplay.capabilities.hasPosition;
+	                }
+
+	                /** 
 	                 * Getter for the display.
 	                 * @returns {VRDisplay} the found vr display.
 	                 */
@@ -3685,8 +3797,7 @@
 	                 * Set the stage parameters.
 	                 * The check for size > 0 is necessary because some devices, like the
 	                 * Oculus Rift, can give you a standing space coordinate but don't
-	                 * have a configured play area. These devices will return a stage
-	                 * size of 0.
+	                 * have a configured play area. These devices will return a stage size of 0.
 	                 * @param {VRDisplay} the current VRDisplay object.
 	                 */
 
@@ -3714,7 +3825,7 @@
 
 	                                // TODO: test early.
 
-	                                console.error('vr device (' + d.displayName + ') did not report stage parameters');
+	                                console.error('WebVR::setStageParameters(): device (' + d.displayName + ') did not report stage parameters');
 	                        }
 	                }
 
@@ -4578,7 +4689,7 @@
 
 	                                                            // Add a keydown event to make VR entry and exit like fullscreen.
 
-	                                                            addEventListener('keydown', _this.vrHandleKeys); ////////////////////////////////////////////////////////////////////
+	                                                            addEventListener('keydown', _this.vrHandleKeys);
 
 	                                                            // Request VR presentation.
 
@@ -4652,16 +4763,6 @@
 	                                                            vr.exitPresent();
 
 	                                                            removeEventListener('keydown', _this.vrHandleKeys);
-
-	                                                            /////// () => { 
-
-	                                                            /////    removeEventListener( 'keydown', this.vrHandleKeys );
-
-	                                                            //////     this.setControlsByMode( this.UI_DOM ) 
-
-	                                                            //////    }
-
-	                                                            ////// );
 	                                                });
 
 	                                                // Reset pose button
@@ -4931,7 +5032,7 @@
 	                                                evt.preventDefault();
 	                                    });
 
-	                                    // Style it on hover.
+	                                    // Style it on hover for desktops.
 
 	                                    button.addEventListener('mouseenter', function (evt) {
 
@@ -4955,7 +5056,7 @@
 	                                                            tt.innerHTML = b.tooltipActive;
 	                                                }
 
-	                                                // Delay appearance of tooltip.
+	                                                // Delay appearance of tooltip after mouse hover starts.
 
 	                                                tt.tid = setTimeout(function () {
 
@@ -4964,6 +5065,15 @@
 	                                                                        ts.left = 16 + parseFloat(st.left) + parseFloat(st.width) + 'px', ts.top = 2 + parseFloat(st.top) + 'px';
 
 	                                                                        ts.display = 'inline-block';
+
+	                                                                        // Make the tooltip disappear after a time limit (needed for mobile).
+
+	                                                                        tt.t2id = setTimeout(function () {
+
+	                                                                                    var evt = new Event('mouseleave');
+
+	                                                                                    button.dispatchEvent(evt);
+	                                                                        }, 3000);
 	                                                            }
 	                                                }, 900);
 	                                    });
@@ -4985,6 +5095,11 @@
 	                                                            clearTimeout(tt.tid);
 
 	                                                            tt.tid = null;
+	                                                }
+
+	                                                if (tt.t2id) {
+
+	                                                            tt.t2id = null;
 	                                                }
 
 	                                                tt.style.display = 'none';
@@ -5887,7 +6002,7 @@
 
 	                                        if (pos !== this.NOT_IN_LIST) {
 
-	                                                console.warn('Shader::addPrim():filling NULL with:' + prim.name + ' to:' + this.name);
+	                                                ///////console.warn( 'Shader::addPrim():filling NULL with:' + prim.name + ' to:' + this.name );
 
 	                                                this.program.renderList[pos] = prim;
 	                                        } else {
@@ -6690,7 +6805,6 @@
 	        }, {
 	                key: 'init',
 	                value: function init(primList) {
-	                        var _this2 = this;
 
 	                        // DESTRUCTING DID NOT WORK!
 	                        //[gl, canvas, mat4, vec3, pMatrix, mvMatrix, program ] = this.setup();
@@ -6935,9 +7049,7 @@
 
 	                                                m = prim.materials[st[0]]; // bind the material
 
-	                                                if (m === undefined) console.log('M undefined for in Shader:' + _this2.name + ' prim:' + prim.name);
-
-	                                                // TODO: ShaderTexture
+	                                                ///if ( m === undefined ) console.log('M undefined for in Shader:' + this.name + ' prim:' + prim.name)
 
 	                                                // Set the material quality of the Prim.
 
@@ -8775,7 +8887,7 @@
 
 	                        var headers = new Headers({
 
-	                                'Content-Type': mimeType
+	                                'Content-Type': mimeType + '; charset: UTF-8'
 
 	                        });
 
@@ -8869,7 +8981,7 @@
 
 	                                        // Run the callback we got in the original request, return received file in data.
 
-	                                        //console.log('>>>>>>>>>>>>>>about to call update function')
+	                                        //console.log('AssetPool::doRequest(): about to call update function')
 
 	                                        updateFn({ pos: pos, path: requestURL, data: response, error: false }); // Send the data to the caller.
 	                                }
@@ -9068,20 +9180,20 @@
 
 	                this.util.emitter.on(this.util.emitter.events.OBJ_GEOMETRY_READY, function (prim, key, options) {
 
-	                        console.log('+++++++OBJ GEOMETRY READY, prim:' + prim.name + ' matStarts:' + prim.matStarts + ' key:' + key + ' pos:' + options.pos);
+	                        ////console.log( 'PrimFactory::' + prim.name + ' OBJ geometry ready, key:' + key + ' pos:' + options.pos );
 
 	                        _this.initPrimGeometry(prim, _this.modelPool.keyList[key], options);
 
-	                        prim.shader.addPrim(prim);
+	                        prim.shader.addPrim(prim); // TRY to add it
 	                });
 
 	                this.util.emitter.on(this.util.emitter.events.PROCEDURAL_GEOMETRY_READY, function (prim, key, options) {
 
-	                        console.log('+++++++PROCEDURAL GEOMETRY READY, prim:' + prim.name + ' matStarts:' + prim.matStarts + ' key:' + key + ' pos:' + options.pos);
+	                        ////console.log( 'PrimFactory::' + prim.name + ' Procedural geometry ready, key:' + key + ' pos:' + options.pos );
 
 	                        _this.initPrimGeometry(prim, _this.modelPool.keyList[key], options);
 
-	                        prim.shader.addPrim(prim);
+	                        prim.shader.addPrim(prim); // TRY to add it
 	                });
 
 	                // Bind Prim callback for a new material applied to individual Prims.
@@ -9090,7 +9202,7 @@
 
 	                        _this.initPrimMaterial(prim, _this.materialPool.keyList[key], materialName); // associative array
 
-	                        prim.shader.addPrim(prim);
+	                        prim.shader.addPrim(prim); // TRY to add it
 	                });
 
 	                // Bind Prim callback for a new texture loaded .(TexturePool).
@@ -9099,7 +9211,7 @@
 
 	                        _this.initPrimTexture(prim, _this.texturePool.keyList[key], options);
 
-	                        prim.shader.addPrim(prim);
+	                        prim.shader.addPrim(prim); // TRY to add its
 	                });
 
 	                // Bind Prim callback for a new texture loaded .(TexturePool).
@@ -9194,12 +9306,13 @@
 	                key: 'initPrimTexture',
 	                value: function initPrimTexture(prim, textureObj, options) {
 
-	                        console.log(">>Prim::initPrimTexture(): new texture for prim:" + prim.name + ', options:' + options);
+	                        ///console.log("Prim::initPrimTexture(): new texture for prim:" + prim.name + ', options:' + options );
 
-	                        if (options.fromObj) {
+	                        //if ( options.fromObj ) {
 
-	                                console.warn(">>PrimFactory::initPrimTexture(): TEXTURE COMING THROUGH FROM AN OBJ FILE FOR: " + prim.name + " WITH NAME:" + options.materialName + " WITH MATERIAL KEY:" + options.materialKey);
-	                        }
+	                        //    console.warn(">>PrimFactory::initPrimTexture(): TEXTURE COMING THROUGH FROM AN OBJ FILE FOR: " + prim.name + " WITH NAME:" + options.materialName + " WITH MATERIAL KEY:" + options.materialKey )
+
+	                        //}
 
 	                        /* 
 	                         * Find the associated material from the material key given to the texture.
@@ -9207,24 +9320,23 @@
 
 	                        var m = prim.materials[options.materialName];
 
-	                        for (var i in prim.materials) {
+	                        //for ( let i in prim.materials ) {
 
-	                                console.log(">>PrimFactory::initPrimTexture(): current materials are:" + prim.materials[i].name);
-	                        }
+	                        //    console.log(">>PrimFactory::initPrimTexture(): current materials are:" + prim.materials[ i ].name)
+
+	                        //}
 
 	                        if (m) {
 
-	                                console.log('>>PrimFactory::initPrimTexture(): found material:' + options.materialName);
+	                                console.log('PrimFactory::initPrimTexture(): adding texture ' + options.type + ' to material:' + options.materialName);
 
 	                                m[options.type] = textureObj.texture, m[options.type + '_key'] = textureObj.key, m[options.type + '_options'] = options[options.type + '_options'];
 	                        } else {
 
-	                                console.log('>>PrimFactory::initPrimTexture(): no material, creating placeholder:' + options.materialName);
+	                                console.log('PrimFactory::initPrimTexture(): no material, creating placeholder for material:' + options.materialName);
 
 	                                prim.materials[options.materialName] = this.materialPool.default(options.materialName);
 	                        }
-
-	                        // Failed texture loads keep the default 'grey pixel' texture substituted from texturePool.
 	                }
 
 	                /** 
@@ -9261,25 +9373,23 @@
 	                key: 'initPrimMaterial',
 	                value: function initPrimMaterial(prim, material, options) {
 
-	                        console.log('<<Prim::initMaterial(): new material:' + material.name + ' for prim:' + prim.name);
-
-	                        console.log("KEY:" + material.key);
+	                        /////console.log('Prim::initMaterial(): new material:' + material.name + ' for prim:' + prim.name + ' key:' + material.key );
 
 	                        var m = prim.materials[material.name];
 
-	                        console.log('<<Prim::initMaterial(): current material: ' + m + ' with:' + material.name + ' for prim:' + prim.name);
+	                        ////console.log('<<Prim::initMaterial(): current material: ' + m + ' with:' + material.name + ' for prim:' + prim.name );
 
 	                        if (m && m.name === options.materialName) {
 	                                // merge over our values, except for textures and texture options.
 
-	                                console.log('<<Prim::initMaterial(): found existing material:' + material.name + ' for prim:' + prim.name);
+	                                console.log('Prim::initMaterial(): found existing material:' + material.name + ' for prim:' + prim.name);
 
 	                                this.materialPool.mergeTo(m, material);
 	                        } else {
 
 	                                // Just add the material.
 
-	                                console.log('<<Prim::initMaterial(): adding new material:' + material.name + ' for prim:' + prim.name);
+	                                console.log('Prim::initMaterial(): adding new material:' + material.name + ' for prim:' + prim.name);
 
 	                                prim.materials[material.name] = material;
 	                        }
@@ -9312,14 +9422,16 @@
 	                         * Their value is their start in coords.vertices.
 	                         */
 
-	                        for (var i in coords.options) {
+	                        //for ( var i in coords.options ) {
 
-	                                console.log('PrimFactory::initPrimGeometry(): prim:' + prim.name + ' new coord:' + i + ' + value:' + coords.options[i]);
-	                        }
+	                        //    console.log( 'PrimFactory::initPrimGeometry(): prim:' + prim.name + ' new coord:' + i + ' + value:'  + coords.options[ i ])
 
-	                        window.options = coords.options;
+	                        //}
 
 	                        if (coords.options) {
+	                                // OBJ files
+
+	                                console.log('PrimFactory::initPrimGeometry(): assigning options for OBJ geometry');
 
 	                                // Object, Group, SmoothingGroup starts.
 
@@ -9337,6 +9449,7 @@
 
 	                                prim.matStarts = coords.options.matStarts;
 	                        } else {
+	                                // Procedural geometry
 
 	                                // No matStarts were defined, so do a default.
 
@@ -12789,9 +12902,9 @@
 
 	                        var len = vertices.length;
 
-	                        for (var _i = 0; _i < len; _i++) {
+	                        for (var i = 0; i < len; i++) {
 
-	                                var vertex = vertices[_i];
+	                                var vertex = vertices[i];
 
 	                                c[0] += vertex[0], c[1] += vertex[1], c[2] += vertex[2];
 	                        }
@@ -12822,9 +12935,9 @@
 
 	                        var p2 = vertices[1];
 
-	                        for (var _i2 = 2; _i2 < vertices.length; _i2++) {
+	                        for (var i = 2; i < vertices.length; i++) {
 
-	                                var p3 = vertices[_i2];
+	                                var p3 = vertices[i];
 
 	                                var edge1 = vec3.subtract([0, 0, 0], p3, p1);
 
@@ -12925,11 +13038,11 @@
 
 	                        // Find minimum topLeft and maximum bottomRight coordinates defining a cube.
 
-	                        for (var _i3 = 0; _i3 < vertices.length; _i3 += 3) {
+	                        for (var i = 0; i < vertices.length; i += 3) {
 
-	                                var v0 = vertices[_i3],
-	                                    v1 = vertices[_i3 + 1],
-	                                    v2 = vertices[_i3 + 2];
+	                                var v0 = vertices[i],
+	                                    v1 = vertices[i + 1],
+	                                    v2 = vertices[i + 2];
 
 	                                tx = Math.min(tx, v0), ty = Math.min(ty, v1), tz = Math.min(tz, v2), bx = Math.max(bx, v0), by = Math.max(by, v1), bz = Math.max(bz, v2);
 
@@ -13070,13 +13183,13 @@
 
 	                        var radius = sphere.radius;
 
-	                        for (var _i4 = 0; _i4 < vertices.length; _i4 += 3) {
+	                        for (var i = 0; i < vertices.length; i += 3) {
 
-	                                var x = vertices[_i4];
+	                                var x = vertices[i];
 
-	                                var y = vertices[_i4 + 1];
+	                                var y = vertices[i + 1];
 
-	                                var z = vertices[_i4 + 2];
+	                                var z = vertices[i + 2];
 
 	                                var dist = Math.sqrt(cx * x + cy * y + cz * z);
 
@@ -13274,11 +13387,11 @@
 
 	                        // For each Face (step through indices 3 by 3)
 
-	                        for (var _i5 = 0; _i5 < numIndices; _i5 += 3) {
+	                        for (var i = 0; i < numIndices; i += 3) {
 
-	                                var i1 = indices[_i5],
-	                                    i2 = indices[_i5 + 1],
-	                                    i3 = indices[_i5 + 2];
+	                                var i1 = indices[i],
+	                                    i2 = indices[i + 1],
+	                                    i3 = indices[i + 2];
 
 	                                var j = i1 * 3;var v1x = vertices[j],
 	                                    v1y = vertices[j + 1],
@@ -13347,13 +13460,13 @@
 
 	                        // Loop through vertices.
 
-	                        for (var _i6 = 0, i4 = 0; i4 < numVertices; _i6 += 3, i4 += 4) {
+	                        for (var _i = 0, i4 = 0; i4 < numVertices; _i += 3, i4 += 4) {
 
-	                                var n = [normals[_i6], normals[_i6 + 1], normals[_i6 + 2]];
+	                                var n = [normals[_i], normals[_i + 1], normals[_i + 2]];
 
-	                                var _t = [tan1[_i6], tan1[_i6 + 1], tan1[_i6 + 2]];
+	                                var _t = [tan1[_i], tan1[_i + 1], tan1[_i + 2]];
 
-	                                var _t2 = [tan2[_i6], tan2[_i6 + 1], tan2[_i6 + 2]];
+	                                var _t2 = [tan2[_i], tan2[_i + 1], tan2[_i + 2]];
 
 	                                // Gram-Schmidt orthogonalize, was const tmp  = subtract(t1, scale(dot(n, t1), n));
 
@@ -13397,9 +13510,9 @@
 
 	                        var texCoords = [];
 
-	                        for (var _i7 = 0; _i7 < vertices.length; _i7 += 3) {
+	                        for (var i = 0; i < vertices.length; i += 3) {
 
-	                                var t = this.computeSphericalCoords([vertices[_i7], vertices[_i7 + 1], vertices[_i7 + 2]]);
+	                                var t = this.computeSphericalCoords([vertices[i], vertices[i + 1], vertices[i + 2]]);
 
 	                                texCoords.push(t[0], t[1]);
 	                        }
@@ -13437,13 +13550,13 @@
 
 	                        var texCoords = new Array(vertices.length * 2 / 3);
 
-	                        for (var _i8 = 0; _i8 < indices.length; _i8 += 3) {
+	                        for (var i = 0; i < indices.length; i += 3) {
 
-	                                var _i9 = _i8,
-	                                    _i10 = _i8 + 1,
-	                                    _i11 = _i8 + 2;
+	                                var _i2 = i,
+	                                    _i3 = i + 1,
+	                                    _i4 = i + 2;
 
-	                                v0 = this.util.getArr(vertices, _i9, 3), v1 = this.util.getArr(vertices, _i10, 3), v2 = this.util.getArr(vertices, _i11, 3);
+	                                v0 = this.util.getArr(vertices, _i2, 3), v1 = this.util.getArr(vertices, _i3, 3), v2 = this.util.getArr(vertices, _i4, 3);
 
 	                                side1 = vec3.sub([0, 0, 0], v1, v0);
 
@@ -13459,37 +13572,37 @@
 
 	                                        case Facing.Forward:
 
-	                                                texCoords[_i9] = scaledUV(v0[0], v0[1], scale);
+	                                                texCoords[_i2] = scaledUV(v0[0], v0[1], scale);
 
-	                                                texCoords[_i10] = scaledUV(v1[0], v1[1], scale);
+	                                                texCoords[_i3] = scaledUV(v1[0], v1[1], scale);
 
-	                                                texCoords[_i11] = scaledUV(v2[0], v2[1], scale);
+	                                                texCoords[_i4] = scaledUV(v2[0], v2[1], scale);
 
 	                                                break;
 
-	                                                texCoords[_i9] = scaledUV(v0[0], v0[2], scale);
+	                                                texCoords[_i2] = scaledUV(v0[0], v0[2], scale);
 
-	                                                texCoords[_i10] = scaledUV(v1[0], v1[2], scale);
+	                                                texCoords[_i3] = scaledUV(v1[0], v1[2], scale);
 
-	                                                texCoords[_i11] = scaledUV(v2[0], v2[2], scale);
+	                                                texCoords[_i4] = scaledUV(v2[0], v2[2], scale);
 
 	                                        case Facing.up:
 
-	                                                texCoords[_i9] = scaledUV(v0[1], v0[2], scale);
+	                                                texCoords[_i2] = scaledUV(v0[1], v0[2], scale);
 
-	                                                texCoords[_i10] = scaledUV(v1[1], v1[2], scale);
+	                                                texCoords[_i3] = scaledUV(v1[1], v1[2], scale);
 
-	                                                texCoords[_i11] = scaledUV(v2[1], v2[2], scale);
+	                                                texCoords[_i4] = scaledUV(v2[1], v2[2], scale);
 
 	                                                break;
 
 	                                        case Facing.right:
 
-	                                                texCoords[_i9] = scaledUV(v0[2], v0[1], scale);
+	                                                texCoords[_i2] = scaledUV(v0[2], v0[1], scale);
 
-	                                                texCoords[_i10] = scaledUV(v1[2], v1[1], scale);
+	                                                texCoords[_i3] = scaledUV(v1[2], v1[1], scale);
 
-	                                                texCoords[_i11] = scaledUV(v2[2], v2[1], scale);
+	                                                texCoords[_i4] = scaledUV(v2[2], v2[1], scale);
 
 	                                                break;
 	                                }
@@ -13573,7 +13686,7 @@
 
 	                        if (colors.length === 4) {
 
-	                                for (var _i12 = 0; _i12 < coords.length; _i12 += 3) {
+	                                for (var i = 0; i < coords.length; i += 3) {
 
 	                                        c.push(colors[0], colors[1], colors[2], colors[3]);
 	                                }
@@ -13581,9 +13694,9 @@
 
 	                        // Otherwise, create colors as a normals map.
 
-	                        for (var _i13 = 0; _i13 < coords.length; _i13 += 3) {
+	                        for (var _i5 = 0; _i5 < coords.length; _i5 += 3) {
 
-	                                c.push(coords[_i13], coords[_i13 + 1], coords[_i13 + 2], 1.0);
+	                                c.push(coords[_i5], coords[_i5 + 1], coords[_i5 + 2], 1.0);
 	                        }
 
 	                        return c;
@@ -13606,9 +13719,9 @@
 
 	                        // Get the subset of vertices we should take by following indices.
 
-	                        for (var _i14 = 0; _i14 < indices.length; _i14++) {
+	                        for (var i = 0; i < indices.length; i++) {
 
-	                                vv.push(vertices[indices[_i14]]);
+	                                vv.push(vertices[indices[i]]);
 	                        }
 
 	                        // Compute the central point of the triangle fan.
@@ -13632,13 +13745,13 @@
 
 	                        var env = lenv - 1;
 
-	                        for (var _i15 = 1; _i15 < lenv; _i15++) {
+	                        for (var _i6 = 1; _i6 < lenv; _i6++) {
 
-	                                var p1 = _i15 - 1;
+	                                var p1 = _i6 - 1;
 
-	                                var p2 = _i15;
+	                                var p2 = _i6;
 
-	                                if (_i15 === lenv - 1) {
+	                                if (_i6 === lenv - 1) {
 
 	                                        p2 = 0;
 	                                }
@@ -13701,9 +13814,9 @@
 
 	                        var oldPos = this.getCenter(vertices);
 
-	                        for (var _i16 = 0; _i16 < vertices.length; _i16++) {
+	                        for (var i = 0; i < vertices.length; i++) {
 
-	                                vertices[_i16] *= scale;
+	                                vertices[i] *= scale;
 	                        }
 
 	                        this.moveTo(oldPos);
@@ -13724,13 +13837,13 @@
 
 	                        var delta = [center[0] - pos[0], center[1] - pos[1], center[2] - pos[2]];
 
-	                        for (var _i17 = 0; _i17 < vertices.length; _i17 += 3) {
+	                        for (var i = 0; i < vertices.length; i += 3) {
 
-	                                vertices[_i17] = delta[0];
+	                                vertices[i] = delta[0];
 
-	                                vertices[_i17 + 1] = delta[1];
+	                                vertices[i + 1] = delta[1];
 
-	                                vertices[_i17 + 2] = delta[2];
+	                                vertices[i + 2] = delta[2];
 	                        }
 	                }
 
@@ -13794,15 +13907,15 @@
 
 	                                var map = prim.sphereMap.map;
 
-	                                for (var _i18 = 0; _i18 < map.length; _i18 += 3) {
+	                                for (var i = 0; i < map.length; i += 3) {
 
-	                                        map[_i18] *= w;
+	                                        map[i] *= w;
 
-	                                        map[_i18 + 1] *= h;
+	                                        map[i + 1] *= h;
 
-	                                        map[_i18 + 2] *= d;
+	                                        map[i + 2] *= d;
 
-	                                        indices.push[_i18];
+	                                        indices.push[i];
 	                                }
 
 	                                // roughness 0.2 of 0-1, flatten = 1 of 0-1;
@@ -14625,11 +14738,11 @@
 
 	                                for (var j = 0; j <= nv; j++) {
 
-	                                        for (var _i19 = 0; _i19 <= nu; _i19++) {
+	                                        for (var i = 0; i <= nu; i++) {
 
 	                                                var vert = positions[vertexIndex] = [0, 0, 0];
 
-	                                                vert[u] = (-su / 2 + _i19 * su / nu) * flipu;
+	                                                vert[u] = (-su / 2 + i * su / nu) * flipu;
 
 	                                                vert[v] = (-sv / 2 + j * sv / nv) * flipv;
 
@@ -14641,12 +14754,12 @@
 
 	                                                        // our 'y' for the TOP x/z MAY NEED TO CHANGE FOR EACH SIDE
 
-	                                                        vert[w] = prim.heightMap.getPixel(_i19, j);
+	                                                        vert[w] = prim.heightMap.getPixel(i, j);
 	                                                }
 
 	                                                // Texture coords.
 
-	                                                texCoords.push(_i19 / nu, 1.0 - j / nv);
+	                                                texCoords.push(i / nu, 1.0 - j / nv);
 
 	                                                // Normals.
 
@@ -14665,9 +14778,9 @@
 
 	                                for (var _j = 0; _j < nv; _j++) {
 
-	                                        for (var _i20 = 0; _i20 < nu; _i20++) {
+	                                        for (var _i7 = 0; _i7 < nu; _i7++) {
 
-	                                                var n = vertShift + _j * (nu + 1) + _i20;
+	                                                var n = vertShift + _j * (nu + 1) + _i7;
 
 	                                                // Indices for entire prim.
 
@@ -14704,9 +14817,9 @@
 
 	                                var rz = sz / 2.0;
 
-	                                for (var _i21 = 0; _i21 < positions.length; _i21++) {
+	                                for (var i = 0; i < positions.length; i++) {
 
-	                                        var pos = positions[_i21];
+	                                        var pos = positions[i];
 
 	                                        var inner = [pos[0], pos[1], pos[2]];
 
@@ -14742,7 +14855,7 @@
 
 	                                        vec3.normalize(normal, normal);
 
-	                                        normals[_i21] = normal;
+	                                        normals[i] = normal;
 
 	                                        pos = [inner[0], inner[1], inner[2]];
 
@@ -14752,7 +14865,7 @@
 
 	                                        vec3.add(pos, pos, tmp);
 
-	                                        positions[_i21] = pos;
+	                                        positions[i] = pos;
 	                                }
 	                        } else if ((prim.type === list.CURVEDOUTERPLANE || prim.type === list.CURVEDINNERPLANE) && prim.dimensions[4] && prim.dimensions[4] !== 0) {
 
@@ -14797,43 +14910,43 @@
 	                                                break;
 	                                }
 
-	                                for (var _i22 = 0; _i22 < positions.length; _i22++) {
+	                                for (var _i8 = 0; _i8 < positions.length; _i8++) {
 
 	                                        switch (prim.dimensions[3]) {
 
 	                                                case side.FRONT:
 
-	                                                        positions[_i22][2] = dSide * Math.cos(positions[_i22][0]) * prim.dimensions[4];
+	                                                        positions[_i8][2] = dSide * Math.cos(positions[_i8][0]) * prim.dimensions[4];
 
 	                                                        break;
 
 	                                                case side.BACK:
 
-	                                                        positions[_i22][2] = dSide * Math.cos(positions[_i22][0]) * prim.dimensions[4];
+	                                                        positions[_i8][2] = dSide * Math.cos(positions[_i8][0]) * prim.dimensions[4];
 
 	                                                        break;
 
 	                                                case side.LEFT:
 
-	                                                        positions[_i22][0] = dSide * Math.cos(positions[_i22][2]) * prim.dimensions[4];
+	                                                        positions[_i8][0] = dSide * Math.cos(positions[_i8][2]) * prim.dimensions[4];
 
 	                                                        break;
 
 	                                                case side.RIGHT:
 
-	                                                        positions[_i22][0] = dSide * Math.cos(positions[_i22][2]) * prim.dimensions[4];
+	                                                        positions[_i8][0] = dSide * Math.cos(positions[_i8][2]) * prim.dimensions[4];
 
 	                                                        break;
 
 	                                                case side.TOP:
 
-	                                                        positions[_i22][1] = dSide * Math.cos(positions[_i22][0]) * prim.dimensions[4];
+	                                                        positions[_i8][1] = dSide * Math.cos(positions[_i8][0]) * prim.dimensions[4];
 
 	                                                        break;
 
 	                                                case side.BOTTOM:
 
-	                                                        positions[_i22][1] = -Math.cos(positions[_i22][0]) * prim.dimensions[4]; // SEEN FROM INSIDE< CORRECT
+	                                                        positions[_i8][1] = -Math.cos(positions[_i8][0]) * prim.dimensions[4]; // SEEN FROM INSIDE< CORRECT
 
 	                                                        break;
 
@@ -15336,9 +15449,9 @@
 
 	                        function createVertexLine(from, to, steps, v, vertices) {
 
-	                                for (var _i23 = 1; _i23 <= steps; _i23++) {
+	                                for (var _i9 = 1; _i9 <= steps; _i9++) {
 
-	                                        vertices[v++] = vec3.lerp([0, 0, 0], from, to, _i23 / steps);
+	                                        vertices[v++] = vec3.lerp([0, 0, 0], from, to, _i9 / steps);
 	                                }
 
 	                                return v;
@@ -15348,7 +15461,7 @@
 
 	                        function createLowerStrip(steps, vTop, vBottom, t, triangles) {
 
-	                                for (var _i24 = 1; _i24 < steps; _i24++) {
+	                                for (var _i10 = 1; _i10 < steps; _i10++) {
 
 	                                        triangles[t++] = vBottom;
 
@@ -15382,7 +15495,7 @@
 
 	                                triangles[t++] = ++vBottom;
 
-	                                for (var _i25 = 1; _i25 <= steps; _i25++) {
+	                                for (var _i11 = 1; _i11 <= steps; _i11++) {
 
 	                                        triangles[t++] = vTop - 1;
 
@@ -15410,7 +15523,7 @@
 
 	                                triangles[t++] = vTop - 1;
 
-	                                for (var _i26 = 1; _i26 <= steps; _i26++) {
+	                                for (var _i12 = 1; _i12 <= steps; _i12++) {
 
 	                                        triangles[t++] = vTop;
 
@@ -15644,21 +15757,21 @@
 
 	                        if (prim.applyTexToFace) {
 
-	                                for (var _i27 = 0; _i27 < faces.length; _i27++) {
+	                                for (var i = 0; i < faces.length; i++) {
 
 	                                        var len = vertices.length;
 
 	                                        // The fan is a flat polygon, constructed with face points, shared vertices.
 
-	                                        var fan = this.computeFan(vtx, faces[_i27]);
+	                                        var fan = this.computeFan(vtx, faces[i]);
 
 	                                        vertices = vertices.concat(fan.vertices);
 
 	                                        // Update the indices to reflect concatenation.
 
-	                                        for (var _i28 = 0; _i28 < fan.indices.length; _i28++) {
+	                                        for (var _i13 = 0; _i13 < fan.indices.length; _i13++) {
 
-	                                                fan.indices[_i28] += len;
+	                                                fan.indices[_i13] += len;
 	                                        }
 
 	                                        indices = indices.concat(fan.indices);
@@ -15669,9 +15782,9 @@
 	                                }
 	                        } else {
 
-	                                for (var _i29 = 0; _i29 < faces.length; _i29++) {
+	                                for (var _i14 = 0; _i14 < faces.length; _i14++) {
 
-	                                        var vv = faces[_i29]; // indices to vertices
+	                                        var vv = faces[_i14]; // indices to vertices
 
 	                                        var vvv = []; // saved vertices
 
@@ -15684,13 +15797,13 @@
 
 	                                        var center = this.geometry.computeCentroid(vvv);
 
-	                                        for (var _i30 = 1; _i30 <= lenv; _i30++) {
+	                                        for (var _i15 = 1; _i15 <= lenv; _i15++) {
 
-	                                                var p1 = _i30 - 1;
+	                                                var p1 = _i15 - 1;
 
-	                                                var p2 = _i30;
+	                                                var p2 = _i15;
 
-	                                                if (_i30 === lenv) {
+	                                                if (_i15 === lenv) {
 
 	                                                        p1 = p2 - 1;
 
@@ -15716,9 +15829,9 @@
 
 	                        // Scale.
 
-	                        for (var _i31 = 0; _i31 < vertices.length; _i31++) {
+	                        for (var _i16 = 0; _i16 < vertices.length; _i16++) {
 
-	                                var _vv = vertices[_i31];
+	                                var _vv = vertices[_i16];
 
 	                                _vv[0] *= w;
 
@@ -15892,9 +16005,9 @@
 
 	                        // TODO: FORWARD SEPARATE ARRAY HERE
 
-	                        for (var _i32 = 0; _i32 < pathList.length; _i32++) {
+	                        for (var i = 0; i < pathList.length; i++) {
 
-	                                this.modelPool.getModel(prim, pathList[_i32], true, { pos: _i32 });
+	                                this.modelPool.getModel(prim, pathList[i], true, { pos: i });
 	                        }
 	                }
 
@@ -15932,7 +16045,7 @@
 	                                        this.modelPool.getModel(prim, path, true, options);
 	                                } else {
 
-	                                        console.warn('GeometryPool::getGeometry(): no path supplied for position ' + i);
+	                                        console.warn('GeometryPool::getGeometry(): no path supplied for prim ' + prim.name);
 	                                } // end of valid path
 	                        } else {
 	                                // NO PATHLIST (procedural instead)
@@ -16215,9 +16328,9 @@
 
 	                                // For quad, this gives 0, 1, 2, 0, 2, 3.
 
-	                                for (var _i = 1; _i < idxs.length - 1; _i++) {
+	                                for (var i = 1; i < idxs.length - 1; i++) {
 
-	                                        nIdxs.push(idxs[0], idxs[_i], idxs[_i + 1]);
+	                                        nIdxs.push(idxs[0], idxs[i], idxs[i + 1]);
 	                                }
 
 	                                return nIdxs;
@@ -16307,9 +16420,9 @@
 
 	                        // Append to faces array.
 
-	                        for (var _i2 = 0; _i2 < iVerts.length; _i2++) {
+	                        for (var i = 0; i < iVerts.length; i++) {
 
-	                                faces.push([iVerts[_i2], iTexCoords[_i2], iNormals[_i2]]);
+	                                faces.push([iVerts[i], iTexCoords[i], iNormals[i]]);
 	                        }
 	                }
 
@@ -16327,7 +16440,7 @@
 	                value: function computeObjMesh(data, prim, path) {
 	                        var _this2 = this;
 
-	                        console.log('ModelPool::computeObjMesh(): loading a new file:' + path + ' for ' + prim.name);
+	                        //////console.log( 'ModelPool::computeObjMesh(): loading a new file:' + path + ' for ' + prim.name );
 
 	                        var m = this.default();
 
@@ -16488,11 +16601,11 @@
 
 	                                                        var mtls = data.split(' ');
 
-	                                                        for (var _i3 = 0; _i3 < mtls.length; _i3++) {
+	                                                        for (var i = 0; i < mtls.length; i++) {
 
-	                                                                var _path = dir + mtls[_i3];
+	                                                                var _path = dir + mtls[i];
 
-	                                                                _this2.materialPool.getMaterial(prim, _path, true, { pos: _i3 });
+	                                                                _this2.materialPool.getMaterial(prim, _path, true, { pos: i });
 	                                                        }
 
 	                                                        break;
@@ -16502,7 +16615,7 @@
 
 	                                                        matStarts.push([data, faces.length]); // store material and start position.
 
-	                                                        console.log('>>>>>>>>>>>>>>>>>>materials[' + data + '] starts at:' + faces.length);
+	                                                        /////console.log('ModelPool::computeObjMesh(): material start for material[' + data + '] at:' + faces.length );
 
 	                                                        break;
 
@@ -16571,11 +16684,11 @@
 	                                    nMatStarts = [],
 	                                    nSmoothingGroups = [];
 
-	                                for (var _i4 = 0; _i4 < faces.length; _i4++) {
+	                                for (var i = 0; i < faces.length; i++) {
 
 	                                        // i is the index in the faces array.
 
-	                                        var f = faces[_i4];
+	                                        var f = faces[i];
 
 	                                        // Construct a hash key for this face.
 
@@ -16610,11 +16723,9 @@
 
 	                                                // Re-index our groups, objects, material starts, smoothing groups.
 
-	                                                // TODO:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-	                                                //console.log('<<<<<<<<<<<MATSTARTS LENGTH:' + matStarts.length)
 	                                                for (var j = 0; j < matStarts.length; j++) {
 
-	                                                        if (matStarts[j][1] === _i4) {
+	                                                        if (matStarts[j][1] === i) {
 
 	                                                                matStarts[j][1] = nIndices.length - 1;
 	                                                        }
@@ -16699,9 +16810,9 @@
 
 	                        // Final computation for matStarts. Compute the length of each material block.
 
-	                        for (var _i5 = 0; _i5 < matStarts.length - 1; _i5++) {
+	                        for (var _i = 0; _i < matStarts.length - 1; _i++) {
 
-	                                matStarts[_i5][2] = matStarts[_i5 + 1][1] - matStarts[_i5][1];
+	                                matStarts[_i][2] = matStarts[_i + 1][1] - matStarts[_i][1];
 	                        }
 
 	                        matStarts[matStarts.length - 1][2] = tIndices.length;
@@ -16837,7 +16948,7 @@
 
 	                                var mimeType = this.modelMimeTypes[this.util.getFileExtension(path)];
 
-	                                console.log("--------OBJ file doRequest model for:" + prim.name + ' path:' + path);
+	                                /////console.log("--------OBJ file doRequest model for:" + prim.name + ' path:' + path)
 
 	                                // check if mimeType is OK.
 
@@ -16855,7 +16966,7 @@
 	                                                 * } 
 	                                                 */
 
-	                                                console.log("--------OBJ file returned model for:" + prim.name);
+	                                                ////////console.log( 'ModelPool::getModel(): OBJ file:' + path + ' returned model for:' + prim.name );
 
 	                                                // load a Model file.
 
@@ -16875,11 +16986,11 @@
 	                                                                _this3.util.emitter.emit(modelObj.emits, prim, modelObj.key, options); ///////////TODO: COMPARE TO PROCEDUAR GEO EMIT
 	                                                        } else {
 
-	                                                                console.error('TexturePool::getModel(): file:' + path + ' could not be parsed');
+	                                                                console.error('ModelPool::getModel(): OBJ file:' + path + ' could not be parsed');
 	                                                        }
 	                                                } else {
 
-	                                                        console.error('ModelPool::getModel(): no data found for:' + updateObj.path);
+	                                                        console.error('ModelPool::getModel(): OBJ file, no data found for:' + updateObj.path);
 	                                                }
 	                                        }, cacheBust, mimeType, 0); // end of this.doRequest(), initial request at 0 tries
 	                                } else {
@@ -16888,7 +16999,7 @@
 	                                }
 	                        } else {
 
-	                                console.warn('ModelPool::getModel(): no path supplied for position ' + i);
+	                                console.warn('ModelPool::getModel(): no path supplied for prim:' + prim.name);
 	                        } // end of valid path
 	                }
 	        }]);
@@ -17328,7 +17439,7 @@
 	                                glTextureType = this.webgl.gl.TEXTURE_2D;
 	                        }
 
-	                        if (options.fromObj) console.warn("GETTING TEXTURE FROM OBJ FILE for PRIM:" + prim.name);
+	                        ////////if ( options.fromObj ) console.warn( 'TexturePool::getTexture(): getting texture from OBJ file ' + path + ' for:' + prim.name)
 
 	                        // Could have an empty path.
 
@@ -17374,7 +17485,7 @@
 
 	                                                        //console.log('-----------adding texture ' + path + ' to ' + prim.name)
 
-	                                                        if (options.fromObj) console.warn('============ adding OBJ texture ' + path + ' to ' + prim.name);
+	                                                        if (options.fromObj) console.warn('TexturePool::getTexture(): adding OBJ texture:' + path + ' to ' + prim.name);
 
 	                                                        var textureObj = _this2.addTexture(prim, image, updateObj.path, mimeType, glTextureType);
 
@@ -17434,7 +17545,7 @@
 	                                }
 	                        } else {
 
-	                                console.warn('TexturePool::getTexture(): no path supplied for position ' + i);
+	                                console.warn('TexturePool::getTexture(): empty path supplied for prim ' + prim.name);
 	                        } // end of valid path
 
 	                        //} // end of for loop for texture paths
@@ -19633,6 +19744,40 @@
 	                key: 'housekeep',
 	                value: function housekeep() {}
 
+	                // TODO: Safari hack to and from fullscreen - if (self.isIOS) { utils.forceCanvasResizeSafariMobile(this.canvas);
+	                /*
+	                
+	                module.exports = function forceCanvasResizeSafariMobile (canvasEl) {
+	                  var width = canvasEl.style.width;
+	                  var height = canvasEl.style.height;
+	                  // Taken from webvr-polyfill (https://github.com/borismus/webvr-polyfill/blob/85f657cd502ec9417bf26b87c3cb2afa6a70e079/src/util.js#L200)
+	                  // iOS only workaround for https://bugs.webkit.org/show_bug.cgi?id=152556
+	                  // By changing the size 1 pixel and restoring the previous value
+	                  // we trigger a size recalculation cycle.
+	                  canvasEl.style.width = (parseInt(width, 10) + 1) + 'px';
+	                  canvasEl.style.height = (parseInt(height, 10) + 1) + 'px';
+	                  setTimeout(function () {
+	                    canvasEl.style.width = width;
+	                    canvasEl.style.height = height;
+	                  }, 200);
+	                };
+	                
+	                */
+
+	                // TODO: audit in https://www.npmjs.com/package/lighthouse
+
+	                // TODO: fog in shader
+
+	                // TODO: study debug system in a-frame
+
+	                // TODO: Webworker for file loads.
+	                // https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers
+
+	                // TODO: daydream controls
+	                // https://github.com/aframevr/aframe/blob/master/src/components/daydream-controls.js
+
+	                // TODO: check event being fired on tap in ios, google pixel. Make sure that tooltip is removed.
+
 	                // TODO: sum for lighting requires a nonzero specular to draw into the shadow!!!!
 
 	                // TODO: escape key needs to run correct resize image in fullscreen! (vr button returns correctly)
@@ -20083,13 +20228,13 @@
 	                                                key: 'mergeTo',
 	                                                value: function mergeTo(recMat, inputMat) {
 
-	                                                                        for (var _i in recMat) {
+	                                                                        for (var i in recMat) {
 
 	                                                                                                // Explicit clone is MUCH faster!
 
-	                                                                                                console.log("MERGING:" + _i);
+	                                                                                                console.log("MERGING:" + i);
 
-	                                                                                                switch (_i) {
+	                                                                                                switch (i) {
 
 	                                                                                                                        case name:
 	                                                                                                                        case key: // key in AssetPool
@@ -20101,7 +20246,7 @@
 	                                                                                                                        case illum:
 	                                                                                                                                                // illium, color and ambient on
 
-	                                                                                                                                                recMat[_i] = inputMat[_i];
+	                                                                                                                                                recMat[i] = inputMat[i];
 
 	                                                                                                                                                break;
 
@@ -20111,7 +20256,7 @@
 	                                                                                                                        case specular:
 	                                                                                                                                                // Ks specular color
 
-	                                                                                                                                                recMat[_i] = JSON.parse(JSON.stringify(inputMat[_i]));
+	                                                                                                                                                recMat[i] = JSON.parse(JSON.stringify(inputMat[i]));
 
 	                                                                                                                                                break;
 
@@ -20124,20 +20269,20 @@
 	                                                                                                                        case map_disp:
 	                                                                                                                                                // displacement map
 
-	                                                                                                                                                console.log("INPUT:" + inputMat[_i] + " RECEIVE:" + recMat[_i]);
+	                                                                                                                                                console.log("INPUT:" + inputMat[i] + " RECEIVE:" + recMat[i]);
 
-	                                                                                                                                                if (inputMat[_i] instanceof WebGLTexture) {
+	                                                                                                                                                if (inputMat[i] instanceof WebGLTexture) {
 
-	                                                                                                                                                                        console.log('MaterialPool::mergeTo(): replacing ' + _i + ' with new texture');
+	                                                                                                                                                                        console.log('MaterialPool::mergeTo(): replacing ' + i + ' with new texture');
 
-	                                                                                                                                                                        recMat[_i] = inputMat[_i];
+	                                                                                                                                                                        recMat[i] = inputMat[i];
 	                                                                                                                                                }
 
 	                                                                                                                                                break;
 
 	                                                                                                                        default:
 
-	                                                                                                                                                console.error('MaterialPool::mergeTo(): unknown object member (' + _i + ')!');
+	                                                                                                                                                console.error('MaterialPool::mergeTo(): unknown object member (' + i + ')!');
 
 	                                                                                                                                                break;
 
@@ -20178,16 +20323,16 @@
 
 	                                                                        var p = [];
 
-	                                                                        for (var _i2 = 0; _i2 < data.length - 1; _i2++) {
+	                                                                        for (var i = 0; i < data.length - 1; i++) {
 
-	                                                                                                p[_i2] = data[_i2];
+	                                                                                                p[i] = data[i];
 	                                                                        }
 
 	                                                                        var pp = p.join(' ').split('-');
 
-	                                                                        for (var _i3 = 0; _i3 < pp.length; _i3++) {
+	                                                                        for (var _i = 0; _i < pp.length; _i++) {
 
-	                                                                                                var ppp = pp[_i3].split(' ');
+	                                                                                                var ppp = pp[_i].split(' ');
 
 	                                                                                                if (ppp.length > 1) {
 
@@ -20602,9 +20747,9 @@
 
 	                                                                                                                                                                                                // The Prim uses textures to render, so toggle to true.
 
-	                                                                                                                                                                                                prim.hasObjTextures = true;
+	                                                                                                                                                                                                //////prim.hasObjTextures = true;
 
-	                                                                                                                                                                                                console.log("MaterialPool::computeObjMaterials(): setting prim:" + prim.name + ' .hasObjTextures to TRUE');
+	                                                                                                                                                                                                //////console.log("MaterialPool::computeObjMaterials(): setting prim:" + prim.name + ' .hasObjTextures to TRUE')
 
 	                                                                                                                                                                                                _this2.texturePool.getTexture(prim, dir + tPath, true, false, null, options);
 	                                                                                                                                                                        }
@@ -20662,11 +20807,11 @@
 
 	                                                                        // If we have textures, load them.
 
-	                                                                        for (var _i4 = 0; _i4 < textureImages.length; _i4++) {
+	                                                                        for (var i = 0; i < textureImages.length; i++) {
 
-	                                                                                                var options = { materialKey: mi.key, materialName: defaultName, type: this.texturePositions[_i4] };
+	                                                                                                var options = { materialKey: mi.key, materialName: defaultName, type: this.texturePositions[i] };
 
-	                                                                                                this.texturePool.getTexture(prim, textureImages[_i4], true, false, this.webgl.getContext().TEXTURE_2D, options);
+	                                                                                                this.texturePool.getTexture(prim, textureImages[i], true, false, this.webgl.getContext().TEXTURE_2D, options);
 	                                                                        }
 
 	                                                                        return mi;
@@ -20713,9 +20858,9 @@
 
 	                                                                        if (m) {
 
-	                                                                                                for (var _i5 in m) {
+	                                                                                                for (var i in m) {
 
-	                                                                                                                        var mi = m[_i5];
+	                                                                                                                        var mi = m[i];
 
 	                                                                                                                        mi.type = type, mi.path = path, mi.emits = this.util.emitter.events.MATERIAL_READY;
 
@@ -20779,14 +20924,14 @@
 
 	                                                                                                                                                                                                for (var j in materialObj) {
 
-	                                                                                                                                                                                                                        console.log("==========emitting for materialObj:" + j);
+	                                                                                                                                                                                                                        console.log("MaterialPool::getMaterial(): emitting new material :" + j + ' for prim:' + prim.name);
 
 	                                                                                                                                                                                                                        _this3.util.emitter.emit(materialObj[j].emits, prim, materialObj[j].key, options);
 	                                                                                                                                                                                                }
 	                                                                                                                                                                        } // end of material addition.
 	                                                                                                                                                } else {
 
-	                                                                                                                                                                        console.error('MaterialPool::getMaterials(): no data found for:' + updateObj.path);
+	                                                                                                                                                                        console.error('MaterialPool::getMaterials(): no data found for material file:' + updateObj.path);
 	                                                                                                                                                }
 	                                                                                                                        }, cacheBust, mimeType, 0); // end of this.doRequest(), initial request at 0 tries
 	                                                                                                } else {
@@ -20795,7 +20940,7 @@
 	                                                                                                }
 	                                                                        } else {
 
-	                                                                                                console.warn('MaterialPool::getMaterials(): no path supplied for position ' + i);
+	                                                                                                console.warn('MaterialPool::getMaterials(): empty path supplied for prim ' + prim.name);
 	                                                                        } // end of valid path
 
 	                                                } // end of function

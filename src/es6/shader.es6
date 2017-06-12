@@ -192,7 +192,7 @@ class Shader {
 
                 if ( pos !== this.NOT_IN_LIST ) {
 
-                    console.warn( 'Shader::addPrim():filling NULL with:' + prim.name + ' to:' + this.name );
+                    ///////console.warn( 'Shader::addPrim():filling NULL with:' + prim.name + ' to:' + this.name );
 
                     this.program.renderList[ pos ] = prim ;
 

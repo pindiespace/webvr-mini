@@ -420,7 +420,7 @@ class TexturePool extends AssetPool {
 
         }
 
-        if ( options.fromObj ) console.warn( "GETTING TEXTURE FROM OBJ FILE for PRIM:" + prim.name)
+        ////////if ( options.fromObj ) console.warn( 'TexturePool::getTexture(): getting texture from OBJ file ' + path + ' for:' + prim.name)
 
         // Could have an empty path.
 
@@ -468,7 +468,7 @@ class TexturePool extends AssetPool {
 
                                 //console.log('-----------adding texture ' + path + ' to ' + prim.name)
 
-                                if (options.fromObj ) console.warn( '============ adding OBJ texture ' + path + ' to ' + prim.name )
+                                if (options.fromObj ) console.warn( 'TexturePool::getTexture(): adding OBJ texture:' + path + ' to ' + prim.name );
 
                                 let textureObj = this.addTexture( prim, image, updateObj.path, mimeType, glTextureType );
 
@@ -518,7 +518,7 @@ class TexturePool extends AssetPool {
 
                                 // Put a single-pixel texture in its place.
 
-                                this.util.emitter.emit( this.util.emitter.events.TEXTURE_2D_READY, prim, this.defaultKey, options );                                    
+                                this.util.emitter.emit( this.util.emitter.events.TEXTURE_2D_READY, prim, this.defaultKey, options );
 
                                 console.error( 'TexturePool::getTexture(): invalid image data for prim:' + prim.name + 'path:' + updateObj.path + ' data:' + updateObj.data );
 
@@ -538,7 +538,7 @@ class TexturePool extends AssetPool {
 
             } else {
 
-                console.warn( 'TexturePool::getTexture(): no path supplied for position ' + i );
+                console.warn( 'TexturePool::getTexture(): empty path supplied for prim ' + prim.name );
 
             } // end of valid path
 

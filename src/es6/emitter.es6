@@ -33,8 +33,6 @@ class Emitter {
 
             TEXTURE_CUBEMAP_READY: 'tcmprdy',             // all files for cubemap loaded
 
-            TEXTURE_REMOVE: 'trm',                        // texture removal event
-
             PRIM_ADDED_TO_SHADER: 'prash',                 // Prim added to Shader
 
             PRIM_REMOVED_FROM_SHADER: 'prmsh',             // a Prim was removed by a Shader
