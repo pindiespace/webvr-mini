@@ -3633,11 +3633,13 @@ class GeometryPool {
      */
     getGeometry( prim, path, cacheBust = true, options = { pos: 0 } ) {
 
-        if( prim.type === this.typeList.MESH ) {
+        if( prim.type === this.typeList.MESH && path !== null ) {
 
             /* 
              * Mesh geometry, uses data from a file in OBJ wavefront format.
              */
+
+            if ( ! path instanceof String ) console.log(">>>>>>>>>>>>>NO PATH")
 
             // Could have an empty path.
 
@@ -3672,8 +3674,6 @@ class GeometryPool {
              * }
              */
 
-             // THIS IS ALL NOT NEEDED!!!!!!!!
-
             console.log( 'GeometryPool::getGeometry() new procedural geometry for:' + prim.name );
 
             let m = this.modelPool.addAsset( this[ prim.type ]( prim ) );
@@ -3688,7 +3688,7 @@ class GeometryPool {
 
             // Default material, since none specified.
 
-            m.material = this.util.DEFAULT_KEY,
+            m.material = this.util.DEFAULT_KEY;
 
             // Add the emit event.
 

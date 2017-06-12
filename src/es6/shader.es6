@@ -451,11 +451,11 @@ class Shader {
 
             for ( let i in tex ) {
 
-            ////    console.log(prim.name + ' does check TEXTURE ' + i + ' in material:' + m.name + ', == ' + m[i])
+               //console.log(prim.name + ' does check TEXTURE ' + i + ' in material:' + m.name + ', == ' + m[i])
 
-                if ( m[ i ] && ! ( m[ i ] instanceof WebGLTexture ) ) {
+                if ( m[ i ] && ( m[ i ] === null || ! ( m[ i ] instanceof WebGLTexture ) ) ) {
 
-            ///        console.log(prim.name + ' does not have TEXTURE ' + i + ' defined in checkPrimTextures')
+                   //console.log(prim.name + ' does not have TEXTURE ' + i + ' defined in checkPrimTextures')
 
                     return false;
 

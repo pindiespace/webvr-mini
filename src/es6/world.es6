@@ -247,7 +247,7 @@ class World extends AssetPool {
 // COLOR SHADER.
 //////////////////////////////////
 
-
+/*
             this.primFactory.createPrim(
 
                 this.s2,                      // callback function
@@ -265,6 +265,12 @@ class World extends AssetPool {
                 false // don't apply texture to each face
 
             );
+
+*/
+
+// TODO: need a default texture start
+// TODO: matstarts not defined for non-texture texture.
+// TODO: Check for texture, no OBJ file
 
 /*
 
@@ -310,7 +316,9 @@ class World extends AssetPool {
 
 
 
+*/
 
+/*
             this.primFactory.createPrim(
             
                 this.s1,                      // callback function
@@ -330,9 +338,7 @@ class World extends AssetPool {
 
 */
 
-
-
-
+/*
             this.primFactory.createPrim(
 
                 this.s1,                               // callback function
@@ -361,6 +367,7 @@ class World extends AssetPool {
                 // if true, apply textures to each face, not whole Prim.
             );
 
+*/
 
 /*
             this.primFactory.createPrim(
@@ -390,6 +397,7 @@ class World extends AssetPool {
                 // if true, use color array instead of texture array
                 // if true, apply textures to each face, not whole Prim.
             );
+
 */
 
             this.primFactory.createPrim(
@@ -419,6 +427,8 @@ class World extends AssetPool {
                 // if true, use color array instead of texture array
                 // if true, apply textures to each face, not whole Prim.
             );
+
+
 
 /*
 

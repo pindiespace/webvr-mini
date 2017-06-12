@@ -322,7 +322,10 @@ class PrimFactory {
 
         let m = prim.materials[ material.name ];
 
-        ////console.log('<<Prim::initMaterial(): current material: ' + m + ' with:' + material.name + ' for prim:' + prim.name );
+        /* 
+         * If a texture arrives before a material (PrimFactor.initPrimTexture()), it creates a placeholder material with 
+         * default values. Check if it exists, and merge our material values onto it if necessary.
+         */
 
         if ( m && m.name === options.materialName ) { // merge over our values, except for textures and texture options.
 
@@ -398,7 +401,7 @@ class PrimFactory {
 
             if ( ! prim.matStarts ) {
 
-                prim.matStarts = [ [ this.materialPool.createDefaultName( prim ), 0, coords.indices.length ] ];
+                prim.matStarts = [ [ this.materialPool.createDefaultName( prim.name ), 0, coords.indices.length ] ];
 
             }
 
@@ -864,15 +867,15 @@ class PrimFactory {
 
             // Save our current Shader as a default (automatically swapped back by s0).
 
-            if ( prim.shader !== this.world.s0 ) {
+            //if ( prim.shader !== this.world.s0 ) {
 
-                prim.defaultShader = prim.shader;
+            //    prim.defaultShader = prim.shader;
 
                 // Move the Prim WITHOUT emitting a Prim add/remove event.
 
                 prim.shader.movePrim( prim, this.world.s0 );
 
-            }
+            //}
 
         }
 
@@ -966,15 +969,13 @@ class PrimFactory {
 
         // Set default material for the Prim (similar to OBJ format).
 
-        prim.defaultMaterial = this.materialPool.setDefaultMaterial( prim, this.materialPool.createDefaultName( prim ), textureImages );
+        let defaultName = this.materialPool.createDefaultName( prim.name );
 
-        // Set this to default.
-
-        prim.materials[ prim.defaultMaterial.name ] = prim.defaultMaterial;
+        prim.materials[ defaultName ] = this.materialPool.setDefaultMaterial( prim, this.materialPool.createDefaultName( prim.name ), textureImages );
 
         // Set Prim alpha from the active Material's transparency (opposite of prim.alpha === opacity).
 
-        prim.alpha = 1.0 - prim.defaultMaterial.transparency;
+        prim.alpha = 1.0 - prim.materials[ defaultName ].transparency;
 
         // Use lighting in Shader.
 
@@ -1026,13 +1027,13 @@ class PrimFactory {
 
             for ( let i = 0; i < modelFiles.length; i++ ) {
 
-                this.geometryPool.getGeometry( prim, modelFiles[ i ], true, { pos: i } );
+                this.geometryPool.getGeometry( prim, modelFiles[ i ], true, { pos: i, defaultMatStarts: false } );
 
             }
 
         } else {
 
-                this.geometryPool.getGeometry( prim, '', true, { pos: 0 } );
+                this.geometryPool.getGeometry( prim, null, true, { pos: 0, defaultMatStarts: true } );
 
         }
 

@@ -238,7 +238,7 @@ class ShaderWater extends Shader {
 
                 // Only render if we are visible, and have at least one texture loaded.
 
-                if ( ! prim || prim.alpha === 0 || ! prim.defaultMaterial.map_Kd ) continue;
+                if ( ! prim || prim.alpha === 0 ) continue;
 
                 // Update Model-View matrix with standard Prim values.
 

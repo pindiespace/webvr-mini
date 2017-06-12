@@ -463,22 +463,20 @@ class ShaderColor extends Shader {
 
                 // Loop through materials
 
-                // default material (other Shaders might use multiple materials).
-
-                let m = prim.defaultMaterial;
-
                 /* 
                  * iSize is either gl.UNSIGNED_INT (0 -> 2e9) or gl.UNSIGNED_SHORT (0 -> 65535)
                  * GeometryPool and ModelPool routines are expected to "chop"
                  */
 
-                 // TODO: m.override says use material color instead of Prim color array.
-                 // TODO: could re-do color array when a Prim material is encountered.
-                 // TODO: create Geometry
+                // Loop through materials, and regions of Prim they apply to.
 
-                if ( ms.length === 1 ) {
+                for ( let j = 0; j < ms.length; j++ ) {
 
-                    // default material (other Shaders might use multiple materials).
+                    let st = ms[ j ];
+
+                           // Get the next material from prim.matStarts
+
+                    let m = prim.materials[ st[ 0 ] ]; // bind the material
 
                     // Set the material quality of the Prim.
 
@@ -488,38 +486,9 @@ class ShaderColor extends Shader {
                     gl.uniform3fv( uMatSpecular, m.specular );
                     gl.uniform1f( uMatSpecExp, m.specularExponent );
 
-                    gl.drawElements( gl.TRIANGLES, prim.geometry.indices.numItems, iSize, 0 );
+                    gl.drawElements( gl.TRIANGLES, st[ 2 ], iSize, st[ 1 ] );
 
-                } else {
-
-                    // Loop through materials, and regions of Prim they apply to.
-
-                    for ( let j = 0; j < ms.length; j++ ) {
-
-                        let st = ms[ j ];
-
-                           // Get the next material from prim.matStarts
-
-                        m = prim.materials[ st[ 0 ] ]; // bind the material
-
-                        // Set the material quality of the Prim.
-
-                        gl.uniform3fv( uMatAmbient, m.ambient );
-                        gl.uniform3fv( uMatDiffuse, m.diffuse );
-                        gl.uniform3fv( uMatEmissive, m.emissive );
-                        gl.uniform3fv( uMatSpecular, m.specular );
-                        gl.uniform1f( uMatSpecExp, m.specularExponent );
-
-                        //gl.activeTexture( gl.TEXTURE0 );
-                        //gl.bindTexture( gl.TEXTURE_2D, null );
-                        ///////gl.bindTexture( gl.TEXTURE_2D, m[ 'map_Kd' ] );
-                        //gl.bindTexture( gl.TEXTURE_2D, m.map_Kd );
-
-                        gl.drawElements( gl.TRIANGLES, st[ 2 ], iSize, st[ 1 ] );
-
-                    }
-
-                } 
+                }
 
                 // Copy back the original Model-View matrix for the next Prim. 
 

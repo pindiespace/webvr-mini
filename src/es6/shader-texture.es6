@@ -417,9 +417,7 @@ class ShaderTexture extends Shader {
 
                 // Only render if we are visible, and have at least one texture loaded.
 
-                ////////////////////////////////////console.log("prim.defaultMaterial.map_Kd:" + prim.defaultMaterial.map_Kd )
-
-                if ( ! prim || prim.alpha === 0 || ! prim.defaultMaterial || ! prim.defaultMaterial.map_Kd ) continue;
+                if ( ! prim || prim.alpha === 0 ) continue;
 
                 // Individual Prim update.
 
@@ -497,10 +495,6 @@ class ShaderTexture extends Shader {
                  * GeometryPool and ModelPool routines are expected to "chop"
                  */
 
-                // default material (other Shaders might use multiple materials).
-
-                let m = prim.defaultMaterial;
-
                 // Look for (multiple) materials.
 
                 let ms = prim.matStarts;
@@ -511,7 +505,7 @@ class ShaderTexture extends Shader {
 
                     // Get the next material from prim.matStarts
 
-                    m = prim.materials[ st[ 0 ] ]; // bind the material
+                    let m = prim.materials[ st[ 0 ] ]; // bind the material
 
                     // Set the material quality of the Prim.
 

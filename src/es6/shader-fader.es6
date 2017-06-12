@@ -184,11 +184,9 @@ class ShaderFader extends Shader {
 
                 // We do a quad fadein of our Ambient so near-transparent objects don't have the Ambient color.
 
-                'vec4 Ambient = vec4(uAmbientColor * uMatAmbient, uAlpha * uAlpha);',
+                'vec4 Ambient = vec4(uAmbientColor * uMatAmbient, uAlpha);',
 
                 'vec4 Diffuse = vec4(uDirectionalColor * uMatDiffuse, uAlpha);',
-
-                //'vec4 Diffuse = vec4(0.4, 1.0, 0.2, uAlpha);',
 
                 // Specular should be zero if we aren't lighting.
 
@@ -209,8 +207,6 @@ class ShaderFader extends Shader {
                     // Compute specular dot. Changing 4th parameter to 0.0 instead of 1.0 improved results.
 
                     'vec4 L = normalize(vec4(uLightingDirection, uAlpha) - vPositionW);',
-
-                    /////////////'vec4 L = normalize(vec4(0.0, 0.0, 0.0, 0.0));', // bright, everything illuminated.
 
                     'vec4 EyePosW = vec4(vPOV, 0.0);', // world = eye = camera position
 
@@ -236,13 +232,9 @@ class ShaderFader extends Shader {
 
                     'Ambient.rgb *= uAlpha;',
 
-                    //'Diffuse.rgb *= uAlpha;',
-
                 '}',
 
-                // Final fragment color.
-
-                'gl_FragColor = (Emissive + Ambient + Diffuse + Specular) * vec4(vColor.rgb, vColor.a * uAlpha);',
+                'gl_FragColor = ((Emissive + Ambient + Diffuse + Specular) * vec4(vColor.rgb, vColor.a));',
 
             '}'
 
@@ -427,6 +419,8 @@ class ShaderFader extends Shader {
 
                     // This turns off this Shader!
 
+                    console.log("TURN OFF SHADER:" + this.name + " MOVE TO:" + prim.shader.name)
+
                     prim.shader.movePrim( prim, prim.defaultShader );
 
                 }
@@ -442,8 +436,6 @@ class ShaderFader extends Shader {
                 if ( prim.alpha <= f.endAlpha ) {
 
                     prim.alpha = f.endAlpha;
-
-                    console.log("prim.alpha is now:" + prim.alpha)
 
                     // This turns off this Shader!
 
@@ -535,11 +527,6 @@ class ShaderFader extends Shader {
                 gl.enableVertexAttribArray( aTextureCoord );
                 gl.vertexAttribPointer( aTextureCoord, 2, gl.FLOAT, false, 0, 0 );
 
-                // Bind the first texture.
-
-                gl.activeTexture( gl.TEXTURE0 );
-                gl.bindTexture( gl.TEXTURE_2D, prim.defaultMaterial.map_Kd );
-
                 // Alpha, with easing animation (in this.util).
 
                 gl.uniform1f( uAlpha, prim.alpha );
@@ -598,8 +585,6 @@ class ShaderFader extends Shader {
 
                     // Loop through materials, and regions of Prim they apply to.
 
-                    // TODO: ShaderFader
-
                     let ms = prim.matStarts;
 
                     for ( let j = 0; j < ms.length; j++ ) {
@@ -620,6 +605,20 @@ class ShaderFader extends Shader {
                             gl.uniform3fv( uMatSpecular, m.specular );
                             gl.uniform1f( uMatSpecExp, m.specularExponent );
 
+                            // We always bind a texture to prevent Shader errors, even if not used.
+
+                            if ( m.map_Kd instanceof WebGLTexture ) {
+
+                                // Set fragment shader sampler uniform.
+
+                                gl.uniform1i( uSampler, 0 );
+
+                                gl.activeTexture( gl.TEXTURE0 );
+                                gl.bindTexture( gl.TEXTURE_2D, null );
+                                gl.bindTexture( gl.TEXTURE_2D, m.map_Kd );
+
+                            }
+
                             // Conditionally draw colors instead of textures.
 
                             if ( prim.useColorArray === true ) {
@@ -631,18 +630,6 @@ class ShaderFader extends Shader {
 
                                 gl.uniform1i( uUseColor, 0 );
                                 gl.uniform1i( uUseTexture, 1 );
-
-                                if ( m.map_Kd instanceof WebGLTexture ) {
-
-                                    // Set fragment shader sampler uniform.
-
-                                    gl.uniform1i( uSampler, 0 );
-
-                                    gl.activeTexture( gl.TEXTURE0 );
-                                    gl.bindTexture( gl.TEXTURE_2D, null );
-                                    gl.bindTexture( gl.TEXTURE_2D, m.map_Kd );
-
-                                }
 
                             }
 

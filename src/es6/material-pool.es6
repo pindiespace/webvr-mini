@@ -391,6 +391,8 @@ class MaterialPool extends AssetPool {
 
                         materials[ currName ] = this.addAsset( this.default( currName ) );
 
+                        materials[ currName ].fromObj = true;
+
                         break;
 
                     case 'Ka': // ambient
@@ -719,11 +721,11 @@ class MaterialPool extends AssetPool {
     }
 
     /** 
-     * create the default name for the Prim.
+     * create the default Material name for the Prim.
      */
-    createDefaultName( prim ) {
+    createDefaultName( name ) {
 
-        return prim.name + '_' + this.util.DEFAULT_KEY;
+        return name + '_' + this.util.DEFAULT_KEY;
 
     }
 
@@ -732,7 +734,7 @@ class MaterialPool extends AssetPool {
      */
     setDefaultMaterial ( prim, materialName, textureImages ) {
 
-        let defaultName = this.createDefaultName( prim );
+        let defaultName = this.createDefaultName( prim.name );
 
         let mi = this.addAsset( this.default ( defaultName ) );
 

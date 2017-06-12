@@ -592,7 +592,7 @@ class ModelPool extends AssetPool {
 
                     iHash[ key ] = iIdx;
 
-                    // Re-index our groups, objects, material starts, smoothing groups.
+                    // Re-index our groups, objects, material starts, smoothing groups to the revised index position.
 
                     for ( let j = 0; j < matStarts.length; j++ ) {
 
@@ -601,8 +601,6 @@ class ModelPool extends AssetPool {
                             matStarts[ j ][ 1 ] = nIndices.length - 1;
 
                         }
-
-                        //console.log( '>>>>>>>>>>>>matstarts:  ' + matStarts[ j ][1] + ', i:' + i );
 
                     }
 
@@ -660,15 +658,6 @@ class ModelPool extends AssetPool {
 
             }
 
-///////////////////////////////
-            // TODO: WE NEED A WAY TO DETERMINE IF WE'VE LOADED ANY MATERIAL FILE. Multiple files would mess up with the above code.
-            // TODO: WE NEED A WAY TO HAVE A PRIM VALIDATE BASED ON ITS OWN CONFIGURATION BEFORE GOING INTO THE SHADER.
-            // SO, NO ADD SHADER UNTIL VALIDATION MESSAGES ARE FINISHED.
-///////////////////////////////
-
-
-            // Compute the length of each matStarts position.
-
             // Replace raw vertex, index, texCoord, normal data with face-adjusted data.
 
             tVertices = nVertices,
@@ -687,15 +676,13 @@ class ModelPool extends AssetPool {
 
         }
 
-
         // If there were no materials, create a default one. This can happen for an .OBJ file without any .mtl files associated.
 
         if ( matStarts.length === 0 ) {
 
-            matStarts.push( [ this.materialPool.createDefaultName( prim ), 0, nIndices.length ] );
+            matStarts.push( [ this.materialPool.createDefaultName( prim.name ), 0, tIndices.length ] );
 
         }
-
 
         // Compute matStarts length
 
