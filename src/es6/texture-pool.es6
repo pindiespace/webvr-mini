@@ -424,9 +424,25 @@ class TexturePool extends AssetPool {
 
         }
 
+        // Check if texture is already in asset pool, use it if it is. Define by PATH.
+
+        let textureObj = this.pathInList( path );
+
+        if ( textureObj !== null ) {
+
+            // Use a pool texture if available. Generally won't be ready within a Prim, but useful for Prims sharing textures.
+
+            console.log( 'TexturePool::getTexture(): found texture ' + path + ' in pool, using it...' );
+
+            this.util.emitter.emit( this.util.emitter.events.TEXTURE_2D_READY, prim, this.defaultKey, options );  
+
+            return;
+
+        }
+
         ////////if ( options.fromObj ) console.warn( 'TexturePool::getTexture(): getting texture from OBJ file ' + path + ' for:' + prim.name)
 
-        // Could have an empty path.
+        // Get texture from .OBJ file (could have an empty path).
 
         if ( ! this.util.isWhitespace( path ) ) {
 

@@ -52,7 +52,7 @@ class MaterialPool extends AssetPool {
      * @param {String} map_Kd the default texture for diffuse mapping.
      * @returns {Material} a Material object.
      */
-    default ( name = this.util.DEFAULT_KEY, ambient = [ 1.0, 1.0, 1.0 ], diffuse = [ 0.1, 0.7, 0.7 ], specular = [ 1.0, 1.0, 1.0 ], 
+    default ( name = this.util.DEFAULT_KEY, ambient = [ 1.0, 1.0, 1.0 ], diffuse = [ 1.0, 1.0, 1.0 ], specular = [ 1.0, 1.0, 1.0 ], 
 
         specularExponent = 64.0, emissive = [ 0, 0, 0 ], sharpness = 60, refraction = 1, transparency = 0, illum = 2, 
 
@@ -62,21 +62,7 @@ class MaterialPool extends AssetPool {
 
         if ( ! map_Kd ) {
 
-            //if ( this.defaultKey ) {
-
                 map_Kd = this.texturePool.getAssetByKey( this.texturePool.defaultKey ).texture;
-
-                //console.log('________________map_Kd:' + map_Kd)
-
-            //} else {
-
-            //    map_Kd = this.texturePool.create2dTexture( 
-
-           //         new Uint8Array( [ diffuse[ 0 ] * 255 , diffuse[ 1 ] * 255, diffuse[ 2 ] * 255, 255 ] )
-
-           //     );
-
-           // }
 
         }
 
@@ -572,7 +558,9 @@ class MaterialPool extends AssetPool {
 
                                 if ( type === 'd' ) data[ 0 ] = 1.0 - data[ 0 ]; // Invert
 
-                                materials[ currName ].transparency = parseFloat( data[ 0 ] ); // single value, 0.0 - 1.0
+                                materials[ currName ].transparency = data[ 0 ]; // single value, 0.0 - 1.0
+
+                                console.log('>>>' + prim.name + ' transparency in material:' + currName + ":" + data[ 0 ])
 
                             } else {
 
@@ -637,7 +625,9 @@ class MaterialPool extends AssetPool {
                          * map_Ka -s 1 1 1 -o 0 0 0 -mm 0 1 file.png
                          */
 
-                        let tPath = data[ data.length - 1 ].trim();
+                        let tPath = data[ data.length - 1 ].replace(/^.*[\\\/]/, '');
+
+                        ////////let tPath = data[ data.length - 1 ].trim();
 
                         //////////console.log('path:' + path + ' data:' + data + ' tPath:' + tPath)
 

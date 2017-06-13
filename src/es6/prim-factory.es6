@@ -110,7 +110,25 @@ class PrimFactory {
 
                 ////console.log( 'PrimFactory::' + prim.name + ' OBJ geometry ready, key:' + key + ' pos:' + options.pos );
 
-                this.initPrimGeometry( prim, this.modelPool.keyList[ key ], options );
+                // Object, Group, SmoothingGroup starts.
+
+                let coords = this.modelPool.keyList[ key ];
+
+                prim.objects = coords.options.objects;
+
+                // Start of section of a model, typically with a new material.
+
+                prim.groups = coords.options.groups;
+
+                // Use smoothingGroups to redefine normals.
+
+                prim.smoothingGroups = coords.options.smoothingGroups;
+
+                // Material start array.
+
+                prim.matStarts = coords.options.matStarts;
+
+                this.initPrimGeometry( prim, coords, options );
 
                 prim.shader.addPrim ( prim ); // TRY to add it
 
@@ -122,7 +140,11 @@ class PrimFactory {
 
                 ////console.log( 'PrimFactory::' + prim.name + ' Procedural geometry ready, key:' + key + ' pos:' + options.pos );
 
-                this.initPrimGeometry( prim, this.modelPool.keyList[ key ], options );
+                let coords = this.modelPool.keyList[ key ]
+
+                prim.matStarts = [ [ this.materialPool.createDefaultName( prim.name ), 0, coords.indices.length ] ]; //////////////////////////////
+
+                this.initPrimGeometry( prim, coords, options );
 
                 prim.shader.addPrim ( prim ); // TRY to add it
 
@@ -187,9 +209,37 @@ class PrimFactory {
 
             ( prim ) => {
 
+                // Get the maximum alpha in all the defined textures. If we have more than one, don't use 'default'.
+
+                let maxAlpha = 0;
+
+                for ( let i in prim.materials ) {
+
+                    let m = prim.materials[ i ];
+
+                    if ( m.name.indexOf( this.util.defaultKey ) !== this.util.NOT_IN_LIST ) {
+
+                        if ( Number.isFinite( m.transparency ) ) {
+
+                            let alpha = 1.0 - m.transparency;
+
+                            if ( alpha > maxAlpha ) maxAlpha = alpha;
+
+                        }
+
+                    }
+
+                }
+
+                if ( maxAlpha > 0 ) {
+
+                    prim.alpha = maxAlpha;
+
+                } // otherwise, keep the default of 1.0
+
                 // Fade in from invisible to our assigned alpha value.
 
-                console.log(prim.name + " SETTING PRIM FADEIN, shader:" + prim.shader.name + ' and defaultShader:' + prim.defaultShader)
+                //console.log(prim.name + " SETTING PRIM FADEIN, shader:" + prim.shader.name + ' and defaultShader:' + prim.defaultShader)
 
                 prim.setFade( 0, prim.alpha, 0.001, 'easeQuad' );
 
@@ -387,7 +437,7 @@ class PrimFactory {
             //    console.log( 'PrimFactory::initPrimGeometry(): prim:' + prim.name + ' new coord:' + i + ' + value:'  + coords.options[ i ])
 
             //}
-
+/*
          if ( coords.options ) { // OBJ files
 
             console.log( 'PrimFactory::initPrimGeometry(): assigning options for OBJ geometry' );
@@ -419,6 +469,8 @@ class PrimFactory {
             }
 
          }
+
+        */
 
         // Update vertices if they were supplied.
 
@@ -841,12 +893,6 @@ class PrimFactory {
 
             let defaultMaterial = prim.materials[ prim.matStarts[ 0 ][ 0 ] ];
 
-            if ( prim.fade.endAlpha >= 1.0 - defaultMaterial.transparency ) {
-
-                prim.fade.endAlpha = 1.0 - defaultMaterial.transparency;
-
-            }
-
             prim.alpha = start;
 
             // Increment.
@@ -877,6 +923,8 @@ class PrimFactory {
 
             }
 
+            console.log("PRIM NAME:" + prim.name + ' defaultMaterial transparency:' + defaultMaterial.transparency)
+
             // Save our current Shader as a default (automatically swapped back by s0).
 
             if ( prim.shader !== this.world.s0 ) {
@@ -903,7 +951,7 @@ class PrimFactory {
 
         prim.shader = this.world.s0; // fadein shader
 
-        console.log(prim.name + " SHADER IS:" + prim.shader.name + " AND DEFAULT SHADER IS:" + prim.defaultShader.name )
+        ///console.log(prim.name + " SHADER IS:" + prim.shader.name + " AND DEFAULT SHADER IS:" + prim.defaultShader.name )
 
         // Initially we aren't rendering.
 
@@ -997,7 +1045,7 @@ class PrimFactory {
 
         // Set Prim alpha from the active Material's transparency (opposite of prim.alpha === opacity).
 
-        prim.alpha = 1.0 - prim.materials[ defaultName ].transparency;
+        prim.alpha = 1.0 - prim.materials[ defaultName ].transparency; // typically 1.0
 
         // Use lighting in Shader.
 

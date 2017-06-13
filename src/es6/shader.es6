@@ -193,7 +193,7 @@ class Shader {
 
             prim.shader.removePrim( prim );
 
-            ///console.error( 'prim:' + prim.name + ' could not be added to Shader:' + this.name + ', giving up (removing from display list)' );
+            console.error( 'prim:' + prim.name + ' could not be added to Shader:' + this.name + ', giving up (removing from display list)' );
 
             return;
 
@@ -272,7 +272,7 @@ class Shader {
 
         // Increment our fail count. If past PrimFactory.MAX_FAIL, give up trying to add the Prim.
 
-        console.log(prim.name + " failCount:" + prim.failCount)
+        //console.log(prim.name + " failCount:" + prim.failCount)
 
         prim.failCount++;
 
@@ -499,7 +499,7 @@ class Shader {
 
                 if ( m[ i ] && ( m[ i ] === null || ! ( m[ i ] instanceof WebGLTexture ) ) ) {
 
-                   console.warn(prim.name + ' OBJ does not have texture ' + i + ' defined in material:' + matName );
+                   console.warn( 'Shader::checkTextures(): prim:' + prim.name + ' OBJ file does not have texture ' + i + ' defined in material:' + matName + ' yet' );
 
                     return false;
 

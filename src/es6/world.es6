@@ -247,7 +247,7 @@ class World extends AssetPool {
 // COLOR SHADER.
 //////////////////////////////////
 
-/*
+
             this.primFactory.createPrim(
 
                 this.s2,                      // callback function
@@ -266,13 +266,12 @@ class World extends AssetPool {
 
             );
 
-*/
+
 
 // TODO: need a default texture start
 // TODO: matstarts not defined for non-texture texture.
 // TODO: Check for texture, no OBJ file
 
-/*
 
             this.primFactory.createPrim(
 
@@ -286,8 +285,8 @@ class World extends AssetPool {
                 vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
                 vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
                 [],               // no texture present
-                [ 'obj/teapot/teapot.obj' ] // object files (.obj, .mtl)
-                false,                                 // if true, use the color array instead of texture array
+                [ 'obj/teapot/teapot.obj' ], // object files (.obj, .mtl)
+                true,                                 // if true, use the color array instead of texture array
                 false,                                 // if true, apply texture to each face,
 
             );
@@ -315,10 +314,6 @@ class World extends AssetPool {
             );
 
 
-
-*/
-
-/*
             this.primFactory.createPrim(
             
                 this.s1,                      // callback function
@@ -336,9 +331,7 @@ class World extends AssetPool {
                 // if true, apply textures to each face, not whole Prim.
             );
 
-*/
 
-/*
             this.primFactory.createPrim(
 
                 this.s1,                               // callback function
@@ -351,7 +344,10 @@ class World extends AssetPool {
                 vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
                 vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
                 [], // texture loaded directly
-                [ 'obj/capsule/capsule.obj' ] // object files (.obj, .mtl)
+                //[ 'obj/capsule/capsule.obj' ] // object files (.obj, .mtl)
+                //[ 'obj/rose/rose.obj' ],
+                [ 'obj/rose2/rose2.obj' ],
+                //[ 'obj/balls/balls.obj' ],
                 //[ 'obj/mountains/mountains.obj' ] // ok
                 //[ 'obj/landscape/landscape.obj'] // ok?
                 //[ 'obj/toilet/toilet.obj' ] // works with texture, multiple groups wrap texture!
@@ -367,9 +363,7 @@ class World extends AssetPool {
                 // if true, apply textures to each face, not whole Prim.
             );
 
-*/
 
-/*
             this.primFactory.createPrim(
 
                 this.s1,                               // callback function
@@ -398,7 +392,6 @@ class World extends AssetPool {
                 // if true, apply textures to each face, not whole Prim.
             );
 
-*/
 
             this.primFactory.createPrim(
 

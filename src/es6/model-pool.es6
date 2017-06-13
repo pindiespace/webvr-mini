@@ -360,6 +360,8 @@ class ModelPool extends AssetPool {
 
         lastType = this.NOT_IN_STRING;
 
+        // Start the loop through the OBJ file.
+
         lines.forEach( ( line ) => {
 
             // First value in string.
@@ -479,7 +481,10 @@ class ModelPool extends AssetPool {
 
                         for ( let i = 0; i < mtls.length; i++ ) {
 
-                            let path = dir + mtls[ i ];
+                            ///////let path = dir + mtls[ i ];
+
+                            let path = dir + mtls[ i ].replace(/^.*[\\\/]/, ''); // strip directories and add our own
+
 
                             this.materialPool.getMaterial( prim, path, true, { pos: i } );
 
@@ -594,6 +599,10 @@ class ModelPool extends AssetPool {
 
                     // Re-index our groups, objects, material starts, smoothing groups to the revised index position.
 
+                    // TODO: re-index downstream matstarts!!!
+
+                    ////////this.util.sort2DByColNum( matStarts, 1 );
+
                     for ( let j = 0; j < matStarts.length; j++ ) {
 
                         if ( matStarts[ j ][ 1 ] === i )  {
@@ -647,7 +656,19 @@ class ModelPool extends AssetPool {
 
                 } // end of re-index a new face
 
-            } // end of else
+
+                    for ( let j = 0; j < matStarts.length; j++ ) {
+
+                        if ( matStarts[ j ][ 1 ] === i )  {
+
+                            matStarts[ j ][ 1 ] = nIndices.length - 1;
+
+                        }
+
+                    }
+
+
+            } // end of for loop
 
             // Should be the same.
             /////////////console.log('nIndices.length:' + nIndices.length + ' faces.length:' + faces.length)
@@ -820,6 +841,22 @@ class ModelPool extends AssetPool {
      */
     getModel ( prim, path, cacheBust = true, options = { pos: 0 } ) {
 
+        // Check if model is already in asset pool, use it if it is. Define by PATH.
+
+        let modelObj = this.pathInList( path );
+
+        if ( modelObj !== null ) {
+
+            // Use a pool texture if available. Generally won't be ready within a Prim, but useful for Prims sharing textures.
+
+            console.log( 'TexturePool::getTexture(): found texture ' + path + ' in pool, using it...' );
+
+            this.util.emitter.emit( modelObj.emits, prim, modelObj.key, options ); 
+
+            return;
+
+        }
+
         // Could have an empty path.
 
         if ( ! this.util.isWhitespace( path ) ) {
@@ -847,7 +884,6 @@ class ModelPool extends AssetPool {
                          *   error: false|response 
                          * } 
                          */
-
 
                         ////////console.log( 'ModelPool::getModel(): OBJ file:' + path + ' returned model for:' + prim.name );
 

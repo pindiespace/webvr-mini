@@ -1302,6 +1302,22 @@
 	            });
 	        }
 
+	        /** 
+	         * Sort a 2-dimensional array by value.
+	         * @param {Array} arr the array to sort.
+	         * @param {Number} colNum the position in the second-dimension (column) of the 2d array.
+	         */
+
+	    }, {
+	        key: 'sort2DByColNum',
+	        value: function sort2DByColNum(arr, colNum) {
+
+	            arr.sort(function (a, b) {
+
+	                return a[colNum] - b[colNum];
+	            });
+	        }
+
 	        /* 
 	         * ---------------------------------------
 	         * RANDOM NUMBERS
@@ -5987,7 +6003,7 @@
 
 	                prim.shader.removePrim(prim);
 
-	                ///console.error( 'prim:' + prim.name + ' could not be added to Shader:' + this.name + ', giving up (removing from display list)' );
+	                console.error('prim:' + prim.name + ' could not be added to Shader:' + this.name + ', giving up (removing from display list)');
 
 	                return;
 	            }
@@ -6057,7 +6073,7 @@
 
 	            // Increment our fail count. If past PrimFactory.MAX_FAIL, give up trying to add the Prim.
 
-	            console.log(prim.name + " failCount:" + prim.failCount);
+	            //console.log(prim.name + " failCount:" + prim.failCount)
 
 	            prim.failCount++;
 
@@ -6284,7 +6300,7 @@
 
 	                    if (m[_i] && (m[_i] === null || !(m[_i] instanceof WebGLTexture))) {
 
-	                        console.warn(prim.name + ' OBJ does not have texture ' + _i + ' defined in material:' + matName);
+	                        console.warn('Shader::checkTextures(): prim:' + prim.name + ' OBJ file does not have texture ' + _i + ' defined in material:' + matName + ' yet');
 
 	                        return false;
 	                    }
@@ -9173,7 +9189,25 @@
 
 	            ////console.log( 'PrimFactory::' + prim.name + ' OBJ geometry ready, key:' + key + ' pos:' + options.pos );
 
-	            _this.initPrimGeometry(prim, _this.modelPool.keyList[key], options);
+	            // Object, Group, SmoothingGroup starts.
+
+	            var coords = _this.modelPool.keyList[key];
+
+	            prim.objects = coords.options.objects;
+
+	            // Start of section of a model, typically with a new material.
+
+	            prim.groups = coords.options.groups;
+
+	            // Use smoothingGroups to redefine normals.
+
+	            prim.smoothingGroups = coords.options.smoothingGroups;
+
+	            // Material start array.
+
+	            prim.matStarts = coords.options.matStarts;
+
+	            _this.initPrimGeometry(prim, coords, options);
 
 	            prim.shader.addPrim(prim); // TRY to add it
 	        });
@@ -9182,7 +9216,11 @@
 
 	            ////console.log( 'PrimFactory::' + prim.name + ' Procedural geometry ready, key:' + key + ' pos:' + options.pos );
 
-	            _this.initPrimGeometry(prim, _this.modelPool.keyList[key], options);
+	            var coords = _this.modelPool.keyList[key];
+
+	            prim.matStarts = [[_this.materialPool.createDefaultName(prim.name), 0, coords.indices.length]]; //////////////////////////////
+
+	            _this.initPrimGeometry(prim, coords, options);
 
 	            prim.shader.addPrim(prim); // TRY to add it
 	        });
@@ -9231,9 +9269,33 @@
 
 	        this.util.emitter.on(this.util.emitter.events.PRIM_ADDED_TO_SHADER, function (prim) {
 
+	            // Get the maximum alpha in all the defined textures. If we have more than one, don't use 'default'.
+
+	            var maxAlpha = 0;
+
+	            for (var i in prim.materials) {
+
+	                var m = prim.materials[i];
+
+	                if (m.name.indexOf(_this.util.defaultKey) !== _this.util.NOT_IN_LIST) {
+
+	                    if (Number.isFinite(m.transparency)) {
+
+	                        var alpha = 1.0 - m.transparency;
+
+	                        if (alpha > maxAlpha) maxAlpha = alpha;
+	                    }
+	                }
+	            }
+
+	            if (maxAlpha > 0) {
+
+	                prim.alpha = maxAlpha;
+	            } // otherwise, keep the default of 1.0
+
 	            // Fade in from invisible to our assigned alpha value.
 
-	            console.log(prim.name + " SETTING PRIM FADEIN, shader:" + prim.shader.name + ' and defaultShader:' + prim.defaultShader);
+	            //console.log(prim.name + " SETTING PRIM FADEIN, shader:" + prim.shader.name + ' and defaultShader:' + prim.defaultShader)
 
 	            prim.setFade(0, prim.alpha, 0.001, 'easeQuad');
 
@@ -9431,37 +9493,40 @@
 	            //    console.log( 'PrimFactory::initPrimGeometry(): prim:' + prim.name + ' new coord:' + i + ' + value:'  + coords.options[ i ])
 
 	            //}
-
-	            if (coords.options) {
-	                // OBJ files
-
-	                console.log('PrimFactory::initPrimGeometry(): assigning options for OBJ geometry');
-
-	                // Object, Group, SmoothingGroup starts.
-
-	                prim.objects = coords.options.objects;
-
-	                // Start of section of a model, typically with a new material.
-
-	                prim.groups = coords.options.groups;
-
-	                // Use the list to 
-
-	                prim.smoothingGroups = coords.options.smoothingGroups;
-
-	                // Material start array.
-
-	                prim.matStarts = coords.options.matStarts;
-	            } else {
-	                // Procedural geometry
-
-	                // No matStarts were defined, so do a default.
-
-	                if (!prim.matStarts) {
-
-	                    prim.matStarts = [[this.materialPool.createDefaultName(prim.name), 0, coords.indices.length]];
-	                }
-	            }
+	            /*
+	                     if ( coords.options ) { // OBJ files
+	            
+	                        console.log( 'PrimFactory::initPrimGeometry(): assigning options for OBJ geometry' );
+	            
+	                        // Object, Group, SmoothingGroup starts.
+	            
+	                        prim.objects = coords.options.objects;
+	            
+	                        // Start of section of a model, typically with a new material.
+	            
+	                        prim.groups = coords.options.groups;
+	            
+	                        // Use the list to 
+	            
+	                        prim.smoothingGroups = coords.options.smoothingGroups;
+	            
+	                        // Material start array.
+	            
+	                        prim.matStarts = coords.options.matStarts;
+	            
+	                     } else { // Procedural geometry
+	            
+	                        // No matStarts were defined, so do a default.
+	            
+	                        if ( ! prim.matStarts ) {
+	            
+	                            prim.matStarts = [ [ this.materialPool.createDefaultName( prim.name ), 0, coords.indices.length ] ];
+	            
+	                        }
+	            
+	                     }
+	            
+	                    */
 
 	            // Update vertices if they were supplied.
 
@@ -9848,11 +9913,6 @@
 
 	                var defaultMaterial = prim.materials[prim.matStarts[0][0]];
 
-	                if (prim.fade.endAlpha >= 1.0 - defaultMaterial.transparency) {
-
-	                    prim.fade.endAlpha = 1.0 - defaultMaterial.transparency;
-	                }
-
 	                prim.alpha = start;
 
 	                // Increment.
@@ -9880,6 +9940,8 @@
 	                    prim.fade.eq = _this2.util['easeLinearIn'];
 	                }
 
+	                console.log("PRIM NAME:" + prim.name + ' defaultMaterial transparency:' + defaultMaterial.transparency);
+
 	                // Save our current Shader as a default (automatically swapped back by s0).
 
 	                if (prim.shader !== _this2.world.s0) {
@@ -9902,7 +9964,7 @@
 
 	            prim.shader = this.world.s0; // fadein shader
 
-	            console.log(prim.name + " SHADER IS:" + prim.shader.name + " AND DEFAULT SHADER IS:" + prim.defaultShader.name);
+	            ///console.log(prim.name + " SHADER IS:" + prim.shader.name + " AND DEFAULT SHADER IS:" + prim.defaultShader.name )
 
 	            // Initially we aren't rendering.
 
@@ -9996,7 +10058,7 @@
 
 	            // Set Prim alpha from the active Material's transparency (opposite of prim.alpha === opacity).
 
-	            prim.alpha = 1.0 - prim.materials[defaultName].transparency;
+	            prim.alpha = 1.0 - prim.materials[defaultName].transparency; // typically 1.0
 
 	            // Use lighting in Shader.
 
@@ -16495,6 +16557,8 @@
 	                lines = data.split('\n'),
 	                lastType = this.NOT_IN_STRING;
 
+	            // Start the loop through the OBJ file.
+
 	            lines.forEach(function (line) {
 
 	                // First value in string.
@@ -16619,7 +16683,10 @@
 
 	                            for (var i = 0; i < mtls.length; i++) {
 
-	                                var _path = dir + mtls[i];
+	                                ///////let path = dir + mtls[ i ];
+
+	                                var _path = dir + mtls[i].replace(/^.*[\\\/]/, ''); // strip directories and add our own
+
 
 	                                _this2.materialPool.getMaterial(prim, _path, true, { pos: i });
 	                            }
@@ -16739,6 +16806,10 @@
 
 	                        // Re-index our groups, objects, material starts, smoothing groups to the revised index position.
 
+	                        // TODO: re-index downstream matstarts!!!
+
+	                        ////////this.util.sort2DByColNum( matStarts, 1 );
+
 	                        for (var j = 0; j < matStarts.length; j++) {
 
 	                            if (matStarts[j][1] === i) {
@@ -16784,7 +16855,16 @@
 	                            nNormals.push(0, 0, 0);
 	                        }
 	                    } // end of re-index a new face
-	                } // end of else
+
+
+	                    for (var _j = 0; _j < matStarts.length; _j++) {
+
+	                        if (matStarts[_j][1] === i) {
+
+	                            matStarts[_j][1] = nIndices.length - 1;
+	                        }
+	                    }
+	                } // end of for loop
 
 	                // Should be the same.
 	                /////////////console.log('nIndices.length:' + nIndices.length + ' faces.length:' + faces.length)
@@ -16943,6 +17023,21 @@
 	            var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : { pos: 0 };
 
 
+	            // Check if model is already in asset pool, use it if it is. Define by PATH.
+
+	            var modelObj = this.pathInList(path);
+
+	            if (modelObj !== null) {
+
+	                // Use a pool texture if available. Generally won't be ready within a Prim, but useful for Prims sharing textures.
+
+	                console.log('TexturePool::getTexture(): found texture ' + path + ' in pool, using it...');
+
+	                this.util.emitter.emit(modelObj.emits, prim, modelObj.key, options);
+
+	                return;
+	            }
+
 	            // Could have an empty path.
 
 	            if (!this.util.isWhitespace(path)) {
@@ -16975,9 +17070,9 @@
 
 	                        if (updateObj.data) {
 
-	                            var modelObj = _this3.addModel(prim, updateObj.data, updateObj.path, mimeType, prim.type);
+	                            var _modelObj = _this3.addModel(prim, updateObj.data, updateObj.path, mimeType, prim.type);
 
-	                            if (modelObj) {
+	                            if (_modelObj) {
 
 	                                /* 
 	                                 * XX_GEOMETRY_READY event, with additional data referencing sub-groups of the model.
@@ -16986,7 +17081,7 @@
 	                                 * See this.addModel() above for more information.
 	                                 */
 
-	                                _this3.util.emitter.emit(modelObj.emits, prim, modelObj.key, options); ///////////TODO: COMPARE TO PROCEDUAR GEO EMIT
+	                                _this3.util.emitter.emit(_modelObj.emits, prim, _modelObj.key, options); ///////////TODO: COMPARE TO PROCEDUAR GEO EMIT
 	                            } else {
 
 	                                console.error('ModelPool::getModel(): OBJ file:' + path + ' could not be parsed');
@@ -17446,9 +17541,24 @@
 	                glTextureType = this.webgl.gl.TEXTURE_2D;
 	            }
 
+	            // Check if texture is already in asset pool, use it if it is. Define by PATH.
+
+	            var textureObj = this.pathInList(path);
+
+	            if (textureObj !== null) {
+
+	                // Use a pool texture if available. Generally won't be ready within a Prim, but useful for Prims sharing textures.
+
+	                console.log('TexturePool::getTexture(): found texture ' + path + ' in pool, using it...');
+
+	                this.util.emitter.emit(this.util.emitter.events.TEXTURE_2D_READY, prim, this.defaultKey, options);
+
+	                return;
+	            }
+
 	            ////////if ( options.fromObj ) console.warn( 'TexturePool::getTexture(): getting texture from OBJ file ' + path + ' for:' + prim.name)
 
-	            // Could have an empty path.
+	            // Get texture from .OBJ file (could have an empty path).
 
 	            if (!this.util.isWhitespace(path)) {
 
@@ -19034,158 +19144,104 @@
 	            // COLOR SHADER.
 	            //////////////////////////////////
 
-	            /*
-	                        this.primFactory.createPrim(
-	            
-	                            this.s2,                      // callback function
-	                            typeList.CUBE,
-	                            'coloredcube',
-	                            vec5( 0.7, 0.7, 0.7, 0 ),            // dimensions
-	                            vec5( 3, 3, 3 ),            // divisions
-	                            vec3.fromValues( 3.2, -0.3, 2 ),          // position (absolute)
-	                            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-	                            vec3.fromValues( util.degToRad( 20 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-	                            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 1 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-	                            [ 'img/webvr-logo3.png' ],               // texture present, NOT USED
-	                            [],  // no obj file
-	                            true, // use color array
-	                            false // don't apply texture to each face
-	            
-	                        );
-	            
-	            */
+
+	            this.primFactory.createPrim(this.s2, // callback function
+	            typeList.CUBE, 'coloredcube', vec5(0.7, 0.7, 0.7, 0), // dimensions
+	            vec5(3, 3, 3), // divisions
+	            vec3.fromValues(3.2, -0.3, 2), // position (absolute)
+	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	            vec3.fromValues(util.degToRad(20), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	            vec3.fromValues(util.degToRad(0), util.degToRad(1), util.degToRad(0)), // angular velocity in x, y, x
+	            ['img/webvr-logo3.png'], // texture present, NOT USED
+	            [], // no obj file
+	            true, // use color array
+	            false // don't apply texture to each face
+
+	            );
 
 	            // TODO: need a default texture start
 	            // TODO: matstarts not defined for non-texture texture.
 	            // TODO: Check for texture, no OBJ file
 
-	            /*
-	            
-	                        this.primFactory.createPrim(
-	            
-	                            this.s2,                               // callback function
-	                            typeList.MESH,
-	                            'teapot',
-	                            vec5( 1, 1, 1 ),                       // dimensions (4th dimension doesn't exist for cylinder)
-	                            vec5( 40, 40, 40  ),                    // divisions MAKE SMALLER
-	                            vec3.fromValues( 0.0, 1.0, 2.0 ),      // position (absolute)
-	                            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-	                            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-	                            vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-	                            [],               // no texture present
-	                            [ 'obj/teapot/teapot.obj' ] // object files (.obj, .mtl)
-	                            false,                                 // if true, use the color array instead of texture array
-	                            false,                                 // if true, apply texture to each face,
-	            
-	                        );
-	            
-	            
+
+	            this.primFactory.createPrim(this.s2, // callback function
+	            typeList.MESH, 'teapot', vec5(1, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
+	            vec5(40, 40, 40), // divisions MAKE SMALLER
+	            vec3.fromValues(0.0, 1.0, 2.0), // position (absolute)
+	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	            vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	            [], // no texture present
+	            ['obj/teapot/teapot.obj'], // object files (.obj, .mtl)
+	            true, // if true, use the color array instead of texture array
+	            false);
+
 	            //////////////////////////////////
 	            // TEXTURED SHADER.
 	            //////////////////////////////////
-	            
-	                        this.primFactory.createPrim(
-	            
-	                            this.s1,                      // callback function
-	                            typeList.CUBE,
-	                            'toji',                                        // name
-	                            vec5( 1, 1, 1 ),            // dimensions
-	                            vec5( 10, 10, 10, 0 ),            // divisions, pass curving of edges as 4th parameter
-	                            vec3.fromValues( 1, 0, 2 ),            // position (absolute)
-	                            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-	                            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-	                            vec3.fromValues( util.degToRad( 1 ), util.degToRad( 1 ), util.degToRad( 1 ) ), // angular velocity in x, y, x
-	                            [ 'img/crate.png', 'img/webvr-logo1.png', 'img/wood-planks-tiled.jpg' ],          // texture image
-	                            [] // no models present
-	                            // if true, use color array instead of texture array
-	                            // if true, apply textures to each face, not whole Prim.
-	                        );
-	            
-	            
-	            
-	            */
 
-	            /*
-	                        this.primFactory.createPrim(
-	                        
-	                            this.s1,                      // callback function
-	                            typeList.CYLINDER,
-	                            'shortcylinder',
-	                            vec5( 1, 1, 1, 0.3, 0.7 ),       // dimensions (4th dimension doesn't exist for cylinder)
-	                            vec5( 40, 40, 40  ),        // divisions MAKE SMALLER
-	                            vec3.fromValues(-1.5, -1.5, 2.0 ),          // position (absolute)
-	                            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-	                            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-	                            vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-	                            [ 'img/uv-test.png' ],               // texture present
-	                            []// no models present
-	                            // if true, use color array instead of texture array
-	                            // if true, apply textures to each face, not whole Prim.
-	                        );
-	            
-	            */
+	            this.primFactory.createPrim(this.s1, // callback function
+	            typeList.CUBE, 'toji', // name
+	            vec5(1, 1, 1), // dimensions
+	            vec5(10, 10, 10, 0), // divisions, pass curving of edges as 4th parameter
+	            vec3.fromValues(1, 0, 2), // position (absolute)
+	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	            vec3.fromValues(util.degToRad(1), util.degToRad(1), util.degToRad(1)), // angular velocity in x, y, x
+	            ['img/crate.png', 'img/webvr-logo1.png', 'img/wood-planks-tiled.jpg'], // texture image
+	            [] // no models present
+	            // if true, use color array instead of texture array
+	            // if true, apply textures to each face, not whole Prim.
+	            );
 
-	            /*
-	                        this.primFactory.createPrim(
-	            
-	                            this.s1,                               // callback function
-	                            typeList.MESH,
-	                            'objfile',
-	                            vec5( 2, 2, 2 ),                       // dimensions (4th dimension doesn't exist for cylinder)
-	                            vec5( 40, 40, 40  ),                    // divisions MAKE SMALLER
-	                            vec3.fromValues( -3.5, -1, -0.0 ),      // position (absolute)
-	                            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-	                            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-	                            vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-	                            [], // texture loaded directly
-	                            [ 'obj/capsule/capsule.obj' ] // object files (.obj, .mtl)
-	                            //[ 'obj/mountains/mountains.obj' ] // ok
-	                            //[ 'obj/landscape/landscape.obj'] // ok?
-	                            //[ 'obj/toilet/toilet.obj' ] // works with texture, multiple groups wrap texture!
-	                            //[ 'obj/naboo/naboo.obj' ] // works fine, but needs to load additional images.
-	                            //[ 'obj/star/star.obj'] // ok, gets generic grey texture
-	                            //[ 'obj/robhead/robhead.obj'] // no texcoords or normals
-	                            //[ 'obj/soccerball/soccerball.obj'] // no texcoords or normals
-	                            //[ 'obj/basketball/basketball.obj'] // needs TGA translation
-	                            //[ 'obj/rock1/rock1.obj'] // rock plus surface, works
-	                            //[ 'obj/cherries/cherries.obj'] // rendering indices error
-	                            //[ 'obj/banana/banana.obj' ] // works great
-	                            // if true, use color array instead of texture array
-	                            // if true, apply textures to each face, not whole Prim.
-	                        );
-	            
-	            */
+	            this.primFactory.createPrim(this.s1, // callback function
+	            typeList.CYLINDER, 'shortcylinder', vec5(1, 1, 1, 0.3, 0.7), // dimensions (4th dimension doesn't exist for cylinder)
+	            vec5(40, 40, 40), // divisions MAKE SMALLER
+	            vec3.fromValues(-1.5, -1.5, 2.0), // position (absolute)
+	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	            vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	            ['img/uv-test.png'], // texture present
+	            [] // no models present
+	            // if true, use color array instead of texture array
+	            // if true, apply textures to each face, not whole Prim.
+	            );
 
-	            /*
-	                        this.primFactory.createPrim(
-	            
-	                            this.s1,                               // callback function
-	                            typeList.MESH,
-	                            'toilet',
-	                            vec5( 2, 2, 2 ),                       // dimensions (4th dimension doesn't exist for cylinder)
-	                            vec5( 40, 40, 40  ),                    // divisions MAKE SMALLER
-	                            vec3.fromValues( -1.5, -1, -0.0 ),      // position (absolute)
-	                            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-	                            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-	                            vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-	                            [], // texture loaded directly
-	                            //[ 'obj/capsule/capsule.obj' ] // object files (.obj, .mtl)
-	                            //[ 'obj/mountains/mountains.obj' ] // ok
-	                            //[ 'obj/landscape/landscape.obj'] // ok?
-	                            [ 'obj/toilet/toilet.obj' ] // works with texture, multiple groups wrap texture!
-	                            //[ 'obj/naboo/naboo.obj' ] // works fine, but needs to load additional images.
-	                            //[ 'obj/star/star.obj'] // ok, gets generic grey texture
-	                            //[ 'obj/robhead/robhead.obj'] // no texcoords or normals
-	                            //[ 'obj/soccerball/soccerball.obj'] // no texcoords or normals
-	                            //[ 'obj/basketball/basketball.obj'] // needs TGA translation
-	                            //[ 'obj/rock1/rock1.obj'] // rock plus surface, works
-	                            //[ 'obj/cherries/cherries.obj'] // rendering indices error
-	                            //[ 'obj/banana/banana.obj' ] // works great
-	                            // if true, use color array instead of texture array
-	                            // if true, apply textures to each face, not whole Prim.
-	                        );
-	            
-	            */
+	            this.primFactory.createPrim(this.s1, // callback function
+	            typeList.MESH, 'objfile', vec5(2, 2, 2), // dimensions (4th dimension doesn't exist for cylinder)
+	            vec5(40, 40, 40), // divisions MAKE SMALLER
+	            vec3.fromValues(-3.5, -1, -0.0), // position (absolute)
+	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	            vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	            [], // texture loaded directly
+	            //[ 'obj/capsule/capsule.obj' ] // object files (.obj, .mtl)
+	            //[ 'obj/rose/rose.obj' ],
+	            ['obj/rose2/rose2.obj']);
+
+	            this.primFactory.createPrim(this.s1, // callback function
+	            typeList.MESH, 'toilet', vec5(2, 2, 2), // dimensions (4th dimension doesn't exist for cylinder)
+	            vec5(40, 40, 40), // divisions MAKE SMALLER
+	            vec3.fromValues(-1.5, -1, -0.0), // position (absolute)
+	            vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	            vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	            vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	            [], // texture loaded directly
+	            //[ 'obj/capsule/capsule.obj' ] // object files (.obj, .mtl)
+	            //[ 'obj/mountains/mountains.obj' ] // ok
+	            //[ 'obj/landscape/landscape.obj'] // ok?
+	            ['obj/toilet/toilet.obj'] // works with texture, multiple groups wrap texture!
+	            //[ 'obj/naboo/naboo.obj' ] // works fine, but needs to load additional images.
+	            //[ 'obj/star/star.obj'] // ok, gets generic grey texture
+	            //[ 'obj/robhead/robhead.obj'] // no texcoords or normals
+	            //[ 'obj/soccerball/soccerball.obj'] // no texcoords or normals
+	            //[ 'obj/basketball/basketball.obj'] // needs TGA translation
+	            //[ 'obj/rock1/rock1.obj'] // rock plus surface, works
+	            //[ 'obj/cherries/cherries.obj'] // rendering indices error
+	            //[ 'obj/banana/banana.obj' ] // works great
+	            // if true, use color array instead of texture array
+	            // if true, apply textures to each face, not whole Prim.
+	            );
 
 	            this.primFactory.createPrim(this.s1, // callback function
 	            typeList.MESH, 'cherries', vec5(2, 2, 2), // dimensions (4th dimension doesn't exist for cylinder)
@@ -20202,7 +20258,7 @@
 	        value: function _default() {
 	            var name = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.util.DEFAULT_KEY;
 	            var ambient = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [1.0, 1.0, 1.0];
-	            var diffuse = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [0.1, 0.7, 0.7];
+	            var diffuse = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [1.0, 1.0, 1.0];
 	            var specular = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [1.0, 1.0, 1.0];
 	            var specularExponent = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : 64.0;
 	            var emissive = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : [0, 0, 0];
@@ -20217,21 +20273,7 @@
 
 	            if (!map_Kd) {
 
-	                //if ( this.defaultKey ) {
-
 	                map_Kd = this.texturePool.getAssetByKey(this.texturePool.defaultKey).texture;
-
-	                //console.log('________________map_Kd:' + map_Kd)
-
-	                //} else {
-
-	                //    map_Kd = this.texturePool.create2dTexture( 
-
-	                //         new Uint8Array( [ diffuse[ 0 ] * 255 , diffuse[ 1 ] * 255, diffuse[ 2 ] * 255, 255 ] )
-
-	                //     );
-
-	                // }
 	            }
 
 	            return {
@@ -20697,7 +20739,9 @@
 
 	                                    if (type === 'd') data[0] = 1.0 - data[0]; // Invert
 
-	                                    materials[currName].transparency = parseFloat(data[0]); // single value, 0.0 - 1.0
+	                                    materials[currName].transparency = data[0]; // single value, 0.0 - 1.0
+
+	                                    console.log('>>>' + prim.name + ' transparency in material:' + currName + ":" + data[0]);
 	                                } else {
 
 	                                    console.error('MaterialPool::computeObjMaterials(): invalid transparency value at line:' + lineNum);
@@ -20758,7 +20802,9 @@
 	                             * map_Ka -s 1 1 1 -o 0 0 0 -mm 0 1 file.png
 	                             */
 
-	                            var tPath = data[data.length - 1].trim();
+	                            var tPath = data[data.length - 1].replace(/^.*[\\\/]/, '');
+
+	                            ////////let tPath = data[ data.length - 1 ].trim();
 
 	                            //////////console.log('path:' + path + ' data:' + data + ' tPath:' + tPath)
 

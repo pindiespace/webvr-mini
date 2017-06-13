@@ -1,6 +1,6 @@
 # Blender v2.71 (sub 0) OBJ File: 'Colorful-Balls.blend'
 # www.blender.org
-mtllib Colorful-Balls.mtl
+mtllib balls.mtl
 o Sphere.004_Sphere.005
 v 0.264919 1.436096 0.124479
 v 0.182884 1.420971 0.149541

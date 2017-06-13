@@ -762,6 +762,20 @@ class Util {
 
     }
 
+    /** 
+     * Sort a 2-dimensional array by value.
+     * @param {Array} arr the array to sort.
+     * @param {Number} colNum the position in the second-dimension (column) of the 2d array.
+     */
+    sort2DByColNum ( arr, colNum ) {
+
+        arr.sort( ( a, b ) => {
+
+            return a[ colNum ] - b[ colNum ];
+
+        } );
+
+    }
 
     /* 
      * ---------------------------------------
