@@ -189,7 +189,20 @@ class PrimFactory {
 
                 // Fade in from invisible to our assigned alpha value.
 
+                console.log(prim.name + " SETTING PRIM FADEIN, shader:" + prim.shader.name + ' and defaultShader:' + prim.defaultShader)
+
                 prim.setFade( 0, prim.alpha, 0.001, 'easeQuad' );
+
+                prim.failCount = 0;
+
+        } );
+
+
+        this.util.emitter.on( this.util.emitter.events.PRIM_REMOVED_FROM_SHADER, 
+
+            ( prim ) => {
+
+                // TODO:
 
         } );
 
@@ -834,7 +847,6 @@ class PrimFactory {
 
             }
 
-
             prim.alpha = start;
 
             // Increment.
@@ -867,27 +879,35 @@ class PrimFactory {
 
             // Save our current Shader as a default (automatically swapped back by s0).
 
-            //if ( prim.shader !== this.world.s0 ) {
+            if ( prim.shader !== this.world.s0 ) {
 
-            //    prim.defaultShader = prim.shader;
+                prim.defaultShader = prim.shader;
 
                 // Move the Prim WITHOUT emitting a Prim add/remove event.
 
                 prim.shader.movePrim( prim, this.world.s0 );
 
-            //}
+            }
 
         }
 
-        // Shader after the Prim has initialized.
 
-        prim.shader = this.world.s0; // Fadein Shader
+        // Prim name (arbitrary).
+
+        prim.name = name;
+
+
+        // Shader after the Prim has initialized.
 
         prim.defaultShader = shader; // Our post-fadein Shader
 
-        // Name (arbitrary).
+        prim.shader = this.world.s0; // fadein shader
 
-        prim.name = name;
+        console.log(prim.name + " SHADER IS:" + prim.shader.name + " AND DEFAULT SHADER IS:" + prim.defaultShader.name )
+
+        // Initially we aren't rendering.
+
+        prim.rendering = false;
 
         // Type (must match type defined in Prim.typeList).
 
@@ -973,6 +993,8 @@ class PrimFactory {
 
         prim.materials[ defaultName ] = this.materialPool.setDefaultMaterial( prim, this.materialPool.createDefaultName( prim.name ), textureImages );
 
+        // prim.defaultMaterial = prim.materials[ defaultName ];
+
         // Set Prim alpha from the active Material's transparency (opposite of prim.alpha === opacity).
 
         prim.alpha = 1.0 - prim.materials[ defaultName ].transparency;
@@ -1036,6 +1058,12 @@ class PrimFactory {
                 this.geometryPool.getGeometry( prim, null, true, { pos: 0, defaultMatStarts: true } );
 
         }
+
+
+        // Prim timecheck. If it is failing to add to a Shader
+
+        prim.failCount = 0;
+
 
         console.log('prim.name:' + prim.name)
 

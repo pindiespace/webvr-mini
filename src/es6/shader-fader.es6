@@ -28,7 +28,7 @@ class ShaderFader extends Shader {
 
         this.required.buffer.colors = true, 
 
-        this.required.buffer.textures = true, // even if default
+        this.required.buffer.texCoords = true, // even if default
 
         this.sortByDistance = true;
 
@@ -405,6 +405,8 @@ class ShaderFader extends Shader {
 
             let dir = f.endAlpha - f.startAlpha;
 
+            ///console.log("DIR:" + dir + " endAlpha:" + f.endAlpha + " startAlpha:" + f.startAlpha)
+
             if ( dir > 0 ) {
 
                 // Fadein. Use a fade equation.
@@ -419,13 +421,13 @@ class ShaderFader extends Shader {
 
                     // This turns off this Shader!
 
-                    console.log("TURN OFF SHADER:" + this.name + " MOVE TO:" + prim.shader.name)
+                    ///console.log("TURN OFF SHADER:" + this.name + " MOVE TO:" + prim.defaultShader.name)
 
-                    prim.shader.movePrim( prim, prim.defaultShader );
+                    prim.shader.movePrim( prim, prim.defaultShader ); 
 
                 }
 
-            } else if ( dir < 0 ) {
+            } else if ( dir <= 0 ) {
 
                 // Fadeout. Use a fade equation.
 
@@ -439,6 +441,8 @@ class ShaderFader extends Shader {
 
                     // This turns off this Shader!
 
+                    ///console.log("TURN OFF SHADER:" + this.name + " MOVE TO:" + prim.defaultShader.name)
+
                     prim.shader.movePrim( prim, prim.defaultShader );
 
                 }
@@ -451,8 +455,8 @@ class ShaderFader extends Shader {
 
         program.update = ( prim, MVM, updatePrim ) => {
 
-            //let f = prim.fade;
-            //console.log(prim.name + ' alpha:' + f.incr + ' endAlpha:' + f.endAlpha + ' startAlpha:' + f.startAlpha)
+            ///let f = prim.fade;
+            ///console.log(prim.name + ' in fade: alpha:' + prim.alpha + ' inc:' + f.incr + ' endAlpha:' + f.endAlpha + ' startAlpha:' + f.startAlpha)
 
             fade( prim );
 

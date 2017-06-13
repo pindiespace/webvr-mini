@@ -570,7 +570,7 @@ class MaterialPool extends AssetPool {
 
                             if ( currName && Number.isFinite( data[ 0 ] ) ) {
 
-                                if ( type === 'Tr' ) data[ 0 ] = 1.0 - data[ 0 ]; // Invert
+                                if ( type === 'd' ) data[ 0 ] = 1.0 - data[ 0 ]; // Invert
 
                                 materials[ currName ].transparency = parseFloat( data[ 0 ] ); // single value, 0.0 - 1.0
 

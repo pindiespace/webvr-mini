@@ -14,7 +14,7 @@ newmtl Cherry
 	Ke 0.0000 0.0000 0.0000
 	map_Ka Cherry.jpg
 	map_Kd Cherry.jpg
-	map_refl Raytrace_Raytrace.tga
+	map_refl Raytrace_Raytrace.png
 
 newmtl Cherry_gr
 	Ns 50.0000
@@ -31,7 +31,7 @@ newmtl Cherry_gr
 	map_Kd Cherry-grn.jpg
 	map_bump Cherry-grn.jpg
 	bump Cherry-grn.jpg
-	map_refl Raytrace_Raytrace.tga
+	map_refl Raytrace_Raytrace.png
 
 newmtl cherry_bowl
 	Ns 50.0000
@@ -48,4 +48,4 @@ newmtl cherry_bowl
 	map_Kd wood-dark.jpg
 	map_bump wood-dark-reflexion.jpg
 	bump wood-dark-reflexion.jpg
-	map_refl Mask_Mask.tga
+	map_refl Mask_Mask.png

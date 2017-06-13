@@ -5250,7 +5250,7 @@
 
 	        var _this = _possibleConstructorReturn(this, (ShaderFader.__proto__ || Object.getPrototypeOf(ShaderFader)).call(this, init, util, glMatrix, webgl, webvr, shaderName, lights));
 
-	        _this.required.buffer.indices = true, _this.required.buffer.colors = true, _this.required.buffer.textures = true, // even if default
+	        _this.required.buffer.indices = true, _this.required.buffer.colors = true, _this.required.buffer.texCoords = true, // even if default
 
 	        _this.sortByDistance = true;
 
@@ -5423,7 +5423,6 @@
 	    }, {
 	        key: 'init',
 	        value: function init(primList) {
-	            var _this2 = this;
 
 	            // DESTRUCTING DID NOT WORK!
 	            //[gl, canvas, mat4, vec3, pMatrix, mvMatrix, program ] = this.setup();
@@ -5544,6 +5543,8 @@
 
 	                var dir = f.endAlpha - f.startAlpha;
 
+	                ///console.log("DIR:" + dir + " endAlpha:" + f.endAlpha + " startAlpha:" + f.startAlpha)
+
 	                if (dir > 0) {
 
 	                    // Fadein. Use a fade equation.
@@ -5558,11 +5559,11 @@
 
 	                        // This turns off this Shader!
 
-	                        console.log("TURN OFF SHADER:" + _this2.name + " MOVE TO:" + prim.shader.name);
+	                        ///console.log("TURN OFF SHADER:" + this.name + " MOVE TO:" + prim.defaultShader.name)
 
 	                        prim.shader.movePrim(prim, prim.defaultShader);
 	                    }
-	                } else if (dir < 0) {
+	                } else if (dir <= 0) {
 
 	                    // Fadeout. Use a fade equation.
 
@@ -5576,6 +5577,8 @@
 
 	                        // This turns off this Shader!
 
+	                        ///console.log("TURN OFF SHADER:" + this.name + " MOVE TO:" + prim.defaultShader.name)
+
 	                        prim.shader.movePrim(prim, prim.defaultShader);
 	                    }
 	                }
@@ -5585,8 +5588,8 @@
 
 	            program.update = function (prim, MVM, updatePrim) {
 
-	                //let f = prim.fade;
-	                //console.log(prim.name + ' alpha:' + f.incr + ' endAlpha:' + f.endAlpha + ' startAlpha:' + f.startAlpha)
+	                ///let f = prim.fade;
+	                ///console.log(prim.name + ' in fade: alpha:' + prim.alpha + ' inc:' + f.incr + ' endAlpha:' + f.endAlpha + ' startAlpha:' + f.startAlpha)
 
 	                fade(prim);
 
@@ -5880,11 +5883,11 @@
 
 	                normals: false,
 
+	                colors: true,
+
 	                tangents: false
 
 	            },
-
-	            colors: true,
 
 	            textures: {
 
@@ -5911,6 +5914,10 @@
 	            }
 
 	        };
+
+	        // Max number of times a Prim can fail to add to a Shader.
+
+	        this.MAX_FAIL = 100;
 
 	        // If we need to sort by distance (translucent Prims), set to true.
 
@@ -5972,11 +5979,28 @@
 	            var emit = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
 
 
+	            // If a Prim never initializes, give up, and flag with a warning.
+
+	            if (prim.failCount > this.MAX_FAIL) {
+
+	                // Remove the Prim its CURRENT Shader.
+
+	                prim.shader.removePrim(prim);
+
+	                ///console.error( 'prim:' + prim.name + ' could not be added to Shader:' + this.name + ', giving up (removing from display list)' );
+
+	                return;
+	            }
+
 	            if (this.checkPrim(prim)) {
+
+	                ///console.log( 'Shader::addPrim(): checking if ' + prim.name + ' is in our list...' );
 
 	                if (this.primInList(prim) === this.NOT_IN_LIST) {
 
-	                    console.warn('Shader::addPrim():prim:' + prim.name + ' not in list, adding to Shader::' + this.name);
+	                    ///console.warn( 'Shader::addPrim(): prim:' + prim.name + ' current Shader:' + prim.shader.name + ' default:' + prim.defaultShader.name )
+
+	                    ///console.warn( 'Shader::addPrim():prim:'  + prim.name + ' not in list, adding to Shader::' + this.name );
 
 	                    // Add the Prim to the Shader program's renderList. If a nulled position is present, use it.
 
@@ -5984,12 +6008,12 @@
 
 	                    if (pos !== this.NOT_IN_LIST) {
 
-	                        ///////console.warn( 'Shader::addPrim():filling NULL with:' + prim.name + ' to:' + this.name );
+	                        ///console.warn( 'Shader::addPrim():filling NULL with:' + prim.name + ' to:' + this.name );
 
 	                        this.program.renderList[pos] = prim;
 	                    } else {
 
-	                        console.warn('Shader::addPrim():appending prim:' + prim.name + ' to:' + this.name);
+	                        ///console.warn( 'Shader::addPrim():appending prim:' + prim.name + ' to:' + this.name )
 
 	                        this.program.renderList.push(prim);
 	                    }
@@ -6001,6 +6025,8 @@
 	                        this.sortPrimsByDistance([0, 0, 0]);
 	                    }
 
+	                    // Switch the Prim's default Shader, and remove it from its old Shader (there can only be one).
+
 	                    if (prim.shader && prim.shader !== this) {
 
 	                        //console.log( 'Shader::addPrim(): removing prim:' + prim.name + ' from old Shader:' + prim.shader.name)
@@ -6008,9 +6034,10 @@
 	                        prim.shader.removePrim(prim, emit);
 	                    }
 
-	                    // Switch the Prim's default Shader, and remove it from its old Shader (there can only be one).
-
 	                    prim.shader = this; // may already be the case
+
+
+	                    prim.rendering = true;
 
 	                    // Emit a PRIM_READY event.
 
@@ -6022,16 +6049,17 @@
 	                    return true;
 	                } else {
 
-	                    ////////console.warn( 'Shader::addPrim():' + prim.name + ' already added to Shader::' + this.name );
-
+	                    console.warn('Shader::addPrim():' + prim.name + ' already added to Shader::' + this.name);
 	                }
-	            } else {
+	            }
 
-	                    //TODO: REMOVE THIS OPTION:
+	            //console.warn( 'Shader::addPrim():' + prim.name + ' did not pass Shader test for ' + this.name )
 
-	                    //console.warn( 'Shader::addPrim():' + prim.name + ' did not pass Shader test for ' + this.name )
+	            // Increment our fail count. If past PrimFactory.MAX_FAIL, give up trying to add the Prim.
 
-	                }
+	            console.log(prim.name + " failCount:" + prim.failCount);
+
+	            prim.failCount++;
 
 	            return false;
 	        }
@@ -6055,11 +6083,13 @@
 
 	                // Remove a Prim from the Shader program's renderList (still in PrimList and World).
 
-	                ////////console.warn( 'Shader::removePrim():removing prim:' + prim.name );
+	                console.warn('Shader::removePrim():removing prim:' + prim.name + ' from Shader:' + this.name);
 
 	                //////////////////////this.program.renderList.splice( pos, 1 );
 
 	                this.program.renderList[pos] = null;
+
+	                prim.rendering = false;
 
 	                // Emit a Prim removal event.
 
@@ -6112,15 +6142,28 @@
 
 	            if (!this.checkPrimBuffers(prim)) {
 
+	                console.log("bad buffers");
+
 	                return false;
 	            }
 
 	            if (!this.checkPrimMaterials(prim)) {
 
+	                console.log("bad materials");
+
 	                return false;
 	            }
 
-	            console.log('Shader::checkPrim(): prim:' + prim.name + ' ready to be added to:' + this.name);
+	            if (!this.checkPrimTextures(prim)) {
+
+	                console.log("bad textures");
+
+	                return false;
+	            }
+
+	            // FAIL IF WE ARE TRYING TO ADD TO OURSELVES!!!!!!!!!
+
+	            console.log('Shader::checkPrim(): prim:' + prim.name + ' ready to be added to:' + this.name + ' from:' + prim.shader.name);
 
 	            return true;
 	        }
@@ -6141,11 +6184,15 @@
 
 	            for (var i in buffer) {
 
+	                ///console.log(prim.name + " BUFFER NAME:" + i );
+
 	                if (buffer[i]) {
 
-	                    //console.log( prim.name + ' required i:' + i + ' value:' + buffer[ i ] + ' geo value:' + geo[ i ] + ' buffer:' + geo[ i ].buffer)
+	                    ///console.log( prim.name + ' required i:' + i + ' value:' + buffer[ i ] + ' geo value:' + geo[ i ])
 
-	                    if (geo[i] && !geo[i].buffer) {
+	                    if (!geo[i] || !geo[i].buffer) {
+
+	                        ///console.log( prim.name + ' has no buffer at:' + i + ' yet' );
 
 	                        return false;
 	                    }
@@ -6168,7 +6215,7 @@
 
 	            if (prim.matStarts === undefined || prim.matStarts.length < 1) {
 
-	                ////console.log(prim.name + ' does not have matStarts yet' )
+	                ///console.log(prim.name + ' does not have matStarts yet' )
 
 	                return false;
 	            }
@@ -6179,12 +6226,7 @@
 
 	            if (prim.materials[matName] === undefined) {
 
-	                ////console.log(prim.name + ' does not have first material (' + prim.matStarts[ 0 ][ 0 ] + ') yet' );
-
-	                return false;
-	            }
-
-	            if (!this.checkPrimTextures(prim)) {
+	                ///console.log(prim.name + ' does not have first material (' + prim.matStarts[ 0 ][ 0 ] + ') yet' );
 
 	                return false;
 	            }
@@ -6207,19 +6249,21 @@
 
 	            var st = prim.matStarts;
 
-	            // if (st.length === 0 ) console.log(prim.name + " does have ST IS ZERO in checkPrimTextures")
+	            ///if (st.length === 0 ) console.log(prim.name + " does have ST IS ZERO in checkPrimTextures")
 
 	            for (var i = 0; i < st.length; i++) {
 
 	                //console.log(prim.name + " does have material NAME " + st[ 0 ][ 0 ] + ' in matStarts in checkPrimtextures')
 
-	                //for ( let j in prim.materials ) {
+	                for (var j in prim.materials) {
 
-	                //    console.log(prim.name + ' does have LOOPO current material: ' + j + '===' +  st[ 0 ][ 0 ] )
+	                    //console.log(prim.name + ' does have LOOPO current material: ' + j + '===' +  st[ 0 ][ 0 ] )
 
-	                //    if ( j === st[ 0 ][ 0 ] ) console.log(prim.name + ' does have st[0] matching ' + j )
+	                    //if ( j === st[ 0 ][ 0 ] ) console.log(prim.name + ' does have st[0] matching ' + j )
 
-	                //}
+	                    // TODO: NEED A FAIL FLAG FOR NO LOAD ON THIS CHECK.
+
+	                }
 
 	                var matName = st[0][0];
 
@@ -6227,12 +6271,12 @@
 
 	                if (m === undefined) {
 
-	                    ////    console.log(prim.name + ' does not have MATERIAL ' + matName + ' DEFINED IN checkPrimTextures' )
+	                    //console.log(prim.name + ' does not have MATERIAL ' + matName + ' DEFINED IN checkPrimTextures' )
 
 	                    return false;
 	                }
 
-	                ///console.log(prim.name + ' does have MATERIAL DEFINED in checkPrimTextures')
+	                //console.warn(prim.name + ' does have MATERIAL DEFINED in checkPrimTextures')
 
 	                for (var _i in tex) {
 
@@ -6240,7 +6284,7 @@
 
 	                    if (m[_i] && (m[_i] === null || !(m[_i] instanceof WebGLTexture))) {
 
-	                        //console.log(prim.name + ' does not have TEXTURE ' + i + ' defined in checkPrimTextures')
+	                        console.warn(prim.name + ' OBJ does not have texture ' + _i + ' defined in material:' + matName);
 
 	                        return false;
 	                    }
@@ -9189,7 +9233,17 @@
 
 	            // Fade in from invisible to our assigned alpha value.
 
+	            console.log(prim.name + " SETTING PRIM FADEIN, shader:" + prim.shader.name + ' and defaultShader:' + prim.defaultShader);
+
 	            prim.setFade(0, prim.alpha, 0.001, 'easeQuad');
+
+	            prim.failCount = 0;
+	        });
+
+	        this.util.emitter.on(this.util.emitter.events.PRIM_REMOVED_FROM_SHADER, function (prim) {
+
+	            // TODO:
+
 	        });
 	    } // end of constructor
 
@@ -9828,26 +9882,31 @@
 
 	                // Save our current Shader as a default (automatically swapped back by s0).
 
-	                //if ( prim.shader !== this.world.s0 ) {
+	                if (prim.shader !== _this2.world.s0) {
 
-	                //    prim.defaultShader = prim.shader;
+	                    prim.defaultShader = prim.shader;
 
-	                // Move the Prim WITHOUT emitting a Prim add/remove event.
+	                    // Move the Prim WITHOUT emitting a Prim add/remove event.
 
-	                prim.shader.movePrim(prim, _this2.world.s0);
-
-	                //}
+	                    prim.shader.movePrim(prim, _this2.world.s0);
+	                }
 	            };
+
+	            // Prim name (arbitrary).
+
+	            prim.name = name;
 
 	            // Shader after the Prim has initialized.
 
-	            prim.shader = this.world.s0; // Fadein Shader
-
 	            prim.defaultShader = shader; // Our post-fadein Shader
 
-	            // Name (arbitrary).
+	            prim.shader = this.world.s0; // fadein shader
 
-	            prim.name = name;
+	            console.log(prim.name + " SHADER IS:" + prim.shader.name + " AND DEFAULT SHADER IS:" + prim.defaultShader.name);
+
+	            // Initially we aren't rendering.
+
+	            prim.rendering = false;
 
 	            // Type (must match type defined in Prim.typeList).
 
@@ -9933,6 +9992,8 @@
 
 	            prim.materials[defaultName] = this.materialPool.setDefaultMaterial(prim, this.materialPool.createDefaultName(prim.name), textureImages);
 
+	            // prim.defaultMaterial = prim.materials[ defaultName ];
+
 	            // Set Prim alpha from the active Material's transparency (opposite of prim.alpha === opacity).
 
 	            prim.alpha = 1.0 - prim.materials[defaultName].transparency;
@@ -9993,6 +10054,10 @@
 
 	                this.geometryPool.getGeometry(prim, null, true, { pos: 0, defaultMatStarts: true });
 	            }
+
+	            // Prim timecheck. If it is failing to add to a Shader
+
+	            prim.failCount = 0;
 
 	            console.log('prim.name:' + prim.name);
 
@@ -17018,13 +17083,17 @@
 
 	        _this.greyPixel = new Uint8Array([128, 128, 128, 255]);
 
+	        _this.transparentPixel = new Uint8Array([0, 0, 0, 0]);
+
 	        if (init) {
 
-	            // Create and store a default texture (one greyPixel).
+	            // Create and store a default texture (one greyPixel, one transparent pixel).
 
 	            var gl = webgl.getContext();
 
 	            _this.defaultKey = _this.addAsset(_this.default(null, null, gl.TEXTURE_2D, null, _this.create2dTexture(), null)).key;
+
+	            _this.transparentKey = _this.addAsset(_this.default(null, null, gl.TEXTURE_2D, null, _this.create2dTexture(), null)).key;
 	        }
 
 	        return _this;
@@ -20626,7 +20695,7 @@
 
 	                                if (currName && Number.isFinite(data[0])) {
 
-	                                    if (type === 'Tr') data[0] = 1.0 - data[0]; // Invert
+	                                    if (type === 'd') data[0] = 1.0 - data[0]; // Invert
 
 	                                    materials[currName].transparency = parseFloat(data[0]); // single value, 0.0 - 1.0
 	                                } else {

@@ -49,13 +49,17 @@ class TexturePool extends AssetPool {
 
         this.greyPixel = new Uint8Array( [ 128, 128, 128, 255 ] );
 
+        this.transparentPixel = new Uint8Array( [ 0, 0, 0, 0 ] );
+
         if ( init ) {
 
-            // Create and store a default texture (one greyPixel).
+            // Create and store a default texture (one greyPixel, one transparent pixel).
 
             let gl = webgl.getContext();
 
             this.defaultKey = this.addAsset( this.default( null, null, gl.TEXTURE_2D, null, this.create2dTexture(), null ) ).key;
+
+            this.transparentKey = this.addAsset( this.default( null, null, gl.TEXTURE_2D, null, this.create2dTexture(), null ) ).key;
 
         }
 
