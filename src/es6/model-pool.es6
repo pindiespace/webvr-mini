@@ -293,6 +293,100 @@ class ModelPool extends AssetPool {
 
     }
 
+    /**
+     * Flatten the arrays so we only need one index array.
+
+     // TODO: DETERMINE WHY WE ARE NOT RE-CREAting oRigiNAL ArRAYS!!!!!!
+     
+     */
+    computeFlatArrays ( geo, vertices, indices, texCoords, normals ) {
+
+        let iHash = [];
+
+        let faces = geo.faces;
+
+        let nVertices = geo.vertices, nIndices = geo.indices, nTexCoords = geo.texCoords, nNormals = geo.normals;
+
+        for ( let i = 0; i < faces.length; i++ ) {
+
+            let f = faces[ i ];
+
+            // Construct a hash key for this face.
+
+            let key = f[ 0 ] + '_' + f[ 1 ] + '_' + f[ 2 ]; // point key (vertex, index, normals)
+
+            let vIdx, iIdx;
+
+            if ( iHash[ key ] !== undefined ) {
+
+                    // Push the existing, revised value for the face key.
+
+                    vIdx = f[ 0 ] // old face index within OBJ file.
+
+                    iIdx = iHash[ key ] //REDUNDANT
+
+                    nIndices.push( iHash[ key ] );
+
+            } else {
+
+                vIdx = f[ 0 ]; // old face index within OBJ file
+
+                iIdx = parseInt( vertices.length / 3 ); // new face index in the new arrays
+
+                let tIdx, nIdx;
+
+                // Push the new Index.
+
+                nIndices.push( iIdx );
+
+                // Save the new index under the hash key
+
+                iHash[ key ] = iIdx;
+
+                // Push the flattened vertex, texCoord, normal values.
+
+                vIdx *= 3;
+
+                // Push vertices.
+
+                nVertices.push( vertices[ vIdx ], vertices[ vIdx + 1 ], vertices[ vIdx + 2 ] );
+
+                // Push texture coords.
+
+                if ( f[ 1 ] !== null ) { 
+
+                    tIdx = f[ 1 ] * 2;
+
+                    nTexCoords.push( texCoords[ tIdx ], texCoords[ tIdx + 1 ] );
+
+                } else {
+
+                    nTexCoords.push( 0, 0 );
+
+                }
+
+                // Push normals.
+
+                if ( f[ 2 ] !== null ) { 
+
+                    nIdx = f[ 2 ] * 3;
+
+                    nNormals.push( normals[ nIdx ], normals[ nIdx + 1 ], normals[ nIdx + 2 ] );
+
+                } else {
+
+                    nNormals.push( 0, 0, 0 );
+
+                }
+
+            }
+
+            console.log('VIDX:' + vIdx + " IIDX:" + iIdx)
+
+
+        }
+
+    }
 
     /** 
      * Parse the .obj file into flattened object data
@@ -351,6 +445,26 @@ class ModelPool extends AssetPool {
         faces = [];
 
         let dir = this.util.getFilePath( path );
+
+        // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        let geos = [];
+        // Need default material.
+
+        let currGeo = geos[ this.materialPool.createDefaultName( prim.name ) ] = {
+
+            faces: [],
+
+            vertices: [],
+
+            indices: [],
+
+            texCoords: [],
+
+            normals: []
+
+        }
+        window.geos = geos;
+        // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
         // Get the lines of the file.
 
@@ -427,6 +541,8 @@ class ModelPool extends AssetPool {
 
                     case 'f': // line of faces, indices, convert polygons to triangles
 
+                        ///if ( ! currMat ) console.error( "starting faces, but not material defined yet! ");
+
                         // If our previous line was a smoothing group, add the start.
 
                         let sg, oldLen;
@@ -452,6 +568,15 @@ class ModelPool extends AssetPool {
                             sg.push( faces.length - oldLen );
 
                         }
+
+                        // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                        // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                        // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                        //console.log("CURRGEO:" + currGeo )
+                        //console.log("adding to CURRGEO for:" + prim.name)
+                        this.computeObjFaces( data, currGeo.faces, lineNum )
+                        // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                        // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
                         break;
 
@@ -483,7 +608,9 @@ class ModelPool extends AssetPool {
 
                             ///////let path = dir + mtls[ i ];
 
-                            let path = dir + mtls[ i ].replace(/^.*[\\\/]/, ''); // strip directories and add our own
+                            ///let path = dir + mtls[ i ].replace(/^.*[\\\/]/, ''); // strip directories and add our own
+
+                            let path = dir + this.util.getFileName( mtls[ i ] );
 
                             this.materialPool.getMaterial( prim, path, true, { pos: i } );
 
@@ -495,7 +622,25 @@ class ModelPool extends AssetPool {
 
                         // matStarts records where to start in the index (faces) array.
 
-                        matStarts.push( [ data, faces.length ] ); // store material and start position.
+                        let path = this.util.getFileName ( data );
+
+                        matStarts.push( [ path, faces.length ] ); // store material and start position.
+
+                        currGeo = geos[ data ] = {
+
+                            faces: [],
+
+                            vertices: [],
+
+                            indices: [],
+
+                            texCoords: [],
+
+                            normals: []
+
+                        };
+
+                        //console.log("USEMTL:" + path + " faces length:" + faces.length )
 
                         /////console.log('ModelPool::computeObjMesh(): material start for material[' + data + '] at:' + faces.length );
 
@@ -569,6 +714,16 @@ class ModelPool extends AssetPool {
 
         // Rewrite indices to fold texCoords and normals under the same index as the vertices (needed for WebGL).
 
+        // @@@@@@@@@@@@@@@@@
+
+        for ( let k in geos ) {
+
+            this.computeFlatArrays( geos[ k ], tVertices, tIndices, tTexCoords, tNormals );
+
+        }
+
+        // @@@@@@@@@@@@@@@@@
+
         if ( faces.length ) {
 
             let nIndices = [], nVertices = [], nTexCoords = [], nNormals = [], nMatStarts = [], nSmoothingGroups = [];
@@ -617,7 +772,6 @@ class ModelPool extends AssetPool {
 
                     ///////////////////////::::::::::::::::::::::::::::::::::::::::::::::::::::
 
- 
                     // Push the flattened vertex, texCoord, normal values.
 
                     vIdx *= 3;
@@ -665,7 +819,7 @@ class ModelPool extends AssetPool {
 
                    if ( matStarts[ j ][ 1 ] === i )  {
 
-                        console.log("recomputng, i:" + i + ' old index:' + matStarts[ j ][ 1 ] + ' new index:' + (nIndices.length - 1))
+                        //////console.log("recomputng, i:" + i + ' old index:' + matStarts[ j ][ 1 ] + ' new index:' + (nIndices.length - 1))
 
                          matStarts[ j ][ 1 ] = nIndices.length - 1;
 
@@ -729,6 +883,43 @@ class ModelPool extends AssetPool {
         m.texCoords = tTexCoords,
 
         m.normals = tNormals;
+
+        // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+/*
+        for ( let k in geos ) {
+
+            let g = geos[ k ];
+
+            m.vertices = m.vertices.concat( m.vertices, g.vertices );
+            m.texCoords = m.texCoords.concat( m.texCoords, g.texCoords );
+            m.normals = m.normals.concat( m.normals, g.normals );
+
+            //Array.prototype.push.apply( m.vertices, g.vertices );
+
+            //Array.prototype.push.apply( m.texCoords, g.texCoords );
+
+            //Array.prototype.push.apply( m.normals, g.normals );
+
+            // Update indices for current length of vertices.
+
+            let len = g.vertices.length;
+
+            //g.indices.forEach( function( idx ) {
+
+            //    idx += len;
+
+            //} );
+
+            m.indices = m.indices.concat( m.indices, g.indices );
+
+            //Array.prototype.push.apply( m.indices, g.indices );
+
+        }
+*/
+
+        // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
         // NOTE: Color arrays and tangents are not part of the Wavefront .obj format (in .mtl data).
 

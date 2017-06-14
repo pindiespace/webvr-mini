@@ -873,13 +873,28 @@ class Util {
     }
 
     /** 
+     * Get the file name, no path.
+     */
+    getFileName ( fname ) {
+
+        if ( fname ) {
+
+            return fname.replace( /^(.*[/\\])?/, '' );
+
+        }
+
+        return null;
+
+    }
+
+    /** 
      * Get the file name, without path or extension.
      */
     getBaseName ( fname ) {
 
         if ( fname ) {
 
-            return fname.replace( /^(.*[/\\])?/, '' ).replace( /(\.[^.]*)$/, '' );
+            return this.getFileName( fname ).replace( /(\.[^.]*)$/, '' );
 
         }
 

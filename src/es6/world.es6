@@ -333,6 +333,8 @@ class World extends AssetPool {
 
 */
 
+
+
             this.primFactory.createPrim(
 
                 this.s1,                               // callback function
@@ -405,6 +407,36 @@ class World extends AssetPool {
 
                 this.s1,                               // callback function
                 typeList.MESH,
+                'banana',
+                vec5( 2, 2, 2 ),                       // dimensions (4th dimension doesn't exist for cylinder)
+                vec5( 40, 40, 40  ),                    // divisions MAKE SMALLER
+                vec3.fromValues( 1.5, -1, 2.0 ),      // position (absolute)
+                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+                vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+                [], // texture loaded directly
+                //[ 'obj/capsule/capsule.obj' ] // object files (.obj, .mtl)
+                //[ 'obj/mountains/mountains.obj' ] // ok
+                //[ 'obj/landscape/landscape.obj'] // ok?
+                //[ 'obj/toilet/toilet.obj' ] // works with texture, multiple groups wrap texture!
+                //[ 'obj/naboo/naboo.obj' ] // works fine, but needs to load additional images.
+                //[ 'obj/star/star.obj'] // ok, gets generic grey texture
+                //[ 'obj/robhead/robhead.obj'] // no texcoords or normals
+                //[ 'obj/soccerball/soccerball.obj'] // no texcoords or normals
+                //[ 'obj/basketball/basketball.obj'] // needs TGA translation
+                //[ 'obj/rock1/rock1.obj'] // rock plus surface, works
+                [ 'obj/banana/banana.obj' ] // works great
+                // if true, use color array instead of texture array
+                // if true, apply textures to each face, not whole Prim.
+                // if true, use color array instead of texture array
+                // if true, apply textures to each face, not whole Prim.
+                // if true, use lighting
+            );
+
+            this.primFactory.createPrim(
+
+                this.s1,                               // callback function
+                typeList.MESH,
                 'cherries',
                 vec5( 2, 2, 2 ),                       // dimensions (4th dimension doesn't exist for cylinder)
                 vec5( 40, 40, 40  ),                    // divisions MAKE SMALLER
@@ -431,7 +463,6 @@ class World extends AssetPool {
                 // if true, apply textures to each face, not whole Prim.
                 // if true, use lighting
             );
-
 */
 
 

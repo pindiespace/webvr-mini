@@ -1411,6 +1411,22 @@
 	        }
 
 	        /** 
+	         * Get the file name, no path.
+	         */
+
+	    }, {
+	        key: 'getFileName',
+	        value: function getFileName(fname) {
+
+	            if (fname) {
+
+	                return fname.replace(/^(.*[/\\])?/, '');
+	            }
+
+	            return null;
+	        }
+
+	        /** 
 	         * Get the file name, without path or extension.
 	         */
 
@@ -1420,7 +1436,7 @@
 
 	            if (fname) {
 
-	                return fname.replace(/^(.*[/\\])?/, '').replace(/(\.[^.]*)$/, '');
+	                return this.getFileName(fname).replace(/(\.[^.]*)$/, '');
 	            }
 
 	            return null;
@@ -16503,6 +16519,99 @@
 	            }
 	        }
 
+	        /**
+	         * Flatten the arrays so we only need one index array.
+	          // TODO: DETERMINE WHY WE ARE NOT RE-CREAting oRigiNAL ArRAYS!!!!!!
+	         
+	         */
+
+	    }, {
+	        key: 'computeFlatArrays',
+	        value: function computeFlatArrays(geo, vertices, indices, texCoords, normals) {
+
+	            var iHash = [];
+
+	            var faces = geo.faces;
+
+	            var nVertices = geo.vertices,
+	                nIndices = geo.indices,
+	                nTexCoords = geo.texCoords,
+	                nNormals = geo.normals;
+
+	            for (var i = 0; i < faces.length; i++) {
+
+	                var f = faces[i];
+
+	                // Construct a hash key for this face.
+
+	                var key = f[0] + '_' + f[1] + '_' + f[2]; // point key (vertex, index, normals)
+
+	                var vIdx = void 0,
+	                    iIdx = void 0;
+
+	                if (iHash[key] !== undefined) {
+
+	                    // Push the existing, revised value for the face key.
+
+	                    vIdx = f[0]; // old face index within OBJ file.
+
+	                    iIdx = iHash[key]; //REDUNDANT
+
+	                    nIndices.push(iHash[key]);
+	                } else {
+
+	                    vIdx = f[0]; // old face index within OBJ file
+
+	                    iIdx = parseInt(vertices.length / 3); // new face index in the new arrays
+
+	                    var tIdx = void 0,
+	                        nIdx = void 0;
+
+	                    // Push the new Index.
+
+	                    nIndices.push(iIdx);
+
+	                    // Save the new index under the hash key
+
+	                    iHash[key] = iIdx;
+
+	                    // Push the flattened vertex, texCoord, normal values.
+
+	                    vIdx *= 3;
+
+	                    // Push vertices.
+
+	                    nVertices.push(vertices[vIdx], vertices[vIdx + 1], vertices[vIdx + 2]);
+
+	                    // Push texture coords.
+
+	                    if (f[1] !== null) {
+
+	                        tIdx = f[1] * 2;
+
+	                        nTexCoords.push(texCoords[tIdx], texCoords[tIdx + 1]);
+	                    } else {
+
+	                        nTexCoords.push(0, 0);
+	                    }
+
+	                    // Push normals.
+
+	                    if (f[2] !== null) {
+
+	                        nIdx = f[2] * 3;
+
+	                        nNormals.push(normals[nIdx], normals[nIdx + 1], normals[nIdx + 2]);
+	                    } else {
+
+	                        nNormals.push(0, 0, 0);
+	                    }
+	                }
+
+	                console.log('VIDX:' + vIdx + " IIDX:" + iIdx);
+	            }
+	        }
+
 	        /** 
 	         * Parse the .obj file into flattened object data
 	         * @link http://paulbourke.net/dataformats/obj/
@@ -16549,6 +16658,26 @@
 	            faces = [];
 
 	            var dir = this.util.getFilePath(path);
+
+	            // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+	            var geos = [];
+	            // Need default material.
+
+	            var currGeo = geos[this.materialPool.createDefaultName(prim.name)] = {
+
+	                faces: [],
+
+	                vertices: [],
+
+	                indices: [],
+
+	                texCoords: [],
+
+	                normals: []
+
+	            };
+	            window.geos = geos;
+	            // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 	            // Get the lines of the file.
 
@@ -16627,6 +16756,8 @@
 	                        case 'f':
 	                            // line of faces, indices, convert polygons to triangles
 
+	                            ///if ( ! currMat ) console.error( "starting faces, but not material defined yet! ");
+
 	                            // If our previous line was a smoothing group, add the start.
 
 	                            var sg = void 0,
@@ -16651,6 +16782,15 @@
 
 	                                sg.push(faces.length - oldLen);
 	                            }
+
+	                            // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+	                            // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+	                            // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+	                            //console.log("CURRGEO:" + currGeo )
+	                            //console.log("adding to CURRGEO for:" + prim.name)
+	                            _this2.computeObjFaces(data, currGeo.faces, lineNum);
+	                            // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+	                            // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 	                            break;
 
@@ -16684,9 +16824,11 @@
 
 	                                ///////let path = dir + mtls[ i ];
 
-	                                var _path = dir + mtls[i].replace(/^.*[\\\/]/, ''); // strip directories and add our own
+	                                ///let path = dir + mtls[ i ].replace(/^.*[\\\/]/, ''); // strip directories and add our own
 
-	                                _this2.materialPool.getMaterial(prim, _path, true, { pos: i });
+	                                var _path2 = dir + _this2.util.getFileName(mtls[i]);
+
+	                                _this2.materialPool.getMaterial(prim, _path2, true, { pos: i });
 	                            }
 
 	                            break;
@@ -16696,7 +16838,25 @@
 
 	                            // matStarts records where to start in the index (faces) array.
 
-	                            matStarts.push([data, faces.length]); // store material and start position.
+	                            var _path = _this2.util.getFileName(data);
+
+	                            matStarts.push([_path, faces.length]); // store material and start position.
+
+	                            currGeo = geos[data] = {
+
+	                                faces: [],
+
+	                                vertices: [],
+
+	                                indices: [],
+
+	                                texCoords: [],
+
+	                                normals: []
+
+	                            };
+
+	                            //console.log("USEMTL:" + path + " faces length:" + faces.length )
 
 	                            /////console.log('ModelPool::computeObjMesh(): material start for material[' + data + '] at:' + faces.length );
 
@@ -16769,6 +16929,15 @@
 
 	            // Rewrite indices to fold texCoords and normals under the same index as the vertices (needed for WebGL).
 
+	            // @@@@@@@@@@@@@@@@@
+
+	            for (var k in geos) {
+
+	                this.computeFlatArrays(geos[k], tVertices, tIndices, tTexCoords, tNormals);
+	            }
+
+	            // @@@@@@@@@@@@@@@@@
+
 	            if (faces.length) {
 
 	                var nIndices = [],
@@ -16823,7 +16992,6 @@
 
 	                        ///////////////////////::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-
 	                        // Push the flattened vertex, texCoord, normal values.
 
 	                        vIdx *= 3;
@@ -16866,7 +17034,7 @@
 
 	                        if (matStarts[j][1] === i) {
 
-	                            console.log("recomputng, i:" + i + ' old index:' + matStarts[j][1] + ' new index:' + (nIndices.length - 1));
+	                            //////console.log("recomputng, i:" + i + ' old index:' + matStarts[ j ][ 1 ] + ' new index:' + (nIndices.length - 1))
 
 	                            matStarts[j][1] = nIndices.length - 1;
 	                        }
@@ -16910,6 +17078,43 @@
 	            // If there was no faces in the OBJ file, use the raw data.
 
 	            m.vertices = tVertices, m.indices = tIndices, m.texCoords = tTexCoords, m.normals = tNormals;
+
+	            // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+	            // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+	            /*
+	                    for ( let k in geos ) {
+	            
+	                        let g = geos[ k ];
+	            
+	                        m.vertices = m.vertices.concat( m.vertices, g.vertices );
+	                        m.texCoords = m.texCoords.concat( m.texCoords, g.texCoords );
+	                        m.normals = m.normals.concat( m.normals, g.normals );
+	            
+	                        //Array.prototype.push.apply( m.vertices, g.vertices );
+	            
+	                        //Array.prototype.push.apply( m.texCoords, g.texCoords );
+	            
+	                        //Array.prototype.push.apply( m.normals, g.normals );
+	            
+	                        // Update indices for current length of vertices.
+	            
+	                        let len = g.vertices.length;
+	            
+	                        //g.indices.forEach( function( idx ) {
+	            
+	                        //    idx += len;
+	            
+	                        //} );
+	            
+	                        m.indices = m.indices.concat( m.indices, g.indices );
+	            
+	                        //Array.prototype.push.apply( m.indices, g.indices );
+	            
+	                    }
+	            */
+
+	            // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+	            // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 	            // NOTE: Color arrays and tangents are not part of the Wavefront .obj format (in .mtl data).
 
@@ -19303,6 +19508,36 @@
 	            
 	                            this.s1,                               // callback function
 	                            typeList.MESH,
+	                            'banana',
+	                            vec5( 2, 2, 2 ),                       // dimensions (4th dimension doesn't exist for cylinder)
+	                            vec5( 40, 40, 40  ),                    // divisions MAKE SMALLER
+	                            vec3.fromValues( 1.5, -1, 2.0 ),      // position (absolute)
+	                            vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+	                            vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+	                            vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+	                            [], // texture loaded directly
+	                            //[ 'obj/capsule/capsule.obj' ] // object files (.obj, .mtl)
+	                            //[ 'obj/mountains/mountains.obj' ] // ok
+	                            //[ 'obj/landscape/landscape.obj'] // ok?
+	                            //[ 'obj/toilet/toilet.obj' ] // works with texture, multiple groups wrap texture!
+	                            //[ 'obj/naboo/naboo.obj' ] // works fine, but needs to load additional images.
+	                            //[ 'obj/star/star.obj'] // ok, gets generic grey texture
+	                            //[ 'obj/robhead/robhead.obj'] // no texcoords or normals
+	                            //[ 'obj/soccerball/soccerball.obj'] // no texcoords or normals
+	                            //[ 'obj/basketball/basketball.obj'] // needs TGA translation
+	                            //[ 'obj/rock1/rock1.obj'] // rock plus surface, works
+	                            [ 'obj/banana/banana.obj' ] // works great
+	                            // if true, use color array instead of texture array
+	                            // if true, apply textures to each face, not whole Prim.
+	                            // if true, use color array instead of texture array
+	                            // if true, apply textures to each face, not whole Prim.
+	                            // if true, use lighting
+	                        );
+	            
+	                        this.primFactory.createPrim(
+	            
+	                            this.s1,                               // callback function
+	                            typeList.MESH,
 	                            'cherries',
 	                            vec5( 2, 2, 2 ),                       // dimensions (4th dimension doesn't exist for cylinder)
 	                            vec5( 40, 40, 40  ),                    // divisions MAKE SMALLER
@@ -19329,7 +19564,6 @@
 	                            // if true, apply textures to each face, not whole Prim.
 	                            // if true, use lighting
 	                        );
-	            
 	            */
 
 	            /*
@@ -20867,7 +21101,9 @@
 	                             * map_Ka -s 1 1 1 -o 0 0 0 -mm 0 1 file.png
 	                             */
 
-	                            var tPath = data[data.length - 1].replace(/^.*[\\\/]/, '');
+	                            //////let tPath = data[ data.length - 1 ].replace(/^.*[\\\/]/, '');
+
+	                            var tPath = _this2.util.getFileName(data[data.length - 1]);
 
 	                            ////////let tPath = data[ data.length - 1 ].trim();
 

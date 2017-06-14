@@ -625,7 +625,9 @@ class MaterialPool extends AssetPool {
                          * map_Ka -s 1 1 1 -o 0 0 0 -mm 0 1 file.png
                          */
 
-                        let tPath = data[ data.length - 1 ].replace(/^.*[\\\/]/, '');
+                        //////let tPath = data[ data.length - 1 ].replace(/^.*[\\\/]/, '');
+
+                        let tPath = this.util.getFileName( data[ data.length - 1 ] );
 
                         ////////let tPath = data[ data.length - 1 ].trim();
 
