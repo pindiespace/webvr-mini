@@ -246,7 +246,7 @@ class World extends AssetPool {
 //////////////////////////////////
 // COLOR SHADER.
 //////////////////////////////////
-
+/*
 
             this.primFactory.createPrim(
 
@@ -272,7 +272,6 @@ class World extends AssetPool {
 // TODO: matstarts not defined for non-texture texture.
 // TODO: Check for texture, no OBJ file
 
-
             this.primFactory.createPrim(
 
                 this.s2,                               // callback function
@@ -290,7 +289,6 @@ class World extends AssetPool {
                 false,                                 // if true, apply texture to each face,
 
             );
-
 
 //////////////////////////////////
 // TEXTURED SHADER.
@@ -311,6 +309,7 @@ class World extends AssetPool {
                 [] // no models present
                 // if true, use color array instead of texture array
                 // if true, apply textures to each face, not whole Prim.
+                // if true, use lighting (default)
             );
 
 
@@ -329,8 +328,10 @@ class World extends AssetPool {
                 []// no models present
                 // if true, use color array instead of texture array
                 // if true, apply textures to each face, not whole Prim.
+                // if true, use lighting
             );
 
+*/
 
             this.primFactory.createPrim(
 
@@ -346,7 +347,9 @@ class World extends AssetPool {
                 [], // texture loaded directly
                 //[ 'obj/capsule/capsule.obj' ] // object files (.obj, .mtl)
                 //[ 'obj/rose/rose.obj' ],
-                [ 'obj/rose2/rose2.obj' ],
+                //[ 'obj/rose2/rose2.obj' ],
+                [ 'obj/oblong/oblong.obj' ],
+                //[ 'obj/cylinder/cylinder.obj' ],
                 //[ 'obj/balls/balls.obj' ],
                 //[ 'obj/mountains/mountains.obj' ] // ok
                 //[ 'obj/landscape/landscape.obj'] // ok?
@@ -359,11 +362,13 @@ class World extends AssetPool {
                 //[ 'obj/rock1/rock1.obj'] // rock plus surface, works
                 //[ 'obj/cherries/cherries.obj'] // rendering indices error
                 //[ 'obj/banana/banana.obj' ] // works great
-                // if true, use color array instead of texture array
-                // if true, apply textures to each face, not whole Prim.
+                false, // if true, use color array instead of texture array
+                false, // if true, apply textures to each face, not whole Prim.
+                false, // if true, use lighting                
             );
 
 
+/*
             this.primFactory.createPrim(
 
                 this.s1,                               // callback function
@@ -390,6 +395,9 @@ class World extends AssetPool {
                 //[ 'obj/banana/banana.obj' ] // works great
                 // if true, use color array instead of texture array
                 // if true, apply textures to each face, not whole Prim.
+                // if true, use color array instead of texture array
+                // if true, apply textures to each face, not whole Prim.
+                // if true, use lighting
             );
 
 
@@ -419,8 +427,12 @@ class World extends AssetPool {
                 //[ 'obj/banana/banana.obj' ] // works great
                 // if true, use color array instead of texture array
                 // if true, apply textures to each face, not whole Prim.
+                // if true, use color array instead of texture array
+                // if true, apply textures to each face, not whole Prim.
+                // if true, use lighting
             );
 
+*/
 
 
 /*

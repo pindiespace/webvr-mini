@@ -594,7 +594,9 @@ class PrimFactory {
 
         useColorArray = false, // if true, don't use the texture, use a modelFile instead
 
-        applyTexToFace = false // if true, apply textures to each face, not whole Prim
+        applyTexToFace = false, // if true, apply textures to each face, not whole Prim
+
+        useLighting = true
 
         ) { // function to execute when prim is done (e.g. attach to drawing list shader).
 
@@ -1049,7 +1051,7 @@ class PrimFactory {
 
         // Use lighting in Shader.
 
-        prim.useLighting = true;
+        prim.useLighting = useLighting;
 
         // So the Prim can emit light.
 

@@ -560,7 +560,7 @@ class MaterialPool extends AssetPool {
 
                                 materials[ currName ].transparency = data[ 0 ]; // single value, 0.0 - 1.0
 
-                                console.log('>>>' + prim.name + ' transparency in material:' + currName + ":" + data[ 0 ])
+                                /////////console.log('>>>' + prim.name + ' transparency in material:' + currName + ":" + data[ 0 ])
 
                             } else {
 

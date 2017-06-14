@@ -485,7 +485,6 @@ class ModelPool extends AssetPool {
 
                             let path = dir + mtls[ i ].replace(/^.*[\\\/]/, ''); // strip directories and add our own
 
-
                             this.materialPool.getMaterial( prim, path, true, { pos: i } );
 
                         }
@@ -494,9 +493,22 @@ class ModelPool extends AssetPool {
 
                     case 'usemtl': // use material (by name, loaded as .mtl file elsewhere)
 
+                        // matStarts records where to start in the index (faces) array.
+
                         matStarts.push( [ data, faces.length ] ); // store material and start position.
 
                         /////console.log('ModelPool::computeObjMesh(): material start for material[' + data + '] at:' + faces.length );
+
+                        // TODO:
+
+                        // TODO: MULTIPLE MATERIALS NEED TO BE TREATED AS SEPARATE OBJECTS. FACE LENGTHS 
+                        // TODO: COMPUTED INDDEPENDENTLY FOR EACH MATERIAL.
+                        // TODO: CONCATENATE THE MATERIALS AT THE END.
+
+                        // TODO: GREAT BINARY FORMAT MODEL
+                        // TODO: https://n-e-r-v-o-u-s.com/blog/?p=2738
+
+                        // TODO: ANOTHER EXAMPLE
 
                         break;
 
@@ -579,6 +591,10 @@ class ModelPool extends AssetPool {
 
                     // Push the existing, revised value for the face key.
 
+                    vIdx = f[ 0 ] // old face index within OBJ file.
+
+                    iIdx = iHash[ key ] //REDUNDANT
+
                     nIndices.push( iHash[ key ] );
 
                 } else {
@@ -598,22 +614,6 @@ class ModelPool extends AssetPool {
                     iHash[ key ] = iIdx;
 
                     // Re-index our groups, objects, material starts, smoothing groups to the revised index position.
-
-                    // TODO: re-index downstream matstarts!!!
-
-                    ////////this.util.sort2DByColNum( matStarts, 1 );
-
-                    for ( let j = 0; j < matStarts.length; j++ ) {
-
-                        if ( matStarts[ j ][ 1 ] === i )  {
-
-                            matStarts[ j ][ 1 ] = nIndices.length - 1;
-
-                        }
-
-                    }
-
-                    // TODO: for smoothing groups
 
                     ///////////////////////::::::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -657,16 +657,21 @@ class ModelPool extends AssetPool {
                 } // end of re-index a new face
 
 
-                    for ( let j = 0; j < matStarts.length; j++ ) {
+                // Recalculate material starts.
 
-                        if ( matStarts[ j ][ 1 ] === i )  {
+                for ( let j = 0; j < matStarts.length; j++ ) {
 
-                            matStarts[ j ][ 1 ] = nIndices.length - 1;
+                    //console.log("checking")
 
-                        }
+                   if ( matStarts[ j ][ 1 ] === i )  {
+
+                        console.log("recomputng, i:" + i + ' old index:' + matStarts[ j ][ 1 ] + ' new index:' + (nIndices.length - 1))
+
+                         matStarts[ j ][ 1 ] = nIndices.length - 1;
 
                     }
 
+                }
 
             } // end of for loop
 
