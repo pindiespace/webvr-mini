@@ -42,14 +42,14 @@
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	module.exports = __webpack_require__(1);
 
 
-/***/ },
+/***/ }),
 /* 1 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/*
 	 * app.es6
@@ -286,9 +286,9 @@
 	exports.world = world;
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
 
-/***/ },
+/***/ }),
 /* 2 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	// shim for using process in browser
 	var process = module.exports = {};
@@ -460,6 +460,10 @@
 	process.removeListener = noop;
 	process.removeAllListeners = noop;
 	process.emit = noop;
+	process.prependListener = noop;
+	process.prependOnceListener = noop;
+
+	process.listeners = function (name) { return [] }
 
 	process.binding = function (name) {
 	    throw new Error('process.binding is not supported');
@@ -472,9 +476,9 @@
 	process.umask = function() { return 0; };
 
 
-/***/ },
+/***/ }),
 /* 3 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -1653,9 +1657,9 @@
 
 	exports.default = Util;
 
-/***/ },
+/***/ }),
 /* 4 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 
@@ -1766,9 +1770,9 @@
 
 	exports.default = Emitter;
 
-/***/ },
+/***/ }),
 /* 5 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 
@@ -1828,9 +1832,9 @@
 	    return GamePad;
 	}();
 
-/***/ },
+/***/ }),
 /* 6 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 
@@ -3507,9 +3511,9 @@
 
 	exports.default = WebGL;
 
-/***/ },
+/***/ }),
 /* 7 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 
@@ -4264,9 +4268,9 @@
 
 	exports.default = WebVR;
 
-/***/ },
+/***/ }),
 /* 8 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 
@@ -5232,9 +5236,9 @@
 
 	exports.default = Ui;
 
-/***/ },
+/***/ }),
 /* 9 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -5816,9 +5820,9 @@
 
 	exports.default = ShaderFader;
 
-/***/ },
+/***/ }),
 /* 10 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 
@@ -6648,9 +6652,9 @@
 
 	exports.default = Shader;
 
-/***/ },
+/***/ }),
 /* 11 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -7136,9 +7140,9 @@
 
 	exports.default = ShaderTexture;
 
-/***/ },
+/***/ }),
 /* 12 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -7584,9 +7588,9 @@
 
 	exports.default = ShaderColor;
 
-/***/ },
+/***/ }),
 /* 13 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -7826,9 +7830,9 @@
 
 	exports.default = ShaderTerrain;
 
-/***/ },
+/***/ }),
 /* 14 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -8082,9 +8086,9 @@
 
 	exports.default = ShaderWater;
 
-/***/ },
+/***/ }),
 /* 15 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -8328,9 +8332,9 @@
 
 	exports.default = ShaderMetal;
 
-/***/ },
+/***/ }),
 /* 16 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	
 	'use strict';
@@ -8463,9 +8467,9 @@
 
 	exports.default = Lights;
 
-/***/ },
+/***/ }),
 /* 17 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -8558,9 +8562,9 @@
 
 	exports.default = ShaderPool;
 
-/***/ },
+/***/ }),
 /* 18 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	
 	'use strict';
@@ -9056,9 +9060,9 @@
 
 	exports.default = AssetPool;
 
-/***/ },
+/***/ }),
 /* 19 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -10167,9 +10171,9 @@
 
 	exports.default = PrimFactory;
 
-/***/ },
+/***/ }),
 /* 20 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -10869,9 +10873,9 @@
 
 	exports.default = Map2d;
 
-/***/ },
+/***/ }),
 /* 21 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 
@@ -10894,9 +10898,9 @@
 
 	exports.default = Mapd;
 
-/***/ },
+/***/ }),
 /* 22 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -11069,9 +11073,9 @@
 
 	exports.default = Map3d;
 
-/***/ },
+/***/ }),
 /* 23 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 
@@ -12530,9 +12534,9 @@
 
 	exports.default = Mesh;
 
-/***/ },
+/***/ }),
 /* 24 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -16189,9 +16193,9 @@
 
 	exports.default = GeometryPool;
 
-/***/ },
+/***/ }),
 /* 25 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -16515,7 +16519,7 @@
 
 	            for (var i = 0; i < iVerts.length; i++) {
 
-	                faces.push([iVerts[i], iTexCoords[i], iNormals[i]]);
+	                faces.push([iVerts[i], iTexCoords[i], iNormals[i], data]);
 	            }
 	        }
 
@@ -16527,7 +16531,7 @@
 
 	    }, {
 	        key: 'computeFlatArrays',
-	        value: function computeFlatArrays(geo, vertices, indices, texCoords, normals) {
+	        value: function computeFlatArrays(geo, vertices, texCoords, normals) {
 
 	            var iHash = [];
 
@@ -16553,16 +16557,16 @@
 
 	                    // Push the existing, revised value for the face key.
 
-	                    vIdx = f[0]; // old face index within OBJ file.
+	                    //vIdx = f[ 0 ] // old face index within OBJ file.
 
-	                    iIdx = iHash[key]; //REDUNDANT
+	                    //iIdx = iHash[ key ] //REDUNDANT
 
 	                    nIndices.push(iHash[key]);
 	                } else {
 
 	                    vIdx = f[0]; // old face index within OBJ file
 
-	                    iIdx = parseInt(vertices.length / 3); // new face index in the new arrays
+	                    iIdx = parseInt(nVertices.length / 3); // new face index in the new arrays
 
 	                    var tIdx = void 0,
 	                        nIdx = void 0;
@@ -16607,9 +16611,181 @@
 	                        nNormals.push(0, 0, 0);
 	                    }
 	                }
-
-	                console.log('VIDX:' + vIdx + " IIDX:" + iIdx);
 	            }
+	        }
+
+	        /** 
+	         * Get 
+	         */
+
+	    }, {
+	        key: 'getGeoFaces',
+	        value: function getGeoFaces(data, faces, lineNum) {
+
+	            faces.push(data);
+	        }
+
+	        /** 
+	         * Parse the obj file into flattened object data, with starts defined 
+	         * for materials.
+	         */
+
+	    }, {
+	        key: 'doObjMesh',
+	        value: function doObjMesh(data, prim, path) {
+	            var _this2 = this;
+
+	            var m = this.default();
+
+	            window.m = m; ////////////////////////////////////////////////////
+
+	            var lineNum = 0,
+	                lines = data.split('\n'),
+	                matStarts = [];
+
+	            var matName = this.materialPool.createDefaultName(prim.name);
+
+	            var currGeo = { material: matName, faces: [] };
+
+	            matStarts.push(currGeo);
+
+	            var faces = [];vertices = [], texCoords = [], texCoords = [], normals = [];
+
+	            lines.forEach(function (line) {
+
+	                // First value in string.
+
+	                var type = line.split(' ')[0].trim();
+
+	                // All other values as a string.
+
+	                var data = line.substr(type.length).trim();
+
+	                if (data !== '') {
+
+	                    switch (data) {
+
+	                        case 'v':
+	                            // vertices
+
+	                            _this2.computeObj3d(data, vertices, lineNum);
+
+	                            break;
+
+	                        case 'f':
+	                            // line of faces, indices, convert polygons to triangles
+
+	                            // Get the faces
+
+	                            _this2.getObjFaces(data, currGeo.faces, lineNum);
+
+	                            break;
+
+	                        case 'vn':
+	                            // normals
+
+	                            _this2.computeObj3d(data, normals, lineNum);
+
+	                            break;
+
+	                        case 'vt':
+	                            // texture uvs
+
+	                            if (!_this2.computeObj2d(data, texCoords)) {
+
+	                                //console.warn( '3D texture encountered:'+ data );
+
+	                                _this2.computeObj3d(data, texCoords);
+	                            }
+
+	                            break;
+
+	                        case 'mtllib':
+	                            // materials library data
+
+	                            // Multiple files may be specified here, and each file may have multiple materials.
+
+	                            var mtls = data.split(' ');
+
+	                            for (var i = 0; i < mtls.length; i++) {
+
+	                                var _path = dir + _this2.util.getFileName(mtls[i]);
+
+	                                _this2.materialPool.getMaterial(prim, _path, true, { pos: i });
+	                            }
+
+	                            break;
+
+	                        case 'usemtl':
+	                            // use material (by name, loaded as .mtl file elsewhere)
+
+	                            // material name === filename without extension.
+
+	                            matName = _this2.util.getFileName(data);
+
+	                            currGeo = { material: matName, faces: [] };
+
+	                            matStarts.push(currGeo);
+
+	                            break;
+
+	                        case '#':
+	                            // comments are ignored
+
+	                            break;
+
+	                        case 'o': // object name (could be several in file)
+	                        case 'g': // group name, store hierarchy
+
+	                        case 'maplib': // poorly documented
+	                        case 'usemap': // ditto
+	                        case 'vp': // parameter vertices
+	                        case 'p': // point
+	                        case 'l': // line
+	                        case 'curv': // 2d curve
+	                        case 'surf': //surface
+	                        case 'parm': // parameter values
+	                        case 'trim': // outer trimming loop
+	                        case 'hole': // inner trimming loop
+	                        case 'scrv': //special curve
+	                        case 'sp': // special point
+	                        case 'end': // end statment
+	                        case 'con': // connectivity between free-form surfaces
+	                        case 'mg': // merging group
+	                        case 'bevel': // bevel interpolation
+	                        case 'c_interp': // color interpolation
+	                        case 'd_interp': // dissolve interpolation
+	                        case 'lod': // level of detail
+	                        case 'shadow_obj': // shadow casting
+	                        case 'trace_obj': // ray tracing
+	                        case 'ctech': // curve approximation
+	                        case 'stech': // surface approximation
+	                        case '':
+	                            // no parameter
+
+	                            console.warn('ModelPool::computeObjMesh(): OBJ data type: ' + type + ' in .obj file not supported');
+
+	                            break;
+
+	                        default:
+
+	                            // If it's not a pure whitespace line, report.
+
+	                            if (!isWhitespace(data)) {
+
+	                                console.error('ModelPool::computeObjMesh(): unknown line data: ' + line + ' in .obj file at line:' + lineNum);
+	                            }
+
+	                            break;
+
+	                    }
+	                }
+	            }); // end of foreach
+
+	            // Second pass.
+
+
+	            return m;
 	        }
 
 	        /** 
@@ -16624,7 +16800,7 @@
 	    }, {
 	        key: 'computeObjMesh',
 	        value: function computeObjMesh(data, prim, path) {
-	            var _this2 = this;
+	            var _this3 = this;
 
 	            //////console.log( 'ModelPool::computeObjMesh(): loading a new file:' + path + ' for ' + prim.name );
 
@@ -16658,26 +16834,6 @@
 	            faces = [];
 
 	            var dir = this.util.getFilePath(path);
-
-	            // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-	            var geos = [];
-	            // Need default material.
-
-	            var currGeo = geos[this.materialPool.createDefaultName(prim.name)] = {
-
-	                faces: [],
-
-	                vertices: [],
-
-	                indices: [],
-
-	                texCoords: [],
-
-	                normals: []
-
-	            };
-	            window.geos = geos;
-	            // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 	            // Get the lines of the file.
 
@@ -16749,7 +16905,7 @@
 	                        case 'v':
 	                            // vertices
 
-	                            _this2.computeObj3d(data, tVertices);
+	                            _this3.computeObj3d(data, tVertices);
 
 	                            break;
 
@@ -16774,7 +16930,7 @@
 
 	                            // Get the faces
 
-	                            _this2.computeObjFaces(data, faces, lineNum);
+	                            _this3.computeObjFaces(data, faces, lineNum);
 
 	                            // If our previous line was a smoothing group, add the length.
 
@@ -16783,32 +16939,23 @@
 	                                sg.push(faces.length - oldLen);
 	                            }
 
-	                            // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-	                            // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-	                            // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-	                            //console.log("CURRGEO:" + currGeo )
-	                            //console.log("adding to CURRGEO for:" + prim.name)
-	                            _this2.computeObjFaces(data, currGeo.faces, lineNum);
-	                            // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-	                            // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
 	                            break;
 
 	                        case 'vn':
 	                            // normals
 
-	                            _this2.computeObj3d(data, tNormals);
+	                            _this3.computeObj3d(data, tNormals);
 
 	                            break;
 
 	                        case 'vt':
 	                            // texture uvs
 
-	                            if (!_this2.computeObj2d(data, tTexCoords)) {
+	                            if (!_this3.computeObj2d(data, tTexCoords)) {
 
 	                                //console.warn( '3D texture encountered:'+ data );
 
-	                                _this2.computeObj3d(data, tTexCoords);
+	                                _this3.computeObj3d(data, tTexCoords);
 	                            }
 
 	                            break;
@@ -16826,9 +16973,9 @@
 
 	                                ///let path = dir + mtls[ i ].replace(/^.*[\\\/]/, ''); // strip directories and add our own
 
-	                                var _path2 = dir + _this2.util.getFileName(mtls[i]);
+	                                var _path3 = dir + _this3.util.getFileName(mtls[i]);
 
-	                                _this2.materialPool.getMaterial(prim, _path2, true, { pos: i });
+	                                _this3.materialPool.getMaterial(prim, _path3, true, { pos: i });
 	                            }
 
 	                            break;
@@ -16838,23 +16985,9 @@
 
 	                            // matStarts records where to start in the index (faces) array.
 
-	                            var _path = _this2.util.getFileName(data);
+	                            var _path2 = _this3.util.getFileName(data);
 
-	                            matStarts.push([_path, faces.length]); // store material and start position.
-
-	                            currGeo = geos[data] = {
-
-	                                faces: [],
-
-	                                vertices: [],
-
-	                                indices: [],
-
-	                                texCoords: [],
-
-	                                normals: []
-
-	                            };
+	                            matStarts.push([_path2, faces.length]); // store material and start position.
 
 	                            //console.log("USEMTL:" + path + " faces length:" + faces.length )
 
@@ -16928,15 +17061,6 @@
 	            });
 
 	            // Rewrite indices to fold texCoords and normals under the same index as the vertices (needed for WebGL).
-
-	            // @@@@@@@@@@@@@@@@@
-
-	            for (var k in geos) {
-
-	                this.computeFlatArrays(geos[k], tVertices, tIndices, tTexCoords, tNormals);
-	            }
-
-	            // @@@@@@@@@@@@@@@@@
 
 	            if (faces.length) {
 
@@ -17063,60 +17187,55 @@
 
 	            if (matStarts.length === 0) {
 
-	                matStarts.push([this.materialPool.createDefaultName(prim.name), 0, tIndices.length]);
+	                m.options.matStarts.push([this.materialPool.createDefaultName(prim.name), 0, tIndices.length]);
 	            }
 
 	            // Compute matStarts length
 
-	            for (var _i = 1; _i < matStarts.length; _i++) {
+	            for (var _i = 1; _i < m.options.matStarts.length; _i++) {
 
-	                matStarts[_i - 1][2] = matStarts[_i][1] - matStarts[_i - 1][1];
+	                //m.options.matStarts[ i - 1 ][ 1 ] -= 60;
+
+	                if (m.options.matStarts[_i - 1][1] < 0) m.options.matStarts[_i - 1][1] = 0;
+
+	                m.options.matStarts[_i - 1][2] = m.options.matStarts[_i][1] - m.options.matStarts[_i - 1][1];
 	            }
 
-	            matStarts[matStarts.length - 1][2] = tIndices.length - matStarts[matStarts.length - 1][1];
+	            m.options.matStarts[m.options.matStarts.length - 1][2] = tIndices.length - m.options.matStarts[m.options.matStarts.length - 1][1];
 
 	            // If there was no faces in the OBJ file, use the raw data.
+
+	            m.options.matStarts = matStarts;
 
 	            m.vertices = tVertices, m.indices = tIndices, m.texCoords = tTexCoords, m.normals = tNormals;
 
 	            // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 	            // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-	            /*
-	                    for ( let k in geos ) {
-	            
-	                        let g = geos[ k ];
-	            
-	                        m.vertices = m.vertices.concat( m.vertices, g.vertices );
-	                        m.texCoords = m.texCoords.concat( m.texCoords, g.texCoords );
-	                        m.normals = m.normals.concat( m.normals, g.normals );
-	            
-	                        //Array.prototype.push.apply( m.vertices, g.vertices );
-	            
-	                        //Array.prototype.push.apply( m.texCoords, g.texCoords );
-	            
-	                        //Array.prototype.push.apply( m.normals, g.normals );
-	            
-	                        // Update indices for current length of vertices.
-	            
-	                        let len = g.vertices.length;
-	            
-	                        //g.indices.forEach( function( idx ) {
-	            
-	                        //    idx += len;
-	            
-	                        //} );
-	            
-	                        m.indices = m.indices.concat( m.indices, g.indices );
-	            
-	                        //Array.prototype.push.apply( m.indices, g.indices );
-	            
-	                    }
-	            */
 
+	            /*
+	            ////////////////
+	                    let g = geos[ 'Material05' ];
+	                    q.vertices = g.vertices;
+	                    q.texCoords = g.texCoords;
+	                    q.normals = g.normals;
+	            
+	                    q.indices = g.indices;
+	                    m.options.matStarts.push( [ 'Material01', 0, q.indices.length ])
+	            
+	                    window.qs = q;
+	                    window.ms = m;
+	            
+	                    m.vertices = q.vertices;
+	                    m.indices = q.indices;
+	                    m.texCoords = q.texCoords;
+	                    m.normals = q.normals;
+	            */
 	            // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 	            // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 	            // NOTE: Color arrays and tangents are not part of the Wavefront .obj format (in .mtl data).
+
+	            this.doObjMesh(data, prim, path);
 
 	            return m;
 	        }
@@ -17229,7 +17348,7 @@
 	    }, {
 	        key: 'getModel',
 	        value: function getModel(prim, path) {
-	            var _this3 = this;
+	            var _this4 = this;
 
 	            var cacheBust = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
 	            var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : { pos: 0 };
@@ -17282,7 +17401,7 @@
 
 	                        if (updateObj.data) {
 
-	                            var _modelObj = _this3.addModel(prim, updateObj.data, updateObj.path, mimeType, prim.type);
+	                            var _modelObj = _this4.addModel(prim, updateObj.data, updateObj.path, mimeType, prim.type);
 
 	                            if (_modelObj) {
 
@@ -17293,7 +17412,7 @@
 	                                 * See this.addModel() above for more information.
 	                                 */
 
-	                                _this3.util.emitter.emit(_modelObj.emits, prim, _modelObj.key, options); ///////////TODO: COMPARE TO PROCEDUAR GEO EMIT
+	                                _this4.util.emitter.emit(_modelObj.emits, prim, _modelObj.key, options); ///////////TODO: COMPARE TO PROCEDUAR GEO EMIT
 	                            } else {
 
 	                                console.error('ModelPool::getModel(): OBJ file:' + path + ' could not be parsed');
@@ -17319,9 +17438,9 @@
 
 	exports.default = ModelPool;
 
-/***/ },
+/***/ }),
 /* 26 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -17886,9 +18005,9 @@
 
 	exports.default = TexturePool;
 
-/***/ },
+/***/ }),
 /* 27 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -17941,9 +18060,9 @@
 
 	exports.default = AudioPool;
 
-/***/ },
+/***/ }),
 /* 28 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 
@@ -19057,9 +19176,9 @@
 
 	exports.default = GeometryBuffer;
 
-/***/ },
+/***/ }),
 /* 29 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -19375,12 +19494,12 @@
 	            
 	                        );
 	            
-	            
-	            
+	            */
+
 	            // TODO: need a default texture start
 	            // TODO: matstarts not defined for non-texture texture.
 	            // TODO: Check for texture, no OBJ file
-	            
+	            /*
 	                        this.primFactory.createPrim(
 	            
 	                            this.s2,                               // callback function
@@ -19564,6 +19683,7 @@
 	                            // if true, apply textures to each face, not whole Prim.
 	                            // if true, use lighting
 	                        );
+	            
 	            */
 
 	            /*
@@ -20476,9 +20596,9 @@
 
 	exports.default = World;
 
-/***/ },
+/***/ }),
 /* 30 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -21360,9 +21480,9 @@
 
 	exports.default = MaterialPool;
 
-/***/ },
+/***/ }),
 /* 31 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	/**
 	 * @fileoverview gl-matrix - High performance matrix and vector operations
@@ -21402,9 +21522,9 @@
 	exports.vec3 = __webpack_require__(38);
 	exports.vec4 = __webpack_require__(39);
 
-/***/ },
+/***/ }),
 /* 32 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
 
@@ -21478,9 +21598,9 @@
 	module.exports = glMatrix;
 
 
-/***/ },
+/***/ }),
 /* 33 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
 
@@ -21920,9 +22040,9 @@
 	module.exports = mat2;
 
 
-/***/ },
+/***/ }),
 /* 34 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
 
@@ -22395,9 +22515,9 @@
 	module.exports = mat2d;
 
 
-/***/ },
+/***/ }),
 /* 35 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
 
@@ -23147,9 +23267,9 @@
 	module.exports = mat3;
 
 
-/***/ },
+/***/ }),
 /* 36 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
 
@@ -25289,9 +25409,9 @@
 	module.exports = mat4;
 
 
-/***/ },
+/***/ }),
 /* 37 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
 
@@ -25895,9 +26015,9 @@
 	module.exports = quat;
 
 
-/***/ },
+/***/ }),
 /* 38 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
 
@@ -26678,9 +26798,9 @@
 	module.exports = vec3;
 
 
-/***/ },
+/***/ }),
 /* 39 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
 
@@ -27293,9 +27413,9 @@
 	module.exports = vec4;
 
 
-/***/ },
+/***/ }),
 /* 40 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
 
@@ -27886,9 +28006,9 @@
 	module.exports = vec2;
 
 
-/***/ },
+/***/ }),
 /* 41 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {/*
 	** Copyright (c) 2012 The Khronos Group Inc.
@@ -28847,5 +28967,5 @@
 
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
-/***/ }
+/***/ })
 /******/ ]);

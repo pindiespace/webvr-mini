@@ -266,12 +266,12 @@ class World extends AssetPool {
 
             );
 
-
+*/
 
 // TODO: need a default texture start
 // TODO: matstarts not defined for non-texture texture.
 // TODO: Check for texture, no OBJ file
-
+/*
             this.primFactory.createPrim(
 
                 this.s2,                               // callback function
@@ -333,8 +333,6 @@ class World extends AssetPool {
 
 */
 
-
-
             this.primFactory.createPrim(
 
                 this.s1,                               // callback function
@@ -368,7 +366,6 @@ class World extends AssetPool {
                 false, // if true, apply textures to each face, not whole Prim.
                 false, // if true, use lighting                
             );
-
 
 /*
             this.primFactory.createPrim(
@@ -463,6 +460,7 @@ class World extends AssetPool {
                 // if true, apply textures to each face, not whole Prim.
                 // if true, use lighting
             );
+
 */
 
 

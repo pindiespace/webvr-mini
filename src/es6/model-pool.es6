@@ -287,7 +287,7 @@ class ModelPool extends AssetPool {
 
         for ( let i = 0; i < iVerts.length; i++ ) {
 
-             faces.push( [ iVerts[ i ], iTexCoords[ i ], iNormals[ i ] ] );
+             faces.push( [ iVerts[ i ], iTexCoords[ i ], iNormals[ i ], data ] );
 
         }
 
@@ -299,7 +299,7 @@ class ModelPool extends AssetPool {
      // TODO: DETERMINE WHY WE ARE NOT RE-CREAting oRigiNAL ArRAYS!!!!!!
      
      */
-    computeFlatArrays ( geo, vertices, indices, texCoords, normals ) {
+    computeFlatArrays ( geo, vertices, texCoords, normals ) {
 
         let iHash = [];
 
@@ -321,9 +321,9 @@ class ModelPool extends AssetPool {
 
                     // Push the existing, revised value for the face key.
 
-                    vIdx = f[ 0 ] // old face index within OBJ file.
+                    //vIdx = f[ 0 ] // old face index within OBJ file.
 
-                    iIdx = iHash[ key ] //REDUNDANT
+                    //iIdx = iHash[ key ] //REDUNDANT
 
                     nIndices.push( iHash[ key ] );
 
@@ -331,7 +331,7 @@ class ModelPool extends AssetPool {
 
                 vIdx = f[ 0 ]; // old face index within OBJ file
 
-                iIdx = parseInt( vertices.length / 3 ); // new face index in the new arrays
+                iIdx = parseInt( nVertices.length / 3 ); // new face index in the new arrays
 
                 let tIdx, nIdx;
 
@@ -381,10 +381,176 @@ class ModelPool extends AssetPool {
 
             }
 
-            console.log('VIDX:' + vIdx + " IIDX:" + iIdx)
-
-
         }
+
+    }
+
+    /** 
+     * Get 
+     */
+    getGeoFaces ( data, faces, lineNum ) {
+
+        faces.push ( data );
+
+    }
+
+    /** 
+     * Parse the obj file into flattened object data, with starts defined 
+     * for materials.
+     */
+    doObjMesh ( data, prim, path ) {
+
+        let m = this.default();
+
+        window.m = m; ////////////////////////////////////////////////////
+
+        let lineNum = 0,
+
+        lines = data.split( '\n' ),
+
+        matStarts = [];
+
+        let matName = this.materialPool.createDefaultName( prim.name );
+
+        let currGeo = { material: matName, faces: [] };
+
+        matStarts.push( currGeo );
+
+        let faces = []; vertices = [], texCoords = [], texCoords = [], normals = [];
+
+        lines.forEach( ( line ) => {
+
+            // First value in string.
+
+            let type = line.split( ' ' )[ 0 ].trim();
+
+            // All other values as a string.
+
+            let data = line.substr( type.length ).trim();
+
+            if ( data !== '' ) {
+
+                switch ( data ) {
+
+                    case 'v': // vertices
+
+                        this.computeObj3d( data, vertices, lineNum );
+
+                        break;
+
+                    case 'f': // line of faces, indices, convert polygons to triangles
+
+                        // Get the faces
+
+                        this.getObjFaces( data, currGeo.faces, lineNum )
+
+                        break;
+
+                    case 'vn': // normals
+
+                        this.computeObj3d( data, normals, lineNum );
+
+                        break;
+
+                    case 'vt': // texture uvs
+
+                        if ( ! this.computeObj2d( data, texCoords ) ) {
+
+                            //console.warn( '3D texture encountered:'+ data );
+
+                            this.computeObj3d( data, texCoords );
+
+                        }
+
+                        break;
+
+                        case 'mtllib': // materials library data
+
+                        // Multiple files may be specified here, and each file may have multiple materials.
+
+                        let mtls = data.split( ' ' );
+
+                        for ( let i = 0; i < mtls.length; i++ ) {
+
+                            let path = dir + this.util.getFileName( mtls[ i ] );
+
+                            this.materialPool.getMaterial( prim, path, true, { pos: i } );
+
+                        }
+
+                        break;
+
+                    case 'usemtl': // use material (by name, loaded as .mtl file elsewhere)
+
+                        // material name === filename without extension.
+
+                        matName = this.util.getFileName ( data );
+
+                        currGeo = { material: matName, faces: [] };
+
+                        matStarts.push( currGeo );
+
+                        break;
+
+                    case '#': // comments are ignored
+
+                        break;
+
+                    case 'o': // object name (could be several in file)
+                    case 'g': // group name, store hierarchy
+
+                    case 'maplib': // poorly documented
+                    case 'usemap': // ditto
+                    case 'vp': // parameter vertices
+                    case 'p': // point
+                    case 'l': // line
+                    case 'curv': // 2d curve
+                    case 'surf': //surface
+                    case 'parm': // parameter values
+                    case 'trim': // outer trimming loop
+                    case 'hole': // inner trimming loop
+                    case 'scrv': //special curve
+                    case 'sp': // special point
+                    case 'end': // end statment
+                    case 'con': // connectivity between free-form surfaces
+                    case 'mg': // merging group
+                    case 'bevel': // bevel interpolation
+                    case 'c_interp': // color interpolation
+                    case 'd_interp': // dissolve interpolation
+                    case 'lod': // level of detail
+                    case 'shadow_obj': // shadow casting
+                    case 'trace_obj': // ray tracing
+                    case 'ctech': // curve approximation
+                    case 'stech': // surface approximation
+                    case '': // no parameter
+
+                        console.warn( 'ModelPool::computeObjMesh(): OBJ data type: ' + type + ' in .obj file not supported' );
+
+                        break;
+
+                    default:
+
+                        // If it's not a pure whitespace line, report.
+
+                        if( ! isWhitespace( data ) ) {
+
+                            console.error( 'ModelPool::computeObjMesh(): unknown line data: ' + line + ' in .obj file at line:' + lineNum );
+
+                        }
+
+                        break;
+
+                }
+
+            }
+
+        } ); // end of foreach
+
+        // Second pass.
+
+
+
+        return m;
 
     }
 
@@ -445,26 +611,6 @@ class ModelPool extends AssetPool {
         faces = [];
 
         let dir = this.util.getFilePath( path );
-
-        // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        let geos = [];
-        // Need default material.
-
-        let currGeo = geos[ this.materialPool.createDefaultName( prim.name ) ] = {
-
-            faces: [],
-
-            vertices: [],
-
-            indices: [],
-
-            texCoords: [],
-
-            normals: []
-
-        }
-        window.geos = geos;
-        // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
         // Get the lines of the file.
 
@@ -569,15 +715,6 @@ class ModelPool extends AssetPool {
 
                         }
 
-                        // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                        // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                        // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                        //console.log("CURRGEO:" + currGeo )
-                        //console.log("adding to CURRGEO for:" + prim.name)
-                        this.computeObjFaces( data, currGeo.faces, lineNum )
-                        // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                        // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
                         break;
 
                     case 'vn': // normals
@@ -625,20 +762,6 @@ class ModelPool extends AssetPool {
                         let path = this.util.getFileName ( data );
 
                         matStarts.push( [ path, faces.length ] ); // store material and start position.
-
-                        currGeo = geos[ data ] = {
-
-                            faces: [],
-
-                            vertices: [],
-
-                            indices: [],
-
-                            texCoords: [],
-
-                            normals: []
-
-                        };
 
                         //console.log("USEMTL:" + path + " faces length:" + faces.length )
 
@@ -713,16 +836,6 @@ class ModelPool extends AssetPool {
         } );
 
         // Rewrite indices to fold texCoords and normals under the same index as the vertices (needed for WebGL).
-
-        // @@@@@@@@@@@@@@@@@
-
-        for ( let k in geos ) {
-
-            this.computeFlatArrays( geos[ k ], tVertices, tIndices, tTexCoords, tNormals );
-
-        }
-
-        // @@@@@@@@@@@@@@@@@
 
         if ( faces.length ) {
 
@@ -860,21 +973,27 @@ class ModelPool extends AssetPool {
 
         if ( matStarts.length === 0 ) {
 
-            matStarts.push( [ this.materialPool.createDefaultName( prim.name ), 0, tIndices.length ] );
+            m.options.matStarts.push( [ this.materialPool.createDefaultName( prim.name ), 0, tIndices.length ] );
 
         }
 
         // Compute matStarts length
 
-        for ( let i = 1; i < matStarts.length; i++ ) {
+        for ( let i = 1; i < m.options.matStarts.length; i++ ) {
 
-            matStarts[ i - 1 ][ 2 ] = matStarts[ i ][ 1 ] - matStarts[ i - 1 ][ 1 ];
+            //m.options.matStarts[ i - 1 ][ 1 ] -= 60;
+
+            if ( m.options.matStarts[ i - 1][ 1 ] < 0 ) m.options.matStarts[ i - 1 ][ 1 ] = 0
+
+            m.options.matStarts[ i - 1 ][ 2 ] = m.options.matStarts[ i ][ 1 ] - m.options.matStarts[ i - 1 ][ 1 ];
 
         }
 
-        matStarts[ matStarts.length - 1 ][ 2 ] = tIndices.length - matStarts[ matStarts.length - 1 ][ 1 ];
+        m.options.matStarts[ m.options.matStarts.length - 1 ][ 2 ] = tIndices.length - m.options.matStarts[ m.options.matStarts.length - 1 ][ 1 ];
 
         // If there was no faces in the OBJ file, use the raw data.
+
+        m.options.matStarts = matStarts;
 
         m.vertices = tVertices,
 
@@ -886,42 +1005,32 @@ class ModelPool extends AssetPool {
 
         // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
         // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
 /*
-        for ( let k in geos ) {
+////////////////
+        let g = geos[ 'Material05' ];
+        q.vertices = g.vertices;
+        q.texCoords = g.texCoords;
+        q.normals = g.normals;
 
-            let g = geos[ k ];
+        q.indices = g.indices;
+        m.options.matStarts.push( [ 'Material01', 0, q.indices.length ])
 
-            m.vertices = m.vertices.concat( m.vertices, g.vertices );
-            m.texCoords = m.texCoords.concat( m.texCoords, g.texCoords );
-            m.normals = m.normals.concat( m.normals, g.normals );
+        window.qs = q;
+        window.ms = m;
 
-            //Array.prototype.push.apply( m.vertices, g.vertices );
-
-            //Array.prototype.push.apply( m.texCoords, g.texCoords );
-
-            //Array.prototype.push.apply( m.normals, g.normals );
-
-            // Update indices for current length of vertices.
-
-            let len = g.vertices.length;
-
-            //g.indices.forEach( function( idx ) {
-
-            //    idx += len;
-
-            //} );
-
-            m.indices = m.indices.concat( m.indices, g.indices );
-
-            //Array.prototype.push.apply( m.indices, g.indices );
-
-        }
+        m.vertices = q.vertices;
+        m.indices = q.indices;
+        m.texCoords = q.texCoords;
+        m.normals = q.normals;
 */
-
         // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
         // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
         // NOTE: Color arrays and tangents are not part of the Wavefront .obj format (in .mtl data).
+
+        this.doObjMesh( data, prim, path );
+
 
         return m;
 
