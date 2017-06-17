@@ -1,8 +1,7 @@
 # cube.obj
 #
- 
+mtllib cube.mtl
 g cube
- 
 v  0.0  0.0  0.0
 v  0.0  0.0  1.0
 v  0.0  1.0  0.0
@@ -11,23 +10,28 @@ v  1.0  0.0  0.0
 v  1.0  0.0  1.0
 v  1.0  1.0  0.0
 v  1.0  1.0  1.0
-
 vn  0.0  0.0  1.0
 vn  0.0  0.0 -1.0
 vn  0.0  1.0  0.0
 vn  0.0 -1.0  0.0
 vn  1.0  0.0  0.0
 vn -1.0  0.0  0.0
- 
+
+usemtl Material02
 f  1//2  7//2  5//2
 f  1//2  3//2  7//2 
+usemtl Material03
 f  1//6  4//6  3//6 
 f  1//6  2//6  4//6 
+usemtl Material04
 f  3//3  8//3  7//3 
 f  3//3  4//3  8//3 
+usemtl Material05
 f  5//5  7//5  8//5 
 f  5//5  8//5  6//5 
+usemtl Material06
 f  1//4  5//4  6//4 
 f  1//4  6//4  2//4 
+usemtl Material07
 f  2//1  6//1  8//1 
 f  2//1  8//1  4//1 

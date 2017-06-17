@@ -177,26 +177,29 @@ class Vertex {
 
         }
 
-        if ( this.coords.isValid() && 
+        if ( this.coords.isValid() ) { 
 
-            Number.isFinite( parseFloat( texCoords.u ) ) && 
+            if ( Number.isFinite( parseFloat( texCoords.u ) ) && 
 
-            Number.isFinite( parseFloat( texCoords.v ) ) ) {
+                Number.isFinite( parseFloat( texCoords.v ) ) ) {
 
-            if ( texCoords.u >= 0 && texCoords.v >= 0 ) {
+                if ( texCoords.u >= 0 && texCoords.v >= 0 ) {
 
-                return true;
+                    return true;
+
+                }
+
+                console.warn( 'Vertex.isValid(): negative texture coordinates for:' + this.idx + texCoords );
+
+                return false;
 
             }
 
-            console.warn( 'Vertex.isValid(): negative texture coordinates for:' + this.idx );
-
-            return false;
+            return true; 
 
         }
 
-
-        console.error( 'Vertex::isValid(): invalid coordinates for:' + this.idx );
+        console.error( 'Vertex::isValid(): invalid coordinates for vertex position:' + this.idx + ' coords.x:' + Number.isFinite( this.coords.x ) + ', coords.y:' + Number.isFinite( this.coords.y ) + ', coords.z:' + Number.isFinite( this.coords.z ) );
 
         return false;
 

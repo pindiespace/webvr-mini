@@ -345,23 +345,24 @@ class World extends AssetPool {
                 vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
                 vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
                 [], // texture loaded directly
-                //[ 'obj/capsule/capsule.obj' ] // object files (.obj, .mtl)
+                //[ 'obj/capsule/capsule.obj' ], // object files (.obj, .mtl)
                 //[ 'obj/rose/rose.obj' ],
                 //[ 'obj/rose2/rose2.obj' ],
-                [ 'obj/oblong/oblong.obj' ],
+                //[ 'obj/cube/cube.obj' ],
+                //[ 'obj/oblong/oblong.obj' ],
                 //[ 'obj/cylinder/cylinder.obj' ],
                 //[ 'obj/balls/balls.obj' ],
-                //[ 'obj/mountains/mountains.obj' ] // ok
-                //[ 'obj/landscape/landscape.obj'] // ok?
-                //[ 'obj/toilet/toilet.obj' ] // works with texture, multiple groups wrap texture!
-                //[ 'obj/naboo/naboo.obj' ] // works fine, but needs to load additional images.
-                //[ 'obj/star/star.obj'] // ok, gets generic grey texture
-                //[ 'obj/robhead/robhead.obj'] // no texcoords or normals
-                //[ 'obj/soccerball/soccerball.obj'] // no texcoords or normals
-                //[ 'obj/basketball/basketball.obj'] // needs TGA translation
+                //[ 'obj/mountains/mountains.obj' ], // ok
+                //[ 'obj/landscape/landscape.obj'], // ok?
+                [ 'obj/toilet/toilet.obj' ], // works with texture, multiple groups wrap texture!
+                //[ 'obj/naboo/naboo.obj' ], // works fine, but needs to load additional images.
+                //[ 'obj/star/star.obj'], // ok, gets generic grey texture
+                //[ 'obj/robhead/robhead.obj'], // no texcoords or normals
+                //[ 'obj/soccerball/soccerball.obj'], // no texcoords or normals
+                //[ 'obj/basketball/basketball.obj'], // needs TGA translation
                 //[ 'obj/rock1/rock1.obj'] // rock plus surface, works
-                //[ 'obj/cherries/cherries.obj'] // rendering indices error
-                //[ 'obj/banana/banana.obj' ] // works great
+                //[ 'obj/cherries/cherries.obj'], // rendering indices error
+                //[ 'obj/banana/banana.obj' ], // works great
                 false, // if true, use color array instead of texture array
                 false, // if true, apply textures to each face, not whole Prim.
                 false, // if true, use lighting                

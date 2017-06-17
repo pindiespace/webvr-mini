@@ -123,6 +123,8 @@ class ModelPool extends AssetPool {
 
                 arr.push( parseFloat( vs[ 1 ] ), parseFloat( vs[ 3 ] ), parseFloat( vs[ 5 ] ) );
 
+                //////////////////////console.log("PUSHED:" + vs[ 1 ] + ',' + vs[ 3 ] + ',' + vs[ 5 ] )
+
             return true;
 
         }
@@ -185,6 +187,37 @@ class ModelPool extends AssetPool {
     }
 
     /** 
+     * Compute triangles for Quads wrapped in Blender quad format (actually 
+     * a triangle strip).
+     * @link https://stackoverflow.com/questions/23723993/converting-quadriladerals-in-an-obj-file-into-triangles
+     */
+    computeBlenderTris ( idxs ) {
+
+
+
+/*
+n = 0;
+triangles[n++] = [values[0], values[1], values[2]];
+for(i = 3; i < count(values); ++i)
+  triangles[n++] = [
+    values[i - 3],
+    values[i - 1],
+    values[i]
+  ];
+
+f A B C D E F
+
+Becomes the following triangles
+
+A B C
+A C D
+B D E
+C E F
+
+            */
+    }
+
+    /** 
      * Compute triangles for Quads and higher polygons (all triangles share the 1st position).
      * Use when the number of faces on a line is > 3 (usually a quad).
      * @param {Array} idxs an array of single numbers, representing start positions in another Array.
@@ -197,7 +230,6 @@ class ModelPool extends AssetPool {
             let nIdxs = [];
 
             // For quad, this gives 0, 1, 2, 0, 2, 3.
-
             for ( let i = 1; i < idxs.length - 1; i++ ) {
 
                 nIdxs.push( idxs[ 0 ], idxs[ i ], idxs[ i + 1 ] );
@@ -293,104 +325,84 @@ class ModelPool extends AssetPool {
 
     }
 
-    /**
-     * Flatten the arrays so we only need one index array.
 
-     // TODO: DETERMINE WHY WE ARE NOT RE-CREAting oRigiNAL ArRAYS!!!!!!
-     
-     */
-    computeFlatArrays ( geo, vertices, texCoords, normals ) {
+    doObjFaces ( data, faces, lineNum ) {
 
-        let iHash = [];
+        let parts = data.match( /[^\s]+/g );
 
-        let faces = geo.faces;
+        let NOT_IN_STRING = this.NOT_IN_LIST;
 
-        let nVertices = geo.vertices, nIndices = geo.indices, nTexCoords = geo.texCoords, nNormals = geo.normals;
+        let idxs, iVert, iTexCoord, iNormal, iVerts = [], iTexCoords = [], iNormals = [];
 
-        for ( let i = 0; i < faces.length; i++ ) {
+        // Each map should refer to one point.
 
-            let f = faces[ i ];
+        parts.map( ( fs ) => {
 
-            // Construct a hash key for this face.
+            //console.log("fs:" + fs)
 
-            let key = f[ 0 ] + '_' + f[ 1 ] + '_' + f[ 2 ]; // point key (vertex, index, normals)
+            // Split indices, normals and texture coordinates if they are present.
 
-            let vIdx, iIdx;
+            if ( fs.indexOf( '//' ) !== NOT_IN_STRING ) { // normals, no texture coordinates
 
-            if ( iHash[ key ] !== undefined ) {
+                idxs = fs.split( '//' );
 
-                    // Push the existing, revised value for the face key.
+                iVerts.push( parseFloat( idxs[ 0 ] ) - 1 );
 
-                    //vIdx = f[ 0 ] // old face index within OBJ file.
+                iTexCoords.push( null );
 
-                    //iIdx = iHash[ key ] //REDUNDANT
+                iNormals.push( parseFloat( idxs[ 1 ] ) - 1 );
 
-                    nIndices.push( iHash[ key ] );
+            } else if ( fs.indexOf ( '/' ) !== NOT_IN_STRING ) { // texCoords present
 
-            } else {
+                idxs = fs.split( '/' );
 
-                vIdx = f[ 0 ]; // old face index within OBJ file
+                iVerts.push( parseFloat( idxs[ 0 ] ) - 1 );
 
-                iIdx = parseInt( nVertices.length / 3 ); // new face index in the new arrays
+                if ( idxs.length == 2 ) { // texCoords present
 
-                let tIdx, nIdx;
+                    iTexCoords.push( parseFloat( idxs[ 1 ] ) - 1 );
 
-                // Push the new Index.
+                    iNormals.push( null );
 
-                nIndices.push( iIdx );
+                } else if ( idxs.length === 3 ) { // both texCoords and normals present
 
-                // Save the new index under the hash key
+                    iTexCoords.push( parseFloat( idxs[ 1 ] ) - 1 );
 
-                iHash[ key ] = iIdx;
+                    iNormals.push( parseFloat( idxs[ 2 ] ) - 1 );
 
-                // Push the flattened vertex, texCoord, normal values.
+                } 
 
-                vIdx *= 3;
+            } else { // Has indices only
 
-                // Push vertices.
-
-                nVertices.push( vertices[ vIdx ], vertices[ vIdx + 1 ], vertices[ vIdx + 2 ] );
-
-                // Push texture coords.
-
-                if ( f[ 1 ] !== null ) { 
-
-                    tIdx = f[ 1 ] * 2;
-
-                    nTexCoords.push( texCoords[ tIdx ], texCoords[ tIdx + 1 ] );
-
-                } else {
-
-                    nTexCoords.push( 0, 0 );
-
-                }
-
-                // Push normals.
-
-                if ( f[ 2 ] !== null ) { 
-
-                    nIdx = f[ 2 ] * 3;
-
-                    nNormals.push( normals[ nIdx ], normals[ nIdx + 1 ], normals[ nIdx + 2 ] );
-
-                } else {
-
-                    nNormals.push( 0, 0, 0 );
-
-                }
+                iVerts.push( parseFloat( fs ) - 1 ); 
 
             }
 
+        } );
+
+        // Now, convert quads and higher polygons to a set of triangles.
+
+        iVerts = this.computeFaceFan( iVerts );
+
+        iTexCoords = this.computeFaceFan( iTexCoords );
+
+        iNormals = this.computeFaceFan( iNormals );
+
+        // Append to faces array.
+
+        let f = { data: data, indices: [] };
+
+        for ( let i = 0; i < iVerts.length; i++ ) {
+
+            //console.log("IVERTS:" + iVerts[ i ] + " iTEXCOORDS:" + iTexCoords + " iNORMALS:" + iNormals)
+
+             f.indices.push( [ iVerts[ i ], iTexCoords[ i ], iNormals[ i ] ] );
+
         }
 
-    }
+        //console.log("F.indices is:" + f.indices[ f.indices.length - 1])
 
-    /** 
-     * Get 
-     */
-    getGeoFaces ( data, faces, lineNum ) {
-
-        faces.push ( data );
+        faces.push( f );
 
     }
 
@@ -402,21 +414,23 @@ class ModelPool extends AssetPool {
 
         let m = this.default();
 
-        window.m = m; ////////////////////////////////////////////////////
-
         let lineNum = 0,
 
         lines = data.split( '\n' ),
 
         matStarts = [];
 
+        let dir = this.util.getFilePath( path );
+
         let matName = this.materialPool.createDefaultName( prim.name );
 
         let currGeo = { material: matName, faces: [] };
 
+        let lastType = '#';
+
         matStarts.push( currGeo );
 
-        let faces = []; vertices = [], texCoords = [], texCoords = [], normals = [];
+        let faces = [], vertices = [], indices = [], texCoords = [], normals = [];
 
         lines.forEach( ( line ) => {
 
@@ -430,19 +444,19 @@ class ModelPool extends AssetPool {
 
             if ( data !== '' ) {
 
-                switch ( data ) {
-
-                    case 'v': // vertices
-
-                        this.computeObj3d( data, vertices, lineNum );
-
-                        break;
+                switch ( type ) {
 
                     case 'f': // line of faces, indices, convert polygons to triangles
 
                         // Get the faces
 
-                        this.getObjFaces( data, currGeo.faces, lineNum )
+                        this.doObjFaces ( data, currGeo.faces, lineNum );
+
+                        break;
+
+                    case 'v': // vertices
+
+                        this.computeObj3d( data, vertices, lineNum );
 
                         break;
 
@@ -474,6 +488,8 @@ class ModelPool extends AssetPool {
 
                             let path = dir + this.util.getFileName( mtls[ i ] );
 
+                            console.log( 'ADDING LIBRARY:' + mtls[ i ])
+
                             this.materialPool.getMaterial( prim, path, true, { pos: i } );
 
                         }
@@ -492,12 +508,21 @@ class ModelPool extends AssetPool {
 
                         break;
 
-                    case '#': // comments are ignored
+                    case 'o': // object names
 
                         break;
 
-                    case 'o': // object name (could be several in file)
-                    case 'g': // group name, store hierarchy
+                    case 's': // smoothing groups
+
+                        break;
+
+                    case 'g': // group name
+
+                        break;
+
+                    case '#': // comments are ignored
+
+                        break;
 
                     case 'maplib': // poorly documented
                     case 'usemap': // ditto
@@ -532,7 +557,7 @@ class ModelPool extends AssetPool {
 
                         // If it's not a pure whitespace line, report.
 
-                        if( ! isWhitespace( data ) ) {
+                        if( ! this.util.isWhitespace( data ) ) {
 
                             console.error( 'ModelPool::computeObjMesh(): unknown line data: ' + line + ' in .obj file at line:' + lineNum );
 
@@ -544,10 +569,118 @@ class ModelPool extends AssetPool {
 
             }
 
+            lastType = type; // store previous type.
+
         } ); // end of foreach
 
         // Second pass.
 
+        // Brute force load
+
+        let tVertices = [], tIndices = [], tTexCoords = [], tNormals = [];
+
+        let startArr = [];
+
+        let idx = 0;
+
+        for ( let i = 0; i < matStarts.length; i++ ) {
+
+            let mat = matStarts[ i ];
+
+            startArr.push( [ mat.material, 4 * tVertices.length / 3, 0 ] ); // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!TIMES 4/ 3
+
+            ////console.log('DOOOBJ:material:' + mat.material ); // one material block
+
+            let matFaces = mat.faces;
+
+            for ( let j = 0; j < matFaces.length; j++ ) {
+
+                let mf = matFaces[ j ];
+
+               //////////////////////////// console.log("face data:" + mf.data) // one face in material
+
+                let faceIndices = mf.indices;
+
+                //console.log("faceIndices::" + j + ": " + faceIndices)
+
+                for ( let k = 0; k < faceIndices.length; k++ ) {
+
+                    let fi = faceIndices[ k ]; // indices for that face
+
+                    // Brute-force push of data using indices. Can use hash later.
+
+                    // THIS HAS REDUNDANANT POINTS, BUT RENDERS CORRECTLY.
+                    // NEED TO TRY HASHING THE VERTEX, INDEX NORMALS ARRAYS.
+
+                    let flat = 0;
+
+                    if ( Number.isFinite( fi[ 0 ] ) ) {
+
+                        tIndices.push( idx );
+
+                        idx++;
+
+                        flat = fi[ 0 ] * 3;
+
+                        tVertices.push( vertices[ flat ], vertices[ flat + 1 ], vertices[ flat + 2 ] );
+
+                    }
+
+                    if ( Number.isFinite( fi[ 1 ] ) ) {
+
+                        flat = fi[ 1 ] * 2;
+
+                        tTexCoords.push( texCoords[ flat ], texCoords[ flat + 1 ] );
+
+                    }
+
+                    /////console.log( "NORMAL fi[2] is:" + fi[ 2 ] + " type:" + typeof fi[ 2] )
+
+                    if ( Number.isFinite( fi[ 2 ] ) ) {
+
+                        flat = fi[ 2 ] * 3;
+
+                        tNormals.push( normals[ flat ], normals[ flat + 1 ], normals[ flat + 2 ] );
+
+                    }
+
+                }
+
+            }
+
+        }
+
+        // Third pass.
+
+        for ( let i = 1; i < startArr.length; i++ ) {
+
+            startArr[ i - 1 ][ 2 ] = ( startArr[ i ][ 1 ] - startArr[ i - 1 ][ 1 ] ) / 4; // !!!!!!!!!!!!!!!!DIVIDED BY 4 
+
+        }
+
+        startArr[ startArr.length - 1 ][ 2 ] = ( ( 4 * tVertices.length / 3 ) - startArr[ startArr.length - 1 ][ 1 ] ) / 4; // !!!!!!!!!!!!!!!!!!!!!!!! 4/3, divided by 4
+
+        m.options.matStarts = startArr;
+
+        m.vertices = tVertices,
+
+        m.indices = tIndices,
+
+        m.texCoords = tTexCoords,
+
+        m.normals = tNormals;
+
+        ////////////////////////////////////
+
+        window.vs = vertices;
+
+        window.ts = texCoords;
+
+        window.ns = normals;
+
+        window.ms = matStarts;
+
+        window.mm = m; ////////////////////////////////////////////////////
 
 
         return m;
@@ -1003,34 +1136,9 @@ class ModelPool extends AssetPool {
 
         m.normals = tNormals;
 
-        // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-/*
-////////////////
-        let g = geos[ 'Material05' ];
-        q.vertices = g.vertices;
-        q.texCoords = g.texCoords;
-        q.normals = g.normals;
-
-        q.indices = g.indices;
-        m.options.matStarts.push( [ 'Material01', 0, q.indices.length ])
-
-        window.qs = q;
-        window.ms = m;
-
-        m.vertices = q.vertices;
-        m.indices = q.indices;
-        m.texCoords = q.texCoords;
-        m.normals = q.normals;
-*/
-        // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        window.m = m;
 
         // NOTE: Color arrays and tangents are not part of the Wavefront .obj format (in .mtl data).
-
-        this.doObjMesh( data, prim, path );
-
 
         return m;
 
@@ -1069,7 +1177,9 @@ class ModelPool extends AssetPool {
 
                 // Return a Model object.
 
-                d = this.computeObjMesh( data, prim, path ); // ADDS LOTS OF STUFF TO 'd'
+                //d = this.computeObjMesh( data, prim, path ); // ADDS LOTS OF STUFF TO 'd'
+
+                d = this.doObjMesh( data, prim, path );
 
                 // Not supplied by OBJ format.
 
