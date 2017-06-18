@@ -349,12 +349,12 @@ class World extends AssetPool {
                 //[ 'obj/rose/rose.obj' ],
                 //[ 'obj/rose2/rose2.obj' ],
                 //[ 'obj/cube/cube.obj' ],
-                //[ 'obj/oblong/oblong.obj' ],
+                [ 'obj/oblong/oblong.obj' ],
                 //[ 'obj/cylinder/cylinder.obj' ],
                 //[ 'obj/balls/balls.obj' ],
                 //[ 'obj/mountains/mountains.obj' ], // ok
                 //[ 'obj/landscape/landscape.obj'], // ok?
-                [ 'obj/toilet/toilet.obj' ], // works with texture, multiple groups wrap texture!
+                //[ 'obj/toilet/toilet.obj' ], // works with texture, multiple groups wrap texture!
                 //[ 'obj/naboo/naboo.obj' ], // works fine, but needs to load additional images.
                 //[ 'obj/star/star.obj'], // ok, gets generic grey texture
                 //[ 'obj/robhead/robhead.obj'], // no texcoords or normals
@@ -365,7 +365,7 @@ class World extends AssetPool {
                 //[ 'obj/banana/banana.obj' ], // works great
                 false, // if true, use color array instead of texture array
                 false, // if true, apply textures to each face, not whole Prim.
-                false, // if true, use lighting                
+                true, // if true, use lighting                
             );
 
 /*

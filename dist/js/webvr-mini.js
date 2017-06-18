@@ -16553,7 +16553,7 @@
 
 	                        for (var i = 0; i < iVerts.length; i++) {
 
-	                                faces.push([iVerts[i], iTexCoords[i], iNormals[i], data]);
+	                                faces.push([iVerts[i], iTexCoords[i], iNormals[i]]);
 	                        }
 	                }
 	        }, {
@@ -16576,7 +16576,7 @@
 
 	                        parts.map(function (fs) {
 
-	                                //console.log("fs:" + fs)
+	                                ///////////////////console.log("fs:" + fs)
 
 	                                // Split indices, normals and texture coordinates if they are present.
 
@@ -16625,13 +16625,13 @@
 
 	                        iNormals = this.computeFaceFan(iNormals);
 
+	                        ////////////////console.log("iVerts:" + iVerts + " iTexCoords:" + iTexCoords + " iNormals:" + iNormals)
+
 	                        // Append to faces array.
 
 	                        var f = { data: data, indices: [] };
 
 	                        for (var i = 0; i < iVerts.length; i++) {
-
-	                                //console.log("IVERTS:" + iVerts[ i ] + " iTEXCOORDS:" + iTexCoords + " iNORMALS:" + iNormals)
 
 	                                f.indices.push([iVerts[i], iTexCoords[i], iNormals[i]]);
 	                        }
@@ -16663,9 +16663,11 @@
 
 	                        var currGeo = { material: matName, faces: [] };
 
+	                        var iHash = []; // associative lookup table for faces (vertices, indices, texCoords);
+
 	                        var lastType = '#';
 
-	                        matStarts.push(currGeo);
+	                        //matStarts.push( currGeo );
 
 	                        var faces = [],
 	                            vertices = [],
@@ -16687,12 +16689,26 @@
 
 	                                        switch (type) {
 
+	                                                // put in default material
+
 	                                                case 'f':
 	                                                        // line of faces, indices, convert polygons to triangles
+
+	                                                        /* 
+	                                                         * If we encounter a new block of faces, add a matStart.
+	                                                         * Whitespace and un-processed types don't change the lastType
+	                                                         */
+
+	                                                        if (lastType !== type) {
+
+	                                                                matStarts.push(currGeo);
+	                                                        }
 
 	                                                        // Get the faces
 
 	                                                        _this2.doObjFaces(data, currGeo.faces, lineNum);
+
+	                                                        lastType = type; // store previous type.
 
 	                                                        break;
 
@@ -16701,12 +16717,16 @@
 
 	                                                        _this2.computeObj3d(data, vertices, lineNum);
 
+	                                                        lastType = type; // store previous type.
+
 	                                                        break;
 
 	                                                case 'vn':
 	                                                        // normals
 
 	                                                        _this2.computeObj3d(data, normals, lineNum);
+
+	                                                        lastType = type; // store previous type.
 
 	                                                        break;
 
@@ -16719,6 +16739,8 @@
 
 	                                                                _this2.computeObj3d(data, texCoords);
 	                                                        }
+
+	                                                        lastType = type; // store previous type.
 
 	                                                        break;
 
@@ -16738,6 +16760,8 @@
 	                                                                _this2.materialPool.getMaterial(prim, _path, true, { pos: i });
 	                                                        }
 
+	                                                        lastType = type; // store previous type.
+
 	                                                        break;
 
 	                                                case 'usemtl':
@@ -16750,6 +16774,8 @@
 	                                                        currGeo = { material: matName, faces: [] };
 
 	                                                        matStarts.push(currGeo);
+
+	                                                        lastType = type; // store previous type.
 
 	                                                        break;
 
@@ -16816,8 +16842,6 @@
 
 	                                        }
 	                                }
-
-	                                lastType = type; // store previous type.
 	                        }); // end of foreach
 
 	                        // Second pass.
@@ -16833,11 +16857,26 @@
 
 	                        var idx = 0;
 
+	                        var hashCount = 0; /////////////////////////////
+
 	                        for (var i = 0; i < matStarts.length; i++) {
 
 	                                var mat = matStarts[i];
 
-	                                startArr.push([mat.material, 4 * tVertices.length / 3, 0]); // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!TIMES 4/ 3
+	                                var tIndicesPos = void 0;
+
+	                                if (tIndices.length === 0) {
+
+	                                        tIndicesPos = 0;
+	                                } else {
+
+	                                        tIndicesPos = tIndices[idx - 1] * 4 + 4;
+	                                }
+
+	                                //////////////////startArr.push( [ mat.material, 4 * tVertices.length / 3, 0 ] ); // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!TIMES 4/ 3
+	                                //console.log('vertices calc:' + 4 * tVertices.length / 3 );
+	                                //console.log('tIndices[' + idx + '] = ' + tIndicesPos );
+	                                startArr.push([mat.material, tIndicesPos, 0]); // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!TIMES 4/ 3
 
 	                                ////console.log('DOOOBJ:material:' + mat.material ); // one material block
 
@@ -16847,26 +16886,27 @@
 
 	                                        var mf = matFaces[j];
 
-	                                        //////////////////////////// console.log("face data:" + mf.data) // one face in material
-
 	                                        var faceIndices = mf.indices;
 
-	                                        //console.log("faceIndices::" + j + ": " + faceIndices)
+	                                        // Save in a hash table.
 
-	                                        for (var k = 0; k < faceIndices.length; k++) {
+	                                        var fIdx = mf.indices;
 
-	                                                var fi = faceIndices[k]; // indices for that face
+	                                        for (var k = 0; k < fIdx.length; k++) {
 
-	                                                // Brute-force push of data using indices. Can use hash later.
+	                                                var fi = fIdx[k]; // indices for that face
 
-	                                                // THIS HAS REDUNDANANT POINTS, BUT RENDERS CORRECTLY.
-	                                                // NEED TO TRY HASHING THE VERTEX, INDEX NORMALS ARRAYS.
+	                                                var key = fi[0] + '_' + fi[1] + '_' + fi[2];
+
+	                                                //if ( iHash[ key ] === undefined ) {
 
 	                                                var flat = 0;
 
 	                                                if (Number.isFinite(fi[0])) {
 
-	                                                        tIndices.push(idx);
+	                                                        tIndices.push(idx); // current position in index array
+
+	                                                        iHash[key] = idx;
 
 	                                                        idx++;
 
@@ -16882,26 +16922,38 @@
 	                                                        tTexCoords.push(texCoords[flat], texCoords[flat + 1]);
 	                                                }
 
-	                                                /////console.log( "NORMAL fi[2] is:" + fi[ 2 ] + " type:" + typeof fi[ 2] )
-
 	                                                if (Number.isFinite(fi[2])) {
 
 	                                                        flat = fi[2] * 3;
 
 	                                                        tNormals.push(normals[flat], normals[flat + 1], normals[flat + 2]);
 	                                                }
-	                                        }
-	                                }
-	                        }
+
+	                                                //} else {
+
+	                                                // Use the hash index.
+
+	                                                //    tIndices.push( iHash[ key ] );
+
+	                                                //}
+	                                        } // faceIndices loop
+
+	                                        ////////////////////console.log("HASHCOUNT WAS: " + hashCount)
+
+	                                        // set Indices
+	                                } // matFaces loop
+	                        } // matStarts loop
 
 	                        // Third pass.
 
 	                        for (var _i = 1; _i < startArr.length; _i++) {
 
-	                                startArr[_i - 1][2] = (startArr[_i][1] - startArr[_i - 1][1]) / 4; // !!!!!!!!!!!!!!!!DIVIDED BY 4 
+	                                startArr[_i - 1][2] = (startArr[_i][1] - startArr[_i - 1][1]) / 4; // !!!!!!!!!!!!!!!!!!!!!!!!!!DIVIDED BY 4
+	                                ////////////////////////////////startArr[ i - 1 ][ 2 ] = ( startArr[ i ][ 1 ] - startArr[ i - 1 ][ 1 ] );
 	                        }
 
 	                        startArr[startArr.length - 1][2] = (4 * tVertices.length / 3 - startArr[startArr.length - 1][1]) / 4; // !!!!!!!!!!!!!!!!!!!!!!!! 4/3, divided by 4
+	                        //////////////////////////////startArr[ startArr.length - 1 ][ 2 ] = ( ( tVertices.length ) - startArr[ startArr.length - 1 ][ 1 ] );
 
 	                        m.options.matStarts = startArr;
 
@@ -16919,6 +16971,7 @@
 
 	                        window.mm = m; ////////////////////////////////////////////////////
 
+	                        window.iHash = iHash;
 
 	                        return m;
 	                }
@@ -17005,6 +17058,7 @@
 	                                                        objects.push([data, faces.length]); // start position in final flattened array
 
 	                                                        ///////////////////console.log('>objects[' + data + '] = ' + faces.length)
+	                                                        lastType = type; // use to catch smoothing groups
 
 	                                                        break;
 
@@ -17014,6 +17068,7 @@
 	                                                        groups.push([data, faces.length]); // starting position in final flattened array
 
 	                                                        ///////////////////////console.log('>groups[' + data + '] = ' + faces.length );
+	                                                        lastType = type; // use to catch smoothing groups
 
 	                                                        break;
 
@@ -17034,13 +17089,15 @@
 	                                                        smoothingGroups.push([data + 's']);
 
 	                                                        //////////////////////////////console.log('>smoothingGroup:' + gKey + ' at:' + lineNum + 1 );
-
+	                                                        lastType = type; // use to catch smoothing groups
 	                                                        break;
 
 	                                                case 'v':
 	                                                        // vertices
 
 	                                                        _this3.computeObj3d(data, tVertices);
+
+	                                                        lastType = type; // use to catch smoothing groups
 
 	                                                        break;
 
@@ -17074,12 +17131,16 @@
 	                                                                sg.push(faces.length - oldLen);
 	                                                        }
 
+	                                                        lastType = type; // use to catch smoothing groups
+
 	                                                        break;
 
 	                                                case 'vn':
 	                                                        // normals
 
 	                                                        _this3.computeObj3d(data, tNormals);
+
+	                                                        lastType = type; // use to catch smoothing groups
 
 	                                                        break;
 
@@ -17092,6 +17153,8 @@
 
 	                                                                _this3.computeObj3d(data, tTexCoords);
 	                                                        }
+
+	                                                        lastType = type; // use to catch smoothing groups
 
 	                                                        break;
 
@@ -17113,6 +17176,8 @@
 	                                                                _this3.materialPool.getMaterial(prim, _path3, true, { pos: i });
 	                                                        }
 
+	                                                        lastType = type; // use to catch smoothing groups
+
 	                                                        break;
 
 	                                                case 'usemtl':
@@ -17122,7 +17187,11 @@
 
 	                                                        var _path2 = _this3.util.getFileName(data);
 
-	                                                        matStarts.push([_path2, faces.length]); // store material and start position.
+	                                                        //matStarts.push( [ path, faces.length ] ); // store material and start position.
+
+	                                                        // TODO: USE THE CUBE TO RESET THESE PROPERLY.
+
+	                                                        matStarts.push([_path2, 4 * tVertices.length / 3, 0]); // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!TIMES 4/ 3
 
 	                                                        //console.log("USEMTL:" + path + " faces length:" + faces.length )
 
@@ -17138,6 +17207,8 @@
 	                                                        // TODO: https://n-e-r-v-o-u-s.com/blog/?p=2738
 
 	                                                        // TODO: ANOTHER EXAMPLE
+
+	                                                        lastType = type; // use to catch smoothing groups
 
 	                                                        break;
 
@@ -17188,8 +17259,6 @@
 	                                                        break;
 
 	                                        } // end of switch
-
-	                                        lastType = type; // use to catch smoothing groups
 	                                } // end of data !== ''
 
 	                                lineNum++;
@@ -17385,9 +17454,9 @@
 
 	                                        // Return a Model object.
 
-	                                        //d = this.computeObjMesh( data, prim, path ); // ADDS LOTS OF STUFF TO 'd'
+	                                        d = this.computeObjMesh(data, prim, path); // ADDS LOTS OF STUFF TO 'd'
 
-	                                        d = this.doObjMesh(data, prim, path);
+	                                        //d = this.doObjMesh( data, prim, path );
 
 	                                        // Not supplied by OBJ format.
 
@@ -19686,12 +19755,12 @@
 	                        //[ 'obj/rose/rose.obj' ],
 	                        //[ 'obj/rose2/rose2.obj' ],
 	                        //[ 'obj/cube/cube.obj' ],
-	                        //[ 'obj/oblong/oblong.obj' ],
+	                        ['obj/oblong/oblong.obj'],
 	                        //[ 'obj/cylinder/cylinder.obj' ],
 	                        //[ 'obj/balls/balls.obj' ],
 	                        //[ 'obj/mountains/mountains.obj' ], // ok
 	                        //[ 'obj/landscape/landscape.obj'], // ok?
-	                        ['obj/toilet/toilet.obj'], // works with texture, multiple groups wrap texture!
+	                        //[ 'obj/toilet/toilet.obj' ], // works with texture, multiple groups wrap texture!
 	                        //[ 'obj/naboo/naboo.obj' ], // works fine, but needs to load additional images.
 	                        //[ 'obj/star/star.obj'], // ok, gets generic grey texture
 	                        //[ 'obj/robhead/robhead.obj'], // no texcoords or normals
@@ -19702,7 +19771,7 @@
 	                        //[ 'obj/banana/banana.obj' ], // works great
 	                        false, // if true, use color array instead of texture array
 	                        false, // if true, apply textures to each face, not whole Prim.
-	                        false);
+	                        true);
 
 	                        /*
 	                                    this.primFactory.createPrim(
