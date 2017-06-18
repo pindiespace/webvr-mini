@@ -17023,6 +17023,8 @@
 
 	                        var dir = this.util.getFilePath(path);
 
+	                        var matName = this.materialPool.createDefaultName(prim.name);
+
 	                        // Get the lines of the file.
 
 	                        var lineNum = 0,
@@ -17104,7 +17106,16 @@
 	                                                case 'f':
 	                                                        // line of faces, indices, convert polygons to triangles
 
-	                                                        ///if ( ! currMat ) console.error( "starting faces, but not material defined yet! ");
+	                                                        /* 
+	                                                         * If we encounter a new block of faces, add a matStart.
+	                                                         * Whitespace and un-processed types don't change the lastType
+	                                                         */
+
+	                                                        //if ( lastType !== type ) {
+
+	                                                        //    matStarts.push( [ matName, faces.length * 4, 0 ] ); // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!TIMES 4/ 3
+
+	                                                        //}
 
 	                                                        // If our previous line was a smoothing group, add the start.
 
@@ -17171,9 +17182,9 @@
 
 	                                                                ///let path = dir + mtls[ i ].replace(/^.*[\\\/]/, ''); // strip directories and add our own
 
-	                                                                var _path3 = dir + _this3.util.getFileName(mtls[i]);
+	                                                                var _path2 = dir + _this3.util.getFileName(mtls[i]);
 
-	                                                                _this3.materialPool.getMaterial(prim, _path3, true, { pos: i });
+	                                                                _this3.materialPool.getMaterial(prim, _path2, true, { pos: i });
 	                                                        }
 
 	                                                        lastType = type; // use to catch smoothing groups
@@ -17185,23 +17196,9 @@
 
 	                                                        // matStarts records where to start in the index (faces) array.
 
-	                                                        var _path2 = _this3.util.getFileName(data);
+	                                                        matName = _this3.util.getFileName(data);
 
-	                                                        //matStarts.push( [ path, faces.length ] ); // store material and start position.
-
-	                                                        // TODO: USE THE CUBE TO RESET THESE PROPERLY.
-
-	                                                        matStarts.push([_path2, 4 * tVertices.length / 3, 0]); // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!TIMES 4/ 3
-
-	                                                        //console.log("USEMTL:" + path + " faces length:" + faces.length )
-
-	                                                        /////console.log('ModelPool::computeObjMesh(): material start for material[' + data + '] at:' + faces.length );
-
-	                                                        // TODO:
-
-	                                                        // TODO: MULTIPLE MATERIALS NEED TO BE TREATED AS SEPARATE OBJECTS. FACE LENGTHS 
-	                                                        // TODO: COMPUTED INDDEPENDENTLY FOR EACH MATERIAL.
-	                                                        // TODO: CONCATENATE THE MATERIALS AT THE END.
+	                                                        matStarts.push([matName, faces.length * 4, 0]); // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!TIMES 4/ 3
 
 	                                                        // TODO: GREAT BINARY FORMAT MODEL
 	                                                        // TODO: https://n-e-r-v-o-u-s.com/blog/?p=2738
@@ -17352,21 +17349,6 @@
 	                                                        nNormals.push(0, 0, 0);
 	                                                }
 	                                        } // end of re-index a new face
-
-
-	                                        // Recalculate material starts.
-
-	                                        for (var j = 0; j < matStarts.length; j++) {
-
-	                                                //console.log("checking")
-
-	                                                if (matStarts[j][1] === i) {
-
-	                                                        //////console.log("recomputng, i:" + i + ' old index:' + matStarts[ j ][ 1 ] + ' new index:' + (nIndices.length - 1))
-
-	                                                        matStarts[j][1] = nIndices.length - 1;
-	                                                }
-	                                        }
 	                                } // end of for loop
 
 	                                // Should be the same.
@@ -17398,14 +17380,12 @@
 
 	                        for (var _i2 = 1; _i2 < m.options.matStarts.length; _i2++) {
 
-	                                //m.options.matStarts[ i - 1 ][ 1 ] -= 60;
+	                                //if ( m.options.matStarts[ i - 1][ 1 ] < 0 ) m.options.matStarts[ i - 1 ][ 1 ] = 0; /////////////////////////////
 
-	                                if (m.options.matStarts[_i2 - 1][1] < 0) m.options.matStarts[_i2 - 1][1] = 0;
-
-	                                m.options.matStarts[_i2 - 1][2] = m.options.matStarts[_i2][1] - m.options.matStarts[_i2 - 1][1];
+	                                m.options.matStarts[_i2 - 1][2] = (m.options.matStarts[_i2][1] - m.options.matStarts[_i2 - 1][1]) / 4;
 	                        }
 
-	                        m.options.matStarts[m.options.matStarts.length - 1][2] = tIndices.length - m.options.matStarts[m.options.matStarts.length - 1][1];
+	                        m.options.matStarts[m.options.matStarts.length - 1][2] = tIndices.length - m.options.matStarts[m.options.matStarts.length - 1][1] / 4;
 
 	                        // If there was no faces in the OBJ file, use the raw data.
 
@@ -19751,27 +19731,27 @@
 	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
 	                        vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
 	                        [], // texture loaded directly
-	                        //[ 'obj/capsule/capsule.obj' ], // object files (.obj, .mtl)
-	                        //[ 'obj/rose/rose.obj' ],
+	                        //[ 'obj/capsule/capsule.obj' ], // !!!!!!!!!!!! nothing in shadows again
+	                        //[ 'obj/rose/rose.obj' ], // works great
 	                        //[ 'obj/rose2/rose2.obj' ],
-	                        //[ 'obj/cube/cube.obj' ],
-	                        ['obj/oblong/oblong.obj'],
-	                        //[ 'obj/cylinder/cylinder.obj' ],
-	                        //[ 'obj/balls/balls.obj' ],
+	                        //[ 'obj/cube/cube.obj' ], // works great
+	                        ['obj/oblong/oblong.obj'], // works great
+	                        //[ 'obj/cylinder/cylinder.obj' ], // !!!!!!!! nothing shadows. One panel is gray
+	                        //[ 'obj/balls/balls.obj' ], // great, but FAIL with lighting
 	                        //[ 'obj/mountains/mountains.obj' ], // ok
-	                        //[ 'obj/landscape/landscape.obj'], // ok?
+	                        //[ 'obj/landscape/landscape.obj'], // without lighting, lighting makkes BLACK
 	                        //[ 'obj/toilet/toilet.obj' ], // works with texture, multiple groups wrap texture!
 	                        //[ 'obj/naboo/naboo.obj' ], // works fine, but needs to load additional images.
 	                        //[ 'obj/star/star.obj'], // ok, gets generic grey texture
-	                        //[ 'obj/robhead/robhead.obj'], // no texcoords or normals
+	                        //[ 'obj/robhead/robhead.obj'], // no texcoords or normals. works, but turns black with lighting
 	                        //[ 'obj/soccerball/soccerball.obj'], // no texcoords or normals
-	                        //[ 'obj/basketball/basketball.obj'], // needs TGA translation
+	                        //[ 'obj/basketball/basketball.obj'], //!!!!!!!!!!! grey, then goes black at alpha = 1; (whether or not there's lighting)
 	                        //[ 'obj/rock1/rock1.obj'] // rock plus surface, works
-	                        //[ 'obj/cherries/cherries.obj'], // rendering indices error
+	                        //[ 'obj/cherries/cherries.obj'], // ok
 	                        //[ 'obj/banana/banana.obj' ], // works great
 	                        false, // if true, use color array instead of texture array
 	                        false, // if true, apply textures to each face, not whole Prim.
-	                        true);
+	                        false);
 
 	                        /*
 	                                    this.primFactory.createPrim(

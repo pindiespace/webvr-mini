@@ -345,27 +345,27 @@ class World extends AssetPool {
                 vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
                 vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
                 [], // texture loaded directly
-                //[ 'obj/capsule/capsule.obj' ], // object files (.obj, .mtl)
-                //[ 'obj/rose/rose.obj' ],
+                //[ 'obj/capsule/capsule.obj' ], // !!!!!!!!!!!! nothing in shadows again
+                //[ 'obj/rose/rose.obj' ], // works great
                 //[ 'obj/rose2/rose2.obj' ],
-                //[ 'obj/cube/cube.obj' ],
-                [ 'obj/oblong/oblong.obj' ],
-                //[ 'obj/cylinder/cylinder.obj' ],
-                //[ 'obj/balls/balls.obj' ],
+                //[ 'obj/cube/cube.obj' ], // works great
+                [ 'obj/oblong/oblong.obj' ], // works great
+                //[ 'obj/cylinder/cylinder.obj' ], // !!!!!!!! nothing shadows. One panel is gray
+                //[ 'obj/balls/balls.obj' ], // great, but FAIL with lighting
                 //[ 'obj/mountains/mountains.obj' ], // ok
-                //[ 'obj/landscape/landscape.obj'], // ok?
+                //[ 'obj/landscape/landscape.obj'], // without lighting, lighting makkes BLACK
                 //[ 'obj/toilet/toilet.obj' ], // works with texture, multiple groups wrap texture!
                 //[ 'obj/naboo/naboo.obj' ], // works fine, but needs to load additional images.
                 //[ 'obj/star/star.obj'], // ok, gets generic grey texture
-                //[ 'obj/robhead/robhead.obj'], // no texcoords or normals
+                //[ 'obj/robhead/robhead.obj'], // no texcoords or normals. works, but turns black with lighting
                 //[ 'obj/soccerball/soccerball.obj'], // no texcoords or normals
-                //[ 'obj/basketball/basketball.obj'], // needs TGA translation
+                //[ 'obj/basketball/basketball.obj'], //!!!!!!!!!!! grey, then goes black at alpha = 1; (whether or not there's lighting)
                 //[ 'obj/rock1/rock1.obj'] // rock plus surface, works
-                //[ 'obj/cherries/cherries.obj'], // rendering indices error
+                //[ 'obj/cherries/cherries.obj'], // ok
                 //[ 'obj/banana/banana.obj' ], // works great
                 false, // if true, use color array instead of texture array
                 false, // if true, apply textures to each face, not whole Prim.
-                true, // if true, use lighting                
+                false, // if true, use lighting                
             );
 
 /*

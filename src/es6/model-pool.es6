@@ -802,6 +802,8 @@ C E F
 
         let dir = this.util.getFilePath( path );
 
+        let matName = this.materialPool.createDefaultName( prim.name );
+
         // Get the lines of the file.
 
         let lineNum = 0,
@@ -881,7 +883,16 @@ C E F
 
                     case 'f': // line of faces, indices, convert polygons to triangles
 
-                        ///if ( ! currMat ) console.error( "starting faces, but not material defined yet! ");
+                        /* 
+                         * If we encounter a new block of faces, add a matStart.
+                         * Whitespace and un-processed types don't change the lastType
+                         */
+
+                        //if ( lastType !== type ) {
+
+                        //    matStarts.push( [ matName, faces.length * 4, 0 ] ); // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!TIMES 4/ 3
+
+                        //}
 
                         // If our previous line was a smoothing group, add the start.
 
@@ -961,23 +972,9 @@ C E F
 
                         // matStarts records where to start in the index (faces) array.
 
-                        let path = this.util.getFileName ( data );
+                        matName = this.util.getFileName ( data );
 
-                        //matStarts.push( [ path, faces.length ] ); // store material and start position.
-
-                        // TODO: USE THE CUBE TO RESET THESE PROPERLY.
-
-                        matStarts.push( [ path, 4 * tVertices.length / 3, 0 ] ); // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!TIMES 4/ 3
-
-                        //console.log("USEMTL:" + path + " faces length:" + faces.length )
-
-                        /////console.log('ModelPool::computeObjMesh(): material start for material[' + data + '] at:' + faces.length );
-
-                        // TODO:
-
-                        // TODO: MULTIPLE MATERIALS NEED TO BE TREATED AS SEPARATE OBJECTS. FACE LENGTHS 
-                        // TODO: COMPUTED INDDEPENDENTLY FOR EACH MATERIAL.
-                        // TODO: CONCATENATE THE MATERIALS AT THE END.
+                        matStarts.push( [ matName, faces.length * 4, 0 ] ); // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!TIMES 4/ 3
 
                         // TODO: GREAT BINARY FORMAT MODEL
                         // TODO: https://n-e-r-v-o-u-s.com/blog/?p=2738
@@ -1129,23 +1126,6 @@ C E F
 
                 } // end of re-index a new face
 
-
-                // Recalculate material starts.
-
-                for ( let j = 0; j < matStarts.length; j++ ) {
-
-                    //console.log("checking")
-
-                   if ( matStarts[ j ][ 1 ] === i )  {
-
-                        //////console.log("recomputng, i:" + i + ' old index:' + matStarts[ j ][ 1 ] + ' new index:' + (nIndices.length - 1))
-
-                         matStarts[ j ][ 1 ] = nIndices.length - 1;
-
-                    }
-
-                }
-
             } // end of for loop
 
             // Should be the same.
@@ -1187,15 +1167,13 @@ C E F
 
         for ( let i = 1; i < m.options.matStarts.length; i++ ) {
 
-            //m.options.matStarts[ i - 1 ][ 1 ] -= 60;
+            //if ( m.options.matStarts[ i - 1][ 1 ] < 0 ) m.options.matStarts[ i - 1 ][ 1 ] = 0; /////////////////////////////
 
-            if ( m.options.matStarts[ i - 1][ 1 ] < 0 ) m.options.matStarts[ i - 1 ][ 1 ] = 0
-
-            m.options.matStarts[ i - 1 ][ 2 ] = m.options.matStarts[ i ][ 1 ] - m.options.matStarts[ i - 1 ][ 1 ];
+            m.options.matStarts[ i - 1 ][ 2 ] = ( m.options.matStarts[ i ][ 1 ] - m.options.matStarts[ i - 1 ][ 1 ] ) / 4;
 
         }
 
-        m.options.matStarts[ m.options.matStarts.length - 1 ][ 2 ] = tIndices.length - m.options.matStarts[ m.options.matStarts.length - 1 ][ 1 ];
+        m.options.matStarts[ m.options.matStarts.length - 1 ][ 2 ] = ( tIndices.length - ( m.options.matStarts[ m.options.matStarts.length - 1 ][ 1 ] / 4 ) );
 
         // If there was no faces in the OBJ file, use the raw data.
 
