@@ -17106,17 +17106,6 @@
 	                                                case 'f':
 	                                                        // line of faces, indices, convert polygons to triangles
 
-	                                                        /* 
-	                                                         * If we encounter a new block of faces, add a matStart.
-	                                                         * Whitespace and un-processed types don't change the lastType
-	                                                         */
-
-	                                                        //if ( lastType !== type ) {
-
-	                                                        //    matStarts.push( [ matName, faces.length * 4, 0 ] ); // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!TIMES 4/ 3
-
-	                                                        //}
-
 	                                                        // If our previous line was a smoothing group, add the start.
 
 	                                                        var sg = void 0,
@@ -17178,10 +17167,6 @@
 
 	                                                        for (var i = 0; i < mtls.length; i++) {
 
-	                                                                ///////let path = dir + mtls[ i ];
-
-	                                                                ///let path = dir + mtls[ i ].replace(/^.*[\\\/]/, ''); // strip directories and add our own
-
 	                                                                var _path2 = dir + _this3.util.getFileName(mtls[i]);
 
 	                                                                _this3.materialPool.getMaterial(prim, _path2, true, { pos: i });
@@ -17202,8 +17187,6 @@
 
 	                                                        // TODO: GREAT BINARY FORMAT MODEL
 	                                                        // TODO: https://n-e-r-v-o-u-s.com/blog/?p=2738
-
-	                                                        // TODO: ANOTHER EXAMPLE
 
 	                                                        lastType = type; // use to catch smoothing groups
 
@@ -17313,10 +17296,6 @@
 
 	                                                iHash[key] = iIdx;
 
-	                                                // Re-index our groups, objects, material starts, smoothing groups to the revised index position.
-
-	                                                ///////////////////////::::::::::::::::::::::::::::::::::::::::::::::::::::
-
 	                                                // Push the flattened vertex, texCoord, normal values.
 
 	                                                vIdx *= 3;
@@ -17327,32 +17306,50 @@
 
 	                                                // Push texture coords.
 
-	                                                if (f[1] !== null) {
+	                                                if (f[1] !== null && f[1] !== undefined) {
 
 	                                                        tIdx = f[1] * 2;
 
-	                                                        nTexCoords.push(tTexCoords[tIdx], tTexCoords[tIdx + 1]);
+	                                                        if (isFinite(tTexCoords[tIdx]) && isFinite(tTexCoords[tIdx + 1])) {
+
+	                                                                nTexCoords.push(tTexCoords[tIdx], tTexCoords[tIdx + 1]);
+
+	                                                                // consle.log("HAS A VALID TEXTURE")
+	                                                        } else {
+
+	                                                                console.error('ModelPool::computeObjMesh(): bad texCoords in file: at' + tIdx + '  face (' + f + ')');
+	                                                        }
 	                                                } else {
 
-	                                                        nTexCoords.push(0, 0);
+	                                                        //console.error( 'ModelPool::computeObjMesh(): undefined texture coord, face:' + f );
+	                                                        // TODO: for toilet, we need to do this.
+	                                                        // TODO: for other files, this zaps the coordinate file.
+	                                                        // TODO: need to handle the case where the texCoords are only defined for PART of the overall object!!!!!!!
+	                                                        // TODO: geometry could scan for invalid coords, and fill in
+	                                                        nTexCoords.push(0, 0); // uncomment to get toilet.obj to work
 	                                                }
 
 	                                                // Push normals.
 
-	                                                if (f[2] !== null) {
+	                                                if (f[2] !== null && f[2] !== undefined) {
 
 	                                                        nIdx = f[2] * 3;
 
-	                                                        nNormals.push(tNormals[nIdx], tNormals[nIdx + 1], tNormals[nIdx + 2]);
-	                                                } else {
+	                                                        if (isFinite(tNormals[nIdx]) && isFinite(tNormals[nIdx + 1] && isFinite(tNormals[nIdx + 2]))) {
 
-	                                                        nNormals.push(0, 0, 0);
-	                                                }
+	                                                                nNormals.push(tNormals[nIdx], tNormals[nIdx + 1], tNormals[nIdx + 2]);
+	                                                        } else {
+
+	                                                                console.error('ModelPool::computeObjMesh(): bad normals in file at' + nIdx + ' face (' + f + ')');
+	                                                        }
+	                                                } // else, don't write anything, GeometryPool will compute
+
+	                                                // TODO: need to handle case where normals are only defined for PART of the overall object!!!!
+	                                                // Geometry could scan for invalid numbers, and fill in.
 	                                        } // end of re-index a new face
 	                                } // end of for loop
 
 	                                // Should be the same.
-	                                /////////////console.log('nIndices.length:' + nIndices.length + ' faces.length:' + faces.length)
 
 	                                if (nVertices.length > this.webgl.MAX_DRAWELEMENTS) {
 
@@ -17386,6 +17383,8 @@
 	                        }
 
 	                        m.options.matStarts[m.options.matStarts.length - 1][2] = tIndices.length - m.options.matStarts[m.options.matStarts.length - 1][1] / 4;
+
+	                        // TODO: do this for objects, groups, smoothinggroups.
 
 	                        // If there was no faces in the OBJ file, use the raw data.
 
@@ -19731,27 +19730,27 @@
 	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
 	                        vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
 	                        [], // texture loaded directly
-	                        //[ 'obj/capsule/capsule.obj' ], // !!!!!!!!!!!! nothing in shadows again
+	                        //[ 'obj/capsule/capsule.obj' ], // works, but HALF-CAPSULE (shader normals???)
 	                        //[ 'obj/rose/rose.obj' ], // works great
 	                        //[ 'obj/rose2/rose2.obj' ],
 	                        //[ 'obj/cube/cube.obj' ], // works great
-	                        ['obj/oblong/oblong.obj'], // works great
+	                        //[ 'obj/oblong/oblong.obj' ], // works great but HALF-OBJECT (dark side in pure gray)
 	                        //[ 'obj/cylinder/cylinder.obj' ], // !!!!!!!! nothing shadows. One panel is gray
-	                        //[ 'obj/balls/balls.obj' ], // great, but FAIL with lighting
-	                        //[ 'obj/mountains/mountains.obj' ], // ok
-	                        //[ 'obj/landscape/landscape.obj'], // without lighting, lighting makkes BLACK
-	                        //[ 'obj/toilet/toilet.obj' ], // works with texture, multiple groups wrap texture!
-	                        //[ 'obj/naboo/naboo.obj' ], // works fine, but needs to load additional images.
-	                        //[ 'obj/star/star.obj'], // ok, gets generic grey texture
-	                        //[ 'obj/robhead/robhead.obj'], // no texcoords or normals. works, but turns black with lighting
+	                        //[ 'obj/balls/balls.obj' ], // great
+	                        //[ 'obj/mountains/mountains.obj' ], // NOT WORKING
+	                        //[ 'obj/landscape/landscape.obj'], // ok, but black shadows with lighting
+	                        ['obj/toilet/toilet.obj'], // NOT WORKING
+	                        //[ 'obj/naboo/naboo.obj' ], // ok, black shadows
+	                        //[ 'obj/star/star.obj'], // ok
+	                        //[ 'obj/robhead/robhead.obj'], // ok, no texcoords or normals. works, but turns black with lighting
 	                        //[ 'obj/soccerball/soccerball.obj'], // no texcoords or normals
-	                        //[ 'obj/basketball/basketball.obj'], //!!!!!!!!!!! grey, then goes black at alpha = 1; (whether or not there's lighting)
-	                        //[ 'obj/rock1/rock1.obj'] // rock plus surface, works
+	                        //[ 'obj/basketball/basketball.obj'], //!!!!!!!!!!! grey, then goes black at alpha = 1; missing texture
+	                        //[ 'obj/rock1/rock1.obj'], // ok, works
 	                        //[ 'obj/cherries/cherries.obj'], // ok
 	                        //[ 'obj/banana/banana.obj' ], // works great
 	                        false, // if true, use color array instead of texture array
 	                        false, // if true, apply textures to each face, not whole Prim.
-	                        false);
+	                        true);
 
 	                        /*
 	                                    this.primFactory.createPrim(

@@ -345,27 +345,27 @@ class World extends AssetPool {
                 vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
                 vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
                 [], // texture loaded directly
-                //[ 'obj/capsule/capsule.obj' ], // !!!!!!!!!!!! nothing in shadows again
+                //[ 'obj/capsule/capsule.obj' ], // works, but HALF-CAPSULE (shader normals???)
                 //[ 'obj/rose/rose.obj' ], // works great
                 //[ 'obj/rose2/rose2.obj' ],
                 //[ 'obj/cube/cube.obj' ], // works great
-                [ 'obj/oblong/oblong.obj' ], // works great
+                //[ 'obj/oblong/oblong.obj' ], // works great but HALF-OBJECT (dark side in pure gray)
                 //[ 'obj/cylinder/cylinder.obj' ], // !!!!!!!! nothing shadows. One panel is gray
-                //[ 'obj/balls/balls.obj' ], // great, but FAIL with lighting
-                //[ 'obj/mountains/mountains.obj' ], // ok
-                //[ 'obj/landscape/landscape.obj'], // without lighting, lighting makkes BLACK
-                //[ 'obj/toilet/toilet.obj' ], // works with texture, multiple groups wrap texture!
-                //[ 'obj/naboo/naboo.obj' ], // works fine, but needs to load additional images.
-                //[ 'obj/star/star.obj'], // ok, gets generic grey texture
-                //[ 'obj/robhead/robhead.obj'], // no texcoords or normals. works, but turns black with lighting
+                //[ 'obj/balls/balls.obj' ], // great
+                //[ 'obj/mountains/mountains.obj' ], // NOT WORKING
+                //[ 'obj/landscape/landscape.obj'], // ok, but black shadows with lighting
+                [ 'obj/toilet/toilet.obj' ], // NOT WORKING
+                //[ 'obj/naboo/naboo.obj' ], // ok, black shadows
+                //[ 'obj/star/star.obj'], // ok
+                //[ 'obj/robhead/robhead.obj'], // ok, no texcoords or normals. works, but turns black with lighting
                 //[ 'obj/soccerball/soccerball.obj'], // no texcoords or normals
-                //[ 'obj/basketball/basketball.obj'], //!!!!!!!!!!! grey, then goes black at alpha = 1; (whether or not there's lighting)
-                //[ 'obj/rock1/rock1.obj'] // rock plus surface, works
+                //[ 'obj/basketball/basketball.obj'], //!!!!!!!!!!! grey, then goes black at alpha = 1; missing texture
+                //[ 'obj/rock1/rock1.obj'], // ok, works
                 //[ 'obj/cherries/cherries.obj'], // ok
                 //[ 'obj/banana/banana.obj' ], // works great
                 false, // if true, use color array instead of texture array
                 false, // if true, apply textures to each face, not whole Prim.
-                false, // if true, use lighting                
+                true, // if true, use lighting                
             );
 
 /*

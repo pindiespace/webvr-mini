@@ -883,17 +883,6 @@ C E F
 
                     case 'f': // line of faces, indices, convert polygons to triangles
 
-                        /* 
-                         * If we encounter a new block of faces, add a matStart.
-                         * Whitespace and un-processed types don't change the lastType
-                         */
-
-                        //if ( lastType !== type ) {
-
-                        //    matStarts.push( [ matName, faces.length * 4, 0 ] ); // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!TIMES 4/ 3
-
-                        //}
-
                         // If our previous line was a smoothing group, add the start.
 
                         let sg, oldLen;
@@ -954,10 +943,6 @@ C E F
 
                         for ( let i = 0; i < mtls.length; i++ ) {
 
-                            ///////let path = dir + mtls[ i ];
-
-                            ///let path = dir + mtls[ i ].replace(/^.*[\\\/]/, ''); // strip directories and add our own
-
                             let path = dir + this.util.getFileName( mtls[ i ] );
 
                             this.materialPool.getMaterial( prim, path, true, { pos: i } );
@@ -978,8 +963,6 @@ C E F
 
                         // TODO: GREAT BINARY FORMAT MODEL
                         // TODO: https://n-e-r-v-o-u-s.com/blog/?p=2738
-
-                        // TODO: ANOTHER EXAMPLE
 
                         lastType = type; // use to catch smoothing groups
 
@@ -1084,10 +1067,6 @@ C E F
 
                     iHash[ key ] = iIdx;
 
-                    // Re-index our groups, objects, material starts, smoothing groups to the revised index position.
-
-                    ///////////////////////::::::::::::::::::::::::::::::::::::::::::::::::::::
-
                     // Push the flattened vertex, texCoord, normal values.
 
                     vIdx *= 3;
@@ -1098,38 +1077,58 @@ C E F
 
                     // Push texture coords.
 
-                    if ( f[ 1 ] !== null ) { 
+                    if ( f[ 1 ] !== null && f[ 1 ] !== undefined ) { 
 
                         tIdx = f[ 1 ] * 2;
 
-                        nTexCoords.push( tTexCoords[ tIdx ], tTexCoords[ tIdx + 1 ] );
+                        if ( isFinite( tTexCoords[ tIdx ] ) && isFinite( tTexCoords[ tIdx + 1 ] ) ) {
+
+                           nTexCoords.push( tTexCoords[ tIdx ], tTexCoords[ tIdx + 1 ] );
+
+                           // consle.log("HAS A VALID TEXTURE")
+
+                        } else {
+
+                            console.error( 'ModelPool::computeObjMesh(): bad texCoords in file: at' + tIdx + '  face (' + f + ')' );
+
+                        }
 
                     } else {
 
-                        nTexCoords.push( 0, 0 );
-
+                        //console.error( 'ModelPool::computeObjMesh(): undefined texture coord, face:' + f );
+                        // TODO: for toilet, we need to do this.
+                        // TODO: for other files, this zaps the coordinate file.
+                        // TODO: need to handle the case where the texCoords are only defined for PART of the overall object!!!!!!!
+                        // TODO: geometry could scan for invalid coords, and fill in
+                        nTexCoords.push( 0, 0 );  // uncomment to get toilet.obj to work
                     }
 
                     // Push normals.
 
-                    if ( f[ 2 ] !== null ) { 
+                    if ( f[ 2 ] !== null && f[ 2 ] !== undefined ) { 
 
                         nIdx = f[ 2 ] * 3;
 
-                        nNormals.push( tNormals[ nIdx ], tNormals[ nIdx + 1 ], tNormals[ nIdx + 2 ] );
+                        if ( isFinite( tNormals[ nIdx ] ) && isFinite( tNormals[ nIdx + 1 ] && isFinite( tNormals[ nIdx + 2 ] ) ) ) {
 
-                    } else {
+                            nNormals.push( tNormals[ nIdx ], tNormals[ nIdx + 1 ], tNormals[ nIdx + 2 ] );
 
-                        nNormals.push( 0, 0, 0 );
+                        } else {
 
-                    }
+                            console.error( 'ModelPool::computeObjMesh(): bad normals in file at' + nIdx + ' face (' + f + ')' );
+
+                        }
+
+                    } // else, don't write anything, GeometryPool will compute
+
+                    // TODO: need to handle case where normals are only defined for PART of the overall object!!!!
+                    // Geometry could scan for invalid numbers, and fill in.
 
                 } // end of re-index a new face
 
             } // end of for loop
 
             // Should be the same.
-            /////////////console.log('nIndices.length:' + nIndices.length + ' faces.length:' + faces.length)
 
             if ( nVertices.length > this.webgl.MAX_DRAWELEMENTS) {
 
@@ -1174,6 +1173,8 @@ C E F
         }
 
         m.options.matStarts[ m.options.matStarts.length - 1 ][ 2 ] = ( tIndices.length - ( m.options.matStarts[ m.options.matStarts.length - 1 ][ 1 ] / 4 ) );
+
+        // TODO: do this for objects, groups, smoothinggroups.
 
         // If there was no faces in the OBJ file, use the raw data.
 
