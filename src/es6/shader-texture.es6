@@ -507,7 +507,7 @@ class ShaderTexture extends Shader {
 
                     let m = prim.materials[ st[ 0 ] ]; // bind the material
 
-                    // Set the material quality of the Prim.
+                    // Set the material quality of the Prim. If undefined, material is MISSING from .mtl file
 
                     gl.uniform3fv( uMatAmbient, m.ambient );
                     gl.uniform3fv( uMatDiffuse, m.diffuse );

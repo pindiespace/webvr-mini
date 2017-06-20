@@ -290,6 +290,8 @@ class World extends AssetPool {
 
             );
 
+*/
+
 //////////////////////////////////
 // TEXTURED SHADER.
 //////////////////////////////////
@@ -312,7 +314,7 @@ class World extends AssetPool {
                 // if true, use lighting (default)
             );
 
-
+/*
             this.primFactory.createPrim(
             
                 this.s1,                      // callback function
@@ -352,9 +354,9 @@ class World extends AssetPool {
                 //[ 'obj/oblong/oblong.obj' ], // works great but HALF-OBJECT (dark side in pure gray)
                 //[ 'obj/cylinder/cylinder.obj' ], // !!!!!!!! nothing shadows. One panel is gray
                 //[ 'obj/balls/balls.obj' ], // great
-                //[ 'obj/mountains/mountains.obj' ], // NOT WORKING
+                //[ 'obj/mountains/mountains.obj' ], // NOT WORKING, calls nonexistent materials
                 //[ 'obj/landscape/landscape.obj'], // ok, but black shadows with lighting
-                [ 'obj/toilet/toilet.obj' ], // NOT WORKING
+                [ 'obj/toilet/toilet.obj' ], // works great
                 //[ 'obj/naboo/naboo.obj' ], // ok, black shadows
                 //[ 'obj/star/star.obj'], // ok
                 //[ 'obj/robhead/robhead.obj'], // ok, no texcoords or normals. works, but turns black with lighting
@@ -373,7 +375,7 @@ class World extends AssetPool {
 
                 this.s1,                               // callback function
                 typeList.MESH,
-                'toilet',
+                'capsule',
                 vec5( 2, 2, 2 ),                       // dimensions (4th dimension doesn't exist for cylinder)
                 vec5( 40, 40, 40  ),                    // divisions MAKE SMALLER
                 vec3.fromValues( -1.5, -1, -0.0 ),      // position (absolute)

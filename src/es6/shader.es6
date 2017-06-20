@@ -353,7 +353,7 @@ class Shader {
 
         if ( ! this.checkPrimBuffers( prim ) ) {
 
-            console.log("bad buffers")
+            console.warn( 'Shader::checkPrim():' + prim.name + ' has bad buffers' );
 
             return false;
 
@@ -361,7 +361,7 @@ class Shader {
 
         if ( ! this.checkPrimMaterials( prim ) ) {
 
-            console.log("bad materials")
+            console.warn( 'Shader::checkPrim():' + prim.name + ' has bad materials' );
 
             return false;
 
@@ -369,7 +369,7 @@ class Shader {
 
         if ( ! this.checkPrimTextures( prim ) ) {
 
-            console.log("bad textures")
+            console.warn( 'Shader::checkPrim():' + prim.name + ' has bad textures' );
 
             return false;
 
@@ -437,15 +437,24 @@ class Shader {
 
         // Check that 'matStarts' points to a defined material.
 
-        let matName = prim.matStarts[ 0 ][ 0 ];
+        //let matName = prim.matStarts[ 0 ][ 0 ];
 
-        if ( prim.materials[ matName ] === undefined ) {
+        for ( let i = 0; i < prim.matStarts.length; i++ ) {
+
+            if ( prim.materials[ prim.matStarts[ i ][ 0 ] ] === undefined ) {
+
+                return false;
+
+            }
+        }
+
+        //if ( prim.materials[ matName ] === undefined ) {
 
             ///console.log(prim.name + ' does not have first material (' + prim.matStarts[ 0 ][ 0 ] + ') yet' );
 
-            return false; 
+        //    return false; 
 
-        }
+        //}
 
         return true;
 

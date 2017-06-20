@@ -194,7 +194,7 @@ class GeometryPool {
     /** 
      * Return a default GeometryPool object.
      * @param {glMatrix.vec3[]} vertices the vertex data.
-     * @param {Array} indices index data for vertices.
+     * @param {Array[gl.UNSIGNED_INT|gl.UNSIGNED_SHORT]} current indices into the vertices.
      * @param {glMatrix.vec2[]} texCoords the 2d texture coordinate data.
      * @param {glMatrix.vec3[]} normals normals for the vertices.
      * @param {glMatrix.vec3[]} tangents tangent data for vertices.
@@ -754,20 +754,21 @@ class GeometryPool {
 
     /** 
      * Compute normals for a 3d object. 
-     * NOTE: some routines may compute their own normals.
+     * NOTE: some routines may compute their own normals. In that case, computation optionally
+     * only is done for normals that aren't computed yet.
      * Adapted from BabylonJS version:
      * @link https://github.com/BabylonJS/Babylon.js/blob/3fe3372053ac58505dbf7a2a6f3f52e3b92670c8/src/Mesh/babylon.mesh.vertexData.js
      * @link http://gamedev.stackexchange.com/questions/8191/any-reliable-polygon-normal-calculation-code
      * @link https://www.opengl.org/wiki/Calculating_a_Surface_Normal
      * @param {glMatrix.vec3[]} vertices the current 3d position coordinates.
-     * @param {Array} current indices into the vertices.
+     * @param {Array[gl.UNSIGNED_INT|gl.UNSIGNED_SHORT]} current indices into the vertices.
      * @param {glMatrix.vec3[]} normals the normals array to populate, or recalculate.
      * @param {Boolean} justFace if true, return the face normal for all three vertices in a triangle, otherwise, compute each vertex normal separately.
      * @returns {glMatrix.vec3[]} an array of normals.
      */
-    computeNormals ( vertices, indices, normals, justFace ) {
+    computeNormals ( vertices, indices, normals, justFace = false ) {
 
-        let idx = 0;
+        let idx = 0, nbFaces;
 
         let p1p2x = 0.0, p1p2y = 0.0, p1p2z = 0.0;
 
@@ -779,11 +780,13 @@ class GeometryPool {
 
         let i1 = 0, i2 = 0, i3 = 0;
 
-        normals = new Float32Array( vertices.length );
+        // Create a new Normals array.
+
+        let norms = new Float32Array( vertices.length );
 
         // Index triangle = 1 face.
 
-        let nbFaces = indices.length / 3;
+        nbFaces = indices.length / 3;
 
         for ( idx = 0; idx < nbFaces; idx++ ) {
 
@@ -829,35 +832,35 @@ class GeometryPool {
 
             // Accumulate all the normals defined for the face.
 
-            normals[ i1 * 3     ] += faceNormalx;
+            norms[ i1 * 3     ] += faceNormalx;
 
-            normals[ i1 * 3 + 1 ] += faceNormaly;
+            norms[ i1 * 3 + 1 ] += faceNormaly;
 
-            normals[ i1 * 3 + 2 ] += faceNormalz;
+            norms[ i1 * 3 + 2 ] += faceNormalz;
 
-            normals[ i2 * 3     ] += faceNormalx;
+            norms[ i2 * 3     ] += faceNormalx;
 
-            normals[ i2 * 3 + 1 ] += faceNormaly;
+            norms[ i2 * 3 + 1 ] += faceNormaly;
 
-            normals[ i2 * 3 + 2 ] += faceNormalz;
+            norms[ i2 * 3 + 2 ] += faceNormalz;
 
-            normals[ i3 * 3     ] += faceNormalx;
+            norms[ i3 * 3     ] += faceNormalx;
 
-            normals[ i3 * 3 + 1 ] += faceNormaly;
+            norms[ i3 * 3 + 1 ] += faceNormaly;
 
-            normals[ i3 * 3 + 2 ] += faceNormalz;
+            norms[ i3 * 3 + 2 ] += faceNormalz;
 
         }
 
         // Last normalization of each normal.
 
-        for ( idx = 0; idx < normals.length / 3; idx++ ) {
+        for ( idx = 0; idx < norms.length / 3; idx++ ) {
 
-            faceNormalx =  normals[ idx * 3 ];
+            faceNormalx =  norms[ idx * 3 ];
 
-            faceNormaly = -normals[ idx * 3 + 1 ];
+            faceNormaly = -norms[ idx * 3 + 1 ];
 
-            faceNormalz =  normals[ idx * 3 + 2 ];
+            faceNormalz =  norms[ idx * 3 + 2 ];
 
             length = Math.sqrt( faceNormalx * faceNormalx + faceNormaly * faceNormaly + faceNormalz * faceNormalz );
 
@@ -871,13 +874,17 @@ class GeometryPool {
 
             // NOTE: added negative (-) to x, z to match our lighting model.
 
-            normals[ idx * 3 ] = -faceNormalx;
+            norms[ idx * 3 ] = -faceNormalx;
 
-            normals[ idx * 3 + 1 ] = faceNormaly;
+            norms[ idx * 3 + 1 ] = faceNormaly;
 
-            normals[ idx * 3 + 2 ] = -faceNormalz;
+            norms[ idx * 3 + 2 ] = -faceNormalz;
 
         }
+
+        // Replace current normals with computed array.
+
+        normals = norms;
 
         return normals;
 
@@ -892,12 +899,11 @@ class GeometryPool {
      * "The code below generates a four-component tangent, in which the handedness of the local coordinate system
      * is stored as ±1 in the w-coordinate. The bitangent vector B is then given by b = (n × tangent) · tangentw."
      * @param {glMatrix.vec3[]} vertices the current 3d position coordinates.
-     * @param {Array} current indices into the vertices.
+     * @param {Array[gl.UNSIGNED_INT|gl.UNSIGNED_SHORT]} current indices into the vertices.
      * @param {glMatrix.vec3[]} normals the normals array to populate, or recalculate.
      * @param {glmatrix.vec2[]} texCoordinates the texture coordinates for the geometry.
      * @param {glMatrix.vec4[]} tangents the tangents array to populate or recompute.
-     * @returns {glmatrix.vec4[]} an array of tangents.
-     * 
+     * @returns {glMatrix.vec4[]} an array of tangents.
      */
     computeTangents ( vertices, indices, normals, texCoords, tangents ) {
 
@@ -913,7 +919,7 @@ class GeometryPool {
 
         const numVertices = vertices.length;
 
-        tangents = new Float32Array( numVertices * 4 / 3 );
+        let tans = new Float32Array( numVertices * 4 / 3 );
 
         // For each Face (step through indices 3 by 3)
 
@@ -993,48 +999,61 @@ class GeometryPool {
 
             const tw = ( vec3.dot( vec3.cross( [ 0, 0, 0 ], n, t1 ), t2 ) < 0.0 ) ? -1.0 : 1.0;
 
-            tangents[ i4     ] = txyz[ 0 ];
+            // If we already have tangents, leave those in place.
 
-            tangents[ i4 + 1 ] = txyz[ 1 ];
+            tans[ i4     ] = txyz[ 0 ];
 
-            tangents[ i4 + 2 ] = txyz[ 2 ];
+            tans[ i4 + 1 ] = txyz[ 1 ];
 
-            tangents[ i4 + 3 ] = tw;
+            tans[ i4 + 2 ] = txyz[ 2 ];
+
+            tans[ i4 + 3 ] = tw;
 
         }
+
+        tangents = tans;
 
         return tangents;
 
     }
 
     /** 
-     * Compute texture coordinates by getting the equivalent spherical coordinate of the object.
-     * @param {glMatrix.vec3[]} vertices. The input positions.
+     * Compute texture coordinates by getting the equivalent spherical coordinate of normalized
+     * vertices in the object.
+     * @param {glMatrix.vec3[]} vertices. vertices the current 3d position coordinates.
      * @returns {glmatrix.vec2} an array of texture coordinates.
      */
-    computeTexCoords ( vertices ) {
+    computeTexCoords ( vertices, texCoords ) {
 
         // Assume y is vertical, x and z are horizontal.
 
-        console.log("VERTICES LENGTH:" + vertices.length)
+        console.log( 'GeometryPool::()computeTexCoords(): vertices:' + vertices.length );
 
-        let texCoords = [];
+        let tCoords = [];
 
         for ( let i = 0; i < vertices.length; i += 3 ) {
 
             let t = this.computeSphericalCoords( [ vertices[ i ], vertices[ i + 1 ], vertices[ i + 2 ] ] );
 
-            texCoords.push( t[ 0 ], t[ 1 ] );
+            tCoords.push( t[ 0 ], t[ 1 ] );
 
         }
+
+        texCoords = tCoords;
 
         return texCoords; 
 
     }
 
-    // http://answers.unity3d.com/questions/64410/generating-uvs-for-a-scripted-mesh.html
-    // TODO: get valid results here
-    computeTexCoords2 ( vertices, indices, scale = 1.0 ) {
+    /** 
+     * Compute texture coordinates for a mesh. 
+     * http://answers.unity3d.com/questions/64410/generating-uvs-for-a-scripted-mesh.html
+     * TODO: get valid results here!   
+     * @param {glMatrix.vec3[]} vertices the current 3d position coordinates.
+     * @param {Array[gl.UNSIGNED_INT|gl.UNSIGNED_SHORT]} current indices into the vertices.
+     * @param {Number} scale scaling factor for texture coordinates.
+     */
+    computeTexCoords2 ( vertices, indices, texCoords, scale = 1.0 ) {
 
         let util = this.util;
 
@@ -1046,7 +1065,7 @@ class GeometryPool {
 
         let Facing = { Up: 0, Forward: 1, Right: 2 };
 
-        let texCoords = new Array( vertices.length * 2 / 3 );
+        let tCoords = new Array( vertices.length * 2 / 3 );
 
         for ( let i = 0; i < indices.length; i += 3 ) {
 
@@ -1070,50 +1089,56 @@ class GeometryPool {
 
             facing = facingDirection( direction );
 
-            // NOTE: replace with :         Array.prototype.push.apply( indices, iIndices );
+            // NOTE: replace with : Array.prototype.push.apply( indices, iIndices );
 
             switch ( facing ) {
 
                 case Facing.Forward:
 
-                    texCoords[i0] = scaledUV( v0[ 0 ], v0[ 1 ], scale );
+                    tCoords[i0] = scaledUV( v0[ 0 ], v0[ 1 ], scale );
 
-                    texCoords[i1] = scaledUV( v1[ 0 ], v1[ 1 ], scale );
+                    tCoords[i1] = scaledUV( v1[ 0 ], v1[ 1 ], scale );
 
-                    texCoords[i2] = scaledUV( v2[ 0 ], v2[ 1 ], scale );
+                    tCoords[i2] = scaledUV( v2[ 0 ], v2[ 1 ], scale );
 
                     break;
 
-                    texCoords[i0] = scaledUV( v0[ 0 ], v0[ 2 ], scale );
+                case Facing.down: // ???????????? TODO: ADDED IS THIS CORRECT NOT IN facingDirection()T????
 
-                    texCoords[i1] = scaledUV( v1[ 0 ], v1[ 2 ], scale );
+                    tCoords[i0] = scaledUV( v0[ 0 ], v0[ 2 ], scale );
 
-                    texCoords[i2] = scaledUV( v2[ 0 ], v2[ 2 ], scale );
+                    tCoords[i1] = scaledUV( v1[ 0 ], v1[ 2 ], scale );
 
+                    tCoords[i2] = scaledUV( v2[ 0 ], v2[ 2 ], scale );
+
+                    break;
 
                 case Facing.up:
 
-                    texCoords[i0] = scaledUV( v0[ 1 ], v0[ 2 ], scale );
+                    tCoords[i0] = scaledUV( v0[ 1 ], v0[ 2 ], scale );
 
-                    texCoords[i1] = scaledUV( v1[ 1 ], v1[ 2 ], scale );
+                    tCoords[i1] = scaledUV( v1[ 1 ], v1[ 2 ], scale );
 
-                    texCoords[i2] = scaledUV( v2[ 1 ], v2[ 2 ], scale );
+                    tCoords[i2] = scaledUV( v2[ 1 ], v2[ 2 ], scale );
 
                     break;
 
                 case Facing.right:
 
-                    texCoords[i0] = scaledUV(v0[ 2 ], v0[ 1 ], scale );
+                    tCoords[i0] = scaledUV(v0[ 2 ], v0[ 1 ], scale );
 
-                    texCoords[i1] = scaledUV(v1[ 2 ], v1[ 1 ], scale );
+                    tCoords[i1] = scaledUV(v1[ 2 ], v1[ 1 ], scale );
 
-                    texCoords[i2] = scaledUV(v2[ 2 ], v2[ 1], scale );
+                    tCoords[i2] = scaledUV(v2[ 2 ], v2[ 1], scale );
 
                     break;
+
             }
 
 
-        } // end of for loop
+        } // end of for loop    
+
+        texCoords = tCoords;
 
         function facesThisWay( v, dir, p, maxDot, ret ) {
 
@@ -1222,7 +1247,7 @@ class GeometryPool {
     /** 
      * Given a set of 3d coordinates, compute a triangle fan around the Centroid for those coordinates.
      * @param {glMatrix.vec3[]} vertices an array of UN-FLATTENED xyz coordinates.
-     * @param {Array} indices the sequence to read triangles.
+     * @param {Array[gl.UNSIGNED_INT|gl.UNSIGNED_SHORT]} current indices into the vertices.
      * @returns {Object} UN-FLATTENED vertices, indices, texCoords nomals, tangents.
      */
     computeFan ( vertices, indices ) {
@@ -3608,15 +3633,21 @@ class GeometryPool {
 
         // Get the model file. Pass in Prim so we can respond to model completion events.
 
-        // TODO: ONLY IF MULTIPLE PATHS
+        if ( pathList === undefined || pathList.length === undefined ) {
 
-        // TODO: FORWARD SEPARATE ARRAY HERE
+            console.error( 'GeometryPool::geometryMesh(): empty path passed for mesh file, returning' );
+
+            return false;
+
+        }
 
         for ( let i = 0; i < pathList.length; i++ ) {
 
             this.modelPool.getModel( prim, pathList[ i ], true, { pos: i } );
 
         }
+
+        return true;
 
     }
 
@@ -3675,6 +3706,14 @@ class GeometryPool {
              */
 
             console.log( 'GeometryPool::getGeometry() new procedural geometry for:' + prim.name );
+
+            if ( prim.type === this.typeList.MESH ) {
+
+                console.error( 'GeometryPool::getGeometry(): Mesh object for ' + prim.name + ' does not have associated file, giving up' );
+
+                return;
+
+            }
 
             let m = this.modelPool.addAsset( this[ prim.type ]( prim ) );
 

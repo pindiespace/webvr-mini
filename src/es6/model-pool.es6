@@ -187,37 +187,6 @@ class ModelPool extends AssetPool {
     }
 
     /** 
-     * Compute triangles for Quads wrapped in Blender quad format (actually 
-     * a triangle strip).
-     * @link https://stackoverflow.com/questions/23723993/converting-quadriladerals-in-an-obj-file-into-triangles
-     */
-    computeBlenderTris ( idxs ) {
-
-
-
-/*
-n = 0;
-triangles[n++] = [values[0], values[1], values[2]];
-for(i = 3; i < count(values); ++i)
-  triangles[n++] = [
-    values[i - 3],
-    values[i - 1],
-    values[i]
-  ];
-
-f A B C D E F
-
-Becomes the following triangles
-
-A B C
-A C D
-B D E
-C E F
-
-            */
-    }
-
-    /** 
      * Compute triangles for Quads and higher polygons (all triangles share the 1st position).
      * Use when the number of faces on a line is > 3 (usually a quad).
      * @param {Array} idxs an array of single numbers, representing start positions in another Array.
@@ -322,425 +291,6 @@ C E F
              faces.push( [ iVerts[ i ], iTexCoords[ i ], iNormals[ i ] ] );
 
         }
-
-    }
-
-
-    doObjFaces ( data, faces, lineNum ) {
-
-        let parts = data.match( /[^\s]+/g );
-
-        let NOT_IN_STRING = this.NOT_IN_LIST;
-
-        let idxs, iVert, iTexCoord, iNormal, iVerts = [], iTexCoords = [], iNormals = [];
-
-        // Each map should refer to one point.
-
-        parts.map( ( fs ) => {
-
-            ///////////////////console.log("fs:" + fs)
-
-            // Split indices, normals and texture coordinates if they are present.
-
-            if ( fs.indexOf( '//' ) !== NOT_IN_STRING ) { // normals, no texture coordinates
-
-                idxs = fs.split( '//' );
-
-                iVerts.push( parseFloat( idxs[ 0 ] ) - 1 );
-
-                iTexCoords.push( null );
-
-                iNormals.push( parseFloat( idxs[ 1 ] ) - 1 );
-
-            } else if ( fs.indexOf ( '/' ) !== NOT_IN_STRING ) { // texCoords present
-
-                idxs = fs.split( '/' );
-
-                iVerts.push( parseFloat( idxs[ 0 ] ) - 1 );
-
-                if ( idxs.length == 2 ) { // texCoords present
-
-                    iTexCoords.push( parseFloat( idxs[ 1 ] ) - 1 );
-
-                    iNormals.push( null );
-
-                } else if ( idxs.length === 3 ) { // both texCoords and normals present
-
-                    iTexCoords.push( parseFloat( idxs[ 1 ] ) - 1 );
-
-                    iNormals.push( parseFloat( idxs[ 2 ] ) - 1 );
-
-                } 
-
-            } else { // Has indices only
-
-                iVerts.push( parseFloat( fs ) - 1 ); 
-
-            }
-
-        } );
-
-        // Now, convert quads and higher polygons to a set of triangles.
-
-        iVerts = this.computeFaceFan( iVerts );
-
-        iTexCoords = this.computeFaceFan( iTexCoords );
-
-        iNormals = this.computeFaceFan( iNormals );
-
-        ////////////////console.log("iVerts:" + iVerts + " iTexCoords:" + iTexCoords + " iNormals:" + iNormals)
-
-        // Append to faces array.
-
-        let f = { data: data, indices: [] };
-
-        for ( let i = 0; i < iVerts.length; i++ ) {
-
-            f.indices.push( [ iVerts[ i ], iTexCoords[ i ], iNormals[ i ] ] );
-
-        }
-
-        //console.log("F.indices is:" + f.indices[ f.indices.length - 1])
-
-        faces.push( f );
-
-    }
-
-    /** 
-     * Parse the obj file into flattened object data, with starts defined 
-     * for materials.
-     */
-    doObjMesh ( data, prim, path ) {
-
-        let m = this.default();
-
-        let lineNum = 0,
-
-        lines = data.split( '\n' ),
-
-        matStarts = [];
-
-        let dir = this.util.getFilePath( path );
-
-        let matName = this.materialPool.createDefaultName( prim.name );
-
-        let currGeo = { material: matName, faces: [] };
-
-        let iHash = []; // associative lookup table for faces (vertices, indices, texCoords);
-
-        let lastType = '#';
-
-        //matStarts.push( currGeo );
-
-        let faces = [], vertices = [], indices = [], texCoords = [], normals = [];
-
-        lines.forEach( ( line ) => {
-
-            // First value in string.
-
-            let type = line.split( ' ' )[ 0 ].trim();
-
-            // All other values as a string.
-
-            let data = line.substr( type.length ).trim();
-
-            if ( data !== '' ) {
-
-                switch ( type ) {
-
-                    // put in default material
-
-                    case 'f': // line of faces, indices, convert polygons to triangles
-
-                        /* 
-                         * If we encounter a new block of faces, add a matStart.
-                         * Whitespace and un-processed types don't change the lastType
-                         */
-
-                        if ( lastType !== type ) {
-
-                            matStarts.push( currGeo );
-
-                        }
-
-                        // Get the faces
-
-                        this.doObjFaces ( data, currGeo.faces, lineNum );
-
-                        lastType = type; // store previous type.
-
-                        break;
-
-                    case 'v': // vertices
-
-                        this.computeObj3d( data, vertices, lineNum );
-
-                        lastType = type; // store previous type.
-
-                        break;
-
-                    case 'vn': // normals
-
-                        this.computeObj3d( data, normals, lineNum );
-
-                        lastType = type; // store previous type.
-
-                        break;
-
-                    case 'vt': // texture uvs
-
-                        if ( ! this.computeObj2d( data, texCoords ) ) {
-
-                            //console.warn( '3D texture encountered:'+ data );
-
-                            this.computeObj3d( data, texCoords );
-
-                        }
-
-                        lastType = type; // store previous type.
-
-                        break;
-
-                        case 'mtllib': // materials library data
-
-                        // Multiple files may be specified here, and each file may have multiple materials.
-
-                        let mtls = data.split( ' ' );
-
-                        for ( let i = 0; i < mtls.length; i++ ) {
-
-                            let path = dir + this.util.getFileName( mtls[ i ] );
-
-                            console.log( 'ADDING LIBRARY:' + mtls[ i ])
-
-                            this.materialPool.getMaterial( prim, path, true, { pos: i } );
-
-                        }
-
-                        lastType = type; // store previous type.
-
-                        break;
-
-                    case 'usemtl': // use material (by name, loaded as .mtl file elsewhere)
-
-                        // material name === filename without extension.
-
-                        matName = this.util.getFileName ( data );
-
-                        currGeo = { material: matName, faces: [] };
-
-                        matStarts.push( currGeo );
-
-                        lastType = type; // store previous type.
-
-                        break;
-
-                    case 'o': // object names
-
-                        break;
-
-                    case 's': // smoothing groups
-
-                        break;
-
-                    case 'g': // group name
-
-                        break;
-
-                    case '#': // comments are ignored
-
-                        break;
-
-                    case 'maplib': // poorly documented
-                    case 'usemap': // ditto
-                    case 'vp': // parameter vertices
-                    case 'p': // point
-                    case 'l': // line
-                    case 'curv': // 2d curve
-                    case 'surf': //surface
-                    case 'parm': // parameter values
-                    case 'trim': // outer trimming loop
-                    case 'hole': // inner trimming loop
-                    case 'scrv': //special curve
-                    case 'sp': // special point
-                    case 'end': // end statment
-                    case 'con': // connectivity between free-form surfaces
-                    case 'mg': // merging group
-                    case 'bevel': // bevel interpolation
-                    case 'c_interp': // color interpolation
-                    case 'd_interp': // dissolve interpolation
-                    case 'lod': // level of detail
-                    case 'shadow_obj': // shadow casting
-                    case 'trace_obj': // ray tracing
-                    case 'ctech': // curve approximation
-                    case 'stech': // surface approximation
-                    case '': // no parameter
-
-                        console.warn( 'ModelPool::computeObjMesh(): OBJ data type: ' + type + ' in .obj file not supported' );
-
-                        break;
-
-                    default:
-
-                        // If it's not a pure whitespace line, report.
-
-                        if( ! this.util.isWhitespace( data ) ) {
-
-                            console.error( 'ModelPool::computeObjMesh(): unknown line data: ' + line + ' in .obj file at line:' + lineNum );
-
-                        }
-
-                        break;
-
-                }
-
-            }
-
-        } ); // end of foreach
-
-        // Second pass.
-
-        // Brute force load
-
-        let tVertices = [], tIndices = [], tTexCoords = [], tNormals = [];
-
-        let startArr = [];
-
-        let idx = 0;
-
-        let hashCount = 0; /////////////////////////////
-
-        for ( let i = 0; i < matStarts.length; i++ ) {
-
-            let mat = matStarts[ i ];
-
-            let tIndicesPos;
-
-            if ( tIndices.length === 0 ) {
-
-                tIndicesPos = 0;
-
-            } else {
-
-                tIndicesPos = ( ( tIndices[ idx - 1 ] * 4) + 4 );
-
-            }
-
-            //////////////////startArr.push( [ mat.material, 4 * tVertices.length / 3, 0 ] ); // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!TIMES 4/ 3
-            //console.log('vertices calc:' + 4 * tVertices.length / 3 );
-            //console.log('tIndices[' + idx + '] = ' + tIndicesPos );
-            startArr.push( [ mat.material, tIndicesPos, 0 ] ); // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!TIMES 4/ 3
-
-            ////console.log('DOOOBJ:material:' + mat.material ); // one material block
-
-            let matFaces = mat.faces;
-
-            for ( let j = 0; j < matFaces.length; j++ ) {
-
-                let mf = matFaces[ j ];
-
-                let faceIndices = mf.indices;
-
-                // Save in a hash table.
-
-                let fIdx = mf.indices;
-
-                for ( let k = 0; k < fIdx.length; k++ ) {
-
-                    let fi = fIdx[ k ]; // indices for that face
-
-                    let key = fi[ 0 ] + '_' + fi[ 1 ] + '_' + fi[ 2 ];
-
-                    //if ( iHash[ key ] === undefined ) {
-
-                        let flat = 0;
-
-                        if ( Number.isFinite( fi[ 0 ] ) ) {
-
-                            tIndices.push( idx ); // current position in index array
-
-                            iHash[ key ] = idx;
-
-                            idx++;
-
-                            flat = fi[ 0 ] * 3;
-
-                            tVertices.push( vertices[ flat ], vertices[ flat + 1 ], vertices[ flat + 2 ] );
-
-                        }
-
-                        if ( Number.isFinite( fi[ 1 ] ) ) {
-
-                            flat = fi[ 1 ] * 2;
-
-                            tTexCoords.push( texCoords[ flat ], texCoords[ flat + 1 ] );
-
-                        }
-
-                        if ( Number.isFinite( fi[ 2 ] ) ) {
-
-                            flat = fi[ 2 ] * 3;
-
-                            tNormals.push( normals[ flat ], normals[ flat + 1 ], normals[ flat + 2 ] );
-
-                        }
-
-                    //} else {
-
-                        // Use the hash index.
-
-                    //    tIndices.push( iHash[ key ] );
-
-                    //}
-
-                } // faceIndices loop
-
-                ////////////////////console.log("HASHCOUNT WAS: " + hashCount)
-
-                // set Indices
-
-            } // matFaces loop
-
-        } // matStarts loop
-
-        // Third pass.
-
-        for ( let i = 1; i < startArr.length; i++ ) {
-
-            startArr[ i - 1 ][ 2 ] = ( startArr[ i ][ 1 ] - startArr[ i - 1 ][ 1 ] ) / 4; // !!!!!!!!!!!!!!!!!!!!!!!!!!DIVIDED BY 4
-            ////////////////////////////////startArr[ i - 1 ][ 2 ] = ( startArr[ i ][ 1 ] - startArr[ i - 1 ][ 1 ] );
-
-        }
-
-        startArr[ startArr.length - 1 ][ 2 ] = ( ( 4 * tVertices.length / 3 ) - startArr[ startArr.length - 1 ][ 1 ] ) / 4; // !!!!!!!!!!!!!!!!!!!!!!!! 4/3, divided by 4
-        //////////////////////////////startArr[ startArr.length - 1 ][ 2 ] = ( ( tVertices.length ) - startArr[ startArr.length - 1 ][ 1 ] );
-
-        m.options.matStarts = startArr;
-
-        m.vertices = tVertices,
-
-        m.indices = tIndices,
-
-        m.texCoords = tTexCoords,
-
-        m.normals = tNormals;
-
-        ////////////////////////////////////
-
-        window.vs = vertices;
-
-        window.ts = texCoords;
-
-        window.ns = normals;
-
-        window.ms = matStarts;
-
-        window.mm = m; ////////////////////////////////////////////////////
-
-        window.iHash = iHash;
-
-
-        return m;
 
     }
 
@@ -1021,6 +571,8 @@ C E F
 
         } );
 
+        // Second phase.
+
         // Rewrite indices to fold texCoords and normals under the same index as the vertices (needed for WebGL).
 
         if ( faces.length ) {
@@ -1085,8 +637,6 @@ C E F
 
                            nTexCoords.push( tTexCoords[ tIdx ], tTexCoords[ tIdx + 1 ] );
 
-                           // consle.log("HAS A VALID TEXTURE")
-
                         } else {
 
                             console.error( 'ModelPool::computeObjMesh(): bad texCoords in file: at' + tIdx + '  face (' + f + ')' );
@@ -1095,12 +645,16 @@ C E F
 
                     } else {
 
-                        //console.error( 'ModelPool::computeObjMesh(): undefined texture coord, face:' + f );
-                        // TODO: for toilet, we need to do this.
-                        // TODO: for other files, this zaps the coordinate file.
-                        // TODO: need to handle the case where the texCoords are only defined for PART of the overall object!!!!!!!
-                        // TODO: geometry could scan for invalid coords, and fill in
-                        nTexCoords.push( 0, 0 );  // uncomment to get toilet.obj to work
+                        /* 
+                         * In a complex OBJ file, groups or objects may have 
+                         * normals or texture coordinates, while others may lack them.
+                         * Uncomment below while debugging automated texture coordinate assignment.
+                         */
+
+                        //nTexCoords.push( 0, 0 );
+
+                        //console.log("INVALID teXCOorD at position:" + i + " 0:" + tTexCoords[ tIdx] + " 1:" + tTexCoords[ tIdx + 1])
+
                     }
 
                     // Push normals.
@@ -1121,9 +675,6 @@ C E F
 
                     } // else, don't write anything, GeometryPool will compute
 
-                    // TODO: need to handle case where normals are only defined for PART of the overall object!!!!
-                    // Geometry could scan for invalid numbers, and fill in.
-
                 } // end of re-index a new face
 
             } // end of for loop
@@ -1133,6 +684,34 @@ C E F
             if ( nVertices.length > this.webgl.MAX_DRAWELEMENTS) {
 
                 console.error( 'ModelPool::computeObjMesh(): size of prim ' + prim.name + ' (' + nVertices.length + ') exceeds max buffer:' + this.webgl.MAX_DRAWELEMENTS );
+
+            }
+
+            // Make sure we returned enough normals, if they were defined.
+
+            if ( nNormals.length > 0 &&
+
+                nNormals.length !== nVertices.length ) {
+
+                console.warn( 'ModelPool::computeObjMesh(): not enough normals returned, zeroing out!' );
+
+                nNormals = [];
+
+            }
+
+            /*
+             * Make sure we returned enough texCoords, if they were defined.
+             * If not, compute manually in GeometryPool.
+             * TODO: useing spherical texCoord calc, get alternate working!
+             */
+
+            if ( nTexCoords.length > 0 &&
+
+                nTexCoords.length !== ( 2 * nVertices.length / 3 ) ) {
+
+                console.warn( 'ModelPool::computeObjMesh(): not enough texCoords returned, zeroing out!' );
+
+                nTexCoords = [];
 
             }
 

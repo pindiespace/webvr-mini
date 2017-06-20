@@ -725,7 +725,7 @@ class PrimFactory {
 
             let geo = p.geometry;
 
-            if ( vertices && vertices.length ) {
+            if ( vertices && vertices.length > 0 ) {
 
                 geo.setVertices( vertices );
 
@@ -739,7 +739,7 @@ class PrimFactory {
 
             let geo = p.geometry;
 
-            if ( indices && indices.length ) {
+            if ( indices && indices.length > 0 ) {
 
                 geo.setIndices( indices );
 
@@ -753,13 +753,13 @@ class PrimFactory {
 
             let geo = p.geometry;
 
-            if ( normals && normals.length ) {
+            if ( normals && normals.length > 0 ) {
 
                 geo.setNormals( normals );
 
             } else {
 
-                //////////console.log("Prim::updateNormals():" + p.name + ' recalculating normal coordinates' );
+                console.log("Prim::updateNormals():" + p.name + ' recalculating normal coordinates' );
 
                 geo.setNormals( this.geometryPool.computeNormals( geo.vertices.data, geo.indices.data, [], p.useFaceNormals ) );
 
@@ -779,9 +779,9 @@ class PrimFactory {
 
             } else if ( geo.numTexCoords() !== geo.numVertices() ) {
 
-                //////////console.log("Prim::updateTexCoords():" + p.name + ' recalculating texture coordinates' );
+                console.log("Prim::updateTexCoords():" + p.name + ' recalculating texture coordinates' );
 
-                geo.setTexCoords( this.geometryPool.computeTexCoords( geo.vertices.data ) );
+                geo.setTexCoords( this.geometryPool.computeTexCoords( geo.vertices.data, texCoords ) );
 
             }
 
@@ -793,7 +793,7 @@ class PrimFactory {
 
             let geo = p.geometry;
 
-            if ( tangents && tangents.length ) {
+            if ( tangents && tangents.length > 0 ) {
 
                 geo.setTangents( tangents );
 
@@ -813,7 +813,7 @@ class PrimFactory {
 
             let geo = p.geometry;
 
-            if ( colors && colors.length ) {
+            if ( colors && colors.length > 0 ) {
 
                 geo.setColors( colors );
 
