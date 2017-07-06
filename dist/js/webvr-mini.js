@@ -13419,11 +13419,9 @@
 
 	                        'mtl': 'text/plain',
 
-	                        'html': 'text/html', // A-Frame?
+	                        'gltf': 'text/tgltf',
 
-	                        'x3d': 'model/x3d+xml', // X3DOM
-
-	                        'x3dv': 'model/x3d-vrml' // VRML
+	                        'gltfBinary': 'bin/gltf'
 
 	                };
 
@@ -14128,9 +14126,59 @@
 
 	                        m.vertices = tVertices, m.indices = tIndices, m.texCoords = tTexCoords, m.normals = tNormals;
 
-	                        window.m = m;
+	                        ////////////////////////window.m = m;
 
 	                        // NOTE: Color arrays and tangents are not part of the Wavefront .obj format (in .mtl data).
+
+	                        return m;
+	                }
+
+	                /** 
+	                 * Decode a simple GlTF file. We only support one scene, with multiple objects. Objects only suppot features 
+	                 * implemented in this program (e.g. no rigging). 
+	                 * Reference: THREE glTF shader, strating about line 850.
+	                 */
+
+	        }, {
+	                key: 'computeGlTFMesh',
+	                value: function computeGlTFMesh(data, prim, path) {
+
+	                        var m = {};
+
+	                        m.data = JSON.parse(data);
+
+	                        // TODO: study the recursion. See how often you can have scene in scene, etc.
+
+	                        for (var i in m.data) {
+
+	                                switch (i) {
+
+	                                        case 'scene':
+
+	                                                break;
+
+	                                        case 'scenes':
+
+	                                                break;
+
+	                                        case 'nodes':
+
+	                                                break;
+
+	                                }
+	                        }
+
+	                        //tData = JSON.parse( new TextDecoder().decode( new Uint8Array( data ) ) );
+
+	                        window.m = m.data;
+
+	                        return m;
+	                }
+	        }, {
+	                key: 'computeGlTFBinaryMesh',
+	                value: function computeGlTFBinaryMesh(data, prim, path) {
+
+	                        var m = this.default();
 
 	                        return m;
 	                }
@@ -14171,8 +14219,6 @@
 
 	                                        d = this.computeObjMesh(data, prim, path); // ADDS LOTS OF STUFF TO 'd'
 
-	                                        //d = this.doObjMesh( data, prim, path );
-
 	                                        // Not supplied by OBJ format.
 
 	                                        d.tangents = [];
@@ -14183,18 +14229,17 @@
 
 	                                        break;
 
-	                                case 'html':
-	                                        // A-Frame?
+	                                case 'gltf':
+
+	                                        console.log('@@@@@@@@@@@@@@@@went to gltf');
+
+	                                        d = this.computeGlTFMesh(data, prim, path);
 
 	                                        break;
 
-	                                case 'x3d':
-	                                        // X3DOM
+	                                case 'gltfbinary':
 
-	                                        break;
-
-	                                case 'x3dv':
-	                                        // VRML
+	                                        d = this.computeGlTFBinaryMesh(data, prim, path);
 
 	                                        break;
 
@@ -14259,7 +14304,7 @@
 
 	                                // Use a pool texture if available. Generally won't be ready within a Prim, but useful for Prims sharing textures.
 
-	                                console.log('TexturePool::getTexture(): found texture ' + path + ' in pool, using it...');
+	                                // console.log( 'TexturePool::getTexture(): found texture ' + path + ' in pool, using it...' );
 
 	                                this.util.emitter.emit(modelObj.emits, prim, modelObj.key, options);
 
@@ -14275,7 +14320,7 @@
 
 	                                        var mimeType = _this3.modelMimeTypes[_this3.util.getFileExtension(path)];
 
-	                                        /////console.log("--------OBJ file doRequest model for:" + prim.name + ' path:' + path)
+	                                        //console.log( '--------@@@@@@@@@@@@@doRequest model for path:' + path + ' is:' + mimeType )
 
 	                                        // check if mimeType is OK.
 
@@ -17058,6 +17103,27 @@
 	                                    );
 	                        */
 
+	                        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	                        // TODO: temporary
+
+	                        window.gltf = this.primFactory.createPrim(this.s1, // callback function
+	                        typeList.MESH, 'gltf', vec5(1, 1, 1), // dimensions (4th dimension doesn't exist for cylinder)
+	                        vec5(40, 40, 40), // divisions MAKE SMALLER
+	                        vec3.fromValues(1.5, 1, 2.0), // position (absolute)
+	                        vec3.fromValues(0, 0, 0), // acceleration in x, y, z
+	                        vec3.fromValues(util.degToRad(0), util.degToRad(0), util.degToRad(0)), // rotation (absolute)
+	                        vec3.fromValues(util.degToRad(0.2), util.degToRad(0.5), util.degToRad(0)), // angular velocity in x, y, x
+	                        [], // texture loaded directly
+	                        ['glTF/boxtextured/boxtextured.gltf'] // object files (.obj, .mtl)
+	                        //[ 'obj/mountains/mountains.obj' ] // ok
+	                        // if true, use color array instead of texture array
+	                        // if true, apply textures to each face, not whole Prim.
+	                        // if true, use color array instead of texture array
+	                        // if true, apply textures to each face, not whole Prim.
+	                        // if true, use lighting
+	                        );
+
+	                        // TODO: temporary
 	                        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	                        // Note: the init() method sets up the update() and render() methods for the Shader.

@@ -938,6 +938,31 @@ class World extends AssetPool {
             );
 */
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // TODO: temporary
+
+            window.gltf = this.primFactory.createPrim(
+
+                this.s1,                               // callback function
+                typeList.MESH,
+                'gltf',
+                vec5( 1, 1, 1 ),                       // dimensions (4th dimension doesn't exist for cylinder)
+                vec5( 40, 40, 40  ),                    // divisions MAKE SMALLER
+                vec3.fromValues( 1.5, 1, 2.0 ),      // position (absolute)
+                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+                vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+                [], // texture loaded directly
+                [ 'glTF/boxtextured/boxtextured.gltf' ] // object files (.obj, .mtl)
+                //[ 'obj/mountains/mountains.obj' ] // ok
+                // if true, use color array instead of texture array
+                // if true, apply textures to each face, not whole Prim.
+                // if true, use color array instead of texture array
+                // if true, apply textures to each face, not whole Prim.
+                // if true, use lighting
+            );
+
+    // TODO: temporary
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         // Note: the init() method sets up the update() and render() methods for the Shader.

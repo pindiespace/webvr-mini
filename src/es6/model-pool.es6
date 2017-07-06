@@ -41,11 +41,9 @@ class ModelPool extends AssetPool {
 
             'mtl': 'text/plain',
 
-            'html': 'text/html',      // A-Frame?
+            'gltf': 'text/tgltf',
 
-            'x3d': 'model/x3d+xml',   // X3DOM
-
-            'x3dv': 'model/x3d-vrml'  // VRML
+            'gltfBinary': 'bin/gltf'
 
         };
 
@@ -767,9 +765,60 @@ class ModelPool extends AssetPool {
 
         m.normals = tNormals;
 
-        window.m = m;
+        ////////////////////////window.m = m;
 
         // NOTE: Color arrays and tangents are not part of the Wavefront .obj format (in .mtl data).
+
+        return m;
+
+    }
+
+    /** 
+     * Decode a simple GlTF file. We only support one scene, with multiple objects. Objects only suppot features 
+     * implemented in this program (e.g. no rigging). 
+     * Reference: THREE glTF shader, strating about line 850.
+     */
+    computeGlTFMesh ( data, prim, path ) {
+
+        let m = {};
+
+        m.data = JSON.parse( data );
+
+        // TODO: study the recursion. See how often you can have scene in scene, etc.
+
+        for ( let i in m.data ) {
+
+            switch ( i ) {
+
+                case 'scene':
+
+                    break;
+
+                case 'scenes':
+
+                    break;
+
+                case 'nodes':
+
+                    break;
+
+            }
+
+
+        }
+
+        //tData = JSON.parse( new TextDecoder().decode( new Uint8Array( data ) ) );
+
+        window.m = m.data;
+
+        return m;
+
+    }
+
+
+    computeGlTFBinaryMesh ( data, prim, path ) {
+
+        let m = this.default();
 
         return m;
 
@@ -809,9 +858,7 @@ class ModelPool extends AssetPool {
                 // Return a Model object.
 
                 d = this.computeObjMesh( data, prim, path ); // ADDS LOTS OF STUFF TO 'd'
-
-                //d = this.doObjMesh( data, prim, path );
-
+ 
                 // Not supplied by OBJ format.
 
                 d.tangents = [];
@@ -822,15 +869,17 @@ class ModelPool extends AssetPool {
 
                 break;
 
-            case 'html': // A-Frame?
+            case 'gltf':
+
+                console.log('@@@@@@@@@@@@@@@@went to gltf')
+
+                d = this.computeGlTFMesh( data, prim, path );
 
                 break;
 
-            case 'x3d': // X3DOM
+            case 'gltfbinary':
 
-                break;
-
-            case 'x3dv': // VRML
+                d = this.computeGlTFBinaryMesh( data, prim, path );
 
                 break;
 
@@ -895,7 +944,7 @@ class ModelPool extends AssetPool {
 
             // Use a pool texture if available. Generally won't be ready within a Prim, but useful for Prims sharing textures.
 
-            console.log( 'TexturePool::getTexture(): found texture ' + path + ' in pool, using it...' );
+            // console.log( 'TexturePool::getTexture(): found texture ' + path + ' in pool, using it...' );
 
             this.util.emitter.emit( modelObj.emits, prim, modelObj.key, options ); 
 
@@ -911,7 +960,7 @@ class ModelPool extends AssetPool {
 
             let mimeType = this.modelMimeTypes[ this.util.getFileExtension( path ) ];
 
-            /////console.log("--------OBJ file doRequest model for:" + prim.name + ' path:' + path)
+            //console.log( '--------@@@@@@@@@@@@@doRequest model for path:' + path + ' is:' + mimeType )
 
             // check if mimeType is OK.
 
