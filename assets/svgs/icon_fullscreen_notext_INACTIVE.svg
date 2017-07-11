@@ -1,1 +1,16 @@
-<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 100 125" style="enable-background:new 0 0 100 125;" xml:space="preserve"><style type="text/css">.st0{fill:#606060;}.st1{fill:none;stroke:#FF7373;stroke-width:3;stroke-miterlimit:10;}</style><g><g><path class="st0" d="M77.2,79.9H61.8c-1.5,0-2.7-1.2-2.7-2.7c0-1.5,1.2-2.7,2.7-2.7h12.6V61.8c0-1.5,1.2-2.7,2.7-2.7s2.7,1.2,2.7,2.7v15.4C79.9,78.7,78.7,79.9,77.2,79.9z"/></g><g><path class="st0" d="M38.3,79.9H22.9c-1.5,0-2.7-1.2-2.7-2.7V61.8c0-1.5,1.2-2.7,2.7-2.7s2.7,1.2,2.7,2.7v12.6h12.6c1.5,0,2.7,1.2,2.7,2.7C41,78.7,39.8,79.9,38.3,79.9z"/></g></g><g><g><path class="st0" d="M22.9,41c-1.5,0-2.7-1.2-2.7-2.7V22.9c0-1.5,1.2-2.7,2.7-2.7h15.4c1.5,0,2.7,1.2,2.7,2.7s-1.2,2.7-2.7,2.7H25.6v12.6C25.6,39.8,24.4,41,22.9,41z"/></g><g><path class="st0" d="M77.2,41c-1.5,0-2.7-1.2-2.7-2.7V25.6H61.8c-1.5,0-2.7-1.2-2.7-2.7s1.2-2.7,2.7-2.7h15.4c1.5,0,2.7,1.2,2.7,2.7v15.4C79.9,39.8,78.7,41,77.2,41z"/></g></g><g><path class="st0" d="M92.3,95H7.7C6.2,95,5,93.8,5,92.3V7.7C5,6.2,6.2,5,7.7,5h84.6C93.8,5,95,6.2,95,7.7v84.6C95,93.8,93.8,95,92.3,95z M10.4,89.6h79.1V10.4H10.4V89.6z"/></g><line class="st1" x1="100" y1="0" x2="5" y2="106"/></svg>
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 21.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 100 125" style="enable-background:new 0 0 100 125;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:#606060;}
+	.st1{fill:#606060;stroke:#FFFFFF;stroke-width:2;stroke-miterlimit:10;}
+	.st2{fill:none;stroke:#FF7373;stroke-width:3;stroke-miterlimit:10;}
+</style>
+<rect x="9.3" y="23.6" class="st0" width="80.8" height="65.3"/>
+<polygon class="st1" points="97.8,43.6 97.8,12.1 73.8,12.1 73.8,22.2 84.6,22.2 70.2,41 29.3,41 14.9,22.2 25.8,22.2 25.8,12.1 
+	1.8,12.1 1.8,43.6 9.4,43.6 9.4,29.3 23.8,48.1 23.8,64.1 9.4,83 9.4,68.7 1.8,68.7 1.8,100.1 25.8,100.1 25.8,90.1 14.9,90.1 
+	29.3,71.2 70.2,71.2 84.6,90.1 73.8,90.1 73.8,100.1 97.8,100.1 97.8,68.7 90.1,68.7 90.1,83 75.7,64.1 75.7,48.1 90.1,29.3 
+	90.1,43.6 "/>
+<line class="st2" x1="97.8" y1="3.2" x2="2.8" y2="109.2"/>
+</svg>
