@@ -19130,6 +19130,8 @@
 
 	        // default World dimensions, Open/WebGL units.
 
+	        _this.dimensions = [100, 100, 100];
+
 	        _this.dimensions = {
 
 	            width: 100,
@@ -19303,7 +19305,29 @@
 
 	                            if (_this2.worldDefinition) {
 
-	                                // TODO: RUN YOUR this.init() here!!!!!!!!!!!!!!
+	                                // Set the Scene by the file.
+
+	                                var s = _this2.worldDefinition.scene;
+
+	                                _this2.position[0] = parseFloat(s.position[0]);
+
+	                                _this2.position[1] = parseFloat(s.position[1]);
+
+	                                ///this.position[ 2 ] = parseFloat( s.position[ 2 ] );  // PROBLEM HERE!!!!
+
+	                                window.s = s;
+
+	                                for (var i in _this2.worldDefinition) {}
+
+	                                //this.position = s.position; // TODO: check this positioning in greater detail on FF vs  Chrome
+
+	                                //this.rotation = s.rotation; // World rotation
+
+	                                //this.lights = s.lights;
+
+	                                //this.dimensions = s.dimensions;
+
+	                                // Load Prims based on the files.
 
 	                                /* 
 	                                 * WORLD_DEFINITION_READY event, indicating all descriptions of World loaded. Individual media 

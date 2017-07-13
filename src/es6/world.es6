@@ -82,6 +82,8 @@ class World extends AssetPool {
 
         // default World dimensions, Open/WebGL units.
 
+        this.dimensions = [ 100, 100, 100 ];
+
         this.dimensions = {
 
             width: 100,
@@ -249,7 +251,33 @@ class World extends AssetPool {
 
                             if ( this.worldDefinition ) {
 
-                                // TODO: RUN YOUR this.init() here!!!!!!!!!!!!!!
+                                // Set the Scene by the file.
+
+                                let s = this.worldDefinition.scene;
+
+                                this.position[ 0 ] = parseFloat( s.position[ 0 ] )
+
+                                this.position[ 1 ] = parseFloat( s.position[ 1 ] )
+
+                                ///this.position[ 2 ] = parseFloat( s.position[ 2 ] );  // PROBLEM HERE!!!!
+
+                                window.s = s
+
+                                for ( var i in this.worldDefinition ) {
+
+
+
+                                }
+
+                                //this.position = s.position; // TODO: check this positioning in greater detail on FF vs  Chrome
+
+                                //this.rotation = s.rotation; // World rotation
+
+                                //this.lights = s.lights;
+
+                                //this.dimensions = s.dimensions;
+
+                                // Load Prims based on the files.
 
                                 /* 
                                  * WORLD_DEFINITION_READY event, indicating all descriptions of World loaded. Individual media 
