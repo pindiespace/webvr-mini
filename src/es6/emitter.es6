@@ -19,6 +19,8 @@ class Emitter {
 
         this.events = {
 
+            WORLD_DEFINITION_READY: 'wrddefrdy',        // World definition file is ready
+
             PROCEDURAL_GEOMETRY_READY: 'plgrdy',           // Procedural geometry is ready
 
             OBJ_GEOMETRY_READY: 'ogrdy',                   // Use for .OBJ and .MTL file formats

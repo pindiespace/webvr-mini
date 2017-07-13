@@ -92,6 +92,29 @@ class World extends AssetPool {
 
         };
 
+        // TODO: make a default out of this.
+
+        this.worldDefinition = {};
+
+
+        // File types in which a World may be encoded.
+
+        this.worldMimeTypes = {
+
+            'json': 'text/plain',
+
+            'gltf': 'text/tgltf',
+
+            'gltfBinary': 'bin/gltf'
+
+        };
+
+        // Path to default World JSON file
+
+        this.DEFAULT_WORLD_PATH = 'json/default-world.json';
+
+        // Stats on World operation.
+
         this.stats = { fps: 0 };
 
         // Matrix operations.
@@ -174,7 +197,7 @@ class World extends AssetPool {
 
         };
 
-    }
+    } 
 
     /**
      * Handle resize event for the World dimensions.
@@ -191,11 +214,75 @@ class World extends AssetPool {
     /** 
      * load a World from a JSON file description.
      */
-    load () {
+    getWorld ( path ) {
 
-        // TODO: use fetch
+         if ( ! this.util.isWhitespace( path ) ) {
 
-        console.error( 'world::load(): not implemented yet!' );
+
+            let mimeType = this.worldMimeTypes[ this.util.getFileExtension( path ) ];
+
+            console.log( '--------@@@@@@@@@@@@@doRequest World for path:' + path + ' is:' + mimeType )
+
+            // check if mimeType is OK.
+
+            if( mimeType ) {
+
+                this.doRequest( path, 0, 
+
+                    ( updateObj ) => {
+
+                        /* 
+                         * updateObj returned from GetAssets has the following structure:
+                         * { 
+                         *   pos: pos, 
+                         *   path: requestURL, 
+                         *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
+                         *   error: false|response 
+                         * } 
+                         */
+
+                        // load a Model file.
+
+                        if ( updateObj.data ) {
+
+                            this.worldDefinition = this.parseWorld( updateObj.data );
+
+                            if ( this.worldDefinition ) {
+
+                                // TODO: RUN YOUR this.init() here!!!!!!!!!!!!!!
+
+                                /* 
+                                 * WORLD_DEFINITION_READY event, indicating all descriptions of World loaded. Individual media 
+                                 * and model files may still need to be loaded.
+                                 */
+
+                                this.util.emitter.emit( this.emitter.events.WORLD_DEFINITION_READY ); ///////////TODO: COMPARE TO PROCEDUAR GEO EMIT
+
+                            } else {
+
+                                console.error( 'World::getWorld():World file:' + path + ' could not be parsed' );
+
+                            }
+
+                        } else {
+
+                            console.error( 'World::getWorld(): World file, no data found for:' + updateObj.path );
+
+                        }
+
+                    }, true, mimeType, 0 ); // end of this.doRequest(), initial request at 0 tries
+
+            } else {
+
+                console.error( 'World::getWorld(): file type "' + this.util.getFileExtension( path ) + '" in:' + path + ' not supported, not loading' );
+
+            }
+
+
+         } else {
+
+
+         }
 
     }
 
@@ -203,11 +290,43 @@ class World extends AssetPool {
      * save a World to a JSON file description.
      * use Prim.toJSON() for indivdiual prims.
      */
-    save () {
+    saveWorld ( path ) {
 
         // TODO: output in editor interface.
 
-        console.error( 'world::save(): not implemented yet!' );
+        console.error( 'World::saveWorld(): not implemented yet!' );
+
+    }
+
+    /** 
+     * After getting the WebVR-Mini JSON, use the parsed data to create the world.
+     * @param {Object} worldObj parsed JSON data describing the world scene and its prims.
+     */
+    parseWorld ( data ) {
+
+        // console.log( 'World::parseWorld():, worldObj is:' + data );
+
+        let d = null;
+
+        try {
+
+            d = JSON.parse( data );
+
+        } catch ( err ) {
+
+            if ( err instanceof SyntaxError ) {
+
+                console.error( 'World::parseWorld(): JSON syntax error:' + e );
+
+            } else {
+
+                console.error( 'World::parseWorld(): JSON unknown error:' + e );
+
+            }
+
+        }
+
+        return d;
 
     }
 
@@ -240,8 +359,9 @@ class World extends AssetPool {
 
         this.s2 = this.shaderPool.getAssetByName( 'shaderColor' );
 
-        //////////////this.s3 = this.shaderPool.getAssetByName( 'shaderDirLightTexture' );
+        // Get the World file, overwriting defaults as necessary.
 
+        this.getWorld( this.DEFAULT_WORLD_PATH );
 
 //////////////////////////////////
 // COLOR SHADER.

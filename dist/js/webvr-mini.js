@@ -1691,6 +1691,8 @@
 
 	        this.events = {
 
+	            WORLD_DEFINITION_READY: 'wrddefrdy', // World definition file is ready
+
 	            PROCEDURAL_GEOMETRY_READY: 'plgrdy', // Procedural geometry is ready
 
 	            OBJ_GEOMETRY_READY: 'ogrdy', // Use for .OBJ and .MTL file formats
@@ -19138,6 +19140,28 @@
 
 	        };
 
+	        // TODO: make a default out of this.
+
+	        _this.worldDefinition = {};
+
+	        // File types in which a World may be encoded.
+
+	        _this.worldMimeTypes = {
+
+	            'json': 'text/plain',
+
+	            'gltf': 'text/tgltf',
+
+	            'gltfBinary': 'bin/gltf'
+
+	        };
+
+	        // Path to default World JSON file
+
+	        _this.DEFAULT_WORLD_PATH = 'json/default-world.json';
+
+	        // Stats on World operation.
+
 	        _this.stats = { fps: 0 };
 
 	        // Matrix operations.
@@ -19245,12 +19269,62 @@
 	         */
 
 	    }, {
-	        key: 'load',
-	        value: function load() {
+	        key: 'getWorld',
+	        value: function getWorld(path) {
+	            var _this2 = this;
 
-	            // TODO: use fetch
+	            if (!this.util.isWhitespace(path)) {
 
-	            console.error('world::load(): not implemented yet!');
+	                var mimeType = this.worldMimeTypes[this.util.getFileExtension(path)];
+
+	                console.log('--------@@@@@@@@@@@@@doRequest World for path:' + path + ' is:' + mimeType);
+
+	                // check if mimeType is OK.
+
+	                if (mimeType) {
+
+	                    this.doRequest(path, 0, function (updateObj) {
+
+	                        /* 
+	                         * updateObj returned from GetAssets has the following structure:
+	                         * { 
+	                         *   pos: pos, 
+	                         *   path: requestURL, 
+	                         *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
+	                         *   error: false|response 
+	                         * } 
+	                         */
+
+	                        // load a Model file.
+
+	                        if (updateObj.data) {
+
+	                            _this2.worldDefinition = _this2.parseWorld(updateObj.data);
+
+	                            if (_this2.worldDefinition) {
+
+	                                // TODO: RUN YOUR this.init() here!!!!!!!!!!!!!!
+
+	                                /* 
+	                                 * WORLD_DEFINITION_READY event, indicating all descriptions of World loaded. Individual media 
+	                                 * and model files may still need to be loaded.
+	                                 */
+
+	                                _this2.util.emitter.emit(_this2.emitter.events.WORLD_DEFINITION_READY); ///////////TODO: COMPARE TO PROCEDUAR GEO EMIT
+	                            } else {
+
+	                                console.error('World::getWorld():World file:' + path + ' could not be parsed');
+	                            }
+	                        } else {
+
+	                            console.error('World::getWorld(): World file, no data found for:' + updateObj.path);
+	                        }
+	                    }, true, mimeType, 0); // end of this.doRequest(), initial request at 0 tries
+	                } else {
+
+	                    console.error('World::getWorld(): file type "' + this.util.getFileExtension(path) + '" in:' + path + ' not supported, not loading');
+	                }
+	            } else {}
 	        }
 
 	        /** 
@@ -19259,12 +19333,42 @@
 	         */
 
 	    }, {
-	        key: 'save',
-	        value: function save() {
+	        key: 'saveWorld',
+	        value: function saveWorld(path) {
 
 	            // TODO: output in editor interface.
 
-	            console.error('world::save(): not implemented yet!');
+	            console.error('World::saveWorld(): not implemented yet!');
+	        }
+
+	        /** 
+	         * After getting the WebVR-Mini JSON, use the parsed data to create the world.
+	         * @param {Object} worldObj parsed JSON data describing the world scene and its prims.
+	         */
+
+	    }, {
+	        key: 'parseWorld',
+	        value: function parseWorld(data) {
+
+	            // console.log( 'World::parseWorld():, worldObj is:' + data );
+
+	            var d = null;
+
+	            try {
+
+	                d = JSON.parse(data);
+	            } catch (err) {
+
+	                if (err instanceof SyntaxError) {
+
+	                    console.error('World::parseWorld(): JSON syntax error:' + e);
+	                } else {
+
+	                    console.error('World::parseWorld(): JSON unknown error:' + e);
+	                }
+	            }
+
+	            return d;
 	        }
 
 	        /** 
@@ -19299,8 +19403,9 @@
 
 	            this.s2 = this.shaderPool.getAssetByName('shaderColor');
 
-	            //////////////this.s3 = this.shaderPool.getAssetByName( 'shaderDirLightTexture' );
+	            // Get the World file, overwriting defaults as necessary.
 
+	            this.getWorld(this.DEFAULT_WORLD_PATH);
 
 	            //////////////////////////////////
 	            // COLOR SHADER.

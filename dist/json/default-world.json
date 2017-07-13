@@ -1,0 +1,45 @@
+{
+
+    "scene" : {
+
+        "dimensions" : [ "100", "100", "100" ],
+
+        "position" : [ "0", "0", "0" ],
+
+        "rotation" : [ "0", "0", "0" ]
+
+    },
+
+    "toji" : {
+
+        "shader" : "shaderTexture",
+
+        "type" : "CUBE",
+
+        "name" : "toji",
+
+        "dimensions" : [ "1", "1", "1" ],
+
+        "divisions" : [ "10", "10", "10", "0" ],
+
+        "position" : [ "1", "0", "2" ],
+
+        "acceleration" : [ "0",  "0", "0" ],
+
+        "rotation" : [ "0", "0", "0" ],
+
+        "angular" : [ "1", "1", "1" ],
+
+        "textureImages" : "true",
+
+        "models" : [],
+
+        "useColorArray" : "false",
+
+        "useFaceTextures" : "false",
+
+        "useLighting" : "true"
+
+    }
+
+}
