@@ -510,325 +510,19 @@ class World extends AssetPool {
 
 */
 
-
 /*
-
             this.primFactory.createPrim(
 
                 this.s1,                      // callback function
-                typeList.ICOSPHERE,
-                'icosphere',
-                vec5( 3, 3, 3, 0 ),            // dimensions
-                vec5( 32, 32, 32 ),            // 1 for icosohedron, 16 for good sphere
-                vec3.fromValues(4.5, 3.5, -2 ),        // position (absolute)
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [ 'img/uv-test.png' ],               // texture present, NOT USED
-                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
-
-            );
-
-
-            this.primFactory.createPrim(
-
-
-
-            );
-
-            this.primFactory.createPrim(
-            
-                this.s1,                      // callback function
-                typeList.BOTTOMICODOME,
-                'bottomicodome',
-                vec5( 3, 3, 3, 0 ),            // dimensions
-                vec5( 32, 32, 32 ),            // 1 for icosohedron, 16 for good sphere
-                vec3.fromValues(4.5, 0.5, -2 ),        // position (absolute)
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [ 'img/uv-test.png' ],               // texture present, NOT USED
-                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
-
-            );
-
-            this.primFactory.createPrim(
-            
-                this.s1,                      // callback function
-                typeList.CONE,
-                'TestCone',
-                vec5( 1, 1, 1, 0.0, 0.0 ),         // dimensions (4th dimension is truncation of cone, none = 0, flat circle = 1.0)
-                vec5( 10, 10, 10  ),        // divisions MAKE SMALLER
-                vec3.fromValues(-0, -1.5, 2.0 ),          // position (absolute)
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [ 'img/uv-test.png' ],               // texture present
-                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
-            
-            );
-
-
-
-            this.primFactory.createPrim(
-            
-                this.s3,                      // callback function
-                typeList.CAPSULE,
-                'TestCapsule',
-                vec5( 0.5, 1, 1 ),       // dimensions (4th dimension doesn't exist for cylinder)
-                vec5( 40, 40, 0  ),        // divisions MAKE SMALLER
-                vec3.fromValues(-2.0, -1.5, 2.0 ),          // position (absolute)
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [ 'img/uv-test.png' ],               // texture present
-                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
-        
-            );
-
-            this.primFactory.createPrim(
-            
-                this.s1,                      // callback function
-                typeList.TEARDROP,
-                'TestTearDrop',
-                vec5( 1, 2, 1 ),       // dimensions (4th dimension doesn't exist for cylinder)
-                vec5( 40, 40, 0  ),        // divisions MAKE SMALLER
-                vec3.fromValues(-2.0, 1.5, 2.0 ),          // position (absolute)
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [ 'img/uv-test.png' ],               // texture present
-                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
-        
-            );
-
-            // TODO: DOES THIS ACTUALLY BECOME TRANSPARENT????
-
-            this.primFactory.createPrim(
-            
-                this.s3,                      // callback function
-                typeList.DODECAHEDRON,
-                'Dodecahedron',
-                vec5( 1, 1, 1 ),       // dimensions (4th dimension doesn't exist for cylinder)
-                vec5( 40, 40, 0  ),        // divisions MAKE SMALLER
-                vec3.fromValues(-1.0, 0.5, 3.0 ),          // position (absolute)
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [ 'img/crate.png' ],               // texture present
-                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color,
-                true                                    // if true, apply texture to each face
-
-            );
-
-
-
-            this.primFactory.createPrim(
-
-                this.s1,                      // callback function
-                typeList.REGULARTETRAHEDRON,
-                'regulartetrahedron',
-                vec5( 3, 3, 3, 0 ),            // dimensions
-                vec5( 18, 18, 18 ),               // divisions
-                vec3.fromValues(6.7, 1.5, -4 ),       // position (absolute)
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [ 'img/mozvr-logo2.png' ],               // texture present
-                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
-
-            );
-
-
-///////////////////////////////////////
-// TEXTURED MESH
-///////////////////////////////////////
-
-            // Note: MESH OBJECT WITH DELAYED LOAD - TEST WITH LOW BANDWIDTH
-            // TODO: INVALID TEXTURING
-
-            this.primFactory.createPrim(
-
-                this.s1,                               // callback function
-                typeList.MESH,
-                'capsule',
-                vec5( 2, 2, 2 ),                       // dimensions (4th dimension doesn't exist for cylinder)
-                vec5( 40, 40, 0  ),                    // divisions MAKE SMALLER
-                vec3.fromValues( 0.0, 1.0, 0.0 ),      // position (absolute)
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [ 'obj/capsule/capsule1.png' ],               // texture present. TODO::: FIGURE OUT NUMBERING.
-                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color,
-                true,                                   // if true, apply texture to each face,
-                [ 'obj/capsule/capsule.obj' ] // object files (.obj, .mtl)
-
-            );
-
-
-
-            this.primFactory.createPrim(
-
-                this.s3,                               // callback function
-                typeList.MESH,
-                'objfile',
-                vec5( 2, 2, 2 ),                       // dimensions (4th dimension doesn't exist for cylinder)
-                vec5( 40, 40, 40  ),                    // divisions MAKE SMALLER
-                vec3.fromValues( -6.5, -1, -1.0 ),      // position (absolute)
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                //[ 'img/crate.png' ],               // texture present. TODO::: FIGURE OUT NUMBERING.
-                '', // texture loaded directly
-                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color,
-                true,                                   // if true, apply texture to each face,
-                //[ 'obj/mountains/mountains.obj' ] // ok
-                //[ 'obj/landscape/landscape.obj'] // ok?
-                //[ 'obj/toilet/toilet.obj' ] // works with texture, multiple groups wrap texture!
-                //[ 'obj/naboo/naboo.obj' ] // works fine, but needs to load additional images.
-                //[ 'obj/star/star.obj'] // ok, gets generic grey texture
-                //[ 'obj/robhead/robhead.obj'] // no texcoords or normals
-                //[ 'obj/soccerball/soccerball.obj'] // no texcoords or normals
-                //[ 'obj/basketball/basketball.obj'] // needs TGA translation
-                //[ 'obj/rock1/rock1.obj'] // rock plus surface, works
-                [ 'obj/cherries/cherries.obj'] // rendering indices error
-                //[ 'obj/banana/banana.obj' ] // works great
-            );
-
-//////////////////////////////////
-// LIT TEXTURE SHADER.
-//////////////////////////////////
-
-
-            this.primFactory.createPrim(
-
-                this.s3,                      // callback function
-                typeList.TERRAIN,
-                'terrain',
-                vec5( 2, 2, 2, directions.TOP, 0.1 ),       // Note: ORIENTATION DESIRED vec5[3], waterline = vec5[4]
-                vec5( 100, 100, 100 ),           // divisions
-                vec3.fromValues( 1.5, -1.5, 2 ),       // position (absolute)
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 1 ), util.degToRad( 0 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [ 'img/mozvr-logo1.png' ],               // texture present
-                vec4.fromValues( 0.5, 1.0, 0.2, 1.0),  // color
-                null //heightMap                       // heightmap
-
-            );
-
-
-            this.primFactory.createPrim(
-            
-                this.s3,                      // callback function
-                typeList.SPHERE,
-                'texsphere',
-                vec5( 1.5, 1.5, 1.5, 0 ),   // dimensions
-                vec5( 6, 6, 6 ), // at least 8 subdividions to smooth!
-                //vec3.fromValues(-5, -1.3, -1 ),       // position (absolute)
-                vec3.fromValues( -0, -1.0, 3.5 ),
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [ 'img/mozvr-logo1.png' ],               // texture present, NOT USED
-                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
-        
-            );
-
-            this.primFactory.createPrim(
-
-                this.s3,                      // callback function
-                typeList.CUBESPHERE,
-                'cubesphere',
-                vec5( 3, 3, 3 ),            // dimensions
-                vec5( 10, 10, 10, 0 ),         // divisions 4th parameter is degree of rounding.
-                vec3.fromValues(3, -0.7, -1 ),       // position (absolute)
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 10 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [ 'img/mozvr-logo1.png' ],               // texture present, NOT USED
-                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
-
-            ); 
-
-            this.primFactory.createPrim(
-
-                this.s3,                      // callback function
-                typeList.CUBE,
-                'lit cube',
-                vec5( 1, 1, 1, 0 ),            // dimensions
-                vec5( 1, 1, 1 ),            // divisions
-                vec3.fromValues( -3, -2, -3 ),          // position (absolute)
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 20 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 1 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [ 'img/webvr-logo4.png' ],               // texture present, NOT USED
-                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color
-
-            );
-
-            this.primFactory.createPrim(
-
-                this.s3,                      // callback function
-                typeList.CURVEDINNERPLANE,
-                'CurvedPlaneFront',
-                vec5( 2, 1, 1, directions.FRONT, 1 ),         // pass orientation ONE UNIT CURVE
-                vec5( 10, 10, 10 ),        // divisions
-                vec3.fromValues(-1, 0.0, 2.0 ),          // position (absolute)
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0.0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [ 'img/webvr-logo1.png' ],               // texture present
-                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
-        
-            );
-
-            this.primFactory.createPrim(
-
-                this.s3,                      // callback function
-                typeList.ICOSOHEDRON,
-                'icosohedron',
-                vec5( 3, 3, 3, 0 ),            // dimensions
-                vec5( 18, 18, 18 ),               // divisions
-                vec3.fromValues(0.5, 3.5, -2 ),       // position (absolute)
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [ 'img/mozvr-logo2.png' ],               // texture present, NOT USED
-                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
-        
-            );
-
-            this.primFactory.createPrim(
-
-                this.s3,                      // callback function
                 typeList.BOTTOMDOME,
-                'TestDome',
+                'BottomDome',
                 vec5( 1, 1, 1, 0 ),            // dimensions
                 vec5( 10, 10, 10  ),            // divisions MAKE SMALLER
-                vec3.fromValues(-4, 0.5, -0.5 ),        // position (absolute)
+                vec3.fromValues(0.0, 0.0, 0.0 ),        // position (absolute)
                 vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
                 vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
                 vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
                 [ 'img/mozvr-logo2.png' ],               // texture present
-                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
-
-            );
-
-            this.primFactory.createPrim(
-
-                this.s3,                  // callback function
-                typeList.TORUS, // TORUS DEFAULT
-                'TORUS1',
-                vec5( 1, 1, 0.5, 0 ),            // dimensions INCLUDING start radius or torus radius(last value)
-                vec5( 15, 15, 15 ),            // divisions MUST BE CONTROLLED TO < 5
-                //vec3.fromValues(-3.5, -3.5, -1 ),        // position (absolute)
-                vec3.fromValues(-0.0, 0, 2.0),
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [ 'img/mozvr-logo1.png', 'ew9ruqwdfhfw' ],               // texture present
-                //[ 'sld;fkjasfd'], // test default procedural texture pixel
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
 
             );
@@ -836,6 +530,7 @@ class World extends AssetPool {
 */
 
 /*
+
             // TODO: MAKE SURE CAP IS ACTUALLY BEING DRAWN!!!!
 
             this.primFactory.createPrim(
@@ -845,45 +540,17 @@ class World extends AssetPool {
                 'CAP',
                 vec5( 3, 3, 3, 0 ),         // dimensions INCLUDING start radius or torus radius(last value)
                 vec5( 15, 15, 15 ),         // divisions MUST BE CONTROLLED TO < 5
-                //vec3.fromValues(-3.5, -3.5, -1 ),    // position (absolute)
+                //vec3.fromValues(0, 0, 0 ),    // position (absolute)
                 vec3.fromValues(-0.0, 0, 2.0),
                 vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
                 vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
                 vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
                 [ 'img/mozvr-logo1.png' ],               // texture present
                 vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
-        
+
             );
 */
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // TODO: temporary
-/*
-            window.gltf = this.primFactory.createPrim(
-
-                this.s1,                               // callback function
-                typeList.MESH,
-                'gltf',
-                vec5( 1, 1, 1 ),                       // dimensions (4th dimension doesn't exist for cylinder)
-                vec5( 40, 40, 40  ),                    // divisions MAKE SMALLER
-                vec3.fromValues( 1.5, 1, 2.0 ),      // position (absolute)
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [], // texture loaded directly
-                [ 'glTF/boxtextured/boxtextured.gltf' ] // object files (.obj, .mtl)
-                //[ 'obj/mountains/mountains.obj' ] // ok
-                // if true, use color array instead of texture array
-                // if true, apply textures to each face, not whole Prim.
-                // if true, use color array instead of texture array
-                // if true, apply textures to each face, not whole Prim.
-                // if true, use lighting
-            );
-
-*/
-
-    // TODO: temporary
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         // Note: the init() method sets up the update() and render() methods for the Shader.
 

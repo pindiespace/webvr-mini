@@ -1,0 +1,140 @@
+
+{
+
+     "teapot" : {
+
+        "shader" : "shaderColor",
+
+        "type" : "MESH",
+
+        "name" : "teapot",
+
+        "description" : "the infamous teapot, rendered with ColorShader",
+
+        "dimensions" : [ "1", "1", "1", "0" ],
+
+        "divisions" : [ "40", "40", "40", "0", "0" ],
+
+        "position" : [ "0.0", "1.0", "2.0" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "0", "0", "0" ],
+
+        "angular" : [ "0.2", "0.5", "0" ],
+
+        "textures" : [],
+
+        "models" : [ "obj/teapot/teapot.obj" ],
+
+        "useColorArray" : "true",
+
+        "useFaceTextures" : "false",
+
+        "useLighting" : "true"
+
+    },
+
+     "objfile" : {
+
+        "shader" : "shaderTexture",
+
+        "type" : "MESH",
+
+        "name" : "objfile",
+
+        "description" : "mesh determined by WaveFront .OBJ file, for testing with format",
+
+        "dimensions" : [ "2", "2", "2", "0" ],
+
+        "divisions" : [ "40", "40", "40", "0", "0" ],
+
+        "position" : [ "-3.5", "-1.0", "0.0" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "0", "0", "0" ],
+
+        "angular" : [ "0.2", "0.5", "0" ],
+
+        "textures" : [],
+
+        "models" : [ "obj/toilet/toilet.obj" ],
+
+        "useColorArray" : "false",
+
+        "useFaceTextures" : "false",
+
+        "useLighting" : "true"
+
+    },
+
+     "banana" : {
+
+        "shader" : "shaderTexture",
+
+        "type" : "MESH",
+
+        "name" : "banana",
+
+        "description" : "banana using complex texture coordinates via .OBJ file",
+
+        "dimensions" : [ "2", "2", "2", "0" ],
+
+        "divisions" : [ "40", "40", "40", "0", "0" ],
+
+        "position" : [ "1.5", "-1.0", "2.0" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "0", "0", "0" ],
+
+        "angular" : [ "0.2", "0.5", "0" ],
+
+        "textures" : [],
+
+        "models" : [ "obj/banana/banana.obj" ],
+
+        "useColorArray" : "false",
+
+        "useFaceTextures" : "false",
+
+        "useLighting" : "true"
+
+    },
+
+     "cherries" : {
+
+        "shader" : "shaderTexture",
+
+        "type" : "MESH",
+
+        "name" : "cherries",
+
+        "description" : "complex OBJ file with multiple materials, lots of material starts",
+
+        "dimensions" : [ "2", "2", "2", "0" ],
+
+        "divisions" : [ "40", "40", "40" ],
+
+        "position" : [ "1.5", "1.0", "2.0" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "0", "0", "0" ],
+
+        "angular" : [ "0.2", "0.5", "0" ],
+
+        "textures" : [],
+
+        "models" : [ "obj/cherries/cherries.obj" ],
+
+        "useColorArray" : "false",
+
+        "useFaceTextures" : "false",
+
+        "useLighting" : "true"
+
+    }
+
+}

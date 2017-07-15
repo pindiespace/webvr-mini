@@ -44,13 +44,13 @@
 
         "divisions" : [ "10", "10", "10", "0", "0" ],
 
-        "position" : [ "0", "0", "0" ],
+        "position" : [ "0", "-1.5", "0" ],
 
         "acceleration" : [ "0", "0", "0" ],
 
         "rotation" : [ "0", "0", "0" ],
 
-        "angular" : [ "0", "0.1", "0" ],
+        "angular" : [ "0", "0", "0" ],
 
         "textures" : [  "img/panorama_01.png" ],
 
@@ -61,6 +61,43 @@
         "useFaceTextures" : "false",
 
         "useLighting" : "true"
+
+    },
+
+
+     "terrainRandom" : {
+
+        "shader" : "shaderTexture",
+
+        "type" : "TERRAIN",
+
+        "name" : "terrainRandom",
+
+        "description" : "random textured and lit terrain",
+
+        "dimensions" : [ "20", "20", "20", "top", "5" ],
+
+        "divisions" : [ "100", "100", "100", "0", "0" ],
+
+        "position" : [ "0", "-1.5", "0" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "0", "0", "0" ],
+
+        "angular" : [ "0", "0", "0" ],
+
+        "textures" : [ "img/moss_01.png" ],
+
+        "models" : [],
+
+        "useColorArray" : "false",
+
+        "useFaceTextures" : "false",
+
+        "useLighting" : "true",
+
+        "comments" : "dimensions[ 3 ] is orientation desired, waterline = dimensions[ 4 ]. TODO: Need to add existing heightmap"
 
     },
 
@@ -78,7 +115,7 @@
 
         "divisions" : [ "10", "10", "10", "0", "0" ],
 
-        "position" : [ "1", "0", "2" ],
+        "position" : [ "1.2", "0.2", "2" ],
 
         "acceleration" : [ "0", "0", "0" ],
 
@@ -180,7 +217,7 @@
 
         "divisions" : [ "40", "40", "40", "0", "0" ],
 
-        "position" : [ "-3.5", "-1.0", "0.0" ],
+        "position" : [ "-3.5", "1.0", "0.0" ],
 
         "acceleration" : [ "0", "0", "0" ],
 
@@ -214,7 +251,7 @@
 
         "divisions" : [ "40", "40", "40", "0", "0" ],
 
-        "position" : [ "-1.5", "-1.5", "2.0" ],
+        "position" : [ "-1.5", "0.2", "2.0" ],
 
         "acceleration" : [ "0", "0", "0" ],
 

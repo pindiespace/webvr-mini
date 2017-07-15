@@ -245,6 +245,290 @@
 
     },
 
+    "testCapsule" : {
+
+        "shader" : "shaderTexture",
+
+        "type" : "CAPSULE",
+
+        "name" : "testCapsule",
+
+        "description": "test of capsule shape",
+
+        "dimensions" : [ "0.5", "1", "1", "0", "0" ],
+
+        "divisions" : [ "40", "40", "40", "0", "0" ],
+
+        "position" : [ "-2.5", "-0.7", "1.0" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "0.2", "0.5", "0" ],
+
+        "angular" : [ "0.5", "1.0", "0.2" ],
+
+        "textures" : [ "img/uv-test.png" ],
+
+        "models" : [],
+
+        "useColorArray" : "false",
+
+        "useFaceTextures" : "false",
+
+        "useLighting" : "true",
+
+        "comments" : "standard capsule."
+
+    },
+
+    "teardrop" : {
+
+        "shader" : "shaderTexture",
+
+        "type" : "TEARDROP",
+
+        "name" : "teardrop",
+
+        "description": "test of capsule shape",
+
+        "dimensions" : [ "1", "2", "1", "0", "0" ],
+
+        "divisions" : [ "40", "40", "0", "0", "0" ],
+
+        "position" : [ "-2.0", "1.5", "2.0" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "0.0", "0.0", "0" ],
+
+        "angular" : [ "0.5", "1.0", "0.2" ],
+
+        "textures" : [ "img/uv-test.png" ],
+
+        "models" : [],
+
+        "useColorArray" : "false",
+
+        "useFaceTextures" : "false",
+
+        "useLighting" : "true",
+
+        "comments" : "standard capsule."
+
+    },
+
+    "dodecahedron" : {
+
+        "shader" : "shaderTexture",
+
+        "type" : "DODECAHEDRON",
+
+        "name" : "dodecahedron",
+
+        "description": "test of dodecahedron shape, image applied to each face",
+
+        "dimensions" : [ "1", "1", "1", "0", "0" ],
+
+        "divisions" : [ "40", "40", "0", "0", "0" ],
+
+        "position" : [ "-2", "0.2", "3.0" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "0.0", "0.0", "0" ],
+
+        "angular" : [ "0.2", "0.5", "0.2" ],
+
+        "textures" : [ "img/crate.png" ],
+
+        "models" : [],
+
+        "useColorArray" : "false",
+
+        "useFaceTextures" : "true",
+
+        "useLighting" : "true",
+
+        "comments" : "standard dodecahedron."
+
+    },
+
+
+    "icosohedron" : {
+
+        "shader" : "shaderTexture",
+
+        "type" : "ICOSOHEDRON",
+
+        "name" : "icosohedron",
+
+        "description": "test of icosohedron",
+
+        "dimensions" : [ "3", "3", "3", "0", "0" ],
+
+        "divisions" : [ "20", "20", "20", "0", "0" ],
+
+        "position" : [ "2", "-2", "1.0" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "0.0", "0.0", "0" ],
+
+        "angular" : [ "0.2", "0.5", "0.0" ],
+
+        "textures" : [ "img/mozvr-logo2.png" ],
+
+        "models" : [],
+
+        "useColorArray" : "false",
+
+        "useFaceTextures" : "true",
+
+        "useLighting" : "true",
+
+        "comments" : "standard dodecahedron."
+
+    },
+
+    "regularTetrahedron" : {
+
+        "shader" : "shaderTexture",
+
+        "type" : "REGULARTETRAHEDRON",
+
+        "name" : "regularTetrahedron",
+
+        "description": "test of regular tetrahedron shape",
+
+        "dimensions" : [ "3", "3", "3", "0", "0" ],
+
+        "divisions" : [ "18", "18", "18", "0", "0" ],
+
+        "position" : [ "8", "-3", "-4" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "0.0", "0.0", "0" ],
+
+        "angular" : [ "0.0", "0.5", "0.2" ],
+
+        "textures" : [ "img/mozvr-logo2.png" ],
+
+        "models" : [],
+
+        "useColorArray" : "false",
+
+        "useFaceTextures" : "true",
+
+        "useLighting" : "true",
+
+        "comments" : "standard dodecahedron."
+
+    },
+
+    "uvsphere" : {
+
+        "shader" : "shaderTexture",
+
+        "type" : "SPHERE",
+
+        "name" : "uvsphere",
+
+        "description": "test of regular basic UV sphere",
+
+        "dimensions" : [ "1.5", "1.5", "1.5", "0", "0" ],
+
+        "divisions" : [ "9", "9", "9", "0", "0" ],
+
+        "position" : [ "-6", "-1.8", "0" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "0.0", "0.0", "0" ],
+
+        "angular" : [ "0.0", "0.5", "0.2" ],
+
+        "textures" : [ "img/mozvr-logo1.png" ],
+
+        "models" : [],
+
+        "useColorArray" : "false",
+
+        "useFaceTextures" : "true",
+
+        "useLighting" : "true"
+
+    },
+
+    "uvBottomDome" : {
+
+        "shader" : "shaderTexture",
+
+        "type" : "BOTTOMDOME",
+
+        "name" : "UVBottomDome",
+
+        "description": "test of regular basic UV bottom dome",
+
+        "dimensions" : [ "1.5", "1.5", "1.5", "0", "0" ],
+
+        "divisions" : [ "9", "9", "9", "0", "0" ],
+
+        "position" : [ "-5", "-1.8", "0" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "0.0", "0.0", "0" ],
+
+        "angular" : [ "0.0", "0.5", "0.2" ],
+
+        "textures" : [ "img/mozvr-logo2.png" ],
+
+        "models" : [],
+
+        "useColorArray" : "false",
+
+        "useFaceTextures" : "true",
+
+        "useLighting" : "true"
+
+    },
+
+    "cap" : {
+
+        "shader" : "shaderTexture",
+
+        "type" : "CAP",
+
+        "name" : "cap",
+
+        "description": "test of cap shape",
+
+        "dimensions" : [ "1.5", "1.5", "1.5", "0", "0" ],
+
+        "divisions" : [ "9", "9", "9", "0", "0" ],
+
+        "position" : [ "-6", "-1.8", "0" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "0.0", "0.0", "0" ],
+
+        "angular" : [ "0.0", "0.5", "0.2" ],
+
+        "textures" : [ "img/mozvr-logo1.png" ],
+
+        "models" : [],
+
+        "useColorArray" : "false",
+
+        "useFaceTextures" : "true",
+
+        "useLighting" : "true"
+
+    },
+
+
      "coloredCube" : {
 
         "shader" : "shaderColor",
