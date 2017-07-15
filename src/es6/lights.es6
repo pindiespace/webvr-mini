@@ -60,11 +60,11 @@ class Lights {
      * @param {GlMatrix.vec3} directionalColor the color of the light.
      * @param {Boolean} active if true, the light is on, else false.
      */
-    setLight ( lightType, ambient = [ 0.3, 0.3, 0.3 ], lightingDirection = [ -1000.0, 0.0, 1000.1 ], 
+    setLight ( type, ambient = [ 0.3, 0.3, 0.3 ], lightingDirection = [ -1000.0, 0.0, 1000.1 ], 
 
         directionalColor = [ 1, 1, 1 ], active = false ) {
 
-        this.lightList[ lightType ] = {
+        this.lightList[ type ] = {
 
             ambient: ambient,
 

@@ -212,6 +212,36 @@ class Util {
 
     }
 
+    /** 
+     * Parse JSON files withi a try...catch statement.
+     * @param {String} data the incoming JSON data.
+     * @returns {Object|null} the parsed JSON object, or null.
+     */
+    parseJSON ( data ) {
+
+        let d = null;
+
+        try {
+
+            d = JSON.parse( data );
+
+        } catch ( err ) {
+
+            if ( err instanceof SyntaxError ) {
+
+                console.error( 'Util::parseJSON(): JSON syntax error:' + err );
+
+            } else {
+
+                console.error( 'Util::parseJSON(): JSON unknown error:' + err );
+
+            }
+
+        }
+
+        return d;
+    }
+
     /*
      * ---------------------------------------
      * NUMBER OPERATIONS
@@ -236,6 +266,8 @@ class Util {
      */
     isPowerOfTwo ( n ) {
 
+        n = parseInt( n );
+
         return ( n & ( n - 1 ) ) === 0;
 
     }
@@ -247,7 +279,7 @@ class Util {
      */
     isEven ( n ) {
 
-        return n % 2 == 0;
+        return parseInt( n ) % 2 == 0;
 
     }
 
@@ -258,7 +290,7 @@ class Util {
      */
     isOdd ( n ) {
 
-        return Math.abs( n % 2 ) == 1;
+        return Math.abs( parseInt( n ) % 2 ) == 1;
 
     }
 
@@ -269,7 +301,7 @@ class Util {
      */
     degToRad( deg ) {
 
-        return deg * Math.PI / 180;
+        return parseFloat( deg ) * Math.PI / 180;
 
     }
 
@@ -281,7 +313,7 @@ class Util {
      */
     frac( n ) {
 
-        return n % 1;
+        return parseFloat( n ) % 1;
 
     }
 

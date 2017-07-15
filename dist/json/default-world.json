@@ -2,15 +2,69 @@
 
     "scene" : {
 
+        "name" : "basic scene",
+
+        "description" : "basic low-poly scene for testing webvr-mini on devices",
+
         "dimensions" : [ "100", "100", "100" ],
 
-        "position" : [ "0", "0", "0" ],
+        "position" : [ "0", "0", "-5" ],
 
-        "rotation" : [ "0", "0", "0" ]
+        "rotation" : [ "0", "0", "0" ],
+
+        "lights" : {
+
+            "LIGHT_0" : { 
+
+                "ambient" : [ "0.3", "0.3", "0.3" ], 
+
+                "lightingDirection" : [ "-1000.0", "0.0", "1000.1" ], 
+
+                "directionalColor" : [ "1", "1", "1" ],
+
+                "active" : "true" 
+
+                }
+
+        }
 
     },
 
-    "toji" : {
+    "skydome" : {
+
+        "shader" : "shaderTexture",
+
+        "type" : "SKYDOME",
+
+        "name" : "skydome",
+
+        "description" : "half-sphere skydome rendered and lit from within",
+
+        "dimensions" : [ "18", "18", "18" ],
+
+        "divisions" : [ "10", "10", "10", "0", "0" ],
+
+        "position" : [ "0", "0", "0" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "0", "0", "0" ],
+
+        "angular" : [ "0", "0.1", "0" ],
+
+        "textures" : [  "img/panorama_01.png" ],
+
+        "models" : [],
+
+        "useColorArray" : "false",
+
+        "useFaceTextures" : "false",
+
+        "useLighting" : "true"
+
+    },
+
+    "tojiJSON" : {
 
         "shader" : "shaderTexture",
 
@@ -18,19 +72,191 @@
 
         "name" : "toji",
 
+        "description" : "basic cube for testing models",
+
         "dimensions" : [ "1", "1", "1" ],
 
-        "divisions" : [ "10", "10", "10", "0" ],
+        "divisions" : [ "10", "10", "10", "0", "0" ],
 
         "position" : [ "1", "0", "2" ],
 
-        "acceleration" : [ "0",  "0", "0" ],
+        "acceleration" : [ "0", "0", "0" ],
 
         "rotation" : [ "0", "0", "0" ],
 
         "angular" : [ "1", "1", "1" ],
 
-        "textureImages" : "true",
+        "textures" : [ "img/crate.png", "img/webvr-logo1.png", "img/wood-planks-tiled.jpg" ],
+
+        "models" : [],
+
+        "useColorArray" : "false",
+
+        "useFaceTextures" : "false",
+
+        "useLighting" : "true"
+
+    },
+
+     "coloredCube" : {
+
+        "shader" : "shaderColor",
+
+        "type" : "CUBE",
+
+        "name" : "coloredCube",
+
+        "description" : "cube using the ColorShader instead of a texture shader",
+
+        "dimensions" : [ "0.7", "0.7", "0.7", "0" ],
+
+        "divisions" : [ "3", "3", "3", "0", "0" ],
+
+        "position" : [ "3.2", "-0.3", "2" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "0", "20", "20" ],
+
+        "angular" : [ "0", "0", "1" ],
+
+        "textures" : [ "img/webvr-logo3.png" ],
+
+        "models" : [],
+
+        "useColorArray" : "true",
+
+        "useFaceTextures" : "false",
+
+        "useLighting" : "true"
+
+    },
+
+     "teapot" : {
+
+        "shader" : "shaderColor",
+
+        "type" : "MESH",
+
+        "name" : "teapot",
+
+        "description" : "the infamous teapot, rendered with ColorShader",
+
+        "dimensions" : [ "1", "1", "1", "0" ],
+
+        "divisions" : [ "40", "40", "40", "0", "0" ],
+
+        "position" : [ "0.0", "1.0", "2.0" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "0", "0", "0" ],
+
+        "angular" : [ "0.2", "0.5", "0" ],
+
+        "textures" : [],
+
+        "models" : [ "obj/teapot/teapot.obj" ],
+
+        "useColorArray" : "true",
+
+        "useFaceTextures" : "false",
+
+        "useLighting" : "true"
+
+    },
+
+     "objfile" : {
+
+        "shader" : "shaderTexture",
+
+        "type" : "MESH",
+
+        "name" : "objfile",
+
+        "description" : "mesh determined by WaveFront .OBJ file, for testing with format",
+
+        "dimensions" : [ "2", "2", "2", "0" ],
+
+        "divisions" : [ "40", "40", "40", "0", "0" ],
+
+        "position" : [ "-3.5", "-1.0", "0.0" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "0", "0", "0" ],
+
+        "angular" : [ "0.2", "0.5", "0" ],
+
+        "textures" : [],
+
+        "models" : [ "obj/toilet/toilet.obj" ],
+
+        "useColorArray" : "false",
+
+        "useFaceTextures" : "false",
+
+        "useLighting" : "true"
+
+    },
+
+     "shortCylinder" : {
+
+        "shader" : "shaderTexture",
+
+        "type" : "CYLINDER",
+
+        "name" : "shortCylinder",
+
+        "description" : "shortened cylinder testing additional features of dimensions object",
+
+        "dimensions" : [ "1", "1", "1", "0.3", "0.7" ],
+
+        "divisions" : [ "40", "40", "40", "0", "0" ],
+
+        "position" : [ "-1.5", "-1.5", "2.0" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "0", "0", "0" ],
+
+        "angular" : [ "0.2", "0.5", "0" ],
+
+        "textures" : [ "img/uv-test.png" ],
+
+        "models" : [],
+
+        "useColorArray" : "false",
+
+        "useFaceTextures" : "false",
+
+        "useLighting" : "true"
+
+    },
+
+     "CurvedPlaneBack" : {
+
+        "shader" : "shaderTexture",
+
+        "type" : "CURVEDINNERPLANE",
+
+        "name" : "curvedPlaneBack",
+
+        "description" : "curved plane lit from the backside",
+
+        "dimensions" : [ "2", "1", "1", "back", "1" ],
+
+        "divisions" : [ "10", "10", "10", "0", "0" ],
+
+        "position" : [ "-1", "0", "2.0" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "0", "0", "0" ],
+
+        "angular" : [ "0.2", "0.5", "0" ],
+
+        "textures" : [ "img/webvr-logo2.png" ],
 
         "models" : [],
 

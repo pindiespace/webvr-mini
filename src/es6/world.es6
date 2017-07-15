@@ -70,34 +70,15 @@ class World extends AssetPool {
 
         this.primFactory = new PrimFactory ( true, this );
 
-        // Add a simple point of view, instead of Cameram 1st 3 values = postion, 2nd 3 values = rotation.
+        //this.dimensions = [ 100, 100, 100 ];
 
-        this.position = [ 0, 0, -5 ]; // TODO: check this positioning in greater detail on FF vs  Chrome
+        // Set the defaults for World position and Camera POV, in case we don't have a JSON file.
 
-        this.rotation = [ 0, 0, 0 ]; // World rotation
+        this.default();
 
         // Add World Lights (Prims may have their own).
 
         this.lights = lights;
-
-        // default World dimensions, Open/WebGL units.
-
-        this.dimensions = [ 100, 100, 100 ];
-
-        this.dimensions = {
-
-            width: 100,
-
-            height: 100,
-
-            depth: 100
-
-        };
-
-        // TODO: make a default out of this.
-
-        this.worldDefinition = {};
-
 
         // File types in which a World may be encoded.
 
@@ -113,7 +94,8 @@ class World extends AssetPool {
 
         // Path to default World JSON file
 
-        this.DEFAULT_WORLD_PATH = 'json/default-world.json';
+        //this.DEFAULT_WORLD_PATH = 'json/default-world.json';
+        this.DEFAULT_WORLD_PATH = 'json/tangled-world.json';
 
         // Stats on World operation.
 
@@ -158,6 +140,23 @@ class World extends AssetPool {
                 }
 
             } );
+
+    }
+
+    /**
+     * Create a default World. Units are OpenGL/WebGL units.
+     */
+    default ( position = [ 0, 0, -5 ], rotation = [ 0, 0, 0 ], dimensions = [ 100, 100, 100 ] ) {
+
+        // Add a simple point of view (POV), by moving the World.
+
+        this.position = position,
+
+        // Addition World (scene) features.
+
+        this.rotation = rotation,
+
+        this.dimensions = dimensions;
 
     }
 
@@ -220,10 +219,19 @@ class World extends AssetPool {
 
          if ( ! this.util.isWhitespace( path ) ) {
 
+            const mimeType = this.worldMimeTypes[ this.util.getFileExtension( path ) ];
 
-            let mimeType = this.worldMimeTypes[ this.util.getFileExtension( path ) ];
+            const vec3 = this.glMatrix.vec3;
 
-            console.log( '--------@@@@@@@@@@@@@doRequest World for path:' + path + ' is:' + mimeType )
+            const vec4 = this.glMatrix.vec4;
+
+            const vec5 = this.primFactory.geometryPool.vec5;
+
+            const typeList = this.primFactory.geometryPool.typeList;
+
+            const directions = this.primFactory.geometryPool.directions;
+
+            const util = this.util;
 
             // check if mimeType is OK.
 
@@ -247,37 +255,119 @@ class World extends AssetPool {
 
                         if ( updateObj.data ) {
 
-                            this.worldDefinition = this.parseWorld( updateObj.data );
+                            let worldDefinition = this.util.parseJSON( updateObj.data );
 
-                            if ( this.worldDefinition ) {
-
-                                // Set the Scene by the file.
-
-                                let s = this.worldDefinition.scene;
-
-                                this.position[ 0 ] = parseFloat( s.position[ 0 ] )
-
-                                this.position[ 1 ] = parseFloat( s.position[ 1 ] )
+                            if ( worldDefinition ) {
 
                                 ///this.position[ 2 ] = parseFloat( s.position[ 2 ] );  // PROBLEM HERE!!!!
 
-                                window.s = s
+                                for ( var i in worldDefinition ) {
 
-                                for ( var i in this.worldDefinition ) {
+                                    let s = worldDefinition[ i ];
+
+                                    if ( i === 'scene' ) { // world params = scene
+
+                                        this.position = s.position; // World position
+
+                                        this.rotation = s.rotation; // World rotation
+
+                                         // Set lights, if present.
+
+                                         let lights = s.lights;
+
+                                         for ( var j in lights ) {
+
+                                            let l = lights[ j ];
+
+                                            this.lights.setLight( this.lights.lightTypes[ j ],  j.ambient,  j.lightingDirection , j.directionalColor, j.active );
+
+                                         }
+
+                                    } else { // its a Prim
+
+                                        let shader = this.shaderPool.getAssetByName( s.shader );
+
+                                        if ( shader ) {
+
+                                            // handle cases for dimensions and divisions params are NOT numbers.
 
 
+                                            this.primFactory.createPrim(
+
+                                                this.shaderPool.getAssetByName( s.shader ), // Shader used
+
+                                                typeList[ s.type ],                         // Prim type
+
+                                                i,                                          // name
+
+                                                vec5( 
+                                                    parseFloat( s.dimensions[ 0 ] ), 
+                                                    parseFloat( s.dimensions[ 1 ] ), 
+                                                    parseFloat( s.dimensions[ 2 ] ), 
+                                                    parseFloat( s.dimensions[ 3 ] ) || s.dimensions[ 3 ],  // these may be non-numeric
+                                                    parseFloat( s.dimensions[ 4 ] ) || s.dimensions[ 4 ]
+
+                                                ),      // dimensions, WebGL units
+
+                                                vec5( 
+                                                    parseFloat( s.divisions[ 0 ] ), 
+                                                    parseFloat( s.divisions[ 1 ] ), 
+                                                    parseFloat( s.divisions[ 2 ] ), 
+                                                    parseFloat( s.divisions[ 3 ] ) || s.divisions[ 3 ],  //these may be non-numeric
+                                                    parseFloat( s.divisions[ 4 ] ) || s.divisions[ 4 ]
+
+                                                ),        // divisions, pass curving of edges as 4th parameter
+
+                                                vec3.fromValues( 
+                                                    parseFloat( s.position[ 0 ] ), 
+                                                    parseFloat( s.position[ 1 ] ), 
+                                                    parseFloat( s.position[ 2 ] )
+
+                                                ),        // acceleration in x, y, z
+
+                                                vec3.fromValues( 
+                                                    parseFloat( s.acceleration[ 0 ] ), 
+                                                    parseFloat( s.acceleration[ 1 ] ), 
+                                                    parseFloat( s.acceleration[ 2 ] )
+
+                                                ),    // position (absolute), relative to camera not World space
+
+                                                vec3.fromValues(
+                                                    util.degToRad( s.rotation[ 0 ] ), 
+                                                    util.degToRad( s.rotation[ 1 ] ), 
+                                                    util.degToRad( s.rotation[ 2 ] )
+
+                                                ),    // rotation (absolute)
+
+                                                vec3.fromValues(
+                                                    util.degToRad( s.angular[ 0 ] ), 
+                                                    util.degToRad( s.angular[ 1 ] ), 
+                                                    util.degToRad( s.angular[ 2 ] )
+
+                                                ),    // angular (orbital) velocity
+
+                                                s.textures,                                 // texture images (if not in model)
+
+                                                s.models,                                   // model (.OBJ, .GlTF)
+
+                                                JSON.parse( s.useColorArray ),              // if true, use color array instead of texture array
+
+                                                JSON.parse( s.useFaceTextures ),            // if true, apply textures to each face, not whole Prim.
+
+                                                JSON.parse( s.useLighting )                 // if true, use lighting (default)
+
+                                            ); // end of valid Shader
+
+
+                                        } else {
+
+                                            console.error( 'World::getWorld(): invalid Shader:' + s.shader + ' for Prim:' + i );
+
+                                        }
+
+                                    }
 
                                 }
-
-                                //this.position = s.position; // TODO: check this positioning in greater detail on FF vs  Chrome
-
-                                //this.rotation = s.rotation; // World rotation
-
-                                //this.lights = s.lights;
-
-                                //this.dimensions = s.dimensions;
-
-                                // Load Prims based on the files.
 
                                 /* 
                                  * WORLD_DEFINITION_READY event, indicating all descriptions of World loaded. Individual media 
@@ -327,38 +417,6 @@ class World extends AssetPool {
     }
 
     /** 
-     * After getting the WebVR-Mini JSON, use the parsed data to create the world.
-     * @param {Object} worldObj parsed JSON data describing the world scene and its prims.
-     */
-    parseWorld ( data ) {
-
-        // console.log( 'World::parseWorld():, worldObj is:' + data );
-
-        let d = null;
-
-        try {
-
-            d = JSON.parse( data );
-
-        } catch ( err ) {
-
-            if ( err instanceof SyntaxError ) {
-
-                console.error( 'World::parseWorld(): JSON syntax error:' + e );
-
-            } else {
-
-                console.error( 'World::parseWorld(): JSON unknown error:' + e );
-
-            }
-
-        }
-
-        return d;
-
-    }
-
-    /** 
      * Create the world. Load Shader objects, and 
      * create objects to render in the world.
      */
@@ -390,98 +448,7 @@ class World extends AssetPool {
         // Get the World file, overwriting defaults as necessary.
 
         this.getWorld( this.DEFAULT_WORLD_PATH );
-
-//////////////////////////////////
-// COLOR SHADER.
-//////////////////////////////////
 /*
-
-            this.primFactory.createPrim(
-
-                this.s2,                      // callback function
-                typeList.CUBE,
-                'coloredcube',
-                vec5( 0.7, 0.7, 0.7, 0 ),            // dimensions
-                vec5( 3, 3, 3 ),            // divisions
-                vec3.fromValues( 3.2, -0.3, 2 ),          // position (absolute)
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 20 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 1 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [ 'img/webvr-logo3.png' ],               // texture present, NOT USED
-                [],  // no obj file
-                true, // use color array
-                false // don't apply texture to each face
-
-            );
-
-*/
-
-// TODO: need a default texture start
-// TODO: matstarts not defined for non-texture texture.
-// TODO: Check for texture, no OBJ file
-/*
-            this.primFactory.createPrim(
-
-                this.s2,                               // callback function
-                typeList.MESH,
-                'teapot',
-                vec5( 1, 1, 1 ),                       // dimensions (4th dimension doesn't exist for cylinder)
-                vec5( 40, 40, 40  ),                    // divisions MAKE SMALLER
-                vec3.fromValues( 0.0, 1.0, 2.0 ),      // position (absolute)
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [],               // no texture present
-                [ 'obj/teapot/teapot.obj' ], // object files (.obj, .mtl)
-                true,                                 // if true, use the color array instead of texture array
-                false,                                 // if true, apply texture to each face,
-
-            );
-
-*/
-
-//////////////////////////////////
-// TEXTURED SHADER.
-//////////////////////////////////
-
-            this.primFactory.createPrim(
-
-                this.s1,                      // callback function
-                typeList.CUBE,
-                'toji',                                        // name
-                vec5( 1, 1, 1 ),            // dimensions
-                vec5( 10, 10, 10, 0 ),            // divisions, pass curving of edges as 4th parameter
-                vec3.fromValues( 1, 0, 2 ),            // position (absolute)
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 1 ), util.degToRad( 1 ), util.degToRad( 1 ) ), // angular velocity in x, y, x
-                [ 'img/crate.png', 'img/webvr-logo1.png', 'img/wood-planks-tiled.jpg' ],          // texture image
-                [] // no models present
-                // if true, use color array instead of texture array
-                // if true, apply textures to each face, not whole Prim.
-                // if true, use lighting (default)
-            );
-
-/*
-            this.primFactory.createPrim(
-            
-                this.s1,                      // callback function
-                typeList.CYLINDER,
-                'shortcylinder',
-                vec5( 1, 1, 1, 0.3, 0.7 ),       // dimensions (4th dimension doesn't exist for cylinder)
-                vec5( 40, 40, 40  ),        // divisions MAKE SMALLER
-                vec3.fromValues(-1.5, -1.5, 2.0 ),          // position (absolute)
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [ 'img/uv-test.png' ],               // texture present
-                []// no models present
-                // if true, use color array instead of texture array
-                // if true, apply textures to each face, not whole Prim.
-                // if true, use lighting
-            );
-
-*/
 
             this.primFactory.createPrim(
 
@@ -518,220 +485,10 @@ class World extends AssetPool {
                 true, // if true, use lighting                
             );
 
-/*
-            this.primFactory.createPrim(
-
-                this.s1,                               // callback function
-                typeList.MESH,
-                'capsule',
-                vec5( 2, 2, 2 ),                       // dimensions (4th dimension doesn't exist for cylinder)
-                vec5( 40, 40, 40  ),                    // divisions MAKE SMALLER
-                vec3.fromValues( -1.5, -1, -0.0 ),      // position (absolute)
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [], // texture loaded directly
-                //[ 'obj/capsule/capsule.obj' ] // object files (.obj, .mtl)
-                //[ 'obj/mountains/mountains.obj' ] // ok
-                //[ 'obj/landscape/landscape.obj'] // ok?
-                [ 'obj/toilet/toilet.obj' ] // works with texture, multiple groups wrap texture!
-                //[ 'obj/naboo/naboo.obj' ] // works fine, but needs to load additional images.
-                //[ 'obj/star/star.obj'] // ok, gets generic grey texture
-                //[ 'obj/robhead/robhead.obj'] // no texcoords or normals
-                //[ 'obj/soccerball/soccerball.obj'] // no texcoords or normals
-                //[ 'obj/basketball/basketball.obj'] // needs TGA translation
-                //[ 'obj/rock1/rock1.obj'] // rock plus surface, works
-                //[ 'obj/cherries/cherries.obj'] // rendering indices error
-                //[ 'obj/banana/banana.obj' ] // works great
-                // if true, use color array instead of texture array
-                // if true, apply textures to each face, not whole Prim.
-                // if true, use color array instead of texture array
-                // if true, apply textures to each face, not whole Prim.
-                // if true, use lighting
-            );
-
-
-            this.primFactory.createPrim(
-
-                this.s1,                               // callback function
-                typeList.MESH,
-                'banana',
-                vec5( 2, 2, 2 ),                       // dimensions (4th dimension doesn't exist for cylinder)
-                vec5( 40, 40, 40  ),                    // divisions MAKE SMALLER
-                vec3.fromValues( 1.5, -1, 2.0 ),      // position (absolute)
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [], // texture loaded directly
-                //[ 'obj/capsule/capsule.obj' ] // object files (.obj, .mtl)
-                //[ 'obj/mountains/mountains.obj' ] // ok
-                //[ 'obj/landscape/landscape.obj'] // ok?
-                //[ 'obj/toilet/toilet.obj' ] // works with texture, multiple groups wrap texture!
-                //[ 'obj/naboo/naboo.obj' ] // works fine, but needs to load additional images.
-                //[ 'obj/star/star.obj'] // ok, gets generic grey texture
-                //[ 'obj/robhead/robhead.obj'] // no texcoords or normals
-                //[ 'obj/soccerball/soccerball.obj'] // no texcoords or normals
-                //[ 'obj/basketball/basketball.obj'] // needs TGA translation
-                //[ 'obj/rock1/rock1.obj'] // rock plus surface, works
-                [ 'obj/banana/banana.obj' ] // works great
-                // if true, use color array instead of texture array
-                // if true, apply textures to each face, not whole Prim.
-                // if true, use color array instead of texture array
-                // if true, apply textures to each face, not whole Prim.
-                // if true, use lighting
-            );
-
-            this.primFactory.createPrim(
-
-                this.s1,                               // callback function
-                typeList.MESH,
-                'cherries',
-                vec5( 2, 2, 2 ),                       // dimensions (4th dimension doesn't exist for cylinder)
-                vec5( 40, 40, 40  ),                    // divisions MAKE SMALLER
-                vec3.fromValues( -1.5, -1, 2.0 ),      // position (absolute)
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [], // texture loaded directly
-                //[ 'obj/capsule/capsule.obj' ] // object files (.obj, .mtl)
-                //[ 'obj/mountains/mountains.obj' ] // ok
-                //[ 'obj/landscape/landscape.obj'] // ok?
-                //[ 'obj/toilet/toilet.obj' ] // works with texture, multiple groups wrap texture!
-                //[ 'obj/naboo/naboo.obj' ] // works fine, but needs to load additional images.
-                //[ 'obj/star/star.obj'] // ok, gets generic grey texture
-                //[ 'obj/robhead/robhead.obj'] // no texcoords or normals
-                //[ 'obj/soccerball/soccerball.obj'] // no texcoords or normals
-                //[ 'obj/basketball/basketball.obj'] // needs TGA translation
-                //[ 'obj/rock1/rock1.obj'] // rock plus surface, works
-                [ 'obj/cherries/cherries.obj'] // rendering indices error
-                //[ 'obj/banana/banana.obj' ] // works great
-                // if true, use color array instead of texture array
-                // if true, apply textures to each face, not whole Prim.
-                // if true, use color array instead of texture array
-                // if true, apply textures to each face, not whole Prim.
-                // if true, use lighting
-            );
-
 */
 
 
 /*
-
-        // Create a UV skydome.
-
-            this.primFactory.createPrim(
-
-                this.s1,                      // callback function
-                typeList.SKYDOME,          // type
-                'skydome',                           // name (not Id)
-                vec5( 18, 18, 18, 0 ),               // dimensions
-                vec5( 10, 10, 10 ),                  // divisions MAKE SMALLER
-                vec3.fromValues( 0, 0, 0 ),          // position (absolute)
-                vec3.fromValues( 0, 0, 0 ),          // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.1 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [ 'img/panorama_01.png' ],           // texture present
-                vec4.fromValues( 0.5, 1.0, 0.2, 1.0) // color
-            );
-
-            this.primFactory.createPrim(
-
-                this.s1,                      // callback function
-                typeList.CUBE,
-                'toji cube',
-                vec5( 1, 1, 1, 0 ),            // dimensions
-                vec5( 1, 1, 1, 0 ),            // divisions, pass curving of edges as 4th parameter
-                vec3.fromValues( 5.5, 1.5, -3 ),           // position (absolute)
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 40 ), util.degToRad( 0  ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 1 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [ 'img/webvr-logo2.png' ],
-                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color
-
-            );
-
-            this.primFactory.createPrim(
-
-                this.s1,                      // callback function
-                typeList.TORUS,
-                'torus2',
-                vec5( 1, 1, 0.5, 0 ),         // dimensions (first is width along x, second  width along y, diameter of torus tube)
-                vec5( 9, 9, 9, 1 ),            // divisions (first is number of rings, second is number of sides)
-                vec3.fromValues( -1.8, 3, -3.5 ),          // position (absolute)
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 20 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 1 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [ 'img/uv-test.png' ],               // texture present, NOT USED
-                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 ),  // color
-
-            );
-
-             //DIMENSIONS INDICATE ANY X or Y CURVATURE.
-             //DIVISIONS FOR CUBED AND CURVED PLANE INDICATE SIDE TO DRAW
-
-            this.primFactory.createPrim(
-
-                this.s1,                      // callback function
-                typeList.CURVEDINNERPLANE,
-                'CurvedPlaneBack',
-                vec5( 2, 1, 1, directions.BACK, 1 ),         // pass orientation ONE UNIT CURVE
-                vec5( 10, 10, 10 ),        // divisions
-                vec3.fromValues(-1, 0.0, 2.0 ),          // position (absolute)
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0.0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [ 'img/webvr-logo2.png' ],               // texture present
-                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
-
-            );
-
-            this.primFactory.createPrim(
-
-                this.s1,                      // callback function
-                typeList.CURVEDINNERPLANE,
-                'CurvedPlaneLeft',
-                vec5( 2, 1, 1, directions.LEFT, 1 ),         // pass orientation ONE UNIT CURVE
-                vec5( 10, 10, 10 ),        // divisions
-                vec3.fromValues(-1, 0.0, 2.0 ),          // position (absolute)
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0.0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [ 'img/webvr-logo3.png' ],               // texture present
-                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
-
-            );
-
-            this.primFactory.createPrim(
-
-                this.s1,                      // callback function
-                typeList.CURVEDINNERPLANE,
-                'CurvedPlaneRight',
-                vec5( 2, 1, 1, directions.RIGHT, 1 ),         // pass orientation ONE UNIT CURVE
-                vec5( 10, 10, 10 ),        // divisions
-                vec3.fromValues(-1, 0.0, 2.0 ),          // position (absolute)
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0.0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [ 'img/webvr-logo4.png' ],               // texture present
-                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
-
-            );
-
-            this.primFactory.createPrim(
-
-                this.s1,                      // callback function
-                typeList.CURVEDOUTERPLANE,
-                'CurvedPlaneOut',
-                vec5( 2, 1, 1, directions.RIGHT, 1 ),         // dimensions Note: pass radius for curvature (also creates orbit) 
-                vec3.fromValues( 10, 10, 10 ),        // divisions
-                vec3.fromValues(-1.2, 0.0, 2.0 ),          // position (absolute)
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [ 'img/mozvr-logo2.png' ],               // texture present
-                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
-
-            );
 
             this.primFactory.createPrim(
 
@@ -1088,7 +845,7 @@ class World extends AssetPool {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // TODO: temporary
-
+/*
             window.gltf = this.primFactory.createPrim(
 
                 this.s1,                               // callback function
@@ -1109,6 +866,8 @@ class World extends AssetPool {
                 // if true, apply textures to each face, not whole Prim.
                 // if true, use lighting
             );
+
+*/
 
     // TODO: temporary
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1155,71 +914,6 @@ class World extends AssetPool {
         this.vr.getDisplay().cancelAnimationFrame( this.rafId );
 
         return ( this.rafId = null );
-
-    }
-
-    /** 
-     * Create multiple Prims from an OBJ file. Load the file, then parse out individual 
-     * OBJs to ModelPool via PrimFactory. Each 'o' and 'usemtl' defines a new Prim.
-     */
-    initFromFile( path ) {
-
-         if ( path ) {
-
-            // Get the image mimeType.
-
-            let mimeType = this.modelPool.modelMimeTypes[ this.util.getFileExtension( path ) ];
-
-            // check if mimeType is OK.
-
-            if( mimeType ) {
-
-                this.doRequest( path, i, 
-
-                    ( updateObj ) => {
-
-                        /* 
-                         * updateObj returned from GetAssets has the following structure:
-                         * { 
-                         *   pos: pos, 
-                         *   path: requestURL, 
-                         *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
-                         *   error: false|response 
-                         * } 
-                         */
-
-                        // load a Model file. Only the first object in the file will be read.
-
-                        if ( updateObj.data ) {
-
-                            // TODO: IS MTL ALWAYS OVER O?
-
-                            // Split by usemtl
-
-                            // Split by obj within usemtl
-
-                                   
-
-                        } else {
-
-                            console.error( 'ModelPool::getModel(): no data found for:' + updateObj.path );
-
-                        }
-
-                }, cacheBust, mimeType, 0 ); // end of this.doRequest(), initial request at 0 tries
-
-            }
-
-        }
-
-    }
-
-    /**
-     * Create a default World.
-     */
-    create ( width, height, depth ) {
-
-        // TODO: not implemented yet
 
     }
 

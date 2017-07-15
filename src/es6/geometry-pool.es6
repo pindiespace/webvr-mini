@@ -1438,11 +1438,11 @@ class GeometryPool {
 
         d = prim.dimensions[ 2 ],
 
-        radius = prim.dimensions[ 3 ],
+        radius = parseFloat( prim.dimensions[ 3 ] ) || 1,
 
-        pointSize = prim.dimensions[ 4 ] || 1,
+        pointSize = parseFloat( prim.dimensions[ 4 ] ) || 1,
 
-        numPoints = prim.divisions[ 0 ] || 1;
+        numPoints = parseInt( prim.divisions[ 0 ] ) || 1;
 
         // Shortcuts to Prim data arrays
 
@@ -1507,9 +1507,9 @@ class GeometryPool {
 
         d = prim.dimensions[ 2 ],
 
-        radius = prim.dimensions[ 3 ],
+        radius = parseFloat( prim.dimensions[ 3 ] ) || 1,
 
-        pointSize = prim.dimensions[ 4 ] || 1,
+        pointSize = parseFloat( prim.dimensions[ 4 ] ) || 1,
 
         numPoints = prim.divisions[ 0 ] || 1;
 
@@ -1572,9 +1572,9 @@ class GeometryPool {
 
         h = prim.dimensions[ 2 ], 
 
-        startSlice = prim.dimensions[ 3 ] || 0,
+        startSlice = parseFloat( prim.dimensions[ 3 ] ) || 0,
 
-        endSlice = prim.dimensions[ 4 ] || 1.0;
+        endSlice = parseFloat( prim.dimensions[ 4 ] ) || 1.0;
 
         // Everything except SPHERE, CYLINDER, SPINDLE, and CONE is a half-object.
 
@@ -2223,15 +2223,21 @@ class GeometryPool {
 
             case list.CUBESPHERE:
 
-                computeSquare( 0, 1, 2, sx, sy, nx, ny,  sz / 2,  1, -1, side.FRONT, side );  //front
+                // These aren't converted to floats by default, since some CUBE routines use non-numnbers 
 
-                computeSquare( 0, 1, 2, sx, sy, nx, ny, -sz / 2, -1, -1, side.BACK, side );   //back
+                prim.divisions[ 3 ] = parseFloat( prim.divisions[ 3 ] ),
 
-                computeSquare( 2, 1, 0, sz, sy, nz, ny, -sx / 2,  1, -1, side.LEFT, side );   //left
+                prim.divisions[ 4 ] = parseFloat( prim.divisions[ 4 ] ),
 
-                computeSquare( 2, 1, 0, sz, sy, nz, ny,  sx / 2, -1, -1, side.RIGHT, side );  //right
+                computeSquare( 0, 1, 2, sx, sy, nx, ny,  sz / 2,  1, -1, side.FRONT, side ),  //front
 
-                computeSquare( 0, 2, 1, sx, sz, nx, nz,  sy / 2,  1,  1, side.TOP, side );    //top
+                computeSquare( 0, 1, 2, sx, sy, nx, ny, -sz / 2, -1, -1, side.BACK, side ),   //back
+
+                computeSquare( 2, 1, 0, sz, sy, nz, ny, -sx / 2,  1, -1, side.LEFT, side ),   //left
+
+                computeSquare( 2, 1, 0, sz, sy, nz, ny,  sx / 2, -1, -1, side.RIGHT, side ),  //right
+
+                computeSquare( 0, 2, 1, sx, sz, nx, nz,  sy / 2,  1,  1, side.TOP, side ),    //top
 
                 computeSquare( 0, 2, 1, sx, sz, nx, nz, -sy / 2,  1, -1, side.BOTTOM, side ); //bottom
 
@@ -2241,6 +2247,8 @@ class GeometryPool {
             case list.CURVEDOUTERPLANE:
             case list.CURVEDINNERPLANE:
             case list.TERRAIN:
+
+                // NOTE: dimensions[ 3 ] is a STRING here!
 
                 switch( prim.dimensions[ 3 ] ) { // which side, based on cube sides
 
@@ -2331,9 +2339,6 @@ class GeometryPool {
                     // Normals.
 
                     /////////////////let norm = normals[ vertexIndex ];
-
-
-
 
                     // Advance Vertex pointer.
 
@@ -2456,6 +2461,8 @@ class GeometryPool {
             }
 
         } else if ( ( prim.type === list.CURVEDOUTERPLANE || prim.type === list.CURVEDINNERPLANE ) && prim.dimensions[ 4 ] && prim.dimensions[ 4 ] !== 0 ) {
+
+            console.log("TRYING TO CURVE IT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 
             let dSide = 1;
 

@@ -1,0 +1,618 @@
+{
+
+    "scene" : {
+
+        "name" : "tangled scene",
+
+        "description" : "complex scene for testing all kinds of Prims together.",
+
+        "dimensions" : [ "100", "100", "100" ],
+
+
+        "position" : [ "0", "0", "-5" ],
+
+        "rotation" : [ "0", "0", "0" ],
+
+        "lights" : {
+
+            "LIGHT_0" : { 
+
+                "ambient" : [ "0.3", "0.3", "0.3" ], 
+
+                "lightingDirection" : [ "-1000.0", "0.0", "1000.1" ], 
+
+                "directionalColor" : [ "1", "1", "1" ],
+
+                "active" : "true" 
+
+                }
+
+        }
+
+    },
+
+    "skydome" : {
+
+        "shader" : "shaderTexture",
+
+        "type" : "SKYDOME",
+
+        "name" : "skydome",
+
+        "description" : "half-sphere skydome rendered and lit from within",
+
+        "dimensions" : [ "18", "18", "18" ],
+
+        "divisions" : [ "10", "10", "10", "0", "0" ],
+
+        "position" : [ "0", "0", "0" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "0", "0", "0" ],
+
+        "angular" : [ "0", "0.1", "0" ],
+
+        "textures" : [  "img/panorama_01.png" ],
+
+        "models" : [],
+
+        "useColorArray" : "false",
+
+        "useFaceTextures" : "false",
+
+        "useLighting" : "true"
+
+    },
+
+    "tojiJSON" : {
+
+        "shader" : "shaderTexture",
+
+        "type" : "CUBE",
+
+        "name" : "toji",
+
+        "description" : "basic cube for testing models",
+
+        "dimensions" : [ "1", "1", "1" ],
+
+        "divisions" : [ "10", "10", "10", "0", "0" ],
+
+        "position" : [ "2.3", "1", "2" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "0", "0", "0" ],
+
+        "angular" : [ "1", "1", "1" ],
+
+        "textures" : [  "img/crate.png", "img/webvr-logo1.png", "img/wood-planks-tiled.jpg" ],
+
+        "models" : [],
+
+        "useColorArray" : "false",
+
+        "useFaceTextures" : "false",
+
+        "useLighting" : "true"
+
+    },
+
+    "torus2" : {
+
+        "shader" : "shaderTexture",
+
+        "type" : "TORUS",
+
+        "name" : "torus2",
+
+        "description": "second torus sample to check",
+
+        "dimensions" : [ "1", "1", "0.5" ],
+
+        "divisions" : [ "9", "9", "9", "1", "0" ],
+
+        "position" : [ "-1.8", "3", "-3.5" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "20", "0", "0" ],
+
+        "angular" : [ "0", "1", "0" ],
+
+        "textures" : [  "img/uv-test.png" ],
+
+        "models" : [],
+
+        "useColorArray" : "false",
+
+        "useFaceTextures" : "false",
+
+        "useLighting" : "true",
+
+        "comments" : "sample torus. dimensions: first is width along x, second is width along y, diameter of torus tube. Divisions: first is number of rings, second is number of sides."
+
+    },
+
+    "icosphere" : {
+
+        "shader" : "shaderTexture",
+
+        "type" : "ICOSPHERE",
+
+        "name" : "icosphere",
+
+        "description": "standard icosphere",
+
+        "dimensions" : [ "3", "3", "3", "0", "0" ],
+
+        "divisions" : [ "32", "32", "32", "0", "0" ],
+
+        "position" : [ "4.5", "3.5", "-2" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "0", "0", "0" ],
+
+        "angular" : [ "0", "0.5", "0" ],
+
+        "textures" : [ "img/uv-test.png" ],
+
+        "models" : [],
+
+        "useColorArray" : "false",
+
+        "useFaceTextures" : "false",
+
+        "useLighting" : "true",
+
+        "comments" : "required directions parameter (e.g. directions.BACK) in dimensions to work."
+
+    },
+
+     "coloredCube" : {
+
+        "shader" : "shaderColor",
+
+        "type" : "CUBE",
+
+        "name" : "coloredCube",
+
+        "description" : "cube using the ColorShader instead of a texture shader",
+
+        "dimensions" : [ "0.7", "0.7", "0.7", "0" ],
+
+        "divisions" : [ "3", "3", "3" ],
+
+        "position" : [ "3.2", "-0.3", "2" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "0", "20", "20" ],
+
+        "angular" : [ "0", "0", "1" ],
+
+        "textures" : [ "img/webvr-logo3.png" ],
+
+        "models" : [],
+
+        "useColorArray" : "true",
+
+        "useFaceTextures" : "false",
+
+        "useLighting" : "true"
+
+    },
+
+     "teapot" : {
+
+        "shader" : "shaderColor",
+
+        "type" : "MESH",
+
+        "name" : "teapot",
+
+        "description" : "the infamous teapot, rendered with ColorShader",
+
+        "dimensions" : [ "1", "1", "1", "0" ],
+
+        "divisions" : [ "40", "40", "40", "0", "0" ],
+
+        "position" : [ "0.0", "1.0", "2.0" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "0", "0", "0" ],
+
+        "angular" : [ "0.2", "0.5", "0" ],
+
+        "textures" : [],
+
+        "models" : [ "obj/teapot/teapot.obj" ],
+
+        "useColorArray" : "true",
+
+        "useFaceTextures" : "false",
+
+        "useLighting" : "true"
+
+    },
+
+     "testCone" : {
+
+        "shader" : "shaderTexture",
+
+        "type" : "CONE",
+
+        "name" : "TestCone",
+
+        "description" : "test conical structure",
+
+        "dimensions" : [ "1", "1", "1", "0" ],
+
+        "divisions" : [ "10", "10", "10", "0", "0" ],
+
+        "position" : [ "0.0", "-1.5", "2.0" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "0", "0", "0" ],
+
+        "angular" : [ "0.2", "0.5", "0" ],
+
+        "textures" : [ "img/uv-test.png" ],
+
+        "models" : [],
+
+        "useColorArray" : "false",
+
+        "useFaceTextures" : "false",
+
+        "useLighting" : "true"
+
+    },
+
+     "cubeSphere" : {
+
+        "shader" : "shaderTexture",
+
+        "type" : "CUBESPHERE",
+
+        "name" : "cubeSphere",
+
+        "description" : "test cubesphere",
+
+        "dimensions" : [ "1", "1", "1" ],
+
+        "divisions" : [ "10", "10", "10", "0" ],
+
+        "position" : [ "3.0", "-2.7", "-1" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "10", "0", "0" ],
+
+        "angular" : [ "0.0", "0.5", "0" ],
+
+        "textures" : [ "img/mozvr-logo1.png" ],
+
+        "models" : [],
+
+        "useColorArray" : "false",
+
+        "useFaceTextures" : "false",
+
+        "useLighting" : "true"
+
+    },
+
+     "curvedInnerPlaneBack" : {
+
+        "shader" : "shaderTexture",
+
+        "type" : "CURVEDINNERPLANE",
+
+        "name" : "curvedInnerPlaneBack",
+
+        "description" : "curved inner plane, interior rendering",
+
+        "dimensions" : [ "2", "1", "1", "back", "1" ],
+
+        "divisions" : [ "10", "10", "10", "0", "0" ],
+
+        "position" : [ "1.0", "0", "2.0" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "0", "0", "0" ],
+
+        "angular" : [ "0.2", "0.5", "0" ],
+
+        "textures" : [ "img/webvr-logo2.png" ],
+
+        "models" : [],
+
+        "useColorArray" : "false",
+
+        "useFaceTextures" : "false",
+
+        "useLighting" : "true"
+
+    },
+
+     "curvedInnerPlaneLeft" : {
+
+        "shader" : "shaderTexture",
+
+        "type" : "CURVEDINNERPLANE",
+
+        "name" : "curvedInnerPlaneLeft",
+
+        "description" : "curved inner plane, curved to the left",
+
+        "dimensions" : [ "2", "1", "1", "left", "1" ],
+
+        "divisions" : [ "10", "10", "10", "0", "0" ],
+
+        "position" : [ "-1.0", "0", "2.0" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "0", "0", "0" ],
+
+        "angular" : [ "0.0", "0.5", "0" ],
+
+        "textures" : [ "img/webvr-logo3.png" ],
+
+        "models" : [],
+
+        "useColorArray" : "false",
+
+        "useFaceTextures" : "false",
+
+        "useLighting" : "true"
+
+    },
+
+     "curvedInnerPlaneRight" : {
+
+        "shader" : "shaderTexture",
+
+        "type" : "CURVEDINNERPLANE",
+
+        "name" : "curvedInnerPlaneRight",
+
+        "description" : "curved inner plane, curved to the right",
+
+        "dimensions" : [ "2", "1", "1", "right", "1" ],
+
+        "divisions" : [ "10", "10", "10", "0", "0" ],
+
+        "position" : [ "-1.0", "0.5", "2.0" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "0", "0", "0" ],
+
+        "angular" : [ "0.0", "0.5", "0" ],
+
+        "textures" : [ "img/webvr-logo4.png" ],
+
+        "models" : [],
+
+        "useColorArray" : "false",
+
+        "useFaceTextures" : "false",
+
+        "useLighting" : "true"
+
+    },
+
+     "curvedOuterPlaneRight" : {
+
+        "shader" : "shaderTexture",
+
+        "type" : "CURVEDOUTERPLANE",
+
+        "name" : "curvedOuterPlaneRight",
+
+        "description" : "curved outer plane, curved to the right",
+
+        "dimensions" : [ "2", "1", "1", "right", "1" ],
+
+        "divisions" : [ "10", "10", "10", "0", "0" ],
+
+        "position" : [ "-1.2", "0.0", "2.0" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "0", "0", "0" ],
+
+        "angular" : [ "0.2", "0.5", "0" ],
+
+        "textures" : [ "img/webvr-logo2.png" ],
+
+        "models" : [],
+
+        "useColorArray" : "false",
+
+        "useFaceTextures" : "false",
+
+        "useLighting" : "true"
+
+    },
+
+     "objfile" : {
+
+        "shader" : "shaderTexture",
+
+        "type" : "MESH",
+
+        "name" : "objfile",
+
+        "description" : "mesh determined by WaveFront .OBJ file, for testing with format",
+
+        "dimensions" : [ "2", "2", "2", "0" ],
+
+        "divisions" : [ "40", "40", "40", "0", "0" ],
+
+        "position" : [ "-3.5", "-1.0", "0.0" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "0", "0", "0" ],
+
+        "angular" : [ "0.2", "0.5", "0" ],
+
+        "textures" : [],
+
+        "models" : [ "obj/toilet/toilet.obj" ],
+
+        "useColorArray" : "false",
+
+        "useFaceTextures" : "false",
+
+        "useLighting" : "true"
+
+    },
+
+     "banana" : {
+
+        "shader" : "shaderTexture",
+
+        "type" : "MESH",
+
+        "name" : "banana",
+
+        "description" : "banana using complex texture coordinates via .OBJ file",
+
+        "dimensions" : [ "2", "2", "2", "0" ],
+
+        "divisions" : [ "40", "40", "40", "0", "0" ],
+
+        "position" : [ "1.5", "-1.0", "2.0" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "0", "0", "0" ],
+
+        "angular" : [ "0.2", "0.5", "0" ],
+
+        "textures" : [],
+
+        "models" : [ "obj/banana/banana.obj" ],
+
+        "useColorArray" : "false",
+
+        "useFaceTextures" : "false",
+
+        "useLighting" : "true"
+
+    },
+
+     "cherries" : {
+
+        "shader" : "shaderTexture",
+
+        "type" : "MESH",
+
+        "name" : "cherries",
+
+        "description" : "complex OBJ file with multiple materials, lots of material starts",
+
+        "dimensions" : [ "2", "2", "2", "0" ],
+
+        "divisions" : [ "40", "40", "40" ],
+
+        "position" : [ "1.5", "1.0", "2.0" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "0", "0", "0" ],
+
+        "angular" : [ "0.2", "0.5", "0" ],
+
+        "textures" : [],
+
+        "models" : [ "obj/cherries/cherries.obj" ],
+
+        "useColorArray" : "false",
+
+        "useFaceTextures" : "false",
+
+        "useLighting" : "true"
+
+    },
+
+     "shortCylinder" : {
+
+        "shader" : "shaderTexture",
+
+        "type" : "CYLINDER",
+
+        "name" : "shortCylinder",
+
+        "description" : "shortened cylinder, for testing extra params of dimensions array",
+
+        "dimensions" : [ "1", "1", "1", "0.3", "0.7" ],
+
+        "divisions" : [ "40", "40", "40", "0", "0" ],
+
+        "position" : [ "-1.5", "-1.5", "2.0" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "0", "0", "0" ],
+
+        "angular" : [ "0.2", "0.5", "0" ],
+
+        "textures" : [ "img/uv-test.png" ],
+
+        "models" : [],
+
+        "useColorArray" : "false",
+
+        "useFaceTextures" : "false",
+
+        "useLighting" : "true"
+
+    },
+
+     "terrainRandom" : {
+
+        "shader" : "shaderTexture",
+
+        "type" : "TERRAIN",
+
+        "name" : "terrainRandom",
+
+        "description" : "random textured and lit terrain",
+
+        "dimensions" : [ "2", "2", "2", "top", "0.1" ],
+
+        "divisions" : [ "100", "100", "100", "0", "0" ],
+
+        "position" : [ "1.5", "-1.5", "2.0" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "0", "0", "0" ],
+
+        "angular" : [ "1", "0", "0" ],
+
+        "textures" : [ "img/uv-test.png" ],
+
+        "models" : [],
+
+        "useColorArray" : "false",
+
+        "useFaceTextures" : "false",
+
+        "useLighting" : "true",
+
+        "comments" : "dimensions[ 3 ] is orientation desired, waterline = dimensions[ 4 ]. TODO: Need to add existing heightmap"
+
+    }
+
+}
