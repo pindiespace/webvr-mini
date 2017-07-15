@@ -162,7 +162,7 @@ class GeometryPool {
 
             UP: 'up',
 
-            TOP: 'up',
+            TOP: 'top', // MADE THIS TOP
 
             DOWN: 'down',
 
@@ -1442,7 +1442,7 @@ class GeometryPool {
 
         pointSize = parseFloat( prim.dimensions[ 4 ] ) || 1,
 
-        numPoints = parseInt( prim.divisions[ 0 ] ) || 1;
+        numPoints = prim.divisions[ 0 ] || 1;
 
         // Shortcuts to Prim data arrays
 
@@ -2461,8 +2461,6 @@ class GeometryPool {
             }
 
         } else if ( ( prim.type === list.CURVEDOUTERPLANE || prim.type === list.CURVEDINNERPLANE ) && prim.dimensions[ 4 ] && prim.dimensions[ 4 ] !== 0 ) {
-
-            console.log("TRYING TO CURVE IT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 
             let dSide = 1;
 

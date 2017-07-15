@@ -65,6 +65,7 @@
 
     },
 
+
     "tojiJSON" : {
 
         "shader" : "shaderTexture",
@@ -171,6 +172,79 @@
 
     },
 
+
+    "icodomeSkyTop" : {
+
+        "shader" : "shaderTexture",
+
+        "type" : "SKYICODOME",
+
+        "name" : "icodomeSkyTOP",
+
+        "description": "half icodome, for creating skydomes",
+
+        "dimensions" : [ "3", "3", "3", "0", "0" ],
+
+        "divisions" : [ "32", "32", "32", "0", "0" ],
+
+        "position" : [ "-4.5", "0.5", "-2" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "0", "0", "0" ],
+
+        "angular" : [ "0", "0.5", "0" ],
+
+        "textures" : [ "img/uv-test.png" ],
+
+        "models" : [],
+
+        "useColorArray" : "false",
+
+        "useFaceTextures" : "false",
+
+        "useLighting" : "true",
+
+        "comments" : "required directions parameter (e.g. directions.BACK) in dimensions to work."
+
+    },
+
+    "icodomeBottom" : {
+
+        "shader" : "shaderTexture",
+
+        "type" : "BOTTOMICODOME",
+
+        "name" : "icodomeBottom",
+
+        "description": "bottom icodome, for creating lakes, craters",
+
+        "dimensions" : [ "3", "3", "3", "0", "0" ],
+
+        "divisions" : [ "32", "32", "32", "0", "0" ],
+
+        "position" : [ "4.5", "0.5", "-2" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "0", "0", "0" ],
+
+        "angular" : [ "0", "0.5", "0" ],
+
+        "textures" : [ "img/uv-test.png" ],
+
+        "models" : [],
+
+        "useColorArray" : "false",
+
+        "useFaceTextures" : "false",
+
+        "useLighting" : "true",
+
+        "comments" : "required directions parameter (e.g. directions.BACK) in dimensions to work."
+
+    },
+
      "coloredCube" : {
 
         "shader" : "shaderColor",
@@ -239,6 +313,40 @@
 
     },
 
+     "shortCylinder" : {
+
+        "shader" : "shaderTexture",
+
+        "type" : "CYLINDER",
+
+        "name" : "shortCylinder",
+
+        "description" : "shortened cylinder, for testing extra params of dimensions array",
+
+        "dimensions" : [ "1", "1", "1", "0.3", "0.7" ],
+
+        "divisions" : [ "40", "40", "40", "0", "0" ],
+
+        "position" : [ "-1.5", "-1.5", "2.0" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "0", "0", "0" ],
+
+        "angular" : [ "0.2", "0.5", "0" ],
+
+        "textures" : [ "img/uv-test.png" ],
+
+        "models" : [],
+
+        "useColorArray" : "false",
+
+        "useFaceTextures" : "false",
+
+        "useLighting" : "true"
+
+    },
+
      "testCone" : {
 
         "shader" : "shaderTexture",
@@ -273,6 +381,7 @@
 
     },
 
+
      "cubeSphere" : {
 
         "shader" : "shaderTexture",
@@ -283,7 +392,7 @@
 
         "description" : "test cubesphere",
 
-        "dimensions" : [ "1", "1", "1" ],
+        "dimensions" : [ "2", "2", "2" ],
 
         "divisions" : [ "10", "10", "10", "0" ],
 
@@ -443,141 +552,6 @@
 
     },
 
-     "objfile" : {
-
-        "shader" : "shaderTexture",
-
-        "type" : "MESH",
-
-        "name" : "objfile",
-
-        "description" : "mesh determined by WaveFront .OBJ file, for testing with format",
-
-        "dimensions" : [ "2", "2", "2", "0" ],
-
-        "divisions" : [ "40", "40", "40", "0", "0" ],
-
-        "position" : [ "-3.5", "-1.0", "0.0" ],
-
-        "acceleration" : [ "0", "0", "0" ],
-
-        "rotation" : [ "0", "0", "0" ],
-
-        "angular" : [ "0.2", "0.5", "0" ],
-
-        "textures" : [],
-
-        "models" : [ "obj/toilet/toilet.obj" ],
-
-        "useColorArray" : "false",
-
-        "useFaceTextures" : "false",
-
-        "useLighting" : "true"
-
-    },
-
-     "banana" : {
-
-        "shader" : "shaderTexture",
-
-        "type" : "MESH",
-
-        "name" : "banana",
-
-        "description" : "banana using complex texture coordinates via .OBJ file",
-
-        "dimensions" : [ "2", "2", "2", "0" ],
-
-        "divisions" : [ "40", "40", "40", "0", "0" ],
-
-        "position" : [ "1.5", "-1.0", "2.0" ],
-
-        "acceleration" : [ "0", "0", "0" ],
-
-        "rotation" : [ "0", "0", "0" ],
-
-        "angular" : [ "0.2", "0.5", "0" ],
-
-        "textures" : [],
-
-        "models" : [ "obj/banana/banana.obj" ],
-
-        "useColorArray" : "false",
-
-        "useFaceTextures" : "false",
-
-        "useLighting" : "true"
-
-    },
-
-     "cherries" : {
-
-        "shader" : "shaderTexture",
-
-        "type" : "MESH",
-
-        "name" : "cherries",
-
-        "description" : "complex OBJ file with multiple materials, lots of material starts",
-
-        "dimensions" : [ "2", "2", "2", "0" ],
-
-        "divisions" : [ "40", "40", "40" ],
-
-        "position" : [ "1.5", "1.0", "2.0" ],
-
-        "acceleration" : [ "0", "0", "0" ],
-
-        "rotation" : [ "0", "0", "0" ],
-
-        "angular" : [ "0.2", "0.5", "0" ],
-
-        "textures" : [],
-
-        "models" : [ "obj/cherries/cherries.obj" ],
-
-        "useColorArray" : "false",
-
-        "useFaceTextures" : "false",
-
-        "useLighting" : "true"
-
-    },
-
-     "shortCylinder" : {
-
-        "shader" : "shaderTexture",
-
-        "type" : "CYLINDER",
-
-        "name" : "shortCylinder",
-
-        "description" : "shortened cylinder, for testing extra params of dimensions array",
-
-        "dimensions" : [ "1", "1", "1", "0.3", "0.7" ],
-
-        "divisions" : [ "40", "40", "40", "0", "0" ],
-
-        "position" : [ "-1.5", "-1.5", "2.0" ],
-
-        "acceleration" : [ "0", "0", "0" ],
-
-        "rotation" : [ "0", "0", "0" ],
-
-        "angular" : [ "0.2", "0.5", "0" ],
-
-        "textures" : [ "img/uv-test.png" ],
-
-        "models" : [],
-
-        "useColorArray" : "false",
-
-        "useFaceTextures" : "false",
-
-        "useLighting" : "true"
-
-    },
 
      "terrainRandom" : {
 
@@ -593,7 +567,7 @@
 
         "divisions" : [ "100", "100", "100", "0", "0" ],
 
-        "position" : [ "1.5", "-1.5", "2.0" ],
+        "position" : [ "0", "0", "0" ],
 
         "acceleration" : [ "0", "0", "0" ],
 

@@ -4343,7 +4343,7 @@
 
 	                                    // Created by Cyril S of the Noun Project.
 
-	                                    vr: 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgOTAgMTEyLjUiIHN0eWxlPSJlbmFibGUtYmFja2dyb3VuZDpuZXcgMCAwIDkwIDExMi41OyIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+PHN0eWxlIHR5cGU9InRleHQvY3NzIj4uc3Qwe3N0cm9rZTojRkZGRkZGO3N0cm9rZS1taXRlcmxpbWl0OjEwO308L3N0eWxlPjxnIGlkPSJMYXllcl8yIj48L2c+PGcgaWQ9IkxheWVyXzFfMV8iPjxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik04NS43LDI2LjJjLTIuMy0yLjMtNzkuNi0xLjgtODEuNCwwYy0xLjksMS45LTEuOSw1MC41LDAsNTIuNGMwLjcsMC43LDEzLjQsMSwyOC41LDEuMWwzLjQtOS4zYzAsMCwyLjItOC44LDguNy04LjhjNi45LDAsOS45LDEwLjcsOS45LDEwLjdsMi45LDcuNWMxNC45LTAuMSwyNy40LTAuNSwyOC0xLjFDODcuMyw3Ni45LDg3LjksMjguNCw4NS43LDI2LjJ6IE0yMyw2Mi44Yy02LjcsMC0xMi4xLTUuNC0xMi4xLTEyLjFTMTYuMywzOC42LDIzLDM4LjZTMzUuMSw0NCwzNS4xLDUwLjdDMzUuMSw1Ny40LDI5LjYsNjIuOCwyMyw2Mi44eiBNNjYuNiw2Mi44Yy02LjcsMC0xMi4xLTUuNC0xMi4xLTEyLjFzNS40LTEyLjEsMTIuMS0xMi4xUzc4LjcsNDQsNzguNyw1MC43Qzc4LjcsNTcuNCw3My4zLDYyLjgsNjYuNiw2Mi44eiIvPjwvZz48L3N2Zz4=',
+	                                    vr: 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgOTAgMTEyLjUiIHN0eWxlPSJlbmFibGUtYmFja2dyb3VuZDpuZXcgMCAwIDkwIDExMi41OyIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+PHN0eWxlIHR5cGU9InRleHQvY3NzIj4uc3Qwe3N0cm9rZTojRkZGRkZGO3N0cm9rZS1taXRlcmxpbWl0OjEwO308L3N0eWxlPjxnIGlkPSJMYXllcl8yIj48L2c+PGcgaWQ9IkxheWVyXzFfMV8iPjxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik04NS43LDI5LjJjLTIuMy0yLjMtNzkuNi0xLjgtODEuNCwwYy0xLjksMS45LTEuOSw1MC41LDAsNTIuNGMwLjcsMC43LDEzLjQsMSwyOC41LDEuMWwzLjQtOS4zYzAsMCwyLjItOC44LDguNy04LjhjNi45LDAsOS45LDEwLjcsOS45LDEwLjdsMi45LDcuNWMxNC45LTAuMSwyNy40LTAuNSwyOC0xLjFDODcuMyw3OS45LDg3LjksMzEuNCw4NS43LDI5LjJ6IE0yMyw2NS44Yy02LjcsMC0xMi4xLTUuNC0xMi4xLTEyLjFTMTYuMyw0MS42LDIzLDQxLjZTMzUuMSw0NywzNS4xLDUzLjdDMzUuMSw2MC40LDI5LjYsNjUuOCwyMyw2NS44eiBNNjYuNiw2NS44Yy02LjcsMC0xMi4xLTUuNC0xMi4xLTEyLjFzNS40LTEyLjEsMTIuMS0xMi4xUzc4LjcsNDcsNzguNyw1My43Qzc4LjcsNjAuNCw3My4zLDY1LjgsNjYuNiw2NS44eiIvPjwvZz48L3N2Zz4=',
 
 	                                    htcvive: 'data:image/svg+xml;base64,PHN2ZyB2ZXJzaW9uPSIxLjEiIGlkPSJMYXllcl8xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB4PSIwcHgiIHk9IjBweCIgdmlld0JveD0iMCAwIDkwIDExMi41IiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCA5MCAxMTIuNTsiIHhtbDpzcGFjZT0icHJlc2VydmUiPjxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI+LnN0MHtmaWxsOiMyODI4Mjc7fS5zdDF7ZmlsbDpub25lO3N0cm9rZTojRkZGRkZGO3N0cm9rZS13aWR0aDo3O3N0cm9rZS1taXRlcmxpbWl0OjEwO30uc3Qye2ZpbGw6IzI4MjgyNztzdHJva2U6I0EwQTBBMDtzdHJva2Utd2lkdGg6MjtzdHJva2UtbWl0ZXJsaW1pdDoxMDt9LnN0M3tmaWxsOm5vbmU7c3Ryb2tlOiNGRkZGRkY7c3Ryb2tlLXdpZHRoOjI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7fS5zdDR7ZmlsbDojRkZGRkZGO30uc3Q1e2ZpbGw6bm9uZTtzdHJva2U6I0EwQTBBMDtzdHJva2Utd2lkdGg6MjtzdHJva2UtbWl0ZXJsaW1pdDoxMDt9PC9zdHlsZT48cG9seWdvbiBjbGFzcz0ic3QwIiBwb2ludHM9IjE2LDQxLjkgMTYsMzguNyAyMCwzMS40IDI1LjMsMjUgMzAuMywyMS4zIDM1LjYsMTguNSAzNS42LDMwLjkgMzEuNywzMy40IDI4LjYsMzYuMSAyOC43LDM4LjkgIi8+PHBvbHlnb24gY2xhc3M9InN0MCIgcG9pbnRzPSI3Niw0Mi45IDc2LDM5LjQgNzEuOSwzMS43IDY2LjUsMjQuOSA2MS40LDIxIDU2LDE4IDU2LDMxLjEgNTkuOSwzMy44IDYyLjgsMzUuNSA2My4xLDM3LjIgNjMuNCwzOS41ICIvPjxpbWFnZSBzdHlsZT0ib3ZlcmZsb3c6dmlzaWJsZTtlbmFibGUtYmFja2dyb3VuZDpuZXcgICAgOyIgd2lkdGg9IjE5MjAiIGhlaWdodD0iMTIwMSIgeGxpbms6aHJlZj0iQ0FDNjFEQjcuanBnIiAgdHJhbnNmb3JtPSJtYXRyaXgoMC45OTk4IDAgMCAwLjk5OTggLTQ5NzYuNzc1NCAtNDc2Ni4zNTk0KSI+PC9pbWFnZT48aW1hZ2Ugc3R5bGU9Im92ZXJmbG93OnZpc2libGU7ZW5hYmxlLWJhY2tncm91bmQ6bmV3OyIgd2lkdGg9IjE5MjEiIGhlaWdodD0iMTIwMSIgeGxpbms6aHJlZj0iQ0FDNjFEQjUuanBnIiAgdHJhbnNmb3JtPSJtYXRyaXgoMC45OTk0IDAgMCAwLjk5OTQgMzE0Ni4xNzgyIDM2NzkuNDY4OCkiPjwvaW1hZ2U+PHBhdGggY2xhc3M9InN0MCIgZD0iTTMzNjEuOCwzNjI5LjFoLTMyMi41Yy01MC43LDAtOTIuMi00MS41LTkyLjItOTIuMnYtMTMzLjVjMC00Ny40LDM4LjgtODYuMiw4Ni4yLTg2LjJoMzI4LjVjNTAuNywwLDkyLjIsNDEuNSw5Mi4yLDkyLjJ2MTI3LjVDMzQ1NC4xLDM1ODcuNiwzNDEyLjYsMzYyOS4xLDMzNjEuOCwzNjI5LjF6Ii8+PHBhdGggY2xhc3M9InN0MCIgZD0iTTMyNDMuNiwzMzI3LjFoLTg1LjVjLTYuNiwwLTEyLTUuNC0xMi0xMnYtMTM5LjVjMC02LjYsNS40LTEyLDEyLTEyaDg1LjVjNi42LDAsMTIsNS40LDEyLDEydjEzOS41QzMyNTUuNiwzMzIxLjcsMzI1MC4yLDMzMjcuMSwzMjQzLjYsMzMyNy4xeiIvPjxjaXJjbGUgY2xhc3M9InN0MSIgY3g9IjMwNDYuOCIgY3k9IjMzODMuNSIgcj0iMzIuNSIvPjxjaXJjbGUgY2xhc3M9InN0MSIgY3g9IjMzNjMuNiIgY3k9IjMzODMuNSIgcj0iMzIuNSIvPjxjaXJjbGUgY2xhc3M9InN0MSIgY3g9IjMyMDAuOCIgY3k9IjM1NzUuOCIgcj0iMzIuNSIvPjxjaXJjbGUgY2xhc3M9InN0MSIgY3g9IjMwMTQuMyIgY3k9IjM0OTAuNCIgcj0iMzIuNSIvPjxjaXJjbGUgY2xhc3M9InN0MSIgY3g9IjMzOTAuNiIgY3k9IjM0OTAuNCIgcj0iMzIuNSIvPjxjaXJjbGUgY2xhc3M9InN0MSIgY3g9IjMyMDAuOCIgY3k9IjM1NzYuOCIgcj0iMTcuNiIvPjxwb2x5bGluZSBjbGFzcz0ic3QxIiBwb2ludHM9IjMzMTAuOCwzMzE0LjEgMzI3OC43LDMzNTYuMyAzMjUxLjMsMzM3Ni4zIDMyMDQsMzM3Ni4zIDMxNDYuMSwzMzc2LjMgMzEyMS4zLDMzNTkuNyAzMDg5LjEsMzMxNy4xIi8+PHBvbHlnb24gY2xhc3M9InN0MCIgcG9pbnRzPSIzMDA0LjUsMzMzOS4xIDMwMDQuNSwzMzIxLjEgMzAzMSwzMjgwLjEgMzA2NiwzMjQ0LjUgMzA5OS41LDMyMjMuNiAzMTM0LjUsMzIwOC4xIDMxMzQuNSwzMjc3LjEgMzEwOSwzMjkxLjEgMzA5MC40LDMzMDYuOSAzMDg4LjUsMzMyMiAiLz48cG9seWdvbiBjbGFzcz0ic3QwIiBwb2ludHM9IjMzOTQsMzMzNi4xIDMzOTQsMzMxOC4xIDMzNjcuNSwzMjc3LjEgMzMzMi41LDMyNDEuNSAzMjk5LDMyMjAuNiAzMjY0LDMyMDUuMSAzMjY0LDMyNzQuMSAzMjg5LjUsMzI4OC4xIDMzMTAsMzMwNi41IDMzMTIuMywzMzE4LjQgIi8+PGxpbmUgY2xhc3M9InN0MSIgeDE9IjMyMDAuOCIgeTE9IjMzNzYuMyIgeDI9IjMyMDAuOCIgeTI9IjM1NDMuMyIvPjxwYXRoIGNsYXNzPSJzdDIiIGQ9Ik02OCw4OC41SDIyQzEwLjMsODguNSwwLjgsNzksMC44LDY3LjNWNTZjMC0xMC43LDguOC0xOS41LDE5LjUtMTkuNUg2OGMxMS43LDAsMjEuMiw5LjUsMjEuMiwyMS4ydjkuNkM4OS4zLDc5LDc5LjcsODguNSw2OCw4OC41eiIvPjxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik00NS41LDM4LjVMNDUuNSwzOC41Yy00LjcsMC04LjUtMy44LTguNS04LjVWMjBjMC00LjcsMy44LTguNSw4LjUtOC41aDAuMWM0LjcsMCw4LjUsMy44LDguNSw4LjV2MTBDNTQsMzQuNyw1MC4yLDM4LjUsNDUuNSwzOC41eiIvPjxlbGxpcHNlIHRyYW5zZm9ybT0ibWF0cml4KDAuOTIyOCAtMC4zODUzIDAuMzg1MyAwLjkyMjggLTE3LjgwMjUgMTAuOTM5MSkiIGNsYXNzPSJzdDMiIGN4PSIxOC40IiBjeT0iNDkuOSIgcng9IjMuOSIgcnk9IjUuNSIvPjxlbGxpcHNlIHRyYW5zZm9ybT0ibWF0cml4KDAuMzY1NSAtMC45MzA4IDAuOTMwOCAwLjM2NTUgLTAuMTc4NSA5OC42NDUxKSIgY2xhc3M9InN0MyIgY3g9IjcyLjMiIGN5PSI0OS41IiByeD0iNS41IiByeT0iNC4zIi8+PGVsbGlwc2UgY2xhc3M9InN0MyIgY3g9IjExLjUiIGN5PSI2NS4zIiByeD0iNSIgcnk9IjQuMyIvPjxlbGxpcHNlIGNsYXNzPSJzdDMiIGN4PSI3OC41IiBjeT0iNjUuMyIgcng9IjUiIHJ5PSI0LjMiLz48Y2lyY2xlIGNsYXNzPSJzdDQiIGN4PSI0NS41IiBjeT0iODAiIHI9IjEuNSIvPjxwb2x5bGluZSBjbGFzcz0ic3Q1IiBwb2ludHM9IjYzLjgsMzcuMiA1OC42LDQzLjUgNTQuMSw0Ni41IDQ2LjQsNDYuNSAzNi45LDQ2LjUgMzIuOSw0NCAyNy42LDM3LjYgIi8+PGxpbmUgY2xhc3M9InN0NSIgeDE9IjQ1LjUiIHkxPSI0Ni41IiB4Mj0iNDUuNSIgeTI9Ijc0LjUiLz48ZWxsaXBzZSB0cmFuc2Zvcm09Im1hdHJpeCgwLjU3NzMgLTAuODE2NiAwLjgxNjYgMC41NzczIC0zNy4yMDk2IDg3LjU2NjMpIiBjbGFzcz0ic3QzIiBjeD0iNjYiIGN5PSI3OS43IiByeD0iMy45IiByeT0iNSIvPjxlbGxpcHNlIHRyYW5zZm9ybT0ibWF0cml4KDAuNzA3MSAtMC43MDcxIDAuNzA3MSAwLjcwNzEgLTQ5LjY1NzQgMzkuNTA1KSIgY2xhc3M9InN0MyIgY3g9IjIyLjkiIGN5PSI3OS43IiByeD0iNSIgcnk9IjMuOSIvPjxlbGxpcHNlIGNsYXNzPSJzdDMiIGN4PSI0NS41IiBjeT0iODAiIHJ4PSI1IiByeT0iNS41Ii8+PC9zdmc+',
 
@@ -12761,7 +12761,7 @@
 
 	                        UP: 'up',
 
-	                        TOP: 'up',
+	                        TOP: 'top', // MADE THIS TOP
 
 	                        DOWN: 'down',
 
@@ -14057,7 +14057,7 @@
 	                            d = prim.dimensions[2],
 	                            radius = parseFloat(prim.dimensions[3]) || 1,
 	                            pointSize = parseFloat(prim.dimensions[4]) || 1,
-	                            numPoints = parseInt(prim.divisions[0]) || 1;
+	                            numPoints = prim.divisions[0] || 1;
 
 	                        // Shortcuts to Prim data arrays
 
@@ -15041,8 +15041,6 @@
 	                                        positions[i] = pos;
 	                                }
 	                        } else if ((prim.type === list.CURVEDOUTERPLANE || prim.type === list.CURVEDINNERPLANE) && prim.dimensions[4] && prim.dimensions[4] !== 0) {
-
-	                                console.log("TRYING TO CURVE IT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 
 	                                var dSide = 1;
 
@@ -19381,8 +19379,27 @@
 
 	                                                                                if (shader) {
 
-	                                                                                        // handle cases for dimensions and divisions params are NOT numbers.
+	                                                                                        // Handle cases for dimensions and divisions params are numbers (they may also be strings).
 
+	                                                                                        if (_this2.util.isNumber(s.dimensions[3])) {
+
+	                                                                                                s.dimensions[3] = parseFloat(s.dimensions[3]);
+	                                                                                        }
+
+	                                                                                        if (_this2.util.isNumber(s.dimensions[4])) {
+
+	                                                                                                s.dimensions[4] = parseFloat(s.dimensions[4]);
+	                                                                                        }
+
+	                                                                                        if (_this2.util.isNumber(s.divisions[3])) {
+
+	                                                                                                s.divisions[3] = parseFloat(s.divisions[3]);
+	                                                                                        }
+
+	                                                                                        if (_this2.util.isNumber(s.divisions[4])) {
+
+	                                                                                                s.divisions[4] = parseFloat(s.divisions[4]);
+	                                                                                        }
 
 	                                                                                        _this2.primFactory.createPrim(_this2.shaderPool.getAssetByName(s.shader), // Shader used
 
@@ -19390,11 +19407,11 @@
 
 	                                                                                        i, // name
 
-	                                                                                        vec5(parseFloat(s.dimensions[0]), parseFloat(s.dimensions[1]), parseFloat(s.dimensions[2]), parseFloat(s.dimensions[3]) || s.dimensions[3], // these may be non-numeric
-	                                                                                        parseFloat(s.dimensions[4]) || s.dimensions[4]), // dimensions, WebGL units
+	                                                                                        vec5(parseFloat(s.dimensions[0]), parseFloat(s.dimensions[1]), parseFloat(s.dimensions[2]), s.dimensions[3], // these may be non-numeric
+	                                                                                        s.dimensions[4]), // dimensions, WebGL units
 
-	                                                                                        vec5(parseFloat(s.divisions[0]), parseFloat(s.divisions[1]), parseFloat(s.divisions[2]), parseFloat(s.divisions[3]) || s.divisions[3], //these may be non-numeric
-	                                                                                        parseFloat(s.divisions[4]) || s.divisions[4]), // divisions, pass curving of edges as 4th parameter
+	                                                                                        vec5(parseFloat(s.divisions[0]), parseFloat(s.divisions[1]), parseFloat(s.divisions[2]), s.divisions[3], //these may be non-numeric
+	                                                                                        s.divisions[4]), // divisions, pass curving of edges as 4th parameter
 
 	                                                                                        vec3.fromValues(parseFloat(s.position[0]), parseFloat(s.position[1]), parseFloat(s.position[2])), // acceleration in x, y, z
 
@@ -19554,17 +19571,7 @@
 	                        
 	                                    this.primFactory.createPrim(
 	                        
-	                                        this.s1,                      // callback function
-	                                        typeList.SKYICODOME,
-	                                        'icoSkyDome',
-	                                        vec5( 3, 3, 3, 0 ),            // dimensions
-	                                        vec5( 32, 32, 32 ),            // 1 for icosohedron, 16 for good sphere
-	                                        vec3.fromValues(-4.5, 0.5, -2 ),        // position (absolute)
-	                                        vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-	                                        vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-	                                        vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-	                                        [ 'img/uv-test.png' ],               // texture present, NOT USED
-	                                        vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
+	                        
 	                        
 	                                    );
 	                        

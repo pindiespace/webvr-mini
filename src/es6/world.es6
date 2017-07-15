@@ -289,8 +289,31 @@ class World extends AssetPool {
 
                                         if ( shader ) {
 
-                                            // handle cases for dimensions and divisions params are NOT numbers.
+                                            // Handle cases for dimensions and divisions params are numbers (they may also be strings).
 
+                                            if ( this.util.isNumber( s.dimensions[ 3 ] ) ) {
+
+                                                s.dimensions[ 3 ] = parseFloat( s.dimensions[ 3 ] );
+
+                                            }
+
+                                            if ( this.util.isNumber( s.dimensions[ 4 ] ) ) {
+
+                                                s.dimensions[ 4 ] = parseFloat( s.dimensions[ 4 ] );
+
+                                            }
+
+                                            if ( this.util.isNumber( s.divisions[ 3 ] ) ) {
+
+                                                s.divisions[ 3 ] = parseFloat( s.divisions[ 3 ] );
+
+                                            }
+
+                                            if ( this.util.isNumber( s.divisions[ 4 ] ) ) {
+
+                                                s.divisions[ 4 ] = parseFloat( s.divisions[ 4 ] );
+
+                                            }
 
                                             this.primFactory.createPrim(
 
@@ -304,8 +327,8 @@ class World extends AssetPool {
                                                     parseFloat( s.dimensions[ 0 ] ), 
                                                     parseFloat( s.dimensions[ 1 ] ), 
                                                     parseFloat( s.dimensions[ 2 ] ), 
-                                                    parseFloat( s.dimensions[ 3 ] ) || s.dimensions[ 3 ],  // these may be non-numeric
-                                                    parseFloat( s.dimensions[ 4 ] ) || s.dimensions[ 4 ]
+                                                    s.dimensions[ 3 ],  // these may be non-numeric
+                                                    s.dimensions[ 4 ]
 
                                                 ),      // dimensions, WebGL units
 
@@ -313,8 +336,8 @@ class World extends AssetPool {
                                                     parseFloat( s.divisions[ 0 ] ), 
                                                     parseFloat( s.divisions[ 1 ] ), 
                                                     parseFloat( s.divisions[ 2 ] ), 
-                                                    parseFloat( s.divisions[ 3 ] ) || s.divisions[ 3 ],  //these may be non-numeric
-                                                    parseFloat( s.divisions[ 4 ] ) || s.divisions[ 4 ]
+                                                    s.divisions[ 3 ],  //these may be non-numeric
+                                                    s.divisions[ 4 ]
 
                                                 ),        // divisions, pass curving of edges as 4th parameter
 
@@ -509,17 +532,7 @@ class World extends AssetPool {
 
             this.primFactory.createPrim(
 
-                this.s1,                      // callback function
-                typeList.SKYICODOME,
-                'icoSkyDome',
-                vec5( 3, 3, 3, 0 ),            // dimensions
-                vec5( 32, 32, 32 ),            // 1 for icosohedron, 16 for good sphere
-                vec3.fromValues(-4.5, 0.5, -2 ),        // position (absolute)
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [ 'img/uv-test.png' ],               // texture present, NOT USED
-                vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
+
 
             );
 
