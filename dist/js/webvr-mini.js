@@ -14184,7 +14184,12 @@
 	                            startSlice = parseFloat(prim.dimensions[3]) || 0,
 	                            endSlice = parseFloat(prim.dimensions[4]) || 1.0;
 
-	                        // Everything except SPHERE, CYLINDER, SPINDLE, and CONE is a half-object.
+	                        if (startSlice > prim.dimensions[1]) {
+
+	                                console.error('GeometryPool::geometrySphere(): error - flattening is greater than sphere radius for:' + prim.name);
+	                        }
+
+	                        // Everything except SPHERE, CYLINDER, SPINDLE, TEARDROP, and CONE is a half-object.
 
 	                        var latStart = 0,
 	                            longStart = 0,
@@ -14227,7 +14232,8 @@
 	                                            z = void 0,
 	                                            _u = void 0,
 	                                            _v = void 0,
-	                                            r = void 0;
+	                                            r = void 0,
+	                                            flatten = void 0;
 
 	                                        // Compute vertices.
 
@@ -14245,13 +14251,13 @@
 
 	                                        z = sinPhi * sinTheta / 2;
 
+	                                        // Flatten spherical objects at their poles (both).
+
+	                                        flatten = (1 - lat) * startSlice;
+
 	                                        switch (prim.type) {
 
 	                                                case list.CAP:
-
-	                                                        x = cosPhi / 4;
-
-	                                                        z = sinPhi / 4;
 
 	                                                        y = 0;
 
@@ -14282,6 +14288,10 @@
 
 	                                                        y = cosTheta / 2;
 
+	                                                        // flatten if startslice is present (flattening)
+
+	                                                        if (startSlice > 0) y -= flatten;
+
 	                                                        break;
 
 	                                                case list.TOPDOME:
@@ -14289,20 +14299,25 @@
 
 	                                                        y = cosTheta / 2;
 
+	                                                        if (startSlice > 0) y -= flatten;
+
 	                                                        break;
 
 	                                                case list.SKYDOME:
 
 	                                                        y = cosTheta / 2;
 
+	                                                        if (startSlice > 0) y -= flatten;
+
 	                                                        _u = long;
 
-	                                                        //v = 1 - lat;
 	                                                        break;
 
 	                                                case list.BOTTOMDOME:
 
 	                                                        y = (1 - cosTheta) / 2 - 0.5;
+
+	                                                        if (startSlice > 0) y -= flatten;
 
 	                                                        _u = long;
 
@@ -19401,7 +19416,7 @@
 	                                                                                                s.divisions[4] = parseFloat(s.divisions[4]);
 	                                                                                        }
 
-	                                                                                        _this2.primFactory.createPrim(_this2.shaderPool.getAssetByName(s.shader), // Shader used
+	                                                                                        var p = _this2.primFactory.createPrim(_this2.shaderPool.getAssetByName(s.shader), // Shader used
 
 	                                                                                        typeList[s.type], // Prim type
 
@@ -19432,7 +19447,6 @@
 	                                                                                        JSON.parse(s.useLighting) // if true, use lighting (default)
 
 	                                                                                        ); // end of valid Shader
-
 	                                                                                } else {
 
 	                                                                                        console.error('World::getWorld(): invalid Shader:' + s.shader + ' for Prim:' + i);
@@ -19548,47 +19562,6 @@
 	                                        true, // if true, use lighting                
 	                                    );
 	                        
-	                        */
-
-	                        /*
-	                                    this.primFactory.createPrim(
-	                        
-	                                        this.s1,                      // callback function
-	                                        typeList.BOTTOMDOME,
-	                                        'BottomDome',
-	                                        vec5( 1, 1, 1, 0 ),            // dimensions
-	                                        vec5( 10, 10, 10  ),            // divisions MAKE SMALLER
-	                                        vec3.fromValues(0.0, 0.0, 0.0 ),        // position (absolute)
-	                                        vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-	                                        vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-	                                        vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-	                                        [ 'img/mozvr-logo2.png' ],               // texture present
-	                                        vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
-	                        
-	                                    );
-	                        
-	                        */
-
-	                        /*
-	                        
-	                                    // TODO: MAKE SURE CAP IS ACTUALLY BEING DRAWN!!!!
-	                        
-	                                    this.primFactory.createPrim(
-	                                    
-	                                        this.s1,                      // callback function
-	                                        typeList.CAP, // CAP DEFAULT, AT WORLD CENTER (also a UV polygon)
-	                                        'CAP',
-	                                        vec5( 3, 3, 3, 0 ),         // dimensions INCLUDING start radius or torus radius(last value)
-	                                        vec5( 15, 15, 15 ),         // divisions MUST BE CONTROLLED TO < 5
-	                                        //vec3.fromValues(0, 0, 0 ),    // position (absolute)
-	                                        vec3.fromValues(-0.0, 0, 2.0),
-	                                        vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-	                                        vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-	                                        vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-	                                        [ 'img/mozvr-logo1.png' ],               // texture present
-	                                        vec4.fromValues( 0.5, 1.0, 0.2, 1.0 )  // color
-	                        
-	                                    );
 	                        */
 
 	                        // Note: the init() method sets up the update() and render() methods for the Shader.

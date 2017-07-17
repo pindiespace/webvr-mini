@@ -434,11 +434,11 @@
 
         "name" : "uvsphere",
 
-        "description": "test of regular basic UV sphere",
+        "description": "test of regular basic UV sphere, flattened at the poles",
 
-        "dimensions" : [ "1.5", "1.5", "1.5", "0", "0" ],
+        "dimensions" : [ "1.5", "1.5", "1.5", "0.5", "0" ],
 
-        "divisions" : [ "9", "9", "9", "0", "0" ],
+        "divisions" : [ "20", "20", "20", "0.5", "0" ],
 
         "position" : [ "-6", "-1.8", "0" ],
 
@@ -456,31 +456,33 @@
 
         "useFaceTextures" : "true",
 
-        "useLighting" : "true"
+        "useLighting" : "true",
+
+        "comments" : "the 4th paramater of dimensions is spherical flattening, should be less than 1/2 the y radius"
 
     },
 
-    "uvBottomDome" : {
+    "uvCap" : {
 
         "shader" : "shaderTexture",
 
-        "type" : "BOTTOMDOME",
+        "type" : "CAP",
 
-        "name" : "UVBottomDome",
+        "name" : "UVCap",
 
-        "description": "test of regular basic UV bottom dome",
+        "description": "A flat circular disc, created with multiple rings.",
 
-        "dimensions" : [ "1.5", "1.5", "1.5", "0", "0" ],
+        "dimensions" : [ "1", "1", "1", "0", "0" ],
 
-        "divisions" : [ "9", "9", "9", "0", "0" ],
+        "divisions" : [ "10", "10", "10", "0", "0" ],
 
-        "position" : [ "-5", "-1.8", "0" ],
+        "position" : [ "1", "3", "0" ],
 
         "acceleration" : [ "0", "0", "0" ],
 
         "rotation" : [ "0.0", "0.0", "0" ],
 
-        "angular" : [ "0.0", "0.5", "0.2" ],
+        "angular" : [ "0.2", "0.5", "0.2" ],
 
         "textures" : [ "img/mozvr-logo2.png" ],
 
@@ -494,29 +496,29 @@
 
     },
 
-    "cap" : {
+    "uvTopDome" : {
 
         "shader" : "shaderTexture",
 
-        "type" : "CAP",
+        "type" : "TOPDOME",
 
-        "name" : "cap",
+        "name" : "UVTopDome",
 
-        "description": "test of cap shape",
+        "description": "test of regular basic UV bottom dome",
 
-        "dimensions" : [ "1.5", "1.5", "1.5", "0", "0" ],
+        "dimensions" : [ "1", "1", "1", "0", "0" ],
 
-        "divisions" : [ "9", "9", "9", "0", "0" ],
+        "divisions" : [ "10", "10", "10", "0", "0" ],
 
-        "position" : [ "-6", "-1.8", "0" ],
+        "position" : [ "0", "3", "0" ],
 
         "acceleration" : [ "0", "0", "0" ],
 
         "rotation" : [ "0.0", "0.0", "0" ],
 
-        "angular" : [ "0.0", "0.5", "0.2" ],
+        "angular" : [ "0.2", "0.5", "0.2" ],
 
-        "textures" : [ "img/mozvr-logo1.png" ],
+        "textures" : [ "img/mozvr-logo2.png" ],
 
         "models" : [],
 
@@ -524,10 +526,47 @@
 
         "useFaceTextures" : "true",
 
-        "useLighting" : "true"
+        "useLighting" : "true",
+
+        "comments" : "dimensions: 4th parameter controls flattening of spherical shape."
 
     },
 
+    "uvBottomDome" : {
+
+        "shader" : "shaderTexture",
+
+        "type" : "BOTTOMDOME",
+
+        "name" : "UVBottomDome",
+
+        "description": "test of regular basic UV bottom dome",
+
+        "dimensions" : [ "1", "1", "1", "0", "0" ],
+
+        "divisions" : [ "10", "10", "10", "0", "0" ],
+
+        "position" : [ "-1", "3", "0" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "0.0", "0.0", "0" ],
+
+        "angular" : [ "0.2", "0.5", "0.2" ],
+
+        "textures" : [ "img/mozvr-logo2.png" ],
+
+        "models" : [],
+
+        "useColorArray" : "false",
+
+        "useFaceTextures" : "true",
+
+        "useLighting" : "true",
+
+        "comments" : "dimensions: 4th parameter controls flattening of spherical shape."
+
+    },
 
      "coloredCube" : {
 

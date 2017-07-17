@@ -1576,7 +1576,13 @@ class GeometryPool {
 
         endSlice = parseFloat( prim.dimensions[ 4 ] ) || 1.0;
 
-        // Everything except SPHERE, CYLINDER, SPINDLE, and CONE is a half-object.
+        if ( startSlice > prim.dimensions[ 1 ] ) {
+
+            console.error( 'GeometryPool::geometrySphere(): error - flattening is greater than sphere radius for:' + prim.name );
+
+        }
+
+        // Everything except SPHERE, CYLINDER, SPINDLE, TEARDROP, and CONE is a half-object.
 
         let latStart = 0, longStart = 0, latDist;
 
@@ -1616,7 +1622,7 @@ class GeometryPool {
 
                 let cosPhi = Math.cos( phi );
 
-                let x, y, z, u, v, r;
+                let x, y, z, u, v, r, flatten;
 
                 // Compute vertices.
 
@@ -1634,13 +1640,13 @@ class GeometryPool {
 
                 z = sinPhi * sinTheta / 2;
 
+                // Flatten spherical objects at their poles (both).
+
+                flatten = ( 1 - lat ) * startSlice;
+
                 switch( prim.type ) {
 
                     case list.CAP:
-
-                        x = cosPhi / 4;
-
-                        z = sinPhi / 4;
 
                         y = 0;
 
@@ -1674,6 +1680,10 @@ class GeometryPool {
 
                         y = cosTheta / 2;
 
+                        // flatten if startslice is present (flattening)
+
+                        if ( startSlice > 0 ) y -= flatten;
+
                         break;
 
                     case list.TOPDOME:
@@ -1681,20 +1691,25 @@ class GeometryPool {
 
                         y = cosTheta / 2;
 
+                        if ( startSlice > 0 ) y -= flatten;
+
                         break;
 
                     case list.SKYDOME:
 
                         y = cosTheta / 2;
 
+                        if ( startSlice > 0 ) y -= flatten;
+
                         u = long;
 
-                        //v = 1 - lat;
                         break;
 
                     case list.BOTTOMDOME:
 
                         y = ( (1 - cosTheta) / 2 ) - 0.5;
+
+                        if ( startSlice > 0 ) y -= flatten;
 
                         u = long;
 
@@ -1802,8 +1817,6 @@ class GeometryPool {
 
                 let n = vec3.normalize( [ 0, 0, 0 ], [ x, y, z ] );
 
-
-
                 // Push vertices.
 
                 vertices.push( x * l, y * w, z * h );
@@ -1821,7 +1834,7 @@ class GeometryPool {
 
                 } else {
 
-                    normals.push( n[ 0 ], n[ 1 ], n[ 2 ] );                    
+                    normals.push( n[ 0 ], n[ 1 ], n[ 2 ] );
                 }
 
                 // Sphere indices.
