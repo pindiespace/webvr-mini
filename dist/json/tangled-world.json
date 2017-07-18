@@ -172,6 +172,77 @@
 
     },
 
+     "prism" : {
+
+        "shader" : "shaderTexture",
+
+        "type" : "PRISM",
+
+        "name" : "prism",
+
+        "description": "closed prism",
+
+        "dimensions" : [ "1", "1", "1", "0", "0" ],
+
+        "divisions" : [ "3", "22", "3", "0", "0" ],
+
+        "position" : [ "-3.0", "2.8", "-2" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "60", "0", "0" ],
+
+        "angular" : [ "0.5", "0.5", "0" ],
+
+        "textures" : [ "img/uv-test.png" ],
+
+        "models" : [],
+
+        "useColorArray" : "false",
+
+        "useFaceTextures" : "true",
+
+        "useLighting" : "true",
+
+        "comments" : "uses Sphere and Capsule routines. typically set useFaceTextures to true."
+
+    },
+
+     "pyramid" : {
+
+        "shader" : "shaderTexture",
+
+        "type" : "PYRAMID",
+
+        "name" : "pyramid",
+
+        "description": "closed prism",
+
+        "dimensions" : [ "2", "2", "2", "0", "0" ],
+
+        "divisions" : [ "3", "22", "3", "0", "0" ],
+
+        "position" : [ "-3.5", "4.0", "-2" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "60", "0", "0" ],
+
+        "angular" : [ "0.5", "0.5", "0" ],
+
+        "textures" : [ "img/uv-test.png" ],
+
+        "models" : [],
+
+        "useColorArray" : "false",
+
+        "useFaceTextures" : "true",
+
+        "useLighting" : "true",
+
+        "comments" : "uses Sphere and Capsule routines. typically set useFaceTextures to true."
+
+    },
 
     "icodomeSkyTop" : {
 
@@ -295,7 +366,7 @@
 
         "divisions" : [ "40", "40", "0", "0", "0" ],
 
-        "position" : [ "-2.0", "1.5", "2.0" ],
+        "position" : [ "-2.7", "1.5", "2.0" ],
 
         "acceleration" : [ "0", "0", "0" ],
 
@@ -666,7 +737,9 @@
 
         "useFaceTextures" : "false",
 
-        "useLighting" : "true"
+        "useLighting" : "true",
+
+        "comments" : "divisions 4 and 4 control closing the prism"
 
     },
 

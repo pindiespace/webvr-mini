@@ -1243,6 +1243,68 @@ class GeometryPool {
 
     }
 
+    /* 
+     * ---------------------------------------
+     * GEOMETRY TRANSFORMATIONS
+     * ---------------------------------------
+     */
+
+    /** 
+     * Scale vertices directly, without changing position.
+     * @param {glMatrix.vec3[]} vertices the input positions.
+     * @param {Number} scale the value to scale by (> 0).
+     */
+    computeScale ( vertices, scale ) {
+
+        let oldPos = this.getCenter( vertices );
+
+        for ( let i = 0; i < vertices.length; i++ ) {
+
+            vertices[ i ] *= scale;
+
+        }
+
+        this.moveTo( oldPos );
+
+    }
+
+    /** 
+     * Move vertices directly in geometry, i.e. for something 
+     * NOTE: normally, you will want to use a matrix transform to position objects.
+     * @param {glMatrix.vec3[]} vertices flattened vertex array.
+     * @param {glMatrix.vec3} pos the new position measured from object centroid.
+     */
+    computeMove ( vertices, pos ) {
+
+        let center = this.computeCentroid( vertices );
+
+        let delta = [
+
+            center[ 0 ] - pos[ 0 ],
+
+            center[ 1 ] - pos[ 1 ],
+
+            center[ 2 ] - pos[ 2 ]
+
+        ];
+
+        for ( let i = 0; i < vertices.length; i += 3 ) {
+
+            vertices[i] = delta[ 0 ];
+
+            vertices[ i + 1 ] = delta[ 1 ];
+
+            vertices[ i + 2 ] = delta[ 2 ];
+
+        }
+
+    }
+
+    /* 
+     * ---------------------------------------
+     * GEOMETRY CREATORS
+     * ---------------------------------------
+     */
 
     /** 
      * Given a set of 3d coordinates, compute a triangle fan around the Centroid for those coordinates.
@@ -1341,69 +1403,6 @@ class GeometryPool {
         }
 
     }
-
-    /* 
-     * ---------------------------------------
-     * GEOMETRY TRANSFORMATIONS
-     * ---------------------------------------
-     */
-
-    /** 
-     * Scale vertices directly, without changing position.
-     * @param {glMatrix.vec3[]} vertices the input positions.
-     * @param {Number} scale the value to scale by (> 0).
-     */
-    computeScale ( vertices, scale ) {
-
-        let oldPos = this.getCenter( vertices );
-
-        for ( let i = 0; i < vertices.length; i++ ) {
-
-            vertices[ i ] *= scale;
-
-        }
-
-        this.moveTo( oldPos );
-
-    }
-
-    /** 
-     * Move vertices directly in geometry, i.e. for something 
-     * NOTE: normally, you will want to use a matrix transform to position objects.
-     * @param {glMatrix.vec3[]} vertices flattened vertex array.
-     * @param {glMatrix.vec3} pos the new position measured from object centroid.
-     */
-    computeMove ( vertices, pos ) {
-
-        let center = this.computeCentroid( vertices );
-
-        let delta = [
-
-            center[ 0 ] - pos[ 0 ],
-
-            center[ 1 ] - pos[ 1 ],
-
-            center[ 2 ] - pos[ 2 ]
-
-        ];
-
-        for ( let i = 0; i < vertices.length; i += 3 ) {
-
-            vertices[i] = delta[ 0 ];
-
-            vertices[ i + 1 ] = delta[ 1 ];
-
-            vertices[ i + 2 ] = delta[ 2 ];
-
-        }
-
-    }
-
-    /* 
-     * ---------------------------------------
-     * GEOMETRY CREATORS
-     * ---------------------------------------
-     */
 
     /** 
      * WebGL point cloud (particle system).
@@ -1653,6 +1652,7 @@ class GeometryPool {
                         break;
 
                     case list.CYLINDER:
+                    case list.PRISM:
 
                         if ( startSlice > 0 && lat <= startSlice ) {
 
@@ -1688,6 +1688,7 @@ class GeometryPool {
 
                     case list.TOPDOME:
                     case list.DOME:
+                    case list.PYRAMID:
 
                         y = cosTheta / 2;
 
@@ -1886,7 +1887,6 @@ class GeometryPool {
 
     }
 
-
     /** 
      * Type DOME.
      * rendered as GL_TRIANGLES.
@@ -2082,15 +2082,21 @@ class GeometryPool {
 
         let vertices = [], indices  = [], normals = [], texCoords = [], tangents = [];
 
+        if ( prim.divisions[ 0 ] < 4 || prim.divisions[ 1 ] < 4 || prim.divisions[ 2 ] < 4 ) {
+
+            console.error( 'GeometryPool::geometryCapsule(): invalid number of divisions for ' + prim.name + ' (must be 4+ in each dimension' );
+
+        }
+
         // Radius is measured along the x axis, height along y axis.
 
         let radius = prim.dimensions[ 0 ] || 0.5,
 
         height = prim.dimensions[ 1 ] || 1.0,
 
-        segmentHeight = prim.divisions[ 0 ] || 12,
+        segmentHeight = prim.divisions[ 0 ] || 12, // divisions along x
 
-        numSegments = prim.divisions[ 1 ] || 12;
+        numSegments = prim.divisions[ 1 ] || 12;   // divisions along y
 
         // Compute a capsule ring.
 
@@ -2126,11 +2132,15 @@ class GeometryPool {
 
         let ringIncr = 1.0 / ( segmentHeight - 1 );
 
+        // Top.
+
         for( let r = 0; r < segmentHeight / 2; r++ ) {
 
             calculateRing( numSegments, Math.sin( Math.PI * r * ringIncr), Math.sin( Math.PI * ( r * ringIncr - 0.5 ) ), -0.5 );
 
         }
+
+        // Middle.
 
         for( let r = 0; r < ringsBody; r++ ) {
 
@@ -2138,11 +2148,15 @@ class GeometryPool {
 
         }
 
+        // Bottom.
+
         for( let r = segmentHeight / 2; r < segmentHeight; r++ ) {
 
-            calculateRing( numSegments, Math.sin( Math.PI * r * ringIncr), Math.sin( Math.PI * ( r * ringIncr - 0.5 ) ), +0.5);
+            calculateRing( numSegments, Math.sin( Math.PI * r * ringIncr), Math.sin( Math.PI * ( r * ringIncr - 0.5 ) ), +0.5 );
 
         }
+
+        // Compute indices.
 
         for( let r = 0; r < ringsTotal - 1; r++ ) {
 
@@ -2922,8 +2936,6 @@ class GeometryPool {
 
         createUV( vertices, texCoords );
 
-        ////////////console.log(" ICOSPHERE VERTICES: " + vertices.length + " texCoords:" + texCoords.length)
-
         // Scale if necessary.
 
         if ( radius != 1 ) {
@@ -3208,7 +3220,83 @@ class GeometryPool {
      */
     geometryPrism( prim ) {
 
-        // TODO code needs to be written.
+        let g = null;
+
+        let oldDivisions = [ prim.divisions[ 0 ], prim.divisions[ 1 ], prim.divisions[ 2 ] ];
+
+        if ( prim.applyTexToFace === true ) {
+
+            // Use the Sphere creator, and create caps.
+
+            // Force a minimal Cylinder (note that this invalidates divisions in the xz direction.
+
+            prim.divisions = [ 3, 2, 3 ];
+
+            g = this.geometrySphere( prim );
+
+            // Multiply texture coordinates by 3.
+
+            for ( let i = 0; i < g.texCoords.length; i += 2 ) {
+
+                let tc = g.texCoords[ i ] * 3;
+
+                if ( tc >= 2 ) {
+
+                    tc -= 2;
+
+                } 
+
+                g.texCoords[ i ] = tc;
+
+            }
+
+            // Add on vertices at start and end
+
+            let ry = prim.dimensions[ 1 ] / 2;
+
+            // Top cap.            
+
+            let ln = g.vertices.length / 3;
+
+            ln = g.vertices.length / 3;
+
+            g.vertices = this.util.concatArr( g.vertices, [ g.vertices[ 0 ], -ry, g.vertices[ 2 ], g.vertices[ 3 ], -ry, g.vertices[ 5 ], g.vertices[ 6 ], -ry, g.vertices[ 8 ] ] );
+
+            g.normals = this.util.concatArr( g.normals, [ 0, -1, 0, 0, -1, 0, 0, -1, 0 ] );
+
+            g.texCoords = this.util.concatArr( g.texCoords, [ 0, 1.0, 1.0, 1.0, 0.5, 0 ] );
+
+            g.indices = this.util.concatArr( g.indices, [ ln, ln + 1, ln + 2 ] );
+
+            // Bottom cap.
+
+            ln = g.vertices.length / 3;
+
+            g.vertices = this.util.concatArr( g.vertices, [ g.vertices[ 0 ], ry, g.vertices[ 2 ], g.vertices[ 3 ], ry, g.vertices[ 5 ], g.vertices[ 6 ], ry, g.vertices[ 8 ] ] );
+
+            g.normals = this.util.concatArr( g.normals, [ 0, 1, 0, 0, 1, 0, 0, 1, 0 ] );
+
+            g.texCoords = this.util.concatArr( g.texCoords, [ 0, 1.0, 1.0, 1.0, 0.5, 0 ] );
+
+            g.indices = this.util.concatArr( g.indices, [ ln, ln + 1, ln + 2 ] );
+
+        } else {
+
+            // Use the Capsule creator, and flatten out the top and bottom point. NOTE: slightly bent.
+
+            prim.divisions = [ 4, 4, 4 ];
+
+            g = this.geometryCapsule( prim );
+
+            // Flatten the first and last point.
+
+            g.vertices[ 1 ] = g.vertices[ 4 ] = g.vertices[ 7 ] = g.vertices[ 10 ] = g.vertices[ 13 ];
+
+            g.vertices[ 106 ] = g.vertices[ 103 ] = g.vertices[ 100 ] = g.vertices[ 97 ] = g.vertices[ 94 ];
+
+        }
+
+        return g;
 
     }
 
@@ -3222,6 +3310,40 @@ class GeometryPool {
 
         // TODO: return upper half of icosohedron, and close. (possibly by setting 
         // bottom half to a comm y value)
+
+        let oldDivisions = [ prim.divisions[ 0 ], prim.divisions[ 1 ], prim.divisions[ 2 ] ];
+
+        prim.divisions = [ 3, 2, 3 ];
+
+        let g = this.geometrySphere( prim );
+
+        // TODO: THIS SHOULD PROBABLY BE HARD-CODED - ICOSPHERE IS SKEWED AT ENDS IN TEXTURE COORDS.
+
+        // TODO: DEFINE PLUS AND MINUS TEXTURE FACES
+
+        let vertices = [
+            // Front face
+            0.0,  1.0,  0.0,
+            -1.0, -1.0,  1.0,
+            1.0, -1.0,  1.0,
+            // Right face
+            0.0,  1.0,  0.0,
+            1.0, -1.0,  1.0,
+            1.0, -1.0, -1.0,
+            // Back face
+            0.0,  1.0,  0.0,
+            1.0, -1.0, -1.0,
+            -1.0, -1.0, -1.0,
+            // Left face
+            0.0,  1.0,  0.0,
+            -1.0, -1.0, -1.0,
+            -1.0, -1.0,  1.0
+        ];
+
+        window.g = g;
+
+
+        return g;
 
     }
 
