@@ -3311,39 +3311,149 @@ class GeometryPool {
         // TODO: return upper half of icosohedron, and close. (possibly by setting 
         // bottom half to a comm y value)
 
-        let oldDivisions = [ prim.divisions[ 0 ], prim.divisions[ 1 ], prim.divisions[ 2 ] ];
-
-        prim.divisions = [ 3, 2, 3 ];
-
-        let g = this.geometrySphere( prim );
-
-        // TODO: THIS SHOULD PROBABLY BE HARD-CODED - ICOSPHERE IS SKEWED AT ENDS IN TEXTURE COORDS.
-
-        // TODO: DEFINE PLUS AND MINUS TEXTURE FACES
 
         let vertices = [
-            // Front face
-            0.0,  1.0,  0.0,
-            -1.0, -1.0,  1.0,
-            1.0, -1.0,  1.0,
-            // Right face
-            0.0,  1.0,  0.0,
-            1.0, -1.0,  1.0,
-            1.0, -1.0, -1.0,
-            // Back face
-            0.0,  1.0,  0.0,
-            1.0, -1.0, -1.0,
-            -1.0, -1.0, -1.0,
-            // Left face
-            0.0,  1.0,  0.0,
-            -1.0, -1.0, -1.0,
-            -1.0, -1.0,  1.0
+
+           // -0.5,  0.5,  0.5, // top -> 0
+           //  0.5,  0.5, -0.5,  // back  bottom right -> 1
+           //  0.5,  0.5,  0.5,  // front bottom right -> 2
+           // -0.5,  0.5,  0.5,  // front bottom left -> 3
+           // -0.5,  0.5, -0.5,  // back bottom left -> 4
+
+            // front, 0, 3, 2
+            -0.0, -0.5,  0.0, // top -> 0
+            -0.5,  0.5,  0.5,  // front bottom left -> 3
+             0.5,  0.5,  0.5,  // front bottom right -> 2
+
+             // left 0, 4, 3
+            -0.0, -0.5,  0.0, // top -> 0
+            -0.5,  0.5, -0.5,  // back bottom left -> 4
+            -0.5,  0.5,  0.5,  // front bottom left -> 3                      
+
+            // back, 0, 1, 4
+            -0.0, -0.5,  0.0, // top -> 0
+             0.5,  0.5, -0.5,  // back  bottom right -> 1            
+            -0.5,  0.5, -0.5,  // back bottom left -> 4
+
+            // right, 0, 1, 2
+            -0.0, -0.5,  0.0, // top -> 0            
+             0.5,  0.5, -0.5,  // back  bottom right -> 1
+             0.5,  0.5,  0.5,  // front bottom right -> 2
+
+            // base ( 2 triangles)
+
+            // 2, 3, 4
+             0.5,  0.5,  0.5,  // front bottom right -> 2
+            -0.5,  0.5,  0.5,  // front bottom left -> 3
+            -0.5,  0.5, -0.5,  // back bottom left -> 4            
+
+            // 2, 4, 1
+             0.5,  0.5,  0.5,  // front bottom right -> 2
+            -0.5,  0.5, -0.5,  // back bottom left -> 4            
+             0.5,  0.5, -0.5,  // back  bottom right -> 1
+
         ];
 
-        window.g = g;
+        // Scale relative to dimensions.
 
+        for ( let i = 0; i < vertices.length; i += 3 ) {
 
-        return g;
+            vertices[ i ] *= prim.dimensions[ 0 ],
+
+            vertices[ i + 1 ] *= prim.dimensions[ 1 ],
+
+            vertices[ i + 2 ] *= prim.dimensions[ 2 ];
+
+        }
+
+        let indices = [
+
+            0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17
+
+        ];
+
+        let texCoords = [], normals = [], tangents = [];
+
+        if ( prim.applyTexToFace === true ) {
+
+            texCoords = [
+
+                // front 0, 3, 2
+                0.5, 0.0,
+                0.0, 1.0,
+                1.0, 1.0,
+
+                // left 0, 4, 3
+                0.5, 0.0,
+                0.0, 1.0,
+                1.0, 1.0,
+
+                // back, 0, 1, 4
+                0.5, 0.0,
+                0.0, 1.0,
+                1.0, 1.0,
+
+                // right 0, 1, 2
+                0.5, 0.0,
+                0.0, 1.0,
+                1.0, 1.0,                
+
+                // base 2, 3, 4
+                1.0, 1.0,
+                0.0, 1.0,
+                0.0, 0.0,
+
+                // base 2, 4, 1 
+                1.0, 1.0,
+                0.0, 0.0,
+                1.0, 0.0
+
+            ];
+
+        } else {
+
+            //3 = 0 or 1.0
+            //2 = 0.25
+            //1 = 0.5
+            //4 = 0.75
+
+            texCoords = [
+
+                // front 0, 3, 2
+                0.125, 0.0,
+                0.0, 1.0,
+                0.25, 1.0,
+
+                // left 0, 4, 3
+                0.875, 0.0,
+                0.75, 1.0,
+                1.0, 1.0,
+
+                // back, 0, 1, 4
+                0.625, 0.0,
+                0.5, 1.0,
+                0.75, 1.0,
+
+                // right 0, 1, 2
+                0.375, 0.0,
+                0.5, 1.0,
+                0.25, 1.0,                
+
+                // base 2, 3, 4
+                1.0, 1.0,
+                0.0, 1.0,
+                0.0, 0.0,
+
+                // base 2, 4, 1 
+                1.0, 1.0,
+                0.0, 0.0,
+                1.0, 0.0
+
+            ];
+
+        }
+
+        return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
 
     }
 

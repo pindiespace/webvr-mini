@@ -218,7 +218,7 @@
 
         "description": "closed prism",
 
-        "dimensions" : [ "2", "2", "2", "0", "0" ],
+        "dimensions" : [ "1", "1", "1", "0", "0" ],
 
         "divisions" : [ "3", "22", "3", "0", "0" ],
 
@@ -236,7 +236,7 @@
 
         "useColorArray" : "false",
 
-        "useFaceTextures" : "true",
+        "useFaceTextures" : "false",
 
         "useLighting" : "true",
 
