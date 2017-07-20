@@ -1046,167 +1046,26 @@ class GeometryPool {
     }
 
     /** 
-     * Compute texture coordinates for a mesh. 
-     * http://answers.unity3d.com/questions/64410/generating-uvs-for-a-scripted-mesh.html
-     * TODO: get valid results here!   
-     * @param {glMatrix.vec3[]} vertices the current 3d position coordinates.
-     * @param {Array[gl.UNSIGNED_INT|gl.UNSIGNED_SHORT]} current indices into the vertices.
-     * @param {Number} scale scaling factor for texture coordinates.
+     * For shapes without a defined polygon building block, just
+     * wrap textures on a quad.
+     * @param {glMatrix.vec3[]} vertices. vertices the current 3d position coordinates.
+     * @returns {glmatrix.vec2} an array of texture coordinates.
      */
-    computeTexCoords2 ( vertices, indices, texCoords, scale = 1.0 ) {
+    computeTexQuads ( vertices, texCoords ) {
 
-        let util = this.util;
+        let tCoords = [];
 
-        let vec3 = this.glMatrix.vec3;
+        for ( let i = 0; i < vertices.length; i += 18 ) {
 
-        let directions = this.directions;
+            tCoords.push( 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1 );
 
-        let i0, i1, i2, v0, v1, v2, side1, side2, direction, facing;
-
-        let Facing = { Up: 0, Forward: 1, Right: 2 };
-
-        let tCoords = new Array( vertices.length * 2 / 3 );
-
-        for ( let i = 0; i < indices.length; i += 3 ) {
-
-            let i0 = i,
-
-            i1 = i + 1,
-
-            i2 = i + 2;
-
-            v0 = this.util.getArr( vertices, i0, 3 ),
-
-            v1 = this.util.getArr( vertices, i1, 3 ),
-
-            v2 = this.util.getArr( vertices, i2, 3 );
-
-            side1 = vec3.sub( [ 0, 0, 0 ], v1, v0 );
-
-            side2 = vec3.sub( [ 0, 0, 0 ], v2, v0 );
-
-            direction = vec3.cross( [ 0, 0, 0 ], side1, side2 );
-
-            facing = facingDirection( direction );
-
-            // NOTE: replace with : Array.prototype.push.apply( indices, iIndices );
-
-            switch ( facing ) {
-
-                case Facing.Forward:
-
-                    tCoords[i0] = scaledUV( v0[ 0 ], v0[ 1 ], scale );
-
-                    tCoords[i1] = scaledUV( v1[ 0 ], v1[ 1 ], scale );
-
-                    tCoords[i2] = scaledUV( v2[ 0 ], v2[ 1 ], scale );
-
-                    break;
-
-                case Facing.down: // ???????????? TODO: ADDED IS THIS CORRECT NOT IN facingDirection()T????
-
-                    tCoords[i0] = scaledUV( v0[ 0 ], v0[ 2 ], scale );
-
-                    tCoords[i1] = scaledUV( v1[ 0 ], v1[ 2 ], scale );
-
-                    tCoords[i2] = scaledUV( v2[ 0 ], v2[ 2 ], scale );
-
-                    break;
-
-                case Facing.up:
-
-                    tCoords[i0] = scaledUV( v0[ 1 ], v0[ 2 ], scale );
-
-                    tCoords[i1] = scaledUV( v1[ 1 ], v1[ 2 ], scale );
-
-                    tCoords[i2] = scaledUV( v2[ 1 ], v2[ 2 ], scale );
-
-                    break;
-
-                case Facing.right:
-
-                    tCoords[i0] = scaledUV(v0[ 2 ], v0[ 1 ], scale );
-
-                    tCoords[i1] = scaledUV(v1[ 2 ], v1[ 1 ], scale );
-
-                    tCoords[i2] = scaledUV(v2[ 2 ], v2[ 1], scale );
-
-                    break;
-
-            }
-
-
-        } // end of for loop    
+        }
 
         texCoords = tCoords;
 
-        function facesThisWay( v, dir, p, maxDot, ret ) {
-
-            let t = vec3.dot( [ 0, 0, 0 ], v, dir );
-
-            if ( t > maxDot ) {
-
-             //ret = p;
-
-             //maxDot = t;
-
-             return {
-                ret: p,
-                maxDot: t
-            };
-
-         }
-
-         return false;
-
-        }
-     
-        function facingDirection( v ) {
-
-            var ret = Facing.Up, val;
-
-            let maxDot = Number.NegativeInfinity;
-
-            if ( ! facesThisWay( v, directions.RIGHT, Facing.Right, maxDot, ret ) ) {
-
-                val = facesThisWay( v, directions.LEFT, Facing.Right, maxDot, ret );
-
-                ret = val.ret, maxDot = val.maxDot
-
-            }
-         
-            if ( ! facesThisWay( v, directions.FORWARD, Facing.Forward, maxDot, ret ) ) {
-
-                val = facesThisWay( v, directions.BACK, Facing.Forward, maxDot, ret );
-
-                ret = val.ret, maxDot = val.maxDot;
-
-            }
-         
-            if ( ! facesThisWay( v, directions.UP, Facing.Up, maxDot, ret ) ) {
-
-                val = facesThisWay( v, directions.DOWN, Facing.Up, maxDot, ret );
-
-                ret = val.ret, maxDot = val.maxDot;
-
-            }
-         
-            return ret;
-
-        }
-     
-        function scaledUV( uv1, uv2, scale ) {
-
-            return [ uv1 / scale, uv2 / scale ];
-
-        }
-
-        // Return computed texCoords
-
-        return texCoords;
+        return tCoords;
 
     }
-
 
     /** 
      * Create default colors for Prim color array. This can also be used 
@@ -1554,6 +1413,12 @@ class GeometryPool {
         let vec3 = this.glMatrix.vec3,
 
         geo = prim.geometry;
+
+        if ( prim.applyTexToFace === true ) {
+
+            console.warn( 'GeometryPool::geometrySphere(): cannot apply textures to individual faces of Sphere-derived shapes' );
+
+        }
 
         // Shortcuts to Prim data arrays.
 
@@ -2220,6 +2085,12 @@ class GeometryPool {
 
         let geo = prim.geometry;
 
+        if ( prim.applyTexToFace === false ) {
+
+            console.warn( 'GeometryPool::geometryCube(): textures can only apply to individual faces of Cube-derived shapes' );
+
+        }
+
         // Shortcuts to Prim data arrays
 
         let vertices = [], indices  = [], normals = [], texCoords = [], tangents = [];
@@ -2761,6 +2632,12 @@ class GeometryPool {
 
         const side = this.directions;
 
+        if ( prim.applyTexToFace === true ) {
+
+            console.warn( 'GeometryPool::geometryIcoSphere(): cannot apply textures to individual faces of IcoSphere-derived shapes' );
+
+        }
+
         // Size and divisions. After making the object, subdivide further to match divisions.
 
         let subdivisions;
@@ -3178,8 +3055,6 @@ class GeometryPool {
 
             return t;
         }
-
-        /////////////console.log("ICOSPHERE: vertices:" + vertices.length + " TANGENTS:" + tangents.length);
 
         // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
@@ -3847,22 +3722,6 @@ class GeometryPool {
         // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
         return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
-
-    }
-
-    geometryTunnel ( prim ) {
-
-        // TODO: write
-
-    }
-
-    /** 
-     * Type SPRING.
-     * a Torus that doesn't close
-     */
-    geometrySpring ( prim ) {
-
-        // TODO: write
 
     }
 

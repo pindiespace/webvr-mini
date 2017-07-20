@@ -164,7 +164,7 @@
 
         "useColorArray" : "false",
 
-        "useFaceTextures" : "false",
+        "useFaceTextures" : "true",
 
         "useLighting" : "true",
 
@@ -792,7 +792,7 @@
 
         "divisions" : [ "10", "10", "10", "0" ],
 
-        "position" : [ "3.0", "-2.7", "-1" ],
+        "position" : [ "4.0", "-2.7", "1" ],
 
         "acceleration" : [ "0", "0", "0" ],
 

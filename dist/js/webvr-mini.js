@@ -13681,165 +13681,26 @@
 	        }
 
 	        /** 
-	         * Compute texture coordinates for a mesh. 
-	         * http://answers.unity3d.com/questions/64410/generating-uvs-for-a-scripted-mesh.html
-	         * TODO: get valid results here!   
-	         * @param {glMatrix.vec3[]} vertices the current 3d position coordinates.
-	         * @param {Array[gl.UNSIGNED_INT|gl.UNSIGNED_SHORT]} current indices into the vertices.
-	         * @param {Number} scale scaling factor for texture coordinates.
+	         * For shapes without a defined polygon building block, just
+	         * wrap textures on a quad.
+	         * @param {glMatrix.vec3[]} vertices. vertices the current 3d position coordinates.
+	         * @returns {glmatrix.vec2} an array of texture coordinates.
 	         */
 
 	    }, {
-	        key: 'computeTexCoords2',
-	        value: function computeTexCoords2(vertices, indices, texCoords) {
-	            var scale = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 1.0;
+	        key: 'computeTexQuads',
+	        value: function computeTexQuads(vertices, texCoords) {
 
+	            var tCoords = [];
 
-	            var util = this.util;
+	            for (var i = 0; i < vertices.length; i += 18) {
 
-	            var vec3 = this.glMatrix.vec3;
-
-	            var directions = this.directions;
-
-	            var i0 = void 0,
-	                i1 = void 0,
-	                i2 = void 0,
-	                v0 = void 0,
-	                v1 = void 0,
-	                v2 = void 0,
-	                side1 = void 0,
-	                side2 = void 0,
-	                direction = void 0,
-	                facing = void 0;
-
-	            var Facing = { Up: 0, Forward: 1, Right: 2 };
-
-	            var tCoords = new Array(vertices.length * 2 / 3);
-
-	            for (var i = 0; i < indices.length; i += 3) {
-
-	                var _i2 = i,
-	                    _i3 = i + 1,
-	                    _i4 = i + 2;
-
-	                v0 = this.util.getArr(vertices, _i2, 3), v1 = this.util.getArr(vertices, _i3, 3), v2 = this.util.getArr(vertices, _i4, 3);
-
-	                side1 = vec3.sub([0, 0, 0], v1, v0);
-
-	                side2 = vec3.sub([0, 0, 0], v2, v0);
-
-	                direction = vec3.cross([0, 0, 0], side1, side2);
-
-	                facing = facingDirection(direction);
-
-	                // NOTE: replace with : Array.prototype.push.apply( indices, iIndices );
-
-	                switch (facing) {
-
-	                    case Facing.Forward:
-
-	                        tCoords[_i2] = scaledUV(v0[0], v0[1], scale);
-
-	                        tCoords[_i3] = scaledUV(v1[0], v1[1], scale);
-
-	                        tCoords[_i4] = scaledUV(v2[0], v2[1], scale);
-
-	                        break;
-
-	                    case Facing.down:
-	                        // ???????????? TODO: ADDED IS THIS CORRECT NOT IN facingDirection()T????
-
-	                        tCoords[_i2] = scaledUV(v0[0], v0[2], scale);
-
-	                        tCoords[_i3] = scaledUV(v1[0], v1[2], scale);
-
-	                        tCoords[_i4] = scaledUV(v2[0], v2[2], scale);
-
-	                        break;
-
-	                    case Facing.up:
-
-	                        tCoords[_i2] = scaledUV(v0[1], v0[2], scale);
-
-	                        tCoords[_i3] = scaledUV(v1[1], v1[2], scale);
-
-	                        tCoords[_i4] = scaledUV(v2[1], v2[2], scale);
-
-	                        break;
-
-	                    case Facing.right:
-
-	                        tCoords[_i2] = scaledUV(v0[2], v0[1], scale);
-
-	                        tCoords[_i3] = scaledUV(v1[2], v1[1], scale);
-
-	                        tCoords[_i4] = scaledUV(v2[2], v2[1], scale);
-
-	                        break;
-
-	                }
-	            } // end of for loop    
+	                tCoords.push(0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1);
+	            }
 
 	            texCoords = tCoords;
 
-	            function facesThisWay(v, dir, p, maxDot, ret) {
-
-	                var t = vec3.dot([0, 0, 0], v, dir);
-
-	                if (t > maxDot) {
-
-	                    //ret = p;
-
-	                    //maxDot = t;
-
-	                    return {
-	                        ret: p,
-	                        maxDot: t
-	                    };
-	                }
-
-	                return false;
-	            }
-
-	            function facingDirection(v) {
-
-	                var ret = Facing.Up,
-	                    val;
-
-	                var maxDot = Number.NegativeInfinity;
-
-	                if (!facesThisWay(v, directions.RIGHT, Facing.Right, maxDot, ret)) {
-
-	                    val = facesThisWay(v, directions.LEFT, Facing.Right, maxDot, ret);
-
-	                    ret = val.ret, maxDot = val.maxDot;
-	                }
-
-	                if (!facesThisWay(v, directions.FORWARD, Facing.Forward, maxDot, ret)) {
-
-	                    val = facesThisWay(v, directions.BACK, Facing.Forward, maxDot, ret);
-
-	                    ret = val.ret, maxDot = val.maxDot;
-	                }
-
-	                if (!facesThisWay(v, directions.UP, Facing.Up, maxDot, ret)) {
-
-	                    val = facesThisWay(v, directions.DOWN, Facing.Up, maxDot, ret);
-
-	                    ret = val.ret, maxDot = val.maxDot;
-	                }
-
-	                return ret;
-	            }
-
-	            function scaledUV(uv1, uv2, scale) {
-
-	                return [uv1 / scale, uv2 / scale];
-	            }
-
-	            // Return computed texCoords
-
-	            return texCoords;
+	            return tCoords;
 	        }
 
 	        /** 
@@ -13868,9 +13729,9 @@
 
 	            // Otherwise, create colors as a normals map.
 
-	            for (var _i5 = 0; _i5 < coords.length; _i5 += 3) {
+	            for (var _i2 = 0; _i2 < coords.length; _i2 += 3) {
 
-	                c.push(coords[_i5], coords[_i5 + 1], coords[_i5 + 2], 1.0);
+	                c.push(coords[_i2], coords[_i2 + 1], coords[_i2 + 2], 1.0);
 	            }
 
 	            return c;
@@ -13976,13 +13837,13 @@
 
 	            var env = lenv - 1;
 
-	            for (var _i6 = 1; _i6 < lenv; _i6++) {
+	            for (var _i3 = 1; _i3 < lenv; _i3++) {
 
-	                var p1 = _i6 - 1;
+	                var p1 = _i3 - 1;
 
-	                var p2 = _i6;
+	                var p2 = _i3;
 
-	                if (_i6 === lenv - 1) {
+	                if (_i3 === lenv - 1) {
 
 	                    p2 = 0;
 	                }
@@ -14167,6 +14028,11 @@
 
 	            var vec3 = this.glMatrix.vec3,
 	                geo = prim.geometry;
+
+	            if (prim.applyTexToFace === true) {
+
+	                console.warn('GeometryPool::geometrySphere(): cannot apply textures to individual faces of Sphere-derived shapes');
+	            }
 
 	            // Shortcuts to Prim data arrays.
 
@@ -14824,6 +14690,11 @@
 
 	            var geo = prim.geometry;
 
+	            if (prim.applyTexToFace === false) {
+
+	                console.warn('GeometryPool::geometryCube(): textures can only apply to individual faces of Cube-derived shapes');
+	            }
+
 	            // Shortcuts to Prim data arrays
 
 	            var vertices = [],
@@ -14987,9 +14858,9 @@
 
 	                for (var _j = 0; _j < nv; _j++) {
 
-	                    for (var _i7 = 0; _i7 < nu; _i7++) {
+	                    for (var _i4 = 0; _i4 < nu; _i4++) {
 
-	                        var n = vertShift + _j * (nu + 1) + _i7;
+	                        var n = vertShift + _j * (nu + 1) + _i4;
 
 	                        // Indices for entire prim.
 
@@ -15119,43 +14990,43 @@
 	                        break;
 	                }
 
-	                for (var _i8 = 0; _i8 < positions.length; _i8++) {
+	                for (var _i5 = 0; _i5 < positions.length; _i5++) {
 
 	                    switch (prim.dimensions[3]) {
 
 	                        case side.FRONT:
 
-	                            positions[_i8][2] = dSide * Math.cos(positions[_i8][0]) * prim.dimensions[4];
+	                            positions[_i5][2] = dSide * Math.cos(positions[_i5][0]) * prim.dimensions[4];
 
 	                            break;
 
 	                        case side.BACK:
 
-	                            positions[_i8][2] = dSide * Math.cos(positions[_i8][0]) * prim.dimensions[4];
+	                            positions[_i5][2] = dSide * Math.cos(positions[_i5][0]) * prim.dimensions[4];
 
 	                            break;
 
 	                        case side.LEFT:
 
-	                            positions[_i8][0] = dSide * Math.cos(positions[_i8][2]) * prim.dimensions[4];
+	                            positions[_i5][0] = dSide * Math.cos(positions[_i5][2]) * prim.dimensions[4];
 
 	                            break;
 
 	                        case side.RIGHT:
 
-	                            positions[_i8][0] = dSide * Math.cos(positions[_i8][2]) * prim.dimensions[4];
+	                            positions[_i5][0] = dSide * Math.cos(positions[_i5][2]) * prim.dimensions[4];
 
 	                            break;
 
 	                        case side.TOP:
 
-	                            positions[_i8][1] = dSide * Math.cos(positions[_i8][0]) * prim.dimensions[4];
+	                            positions[_i5][1] = dSide * Math.cos(positions[_i5][0]) * prim.dimensions[4];
 
 	                            break;
 
 	                        case side.BOTTOM:
 
-	                            positions[_i8][1] = -Math.cos(positions[_i8][0]) * prim.dimensions[4]; // SEEN FROM INSIDE< CORRECT
+	                            positions[_i5][1] = -Math.cos(positions[_i5][0]) * prim.dimensions[4]; // SEEN FROM INSIDE< CORRECT
 
 	                            break;
 
@@ -15361,6 +15232,11 @@
 	            var list = this.typeList;
 
 	            var side = this.directions;
+
+	            if (prim.applyTexToFace === true) {
+
+	                console.warn('GeometryPool::geometryIcoSphere(): cannot apply textures to individual faces of IcoSphere-derived shapes');
+	            }
 
 	            // Size and divisions. After making the object, subdivide further to match divisions.
 
@@ -15656,9 +15532,9 @@
 
 	            function createVertexLine(from, to, steps, v, vertices) {
 
-	                for (var _i9 = 1; _i9 <= steps; _i9++) {
+	                for (var _i6 = 1; _i6 <= steps; _i6++) {
 
-	                    vertices[v++] = vec3.lerp([0, 0, 0], from, to, _i9 / steps);
+	                    vertices[v++] = vec3.lerp([0, 0, 0], from, to, _i6 / steps);
 	                }
 
 	                return v;
@@ -15668,7 +15544,7 @@
 
 	            function createLowerStrip(steps, vTop, vBottom, t, triangles) {
 
-	                for (var _i10 = 1; _i10 < steps; _i10++) {
+	                for (var _i7 = 1; _i7 < steps; _i7++) {
 
 	                    triangles[t++] = vBottom;
 
@@ -15702,7 +15578,7 @@
 
 	                triangles[t++] = ++vBottom;
 
-	                for (var _i11 = 1; _i11 <= steps; _i11++) {
+	                for (var _i8 = 1; _i8 <= steps; _i8++) {
 
 	                    triangles[t++] = vTop - 1;
 
@@ -15730,7 +15606,7 @@
 
 	                triangles[t++] = vTop - 1;
 
-	                for (var _i12 = 1; _i12 <= steps; _i12++) {
+	                for (var _i9 = 1; _i9 <= steps; _i9++) {
 
 	                    triangles[t++] = vTop;
 
@@ -15747,8 +15623,6 @@
 
 	                return t;
 	            }
-
-	            /////////////console.log("ICOSPHERE: vertices:" + vertices.length + " TANGENTS:" + tangents.length);
 
 	            // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
@@ -16155,9 +16029,9 @@
 
 	                    // Update the indices to reflect concatenation.
 
-	                    for (var _i13 = 0; _i13 < fan.indices.length; _i13++) {
+	                    for (var _i10 = 0; _i10 < fan.indices.length; _i10++) {
 
-	                        fan.indices[_i13] += len;
+	                        fan.indices[_i10] += len;
 	                    }
 
 	                    indices = indices.concat(fan.indices);
@@ -16168,9 +16042,9 @@
 	                }
 	            } else {
 
-	                for (var _i14 = 0; _i14 < faces.length; _i14++) {
+	                for (var _i11 = 0; _i11 < faces.length; _i11++) {
 
-	                    var vv = faces[_i14]; // indices to vertices
+	                    var vv = faces[_i11]; // indices to vertices
 
 	                    var vvv = []; // saved vertices
 
@@ -16183,13 +16057,13 @@
 
 	                    var center = this.geometry.computeCentroid(vvv);
 
-	                    for (var _i15 = 1; _i15 <= lenv; _i15++) {
+	                    for (var _i12 = 1; _i12 <= lenv; _i12++) {
 
-	                        var p1 = _i15 - 1;
+	                        var p1 = _i12 - 1;
 
-	                        var p2 = _i15;
+	                        var p2 = _i12;
 
-	                        if (_i15 === lenv) {
+	                        if (_i12 === lenv) {
 
 	                            p1 = p2 - 1;
 
@@ -16215,9 +16089,9 @@
 
 	            // Scale.
 
-	            for (var _i16 = 0; _i16 < vertices.length; _i16++) {
+	            for (var _i13 = 0; _i13 < vertices.length; _i13++) {
 
-	                var _vv = vertices[_i16];
+	                var _vv = vertices[_i13];
 
 	                _vv[0] *= w;
 
@@ -16350,22 +16224,6 @@
 
 	            return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
 	        }
-	    }, {
-	        key: 'geometryTunnel',
-	        value: function geometryTunnel(prim) {}
-
-	        // TODO: write
-
-	        /** 
-	         * Type SPRING.
-	         * a Torus that doesn't close
-	         */
-
-	    }, {
-	        key: 'geometrySpring',
-	        value: function geometrySpring(prim) {}
-
-	        // TODO: write
 
 	        /** 
 	         * Generic 3d shape defined from files (e.g. OBJ model).
@@ -19386,6 +19244,8 @@
 	        // Path to default World JSON file
 
 	        //this.DEFAULT_WORLD_PATH = 'json/default-world.json';
+	        //this.DEFAULT_WORLD_PATH = 'json/gltf-world.json';
+	        //this.DEFAULT_WORLD_PATH = 'json/obj-world.json';
 	        _this.DEFAULT_WORLD_PATH = 'json/tangled-world.json';
 
 	        // Stats on World operation.

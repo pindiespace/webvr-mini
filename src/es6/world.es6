@@ -95,6 +95,8 @@ class World extends AssetPool {
         // Path to default World JSON file
 
         //this.DEFAULT_WORLD_PATH = 'json/default-world.json';
+        //this.DEFAULT_WORLD_PATH = 'json/gltf-world.json';
+        //this.DEFAULT_WORLD_PATH = 'json/obj-world.json';
         this.DEFAULT_WORLD_PATH = 'json/tangled-world.json';
 
         // Stats on World operation.
