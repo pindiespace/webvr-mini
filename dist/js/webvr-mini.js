@@ -13681,29 +13681,6 @@
 	        }
 
 	        /** 
-	         * For shapes without a defined polygon building block, just
-	         * wrap textures on a quad.
-	         * @param {glMatrix.vec3[]} vertices. vertices the current 3d position coordinates.
-	         * @returns {glmatrix.vec2} an array of texture coordinates.
-	         */
-
-	    }, {
-	        key: 'computeTexQuads',
-	        value: function computeTexQuads(vertices, texCoords) {
-
-	            var tCoords = [];
-
-	            for (var i = 0; i < vertices.length; i += 18) {
-
-	                tCoords.push(0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1);
-	            }
-
-	            texCoords = tCoords;
-
-	            return tCoords;
-	        }
-
-	        /** 
 	         * Create default colors for Prim color array. This can also be used 
 	         * to generate a normal map or tangent map.
 	         * @param {glMatrix.vec3[]} coords either vertices, normals (normalmap) tangents (tangentmap).
@@ -14031,7 +14008,7 @@
 
 	            if (prim.applyTexToFace === true) {
 
-	                console.warn('GeometryPool::geometrySphere(): cannot apply textures to individual faces of Sphere-derived shapes');
+	                console.warn('GeometryPool::geometrySphere(): cannot apply textures to individual faces of Sphere-derived shapes due to shared indices');
 	            }
 
 	            // Shortcuts to Prim data arrays.
@@ -14842,10 +14819,6 @@
 
 	                        texCoords.push(i / nu, 1.0 - j / nv);
 
-	                        // Normals.
-
-	                        /////////////////let norm = normals[ vertexIndex ];
-
 	                        // Advance Vertex pointer.
 
 	                        ++vertexIndex;
@@ -15235,7 +15208,7 @@
 
 	            if (prim.applyTexToFace === true) {
 
-	                console.warn('GeometryPool::geometryIcoSphere(): cannot apply textures to individual faces of IcoSphere-derived shapes');
+	                console.warn('GeometryPool::geometryIcoSphere(): cannot apply textures to individual faces of IcoSphere-derived shapes due to shared indices');
 	            }
 
 	            // Size and divisions. After making the object, subdivide further to match divisions.
