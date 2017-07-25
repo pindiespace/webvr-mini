@@ -217,7 +217,6 @@ class GeometryPool {
 
     }
 
-
     /** 
      * ---------------------------------------
      * UTILITY
@@ -1531,7 +1530,6 @@ class GeometryPool {
 
                     case list.TOPDOME:
                     case list.DOME:
-                    case list.PYRAMID:
 
                         y = cosTheta / 2;
 
@@ -1677,6 +1675,15 @@ class GeometryPool {
                     normals.push( -n[ 0 ], -n[ 1 ], -n[ 2 ] );
 
                 } else {
+
+                    if ( prim.type === list.CAP ) {
+
+                        n[ 0 ] = n[ 2 ] = 0;
+
+                        n[ 1 ] = 1;
+
+
+                    }
 
                     normals.push( n[ 0 ], n[ 1 ], n[ 2 ] );
                 }
@@ -3171,18 +3178,21 @@ class GeometryPool {
 
             // front, 0, 3, 2
             -0.0, -0.5,  0.0, // top -> 0
-            -0.5,  0.5,  0.5,  // front bottom left -> 3
-             0.5,  0.5,  0.5,  // front bottom right -> 2
+             0.5,  0.5,  0.5,  // front bottom right -> 2            
+             -0.5,  0.5,  0.5,  // front bottom left -> 3
+
 
              // left 0, 4, 3
             -0.0, -0.5,  0.0, // top -> 0
+            -0.5,  0.5,  0.5,  // front bottom left -> 3 
             -0.5,  0.5, -0.5,  // back bottom left -> 4
-            -0.5,  0.5,  0.5,  // front bottom left -> 3                      
+                    
 
             // back, 0, 1, 4
             -0.0, -0.5,  0.0, // top -> 0
-             0.5,  0.5, -0.5,  // back  bottom right -> 1            
-            -0.5,  0.5, -0.5,  // back bottom left -> 4
+            -0.5,  0.5, -0.5,  // back bottom left -> 4             
+            0.5,  0.5, -0.5,  // back  bottom right -> 1            
+
 
             // right, 0, 1, 2
             -0.0, -0.5,  0.0, // top -> 0            
@@ -3192,14 +3202,14 @@ class GeometryPool {
             // base ( 2 triangles)
 
             // 2, 3, 4
-             0.5,  0.5,  0.5,  // front bottom right -> 2
+            -0.5,  0.5, -0.5,  // back bottom left -> 4
             -0.5,  0.5,  0.5,  // front bottom left -> 3
-            -0.5,  0.5, -0.5,  // back bottom left -> 4            
+             0.5,  0.5,  0.5,  // front bottom right -> 2
 
             // 2, 4, 1
-             0.5,  0.5,  0.5,  // front bottom right -> 2
-            -0.5,  0.5, -0.5,  // back bottom left -> 4            
              0.5,  0.5, -0.5,  // back  bottom right -> 1
+            -0.5,  0.5, -0.5,  // back bottom left -> 4            
+             0.5,  0.5,  0.5,  // front bottom right -> 2
 
         ];
 
@@ -3219,6 +3229,7 @@ class GeometryPool {
 
             0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17
 
+
         ];
 
         let texCoords = [], normals = [], tangents = [];
@@ -3228,24 +3239,24 @@ class GeometryPool {
             texCoords = [
 
                 // front 0, 3, 2
-                0.5, 0.0,
-                0.0, 1.0,
-                1.0, 1.0,
+                0.5, 1.0,
+                0.0, 0.0,
+                1.0, 0.0,
 
                 // left 0, 4, 3
-                0.5, 0.0,
-                0.0, 1.0,
-                1.0, 1.0,
+                0.5, 1.0,
+                0.0, 0.0,
+                1.0, 0.0,
 
                 // back, 0, 1, 4
-                0.5, 0.0,
-                0.0, 1.0,
-                1.0, 1.0,
+                0.5, 1.0,
+                0.0, 0.0,
+                1.0, 0.0,
 
                 // right 0, 1, 2
-                0.5, 0.0,
-                0.0, 1.0,
-                1.0, 1.0,                
+                0.5, 1.0,
+                0.0, 0.0,
+                1.0, 0.0,                
 
                 // base 2, 3, 4
                 1.0, 1.0,
@@ -3253,9 +3264,9 @@ class GeometryPool {
                 0.0, 0.0,
 
                 // base 2, 4, 1 
+                1.0, 0.0,                
                 1.0, 1.0,
-                0.0, 0.0,
-                1.0, 0.0
+                0.0, 0.0
 
             ];
 
@@ -3269,24 +3280,24 @@ class GeometryPool {
             texCoords = [
 
                 // front 0, 3, 2
-                0.125, 0.0,
-                0.0, 1.0,
-                0.25, 1.0,
+                0.125, 1.0,
+                0.0, 0.0,
+                0.25, 0.0,
 
                 // left 0, 4, 3
-                0.875, 0.0,
-                0.75, 1.0,
-                1.0, 1.0,
+                0.375, 1.0,
+                0.25, 0.0,
+                0.5, 0.0,
 
                 // back, 0, 1, 4
-                0.625, 0.0,
-                0.5, 1.0,
-                0.75, 1.0,
+                0.625, 1.0,
+                0.5, 0.0,
+                0.75, 0.0,
 
                 // right 0, 1, 2
-                0.375, 0.0,
-                0.5, 1.0,
-                0.25, 1.0,                
+                0.875, 1.0, //875
+                0.75, 0.0,
+                1.0, 0.0,
 
                 // base 2, 3, 4
                 1.0, 1.0,
@@ -3294,13 +3305,46 @@ class GeometryPool {
                 0.0, 0.0,
 
                 // base 2, 4, 1 
+                1.0, 0.0,                
                 1.0, 1.0,
-                0.0, 0.0,
-                1.0, 0.0
+                0.0, 0.0
 
             ];
 
         }
+
+        // Hard-code normals.
+/*
+        normals = [
+
+            0, 0.4472, 0.89443, 
+            0, 0.4472, 0.89443, 
+            0, 0.4472, 0.89443,
+
+            -0.89443, 0.4472, 0,
+            -0.89443, 0.4472, 0,
+            -0.89443, 0.4472, 0,
+
+            0, 0.4472, -0.89443,
+            0, 0.4472, -0.89443,
+            0, 0.4472, -0.89443,
+
+            0.89443, -0.4472, 0,
+            0.89443, -0.4472, 0,
+            0.89443, -0.4472, 0,
+
+            0, 1, 0,
+            0, 1, 0,
+            0, 1, 0,
+
+            0, 1, 0,
+            0, 1, 0,
+            0, 1, 0,
+
+
+        ];
+*/
+
 
         return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
 
