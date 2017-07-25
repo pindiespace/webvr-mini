@@ -15652,19 +15652,26 @@
 
 	            var oldDivisions = [prim.divisions[0], prim.divisions[1], prim.divisions[2]];
 
+	            // Use the Sphere creator, and create caps.
+
+	            // Force a minimal Cylinder (note that this invalidates divisions in the xz direction.
+
+	            prim.divisions = [3, 2, 3];
+
+	            g = this.geometrySphere(prim);
+
+	            // Multiply texture coordinates by 3.
+
 	            if (prim.applyTexToFace === true) {
 
-	                // Use the Sphere creator, and create caps.
+	                //TODO: texture coords flipped for one side of prism.
 
-	                // Force a minimal Cylinder (note that this invalidates divisions in the xz direction.
+	                // -0,  -1, 0,   1, 1, 1,   -1, 1, 1,   -0,  -1, 0,   -1, 1, 1,  -1, 1, -1,  -0,  -1, 0,   -1, 1, -1,   1, 1,-1,  -0,  -1, 0,   1, 1, -1,  1, 1, 1, 
+	                //  0.5, 1,      0, 0,       1, 0,       0.5, 1,       0, 0,      1, 0,       0.5, 1,       0, 0,       1, 0,      0.5, 1,      0, 0,      1, 0   
 
-	                prim.divisions = [3, 2, 3];
+	                var len = g.texCoords.length;
 
-	                g = this.geometrySphere(prim);
-
-	                // Multiply texture coordinates by 3.
-
-	                for (var i = 0; i < g.texCoords.length; i += 2) {
+	                for (var i = 0; i < len; i += 2) {
 
 	                    var tc = g.texCoords[i] * 3;
 
@@ -15675,50 +15682,37 @@
 
 	                    g.texCoords[i] = tc;
 	                }
-
-	                // Add on vertices at start and end
-
-	                var ry = prim.dimensions[1] / 2;
-
-	                // Top cap.            
-
-	                var ln = g.vertices.length / 3;
-
-	                ln = g.vertices.length / 3;
-
-	                g.vertices = this.util.concatArr(g.vertices, [g.vertices[0], -ry, g.vertices[2], g.vertices[3], -ry, g.vertices[5], g.vertices[6], -ry, g.vertices[8]]);
-
-	                g.normals = this.util.concatArr(g.normals, [0, -1, 0, 0, -1, 0, 0, -1, 0]);
-
-	                g.texCoords = this.util.concatArr(g.texCoords, [0, 1.0, 1.0, 1.0, 0.5, 0]);
-
-	                g.indices = this.util.concatArr(g.indices, [ln, ln + 1, ln + 2]);
-
-	                // Bottom cap.
-
-	                ln = g.vertices.length / 3;
-
-	                g.vertices = this.util.concatArr(g.vertices, [g.vertices[0], ry, g.vertices[2], g.vertices[3], ry, g.vertices[5], g.vertices[6], ry, g.vertices[8]]);
-
-	                g.normals = this.util.concatArr(g.normals, [0, 1, 0, 0, 1, 0, 0, 1, 0]);
-
-	                g.texCoords = this.util.concatArr(g.texCoords, [0, 1.0, 1.0, 1.0, 0.5, 0]);
-
-	                g.indices = this.util.concatArr(g.indices, [ln, ln + 1, ln + 2]);
-	            } else {
-
-	                // Use the Capsule creator, and flatten out the top and bottom point. NOTE: slightly bent.
-
-	                prim.divisions = [4, 4, 4];
-
-	                g = this.geometryCapsule(prim);
-
-	                // Flatten the first and last point.
-
-	                g.vertices[1] = g.vertices[4] = g.vertices[7] = g.vertices[10] = g.vertices[13];
-
-	                g.vertices[106] = g.vertices[103] = g.vertices[100] = g.vertices[97] = g.vertices[94];
 	            }
+
+	            // Add on vertices at start and end
+
+	            var ry = prim.dimensions[1] / 2;
+
+	            // Top cap.            
+
+	            var ln = g.vertices.length / 3;
+
+	            ln = g.vertices.length / 3;
+
+	            g.vertices = this.util.concatArr(g.vertices, [g.vertices[0], -ry, g.vertices[2], g.vertices[3], -ry, g.vertices[5], g.vertices[6], -ry, g.vertices[8]]);
+
+	            g.normals = this.util.concatArr(g.normals, [0, -1, 0, 0, -1, 0, 0, -1, 0]);
+
+	            g.texCoords = this.util.concatArr(g.texCoords, [0, 1.0, 1.0, 1.0, 0.5, 0]);
+
+	            g.indices = this.util.concatArr(g.indices, [ln, ln + 1, ln + 2]);
+
+	            // Bottom cap.
+
+	            ln = g.vertices.length / 3;
+
+	            g.vertices = this.util.concatArr(g.vertices, [g.vertices[0], ry, g.vertices[2], g.vertices[3], ry, g.vertices[5], g.vertices[6], ry, g.vertices[8]]);
+
+	            g.normals = this.util.concatArr(g.normals, [0, 1, 0, 0, 1, 0, 0, 1, 0]);
+
+	            g.texCoords = this.util.concatArr(g.texCoords, [0, 1.0, 1.0, 1.0, 0.5, 0]);
+
+	            g.indices = this.util.concatArr(g.indices, [ln, ln + 1, ln + 2]);
 
 	            return g;
 	        }
@@ -15734,9 +15728,8 @@
 	        key: 'geometryPyramid',
 	        value: function geometryPyramid(prim) {
 
-	            // TODO: return upper half of icosohedron, and close. (possibly by setting 
-	            // bottom half to a comm y value)
-
+	            //
+	            var oldDivisions = [prim.divisions[0], prim.divisions[1], prim.divisions[2]];
 
 	            var vertices = [
 

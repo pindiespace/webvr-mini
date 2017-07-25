@@ -182,17 +182,17 @@
 
         "description": "closed prism",
 
-        "dimensions" : [ "1", "1", "1", "0", "0" ],
+        "dimensions" : [ "3", "3", "3", "0", "0" ],
 
         "divisions" : [ "3", "22", "3", "0", "0" ],
 
-        "position" : [ "-3.0", "2.8", "-2" ],
+        "position" : [ "-0.0", "0", "0" ],
 
         "acceleration" : [ "0", "0", "0" ],
 
-        "rotation" : [ "60", "0", "0" ],
+        "rotation" : [ "0", "0", "0" ],
 
-        "angular" : [ "0.5", "0.5", "0" ],
+        "angular" : [ "0", "0.5", "0" ],
 
         "textures" : [ "img/uv-test.png" ],
 
@@ -218,11 +218,11 @@
 
         "description": "closed prism",
 
-        "dimensions" : [ "3", "3", "3", "0", "0" ],
+        "dimensions" : [ "2", "2", "2", "0", "0" ],
 
         "divisions" : [ "3", "22", "3", "0", "0" ],
 
-        "position" : [ "-0", "0.0", "0" ],
+        "position" : [ "-4", "3.8", "-2" ],
 
         "acceleration" : [ "0", "0", "0" ],
 
