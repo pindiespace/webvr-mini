@@ -1,0 +1,16 @@
+
+Starmaps
+
+http://www.skybeautiful.com/downloads/
+
+https://github.com/jaycrossler/StarDatabase
+
+
+CSV TO JSON CONVERTER - best
+
+http://www.convertcsv.com/csv-to-json.htm
+
+
+SIMPLE, BUT DOESN'T WRAP NUMBERS
+
+https://shancarter.github.io/mr-data-converter/
