@@ -127,7 +127,6 @@ class Shader {
 
         };
 
-
         // Max number of times a Prim can fail to add to a Shader.
 
         this.MAX_FAIL = 100; 

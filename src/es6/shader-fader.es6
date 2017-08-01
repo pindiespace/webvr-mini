@@ -64,6 +64,12 @@ class ShaderFader extends Shader {
 
             'uniform vec3 uPOV;',
 
+            // Point size.
+
+            'uniform float uPointSize;',
+
+            // Line size.
+
             // Adjusted positions and normals.
 
             'varying vec3 vPOV;',       // user point of view (camera)
@@ -76,7 +82,12 @@ class ShaderFader extends Shader {
 
             'varying vec4 vVertexColor;',
 
+
             'void main(void) {',
+
+                // GL pointSize
+
+                'gl_PointSize = uPointSize;',
 
                 // View-Model-Position-Projection matrix.
 
@@ -359,6 +370,10 @@ class ShaderFader extends Shader {
 
         uLightingDirection = fsVars.uniform.vec3.uLightingDirection, 
 
+        // Point size, if GL_POINTS is used.
+
+        uPointSize = vsVars.uniform.float.uPointSize,
+
         // World position, also position of camera.
 
         uPOV = vsVars.uniform.vec3.uPOV,
@@ -376,9 +391,6 @@ class ShaderFader extends Shader {
         let easeIn = this.util.easeQuadIn;
 
         let easeType = 0;
-
-        window.vsVars = vsVars;
-        window.fsVars = fsVars;
 
         /* 
          * Set up directional lighting with the primary World light passed to the 
@@ -534,6 +546,10 @@ class ShaderFader extends Shader {
                 gl.enableVertexAttribArray( aTextureCoord );
                 gl.vertexAttribPointer( aTextureCoord, 2, gl.FLOAT, false, 0, 0 );
 
+                // Set pointSize.
+
+                gl.uniform1f( uPointSize, prim.pointSize );
+
                 // Alpha, with easing animation (in this.util).
 
                 gl.uniform1f( uAlpha, prim.alpha );
@@ -640,7 +656,11 @@ class ShaderFader extends Shader {
 
                             }
 
-                            gl.drawElements( gl.TRIANGLES, st[ 2 ], iSize, st[ 1 ] );
+                            if ( prim.drawTris ) gl.drawElements( gl.TRIANGLES, st[ 2 ], iSize, st[ 1 ] );
+
+                            if ( prim.drawPoints ) gl.drawElements( gl.POINTS, st[ 2 ], iSize, st[ 1 ] );
+
+                            if ( prim.drawLines ) gl.drawElements( gl.LINES, st[ 2 ], iSize, st[ 1 ] );
 
                         }
 

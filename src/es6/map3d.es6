@@ -27,9 +27,10 @@ class Map3d extends Mapd {
 
         this.type = {
 
-            CLOUD: 'initPlane',
+            CLOUD: 'initRandom',
 
-            SPHERE: 'initRandom'
+            SPHERE: 'initRandomSphere'
+
         };
 
 
@@ -120,11 +121,62 @@ class Map3d extends Mapd {
 
         } else {
 
-            console.error( 'error creating Map3d using ' + this.type.RANDOM );
+            console.error( 'error creating Map3d using ' + this.type.CLOUD );
 
         }
 
-        return this.map;
+    }
+
+    /** 
+     * Return a set of random UV coordinates.
+     */
+    initRandomSphere( w, h, d, numPoints ) {
+
+        let util = this.util;
+
+        this.mapUV = new Float32Array( numPoints * 2 );
+
+        for ( let i = 0; i < numPoints; i += 2 ) {
+
+            // Distribute evenly over sphere.
+
+            this.mapUV[ i ] = Math.PI * 2 * util.getRand(); // theta or u
+
+            this.mapUV[ i + 1 ] = Math.acos( 2 * util.getRand() - 1 ); // phi or v
+
+        }
+
+        this.map = this.uvToCartesian( this.mapUV, w, h, d );
+
+        //this.initRandom( w, h, d, numPoints )
+
+
+    }
+
+    /** 
+     * Given a uv (latitude, longitude) array, return cartesian coordinate equivalents.
+     */
+    uvToCartesian ( uvPositions, w, h, d ) {
+
+        let m = new Float32Array( 3 * uvPositions.length / 2 );
+
+        let idx = 0;
+
+        for ( let i = 0; i < uvPositions.length; i += 2 ) {
+
+            let u = uvPositions[ i ];
+
+            let v = uvPositions[ i + 1 ];
+
+            m[ idx++ ] = Math.cos( u ) * Math.sin( v ) * w; // x
+
+            m[ idx++ ] = Math.sin( u ) * Math.sin( v ) * h; // y
+
+            m[ idx++ ] = Math.cos( v ) * d; // z
+
+        }
+
+        return m;
 
     }
 

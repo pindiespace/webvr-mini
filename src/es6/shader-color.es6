@@ -67,6 +67,10 @@ class ShaderColor extends Shader {
 
             'uniform vec3 uPOV;',
 
+            // Point size.
+
+            'uniform float uPointSize;',
+
             // Adjusted positions and normals.
 
             'varying vec3 vPOV;',       // user point of view (camera)
@@ -80,9 +84,11 @@ class ShaderColor extends Shader {
 
             'void main(void) {',
 
-            '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);',
+                'gl_PointSize = uPointSize;',
 
-            '    vVertexColor = aVertexColor;',
+                'gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);',
+
+                'vVertexColor = aVertexColor;',
 
                 'vPOV = -uPOV;',
 
@@ -335,7 +341,13 @@ class ShaderColor extends Shader {
 
         directionalColor = light0.directionalColor,
 
-        uPOV = vsVars.uniform.vec3.uPOV; // World Position (also position of camera/POV)
+        // Point size, if GL_POINTS is used.
+
+        uPointSize = vsVars.uniform.float.uPointSize,
+
+        // World Position (also position of camera/POV).
+
+        uPOV = vsVars.uniform.vec3.uPOV; 
 
         // Initialize some local variables.
 
@@ -423,6 +435,10 @@ class ShaderColor extends Shader {
                 gl.uniform3fv( uDirectionalColor, directionalColor );
                 gl.uniform3fv( uPOV, pov.position ); // used for specular highlight
 
+                // Set pointSize.
+
+                gl.uniform1f( uPointSize, prim.pointSize );
+
                 // Alpha, with easing animation (in this.util).
 
                 gl.uniform1f( uAlpha, prim.alpha );
@@ -486,7 +502,11 @@ class ShaderColor extends Shader {
                     gl.uniform3fv( uMatSpecular, m.specular );
                     gl.uniform1f( uMatSpecExp, m.specularExponent );
 
-                    gl.drawElements( gl.TRIANGLES, st[ 2 ], iSize, st[ 1 ] );
+                    if ( prim.drawTris ) gl.drawElements( gl.TRIANGLES, st[ 2 ], iSize, st[ 1 ] );
+
+                    if ( prim.drawPoints ) gl.drawElements( gl.POINTS, st[ 2 ], iSize, st[ 1 ] );
+
+                    if ( prim.drawLines ) gl.drawElements( gl.LINES, st[ 2 ], iSize, st[ 1 ] );
 
                 }
 

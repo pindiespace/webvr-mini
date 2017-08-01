@@ -5373,6 +5373,12 @@
 
 	            'uniform vec3 uPOV;',
 
+	            // Point size.
+
+	            'uniform float uPointSize;',
+
+	            // Line size.
+
 	            // Adjusted positions and normals.
 
 	            'varying vec3 vPOV;', // user point of view (camera)
@@ -5382,6 +5388,10 @@
 	            // Texture coordinates.
 
 	            'varying vec2 vTextureCoord;', 'varying vec4 vVertexColor;', 'void main(void) {',
+
+	            // GL pointSize
+
+	            'gl_PointSize = uPointSize;',
 
 	            // View-Model-Position-Projection matrix.
 
@@ -5585,6 +5595,11 @@
 	            uLightingDirection = fsVars.uniform.vec3.uLightingDirection,
 
 
+	            // Point size, if GL_POINTS is used.
+
+	            uPointSize = vsVars.uniform.float.uPointSize,
+
+
 	            // World position, also position of camera.
 
 	            uPOV = vsVars.uniform.vec3.uPOV,
@@ -5601,9 +5616,6 @@
 	            var easeIn = this.util.easeQuadIn;
 
 	            var easeType = 0;
-
-	            window.vsVars = vsVars;
-	            window.fsVars = fsVars;
 
 	            /* 
 	             * Set up directional lighting with the primary World light passed to the 
@@ -5753,6 +5765,10 @@
 	                    gl.enableVertexAttribArray(aTextureCoord);
 	                    gl.vertexAttribPointer(aTextureCoord, 2, gl.FLOAT, false, 0, 0);
 
+	                    // Set pointSize.
+
+	                    gl.uniform1f(uPointSize, prim.pointSize);
+
 	                    // Alpha, with easing animation (in this.util).
 
 	                    gl.uniform1f(uAlpha, prim.alpha);
@@ -5854,7 +5870,11 @@
 	                                gl.uniform1i(uUseTexture, 1);
 	                            }
 
-	                            gl.drawElements(gl.TRIANGLES, st[2], iSize, st[1]);
+	                            if (prim.drawTris) gl.drawElements(gl.TRIANGLES, st[2], iSize, st[1]);
+
+	                            if (prim.drawPoints) gl.drawElements(gl.POINTS, st[2], iSize, st[1]);
+
+	                            if (prim.drawLines) gl.drawElements(gl.LINES, st[2], iSize, st[1]);
 	                        }
 	                    }
 
@@ -6805,13 +6825,17 @@
 
 	            'uniform vec3 uPOV;',
 
+	            // Point size.
+
+	            'uniform float uPointSize;',
+
 	            // Adjusted positions and normals.
 
 	            'varying vec3 vPOV;', // user point of view (camera)
 	            'varying vec4 vPositionW;', // adjusted position
 	            'varying vec4 vNormalW;', // adjusted normal
 
-	            'varying vec2 vTextureCoord;', 'void main(void) {', 'gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', 'vTextureCoord = aTextureCoord;', 'vPOV = -uPOV;', // reversed from our coordinates
+	            'varying vec2 vTextureCoord;', 'void main(void) {', 'gl_PointSize = uPointSize;', 'gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', 'vTextureCoord = aTextureCoord;', 'vPOV = -uPOV;', // reversed from our coordinates
 
 	            'vPositionW = uMVMatrix * vec4(aVertexPosition, 1.0);', // Model-View Matrix (including POV / camera).
 
@@ -7008,6 +7032,11 @@
 	            uLightingDirection = fsVars.uniform.vec3.uLightingDirection,
 
 
+	            // Point size, if GL_POINTS is used.
+
+	            uPointSize = vsVars.uniform.float.uPointSize,
+
+
 	            // World position, also position of camera.
 
 	            uPOV = vsVars.uniform.vec3.uPOV,
@@ -7106,6 +7135,10 @@
 
 	                    gl.uniform1i(uSampler, 0);
 
+	                    // Set pointSize.
+
+	                    gl.uniform1f(uPointSize, prim.pointSize);
+
 	                    // Alpha, with easing animation (in this.util).
 
 	                    gl.uniform1f(uAlpha, prim.alpha);
@@ -7184,7 +7217,13 @@
 	                        gl.bindTexture(gl.TEXTURE_2D, null);
 	                        gl.bindTexture(gl.TEXTURE_2D, m.map_Kd);
 
-	                        gl.drawElements(gl.TRIANGLES, st[2], iSize, st[1]);
+	                        // We can overlay points and lines on objects.
+
+	                        if (prim.drawTris) gl.drawElements(gl.TRIANGLES, st[2], iSize, st[1]);
+
+	                        if (prim.drawPoints) gl.drawElements(gl.POINTS, st[2], iSize, st[1]);
+
+	                        if (prim.drawLines) gl.drawElements(gl.LINES, st[2], iSize, st[1]);
 	                    }
 
 	                    // Copy back the original for the next Prim. 
@@ -7295,6 +7334,10 @@
 
 	            'uniform vec3 uPOV;',
 
+	            // Point size.
+
+	            'uniform float uPointSize;',
+
 	            // Adjusted positions and normals.
 
 	            'varying vec3 vPOV;', // user point of view (camera)
@@ -7303,7 +7346,7 @@
 
 	            //'varying vec2 vTextureCoord;',
 
-	            'varying vec4 vVertexColor;', 'void main(void) {', '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '    vVertexColor = aVertexColor;', 'vPOV = -uPOV;', 'vPositionW = uMVMatrix * vec4(aVertexPosition, 1.0);', // Model-View Matrix (including POV / camera).
+	            'varying vec4 vVertexColor;', 'void main(void) {', 'gl_PointSize = uPointSize;', 'gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', 'vVertexColor = aVertexColor;', 'vPOV = -uPOV;', 'vPositionW = uMVMatrix * vec4(aVertexPosition, 1.0);', // Model-View Matrix (including POV / camera).
 
 	            'vNormalW =  normalize(vec4(uNMatrix*aVertexNormal, 0.0));', // Inverse-transpose-normal matrix rotates object normals.
 
@@ -7486,7 +7529,16 @@
 	            ambient = light0.ambient,
 	                lightingDirection = light0.lightingDirection,
 	                directionalColor = light0.directionalColor,
-	                uPOV = vsVars.uniform.vec3.uPOV; // World Position (also position of camera/POV)
+
+
+	            // Point size, if GL_POINTS is used.
+
+	            uPointSize = vsVars.uniform.float.uPointSize,
+
+
+	            // World Position (also position of camera/POV).
+
+	            uPOV = vsVars.uniform.vec3.uPOV;
 
 	            // Initialize some local variables.
 
@@ -7573,6 +7625,10 @@
 	                    gl.uniform3fv(uDirectionalColor, directionalColor);
 	                    gl.uniform3fv(uPOV, pov.position); // used for specular highlight
 
+	                    // Set pointSize.
+
+	                    gl.uniform1f(uPointSize, prim.pointSize);
+
 	                    // Alpha, with easing animation (in this.util).
 
 	                    gl.uniform1f(uAlpha, prim.alpha);
@@ -7634,7 +7690,11 @@
 	                        gl.uniform3fv(uMatSpecular, m.specular);
 	                        gl.uniform1f(uMatSpecExp, m.specularExponent);
 
-	                        gl.drawElements(gl.TRIANGLES, st[2], iSize, st[1]);
+	                        if (prim.drawTris) gl.drawElements(gl.TRIANGLES, st[2], iSize, st[1]);
+
+	                        if (prim.drawPoints) gl.drawElements(gl.POINTS, st[2], iSize, st[1]);
+
+	                        if (prim.drawLines) gl.drawElements(gl.LINES, st[2], iSize, st[1]);
 	                    }
 
 	                    // Copy back the original Model-View matrix for the next Prim. 
@@ -10155,6 +10215,26 @@
 	            prim.useColorArray = useColorArray;
 
 	            /* 
+	             * If this is set to true, use GL_TRIANGLES to draw. True by default.
+	             */
+
+	            prim.drawTris = true;
+
+	            /*
+	             * If this is set to true, use GL_POINTS to draw (determined by prim.type = GeometryPool.typeList).
+	             */
+
+	            prim.drawPoints = false;
+
+	            prim.pointSize = 3.0; // size if drawn
+
+	            /* 
+	             * If this is set to true, use GL_LINES instad of GL_TRIANGLES to draw (determined by prim type = GeometryPool.typeList).
+	             */
+
+	            prim.drawLines = false;
+
+	            /* 
 	             * Repeatedly apply the texture to each defined Face of the Prim (instead of wrapping around the Mesh).
 	             * If we have multiple textures, apply in succession.
 	             */
@@ -10246,15 +10326,9 @@
 	                this.geometryPool.getGeometry(prim, null, true, { pos: 0, defaultMatStarts: true });
 	            }
 
-	            // Prim timecheck. If it is failing to add to a Shader
+	            // Prim timecheck. If it is failing to add to a Shader, will keep track of number of attempts.
 
 	            prim.failCount = 0;
-
-	            console.log('prim.name:' + prim.name);
-
-	            //////////////////////////////////////
-	            window[prim.name] = prim;
-	            //////////////////////////////////////
 
 	            this.prims.push(prim);
 
@@ -11061,9 +11135,10 @@
 
 	        _this.type = {
 
-	            CLOUD: 'initPlane',
+	            CLOUD: 'initRandom',
 
-	            SPHERE: 'initRandom'
+	            SPHERE: 'initRandomSphere'
+
 	        };
 
 	        _this.width = 0;
@@ -11154,10 +11229,63 @@
 	                }
 	            } else {
 
-	                console.error('error creating Map3d using ' + this.type.RANDOM);
+	                console.error('error creating Map3d using ' + this.type.CLOUD);
+	            }
+	        }
+
+	        /** 
+	         * Return a set of random UV coordinates.
+	         */
+
+	    }, {
+	        key: 'initRandomSphere',
+	        value: function initRandomSphere(w, h, d, numPoints) {
+
+	            var util = this.util;
+
+	            this.mapUV = new Float32Array(numPoints * 2);
+
+	            for (var i = 0; i < numPoints; i += 2) {
+
+	                // Distribute evenly over sphere.
+
+	                this.mapUV[i] = Math.PI * 2 * util.getRand(); // theta or u
+
+	                this.mapUV[i + 1] = Math.acos(2 * util.getRand() - 1); // phi or v
 	            }
 
-	            return this.map;
+	            this.map = this.uvToCartesian(this.mapUV, w, h, d);
+
+	            //this.initRandom( w, h, d, numPoints )
+
+	        }
+
+	        /** 
+	         * Given a uv (latitude, longitude) array, return cartesian coordinate equivalents.
+	         */
+
+	    }, {
+	        key: 'uvToCartesian',
+	        value: function uvToCartesian(uvPositions, w, h, d) {
+
+	            var m = new Float32Array(3 * uvPositions.length / 2);
+
+	            var idx = 0;
+
+	            for (var i = 0; i < uvPositions.length; i += 2) {
+
+	                var u = uvPositions[i];
+
+	                var v = uvPositions[i + 1];
+
+	                m[idx++] = Math.cos(u) * Math.sin(v) * w; // x
+
+	                m[idx++] = Math.sin(u) * Math.sin(v) * h; // y
+
+	                m[idx++] = Math.cos(v) * d; // z
+	            }
+
+	            return m;
 	        }
 
 	        /** 
@@ -13942,6 +14070,8 @@
 	         * @link http://nullprogram.com/blog/2014/06/29/
 	         * https://codepen.io/kenjiSpecial/pen/yyeaKm
 	         * rendered as an array of coordinates.
+	         * NOTE: for different sized points, use multiple Prims.
+	         * NOTE: for different brightness, use custom Color array.
 	         * 
 	         * @param {Prim} the Prim needing geometry. 
 	         *  - prim.dimensions    = (glMatrix.vec4) [ x, y, z, radius || 0, pointSize (pixels) | 0 ]
@@ -13954,69 +14084,40 @@
 	        key: 'geometryPointCloud',
 	        value: function geometryPointCloud(prim) {
 
-	            var list = this.typeList;
-
-	            var vec3 = this.glMatrix.vec3,
-	                geo = prim.geometry;
-
 	            var dimensions = prim.dimensions,
 	                divisions = prim.divisions;
 
-	            // Expect points in Map3d object, or generate random.
+	            prim.drawTris = false; // don't draw filled triangles
 
-	            var w = prim.dimensions[0],
-	                h = prim.dimensions[1],
-	                d = prim.dimensions[2],
-	                radius = parseFloat(dimensions[3]) || 1,
-	                pointSize = parseFloat(dimensions[4]) || 1,
-	                numPoints = divisions[0] * divisions[1] * divisions[2] || 1;
+	            prim.drawPoints = true; // draw points
 
-	            // Shortcuts to Prim data arrays.
+	            // Shortcuts to Prim data arrays
 
 	            var vertices = [],
 	                indices = [],
 	                normals = [],
 	                texCoords = [],
-	                colors = [],
 	                tangents = [];
 
 	            if (!prim.map) {
 
-	                console.log('GeometryPool::geometryPointCloud(): adding spaceMap for:' + prim.name);
+	                var mm = new _map3d2.default(this.util);
 
-	                var map3 = new _map3d2.default(this.util);
+	                mm[mm.type.SPHERE](dimensions[0], dimensions[1], dimensions[2], 1000);
 
-	                vertices = map3.initRandom(w, h, d, numPoints);
+	                vertices = mm.map;
 
-	                var map = prim.map;
+	                var vIdx = 0,
+	                    idx = 0;
 
-	                var idx = 0,
-	                    cIdx = 0;
+	                for (var i = 0; i < mm.map.length; i += 3) {
 
-	                for (var i = 0; i < vertices.length; i += 3) {
-
-	                    // Vertices.
-
-	                    vertices[i] *= dimensions[0], vertices[i + 1] *= dimensions[1], vertices[i + 2] *= dimensions[2],
-
-	                    // Colors.
-
-	                    colors[cIdx++] = this.util.getRand(0, 255), colors[cIdx++] = this.util.getRand(0, 255), colors[cIdx++] = this.util.getRand(0, 255), colors[cIdx++] = 1.0;
-
-	                    // indices.
-
-	                    //indices.push( idx++ );
-	                }
-
-	                // TODO: anything above this number goes OUT OF RANGE, even though we should have 1000 indices, 3000 points.
-
-	                for (var _i4 = 0; _i4 < 96; _i4++) {
-
-	                    indices.push(_i4);
+	                    indices.push(idx++);
 	                }
 	            } else {}
 
-	            // Read a starmap, assign colors, brightness, etc.
+	            // TODO: load 3d position file, then run this.
+
 
 	            // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
@@ -14025,6 +14126,8 @@
 	    }, {
 	        key: 'geometryStarDome',
 	        value: function geometryStarDome(prim) {
+
+	            // TODO: add prim.map here....
 
 	            return this.geometryPointCloud(prim);
 	        }
@@ -14924,9 +15027,9 @@
 
 	                for (var _j = 0; _j < nv; _j++) {
 
-	                    for (var _i5 = 0; _i5 < nu; _i5++) {
+	                    for (var _i4 = 0; _i4 < nu; _i4++) {
 
-	                        var n = vertShift + _j * (nu + 1) + _i5;
+	                        var n = vertShift + _j * (nu + 1) + _i4;
 
 	                        // Indices for entire prim.
 
@@ -15056,43 +15159,43 @@
 	                        break;
 	                }
 
-	                for (var _i6 = 0; _i6 < positions.length; _i6++) {
+	                for (var _i5 = 0; _i5 < positions.length; _i5++) {
 
 	                    switch (prim.dimensions[3]) {
 
 	                        case side.FRONT:
 
-	                            positions[_i6][2] = dSide * Math.cos(positions[_i6][0]) * prim.dimensions[4];
+	                            positions[_i5][2] = dSide * Math.cos(positions[_i5][0]) * prim.dimensions[4];
 
 	                            break;
 
 	                        case side.BACK:
 
-	                            positions[_i6][2] = dSide * Math.cos(positions[_i6][0]) * prim.dimensions[4];
+	                            positions[_i5][2] = dSide * Math.cos(positions[_i5][0]) * prim.dimensions[4];
 
 	                            break;
 
 	                        case side.LEFT:
 
-	                            positions[_i6][0] = dSide * Math.cos(positions[_i6][2]) * prim.dimensions[4];
+	                            positions[_i5][0] = dSide * Math.cos(positions[_i5][2]) * prim.dimensions[4];
 
 	                            break;
 
 	                        case side.RIGHT:
 
-	                            positions[_i6][0] = dSide * Math.cos(positions[_i6][2]) * prim.dimensions[4];
+	                            positions[_i5][0] = dSide * Math.cos(positions[_i5][2]) * prim.dimensions[4];
 
 	                            break;
 
 	                        case side.TOP:
 
-	                            positions[_i6][1] = dSide * Math.cos(positions[_i6][0]) * prim.dimensions[4];
+	                            positions[_i5][1] = dSide * Math.cos(positions[_i5][0]) * prim.dimensions[4];
 
 	                            break;
 
 	                        case side.BOTTOM:
 
-	                            positions[_i6][1] = -Math.cos(positions[_i6][0]) * prim.dimensions[4]; // SEEN FROM INSIDE< CORRECT
+	                            positions[_i5][1] = -Math.cos(positions[_i5][0]) * prim.dimensions[4]; // SEEN FROM INSIDE< CORRECT
 
 	                            break;
 
@@ -15598,9 +15701,9 @@
 
 	            function createVertexLine(from, to, steps, v, vertices) {
 
-	                for (var _i7 = 1; _i7 <= steps; _i7++) {
+	                for (var _i6 = 1; _i6 <= steps; _i6++) {
 
-	                    vertices[v++] = vec3.lerp([0, 0, 0], from, to, _i7 / steps);
+	                    vertices[v++] = vec3.lerp([0, 0, 0], from, to, _i6 / steps);
 	                }
 
 	                return v;
@@ -15610,7 +15713,7 @@
 
 	            function createLowerStrip(steps, vTop, vBottom, t, triangles) {
 
-	                for (var _i8 = 1; _i8 < steps; _i8++) {
+	                for (var _i7 = 1; _i7 < steps; _i7++) {
 
 	                    triangles[t++] = vBottom;
 
@@ -15644,7 +15747,7 @@
 
 	                triangles[t++] = ++vBottom;
 
-	                for (var _i9 = 1; _i9 <= steps; _i9++) {
+	                for (var _i8 = 1; _i8 <= steps; _i8++) {
 
 	                    triangles[t++] = vTop - 1;
 
@@ -15672,7 +15775,7 @@
 
 	                triangles[t++] = vTop - 1;
 
-	                for (var _i10 = 1; _i10 <= steps; _i10++) {
+	                for (var _i9 = 1; _i9 <= steps; _i9++) {
 
 	                    triangles[t++] = vTop;
 
@@ -16123,9 +16226,9 @@
 
 	                    // Update the indices to reflect concatenation.
 
-	                    for (var _i11 = 0; _i11 < fan.indices.length; _i11++) {
+	                    for (var _i10 = 0; _i10 < fan.indices.length; _i10++) {
 
-	                        fan.indices[_i11] += len;
+	                        fan.indices[_i10] += len;
 	                    }
 
 	                    indices = indices.concat(fan.indices);
@@ -16136,9 +16239,9 @@
 	                }
 	            } else {
 
-	                for (var _i12 = 0; _i12 < faces.length; _i12++) {
+	                for (var _i11 = 0; _i11 < faces.length; _i11++) {
 
-	                    var vv = faces[_i12]; // indices to vertices
+	                    var vv = faces[_i11]; // indices to vertices
 
 	                    var vvv = []; // saved vertices
 
@@ -16151,13 +16254,13 @@
 
 	                    var center = this.geometry.computeCentroid(vvv);
 
-	                    for (var _i13 = 1; _i13 <= lenv; _i13++) {
+	                    for (var _i12 = 1; _i12 <= lenv; _i12++) {
 
-	                        var p1 = _i13 - 1;
+	                        var p1 = _i12 - 1;
 
-	                        var p2 = _i13;
+	                        var p2 = _i12;
 
-	                        if (_i13 === lenv) {
+	                        if (_i12 === lenv) {
 
 	                            p1 = p2 - 1;
 
@@ -16183,9 +16286,9 @@
 
 	            // Scale.
 
-	            for (var _i14 = 0; _i14 < vertices.length; _i14++) {
+	            for (var _i13 = 0; _i13 < vertices.length; _i13++) {
 
-	                var _vv = vertices[_i14];
+	                var _vv = vertices[_i13];
 
 	                _vv[0] *= w;
 
@@ -18188,6 +18291,18 @@
 	            buffer: null,
 
 	            itemSize: 4,
+
+	            numItems: 0
+
+	        };
+
+	        this.pointSizes = {
+
+	            data: [],
+
+	            buffer: null,
+
+	            itemSize: 1,
 
 	            numItems: 0
 

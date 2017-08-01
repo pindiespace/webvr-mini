@@ -74,7 +74,6 @@ class WebGL {
 
             aVertexTangent: [ 'aVertexTangent', 9 ]
 
-
         }
 
         //TODO: hard-code the attribute bindings, so they always have the same index.

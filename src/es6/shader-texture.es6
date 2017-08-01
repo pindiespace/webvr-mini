@@ -69,6 +69,10 @@ class ShaderTexture extends Shader {
 
             'uniform vec3 uPOV;',
 
+            // Point size.
+
+            'uniform float uPointSize;',
+
             // Adjusted positions and normals.
 
             'varying vec3 vPOV;',       // user point of view (camera)
@@ -78,6 +82,8 @@ class ShaderTexture extends Shader {
             'varying vec2 vTextureCoord;',
 
             'void main(void) {',
+
+                'gl_PointSize = uPointSize;',
 
                 'gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);',
 
@@ -339,6 +345,10 @@ class ShaderTexture extends Shader {
 
         uLightingDirection = fsVars.uniform.vec3.uLightingDirection, 
 
+        // Point size, if GL_POINTS is used.
+
+        uPointSize = vsVars.uniform.float.uPointSize,
+
         // World position, also position of camera.
 
         uPOV = vsVars.uniform.vec3.uPOV,
@@ -439,6 +449,10 @@ class ShaderTexture extends Shader {
 
                 gl.uniform1i( uSampler, 0 );
 
+                // Set pointSize.
+
+                gl.uniform1f( uPointSize, prim.pointSize );
+
                 // Alpha, with easing animation (in this.util).
 
                 gl.uniform1f( uAlpha, prim.alpha );
@@ -519,7 +533,13 @@ class ShaderTexture extends Shader {
                     gl.bindTexture( gl.TEXTURE_2D, null );
                     gl.bindTexture( gl.TEXTURE_2D, m.map_Kd );
 
-                    gl.drawElements( gl.TRIANGLES, st[ 2 ], iSize, st[ 1 ] );
+                    // We can overlay points and lines on objects.
+
+                    if ( prim.drawTris ) gl.drawElements( gl.TRIANGLES, st[ 2 ], iSize, st[ 1 ] );
+
+                    if ( prim.drawPoints ) gl.drawElements( gl.POINTS, st[ 2 ], iSize, st[ 1 ] );
+
+                    if ( prim.drawLines ) gl.drawElements( gl.LINES, st[ 2 ], iSize, st[ 1 ] );
 
                 }
 

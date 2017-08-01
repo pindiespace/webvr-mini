@@ -38,21 +38,21 @@
 
         "name" : "stardome",
 
-        "description" : "half-sphere stardome rendered and lit from within",
+        "description": "point source of stars",
 
-        "dimensions" : [ "18", "18", "18" ],
+        "dimensions" : [ "100", "100", "100" ],
 
-        "divisions" : [ "10", "10", "10", "0", "0" ],
+        "divisions" : [ "9", "9", "9", "1", "0" ],
 
-        "position" : [ "0", "-1.5", "0" ],
+        "position" : [ "0", "0", "0" ],
 
         "acceleration" : [ "0", "0", "0" ],
 
         "rotation" : [ "0", "0", "0" ],
 
-        "angular" : [ "0", "0", "0" ],
+        "angular" : [ "0", "0.1", "0" ],
 
-        "textures" : [],
+        "textures" : [  "img/uv-test.png" ],
 
         "models" : [],
 
@@ -60,9 +60,11 @@
 
         "useFaceTextures" : "false",
 
-        "useLighting" : "false",
+        "useLighting" : "true",
 
-        "map" : "map/starmap/hyg70.json"
+        "map" : "map/starmap/hyg70.json",
+
+        "comments" : "sample torus. dimensions: first is width along x, second is width along y, diameter of torus tube. Divisions: first is number of rings, second is number of sides."
 
     },
 

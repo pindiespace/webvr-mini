@@ -1252,6 +1252,8 @@ class GeometryPool {
      * @link http://nullprogram.com/blog/2014/06/29/
      * https://codepen.io/kenjiSpecial/pen/yyeaKm
      * rendered as an array of coordinates.
+     * NOTE: for different sized points, use multiple Prims.
+     * NOTE: for different brightness, use custom Color array.
      * 
      * @param {Prim} the Prim needing geometry. 
      *  - prim.dimensions    = (glMatrix.vec4) [ x, y, z, radius || 0, pointSize (pixels) | 0 ]
@@ -1261,94 +1263,50 @@ class GeometryPool {
      */
     geometryPointCloud ( prim ) {
 
-        const list = this.typeList;
-
-        let vec3 = this.glMatrix.vec3,
-
-        geo = prim.geometry;
-
         let dimensions = prim.dimensions,
 
         divisions = prim.divisions;
 
-        // Expect points in Map3d object, or generate random.
+        prim.drawTris = false; // don't draw filled triangles
 
-        const w = prim.dimensions[ 0 ],
+        prim.drawPoints = true; // draw points
 
-        h = prim.dimensions[ 1 ],
+        // Shortcuts to Prim data arrays
 
-        d = prim.dimensions[ 2 ],
-
-        radius = parseFloat( dimensions[ 3 ] ) || 1,
-
-        pointSize = parseFloat( dimensions[ 4 ] ) || 1,
-
-        numPoints = ( divisions[ 0 ] * divisions[ 1 ] * divisions[ 2 ] ) || 1;
-
-        // Shortcuts to Prim data arrays.
-
-        let vertices = [], indices = [], normals = [], texCoords = [], colors = [], tangents = [];
+        let vertices = [], indices  = [], normals = [], texCoords = [], tangents = [];
 
         if ( ! prim.map ) {
 
-            console.log( 'GeometryPool::geometryPointCloud(): adding spaceMap for:' + prim.name );
+            let mm = new Map3d( this.util );
 
-            let map3 = new Map3d( this.util );
+            mm[ mm.type.SPHERE ]( dimensions[ 0 ], dimensions[ 1 ], dimensions[ 2 ], 1000 );
 
-            vertices = map3.initRandom ( w, h, d, numPoints );
+            vertices = mm.map;
 
-            let map = prim.map;
+            let vIdx = 0, idx = 0;
 
-            let idx = 0, cIdx = 0;
+            for ( let i = 0; i < mm.map.length; i+=3 ) {
 
-             for ( let i = 0; i < vertices.length; i += 3 ) {
-
-                // Vertices.
-
-                vertices[ i ]     *= dimensions[ 0 ],
-
-                vertices[ i + 1 ] *= dimensions[ 1 ],
-
-                vertices[ i + 2 ] *= dimensions[ 2 ],
-
-                // Colors.
-
-                colors[ cIdx++ ] = this.util.getRand( 0, 255 ),
-
-                colors[ cIdx++ ] = this.util.getRand( 0, 255 ),
-
-                colors[ cIdx++ ] = this.util.getRand( 0, 255 ),
-
-                colors[ cIdx++ ] = 1.0;
-
-                // indices.
-
-                //indices.push( idx++ );
+                indices.push( idx++ );
 
             }
-
-            // TODO: anything above this number goes OUT OF RANGE, even though we should have 1000 indices, 3000 points.
-
-            for ( let i = 0; i < 96; i++ ) {
-
-                indices.push(i)
-
-            }
-
 
         } else {
 
-            // Read a starmap, assign colors, brightness, etc.
+            // TODO: load 3d position file, then run this.
+
 
         }
 
         // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
-        return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords,  tangents: tangents };
+        return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
 
     }
 
     geometryStarDome ( prim ) {
+
+        // TODO: add prim.map here....
 
         return this.geometryPointCloud( prim );
 

@@ -681,7 +681,6 @@ class PrimFactory {
 
             vec3.add( p.rotation, p.rotation, p.angular );
 
-
             // Scale doesn't need to be updated, just passed in the .setM and .setMV above.
 
         }
@@ -1017,6 +1016,26 @@ class PrimFactory {
         prim.useColorArray = useColorArray;
 
         /* 
+         * If this is set to true, use GL_TRIANGLES to draw. True by default.
+         */
+
+        prim.drawTris = true;
+
+        /*
+         * If this is set to true, use GL_POINTS to draw (determined by prim.type = GeometryPool.typeList).
+         */
+
+        prim.drawPoints = false;
+
+        prim.pointSize = 3.0; // size if drawn
+
+        /* 
+         * If this is set to true, use GL_LINES instad of GL_TRIANGLES to draw (determined by prim type = GeometryPool.typeList).
+         */
+
+        prim.drawLines = false;
+
+        /* 
          * Repeatedly apply the texture to each defined Face of the Prim (instead of wrapping around the Mesh).
          * If we have multiple textures, apply in succession.
          */
@@ -1112,16 +1131,9 @@ class PrimFactory {
         }
 
 
-        // Prim timecheck. If it is failing to add to a Shader
+        // Prim timecheck. If it is failing to add to a Shader, will keep track of number of attempts.
 
         prim.failCount = 0;
-
-
-        console.log('prim.name:' + prim.name)
-
-        //////////////////////////////////////
-        window[ prim.name ] = prim;
-        //////////////////////////////////////
     
         this.prims.push( prim );
 

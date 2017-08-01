@@ -112,6 +112,18 @@ class GeometryBuffer {
 
         };
 
+        this.pointSizes = {
+
+                data: [],
+
+                buffer: null,
+
+                itemSize: 1,
+
+                numItems: 0
+
+        };
+
         this.valid = false;
 
         // Save the max allowed drawing size. For WebGL 1.0 with extension, vertices must be < 65k.
