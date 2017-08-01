@@ -97,7 +97,8 @@ class World extends AssetPool {
         //this.DEFAULT_WORLD_PATH = 'json/default-world.json';
         //this.DEFAULT_WORLD_PATH = 'json/gltf-world.json';
         //this.DEFAULT_WORLD_PATH = 'json/obj-world.json';
-        this.DEFAULT_WORLD_PATH = 'world/tangled-world.json';
+        //this.DEFAULT_WORLD_PATH = 'world/tangled-world.json';
+        this.DEFAULT_WORLD_PATH = 'world/celestial-world.json';
 
         // Stats on World operation.
 
@@ -833,6 +834,8 @@ Note: THIS IMPLIES WE HAVE TO DO IT IN WORLD.
                      * draw left or right view using the frameDat left and right view matrix.
                      */
 
+                    ////////////////this.r3.renderVR( vr, fd, wvMatrix, pov );  // particle
+
                     this.r1.renderVR( vr, fd, wvMatrix, pov );  // textured, no lighting
 
                     this.r2.renderVR( vr, fd, wvMatrix, pov );  // color
@@ -863,6 +866,8 @@ Note: THIS IMPLIES WE HAVE TO DO IT IN WORLD.
                 // Get any World transforms (translation, rotation).
 
                 this.getWorldViewMatrix( wvMatrix );
+
+                //////////////this.r3.renderMono( wvMatrix, pov );
 
                 this.r1.renderMono( wvMatrix, pov ); // textured, no lighting
 

@@ -49,6 +49,8 @@ import ShaderColor from './shader-color';
 
 import ShaderTerrain from './shader-terrain';
 
+import ShaderSky from './shader-sky';
+
 import ShaderWater from './shader-water';
 
 import ShaderMetal from './shader-metal';
@@ -142,6 +144,22 @@ var promise = new Promise( ( resolve, reject ) => {
         // Basic color array Shader, without lighting.
 
         shaderPool.addAsset( new ShaderColor( true, util, glMatrix, webgl, webvr, 'shaderColor', lights ) );
+
+        // Terrain.
+
+        shaderPool.addAsset( new ShaderTerrain( true, util, glMatrix, webgl, webvr, 'shaderTerrain', lights ) );
+
+        // Sky.
+
+        shaderPool.addAsset( new ShaderSky( true, util, glMatrix, webgl, webvr, 'shaderSky', lights ) );
+
+        // Water simulation.
+
+        shaderPool.addAsset( new ShaderWater( true, util, glMatrix, webgl, webvr, 'shaderWater', lights ) );
+
+        // Metallic, reflective mirrors.
+
+        shaderPool.addAsset( new ShaderMetal( true, util, glMatrix, webgl, webvr, 'shaderMetal', lights ) );
 
         // Create the world, which needs WebGL, WebVR, the Shader list and world Lights.
 

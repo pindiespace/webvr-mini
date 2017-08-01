@@ -30,15 +30,15 @@
 
     },
 
-    "skydome" : {
+    "stardome" : {
 
-        "shader" : "shaderTexture",
+        "shader" : "shaderColor",
 
-        "type" : "SKYDOME",
+        "type" : "STARDOME",
 
-        "name" : "skydome",
+        "name" : "stardome",
 
-        "description" : "half-sphere skydome rendered and lit from within",
+        "description" : "half-sphere stardome rendered and lit from within",
 
         "dimensions" : [ "18", "18", "18" ],
 
@@ -52,15 +52,17 @@
 
         "angular" : [ "0", "0", "0" ],
 
-        "textures" : [  "img/panorama_01.png" ],
+        "textures" : [],
 
         "models" : [],
 
-        "useColorArray" : "false",
+        "useColorArray" : "true",
 
         "useFaceTextures" : "false",
 
-        "useLighting" : "true"
+        "useLighting" : "false",
+
+        "map" : "map/starmap/hyg70.json"
 
     },
 

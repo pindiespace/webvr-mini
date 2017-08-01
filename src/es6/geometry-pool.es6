@@ -68,6 +68,8 @@ class GeometryPool {
 
             POINTCLOUD: 'geometryPointCloud',
 
+            STARDOME: 'geometryStarDome',
+
             LINE: 'geometryLine',
 
             PLANE: 'geometryOuterPlane',
@@ -1265,6 +1267,10 @@ class GeometryPool {
 
         geo = prim.geometry;
 
+        let dimensions = prim.dimensions,
+
+        divisions = prim.divisions;
+
         // Expect points in Map3d object, or generate random.
 
         const w = prim.dimensions[ 0 ],
@@ -1273,41 +1279,62 @@ class GeometryPool {
 
         d = prim.dimensions[ 2 ],
 
-        radius = parseFloat( prim.dimensions[ 3 ] ) || 1,
+        radius = parseFloat( dimensions[ 3 ] ) || 1,
 
-        pointSize = parseFloat( prim.dimensions[ 4 ] ) || 1,
+        pointSize = parseFloat( dimensions[ 4 ] ) || 1,
 
-        numPoints = prim.divisions[ 0 ] || 1;
+        numPoints = ( divisions[ 0 ] * divisions[ 1 ] * divisions[ 2 ] ) || 1;
 
-        // Shortcuts to Prim data arrays
+        // Shortcuts to Prim data arrays.
 
-        let vertices = [], indices = [], texCoords = [], normals = [], tangents = [];
+        let vertices = [], indices = [], normals = [], texCoords = [], colors = [], tangents = [];
 
-        if ( ! prim.spaceMap ) {
+        if ( ! prim.map ) {
 
             console.log( 'GeometryPool::geometryPointCloud(): adding spaceMap for:' + prim.name );
 
-            prim.sphereMap = new Map3d( this.util );
+            let map3 = new Map3d( this.util );
 
-            prim.sphereMap.initRandom ( w, h, d, numPoints );
+            vertices = map3.initRandom ( w, h, d, numPoints );
 
-            let map = prim.sphereMap.map;
+            let map = prim.map;
 
-             for ( let i = 0; i < map.length; i += 3 ) {
+            let idx = 0, cIdx = 0;
 
-                map[ i ]     *= w;
+             for ( let i = 0; i < vertices.length; i += 3 ) {
 
-                map[ i + 1 ] *= h;
+                // Vertices.
 
-                map[ i + 2 ] *= d;
+                vertices[ i ]     *= dimensions[ 0 ],
 
-                indices.push[ i ];
+                vertices[ i + 1 ] *= dimensions[ 1 ],
+
+                vertices[ i + 2 ] *= dimensions[ 2 ],
+
+                // Colors.
+
+                colors[ cIdx++ ] = this.util.getRand( 0, 255 ),
+
+                colors[ cIdx++ ] = this.util.getRand( 0, 255 ),
+
+                colors[ cIdx++ ] = this.util.getRand( 0, 255 ),
+
+                colors[ cIdx++ ] = 1.0;
+
+                // indices.
+
+                //indices.push( idx++ );
 
             }
 
-            // roughness 0.2 of 0-1, flatten = 1 of 0-1;
+            // TODO: anything above this number goes OUT OF RANGE, even though we should have 1000 indices, 3000 points.
 
-            //prim.spaceMap[ prim.spaceMap.type.CLOUD ]( prim.divisions[ 0 ], prim.divisions[ 1 ], prim.divisions[ 2 ], 0.6, 1 );
+            for ( let i = 0; i < 96; i++ ) {
+
+                indices.push(i)
+
+            }
+
 
         } else {
 
@@ -1317,10 +1344,15 @@ class GeometryPool {
 
         // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
-        return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
+        return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords,  tangents: tangents };
 
     }
 
+    geometryStarDome ( prim ) {
+
+        return this.geometryPointCloud( prim );
+
+    }
 
     /** 
      * type LINE
@@ -2520,7 +2552,7 @@ class GeometryPool {
      */
     geometryTerrain ( prim ) {
 
-        if ( ! prim.heightMap ) {
+        if ( ! prim.map ) {
 
             console.log( 'Prim::geometryTerrain(): adding heightmap for:' + prim.name );
 
@@ -3158,8 +3190,6 @@ class GeometryPool {
      */
     geometryPyramid ( prim ) {
 
-
-        //
         let oldDivisions = [ prim.divisions[ 0 ], prim.divisions[ 1 ], prim.divisions[ 2 ] ];
 
         let vertices = [

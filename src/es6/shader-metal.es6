@@ -61,6 +61,22 @@ class ShaderMetal extends Shader {
             'attribute vec2 ' + this.webgl.attributeNames.aTextureCoord[ 0 ] + ';',
             'attribute vec3 ' + this.webgl.attributeNames.aVertexNormal[ 0 ] + ';',
 
+            'uniform mat4 uMVMatrix;',  // Model-view matrix
+            'uniform mat4 uPMatrix;',   // Perspective matrix
+            'uniform mat3 uNMatrix;',   // Inverse-transpose of Model-View matrix
+
+            // World position.
+
+            'uniform vec3 uPOV;',
+
+            // Adjusted positions and normals.
+
+            'varying vec3 vPOV;',       // user point of view (camera)
+            'varying vec4 vPositionW;', // adjusted position
+            'varying vec4 vNormalW;',   // adjusted normal
+
+            'varying vec2 vTextureCoord;',
+
             'void main(void) {',
 
             // View-Model-Position-Projection matrix.

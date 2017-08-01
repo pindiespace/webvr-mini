@@ -48,7 +48,13 @@ class Map3d extends Mapd {
     /** 
      * confirm our data is ok for a 3d map (pointcloud).
      */
-    checkParams ( w, h, d, roughness, flatten ) {
+    checkParams ( w, h, d, flatten ) {
+
+        if ( w && h && d && ( ( w + h + d ) > 0 ) ) {
+
+            return true;
+
+        }
 
         return false;
 
@@ -81,18 +87,16 @@ class Map3d extends Mapd {
     }
 
     /** 
-     * Generate a Map using completely random numbers clamped. 
+     * Generate a 3d Map using completely random numbers clamped. 
      * to a range.
      */
     initRandom ( w, h, d, numPoints ) {
 
-        if( this.checkParams( w, d, roughness, 0 ) ) {
+        if( this.checkParams( w, h, d, 0 ) ) {
 
             this.type = this.CLOUD;
 
-            this.map = new Float32Array( numPoints );
-
-            this.mapColors = new Float32Array ( numPoints );
+            this.map = new Float32Array( numPoints * 3 );
 
             this.width = w;
 
@@ -102,20 +106,15 @@ class Map3d extends Mapd {
 
             let util = this.util;
 
-            for ( let i = 0; i < this.map.length; i++ ) {
+            let colorPtr = 0;
 
-                this.map.push( 
-                    util.getRand() * w, 
-                    util.getRand() * h,
-                    util.getRand() * d
-                );
+            for ( let i = 0; i < this.map.length; i += 3 ) {
 
-                this.mapColors.push(
-                    util.getRand( 0, 255 ),
-                    util.getRand( 0, 255 ),
-                    util.getRand( 0, 255 ),
-                    1.0
-                );
+                this.map[ i ] = util.getRand() * w,
+
+                this.map[ i + 1 ] = util.getRand() * h,
+
+                this.map[ i + 2 ] = this.util.getRand() * d;
 
             }
 
@@ -125,13 +124,7 @@ class Map3d extends Mapd {
 
         }
 
-    }
-
-    /** 
-     * Set points on the surface of a sphere.
-     */
-    initSphere( w, h, d, numPoints ) {
-
+        return this.map;
 
     }
 

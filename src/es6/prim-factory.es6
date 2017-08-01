@@ -596,7 +596,9 @@ class PrimFactory {
 
         applyTexToFace = false, // if true, apply textures to each face, not whole Prim
 
-        useLighting = true
+        useLighting = true, // if true, light the object with the World Light
+
+        map = null // if true, use coordinates
 
         ) { // function to execute when prim is done (e.g. attach to drawing list shader).
 
