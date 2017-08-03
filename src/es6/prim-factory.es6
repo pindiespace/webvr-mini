@@ -104,6 +104,8 @@ class PrimFactory {
 
         // Bind the callback for geometry initialization applied to individual prims (GeometryPool, Mesh, and ModelPool).
 
+        // Alias Wavefront OBJ format files.
+
         this.util.emitter.on( this.util.emitter.events.OBJ_GEOMETRY_READY, 
 
             ( prim, key, options ) => {
@@ -130,9 +132,29 @@ class PrimFactory {
 
                 this.initPrimGeometry( prim, coords, options );
 
-                prim.shader.addPrim ( prim ); // TRY to add it
+                prim.shader.addPrim( prim ); // TRY to add it
 
         } );
+
+        // HYG stellar database.
+
+        this.util.emitter.on( this.util.emitter.events.HYG_GEOMETRY_READY, 
+
+            ( prim, key, options ) => {
+
+                let coords = this.modelPool.keyList[ key ];
+
+                prim.matStarts = coords.options.matStarts;
+
+                this.initPrimGeometry( prim, coords, options );
+
+                console.log("PRIM SHADER: " + prim.shader.name)
+
+                prim.shader.addPrim( prim );
+
+        } );
+
+        // Standard procedural Prim shapes
 
         this.util.emitter.on( this.util.emitter.events.PROCEDURAL_GEOMETRY_READY, 
 
@@ -1115,6 +1137,8 @@ class PrimFactory {
         prim.geometry = new GeometryBuffer( prim.name, this.util, this.webgl );
 
         // Create Geometry data, or load Mesh data (may alter some of the above default properties).
+
+        window.mf = modelFiles
 
         if ( modelFiles.length > 0 ) {
 

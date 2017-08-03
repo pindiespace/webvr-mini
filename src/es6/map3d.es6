@@ -187,7 +187,6 @@ class Map3d extends Mapd {
      */
     initFromData( positions ) {
 
-        // TODO: use stellar or other data.
 
     }
 

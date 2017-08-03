@@ -43,7 +43,9 @@ class ModelPool extends AssetPool {
 
             'gltf': 'text/tgltf',
 
-            'gltfBinary': 'bin/gltf'
+            'gltfBinary': 'bin/gltf',
+
+            'hyg': 'text/plain'
 
         };
 
@@ -776,11 +778,14 @@ class ModelPool extends AssetPool {
     /** 
      * Decode a simple GlTF file. We only support one scene, with multiple objects. Objects only suppot features 
      * implemented in this program (e.g. no rigging). 
-     * Reference: THREE glTF shader, strating about line 850.
+     * Reference: THREE glTF shader, starting about line 850.
+     * @param {String} data the incoming data from the file.
+     * @param {Prim} prim the Prim object defined in prim.es6
+     * @param {String} path the path to the file.
      */
     computeGlTFMesh ( data, prim, path ) {
 
-        let m = {};
+        let m = this.default();
 
         m.data = JSON.parse( data );
 
@@ -816,9 +821,80 @@ class ModelPool extends AssetPool {
     }
 
 
+    /** 
+     * Compute a mesh encoded in GlTF format.
+     * @param {String} data the incoming data from the file.
+     * @param {Prim} prim the Prim object defined in prim.es6
+     * @param {String} path the path to the file. MTL files may reference other files in their directory.
+     */
     computeGlTFBinaryMesh ( data, prim, path ) {
 
         let m = this.default();
+
+        return m;
+
+    }
+
+    /**
+     * Compute a starmap based on the Hyg database, encoded as a JSON file.
+     * @link http://www.astronexus.com/hyg
+     * @param {String} data the incoming data from the file.
+     * @param {Prim} prim the Prim object defined in prim.es6
+     * @param {String} path the path to the file. MTL files may reference other files in their directory.
+     */
+    computeHyg ( data, prim, path ) {
+
+        let m = this.default();
+
+        let stars = JSON.parse( data );
+
+        let tVertices = [], tIndices = [], tNormals = [], tTexCoords = [], tColors = [];
+
+
+        console.log(">>>>>>>STARS.LENGTH::::" + stars.length );
+
+        let iIdx = 0;
+
+        for ( let i = 0; i < stars.length; i++ ) {
+
+            let star = stars[ i ];
+
+            let u = star.RA;
+
+            let v = star.Dec;
+
+            tVertices.push ( Math.cos( u ) * Math.sin( v ) * prim.dimensions[ 0 ], // x
+
+                            Math.sin( u ) * Math.sin( v ) * prim.dimensions[ 1 ], // y
+
+                            Math.cos( v ) * prim.dimensions[ 2 ] // z
+                        );
+
+            tNormals.push( 0, 0, 0 );
+
+            tIndices.push( iIdx++ );
+
+            tTexCoords.push( 0, 1 );
+
+            tColors.push( 1, 1, 1, 1 );
+
+        }
+
+        /////////// stars = [];
+
+
+        m.options.matStarts.push( [ this.materialPool.createDefaultName( prim.name ), 0, tIndices.length ] );
+
+        m.vertices = tVertices,
+
+        m.indices = tIndices,
+
+        m.texCoords = tTexCoords,
+
+        m.normals = tNormals,
+ 
+        m.colors = tColors;      // USE COLOR ARRAY
+
 
         return m;
 
@@ -871,15 +947,31 @@ class ModelPool extends AssetPool {
 
             case 'gltf':
 
-                console.log('@@@@@@@@@@@@@@@@went to gltf')
-
                 d = this.computeGlTFMesh( data, prim, path );
+
+                emitEvent = this.util.emitter.events.GLTF_GEOMETRY_READY;
 
                 break;
 
             case 'gltfbinary':
 
                 d = this.computeGlTFBinaryMesh( data, prim, path );
+
+                emitEvent = this.util.emitter.events.GLTF_GEOMETRY_READY;
+
+                break;
+
+            case 'hyg':
+
+                prim.drawTris = false,
+
+                prim.drawLines = false,
+
+                prim.drawPoints = true;
+
+                d = this.computeHyg( data, prim, path );
+
+                emitEvent = this.util.emitter.events.HYG_GEOMETRY_READY;
 
                 break;
 
@@ -1001,13 +1093,13 @@ class ModelPool extends AssetPool {
 
                             } else {
 
-                                console.error( 'ModelPool::getModel(): OBJ file:' + path + ' could not be parsed' );
+                                console.error( 'ModelPool::getModel():' + + this.util.getFileExtension( path ) + ' file path:' + path + ' could not be parsed' );
 
                             }
 
                         } else {
 
-                            console.error( 'ModelPool::getModel(): OBJ file, no data found for:' + updateObj.path );
+                            console.error( 'ModelPool::getModel(): ' + this.util.getFileExtension( path ) + ' file, no data found for:' + updateObj.path );
 
                         }
 

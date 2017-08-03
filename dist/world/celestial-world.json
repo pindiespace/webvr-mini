@@ -54,7 +54,7 @@
 
         "textures" : [  "img/uv-test.png" ],
 
-        "models" : [],
+        "models" : [ "map/starmap/hyg70.hyg" ],
 
         "useColorArray" : "true",
 
@@ -62,9 +62,7 @@
 
         "useLighting" : "true",
 
-        "map" : "map/starmap/hyg70.json",
-
-        "comments" : "sample torus. dimensions: first is width along x, second is width along y, diameter of torus tube. Divisions: first is number of rings, second is number of sides."
+        "comments" : "stardome with positions from the HYG database."
 
     },
 

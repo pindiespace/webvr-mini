@@ -99,31 +99,31 @@
 
 	var _shaderTerrain2 = _interopRequireDefault(_shaderTerrain);
 
-	var _shaderSky = __webpack_require__(43);
+	var _shaderSky = __webpack_require__(14);
 
 	var _shaderSky2 = _interopRequireDefault(_shaderSky);
 
-	var _shaderWater = __webpack_require__(14);
+	var _shaderWater = __webpack_require__(15);
 
 	var _shaderWater2 = _interopRequireDefault(_shaderWater);
 
-	var _shaderMetal = __webpack_require__(15);
+	var _shaderMetal = __webpack_require__(16);
 
 	var _shaderMetal2 = _interopRequireDefault(_shaderMetal);
 
-	var _lights = __webpack_require__(16);
+	var _lights = __webpack_require__(17);
 
 	var _lights2 = _interopRequireDefault(_lights);
 
-	var _shaderPool = __webpack_require__(17);
+	var _shaderPool = __webpack_require__(18);
 
 	var _shaderPool2 = _interopRequireDefault(_shaderPool);
 
-	var _primFactory = __webpack_require__(19);
+	var _primFactory = __webpack_require__(20);
 
 	var _primFactory2 = _interopRequireDefault(_primFactory);
 
-	var _world = __webpack_require__(29);
+	var _world = __webpack_require__(30);
 
 	var _world2 = _interopRequireDefault(_world);
 
@@ -139,7 +139,7 @@
 
 	// WebGL matrix math library.
 
-	var glMatrix = __webpack_require__(31);
+	var glMatrix = __webpack_require__(32);
 
 	if (!glMatrix) {
 
@@ -178,7 +178,7 @@
 	    // require kronos webgl debug from node_modules
 	    // https://github.com/vorg/webgl-debug
 
-	    var debug = __webpack_require__(41);
+	    var debug = __webpack_require__(42);
 
 	    exports.webgl = webgl = new _webgl2.default(false, glMatrix, util, debug);
 
@@ -1747,6 +1747,10 @@
 	            PROCEDURAL_GEOMETRY_READY: 'plgrdy', // Procedural geometry is ready
 
 	            OBJ_GEOMETRY_READY: 'ogrdy', // Use for .OBJ and .MTL file formats
+
+	            HYG_GEOMETRY_READY: 'hygrdy', // Use for HYG stellar database
+
+	            GLTF_GEOMETRY_READY: 'gltfrdy', // Use for GlTF file formats
 
 	            MATERIAL_READY: 'mrdy', // sends Prim reference. Not used for procedural geometry
 
@@ -7995,6 +7999,271 @@
 
 	'use strict';
 
+	var ShaderSky = function (_Shader) {
+	    _inherits(ShaderSky, _Shader);
+
+	    /** 
+	     * --------------------------------------------------------------------
+	     * VERTEX SHADER 7
+	     * A sky shader (realistic sky colors, clouds).
+	     * @link http://learningwebgl.com/blog/?p=684
+	     * - vertex position
+	     * - texture coordinate
+	     * - model-view matrix
+	     * - projection matrix
+	     * Water example
+	     * @link http://madebyevan.com/webgl-water/
+	     * --------------------------------------------------------------------
+	     */
+	    function ShaderSky(init, util, glMatrix, webgl, webvr, shaderName, lights) {
+	        _classCallCheck(this, ShaderSky);
+
+	        var _this = _possibleConstructorReturn(this, (ShaderSky.__proto__ || Object.getPrototypeOf(ShaderSky)).call(this, init, util, glMatrix, webgl, webvr, shaderName, lights));
+
+	        console.log('In ShaderSky class');
+
+	        _this.required.buffer.indices = true, _this.required.buffer.texCoords = true, _this.required.buffer.colors = true, _this.required.buffer.normals = true, _this.required.buffer.tangents = true, _this.required.lights = 1, _this.required.textures = 5;
+
+	        // TODO: include more for water
+
+	        return _this;
+	    }
+
+	    /* 
+	     * Vertex and Fragment Shaders. We use the internal 'program' object from the webgl object to compile these. 
+	     * Alternatively, They may be defined to load from HTML or and external file.
+	     * @return {Object{code, varList}} an object, with internal elements
+	     * code: The shader code.
+	     * varList: A scanned list of all the variables in the shader code (created by webgl object).
+	     */
+
+
+	    _createClass(ShaderSky, [{
+	        key: 'vsSrc',
+	        value: function vsSrc() {
+
+	            var s = [
+
+	            // Set precision.
+
+	            this.floatp,
+
+	            /* 
+	             * Attribute names are hard-coded in the WebGL object, with rigid indices.
+	             * vertex, textureX coordinates, colors, normals, tangents.
+	             */
+
+	            'attribute vec3 ' + this.webgl.attributeNames.aVertexPosition[0] + ';',
+	            //'attribute vec4 ' + this.webgl.attributeNames.aVertexColor[ 0 ] + ';',
+	            'attribute vec2 ' + this.webgl.attributeNames.aTextureCoord[0] + ';', 'attribute vec3 ' + this.webgl.attributeNames.aVertexNormal[0] + ';', 'uniform mat4 uMVMatrix;', // Model-view matrix
+	            'uniform mat4 uPMatrix;', // Perspective matrix
+	            'uniform mat3 uNMatrix;', // Inverse-transpose of Model-View matrix
+
+	            // World position.
+
+	            'uniform vec3 uPOV;',
+
+	            // Adjusted positions and normals.
+
+	            'varying vec3 vPOV;', // user point of view (camera)
+	            'varying vec4 vPositionW;', // adjusted position
+	            'varying vec4 vNormalW;', // adjusted normal
+
+	            'varying vec2 vTextureCoord;', 'void main(void) {',
+
+	            // View-Model-Position-Projection matrix.
+
+	            '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '}'];
+
+	            return {
+
+	                code: s.join('\n'),
+
+	                varList: this.webgl.createVarList(s)
+
+	            };
+	        }
+
+	        /** 
+	         * sky fragment shader.
+	         * - varying texture coordinate
+	         * - texture 2D sampler
+	         */
+
+	    }, {
+	        key: 'fsSrc',
+	        value: function fsSrc() {
+
+	            var s = [
+
+	            // Set precision.
+
+	            this.floatp,
+
+	            /* 
+	             * Attribute names are hard-coded in the WebGL object, with rigid indices.
+	             * vertex, textureX coordinates, colors, normals, tangents.
+	             */
+
+	            'void main(void) {', 'gl_FragColor = vec4(0.5, 0.5, 0.5, 1.0);', '}'];
+
+	            return {
+
+	                code: s.join('\n'),
+
+	                varList: this.webgl.createVarList(s)
+
+	            };
+	        }
+
+	        /** 
+	         * initialize the update() and render() methods for this shader.
+	         * @param{Prim[]} primList a list of initializing Prims (optional).
+	         */
+
+	    }, {
+	        key: 'init',
+	        value: function init(primList) {
+
+	            var arr = this.setup(),
+	                gl = arr[0],
+	                canvas = arr[1],
+	                mat4 = arr[2],
+	                mat3 = arr[3],
+	                vec3 = arr[4],
+	                program = arr[5],
+	                vsVars = arr[6],
+	                fsVars = arr[7],
+	                stats = arr[8],
+	                near = arr[9],
+	                far = arr[10],
+	                vr = arr[11],
+	                iSize = arr[12];
+
+	            // Shorter reference.
+
+	            var shaderProgram = program.shaderProgram;
+
+	            // If we init with primList, add them here.
+
+	            if (primList) {
+
+	                program.renderList = this.util.concatArr(program.renderList, primList);
+	            }
+
+	            // Local reference to our matrices.
+
+	            //let pMatrix = this.pMatrix,
+
+	            var mvMatrix = this.mvMatrix,
+	                vMatrix = this.vMatrix,
+	                mMatrix = this.mMatrix;
+
+	            /** 
+	             * POLYMORPHIC METHODS
+	             */
+
+	            // Update Prim position, motion - given to World object.
+
+	            program.update = function (prim, MVM, updatePrim) {
+
+	                // Update the model-view matrix using current Prim position, rotation, etc.
+
+	                prim.setMV(mvMatrix);
+
+	                // Calculates a 3x3 normal matrix (transpose inverse) from the 4x4 matrix.
+
+	                mat3.normalFromMat4(nMatrix, mvMatrix);
+
+	                // Update coordinates every time for mono, but only one time for stereo.
+
+	                if (updatePrim) prim.updateCoords();
+	            };
+
+	            // Create a save matrix.
+
+	            var saveMV = mat4.create();
+
+	            /*
+	             * Prim rendering. We pass in a the Projection Matrix so we can render in mono and stereo, and 
+	             * the position of the camera/eye (POV) for some kinds of rendering (e.g. specular).
+	             * @param {glMatrix.mat4} PM projection matrix, either mono or stereo.
+	             * @param {glMatrix.vec3} pov the position of the camera in World space.
+	             * @param {Boolean} if true, have the Prim update its position and rotation. If false, 
+	             * compute the mvMatrix for the Prim without updating (e.g. for the second Stereo view in 
+	             * vrDisplay).
+	             */
+
+	            program.render = function (PM, pov, updatePrim) {
+
+	                if (!program.renderList.length) return;
+
+	                gl.useProgram(shaderProgram);
+
+	                // Save the model-view supplied by the shader. Mono and VR return different MV matrices.
+
+	                mat4.copy(saveMV, mvMatrix);
+
+	                // Begin program loop
+
+	                for (var i = 0, len = program.renderList.length; i < len; i++) {
+
+	                    var prim = program.renderList[i];
+
+	                    // Only render if we are visible, and have at least one texture loaded.
+
+	                    if (!prim || prim.alpha === 0) continue;
+
+	                    // Update Model-View matrix with standard Prim values.
+
+	                    program.update(prim, mvMatrix, updatePrim);
+
+	                    // TODO: bind buffers
+
+	                    // TODO: Set fragment shader sampler uniform.
+
+	                    // TODO: drawElements()
+
+	                    // Copy back the original for the next Prim. 
+
+	                    mat4.copy(mvMatrix, saveMV);
+	                } // end of renerList for Prims
+	            }; // end of program.render()
+	        } // end of init()
+
+	    }]);
+
+	    return ShaderSky;
+	}(_shader2.default);
+
+	exports.default = ShaderSky;
+
+/***/ }),
+/* 15 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _shader = __webpack_require__(10);
+
+	var _shader2 = _interopRequireDefault(_shader);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	'use strict';
+
 	var ShaderWater = function (_Shader) {
 	    _inherits(ShaderWater, _Shader);
 
@@ -8240,7 +8509,7 @@
 	exports.default = ShaderWater;
 
 /***/ }),
-/* 15 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -8500,7 +8769,7 @@
 	exports.default = ShaderMetal;
 
 /***/ }),
-/* 16 */
+/* 17 */
 /***/ (function(module, exports) {
 
 	
@@ -8635,7 +8904,7 @@
 	exports.default = Lights;
 
 /***/ }),
-/* 17 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -8646,7 +8915,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _assetPool = __webpack_require__(18);
+	var _assetPool = __webpack_require__(19);
 
 	var _assetPool2 = _interopRequireDefault(_assetPool);
 
@@ -8730,7 +8999,7 @@
 	exports.default = ShaderPool;
 
 /***/ }),
-/* 18 */
+/* 19 */
 /***/ (function(module, exports) {
 
 	
@@ -9228,7 +9497,7 @@
 	exports.default = AssetPool;
 
 /***/ }),
-/* 19 */
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -9239,39 +9508,39 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _map2d = __webpack_require__(20);
+	var _map2d = __webpack_require__(21);
 
 	var _map2d2 = _interopRequireDefault(_map2d);
 
-	var _map3d = __webpack_require__(22);
+	var _map3d = __webpack_require__(23);
 
 	var _map3d2 = _interopRequireDefault(_map3d);
 
-	var _mesh = __webpack_require__(23);
+	var _mesh = __webpack_require__(24);
 
 	var _mesh2 = _interopRequireDefault(_mesh);
 
-	var _lights = __webpack_require__(16);
+	var _lights = __webpack_require__(17);
 
 	var _lights2 = _interopRequireDefault(_lights);
 
-	var _geometryPool = __webpack_require__(24);
+	var _geometryPool = __webpack_require__(25);
 
 	var _geometryPool2 = _interopRequireDefault(_geometryPool);
 
-	var _texturePool = __webpack_require__(26);
+	var _texturePool = __webpack_require__(27);
 
 	var _texturePool2 = _interopRequireDefault(_texturePool);
 
-	var _modelPool = __webpack_require__(25);
+	var _modelPool = __webpack_require__(26);
 
 	var _modelPool2 = _interopRequireDefault(_modelPool);
 
-	var _audioPool = __webpack_require__(27);
+	var _audioPool = __webpack_require__(28);
 
 	var _audioPool2 = _interopRequireDefault(_audioPool);
 
-	var _geometryBuffer = __webpack_require__(28);
+	var _geometryBuffer = __webpack_require__(29);
 
 	var _geometryBuffer2 = _interopRequireDefault(_geometryBuffer);
 
@@ -9372,6 +9641,8 @@
 
 	        // Bind the callback for geometry initialization applied to individual prims (GeometryPool, Mesh, and ModelPool).
 
+	        // Alias Wavefront OBJ format files.
+
 	        this.util.emitter.on(this.util.emitter.events.OBJ_GEOMETRY_READY, function (prim, key, options) {
 
 	            ////console.log( 'PrimFactory::' + prim.name + ' OBJ geometry ready, key:' + key + ' pos:' + options.pos );
@@ -9398,6 +9669,23 @@
 
 	            prim.shader.addPrim(prim); // TRY to add it
 	        });
+
+	        // HYG stellar database.
+
+	        this.util.emitter.on(this.util.emitter.events.HYG_GEOMETRY_READY, function (prim, key, options) {
+
+	            var coords = _this.modelPool.keyList[key];
+
+	            prim.matStarts = coords.options.matStarts;
+
+	            _this.initPrimGeometry(prim, coords, options);
+
+	            console.log("PRIM SHADER: " + prim.shader.name);
+
+	            prim.shader.addPrim(prim);
+	        });
+
+	        // Standard procedural Prim shapes
 
 	        this.util.emitter.on(this.util.emitter.events.PROCEDURAL_GEOMETRY_READY, function (prim, key, options) {
 
@@ -10315,6 +10603,8 @@
 
 	            // Create Geometry data, or load Mesh data (may alter some of the above default properties).
 
+	            window.mf = modelFiles;
+
 	            if (modelFiles.length > 0) {
 
 	                for (var i = 0; i < modelFiles.length; i++) {
@@ -10356,7 +10646,7 @@
 	exports.default = PrimFactory;
 
 /***/ }),
-/* 20 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -10367,7 +10657,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _mapd = __webpack_require__(21);
+	var _mapd = __webpack_require__(22);
 
 	var _mapd2 = _interopRequireDefault(_mapd);
 
@@ -11058,7 +11348,7 @@
 	exports.default = Map2d;
 
 /***/ }),
-/* 21 */
+/* 22 */
 /***/ (function(module, exports) {
 
 	'use strict';
@@ -11083,7 +11373,7 @@
 	exports.default = Mapd;
 
 /***/ }),
-/* 22 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -11094,7 +11384,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _mapd = __webpack_require__(21);
+	var _mapd = __webpack_require__(22);
 
 	var _mapd2 = _interopRequireDefault(_mapd);
 
@@ -11296,11 +11586,7 @@
 
 	    }, {
 	        key: 'initFromData',
-	        value: function initFromData(positions) {
-
-	            // TODO: use stellar or other data.
-
-	        }
+	        value: function initFromData(positions) {}
 	    }]);
 
 	    return Map3d;
@@ -11309,7 +11595,7 @@
 	exports.default = Map3d;
 
 /***/ }),
-/* 23 */
+/* 24 */
 /***/ (function(module, exports) {
 
 	'use strict';
@@ -12775,7 +13061,7 @@
 	exports.default = Mesh;
 
 /***/ }),
-/* 24 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -12786,19 +13072,19 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _map2d = __webpack_require__(20);
+	var _map2d = __webpack_require__(21);
 
 	var _map2d2 = _interopRequireDefault(_map2d);
 
-	var _map3d = __webpack_require__(22);
+	var _map3d = __webpack_require__(23);
 
 	var _map3d2 = _interopRequireDefault(_map3d);
 
-	var _mesh = __webpack_require__(23);
+	var _mesh = __webpack_require__(24);
 
 	var _mesh2 = _interopRequireDefault(_mesh);
 
-	var _modelPool = __webpack_require__(25);
+	var _modelPool = __webpack_require__(26);
 
 	var _modelPool2 = _interopRequireDefault(_modelPool);
 
@@ -14099,6 +14385,8 @@
 	                texCoords = [],
 	                tangents = [];
 
+	            console.log(">>>>>>>>>>PRIM.MAP IS:" + prim.map);
+
 	            if (!prim.map) {
 
 	                var mm = new _map3d2.default(this.util);
@@ -14117,7 +14405,8 @@
 	            } else {}
 
 	            // TODO: load 3d position file, then run this.
-
+	            // Define type .json 
+	            // Define type .heightmap
 
 	            // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
@@ -14125,9 +14414,23 @@
 	        }
 	    }, {
 	        key: 'geometryStarDome',
-	        value: function geometryStarDome(prim) {
+	        value: function geometryStarDome(prim, pathList) {
+
+	            console.log("IN POINTCLOUD..................");
 
 	            // TODO: add prim.map here....
+
+	            // Get the model file. Pass in Prim so we can respond to model completion events.
+
+	            /*
+	             if ( pathList === undefined || pathList.length === undefined ) {
+	                 console.error( 'GeometryPool::geometryStarDome(): empty path passed for starmap file, returning' );
+	                 return false;
+	             }
+	             for ( let i = 0; i < pathList.length; i++ ) {
+	                 this.modelPool.getModel( prim, pathList[ i ], true, { pos: i } );
+	             }
+	             */
 
 	            return this.geometryPointCloud(prim);
 	        }
@@ -16476,7 +16779,7 @@
 	            var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : { pos: 0 };
 
 
-	            if (prim.type === this.typeList.MESH && path !== null) {
+	            if (path !== null) {
 
 	                /* 
 	                 * Mesh geometry, uses data from a file in OBJ wavefront format.
@@ -16488,7 +16791,7 @@
 
 	                if (!this.util.isWhitespace(path)) {
 
-	                    console.log("--------getting model for:" + prim.name);
+	                    console.log("--------getting model for:" + prim.name + " path:" + path);
 
 	                    this.modelPool.getModel(prim, path, true, options);
 	                } else {
@@ -16550,7 +16853,7 @@
 	exports.default = GeometryPool;
 
 /***/ }),
-/* 25 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -16561,7 +16864,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _assetPool = __webpack_require__(18);
+	var _assetPool = __webpack_require__(19);
 
 	var _assetPool2 = _interopRequireDefault(_assetPool);
 
@@ -16610,7 +16913,9 @@
 
 	            'gltf': 'text/tgltf',
 
-	            'gltfBinary': 'bin/gltf'
+	            'gltfBinary': 'bin/gltf',
+
+	            'hyg': 'text/plain'
 
 	        };
 
@@ -17325,14 +17630,17 @@
 	        /** 
 	         * Decode a simple GlTF file. We only support one scene, with multiple objects. Objects only suppot features 
 	         * implemented in this program (e.g. no rigging). 
-	         * Reference: THREE glTF shader, strating about line 850.
+	         * Reference: THREE glTF shader, starting about line 850.
+	         * @param {String} data the incoming data from the file.
+	         * @param {Prim} prim the Prim object defined in prim.es6
+	         * @param {String} path the path to the file.
 	         */
 
 	    }, {
 	        key: 'computeGlTFMesh',
 	        value: function computeGlTFMesh(data, prim, path) {
 
-	            var m = {};
+	            var m = this.default();
 
 	            m.data = JSON.parse(data);
 
@@ -17363,11 +17671,80 @@
 
 	            return m;
 	        }
+
+	        /** 
+	         * Compute a mesh encoded in GlTF format.
+	         * @param {String} data the incoming data from the file.
+	         * @param {Prim} prim the Prim object defined in prim.es6
+	         * @param {String} path the path to the file. MTL files may reference other files in their directory.
+	         */
+
 	    }, {
 	        key: 'computeGlTFBinaryMesh',
 	        value: function computeGlTFBinaryMesh(data, prim, path) {
 
 	            var m = this.default();
+
+	            return m;
+	        }
+
+	        /**
+	         * Compute a starmap based on the Hyg database, encoded as a JSON file.
+	         * @link http://www.astronexus.com/hyg
+	         * @param {String} data the incoming data from the file.
+	         * @param {Prim} prim the Prim object defined in prim.es6
+	         * @param {String} path the path to the file. MTL files may reference other files in their directory.
+	         */
+
+	    }, {
+	        key: 'computeHyg',
+	        value: function computeHyg(data, prim, path) {
+
+	            var m = this.default();
+
+	            var stars = JSON.parse(data);
+
+	            var tVertices = [],
+	                tIndices = [],
+	                tNormals = [],
+	                tTexCoords = [],
+	                tColors = [];
+
+	            console.log(">>>>>>>STARS.LENGTH::::" + stars.length);
+
+	            var iIdx = 0;
+
+	            for (var i = 0; i < stars.length; i++) {
+
+	                var star = stars[i];
+
+	                var u = star.RA;
+
+	                var v = star.Dec;
+
+	                tVertices.push(Math.cos(u) * Math.sin(v) * prim.dimensions[0], // x
+
+	                Math.sin(u) * Math.sin(v) * prim.dimensions[1], // y
+
+	                Math.cos(v) * prim.dimensions[2] // z
+	                );
+
+	                tNormals.push(0, 0, 0);
+
+	                tIndices.push(iIdx++);
+
+	                tTexCoords.push(0, 1);
+
+	                tColors.push(1, 1, 1, 1);
+	            }
+
+	            /////////// stars = [];
+
+
+	            m.options.matStarts.push([this.materialPool.createDefaultName(prim.name), 0, tIndices.length]);
+
+	            m.vertices = tVertices, m.indices = tIndices, m.texCoords = tTexCoords, m.normals = tNormals, m.colors = tColors; // USE COLOR ARRAY
+
 
 	            return m;
 	        }
@@ -17420,15 +17797,27 @@
 
 	                case 'gltf':
 
-	                    console.log('@@@@@@@@@@@@@@@@went to gltf');
-
 	                    d = this.computeGlTFMesh(data, prim, path);
+
+	                    emitEvent = this.util.emitter.events.GLTF_GEOMETRY_READY;
 
 	                    break;
 
 	                case 'gltfbinary':
 
 	                    d = this.computeGlTFBinaryMesh(data, prim, path);
+
+	                    emitEvent = this.util.emitter.events.GLTF_GEOMETRY_READY;
+
+	                    break;
+
+	                case 'hyg':
+
+	                    prim.drawTris = false, prim.drawLines = false, prim.drawPoints = true;
+
+	                    d = this.computeHyg(data, prim, path);
+
+	                    emitEvent = this.util.emitter.events.HYG_GEOMETRY_READY;
 
 	                    break;
 
@@ -17546,11 +17935,11 @@
 	                                _this3.util.emitter.emit(_modelObj.emits, prim, _modelObj.key, options); ///////////TODO: COMPARE TO PROCEDUAR GEO EMIT
 	                            } else {
 
-	                                console.error('ModelPool::getModel(): OBJ file:' + path + ' could not be parsed');
+	                                console.error('ModelPool::getModel():' + +_this3.util.getFileExtension(path) + ' file path:' + path + ' could not be parsed');
 	                            }
 	                        } else {
 
-	                            console.error('ModelPool::getModel(): OBJ file, no data found for:' + updateObj.path);
+	                            console.error('ModelPool::getModel(): ' + _this3.util.getFileExtension(path) + ' file, no data found for:' + updateObj.path);
 	                        }
 	                    }, cacheBust, mimeType, 0); // end of this.doRequest(), initial request at 0 tries
 	                } else {
@@ -17570,7 +17959,7 @@
 	exports.default = ModelPool;
 
 /***/ }),
-/* 26 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -17581,7 +17970,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _assetPool = __webpack_require__(18);
+	var _assetPool = __webpack_require__(19);
 
 	var _assetPool2 = _interopRequireDefault(_assetPool);
 
@@ -18137,7 +18526,7 @@
 	exports.default = TexturePool;
 
 /***/ }),
-/* 27 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -18146,7 +18535,7 @@
 	    value: true
 	});
 
-	var _assetPool = __webpack_require__(18);
+	var _assetPool = __webpack_require__(19);
 
 	var _assetPool2 = _interopRequireDefault(_assetPool);
 
@@ -18192,7 +18581,7 @@
 	exports.default = AudioPool;
 
 /***/ }),
-/* 28 */
+/* 29 */
 /***/ (function(module, exports) {
 
 	'use strict';
@@ -19320,7 +19709,7 @@
 	exports.default = GeometryBuffer;
 
 /***/ }),
-/* 29 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -19331,35 +19720,35 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _assetPool = __webpack_require__(18);
+	var _assetPool = __webpack_require__(19);
 
 	var _assetPool2 = _interopRequireDefault(_assetPool);
 
-	var _geometryPool = __webpack_require__(24);
+	var _geometryPool = __webpack_require__(25);
 
 	var _geometryPool2 = _interopRequireDefault(_geometryPool);
 
-	var _texturePool = __webpack_require__(26);
+	var _texturePool = __webpack_require__(27);
 
 	var _texturePool2 = _interopRequireDefault(_texturePool);
 
-	var _materialPool = __webpack_require__(30);
+	var _materialPool = __webpack_require__(31);
 
 	var _materialPool2 = _interopRequireDefault(_materialPool);
 
-	var _modelPool = __webpack_require__(25);
+	var _modelPool = __webpack_require__(26);
 
 	var _modelPool2 = _interopRequireDefault(_modelPool);
 
-	var _audioPool = __webpack_require__(27);
+	var _audioPool = __webpack_require__(28);
 
 	var _audioPool2 = _interopRequireDefault(_audioPool);
 
-	var _lights = __webpack_require__(16);
+	var _lights = __webpack_require__(17);
 
 	var _lights2 = _interopRequireDefault(_lights);
 
-	var _primFactory = __webpack_require__(19);
+	var _primFactory = __webpack_require__(20);
 
 	var _primFactory2 = _interopRequireDefault(_primFactory);
 
@@ -19452,9 +19841,9 @@
 
 	        // Path to default World JSON file
 
-	        //this.DEFAULT_WORLD_PATH = 'json/default-world.json';
-	        //this.DEFAULT_WORLD_PATH = 'json/gltf-world.json';
-	        //this.DEFAULT_WORLD_PATH = 'json/obj-world.json';
+	        //this.DEFAULT_WORLD_PATH = 'world/default-world.json';
+	        //this.DEFAULT_WORLD_PATH = 'world/gltf-world.json';
+	        //this.DEFAULT_WORLD_PATH = 'world/obj-world.json';
 	        //this.DEFAULT_WORLD_PATH = 'world/tangled-world.json';
 	        _this.DEFAULT_WORLD_PATH = 'world/celestial-world.json';
 
@@ -20213,7 +20602,7 @@
 	exports.default = World;
 
 /***/ }),
-/* 30 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -20224,7 +20613,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _assetPool = __webpack_require__(18);
+	var _assetPool = __webpack_require__(19);
 
 	var _assetPool2 = _interopRequireDefault(_assetPool);
 
@@ -21097,7 +21486,7 @@
 	exports.default = MaterialPool;
 
 /***/ }),
-/* 31 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/**
@@ -21128,18 +21517,18 @@
 	THE SOFTWARE. */
 	// END HEADER
 
-	exports.glMatrix = __webpack_require__(32);
-	exports.mat2 = __webpack_require__(33);
-	exports.mat2d = __webpack_require__(34);
-	exports.mat3 = __webpack_require__(35);
-	exports.mat4 = __webpack_require__(36);
-	exports.quat = __webpack_require__(37);
-	exports.vec2 = __webpack_require__(40);
-	exports.vec3 = __webpack_require__(38);
-	exports.vec4 = __webpack_require__(39);
+	exports.glMatrix = __webpack_require__(33);
+	exports.mat2 = __webpack_require__(34);
+	exports.mat2d = __webpack_require__(35);
+	exports.mat3 = __webpack_require__(36);
+	exports.mat4 = __webpack_require__(37);
+	exports.quat = __webpack_require__(38);
+	exports.vec2 = __webpack_require__(41);
+	exports.vec3 = __webpack_require__(39);
+	exports.vec4 = __webpack_require__(40);
 
 /***/ }),
-/* 32 */
+/* 33 */
 /***/ (function(module, exports) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -21215,7 +21604,7 @@
 
 
 /***/ }),
-/* 33 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -21238,7 +21627,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(32);
+	var glMatrix = __webpack_require__(33);
 
 	/**
 	 * @class 2x2 Matrix
@@ -21657,7 +22046,7 @@
 
 
 /***/ }),
-/* 34 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -21680,7 +22069,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(32);
+	var glMatrix = __webpack_require__(33);
 
 	/**
 	 * @class 2x3 Matrix
@@ -22132,7 +22521,7 @@
 
 
 /***/ }),
-/* 35 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -22155,7 +22544,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(32);
+	var glMatrix = __webpack_require__(33);
 
 	/**
 	 * @class 3x3 Matrix
@@ -22884,7 +23273,7 @@
 
 
 /***/ }),
-/* 36 */
+/* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -22907,7 +23296,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(32);
+	var glMatrix = __webpack_require__(33);
 
 	/**
 	 * @class 4x4 Matrix
@@ -25026,7 +25415,7 @@
 
 
 /***/ }),
-/* 37 */
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -25049,10 +25438,10 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(32);
-	var mat3 = __webpack_require__(35);
-	var vec3 = __webpack_require__(38);
-	var vec4 = __webpack_require__(39);
+	var glMatrix = __webpack_require__(33);
+	var mat3 = __webpack_require__(36);
+	var vec3 = __webpack_require__(39);
+	var vec4 = __webpack_require__(40);
 
 	/**
 	 * @class Quaternion
@@ -25632,7 +26021,7 @@
 
 
 /***/ }),
-/* 38 */
+/* 39 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -25655,7 +26044,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(32);
+	var glMatrix = __webpack_require__(33);
 
 	/**
 	 * @class 3 Dimensional Vector
@@ -26415,7 +26804,7 @@
 
 
 /***/ }),
-/* 39 */
+/* 40 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -26438,7 +26827,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(32);
+	var glMatrix = __webpack_require__(33);
 
 	/**
 	 * @class 4 Dimensional Vector
@@ -27030,7 +27419,7 @@
 
 
 /***/ }),
-/* 40 */
+/* 41 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
@@ -27053,7 +27442,7 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE. */
 
-	var glMatrix = __webpack_require__(32);
+	var glMatrix = __webpack_require__(33);
 
 	/**
 	 * @class 2 Dimensional Vector
@@ -27623,7 +28012,7 @@
 
 
 /***/ }),
-/* 41 */
+/* 42 */
 /***/ (function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {/*
@@ -28582,272 +28971,6 @@
 	module.exports = WebGLDebugUtils;
 
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
-
-/***/ }),
-/* 42 */,
-/* 43 */
-/***/ (function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-	var _shader = __webpack_require__(10);
-
-	var _shader2 = _interopRequireDefault(_shader);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-	'use strict';
-
-	var ShaderSky = function (_Shader) {
-	    _inherits(ShaderSky, _Shader);
-
-	    /** 
-	     * --------------------------------------------------------------------
-	     * VERTEX SHADER 7
-	     * A sky shader (realistic sky colors, clouds).
-	     * @link http://learningwebgl.com/blog/?p=684
-	     * - vertex position
-	     * - texture coordinate
-	     * - model-view matrix
-	     * - projection matrix
-	     * Water example
-	     * @link http://madebyevan.com/webgl-water/
-	     * --------------------------------------------------------------------
-	     */
-	    function ShaderSky(init, util, glMatrix, webgl, webvr, shaderName, lights) {
-	        _classCallCheck(this, ShaderSky);
-
-	        var _this = _possibleConstructorReturn(this, (ShaderSky.__proto__ || Object.getPrototypeOf(ShaderSky)).call(this, init, util, glMatrix, webgl, webvr, shaderName, lights));
-
-	        console.log('In ShaderSky class');
-
-	        _this.required.buffer.indices = true, _this.required.buffer.texCoords = true, _this.required.buffer.colors = true, _this.required.buffer.normals = true, _this.required.buffer.tangents = true, _this.required.lights = 1, _this.required.textures = 5;
-
-	        // TODO: include more for water
-
-	        return _this;
-	    }
-
-	    /* 
-	     * Vertex and Fragment Shaders. We use the internal 'program' object from the webgl object to compile these. 
-	     * Alternatively, They may be defined to load from HTML or and external file.
-	     * @return {Object{code, varList}} an object, with internal elements
-	     * code: The shader code.
-	     * varList: A scanned list of all the variables in the shader code (created by webgl object).
-	     */
-
-
-	    _createClass(ShaderSky, [{
-	        key: 'vsSrc',
-	        value: function vsSrc() {
-
-	            var s = [
-
-	            // Set precision.
-
-	            this.floatp,
-
-	            /* 
-	             * Attribute names are hard-coded in the WebGL object, with rigid indices.
-	             * vertex, textureX coordinates, colors, normals, tangents.
-	             */
-
-	            'attribute vec3 ' + this.webgl.attributeNames.aVertexPosition[0] + ';',
-	            //'attribute vec4 ' + this.webgl.attributeNames.aVertexColor[ 0 ] + ';',
-	            'attribute vec2 ' + this.webgl.attributeNames.aTextureCoord[0] + ';', 'attribute vec3 ' + this.webgl.attributeNames.aVertexNormal[0] + ';', 'uniform mat4 uMVMatrix;', // Model-view matrix
-	            'uniform mat4 uPMatrix;', // Perspective matrix
-	            'uniform mat3 uNMatrix;', // Inverse-transpose of Model-View matrix
-
-	            // World position.
-
-	            'uniform vec3 uPOV;',
-
-	            // Adjusted positions and normals.
-
-	            'varying vec3 vPOV;', // user point of view (camera)
-	            'varying vec4 vPositionW;', // adjusted position
-	            'varying vec4 vNormalW;', // adjusted normal
-
-	            'varying vec2 vTextureCoord;', 'void main(void) {',
-
-	            // View-Model-Position-Projection matrix.
-
-	            '    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);', '}'];
-
-	            return {
-
-	                code: s.join('\n'),
-
-	                varList: this.webgl.createVarList(s)
-
-	            };
-	        }
-
-	        /** 
-	         * sky fragment shader.
-	         * - varying texture coordinate
-	         * - texture 2D sampler
-	         */
-
-	    }, {
-	        key: 'fsSrc',
-	        value: function fsSrc() {
-
-	            var s = [
-
-	            // Set precision.
-
-	            this.floatp,
-
-	            /* 
-	             * Attribute names are hard-coded in the WebGL object, with rigid indices.
-	             * vertex, textureX coordinates, colors, normals, tangents.
-	             */
-
-	            'void main(void) {', 'gl_FragColor = vec4(0.5, 0.5, 0.5, 1.0);', '}'];
-
-	            return {
-
-	                code: s.join('\n'),
-
-	                varList: this.webgl.createVarList(s)
-
-	            };
-	        }
-
-	        /** 
-	         * initialize the update() and render() methods for this shader.
-	         * @param{Prim[]} primList a list of initializing Prims (optional).
-	         */
-
-	    }, {
-	        key: 'init',
-	        value: function init(primList) {
-
-	            var arr = this.setup(),
-	                gl = arr[0],
-	                canvas = arr[1],
-	                mat4 = arr[2],
-	                mat3 = arr[3],
-	                vec3 = arr[4],
-	                program = arr[5],
-	                vsVars = arr[6],
-	                fsVars = arr[7],
-	                stats = arr[8],
-	                near = arr[9],
-	                far = arr[10],
-	                vr = arr[11],
-	                iSize = arr[12];
-
-	            // Shorter reference.
-
-	            var shaderProgram = program.shaderProgram;
-
-	            // If we init with primList, add them here.
-
-	            if (primList) {
-
-	                program.renderList = this.util.concatArr(program.renderList, primList);
-	            }
-
-	            // Local reference to our matrices.
-
-	            //let pMatrix = this.pMatrix,
-
-	            var mvMatrix = this.mvMatrix,
-	                vMatrix = this.vMatrix,
-	                mMatrix = this.mMatrix;
-
-	            /** 
-	             * POLYMORPHIC METHODS
-	             */
-
-	            // Update Prim position, motion - given to World object.
-
-	            program.update = function (prim, MVM, updatePrim) {
-
-	                // Update the model-view matrix using current Prim position, rotation, etc.
-
-	                prim.setMV(mvMatrix);
-
-	                // Calculates a 3x3 normal matrix (transpose inverse) from the 4x4 matrix.
-
-	                mat3.normalFromMat4(nMatrix, mvMatrix);
-
-	                // Update coordinates every time for mono, but only one time for stereo.
-
-	                if (updatePrim) prim.updateCoords();
-	            };
-
-	            // Create a save matrix.
-
-	            var saveMV = mat4.create();
-
-	            /*
-	             * Prim rendering. We pass in a the Projection Matrix so we can render in mono and stereo, and 
-	             * the position of the camera/eye (POV) for some kinds of rendering (e.g. specular).
-	             * @param {glMatrix.mat4} PM projection matrix, either mono or stereo.
-	             * @param {glMatrix.vec3} pov the position of the camera in World space.
-	             * @param {Boolean} if true, have the Prim update its position and rotation. If false, 
-	             * compute the mvMatrix for the Prim without updating (e.g. for the second Stereo view in 
-	             * vrDisplay).
-	             */
-
-	            program.render = function (PM, pov, updatePrim) {
-
-	                if (!program.renderList.length) return;
-
-	                gl.useProgram(shaderProgram);
-
-	                // Save the model-view supplied by the shader. Mono and VR return different MV matrices.
-
-	                mat4.copy(saveMV, mvMatrix);
-
-	                // Begin program loop
-
-	                for (var i = 0, len = program.renderList.length; i < len; i++) {
-
-	                    var prim = program.renderList[i];
-
-	                    // Only render if we are visible, and have at least one texture loaded.
-
-	                    if (!prim || prim.alpha === 0) continue;
-
-	                    // Update Model-View matrix with standard Prim values.
-
-	                    program.update(prim, mvMatrix, updatePrim);
-
-	                    // TODO: bind buffers
-
-	                    // TODO: Set fragment shader sampler uniform.
-
-	                    // TODO: drawElements()
-
-	                    // Copy back the original for the next Prim. 
-
-	                    mat4.copy(mvMatrix, saveMV);
-	                } // end of renerList for Prims
-	            }; // end of program.render()
-	        } // end of init()
-
-	    }]);
-
-	    return ShaderSky;
-	}(_shader2.default);
-
-	exports.default = ShaderSky;
 
 /***/ })
 /******/ ]);

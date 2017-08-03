@@ -1275,6 +1275,8 @@ class GeometryPool {
 
         let vertices = [], indices  = [], normals = [], texCoords = [], tangents = [];
 
+        console.log(">>>>>>>>>>PRIM.MAP IS:" + prim.map)
+
         if ( ! prim.map ) {
 
             let mm = new Map3d( this.util );
@@ -1294,7 +1296,8 @@ class GeometryPool {
         } else {
 
             // TODO: load 3d position file, then run this.
-
+            // Define type .json 
+            // Define type .heightmap
 
         }
 
@@ -1304,9 +1307,31 @@ class GeometryPool {
 
     }
 
-    geometryStarDome ( prim ) {
+    geometryStarDome ( prim, pathList ) {
+
+        console.log("IN POINTCLOUD..................")
 
         // TODO: add prim.map here....
+
+        // Get the model file. Pass in Prim so we can respond to model completion events.
+
+        /*
+
+        if ( pathList === undefined || pathList.length === undefined ) {
+
+            console.error( 'GeometryPool::geometryStarDome(): empty path passed for starmap file, returning' );
+
+            return false;
+
+        }
+
+        for ( let i = 0; i < pathList.length; i++ ) {
+
+            this.modelPool.getModel( prim, pathList[ i ], true, { pos: i } );
+
+        }
+
+        */
 
         return this.geometryPointCloud( prim );
 
@@ -3773,7 +3798,7 @@ class GeometryPool {
      */
     getGeometry( prim, path, cacheBust = true, options = { pos: 0 } ) {
 
-        if( prim.type === this.typeList.MESH && path !== null ) {
+        if( path !== null ) {
 
             /* 
              * Mesh geometry, uses data from a file in OBJ wavefront format.
@@ -3785,8 +3810,7 @@ class GeometryPool {
 
             if ( ! this.util.isWhitespace( path ) ) {
 
-                console.log("--------getting model for:" + prim.name)
-
+                console.log("--------getting model for:" + prim.name + " path:" + path )
 
                 this.modelPool.getModel( prim, path, true, options );
 

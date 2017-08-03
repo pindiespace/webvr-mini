@@ -19,11 +19,15 @@ class Emitter {
 
         this.events = {
 
-            WORLD_DEFINITION_READY: 'wrddefrdy',        // World definition file is ready
+            WORLD_DEFINITION_READY: 'wrddefrdy',          // World definition file is ready
 
-            PROCEDURAL_GEOMETRY_READY: 'plgrdy',           // Procedural geometry is ready
+            PROCEDURAL_GEOMETRY_READY: 'plgrdy',          // Procedural geometry is ready
 
-            OBJ_GEOMETRY_READY: 'ogrdy',                   // Use for .OBJ and .MTL file formats
+            OBJ_GEOMETRY_READY: 'ogrdy',                  // Use for .OBJ and .MTL file formats
+
+            HYG_GEOMETRY_READY: 'hygrdy',                 // Use for HYG stellar database
+
+            GLTF_GEOMETRY_READY: 'gltfrdy',               // Use for GlTF file formats
 
             MATERIAL_READY: 'mrdy',                       // sends Prim reference. Not used for procedural geometry
 
