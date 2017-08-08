@@ -567,12 +567,6 @@ class ShaderFader extends Shader {
 
                     gl.uniform1i( uUseLighting, 1 );
 
-                    // Bind normals for lighting.
-
-                    gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.normals.buffer );
-                    gl.enableVertexAttribArray( aVertexNormal );
-                    gl.vertexAttribPointer( aVertexNormal, 3, gl.FLOAT, false, 0, 0 );
-
                 } else {
 
                     // Turn off lighting in the Shader.
@@ -580,6 +574,12 @@ class ShaderFader extends Shader {
                     gl.uniform1i( uUseLighting, 0 );
 
                 }
+
+                // Bind normals for lighting, or other calcs.
+
+                gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.normals.buffer );
+                gl.enableVertexAttribArray( aVertexNormal );
+                gl.vertexAttribPointer( aVertexNormal, 3, gl.FLOAT, false, 0, 0 );
 
                 // Normals matrix (transpose inverse) uniform.
 

@@ -355,7 +355,7 @@ class WebGL {
              */
             gl.pixelStorei( gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true );
 
-            gl.clearColor( 0.1, 0.1, 0.1, 1.0 );
+            gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
 
         }
 

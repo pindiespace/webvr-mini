@@ -297,11 +297,17 @@ class Util {
     /** 
      * Return radians for degrees.
      * @param {Number} n the number, in degrees (0-360).
-     * @returns {Nu,ber} return the same number, in radians (0-2PI).
+     * @returns {Number} return the same number, in radians (0-2PI).
      */
     degToRad( deg ) {
 
         return parseFloat( deg ) * Math.PI / 180;
+
+    }
+
+    radToDeg ( rad ) {
+
+        return parseFloat( rad ) * 180 / Math.PI;
 
     }
 

@@ -468,12 +468,6 @@ class ShaderTexture extends Shader {
 
                     gl.uniform1i( uUseLighting, 1 );
 
-                    // Bind normals for lighting.
-
-                    gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.normals.buffer );
-                    gl.enableVertexAttribArray( aVertexNormal );
-                    gl.vertexAttribPointer( aVertexNormal, 3, gl.FLOAT, false, 0, 0 );
-
                 } else {
 
                     // Turn off lighting in the Shader.
@@ -484,7 +478,11 @@ class ShaderTexture extends Shader {
 
                 gl.uniform3fv( uPOV, pov.position ); // used for specular highlight
 
-                // Set the material quality of the Prim.
+                // Bind normals for lighting, or other calcs.
+
+                gl.bindBuffer( gl.ARRAY_BUFFER, prim.geometry.normals.buffer );
+                gl.enableVertexAttribArray( aVertexNormal );
+                gl.vertexAttribPointer( aVertexNormal, 3, gl.FLOAT, false, 0, 0 );
 
                 // Normals matrix (transpose inverse) uniform.
 

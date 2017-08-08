@@ -764,9 +764,8 @@ class MaterialPool extends AssetPool {
      * @param {Object} data data to construct the Prim GeoBuffer.
      * @param {String} path the file path to the object.
      * @param {String} mimeType the MIME type of the file.
-     * @param {String} type the GeometryPool.typeList type of the object, e.g. MESH, SPHERE...
      */
-    addMaterial ( prim, data, path, mimeType, type ) {
+    addMaterial ( prim, data, path, mimeType ) {
 
         let m;
 
@@ -800,7 +799,7 @@ class MaterialPool extends AssetPool {
 
                 let mi = m[ i ];
 
-                mi.type = type,
+                mi.type = prim.type,
 
                 mi.path = path,
 
@@ -855,7 +854,7 @@ class MaterialPool extends AssetPool {
 
                         if ( updateObj.data ) {
 
-                            let materialObj = this.addMaterial( prim, updateObj.data, updateObj.path, mimeType, prim.type );
+                            let materialObj = this.addMaterial( prim, updateObj.data, updateObj.path, mimeType );
 
                             // Multiple materials may be returned from one .mtl file.
 

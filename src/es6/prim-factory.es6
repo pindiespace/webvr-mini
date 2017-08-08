@@ -449,50 +449,6 @@ class PrimFactory {
      */
     initPrimGeometry ( prim, coords, options ) {
 
-        /* 
-         * Options contain material name declarations, groups, smoothing groups, etc. 
-         * Their value is their start in coords.vertices.
-         */
-
-            //for ( var i in coords.options ) {
-
-            //    console.log( 'PrimFactory::initPrimGeometry(): prim:' + prim.name + ' new coord:' + i + ' + value:'  + coords.options[ i ])
-
-            //}
-/*
-         if ( coords.options ) { // OBJ files
-
-            console.log( 'PrimFactory::initPrimGeometry(): assigning options for OBJ geometry' );
-
-            // Object, Group, SmoothingGroup starts.
-
-            prim.objects = coords.options.objects;
-
-            // Start of section of a model, typically with a new material.
-
-            prim.groups = coords.options.groups;
-
-            // Use the list to 
-
-            prim.smoothingGroups = coords.options.smoothingGroups;
-
-            // Material start array.
-
-            prim.matStarts = coords.options.matStarts;
-
-         } else { // Procedural geometry
-
-            // No matStarts were defined, so do a default.
-
-            if ( ! prim.matStarts ) {
-
-                prim.matStarts = [ [ this.materialPool.createDefaultName( prim.name ), 0, coords.indices.length ] ];
-
-            }
-
-         }
-
-        */
 
         // Update vertices if they were supplied.
 
@@ -501,7 +457,6 @@ class PrimFactory {
         // Compute bounding box.
 
         prim.computeBoundingBox( prim.geometry.vertices.data );
-
 
         /* 
          * Procedural geometry is already at scale = 1, so bounding box should be computed 
@@ -539,7 +494,7 @@ class PrimFactory {
 
         // Colors aren't supplied by OBJ format, so re-compute.
 
-        prim.updateColors();
+        prim.updateColors( coords.colors );
 
         // If a usemtl was specified by a file load
 
@@ -1049,7 +1004,7 @@ class PrimFactory {
 
         prim.drawPoints = false;
 
-        prim.pointSize = 3.0; // size if drawn
+        prim.pointSize = 2.0; // size if drawn
 
         /* 
          * If this is set to true, use GL_LINES instad of GL_TRIANGLES to draw (determined by prim type = GeometryPool.typeList).
@@ -1137,8 +1092,6 @@ class PrimFactory {
         prim.geometry = new GeometryBuffer( prim.name, this.util, this.webgl );
 
         // Create Geometry data, or load Mesh data (may alter some of the above default properties).
-
-        window.mf = modelFiles
 
         if ( modelFiles.length > 0 ) {
 

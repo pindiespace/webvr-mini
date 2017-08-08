@@ -66,9 +66,11 @@ class GeometryPool {
 
             POINT: 'geometryPointCloud',
 
-            POINTCLOUD: 'geometryPointCloud',
+            POINTCLOUD: 'geometryPointCloud', // random cloud of 3d points
 
-            STARDOME: 'geometryStarDome',
+            STARDOME: 'geometryStarDome',  // stars projected onto a sphere
+
+            STAR3D: 'geometryStarSpace', // stars projected in 3d
 
             LINE: 'geometryLine',
 
@@ -1307,31 +1309,25 @@ class GeometryPool {
 
     }
 
+    /** 
+     * We don't use a procedural generation for a StarDome - it uses data specified in the world.json file instead.
+     * So we should never go here.
+     */
     geometryStarDome ( prim, pathList ) {
 
-        console.log("IN POINTCLOUD..................")
+        console.error( 'GeometryPool::geometryStarDome(): not procedural, use stellar data, generating randomMap' );
 
-        // TODO: add prim.map here....
+        return this.geometryPointCloud( prim );
 
-        // Get the model file. Pass in Prim so we can respond to model completion events.
+    }
 
-        /*
+    /** 
+     * We don't use a procedural generation for a StarDome - it uses data specified in the world.json file instead.
+     * So we should never go here.
+     */
+    geometryStarSpace( prim ) {
 
-        if ( pathList === undefined || pathList.length === undefined ) {
-
-            console.error( 'GeometryPool::geometryStarDome(): empty path passed for starmap file, returning' );
-
-            return false;
-
-        }
-
-        for ( let i = 0; i < pathList.length; i++ ) {
-
-            this.modelPool.getModel( prim, pathList[ i ], true, { pos: i } );
-
-        }
-
-        */
+        console.error( 'GeometryPool::geometryStarSpace(): not procedural, use stellar data, generating randomMap' );
 
         return this.geometryPointCloud( prim );
 
@@ -3801,7 +3797,8 @@ class GeometryPool {
         if( path !== null ) {
 
             /* 
-             * Mesh geometry, uses data from a file in OBJ wavefront format.
+             * Mesh geometry, uses data from a file using OBJ format, or 
+             * other data formats (e.g. HYG stellar coordinates).
              */
 
             if ( ! path instanceof String ) console.log(">>>>>>>>>>>>>NO PATH")
@@ -3811,6 +3808,26 @@ class GeometryPool {
             if ( ! this.util.isWhitespace( path ) ) {
 
                 console.log("--------getting model for:" + prim.name + " path:" + path )
+
+                // Adjust options for special models.
+
+                if ( prim.type === this.typeList.STARDOME ) {
+
+                    // Use RA and Dec fields for coordinates when creating vertices.
+
+                    console.log(">>>>>>>>>>>>>>>>GOTTA STARDOME")
+
+                    options.useXYZ = false;
+
+                } else if ( prim.type === this.typeList.STAR3D ) {
+
+                    // Use Cartesian xyz fields for coordinates when creating vertices.
+
+                    console.log(">>>>>>>>>>>>GOTTA 3D STARSs")
+
+                    options.useXYZ = true;
+
+                }
 
                 this.modelPool.getModel( prim, path, true, options );
 

@@ -825,7 +825,7 @@
 	        /** 
 	         * Return radians for degrees.
 	         * @param {Number} n the number, in degrees (0-360).
-	         * @returns {Nu,ber} return the same number, in radians (0-2PI).
+	         * @returns {Number} return the same number, in radians (0-2PI).
 	         */
 
 	    }, {
@@ -833,6 +833,12 @@
 	        value: function degToRad(deg) {
 
 	            return parseFloat(deg) * Math.PI / 180;
+	        }
+	    }, {
+	        key: 'radToDeg',
+	        value: function radToDeg(rad) {
+
+	            return parseFloat(rad) * 180 / Math.PI;
 	        }
 
 	        /** 
@@ -2249,7 +2255,7 @@
 	                 */
 	                gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
 
-	                gl.clearColor(0.1, 0.1, 0.1, 1.0);
+	                gl.clearColor(0.0, 0.0, 0.0, 1.0);
 	            }
 	        }
 
@@ -5789,18 +5795,18 @@
 	                    if (prim.useLighting) {
 
 	                        gl.uniform1i(uUseLighting, 1);
-
-	                        // Bind normals for lighting.
-
-	                        gl.bindBuffer(gl.ARRAY_BUFFER, prim.geometry.normals.buffer);
-	                        gl.enableVertexAttribArray(aVertexNormal);
-	                        gl.vertexAttribPointer(aVertexNormal, 3, gl.FLOAT, false, 0, 0);
 	                    } else {
 
 	                        // Turn off lighting in the Shader.
 
 	                        gl.uniform1i(uUseLighting, 0);
 	                    }
+
+	                    // Bind normals for lighting, or other calcs.
+
+	                    gl.bindBuffer(gl.ARRAY_BUFFER, prim.geometry.normals.buffer);
+	                    gl.enableVertexAttribArray(aVertexNormal);
+	                    gl.vertexAttribPointer(aVertexNormal, 3, gl.FLOAT, false, 0, 0);
 
 	                    // Normals matrix (transpose inverse) uniform.
 
@@ -7157,12 +7163,6 @@
 	                    if (prim.useLighting) {
 
 	                        gl.uniform1i(uUseLighting, 1);
-
-	                        // Bind normals for lighting.
-
-	                        gl.bindBuffer(gl.ARRAY_BUFFER, prim.geometry.normals.buffer);
-	                        gl.enableVertexAttribArray(aVertexNormal);
-	                        gl.vertexAttribPointer(aVertexNormal, 3, gl.FLOAT, false, 0, 0);
 	                    } else {
 
 	                        // Turn off lighting in the Shader.
@@ -7172,7 +7172,11 @@
 
 	                    gl.uniform3fv(uPOV, pov.position); // used for specular highlight
 
-	                    // Set the material quality of the Prim.
+	                    // Bind normals for lighting, or other calcs.
+
+	                    gl.bindBuffer(gl.ARRAY_BUFFER, prim.geometry.normals.buffer);
+	                    gl.enableVertexAttribArray(aVertexNormal);
+	                    gl.vertexAttribPointer(aVertexNormal, 3, gl.FLOAT, false, 0, 0);
 
 	                    // Normals matrix (transpose inverse) uniform.
 
@@ -7640,18 +7644,18 @@
 	                    if (prim.useLighting) {
 
 	                        gl.uniform1i(uUseLighting, 1);
-
-	                        // Bind normals for lighting.
-
-	                        gl.bindBuffer(gl.ARRAY_BUFFER, prim.geometry.normals.buffer);
-	                        gl.enableVertexAttribArray(aVertexNormal);
-	                        gl.vertexAttribPointer(aVertexNormal, 3, gl.FLOAT, false, 0, 0);
 	                    } else {
 
 	                        // Turn off lighting in the Shader.
 
 	                        gl.uniform1i(uUseLighting, 0);
 	                    }
+
+	                    // Bind normals for lighting (or other calcs).
+
+	                    gl.bindBuffer(gl.ARRAY_BUFFER, prim.geometry.normals.buffer);
+	                    gl.enableVertexAttribArray(aVertexNormal);
+	                    gl.vertexAttribPointer(aVertexNormal, 3, gl.FLOAT, false, 0, 0);
 
 	                    // Set normals matrix uniform (inverse transpose matrix).
 
@@ -9958,51 +9962,6 @@
 	        key: 'initPrimGeometry',
 	        value: function initPrimGeometry(prim, coords, options) {
 
-	            /* 
-	             * Options contain material name declarations, groups, smoothing groups, etc. 
-	             * Their value is their start in coords.vertices.
-	             */
-
-	            //for ( var i in coords.options ) {
-
-	            //    console.log( 'PrimFactory::initPrimGeometry(): prim:' + prim.name + ' new coord:' + i + ' + value:'  + coords.options[ i ])
-
-	            //}
-	            /*
-	                     if ( coords.options ) { // OBJ files
-	            
-	                        console.log( 'PrimFactory::initPrimGeometry(): assigning options for OBJ geometry' );
-	            
-	                        // Object, Group, SmoothingGroup starts.
-	            
-	                        prim.objects = coords.options.objects;
-	            
-	                        // Start of section of a model, typically with a new material.
-	            
-	                        prim.groups = coords.options.groups;
-	            
-	                        // Use the list to 
-	            
-	                        prim.smoothingGroups = coords.options.smoothingGroups;
-	            
-	                        // Material start array.
-	            
-	                        prim.matStarts = coords.options.matStarts;
-	            
-	                     } else { // Procedural geometry
-	            
-	                        // No matStarts were defined, so do a default.
-	            
-	                        if ( ! prim.matStarts ) {
-	            
-	                            prim.matStarts = [ [ this.materialPool.createDefaultName( prim.name ), 0, coords.indices.length ] ];
-	            
-	                        }
-	            
-	                     }
-	            
-	                    */
-
 	            // Update vertices if they were supplied.
 
 	            prim.updateVertices(coords.vertices);
@@ -10047,7 +10006,7 @@
 
 	            // Colors aren't supplied by OBJ format, so re-compute.
 
-	            prim.updateColors();
+	            prim.updateColors(coords.colors);
 
 	            // If a usemtl was specified by a file load
 
@@ -10514,7 +10473,7 @@
 
 	            prim.drawPoints = false;
 
-	            prim.pointSize = 3.0; // size if drawn
+	            prim.pointSize = 2.0; // size if drawn
 
 	            /* 
 	             * If this is set to true, use GL_LINES instad of GL_TRIANGLES to draw (determined by prim type = GeometryPool.typeList).
@@ -10602,8 +10561,6 @@
 	            prim.geometry = new _geometryBuffer2.default(prim.name, this.util, this.webgl);
 
 	            // Create Geometry data, or load Mesh data (may alter some of the above default properties).
-
-	            window.mf = modelFiles;
 
 	            if (modelFiles.length > 0) {
 
@@ -13148,9 +13105,11 @@
 
 	            POINT: 'geometryPointCloud',
 
-	            POINTCLOUD: 'geometryPointCloud',
+	            POINTCLOUD: 'geometryPointCloud', // random cloud of 3d points
 
-	            STARDOME: 'geometryStarDome',
+	            STARDOME: 'geometryStarDome', // stars projected onto a sphere
+
+	            STAR3D: 'geometryStarSpace', // stars projected in 3d
 
 	            LINE: 'geometryLine',
 
@@ -14412,25 +14371,31 @@
 
 	            return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
 	        }
+
+	        /** 
+	         * We don't use a procedural generation for a StarDome - it uses data specified in the world.json file instead.
+	         * So we should never go here.
+	         */
+
 	    }, {
 	        key: 'geometryStarDome',
 	        value: function geometryStarDome(prim, pathList) {
 
-	            console.log("IN POINTCLOUD..................");
+	            console.error('GeometryPool::geometryStarDome(): not procedural, use stellar data, generating randomMap');
 
-	            // TODO: add prim.map here....
+	            return this.geometryPointCloud(prim);
+	        }
 
-	            // Get the model file. Pass in Prim so we can respond to model completion events.
+	        /** 
+	         * We don't use a procedural generation for a StarDome - it uses data specified in the world.json file instead.
+	         * So we should never go here.
+	         */
 
-	            /*
-	             if ( pathList === undefined || pathList.length === undefined ) {
-	                 console.error( 'GeometryPool::geometryStarDome(): empty path passed for starmap file, returning' );
-	                 return false;
-	             }
-	             for ( let i = 0; i < pathList.length; i++ ) {
-	                 this.modelPool.getModel( prim, pathList[ i ], true, { pos: i } );
-	             }
-	             */
+	    }, {
+	        key: 'geometryStarSpace',
+	        value: function geometryStarSpace(prim) {
+
+	            console.error('GeometryPool::geometryStarSpace(): not procedural, use stellar data, generating randomMap');
 
 	            return this.geometryPointCloud(prim);
 	        }
@@ -16782,7 +16747,8 @@
 	            if (path !== null) {
 
 	                /* 
-	                 * Mesh geometry, uses data from a file in OBJ wavefront format.
+	                 * Mesh geometry, uses data from a file using OBJ format, or 
+	                 * other data formats (e.g. HYG stellar coordinates).
 	                 */
 
 	                if (!path instanceof String) console.log(">>>>>>>>>>>>>NO PATH");
@@ -16792,6 +16758,24 @@
 	                if (!this.util.isWhitespace(path)) {
 
 	                    console.log("--------getting model for:" + prim.name + " path:" + path);
+
+	                    // Adjust options for special models.
+
+	                    if (prim.type === this.typeList.STARDOME) {
+
+	                        // Use RA and Dec fields for coordinates when creating vertices.
+
+	                        console.log(">>>>>>>>>>>>>>>>GOTTA STARDOME");
+
+	                        options.useXYZ = false;
+	                    } else if (prim.type === this.typeList.STAR3D) {
+
+	                        // Use Cartesian xyz fields for coordinates when creating vertices.
+
+	                        console.log(">>>>>>>>>>>>GOTTA 3D STARSs");
+
+	                        options.useXYZ = true;
+	                    }
 
 	                    this.modelPool.getModel(prim, path, true, options);
 	                } else {
@@ -17085,6 +17069,7 @@
 	                var nIdxs = [];
 
 	                // For quad, this gives 0, 1, 2, 0, 2, 3.
+
 	                for (var i = 1; i < idxs.length - 1; i++) {
 
 	                    nIdxs.push(idxs[0], idxs[i], idxs[i + 1]);
@@ -17689,20 +17674,32 @@
 	        }
 
 	        /**
-	         * Compute a starmap based on the Hyg database, encoded as a JSON file.
-	         * @link http://www.astronexus.com/hyg
+	         * Compute a starmap based on the Hyg database, encoded as a JSON file. From the HYG database, with 
+	         * some fields removed.
+	         * @link https://github.com/astronexus/HYG-Database
+	         * Lookup for some missing star names (get their hipparcos ID)
+	         * @link http://simbad.u-strasbg.fr/simbad/sim-fid
+	         * CSV to JSON converter:
+	         * @link http://www.convertcsv.com/csv-to-json.htm
+	         * Nebulae and galaxies
+	         * @link https://github.com/astronexus/HYG-Database/blob/master/dso.csv
 	         * @param {String} data the incoming data from the file.
 	         * @param {Prim} prim the Prim object defined in prim.es6
 	         * @param {String} path the path to the file. MTL files may reference other files in their directory.
+	         * @param {Object} options additional data for using specific fields in the HYG data.
 	         */
 
 	    }, {
 	        key: 'computeHyg',
-	        value: function computeHyg(data, prim, path) {
+	        value: function computeHyg(data, prim, path, options) {
 
 	            var m = this.default();
 
+	            var dimensions = prim.dimensions;
+
 	            var stars = JSON.parse(data);
+
+	            window.stars = stars;
 
 	            var tVertices = [],
 	                tIndices = [],
@@ -17710,24 +17707,42 @@
 	                tTexCoords = [],
 	                tColors = [];
 
-	            console.log(">>>>>>>STARS.LENGTH::::" + stars.length);
-
 	            var iIdx = 0;
 
 	            for (var i = 0; i < stars.length; i++) {
 
 	                var star = stars[i];
 
-	                var u = star.RA;
+	                // TODO: GEOMETRY POOL ASSSIGNMENT options.useXYZ
+	                // TODO: WHY ISN'T THIS LARGER, RA/DEC seems OK!!!!!!!!!!!
+	                // TODO:
+	                // TODO:
 
-	                var v = star.Dec;
+	                if (options.useXYZ === true) {
 
-	                tVertices.push(Math.cos(u) * Math.sin(v) * prim.dimensions[0], // x
+	                    tVertices.push(star.x, star.y, star.z);
+	                } else {
 
-	                Math.sin(u) * Math.sin(v) * prim.dimensions[1], // y
+	                    var A = this.util.degToRad(parseFloat(star.ra) * 15);
 
-	                Math.cos(v) * prim.dimensions[2] // z
-	                );
+	                    var B = this.util.degToRad(parseFloat(star.dec));
+
+	                    // The map is reversed, relative to our coordinate system.
+
+	                    // increase -x, pushes down from pole  so user initially faces polaris (latitude on earth)
+
+	                    // put z at 90 to put the polaris overhead, with y rotating around pole
+
+	                    //?????????WHY DON'T WE HAVE TO SCALE???????
+
+	                    tVertices.push(Math.sin(B), // z
+
+	                    Math.cos(B) * Math.cos(A), // x
+
+	                    Math.cos(B) * Math.sin(A) // y
+
+	                    );
+	                }
 
 	                tNormals.push(0, 0, 0);
 
@@ -17735,11 +17750,20 @@
 
 	                tTexCoords.push(0, 1);
 
-	                tColors.push(1, 1, 1, 1);
+	                /* 
+	                 * We compute magnitude by scaling Sirius (brightest star) from -1.44 to 1.0
+	                 * and assume a cutoff magnitude of +8.0
+	                 * @link https://lco.global/spacebook/what-apparent-magnitude/
+	                 */
+
+	                var mag = 1.0 - (parseFloat(star.mag) + 1.44) / 8;
+
+	                var color = parseFloat(star.ci) || 0;
+
+	                color *= mag;
+
+	                if (star.proper === 'Betelgeuse' || star.proper === 'Rigel' || star.proper === 'Bellatrix' || star.proper === 'Saiph' || star.proper === 'Alnitak' || star.proper === 'Alnilam' || star.proper === 'Mintaka' || star.proper === 'Polaris' || star.proper === 'Alkaid' || star.proper === 'Mizar' || star.proper === 'Alioth' || star.proper === 'Mergrez' || star.proper === 'Phad' || star.proper === 'Merak' || star.proper === 'Dubhe') tColors.push(0, 1, 0, 1);else tColors.push(mag + color, mag, mag - color, 1);
 	            }
-
-	            /////////// stars = [];
-
 
 	            m.options.matStarts.push([this.materialPool.createDefaultName(prim.name), 0, tIndices.length]);
 
@@ -17761,16 +17785,9 @@
 
 	    }, {
 	        key: 'addModel',
-	        value: function addModel(prim, data, path, pos, mimeType, type) {
+	        value: function addModel(prim, data, path, mimeType, options) {
 
 	            //let d;
-
-	            if (pos === undefined) {
-
-	                console.error('ModelPool::addModel(): undefined pos');
-
-	                return null;
-	            }
 
 	            var fType = this.util.getFileExtension(path);
 
@@ -17812,10 +17829,17 @@
 	                    break;
 
 	                case 'hyg':
+	                    // stardome or 3d stars
 
 	                    prim.drawTris = false, prim.drawLines = false, prim.drawPoints = true;
 
-	                    d = this.computeHyg(data, prim, path);
+	                    /* 
+	                     * OPTIONS.xyz is assigned by GeometryPool as true for 
+	                     * typeList.STAR3D, false for typeList.STARDOME. HYG data contains 
+	                     * both spherical (RA and Dec) coordinates, as well as Cartesian coords.
+	                     */
+
+	                    d = this.computeHyg(data, prim, path, options);
 
 	                    emitEvent = this.util.emitter.events.HYG_GEOMETRY_READY;
 
@@ -17836,7 +17860,7 @@
 
 	            if (d) {
 
-	                d.type = type, d.path = path, d.emits = emitEvent;
+	                d.type = prim.type, d.path = path, d.emits = emitEvent;
 
 	                /*
 	                 * Model format which must be returned by Mesh or procedural geometry creation.
@@ -17917,11 +17941,11 @@
 
 	                        ////////console.log( 'ModelPool::getModel(): OBJ file:' + path + ' returned model for:' + prim.name );
 
-	                        // load a Model file.
+	                        // load a Model file. the 'options' may contain special instructions for computing model data differently (e.g. stardome vs 3d stars).
 
 	                        if (updateObj.data) {
 
-	                            var _modelObj = _this3.addModel(prim, updateObj.data, updateObj.path, mimeType, prim.type);
+	                            var _modelObj = _this3.addModel(prim, updateObj.data, updateObj.path, mimeType, options);
 
 	                            if (_modelObj) {
 
@@ -21356,12 +21380,11 @@
 	         * @param {Object} data data to construct the Prim GeoBuffer.
 	         * @param {String} path the file path to the object.
 	         * @param {String} mimeType the MIME type of the file.
-	         * @param {String} type the GeometryPool.typeList type of the object, e.g. MESH, SPHERE...
 	         */
 
 	    }, {
 	        key: 'addMaterial',
-	        value: function addMaterial(prim, data, path, mimeType, type) {
+	        value: function addMaterial(prim, data, path, mimeType) {
 
 	            var m = void 0;
 
@@ -21395,7 +21418,7 @@
 
 	                    var mi = m[i];
 
-	                    mi.type = type, mi.path = path, mi.emits = this.util.emitter.events.MATERIAL_READY;
+	                    mi.type = prim.type, mi.path = path, mi.emits = this.util.emitter.events.MATERIAL_READY;
 
 	                    ///////////console.log("MaterialPool::addMaterial(): adding:" + mi.name + " to Prim:" + prim.name )
 
@@ -21449,7 +21472,7 @@
 
 	                        if (updateObj.data) {
 
-	                            var materialObj = _this3.addMaterial(prim, updateObj.data, updateObj.path, mimeType, prim.type);
+	                            var materialObj = _this3.addMaterial(prim, updateObj.data, updateObj.path, mimeType);
 
 	                            // Multiple materials may be returned from one .mtl file.
 

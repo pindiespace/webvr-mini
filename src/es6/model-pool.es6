@@ -199,6 +199,7 @@ class ModelPool extends AssetPool {
             let nIdxs = [];
 
             // For quad, this gives 0, 1, 2, 0, 2, 3.
+
             for ( let i = 1; i < idxs.length - 1; i++ ) {
 
                 nIdxs.push( idxs[ 0 ], idxs[ i ], idxs[ i + 1 ] );
@@ -836,22 +837,31 @@ class ModelPool extends AssetPool {
     }
 
     /**
-     * Compute a starmap based on the Hyg database, encoded as a JSON file.
-     * @link http://www.astronexus.com/hyg
+     * Compute a starmap based on the Hyg database, encoded as a JSON file. From the HYG database, with 
+     * some fields removed.
+     * @link https://github.com/astronexus/HYG-Database
+     * Lookup for some missing star names (get their hipparcos ID)
+     * @link http://simbad.u-strasbg.fr/simbad/sim-fid
+     * CSV to JSON converter:
+     * @link http://www.convertcsv.com/csv-to-json.htm
+     * Nebulae and galaxies
+     * @link https://github.com/astronexus/HYG-Database/blob/master/dso.csv
      * @param {String} data the incoming data from the file.
      * @param {Prim} prim the Prim object defined in prim.es6
      * @param {String} path the path to the file. MTL files may reference other files in their directory.
+     * @param {Object} options additional data for using specific fields in the HYG data.
      */
-    computeHyg ( data, prim, path ) {
+    computeHyg ( data, prim, path, options ) {
 
         let m = this.default();
 
+        let dimensions = prim.dimensions;
+
         let stars = JSON.parse( data );
 
+        window.stars = stars;
+
         let tVertices = [], tIndices = [], tNormals = [], tTexCoords = [], tColors = [];
-
-
-        console.log(">>>>>>>STARS.LENGTH::::" + stars.length );
 
         let iIdx = 0;
 
@@ -859,16 +869,50 @@ class ModelPool extends AssetPool {
 
             let star = stars[ i ];
 
-            let u = star.RA;
+            // TODO: GEOMETRY POOL ASSSIGNMENT options.useXYZ
+            // TODO: WHY ISN'T THIS LARGER, RA/DEC seems OK!!!!!!!!!!!
+            // TODO:
+            // TODO:
 
-            let v = star.Dec;
+            if ( options.useXYZ === true ) {
 
-            tVertices.push ( Math.cos( u ) * Math.sin( v ) * prim.dimensions[ 0 ], // x
+                tVertices.push( 
 
-                            Math.sin( u ) * Math.sin( v ) * prim.dimensions[ 1 ], // y
+                    star.x,
 
-                            Math.cos( v ) * prim.dimensions[ 2 ] // z
-                        );
+                    star.y,
+
+                    star.z
+
+                );
+
+            } else {
+
+                let A = this.util.degToRad( parseFloat( star.ra ) * 15 );
+
+                let B = this.util.degToRad( parseFloat( star.dec ) );
+
+                // The map is reversed, relative to our coordinate system.
+
+                // increase -x, pushes down from pole  so user initially faces polaris (latitude on earth)
+
+                // put z at 90 to put the polaris overhead, with y rotating around pole
+
+                //?????????WHY DON'T WE HAVE TO SCALE???????
+
+                tVertices.push( 
+
+                    Math.sin( B ), // z
+
+                    Math.cos( B ) * Math.cos( A ), // x
+         
+                    Math.cos( B ) * Math.sin( A ), // y
+
+                );
+
+            }
+
+
 
             tNormals.push( 0, 0, 0 );
 
@@ -876,12 +920,38 @@ class ModelPool extends AssetPool {
 
             tTexCoords.push( 0, 1 );
 
-            tColors.push( 1, 1, 1, 1 );
+            /* 
+             * We compute magnitude by scaling Sirius (brightest star) from -1.44 to 1.0
+             * and assume a cutoff magnitude of +8.0
+             * @link https://lco.global/spacebook/what-apparent-magnitude/
+             */
+
+            let mag = 1.0 - ( ( parseFloat( star.mag ) + 1.44 ) / 8 );
+
+            let color = parseFloat( star.ci ) || 0;
+
+            color *= mag;
+
+            if ( 
+
+                star.proper === 'Betelgeuse' || star.proper === 'Rigel' || 
+                star.proper === 'Bellatrix' || star.proper === 'Saiph' || 
+                star.proper === 'Alnitak' || star.proper === 'Alnilam' || star.proper === 'Mintaka' 
+
+                ||
+
+                star.proper === 'Polaris' || 
+                star.proper === 'Alkaid' || star.proper === 'Mizar' || star.proper === 'Alioth' || 
+                star.proper === 'Mergrez' || star.proper === 'Phad' || star.proper === 'Merak' || star.proper === 'Dubhe'
+
+
+                ) tColors.push(0, 1, 0, 1)
+
+            else tColors.push( mag + color, mag, mag - color, 1 );
+
+
 
         }
-
-        /////////// stars = [];
-
 
         m.options.matStarts.push( [ this.materialPool.createDefaultName( prim.name ), 0, tIndices.length ] );
 
@@ -909,17 +979,9 @@ class ModelPool extends AssetPool {
      * @param {String} mimeType the MIME type of the file.
      * @param {String} type the GeometryPool.typeList type of the object, e.g. MESH, SPHERE...
      */
-    addModel ( prim, data, path, pos, mimeType, type ) {
+    addModel ( prim, data, path, mimeType, options ) {
 
         //let d;
-
-        if ( pos === undefined ) {
-
-            console.error( 'ModelPool::addModel(): undefined pos' );
-
-            return null;
-
-        }
 
         let fType = this.util.getFileExtension( path );
 
@@ -961,7 +1023,7 @@ class ModelPool extends AssetPool {
 
                 break;
 
-            case 'hyg':
+            case 'hyg': // stardome or 3d stars
 
                 prim.drawTris = false,
 
@@ -969,7 +1031,13 @@ class ModelPool extends AssetPool {
 
                 prim.drawPoints = true;
 
-                d = this.computeHyg( data, prim, path );
+                /* 
+                 * OPTIONS.xyz is assigned by GeometryPool as true for 
+                 * typeList.STAR3D, false for typeList.STARDOME. HYG data contains 
+                 * both spherical (RA and Dec) coordinates, as well as Cartesian coords.
+                 */
+
+                d = this.computeHyg( data, prim, path, options );
 
                 emitEvent = this.util.emitter.events.HYG_GEOMETRY_READY;
 
@@ -991,7 +1059,7 @@ class ModelPool extends AssetPool {
 
         if ( d ) {
 
-            d.type = type,
+            d.type = prim.type,
 
             d.path = path,
 
@@ -1074,11 +1142,11 @@ class ModelPool extends AssetPool {
 
                         ////////console.log( 'ModelPool::getModel(): OBJ file:' + path + ' returned model for:' + prim.name );
 
-                        // load a Model file.
+                        // load a Model file. the 'options' may contain special instructions for computing model data differently (e.g. stardome vs 3d stars).
 
                         if ( updateObj.data ) {
 
-                            let modelObj = this.addModel( prim, updateObj.data, updateObj.path, mimeType, prim.type );
+                            let modelObj = this.addModel( prim, updateObj.data, updateObj.path, mimeType, options );
 
                             if ( modelObj ) {
 
