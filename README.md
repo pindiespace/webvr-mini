@@ -6,7 +6,7 @@ This library illustrates how to get a WebVR installation up in barebones code, w
 
 The goal was to create an app with a small download footprint that would allow experimentation in WebVR with simple worlds, without the overhead of a large library like [THREE.js](http://threejs.org). In addition, it is written in ES6 instead of ES5.
 
-Sample project at: [Plyojump portfolio](http://plyojump.com/assets/projects/webvr-mini).
+Sample project at: [Plyojump portfolio](http://plyojump.com/assets/projects/webvr-mini). Give it some time to load; this sample grabs some very large OBJ files.
 
 ## DOM Friendly
 
