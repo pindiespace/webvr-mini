@@ -1275,29 +1275,17 @@ class GeometryPool {
 
         let vertices = [], indices  = [], normals = [], texCoords = [], tangents = [];
 
-        console.log(">>>>>>>>>>PRIM.MAP IS:" + prim.map)
+        let mm = new Map3d( this.util );
 
-        if ( ! prim.map ) {
+        mm[ mm.typeList.SPHERE ]( dimensions[ 0 ], dimensions[ 1 ], dimensions[ 2 ], 1000 );
 
-            let mm = new Map3d( this.util );
+        vertices = mm.map;
 
-            mm[ mm.type.SPHERE ]( dimensions[ 0 ], dimensions[ 1 ], dimensions[ 2 ], 1000 );
+        let vIdx = 0, idx = 0;
 
-            vertices = mm.map;
+        for ( let i = 0; i < mm.map.length; i+=3 ) {
 
-            let vIdx = 0, idx = 0;
-
-            for ( let i = 0; i < mm.map.length; i+=3 ) {
-
-                indices.push( idx++ );
-
-            }
-
-        } else {
-
-            // TODO: load 3d position file, then run this.
-            // Define type .json 
-            // Define type .heightmap
+            indices.push( idx++ );
 
         }
 
@@ -2520,7 +2508,7 @@ class GeometryPool {
     /** 
      * type TERRAIN.
      * rendered as GL_TRIANGLES.
-     * Generate terrain, using a heightMap, from a PLANE object. The 
+     * Generate random terrain from a PLANE object. The 
      * heightMap values are interpolated for each vertex in the PLANE.
      * @param {Prim} the Prim needing geometry. 
      *  - prim.dimensions    = (vec4) [ x, y, z, Prim.side ]
@@ -2537,7 +2525,7 @@ class GeometryPool {
 
             // roughness 0.2 of 0-1, flatten = 1 of 0-1;
 
-            prim.heightMap[ prim.heightMap.type.DIAMOND ]( prim.divisions[ 0 ], prim.divisions[ 2 ], 0.6, 1 );
+            prim.heightMap[ prim.heightMap.typeList.DIAMOND ]( prim.divisions[ 0 ], prim.divisions[ 2 ], 0.6, 1 );
 
             // TODO: SCALE DOWN FOR WATERLINE.
 
@@ -3807,21 +3795,17 @@ class GeometryPool {
 
                 console.log("--------getting model for:" + prim.name + " path:" + path )
 
-                // Adjust options for special models.
+                // Adjust options for special models, e.g. the HYG stellar database.
 
                 if ( prim.type === this.typeList.STARDOME ) {
 
-                    // Use RA and Dec fields for coordinates when creating vertices.
-
-                    console.log(">>>>>>>>>>>>>>>>GOTTA STARDOME")
+                    // Use RA and Dec fields as spherical coordinates when creating vertices.
 
                     options.useXYZ = false;
 
                 } else if ( prim.type === this.typeList.STAR3D ) {
 
-                    // Use Cartesian xyz fields for coordinates when creating vertices.
-
-                    console.log(">>>>>>>>>>>>GOTTA 3D STARSs")
+                    // Use Cartesian x,y,z fields for coordinates when creating vertices.
 
                     options.useXYZ = true;
 

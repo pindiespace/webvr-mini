@@ -22,7 +22,7 @@ class Util {
 
         this.NEGATIVE = -1,
 
-        // Create an Emitter object for pseudo-events.
+        // Create an Emitter object for pseudo-events, used by MANY other objects calling Util.
 
         this.emitter = new Emitter(),
 
@@ -242,6 +242,31 @@ class Util {
         return d;
     }
 
+    /** 
+     * Given a JS object, compute the equivalent Ajax query string.
+     * @param {Object} obj any JS object
+     * @returns {String} a query string that can be used in Ajax requests.
+     */
+    computeQueryString ( obj ) {
+
+        const query = [];
+
+        for( let key in obj ) {
+
+            const value = Array.isArray( obj[ key ] ) ? obj[ key ] : [ obj[ key ] ];
+
+            value.forEach( v => {
+
+                query.push( encodeURIComponent( key ) + '=' + encodeURIComponent( v ) );
+
+            } );
+
+        }
+
+        return query.join( '&' );
+
+    }
+
     /*
      * ---------------------------------------
      * NUMBER OPERATIONS
@@ -308,6 +333,38 @@ class Util {
     radToDeg ( rad ) {
 
         return parseFloat( rad ) * 180 / Math.PI;
+
+    }
+
+    /** 
+     * Given a uv (latitude, longitude) array, return cartesian coordinate equivalents.
+     * @param {Array} uvPositions array, with alternating u (theta) and v (phi) coordinates in RADIANS.
+     * @param {Number} w the width of the bounding box for the resulting 3d space.
+     * @param {Number} h the height of the bounding box for the resulting 3d space.
+     * @param {Number} d the depth of the bounding box for the resulting 3d space.
+     * @returns {Array} a flattened xyz, vertices-compatible array.
+     */
+    uvToCartesian ( uvPositions, w = 1, h = 1, d = 1 ) {
+
+        let m = new Float32Array( 3 * uvPositions.length / 2 );
+
+        let idx = 0;
+
+        for ( let i = 0; i < uvPositions.length; i += 2 ) {
+
+            let u = uvPositions[ i ];
+
+            let v = uvPositions[ i + 1 ];
+
+            m[ idx++ ] = Math.cos( u ) * Math.sin( v ) * w; // x
+
+            m[ idx++ ] = Math.sin( u ) * Math.sin( v ) * h; // y
+
+            m[ idx++ ] = Math.cos( v ) * d; // z
+
+        }
+
+        return m;
 
     }
 
@@ -988,6 +1045,56 @@ class Util {
 
         }
     }
+
+    /*
+     * ---------------------------------------
+     * GEOLOCATION
+     * ---------------------------------------
+     */
+
+    /** 
+     * Get the geolocation of the user.
+     * @param {Prim} prim the Prim to update when geolocation data is returned.
+     */
+    getGeolocation ( ) {
+
+        let emitter = this.emitter;
+
+        navigator.geolocation.getCurrentPosition( 
+
+            ( pos ) => {
+
+                emitter.emit( emitter.events.WORLD_GEOLOCATION_READY, pos.coords );
+
+            }, 
+
+            ( err ) => {
+
+                console.error( 'Util::getGeolocation():Geolocation data not available, error:' + err );
+
+            }, 
+
+            {
+
+                enableHighAccuracy: true,
+
+                timeout: 5000,
+
+                maximumAge: 0
+
+            } 
+
+        );
+
+    }
+
+    /*
+     * ---------------------------------------
+     * API get and put
+     * ---------------------------------------
+     */
+
+
 
     /*
      * ---------------------------------------

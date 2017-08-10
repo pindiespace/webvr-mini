@@ -891,6 +891,8 @@ class ModelPool extends AssetPool {
 
             } else {
 
+                // Not a straight UVToCartesian, ra = 0-24 hours, dec = 0-360 degrees.
+
                 let A = this.util.degToRad( parseFloat( star.ra ) * 15 );
 
                 let B = this.util.degToRad( parseFloat( star.dec ) );
@@ -948,9 +950,13 @@ class ModelPool extends AssetPool {
 
             else tColors.push( mag + color, mag, mag - color, 1 );
 
-
-
         }
+
+        // Set the geolocation flag so we can rotate just before the Prim is added to the Shader.
+
+        prim.geolocate = true;
+
+        // Push the (single) Material start and length for this kind of Prim.
 
         m.options.matStarts.push( [ this.materialPool.createDefaultName( prim.name ), 0, tIndices.length ] );
 

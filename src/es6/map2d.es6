@@ -25,7 +25,7 @@ class Map2d extends Mapd {
 
         //this.util = util;
 
-        this.type = {
+        this.typeList = {
 
             PLANE: 'initPlane',
 
@@ -181,9 +181,11 @@ class Map2d extends Mapd {
 
             this.squareSize = Math.min( w * d ); // shortest face.
 
+            this.type = this.typeList.PLANE;
+
         } else {
 
-            console.error( 'error creating Map2d using ' + this.type.PLANE );
+            console.error( 'error creating Map2d using ' + this.typeList.PLANE );
 
         }
 
@@ -215,9 +217,11 @@ class Map2d extends Mapd {
 
             }
 
+            this.type = this.typeList.RANDOM;
+
         } else {
 
-            console.error( 'error creating Map using ' + this.type.RANDOM );
+            console.error( 'error creating Map using ' + this.typeList.RANDOM );
 
         }
 
@@ -276,9 +280,11 @@ class Map2d extends Mapd {
 
             this.flatten( flatten / this.squareSize ); // if divisions = 100, shrink height 1/ 100;
 
+            this.type = this.typeList.DIAMOND;
+
             } else {
 
-                console.error( 'error creating Map using ' + this.type.DIAMOND );
+                console.error( 'error creating Map using ' + this.typeList.DIAMOND );
 
             }
 

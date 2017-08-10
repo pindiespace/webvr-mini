@@ -21,6 +21,8 @@ class Emitter {
 
             WORLD_DEFINITION_READY: 'wrddefrdy',          // World definition file is ready
 
+            WORLD_GEOLOCATION_READY: 'wrdgeordy',         // World was geo-located in the real world
+
             PROCEDURAL_GEOMETRY_READY: 'plgrdy',          // Procedural geometry is ready
 
             OBJ_GEOMETRY_READY: 'ogrdy',                  // Use for .OBJ and .MTL file formats

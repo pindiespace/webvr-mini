@@ -26,7 +26,9 @@
 
                 }
 
-        }
+        },
+
+        "geolocate" : "true"
 
     },
 
@@ -63,6 +65,43 @@
         "useLighting" : "false",
 
         "comments" : "stardome with positions from the HYG database. A few very distant stars will cause this to scale to a small pointcloud for type STAR3D."
+
+    },
+
+
+    "pointcloud" : {
+
+        "shader" : "shaderColor",
+
+        "type" : "POINTCLOUD",
+
+        "name" : "cloud",
+
+        "description": "random 3d cloud",
+
+        "dimensions" : [ "2", "2", "2" ],
+
+        "divisions" : [ "9", "9", "9", "1", "0" ],
+
+        "position" : [ "0", "0", "0" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "-52", "0", "90" ],
+
+        "angular" : [ "0.0", "0.3", "0.0" ],
+
+        "textures" : [],
+
+        "models" : [],
+
+        "useColorArray" : "true",
+
+        "useFaceTextures" : "false",
+
+        "useLighting" : "false",
+
+        "comments" : "pointcloud with positions from the HYG database. A few very distant stars will cause this to scale to a small pointcloud for type STAR3D."
 
     },
 

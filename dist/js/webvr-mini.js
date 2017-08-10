@@ -533,7 +533,7 @@
 
 	        this.DEFAULT_KEY = 'default', this.POSITIVE = 1, this.NEGATIVE = -1,
 
-	        // Create an Emitter object for pseudo-events.
+	        // Create an Emitter object for pseudo-events, used by MANY other objects calling Util.
 
 	        this.emitter = new _emitter2.default(),
 
@@ -762,6 +762,35 @@
 	            return d;
 	        }
 
+	        /** 
+	         * Given a JS object, compute the equivalent Ajax query string.
+	         * @param {Object} obj any JS object
+	         * @returns {String} a query string that can be used in Ajax requests.
+	         */
+
+	    }, {
+	        key: 'computeQueryString',
+	        value: function computeQueryString(obj) {
+
+	            var query = [];
+
+	            var _loop = function _loop(key) {
+
+	                var value = Array.isArray(obj[key]) ? obj[key] : [obj[key]];
+
+	                value.forEach(function (v) {
+
+	                    query.push(encodeURIComponent(key) + '=' + encodeURIComponent(v));
+	                });
+	            };
+
+	            for (var key in obj) {
+	                _loop(key);
+	            }
+
+	            return query.join('&');
+	        }
+
 	        /*
 	         * ---------------------------------------
 	         * NUMBER OPERATIONS
@@ -839,6 +868,43 @@
 	        value: function radToDeg(rad) {
 
 	            return parseFloat(rad) * 180 / Math.PI;
+	        }
+
+	        /** 
+	         * Given a uv (latitude, longitude) array, return cartesian coordinate equivalents.
+	         * @param {Array} uvPositions array, with alternating u (theta) and v (phi) coordinates in RADIANS.
+	         * @param {Number} w the width of the bounding box for the resulting 3d space.
+	         * @param {Number} h the height of the bounding box for the resulting 3d space.
+	         * @param {Number} d the depth of the bounding box for the resulting 3d space.
+	         * @returns {Array} a flattened xyz, vertices-compatible array.
+	         */
+
+	    }, {
+	        key: 'uvToCartesian',
+	        value: function uvToCartesian(uvPositions) {
+	            var w = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
+	            var h = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 1;
+	            var d = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 1;
+
+
+	            var m = new Float32Array(3 * uvPositions.length / 2);
+
+	            var idx = 0;
+
+	            for (var i = 0; i < uvPositions.length; i += 2) {
+
+	                var u = uvPositions[i];
+
+	                var v = uvPositions[i + 1];
+
+	                m[idx++] = Math.cos(u) * Math.sin(v) * w; // x
+
+	                m[idx++] = Math.sin(u) * Math.sin(v) * h; // y
+
+	                m[idx++] = Math.cos(v) * d; // z
+	            }
+
+	            return m;
 	        }
 
 	        /** 
@@ -1556,6 +1622,46 @@
 
 	        /*
 	         * ---------------------------------------
+	         * GEOLOCATION
+	         * ---------------------------------------
+	         */
+
+	        /** 
+	         * Get the geolocation of the user.
+	         * @param {Prim} prim the Prim to update when geolocation data is returned.
+	         */
+
+	    }, {
+	        key: 'getGeolocation',
+	        value: function getGeolocation() {
+
+	            var emitter = this.emitter;
+
+	            navigator.geolocation.getCurrentPosition(function (pos) {
+
+	                emitter.emit(emitter.events.WORLD_GEOLOCATION_READY, pos.coords);
+	            }, function (err) {
+
+	                console.error('Util::getGeolocation():Geolocation data not available, error:' + err);
+	            }, {
+
+	                enableHighAccuracy: true,
+
+	                timeout: 5000,
+
+	                maximumAge: 0
+
+	            });
+	        }
+
+	        /*
+	         * ---------------------------------------
+	         * API get and put
+	         * ---------------------------------------
+	         */
+
+	        /*
+	         * ---------------------------------------
 	         * BROWSER AND DEVICE FEATURES
 	         * ---------------------------------------
 	         */
@@ -1749,6 +1855,8 @@
 	        this.events = {
 
 	            WORLD_DEFINITION_READY: 'wrddefrdy', // World definition file is ready
+
+	            WORLD_GEOLOCATION_READY: 'wrdgeordy', // World was geo-located in the real world
 
 	            PROCEDURAL_GEOMETRY_READY: 'plgrdy', // Procedural geometry is ready
 
@@ -9679,6 +9787,18 @@
 
 	            console.log("PRIM SHADER: " + prim.shader.name);
 
+	            // If the World is gelocated, check if this Prim reacts. If so, fire update.
+
+	            if (prim.geolocate) {
+
+	                if (world.coords) {
+
+	                    // TODO: DEBUG
+
+	                    prim.rotation = _this.util.uvToCartesian(_this.util.degToRad(parseFloat(coords.latitude)), _this.util.detToRad(parseFloat(coords.longitude)));
+	                }
+	            }
+
 	            prim.shader.addPrim(prim);
 	        });
 
@@ -9740,6 +9860,8 @@
 	        // Bind Prim callback for a Shader accepting a Prim for rendering.
 
 	        this.util.emitter.on(this.util.emitter.events.PRIM_ADDED_TO_SHADER, function (prim) {
+
+	            // If we are a Prim that needs geolocation, update our rotation (STARDOME, TERRAIN)
 
 	            // Get the maximum alpha in all the defined textures. If we have more than one, don't use 'default'.
 
@@ -10054,7 +10176,7 @@
 	        key: 'createPrim',
 	        value: function createPrim(shader, // Shader which attaches/detaches this Prim from display list
 
-	        type) // if true, light the object with the World Light
+	        type) // if true, use meta-data associated with array, store it in objects[] array
 
 	        {
 	            var name = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'unknown';
@@ -10067,11 +10189,12 @@
 	            var textureImages = arguments.length > 9 && arguments[9] !== undefined ? arguments[9] : [];
 	            var modelFiles = arguments.length > 10 && arguments[10] !== undefined ? arguments[10] : [];
 	            var useColorArray = arguments.length > 11 && arguments[11] !== undefined ? arguments[11] : false;
+	            var applyTexToFace = arguments.length > 12 && arguments[12] !== undefined ? arguments[12] : false;
 
 	            var _this2 = this;
 
-	            var applyTexToFace = arguments.length > 12 && arguments[12] !== undefined ? arguments[12] : false;
 	            var useLighting = arguments.length > 13 && arguments[13] !== undefined ? arguments[13] : true;
+	            var useMetaData = arguments.length > 14 && arguments[14] !== undefined ? arguments[14] : false;
 	            // function to execute when prim is done (e.g. attach to drawing list shader).
 
 	            var vec3 = this.glMatrix.vec3,
@@ -10136,7 +10259,7 @@
 	            };
 
 	            /** 
-	             * Update the position, rotation, and orbit of a Prim. Called 
+	             * Update the position, rotation, and orbit of a Prim during rendering loop. Called 
 	             * in the Shader.program.update() routine, conditionally if mono (always) 
 	             * or stereo (called evern other render).
 	             */
@@ -10492,6 +10615,10 @@
 
 	            prim.waypoints = [];
 
+	            // By default, Prims do not adjust to geolocation data. If ModelPool loads data, this may be set to true for TERRAIN and STARDOME objects.
+
+	            prim.geolocate = false;
+
 	            // Material array (stores textures as well).
 
 	            prim.materials = [];
@@ -10573,18 +10700,6 @@
 
 	            return prim;
 	        }
-
-	        /** 
-	         * Convert a Prim to its JSON equivalent
-	         * @param {Prim} prim the object to stringify.
-	         */
-
-	    }, {
-	        key: 'toJSON',
-	        value: function toJSON(prim) {
-
-	            return JSON.stringify(prim);
-	        }
 	    }]);
 
 	    return PrimFactory;
@@ -10645,7 +10760,7 @@
 
 	        var _this = _possibleConstructorReturn(this, (Map2d.__proto__ || Object.getPrototypeOf(Map2d)).call(this, util));
 
-	        _this.type = {
+	        _this.typeList = {
 
 	            PLANE: 'initPlane',
 
@@ -10805,9 +10920,11 @@
 	                this.depth = d;
 
 	                this.squareSize = Math.min(w * d); // shortest face.
+
+	                this.type = this.typeList.PLANE;
 	            } else {
 
-	                console.error('error creating Map2d using ' + this.type.PLANE);
+	                console.error('error creating Map2d using ' + this.typeList.PLANE);
 	            }
 	        }
 
@@ -10838,9 +10955,11 @@
 
 	                    this.map[i] = util.getRand() * roughness;
 	                }
+
+	                this.type = this.typeList.RANDOM;
 	            } else {
 
-	                console.error('error creating Map using ' + this.type.RANDOM);
+	                console.error('error creating Map using ' + this.typeList.RANDOM);
 	            }
 	        }
 
@@ -10899,9 +11018,11 @@
 	                this.setPixel(0, 0, (this.getPixel(0, 1) + this.getPixel(1, 0)) / 2);
 
 	                this.flatten(flatten / this.squareSize); // if divisions = 100, shrink height 1/ 100;
+
+	                this.type = this.typeList.DIAMOND;
 	            } else {
 
-	                console.error('error creating Map using ' + this.type.DIAMOND);
+	                console.error('error creating Map using ' + this.typeList.DIAMOND);
 	            }
 	        }
 
@@ -11368,11 +11489,9 @@
 
 	        console.log('in Map3d');
 
-	        //this.util = util;
-
 	        var _this = _possibleConstructorReturn(this, (Map3d.__proto__ || Object.getPrototypeOf(Map3d)).call(this, util));
 
-	        _this.type = {
+	        _this.typeList = {
 
 	            CLOUD: 'initRandom',
 
@@ -11411,7 +11530,7 @@
 	        }
 
 	        /** 
-	         * Get a 3D pixel. This allows interpolation of values (colors or other 
+	         * Get a 3D pixel from a 3D texture. This allows interpolation of values (colors or other 
 	         * meta-data ) using 3d coordinates.
 	         *
 	         * @param {Number} x the x coordinate of the pixel (column)
@@ -11466,6 +11585,8 @@
 
 	                    this.map[i] = util.getRand() * w, this.map[i + 1] = util.getRand() * h, this.map[i + 2] = this.util.getRand() * d;
 	                }
+
+	                this.type = this.typeList.CLOUD;
 	            } else {
 
 	                console.error('error creating Map3d using ' + this.type.CLOUD);
@@ -11473,7 +11594,11 @@
 	        }
 
 	        /** 
-	         * Return a set of random UV coordinates.
+	         * Return a set of random UV coordinates, arrayed on a sphere.
+	         * @param {Number} w the width of the space, in program/WebGL units.
+	         * @param {Number} h the height of the space, in program/WebGL units.
+	         * @param {Number} d the depth of the space, in program/WebGL units.
+	         * @param {Number} numPoints the number of points (vertices) to create.
 	         */
 
 	    }, {
@@ -11482,49 +11607,22 @@
 
 	            var util = this.util;
 
-	            this.mapUV = new Float32Array(numPoints * 2);
+	            var mapUV = new Float32Array(numPoints * 2);
 
 	            for (var i = 0; i < numPoints; i += 2) {
 
-	                // Distribute evenly over sphere.
+	                // Distribute evenly over sphere. Since the sphere radius is constant, we don't set min or max for util.getRand.
 
-	                this.mapUV[i] = Math.PI * 2 * util.getRand(); // theta or u
+	                mapUV[i] = Math.PI * 2 * util.getRand(); // theta or u
 
-	                this.mapUV[i + 1] = Math.acos(2 * util.getRand() - 1); // phi or v
+	                mapUV[i + 1] = Math.acos(2 * util.getRand() - 1); // phi or v
 	            }
 
-	            this.map = this.uvToCartesian(this.mapUV, w, h, d);
+	            //this.map = this.uvToCartesian( mapUV, w, h, d );
 
-	            //this.initRandom( w, h, d, numPoints )
+	            this.map = util.uvToCartesian(mapUV, w, h, d);
 
-	        }
-
-	        /** 
-	         * Given a uv (latitude, longitude) array, return cartesian coordinate equivalents.
-	         */
-
-	    }, {
-	        key: 'uvToCartesian',
-	        value: function uvToCartesian(uvPositions, w, h, d) {
-
-	            var m = new Float32Array(3 * uvPositions.length / 2);
-
-	            var idx = 0;
-
-	            for (var i = 0; i < uvPositions.length; i += 2) {
-
-	                var u = uvPositions[i];
-
-	                var v = uvPositions[i + 1];
-
-	                m[idx++] = Math.cos(u) * Math.sin(v) * w; // x
-
-	                m[idx++] = Math.sin(u) * Math.sin(v) * h; // y
-
-	                m[idx++] = Math.cos(v) * d; // z
-	            }
-
-	            return m;
+	            this.type = this.typeList.SPHERE;
 	        }
 
 	        /** 
@@ -14334,28 +14432,19 @@
 	                texCoords = [],
 	                tangents = [];
 
-	            console.log(">>>>>>>>>>PRIM.MAP IS:" + prim.map);
+	            var mm = new _map3d2.default(this.util);
 
-	            if (!prim.map) {
+	            mm[mm.typeList.SPHERE](dimensions[0], dimensions[1], dimensions[2], 1000);
 
-	                var mm = new _map3d2.default(this.util);
+	            vertices = mm.map;
 
-	                mm[mm.type.SPHERE](dimensions[0], dimensions[1], dimensions[2], 1000);
+	            var vIdx = 0,
+	                idx = 0;
 
-	                vertices = mm.map;
+	            for (var i = 0; i < mm.map.length; i += 3) {
 
-	                var vIdx = 0,
-	                    idx = 0;
-
-	                for (var i = 0; i < mm.map.length; i += 3) {
-
-	                    indices.push(idx++);
-	                }
-	            } else {}
-
-	            // TODO: load 3d position file, then run this.
-	            // Define type .json 
-	            // Define type .heightmap
+	                indices.push(idx++);
+	            }
 
 	            // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
@@ -15553,7 +15642,7 @@
 	        /** 
 	         * type TERRAIN.
 	         * rendered as GL_TRIANGLES.
-	         * Generate terrain, using a heightMap, from a PLANE object. The 
+	         * Generate random terrain from a PLANE object. The 
 	         * heightMap values are interpolated for each vertex in the PLANE.
 	         * @param {Prim} the Prim needing geometry. 
 	         *  - prim.dimensions    = (vec4) [ x, y, z, Prim.side ]
@@ -15570,7 +15659,7 @@
 
 	                // roughness 0.2 of 0-1, flatten = 1 of 0-1;
 
-	                prim.heightMap[prim.heightMap.type.DIAMOND](prim.divisions[0], prim.divisions[2], 0.6, 1);
+	                prim.heightMap[prim.heightMap.typeList.DIAMOND](prim.divisions[0], prim.divisions[2], 0.6, 1);
 
 	                // TODO: SCALE DOWN FOR WATERLINE.
 
@@ -16749,20 +16838,16 @@
 
 	                    console.log("--------getting model for:" + prim.name + " path:" + path);
 
-	                    // Adjust options for special models.
+	                    // Adjust options for special models, e.g. the HYG stellar database.
 
 	                    if (prim.type === this.typeList.STARDOME) {
 
-	                        // Use RA and Dec fields for coordinates when creating vertices.
-
-	                        console.log(">>>>>>>>>>>>>>>>GOTTA STARDOME");
+	                        // Use RA and Dec fields as spherical coordinates when creating vertices.
 
 	                        options.useXYZ = false;
 	                    } else if (prim.type === this.typeList.STAR3D) {
 
-	                        // Use Cartesian xyz fields for coordinates when creating vertices.
-
-	                        console.log(">>>>>>>>>>>>GOTTA 3D STARSs");
+	                        // Use Cartesian x,y,z fields for coordinates when creating vertices.
 
 	                        options.useXYZ = true;
 	                    }
@@ -17715,6 +17800,8 @@
 	                    }
 	                } else {
 
+	                    // Not a straight UVToCartesian, ra = 0-24 hours, dec = 0-360 degrees.
+
 	                    var A = this.util.degToRad(parseFloat(star.ra) * 15);
 
 	                    var B = this.util.degToRad(parseFloat(star.dec));
@@ -17754,6 +17841,12 @@
 
 	                if (star.proper === 'Betelgeuse' || star.proper === 'Rigel' || star.proper === 'Bellatrix' || star.proper === 'Saiph' || star.proper === 'Alnitak' || star.proper === 'Alnilam' || star.proper === 'Mintaka' || star.proper === 'Polaris' || star.proper === 'Alkaid' || star.proper === 'Mizar' || star.proper === 'Alioth' || star.proper === 'Mergrez' || star.proper === 'Phad' || star.proper === 'Merak' || star.proper === 'Dubhe') tColors.push(0, 1, 0, 1);else tColors.push(mag + color, mag, mag - color, 1);
 	            }
+
+	            // Set the geolocation flag so we can rotate just before the Prim is added to the Shader.
+
+	            prim.geolocate = true;
+
+	            // Push the (single) Material start and length for this kind of Prim.
 
 	            m.options.matStarts.push([this.materialPool.createDefaultName(prim.name), 0, tIndices.length]);
 
@@ -19901,6 +19994,15 @@
 	            }
 	        });
 
+	        // Rotate Prims which depend on our current (real-world) latitude and longitude.
+
+	        _this.util.emitter.on(_this.util.emitter.events.WORLD_GEOLOCATION_READY, function (coords) {
+
+	            world.coords = coords;
+
+	            // Individual Prims which need to update check this value.
+	        });
+
 	        return _this;
 	    }
 
@@ -20058,6 +20160,13 @@
 
 	                                            _this2.lights.setLight(_this2.lights.lightTypes[j], j.ambient, j.lightingDirection, j.directionalColor, j.active);
 	                                        }
+
+	                                        // If our scene is located in the real world, geolocate.
+
+	                                        if (s.geolocate) {
+
+	                                            util.getGeolocation();
+	                                        }
 	                                    } else {
 	                                        // its a Prim
 
@@ -20087,6 +20196,16 @@
 	                                                s.divisions[4] = parseFloat(s.divisions[4]);
 	                                            }
 
+	                                            if (s.useColorArray) s.useColorArray = JSON.parse(s.useColorArray); // if true, use color array instead of texture array
+
+	                                            if (s.useFaceTextures) s.useFaceTextures = JSON.parse(s.useFaceTextures); // if true, apply textures to each face, not whole Prim.
+
+	                                            if (s.useLighting) s.useLighting = JSON.parse(s.useLighting); // if true, use lighting (default)
+
+	                                            if (s.useMetaData) s.useMetaData = JSON.parse(s.useMetaData); // if true, keep data associated with regions of prim.
+
+	                                            // Create the Prim.
+
 	                                            var p = _this2.primFactory.createPrim(_this2.shaderPool.getAssetByName(s.shader), // Shader used
 
 	                                            typeList[s.type], // Prim type
@@ -20111,15 +20230,13 @@
 
 	                                            s.models, // model (.OBJ, .GlTF)
 
-	                                            JSON.parse(s.useColorArray), // if true, use color array instead of texture array
+	                                            s.useColorArray, // if true, use color array instead of texture array
 
-	                                            JSON.parse(s.useFaceTextures), // if true, apply textures to each face, not whole Prim.
+	                                            s.useFaceTextures, // if true, apply textures to each face, not whole Prim.
 
-	                                            JSON.parse(s.useLighting) // if true, use lighting (default)
+	                                            s.useLighting, // if true, use lighting (default)
 
-	                                            ); // end of valid Shader
-
-	                                            console.log("S.clipGeometry:::::::::::::::" + s.clipGeometry);
+	                                            s.useMetaData); // end of valid Shader
 	                                        } else {
 
 	                                            console.error('World::getWorld(): invalid Shader:' + s.shader + ' for Prim:' + i);
@@ -20132,7 +20249,7 @@
 	                                 * and model files may still need to be loaded.
 	                                 */
 
-	                                _this2.util.emitter.emit(_this2.emitter.events.WORLD_DEFINITION_READY); ///////////TODO: COMPARE TO PROCEDUAR GEO EMIT
+	                                _this2.util.emitter.emit(_this2.emitter.events.WORLD_DEFINITION_READY);
 	                            } else {
 
 	                                console.error('World::getWorld():World file:' + path + ' could not be parsed');
@@ -20151,7 +20268,6 @@
 
 	        /** 
 	         * save a World to a JSON file description.
-	         * use Prim.toJSON() for indivdiual prims.
 	         */
 
 	    }, {

@@ -150,6 +150,20 @@ class PrimFactory {
 
                 console.log("PRIM SHADER: " + prim.shader.name)
 
+                // If the World is gelocated, check if this Prim reacts. If so, fire update.
+
+                if ( prim.geolocate ) {
+
+                    if ( world.coords ) {
+
+                        // TODO: DEBUG
+
+                        prim.rotation = this.util.uvToCartesian( this.util.degToRad( parseFloat( coords.latitude ) ), this.util.detToRad( parseFloat( coords.longitude ) ) );
+
+                    }
+
+                }
+
                 prim.shader.addPrim( prim );
 
         } );
@@ -230,6 +244,8 @@ class PrimFactory {
         this.util.emitter.on( this.util.emitter.events.PRIM_ADDED_TO_SHADER, 
 
             ( prim ) => {
+
+                // If we are a Prim that needs geolocation, update our rotation (STARDOME, TERRAIN)
 
                 // Get the maximum alpha in all the defined textures. If we have more than one, don't use 'default'.
 
@@ -572,7 +588,9 @@ class PrimFactory {
 
         applyTexToFace = false, // if true, apply textures to each face, not whole Prim
 
-        useLighting = true // if true, light the object with the World Light
+        useLighting = true, // if true, light the object with the World Light
+
+        useMetaData = false // if true, use meta-data associated with array, store it in objects[] array
 
         ) { // function to execute when prim is done (e.g. attach to drawing list shader).
 
@@ -641,7 +659,7 @@ class PrimFactory {
         };
 
         /** 
-         * Update the position, rotation, and orbit of a Prim. Called 
+         * Update the position, rotation, and orbit of a Prim during rendering loop. Called 
          * in the Shader.program.update() routine, conditionally if mono (always) 
          * or stereo (called evern other render).
          */
@@ -1028,6 +1046,10 @@ class PrimFactory {
 
         prim.waypoints = [];
 
+        // By default, Prims do not adjust to geolocation data. If ModelPool loads data, this may be set to true for TERRAIN and STARDOME objects.
+
+        prim.geolocate = false;
+
         // Material array (stores textures as well).
 
         prim.materials = [];
@@ -1112,16 +1134,6 @@ class PrimFactory {
         this.prims.push( prim );
 
         return prim;
-
-    }
-
-    /** 
-     * Convert a Prim to its JSON equivalent
-     * @param {Prim} prim the object to stringify.
-     */
-    toJSON ( prim ) {
-
-        return JSON.stringify( prim );
 
     }
 

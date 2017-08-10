@@ -23,9 +23,7 @@ class Map3d extends Mapd {
 
         super ( util );
 
-        //this.util = util;
-
-        this.type = {
+        this.typeList = {
 
             CLOUD: 'initRandom',
 
@@ -61,9 +59,8 @@ class Map3d extends Mapd {
 
     }
 
-
     /** 
-     * Get a 3D pixel. This allows interpolation of values (colors or other 
+     * Get a 3D pixel from a 3D texture. This allows interpolation of values (colors or other 
      * meta-data ) using 3d coordinates.
      *
      * @param {Number} x the x coordinate of the pixel (column)
@@ -119,6 +116,8 @@ class Map3d extends Mapd {
 
             }
 
+            this.type = this.typeList.CLOUD;
+
         } else {
 
             console.error( 'error creating Map3d using ' + this.type.CLOUD );
@@ -128,55 +127,33 @@ class Map3d extends Mapd {
     }
 
     /** 
-     * Return a set of random UV coordinates.
+     * Return a set of random UV coordinates, arrayed on a sphere.
+     * @param {Number} w the width of the space, in program/WebGL units.
+     * @param {Number} h the height of the space, in program/WebGL units.
+     * @param {Number} d the depth of the space, in program/WebGL units.
+     * @param {Number} numPoints the number of points (vertices) to create.
      */
     initRandomSphere( w, h, d, numPoints ) {
 
         let util = this.util;
 
-        this.mapUV = new Float32Array( numPoints * 2 );
+        let mapUV = new Float32Array( numPoints * 2 );
 
         for ( let i = 0; i < numPoints; i += 2 ) {
 
-            // Distribute evenly over sphere.
+            // Distribute evenly over sphere. Since the sphere radius is constant, we don't set min or max for util.getRand.
 
-            this.mapUV[ i ] = Math.PI * 2 * util.getRand(); // theta or u
+            mapUV[ i ] = Math.PI * 2 * util.getRand(); // theta or u
 
-            this.mapUV[ i + 1 ] = Math.acos( 2 * util.getRand() - 1 ); // phi or v
-
-        }
-
-        this.map = this.uvToCartesian( this.mapUV, w, h, d );
-
-        //this.initRandom( w, h, d, numPoints )
-
-
-    }
-
-    /** 
-     * Given a uv (latitude, longitude) array, return cartesian coordinate equivalents.
-     */
-    uvToCartesian ( uvPositions, w, h, d ) {
-
-        let m = new Float32Array( 3 * uvPositions.length / 2 );
-
-        let idx = 0;
-
-        for ( let i = 0; i < uvPositions.length; i += 2 ) {
-
-            let u = uvPositions[ i ];
-
-            let v = uvPositions[ i + 1 ];
-
-            m[ idx++ ] = Math.cos( u ) * Math.sin( v ) * w; // x
-
-            m[ idx++ ] = Math.sin( u ) * Math.sin( v ) * h; // y
-
-            m[ idx++ ] = Math.cos( v ) * d; // z
+            mapUV[ i + 1 ] = Math.acos( 2 * util.getRand() - 1 ); // phi or v
 
         }
 
-        return m;
+        //this.map = this.uvToCartesian( mapUV, w, h, d );
+
+        this.map = util.uvToCartesian( mapUV, w, h, d );
+
+        this.type = this.typeList.SPHERE;
 
     }
 

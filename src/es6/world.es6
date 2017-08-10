@@ -144,6 +144,18 @@ class World extends AssetPool {
 
             } );
 
+        // Rotate Prims which depend on our current (real-world) latitude and longitude.
+
+        this.util.emitter.on( this.util.emitter.events.WORLD_GEOLOCATION_READY,
+
+            ( coords ) => {
+
+                world.coords = coords;
+
+                // Individual Prims which need to update check this value.
+
+        } );
+
     }
 
     /**
@@ -286,6 +298,14 @@ class World extends AssetPool {
 
                                          }
 
+                                        // If our scene is located in the real world, geolocate.
+
+                                        if ( s.geolocate ) {
+
+                                            util.getGeolocation();
+
+                                        }
+
                                     } else { // its a Prim
 
                                         let shader = this.shaderPool.getAssetByName( s.shader );
@@ -317,6 +337,16 @@ class World extends AssetPool {
                                                 s.divisions[ 4 ] = parseFloat( s.divisions[ 4 ] );
 
                                             }
+
+                                            if ( s.useColorArray ) s.useColorArray = JSON.parse( s.useColorArray );      // if true, use color array instead of texture array
+
+                                            if ( s.useFaceTextures) s.useFaceTextures = JSON.parse( s.useFaceTextures ); // if true, apply textures to each face, not whole Prim.
+
+                                            if ( s.useLighting ) s.useLighting = JSON.parse( s.useLighting );            // if true, use lighting (default)
+
+                                            if ( s.useMetaData ) s.useMetaData = JSON.parse( s.useMetaData );            // if true, keep data associated with regions of prim.
+
+                                            // Create the Prim.
 
                                             let p = this.primFactory.createPrim(
 
@@ -376,15 +406,15 @@ class World extends AssetPool {
 
                                                 s.models,                                   // model (.OBJ, .GlTF)
 
-                                                JSON.parse( s.useColorArray ),              // if true, use color array instead of texture array
+                                                s.useColorArray,              // if true, use color array instead of texture array
 
-                                                JSON.parse( s.useFaceTextures ),            // if true, apply textures to each face, not whole Prim.
+                                                s.useFaceTextures,            // if true, apply textures to each face, not whole Prim.
 
-                                                JSON.parse( s.useLighting )                // if true, use lighting (default)
+                                                s.useLighting,                // if true, use lighting (default)
+
+                                                s.useMetaData
 
                                             ); // end of valid Shader
-
-                                            console.log("S.clipGeometry:::::::::::::::" + s.clipGeometry)
 
                                         } else {
 
@@ -401,7 +431,7 @@ class World extends AssetPool {
                                  * and model files may still need to be loaded.
                                  */
 
-                                this.util.emitter.emit( this.emitter.events.WORLD_DEFINITION_READY ); ///////////TODO: COMPARE TO PROCEDUAR GEO EMIT
+                                this.util.emitter.emit( this.emitter.events.WORLD_DEFINITION_READY );
 
                             } else {
 
@@ -433,7 +463,6 @@ class World extends AssetPool {
 
     /** 
      * save a World to a JSON file description.
-     * use Prim.toJSON() for indivdiual prims.
      */
     saveWorld ( path ) {
 
