@@ -62,7 +62,7 @@
 
         "useLighting" : "false",
 
-        "comments" : "stardome with positions from the HYG database."
+        "comments" : "stardome with positions from the HYG database. A few very distant stars will cause this to scale to a small pointcloud for type STAR3D."
 
     },
 

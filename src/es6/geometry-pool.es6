@@ -575,8 +575,6 @@ class GeometryPool {
 
             bz = Math.max( bz, v2 );
 
-            //console.log("BX:"+ bx + " V[0]:" + v[0])
-
         }
 
         // Two quads, vary by z values only, clockwise.

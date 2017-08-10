@@ -76,13 +76,6 @@ class WebGL {
 
         }
 
-        //TODO: hard-code the attribute bindings, so they always have the same index.
-        //TODO: use the above array.
-        //TODO: otherwise, getting confusing errors when we try to assign arrays.
-        //https://www.khronos.org/webgl/public-mailing-list/public_webgl/1003/msg00068.php
-        //TODO:
-        //TODO:
-
         // Perspective matrix in Shaders.
 
         this.near = 0.1;

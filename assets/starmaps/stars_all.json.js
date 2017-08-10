@@ -1,4 +1,4 @@
-var star_init_list = [
+{
  { starName:"Sol", id:101, mass:1.9891E+30, diameter:1392000, galX:0, galY:0, galZ:0,  dist:0, starType:"G2(V)", temp:5760, color:0xfff5ec}, 
  { starName:"Proxima Centauri", id:203, mass:2.446593E+29, diameter:1453, galX:2.972, galY:-2.994, galZ:-0.077,  dist:4.22, starType:"M5(V)", temp:2680, color:0xffcd75}, 
  { starName:"Alpha Centauri", id:201, mass:2.18801E+30, diameter:1707984, galX:3.205, galY:-3.014, galZ:0.035,  dist:4.4, starType:"G2(V)", temp:5760, color:0xfff5ec}, 
@@ -2609,4 +2609,4 @@ var star_init_list = [
  { starName:"Epsilon Aurigae", id:221502, mass:0, diameter:410640000, galX:-1949.837, galY:591.123, galZ:61.681,  dist:2038.52, starType:"M (V)", temp:5000, color:0xffcc6f}, 
  { starName:"Cygnus X-1", id:221601, mass:4.97275E+31, diameter:27840000, galX:2262.757, galY:6825.657, galZ:353.385,  dist:7200, starType:"B0(II)", temp:30700, color:0xa7bcff}, 
  { starName:"Cygnus X-1", id:221602, mass:2.38692E+31, diameter:72, galX:2262.757, galY:6825.657, galZ:353.385,  dist:7200, starType:"", temp:5000, color:0xffc97f}
- ];
+ }

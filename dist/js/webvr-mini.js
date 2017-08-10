@@ -1986,13 +1986,6 @@
 
 	            aVertexTangent: ['aVertexTangent', 9]
 
-	            //TODO: hard-code the attribute bindings, so they always have the same index.
-	            //TODO: use the above array.
-	            //TODO: otherwise, getting confusing errors when we try to assign arrays.
-	            //https://www.khronos.org/webgl/public-mailing-list/public_webgl/1003/msg00068.php
-	            //TODO:
-	            //TODO:
-
 	            // Perspective matrix in Shaders.
 
 	        };this.near = 0.1;
@@ -10061,7 +10054,7 @@
 	        key: 'createPrim',
 	        value: function createPrim(shader, // Shader which attaches/detaches this Prim from display list
 
-	        type) // if true, use coordinates
+	        type) // if true, light the object with the World Light
 
 	        {
 	            var name = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'unknown';
@@ -10074,12 +10067,11 @@
 	            var textureImages = arguments.length > 9 && arguments[9] !== undefined ? arguments[9] : [];
 	            var modelFiles = arguments.length > 10 && arguments[10] !== undefined ? arguments[10] : [];
 	            var useColorArray = arguments.length > 11 && arguments[11] !== undefined ? arguments[11] : false;
-	            var applyTexToFace = arguments.length > 12 && arguments[12] !== undefined ? arguments[12] : false;
 
 	            var _this2 = this;
 
+	            var applyTexToFace = arguments.length > 12 && arguments[12] !== undefined ? arguments[12] : false;
 	            var useLighting = arguments.length > 13 && arguments[13] !== undefined ? arguments[13] : true;
-	            var map = arguments.length > 14 && arguments[14] !== undefined ? arguments[14] : null;
 	            // function to execute when prim is done (e.g. attach to drawing list shader).
 
 	            var vec3 = this.glMatrix.vec3,
@@ -13629,8 +13621,6 @@
 	                    v2 = vertices[i + 2];
 
 	                tx = Math.min(tx, v0), ty = Math.min(ty, v1), tz = Math.min(tz, v2), bx = Math.max(bx, v0), by = Math.max(by, v1), bz = Math.max(bz, v2);
-
-	                //console.log("BX:"+ bx + " V[0]:" + v[0])
 	            }
 
 	            // Two quads, vary by z values only, clockwise.
@@ -17605,8 +17595,6 @@
 
 	            m.vertices = tVertices, m.indices = tIndices, m.texCoords = tTexCoords, m.normals = tNormals;
 
-	            ////////////////////////window.m = m;
-
 	            // NOTE: Color arrays and tangents are not part of the Wavefront .obj format (in .mtl data).
 
 	            return m;
@@ -17699,8 +17687,6 @@
 
 	            var stars = JSON.parse(data);
 
-	            window.stars = stars;
-
 	            var tVertices = [],
 	                tIndices = [],
 	                tNormals = [],
@@ -17713,14 +17699,20 @@
 
 	                var star = stars[i];
 
-	                // TODO: GEOMETRY POOL ASSSIGNMENT options.useXYZ
-	                // TODO: WHY ISN'T THIS LARGER, RA/DEC seems OK!!!!!!!!!!!
-	                // TODO:
-	                // TODO:
+	                // NOTE: xyz doesn't plot Stars beyond webgl clipping.
 
 	                if (options.useXYZ === true) {
 
-	                    tVertices.push(star.x, star.y, star.z);
+	                    if (star.dist < this.webgl.far) {
+
+	                        tVertices.push(parseFloat(star.x), parseFloat(star.y), parseFloat(star.z));
+
+	                        tNormals.push(0, 0, 0);
+
+	                        tIndices.push(iIdx++);
+
+	                        tTexCoords.push(0, 1);
+	                    }
 	                } else {
 
 	                    var A = this.util.degToRad(parseFloat(star.ra) * 15);
@@ -17729,11 +17721,9 @@
 
 	                    // The map is reversed, relative to our coordinate system.
 
-	                    // increase -x, pushes down from pole  so user initially faces polaris (latitude on earth)
+	                    // Increase -x rotation degrees, pushes down from pole, so user initially faces polaris (latitude on earth).
 
-	                    // put z at 90 to put the polaris overhead, with y rotating around pole
-
-	                    //?????????WHY DON'T WE HAVE TO SCALE???????
+	                    // Put z at 90 degrees to put the Polaris overhead, with y rotating around pole.
 
 	                    tVertices.push(Math.sin(B), // z
 
@@ -17742,13 +17732,13 @@
 	                    Math.cos(B) * Math.sin(A) // y
 
 	                    );
+
+	                    tNormals.push(0, 0, 0);
+
+	                    tIndices.push(iIdx++);
+
+	                    tTexCoords.push(0, 1);
 	                }
-
-	                tNormals.push(0, 0, 0);
-
-	                tIndices.push(iIdx++);
-
-	                tTexCoords.push(0, 1);
 
 	                /* 
 	                 * We compute magnitude by scaling Sirius (brightest star) from -1.44 to 1.0
@@ -20128,6 +20118,8 @@
 	                                            JSON.parse(s.useLighting) // if true, use lighting (default)
 
 	                                            ); // end of valid Shader
+
+	                                            console.log("S.clipGeometry:::::::::::::::" + s.clipGeometry);
 	                                        } else {
 
 	                                            console.error('World::getWorld(): invalid Shader:' + s.shader + ' for Prim:' + i);

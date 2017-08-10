@@ -1,9 +1,21 @@
 
 Starmaps
+===================
 
-http://www.skybeautiful.com/downloads/
+Hyg database
+https://github.com/astronexus/HYG-Database
+
+(abbreviated, with some fields removed, and magnitude > 7 removed)
+
+
+stars_all.json.js
 
 https://github.com/jaycrossler/StarDatabase
+
+
+Color Mapping (RGB) based on Stellar type
+
+http://www.isthe.com/chongo/tech/astro/HR-temp-mass-table-byhrclass.html
 
 
 CSV TO JSON CONVERTER - best

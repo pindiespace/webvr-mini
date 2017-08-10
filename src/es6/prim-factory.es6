@@ -449,7 +449,6 @@ class PrimFactory {
      */
     initPrimGeometry ( prim, coords, options ) {
 
-
         // Update vertices if they were supplied.
 
         prim.updateVertices( coords.vertices );
@@ -573,9 +572,7 @@ class PrimFactory {
 
         applyTexToFace = false, // if true, apply textures to each face, not whole Prim
 
-        useLighting = true, // if true, light the object with the World Light
-
-        map = null // if true, use coordinates
+        useLighting = true // if true, light the object with the World Light
 
         ) { // function to execute when prim is done (e.g. attach to drawing list shader).
 

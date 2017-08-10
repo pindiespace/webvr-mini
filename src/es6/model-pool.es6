@@ -768,8 +768,6 @@ class ModelPool extends AssetPool {
 
         m.normals = tNormals;
 
-        ////////////////////////window.m = m;
-
         // NOTE: Color arrays and tangents are not part of the Wavefront .obj format (in .mtl data).
 
         return m;
@@ -859,8 +857,6 @@ class ModelPool extends AssetPool {
 
         let stars = JSON.parse( data );
 
-        window.stars = stars;
-
         let tVertices = [], tIndices = [], tNormals = [], tTexCoords = [], tColors = [];
 
         let iIdx = 0;
@@ -869,22 +865,29 @@ class ModelPool extends AssetPool {
 
             let star = stars[ i ];
 
-            // TODO: GEOMETRY POOL ASSSIGNMENT options.useXYZ
-            // TODO: WHY ISN'T THIS LARGER, RA/DEC seems OK!!!!!!!!!!!
-            // TODO:
-            // TODO:
+            // NOTE: xyz doesn't plot Stars beyond webgl clipping.
 
             if ( options.useXYZ === true ) {
 
-                tVertices.push( 
+                if ( star.dist < this.webgl.far ) {
 
-                    star.x,
+                    tVertices.push( 
 
-                    star.y,
+                        parseFloat( star.x ),
 
-                    star.z
+                        parseFloat( star.y ),
 
-                );
+                        parseFloat( star.z )
+
+                    );
+
+                    tNormals.push( 0, 0, 0 );
+
+                    tIndices.push( iIdx++ );
+
+                    tTexCoords.push( 0, 1 );
+
+                }
 
             } else {
 
@@ -894,11 +897,9 @@ class ModelPool extends AssetPool {
 
                 // The map is reversed, relative to our coordinate system.
 
-                // increase -x, pushes down from pole  so user initially faces polaris (latitude on earth)
+                // Increase -x rotation degrees, pushes down from pole, so user initially faces polaris (latitude on earth).
 
-                // put z at 90 to put the polaris overhead, with y rotating around pole
-
-                //?????????WHY DON'T WE HAVE TO SCALE???????
+                // Put z at 90 degrees to put the Polaris overhead, with y rotating around pole.
 
                 tVertices.push( 
 
@@ -910,15 +911,13 @@ class ModelPool extends AssetPool {
 
                 );
 
+                tNormals.push( 0, 0, 0 );
+
+                tIndices.push( iIdx++ );
+
+                tTexCoords.push( 0, 1 );
+
             }
-
-
-
-            tNormals.push( 0, 0, 0 );
-
-            tIndices.push( iIdx++ );
-
-            tTexCoords.push( 0, 1 );
 
             /* 
              * We compute magnitude by scaling Sirius (brightest star) from -1.44 to 1.0

@@ -380,9 +380,11 @@ class World extends AssetPool {
 
                                                 JSON.parse( s.useFaceTextures ),            // if true, apply textures to each face, not whole Prim.
 
-                                                JSON.parse( s.useLighting )                 // if true, use lighting (default)
+                                                JSON.parse( s.useLighting )                // if true, use lighting (default)
 
                                             ); // end of valid Shader
+
+                                            console.log("S.clipGeometry:::::::::::::::" + s.clipGeometry)
 
                                         } else {
 
