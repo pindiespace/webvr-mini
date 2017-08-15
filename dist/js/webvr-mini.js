@@ -9795,7 +9795,7 @@
 
 	                    // TODO: DEBUG
 
-	                    prim.rotation = _this.util.uvToCartesian(_this.util.degToRad(parseFloat(coords.latitude)), _this.util.detToRad(parseFloat(coords.longitude)));
+	                    prim.rotation = _this.util.uvToCartesian(_this.util.degToRad(parseFloat(coords.latitude)), _this.util.degToRad(parseFloat(coords.longitude)));
 	                }
 	            }
 
@@ -10176,7 +10176,7 @@
 	        key: 'createPrim',
 	        value: function createPrim(shader, // Shader which attaches/detaches this Prim from display list
 
-	        type) // if true, use meta-data associated with array, store it in objects[] array
+	        type) // if not false, the Prim has animation waypoints
 
 	        {
 	            var name = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'unknown';
@@ -10190,11 +10190,13 @@
 	            var modelFiles = arguments.length > 10 && arguments[10] !== undefined ? arguments[10] : [];
 	            var useColorArray = arguments.length > 11 && arguments[11] !== undefined ? arguments[11] : false;
 	            var applyTexToFace = arguments.length > 12 && arguments[12] !== undefined ? arguments[12] : false;
+	            var useLighting = arguments.length > 13 && arguments[13] !== undefined ? arguments[13] : true;
+	            var useMetaData = arguments.length > 14 && arguments[14] !== undefined ? arguments[14] : false;
 
 	            var _this2 = this;
 
-	            var useLighting = arguments.length > 13 && arguments[13] !== undefined ? arguments[13] : true;
-	            var useMetaData = arguments.length > 14 && arguments[14] !== undefined ? arguments[14] : false;
+	            var pSystem = arguments.length > 15 && arguments[15] !== undefined ? arguments[15] : false;
+	            var animSystem = arguments.length > 16 && arguments[16] !== undefined ? arguments[16] : false;
 	            // function to execute when prim is done (e.g. attach to drawing list shader).
 
 	            var vec3 = this.glMatrix.vec3,
@@ -10423,25 +10425,60 @@
 	                _this2.geometryPool.computeBoundingSphere(prim.geometry.vertices.data);
 	            };
 
+	            // Copy just the geometry of a Prim into another geometry.
+
+	            prim.copyGometry = function (scale, pos, geo) {
+
+	                var vertices = _this2.util.copyArr(prim.geometry.vertices.data),
+	                    indices = _this2.util.copyArr(prim.geometry.indices.data),
+	                    texCoords = _this2.util.copyArr(prim.geometry.texCoords.data),
+	                    normals = _this2.util.copyArr(prim.geometry.normals.data),
+	                    tangents = _this2.util.copyArr(prim.geometry.tangents.data),
+	                    colors = _this2.util.copyArr(prim.geometry.tangents.data);
+
+	                _this2.geometryPool.scale(newVertices, scale);
+
+	                _this2.geometryPool.computeMove(newVertices, pos);
+
+	                if (!geo) {
+
+	                    geo = _this2.geometryPool.default(vertices, indices, texCoords, normals, tangents, colors);
+	                } else {
+
+	                    geo.vertices = _this2.util.concatArr(geo.vertices, vertices);
+
+	                    // INDICES
+
+	                    for (var i = 0; i < indices.length; i++) {
+
+	                        indices[i] += geo.vertices.length; // shift index by current length of vertices
+	                    }
+
+	                    geo.indices = _this2.util.contactArr(geo.indices, indices), geo.texCoords = _this2.util.concatArr(geo.texCoords, texCoords), geo.normals = _this2.util.concatArr(geo.normals, normals), geo.tangents = _this2.util.concatArr(geo.tangents, tangents), geo.colors = _this2.util.concatArr(geo.colors, colors);
+	                }
+
+	                return geo;
+	            };
+
 	            // Scale. Normally, we use matrix transforms to accomplish this.
 
-	            prim.scale = function (scale) {
+	            prim.resize = function (scale) {
 
-	                _this2.geometryPool.scale(scale, prim.geometry.vertices.data);
+	                _this2.geometryPool.computeScale(prim.geometry.vertices.data, scale);
 	            };
 
 	            // Move. Normally, we use matrix transforms to accomplish this.
 
 	            prim.move = function (pos) {
 
-	                _this2.geometryPool.computeMove(scale, prim.geometry.vertices.data);
+	                _this2.geometryPool.computeMove(prim.geometry.vertices.data, pos);
 	            };
 
-	            // Move to a specificed coordinate.
+	            // Move to a specificed coordinate. Normally, we use matrix transforms to accomplish this.
 
 	            prim.moveTo = function (pos) {
 
-	                _this2.geometryPool.move([_this2.position[0] - pos[0], _this2.position[1] - pos[1], _this2.position[2] - pos[2]]);
+	                _this2.geometryPool.computeMove([_this2.position[0] - pos[0], _this2.position[1] - pos[1], _this2.position[2] - pos[2]]);
 	            };
 
 	            /** 
@@ -10569,30 +10606,21 @@
 
 	            prim.visibleFrom = this.geometryPool.OUTSIDE;
 
-	            /* 
-	             * If this is set to true, ignore the texture material and use 
-	             * the Prim's color array to render.
-	             */
+	            // If this is set to true, ignore the texture material and use the Prim's color array to render.
 
 	            prim.useColorArray = useColorArray;
 
-	            /* 
-	             * If this is set to true, use GL_TRIANGLES to draw. True by default.
-	             */
+	            // If this is set to true, use GL_TRIANGLES to draw. True by default.
 
 	            prim.drawTris = true;
 
-	            /*
-	             * If this is set to true, use GL_POINTS to draw (determined by prim.type = GeometryPool.typeList).
-	             */
+	            // If this is set to true, use GL_POINTS to draw (determined by prim.type = GeometryPool.typeList).
 
 	            prim.drawPoints = false;
 
 	            prim.pointSize = 2.0; // size if drawn
 
-	            /* 
-	             * If this is set to true, use GL_LINES instad of GL_TRIANGLES to draw (determined by prim type = GeometryPool.typeList).
-	             */
+	            // If this is set to true, use GL_LINES instad of GL_TRIANGLES to draw (determined by prim type = GeometryPool.typeList).
 
 	            prim.drawLines = false;
 
@@ -10611,9 +10639,13 @@
 
 	            prim.useTangents = false; // TODO: optional setting
 
-	            // Waypoints for scripted motion or timelines.
+	            // Information for making this Prim into a particle system
 
-	            prim.waypoints = [];
+	            prim.pSystem = pSystem;
+
+	            // Waypoints for scripted motion or timelines
+
+	            prim.animSystem = animSystem;
 
 	            // By default, Prims do not adjust to geolocation data. If ModelPool loads data, this may be set to true for TERRAIN and STARDOME objects.
 
@@ -10673,7 +10705,7 @@
 
 	            // Execute geometry creation routine (which may be a file load).
 
-	            console.log('Generating Prim:' + prim.name + '(' + prim.type + ')');
+	            console.log('PrimFactory::createPrim(): Generating:' + prim.name + '(' + prim.type + ')');
 
 	            // Geometry factory function, create empty WebGL Buffers.
 
@@ -10699,6 +10731,55 @@
 	            this.prims.push(prim);
 
 	            return prim;
+	        }
+
+	        /** 
+	         * Create a Particle System from a Prim.
+	         * @param {Prim} The Prim to use to create the particle system.
+	         * @param {PsSystem} particle system configuration (PSystem class)
+	         */
+
+	    }, {
+	        key: 'createParticleSystem',
+	        value: function createParticleSystem(prim) {
+
+	            if (!prim.pSystem) {
+
+	                console.error('PrimFactory::createParticleSystem(): no particle system defined');
+	            }
+
+	            var ps = prim.pSystem;
+
+	            // Loop through the prim points, and shift them accd. to pSystem coordinates. If 
+	            // a function is defined (e.g. another Prim) use its coordinates, to place the Prim. 
+	            // scale so it works.
+
+	            if (ps.coords) {
+
+	                // Move the first Prim to the first coordinate.
+
+	                var _geo = this.geometryPool.default();
+
+	                for (var i = 1; i < ps.coords.length; i++) {
+
+	                    _geo = prim.copyGeometry(ps.coords.scale[i], ps.coords.pos[i], _geo);
+	                }
+	            }
+
+	            // force geometry to update.
+
+	            var options = {};
+
+	            this.initPrimGeometry(prim, geo, options);
+	        }
+	    }, {
+	        key: 'createAnimationSystem',
+	        value: function createAnimationSystem(prim) {
+
+	            if (!prim.animSystem) {
+
+	                console.error('PrimFactory::createAnimationSystem(): no animation system defined');
+	            }
 	        }
 	    }]);
 
@@ -11621,6 +11702,8 @@
 	            //this.map = this.uvToCartesian( mapUV, w, h, d );
 
 	            this.map = util.uvToCartesian(mapUV, w, h, d);
+
+	            this.mapUV = mapUV; // retain lat and long data
 
 	            this.type = this.typeList.SPHERE;
 	        }
@@ -13197,6 +13280,8 @@
 
 	            POINTCLOUD: 'geometryPointCloud', // random cloud of 3d points
 
+	            TEXTURECLOUD: 'geometryTextureCloud',
+
 	            STARDOME: 'geometryStarDome', // stars projected onto a sphere
 
 	            STAR3D: 'geometryStarSpace', // stars projected in 3d
@@ -13274,7 +13359,6 @@
 	            TORUS: 'geometryTorus',
 
 	            MESH: 'geometryMesh'
-
 	        };
 
 	        // Sideness, direction. Mapped to equivalent unit vector names in this.getStdVecs()
@@ -13336,6 +13420,7 @@
 	            var texCoords = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [];
 	            var normals = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
 	            var tangents = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : [];
+	            var colors = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : [];
 
 
 	            return {
@@ -13348,7 +13433,9 @@
 
 	                texCoords: texCoords,
 
-	                tangents: tangents
+	                tangents: tangents,
+
+	                colors: colors
 
 	            };
 	        }
@@ -14265,7 +14352,7 @@
 	                vertices[i] *= scale;
 	            }
 
-	            this.moveTo(oldPos);
+	            this.moveTo(oldPos); // ERROR!!!!!!!!!!!!!!!!!!!!
 	        }
 
 	        /** 
@@ -14376,21 +14463,24 @@
 
 	            norms.push(center[0], center[1], center[2]);
 
-	            return {
-
-	                vertices: vv,
-
-	                indices: idx,
-
-	                texCoords: tex,
-
-	                normals: norms,
-
-	                tangents: [],
-
-	                colors: []
-
-	            };
+	            return this.default(vv, idx, tex, norms, [], []);
+	            /*
+	                    return {
+	            
+	                        vertices: vv,
+	            
+	                        indices: idx,
+	            
+	                        texCoords: tex,
+	            
+	                        normals: norms,
+	            
+	                        tangents: [],
+	            
+	                        colors: []
+	            
+	                    }
+	            */
 	        }
 
 	        /** 
@@ -14416,6 +14506,8 @@
 	    }, {
 	        key: 'geometryPointCloud',
 	        value: function geometryPointCloud(prim) {
+	            var useTexture = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
 
 	            var dimensions = prim.dimensions,
 	                divisions = prim.divisions;
@@ -14434,7 +14526,7 @@
 
 	            var mm = new _map3d2.default(this.util);
 
-	            mm[mm.typeList.SPHERE](dimensions[0], dimensions[1], dimensions[2], 1000);
+	            mm[mm.typeList.SPHERE](dimensions[0], dimensions[1], dimensions[2], divisions[0] * divisions[1] * divisions[2]); // initRandomSphere
 
 	            vertices = mm.map;
 
@@ -14446,19 +14538,49 @@
 	                indices.push(idx++);
 	            }
 
+	            // If we use a texture, specify points on a single texture surface.
+	            // TODO: shift by divisions width.
+
+	            if (useTexture) {
+
+	                var twoPI = Math.PI * 2;
+
+	                var halfPI = Math.PI / 2;
+
+	                for (var _i4 = 0; _i4 < mm.mapUV.length; _i4 += 2) {
+
+	                    texCoords.push(1.0 - mm.mapUV[_i4] / twoPI);
+
+	                    texCoords.push(mm.mapUV[_i4 + 1] / Math.PI);
+	                }
+	            }
+
 	            // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
-	            return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
+	            return this.default(vertices, indices, texCoords, normals, tangents);
 	        }
 
 	        /** 
+	         * a PointCloud which uses texture mapping to assign color.
+	         *
+	         */
+
+	    }, {
+	        key: 'geometryTextureCloud',
+	        value: function geometryTextureCloud(prim) {
+
+	            return this.geometryPointCloud(prim, true); // PointCloud, but use textures
+	        }
+
+	        /** 
+	         * Arrange starlike points randomly on a dome.
 	         * We don't use a procedural generation for a StarDome - it uses data specified in the world.json file instead.
 	         * So we should never go here.
 	         */
 
 	    }, {
 	        key: 'geometryStarDome',
-	        value: function geometryStarDome(prim, pathList) {
+	        value: function geometryStarDome(prim) {
 
 	            console.error('GeometryPool::geometryStarDome(): not procedural, use stellar data, generating randomMap');
 
@@ -14466,6 +14588,7 @@
 	        }
 
 	        /** 
+	         * Arrange starlike points in 3d space randomly.
 	         * We don't use a procedural generation for a StarDome - it uses data specified in the world.json file instead.
 	         * So we should never go here.
 	         */
@@ -14520,7 +14643,9 @@
 
 	            // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
-	            return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
+	            return this.default(vertices, indices, texCoords, normals, tangents);
+
+	            ////////////return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
 	        }
 
 	        /** 
@@ -14856,7 +14981,9 @@
 
 	            // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
-	            return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
+	            return this.default(vertices, indices, texCoords, normals, tangents);
+
+	            ///////return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
 	        }
 
 	        /** 
@@ -15177,7 +15304,9 @@
 
 	            // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
-	            return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
+	            return this.default(vertices, indices, texCoords, normals, tangents);
+
+	            ///////return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
 	        }
 
 	        /** 
@@ -15374,9 +15503,9 @@
 
 	                for (var _j = 0; _j < nv; _j++) {
 
-	                    for (var _i4 = 0; _i4 < nu; _i4++) {
+	                    for (var _i5 = 0; _i5 < nu; _i5++) {
 
-	                        var n = vertShift + _j * (nu + 1) + _i4;
+	                        var n = vertShift + _j * (nu + 1) + _i5;
 
 	                        // Indices for entire prim.
 
@@ -15506,43 +15635,43 @@
 	                        break;
 	                }
 
-	                for (var _i5 = 0; _i5 < positions.length; _i5++) {
+	                for (var _i6 = 0; _i6 < positions.length; _i6++) {
 
 	                    switch (prim.dimensions[3]) {
 
 	                        case side.FRONT:
 
-	                            positions[_i5][2] = dSide * Math.cos(positions[_i5][0]) * prim.dimensions[4];
+	                            positions[_i6][2] = dSide * Math.cos(positions[_i6][0]) * prim.dimensions[4];
 
 	                            break;
 
 	                        case side.BACK:
 
-	                            positions[_i5][2] = dSide * Math.cos(positions[_i5][0]) * prim.dimensions[4];
+	                            positions[_i6][2] = dSide * Math.cos(positions[_i6][0]) * prim.dimensions[4];
 
 	                            break;
 
 	                        case side.LEFT:
 
-	                            positions[_i5][0] = dSide * Math.cos(positions[_i5][2]) * prim.dimensions[4];
+	                            positions[_i6][0] = dSide * Math.cos(positions[_i6][2]) * prim.dimensions[4];
 
 	                            break;
 
 	                        case side.RIGHT:
 
-	                            positions[_i5][0] = dSide * Math.cos(positions[_i5][2]) * prim.dimensions[4];
+	                            positions[_i6][0] = dSide * Math.cos(positions[_i6][2]) * prim.dimensions[4];
 
 	                            break;
 
 	                        case side.TOP:
 
-	                            positions[_i5][1] = dSide * Math.cos(positions[_i5][0]) * prim.dimensions[4];
+	                            positions[_i6][1] = dSide * Math.cos(positions[_i6][0]) * prim.dimensions[4];
 
 	                            break;
 
 	                        case side.BOTTOM:
 
-	                            positions[_i5][1] = -Math.cos(positions[_i5][0]) * prim.dimensions[4]; // SEEN FROM INSIDE< CORRECT
+	                            positions[_i6][1] = -Math.cos(positions[_i6][0]) * prim.dimensions[4]; // SEEN FROM INSIDE< CORRECT
 
 	                            break;
 
@@ -15563,7 +15692,9 @@
 
 	            // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
-	            return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
+	            return this.default(vertices, indices, texCoords, normals, tangents);
+
+	            /////////return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
 	        }
 
 	        /** 
@@ -16048,9 +16179,9 @@
 
 	            function createVertexLine(from, to, steps, v, vertices) {
 
-	                for (var _i6 = 1; _i6 <= steps; _i6++) {
+	                for (var _i7 = 1; _i7 <= steps; _i7++) {
 
-	                    vertices[v++] = vec3.lerp([0, 0, 0], from, to, _i6 / steps);
+	                    vertices[v++] = vec3.lerp([0, 0, 0], from, to, _i7 / steps);
 	                }
 
 	                return v;
@@ -16060,7 +16191,7 @@
 
 	            function createLowerStrip(steps, vTop, vBottom, t, triangles) {
 
-	                for (var _i7 = 1; _i7 < steps; _i7++) {
+	                for (var _i8 = 1; _i8 < steps; _i8++) {
 
 	                    triangles[t++] = vBottom;
 
@@ -16094,7 +16225,7 @@
 
 	                triangles[t++] = ++vBottom;
 
-	                for (var _i8 = 1; _i8 <= steps; _i8++) {
+	                for (var _i9 = 1; _i9 <= steps; _i9++) {
 
 	                    triangles[t++] = vTop - 1;
 
@@ -16122,7 +16253,7 @@
 
 	                triangles[t++] = vTop - 1;
 
-	                for (var _i9 = 1; _i9 <= steps; _i9++) {
+	                for (var _i10 = 1; _i10 <= steps; _i10++) {
 
 	                    triangles[t++] = vTop;
 
@@ -16142,7 +16273,9 @@
 
 	            // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
-	            return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
+	            return this.default(vertices, indices, texCoords, normals, tangents);
+
+	            ///////////return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
 	        }
 
 	        /** 
@@ -16250,6 +16383,8 @@
 	            g.texCoords = this.util.concatArr(g.texCoords, [0, 1.0, 1.0, 1.0, 0.5, 0]);
 
 	            g.indices = this.util.concatArr(g.indices, [ln, ln + 1, ln + 2]);
+
+	            // this is already an altered geometry.SPHERE, so don't need to default it.
 
 	            return g;
 	        }
@@ -16405,7 +16540,9 @@
 	                    ];
 	            */
 
-	            return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
+	            return this.default(vertices, indices, texCoords, normals, tangents);
+
+	            ///////////return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
 	        }
 
 	        /** 
@@ -16573,9 +16710,9 @@
 
 	                    // Update the indices to reflect concatenation.
 
-	                    for (var _i10 = 0; _i10 < fan.indices.length; _i10++) {
+	                    for (var _i11 = 0; _i11 < fan.indices.length; _i11++) {
 
-	                        fan.indices[_i10] += len;
+	                        fan.indices[_i11] += len;
 	                    }
 
 	                    indices = indices.concat(fan.indices);
@@ -16586,9 +16723,9 @@
 	                }
 	            } else {
 
-	                for (var _i11 = 0; _i11 < faces.length; _i11++) {
+	                for (var _i12 = 0; _i12 < faces.length; _i12++) {
 
-	                    var vv = faces[_i11]; // indices to vertices
+	                    var vv = faces[_i12]; // indices to vertices
 
 	                    var vvv = []; // saved vertices
 
@@ -16601,13 +16738,13 @@
 
 	                    var center = this.geometry.computeCentroid(vvv);
 
-	                    for (var _i12 = 1; _i12 <= lenv; _i12++) {
+	                    for (var _i13 = 1; _i13 <= lenv; _i13++) {
 
-	                        var p1 = _i12 - 1;
+	                        var p1 = _i13 - 1;
 
-	                        var p2 = _i12;
+	                        var p2 = _i13;
 
-	                        if (_i12 === lenv) {
+	                        if (_i13 === lenv) {
 
 	                            p1 = p2 - 1;
 
@@ -16633,9 +16770,9 @@
 
 	            // Scale.
 
-	            for (var _i13 = 0; _i13 < vertices.length; _i13++) {
+	            for (var _i14 = 0; _i14 < vertices.length; _i14++) {
 
-	                var _vv = vertices[_i13];
+	                var _vv = vertices[_i14];
 
 	                _vv[0] *= w;
 
@@ -16654,7 +16791,9 @@
 
 	            // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
-	            return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
+	            return this.default(vertices, indices, texCoords, normals, tangents);
+
+	            ////////return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
 	        }
 
 	        /** 
@@ -16766,7 +16905,9 @@
 
 	            // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
-	            return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
+	            return this.default(vertices, indices, texCoords, normals, tangents);
+
+	            ////////////return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
 	        }
 
 	        /** 
@@ -17855,6 +17996,14 @@
 
 	            return m;
 	        }
+
+	        /** 
+	         * Add a particle System
+	         */
+
+	    }, {
+	        key: 'computeParticleSystem',
+	        value: function computeParticleSystem(data, prim, path, options) {}
 
 	        /** 
 	         * Add a model
@@ -20236,7 +20385,13 @@
 
 	                                            s.useLighting, // if true, use lighting (default)
 
-	                                            s.useMetaData); // end of valid Shader
+	                                            s.useMetaData, // if true, store meta-data in prim.materials[].objects array
+
+	                                            s.pSystem, // if this Prim should be duplicated into a particle system, data is here
+
+	                                            s.animSystem // if this Prim has animation waypoints, data is here
+
+	                                            ); // end of valid Shader
 	                                        } else {
 
 	                                            console.error('World::getWorld(): invalid Shader:' + s.shader + ' for Prim:' + i);
@@ -20428,6 +20583,16 @@
 	        };
 	        
 	        */
+
+	        // TODO: geolocation rotation
+
+	        // TODO: particle system
+
+	        // TODO: toggle worlds in Ui
+
+	        // TODO: terrain multitexture
+
+	        // =========================
 
 	        // TODO: audit in https://www.npmjs.com/package/lighthouse
 

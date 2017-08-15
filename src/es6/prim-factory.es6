@@ -158,7 +158,7 @@ class PrimFactory {
 
                         // TODO: DEBUG
 
-                        prim.rotation = this.util.uvToCartesian( this.util.degToRad( parseFloat( coords.latitude ) ), this.util.detToRad( parseFloat( coords.longitude ) ) );
+                        prim.rotation = this.util.uvToCartesian( this.util.degToRad( parseFloat( coords.latitude ) ), this.util.degToRad( parseFloat( coords.longitude ) ) );
 
                     }
 
@@ -590,7 +590,11 @@ class PrimFactory {
 
         useLighting = true, // if true, light the object with the World Light
 
-        useMetaData = false // if true, use meta-data associated with array, store it in objects[] array
+        useMetaData = false, // if true, use meta-data associated with array, store it in objects[] array
+
+        pSystem = false,  // if not false, the Prim should be duplicated as a particle system accd to this object
+
+        animSystem = false // if not false, the Prim has animation waypoints
 
         ) { // function to execute when prim is done (e.g. attach to drawing list shader).
 
@@ -836,11 +840,63 @@ class PrimFactory {
 
         };
 
+        // Copy just the geometry of a Prim into another geometry.
+
+        prim.copyGometry = ( scale, pos, geo ) => {
+
+            let vertices = this.util.copyArr( prim.geometry.vertices.data ),
+
+            indices = this.util.copyArr( prim.geometry.indices.data ),
+
+            texCoords = this.util.copyArr( prim.geometry.texCoords.data ),
+
+            normals = this.util.copyArr( prim.geometry.normals.data ),
+
+            tangents = this.util.copyArr( prim.geometry.tangents.data ),
+
+            colors = this.util.copyArr( prim.geometry.tangents.data );
+
+            this.geometryPool.scale( newVertices, scale );
+
+            this.geometryPool.computeMove( newVertices, pos );
+
+            if ( ! geo ) {
+
+                geo = this.geometryPool.default( vertices, indices, texCoords, normals, tangents, colors );
+
+            } else {
+
+                geo.vertices = this.util.concatArr( geo.vertices, vertices );
+
+                // INDICES
+
+                for ( let i = 0; i < indices.length; i++ ) {
+
+                    indices[ i ] += geo.vertices.length; // shift index by current length of vertices
+
+                }
+
+                geo.indices = this.util.contactArr( geo.indices, indices ),
+
+                geo.texCoords = this.util.concatArr( geo.texCoords, texCoords ),
+
+                geo.normals = this.util.concatArr( geo.normals, normals ),
+
+                geo.tangents = this.util.concatArr( geo.tangents, tangents ),
+
+                geo.colors = this.util.concatArr( geo.colors, colors );
+
+            }
+
+            return geo;
+
+        };
+
         // Scale. Normally, we use matrix transforms to accomplish this.
 
-        prim.scale = ( scale ) => { 
+        prim.resize = ( scale ) => { 
 
-            this.geometryPool.scale ( scale, prim.geometry.vertices.data );
+            this.geometryPool.computeScale( prim.geometry.vertices.data, scale );
 
         };
 
@@ -848,21 +904,21 @@ class PrimFactory {
 
         prim.move = ( pos ) => { 
 
-            this.geometryPool.computeMove( scale, prim.geometry.vertices.data );
+            this.geometryPool.computeMove( prim.geometry.vertices.data, pos );
 
         };
 
-        // Move to a specificed coordinate.
+        // Move to a specificed coordinate. Normally, we use matrix transforms to accomplish this.
 
         prim.moveTo = ( pos ) => {
 
-            this.geometryPool.move( [ 
+            this.geometryPool.computeMove( [ 
 
-            this.position[ 0 ] - pos[ 0 ],
+                this.position[ 0 ] - pos[ 0 ],
 
-            this.position[ 1 ] - pos[ 1 ],
+                this.position[ 1 ] - pos[ 1 ],
 
-            this.position[ 2 ] - pos[ 2 ]
+                this.position[ 2 ] - pos[ 2 ]
 
             ] );
 
@@ -1000,30 +1056,21 @@ class PrimFactory {
 
         prim.visibleFrom = this.geometryPool.OUTSIDE;
 
-        /* 
-         * If this is set to true, ignore the texture material and use 
-         * the Prim's color array to render.
-         */
+        // If this is set to true, ignore the texture material and use the Prim's color array to render.
 
         prim.useColorArray = useColorArray;
 
-        /* 
-         * If this is set to true, use GL_TRIANGLES to draw. True by default.
-         */
+        // If this is set to true, use GL_TRIANGLES to draw. True by default.
 
         prim.drawTris = true;
 
-        /*
-         * If this is set to true, use GL_POINTS to draw (determined by prim.type = GeometryPool.typeList).
-         */
+        // If this is set to true, use GL_POINTS to draw (determined by prim.type = GeometryPool.typeList).
 
         prim.drawPoints = false;
 
         prim.pointSize = 2.0; // size if drawn
 
-        /* 
-         * If this is set to true, use GL_LINES instad of GL_TRIANGLES to draw (determined by prim type = GeometryPool.typeList).
-         */
+        // If this is set to true, use GL_LINES instad of GL_TRIANGLES to draw (determined by prim type = GeometryPool.typeList).
 
         prim.drawLines = false;
 
@@ -1042,9 +1089,13 @@ class PrimFactory {
 
         prim.useTangents = false; // TODO: optional setting
 
-        // Waypoints for scripted motion or timelines.
+        // Information for making this Prim into a particle system
 
-        prim.waypoints = [];
+        prim.pSystem = pSystem;
+
+        // Waypoints for scripted motion or timelines
+
+        prim.animSystem = animSystem;
 
         // By default, Prims do not adjust to geolocation data. If ModelPool loads data, this may be set to true for TERRAIN and STARDOME objects.
 
@@ -1104,7 +1155,7 @@ class PrimFactory {
 
         // Execute geometry creation routine (which may be a file load).
 
-        console.log( 'Generating Prim:' + prim.name + '(' + prim.type + ')' );
+        console.log( 'PrimFactory::createPrim(): Generating:' + prim.name + '(' + prim.type + ')' );
 
         // Geometry factory function, create empty WebGL Buffers.
 
@@ -1134,6 +1185,59 @@ class PrimFactory {
         this.prims.push( prim );
 
         return prim;
+
+    }
+
+    /** 
+     * Create a Particle System from a Prim.
+     * @param {Prim} The Prim to use to create the particle system.
+     * @param {PsSystem} particle system configuration (PSystem class)
+     */
+    createParticleSystem ( prim ) {
+
+        if ( ! prim.pSystem ) {
+
+            console.error( 'PrimFactory::createParticleSystem(): no particle system defined' );
+
+        }
+
+        let ps = prim.pSystem;
+
+        // Loop through the prim points, and shift them accd. to pSystem coordinates. If 
+        // a function is defined (e.g. another Prim) use its coordinates, to place the Prim. 
+        // scale so it works.
+
+        if ( ps.coords ) {
+
+            // Move the first Prim to the first coordinate.
+
+            let geo = this.geometryPool.default();
+
+            for ( let i = 1; i < ps.coords.length; i++ ) {
+
+                geo = prim.copyGeometry( ps.coords.scale[ i ], ps.coords.pos[ i ], geo );
+
+            }
+
+        }
+
+        // force geometry to update.
+
+        let options = {};
+
+        this.initPrimGeometry( prim, geo, options );
+
+
+    }
+
+    createAnimationSystem ( prim ) {
+
+        if ( ! prim.animSystem ) {
+
+            console.error( 'PrimFactory::createAnimationSystem(): no animation system defined' );
+
+        }
+
 
     }
 

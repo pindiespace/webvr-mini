@@ -153,6 +153,8 @@ class Map3d extends Mapd {
 
         this.map = util.uvToCartesian( mapUV, w, h, d );
 
+        this.mapUV = mapUV; // retain lat and long data
+
         this.type = this.typeList.SPHERE;
 
     }

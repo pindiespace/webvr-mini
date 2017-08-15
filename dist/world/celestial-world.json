@@ -68,7 +68,6 @@
 
     },
 
-
     "pointcloud" : {
 
         "shader" : "shaderColor",
@@ -101,10 +100,95 @@
 
         "useLighting" : "false",
 
-        "comments" : "pointcloud with positions from the HYG database. A few very distant stars will cause this to scale to a small pointcloud for type STAR3D."
+        "comments" : "pointcloud with positions from the HYG database. A few very distant stars will cause this to scale to a small 3D pointcloud for type STAR3D."
 
     },
 
+    "texturecloud" : {
+
+        "shader" : "shaderTexture",
+
+        "type" : "TEXTURECLOUD",
+
+        "name" : "texturecloud",
+
+        "description": "random 3d cloud",
+
+        "dimensions" : [ "2", "2", "2" ],
+
+        "divisions" : [ "30", "30", "30", "1", "0" ],
+
+        "position" : [ "2", "0", "0" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "-52", "0", "90" ],
+
+        "angular" : [ "0.0", "0.3", "0.0" ],
+
+        "textures" : [ "img/uv-test.png" ],
+
+        "models" : [],
+
+        "useColorArray" : "false",
+
+        "useFaceTextures" : "false",
+
+        "useLighting" : "false",
+
+        "comments" : "pointcloud with random points sampling texture to color."
+
+    },
+
+    "torus2" : {
+
+        "shader" : "shaderTexture",
+
+        "type" : "TORUS",
+
+        "name" : "torus2",
+
+        "description": "second torus sample to check",
+
+        "dimensions" : [ "1", "1", "0.5" ],
+
+        "divisions" : [ "9", "9", "9", "1", "0" ],
+
+        "position" : [ "-1.8", "3", "-3.5" ],
+
+        "acceleration" : [ "0", "0", "0" ],
+
+        "rotation" : [ "20", "0", "0" ],
+
+        "angular" : [ "0", "1", "0" ],
+
+        "textures" : [  "img/uv-test.png" ],
+
+        "models" : [],
+
+        "useColorArray" : "false",
+
+        "useFaceTextures" : "false",
+
+        "useLighting" : "true",
+
+        "pSystem" : {
+
+            "numItems" : "20",
+
+            "scale" : "0.1",
+
+            "coordsFn" : "null",
+
+            "coords" : [],
+
+            "scales" : []
+
+        },
+
+        "comments" : "sample torus. dimensions: first is width along x, second is width along y, diameter of torus tube. Divisions: first is number of rings, second is number of sides."
+
+    },
 
      "terrainRandom" : {
 

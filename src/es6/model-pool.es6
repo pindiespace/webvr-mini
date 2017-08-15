@@ -976,6 +976,14 @@ class ModelPool extends AssetPool {
     }
 
     /** 
+     * Add a particle System
+     */
+    computeParticleSystem (  data, prim, path, options  ) {
+
+
+    }
+
+    /** 
      * Add a model
      * @param {Prim} prim the requesting Prim object.
      * @param {Object} data data to construct the Prim GeometryBuffer.

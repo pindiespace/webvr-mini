@@ -68,6 +68,8 @@ class GeometryPool {
 
             POINTCLOUD: 'geometryPointCloud', // random cloud of 3d points
 
+            TEXTURECLOUD: 'geometryTextureCloud',
+
             STARDOME: 'geometryStarDome',  // stars projected onto a sphere
 
             STAR3D: 'geometryStarSpace', // stars projected in 3d
@@ -145,7 +147,6 @@ class GeometryPool {
             TORUS: 'geometryTorus',
 
             MESH: 'geometryMesh'
-
         };
 
         // Sideness, direction. Mapped to equivalent unit vector names in this.getStdVecs()
@@ -203,7 +204,7 @@ class GeometryPool {
      * @param {glMatrix.vec3[]} normals normals for the vertices.
      * @param {glMatrix.vec3[]} tangents tangent data for vertices.
      */
-    default ( vertices = [], indices = [], texCoords = [], normals = [], tangents = [] ) {
+    default ( vertices = [], indices = [], texCoords = [], normals = [], tangents = [], colors = [] ) {
 
         return {
 
@@ -215,7 +216,9 @@ class GeometryPool {
 
             texCoords: texCoords, 
 
-            tangents: tangents 
+            tangents: tangents,
+
+            colors: colors
 
         };
 
@@ -1102,7 +1105,7 @@ class GeometryPool {
 
         }
 
-        this.moveTo( oldPos );
+        this.moveTo( oldPos ); // ERROR!!!!!!!!!!!!!!!!!!!!
 
     }
 
@@ -1224,6 +1227,8 @@ class GeometryPool {
 
         norms.push( center[ 0 ], center[ 1 ], center[ 2 ] );
 
+        return this.default( vv, idx, tex, norms, [], [] );
+/*
         return {
 
             vertices: vv,
@@ -1239,6 +1244,7 @@ class GeometryPool {
             colors: []
 
         }
+*/
 
     }
 
@@ -1261,7 +1267,7 @@ class GeometryPool {
      * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. 
      * Creating WebGL buffers is turned on or off conditionally in the method.
      */
-    geometryPointCloud ( prim ) {
+    geometryPointCloud ( prim, useTexture = false ) {
 
         let dimensions = prim.dimensions,
 
@@ -1277,29 +1283,59 @@ class GeometryPool {
 
         let mm = new Map3d( this.util );
 
-        mm[ mm.typeList.SPHERE ]( dimensions[ 0 ], dimensions[ 1 ], dimensions[ 2 ], 1000 );
+        mm[ mm.typeList.SPHERE ]( dimensions[ 0 ], dimensions[ 1 ], dimensions[ 2 ], divisions[ 0 ] * divisions[ 1 ] * divisions[ 2 ] ); // initRandomSphere
 
         vertices = mm.map;
 
         let vIdx = 0, idx = 0;
 
-        for ( let i = 0; i < mm.map.length; i+=3 ) {
+        for ( let i = 0; i < mm.map.length; i += 3 ) {
 
             indices.push( idx++ );
 
         }
 
+        // If we use a texture, specify points on a single texture surface.
+        // TODO: shift by divisions width.
+
+        if ( useTexture ) {
+
+            let twoPI = Math.PI * 2;
+
+            let halfPI = Math.PI / 2;
+
+            for ( let i = 0; i < mm.mapUV.length; i += 2 ) {
+
+                texCoords.push( 1.0 - ( mm.mapUV[ i ] / twoPI ) );
+
+                texCoords.push( mm.mapUV[ i + 1 ] / Math.PI );
+
+            }
+
+        }
+
         // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
-        return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
+        return this.default( vertices, indices, texCoords, normals, tangents );
 
     }
 
     /** 
+     * a PointCloud which uses texture mapping to assign color.
+     *
+     */
+    geometryTextureCloud ( prim ) {
+
+        return this.geometryPointCloud( prim, true ); // PointCloud, but use textures
+
+    }
+
+    /** 
+     * Arrange starlike points randomly on a dome.
      * We don't use a procedural generation for a StarDome - it uses data specified in the world.json file instead.
      * So we should never go here.
      */
-    geometryStarDome ( prim, pathList ) {
+    geometryStarDome ( prim ) {
 
         console.error( 'GeometryPool::geometryStarDome(): not procedural, use stellar data, generating randomMap' );
 
@@ -1308,6 +1344,7 @@ class GeometryPool {
     }
 
     /** 
+     * Arrange starlike points in 3d space randomly.
      * We don't use a procedural generation for a StarDome - it uses data specified in the world.json file instead.
      * So we should never go here.
      */
@@ -1365,7 +1402,9 @@ class GeometryPool {
 
         // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
-        return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
+        return this.default( vertices, indices, texCoords, normals, tangents );
+
+        ////////////return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
 
     }
 
@@ -1715,7 +1754,9 @@ class GeometryPool {
 
         // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
-        return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
+        return this.default( vertices, indices, texCoords, normals, tangents );
+
+        ///////return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
 
     }
 
@@ -2035,7 +2076,9 @@ class GeometryPool {
 
         // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
-        return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
+        return this.default( vertices, indices, texCoords, normals, tangents );
+
+        ///////return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
 
     }
 
@@ -2439,7 +2482,9 @@ class GeometryPool {
 
         // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
-        return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
+        return this.default( vertices, indices, texCoords, normals, tangents );
+
+        /////////return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
 
     }
 
@@ -3036,7 +3081,9 @@ class GeometryPool {
 
         // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
-        return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
+        return this.default( vertices, indices, texCoords, normals, tangents );
+
+        ///////////return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
 
     }
 
@@ -3143,6 +3190,8 @@ class GeometryPool {
 
         g.indices = this.util.concatArr( g.indices, [ ln, ln + 1, ln + 2 ] );
 
+        // this is already an altered geometry.SPHERE, so don't need to default it.
+
         return g;
 
     }
@@ -3217,7 +3266,6 @@ class GeometryPool {
         let indices = [
 
             0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17
-
 
         ];
 
@@ -3334,8 +3382,9 @@ class GeometryPool {
         ];
 */
 
+        return this.default( vertices, indices, texCoords, normals, tangents );
 
-        return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
+        ///////////return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
 
     }
 
@@ -3622,7 +3671,9 @@ class GeometryPool {
 
         // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
-        return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
+        return this.default( vertices, indices, texCoords, normals, tangents );
+
+        ////////return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
 
     }
 
@@ -3728,7 +3779,9 @@ class GeometryPool {
 
         // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
-        return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
+        return this.default( vertices, indices, texCoords, normals, tangents );
+
+        ////////////return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
 
     }
 

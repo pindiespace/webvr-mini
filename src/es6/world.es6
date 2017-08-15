@@ -402,9 +402,9 @@ class World extends AssetPool {
 
                                                 ),    // angular (orbital) velocity
 
-                                                s.textures,                                 // texture images (if not in model)
+                                                s.textures,                   // texture images (if not in model)
 
-                                                s.models,                                   // model (.OBJ, .GlTF)
+                                                s.models,                     // model (.OBJ, .GlTF)
 
                                                 s.useColorArray,              // if true, use color array instead of texture array
 
@@ -412,7 +412,11 @@ class World extends AssetPool {
 
                                                 s.useLighting,                // if true, use lighting (default)
 
-                                                s.useMetaData
+                                                s.useMetaData,                // if true, store meta-data in prim.materials[].objects array
+
+                                                s.pSystem,                    // if this Prim should be duplicated into a particle system, data is here
+
+                                                s.animSystem                  // if this Prim has animation waypoints, data is here
 
                                             ); // end of valid Shader
 
@@ -613,6 +617,15 @@ module.exports = function forceCanvasResizeSafariMobile (canvasEl) {
 
 */
 
+// TODO: geolocation rotation
+
+// TODO: particle system
+
+// TODO: toggle worlds in Ui
+
+// TODO: terrain multitexture
+
+// =========================
 
 // TODO: audit in https://www.npmjs.com/package/lighthouse
 
