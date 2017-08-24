@@ -120,7 +120,18 @@ class World extends AssetPool {
 
         this.rafId = null;
 
-        this.counter = 0;
+        this.counters = {
+
+            fps: 0,  // visible FPS
+
+            geolocate: 0,  // positions of sun, moon, stars
+
+            housekeep: 0 // check for damaged Prims, etc
+
+        }; // TODO: REPLACE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+        ////this.counter = 0;
+
 
         // Bind the render loop (best current method)
 
@@ -144,19 +155,22 @@ class World extends AssetPool {
 
             } );
 
-        // Rotate Prims which depend on our current (real-world) latitude and longitude.
+        /* 
+         * Rotate Prims which depend on our current (real-world) latitude and longitude.
+         * Fires 1 times per minute in world.update()
+         */
 
         this.util.emitter.on( this.util.emitter.events.WORLD_GEOLOCATION_READY,
 
-            ( geolocate ) => {
+            ( geoData ) => {
 
                 // Confirm back we got meaningful data.
 
-                if ( this.util.isNumber( geolocate.latitude ) && this.util.isNumber( geolocate.longitude ) ) {
+                if ( this.util.isNumber( geoData.latitude ) && this.util.isNumber( geoData.longitude ) ) {
 
-                    console.log("+++++++++++++++++VALID GEOLOCATION RETURNED.....")
+                    console.log("+++++++++WORLD VALID GEOLOCATION RETURNED.....")
 
-                    this.geoData = geolocate;
+                    this.geoData = geoData;
 
                     // Individual Prims which need to update check this value.
 
@@ -174,12 +188,23 @@ class World extends AssetPool {
 
                             // set default for z, adjust x, spin on y
 
-                            let oldrot = this.util.cartesianToUV( prim.rotation );
+                            console.log("++++++WORLD GEOLOCATE")
 
-                            let rot = this.util.latLongToCartesian( this.util.degToRad( parseFloat( world.geoData.latitude ) ), this.util.degToRad( parseFloat( world.geoData.longitude ) ) );
+                            this.computeSkyRotation( prim, geoData );
 
-                            //prim.rotation = [ this.util.radToDeg( rot[ 0 ] ) ,  this.util.radToDeg( rot[ 1 ] ),  this.util.radToDeg( rot[ 2 ] ) ];
+                            // We set latitude by rotating on the X axis, with value 90 - returned latitude.
+/*
+                            prim.rotation[ 0 ] = this.util.degToRad( -90 + geoData.latitude );
 
+                            let d = new Date();
+
+                            let hrDegs = this.util.hoursToDeg( d.getUTCHours() );
+
+                            prim.rotation[ 1 ] = this.util.degToRad( -geoData.longitude ) + hrDegs;
+
+                            prim.rotation[ 2 ] = this.util.degToRad( 90 );
+
+*/
 
                         }
 
@@ -229,6 +254,52 @@ class World extends AssetPool {
     setRotation ( rx, ry, rz ) {
 
         this.rotation = [ rx, ry, rz ];
+
+    }
+
+    /** 
+     * Compute the rotations needed for a StarDome to be positioned from 
+     * the point of view of an observer on Earth,  given the user's latitude, 
+     * longitude, and the time of day. Assumes a StarDome Prim, set to 
+     * rotation 0, 0, 0.
+     * @param {Prim} prim the prim to rotate
+     */
+    computeSkyRotation ( prim, geoData ) {
+
+        if ( ! prim.geolocate ) { 
+
+            console.error( 'World::computeSkyRotation(): prim ' + prim.name + ' does not geolocate' );
+
+            return;
+        }
+
+        prim.rotation[ 0 ] = this.util.degToRad( -90 + geoData.latitude );
+
+        let d = new Date();
+
+        let hrDegs = this.util.hoursToDeg( d.getUTCHours() );
+
+        prim.rotation[ 1 ] = this.util.degToRad( geoData.longitude ) - hrDegs;
+
+        prim.rotation[ 2 ] = this.util.degToRad( 90 );
+
+    }
+
+    /** 
+     * Compute position of the Sun from a position on Earth, given the user's 
+     * latitude, longitude, and time of day on a normalized sphere.
+     */
+    computeSunPosition ( prim ) {
+
+
+    }
+
+    /**
+     * Compute position of the planets from a position on Earth, given the user's
+     * latitude, longitude, and time of day on a nomalized sphere.
+     */
+    computePlanetPositions ( prim ) {
+
 
     }
 
@@ -652,6 +723,10 @@ module.exports = function forceCanvasResizeSafariMobile (canvasEl) {
 
 // TODO: geolocation rotation
 
+// TODO: confirm that geolocation rotation is working
+
+// TODO: constellation data co-loaded.
+
 // TODO: particle system
 
 // TODO: toggle worlds in Ui
@@ -780,23 +855,39 @@ module.exports = function forceCanvasResizeSafariMobile (canvasEl) {
 
         // fps calculation.
 
-        this.counter++;
+        this.counters.fps++;
 
         let now = performance.now();
 
         let delta = now - this.last;
 
-        if ( this.counter > 300 ) {
+        if ( this.counters.fps > 300 ) {
 
             //console.log('delta:' + delta)
 
-            this.stats.fps = parseInt( 1000 / ( delta / this.counter ) ) + ' fps';
+            this.stats.fps = parseInt( 1000 / ( delta / this.counters.fps ) ) + ' fps';
 
             this.last = now;
 
-            this.counter = 0;
+            this.counters.fps = 0;
 
         }
+
+        // Update stars, if present
+
+        this.counters.geolocate++;
+
+        if ( this.counters.geolocate > 3600 ) {
+
+            this.counters.geolocate = 0;
+
+            this.util.getGeolocation(); // fires event back to world.computeSkyRotation();
+
+        }
+
+        // Update Sun, if present
+
+        // Update Moon, if present
 
         // Update Lights
 

@@ -844,6 +844,12 @@ class ModelPool extends AssetPool {
      * @link http://www.convertcsv.com/csv-to-json.htm
      * Nebulae and galaxies
      * @link https://github.com/astronexus/HYG-Database/blob/master/dso.csv
+     * Discussion
+     * @link https://medium.com/@LeapMotion/planetarium-3675b0eedbc2
+     * Check our map against projection of night sky
+     * @link https://in-the-sky.org/skymap.php
+     * Find our Hyg stars by their HIP number
+     * @link http://www.magnitudo.org/stars/#
      * @param {String} data the incoming data from the file.
      * @param {Prim} prim the Prim object defined in prim.es6
      * @param {String} path the path to the file. MTL files may reference other files in their directory.
@@ -941,9 +947,17 @@ class ModelPool extends AssetPool {
 
                 ||
 
-                star.proper === 'Polaris' || 
                 star.proper === 'Alkaid' || star.proper === 'Mizar' || star.proper === 'Alioth' || 
                 star.proper === 'Mergrez' || star.proper === 'Phad' || star.proper === 'Merak' || star.proper === 'Dubhe'
+
+                ||
+
+                star.proper === 'Polaris' || star.proper === 'kochab' || star.hip === '75097' || star.hip === '79822' || 
+                star.hip === '77055' || star.hip === '82080' || star.hip === '85822'
+
+                ||
+
+                star.proper === 'Caph' || star.proper === 'Shedir' || star.proper === 'Cih' || star.proper === 'Ruchbah' || star.id === '8867'
 
 
                 ) tColors.push(0, 1, 0, 1)
@@ -972,14 +986,6 @@ class ModelPool extends AssetPool {
 
 
         return m;
-
-    }
-
-    /** 
-     * Add a particle System
-     */
-    computeParticleSystem (  data, prim, path, options  ) {
-
 
     }
 

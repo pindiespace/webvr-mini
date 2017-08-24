@@ -330,9 +330,30 @@ class Util {
 
     }
 
+    /** 
+     * Returns radians for degress.
+     */
     radToDeg ( rad ) {
 
         return parseFloat( rad ) * 180 / Math.PI;
+
+    }
+
+    /** 
+     * Returns hours for degrees.
+     */
+    degToHours ( deg ) {
+
+        return ( 24 * deg / 360 );
+
+    }
+
+    /**
+     * Returns 0-360 degrees for a 24-hour clock.
+     */
+    hoursToDeg ( hours ) {
+
+        return ( 360 * hours / 24 );
 
     }
 

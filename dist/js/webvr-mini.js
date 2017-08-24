@@ -863,11 +863,38 @@
 
 	            return parseFloat(deg) * Math.PI / 180;
 	        }
+
+	        /** 
+	         * Returns radians for degress.
+	         */
+
 	    }, {
 	        key: 'radToDeg',
 	        value: function radToDeg(rad) {
 
 	            return parseFloat(rad) * 180 / Math.PI;
+	        }
+
+	        /** 
+	         * Returns hours for degrees.
+	         */
+
+	    }, {
+	        key: 'degToHours',
+	        value: function degToHours(deg) {
+
+	            return 24 * deg / 360;
+	        }
+
+	        /**
+	         * Returns 0-360 degrees for a 24-hour clock.
+	         */
+
+	    }, {
+	        key: 'hoursToDeg',
+	        value: function hoursToDeg(hours) {
+
+	            return 360 * hours / 24;
 	        }
 	    }, {
 	        key: 'cartesianToUV',
@@ -9833,7 +9860,7 @@
 	            prim.shader.addPrim(prim); // TRY to add it
 	        });
 
-	        // HYG stellar database.
+	        // HYG stellar database (only fires once for each database load).
 
 	        this.util.emitter.on(this.util.emitter.events.HYG_GEOMETRY_READY, function (prim, key, options) {
 
@@ -9849,20 +9876,26 @@
 
 	            // If the World is gelocated, check if this Prim reacts. If so, fire  a position/rotation update.
 
-	            if (prim.geolocate) {
+	            if (prim.geolocate === true) {
 
-	                console.log("==========GEOLOCATION PRIM HYG, world.geoData:" + world.geoData);
+	                var geoData = _this.world.geoData;
 
-	                window.geoData = world.geoData;
+	                if (geoData && _this.util.isNumber(geoData.latitude) && _this.util.isNumber(geoData.longitude)) {
 
-	                if (world.geoData && _this.util.isNumber(world.geoData.latitude) && _this.util.isNumber(world.geoData.longitude)) {
+	                    console.log("==========GEOLOCATION PRIM HYG, world.geoData:" + geoData);
 
-	                    var oldrot = _this.util.cartesianToUV(prim.rotation);
+	                    _this.world.computeSkyRotation(prim, geoData);
 
-	                    var rot = _this.util.latLongToCartesian(_this.util.degToRad(parseFloat(world.geoData.latitude)), _this.util.degToRad(parseFloat(world.geoData.longitude)));
-
-	                    //prim.rotation = [ this.util.radToDeg( rot[ 0 ] ) ,  this.util.radToDeg( rot[ 1 ] ),  this.util.radToDeg( rot[ 2 ] ) ];
-
+	                    /*
+	                     // We set latitude by rotating on the X axis, with value 90 - returned latitude.
+	                     prim.rotation[ 0 ] = this.util.degToRad( -90 + geoData.latitude ); // moves away from pole (overhead at north pole, at horizon at equator)
+	                     prim.rotation[ 1 ] = this.util.degToRad( -geoData.longitude ); // spins around pole
+	                     // default position is at midnight. Adjust for current hour of day
+	                     let d = new Date();
+	                     let hrDegs = this.util.hoursToDeg( d.getUTCHours() );
+	                     prim.rotation[ 1 ] = this.util.degToRad( -geoData.longitude ) + hrDegs;
+	                     prim.rotation[ 2 ] = this.util.degToRad( 90 ); // z-axis, NEVER CHANGES
+	                     */
 	                }
 	            }
 
@@ -17966,6 +17999,12 @@
 	         * @link http://www.convertcsv.com/csv-to-json.htm
 	         * Nebulae and galaxies
 	         * @link https://github.com/astronexus/HYG-Database/blob/master/dso.csv
+	         * Discussion
+	         * @link https://medium.com/@LeapMotion/planetarium-3675b0eedbc2
+	         * Check our map against projection of night sky
+	         * @link https://in-the-sky.org/skymap.php
+	         * Find our Hyg stars by their HIP number
+	         * @link http://www.magnitudo.org/stars/#
 	         * @param {String} data the incoming data from the file.
 	         * @param {Prim} prim the Prim object defined in prim.es6
 	         * @param {String} path the path to the file. MTL files may reference other files in their directory.
@@ -18049,7 +18088,7 @@
 
 	                color *= mag;
 
-	                if (star.proper === 'Betelgeuse' || star.proper === 'Rigel' || star.proper === 'Bellatrix' || star.proper === 'Saiph' || star.proper === 'Alnitak' || star.proper === 'Alnilam' || star.proper === 'Mintaka' || star.proper === 'Polaris' || star.proper === 'Alkaid' || star.proper === 'Mizar' || star.proper === 'Alioth' || star.proper === 'Mergrez' || star.proper === 'Phad' || star.proper === 'Merak' || star.proper === 'Dubhe') tColors.push(0, 1, 0, 1);else tColors.push(mag + color, mag, mag - color, 1);
+	                if (star.proper === 'Betelgeuse' || star.proper === 'Rigel' || star.proper === 'Bellatrix' || star.proper === 'Saiph' || star.proper === 'Alnitak' || star.proper === 'Alnilam' || star.proper === 'Mintaka' || star.proper === 'Alkaid' || star.proper === 'Mizar' || star.proper === 'Alioth' || star.proper === 'Mergrez' || star.proper === 'Phad' || star.proper === 'Merak' || star.proper === 'Dubhe' || star.proper === 'Polaris' || star.proper === 'kochab' || star.hip === '75097' || star.hip === '79822' || star.hip === '77055' || star.hip === '82080' || star.hip === '85822' || star.proper === 'Caph' || star.proper === 'Shedir' || star.proper === 'Cih' || star.proper === 'Ruchbah' || star.id === '8867') tColors.push(0, 1, 0, 1);else tColors.push(mag + color, mag, mag - color, 1);
 	            }
 
 	            // Set the geolocation flag so we can rotate just before the Prim is added to the Shader.
@@ -18065,14 +18104,6 @@
 
 	            return m;
 	        }
-
-	        /** 
-	         * Add a particle System
-	         */
-
-	    }, {
-	        key: 'computeParticleSystem',
-	        value: function computeParticleSystem(data, prim, path, options) {}
 
 	        /** 
 	         * Add a model
@@ -20192,7 +20223,18 @@
 
 	        _this.rafId = null;
 
-	        _this.counter = 0;
+	        _this.counters = {
+
+	            fps: 0, // visible FPS
+
+	            geolocate: 0, // positions of sun, moon, stars
+
+	            housekeep: 0 // check for damaged Prims, etc
+
+	        }; // TODO: REPLACE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+	        ////this.counter = 0;
+
 
 	        // Bind the render loop (best current method)
 
@@ -20212,17 +20254,20 @@
 	            }
 	        });
 
-	        // Rotate Prims which depend on our current (real-world) latitude and longitude.
+	        /* 
+	         * Rotate Prims which depend on our current (real-world) latitude and longitude.
+	         * Fires 1 times per minute in world.update()
+	         */
 
-	        _this.util.emitter.on(_this.util.emitter.events.WORLD_GEOLOCATION_READY, function (geolocate) {
+	        _this.util.emitter.on(_this.util.emitter.events.WORLD_GEOLOCATION_READY, function (geoData) {
 
 	            // Confirm back we got meaningful data.
 
-	            if (_this.util.isNumber(geolocate.latitude) && _this.util.isNumber(geolocate.longitude)) {
+	            if (_this.util.isNumber(geoData.latitude) && _this.util.isNumber(geoData.longitude)) {
 
-	                console.log("+++++++++++++++++VALID GEOLOCATION RETURNED.....");
+	                console.log("+++++++++WORLD VALID GEOLOCATION RETURNED.....");
 
-	                _this.geoData = geolocate;
+	                _this.geoData = geoData;
 
 	                // Individual Prims which need to update check this value.
 
@@ -20240,12 +20285,23 @@
 
 	                        // set default for z, adjust x, spin on y
 
-	                        var oldrot = _this.util.cartesianToUV(prim.rotation);
+	                        console.log("++++++WORLD GEOLOCATE");
 
-	                        var rot = _this.util.latLongToCartesian(_this.util.degToRad(parseFloat(world.geoData.latitude)), _this.util.degToRad(parseFloat(world.geoData.longitude)));
+	                        _this.computeSkyRotation(prim, geoData);
 
-	                        //prim.rotation = [ this.util.radToDeg( rot[ 0 ] ) ,  this.util.radToDeg( rot[ 1 ] ),  this.util.radToDeg( rot[ 2 ] ) ];
-
+	                        // We set latitude by rotating on the X axis, with value 90 - returned latitude.
+	                        /*
+	                                                    prim.rotation[ 0 ] = this.util.degToRad( -90 + geoData.latitude );
+	                        
+	                                                    let d = new Date();
+	                        
+	                                                    let hrDegs = this.util.hoursToDeg( d.getUTCHours() );
+	                        
+	                                                    prim.rotation[ 1 ] = this.util.degToRad( -geoData.longitude ) + hrDegs;
+	                        
+	                                                    prim.rotation[ 2 ] = this.util.degToRad( 90 );
+	                        
+	                        */
 	                    }
 	                }
 	            }
@@ -20303,6 +20359,54 @@
 
 	            this.rotation = [rx, ry, rz];
 	        }
+
+	        /** 
+	         * Compute the rotations needed for a StarDome to be positioned from 
+	         * the point of view of an observer on Earth,  given the user's latitude, 
+	         * longitude, and the time of day. Assumes a StarDome Prim, set to 
+	         * rotation 0, 0, 0.
+	         * @param {Prim} prim the prim to rotate
+	         */
+
+	    }, {
+	        key: 'computeSkyRotation',
+	        value: function computeSkyRotation(prim, geoData) {
+
+	            if (!prim.geolocate) {
+
+	                console.error('World::computeSkyRotation(): prim ' + prim.name + ' does not geolocate');
+
+	                return;
+	            }
+
+	            prim.rotation[0] = this.util.degToRad(-90 + geoData.latitude);
+
+	            var d = new Date();
+
+	            var hrDegs = this.util.hoursToDeg(d.getUTCHours());
+
+	            prim.rotation[1] = this.util.degToRad(geoData.longitude) - hrDegs;
+
+	            prim.rotation[2] = this.util.degToRad(90);
+	        }
+
+	        /** 
+	         * Compute position of the Sun from a position on Earth, given the user's 
+	         * latitude, longitude, and time of day on a normalized sphere.
+	         */
+
+	    }, {
+	        key: 'computeSunPosition',
+	        value: function computeSunPosition(prim) {}
+
+	        /**
+	         * Compute position of the planets from a position on Earth, given the user's
+	         * latitude, longitude, and time of day on a nomalized sphere.
+	         */
+
+	    }, {
+	        key: 'computePlanetPositions',
+	        value: function computePlanetPositions(prim) {}
 
 	        /** 
 	         * Get the POV (simple camera).
@@ -20685,6 +20789,10 @@
 
 	        // TODO: geolocation rotation
 
+	        // TODO: confirm that geolocation rotation is working
+
+	        // TODO: constellation data co-loaded.
+
 	        // TODO: particle system
 
 	        // TODO: toggle worlds in Ui
@@ -20814,22 +20922,37 @@
 
 	            // fps calculation.
 
-	            this.counter++;
+	            this.counters.fps++;
 
 	            var now = performance.now();
 
 	            var delta = now - this.last;
 
-	            if (this.counter > 300) {
+	            if (this.counters.fps > 300) {
 
 	                //console.log('delta:' + delta)
 
-	                this.stats.fps = parseInt(1000 / (delta / this.counter)) + ' fps';
+	                this.stats.fps = parseInt(1000 / (delta / this.counters.fps)) + ' fps';
 
 	                this.last = now;
 
-	                this.counter = 0;
+	                this.counters.fps = 0;
 	            }
+
+	            // Update stars, if present
+
+	            this.counters.geolocate++;
+
+	            if (this.counters.geolocate > 3600) {
+
+	                this.counters.geolocate = 0;
+
+	                this.util.getGeolocation(); // fires event back to world.computeSkyRotation();
+	            }
+
+	            // Update Sun, if present
+
+	            // Update Moon, if present
 
 	            // Update Lights
 

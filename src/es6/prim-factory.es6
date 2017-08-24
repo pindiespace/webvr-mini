@@ -136,7 +136,7 @@ class PrimFactory {
 
         } );
 
-        // HYG stellar database.
+        // HYG stellar database (only fires once for each database load).
 
         this.util.emitter.on( this.util.emitter.events.HYG_GEOMETRY_READY, 
 
@@ -154,21 +154,37 @@ class PrimFactory {
 
                 // If the World is gelocated, check if this Prim reacts. If so, fire  a position/rotation update.
 
-                if ( prim.geolocate ) {
+                if ( prim.geolocate === true ) {
 
-                    console.log("==========GEOLOCATION PRIM HYG, world.geoData:" + world.geoData);
+                    let geoData = this.world.geoData;
 
-                    window.geoData = world.geoData;
+                    if ( geoData && this.util.isNumber( geoData.latitude ) && this.util.isNumber( geoData.longitude ) ) {
 
-                    if ( world.geoData && this.util.isNumber( world.geoData.latitude ) && this.util.isNumber( world.geoData.longitude ) ) {
+                        console.log("==========GEOLOCATION PRIM HYG, world.geoData:" + geoData);
 
-                            let oldrot = this.util.cartesianToUV( prim.rotation );
+                        this.world.computeSkyRotation( prim, geoData );
 
-                            let rot = this.util.latLongToCartesian( this.util.degToRad( parseFloat( world.geoData.latitude ) ), this.util.degToRad( parseFloat( world.geoData.longitude ) ) );
+                        /*
 
-                            //prim.rotation = [ this.util.radToDeg( rot[ 0 ] ) ,  this.util.radToDeg( rot[ 1 ] ),  this.util.radToDeg( rot[ 2 ] ) ];
+                        // We set latitude by rotating on the X axis, with value 90 - returned latitude.
 
-     
+                        prim.rotation[ 0 ] = this.util.degToRad( -90 + geoData.latitude ); // moves away from pole (overhead at north pole, at horizon at equator)
+
+                        prim.rotation[ 1 ] = this.util.degToRad( -geoData.longitude ); // spins around pole
+
+                        // default position is at midnight. Adjust for current hour of day
+
+                        let d = new Date();
+
+                        let hrDegs = this.util.hoursToDeg( d.getUTCHours() );
+
+                        prim.rotation[ 1 ] = this.util.degToRad( -geoData.longitude ) + hrDegs;
+
+                        prim.rotation[ 2 ] = this.util.degToRad( 90 ); // z-axis, NEVER CHANGES
+
+                        */
+
+   
                     }
 
                 }
