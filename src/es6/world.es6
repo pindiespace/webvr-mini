@@ -134,7 +134,7 @@ class World extends AssetPool {
 
                 if ( this.rafId !== null ) {
 
-                    console.log("VR_DISPLAY_READY, display typeof:" + this.vr.getDisplay());
+                    console.log( 'VR_DISPLAY_READY, display typeof:' + this.vr.getDisplay() );
 
                     this.stop();
 
@@ -148,11 +148,44 @@ class World extends AssetPool {
 
         this.util.emitter.on( this.util.emitter.events.WORLD_GEOLOCATION_READY,
 
-            ( coords ) => {
+            ( geolocate ) => {
 
-                world.coords = coords;
+                // Confirm back we got meaningful data.
 
-                // Individual Prims which need to update check this value.
+                if ( this.util.isNumber( geolocate.latitude ) && this.util.isNumber( geolocate.longitude ) ) {
+
+                    console.log("+++++++++++++++++VALID GEOLOCATION RETURNED.....")
+
+                    this.geoData = geolocate;
+
+                    // Individual Prims which need to update check this value.
+
+                    for ( let i = 0; i < this.primFactory.prims.length; i++ ) {
+
+                        let prim = this.primFactory.prims[ i ];
+
+                        if ( prim.geolocate === true ) {
+
+                            // default position x = 0, spin around zeinth
+
+                            // default position x = -59, like 30 degrees north (los angeles)
+
+                            // default position x = -90, equator spin straight ahead (north)
+
+                            // set default for z, adjust x, spin on y
+
+                            let oldrot = this.util.cartesianToUV( prim.rotation );
+
+                            let rot = this.util.latLongToCartesian( this.util.degToRad( parseFloat( world.geoData.latitude ) ), this.util.degToRad( parseFloat( world.geoData.longitude ) ) );
+
+                            //prim.rotation = [ this.util.radToDeg( rot[ 0 ] ) ,  this.util.radToDeg( rot[ 1 ] ),  this.util.radToDeg( rot[ 2 ] ) ];
+
+
+                        }
+
+                    }
+
+                }
 
         } );
 

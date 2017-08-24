@@ -142,24 +142,33 @@ class PrimFactory {
 
             ( prim, key, options ) => {
 
+                console.log("==========HYG GEOMETRY READY");
+
                 let coords = this.modelPool.keyList[ key ];
 
                 prim.matStarts = coords.options.matStarts;
 
+                // Note: this computes the bounding box, needed for the rotation.
+
                 this.initPrimGeometry( prim, coords, options );
 
-                console.log("PRIM SHADER: " + prim.shader.name)
-
-                // If the World is gelocated, check if this Prim reacts. If so, fire update.
+                // If the World is gelocated, check if this Prim reacts. If so, fire  a position/rotation update.
 
                 if ( prim.geolocate ) {
 
-                    if ( world.coords ) {
+                    console.log("==========GEOLOCATION PRIM HYG, world.geoData:" + world.geoData);
 
-                        // TODO: DEBUG
+                    window.geoData = world.geoData;
 
-                        prim.rotation = this.util.uvToCartesian( this.util.degToRad( parseFloat( coords.latitude ) ), this.util.degToRad( parseFloat( coords.longitude ) ) );
+                    if ( world.geoData && this.util.isNumber( world.geoData.latitude ) && this.util.isNumber( world.geoData.longitude ) ) {
 
+                            let oldrot = this.util.cartesianToUV( prim.rotation );
+
+                            let rot = this.util.latLongToCartesian( this.util.degToRad( parseFloat( world.geoData.latitude ) ), this.util.degToRad( parseFloat( world.geoData.longitude ) ) );
+
+                            //prim.rotation = [ this.util.radToDeg( rot[ 0 ] ) ,  this.util.radToDeg( rot[ 1 ] ),  this.util.radToDeg( rot[ 2 ] ) ];
+
+     
                     }
 
                 }
@@ -507,7 +516,7 @@ class PrimFactory {
 
         prim.updateTangents();
 
-        // Colors aren't supplied by OBJ format, so re-compute.
+        // Colors aren't supplied by OBJ format, but are supplied by others (e.g. Hyg) so re-compute.
 
         prim.updateColors( coords.colors );
 

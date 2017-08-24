@@ -336,15 +336,52 @@ class Util {
 
     }
 
+    cartesianToUV ( coords ) {
+
+        if ( ! coords.length ) {
+
+            console.error( 'Util::uvToCartesian(): ARRAY not supplied (did you just use separate x, y, z?' );
+
+            return null;
+
+        }
+
+        let m = new Float32Array( 2 * coords.length / 3 );
+
+        let idx = 0;
+
+        for ( let i = 0; i < coords.length; i += 3 ) {
+
+            let x = coords[ i ], y = coords[ i + 1 ], z = coords[ i + 2 ];
+
+            let r = Math.sqrt( x * x + y * y + z * z );
+
+            m[ idx++ ] = Math.acos( z / r );
+
+            m[ idx++ ] =  Math.acos( x / Math.sqrt( x * x + y * y ) ) * ( y < 0 ? -1 : 1 );
+        }
+
+        return m;
+
+    }
+
     /** 
      * Given a uv (latitude, longitude) array, return cartesian coordinate equivalents.
-     * @param {Array} uvPositions array, with alternating u (theta) and v (phi) coordinates in RADIANS.
+     * @param {Array} FLATTENED uvPositions array, with alternating u (theta) and v (phi) coordinates in RADIANS.
      * @param {Number} w the width of the bounding box for the resulting 3d space.
      * @param {Number} h the height of the bounding box for the resulting 3d space.
      * @param {Number} d the depth of the bounding box for the resulting 3d space.
-     * @returns {Array} a flattened xyz, vertices-compatible array.
+     * @returns {Float32Array} a flattened Float32 array, vertices-compatible, with equivalent x, y, z coordinates.
      */
     uvToCartesian ( uvPositions, w = 1, h = 1, d = 1 ) {
+
+        if ( ! uvPositions.length ) {
+
+            console.error( 'Util::uvToCartesian(): ARRAY not supplied (did you just add latitude and longitude?' );
+
+            return null;
+
+        }
 
         let m = new Float32Array( 3 * uvPositions.length / 2 );
 
@@ -365,6 +402,21 @@ class Util {
         }
 
         return m;
+
+    }
+
+    /** 
+     * Use when only one latitude and longitude needs to be converted, instead of a flattened array of uv coordinates.
+     * @param {Number} latitude the latitude
+     * @param {Number} longitude the longitude
+     * @param {Number} w the width of the bounding box for the resulting 3d space.
+     * @param {Number} h the height of the bounding box for the resulting 3d space.
+     * @param {Number} d the depth of the bounding box for the resulting 3d space.
+     * @returns {Float32Array} a Float32 array with equivalent x, y, z coordinates.
+     */
+    latLongToCartesian( latitude, longitude, w = 1, h = 1, d = 1 ) {
+
+        return this.uvToCartesian( [ latitude, longitude ], w, h, d );
 
     }
 

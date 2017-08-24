@@ -3846,7 +3846,9 @@ class GeometryPool {
 
             if ( ! this.util.isWhitespace( path ) ) {
 
-                console.log("--------getting model for:" + prim.name + " path:" + path )
+                console.log("SLKDJF:SLFKJS:SFDKJFS:LSDFKJFS:LKJFS:LFSJ")
+
+                console.log("--+++---getting model for:" + prim.name + " path:" + path )
 
                 // Adjust options for special models, e.g. the HYG stellar database.
 

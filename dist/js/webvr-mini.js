@@ -869,14 +869,44 @@
 
 	            return parseFloat(rad) * 180 / Math.PI;
 	        }
+	    }, {
+	        key: 'cartesianToUV',
+	        value: function cartesianToUV(coords) {
+
+	            if (!coords.length) {
+
+	                console.error('Util::uvToCartesian(): ARRAY not supplied (did you just use separate x, y, z?');
+
+	                return null;
+	            }
+
+	            var m = new Float32Array(2 * coords.length / 3);
+
+	            var idx = 0;
+
+	            for (var i = 0; i < coords.length; i += 3) {
+
+	                var _x = coords[i],
+	                    y = coords[i + 1],
+	                    z = coords[i + 2];
+
+	                var r = Math.sqrt(_x * _x + y * y + z * z);
+
+	                m[idx++] = Math.acos(z / r);
+
+	                m[idx++] = Math.acos(_x / Math.sqrt(_x * _x + y * y)) * (y < 0 ? -1 : 1);
+	            }
+
+	            return m;
+	        }
 
 	        /** 
 	         * Given a uv (latitude, longitude) array, return cartesian coordinate equivalents.
-	         * @param {Array} uvPositions array, with alternating u (theta) and v (phi) coordinates in RADIANS.
+	         * @param {Array} FLATTENED uvPositions array, with alternating u (theta) and v (phi) coordinates in RADIANS.
 	         * @param {Number} w the width of the bounding box for the resulting 3d space.
 	         * @param {Number} h the height of the bounding box for the resulting 3d space.
 	         * @param {Number} d the depth of the bounding box for the resulting 3d space.
-	         * @returns {Array} a flattened xyz, vertices-compatible array.
+	         * @returns {Float32Array} a flattened Float32 array, vertices-compatible, with equivalent x, y, z coordinates.
 	         */
 
 	    }, {
@@ -886,6 +916,13 @@
 	            var h = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 1;
 	            var d = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 1;
 
+
+	            if (!uvPositions.length) {
+
+	                console.error('Util::uvToCartesian(): ARRAY not supplied (did you just add latitude and longitude?');
+
+	                return null;
+	            }
 
 	            var m = new Float32Array(3 * uvPositions.length / 2);
 
@@ -905,6 +942,27 @@
 	            }
 
 	            return m;
+	        }
+
+	        /** 
+	         * Use when only one latitude and longitude needs to be converted, instead of a flattened array of uv coordinates.
+	         * @param {Number} latitude the latitude
+	         * @param {Number} longitude the longitude
+	         * @param {Number} w the width of the bounding box for the resulting 3d space.
+	         * @param {Number} h the height of the bounding box for the resulting 3d space.
+	         * @param {Number} d the depth of the bounding box for the resulting 3d space.
+	         * @returns {Float32Array} a Float32 array with equivalent x, y, z coordinates.
+	         */
+
+	    }, {
+	        key: 'latLongToCartesian',
+	        value: function latLongToCartesian(latitude, longitude) {
+	            var w = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 1;
+	            var h = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 1;
+	            var d = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : 1;
+
+
+	            return this.uvToCartesian([latitude, longitude], w, h, d);
 	        }
 
 	        /** 
@@ -9779,23 +9837,32 @@
 
 	        this.util.emitter.on(this.util.emitter.events.HYG_GEOMETRY_READY, function (prim, key, options) {
 
+	            console.log("==========HYG GEOMETRY READY");
+
 	            var coords = _this.modelPool.keyList[key];
 
 	            prim.matStarts = coords.options.matStarts;
 
+	            // Note: this computes the bounding box, needed for the rotation.
+
 	            _this.initPrimGeometry(prim, coords, options);
 
-	            console.log("PRIM SHADER: " + prim.shader.name);
-
-	            // If the World is gelocated, check if this Prim reacts. If so, fire update.
+	            // If the World is gelocated, check if this Prim reacts. If so, fire  a position/rotation update.
 
 	            if (prim.geolocate) {
 
-	                if (world.coords) {
+	                console.log("==========GEOLOCATION PRIM HYG, world.geoData:" + world.geoData);
 
-	                    // TODO: DEBUG
+	                window.geoData = world.geoData;
 
-	                    prim.rotation = _this.util.uvToCartesian(_this.util.degToRad(parseFloat(coords.latitude)), _this.util.degToRad(parseFloat(coords.longitude)));
+	                if (world.geoData && _this.util.isNumber(world.geoData.latitude) && _this.util.isNumber(world.geoData.longitude)) {
+
+	                    var oldrot = _this.util.cartesianToUV(prim.rotation);
+
+	                    var rot = _this.util.latLongToCartesian(_this.util.degToRad(parseFloat(world.geoData.latitude)), _this.util.degToRad(parseFloat(world.geoData.longitude)));
+
+	                    //prim.rotation = [ this.util.radToDeg( rot[ 0 ] ) ,  this.util.radToDeg( rot[ 1 ] ),  this.util.radToDeg( rot[ 2 ] ) ];
+
 	                }
 	            }
 
@@ -10119,7 +10186,7 @@
 
 	            prim.updateTangents();
 
-	            // Colors aren't supplied by OBJ format, so re-compute.
+	            // Colors aren't supplied by OBJ format, but are supplied by others (e.g. Hyg) so re-compute.
 
 	            prim.updateColors(coords.colors);
 
@@ -16977,7 +17044,9 @@
 
 	                if (!this.util.isWhitespace(path)) {
 
-	                    console.log("--------getting model for:" + prim.name + " path:" + path);
+	                    console.log("SLKDJF:SLFKJS:SFDKJFS:LSDFKJFS:LKJFS:LFSJ");
+
+	                    console.log("--+++---getting model for:" + prim.name + " path:" + path);
 
 	                    // Adjust options for special models, e.g. the HYG stellar database.
 
@@ -20135,7 +20204,7 @@
 
 	            if (_this.rafId !== null) {
 
-	                console.log("VR_DISPLAY_READY, display typeof:" + _this.vr.getDisplay());
+	                console.log('VR_DISPLAY_READY, display typeof:' + _this.vr.getDisplay());
 
 	                _this.stop();
 
@@ -20145,11 +20214,41 @@
 
 	        // Rotate Prims which depend on our current (real-world) latitude and longitude.
 
-	        _this.util.emitter.on(_this.util.emitter.events.WORLD_GEOLOCATION_READY, function (coords) {
+	        _this.util.emitter.on(_this.util.emitter.events.WORLD_GEOLOCATION_READY, function (geolocate) {
 
-	            world.coords = coords;
+	            // Confirm back we got meaningful data.
 
-	            // Individual Prims which need to update check this value.
+	            if (_this.util.isNumber(geolocate.latitude) && _this.util.isNumber(geolocate.longitude)) {
+
+	                console.log("+++++++++++++++++VALID GEOLOCATION RETURNED.....");
+
+	                _this.geoData = geolocate;
+
+	                // Individual Prims which need to update check this value.
+
+	                for (var i = 0; i < _this.primFactory.prims.length; i++) {
+
+	                    var prim = _this.primFactory.prims[i];
+
+	                    if (prim.geolocate === true) {
+
+	                        // default position x = 0, spin around zeinth
+
+	                        // default position x = -59, like 30 degrees north (los angeles)
+
+	                        // default position x = -90, equator spin straight ahead (north)
+
+	                        // set default for z, adjust x, spin on y
+
+	                        var oldrot = _this.util.cartesianToUV(prim.rotation);
+
+	                        var rot = _this.util.latLongToCartesian(_this.util.degToRad(parseFloat(world.geoData.latitude)), _this.util.degToRad(parseFloat(world.geoData.longitude)));
+
+	                        //prim.rotation = [ this.util.radToDeg( rot[ 0 ] ) ,  this.util.radToDeg( rot[ 1 ] ),  this.util.radToDeg( rot[ 2 ] ) ];
+
+	                    }
+	                }
+	            }
 	        });
 
 	        return _this;
