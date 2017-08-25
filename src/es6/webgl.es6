@@ -1684,16 +1684,6 @@ class WebGL {
 
     }
 
-    /** 
-     * Provide statistics for display as JSON data.
-     */
-    stats () {
-
-        return JSON.stringify( this.stats );
-
-    }
-
-
 }
 
 export default WebGL;

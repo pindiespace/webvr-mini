@@ -109,7 +109,9 @@ if ( __DEV__ === 'true' ) {
 
 }
 
-let webvr, ui, shaderPool, lights, world;
+// Create sub-objects.
+
+let webvr, gamepad, ui, shaderPool, lights, world;
 
 // WebGL can take some time to init.
 
@@ -120,6 +122,10 @@ var promise = new Promise( ( resolve, reject ) => {
     if ( webgl.init( 'webvr-mini-canvas' ) ) {
 
         webvr = new WebVR( true, util, glMatrix, webgl );
+
+        // Load Gamepad support.
+
+        gamepad = new GamePad( true, util );
 
         // Load our (minimal) 2d user interface.
 
@@ -161,9 +167,9 @@ var promise = new Promise( ( resolve, reject ) => {
 
         shaderPool.addAsset( new ShaderMetal( true, util, glMatrix, webgl, webvr, 'shaderMetal', lights ) );
 
-        // Create the world, which needs WebGL, WebVR, the Shader list and world Lights.
+        // Create the world, which needs WebGL, WebVR, GamePad, the Shader list and world Lights.
 
-        world = new World( true, glMatrix, webgl, webvr, shaderPool, lights );
+        world = new World( true, glMatrix, webgl, webvr, gamepad, shaderPool, lights );
 
         // Initialize our Ui after other elements.
 

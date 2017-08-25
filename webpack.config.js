@@ -35,7 +35,10 @@ module.exports = {
     devServer: {
         // This is required for webpack-dev-server. The path should  
         // be an absolute path to your build destination. 
-        outputPath: path.join(__dirname, 'build')
+        outputPath: path.join(__dirname, 'build'),
+
+        https: true
+
     },
 
     module: {

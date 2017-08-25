@@ -4,10 +4,25 @@ class WebVR {
 
     /** 
      * @class
-     * render scenes to webvr devices
-     * following toji's room-scale example:
+     * render scenes to webvr devices, following toji's room-scale example:
      * @link https://github.com/toji/webvr.info/blob/master/samples/05-room-scale.html
-     * Note: significant webvr code in Shader parent object (sets left and right eye matrix).
+     * Note: there is some WebVR code in  the Shader (shader.es6) parent object (it sets left and right eye matrix).
+     * ---------------------------------------
+     * Compatibility Aug 2017
+     * FF/openvr - works, with jitters, roomscale OK.
+     * FF/native - did not work.
+     * Edge/Windows Mixed Reality - works with Acer and HP headsets, including roomscale, as long as Vive is not installed!
+     * ----------------------------------------
+     * Compatibility April 2017
+     * Firefox Nightly: 
+     * - turn on support in about:config in location field of browser
+     * - Vive also needs an openvr .dll connected via about:config
+     * - https://webvr.rocks/firefox#download
+     * ----------------------------------------
+     * Chromium dev build from webvr rocks
+     * - turn on in chrome://flags/
+     * - use https:// instead of http://
+     *
      * @constructor
      */
     constructor ( init, util, glMatrix, webgl  ) {
@@ -28,17 +43,17 @@ class WebVR {
 
         this.frameData = null,         // VR frame data
 
-        this.PLAYER_HEIGHT = 1.75;     // average player height.
+        this.PLAYER_HEIGHT = 1.75;     // average player height, a default if not available.
 
         // Statistics object.
 
         this.stats = {
 
-            vers: 1.0
+            version: 0
 
         };
 
-        // Listen for World init event.
+        // Todo: Listen for World init event?
 
         // Immediately initialize (for now).
 
@@ -51,7 +66,8 @@ class WebVR {
     }
 
     /** 
-     * Set the World object (which has .requestAnimationFrame)
+     * Set the World object (which has .requestAnimationFrame). used by World 
+     * to apply itself to this object.
      * @param {World} world the current world, including world.render() loop.
      */
     setWorld ( world ) {
@@ -61,18 +77,7 @@ class WebVR {
     }
 
     /** 
-     * Compatibility Mar 2017
-     * Adapted from toji's room-scale example.
-     * 
-     * ENABLING
-     *
-     * Firefox: turn on in http://about:config
-     * Vive also needs a .dll
-     * https://webvr.rocks/firefox#download
-     *
-     * Chrome: turn on in chrome://flags/
-     * Note: in Mar 2017, FF only supported Oculus, 
-     * needed Chromium WebVR build to support Vive.
+     * Initialize webvr displays.
      */
     init () {
 
@@ -88,7 +93,9 @@ class WebVR {
 
             navigator.getVRDisplays().then( ( displays ) => {
 
-                console.log( 'WebVR::init(): webvr is available' );
+                console.log( 'WebVR::init(): webvr 1.1 is available' );
+
+                this.stats.version = 1.1;
 
                 if ( 'VRFrameData' in window ) {
 
@@ -102,7 +109,7 @@ class WebVR {
 
                     console.log( 'WebVR::init(): VRFrameData is available for ' + displays.length + ' headsets' );
 
-                    if ( displays.length > 0 )  {
+                    if ( displays.length > 0 ) {
 
                         console.log( 'WebVR::init(): ' + displays.length + ' displays are available' );
 
@@ -126,7 +133,7 @@ class WebVR {
 
                         }
 
-                        // Grab the first VRDisplay.
+                        // Grab the first VRDisplay, ignore others for now.
 
                         d = this.cDisplay = this.displays[ 1 ];
 
@@ -208,21 +215,27 @@ class WebVR {
 
                         console.warn( 'WebVR::init(): no VR displays found' );
 
+                        // This should be reported as a fail.
+
                         this.util.emitter.emit( this.util.emitter.events.VR_DISPLAY_FAIL, d );
 
                     }  // no valid display
 
-                } else { // valid VRFrameData
+                } else { // invalid VRFrameData
 
                     console.warn( 'WebVR::init(): invalid VRFrameData for ' + d );
 
+                    // This should be reported as a fail.
+
                     this.util.emitter.emit( this.util.emitter.events.VR_DISPLAY_FAIL, d );
 
-                } // end of valid VRFrameData
+                } // end of invalid VRFrameData
 
             }, ( reject ) => {
 
                 console.warn( 'WebVR::init(): reject navigator.getVRDisplays, error is:' + reject + ' display is:' + d );
+
+                // This should be reported as a fail.
 
                 this.util.emitter.emit( this.util.emitter.events.VR_DISPLAY_FAIL, d );
 
@@ -230,7 +243,9 @@ class WebVR {
 
                 ( error ) => {
 
-                    console.warn( '&&&&&&&&&&&&&&&&&&&&&&&&&WebVR::init(): error navigator.getVRDisplays:' + error + ' display is:' + d );
+                    console.warn( 'WebVR::init(): error navigator.getVRDisplays:' + error + ' display is:' + d );
+
+                    // This should be reported as a fail.
 
                     this.util.emitter.emit( this.util.emitter.events.VR_DISPLAY_FAIL, d );
 
@@ -318,8 +333,6 @@ class WebVR {
         return this.cDisplay;
 
     }
-
-
 
     /** 
      * Set the stage parameters.
@@ -483,7 +496,7 @@ class WebVR {
 
                 ( error ) => {
 
-                    console.warn( '&&&&&&&&&&&&&&&&&&&&&&&&&WebVR::requestPresent(): catch, error is:' + error + ' for display:' + d );
+                    console.warn( 'WebVR::requestPresent(): catch, error is:' + error + ' for display:' + d );
 
                     /////////////this.util.emitter.emit( this.util.emitter.events.VR_DISPLAY_FAIL, d );
 
@@ -493,7 +506,7 @@ class WebVR {
 
         } else {
 
-            console.error( '&&&&&&&&&&&&&&&&WebVR::requestPresent(): vrdisplay (' + d.displayName + ') is not a valid vr display' );
+            console.error( 'WebVR::requestPresent(): vrdisplay (' + d.displayName + ') has invalid configuration' );
 
         }
 
@@ -558,7 +571,7 @@ class WebVR {
 
                 ( error ) => {
 
-                    console.warn( '&&&&&&&&&&&&&&&&&&&&&&&&&WebVR::exitPresent(): error for display (' + d.displayName + '), error:' + error );
+                    console.warn( 'WebVR::exitPresent(): error for display (' + d.displayName + '), error:' + error );
 
                     this.util.emitter.emit( this.util.emitter.events.VR_DISPLAY_FAIL, d );
 
@@ -755,11 +768,47 @@ class WebVR {
     }
 
     /** 
-     * Provide statistics for display as JSON data.
+     * Report features of the WebVR interface to the Ui.
+     * @param {Display|Number} the WebVR display object, or its index in our list of WebVR displays. The 
+     * first display is always 'window', and HMDs are listed after displays[ 0 ]. Currently, we only use 
+     * the first WebVR display (no way to switch yet).
+     * @returns {Array|null} a list of the display features, or null.
      */
-    stats () {
+    reportWebVR ( display = 1 ) {
 
-        return JSON.stringify( this.stats );
+        if ( this.util.isNumber( display ) ) {
+
+            display = this.displays[ display ] || null;
+
+        }
+
+        // Return a key-value array for readout
+
+        if ( display ) {
+
+            let cap = display.capabilities || {};
+
+            return {
+
+                id : display.displayId,
+
+                name: display.displayName,
+
+                present: cap.canPresent || false,
+
+                externalHMD: cap.hasExternalDisplay || false,
+
+                pose: cap.hasPosition || false,
+
+                orientation: cap.hasOrientation || false,
+
+                maxLayers: cap.maxLayers || false
+
+            };
+
+        }
+
+        return null;
 
     }
 

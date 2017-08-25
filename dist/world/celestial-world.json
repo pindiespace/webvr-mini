@@ -52,7 +52,7 @@
 
         "rotation" : [ "0", "0", "0", "was -59.7, 0, 90 to match LA position with no correction" ],
 
-        "angular" : [ "0.0", "0.0", "0.0", "was -0.3 on y  spinning counter-clockwise on longitude axis" ],
+        "angular" : [ "0.0", "-0.02", "0.0", "was -0.3 on y  spinning counter-clockwise on longitude axis" ],
 
         "textures" : [  "img/uv-test.png" ],
 
@@ -82,7 +82,7 @@
 
         "divisions" : [ "9", "9", "9", "1", "0" ],
 
-        "position" : [ "0", "0", "0" ],
+        "position" : [ "-1.5", "0", "0" ],
 
         "acceleration" : [ "0", "0", "0" ],
 

@@ -3840,15 +3840,11 @@ class GeometryPool {
              * other data formats (e.g. HYG stellar coordinates).
              */
 
-            if ( ! path instanceof String ) console.log(">>>>>>>>>>>>>NO PATH")
-
             // Could have an empty path.
 
-            if ( ! this.util.isWhitespace( path ) ) {
+            if ( ! path instanceof String || ! this.util.isWhitespace( path ) ) {
 
-                console.log("SLKDJF:SLFKJS:SFDKJFS:LSDFKJFS:LKJFS:LFSJ")
-
-                console.log("--+++---getting model for:" + prim.name + " path:" + path )
+                console.log( 'GeometryPool::getGeometry(): getting model for:' + prim.name + ' at path:' + path );
 
                 // Adjust options for special models, e.g. the HYG stellar database.
 

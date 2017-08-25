@@ -32,7 +32,7 @@ class World extends AssetPool {
      * @param {Prim} prim the object/mesh primitives module.
      * @param {ShaderPool} shaderPool the GLSL rendering module.
      */
-    constructor ( init, glMatrix, webgl, webvr, shaderPool, lights ) {
+    constructor ( init, glMatrix, webgl, webvr, gamepad, shaderPool, lights ) {
 
         // Initialize AssetLoader superclass.
 
@@ -47,6 +47,8 @@ class World extends AssetPool {
         this.util = webgl.util,
 
         this.vr = webvr,
+
+        this.gamepad = gamepad,
 
         this.shaderPool = shaderPool,
 
