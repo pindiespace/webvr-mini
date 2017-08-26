@@ -82,15 +82,15 @@ class World extends AssetPool {
 
         this.lights = lights;
 
-        // File types in which a World may be encoded.
+        // File types in which a World may be described.
 
         this.worldMimeTypes = {
 
-            'json': 'text/plain',
+            'json': 'text/plain',      // our proprietary JSON format
 
-            'gltf': 'text/tgltf',
+            'gltf': 'text/tgltf',      // TODO: GLTF text
 
-            'gltfBinary': 'bin/gltf'
+            'gltfBinary': 'bin/gltf'   // TODO: GLTF binary
 
         };
 
@@ -168,9 +168,9 @@ class World extends AssetPool {
 
                 // Confirm back we got meaningful data.
 
-                if ( this.util.isNumber( geoData.latitude ) && this.util.isNumber( geoData.longitude ) ) {
+                console.log( 'World::WORLD_GEOLOCATION_READY event' );
 
-                    console.log("+++++++++WORLD VALID GEOLOCATION RETURNED.....")
+                if ( this.util.isNumber( geoData.latitude ) && this.util.isNumber( geoData.longitude ) ) {
 
                     this.geoData = geoData;
 
@@ -190,23 +190,9 @@ class World extends AssetPool {
 
                             // set default for z, adjust x, spin on y
 
-                            console.log("++++++WORLD GEOLOCATE")
+                            console.log( 'World::WORLD_GEOLOCATION_READY event, setting geoData lat:' + geoData.latitude + ' long:' + geoData.longitude );
 
                             this.computeSkyRotation( prim, geoData );
-
-                            // We set latitude by rotating on the X axis, with value 90 - returned latitude.
-/*
-                            prim.rotation[ 0 ] = this.util.degToRad( -90 + geoData.latitude );
-
-                            let d = new Date();
-
-                            let hrDegs = this.util.hoursToDeg( d.getUTCHours() );
-
-                            prim.rotation[ 1 ] = this.util.degToRad( -geoData.longitude ) + hrDegs;
-
-                            prim.rotation[ 2 ] = this.util.degToRad( 90 );
-
-*/
 
                         }
 
@@ -262,8 +248,14 @@ class World extends AssetPool {
     /** 
      * Compute the rotations needed for a StarDome to be positioned from 
      * the point of view of an observer on Earth,  given the user's latitude, 
-     * longitude, and the time of day. Assumes a StarDome Prim, set to 
-     * rotation 0, 0, 0.
+     * longitude, and the time of day. 
+     * Assumes a StarDome Prim, set to rotation 0, 0, 0. and util.geoLocate() was fired:
+     *
+     * - world.getWorld()
+     * - with a 1 minute timer in world.update()
+     * Note: greenwich, england - 51.4826° N, 0.0077° W
+     * Note: los Angeles - 34.0522° N, 118.2437° W
+     *
      * @param {Prim} prim the prim to rotate
      */
     computeSkyRotation ( prim, geoData ) {
@@ -275,15 +267,23 @@ class World extends AssetPool {
             return;
         }
 
-        prim.rotation[ 0 ] = this.util.degToRad( -90 + geoData.latitude );
+        if ( this.util.isNumber( geoData.latitude ) && this.util.isNumber( geoData.longitude ) ) {
 
-        let d = new Date();
+            prim.rotation[ 0 ] = this.util.degToRad( -90 + geoData.latitude );
 
-        let hrDegs = this.util.hoursToDeg( d.getUTCHours() );
+            let d = new Date();
 
-        prim.rotation[ 1 ] = this.util.degToRad( geoData.longitude ) - hrDegs;
+            let hrDegs = this.util.hoursToDeg( d.getUTCHours(), d.getUTCMinutes(), d.getUTCSeconds() );
 
-        prim.rotation[ 2 ] = this.util.degToRad( 90 );
+            prim.rotation[ 1 ] = -this.util.degToRad( geoData.longitude - hrDegs );
+
+            prim.rotation[ 2 ] = this.util.degToRad( 90 );
+
+        } else {
+
+            console.warn( 'World::computeSkyRotation(): invalid geoData' );
+
+        }
 
     }
 
@@ -680,6 +680,8 @@ class World extends AssetPool {
         console.log( 'World::start(): starting animation' );
 
         this.vr.setWorld( this );
+
+        this.gamepad.setWorld( this );
 
         return ( this.rafId = this.vr.getDisplay().requestAnimationFrame( this.render ) );
 

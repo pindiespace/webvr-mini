@@ -142,7 +142,7 @@ class PrimFactory {
 
             ( prim, key, options ) => {
 
-                console.log("==========HYG GEOMETRY READY");
+                console.log( 'PrimFactory::HYG_GEOMETRY_READY event' );
 
                 let coords = this.modelPool.keyList[ key ];
 
@@ -160,31 +160,10 @@ class PrimFactory {
 
                     if ( geoData && this.util.isNumber( geoData.latitude ) && this.util.isNumber( geoData.longitude ) ) {
 
-                        console.log("==========GEOLOCATION PRIM HYG, world.geoData:" + geoData);
+                        console.log( 'PrimFactory::HYG_GEOMETRY_READY event, world.geoData:' + geoData);
 
                         this.world.computeSkyRotation( prim, geoData );
 
-                        /*
-
-                        // We set latitude by rotating on the X axis, with value 90 - returned latitude.
-
-                        prim.rotation[ 0 ] = this.util.degToRad( -90 + geoData.latitude ); // moves away from pole (overhead at north pole, at horizon at equator)
-
-                        prim.rotation[ 1 ] = this.util.degToRad( -geoData.longitude ); // spins around pole
-
-                        // default position is at midnight. Adjust for current hour of day
-
-                        let d = new Date();
-
-                        let hrDegs = this.util.hoursToDeg( d.getUTCHours() );
-
-                        prim.rotation[ 1 ] = this.util.degToRad( -geoData.longitude ) + hrDegs;
-
-                        prim.rotation[ 2 ] = this.util.degToRad( 90 ); // z-axis, NEVER CHANGES
-
-                        */
-
-   
                     }
 
                 }

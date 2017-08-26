@@ -320,7 +320,7 @@ class Util {
     }
 
     /** 
-     * Return radians for degrees.
+     * Return radians for (fractional) degrees.
      * @param {Number} n the number, in degrees (0-360).
      * @returns {Number} return the same number, in radians (0-2PI).
      */
@@ -331,7 +331,7 @@ class Util {
     }
 
     /** 
-     * Returns radians for degress.
+     * Returns radians for (fractional) degress.
      */
     radToDeg ( rad ) {
 
@@ -340,7 +340,7 @@ class Util {
     }
 
     /** 
-     * Returns hours for degrees.
+     * Returns hours for (fractional) degrees.
      */
     degToHours ( deg ) {
 
@@ -349,11 +349,26 @@ class Util {
     }
 
     /**
-     * Returns 0-360 degrees for a 24-hour clock.
+     * Returns 0-360 degrees for a 24-hour clock, optionally
+     * accurate for minutes and seconds.
      */
-    hoursToDeg ( hours ) {
+    hoursToDeg ( hours = 0, minutes = 0, seconds = 0 ) {
 
-        return ( 360 * hours / 24 );
+        let deg = 0;
+
+        hours = parseFloat( hours ); // force to number
+
+        minutes = parseFloat( minutes );
+
+        seconds = parseFloat( seconds );
+
+        if ( hours ) hours *= ( 360 / 24 );
+
+        if ( minutes ) minutes *= ( 360 / 1440 ); // convert to fractional hours
+
+        if ( seconds ) seconds *= ( 360 / 86400 );
+
+        return ( hours + minutes + seconds );
 
     }
 
