@@ -875,6 +875,13 @@ class ModelPool extends AssetPool {
 
         let iIdx = 0;
 
+        /* 
+         * Use the colorIndex instead of spectral type colors. Otherwise, 
+         * use preceived colors accd. to spectral type.
+         */
+
+        let useColorIndex = false;
+
         for ( let i = 0; i < stars.length; i++ ) {
 
             let star = stars[ i ];
@@ -937,15 +944,106 @@ class ModelPool extends AssetPool {
 
             /* 
              * We compute magnitude by scaling Sirius (brightest star) from -1.44 to 1.0
-             * and assume a cutoff magnitude of +8.0
+             * and assume a cutoff magnitude of +8.5
              * @link https://lco.global/spacebook/what-apparent-magnitude/
              */
 
-            let mag = 1.0 - ( ( parseFloat( star.mag ) + 1.44 ) / 8 );
+            let mag = 1.0 - ( ( parseFloat( star.mag ) + 1.44 ) / 8.5 );
 
-            let color = parseFloat( star.ci ) || 0;
+            //////////////console.log( 'RAWMAG:' + ( parseFloat( star.mag ) + 1.44 ) +  ' MAG:' + mag)
 
-            color *= mag;
+            /* 
+             * rather than using the color index, we use the start spectral type, 
+             * which is closer to the real visual display. The first leter of the 
+             * spectral type is the class, which we use to set the color.
+             */
+
+            let rgb, clr;
+
+            let spect = star.spect[ 0 ]; // first letter of spectral type
+
+            if ( spect && ! useColorIndex ) {
+
+                spect = spect.toLowerCase();
+
+                switch( spect ) {
+
+                    case 'o':
+
+                        clr = '9bb0ff';
+
+                        break;
+
+                    case 'b':
+
+                        clr = 'aabfff';
+
+                        break;
+
+                    case 'a':
+
+                        clr = 'aabfff';
+
+
+                        break;
+
+                    case 'f':
+
+                        clr = 'fbf8ff';
+
+                        break;
+
+                    case 'g':
+
+                        clr = 'fff4e8';
+
+                        break;
+
+                    case 'k':
+
+                        clr = 'ffddb4';
+
+                        break;
+
+                    case 'm':
+
+                        clr = 'ff806f'; // made slightly redder
+
+                        break;
+
+                    default: 
+
+                        // white
+
+                        clr = '#FFFFFF';
+
+
+                        break;
+
+                }
+
+                    // Brightness
+
+                    rgb = this.util.hexToRGB( clr, 255 );
+
+                    rgb.r *= mag, rgb.g *= mag, rgb.b *= mag;
+
+            } else {
+
+                // No stellar type, use colorIndex instead.
+
+                clr = parseFloat( star.ci ) || 0;
+
+                clr *= mag;
+
+                rgb = { r: mag + clr, g: mag, b: mag - clr }
+
+            }
+
+
+
+
+            // Colorize certain stars forming useful constellations
 
             if ( 
 
@@ -970,7 +1068,8 @@ class ModelPool extends AssetPool {
 
                 ) tColors.push(0, 1, 0, 1)
 
-            else tColors.push( mag + color, mag, mag - color, 1 );
+            //else tColors.push( mag + color, mag, mag - color, 1 );
+            else tColors.push( rgb.r, rgb.b, rgb.b, 1 );
 
         }
 

@@ -442,6 +442,26 @@ class Util {
     }
 
     /** 
+     * Convert hex colors to RGB.
+     * @link https://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
+     */
+    hexToRGB ( hex, normalize = 1 ) {
+
+        hex = hex.replace( '#', '' );
+
+        return {
+
+            r: parseInt(hex.substring( 0, 2 ), 16 ) / normalize,
+
+            g: parseInt(hex.substring( 2, 4 ), 16 ) / normalize,
+
+            b: parseInt(hex.substring( 4, 6 ), 16 ) / normalize
+
+        }
+
+  }
+
+    /** 
      * Use when only one latitude and longitude needs to be converted, instead of a flattened array of uv coordinates.
      * @param {Number} latitude the latitude
      * @param {Number} longitude the longitude
