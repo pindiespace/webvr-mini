@@ -4861,7 +4861,23 @@
 
 	                        // Current button style. This may be changed depending on size and resolution of display.
 
-	                        this.currentStyle = {
+	                        this.buttonStyle = {
+
+	                                    backgroundSize: 'cover',
+
+	                                    backgroundColor: 'transparent',
+
+	                                    border: '0',
+
+	                                    userSelect: 'none',
+
+	                                    webkitUserSelect: 'none',
+
+	                                    MozUserSelect: 'none',
+
+	                                    cursor: 'pointer',
+
+	                                    position: 'absolute',
 
 	                                    top: '0px',
 
@@ -4877,7 +4893,39 @@
 
 	                                    zIndex: 1,
 
+	                                    boxSizing: 'content-box',
+
 	                                    display: 'inline-block'
+
+	                        };
+
+	                        // Default style for tooltip.
+
+	                        this.tooltipStyle = {
+
+	                                    position: 'absolute',
+
+	                                    fontSize: '14px',
+
+	                                    lineHeight: '16px', // vertically center
+
+	                                    fontFamily: 'sans-serif',
+
+	                                    padding: '4px',
+
+	                                    padingBottom: '0px',
+
+	                                    borderRadius: '9px',
+
+	                                    left: '0px',
+
+	                                    top: '0px',
+
+	                                    backgroundColor: 'rgba(248,255,164,0.7)', // light yellow
+
+	                                    zIndex: '10000',
+
+	                                    display: 'none'
 
 	                        };
 
@@ -5037,36 +5085,21 @@
 
 	                                    p.style.padding = '0';
 
-	                                    // Check for control HTML markup.
+	                                    // Check for control HTML markup, create if necessary.
 
 	                                    var controls = c.parentNode.querySelector('.webvr-mini-controls');
 
 	                                    if (!controls) {
 
-	                                                controls = document.createElement('nav');
+	                                                this.controls = document.createElement('nav');
+	                                    } else {
+
+	                                                this.controls = controls;
 	                                    }
 
-	                                    // Create an information tooltip on mouse hover.
+	                                    // Create an information tooltip on mouse hover (only one).
 
-	                                    var tooltip = document.createElement('p');
-
-	                                    tooltip.className = 'webvr-mini-tooltip';
-
-	                                    tooltip.setAttribute('status', 'invisible');
-
-	                                    var ts = tooltip.style;
-
-	                                    ts.position = 'absolute', ts.fontSize = '14px', ts.lineHeight = '16px', // vertically center
-
-	                                    ts.fontFamily = 'sans-serif', ts.padding = '4px', ts.padingBottom = '0px', ts.borderRadius = '9px',
-
-	                                    //ts.height = '17px',
-
-	                                    ts.left = '0px', ts.top = '0px', ts.backgroundColor = 'rgba(248,255,164,0.7)', // light yellow
-
-	                                    ts.zIndex = '10000', ts.display = 'none', tooltip.innerHTML = '', controls.appendChild(tooltip);
-
-	                                    this.controls.tooltip = tooltip;
+	                                    this.controls.tooltip = this.createTooltip();
 
 	                                    // Ui for HTML5 canvas present.
 
@@ -5078,17 +5111,15 @@
 
 	                                                console.log('creating DOM Ui');
 
-	                                                this.controls = controls; // save a shadow reference
+	                                                //this.controls = controls; // save a shadow reference
 
 	                                                // VR button
 
-	                                                var vrButton = this.createButton(this.icons.vr);
+	                                                var vrButton = this.createButton(this.icons.vr, 0, 0, 10, true);
 
-	                                                vrButton.style.top = '0px', vrButton.style.left = '0px', vrButton.zIndex = '9999', vrButton.tooltipActive = 'go to vr mode', vrButton.tooltipInactive = 'vr mode not available';
+	                                                vrButton.tooltipActive = 'go to vr mode', vrButton.tooltipInactive = 'vr mode not available';
 
-	                                                vrButton.strikethrough(this.icons.strikethrough);
-
-	                                                vrButton.inactivate();
+	                                                //vrButton.inactivate();
 
 	                                                vrButton.show(); // initially .active === true
 
@@ -5146,11 +5177,11 @@
 
 	                                                // Fullscreen
 
-	                                                var fullscreenButton = this.createButton(this.icons.fullscreen);
+	                                                var fullscreenButton = this.createButton(this.icons.fullscreen, 0, 72, 10, true);
 
-	                                                fullscreenButton.style.left = '72px', fullscreenButton.tooltipActive = 'go to fullscreen mode', fullscreenButton.tooltipInactive = 'fullscreen mode not available';
+	                                                //fullscreenButton.style.left = '72px',
 
-	                                                fullscreenButton.strikethrough(this.icons.strikethrough);
+	                                                fullscreenButton.tooltipActive = 'go to fullscreen mode', fullscreenButton.tooltipInactive = 'fullscreen mode not available';
 
 	                                                fullscreenButton.show(); // initially .active === true
 
@@ -5170,9 +5201,7 @@
 
 	                                                // World select button.
 
-	                                                var worldButton = this.createButton(this.icons.world);
-
-	                                                worldButton.style.top = '0px', worldButton.style.left = '144px', worldButton.strikethrough(this.icons.strikethrough);
+	                                                var worldButton = this.createButton(this.icons.world, 0, 144, 10, true);
 
 	                                                worldButton.tooltipActive = 'Select a World', worldButton.tooltipInactive = 'No Worlds Available', worldButton.activate();
 
@@ -5186,9 +5215,9 @@
 
 	                                                // Fullscreen return button.
 
-	                                                var exitFullscreenButton = this.createButton(this.icons.backArrow);
+	                                                var exitFullscreenButton = this.createButton(this.icons.backArrow, 0, 0, '9999', false);
 
-	                                                exitFullscreenButton.style.top = '0px', exitFullscreenButton.style.left = '0px', exitFullscreenButton.zIndex = '9999', exitFullscreenButton.tooltipActive = 'exit from Fullscreen', exitFullscreenButton.tooltipInactive = '';
+	                                                exitFullscreenButton.tooltipActive = 'exit from Fullscreen', exitFullscreenButton.tooltipInactive = '';
 
 	                                                if (this.hasFullscreen()) {
 
@@ -5568,13 +5597,48 @@
 	                         */
 
 	                        /** 
+	                         * Create a Ui tooltip
+	                         */
+
+	            }, {
+	                        key: 'createTooltip',
+	                        value: function createTooltip(activeMsg, inactiveMsg) {
+
+	                                    // Create an information tooltip on mouse hover (only one).
+
+	                                    var tooltip = document.createElement('p');
+
+	                                    tooltip.className = 'webvr-mini-tooltip';
+
+	                                    tooltip.setAttribute('status', 'invisible');
+
+	                                    var ts = tooltip.style;
+
+	                                    for (var i in this.tooltipStyle) {
+
+	                                                ts[i] = this.tooltipStyle[i];
+	                                    }
+
+	                                    tooltip.innerHTML = '', this.controls.tooltip = tooltip, this.controls.appendChild(tooltip);
+
+	                                    return tooltip;
+	                        }
+
+	                        /** 
 	                         * Create a Ui button
 	                         */
 
 	            }, {
 	                        key: 'createButton',
 	                        value: function createButton(buttonIcon) {
+	                                    var top = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '0';
+	                                    var left = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : '0';
+
 	                                    var _this2 = this;
+
+	                                    var zIndex = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : '10';
+	                                    var display = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : 'none';
+
 
 	                                    var button = document.createElement('img');
 
@@ -5582,7 +5646,20 @@
 
 	                                    var s = button.style;
 
-	                                    s.position = 'absolute', s.width = '64px', s.height = '50px', s.backgroundSize = 'cover', s.backgroundColor = 'transparent', s.border = '0', s.userSelect = 'none', s.webkitUserSelect = 'none', s.MozUserSelect = 'none', s.cursor = 'pointer', s.padding = '12px', s.zIndex = '10', s.display = 'none', s.boxSizing = 'content-box';
+	                                    var styleObj = this.buttonStyle;
+
+	                                    for (var i in styleObj) {
+
+	                                                s[i] = styleObj[i];
+	                                    }
+
+	                                    // Convert to CSS property value if number was supplied.
+
+	                                    if (this.util.isNumber(top)) top += 'px';
+
+	                                    if (this.util.isNumber(left)) left += 'px';
+
+	                                    s.top = top, s.left = left, s.zIndex = zIndex, s.display = display,
 
 	                                    // Set the icon.
 
@@ -5623,7 +5700,7 @@
 
 	                                                // Deactivate tooltip if necessary.
 
-	                                                if (b.active === true) {
+	                                                if (!b.active) {
 
 	                                                            tt.innerHTML = b.tooltipInactive;
 	                                                } else {
@@ -5696,13 +5773,6 @@
 	                                                button.style.display = 'none';
 	                                    };
 
-	                                    // button icon
-
-	                                    button.setIcon = function (iconImg) {
-
-	                                                button.src = iconImg;
-	                                    };
-
 	                                    // Add the emulated symbol underneath a given button.
 
 	                                    button.emulated = function (emuImg) {
@@ -5717,6 +5787,8 @@
 	                                                }
 	                                    };
 
+	                                    // Add a strikethrough image link
+
 	                                    button.strikethrough = function (strikeImg) {
 
 	                                                if (!button.strikethroughImg) {
@@ -5729,12 +5801,9 @@
 	                                                }
 	                                    };
 
-	                                    // Set the button style according the the style object for the device's screen (defned in constructor, NOT a CSS style object).
+	                                    // Set the strikethrough.
 
-	                                    button.setScreenStyle = function (styleObj) {
-
-	                                                _this2.style.position = styleObj.position, _this2.style.top = styleObj.top, _this2.style.left = styleObj.left, _this2.style.width = styleObj.width, _this2.style.height = styleObj.height, _this2.style.padding = styleObj.padding, _this2.style.zIndex = styleObj.zIndex;
-	                                    };
+	                                    button.strikethrough(this.icons.strikethrough);
 
 	                                    // Display and activate the button.
 
@@ -5753,6 +5822,8 @@
 
 	                                                if (button.strikethroughImg) button.strikethroughImg.style.display = 'inline-block';
 	                                    };
+
+	                                    // Return the completed button.
 
 	                                    return button;
 	                        }
