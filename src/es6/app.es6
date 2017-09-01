@@ -173,7 +173,7 @@ var promise = new Promise( ( resolve, reject ) => {
 
         // Initialize our Ui after other elements.
 
-        ui.init();
+        ui.init( world.getCurrentWorld() );
 
         resolve( 'Stuff worked!' );
 

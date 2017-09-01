@@ -22,7 +22,7 @@ class Util {
 
         this.NEGATIVE = -1,
 
-        // Create an Emitter object for pseudo-events, used by MANY other objects calling Util.
+        // Create an Emitter object for pseudo-events, used by MANY other objects calling Util
 
         this.emitter = new Emitter(),
 
@@ -1180,7 +1180,27 @@ class Util {
 
                 console.error( 'Util::getGeolocation():Geolocation data not available, error:' + err );
 
-            }, 
+                // Create a default geolocator, at the equator, no movement.
+
+                emitter.emit( emitter.events.WORLD_GEOLOCATION_READY, {
+
+                    latitude: 0,
+
+                    longitude: 0,
+
+                    altitude: 0,
+
+                    accuracy: 1,
+
+                    altitudeAccuracy: 1,
+
+                    heading: 0,
+
+                    speed: 0
+
+                } );
+
+            },
 
             {
 

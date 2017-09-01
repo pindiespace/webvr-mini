@@ -222,6 +222,44 @@ class World extends AssetPool {
     }
 
     /** 
+     * Get the current list of Worlds.
+     */
+    getWorlds () {
+
+        // TODO: NOT DONE
+
+        return null;
+
+    }
+
+    /** 
+     * Get a World by name.
+     */
+    getWorld () {
+
+
+        // TODO: NOT DONE
+
+        return null;
+
+    }
+
+    /** 
+     * Get the current world.
+     */
+    getCurrentWorld ( name ) {
+
+        // TODO: NOT DONE
+
+        //return null;
+
+        // TODO: DUMMY FUNCTION.
+
+        return this.DEFAULT_WORLD_PATH;
+
+    }
+
+    /** 
      * Set the POV position (simple camera).
      * @param {Number} x coordinate in World space.
      * @param {Number} y coordinate in World space.
