@@ -146,13 +146,19 @@ class PrimFactory {
 
                 let coords = this.modelPool.keyList[ key ];
 
+                // Star data, one for each vertex.
+
+                prim.objects = coords.options.objects;
+
+                // Default material.
+
                 prim.matStarts = coords.options.matStarts;
 
-                // Note: this computes the bounding box, needed for the rotation.
+                // Note: this routine computes the bounding box, needed for the rotation.
 
                 this.initPrimGeometry( prim, coords, options );
 
-                // If the World is gelocated, check if this Prim reacts. If so, fire  a position/rotation update.
+                // If the World is gelocated, check if this Prim reacts to Geolocation data. If so, fire a position/rotation update.
 
                 if ( prim.geolocate === true ) {
 

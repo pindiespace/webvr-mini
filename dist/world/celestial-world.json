@@ -1,5 +1,7 @@
 {
 
+    "active" : "true",
+
     "scene" : {
 
         "name" : "basic scene",
@@ -28,7 +30,13 @@
 
         },
 
-        "geolocate" : "true"
+        "geolocate" : "true",
+
+        "connections" : {
+
+            "default" : "USE THIS TO SPECIFY TELEPORTS TO OTHER SCENES"
+
+        }
 
     },
 
@@ -52,7 +60,7 @@
 
         "rotation" : [ "0", "0", "0", "was -59.7, 0, 90 to match LA position with no correction" ],
 
-        "angular" : [ "0.0", "-0.02", "0.0", "was -0.3 on y  spinning counter-clockwise on longitude axis" ],
+        "angular" : [ "0.0", "-0.02", "0.0", "was -0.3 on y, spinning counter-clockwise on longitude axis" ],
 
         "textures" : [  "img/uv-test.png" ],
 

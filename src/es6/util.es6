@@ -1162,9 +1162,10 @@ class Util {
 
     /** 
      * Get the geolocation of the user.
-     * @param {Prim} prim the Prim to update when geolocation data is returned.
+     * @param {Number} dLat the default latitude, if no geolocated coords are returned.
+     * @param {Number} dLong the default longitude, if no geolocated coords are returned.
      */
-    getGeolocation ( ) {
+    getGeolocation ( dLat = 0, dLong = 0 ) {
 
         let emitter = this.emitter;
 
@@ -1178,15 +1179,17 @@ class Util {
 
             ( err ) => {
 
+                // TODO: many need to remove in production.
+
                 console.error( 'Util::getGeolocation():Geolocation data not available, error:' + err );
 
                 // Create a default geolocator, at the equator, no movement.
 
                 emitter.emit( emitter.events.WORLD_GEOLOCATION_READY, {
 
-                    latitude: 0,
+                    latitude: dLat,
 
-                    longitude: 0,
+                    longitude: dLong,
 
                     altitude: 0,
 

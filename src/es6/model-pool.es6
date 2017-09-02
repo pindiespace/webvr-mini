@@ -331,7 +331,7 @@ class ModelPool extends AssetPool {
 
         matStarts = m.options.matStarts,
 
-        // temp arrays needed to flatten OBJ multi-index format to WebGL format.
+        // temp arrays needed to flatten OBJ multi-index format to WebGL format, so don't append directly to default() Model.
 
         tIndices = [],
 
@@ -391,7 +391,6 @@ class ModelPool extends AssetPool {
 
                         objects.push( [ data, faces.length ] ); // start position in final flattened array
 
-                        ///////////////////console.log('>objects[' + data + '] = ' + faces.length)
                         lastType = type; // use to catch smoothing groups
 
                         break;
@@ -400,7 +399,6 @@ class ModelPool extends AssetPool {
 
                         groups.push ( [ data, faces.length ] ); // starting position in final flattened array
 
-                        ///////////////////////console.log('>groups[' + data + '] = ' + faces.length );
                         lastType = type; // use to catch smoothing groups
 
                         break;
@@ -420,8 +418,8 @@ class ModelPool extends AssetPool {
 
                         smoothingGroups.push( [ data + 's' ] );
 
-                        //////////////////////////////console.log('>smoothingGroup:' + gKey + ' at:' + lineNum + 1 );
                         lastType = type; // use to catch smoothing groups
+
                         break;
 
                     case 'v': // vertices
@@ -510,10 +508,7 @@ class ModelPool extends AssetPool {
 
                         matName = this.util.getFileName ( data );
 
-                        matStarts.push( [ matName, faces.length * 4, 0 ] ); // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!TIMES 4/ 3
-
-                        // TODO: GREAT BINARY FORMAT MODEL
-                        // TODO: https://n-e-r-v-o-u-s.com/blog/?p=2738
+                        matStarts.push( [ matName, faces.length * 4, 0 ] ); // multiply times 4/3
 
                         lastType = type; // use to catch smoothing groups
 
@@ -572,9 +567,12 @@ class ModelPool extends AssetPool {
 
         } );
 
-        // Second phase.
-
-        // Rewrite indices to fold texCoords and normals under the same index as the vertices (needed for WebGL).
+        /* 
+         * Second phase.
+         *
+         *  Rewrite indices to fold texCoords and normals under a single index, which is 
+         * the same as the vertices (needed for WebGL).
+         */
 
         if ( faces.length ) {
 
@@ -746,15 +744,11 @@ class ModelPool extends AssetPool {
 
         for ( let i = 1; i < m.options.matStarts.length; i++ ) {
 
-            //if ( m.options.matStarts[ i - 1][ 1 ] < 0 ) m.options.matStarts[ i - 1 ][ 1 ] = 0; /////////////////////////////
-
             m.options.matStarts[ i - 1 ][ 2 ] = ( m.options.matStarts[ i ][ 1 ] - m.options.matStarts[ i - 1 ][ 1 ] ) / 4;
 
         }
 
         m.options.matStarts[ m.options.matStarts.length - 1 ][ 2 ] = ( tIndices.length - ( m.options.matStarts[ m.options.matStarts.length - 1 ][ 1 ] / 4 ) );
-
-        // TODO: do this for objects, groups, smoothinggroups.
 
         // If there was no faces in the OBJ file, use the raw data.
 
@@ -768,7 +762,7 @@ class ModelPool extends AssetPool {
 
         m.normals = tNormals;
 
-        // NOTE: Color arrays and tangents are not part of the Wavefront .obj format (in .mtl data).
+        // NOTE: Color arrays and tangents are not part of the Wavefront .obj format.
 
         return m;
 
@@ -808,12 +802,7 @@ class ModelPool extends AssetPool {
 
             }
 
-
         }
-
-        //tData = JSON.parse( new TextDecoder().decode( new Uint8Array( data ) ) );
-
-        window.m = m.data;
 
         return m;
 
@@ -873,20 +862,24 @@ class ModelPool extends AssetPool {
 
         let tVertices = [], tIndices = [], tNormals = [], tTexCoords = [], tColors = [];
 
+        let objects = m.options.objects; // data for each Star (original JSON array)
+
         let iIdx = 0;
 
         /* 
+         * ADDITIONAL PARAMETERS
          * Use the colorIndex instead of spectral type colors. Otherwise, 
          * use preceived colors accd. to spectral type.
          */
 
-        let useColorIndex = false;
+        let useColorIndex = false; /////////////////////////////////////////////////////////////////////////////
+        let properNamesOnly = true; ///////////////////////////////////////////////////////////////////////////
 
         for ( let i = 0; i < stars.length; i++ ) {
 
             let star = stars[ i ];
 
-            // NOTE: xyz doesn't plot Stars beyond webgl clipping.
+            // NOTE: xyz option (3d starfield instead of stardome) doesn't plot Stars beyond webgl clipping.
 
             if ( options.useXYZ === true ) {
 
@@ -901,6 +894,8 @@ class ModelPool extends AssetPool {
                         parseFloat( star.z )
 
                     );
+
+                    // Normals, indices, texture coordinates.
 
                     tNormals.push( 0, 0, 0 );
 
@@ -918,27 +913,30 @@ class ModelPool extends AssetPool {
 
                 let B = this.util.degToRad( parseFloat( star.dec ) );
 
-                // The map is reversed, relative to our coordinate system.
-
-                // Increase -x rotation degrees, pushes down from pole, so user initially faces polaris (latitude on earth).
-
-                // Put z at 90 degrees to put the Polaris overhead, with y rotating around pole.
+                /*
+                 * The map is reversed, relative to our coordinate system.
+                 *
+                 * 1. Rotate z to 90 degrees to put the Polaris overhead, with y axis rotating around North pole at zeinth.
+                 * 2. Rotate -x to  change latitude, i.e., push down from pole to equator. User initially faces Polaris.
+                 * 3. Rotate -y to move the skydome with respect to hours of day ( y === 0 is midnight ).
+                 *
+                 */
 
                 tVertices.push( 
 
                     Math.sin( B ), // z
 
                     Math.cos( B ) * Math.cos( A ), // x
-         
+
                     Math.cos( B ) * Math.sin( A ), // y
 
                 );
 
-                tNormals.push( 0, 0, 0 );
+                tNormals.push( 0, 0, 0 ); // no normals
 
                 tIndices.push( iIdx++ );
 
-                tTexCoords.push( 0, 1 );
+                tTexCoords.push( 0, 1 ); // no texture
 
             }
 
@@ -984,7 +982,6 @@ class ModelPool extends AssetPool {
 
                         clr = 'aabfff';
 
-
                         break;
 
                     case 'f':
@@ -1013,10 +1010,7 @@ class ModelPool extends AssetPool {
 
                     default: 
 
-                        // white
-
                         clr = '#FFFFFF';
-
 
                         break;
 
@@ -1040,10 +1034,9 @@ class ModelPool extends AssetPool {
 
             }
 
-
-
-
             // Colorize certain stars forming useful constellations
+
+//////////////////////////////////////////////
 
             if ( 
 
@@ -1066,12 +1059,32 @@ class ModelPool extends AssetPool {
                 star.proper === 'Caph' || star.proper === 'Shedir' || star.proper === 'Cih' || star.proper === 'Ruchbah' || star.id === '8867'
 
 
-                ) tColors.push(0, 1, 0, 1)
+                ) tColors.push( 0, 1, 0, 1 )
 
-            //else tColors.push( mag + color, mag, mag - color, 1 );
             else tColors.push( rgb.r, rgb.b, rgb.b, 1 );
 
-        }
+////////////////////////////////////////////////
+
+            // Save the Star data in the Objects array, conditionally only named Stars.
+
+            if ( properNamesOnly ) {
+
+                if ( star.proper.length > 0 ) {
+
+                    objects.push( [ star, tVertices.length ] );
+
+                }
+
+            } else {
+
+                objects.push( [ star, tVertices.length ] ); // start position for each Star final flattened array
+
+            }
+
+
+
+
+        } // end of loop through Stars
 
         // Set the geolocation flag so we can rotate just before the Prim is added to the Shader.
 
@@ -1089,8 +1102,7 @@ class ModelPool extends AssetPool {
 
         m.normals = tNormals,
  
-        m.colors = tColors;      // USE COLOR ARRAY
-
+        m.colors = tColors;      // use the color array
 
         return m;
 
@@ -1222,15 +1234,11 @@ class ModelPool extends AssetPool {
      */
     getModel ( prim, path, cacheBust = true, options = { pos: 0 } ) {
 
-        // Check if model is already in asset pool, use it if it is. Define by PATH.
+        // Check if model is already in asset pool, use it if it is. Define unique models by their PATH.
 
         let modelObj = this.pathInList( path );
 
         if ( modelObj !== null ) {
-
-            // Use a pool texture if available. Generally won't be ready within a Prim, but useful for Prims sharing textures.
-
-            // console.log( 'TexturePool::getTexture(): found texture ' + path + ' in pool, using it...' );
 
             this.util.emitter.emit( modelObj.emits, prim, modelObj.key, options ); 
 
@@ -1245,8 +1253,6 @@ class ModelPool extends AssetPool {
             // Get the file mimeType.
 
             let mimeType = this.modelMimeTypes[ this.util.getFileExtension( path ) ];
-
-            //console.log( '--------@@@@@@@@@@@@@doRequest model for path:' + path + ' is:' + mimeType )
 
             // check if mimeType is OK.
 

@@ -180,6 +180,9 @@ class Ui {
 
     }
 
+    /** 
+     * Initialize our Ui
+     */
     init ( uiMode ) {
 
         if ( ! uiMode ) {
@@ -217,6 +220,17 @@ class Ui {
     initBadGL () {
 
         this.modalMessage( 'WebGL is present, but failed to load' );
+
+    }
+
+    /** 
+     * Set the World object, which has a list of Worlds and other data 
+     * we can display in our Ui.
+     * @param {World} world the current World.
+     */
+    setWorld ( world ) {
+
+        this.world = world;
 
     }
 
@@ -1086,9 +1100,12 @@ class Ui {
 
                 emu.style.left = button.style.left,
 
+                emu.style.padding = button.style.padding,
+
                 emu.style.zIndex = '1',
 
                 emu.style.display = 'none',
+
 
                 emu.src = emuImg,
 
@@ -1119,6 +1136,8 @@ class Ui {
                 strike.style.height = button.style.height,
 
                 strike.style.padding = button.style.padding,
+
+                strike.style.margin = button.style.margin,
 
                 strike.style.zIndex = '1000',
 

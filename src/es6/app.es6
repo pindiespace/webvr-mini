@@ -145,7 +145,7 @@ var promise = new Promise( ( resolve, reject ) => {
 
         // Basic one-texture Shader, without lighting.
 
-        shaderPool.addAsset( new ShaderTexture( true, util, glMatrix, webgl, webvr, 'shaderTexture', lights ) );        
+        shaderPool.addAsset( new ShaderTexture( true, util, glMatrix, webgl, webvr, 'shaderTexture', lights ) );
 
         // Basic color array Shader, without lighting.
 
@@ -169,11 +169,11 @@ var promise = new Promise( ( resolve, reject ) => {
 
         // Create the world, which needs WebGL, WebVR, GamePad, the Shader list and world Lights.
 
-        world = new World( true, glMatrix, webgl, webvr, gamepad, shaderPool, lights );
+        world = new World( true, glMatrix, webgl, webvr, gamepad, shaderPool, lights, ui );
 
         // Initialize our Ui after other elements.
 
-        ui.init( world.getCurrentWorld() );
+        ui.init();
 
         resolve( 'Stuff worked!' );
 

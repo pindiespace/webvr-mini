@@ -1,7 +1,7 @@
 # Blender v2.78 (sub 0) OBJ File: 'banana upload1.blend'
 # www.blender.org
 mtllib banana.mtl
-o Cube.001
+o Banana.001
 v 0.185236 -0.239609 0.537600
 v 0.151447 -0.095013 1.497264
 v -1.054999 -0.048709 1.492495
