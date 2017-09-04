@@ -82,7 +82,11 @@ class World extends AssetPool {
 
         // Add World Lights (Prims may have their own).
 
-        this.lights = lights;
+        this.lights = lights,
+
+        // Connect to our user interface.
+
+        this.ui = ui;
 
         // File types in which a World may be described.
 
@@ -96,22 +100,12 @@ class World extends AssetPool {
 
         };
 
-        // Path to default World JSON file
-
-        //this.DEFAULT_WORLD_PATH = 'world/default-world.json';
-        //this.DEFAULT_WORLD_PATH = 'world/gltf-world.json';
-        //this.DEFAULT_WORLD_PATH = 'world/obj-world.json';
-        //this.DEFAULT_WORLD_PATH = 'world/tangled-world.json';
-        //this.DEFAULT_WORLD_PATH = 'world/celestial-world.json';
-
-
-
         ////////////////////////////////////////////////////////////////////////////////////////
         /* 
          * TODO: THE SERVERS SHOULD SET THESE. USE AJAX OR EMBED PRIOR TO DOWNLOAD.
          */
 
-        this.scenePaths = [
+        this.worldPaths = [
 
             'world/default-world.json', 
             'world/gltf-world.json', 
@@ -123,9 +117,6 @@ class World extends AssetPool {
 
         /////////////////////////////////////////////////////////////////////////////////////////
 
-        // List of scenes that may be displayed. Each is defined in a JSON file.
-
-        this.scenes = [];
 
         // Stats on World operation.
 
@@ -168,6 +159,10 @@ class World extends AssetPool {
         // Bind the render loop (best current method)
 
         this.render = this.render.bind( this );
+
+        // Create a default, empty World.
+
+        this.defaultKey = this.addAsset( this.default(), '' ).key;
 
         // Listen for the VR display being ready (initially bind to 'window').
 
@@ -238,34 +233,433 @@ class World extends AssetPool {
      * Create a default World. Units are OpenGL/WebGL units. Replaced by 
      * Scene data in the JSON world files when loaded.
      */
-    default ( position = [ 0, 0, -5 ], rotation = [ 0, 0, 0 ], dimensions = [ 100, 100, 100 ] ) {
+    default ( position = [ 0, 0, -5 ], rotation = [ 0, 0, 0 ], dimensions = [ 100, 100, 100 ], name = 'no name', 
+
+        description = 'none', geolocate = false, lights = null, connections = {} ) {
+
+        let d = {
+
+            scene: {
+
+                active: false, 
+
+                name : name,
+
+                description : description,
+
+                dimensions : dimensions[ 0 ],
+
+                position : position[ 0 ],
+
+                rotation : rotation[ 0 ],
+
+                light: lights,
+
+                connections: connections
+
+            }
+
+        };
 
         // Add a simple point of view (POV), by moving the World instead of camera.
 
-        this.position = position,
+        let scene = d.scene;
+
+        this.position = scene.position,
+
+        this.rotation = scene.rotation,
 
         // Additional World (scene) features.
 
-        this.rotation = rotation,
+        this.dimensions = scene.dimensions,
 
-        this.dimensions = dimensions;
+        this.name = scene.name,
+
+        this.description = scene.description,
+
+        this.geolocate = scene.geolocate,
+
+        this.connections = scene.connections; // teleports
+
+        // the global Lights object is in app.js. We only add individual Lights.
+
+        if ( lights ) this.setLights ( scene.lights );
+
+        /*
+         * Because the World object = the current World, and we may need to purge
+         * the Prims from a world, we only store the path and JSON data for a world, rather 
+         * than the World object itself (of which there is only one).
+         */
+
+        return d; // end of returned JSON object
 
     }
 
     /** 
-     * Store scene data for the Ui.
-     * TODO: ORGANIZE SO WE LOAD ALL THE JSON FILES, BUT NOT ALL THE OBJECTS
-     * TODO: WE'LL ALSO NEED A WAY TO STORE OR CLEAR OLD SCENES.
+     * Set the scene which should be active.
      */
-    addScene ( scene, path, active = true ) {
+    setActiveWorld ( world ) {
 
-        if ( ! this.scenes[ path ] ) {
+        // Clear existing World.
 
-            scene.active = active;
+        // Set the new World.
 
-            this.scenes[ path ] = scene;
+        this.computeWorld( world );
 
-       }
+    }
+
+    /** 
+     * Add Lights to global (app.js) Light object.
+     */
+    setLights ( lights ) {
+
+        for ( var j in lights ) {
+
+            let l = lights[ j ];
+
+            this.lights.setLight( this.lights.lightTypes[ j ],  j.ambient, j.lightingDirection , j.directionalColor, j.active );
+
+        }
+
+    }
+
+    /** 
+     * Get the POV (simple camera).
+     * @returns {Object} an object containing vec3 position and rotation arrays.
+     */
+    getPOV () {
+
+        return { 
+
+            position: this.position, 
+
+            rotation: this.rotation 
+
+        };
+
+    } 
+
+    /**
+     * Handle resize event for the World dimensions.
+     * @param {Number} width world width (x-axis) in units.
+     * @param {Number} height world height (y-axis) in units.
+     * @param {Number} depth world depth (z-axis) in units.
+     */
+    resize ( width, height, depth ) {
+
+        console.error( 'world::resize(): not implemented yet!' );
+
+    }
+
+    /** 
+     * Given a World JSON file data set, compute the World.
+     * @param {Object} world the definition of a scene and its Prims.
+     * @param {String} path the server path to the JSON file with the scene and its Prims.
+     * @param {Boolean} createPrims if true, create the scene objects, otherwise just store the JSON file.
+     */
+    computeWorld ( world, path ) {
+
+        const vec3 = this.glMatrix.vec3;
+
+        const vec4 = this.glMatrix.vec4;
+
+        const vec5 = this.primFactory.geometryPool.vec5; // special vector
+
+        const typeList = this.primFactory.geometryPool.typeList; // types of geometry
+
+        const directions = this.primFactory.geometryPool.directions; // cardinal positions
+
+        const util = this.util;
+
+        // If we're going to create the Scene, make this the active Scene.
+
+        if ( world.scene ) {
+
+            // Assign a URL style path, if defined.
+
+            if ( path ) world.scene.path = path;
+
+            // Check if the World is active.
+
+            world.scene.active = JSON.parse( world.scene.active );
+
+            if ( world.scene.active === true ) {
+
+                // Loop thrugh Scene objects.
+
+                for ( var i in world ) {
+
+                    let s = world[ i ];
+
+                    // 'scene' = parameters used to configure the World for its Prims.
+
+                    if ( i === 'scene' ) { 
+
+                        this.position = s.position; // World position
+
+                        this.rotation = s.rotation; // World rotation
+
+                        // Set lights, if present.
+
+                        this.setLights( s.lights );
+
+                        // If our scene is located in the real world, geolocate.
+
+                        if ( s.geolocate ) {
+
+                            util.getGeolocation();
+
+                        }
+
+                    } else { // its an individual Prim
+
+                        console.log( "I is:" + i + ", CHECKING SHADER for " + world.scene.name + " is:" + s.shader + " for prim: " + s.name)
+
+                        let shader = this.shaderPool.getAssetByName( s.shader );
+
+                        if ( shader.name )  console.log("GETTING SHADER:" + shader.name );
+
+                        if ( shader ) {
+
+                            // Handle cases for dimensions and divisions params are numbers (they may also be strings).
+
+                            if ( this.util.isNumber( s.dimensions[ 3 ] ) ) {
+
+                                s.dimensions[ 3 ] = parseFloat( s.dimensions[ 3 ] );
+
+                            }
+
+                            if ( this.util.isNumber( s.dimensions[ 4 ] ) ) {
+
+                                s.dimensions[ 4 ] = parseFloat( s.dimensions[ 4 ] );
+
+                            }
+
+                            if ( this.util.isNumber( s.divisions[ 3 ] ) ) {
+
+                                s.divisions[ 3 ] = parseFloat( s.divisions[ 3 ] );
+
+                            }
+
+                            if ( this.util.isNumber( s.divisions[ 4 ] ) ) {
+
+                                s.divisions[ 4 ] = parseFloat( s.divisions[ 4 ] );
+
+                            }
+
+                            if ( s.useColorArray ) s.useColorArray = JSON.parse( s.useColorArray );      // if true, use color array instead of texture array
+
+                            if ( s.useFaceTextures) s.useFaceTextures = JSON.parse( s.useFaceTextures ); // if true, apply textures to each face, not whole Prim.
+
+                            if ( s.useLighting ) s.useLighting = JSON.parse( s.useLighting );            // if true, use lighting (default)
+
+                            if ( s.useMetaData ) s.useMetaData = JSON.parse( s.useMetaData );            // if true, keep data associated with regions of prim.
+
+                            // Create the Prim.
+
+                            let p = this.primFactory.createPrim(
+
+                                this.shaderPool.getAssetByName( s.shader ), // Shader used
+
+                                typeList[ s.type ],                         // Prim type
+
+                                i,                                          // name
+
+                                vec5( 
+                                    parseFloat( s.dimensions[ 0 ] ), 
+                                    parseFloat( s.dimensions[ 1 ] ), 
+                                    parseFloat( s.dimensions[ 2 ] ), 
+                                    s.dimensions[ 3 ],  // these may be non-numeric
+                                    s.dimensions[ 4 ]
+
+                                ),      // dimensions, WebGL units
+
+                                vec5( 
+                                    parseFloat( s.divisions[ 0 ] ), 
+                                    parseFloat( s.divisions[ 1 ] ), 
+                                    parseFloat( s.divisions[ 2 ] ), 
+                                    s.divisions[ 3 ],  //these may be non-numeric
+                                    s.divisions[ 4 ]
+
+                                ),        // divisions, pass curving of edges as 4th parameter
+
+                                vec3.fromValues( 
+                                    parseFloat( s.position[ 0 ] ), 
+                                    parseFloat( s.position[ 1 ] ), 
+                                    parseFloat( s.position[ 2 ] )
+
+                                ),        // acceleration in x, y, z
+
+                                vec3.fromValues( 
+                                    parseFloat( s.acceleration[ 0 ] ), 
+                                    parseFloat( s.acceleration[ 1 ] ), 
+                                     parseFloat( s.acceleration[ 2 ] )
+
+                                ),    // position (absolute), relative to camera not World space
+
+                                vec3.fromValues(
+                                    util.degToRad( s.rotation[ 0 ] ), 
+                                    util.degToRad( s.rotation[ 1 ] ), 
+                                    util.degToRad( s.rotation[ 2 ] )
+
+                                ),    // rotation (absolute)
+
+                                vec3.fromValues(
+                                    util.degToRad( s.angular[ 0 ] ), 
+                                    util.degToRad( s.angular[ 1 ] ), 
+                                    util.degToRad( s.angular[ 2 ] )
+
+                                ),    // angular (orbital) velocity
+
+                                s.textures,                   // texture images (if not in model)
+
+                                s.models,                     // model (.OBJ, .GlTF)
+
+                                s.useColorArray,              // if true, use color array instead of texture array
+
+                                s.useFaceTextures,            // if true, apply textures to each face, not whole Prim.
+
+                                s.useLighting,                // if true, use lighting (default)
+
+                                s.useMetaData,                // if true, store meta-data in prim.materials[].objects array
+
+                                s.pSystem,                    // if this Prim should be duplicated into a particle system, data is here
+
+                                s.animSystem                  // if this Prim has animation waypoints, data is here
+
+                            ); // end createPrim
+
+                        } else {
+
+                            console.error( 'World::getWorld(): invalid Shader:' + i + ', shader:' + s.shader + ' for Prim:' + i.name );
+
+                        }
+
+                    } // scene vs. prim conditional
+
+                } // end of loop through World
+
+            } // world.scene.active
+
+            /* 
+             * WORLD_DEFINITION_READY event, indicating all descriptions of World loaded. Individual media 
+             * and model files may still need to be loaded.
+             */
+
+            this.util.emitter.emit( this.emitter.events.WORLD_DEFINITION_READY );
+
+            console.log("WORLD EMITTING:" + world.scene.name)
+
+            return true;
+
+        } else {
+
+            // inactive World.
+
+            console.log( 'World::computeWorld(): inactive World at path:' + path + ' loaded' );
+
+        }
+
+        return false;
+
+    }
+
+    /** 
+     * load a World from a JSON file description.
+     */
+    getWorld ( path ) {
+
+         if ( ! this.util.isWhitespace( path ) ) {
+
+            const mimeType = this.worldMimeTypes[ this.util.getFileExtension( path ) ];
+
+            const vec3 = this.glMatrix.vec3;
+
+            const vec4 = this.glMatrix.vec4;
+
+            const vec5 = this.primFactory.geometryPool.vec5; // special vector
+
+            const typeList = this.primFactory.geometryPool.typeList; // types of geometry
+
+            const directions = this.primFactory.geometryPool.directions; // cardinal positions
+
+            const util = this.util;
+
+            // check if mimeType is OK.
+
+            if( mimeType ) {
+
+                this.doRequest( path, 0, 
+
+                    ( updateObj ) => {
+
+                        /* 
+                         * updateObj returned from GetAssets has the following structure:
+                         * { 
+                         *   pos: pos, 
+                         *   path: requestURL, 
+                         *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
+                         *   error: false|response 
+                         * } 
+                         */
+
+                        // load a Model file.
+
+                        if ( updateObj.data ) {
+
+                            let world = this.util.parseJSON( updateObj.data );
+
+                            if ( world ) {
+
+                                if ( this.computeWorld( world, path, world.active ) ) {
+
+                                    // Store in AssetPool (superclass) using a key, with path in world.scene.path
+
+                                    this.addAsset( world, '' );
+
+                                }
+
+                            } else {
+
+                                console.error( 'World::getWorld():World file:' + path + ' could not be parsed' );
+
+                            }
+
+                        } else {
+
+                            console.error( 'World::getWorld(): World file, no data found for:' + updateObj.path );
+
+                        }
+
+                    }, true, mimeType, 0 ); // end of this.doRequest(), initial request at 0 tries
+
+            } else {
+
+                // Invalid MIMEtype.
+
+                console.error( 'World::getWorld(): file type "' + this.util.getFileExtension( path ) + '" in:' + path + ' not supported, not loading' );
+
+            }
+
+
+         } else {
+
+            // Invalid path.
+
+            console.error( 'World::getWorld(): no path supplied, not loading' );
+
+         }
+
+    }
+
+    /** 
+     * save a World to a JSON file description.
+     */
+    saveWorld ( path ) {
+
+        // TODO: output in editor interface.
+
+        console.error( 'World::saveWorld(): not implemented yet!' );
 
     }
 
@@ -330,335 +724,6 @@ class World extends AssetPool {
 
     }
 
-    /** 
-     * Get the POV (simple camera).
-     * @returns {Object} an object containing vec3 position and rotation arrays.
-     */
-    getPOV () {
-
-        return { 
-
-            position: this.position, 
-
-            rotation: this.rotation 
-
-        };
-
-    } 
-
-    /**
-     * Handle resize event for the World dimensions.
-     * @param {Number} width world width (x-axis) in units.
-     * @param {Number} height world height (y-axis) in units.
-     * @param {Number} depth world depth (z-axis) in units.
-     */
-    resize ( width, height, depth ) {
-
-        console.error( 'world::resize(): not implemented yet!' );
-
-    }
-
-    /** 
-     * Given a World JSON file data set, compute the World.
-     * @param {Object} scene the definition of a scene and its Prims.
-     * @param {String} path the server path to the JSON file with the scene and its Prims.
-     * @param {Boolean} createPrims if true, create the scene objects, otherwise just store the JSON file.
-     */
-    computeScene ( scene, path, active = false ) {
-
-        const vec3 = this.glMatrix.vec3;
-
-        const vec4 = this.glMatrix.vec4;
-
-        const vec5 = this.primFactory.geometryPool.vec5; // special vector
-
-        const typeList = this.primFactory.geometryPool.typeList; // types of geometry
-
-        const directions = this.primFactory.geometryPool.directions; // cardinal positions
-
-        const util = this.util;
-
-        // If we're going to create the Scene, make this the active Scene.
-
-        if ( active ) {
-
-            // Loop thrugh Scene objects.
-
-            for ( var i in scene ) {
-
-                let s = scene[ i ];
-
-                // 'scene' = parameters used to configure the World for its Prims.
-
-                if ( i === 'scene' ) { 
-
-                    this.position = s.position; // World position
-
-                    this.rotation = s.rotation; // World rotation
-
-                    // Set lights, if present.
-
-                    let lights = s.lights;
-
-                    for ( var j in lights ) {
-
-                        let l = lights[ j ];
-
-                        this.lights.setLight( this.lights.lightTypes[ j ],  j.ambient,  j.lightingDirection , j.directionalColor, j.active );
-
-                    }
-
-                    // If our scene is located in the real world, geolocate.
-
-                    if ( s.geolocate ) {
-
-                        util.getGeolocation();
-
-                    }
-
-                } else if ( i === 'active' ) {
-
-                    // If a world is active, we should be doing this. If not, we have an error.
-
-                } else { // its an individual Prim
-
-                    let shader = this.shaderPool.getAssetByName( s.shader );
-
-                    if ( shader ) {
-
-                        // Handle cases for dimensions and divisions params are numbers (they may also be strings).
-
-                        if ( this.util.isNumber( s.dimensions[ 3 ] ) ) {
-
-                            s.dimensions[ 3 ] = parseFloat( s.dimensions[ 3 ] );
-
-                        }
-
-                        if ( this.util.isNumber( s.dimensions[ 4 ] ) ) {
-
-                            s.dimensions[ 4 ] = parseFloat( s.dimensions[ 4 ] );
-
-                        }
-
-                        if ( this.util.isNumber( s.divisions[ 3 ] ) ) {
-
-                            s.divisions[ 3 ] = parseFloat( s.divisions[ 3 ] );
-
-                        }
-
-                        if ( this.util.isNumber( s.divisions[ 4 ] ) ) {
-
-                            s.divisions[ 4 ] = parseFloat( s.divisions[ 4 ] );
-
-                        }
-
-                        if ( s.useColorArray ) s.useColorArray = JSON.parse( s.useColorArray );      // if true, use color array instead of texture array
-
-                        if ( s.useFaceTextures) s.useFaceTextures = JSON.parse( s.useFaceTextures ); // if true, apply textures to each face, not whole Prim.
-
-                        if ( s.useLighting ) s.useLighting = JSON.parse( s.useLighting );            // if true, use lighting (default)
-
-                        if ( s.useMetaData ) s.useMetaData = JSON.parse( s.useMetaData );            // if true, keep data associated with regions of prim.
-
-                        // Create the Prim.
-
-                        let p = this.primFactory.createPrim(
-
-                            this.shaderPool.getAssetByName( s.shader ), // Shader used
-
-                            typeList[ s.type ],                         // Prim type
-
-                            i,                                          // name
-
-                            vec5( 
-                                parseFloat( s.dimensions[ 0 ] ), 
-                                parseFloat( s.dimensions[ 1 ] ), 
-                                parseFloat( s.dimensions[ 2 ] ), 
-                                s.dimensions[ 3 ],  // these may be non-numeric
-                                s.dimensions[ 4 ]
-
-                            ),      // dimensions, WebGL units
-
-                            vec5( 
-                                parseFloat( s.divisions[ 0 ] ), 
-                                parseFloat( s.divisions[ 1 ] ), 
-                                parseFloat( s.divisions[ 2 ] ), 
-                                s.divisions[ 3 ],  //these may be non-numeric
-                                s.divisions[ 4 ]
-
-                            ),        // divisions, pass curving of edges as 4th parameter
-
-                            vec3.fromValues( 
-                                parseFloat( s.position[ 0 ] ), 
-                                parseFloat( s.position[ 1 ] ), 
-                                parseFloat( s.position[ 2 ] )
-
-                            ),        // acceleration in x, y, z
-
-                            vec3.fromValues( 
-                                parseFloat( s.acceleration[ 0 ] ), 
-                                parseFloat( s.acceleration[ 1 ] ), 
-                                 parseFloat( s.acceleration[ 2 ] )
-
-                            ),    // position (absolute), relative to camera not World space
-
-                            vec3.fromValues(
-                                util.degToRad( s.rotation[ 0 ] ), 
-                                util.degToRad( s.rotation[ 1 ] ), 
-                                util.degToRad( s.rotation[ 2 ] )
-
-                            ),    // rotation (absolute)
-
-                            vec3.fromValues(
-                                util.degToRad( s.angular[ 0 ] ), 
-                                util.degToRad( s.angular[ 1 ] ), 
-                                util.degToRad( s.angular[ 2 ] )
-
-                            ),    // angular (orbital) velocity
-
-                            s.textures,                   // texture images (if not in model)
-
-                            s.models,                     // model (.OBJ, .GlTF)
-
-                            s.useColorArray,              // if true, use color array instead of texture array
-
-                            s.useFaceTextures,            // if true, apply textures to each face, not whole Prim.
-
-                            s.useLighting,                // if true, use lighting (default)
-
-                            s.useMetaData,                // if true, store meta-data in prim.materials[].objects array
-
-                            s.pSystem,                    // if this Prim should be duplicated into a particle system, data is here
-
-                            s.animSystem                  // if this Prim has animation waypoints, data is here
-
-                        ); // end createPrim
-
-                    } else {
-
-                        console.error( 'World::getWorld(): invalid Shader:' + i + ', shader:' + s.shader + ' for Prim:' + i.name );
-
-                    }
-
-                }
-
-            }
-
-            /* 
-             * WORLD_DEFINITION_READY event, indicating all descriptions of World loaded. Individual media 
-             * and model files may still need to be loaded.
-             */
-
-            this.util.emitter.emit( this.emitter.events.WORLD_DEFINITION_READY );
-
-        } else {
-
-            // inactive scene
-
-        }
-
-        /*
-         * Store the scene description in World. as scenes[ path ] = scene
-         * Use the path to download, or re-download the scene.
-         * If the scene is active, then generate Prims and Adjust world. otherwise, just store the scene.
-         */
-
-        this.addScene( scene, path, active );
-
-    }
-
-    /** 
-     * load a World from a JSON file description.
-     */
-    getWorld ( path ) {
-
-         if ( ! this.util.isWhitespace( path ) ) {
-
-            const mimeType = this.worldMimeTypes[ this.util.getFileExtension( path ) ];
-
-            const vec3 = this.glMatrix.vec3;
-
-            const vec4 = this.glMatrix.vec4;
-
-            const vec5 = this.primFactory.geometryPool.vec5; // special vector
-
-            const typeList = this.primFactory.geometryPool.typeList; // types of geometry
-
-            const directions = this.primFactory.geometryPool.directions; // cardinal positions
-
-            const util = this.util;
-
-            // check if mimeType is OK.
-
-            if( mimeType ) {
-
-                this.doRequest( path, 0, 
-
-                    ( updateObj ) => {
-
-                        /* 
-                         * updateObj returned from GetAssets has the following structure:
-                         * { 
-                         *   pos: pos, 
-                         *   path: requestURL, 
-                         *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
-                         *   error: false|response 
-                         * } 
-                         */
-
-                        // load a Model file.
-
-                        if ( updateObj.data ) {
-
-                            let scene = this.util.parseJSON( updateObj.data );
-
-                            if ( scene ) {
-
-                                this.computeScene ( scene, path, scene.active );
-
-                            } else {
-
-                                console.error( 'World::getWorld():World file:' + path + ' could not be parsed' );
-
-                            }
-
-                        } else {
-
-                            console.error( 'World::getWorld(): World file, no data found for:' + updateObj.path );
-
-                        }
-
-                    }, true, mimeType, 0 ); // end of this.doRequest(), initial request at 0 tries
-
-            } else {
-
-                // Invalid MIMEtype.
-
-                console.error( 'World::getWorld(): file type "' + this.util.getFileExtension( path ) + '" in:' + path + ' not supported, not loading' );
-
-            }
-
-
-         } else {
-
-            // Invalid path.
-
-            console.error( 'World::getWorld(): no path supplied, not loading' );
-
-         }
-
-    }
-
-    /** 
-     * save a World to a JSON file description.
-     */
-    saveWorld ( path ) {
-
-        // TODO: output in editor interface.
-
-        console.error( 'World::saveWorld(): not implemented yet!' );
-
-    }
 
     /** 
      * Create the world. Load Shader objects, and 
@@ -693,11 +758,17 @@ class World extends AssetPool {
 
         ////////////////////////////this.getWorld( this.DEFAULT_WORLD_PATH, true );
 
-        for ( let i = 0; i < this.scenePaths.length; i++ ) {
+        for ( let i = 0; i < this.worldPaths.length; i++ ) {
 
-            this.getWorld( this.scenePaths[ i ] );
+            this.getWorld( this.worldPaths[ i ] );
 
         }
+
+        // if nobody is active, or there are not worldPaths, create a default world.
+
+        // TODO: ULTRA-SIMPLE PRIM GENERATION.
+
+        // TODO: WARNING THAT NO WORLDS ARE DEFINED
 
 /*
 
@@ -770,6 +841,8 @@ class World extends AssetPool {
 
         this.gamepad.setWorld( this );
 
+        this.ui.setWorld( this );
+
         // Fire the WebVR .requestAnimationFrame (rather than window.requestAnimationFrame).
 
         return ( this.rafId = this.vr.getDisplay().requestAnimationFrame( this.render ) );
@@ -815,6 +888,8 @@ module.exports = function forceCanvasResizeSafariMobile (canvasEl) {
 };
 
 */
+
+// TODO: TEST WITHOUT A DOM (document.body)
 
 // TODO: world menu
 

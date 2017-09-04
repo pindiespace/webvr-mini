@@ -1,5 +1,42 @@
-
 {
+
+    "scene" : {
+
+        "active" : false,
+
+        "name" : "OBJ test",
+
+        "description" : "test higher-poly .obj model format objects",
+
+        "dimensions" : [ "100", "100", "100" ],
+
+        "position" : [ "0", "0", "-5" ],
+
+        "rotation" : [ "0", "0", "0" ],
+
+        "lights" : {
+
+            "LIGHT_0" : { 
+
+                "ambient" : [ "0.3", "0.3", "0.3" ], 
+
+                "lightingDirection" : [ "-1000.0", "0.0", "1000.1" ], 
+
+                "directionalColor" : [ "1", "1", "1" ],
+
+                "active" : true 
+
+                }
+
+        },
+
+        "geolocate" : false,
+
+        "connections" : {
+
+        }
+
+    },
 
      "teapot" : {
 
@@ -27,11 +64,11 @@
 
         "models" : [ "obj/teapot/teapot.obj" ],
 
-        "useColorArray" : "true",
+        "useColorArray" : true,
 
-        "useFaceTextures" : "false",
+        "useFaceTextures" : false,
 
-        "useLighting" : "true"
+        "useLighting" : true
 
     },
 
@@ -61,11 +98,11 @@
 
         "models" : [ "obj/toilet/toilet.obj" ],
 
-        "useColorArray" : "false",
+        "useColorArray" : false,
 
-        "useFaceTextures" : "false",
+        "useFaceTextures" : false,
 
-        "useLighting" : "true"
+        "useLighting" : true
 
     },
 
@@ -95,11 +132,11 @@
 
         "models" : [ "obj/banana/banana.obj" ],
 
-        "useColorArray" : "false",
+        "useColorArray" : false,
 
-        "useFaceTextures" : "false",
+        "useFaceTextures" : false,
 
-        "useLighting" : "true"
+        "useLighting" : true
 
     },
 
@@ -129,11 +166,11 @@
 
         "models" : [ "obj/cherries/cherries.obj" ],
 
-        "useColorArray" : "false",
+        "useColorArray" : false,
 
-        "useFaceTextures" : "false",
+        "useFaceTextures" : false,
 
-        "useLighting" : "true"
+        "useLighting" : true
 
     }
 

@@ -53,31 +53,11 @@ class AssetPool {
     }
 
     /** 
-     * Find an asset by its path, if the path was not used as the key.
-     * @param {String} path the URL of the texture file.
-     * @returns {Boolean} if found in current textureList, return true, else false.
+     * Get ALL the assets associated with this object. 
      */
-    pathInList ( path ) {
+    getAllAssets () {
 
-        if ( path ) {
-
-            for ( let i in this.keyList ) {
-
-                let obj = this.keyList[ i ];
-
-                //////////////////////////console.log( '^^^^obj.path:' + obj.path + ' path:' + path )
-
-                if( obj.path && obj.path === path ) {
-
-                    return obj;
-
-                }
-
-            }
-
-        }
-
-        return null;
+        return this.keyList;
 
     }
 
@@ -118,6 +98,35 @@ class AssetPool {
                 if ( o.name && o.name === name ) {
 
                     return o;
+
+                }
+
+            }
+
+        }
+
+        return null;
+
+    }
+
+    /** 
+     * Find an asset by its path, if the path was not used as the key.
+     * @param {String} path the URL of the texture file.
+     * @returns {Boolean} if found in current textureList, return true, else false.
+     */
+    pathInList ( path ) {
+
+        if ( path ) {
+
+            for ( let i in this.keyList ) {
+
+                let obj = this.keyList[ i ];
+
+                //////////////////////////console.log( '^^^^obj.path:' + obj.path + ' path:' + path )
+
+                if( obj.path && obj.path === path ) {
+
+                    return obj;
 
                 }
 

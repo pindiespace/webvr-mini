@@ -1,12 +1,12 @@
 {
 
-    "active" : "true",
-
     "scene" : {
 
-        "name" : "basic scene",
+        "active" : true,
 
-        "description" : "basic low-poly scene for testing webvr-mini on devices",
+        "name" : "celestial scene",
+
+        "description" : "low-poly scene with accurate stars, geopositioning in skydome",
 
         "dimensions" : [ "100", "100", "100" ],
 
@@ -24,13 +24,13 @@
 
                 "directionalColor" : [ "1", "1", "1" ],
 
-                "active" : "true" 
+                "active" : true 
 
                 }
 
         },
 
-        "geolocate" : "true",
+        "geolocate" : true,
 
         "connections" : {
 
@@ -66,11 +66,11 @@
 
         "models" : [ "map/starmap/hyg70.hyg" ],
 
-        "useColorArray" : "true",
+        "useColorArray" : true,
 
-        "useFaceTextures" : "false",
+        "useFaceTextures" : false,
 
-        "useLighting" : "false",
+        "useLighting" : false,
 
         "comments" : "stardome with positions from the HYG database. A few very distant stars will cause this to scale to a small pointcloud for type STAR3D."
 
@@ -102,11 +102,11 @@
 
         "models" : [],
 
-        "useColorArray" : "true",
+        "useColorArray" : true,
 
-        "useFaceTextures" : "false",
+        "useFaceTextures" : false,
 
-        "useLighting" : "false",
+        "useLighting" : false,
 
         "comments" : "pointcloud with positions from the HYG database. A few very distant stars will cause this to scale to a small 3D pointcloud for type STAR3D."
 
@@ -138,11 +138,11 @@
 
         "models" : [],
 
-        "useColorArray" : "false",
+        "useColorArray" : false,
 
-        "useFaceTextures" : "false",
+        "useFaceTextures" : false,
 
-        "useLighting" : "false",
+        "useLighting" : false,
 
         "comments" : "pointcloud with random points sampling texture to color."
 
@@ -174,11 +174,11 @@
 
         "models" : [],
 
-        "useColorArray" : "false",
+        "useColorArray" : false,
 
-        "useFaceTextures" : "false",
+        "useFaceTextures" : false,
 
-        "useLighting" : "true",
+        "useLighting" : true,
 
         "pSystem" : {
 
@@ -224,11 +224,11 @@
 
         "models" : [],
 
-        "useColorArray" : "false",
+        "useColorArray" : false,
 
-        "useFaceTextures" : "false",
+        "useFaceTextures" : false,
 
-        "useLighting" : "true",
+        "useLighting" : true,
 
         "comments" : "dimensions[ 3 ] is orientation desired, waterline = dimensions[ 4 ]. TODO: Need to add existing heightmap"
 

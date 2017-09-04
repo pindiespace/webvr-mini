@@ -1,5 +1,43 @@
 {
 
+    "scene" : {
+
+        "active" : false,
+
+        "name" : "GLTF Scene",
+
+        "description" : "test of GLTF format rendering",
+
+        "dimensions" : [ "100", "100", "100" ],
+
+        "position" : [ "0", "0", "-5" ],
+
+        "rotation" : [ "0", "0", "0" ],
+
+        "lights" : {
+
+            "LIGHT_0" : { 
+
+                "ambient" : [ "0.3", "0.3", "0.3" ], 
+
+                "lightingDirection" : [ "-1000.0", "0.0", "1000.1" ], 
+
+                "directionalColor" : [ "1", "1", "1" ],
+
+                "active" : true 
+
+                }
+
+        },
+
+        "geolocate" : false,
+
+        "connections" : {
+
+        }
+
+    },
+
      "gltfBoxTextured" : {
 
         "shader" : "shaderColor",
@@ -26,11 +64,11 @@
 
         "models" : [ "glTF/boxtextured/boxtextured.gltf" ],
 
-        "useColorArray" : "true",
+        "useColorArray" : true,
 
-        "useFaceTextures" : "false",
+        "useFaceTextures" : false,
 
-        "useLighting" : "true"
+        "useLighting" : true
 
     }
 

@@ -2,6 +2,8 @@
 
     "scene" : {
 
+        "active" : false,
+
         "name" : "basic scene",
 
         "description" : "basic low-poly scene for testing webvr-mini on devices",
@@ -22,9 +24,15 @@
 
                 "directionalColor" : [ "1", "1", "1" ],
 
-                "active" : "true" 
+                "active" : true 
 
                 }
+
+        }, 
+
+        "geolocate" : false,
+
+        "connections" : {
 
         }
 
@@ -56,11 +64,11 @@
 
         "models" : [],
 
-        "useColorArray" : "false",
+        "useColorArray" : false,
 
-        "useFaceTextures" : "false",
+        "useFaceTextures" : false,
 
-        "useLighting" : "true"
+        "useLighting" : true
 
     },
 
@@ -91,11 +99,11 @@
 
         "models" : [],
 
-        "useColorArray" : "false",
+        "useColorArray" : false,
 
-        "useFaceTextures" : "false",
+        "useFaceTextures" : false,
 
-        "useLighting" : "true",
+        "useLighting" : true,
 
         "comments" : "dimensions[ 3 ] is orientation desired, waterline = dimensions[ 4 ]. TODO: Need to add existing heightmap"
 
@@ -127,11 +135,11 @@
 
         "models" : [],
 
-        "useColorArray" : "false",
+        "useColorArray" : false,
 
-        "useFaceTextures" : "false",
+        "useFaceTextures" : false,
 
-        "useLighting" : "true"
+        "useLighting" : true
 
     },
 
@@ -161,11 +169,11 @@
 
         "models" : [],
 
-        "useColorArray" : "true",
+        "useColorArray" : true,
 
-        "useFaceTextures" : "false",
+        "useFaceTextures" : false,
 
-        "useLighting" : "true"
+        "useLighting" : true
 
     },
 
@@ -195,11 +203,11 @@
 
         "models" : [ "obj/teapot/teapot.obj" ],
 
-        "useColorArray" : "true",
+        "useColorArray" : true,
 
-        "useFaceTextures" : "false",
+        "useFaceTextures" : false,
 
-        "useLighting" : "true"
+        "useLighting" : true
 
     },
 
@@ -229,11 +237,11 @@
 
         "models" : [ "obj/toilet/toilet.obj" ],
 
-        "useColorArray" : "false",
+        "useColorArray" : false,
 
-        "useFaceTextures" : "false",
+        "useFaceTextures" : false,
 
-        "useLighting" : "true"
+        "useLighting" : true
 
     },
 
@@ -263,11 +271,11 @@
 
         "models" : [],
 
-        "useColorArray" : "false",
+        "useColorArray" : false,
 
-        "useFaceTextures" : "false",
+        "useFaceTextures" : false,
 
-        "useLighting" : "true"
+        "useLighting" : true
 
     },
 
@@ -297,11 +305,11 @@
 
         "models" : [],
 
-        "useColorArray" : "false",
+        "useColorArray" : false,
 
-        "useFaceTextures" : "false",
+        "useFaceTextures" : false,
 
-        "useLighting" : "true"
+        "useLighting" : true
 
     }
 

@@ -679,13 +679,9 @@ class PrimFactory {
          */
         prim.updateCoords = () => {
 
-            // Translate.
+            vec3.add( p.position, p.position, p.acceleration ); // translate
 
-            vec3.add( p.position, p.position, p.acceleration );
-
-            // Rotate.
-
-            vec3.add( p.rotation, p.rotation, p.angular );
+            vec3.add( p.rotation, p.rotation, p.angular ); // rotate
 
             // Scale doesn't need to be updated, just passed in the .setM and .setMV above.
 

@@ -80,9 +80,9 @@ class Ui {
 
         // Controls.
 
-        this.controls = [],
+        this.controls = null, // DOM element wrapping controls below.
 
-        // Buttons.
+        // Buttons (DOM elements).
 
         this.vrButton = null,
 
@@ -96,75 +96,122 @@ class Ui {
 
         this.exitVRButton = null;
 
-        // Current button style. This may be changed depending on size and resolution of display.
+        /* 
+         * Styles for the 2d Ui. zIndex values, added to the current zIndex of the 
+         * <nav> or other navigation element (control panel).
+         */
 
-        this.buttonStyle = {
+        this.styles = {
 
-            backgroundSize: 'cover',
+            controls: {
 
-            backgroundColor: 'transparent',
+                zIndex: 10
 
-            border: '0',
+            },
 
-            userSelect: 'none',
+            modal: {
 
-            webkitUserSelect: 'none',
+                zIndex: 50
 
-            MozUserSelect: 'none',
+            },
 
-            cursor: 'pointer',
+            button: {
 
-            position: 'absolute',
+                backgroundSize: 'cover',
 
-            top: '0px',
+                backgroundColor: 'transparent',
 
-            left: '0px',
+                border: '0',
 
-            width: '64px',
+                userSelect: 'none',
 
-            height: '50px',
+                webkitUserSelect: 'none',
 
-            padding: '12px',
+                MozUserSelect: 'none',
 
-            margin: '8px',
+                cursor: 'pointer',
 
-            zIndex: 1,
+                position: 'absolute',
 
-            boxSizing: 'content-box',
+                top: '0px',
 
-            display: 'inline-block'
+                left: '0px',
 
-        };
+                width: '64px',
 
-        // Default style for tooltip.
+                height: '50px',
 
-        this.tooltipStyle = {
+                padding: '12px',
 
-            position: 'absolute',
+                margin: '8px',
 
-            fontSize: '14px',
+                zIndex: 100,
 
-            lineHeight: '16px', // vertically center
+                boxSizing: 'content-box',
 
-            fontFamily: 'sans-serif',
+                display: 'inline-block'
 
-            padding: '4px',
+            },
 
-            padingBottom: '0px',
+            em: {
 
-            borderRadius: '9px',
+                zIndex: 101
 
-            left: '0px',
+            },
 
-            top: '0px',
+            strikethrough: {
 
-            backgroundColor: 'rgba(248,255,164,0.7)', // light yellow
+                zIndex: 102
 
-            zIndex: '10000',
+            },
 
-            display: 'none'
+            progress: {
 
-        };
+                zIndex: 7999
+
+            },
+
+            menu: {
+
+                zIndex: 8999
+
+            },
+
+            spinner: {
+
+                zIndex: 9998
+
+            },
+
+            tooltip : {
+
+                position: 'absolute',
+
+                fontSize: '14px',
+
+                lineHeight: '16px', // vertically center
+
+                fontFamily: 'sans-serif',
+
+                padding: '4px',
+
+                padingBottom: '0px',
+
+                borderRadius: '9px',
+
+                left: '0px',
+
+                top: '0px',
+
+                backgroundColor: 'rgba(248,255,164,0.7)', // light yellow
+
+                zIndex: '10000',
+
+                display: 'none'
+
+            }
+
+        }
 
         // EventHandler ES6 kludges. Rebind handlers so we can use removeEventListener.
 
@@ -241,17 +288,6 @@ class Ui {
      */
 
     /** 
-     * Create a DOM-based modal dialog
-     */
-    modalMessage( msg ) {
-
-        // TODO: create modal dialog
-
-        console.error( msg );
-
-    }
-
-    /** 
      * Set the Ui controls (visible, active, inactive) by the current mode.
      */
     setControlsByMode( mode ) {
@@ -313,7 +349,7 @@ class Ui {
 
         p = c.parentNode;
 
-        // c.parentNode should be a <div> that gets ALL the DOM styling. Don't touch <canvas>.
+        // c.parentNode should be a <div> or <nav> that gets ALL the DOM styling. Don't touch <canvas>.
 
         // TODO: set local style of <canvas> to width=100%, height = 100%
 
@@ -335,15 +371,25 @@ class Ui {
 
             this.controls = document.createElement( 'nav' );
 
-        } else {
+        } else { // create control bar, attach to <canvas> parent
 
             this.controls = controls;
 
+            if ( parseInt( controls.style.zIndex ) < this.styles.controls.zIndex ) {
+
+                controls.style.zIndex = this.styles.controls.zIndex;
+
+            }
+
+            p.appendChild( controls );
+
         }
+
+        // save the base zIndex to add to individual controls.
 
         // Create an information tooltip on mouse hover (only one).
 
-        this.controls.tooltip = this.createTooltip();
+        this.tooltip = this.createTooltip();
 
         // Ui for HTML5 canvas present.
 
@@ -355,11 +401,11 @@ class Ui {
 
             console.log( 'creating DOM Ui');
 
-            //this.controls = controls; // save a shadow reference
+             /* 
+              * ================ VR button =====================
+              */
 
-            // VR button
-
-            let vrButton = this.createButton( this.icons.vr, 0, 0, 10, true );
+            let vrButton = this.createButton( 'vrButton', this.icons.vr, 0, 0 );
 
             vrButton.tooltipActive = 'go to vr mode',
 
@@ -368,20 +414,6 @@ class Ui {
             //vrButton.inactivate();
 
             vrButton.show(); // initially .active === true
-
-            //if ( vr.hasWebVR() ) {
-
-            //    vrButton.activate();
-
-            //} else {
-
-            //    vrButton.inactivate();
-
-            //}
-
-            this.vrButton = vrButton;
-
-            this.controls.vrButton = vrButton;
 
             /* 
              * Set the emitter (pseudo-event 'vrdisplay'). If the 
@@ -415,6 +447,8 @@ class Ui {
 
                         }
 
+                        // NOTE: FF uses OpenVR HMD, which doesn't return the name of the device!
+
                     }
 
                     vrButton.activate();
@@ -429,113 +463,9 @@ class Ui {
 
                     vrButton.inactivate();
 
-                } );
+            } );
 
-            // Fullscreen
-
-            let fullscreenButton = this.createButton( this.icons.fullscreen, 0, 72, 10, true );
-
-            //fullscreenButton.style.left = '72px',
-
-            fullscreenButton.tooltipActive = 'go to fullscreen mode',
-
-            fullscreenButton.tooltipInactive = 'fullscreen mode not available';
-
-            fullscreenButton.show(); // initially .active === true
-
-            if ( this.hasFullscreen() ) { 
-
-                fullscreenButton.activate();
-
-            } else {
-
-                fullscreenButton.inactivate();
-
-            }
-
-            // Attach DOM element directly, and via controls DOM element.
-
-            this.fullscreenButton = fullscreenButton;
-
-            this.controls.fullscreenButton = fullscreenButton;
-
-            // World select button.
-
-            let worldButton = this.createButton( this.icons.world, 0, 144, 10, true );
-
-            worldButton.tooltipActive = 'Select a World',
-
-            worldButton.tooltipInactive = 'No Worlds Available',
-
-            worldButton.activate();
-
-            worldButton.show();
-
-            window.worldButton = worldButton;
-
-            // Attach DOM element directly, and via controls DOM element.
-
-            this.worldButton = worldButton;
-
-            // Fullscreen return button.
-
-            let exitFullscreenButton = this.createButton( this.icons.backArrow, 0, 0, '9999', false );
-
-            exitFullscreenButton.tooltipActive = 'exit from Fullscreen',
-
-            exitFullscreenButton.tooltipInactive = '';
-
-            if ( this.hasFullscreen() ) {
-
-                exitFullscreenButton.activate();
-
-            } else {
-
-               exitFullscreenButton.inactivate();
-
-            }
-
-            exitFullscreenButton.hide();
-
-            this.exitFullscreenButton = exitFullscreenButton;
-
-            this.controls.exitFullscreenButton = exitFullscreenButton;
-
-            // VR return button.
-
-            let exitVRButton = this.createButton( this.icons.backArrow );
-
-            exitVRButton.style.top = '0px',
-
-            exitVRButton.style.left = '0px',
-
-            exitVRButton.zIndex = '9999',
-
-            exitVRButton.tooltipActive = 'exit from VR',
-
-            exitVRButton.tooltipInactive = '';
-
-            if ( vr.hasWebVR() ) {
-
-                exitVRButton.activate();
-
-            } else {
-
-                exitVRButton.inactivate();
-
-            }
-
-            exitVRButton.hide();
-
-            this.exitVRButton = exitVRButton; // save reference
-
-            this.controls.exitVRButton = exitVRButton; // group under controls
-
-            // Bind our pseudo-event to activating the button (so it waits for the webvr display).
-
-            this.util.emitter.on( this.util.emitter.events.VR_DISPLAY_READY, exitVRButton.activate );
-
-            // Add event listeners.
+            this.vrButton = vrButton;
 
             // Go to VR mode.
 
@@ -563,13 +493,87 @@ class Ui {
 
                 addEventListener( 'keydown', this.vrHandleKeys );
 
-                // Request VR presentation.
-
-                // Note: THIS MAY TAKE A FEW SECONDS, PROVIDE A SPINNER
+                // Request VR presentation. This may take a few seconds (spinner).
 
                 vr.requestPresent();
 
             } );
+
+            /* 
+             * ================ VR exit arrow =====================
+             */
+
+            let exitVRButton = this.createButton( 'exitVR', this.icons.backArrow, 0, 0 );
+
+            exitVRButton.tooltipActive = 'exit from VR',
+
+            exitVRButton.tooltipInactive = '';
+
+            if ( vr.hasWebVR() ) {
+
+                exitVRButton.activate();
+
+            } else {
+
+                exitVRButton.inactivate();
+
+            }
+
+            exitVRButton.hide();
+
+            this.exitVRButton = exitVRButton; // save reference
+
+            // Bind our pseudo-event to activating the button (so it waits for the webvr display).
+
+            this.util.emitter.on( this.util.emitter.events.VR_DISPLAY_READY, exitVRButton.activate );
+
+            // Return from VR button listener.
+
+            exitVRButton.addEventListener( 'click', ( evt ) => {
+
+                evt.preventDefault();
+
+                console.log( 'clicked exit vr button' );
+
+                this.exitVRButton.hide();
+
+                this.vrButton.show();
+
+                this.fullscreenButton.show();
+
+                // Call webvr presentation exit (which may fail).
+
+                vr.exitPresent();
+
+                removeEventListener( 'keydown', this.vrHandleKeys );
+
+            } );
+
+            /* 
+             * ================ Fullscreen button =====================
+             */
+
+            let fullscreenButton = this.createButton( 'fullscreen', this.icons.fullscreen, 0, 72 );
+
+            fullscreenButton.tooltipActive = 'go to fullscreen mode',
+
+            fullscreenButton.tooltipInactive = 'fullscreen mode not available';
+
+            fullscreenButton.show(); // initially .active === true
+
+            if ( this.hasFullscreen() ) { 
+
+                fullscreenButton.activate();
+
+            } else {
+
+                fullscreenButton.inactivate();
+
+            }
+
+            // Attach DOM element directly, and via controls DOM element.
+
+            this.fullscreenButton = fullscreenButton;
 
             // Go to fullscreen mode.
 
@@ -605,11 +609,37 @@ class Ui {
 
             } );
 
+            /* 
+             * ================ Exit fullscreen button =====================
+             */
+
+            let exitFullscreenButton = this.createButton( 'exitFullscreen', this.icons.backArrow, 0, 0 );
+
+            exitFullscreenButton.tooltipActive = 'exit from Fullscreen',
+
+            exitFullscreenButton.tooltipInactive = '';
+
+            if ( this.hasFullscreen() ) {
+
+                exitFullscreenButton.activate();
+
+            } else {
+
+               exitFullscreenButton.inactivate();
+
+            }
+
+            exitFullscreenButton.hide();
+
+            this.exitFullscreenButton = exitFullscreenButton;
+
             // Return from fullscreen button listener.
 
             exitFullscreenButton.addEventListener( 'click' , ( evt ) => {
 
-                evt.preventDefault();                
+                evt.preventDefault();
+
+                if ( ! this.exitFullscreenButton.active ) return;
 
                 console.log( 'clicked exit fullscreen button...' );
 
@@ -619,41 +649,97 @@ class Ui {
 
             } );
 
-            // Return from VR button listener.
+            this.exitFullscreenButton = exitFullscreenButton;
 
-            exitVRButton.addEventListener( 'click', ( evt ) => {
+            /* 
+             * ================ World select button =====================
+             */
+
+            let worldButton = this.createButton( 'worlds', this.icons.world, 0, 144 );
+
+            worldButton.tooltipActive = 'Select a World',
+
+            worldButton.tooltipInactive = 'No Worlds Available';
+
+            worldButton.activate();
+
+            worldButton.show();
+
+            // Attach DOM element directly, and via controls DOM element.
+
+            this.worldButton = worldButton;
+
+            // WorldButton controls the scene menu.
+
+            worldButton.addEventListener( 'click' , ( evt ) => {
 
                 evt.preventDefault();
 
-                console.log( 'clicked exit vr button' );
+                if ( ! this.worldButton.active ) return;
 
-                this.exitVRButton.hide();
+                console.log( 'clicked world scenes...' );
 
-                this.vrButton.show();
+                // Get a list of Worlds, and display to use to select.
 
-                this.fullscreenButton.show();
+                let worlds = this.world.getAllAssets();
 
-                // Call webvr presentation exit (which may fail).
+                window.worlds = worlds;
 
-                vr.exitPresent();
+                let worldMenu = this.worldMenu;
 
-                removeEventListener( 'keydown', this.vrHandleKeys );
+                // Clear the menu.
+
+                worldMenu.innerHTML = '';
+
+                // Fill with most current World list.
+
+                for ( let i in worlds ) {
+
+                    let world = worlds[ i ];
+
+                    let worldItem = document.createElement( 'li' );
+
+                    worldItem.innerHTML = '<div id=' + i + '>' + world.scene.name + '</div>';
+
+                    worldMenu.appendChild( worldItem );
+
+                }
+
+                worldMenu.activate();
+
+                worldMenu.show();
 
             } );
 
-            // Reset pose button
+            /* 
+             * ================ Scene menu ==============================
+             */
+
+            let worldMenu = this.createMenu( 'worldMenu', worldButton.top, worldButton.left );
+
+            // Attach.
+
+            this.worldMenu = worldMenu;
 
             // Append the buttons to the DOM.
 
             controls.appendChild( vrButton );
 
+            controls.appendChild( exitVRButton );
+
             controls.appendChild( fullscreenButton );
+
+            /*
+             * TODO: FF had document.exitFullscreen, but it is ZAPPED when we try to add this button, and becomes the 
+             * exitFullscreenButton!!!!!!!!!!!!!!!!!
+             * So, in the exit, check if typeof document.exitFullscreen === 'function', and only use if it is
+             */
 
             controls.appendChild( exitFullscreenButton );
 
             controls.appendChild( worldButton );
 
-            controls.appendChild( exitVRButton );
+            controls.appendChild( worldMenu );
 
         } else {
 
@@ -662,6 +748,465 @@ class Ui {
         }
 
     }
+
+    /* 
+     * ---------------------------------------
+     * UI FACTORY FUNCTIONS
+     * ---------------------------------------
+     */
+
+    /** 
+     * Create a Ui tooltip
+     * @param {String} activeMsg the message when a control is active.
+     * @param {String} inactiveMsg the message when a control is inactive.
+     * @param {Number} baseIndex the base zIndex to add our zIndex to.
+     */
+    createTooltip ( activeMsg, inactiveMsg ) {
+
+        // Create an information tooltip on mouse hover (only one).
+
+        let tooltip = document.createElement( 'p' );
+
+        tooltip.className = 'webvr-mini-tooltip';
+
+        tooltip.setAttribute( 'status', 'invisible' );
+
+        let ts = tooltip.style;
+
+        for ( let i in this.styles.tooltip ) {
+
+            ts[ i ] = this.styles.tooltip[ i ]; // sets zIndex
+
+        }
+
+        tooltip.innerHTML = '',
+
+        this.tooltip = tooltip,
+
+        this.controls.appendChild( tooltip );
+
+        return tooltip;
+
+    }
+
+    createUiElement ( elem, name, className, top, left, zIndex, display ) {
+
+        elem.className = 'webvr-mini-' + name;
+
+        // Create button styles.
+
+        let s = elem.style;
+
+        let styleObj = this.styles[ name ];
+
+        for ( let i in styleObj ) {
+
+            s[ i ] = styleObj[ i ];
+
+        }
+
+        // Convert to CSS property value if number was supplied.
+
+        if ( this.util.isNumber( top ) ) {
+            top += 'px';
+        }
+
+        if ( this.util.isNumber( left ) ) {
+
+            left += 'px';
+
+        }
+
+        if ( top ) s.top = top;
+
+        if ( left ) s.left = left;
+
+        if( zIndex ) s.zIndex = zIndex;
+
+        if( display ) s.display = display;
+
+        // Prevent button from being selected and dragged.
+
+        elem.draggable = false;
+
+        elem.addEventListener( 'dragstart', ( evt ) => {
+
+            evt.preventDefault();
+
+        } );
+
+        // by default, button is active.
+
+        elem.active = true;
+
+        return elem;
+
+    }
+
+    /** 
+     * Create a Ui button
+     */
+    createButton ( name, buttonIcon, top, left, zIndex, display, options = {} ) {
+
+        let button = this.createUiElement (document.createElement( 'img' ), 'button', 'webvr-mini-button', top, left, zIndex, display );
+
+        button.name = name;
+
+        // Set the icon.
+
+        button.src = buttonIcon;
+
+        // Button tooltip messages
+
+        button.tooltipActive = '',
+
+        button.tooltipInactive = '',
+
+        // Style it on hover for desktops.
+
+        button.addEventListener( 'mouseenter', ( evt ) => {
+
+            let b = evt.target;
+
+            let st = b.style;
+
+            st.filter = st.webkitFilter = 'drop-shadow(0 0 6px rgba(255,255,255,1))';
+
+            let tt = b.parentNode.querySelector( '.webvr-mini-tooltip' );
+
+            let ts = tt.style;
+
+            tt.status = 'visible'; // Manage mousleave with setTimeout below
+
+            // Deactivate tooltip if necessary.
+
+            if ( ! b.active ) {
+
+                tt.innerHTML = b.tooltipInactive;
+
+            } else {
+
+                tt.innerHTML = b.tooltipActive;
+
+            }
+
+            // Delay appearance of tooltip after mouse hover starts.
+
+            tt.tid = setTimeout( () => {
+
+                if ( tt.status === 'visible' ) {
+
+                    ts.left = ( 16 + parseFloat( st.left ) + parseFloat( st.width ) ) + 'px',
+
+                    ts.top = ( 2 + parseFloat( st.top) ) + 'px';
+
+                    ts.display = 'inline-block';
+
+                    // Make the tooltip disappear after a time limit (needed for mobile).
+
+                    tt.t2id = setTimeout( () => {
+
+                        let evt = new Event( 'mouseleave' );
+
+                        button.dispatchEvent( evt );
+
+                    }, 3000 );
+
+                }
+
+             }, 900);
+
+
+        } );
+
+        button.addEventListener( 'mouseleave', ( evt ) => {
+
+            let b = evt.target;
+
+            let st = b.style;
+
+            st.filter = st.webkitFilter = '';
+
+            let tt = b.parentNode.querySelector( '.webvr-mini-tooltip' );
+
+            tt.status = 'invisible'; // flag compensating for setTimeout above
+
+            if ( tt.tid ) {
+
+                clearTimeout( tt.tid );
+
+                tt.tid = null;
+
+            }
+
+            if ( tt.t2id ) {
+
+                tt.t2id = null;
+
+            }
+
+            tt.style.display = 'none';
+
+            tt.innerHTML = '';
+
+        } );
+
+        // Show the button onscreen. Also set activation/deactivation of its strikethrough.
+
+        button.show = () => {
+
+            button.style.display = 'inline-block';
+
+            if ( button.active ) {
+
+                button.strikethroughImg.style.display = 'none';
+
+            } else {
+
+                button.strikethroughImg.style.display = 'inline-block';
+
+            }
+
+        }
+
+        // Hide the button onscreen.
+
+        button.hide = () => {
+
+            button.style.display = 'none';
+
+            button.strikethroughImg.style.display = 'none';
+
+        }
+
+        // Add the emulated symbol underneath a given button.
+
+        button.emulated = ( emuImg ) => {
+
+            if ( ! button.emulatedImg ) {
+
+                let emu = document.createElement( 'img' );
+
+                emu.style.position = 'absolute',
+
+                emu.style.top = '0',
+
+                emu.style.left = button.style.left,
+
+                emu.style.padding = button.style.padding,
+
+                emu.style.zIndex = this.styles.emu.zIndex,
+
+                emu.style.display = 'none',
+
+                emu.src = emuImg,
+
+                button.emulatedImg = emu, // save a reference to emulation in the original button.
+
+                this.controls.appendChild( emu );
+
+            }
+
+        }
+
+        // Add a strikethrough image link
+
+        button.strikethrough = ( strikeImg ) => {
+
+            if ( ! button.strikethroughImg ) {
+
+                let strike = document.createElement( 'img' );
+
+                strike.style.position = 'absolute',
+
+                strike.style.top = button.style.top,
+
+                strike.style.left = button.style.left,
+
+                strike.style.width = button.style.width,
+
+                strike.style.height = button.style.height,
+
+                strike.style.padding = button.style.padding,
+
+                strike.style.margin = button.style.margin,
+
+                strike.style.zIndex = this.styles.strikethrough.zIndex,
+
+                strike.style.display = 'none',
+
+                strike.src = strikeImg,
+
+                strike.name = 'strikethrough',
+
+                button.strikethroughImg = strike; // save a reference to strikethrough in the original button.
+
+                this.controls.appendChild( strike );
+
+            }
+
+        }
+
+        // Set the strikethrough.
+
+        button.strikethrough( this.icons.strikethrough );
+
+        // Display and activate the button.
+
+        button.activate = () => {
+
+            button.active = true;
+
+            if ( button.strikethroughImg ) button.strikethroughImg.style.display = 'none';
+
+
+        }
+
+        // Display the button, but deactivate it.
+
+        button.inactivate = () => {
+
+            button.active = false;
+
+            if ( button.strikethroughImg ) button.strikethroughImg.style.display = 'inline-block';
+
+        }
+
+        // Return the completed button.
+
+        return button;
+
+    }
+
+    /** 
+     * Create a modal dialog.
+     */
+    createModal ( name, modalIcon, top, left, zIndex, display, options = {} ) {
+
+        let modal = this.createUiElement ( document.createElement( 'div' ), 'modal', 'webvr-mini-modal', top, left, zIndex, display );
+
+        modal.name = name;
+
+        modal.show = () => {
+
+            modal.style.display = 'inline-block';
+
+        }
+
+        modal.hide = () => {
+
+            modal.style.display = 'none';
+
+        }
+
+        return modal;
+
+    }
+
+    /** 
+     * Create a DOM-based modal dialog
+     * TODO: REMOVE LATER
+     */
+    modalMessage( msg ) {
+
+        // TODO: create modal dialog
+
+        console.error( msg );
+
+    }
+
+
+    /** 
+     * Create a loading progress bar.
+     */
+    createProgress ( name, progressIcon, top, left, zIndex, display, options = {} ) {
+
+        let progress = this.createUiElement ( document.createElement( 'img' ), 'progress', 'webvr-mini-progress', top, left, zIndex, display );
+
+        progress.name = name;
+
+        progress.show = () => {
+
+            progress.style.display = 'inline-block';
+
+        }
+
+        progress.hide = () => {
+
+            progress.style.display = 'none';
+
+        }
+
+        return progress;
+
+    }
+
+    /** 
+     * Create a selectable menu.
+     */
+    createMenu ( name, menuIcon = null, top, left, zIndex, display, options = {} ) {
+
+        // TODO: WHY NOT SHIFTED OVER?????????
+
+        let menu = this.createUiElement( document.createElement( 'ul' ), 'menu', 'webvr-mini-menu', top, left, zIndex, display );
+
+        menu.name = name;
+
+        // TODO: DEBUG
+
+        // TODO: z-index set high, buttons low...but buttons are ON TOP of menU!!!!!!!
+
+        menu.style.backgroundColor = 'white'; /////////////DEBUG WHY UNDERNEATH CONTROLS???????
+
+        menu.show = () => {
+
+            menu.style.display = 'inline-block';
+
+        }
+
+        menu.hide = () => {
+
+            menu.style.display = 'none';
+
+        }
+
+        menu.activate = () => {
+
+        }
+
+        menu.deactivate = () => {
+
+        }
+
+        return menu;
+
+    }
+
+    /** 
+     * Create a loading spinner.
+     */
+    createSpinner ( name, spinnerIcon, top, left, zIndex, display, options = {} ) {
+
+        let spinner = this.createUiElement ( document.createElement( 'img' ), 'spinner', 'webvr-mini-spinner', top, left, zIndex, display );
+
+        spinner.name = name; // TODO ADD TO createUiElement
+
+        spinner.show = () => {
+
+            spinner.style.display = 'inline-block';
+
+        }
+
+        spinner.hide = () => {
+
+            spinner.style.display = 'none';
+
+        }
+
+        return spinner;
+
+    }
+
 
     /* 
      * ---------------------------------------
@@ -779,7 +1324,7 @@ class Ui {
      */
     exitFullscreen ( evt ) {
 
-        if ( document.exitFullscreen ) {
+        if ( typeof document.exitFullscreen === 'function' ) {
 
             document.exitFullscreen();
 
@@ -886,328 +1431,6 @@ class Ui {
         }
 
     }
-
-    /* 
-     * ---------------------------------------
-     * UI FACTORY FUNCTIONS
-     * ---------------------------------------
-     */
-
-    /** 
-     * Create a Ui tooltip
-     */
-    createTooltip ( activeMsg, inactiveMsg ) {
-
-        // Create an information tooltip on mouse hover (only one).
-
-        let tooltip = document.createElement( 'p' );
-
-        tooltip.className = 'webvr-mini-tooltip';
-
-        tooltip.setAttribute( 'status', 'invisible' );
-
-        let ts = tooltip.style;
-
-        for ( let i in this.tooltipStyle ) {
-
-            ts[ i ] = this.tooltipStyle[ i ];
-
-        }
-
-        tooltip.innerHTML = '',
-
-        this.controls.tooltip = tooltip,
-
-        this.controls.appendChild( tooltip );
-
-        return tooltip;
-
-    }
-
-    /** 
-     * Create a Ui button
-     */
-    createButton ( buttonIcon, top = '0', left = '0', zIndex = '10', display = 'none' ) {
-
-        let button = document.createElement( 'img' );
-
-        button.className = 'webvr-mini-button';
-
-        let s = button.style;
-
-        let styleObj = this.buttonStyle;
-
-        for ( let i in styleObj ) {
-
-            s[ i ] = styleObj[ i ];
-
-        }
-
-        // Convert to CSS property value if number was supplied.
-
-        if ( this.util.isNumber( top ) ) top += 'px';
-
-        if ( this.util.isNumber( left ) ) left += 'px';
-
-        s.top = top,
-
-        s.left = left,
-
-        s.zIndex = zIndex,
-
-        s.display = display,
-
-        // Set the icon.
-
-        button.src = buttonIcon;
-
-        // by default, button is active.
-
-        button.active = true;
-
-        // Button tooltip messages
-
-        button.tooltipActive = '',
-
-        button.tooltipInactive = '',
-
-        // Prevent button from being selected and dragged.
-
-        button.draggable = false;
-
-        button.addEventListener( 'dragstart', ( evt ) => {
-
-            evt.preventDefault();
-
-        } );
-
-        // Style it on hover for desktops.
-
-        button.addEventListener( 'mouseenter', ( evt ) => {
-
-            let b = evt.target;
-
-            let st = b.style;
-
-            st.filter = st.webkitFilter = 'drop-shadow(0 0 6px rgba(255,255,255,1))';
-
-            let tt = b.parentNode.querySelector( '.webvr-mini-tooltip' );
-
-            let ts = tt.style;
-
-            tt.status = 'visible'; // Manage mousleave with setTimeout below
-
-            // Deactivate tooltip if necessary.
-
-            if ( ! b.active ) {
-
-                tt.innerHTML = b.tooltipInactive;
-
-            } else {
-
-                tt.innerHTML = b.tooltipActive;
-
-            }
-
-            // Delay appearance of tooltip after mouse hover starts.
-
-            tt.tid = setTimeout( () => {
-
-                if ( tt.status === 'visible' ) {
-
-                    ts.left = ( 16 + parseFloat( st.left ) + parseFloat( st.width ) ) + 'px',
-
-                    ts.top = ( 2 + parseFloat( st.top) ) + 'px';
-
-                    ts.display = 'inline-block';
-
-                    // Make the tooltip disappear after a time limit (needed for mobile).
-
-                    tt.t2id = setTimeout( () => {
-
-                        let evt = new Event( 'mouseleave' );
-
-                        button.dispatchEvent( evt );
-
-                    }, 3000 );
-
-                }
-
-             }, 900);
-
-
-        } );
-
-        button.addEventListener( 'mouseleave', ( evt ) => {
-
-            let b = evt.target;
-
-            let st = b.style;
-
-            st.filter = st.webkitFilter = '';
-
-            let tt = b.parentNode.querySelector( '.webvr-mini-tooltip' );
-
-            tt.status = 'invisible'; // flag compensating for setTimeout above
-
-            if ( tt.tid ) {
-
-                clearTimeout( tt.tid );
-
-                tt.tid = null;
-
-            }
-
-            if ( tt.t2id ) {
-
-                tt.t2id = null;
-
-            }
-
-            tt.style.display = 'none';
-
-            tt.innerHTML = '';
-
-        } );
-
-        // Show the button onscreen.
-
-        button.show = () => {
-
-            button.style.display = 'inline-block';
-
-        }
-
-        // Hide the button onscreen.
-
-        button.hide = () => {
-
-            button.style.display = 'none';
-
-        }
-
-        // Add the emulated symbol underneath a given button.
-
-        button.emulated = ( emuImg ) => {
-
-            if ( ! button.emulatedImg ) {
-
-                let emu = document.createElement( 'img' );
-
-                emu.style.position = 'absolute',
-
-                emu.style.top = '0',
-
-                emu.style.left = button.style.left,
-
-                emu.style.padding = button.style.padding,
-
-                emu.style.zIndex = '1',
-
-                emu.style.display = 'none',
-
-
-                emu.src = emuImg,
-
-                button.emulatedImg = emu, // save a reference to emulation in the original button.
-
-                this.controls.appendChild( emu );
-
-            }
-
-        }
-
-        // Add a strikethrough image link
-
-        button.strikethrough = ( strikeImg ) => {
-
-            if ( ! button.strikethroughImg ) {
-
-                let strike = document.createElement( 'img' );
-
-                strike.style.position = 'absolute',
-
-                strike.style.top = button.style.top,
-
-                strike.style.left = button.style.left,
-
-                strike.style.width = button.style.width,
-
-                strike.style.height = button.style.height,
-
-                strike.style.padding = button.style.padding,
-
-                strike.style.margin = button.style.margin,
-
-                strike.style.zIndex = '1000',
-
-                strike.style.display = 'none',
-
-                strike.src = strikeImg,
-
-                button.strikethroughImg = strike; // save a reference to strikethrough in the original button.
-
-                this.controls.appendChild( strike );
-
-            }
-
-        }
-
-        // Set the strikethrough.
-
-        button.strikethrough( this.icons.strikethrough );
-
-        // Display and activate the button.
-
-        button.activate = () => {
-
-            button.active = true;
-
-            if ( button.strikethroughImg ) button.strikethroughImg.style.display = 'none';
-
-        }
-
-        // Display the button, but deactivate it.
-
-        button.inactivate = () => {
-
-            button.active = false;
-
-            if ( button.strikethroughImg ) button.strikethroughImg.style.display = 'inline-block';
-
-        }
-
-        // Return the completed button.
-
-        return button;
-
-    }
-
-    /** 
-     * Create a timeout spinner.
-     */
-    createSpinner () {
-
-        let spinner = document.createElement( 'img' );
-
-        spinner.className = 'webvr-mini-spinner';
-
-        let s = spinner.style;
-
-        spinner.show = () => {
-
-            s.display = 'inline-block';
-
-        }
-
-        spinner.hide = () => {
-
-            s.display = 'none';
-
-        }
-
-    }
-
 
 }
 

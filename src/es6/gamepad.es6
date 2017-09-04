@@ -46,7 +46,7 @@ class GamePad {
 
             // TODO: need to tedect TWO controllers here!
 
-            this.gpad = navigator.getGamepads()[ e.gamepad.index ];
+            this.gpad = navigator.getGamepads()[ evt.gamepad.index ];
 
             // TODO: activate gamepad icon
 
