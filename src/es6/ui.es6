@@ -18,10 +18,8 @@ class Ui {
 
         this.mode = this.UI_DOM; // by default
 
-        // TODO: CHECK IF WEBVR IS AVAILABLE. IF SO, ALWAYS GO INTO VR MODE INSTEAD OF FULLSCREEN.
-
         /* 
-         * icons from the noun project.
+         * some icons were modified from the noun project.
          * @link https://thenounproject.com/
          * Conversion of SVG to base64
          * @link http://b64.io/
@@ -46,17 +44,15 @@ class Ui {
 
             riftControl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAABkCAMAAAB5NchtAAAAY1BMVEUAAAAAAAD//wDAwADx8QBAQAAQEADQ0ACAgACgoABwcABgYAAgIAD//wDg4AD//wD//wAwMACQjwD//wD//wD//wD//wD//wCwsAD//wBQUAD//wD//wD//wD//wD//wD//wCz89QSAAAAIXRSTlMAq6urq6urq6urq6urC6tWoaurQIErIGurdquLlhVLNmEagNWoAAAGW0lEQVR4Ae1abZOjOA+cFRjMS3ghZAKEhPz/X/ms4mkisui5ipdh6662P9wdlRvUltot2cnHvxJ/cT2W0/VPBf+8nUd6oD3f9mZxuPUVSVTTrok/z9GDJiCH427hpxbBrfnByI0Niei8U3hX96Lh4DPqmKVw2CH+0a09Q2QgYgaXz33iJ/WPFSQsxe9mUBJRHP1YR8rkvnc/nvX4jCF8bMj2fjztHB+oQwLGvpz2jZ9nTRDTAuP9c6/4URrTKsbyukd8G5KO8/W74+du9bEdYIyZDQSlqjxss/+6Ob4xJloqL7Q5FyLggEWQ/nyo03hDCp9sP1hwU+CJEfFTw3wyseok5/8zLfB8+U0GLVGBgF9hYMYd/jsjiXBw1oBe+XsufSMiA8FxSrkh1S4fRJSCWJjmXJO0EAwNP/ymS18rogYpD4nuh8NIVET8mCI3hiichZExmxwWHToG/gNDj3e7RFcHJ4qOnxsiiw+CpSc2y23iP7IciGjAywqiElWx7nl4zcCSDzql/8gyEcXivXSYjcFwRaCOcGEUhkuz4OOfg7vIZjEv43AhCusIGnTduIBUo+SRgdwGdohmBlw9D1yQZaf5K7yhYv8hDiTyXFjzE5aln31FDa0TC6P0lED+zGS7mI5CEp9aEmCrIgZcK3ikwKMxnEQ1E7EGzIdCbXlCACu05n+5ZPCHvjoshe/GRJOcELkK8BxGPTRN8BNdWnO74MVHUfdF0bE7+dgwAkTYA8Ihko7F+JyMKTCoeOGe4y8CNTH6twmIIhuiy4fESDREIRjA9xs3n0IiBK9yI6OHBMJ58BA1RJOMmJZjwEPBY9FDx02Z+LmACGeCn+8SECILXqzk5vw4YwbZg0D68N244+mBvYDyyBhOIKwKb/Aj8Mq/5YhwmeYRMLD8z+zhCCls8qkg5NCfwLpDmJAjDvG8L+f9CHN2BYwN0bgdgSOaBBpe1xE5QWBOTWWD5EdY6SYEzq5JSBvsmqZLc36OBhtYs4xfRHCSbQhUixLnTuRxupyd5VRiHgZRbkIAG1TCOAoUpMvjM6bTzOm134rAXXg0KMziCxprHNImFmOsIWrfJhCvExjh0RK5dkgLDRp69X43XiVwlZtsyaEL6RVxJN7h2wuWRnTj2mjIB5sEDkmM+JipPt/uhuZ5CLkvbfCfEQWI7xC83ZH7Z6AMPiZtUAdaNLSKRdzeHkgs3iZqMPGgpCI3ZrC2CYIC8QH7thEcRa0T9BLY4CqigiQK6Qo+TiSWOmATwQZXEdALiqaWH07v78P570P8+eerDb4cg9q2LctyKudrXU8RYvATL+9hg916/Gw5+x6OPXzQl8AkFmvQTi9rNojR8/KSw6l9vgJz7TuoRLDYaUi3wZBoPOh26uGEy3RnToY3dIhXxOtXEf4EMPzm4obmKN1pCYMjsEagJhq9jqep2Met2BkSGNw1An7tmIGE44B8Oyo2iMF9awJXueCGqOo1G4RXqwRS7GNvK8A9nVEkUGk93cuJgaOMOBApNqisT/pm4XlP08pt1y073EqvVRtaDR/y2YmpPGMNqwRCSEBr6Q1S5GNGYSTcVrPhSr1j8KwAcKieabdEnS4BxcxrpQI+Ooy1RtRB4lor8K8AdAgrijQJnLSzhVIBHx2mWiNiZv/3nsugAv46zDnR2jyeaTZ7/toEMTqFvw756B9o02CiSWB0f2EJJfLE5L4JUQ8EhfL+1omGt8B9g6+uM9JdgJQCUOqG9cuHP3BBzSi0CvQKa5ZgIzulP4NxMWMD6JLT2hZ0m8YQFOIPfE1AjbIHxvWcFZFvATRJW2UcLX+Nf/m6Re38ruoVTQ+KBK+rP3cZXHqUQ7HXhGqUA1lfHk+HOVW3kRipi88etQ14U69KEGj7cjpd7xXNl/cp+RdA72xLpLSGJN/85y24tltxQWtSG8Q0I7QRiuP/5bU+3i2RPQem3PGIM9zRbBof490rYmVMjdyPvBD/2wiwzeVKeLTgDUsQr81i3UpdHuGrcqvQ+vVc/utJKTJZsdkPSNSjMpAQIw4SmxqT2iTg2N8UHle0igkB24fXL6ldo7nQCy7txuH1a/rENZrD6VSWfdv25e10+vhO3FEDeS23H/CjImDAtdyOuAgGA67ldgPGss7ybTih0e2MMwlIxe3PYOynjz+CW8k4Xj/+Q/iL/wEs0FUtYkz0LgAAAABJRU5ErkJggg==',
 
-            'daydreamControl': 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgMTAwIDEyNSIgc3R5bGU9ImVuYWJsZS1iYWNrZ3JvdW5kOm5ldyAwIDAgMTAwIDEyNTsiIHhtbDpzcGFjZT0icHJlc2VydmUiPjxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI+LnN0MHtmaWxsOiMyODI4Mjg7fS5zdDF7ZmlsbDojQTBBMEEwO308L3N0eWxlPjxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik01MC42LDExOWgtMC4yYy0xMC4xLDAtMTguNC04LjMtMTguNC0xOC40VjI2LjRDMzIsMTYuMyw0MC4zLDgsNTAuNCw4aDBDNjAuNiw4LDY5LDE2LjQsNjksMjYuNnY3NEM2OSwxMTAuNyw2MC43LDExOSw1MC42LDExOXoiLz48ZWxsaXBzZSBjbGFzcz0ic3QxIiBjeD0iNTAuNyIgY3k9Ijc5LjkiIHJ4PSI4LjQiIHJ5PSI4LjUiLz48ZWxsaXBzZSBjbGFzcz0ic3QxIiBjeD0iNTAuOCIgY3k9IjU4IiByeD0iOC40IiByeT0iOC41Ii8+PGVsbGlwc2UgY2xhc3M9InN0MSIgY3g9IjUwLjQiIGN5PSIyNy41IiByeD0iMTYuMSIgcnk9IjE2Ii8+PC9zdmc+',
+            daydreamControl: 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgMTAwIDEyNSIgc3R5bGU9ImVuYWJsZS1iYWNrZ3JvdW5kOm5ldyAwIDAgMTAwIDEyNTsiIHhtbDpzcGFjZT0icHJlc2VydmUiPjxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI+LnN0MHtmaWxsOiMyODI4Mjg7fS5zdDF7ZmlsbDojQTBBMEEwO308L3N0eWxlPjxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik01MC42LDExOWgtMC4yYy0xMC4xLDAtMTguNC04LjMtMTguNC0xOC40VjI2LjRDMzIsMTYuMyw0MC4zLDgsNTAuNCw4aDBDNjAuNiw4LDY5LDE2LjQsNjksMjYuNnY3NEM2OSwxMTAuNyw2MC43LDExOSw1MC42LDExOXoiLz48ZWxsaXBzZSBjbGFzcz0ic3QxIiBjeD0iNTAuNyIgY3k9Ijc5LjkiIHJ4PSI4LjQiIHJ5PSI4LjUiLz48ZWxsaXBzZSBjbGFzcz0ic3QxIiBjeD0iNTAuOCIgY3k9IjU4IiByeD0iOC40IiByeT0iOC41Ii8+PGVsbGlwc2UgY2xhc3M9InN0MSIgY3g9IjUwLjQiIGN5PSIyNy41IiByeD0iMTYuMSIgcnk9IjE2Ii8+PC9zdmc+',
 
             // Created by Arthur Shlain of the Noun Project.
 
-            'gamepadControl': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAABkCAMAAAB5NchtAAAAYFBMVEUAAAAAAAD//wDAwAD//wBAQACAgAD//wDw8AD//wD//wCgoAAwMADQ0AAgIAD//wCQkADg4AD//wBwcAD//wD//wD//wD//wBQUAD//wD//wD//wBgYACwsAD//wD//wCi9gSrAAAAIHRSTlMAq6urK6urVquBoaurq6sLq6uLq0AgFZarazZLq6t2YfI1sDIAAAUFSURBVHgB7ZnJdrM6EIRDScwDiBkP9vu/5ZUs+lpxbEmELP4F3y7nGLro6kGQrwMHBwcHBwcHB7yPJSe++cKRn+WFZz7uCD6eUxBIz7X/ladlAjEtp1+GX/DC4vk0PUUnpn57+PqOB4JFEpZAkcU+prV4wHJ5Yc5WCVs9HCZIyq4KVqpOQNI6kxBDkc8BMedQ3DfF7zMVPgy+cREAshO3skDSBN9pILnVG+JDEgU/aOBDWQSvFCWA1lvBACApgjdcEjjJybRcQOTkYQ5g8a2/7Gd8omAuGrJea01CQ0HsJyCl+HuoKFeJmYPBa4gAuAR7yVW9ymI2KlIAqY+ACbgGRIiVYCMl0OtyZua9uF8Cqv0CAIxrPQdE7pWCG9XxPgEMOMu7nSkDigrA2dkCAApTgBL9CwERgJjHAKJvqlIPB0SwS0CVJ0BJEwPJfAUSPQ86YHKPcirbC5OUJIApfJqzWCOX6xxoQPNAe+AxBC6URAUJeBAGbgRWLp2U3M1YSQKJRx9kQLFHwOVRaGMLlIHiCrT8i2e6Fhhwctfgs4wWLpHTiytaLwFXvXhHuk8C8Oc8aJzjmAMlCXj5ceolgJ6RBKyucy2gA252AWfg+hSQxpJeVqZi8hLQ6BCcBAjd+nd93xBonU0QBXtqIARw43H2CFisS5AvtF8AeDXBji5gVPUdA8DmBJrSmNAWjDyHkSQnAZGiCrwVUP+jERRfwVx9SNbtGcVzzlgXQpJBUnRXdqW05o424IB4FdByvk0ARZqGx+E6f1kRd8cmYAGxaxsK3Y4nSv7KDKR+m+CPzgPjOoOJAsgch4Hu/SE02AjTZsdmSj36kKbdfjoAS7/g9YmEvQ0AOFottAssQrq+NPqfcK6j0WF2yCBhHzXkCQARkYIf8Z3riAPMOudXGutRhILODWvmN9bc7KvIbivaFpLo06tIlpKCD4TWPrzTrd9RrW/nY/u+UnJ95q1juO5ibYLZloCp/pLUE9C97fyehomwDojavYosJ/3/D/vMpAhC0Im3tvZSaetDaxPQIqNahUlomps6nqO3fBdIAteVdMCrYBLRYYcOtrY3lti6iixXUoQUaPSe1CxA8xDESV9i7aWb3yp6pVq/89TLw+MGWL69TTEg4+qvDMh/14cLEDnmUJammZ5EydPLGsr0ApI2bUEJ2NqH9uKZI9XpK/nDkMxUXhofkJIimK/b+9BePAku0j8BiehUIs1aGrSogml5lZrKoU8f+nfhdd2rRRgW69ey9tsI1b5XYRiuW0Fs70P++aoZClbQCziAbDCvbc0PmxEUjX8furuQ3C2jrosYnvGJuoVENNElutKPQ/8+dHXhVQW8wSAdfy4yg2logdK/Dx1dOOs9x1OstO9MHBZQ+Lh+1GXk34f2LkxI89jHyxL3n16u6lN8v8XxQPn80FMA/LuQDKCYG5iAclsfArAYsBlumOB1Lh0AYTFgO3cywfNcSifS3QYQNZngOQgGINlvgMMEyoD/WwkZsN8EdxG2QOdrgL8J4t0cqD+9FYg/M8Bck4Trm3mdvVpW7TKAxtH8OonRW359eXErq/2j+fz/p6BF/pYWZg5CATUy9jFmQNI9PU1okX40AeJC//CkZO1iyACw9Z7Mfk9a6xCMAbvjmwqAkpVQZI6cxhlApJSrfdQLntxG58/PrVa68K+/YrxPUEzL4Jk1zuuvP4bTPf81Dg4ODg4ODg7+AwlERtddq/a6AAAAAElFTkSuQmCC',
+            gamepadControl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAABkCAMAAAB5NchtAAAAYFBMVEUAAAAAAAD//wDAwAD//wBAQACAgAD//wDw8AD//wD//wCgoAAwMADQ0AAgIAD//wCQkADg4AD//wBwcAD//wD//wD//wD//wBQUAD//wD//wD//wBgYACwsAD//wD//wCi9gSrAAAAIHRSTlMAq6urK6urVquBoaurq6sLq6uLq0AgFZarazZLq6t2YfI1sDIAAAUFSURBVHgB7ZnJdrM6EIRDScwDiBkP9vu/5ZUs+lpxbEmELP4F3y7nGLro6kGQrwMHBwcHBwcHB7yPJSe++cKRn+WFZz7uCD6eUxBIz7X/ladlAjEtp1+GX/DC4vk0PUUnpn57+PqOB4JFEpZAkcU+prV4wHJ5Yc5WCVs9HCZIyq4KVqpOQNI6kxBDkc8BMedQ3DfF7zMVPgy+cREAshO3skDSBN9pILnVG+JDEgU/aOBDWQSvFCWA1lvBACApgjdcEjjJybRcQOTkYQ5g8a2/7Gd8omAuGrJea01CQ0HsJyCl+HuoKFeJmYPBa4gAuAR7yVW9ymI2KlIAqY+ACbgGRIiVYCMl0OtyZua9uF8Cqv0CAIxrPQdE7pWCG9XxPgEMOMu7nSkDigrA2dkCAApTgBL9CwERgJjHAKJvqlIPB0SwS0CVJ0BJEwPJfAUSPQ86YHKPcirbC5OUJIApfJqzWCOX6xxoQPNAe+AxBC6URAUJeBAGbgRWLp2U3M1YSQKJRx9kQLFHwOVRaGMLlIHiCrT8i2e6Fhhwctfgs4wWLpHTiytaLwFXvXhHuk8C8Oc8aJzjmAMlCXj5ceolgJ6RBKyucy2gA252AWfg+hSQxpJeVqZi8hLQ6BCcBAjd+nd93xBonU0QBXtqIARw43H2CFisS5AvtF8AeDXBji5gVPUdA8DmBJrSmNAWjDyHkSQnAZGiCrwVUP+jERRfwVx9SNbtGcVzzlgXQpJBUnRXdqW05o424IB4FdByvk0ARZqGx+E6f1kRd8cmYAGxaxsK3Y4nSv7KDKR+m+CPzgPjOoOJAsgch4Hu/SE02AjTZsdmSj36kKbdfjoAS7/g9YmEvQ0AOFottAssQrq+NPqfcK6j0WF2yCBhHzXkCQARkYIf8Z3riAPMOudXGutRhILODWvmN9bc7KvIbivaFpLo06tIlpKCD4TWPrzTrd9RrW/nY/u+UnJ95q1juO5ibYLZloCp/pLUE9C97fyehomwDojavYosJ/3/D/vMpAhC0Im3tvZSaetDaxPQIqNahUlomps6nqO3fBdIAteVdMCrYBLRYYcOtrY3lti6iixXUoQUaPSe1CxA8xDESV9i7aWb3yp6pVq/89TLw+MGWL69TTEg4+qvDMh/14cLEDnmUJammZ5EydPLGsr0ApI2bUEJ2NqH9uKZI9XpK/nDkMxUXhofkJIimK/b+9BePAku0j8BiehUIs1aGrSogml5lZrKoU8f+nfhdd2rRRgW69ey9tsI1b5XYRiuW0Fs70P++aoZClbQCziAbDCvbc0PmxEUjX8furuQ3C2jrosYnvGJuoVENNElutKPQ/8+dHXhVQW8wSAdfy4yg2logdK/Dx1dOOs9x1OstO9MHBZQ+Lh+1GXk34f2LkxI89jHyxL3n16u6lN8v8XxQPn80FMA/LuQDKCYG5iAclsfArAYsBlumOB1Lh0AYTFgO3cywfNcSifS3QYQNZngOQgGINlvgMMEyoD/WwkZsN8EdxG2QOdrgL8J4t0cqD+9FYg/M8Bck4Trm3mdvVpW7TKAxtH8OonRW359eXErq/2j+fz/p6BF/pYWZg5CATUy9jFmQNI9PU1okX40AeJC//CkZO1iyACw9Z7Mfk9a6xCMAbvjmwqAkpVQZI6cxhlApJSrfdQLntxG58/PrVa68K+/YrxPUEzL4Jk1zuuvP4bTPf81Dg4ODg4ODg7+AwlERtddq/a6AAAAAElFTkSuQmCC',
 
             // Created by Garrett Knoll of the Noun Project.
 
             fullscreen: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAABkCAMAAAB5NchtAAAAUVBMVEUAAAAAAAD//wCAgADAwABAQAD//wD//wD//wDx8QAQEADQ0AAwMACgoADh4QCwsABwcABgYABQUACQkAAgIAD//wD//wD//wD//wD//wD//wCYxtj5AAAAG3RSTlMAq6urq6tWK4Grq6urq6urq6urq6tAFZZmiyDXexdmAAACxklEQVR4Ae2a3W6cMBCF6wMkMeYf2qR9/wetdiPnDJtEYs6ialX5u9obW9/i8Qwe82NPofDz6Vt+/ZN5XvAtzx4BYZ7HEeirLxgcAto8HNiEL6h9Avo8RaAIPJRAY0h+gakhmyTQn5aIYqctQcJJLGIMbBGnsMpBuOAMkhKEU7hSAZiDTpuA2L7/nF0C6LIxI0igx8cTHSufQPaOQGqDyAygys/SKYA6XGkAjEGjg53GJ0D1CcCkBcAADHyQXgEuHgAlDOzAGopA3D7+SBTCoOKjWyEJINml9GKCZ4EogNUGsw+zfbaoCawAFrudXZgEkoCYBIHrwI4JbQsOLvYz7ZdaEdj4FLvLz3AErnrP9VuDJBAaTrMwIg6w0feiXgdRwNYiRsQB8oqxGikCOYGYUKqOMVJ2vIavLtBGYOBmcr+DTNx+mkDomE4aHKcOZrRXIPOpFi3VYdrbalQj4xLgKiowgnQBxrEX7iGHAHnOy8idLFWj3sg8cXqPAGuRXI10gUyvvJKMrEaygH23aoQInMJJAqHWBJoiUASKQBEoAkXg/xFImsBylsAETWBozxHopD6VHaULmNORB56K3AJvL1d+A3HXapC7lHxDfH1554/vXKB3a+2JQj+Y2Lf7rjkM2xq1S4A3HVmg3XVJjmK7I1UW6Hnz4jgd7/pEDmx/SD6ef+411ccYbrpbusCi9QpveoRJFOBodku1LumqCiS5X3zTJ14kAUaQs2POAYxjRWDe95om4a6AYZAEAWYRoRrddreiIJBXndVIrUWV2q5vbK/JzWhmkASs/3znnWFUBGpbjQRsLWoEgeH+i0OTPSe/gN3FQcRmEq/AZG8+VFqbS30Co7350OlMNfEJMIkN1T30TKetQyCTzv6AwinQ4xxipwnM2PH25OAVltRKAtN5X9N1FChfUhWBIvAAH7WW74of7NPuQuEvZ9lH5JznAfgAAAAASUVORK5CYII=',
-
-            // Globe, for selecting world files.
 
             world: 'data:image/png;base64,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',
 
@@ -171,9 +167,43 @@ class Ui {
 
             },
 
-            menu: {
+            menuContainer: {
+
+                cursor: 'pointer',
+
+                fontSize: '16px',
+
+                position: 'relative',
+
+                height: '50px',
+
+                overflow: 'hidden',
+
+                padding: '0',
+
+                borderRadius: '8px',
 
                 zIndex: 8999
+
+            },
+
+            menu: {
+
+                width: '100%',
+
+                height: '100%',
+
+                margin: '0',
+
+                padding: '0',
+
+                overflowY: 'auto',
+
+                fontSize: '16px',
+
+                lineHeight: '18px',
+
+                paddingRight: '17px' // hides the scrollbar
 
             },
 
@@ -248,6 +278,16 @@ class Ui {
 
         document.addEventListener( 'msfullscreenchange', this.fullscreenChange.bind( this ), false );
 
+        // Click event for closing open menus and ui elements, if the user clicks outside of them.
+
+        document.addEventListener( 'click', this.clickChange.bind( this ), false );
+
+        // Keep track of whether mouse is down (for dragging).
+
+        /////////document.addEventListener( 'mousedown', ( evt ) => { this.mouseIsDown = true; }, false );
+
+        /////////document.addEventListener( 'mouseup', ( evt ) => { this.mouseIsDown = false }, false );
+
         this.createUi(); // starting configuration
 
     }
@@ -286,6 +326,31 @@ class Ui {
      * Ui SETUP AND CONFIGURATION
      * ---------------------------------------
      */
+
+
+     /** 
+      * Add a CSS rule to the first stylesheet of the browser. use for properties (e.g. :before, :after) that
+      * can't be easily set up via element.styles.xxx methods.
+      * @link http://fiddle.jshell.net/MDyxg/1/
+      * Example: addCSSRule("body:after", "content: 'foo'");
+      * @param {String} selector the CSS selector.
+      * @param {String} styles the associated CSS styles.
+      */
+    addCSSRule ( selector, styles ) {
+
+    let sheet = document.styleSheets[ 0 ];
+
+        if ( sheet.insertRule ) {
+
+            return sheet.insertRule( selector + " {" + styles + "}", sheet.cssRules.length );
+
+        } else if ( sheet.addRule ) {
+
+            return sheet.addRule( selector, styles );
+
+        }
+
+    }
 
     /** 
      * Set the Ui controls (visible, active, inactive) by the current mode.
@@ -339,6 +404,25 @@ class Ui {
     }
 
     /** 
+     * Global test for click. If something is open, and the user clicked outside it, close.
+     */
+    clickChange ( evt ) {
+
+        evt.preventDefault();
+
+        evt.stopPropagation();
+
+        // If the World menu is open, close it.
+
+       if( ! this.worldMenu.contains( evt.target ) ) {
+
+            this.worldMenu.hide();
+
+       }
+
+    }
+
+    /** 
      * Create the default DOM ui.
      */
     createUi () {
@@ -371,6 +455,12 @@ class Ui {
 
             this.controls = document.createElement( 'nav' );
 
+            controls.style.zIndex = this.styles.controls.zIndex;
+
+            controls.style.position = 'relative';
+
+            p.appendChild( controls );            
+
         } else { // create control bar, attach to <canvas> parent
 
             this.controls = controls;
@@ -379,11 +469,14 @@ class Ui {
 
                 controls.style.zIndex = this.styles.controls.zIndex;
 
+                controls.style.position = 'relative';
+
             }
 
-            p.appendChild( controls );
 
         }
+
+        // document.styleSheets[0].addRule('p.special:before', 'content: "' + str + '";');
 
         // save the base zIndex to add to individual controls.
 
@@ -411,7 +504,7 @@ class Ui {
 
             vrButton.tooltipInactive = 'vr mode not available';
 
-            //vrButton.inactivate();
+            vrButton.inactivate();
 
             vrButton.show(); // initially .active === true
 
@@ -473,6 +566,8 @@ class Ui {
 
                 evt.preventDefault();
 
+                evt.stopPropagation();
+
                 if ( ! this.vrButton.active ) return; // don't process click if inactive
 
                 console.log( 'clicked vr button...' );
@@ -533,6 +628,8 @@ class Ui {
 
                 evt.preventDefault();
 
+                evt.stopPropagation();
+
                 console.log( 'clicked exit vr button' );
 
                 this.exitVRButton.hide();
@@ -580,6 +677,8 @@ class Ui {
             fullscreenButton.addEventListener( 'click', ( evt ) => {
 
                 evt.preventDefault();
+
+                evt.stopPropagation();
 
                 if ( ! this.fullscreenButton.active ) return; // don't process click if inactive
 
@@ -639,6 +738,8 @@ class Ui {
 
                 evt.preventDefault();
 
+                evt.stopPropagation();
+
                 if ( ! this.exitFullscreenButton.active ) return;
 
                 console.log( 'clicked exit fullscreen button...' );
@@ -675,6 +776,8 @@ class Ui {
 
                 evt.preventDefault();
 
+                evt.stopPropagation();
+
                 if ( ! this.worldButton.active ) return;
 
                 console.log( 'clicked world scenes...' );
@@ -683,13 +786,15 @@ class Ui {
 
                 let worlds = this.world.getAllAssets();
 
-                window.worlds = worlds;
-
                 let worldMenu = this.worldMenu;
+
+                let worldMenuList = this.worldMenu.getElementsByTagName( 'ul' )[ 0 ];
 
                 // Clear the menu.
 
-                worldMenu.innerHTML = '';
+                worldMenuList.innerHTML = '';
+
+                let itemCount = 0;
 
                 // Fill with most current World list.
 
@@ -699,11 +804,52 @@ class Ui {
 
                     let worldItem = document.createElement( 'li' );
 
+                    worldItem.style.padding = '0';
+
+                    worldItem.style.margin = '0';
+
+                    worldItem.style.listStyle = 'none';
+
+                    worldItem.style.textAlign = 'center';
+
                     worldItem.innerHTML = '<div id=' + i + '>' + world.scene.name + '</div>';
 
-                    worldMenu.appendChild( worldItem );
+                    worldMenuList.appendChild( worldItem );
+
+                    itemCount++;
 
                 }
+
+                // get the current width, and position.
+
+                console.log("itemCount:" + itemCount + " lineHeight:" + this.styles.menu.lineHeight)
+
+               let h = itemCount * parseFloat( this.styles.menu.lineHeight );
+
+                console.log("SCROLLING TO h:" + h)
+
+                // scroll halfway
+
+                // NOTE: THIS DOESN'T WORK IMMEDIATELY, only later - FIND ANOTHER WAY TO SET?
+
+                // Temp set overflow to hidden
+                // https://stackoverflow.com/questions/12225456/jquery-scrolltop-does-not-work-in-scrolling-div-on-mobile-browsers-alternativ
+
+                worldMenuList.scrollTop = 50;
+
+                window.worldMenuList = worldMenuList;
+
+                // Compute styles (e.g. highlight and opacity).
+
+                // Find the next smallest odd number.
+
+                // Scroll so the center list element is centered.
+
+                // Highlight.
+
+                // Apply increasinging opacity as we move away from the center.
+
+
 
                 worldMenu.activate();
 
@@ -712,10 +858,26 @@ class Ui {
             } );
 
             /* 
-             * ================ Scene menu ==============================
+             * ================ World Scene menu =======================
              */
 
             let worldMenu = this.createMenu( 'worldMenu', worldButton.top, worldButton.left );
+
+            // Allow World selection.
+
+            worldMenu.addEventListener( 'click', ( evt ) => {
+
+                console.log( 'World name:' + evt.target.innerHTML )
+
+                // If in center, select. Otherwise, scroll to center.
+
+            } );
+
+            worldMenu.hide();
+
+            /*
+             * =============== End of Menus =============================
+             */
 
             // Attach.
 
@@ -755,39 +917,6 @@ class Ui {
      * ---------------------------------------
      */
 
-    /** 
-     * Create a Ui tooltip
-     * @param {String} activeMsg the message when a control is active.
-     * @param {String} inactiveMsg the message when a control is inactive.
-     * @param {Number} baseIndex the base zIndex to add our zIndex to.
-     */
-    createTooltip ( activeMsg, inactiveMsg ) {
-
-        // Create an information tooltip on mouse hover (only one).
-
-        let tooltip = document.createElement( 'p' );
-
-        tooltip.className = 'webvr-mini-tooltip';
-
-        tooltip.setAttribute( 'status', 'invisible' );
-
-        let ts = tooltip.style;
-
-        for ( let i in this.styles.tooltip ) {
-
-            ts[ i ] = this.styles.tooltip[ i ]; // sets zIndex
-
-        }
-
-        tooltip.innerHTML = '',
-
-        this.tooltip = tooltip,
-
-        this.controls.appendChild( tooltip );
-
-        return tooltip;
-
-    }
 
     createUiElement ( elem, name, className, top, left, zIndex, display ) {
 
@@ -832,6 +961,8 @@ class Ui {
         elem.addEventListener( 'dragstart', ( evt ) => {
 
             evt.preventDefault();
+
+            evt.stopPropagation();
 
         } );
 
@@ -918,6 +1049,8 @@ class Ui {
 
 
         } );
+
+        // Set tooltip to invisible after mouse leaves.
 
         button.addEventListener( 'mouseleave', ( evt ) => {
 
@@ -1115,7 +1248,6 @@ class Ui {
 
     }
 
-
     /** 
      * Create a loading progress bar.
      */
@@ -1146,9 +1278,23 @@ class Ui {
      */
     createMenu ( name, menuIcon = null, top, left, zIndex, display, options = {} ) {
 
-        // TODO: WHY NOT SHIFTED OVER?????????
+        let menuContainer = document.createElement( 'div' );
 
-        let menu = this.createUiElement( document.createElement( 'ul' ), 'menu', 'webvr-mini-menu', top, left, zIndex, display );
+        menuContainer.className = 'webvr-mini-menu-container';
+
+        let menu = this.createUiElement( document.createElement( 'div' ), 'menuContainer', 'webvr-mini-menu', top, left, zIndex, display );
+
+        let menuList = document.createElement( 'ul' );
+
+        for ( let i in this.styles.menu ) {
+
+            menuList.style[ i ] = this.styles.menu[ i ];
+
+        }
+
+        menuList.style.border = '1px solid black';
+
+        menu.appendChild( menuList );
 
         menu.name = name;
 
@@ -1156,7 +1302,25 @@ class Ui {
 
         // TODO: z-index set high, buttons low...but buttons are ON TOP of menU!!!!!!!
 
-        menu.style.backgroundColor = 'white'; /////////////DEBUG WHY UNDERNEATH CONTROLS???????
+        menu.style.backgroundColor = 'white';
+
+        document.addEventListener( 'click', () => {
+
+            // check if click inside or outside control
+
+            // check if click on center selection, or outer ones
+
+        }, false );
+
+        // Enable dragging in menu, iOS style.
+
+        menu.addEventListener( 'click', ( evt ) => {
+
+            // Click on center selects, otherwise start of drag (vertical scroll)
+
+        } );
+
+
 
         menu.show = () => {
 
@@ -1207,6 +1371,39 @@ class Ui {
 
     }
 
+    /** 
+     * Create a Ui tooltip
+     * @param {String} activeMsg the message when a control is active.
+     * @param {String} inactiveMsg the message when a control is inactive.
+     * @param {Number} baseIndex the base zIndex to add our zIndex to.
+     */
+    createTooltip ( activeMsg, inactiveMsg ) {
+
+        // Create an information tooltip on mouse hover (only one).
+
+        let tooltip = document.createElement( 'p' );
+
+        tooltip.className = 'webvr-mini-tooltip';
+
+        tooltip.setAttribute( 'status', 'invisible' );
+
+        let ts = tooltip.style;
+
+        for ( let i in this.styles.tooltip ) {
+
+            ts[ i ] = this.styles.tooltip[ i ]; // sets zIndex
+
+        }
+
+        tooltip.innerHTML = '',
+
+        this.tooltip = tooltip,
+
+        this.controls.appendChild( tooltip );
+
+        return tooltip;
+
+    }
 
     /* 
      * ---------------------------------------
