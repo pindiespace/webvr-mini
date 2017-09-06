@@ -296,6 +296,42 @@ class World extends AssetPool {
     }
 
     /** 
+     * Get all worlds by their key.
+     */
+    getWorlds () {
+
+        return this.getAllAssets();
+
+    }
+
+    /** 
+     * Get all worlds by their name. Used by the Ui class.
+     */
+    getWorldScenes () {
+
+        let w = {},
+
+        dName = 'unnamed world ',
+
+        ct = 0;
+
+        let worlds = this.getAllAssets();
+
+        for ( let i in worlds ) { // i is the key in AssetPool
+
+            let wd = worlds[ i ];
+
+            w[ i ] = wd.scene;
+
+        }
+
+        window.w = w;
+
+        return w;
+
+    }
+
+    /** 
      * Set the scene which should be active.
      */
     setActiveWorld ( world ) {

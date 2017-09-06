@@ -101,6 +101,8 @@ class Ui {
 
             controls: {
 
+               boxSizing: 'border-box',
+
                 zIndex: 10
 
             },
@@ -175,7 +177,7 @@ class Ui {
 
                 position: 'relative',
 
-                height: '50px',
+                height: '58px',
 
                 overflow: 'hidden',
 
@@ -203,7 +205,21 @@ class Ui {
 
                 lineHeight: '18px',
 
-                paddingRight: '17px' // hides the scrollbar
+                paddingLeft: '7px',
+
+                paddingRight: '18px' // hides the scrollbar
+
+            },
+
+            menuItem: {
+
+                margin: '0',
+
+                padding: '0',
+
+                listStyle: 'none',
+
+                textAlign: 'center'
 
             },
 
@@ -282,11 +298,11 @@ class Ui {
 
         document.addEventListener( 'click', this.clickChange.bind( this ), false );
 
-        // Keep track of whether mouse is down (for dragging).
+        // Keep track of whether mouse is down (for desktop dragging).
 
-        /////////document.addEventListener( 'mousedown', ( evt ) => { this.mouseIsDown = true; }, false );
+        //document.addEventListener( 'mousedown', ( evt ) => { this.mouseIsDown = true; }, false );
 
-        /////////document.addEventListener( 'mouseup', ( evt ) => { this.mouseIsDown = false }, false );
+        //document.addEventListener( 'mouseup', ( evt ) => { this.mouseIsDown = false }, false );
 
         this.createUi(); // starting configuration
 
@@ -782,78 +798,17 @@ class Ui {
 
                 console.log( 'clicked world scenes...' );
 
-                // Get a list of Worlds, and display to use to select.
-
-                let worlds = this.world.getAllAssets();
+                // Get a list of Worlds, and display to use in popup select menu.
 
                 let worldMenu = this.worldMenu;
 
-                let worldMenuList = this.worldMenu.getElementsByTagName( 'ul' )[ 0 ];
-
-                // Clear the menu.
-
-                worldMenuList.innerHTML = '';
-
-                let itemCount = 0;
-
-                // Fill with most current World list.
-
-                for ( let i in worlds ) {
-
-                    let world = worlds[ i ];
-
-                    let worldItem = document.createElement( 'li' );
-
-                    worldItem.style.padding = '0';
-
-                    worldItem.style.margin = '0';
-
-                    worldItem.style.listStyle = 'none';
-
-                    worldItem.style.textAlign = 'center';
-
-                    worldItem.innerHTML = '<div id=' + i + '>' + world.scene.name + '</div>';
-
-                    worldMenuList.appendChild( worldItem );
-
-                    itemCount++;
-
-                }
-
-                // get the current width, and position.
-
-                console.log("itemCount:" + itemCount + " lineHeight:" + this.styles.menu.lineHeight)
-
-               let h = itemCount * parseFloat( this.styles.menu.lineHeight );
-
-                console.log("SCROLLING TO h:" + h)
-
-                // scroll halfway
-
-                // NOTE: THIS DOESN'T WORK IMMEDIATELY, only later - FIND ANOTHER WAY TO SET?
-
-                // Temp set overflow to hidden
-                // https://stackoverflow.com/questions/12225456/jquery-scrolltop-does-not-work-in-scrolling-div-on-mobile-browsers-alternativ
-
-                worldMenuList.scrollTop = 50;
-
-                window.worldMenuList = worldMenuList;
-
-                // Compute styles (e.g. highlight and opacity).
-
-                // Find the next smallest odd number.
-
-                // Scroll so the center list element is centered.
-
-                // Highlight.
-
-                // Apply increasinging opacity as we move away from the center.
-
-
+                let scrollTo = worldMenu.buildList( this.world.getWorldScenes() );
 
                 worldMenu.activate();
 
-                worldMenu.show();
+                // Define a scroll to center.
+
+                worldMenu.show( scrollTo );
 
             } );
 
@@ -861,7 +816,13 @@ class Ui {
              * ================ World Scene menu =======================
              */
 
-            let worldMenu = this.createMenu( 'worldMenu', worldButton.top, worldButton.left );
+            // Note: controls is always box-sizing = 'border-box';
+
+            let menuTop = parseFloat( worldButton.style.top ) + parseFloat( worldButton.style.height ) + 10;
+
+            let menuLeft = parseFloat( worldButton.style.left ) + parseFloat( worldButton.style.width ) / 2;
+
+            let worldMenu = this.createMenu( 'worldMenu', null, menuTop, menuLeft );
 
             // Allow World selection.
 
@@ -871,7 +832,71 @@ class Ui {
 
                 // If in center, select. Otherwise, scroll to center.
 
+                // scroll up if we are up, scroll down if we are beneath. Hover for a bit when 
+                // we reach a selected element.
+
+                let domList = worldMenu.getList();
+
+                let domItem = evt.target;
+
+                // Get index selected, and active.
+
+                let index = domItem.index;
+
+                let activeIndex = worldMenu.getActive();
+
+                let dist = index - activeIndex;
+
+                console.log("INDEX:" + index + " ActiveIndex:" + activeIndex + " DIST:" + dist )
+
+                if ( index < activeIndex ) {
+
+                    //clicked above active.
+
+                    domList.scrollTop -= dist * this.styles.button.lineHeight;
+
+                } else if ( index > activeIndex ) {
+
+                    //clicked below active.
+
+                    domList.scrollTop += dist * style.styles.button.lineHeight;
+
+                } else {
+
+                    // Commit.
+
+                    console.log("CHANGING WORLD TO:" + evt.target.innerHTML );
+
+                }
+
             } );
+
+            // Detect element moving on mobile.
+
+            worldMenu.addEventListener ( 'touchstart', ( evt ) => {
+
+                console.log('start touch')
+
+            } );
+
+            /** 
+             * Move event on mobile
+             */
+            worldMenu.addEventListener( 'touchmove', ( evt ) => {
+
+                console.log('touch in menu')
+
+                // TODO:
+
+            } );
+
+            worldMenu.addEventListener( 'touchend', ( evt ) => {
+
+                console.log('end touch')
+
+            } );
+
+            // Hide for now.
 
             worldMenu.hide();
 
@@ -917,7 +942,6 @@ class Ui {
      * ---------------------------------------
      */
 
-
     createUiElement ( elem, name, className, top, left, zIndex, display ) {
 
         elem.className = 'webvr-mini-' + name;
@@ -934,23 +958,25 @@ class Ui {
 
         }
 
-        // Convert to CSS property value if number was supplied.
+        // Convert to CSS property value if a number was supplied.
 
         if ( this.util.isNumber( top ) ) {
-            top += 'px';
+
+            s.top = parseFloat( top ) + 'px';
+
         }
 
         if ( this.util.isNumber( left ) ) {
 
-            left += 'px';
+            s.left = parseFloat( left ) + 'px';
 
         }
 
-        if ( top ) s.top = top;
+        if ( this.util.isNumber( zIndex ) ) {
 
-        if ( left ) s.left = left;
+            s.zIndex = parseInt( zIndex );
 
-        if( zIndex ) s.zIndex = zIndex;
+        }
 
         if( display ) s.display = display;
 
@@ -1278,13 +1304,11 @@ class Ui {
      */
     createMenu ( name, menuIcon = null, top, left, zIndex, display, options = {} ) {
 
-        let menuContainer = document.createElement( 'div' );
-
-        menuContainer.className = 'webvr-mini-menu-container';
-
         let menu = this.createUiElement( document.createElement( 'div' ), 'menuContainer', 'webvr-mini-menu', top, left, zIndex, display );
 
         let menuList = document.createElement( 'ul' );
+
+        // Assign default style.
 
         for ( let i in this.styles.menu ) {
 
@@ -1292,39 +1316,152 @@ class Ui {
 
         }
 
-        menuList.style.border = '1px solid black';
+        menuList.style.border = '1px solid black'; //////////////////////////TEMPORARY
 
         menu.appendChild( menuList );
 
         menu.name = name;
 
-        // TODO: DEBUG
-
-        // TODO: z-index set high, buttons low...but buttons are ON TOP of menU!!!!!!!
-
         menu.style.backgroundColor = 'white';
 
-        document.addEventListener( 'click', () => {
+        // Build an empty menu item.
 
-            // check if click inside or outside control
+        menu.buildItem = ( key, value ) => {
 
-            // check if click on center selection, or outer ones
+            let domItem = document.createElement( 'li' );
 
-        }, false );
+                let s = domItem.style;
 
-        // Enable dragging in menu, iOS style.
+                for ( let j in this.styles.menuItem ) {
 
-        menu.addEventListener( 'click', ( evt ) => {
+                    s[ j ] = this.styles.menuItem[ j ]
 
-            // Click on center selects, otherwise start of drag (vertical scroll)
+                }
 
-        } );
+            domItem.innerHTML = '<div id=' + key + '>' + value + '</div>';
 
+            return domItem;
 
+        }
 
-        menu.show = () => {
+        // Get a blank padding menu element.
+
+        menu.blankItem = () => {
+
+            let domItem = menu.buildItem( '-1', '-' );
+
+            return domItem;
+
+        }
+
+        // Get the menu list.
+
+        menu.getList = () => {
+
+            return this.worldMenu.getElementsByTagName( 'ul' )[ 0 ];
+
+        }
+
+        // Get the active element in the list.
+
+        menu.getActive = () => {
+
+            let domList = menu.getList();
+
+            let cn = domList.childNodes;
+
+            // find the active one, and return its position in the list.
+
+            for ( let i = 0; i < domList.childNodes.length; i++ ) {
+
+                if( cn[ i ].active === true) return cn[ i ].index;
+
+            }
+
+            return -1;
+
+        }
+
+        // Create function for building the menu list.
+
+        menu.buildList = ( listObj ) => {
+
+            let domList = menu.getList();
+
+            // Clear the menu.
+
+            domList.innerHTML = '';
+
+            let h = 0, itemCount = 0, scrollToChild = 0;
+
+            /* 
+             * Read the object and build the list. Recurse to find the topmost name 
+             * of the supplied object.
+             */
+
+            // put a blank domlist at the start.
+
+            domList.appendChild( menu.blankItem() );
+
+            // Add the list elements.
+
+            for ( var i in listObj ) {
+
+                let item = listObj[ i ];
+
+                let domItem = menu.buildItem( i, item.name );
+
+                // Select if active.
+
+                if ( item.active ) {
+
+                    domItem.style.backgroundColor = 'red';
+
+                    domItem.active = 'true';
+
+                    // Set scroll to active item.
+
+                    scrollToChild = itemCount * parseFloat( this.styles.menu.lineHeight );
+
+                }
+
+                // TODO: when change active element, need to change domItem.active!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+                domList.appendChild( domItem );
+
+                itemCount++;
+
+            }
+
+            let cn = domList.childNodes;
+
+            // Assign an index by using .childNodes ordering.
+
+            for ( let i = 0; i < domList.childNodes.length; i++ ) {
+
+                cn.index = i;
+
+            }
+
+            // Add padding.
+
+            domList.appendChild( menu.blankItem() );
+
+            return scrollToChild;
+
+        }
+
+        // Show the menu.
+
+        menu.show = ( scroll ) => {
+
+            console.log("MENU SCROLLTOP:" + scroll)
 
             menu.style.display = 'inline-block';
+
+            let domList = menu.getList();
+
+            domList.scrollTop = scroll || 0;
 
         }
 
@@ -1339,6 +1476,12 @@ class Ui {
         }
 
         menu.deactivate = () => {
+
+        }
+
+        menu.timeout = () => {
+
+            // TODO: TIMEOUT FOR MENU IF NOT SELECTED.
 
         }
 

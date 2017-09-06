@@ -53,15 +53,6 @@ class AssetPool {
     }
 
     /** 
-     * Get ALL the assets associated with this object. 
-     */
-    getAllAssets () {
-
-        return this.keyList;
-
-    }
-
-    /** 
      * Find a texture by its key (numeric or string)
      */
     getAssetByKey ( key ) {
@@ -106,6 +97,17 @@ class AssetPool {
         }
 
         return null;
+
+    }
+
+    /** 
+     * Get ALL the assets associated with this object, returned as 
+     * key => value array.
+     * @return {Array} the array of assets in the pool.
+     */
+    getAllAssets () {
+
+        return this.keyList;
 
     }
 
