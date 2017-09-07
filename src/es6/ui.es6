@@ -177,7 +177,7 @@ class Ui {
 
                 position: 'relative',
 
-                height: '58px',
+                maxHeight: '180px',
 
                 overflow: 'hidden',
 
@@ -205,7 +205,7 @@ class Ui {
 
                 lineHeight: '18px',
 
-                paddingLeft: '7px',
+                paddingLeft: '0px',
 
                 paddingRight: '18px' // hides the scrollbar
 
@@ -830,44 +830,11 @@ class Ui {
 
                 console.log( 'World name:' + evt.target.innerHTML )
 
-                // If in center, select. Otherwise, scroll to center.
+                // Commit.
 
-                // scroll up if we are up, scroll down if we are beneath. Hover for a bit when 
-                // we reach a selected element.
+                console.log("CHANGING WORLD TO:" + evt.target.innerHTML );
 
-                let domList = worldMenu.getList();
-
-                let domItem = evt.target;
-
-                // Get index selected, and active.
-
-                let index = domItem.index;
-
-                let activeIndex = worldMenu.getActive();
-
-                let dist = index - activeIndex;
-
-                console.log("INDEX:" + index + " ActiveIndex:" + activeIndex + " DIST:" + dist )
-
-                if ( index < activeIndex ) {
-
-                    //clicked above active.
-
-                    domList.scrollTop -= dist * this.styles.button.lineHeight;
-
-                } else if ( index > activeIndex ) {
-
-                    //clicked below active.
-
-                    domList.scrollTop += dist * style.styles.button.lineHeight;
-
-                } else {
-
-                    // Commit.
-
-                    console.log("CHANGING WORLD TO:" + evt.target.innerHTML );
-
-                }
+                worldMenu.hide();
 
             } );
 
@@ -1344,6 +1311,35 @@ class Ui {
 
         }
 
+        // Timeout ID for setTimeout.
+
+        menu.mid = null;
+
+        // End timeout.
+
+        menu.addEventListener( 'mouseenter', ( evt ) => {
+
+            if ( menu.mid ) {
+
+                clearTimeout( menu.mid );
+
+                menu.mid = null;
+            }
+
+        } );
+
+        // Set timeout.
+
+        menu.addEventListener( 'mouseleave', ( evt ) => {
+
+            menu.mid = setTimeout( () => {
+
+                menu.hide();
+
+            }, 900 );
+
+        } );
+
         // Get a blank padding menu element.
 
         menu.blankItem = () => {
@@ -1359,26 +1355,6 @@ class Ui {
         menu.getList = () => {
 
             return this.worldMenu.getElementsByTagName( 'ul' )[ 0 ];
-
-        }
-
-        // Get the active element in the list.
-
-        menu.getActive = () => {
-
-            let domList = menu.getList();
-
-            let cn = domList.childNodes;
-
-            // find the active one, and return its position in the list.
-
-            for ( let i = 0; i < domList.childNodes.length; i++ ) {
-
-                if( cn[ i ].active === true) return cn[ i ].index;
-
-            }
-
-            return -1;
 
         }
 
@@ -1399,10 +1375,6 @@ class Ui {
              * of the supplied object.
              */
 
-            // put a blank domlist at the start.
-
-            domList.appendChild( menu.blankItem() );
-
             // Add the list elements.
 
             for ( var i in listObj ) {
@@ -1417,7 +1389,7 @@ class Ui {
 
                     domItem.style.backgroundColor = 'red';
 
-                    domItem.active = 'true';
+                    domItem.active = true;
 
                     // Set scroll to active item.
 
@@ -1439,13 +1411,9 @@ class Ui {
 
             for ( let i = 0; i < domList.childNodes.length; i++ ) {
 
-                cn.index = i;
+                cn[ i ].index = i;
 
             }
-
-            // Add padding.
-
-            domList.appendChild( menu.blankItem() );
 
             return scrollToChild;
 
