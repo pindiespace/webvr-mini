@@ -92,6 +92,12 @@ class Ui {
 
         this.exitVRButton = null;
 
+        // Transition speeds.
+
+        this.fin = 'all 0.75s ease';
+
+        this.fout = 'all 0.25s ease';
+
         /* 
          * Styles for the 2d Ui. zIndex values, added to the current zIndex of the 
          * <nav> or other navigation element (control panel).
@@ -183,9 +189,9 @@ class Ui {
 
                 padding: '0',
 
-                borderRadius: '8px',
+                zIndex: 8999,
 
-                zIndex: 8999
+                transition: this.fin
 
             },
 
@@ -198,6 +204,10 @@ class Ui {
                 margin: '0',
 
                 padding: '0',
+
+                ///////////////////////borderRadius: '2px',
+
+                //////////////////////borderColor: '#abab00', // 171, 171, 0
 
                 overflowY: 'auto',
 
@@ -363,6 +373,34 @@ class Ui {
         } else if ( sheet.addRule ) {
 
             return sheet.addRule( selector, styles );
+
+        }
+
+    }
+
+    /** 
+     * Regularize detecting the end of a CSS transition. Return the 
+     * first transition event the browser supports.
+     * @return {String} the transition event name.
+     */
+    transitionEndEvent () {
+
+        var t, elem = document.createElement( 'fake' );
+
+        var transitions = {
+            'transition'      : 'transitionend',
+            'OTransition'     : 'oTransitionEnd',
+            'MozTransition'   : 'transitionend',
+            'WebkitTransition': 'webkitTransitionEnd'
+        };
+
+        for ( t in transitions ) {
+
+            if ( elem.style[ t ] !== undefined ) {
+
+                return transitions[ t ];
+
+            }
 
         }
 
@@ -718,9 +756,19 @@ class Ui {
 
                 this.mode = this.UI_DOM;
 
+                // If the World menu is visible, hide it.
+
+                this.worldMenu.hide();
+
                 // Fire the request fullscreen command.
 
                 this.requestFullscreen();
+
+                // If the tooltip is visible, hide it.
+
+                let e = new Event( 'mouseleave' );
+
+                fullscreenButton.dispatchEvent( e );
 
             } );
 
@@ -786,8 +834,6 @@ class Ui {
 
             this.worldButton = worldButton;
 
-            // WorldButton controls the scene menu.
-
             worldButton.addEventListener( 'click' , ( evt ) => {
 
                 evt.preventDefault();
@@ -805,8 +851,6 @@ class Ui {
                 let scrollTo = worldMenu.buildList( this.world.getWorldScenes() );
 
                 worldMenu.activate();
-
-                // Define a scroll to center.
 
                 worldMenu.show( scrollTo );
 
@@ -947,6 +991,8 @@ class Ui {
 
         if( display ) s.display = display;
 
+        // fadein
+
         // Prevent button from being selected and dragged.
 
         elem.draggable = false;
@@ -970,7 +1016,7 @@ class Ui {
     /** 
      * Create a Ui button
      */
-    createButton ( name, buttonIcon, top, left, zIndex, display, options = {} ) {
+    createButton ( name, buttonIcon, top, left, zIndex, display) {
 
         let button = this.createUiElement (document.createElement( 'img' ), 'button', 'webvr-mini-button', top, left, zIndex, display );
 
@@ -986,11 +1032,17 @@ class Ui {
 
         button.tooltipInactive = '',
 
+        button.hover = false,
+
         // Style it on hover for desktops.
 
         button.addEventListener( 'mouseenter', ( evt ) => {
 
             let b = evt.target;
+
+            button.hover = true;
+
+            // Tooltip stuff.
 
             let st = b.style;
 
@@ -1048,6 +1100,10 @@ class Ui {
         button.addEventListener( 'mouseleave', ( evt ) => {
 
             let b = evt.target;
+
+            button.hover = false;
+
+            // target style.
 
             let st = b.style;
 
@@ -1207,7 +1263,7 @@ class Ui {
     /** 
      * Create a modal dialog.
      */
-    createModal ( name, modalIcon, top, left, zIndex, display, options = {} ) {
+    createModal ( name, modalIcon, top, left, zIndex, display ) {
 
         let modal = this.createUiElement ( document.createElement( 'div' ), 'modal', 'webvr-mini-modal', top, left, zIndex, display );
 
@@ -1244,7 +1300,7 @@ class Ui {
     /** 
      * Create a loading progress bar.
      */
-    createProgress ( name, progressIcon, top, left, zIndex, display, options = {} ) {
+    createProgress ( name, progressIcon, top, left, zIndex, display ) {
 
         let progress = this.createUiElement ( document.createElement( 'img' ), 'progress', 'webvr-mini-progress', top, left, zIndex, display );
 
@@ -1269,7 +1325,7 @@ class Ui {
     /** 
      * Create a selectable menu.
      */
-    createMenu ( name, menuIcon = null, top, left, zIndex, display, options = {} ) {
+    createMenu ( name, menuIcon = null, top, left, zIndex, display, caller ) {
 
         let menu = this.createUiElement( document.createElement( 'div' ), 'menuContainer', 'webvr-mini-menu', top, left, zIndex, display );
 
@@ -1283,13 +1339,17 @@ class Ui {
 
         }
 
-        menuList.style.border = '1px solid black'; //////////////////////////TEMPORARY
+        // Add the list to the menu.
 
         menu.appendChild( menuList );
 
         menu.name = name;
 
-        menu.style.backgroundColor = 'white';
+        //menu.style.backgroundColor = 'white';
+
+        // Calling control for menu. If mouse hovers over caller, don't hide.
+
+        menu.caller = caller;
 
         // Build an empty menu item.
 
@@ -1307,38 +1367,38 @@ class Ui {
 
             domItem.innerHTML = '<div id=' + key + '>' + value + '</div>';
 
+            domItem.style.backgroundColor = 'white';
+
+            domItem.style.opacity = 0.5;
+
+            // Enter the menu
+
+            domItem.addEventListener( 'mouseenter', ( evt ) => {
+
+                console.log("ENTERED MENU")
+
+                console.log("EVT.target:" + evt.target )
+
+                evt.target.style.opacity = 1.0;
+
+            } );
+
+            // Exit the menu
+
+            domItem.addEventListener( 'mouseleave', ( evt ) => {
+
+                console.log("EXITED MENU")
+
+                //if ( ! evt.target.active )
+
+                evt.target.style.opacity = 0.5;            
+
+            } );
+
             return domItem;
 
         }
 
-        // Timeout ID for setTimeout.
-
-        menu.mid = null;
-
-        // End timeout.
-
-        menu.addEventListener( 'mouseenter', ( evt ) => {
-
-            if ( menu.mid ) {
-
-                clearTimeout( menu.mid );
-
-                menu.mid = null;
-            }
-
-        } );
-
-        // Set timeout.
-
-        menu.addEventListener( 'mouseleave', ( evt ) => {
-
-            menu.mid = setTimeout( () => {
-
-                menu.hide();
-
-            }, 900 );
-
-        } );
 
         // Get a blank padding menu element.
 
@@ -1354,7 +1414,7 @@ class Ui {
 
         menu.getList = () => {
 
-            return this.worldMenu.getElementsByTagName( 'ul' )[ 0 ];
+            return menu.getElementsByTagName( 'ul' )[ 0 ];
 
         }
 
@@ -1389,6 +1449,8 @@ class Ui {
 
                     domItem.style.backgroundColor = 'red';
 
+                    domItem.style.opacity = 1.0;
+
                     domItem.active = true;
 
                     // Set scroll to active item.
@@ -1419,11 +1481,18 @@ class Ui {
 
         }
 
+        // use the transition event end to set to inline-block.
+        // @link https://jonsuh.com/blog/detect-the-end-of-css-animations-and-transitions-with-javascript/
+
+        menu.addEventListener( this.transitionEndEvent(), ( evt ) => {
+
+            console.log("ENTERING TRANSITION END EVENT")
+
+        } );
+
         // Show the menu.
 
         menu.show = ( scroll ) => {
-
-            console.log("MENU SCROLLTOP:" + scroll)
 
             menu.style.display = 'inline-block';
 
@@ -1436,6 +1505,12 @@ class Ui {
         menu.hide = () => {
 
             menu.style.display = 'none';
+
+        }
+
+        menu.visible = () => {
+
+            return !! ( menu.style.display === 'inline-block' );
 
         }
 
@@ -1460,7 +1535,7 @@ class Ui {
     /** 
      * Create a loading spinner.
      */
-    createSpinner ( name, spinnerIcon, top, left, zIndex, display, options = {} ) {
+    createSpinner ( name, spinnerIcon, top, left, zIndex, display ) {
 
         let spinner = this.createUiElement ( document.createElement( 'img' ), 'spinner', 'webvr-mini-spinner', top, left, zIndex, display );
 

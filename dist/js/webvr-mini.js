@@ -4863,6 +4863,12 @@
 
 	        this.vrButton = null, this.fullscreenButton = null, this.worldButton = null, this.poseButton = null, this.exitFullscreenButton = null, this.exitVRButton = null;
 
+	        // Transition speeds.
+
+	        this.fin = 'all 0.75s ease';
+
+	        this.fout = 'all 0.25s ease';
+
 	        /* 
 	         * Styles for the 2d Ui. zIndex values, added to the current zIndex of the 
 	         * <nav> or other navigation element (control panel).
@@ -4954,9 +4960,9 @@
 
 	                padding: '0',
 
-	                borderRadius: '8px',
+	                zIndex: 8999,
 
-	                zIndex: 8999
+	                transition: this.fin
 
 	            },
 
@@ -4969,6 +4975,10 @@
 	                margin: '0',
 
 	                padding: '0',
+
+	                ///////////////////////borderRadius: '2px',
+
+	                //////////////////////borderColor: '#abab00', // 171, 171, 0
 
 	                overflowY: 'auto',
 
@@ -5139,6 +5149,35 @@
 	            } else if (sheet.addRule) {
 
 	                return sheet.addRule(selector, styles);
+	            }
+	        }
+
+	        /** 
+	         * Regularize detecting the end of a CSS transition. Return the 
+	         * first transition event the browser supports.
+	         * @return {String} the transition event name.
+	         */
+
+	    }, {
+	        key: 'transitionEndEvent',
+	        value: function transitionEndEvent() {
+
+	            var t,
+	                elem = document.createElement('fake');
+
+	            var transitions = {
+	                'transition': 'transitionend',
+	                'OTransition': 'oTransitionEnd',
+	                'MozTransition': 'transitionend',
+	                'WebkitTransition': 'webkitTransitionEnd'
+	            };
+
+	            for (t in transitions) {
+
+	                if (elem.style[t] !== undefined) {
+
+	                    return transitions[t];
+	                }
 	            }
 	        }
 
@@ -5473,9 +5512,19 @@
 
 	                    _this.mode = _this.UI_DOM;
 
+	                    // If the World menu is visible, hide it.
+
+	                    _this.worldMenu.hide();
+
 	                    // Fire the request fullscreen command.
 
 	                    _this.requestFullscreen();
+
+	                    // If the tooltip is visible, hide it.
+
+	                    var e = new Event('mouseleave');
+
+	                    fullscreenButton.dispatchEvent(e);
 	                });
 
 	                /* 
@@ -5533,8 +5582,6 @@
 
 	                this.worldButton = worldButton;
 
-	                // WorldButton controls the scene menu.
-
 	                worldButton.addEventListener('click', function (evt) {
 
 	                    evt.preventDefault();
@@ -5552,8 +5599,6 @@
 	                    var scrollTo = worldMenu.buildList(_this.world.getWorldScenes());
 
 	                    worldMenu.activate();
-
-	                    // Define a scroll to center.
 
 	                    worldMenu.show(scrollTo);
 	                });
@@ -5684,6 +5729,8 @@
 
 	            if (display) s.display = display;
 
+	            // fadein
+
 	            // Prevent button from being selected and dragged.
 
 	            elem.draggable = false;
@@ -5711,9 +5758,6 @@
 	        value: function createButton(name, buttonIcon, top, left, zIndex, display) {
 	            var _this2 = this;
 
-	            var options = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : {};
-
-
 	            var button = this.createUiElement(document.createElement('img'), 'button', 'webvr-mini-button', top, left, zIndex, display);
 
 	            button.name = name;
@@ -5724,13 +5768,17 @@
 
 	            // Button tooltip messages
 
-	            button.tooltipActive = '', button.tooltipInactive = '',
+	            button.tooltipActive = '', button.tooltipInactive = '', button.hover = false,
 
 	            // Style it on hover for desktops.
 
 	            button.addEventListener('mouseenter', function (evt) {
 
 	                var b = evt.target;
+
+	                button.hover = true;
+
+	                // Tooltip stuff.
 
 	                var st = b.style;
 
@@ -5779,6 +5827,10 @@
 	            button.addEventListener('mouseleave', function (evt) {
 
 	                var b = evt.target;
+
+	                button.hover = false;
+
+	                // target style.
 
 	                var st = b.style;
 
@@ -5891,8 +5943,6 @@
 	    }, {
 	        key: 'createModal',
 	        value: function createModal(name, modalIcon, top, left, zIndex, display) {
-	            var options = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : {};
-
 
 	            var modal = this.createUiElement(document.createElement('div'), 'modal', 'webvr-mini-modal', top, left, zIndex, display);
 
@@ -5932,8 +5982,6 @@
 	    }, {
 	        key: 'createProgress',
 	        value: function createProgress(name, progressIcon, top, left, zIndex, display) {
-	            var options = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : {};
-
 
 	            var progress = this.createUiElement(document.createElement('img'), 'progress', 'webvr-mini-progress', top, left, zIndex, display);
 
@@ -5967,7 +6015,7 @@
 	            var _this3 = this;
 
 	            var display = arguments[5];
-	            var options = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : {};
+	            var caller = arguments[6];
 
 
 	            var menu = this.createUiElement(document.createElement('div'), 'menuContainer', 'webvr-mini-menu', top, left, zIndex, display);
@@ -5981,13 +6029,17 @@
 	                menuList.style[i] = this.styles.menu[i];
 	            }
 
-	            menuList.style.border = '1px solid black'; //////////////////////////TEMPORARY
+	            // Add the list to the menu.
 
 	            menu.appendChild(menuList);
 
 	            menu.name = name;
 
-	            menu.style.backgroundColor = 'white';
+	            //menu.style.backgroundColor = 'white';
+
+	            // Calling control for menu. If mouse hovers over caller, don't hide.
+
+	            menu.caller = caller;
 
 	            // Build an empty menu item.
 
@@ -6004,34 +6056,34 @@
 
 	                domItem.innerHTML = '<div id=' + key + '>' + value + '</div>';
 
+	                domItem.style.backgroundColor = 'white';
+
+	                domItem.style.opacity = 0.5;
+
+	                // Enter the menu
+
+	                domItem.addEventListener('mouseenter', function (evt) {
+
+	                    console.log("ENTERED MENU");
+
+	                    console.log("EVT.target:" + evt.target);
+
+	                    evt.target.style.opacity = 1.0;
+	                });
+
+	                // Exit the menu
+
+	                domItem.addEventListener('mouseleave', function (evt) {
+
+	                    console.log("EXITED MENU");
+
+	                    //if ( ! evt.target.active )
+
+	                    evt.target.style.opacity = 0.5;
+	                });
+
 	                return domItem;
 	            };
-
-	            // Timeout ID for setTimeout.
-
-	            menu.mid = null;
-
-	            // End timeout.
-
-	            menu.addEventListener('mouseenter', function (evt) {
-
-	                if (menu.mid) {
-
-	                    clearTimeout(menu.mid);
-
-	                    menu.mid = null;
-	                }
-	            });
-
-	            // Set timeout.
-
-	            menu.addEventListener('mouseleave', function (evt) {
-
-	                menu.mid = setTimeout(function () {
-
-	                    menu.hide();
-	                }, 900);
-	            });
 
 	            // Get a blank padding menu element.
 
@@ -6046,7 +6098,7 @@
 
 	            menu.getList = function () {
 
-	                return _this3.worldMenu.getElementsByTagName('ul')[0];
+	                return menu.getElementsByTagName('ul')[0];
 	            };
 
 	            // Create function for building the menu list.
@@ -6082,6 +6134,8 @@
 
 	                        domItem.style.backgroundColor = 'red';
 
+	                        domItem.style.opacity = 1.0;
+
 	                        domItem.active = true;
 
 	                        // Set scroll to active item.
@@ -6108,11 +6162,17 @@
 	                return scrollToChild;
 	            };
 
+	            // use the transition event end to set to inline-block.
+	            // @link https://jonsuh.com/blog/detect-the-end-of-css-animations-and-transitions-with-javascript/
+
+	            menu.addEventListener(this.transitionEndEvent(), function (evt) {
+
+	                console.log("ENTERING TRANSITION END EVENT");
+	            });
+
 	            // Show the menu.
 
 	            menu.show = function (scroll) {
-
-	                console.log("MENU SCROLLTOP:" + scroll);
 
 	                menu.style.display = 'inline-block';
 
@@ -6124,6 +6184,11 @@
 	            menu.hide = function () {
 
 	                menu.style.display = 'none';
+	            };
+
+	            menu.visible = function () {
+
+	                return !!(menu.style.display === 'inline-block');
 	            };
 
 	            menu.activate = function () {};
@@ -6146,8 +6211,6 @@
 	    }, {
 	        key: 'createSpinner',
 	        value: function createSpinner(name, spinnerIcon, top, left, zIndex, display) {
-	            var options = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : {};
-
 
 	            var spinner = this.createUiElement(document.createElement('img'), 'spinner', 'webvr-mini-spinner', top, left, zIndex, display);
 
