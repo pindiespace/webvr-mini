@@ -8,7 +8,7 @@ class AssetPool {
      * complete or timed out. Also provide a callback so the requesting object 
      * can check if their load is complete.
      * Inspired by:
-     * @link https://blog.hospodarets.com/fetch_in_action
+     * @see{ @link https://blog.hospodarets.com/fetch_in_action fetch in action}
      */
     constructor ( util ) {
 
@@ -278,7 +278,7 @@ class AssetPool {
 
     /** 
      * get fetch wrapped into a wrapped Promise.
-     * @link http://stackoverflow.com/questions/35520790/error-handling-for-fetch-in-aurelia
+     * @see {@link http://stackoverflow.com/questions/35520790/error-handling-for-fetch-in-aurelia error handling for fetch}
      */
     getWrappedFetch ( url, params, tries, pos ) {
 

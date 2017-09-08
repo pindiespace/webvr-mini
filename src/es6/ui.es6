@@ -92,11 +92,7 @@ class Ui {
 
         this.exitVRButton = null;
 
-        // Transition speeds.
-
-        this.fin = 'all 0.75s ease';
-
-        this.fout = 'all 0.25s ease';
+        this.bubbleArrow = null; // creates triangle under control for menu.
 
         /* 
          * Styles for the 2d Ui. zIndex values, added to the current zIndex of the 
@@ -107,7 +103,7 @@ class Ui {
 
             controls: {
 
-               boxSizing: 'border-box',
+                boxSizing: 'border-box', // control sizes
 
                 zIndex: 10
 
@@ -151,9 +147,9 @@ class Ui {
 
                 zIndex: 100,
 
-                boxSizing: 'content-box',
+                display: 'inline-block',
 
-                display: 'inline-block'
+                boxSizing: 'content-box' // useful to compute without borders here
 
             },
 
@@ -175,11 +171,9 @@ class Ui {
 
             },
 
-            menuContainer: {
+            menuContainer: { // <div>, holds menu
 
                 cursor: 'pointer',
-
-                fontSize: '16px',
 
                 position: 'relative',
 
@@ -187,15 +181,13 @@ class Ui {
 
                 overflow: 'hidden',
 
-                padding: '0',
+                padding: '9px',
 
-                zIndex: 8999,
-
-                transition: this.fin
+                zIndex: 8999
 
             },
 
-            menu: {
+            menu: { // <ul>, hides scrollBar
 
                 width: '100%',
 
@@ -205,31 +197,43 @@ class Ui {
 
                 padding: '0',
 
-                ///////////////////////borderRadius: '2px',
-
-                //////////////////////borderColor: '#abab00', // 171, 171, 0
+                borderRadius: '2px',
 
                 overflowY: 'auto',
 
-                fontSize: '16px',
-
                 lineHeight: '18px',
 
-                paddingLeft: '0px',
+                paddingLeft: '0px', 
 
                 paddingRight: '18px' // hides the scrollbar
 
             },
 
-            menuItem: {
+            menuItem: { // <li>, holds content
 
                 margin: '0',
 
                 padding: '0',
 
+                border: '2px solid #abab00',
+
+                backgroundColor: 'white',
+
+                borderBottom:'0px',
+
+                opacity: 0.75,
+
                 listStyle: 'none',
 
                 textAlign: 'center'
+
+            },
+
+            menuActiveItem: { // active  
+
+            },
+
+            menuContent: { // <div> the content
 
             },
 
@@ -265,6 +269,20 @@ class Ui {
 
                 display: 'none'
 
+            },
+
+            bubbleArrow: {
+
+                position: 'absolute',
+
+                width: '0px',
+
+                height: '0px',
+
+                border: '10px solid',
+
+                borderColor: 'transparent transparent #880 transparent'
+
             }
 
         }
@@ -282,6 +300,12 @@ class Ui {
         }
 
     }
+
+    /* 
+     * ---------------------------------------
+     * Ui SETUP AND CONFIGURATION
+     * ---------------------------------------
+     */
 
     /** 
      * Initialize our Ui
@@ -349,65 +373,13 @@ class Ui {
 
     /* 
      * ---------------------------------------
-     * Ui SETUP AND CONFIGURATION
+     * Ui LOGIC
      * ---------------------------------------
      */
 
-
-     /** 
-      * Add a CSS rule to the first stylesheet of the browser. use for properties (e.g. :before, :after) that
-      * can't be easily set up via element.styles.xxx methods.
-      * @link http://fiddle.jshell.net/MDyxg/1/
-      * Example: addCSSRule("body:after", "content: 'foo'");
-      * @param {String} selector the CSS selector.
-      * @param {String} styles the associated CSS styles.
-      */
-    addCSSRule ( selector, styles ) {
-
-    let sheet = document.styleSheets[ 0 ];
-
-        if ( sheet.insertRule ) {
-
-            return sheet.insertRule( selector + " {" + styles + "}", sheet.cssRules.length );
-
-        } else if ( sheet.addRule ) {
-
-            return sheet.addRule( selector, styles );
-
-        }
-
-    }
-
-    /** 
-     * Regularize detecting the end of a CSS transition. Return the 
-     * first transition event the browser supports.
-     * @return {String} the transition event name.
-     */
-    transitionEndEvent () {
-
-        var t, elem = document.createElement( 'fake' );
-
-        var transitions = {
-            'transition'      : 'transitionend',
-            'OTransition'     : 'oTransitionEnd',
-            'MozTransition'   : 'transitionend',
-            'WebkitTransition': 'webkitTransitionEnd'
-        };
-
-        for ( t in transitions ) {
-
-            if ( elem.style[ t ] !== undefined ) {
-
-                return transitions[ t ];
-
-            }
-
-        }
-
-    }
-
     /** 
      * Set the Ui controls (visible, active, inactive) by the current mode.
+     * @enum {Number} mode the screen mode we are in (window, fullscreen, fullscreen VR).
      */
     setControlsByMode( mode ) {
 
@@ -449,16 +421,11 @@ class Ui {
 
         }
 
-        //TODO: switch() toggle control configurations.
-
-        // TODO: use this to control event handler response
-
-        // TODO: bind all the event handlers as separate functions in the constructor
-
     }
 
     /** 
-     * Global test for click. If something is open, and the user clicked outside it, close.
+     * Global test for click. If control is open, and the user clicked outside it, close.
+     * @param {Event} evt.
      */
     clickChange ( evt ) {
 
@@ -475,6 +442,12 @@ class Ui {
        }
 
     }
+
+    /* 
+     * ---------------------------------------
+     * Ui creation and rendering
+     * ---------------------------------------
+     */
 
     /** 
      * Create the default DOM ui.
@@ -820,7 +793,9 @@ class Ui {
              * ================ World select button =====================
              */
 
-            let worldButton = this.createButton( 'worlds', this.icons.world, 0, 144 );
+            // the last prameter attached a speech bubble to the button.
+
+            let worldButton = this.createButton( 'worlds', this.icons.world, 0, 144, null, null );
 
             worldButton.tooltipActive = 'Select a World',
 
@@ -860,13 +835,25 @@ class Ui {
              * ================ World Scene menu =======================
              */
 
+            /* 
+             * Add bubble, link to menu below which controls its opacity. 
+             * We position the arrow relative to a button triggering a menu.
+             * We provide this arrow to the Menu so it can control its visiblity.
+             */
+
+            let arrow = this.createBubbleArrow( worldButton );
+
             // Note: controls is always box-sizing = 'border-box';
 
-            let menuTop = parseFloat( worldButton.style.top ) + parseFloat( worldButton.style.height ) + 10;
+            let menuTop = parseFloat( worldButton.style.top ) + parseFloat( worldButton.style.height ) +
 
-            let menuLeft = parseFloat( worldButton.style.left ) + parseFloat( worldButton.style.width ) / 2;
+                parseFloat( worldButton.style.padding ) + 10;
 
-            let worldMenu = this.createMenu( 'worldMenu', null, menuTop, menuLeft );
+            let menuLeft = parseFloat( worldButton.style.left ) + parseFloat( worldButton.style.width ) / 2 -
+
+                parseFloat( worldButton.style.padding ) + 4;
+
+            let worldMenu = this.createMenu( 'worldMenu', null, menuTop, menuLeft, null, null, arrow );
 
             // Allow World selection.
 
@@ -911,13 +898,17 @@ class Ui {
 
             worldMenu.hide();
 
-            /*
-             * =============== End of Menus =============================
-             */
-
             // Attach.
 
             this.worldMenu = worldMenu;
+
+            /*
+             * =============== Gear Menu =============================
+             */
+
+            /*
+             * =============== End of Menus =============================
+             */
 
             // Append the buttons to the DOM.
 
@@ -928,9 +919,9 @@ class Ui {
             controls.appendChild( fullscreenButton );
 
             /*
-             * TODO: FF had document.exitFullscreen, but it is ZAPPED when we try to add this button, and becomes the 
-             * exitFullscreenButton!!!!!!!!!!!!!!!!!
-             * So, in the exit, check if typeof document.exitFullscreen === 'function', and only use if it is
+             * TODO: FF had document.exitFullscreen() as native code, but it is ZAPPED when we try to add this button, so, exitFullscreen 
+             * becomes the exitFullscreenButton! So, in the exit, check if typeof document.exitFullscreen === 'function', 
+             * and only use if it is.
              */
 
             controls.appendChild( exitFullscreenButton );
@@ -953,6 +944,16 @@ class Ui {
      * ---------------------------------------
      */
 
+    /** 
+     * Create a basic Ui element (decorate to create different types).
+     * @param {DOMElement} a DOM element created with document.createElement().
+     * @param {String} name the name of the element.
+     * @param {Number|String} top either the numerical top ('10') or the CSS property ('10px').
+     * @param {Number|String} left either the numerical left ('10') or the CSS property ('10px').
+     * @param {Number} zIndex the stacking order for the spinner.
+     * @param {String} display the CSS display type to use.
+     * @return {UiElement} the Ui element.
+     */
     createUiElement ( elem, name, className, top, left, zIndex, display ) {
 
         elem.className = 'webvr-mini-' + name;
@@ -1014,9 +1015,16 @@ class Ui {
     }
 
     /** 
-     * Create a Ui button
+     * Create a Ui button.
+     * @param {String} name the name of the button.
+     * @param {Image} if present, an image to present in the button.
+     * @param {Number|String} top either the numerical top ('10') or the CSS property ('10px').
+     * @param {Number|String} left either the numerical left ('10') or the CSS property ('10px').
+     * @param {Number} zIndex the stacking order for the button.
+     * @param {String} display the CSS display type to use.
+     * @return {UiElement} the button Ui element.
      */
-    createButton ( name, buttonIcon, top, left, zIndex, display) {
+    createButton ( name, buttonIcon, top, left, zIndex, display, bubbleClass ) {
 
         let button = this.createUiElement (document.createElement( 'img' ), 'button', 'webvr-mini-button', top, left, zIndex, display );
 
@@ -1028,9 +1036,7 @@ class Ui {
 
         // Button tooltip messages
 
-        button.tooltipActive = '',
-
-        button.tooltipInactive = '',
+        button.tooltipActive = button.tooltipInactive = '',
 
         button.hover = false,
 
@@ -1262,6 +1268,13 @@ class Ui {
 
     /** 
      * Create a modal dialog.
+     * @param {String} name the name of the dialog.
+     * @param {Image} if present, an image to present in the dialog.
+     * @param {Number|String} top either the numerical top ('10') or the CSS property ('10px').
+     * @param {Number|String} left either the numerical left ('10') or the CSS property ('10px').
+     * @param {Number} zIndex the stacking order for the dialog.
+     * @param {String} display the CSS display type to use.
+     * @return {UiElement} the dialog Ui element.
      */
     createModal ( name, modalIcon, top, left, zIndex, display ) {
 
@@ -1299,6 +1312,13 @@ class Ui {
 
     /** 
      * Create a loading progress bar.
+     * @param {String} name the name of the progress bar.
+     * @param {Image} if present, an image to present in the progress bar.
+     * @param {Number|String} top either the numerical top ('10') or the CSS property ('10px').
+     * @param {Number|String} left either the numerical left ('10') or the CSS property ('10px').
+     * @param {Number} zIndex the stacking order for the progress element.
+     * @param {String} display the CSS display type to use.
+     * @return {UiElement} the progress Ui element.
      */
     createProgress ( name, progressIcon, top, left, zIndex, display ) {
 
@@ -1324,12 +1344,35 @@ class Ui {
 
     /** 
      * Create a selectable menu.
+     * @param {String} name the name of the menu.
+     * @param {Image} if present, an image to present in the menu.
+     * @param {Number|String} top either the numerical top ('10') or the CSS property ('10px').
+     * @param {Number|String} left either the numerical left ('10') or the CSS property ('10px').
+     * @param {Number} zIndex the stacking order for the spinner.
+     * @param {String} display the CSS display type to use.
+     * @return {UiElement} the menu Ui element.
      */
-    createMenu ( name, menuIcon = null, top, left, zIndex, display, caller ) {
+    createMenu ( name, menuIcon, top, left, zIndex, display, arrow ) {
+
+        // Create a wrapper <div> (so we can position speech bubble).
 
         let menu = this.createUiElement( document.createElement( 'div' ), 'menuContainer', 'webvr-mini-menu', top, left, zIndex, display );
 
+        // Assign a name.
+
+        menu.name = name;
+
+        // If the menu has an arrow, use the supplied arrow (usually underneath the Button that triggere this menu).
+
+        if ( arrow ) menu.arrow = arrow;
+
+        console.log("ARROW IS A:" + arrow)
+
+        // Create menu secondary wrapper (clips overflow from our list so we can scroll long lists).
+
         let menuList = document.createElement( 'ul' );
+
+        menuList.className = 'webvr-mini-menuList';
 
         // Assign default style.
 
@@ -1343,55 +1386,49 @@ class Ui {
 
         menu.appendChild( menuList );
 
-        menu.name = name;
-
-        //menu.style.backgroundColor = 'white';
-
-        // Calling control for menu. If mouse hovers over caller, don't hide.
-
-        menu.caller = caller;
-
         // Build an empty menu item.
 
-        menu.buildItem = ( key, value ) => {
+        menu.buildItem = ( key, value, active ) => {
 
             let domItem = document.createElement( 'li' );
 
                 let s = domItem.style;
 
-                for ( let j in this.styles.menuItem ) {
+                for ( let i in this.styles.menuItem ) {
 
-                    s[ j ] = this.styles.menuItem[ j ]
+                    s[ i ] = this.styles.menuItem[ i ]
 
                 }
 
+            // Add content element inside <div>
+
             domItem.innerHTML = '<div id=' + key + '>' + value + '</div>';
 
-            domItem.style.backgroundColor = 'white';
+            s = domItem.childNodes[ 0 ].style;
 
-            domItem.style.opacity = 0.5;
+            for ( let i in this.styles.menuContent ) {
 
-            // Enter the menu
+                s[ i ] = this.styles.menuContent[ i ];
+
+            }
+
+            // Enter the menu, highlight the <li> element
 
             domItem.addEventListener( 'mouseenter', ( evt ) => {
-
-                console.log("ENTERED MENU")
-
-                console.log("EVT.target:" + evt.target )
 
                 evt.target.style.opacity = 1.0;
 
             } );
 
-            // Exit the menu
+            // Exit the menu, dim the <li> element
 
             domItem.addEventListener( 'mouseleave', ( evt ) => {
 
-                console.log("EXITED MENU")
+                if ( ! evt.target.active ) {
 
-                //if ( ! evt.target.active )
+                    evt.target.style.opacity = this.styles.menuItem.opacity;
 
-                evt.target.style.opacity = 0.5;            
+                }
 
             } );
 
@@ -1399,18 +1436,7 @@ class Ui {
 
         }
 
-
-        // Get a blank padding menu element.
-
-        menu.blankItem = () => {
-
-            let domItem = menu.buildItem( '-1', '-' );
-
-            return domItem;
-
-        }
-
-        // Get the menu list.
+        // Get the menu list <ul> inside its container <div>.
 
         menu.getList = () => {
 
@@ -1418,7 +1444,7 @@ class Ui {
 
         }
 
-        // Create function for building the menu list.
+        // Create function for building the menu list <ul>.
 
         menu.buildList = ( listObj ) => {
 
@@ -1430,26 +1456,50 @@ class Ui {
 
             let h = 0, itemCount = 0, scrollToChild = 0;
 
-            /* 
-             * Read the object and build the list. Recurse to find the topmost name 
-             * of the supplied object.
-             */
-
             // Add the list elements.
+
+            let num = this.util.numKeys( listObj ) - 1;
 
             for ( var i in listObj ) {
 
-                let item = listObj[ i ];
+                let item = listObj[ i ]; // the original data
 
-                let domItem = menu.buildItem( i, item.name );
+                // listObj must be an object with .name and .active properties.
+
+                let domItem = menu.buildItem( i, item.name, item.active );
+
+                // Get local reference to <li> and <div> styles in each item.
+
+                let s = domItem.style;
+
+                let cs = domItem.childNodes[ 0 ].style;
+
+                // Round the top and bottom list elements, here (instead of an external stylesheet).
+
+                if ( itemCount === 0 ) {
+
+                    s.borderTopLeftRadius =  s.borderTopRightRadius = '8px';
+
+                    cs.borderTopLeftRadius = cs.borderTopRightRadius = '6px';
+                }
+
+                if ( itemCount === num ) {
+
+                    s.borderBottomLeftRadius = s.borderBottomRightRadius = '8px';
+
+                    cs.borderBottomLeftRadius = cs.borderBottomRightRadius = '6px';
+
+                    s.border = this.styles.menuItem.border;
+
+                }
 
                 // Select if active.
 
                 if ( item.active ) {
 
-                    domItem.style.backgroundColor = 'red';
+                    s.backgroundColor = '#ffffcc'; // light yellow
 
-                    domItem.style.opacity = 1.0;
+                    s.opacity = 1.0;
 
                     domItem.active = true;
 
@@ -1458,8 +1508,6 @@ class Ui {
                     scrollToChild = itemCount * parseFloat( this.styles.menu.lineHeight );
 
                 }
-
-                // TODO: when change active element, need to change domItem.active!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
                 domList.appendChild( domItem );
 
@@ -1471,7 +1519,7 @@ class Ui {
 
             // Assign an index by using .childNodes ordering.
 
-            for ( let i = 0; i < domList.childNodes.length; i++ ) {
+            for ( let i = 0; i < cn.length; i++ ) {
 
                 cn[ i ].index = i;
 
@@ -1481,20 +1529,15 @@ class Ui {
 
         }
 
-        // use the transition event end to set to inline-block.
-        // @link https://jonsuh.com/blog/detect-the-end-of-css-animations-and-transitions-with-javascript/
-
-        menu.addEventListener( this.transitionEndEvent(), ( evt ) => {
-
-            console.log("ENTERING TRANSITION END EVENT")
-
-        } );
-
         // Show the menu.
 
         menu.show = ( scroll ) => {
 
             menu.style.display = 'inline-block';
+
+            menu.style.opacity = '1';
+
+            if ( arrow ) arrow.style.opacity = '1';
 
             let domList = menu.getList();
 
@@ -1505,6 +1548,8 @@ class Ui {
         menu.hide = () => {
 
             menu.style.display = 'none';
+
+            if ( arrow ) arrow.style.opacity = 0;
 
         }
 
@@ -1534,6 +1579,13 @@ class Ui {
 
     /** 
      * Create a loading spinner.
+     * @param {String} name the name of the spinner.
+     * @param {Image} if present, the image to use in the spinner.
+     * @param {Number|String} top either the numerical top ('10') or the CSS property ('10px').
+     * @param {Number|String} left either the numerical left ('10') or the CSS property ('10px').
+     * @param {Number} zIndex the stacking order for the spinner.
+     * @param {String} display the CSS display type to use.
+     * @return {UiElement} the spinner Ui element.
      */
     createSpinner ( name, spinnerIcon, top, left, zIndex, display ) {
 
@@ -1562,6 +1614,7 @@ class Ui {
      * @param {String} activeMsg the message when a control is active.
      * @param {String} inactiveMsg the message when a control is inactive.
      * @param {Number} baseIndex the base zIndex to add our zIndex to.
+     * @return {UiElement} a tooltip Ui element.
      */
     createTooltip ( activeMsg, inactiveMsg ) {
 
@@ -1588,6 +1641,42 @@ class Ui {
         this.controls.appendChild( tooltip );
 
         return tooltip;
+
+    }
+
+    /** 
+     * Move a bubbleArrow underneath buttons that open menus.
+     * @param {Button} button object created with createButton()
+     * @return {DOMElement} bubbleArrow Ui element, basic DOMElement.
+     */
+    createBubbleArrow ( button ) {
+
+        let arrow = document.createElement( 'div' );
+
+        let s = arrow.style;
+
+        for ( let i in this.styles.bubbleArrow ) {
+
+            s[ i ] = this.styles.bubbleArrow[ i ];
+
+        }
+
+        s.top = ( parseFloat( button.style.top ) + parseFloat( button.style.height ) + parseFloat( button.style.padding ) ) + 'px';
+
+        s.left = parseFloat( button.style.left ) + ( parseFloat( button.style.width ) / 2 ) + ( parseFloat( button.style.padding ) / 2 ) 
+
+        + ( parseFloat( s.borderWidth ) / 2 )
+
+        + 'px';
+
+        s.zIndex = this.styles.menuContainer.zIndex;
+
+        s.opacity = 0; // initially invisible
+
+
+        this.controls.appendChild( arrow );
+
+        return arrow;
 
     }
 
