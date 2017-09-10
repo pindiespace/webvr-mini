@@ -1201,7 +1201,11 @@ class Ui {
 
                 emu.style.height = button.style.height,
 
-                emu.style.padding = button.style.padding,
+                emu.style.padding = '0',
+
+                emu.style.paddingTop = 2 * parseFloat( button.style.padding ) + 'px';
+
+                emu.style.paddingLeft = 2 * parseFloat( button.style.padding ) + 'px';
 
                 emu.style.zIndex = this.styles.emu.zIndex;
 
