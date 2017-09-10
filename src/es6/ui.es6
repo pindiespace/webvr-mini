@@ -95,23 +95,6 @@ class Ui {
         this.bubbleArrow = null; // creates triangle under control for menu.
 
         /* 
-         * Shorthand for css properties.
-         */
-
-        this.cssProps = {
-
-            none: 'none',
-
-            absolute: 'absolute',
-
-            rel: 'relative',
-
-            ib: 'inline-block', 
-
-            click: 'click'
-        }
-
-        /* 
          * Styles for the 2d Ui. zIndex values, added to the current zIndex of the 
          * <nav> or other navigation element (control panel).
          */
@@ -120,14 +103,13 @@ class Ui {
 
             controls: {
 
-                position: this.cssProps.absolute,
+                position: 'absolute',
 
-                //boxSizing: 'border-box', // control sizes
+                boxSizing: 'border-box', // control sizes
 
                 zIndex: 10,
 
-                //height: '72px'
-
+                height: '72px'
 
             },
 
@@ -145,15 +127,15 @@ class Ui {
 
                 border: '0',
 
-                userSelect: this.cssProps.none,
+                userSelect: 'none',
 
-                webkitUserSelect: this.cssProps.none,
+                webkitUserSelect: 'none',
 
-                MozUserSelect: this.cssProps.none,
+                MozUserSelect: 'none',
 
                 cursor: 'pointer',
 
-                position: this.cssProps.absolute,
+                position: 'absolute',
 
                 top: '0px',
 
@@ -169,9 +151,13 @@ class Ui {
 
                 zIndex: 100,
 
-                display: this.cssProps.ib,
+                display: 'inline-block',
 
-                boxSizing: 'content-box' // useful to compute without borders here
+                boxSizing: 'content-box', // useful to compute without borders here
+
+                transitionProperty: 'left',
+
+                transition: 'transition: left 0.3s;'
 
             },
 
@@ -205,7 +191,7 @@ class Ui {
 
                 padding: '9px',
 
-                zIndex: 8999
+                zIndex: 8999,
 
             },
 
@@ -245,7 +231,7 @@ class Ui {
 
                 opacity: 0.75,
 
-                listStyle: this.cssProps.none,
+                listStyle: 'none',
 
                 textAlign: 'center'
 
@@ -267,7 +253,7 @@ class Ui {
 
             tooltip : {
 
-                position: this.cssProps.absolute,
+                position: 'absolute',
 
                 fontSize: '14px',
 
@@ -289,13 +275,13 @@ class Ui {
 
                 zIndex: '10000',
 
-                display: this.cssProps.none
+                display: 'none'
 
             },
 
             bubbleArrow: {
 
-                position: this.cssProps.absolute,
+                position: 'absolute',
 
                 width: '0px',
 
@@ -353,7 +339,7 @@ class Ui {
 
         // Click event for closing open menus and ui elements, if the user clicks outside of them.
 
-        document.addEventListener( this.cssProps.click, this.clickChange.bind( this ), false );
+        document.addEventListener( 'click', this.clickChange.bind( this ), false );
 
         // Keep track of whether mouse is down (for desktop dragging).
 
@@ -619,7 +605,7 @@ class Ui {
 
             // Go to VR mode.
 
-            vrButton.addEventListener( this.cssProps.click , ( evt ) => {
+            vrButton.addEventListener( 'click', ( evt ) => {
 
                 evt.preventDefault();
 
@@ -632,6 +618,10 @@ class Ui {
                 this.vrButton.hide();
 
                 this.fullscreenButton.hide();
+
+                this.worldButton.shift( true );
+
+                this.gearButton.shift( true );
 
                 this.exitVRButton.show();
 
@@ -681,7 +671,7 @@ class Ui {
 
             // Return from VR button listener.
 
-            exitVRButton.addEventListener( this.cssProps.click, ( evt ) => {
+            exitVRButton.addEventListener( 'click', ( evt ) => {
 
                 evt.preventDefault();
 
@@ -690,6 +680,10 @@ class Ui {
                 console.log( 'clicked exit vr button' );
 
                 this.exitVRButton.hide();
+
+                this.worldButton.shift( false );
+
+                this.gearButton.shift( false );
 
                 this.vrButton.show();
 
@@ -731,7 +725,9 @@ class Ui {
 
             // Go to fullscreen mode.
 
-            fullscreenButton.addEventListener( this.cssProps.click, ( evt ) => {
+            fullscreenButton.addEventListener( 'click', ( evt ) => {
+
+                console.log("IN FULLSCREEN EVENT")
 
                 evt.preventDefault();
 
@@ -762,6 +758,10 @@ class Ui {
                 // If the World menu is visible, hide it.
 
                 this.worldMenu.hide();
+
+                this.worldButton.shift( true );
+
+                this.gearButton.shift( true );
 
                 // Fire the request fullscreen command.
 
@@ -801,7 +801,7 @@ class Ui {
 
             // Return from fullscreen button listener.
 
-            exitFullscreenButton.addEventListener( this.cssProps.click , ( evt ) => {
+            exitFullscreenButton.addEventListener( 'click', ( evt ) => {
 
                 evt.preventDefault();
 
@@ -810,6 +810,10 @@ class Ui {
                 if ( ! this.exitFullscreenButton.active ) return;
 
                 console.log( 'clicked exit fullscreen button...' );
+
+                this.worldButton.shift( false );
+
+                this.gearButton.shift( false );
 
                 // Fire the exit fullscreen event (also triggered by escape key).
 
@@ -837,7 +841,7 @@ class Ui {
 
             this.worldButton = worldButton;
 
-            worldButton.addEventListener( this.cssProps.click , ( evt ) => {
+            worldButton.addEventListener( 'click', ( evt ) => {
 
                 evt.preventDefault();
 
@@ -885,7 +889,7 @@ class Ui {
 
             // Allow World selection.
 
-            worldMenu.addEventListener( this.cssProps.click, ( evt ) => {
+            worldMenu.addEventListener( 'click', ( evt ) => {
 
                 console.log( 'World name:' + evt.target.innerHTML )
 
@@ -1126,7 +1130,7 @@ class Ui {
 
                     ts.top = ( 2 + parseFloat( st.top) ) + 'px';
 
-                    ts.display = this.cssProps.ib;
+                    ts.display = 'inline-block';
 
                     // Make the tooltip disappear after a time limit (needed for mobile).
 
@@ -1177,7 +1181,7 @@ class Ui {
 
             }
 
-            tt.style.display = this.cssProps.none;
+            tt.style.display = 'none';
 
             tt.innerHTML = '';
 
@@ -1191,7 +1195,7 @@ class Ui {
 
                 let emu = document.createElement( 'img' );
 
-                emu.style.position = this.cssProps.absolute,
+                emu.style.position = 'absolute',
 
                 emu.style.top = button.style.top,
 
@@ -1203,7 +1207,9 @@ class Ui {
 
                 emu.style.padding = '0',
 
-                emu.style.paddingTop = 2 * parseFloat( button.style.padding ) + 'px';
+                // Shift the 'em' below and to the right of the main icon.
+
+                emu.style.paddingTop = 1.8 * parseFloat( button.style.padding ) + 'px';
 
                 emu.style.paddingLeft = 2 * parseFloat( button.style.padding ) + 'px';
 
@@ -1211,9 +1217,9 @@ class Ui {
 
                 if ( ! this.hasPointerEvents() ) {
 
-                    emu.addEventListener( this.cssProps.click, () => {
+                    emu.addEventListener( 'click', () => {
 
-                        let evt = new Event( this.cssProps.click );
+                        let evt = new Event( 'click');
 
                         button.dispatchEvent( evt );
 
@@ -1222,11 +1228,11 @@ class Ui {
 
                 } else {
 
-                    emu.style.pointerEvents = this.cssProps.none; // nobody without PointerEvents supports WebVR
+                    emu.style.pointerEvents = 'none'; // nobody without PointerEvents supports WebVR
 
                 }
 
-                emu.style.display = this.cssProps.none,
+                emu.style.display = 'none',
 
                 emu.src = emuImg,
 
@@ -1248,7 +1254,7 @@ class Ui {
 
                 let strike = document.createElement( 'img' );
 
-                strike.style.position = this.cssProps.absolute,
+                strike.style.position = 'absolute',
 
                 strike.style.top = button.style.top,
 
@@ -1264,7 +1270,7 @@ class Ui {
 
                 strike.style.zIndex = this.styles.strikethrough.zIndex,
 
-                strike.style.display = this.cssProps.none,
+                strike.style.display = 'none',
 
                 strike.src = strikeImg,
 
@@ -1288,9 +1294,9 @@ class Ui {
 
             button.active = true;
 
-            if ( button.emulatedImg ) button.emulatedImg.style.display = this.cssProps.ib;
+            if ( button.emulatedImg ) button.emulatedImg.style.display = 'inline-block';
 
-            if ( button.strikethroughImg ) button.strikethroughImg.style.display = this.cssProps.none;
+            if ( button.strikethroughImg ) button.strikethroughImg.style.display = 'none';
 
 
         }
@@ -1301,7 +1307,7 @@ class Ui {
 
             button.active = false;
 
-            if ( button.strikethroughImg ) button.strikethroughImg.style.display = this.cssProps.ib;
+            if ( button.strikethroughImg ) button.strikethroughImg.style.display = 'inline-block';
 
         }
 
@@ -1309,17 +1315,17 @@ class Ui {
 
         button.show = () => {
 
-            button.style.display = this.cssProps.ib;
+            button.style.display = 'inline-block';
 
-            if ( button.emulatedImg ) button.emulatedImg.style.display = this.cssProps.ib;
+            if ( button.emulatedImg ) button.emulatedImg.style.display = 'inline-block';
 
             if ( button.active ) {
 
-                button.strikethroughImg.style.display = this.cssProps.none;
+                button.strikethroughImg.style.display = 'none';
 
             } else {
 
-                button.strikethroughImg.style.display = this.cssProps.ib;
+                button.strikethroughImg.style.display = 'inline-block';
 
             }
 
@@ -1329,11 +1335,29 @@ class Ui {
 
         button.hide = () => {
 
-            button.style.display = this.cssProps.none;
+            button.style.display = 'none';
 
-            if ( button.emulatedImg ) button.emulatedImg.style.display = this.cssProps.none;
+            if ( button.emulatedImg ) button.emulatedImg.style.display = 'none';
 
-            if ( button.strikethroughImg ) button.strikethroughImg.style.display = this.cssProps.none;
+            if ( button.strikethroughImg ) button.strikethroughImg.style.display = 'none';
+
+        }
+
+        button.shift = ( collapse ) => {
+
+            let left = parseFloat( button.style.left );
+
+            let shiftValue = parseFloat( button.style.width ) + ( parseFloat( button.style.margin ) * 2 );
+
+            if ( collapse ) {
+
+                button.style.left = ( left - shiftValue ) + 'px';
+
+            } else {
+
+                button.style.left = (left + shiftValue ) + 'px';
+
+            }
 
         }
 
@@ -1361,13 +1385,13 @@ class Ui {
 
         modal.show = () => {
 
-            modal.style.display = this.cssProps.ib;
+            modal.style.display = 'inline-block';
 
         }
 
         modal.hide = () => {
 
-            modal.style.display = this.cssProps.none;
+            modal.style.display = 'none';
 
         }
 
@@ -1405,13 +1429,13 @@ class Ui {
 
         progress.show = () => {
 
-            progress.style.display = this.cssProps.ib;
+            progress.style.display = 'inline-block';
 
         }
 
         progress.hide = () => {
 
-            progress.style.display = this.cssProps.none;
+            progress.style.display = 'none';
 
         }
 
@@ -1610,7 +1634,7 @@ class Ui {
 
         menu.show = ( scroll ) => {
 
-            menu.style.display = this.cssProps.ib;
+            menu.style.display = 'inline-block';
 
             menu.style.opacity = '1';
 
@@ -1624,7 +1648,7 @@ class Ui {
 
         menu.hide = () => {
 
-            menu.style.display = this.cssProps.none;
+            menu.style.display = 'none';
 
             if ( arrow ) arrow.style.opacity = 0;
 
@@ -1632,7 +1656,7 @@ class Ui {
 
         menu.visible = () => {
 
-            return !! ( menu.style.display === this.cssProps.ib );
+            return !! ( menu.style.display === 'inline-block' );
 
         }
 
@@ -1672,13 +1696,13 @@ class Ui {
 
         spinner.show = () => {
 
-            spinner.style.display = this.cssProps.ib;
+            spinner.style.display = 'inline-block';
 
         }
 
         spinner.hide = () => {
 
-            spinner.style.display = this.cssProps.none;
+            spinner.style.display = 'none';
 
         }
 
