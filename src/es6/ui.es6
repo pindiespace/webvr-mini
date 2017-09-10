@@ -1197,6 +1197,10 @@ class Ui {
 
                 emu.style.left = button.style.left,
 
+                emu.style.width = button.style.width,
+
+                emu.style.height = button.style.height,
+
                 emu.style.padding = button.style.padding,
 
                 emu.style.zIndex = this.styles.emu.zIndex;
