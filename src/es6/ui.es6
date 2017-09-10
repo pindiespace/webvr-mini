@@ -486,7 +486,7 @@ class Ui {
 
             controls.style.position = 'relative';
 
-            p.appendChild( controls );            
+            p.appendChild( controls );
 
         } else { // create control bar, attach to <canvas> parent
 
@@ -533,7 +533,7 @@ class Ui {
 
             vrButton.inactivate();
 
-            vrButton.show(); // initially .active === true
+            vrButton.show(); // initially .active !== true
 
             /* 
              * Set the emitter (pseudo-event 'vrdisplay'). If the 
@@ -553,9 +553,11 @@ class Ui {
 
                             vrButton.src = vrButton.src = this.icons.htcvive;
 
-                            // Look for emulated display.
+                            // Look for emulated display in vendor string.
 
                             if ( dName.indexOf( 'emulat' ) !== this.util.NOT_IN_LIST ) {
+
+                                console.log( 'Emulated display!!!!!!!!!!!!!!');
 
                                 vrButton.emulated( this.icons.emulated );
 
@@ -793,9 +795,7 @@ class Ui {
              * ================ World select button =====================
              */
 
-            // the last prameter attached a speech bubble to the button.
-
-            let worldButton = this.createButton( 'worlds', this.icons.world, 0, 144, null, null );
+            let worldButton = this.createButton( 'worlds', this.icons.world, 0, 144 );
 
             worldButton.tooltipActive = 'Select a World',
 
@@ -841,7 +841,7 @@ class Ui {
              * We provide this arrow to the Menu so it can control its visiblity.
              */
 
-            let arrow = this.createBubbleArrow( worldButton );
+            let worldMenuArrow = this.createBubbleArrow( worldButton );
 
             // Note: controls is always box-sizing = 'border-box';
 
@@ -853,7 +853,7 @@ class Ui {
 
                 parseFloat( worldButton.style.padding ) + 4;
 
-            let worldMenu = this.createMenu( 'worldMenu', null, menuTop, menuLeft, null, null, arrow );
+            let worldMenu = this.createMenu( 'worldMenu', null, menuTop, menuLeft, null, null, worldMenuArrow );
 
             // Allow World selection.
 
@@ -906,6 +906,20 @@ class Ui {
              * =============== Gear Menu =============================
              */
 
+            let gearButton = this.createButton( 'gear', this.icons.gear, 0, 218, null, null );
+
+            gearButton.tooltipActive = 'Configure',
+
+            gearButton.tooltipInactive = 'Cannot configure';
+
+            gearButton.activate();
+
+            gearButton.show();
+
+            // Attach DOM element directly, and via controls DOM element.
+
+            this.gearButton = gearButton;
+
             /*
              * =============== End of Menus =============================
              */
@@ -929,6 +943,8 @@ class Ui {
             controls.appendChild( worldButton );
 
             controls.appendChild( worldMenu );
+
+            controls.appendChild( gearButton );
 
         } else {
 

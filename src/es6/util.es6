@@ -181,7 +181,7 @@ class Util {
      * @param {String} str the string.
      * @returns {String} the reversed string.
      */
-    reverseString( str ) {
+    reverseString ( str ) {
 
         if ( ! str.split ) return null;
 

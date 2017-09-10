@@ -179,25 +179,29 @@ class AssetPool {
 
             if ( key ) {
 
-                // Object saves its associative key.
-
-                obj.key = key;
-
                 if ( this.keyList[ key ] ) {
 
                     if ( this.keyList[ key ] === obj ) {
 
-                        ///////////console.warn( 'AssetPool::addAsset(): asset ' + key + ' already added to pool' );
+                        console.warn( 'AssetPool::addAsset(): asset ' + key + ' already added to pool' );
 
                         return obj;
 
                     } else {
 
-                        /////////console.warn( 'AssetPool::addAsset(): replacing asset at key:' + key );
+                        console.warn( 'AssetPool::addAsset(): replacing old asset at same key:' + key );
 
                     }
 
+                } else {
+
+                    this.keyList[ key ] = obj;
+
                 }
+
+                // Object saves its associative key.
+
+                obj.key = key;
 
             } else {
 
@@ -238,6 +242,8 @@ class AssetPool {
         } else {
 
             console.warn( 'AssetPool::removeAsset(): key not found in assetList' );
+
+            return null;
 
         }
 

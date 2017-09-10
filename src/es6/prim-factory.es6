@@ -2,6 +2,7 @@ import Map2d from './map2d';
 import Map3d from './map3d';
 import Mesh from  './mesh';
 import Lights from './lights';
+import AssetPool from './asset-pool';
 import GeometryPool from './geometry-pool';
 import TexturePool from './texture-pool';
 import ModelPool from './model-pool';
@@ -10,7 +11,7 @@ import GeometryBuffer from './geometry-buffer';
 
 'use strict'
 
-class PrimFactory {
+class PrimFactory extends AssetPool {
 
     /** 
      * @class
@@ -65,6 +66,12 @@ class PrimFactory {
     constructor ( init, world ) {
 
         console.log( 'in PrimFactory class' );
+
+        /* 
+         * Initialize AssetLoader class
+         */
+
+        super( world.webgl.util );
 
         // Keep a copy of the World for up-communication.
 
@@ -306,6 +313,119 @@ class PrimFactory {
 
     } // end of constructor
 
+
+    /**
+     * Remove a Prim, which means removing from this.prims[], AND 
+     * removing from the base class AssetPool.
+     */
+    deletePrim ( prim ) {
+
+        let p = null;
+
+        // remove from this.prims[].
+
+        let i = array.indexOf( prim );
+
+        if( i !== -1 ) {
+
+           p = array.splice( i, 1 )[ 0 ];
+
+        }
+
+        // remove from AssetPool.
+
+        if ( p ) {
+
+            p =  this.removeAsset( prim.key );
+
+        } else {
+
+            console.warn( 'PrimFactory::deletePrim(): asset not found in prim array' );
+
+        }
+
+        return p;
+
+    }
+
+    /** 
+     * Set the current prim list to a specific World.
+     * @param {String} worldKey 
+     */
+    setActivePrims ( worldKey ) {
+
+        // Check to see if the key is defined in World.
+
+        if ( ! this.world.keyList[ worldKey ] ) {
+
+            console.error( 'Primfactory::setPrimWorld(): invalid key passed' );
+
+        }
+
+        let newPrims = [];
+
+        // Loop through assigned assets to reconstruct the Prim list.
+
+        for ( let i in this.keyList ) {
+
+            let p = this.keyList[ i ];
+
+            if ( p.worldKey === worldKey ) {
+
+                newPrims.push( p );
+
+            } 
+
+        }
+
+        /* 
+         * Remove old array contents WITHOUT zapping the array reference (ES5 method). We 
+         * do this even if there are no Prims in the World.
+         */
+
+        this.prims.splice(0, this.prims.length);
+
+        Array.prototype.push.apply( this.prims, newPrims );
+
+    }
+
+
+    /** 
+     * Switch a specific Prim between Worlds 
+     * @param {Prim} the prim to switch.
+     * @param {String} newWorldKey the new world to switch to.
+     */
+    switchPrimWorld( prim, newWorldKey ) {
+
+        let p = this.assetInList( prim );
+
+        let currentWorld = this.world.getActiveWorld();
+
+        if ( p && currentWorld ) {
+
+            // If the assigned world is not the one currently being displayed, delete from this.prims[];
+
+            if ( currentWorld !== newWorldKey ) {
+
+                let pos = this.prims.indexOf( p );
+
+                if ( pos !== this.util.NOT_IN_LIST ) {
+
+                    this.prims[ pos ] = null; // nulls are ok in prim display list.
+
+                }
+
+            }
+
+            p.worldKey = newWorldKey;
+
+            return true;
+
+        }
+
+        return false;
+
+    }
 
     /** 
      * Create a large coordinate data array with data for multiple Prims.
@@ -1187,8 +1307,16 @@ class PrimFactory {
         // Prim timecheck. If it is failing to add to a Shader, will keep track of number of attempts.
 
         prim.failCount = 0;
-    
+
+        // Add to our 'quick list'
+
         this.prims.push( prim );
+
+        // Add to our Asset Pool.
+
+        this.addAsset( prim );
+
+        // Return the completed Prim.
 
         return prim;
 

@@ -305,6 +305,27 @@ class World extends AssetPool {
     }
 
     /** 
+     * Get the currently active World.
+     */
+    getActiveWorld () {
+
+        for ( let i in this.keyList ) {
+
+            let w = this.keyList[ i ];
+
+            if ( w.scene.active ) {
+
+                return w;
+
+            }
+
+        }
+
+        return null;
+
+    }
+
+    /** 
      * Get all worlds by their name. Used by the Ui class.
      */
     getWorldScenes () {
@@ -333,10 +354,27 @@ class World extends AssetPool {
 
     /** 
      * Set the scene which should be active.
+     * @param {World} world object.
      */
     setActiveWorld ( world ) {
 
         // Clear existing World.
+
+        for ( let i in this.keyList ) {
+
+            let w = this.keyList[ i ];
+
+            if ( w.key === world.key ) {
+
+                w.scene.active = true;
+
+            } else {
+
+                w.scene.active = false;
+
+            }
+
+        }
 
         // Set the new World.
 
@@ -387,9 +425,10 @@ class World extends AssetPool {
 
     }
 
+
     /** 
      * Given a World JSON file data set, compute the World.
-     * @param {Object} world the definition of a scene and its Prims.
+     * @param {Object} world the definition of a scene and its Prims, derived from JSON file.
      * @param {String} path the server path to the JSON file with the scene and its Prims.
      * @param {Boolean} createPrims if true, create the scene objects, otherwise just store the JSON file.
      */
@@ -406,6 +445,10 @@ class World extends AssetPool {
         const directions = this.primFactory.geometryPool.directions; // cardinal positions
 
         const util = this.util;
+
+        // Return a list of valid Prim objects to assign to this World later.
+
+        let validPrims = [];
 
         // If we're going to create the Scene, make this the active Scene.
 
@@ -565,6 +608,13 @@ class World extends AssetPool {
 
                             ); // end createPrim
 
+                            if ( p ) {
+
+                                validPrims.push( p );
+
+                            }
+
+
                         } else {
 
                             console.error( 'World::getWorld(): invalid Shader:' + i + ', shader:' + s.shader + ' for Prim:' + i.name );
@@ -586,38 +636,29 @@ class World extends AssetPool {
 
             console.log("WORLD EMITTING:" + world.scene.name)
 
-            return true;
-
         } else {
 
-            // inactive World.
+            // World with missing scene.
 
-            console.log( 'World::computeWorld(): inactive World at path:' + path + ' loaded' );
+            console.warn( 'World::computeWorld(): World with no scene:' + path );
+
+            return null;
 
         }
 
-        return false;
+        return validPrims;
 
     }
 
     /** 
-     * load a World from a JSON file description.
+     * load a World from a JSON file description, compute Prims, and load them into 
+     * PrimFactory if the World is the active one.
      */
     getWorld ( path ) {
 
          if ( ! this.util.isWhitespace( path ) ) {
 
             const mimeType = this.worldMimeTypes[ this.util.getFileExtension( path ) ];
-
-            const vec3 = this.glMatrix.vec3;
-
-            const vec4 = this.glMatrix.vec4;
-
-            const vec5 = this.primFactory.geometryPool.vec5; // special vector
-
-            const typeList = this.primFactory.geometryPool.typeList; // types of geometry
-
-            const directions = this.primFactory.geometryPool.directions; // cardinal positions
 
             const util = this.util;
 
@@ -643,15 +684,37 @@ class World extends AssetPool {
 
                         if ( updateObj.data ) {
 
-                            let world = this.util.parseJSON( updateObj.data );
+                            let world = util.parseJSON( updateObj.data );
+
+                            let worldKey = util.computeId();
 
                             if ( world ) {
 
-                                if ( this.computeWorld( world, path, world.active ) ) {
+                                // valid Prims are returned from this.
+
+                                let validPrims = this.computeWorld( world, path );
+
+                                if ( validPrims ) { // zero is OK.
 
                                     // Store in AssetPool (superclass) using a key, with path in world.scene.path
 
                                     this.addAsset( world, '' );
+
+                                    // If there were valid Prims in the list, retroactively add the world key to them.
+
+                                    if ( validPrims.length > 0 ) {
+
+                                        for ( let i = 0; i < validPrims.length; i++ ) {
+
+                                            validPrims[ i ].worldKey = world.key; // so we can find them later!
+
+                                        }
+
+                                        // Force PrimFactory to reset its list of current prims to the current active Worlds.
+
+                                        this.primFactory.setActivePrims( world.key );
+
+                                    }
 
                                 }
 
@@ -673,7 +736,7 @@ class World extends AssetPool {
 
                 // Invalid MIMEtype.
 
-                console.error( 'World::getWorld(): file type "' + this.util.getFileExtension( path ) + '" in:' + path + ' not supported, not loading' );
+                console.error( 'World::getWorld(): file type "' + util.getFileExtension( path ) + '" in:' + path + ' not supported, not loading' );
 
             }
 
