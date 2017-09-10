@@ -95,6 +95,23 @@ class Ui {
         this.bubbleArrow = null; // creates triangle under control for menu.
 
         /* 
+         * Shorthand for css properties.
+         */
+
+        this.cssProps = {
+
+            none: 'none',
+
+            absolute: 'absolute',
+
+            rel: 'relative',
+
+            ib: 'inline-block', 
+
+            click: 'click'
+        }
+
+        /* 
          * Styles for the 2d Ui. zIndex values, added to the current zIndex of the 
          * <nav> or other navigation element (control panel).
          */
@@ -103,9 +120,14 @@ class Ui {
 
             controls: {
 
-                boxSizing: 'border-box', // control sizes
+                position: this.cssProps.absolute,
 
-                zIndex: 10
+                //boxSizing: 'border-box', // control sizes
+
+                zIndex: 10,
+
+                //height: '72px'
+
 
             },
 
@@ -123,15 +145,15 @@ class Ui {
 
                 border: '0',
 
-                userSelect: 'none',
+                userSelect: this.cssProps.none,
 
-                webkitUserSelect: 'none',
+                webkitUserSelect: this.cssProps.none,
 
-                MozUserSelect: 'none',
+                MozUserSelect: this.cssProps.none,
 
                 cursor: 'pointer',
 
-                position: 'absolute',
+                position: this.cssProps.absolute,
 
                 top: '0px',
 
@@ -147,13 +169,13 @@ class Ui {
 
                 zIndex: 100,
 
-                display: 'inline-block',
+                display: this.cssProps.ib,
 
                 boxSizing: 'content-box' // useful to compute without borders here
 
             },
 
-            em: {
+            emu: {
 
                 zIndex: 101
 
@@ -223,7 +245,7 @@ class Ui {
 
                 opacity: 0.75,
 
-                listStyle: 'none',
+                listStyle: this.cssProps.none,
 
                 textAlign: 'center'
 
@@ -245,7 +267,7 @@ class Ui {
 
             tooltip : {
 
-                position: 'absolute',
+                position: this.cssProps.absolute,
 
                 fontSize: '14px',
 
@@ -267,13 +289,13 @@ class Ui {
 
                 zIndex: '10000',
 
-                display: 'none'
+                display: this.cssProps.none
 
             },
 
             bubbleArrow: {
 
-                position: 'absolute',
+                position: this.cssProps.absolute,
 
                 width: '0px',
 
@@ -286,6 +308,7 @@ class Ui {
             }
 
         }
+
 
         // EventHandler ES6 kludges. Rebind handlers so we can use removeEventListener.
 
@@ -330,7 +353,7 @@ class Ui {
 
         // Click event for closing open menus and ui elements, if the user clicks outside of them.
 
-        document.addEventListener( 'click', this.clickChange.bind( this ), false );
+        document.addEventListener( this.cssProps.click, this.clickChange.bind( this ), false );
 
         // Keep track of whether mouse is down (for desktop dragging).
 
@@ -424,6 +447,18 @@ class Ui {
     }
 
     /** 
+     * Check for Pointer Events
+     * @see {@link https://msdn.microsoft.com/library/hh673557(v=vs.85).aspx pointer and gesture events in IE 10}
+     * @see {@link https://github.com/rafrex/detect-pointer-events/blob/master/src/index.js detect-pointer-events}
+     * @return {Boolean} if supported, return true, else false.
+     */
+    hasPointerEvents () {
+
+        return ( window.navigator.msPointerEnabled || ( 'PointerEvent' in window ) );
+
+    }
+
+    /** 
      * Global test for click. If control is open, and the user clicked outside it, close.
      * @param {Event} evt.
      */
@@ -451,6 +486,8 @@ class Ui {
 
     /** 
      * Create the default DOM ui.
+     * NOTE: the Player (wrapper <divs> for the <canvas> object are created in the 
+     * WebGL module ).
      */
     createUi () {
 
@@ -482,24 +519,17 @@ class Ui {
 
             this.controls = document.createElement( 'nav' );
 
-            controls.style.zIndex = this.styles.controls.zIndex;
-
-            controls.style.position = 'relative';
-
             p.appendChild( controls );
 
         } else { // create control bar, attach to <canvas> parent
 
             this.controls = controls;
 
-            if ( parseInt( controls.style.zIndex ) < this.styles.controls.zIndex ) {
+        }
 
-                controls.style.zIndex = this.styles.controls.zIndex;
+        for ( let i in this.styles.controls ) {
 
-                controls.style.position = 'relative';
-
-            }
-
+            controls.style[ i ] = this.styles.controls[ i ];
 
         }
 
@@ -557,8 +587,6 @@ class Ui {
 
                             if ( dName.indexOf( 'emulat' ) !== this.util.NOT_IN_LIST ) {
 
-                                console.log( 'Emulated display!!!!!!!!!!!!!!');
-
                                 vrButton.emulated( this.icons.emulated );
 
                             }
@@ -591,7 +619,7 @@ class Ui {
 
             // Go to VR mode.
 
-            vrButton.addEventListener( 'click' , ( evt ) => {
+            vrButton.addEventListener( this.cssProps.click , ( evt ) => {
 
                 evt.preventDefault();
 
@@ -653,7 +681,7 @@ class Ui {
 
             // Return from VR button listener.
 
-            exitVRButton.addEventListener( 'click', ( evt ) => {
+            exitVRButton.addEventListener( this.cssProps.click, ( evt ) => {
 
                 evt.preventDefault();
 
@@ -703,7 +731,7 @@ class Ui {
 
             // Go to fullscreen mode.
 
-            fullscreenButton.addEventListener( 'click', ( evt ) => {
+            fullscreenButton.addEventListener( this.cssProps.click, ( evt ) => {
 
                 evt.preventDefault();
 
@@ -773,7 +801,7 @@ class Ui {
 
             // Return from fullscreen button listener.
 
-            exitFullscreenButton.addEventListener( 'click' , ( evt ) => {
+            exitFullscreenButton.addEventListener( this.cssProps.click , ( evt ) => {
 
                 evt.preventDefault();
 
@@ -809,7 +837,7 @@ class Ui {
 
             this.worldButton = worldButton;
 
-            worldButton.addEventListener( 'click' , ( evt ) => {
+            worldButton.addEventListener( this.cssProps.click , ( evt ) => {
 
                 evt.preventDefault();
 
@@ -857,7 +885,7 @@ class Ui {
 
             // Allow World selection.
 
-            worldMenu.addEventListener( 'click', ( evt ) => {
+            worldMenu.addEventListener( this.cssProps.click, ( evt ) => {
 
                 console.log( 'World name:' + evt.target.innerHTML )
 
@@ -1098,7 +1126,7 @@ class Ui {
 
                     ts.top = ( 2 + parseFloat( st.top) ) + 'px';
 
-                    ts.display = 'inline-block';
+                    ts.display = this.cssProps.ib;
 
                     // Make the tooltip disappear after a time limit (needed for mobile).
 
@@ -1149,39 +1177,11 @@ class Ui {
 
             }
 
-            tt.style.display = 'none';
+            tt.style.display = this.cssProps.none;
 
             tt.innerHTML = '';
 
         } );
-
-        // Show the button onscreen. Also set activation/deactivation of its strikethrough.
-
-        button.show = () => {
-
-            button.style.display = 'inline-block';
-
-            if ( button.active ) {
-
-                button.strikethroughImg.style.display = 'none';
-
-            } else {
-
-                button.strikethroughImg.style.display = 'inline-block';
-
-            }
-
-        }
-
-        // Hide the button onscreen.
-
-        button.hide = () => {
-
-            button.style.display = 'none';
-
-            button.strikethroughImg.style.display = 'none';
-
-        }
 
         // Add the emulated symbol underneath a given button.
 
@@ -1191,19 +1191,38 @@ class Ui {
 
                 let emu = document.createElement( 'img' );
 
-                emu.style.position = 'absolute',
+                emu.style.position = this.cssProps.absolute,
 
-                emu.style.top = '0',
+                emu.style.top = button.style.top,
 
                 emu.style.left = button.style.left,
 
                 emu.style.padding = button.style.padding,
 
-                emu.style.zIndex = this.styles.emu.zIndex,
+                emu.style.zIndex = this.styles.emu.zIndex;
 
-                emu.style.display = 'none',
+                if ( ! this.hasPointerEvents() ) {
+
+                    emu.addEventListener( this.cssProps.click, () => {
+
+                        let evt = new Event( this.cssProps.click );
+
+                        button.dispatchEvent( evt );
+
+                    }, false );
+
+
+                } else {
+
+                    emu.style.pointerEvents = this.cssProps.none; // nobody without PointerEvents supports WebVR
+
+                }
+
+                emu.style.display = this.cssProps.none,
 
                 emu.src = emuImg,
+
+                emu.name = 'emulated',
 
                 button.emulatedImg = emu, // save a reference to emulation in the original button.
 
@@ -1221,7 +1240,7 @@ class Ui {
 
                 let strike = document.createElement( 'img' );
 
-                strike.style.position = 'absolute',
+                strike.style.position = this.cssProps.absolute,
 
                 strike.style.top = button.style.top,
 
@@ -1237,7 +1256,7 @@ class Ui {
 
                 strike.style.zIndex = this.styles.strikethrough.zIndex,
 
-                strike.style.display = 'none',
+                strike.style.display = this.cssProps.none,
 
                 strike.src = strikeImg,
 
@@ -1261,7 +1280,9 @@ class Ui {
 
             button.active = true;
 
-            if ( button.strikethroughImg ) button.strikethroughImg.style.display = 'none';
+            if ( button.emulatedImg ) button.emulatedImg.style.display = this.cssProps.ib;
+
+            if ( button.strikethroughImg ) button.strikethroughImg.style.display = this.cssProps.none;
 
 
         }
@@ -1272,7 +1293,39 @@ class Ui {
 
             button.active = false;
 
-            if ( button.strikethroughImg ) button.strikethroughImg.style.display = 'inline-block';
+            if ( button.strikethroughImg ) button.strikethroughImg.style.display = this.cssProps.ib;
+
+        }
+
+        // Show the button onscreen. Also set activation/deactivation of its strikethrough.
+
+        button.show = () => {
+
+            button.style.display = this.cssProps.ib;
+
+            if ( button.emulatedImg ) button.emulatedImg.style.display = this.cssProps.ib;
+
+            if ( button.active ) {
+
+                button.strikethroughImg.style.display = this.cssProps.none;
+
+            } else {
+
+                button.strikethroughImg.style.display = this.cssProps.ib;
+
+            }
+
+        }
+
+        // Hide the button onscreen.
+
+        button.hide = () => {
+
+            button.style.display = this.cssProps.none;
+
+            if ( button.emulatedImg ) button.emulatedImg.style.display = this.cssProps.none;
+
+            if ( button.strikethroughImg ) button.strikethroughImg.style.display = this.cssProps.none;
 
         }
 
@@ -1300,13 +1353,13 @@ class Ui {
 
         modal.show = () => {
 
-            modal.style.display = 'inline-block';
+            modal.style.display = this.cssProps.ib;
 
         }
 
         modal.hide = () => {
 
-            modal.style.display = 'none';
+            modal.style.display = this.cssProps.none;
 
         }
 
@@ -1344,13 +1397,13 @@ class Ui {
 
         progress.show = () => {
 
-            progress.style.display = 'inline-block';
+            progress.style.display = this.cssProps.ib;
 
         }
 
         progress.hide = () => {
 
-            progress.style.display = 'none';
+            progress.style.display = this.cssProps.none;
 
         }
 
@@ -1549,7 +1602,7 @@ class Ui {
 
         menu.show = ( scroll ) => {
 
-            menu.style.display = 'inline-block';
+            menu.style.display = this.cssProps.ib;
 
             menu.style.opacity = '1';
 
@@ -1563,7 +1616,7 @@ class Ui {
 
         menu.hide = () => {
 
-            menu.style.display = 'none';
+            menu.style.display = this.cssProps.none;
 
             if ( arrow ) arrow.style.opacity = 0;
 
@@ -1571,7 +1624,7 @@ class Ui {
 
         menu.visible = () => {
 
-            return !! ( menu.style.display === 'inline-block' );
+            return !! ( menu.style.display === this.cssProps.ib );
 
         }
 
@@ -1611,13 +1664,13 @@ class Ui {
 
         spinner.show = () => {
 
-            spinner.style.display = 'inline-block';
+            spinner.style.display = this.cssProps.ib;
 
         }
 
         spinner.hide = () => {
 
-            spinner.style.display = 'none';
+            spinner.style.display = this.cssProps.none;
 
         }
 

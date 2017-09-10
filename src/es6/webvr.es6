@@ -233,7 +233,7 @@ class WebVR {
 
             }, ( reject ) => {
 
-                console.warn( 'WebVR::init(): reject navigator.getVRDisplays, error is:' + reject + ' display is:' + d );
+                console.warn( 'WebVR::init(): reject navigator.getVRDisplays, error is:' + reject + ', display is:' + d );
 
                 // This should be reported as a fail.
 

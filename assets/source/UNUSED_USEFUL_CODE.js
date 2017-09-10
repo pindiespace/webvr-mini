@@ -1,6 +1,24 @@
 /* unused JS code */
 
 
+/* don't need styles for controls on WebVR WebGL <canvas>, so remove from index.html */
+
+        /* controls get local styles in Ui module. */
+
+        .webvr-mini-controls {
+
+            position: absolute;
+
+            top: 0;
+
+            left: 0;
+
+            width: 100%;
+
+            /* height adjusted dynamically by internal controls */
+
+        }
+
 
     /** 
      * Regularize detecting the end of a CSS transition. Return the 
