@@ -109,7 +109,9 @@ class Ui {
 
                 zIndex: 10,
 
-                height: '72px'
+                height: '84px', // controls plus their padding
+
+                width: "100%" // forces across width of canvas
 
             },
 
@@ -153,11 +155,7 @@ class Ui {
 
                 display: 'inline-block',
 
-                boxSizing: 'content-box', // useful to compute without borders here
-
-                transitionProperty: 'left',
-
-                transition: 'transition: left 0.3s;'
+                transition: 'left 0.3s ease'
 
             },
 
@@ -213,7 +211,11 @@ class Ui {
 
                 paddingLeft: '0px', 
 
-                paddingRight: '18px' // hides the scrollbar
+                paddingRight: '18px', // hides the scrollbar
+
+                opacity: '0',
+
+                transition: 'opacity 0.5s ease'
 
             },
 
@@ -266,6 +268,10 @@ class Ui {
                 padingBottom: '0px',
 
                 borderRadius: '9px',
+
+                overflow: 'hidden', // prevents linebreaks in text
+
+                whiteSpace: 'nowrap',
 
                 left: '0px',
 
@@ -940,7 +946,7 @@ class Ui {
 
             let gearButton = this.createButton( 'gear', this.icons.gear, 0, 218, null, null );
 
-            gearButton.tooltipActive = 'Configure',
+            gearButton.tooltipActive = 'Configure the display any old way that you want',
 
             gearButton.tooltipInactive = 'Cannot configure';
 
@@ -1298,7 +1304,6 @@ class Ui {
 
             if ( button.strikethroughImg ) button.strikethroughImg.style.display = 'none';
 
-
         }
 
         // Display the button, but deactivate it.
@@ -1630,17 +1635,29 @@ class Ui {
 
         }
 
-        // Show the menu.
-
-        menu.show = ( scroll ) => {
+        menu.activate = () => {
 
             menu.style.display = 'inline-block';
 
-            menu.style.opacity = '1';
+            if ( menu.strikethroughImg ) menu.strikethroughImg.style.display = 'none';
+
+        }
+
+        menu.deactivate = () => {
+
+            if ( menu.strikethroughImg ) menu.strikethroughImg.style.display = 'none';
+
+        }
+
+        // Show the menu. Use opacity because it can be animated via CSS transitions.
+
+        menu.show = ( scroll ) => {
 
             if ( arrow ) arrow.style.opacity = '1';
 
             let domList = menu.getList();
+
+            domList.style.opacity = '1';
 
             domList.scrollTop = scroll || 0;
 
@@ -1648,23 +1665,9 @@ class Ui {
 
         menu.hide = () => {
 
-            menu.style.display = 'none';
+            menu.getList().style.opacity = '0';
 
             if ( arrow ) arrow.style.opacity = 0;
-
-        }
-
-        menu.visible = () => {
-
-            return !! ( menu.style.display === 'inline-block' );
-
-        }
-
-        menu.activate = () => {
-
-        }
-
-        menu.deactivate = () => {
 
         }
 
