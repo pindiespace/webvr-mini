@@ -140,6 +140,29 @@ class AssetPool {
 
     }
 
+    /**
+     * Given an object, recover its key.
+     * @param {Object} obj the object (supposedly) in the keyList.
+     * @return {String|Null} return the key of the object, or null.
+     */
+    getKey ( obj ) {
+
+        for ( let i in this.keyList ) {
+
+            let o = this.keyList[ i ];
+
+            if ( o === obj ) {
+
+                return i;
+
+            }
+
+        }
+
+        return null;
+
+    }
+
     /** 
      * Check if the actual object (not a clone) has already been added to the list.
      * @param {Object} the test object.

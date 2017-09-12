@@ -1109,6 +1109,8 @@ class Util {
 
     getFileExtension ( fname ) {
 
+        console.log(".....FNAME IS A:" + fname)
+
         if ( fname ) {
 
             return fname.slice( ( ( fname.lastIndexOf( '.' ) - 1 >>> 0 ) + 2 ) ).toLowerCase();

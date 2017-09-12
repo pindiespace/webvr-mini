@@ -331,7 +331,11 @@ class World extends AssetPool {
 
         this.s2 = this.shaderPool.getAssetByName( 'shaderColor' );
 
-        // Get the World file, overwriting defaults as necessary.
+        /* 
+         * Get the World file, overwriting defaults as necessary. The 
+         * active World JSON file data is used to call PrimFactory to 
+         * create the Prims for the active scene.
+         */
 
         for ( let i = 0; i < this.worldPaths.length; i++ ) {
 
@@ -339,52 +343,10 @@ class World extends AssetPool {
 
         }
 
-        // if nobody is active, or there are not worldPaths, create a default world.
-
-        // TODO: ULTRA-SIMPLE PRIM GENERATION.
-
-        // TODO: WARNING THAT NO WORLDS ARE DEFINED
-
-/*
-
-            this.primFactory.createPrim(
-
-                this.s1,                               // callback function
-                typeList.MESH,
-                'objfile',
-                vec5( 2, 2, 2 ),                       // dimensions (4th dimension doesn't exist for cylinder)
-                vec5( 40, 40, 40  ),                    // divisions MAKE SMALLER
-                vec3.fromValues( -3.5, -1, -0.0 ),      // position (absolute)
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [], // texture loaded directly
-                //[ 'obj/capsule/capsule.obj' ], // works, but HALF-CAPSULE (shader normals???)
-                //[ 'obj/rose/rose.obj' ], // works great
-                //[ 'obj/rose2/rose2.obj' ],
-                //[ 'obj/cube/cube.obj' ], // works great
-                //[ 'obj/oblong/oblong.obj' ], // works great but HALF-OBJECT (dark side in pure gray)
-                //[ 'obj/cylinder/cylinder.obj' ], // !!!!!!!! nothing shadows. One panel is gray
-                //[ 'obj/balls/balls.obj' ], // great
-                //[ 'obj/mountains/mountains.obj' ], // NOT WORKING, calls nonexistent materials
-                //[ 'obj/landscape/landscape.obj'], // ok, but black shadows with lighting
-                [ 'obj/toilet/toilet.obj' ], // works great
-                //[ 'obj/naboo/naboo.obj' ], // ok, black shadows
-                //[ 'obj/star/star.obj'], // ok
-                //[ 'obj/robhead/robhead.obj'], // ok, no texcoords or normals. works, but turns black with lighting
-                //[ 'obj/soccerball/soccerball.obj'], // no texcoords or normals
-                //[ 'obj/basketball/basketball.obj'], //!!!!!!!!!!! grey, then goes black at alpha = 1; missing texture
-                //[ 'obj/rock1/rock1.obj'], // ok, works
-                //[ 'obj/cherries/cherries.obj'], // ok
-                //[ 'obj/banana/banana.obj' ], // works great
-                false, // if true, use color array instead of texture array
-                false, // if true, apply textures to each face, not whole Prim.
-                true, // if true, use lighting                
-            );
-
-*/
-
-        // Note: the init() method sets up the update() and render() methods for the Shader.
+        /* 
+         * Initialize the Shaders we will use.
+         * Note: the init() method sets up the update() and render() methods for the Shader.
+         */
 
         this.r0 = this.s0.init();
 
@@ -400,28 +362,6 @@ class World extends AssetPool {
          */
 
         this.start();
-
-    }
-
-    /** 
-     * Get the currently active World.
-     * Used by PrimFactory to reset the active Prims to render.
-     */
-    getActiveWorld () {
-
-        for ( let i in this.keyList ) {
-
-            let w = this.keyList[ i ];
-
-            if ( w.scene.active ) {
-
-                return w;
-
-            }
-
-        }
-
-        return null;
 
     }
 
@@ -453,14 +393,31 @@ class World extends AssetPool {
     }
 
     /** 
-     * Given a World JSON file data set, compute the World.
-     * @param {Object} world the definition of a scene and its Prims, derived from JSON file.
-     * @param {String} path the server path to the JSON file with the scene and its Prims.
-     * @return {Array[Prim]| Null} if we load a World (either for the first time, or from the 
-     * PrimFactory AssetPool) return a list of rendered Prims, else return NULL if the world 
-     * is invalid or inactive.
+     * Get the currently active World.
+     * Used by PrimFactory to reset the active Prims to render.
      */
-    computeWorld ( world, path ) {
+    getActiveWorld () {
+
+        for ( let i in this.keyList ) {
+
+            let w = this.keyList[ i ];
+
+            if ( w.scene.active ) {
+
+                return w;
+
+            }
+
+        }
+
+        return null;
+
+    }
+
+    /** 
+     * Read the JSON for an individual Prim, and execute Prim creation.
+     */
+    computePrim ( pData, i ) {
 
         const vec3 = this.glMatrix.vec3;
 
@@ -473,41 +430,154 @@ class World extends AssetPool {
         const directions = this.primFactory.geometryPool.directions; // cardinal positions
 
         const util = this.util;
-            // Return a list of valid Prim objects to assign to this World later.
 
-            let validPrims = [];
+        let shader = this.shaderPool.getAssetByName( pData.shader );
 
-        // If we're going to create the Scene, make this the active Scene.
+        console.log("..........ComputePrim: i:" + i + " SHADER:" + shader)
 
-        if ( world.scene ) {
+        if ( shader ) {
 
-            // Assign a URL style path, if defined.
 
-            if ( path ) {
+            if ( shader.name )  console.log("...........GETTING SHADER:" + shader.name ); ///////////////////////////////////////
 
-                world.scene.path = path;
 
-            } else if ( world.path ) {
+            // Handle cases for dimensions and divisions params are numbers (they may also be strings).
 
-                path = world.scene.path;
+            if ( util.isNumber( pData.dimensions[ 3 ] ) ) {
 
-            } else {
-
-                console.error( 'World::getWorld(): no valid path to World' );
-
-                return null; // empty set.
+                pData.dimensions[ 3 ] = parseFloat( pData.dimensions[ 3 ] );
 
             }
 
-            /* 
-             * ======================================================
-             * We've never loaded this World, so begin loading it.
-             * 
-             * Check if the World is listed as 'active'.
-             * ======================================================
-             */
+            if ( util.isNumber( pData.dimensions[ 4 ] ) ) {
 
+                pData.dimensions[ 4 ] = parseFloat( pData.dimensions[ 4 ] );
 
+            }
+
+            if ( util.isNumber( pData.divisions[ 3 ] ) ) {
+
+                pData.divisions[ 3 ] = parseFloat( pData.divisions[ 3 ] );
+
+            }
+
+            if ( util.isNumber( pData.divisions[ 4 ] ) ) {
+
+                pData.divisions[ 4 ] = parseFloat( pData.divisions[ 4 ] );
+
+            }
+
+            if ( pData.useColorArray ) pData.useColorArray = JSON.parse( pData.useColorArray );      // if true, use color array instead of texture array
+
+            if ( pData.useFaceTextures) pData.useFaceTextures = JSON.parse( pData.useFaceTextures ); // if true, apply textures to each face, not whole Prim.
+
+            if ( pData.useLighting ) pData.useLighting = JSON.parse( pData.useLighting );            // if true, use lighting (default)
+
+            if ( pData.useMetaData ) pData.useMetaData = JSON.parse( pData.useMetaData );            // if true, keep data associated with regions of prim.
+
+            // Create the Prim.
+
+            return this.primFactory.createPrim(
+
+                this.shaderPool.getAssetByName( pData.shader ), // Shader used
+
+                typeList[ pData.type ],                         // Prim type
+
+                i,                                          // name
+
+                vec5( 
+                    parseFloat( pData.dimensions[ 0 ] ), 
+                    parseFloat( pData.dimensions[ 1 ] ), 
+                    parseFloat( pData.dimensions[ 2 ] ), 
+                    pData.dimensions[ 3 ],  // these may be non-numeric
+                    pData.dimensions[ 4 ]
+
+                ),      // dimensions, WebGL units
+
+                vec5( 
+                    parseFloat( pData.divisions[ 0 ] ), 
+                    parseFloat( pData.divisions[ 1 ] ), 
+                    parseFloat( pData.divisions[ 2 ] ), 
+                    pData.divisions[ 3 ],  //these may be non-numeric
+                    pData.divisions[ 4 ]
+
+                ),        // divisions, pass curving of edges as 4th parameter
+
+                vec3.fromValues( 
+                    parseFloat( pData.position[ 0 ] ), 
+                    parseFloat( pData.position[ 1 ] ), 
+                    parseFloat( pData.position[ 2 ] )
+
+                ),        // acceleration in x, y, z
+
+                vec3.fromValues( 
+                    parseFloat( pData.acceleration[ 0 ] ), 
+                    parseFloat( pData.acceleration[ 1 ] ), 
+                    parseFloat( pData.acceleration[ 2 ] )
+
+                ),    // position (absolute), relative to camera not World space
+
+                vec3.fromValues(
+                    util.degToRad( pData.rotation[ 0 ] ), 
+                    util.degToRad( pData.rotation[ 1 ] ), 
+                    util.degToRad( pData.rotation[ 2 ] )
+
+                ),    // rotation (absolute)
+
+                vec3.fromValues(
+                    util.degToRad( pData.angular[ 0 ] ), 
+                    util.degToRad( pData.angular[ 1 ] ), 
+                    util.degToRad( pData.angular[ 2 ] )
+
+                ),    // angular (orbital) velocity
+
+                pData.textures,                   // texture images (if not in model)
+
+                pData.models,                     // model (.OBJ, .GlTF)
+
+                pData.useColorArray,              // if true, use color array instead of texture array
+
+                pData.useFaceTextures,            // if true, apply textures to each face, not whole Prim.
+
+                pData.useLighting,                // if true, use lighting (default)
+
+                pData.useMetaData,                // if true, store meta-data in prim.materials[].objects array
+
+                pData.pSystem,                    // if this Prim should be duplicated into a particle system, data is here
+
+                pData.animSystem                  // if this Prim has animation waypoints, data is here
+
+            ); // end createPrim
+
+        } else { // no Shader
+
+            console.error( 'World::computePrim(): no shader for:' + pData.name );
+
+        }
+
+    }
+
+    /** 
+     * Given a World JSON file data set already in World AssetPool, compute the World.
+     * @param {String} key the key to access the individual World.
+     * @param {String} path the server path to the JSON file with the scene and its Prims.
+     * @return {Array[Prim]| Null} if we load a World (either for the first time, or from the 
+     * PrimFactory AssetPool) return a list of rendered Prims, else return NULL if the world 
+     * is invalid or inactive.
+     */
+    computeWorld ( world ) {
+
+        const util = this.util;
+            
+        // Return a list of valid Prim objects to assign to this World later.
+
+        let validPrims = [];
+
+        console.log(".....in computeWorld, world is:" + world )
+
+        // Parse the active world scene
+
+        if ( world && world.scene ) {
 
             world.scene.active = JSON.parse( world.scene.active );
 
@@ -520,6 +590,8 @@ class World extends AssetPool {
                     let s = world[ i ];
 
                     // 'scene' = parameters used to configure the World for its Prims.
+
+                    console.log(".......WORLD[ i ] " + world.scene.name + " is:" + s)
 
                     if ( i === 'scene' ) { 
 
@@ -539,135 +611,43 @@ class World extends AssetPool {
 
                         }
 
+                    } else if ( i === 'key' ) {
+
+                        // do nothing
+
+                    } else if ( i === 'path' ) {
+
+                        // do nothing
+
                     } else { // its an individual Prim
 
+                        // check for a Prim worldKey
 
-                        console.log( "I is:" + i + ", CHECKING SHADER for " + world.scene.name + " is:" + s.shader + " for prim: " + s.name)
+                        if ( ! s.worldKey ) {
 
-                        let shader = this.shaderPool.getAssetByName( s.shader );
+                            console.log( 'World::computeWorld(): prim ' + s.name + ' not loaded, loading...');
 
-                        if ( shader.name )  console.log("GETTING SHADER:" + shader.name );
-
-                        if ( shader ) {
-
-                            // Handle cases for dimensions and divisions params are numbers (they may also be strings).
-
-                            if ( this.util.isNumber( s.dimensions[ 3 ] ) ) {
-
-                                s.dimensions[ 3 ] = parseFloat( s.dimensions[ 3 ] );
-
-                            }
-
-                            if ( this.util.isNumber( s.dimensions[ 4 ] ) ) {
-
-                                s.dimensions[ 4 ] = parseFloat( s.dimensions[ 4 ] );
-
-                            }
-
-                            if ( this.util.isNumber( s.divisions[ 3 ] ) ) {
-
-                                s.divisions[ 3 ] = parseFloat( s.divisions[ 3 ] );
-
-                            }
-
-                            if ( this.util.isNumber( s.divisions[ 4 ] ) ) {
-
-                                s.divisions[ 4 ] = parseFloat( s.divisions[ 4 ] );
-
-                            }
-
-                            if ( s.useColorArray ) s.useColorArray = JSON.parse( s.useColorArray );      // if true, use color array instead of texture array
-
-                            if ( s.useFaceTextures) s.useFaceTextures = JSON.parse( s.useFaceTextures ); // if true, apply textures to each face, not whole Prim.
-
-                            if ( s.useLighting ) s.useLighting = JSON.parse( s.useLighting );            // if true, use lighting (default)
-
-                            if ( s.useMetaData ) s.useMetaData = JSON.parse( s.useMetaData );            // if true, keep data associated with regions of prim.
-
-                            // Create the Prim.
-
-                            let p = this.primFactory.createPrim(
-
-                                this.shaderPool.getAssetByName( s.shader ), // Shader used
-
-                                typeList[ s.type ],                         // Prim type
-
-                                i,                                          // name
-
-                                vec5( 
-                                    parseFloat( s.dimensions[ 0 ] ), 
-                                    parseFloat( s.dimensions[ 1 ] ), 
-                                    parseFloat( s.dimensions[ 2 ] ), 
-                                    s.dimensions[ 3 ],  // these may be non-numeric
-                                    s.dimensions[ 4 ]
-
-                                ),      // dimensions, WebGL units
-
-                                vec5( 
-                                    parseFloat( s.divisions[ 0 ] ), 
-                                    parseFloat( s.divisions[ 1 ] ), 
-                                    parseFloat( s.divisions[ 2 ] ), 
-                                    s.divisions[ 3 ],  //these may be non-numeric
-                                    s.divisions[ 4 ]
-
-                                ),        // divisions, pass curving of edges as 4th parameter
-
-                                vec3.fromValues( 
-                                    parseFloat( s.position[ 0 ] ), 
-                                    parseFloat( s.position[ 1 ] ), 
-                                    parseFloat( s.position[ 2 ] )
-
-                                ),        // acceleration in x, y, z
-
-                                vec3.fromValues( 
-                                    parseFloat( s.acceleration[ 0 ] ), 
-                                    parseFloat( s.acceleration[ 1 ] ), 
-                                     parseFloat( s.acceleration[ 2 ] )
-
-                                ),    // position (absolute), relative to camera not World space
-
-                                vec3.fromValues(
-                                    util.degToRad( s.rotation[ 0 ] ), 
-                                    util.degToRad( s.rotation[ 1 ] ), 
-                                    util.degToRad( s.rotation[ 2 ] )
-
-                                ),    // rotation (absolute)
-
-                                vec3.fromValues(
-                                    util.degToRad( s.angular[ 0 ] ), 
-                                    util.degToRad( s.angular[ 1 ] ), 
-                                    util.degToRad( s.angular[ 2 ] )
-
-                                ),    // angular (orbital) velocity
-
-                                s.textures,                   // texture images (if not in model)
-
-                                s.models,                     // model (.OBJ, .GlTF)
-
-                                s.useColorArray,              // if true, use color array instead of texture array
-
-                                s.useFaceTextures,            // if true, apply textures to each face, not whole Prim.
-
-                                s.useLighting,                // if true, use lighting (default)
-
-                                s.useMetaData,                // if true, store meta-data in prim.materials[].objects array
-
-                                s.pSystem,                    // if this Prim should be duplicated into a particle system, data is here
-
-                                s.animSystem                  // if this Prim has animation waypoints, data is here
-
-                            ); // end createPrim
+                            let p = this.computePrim ( s, i );
 
                             if ( p ) {
+
+                                p.worldKey = world.key;
 
                                 validPrims.push( p );
 
                             }
 
-
                         } else {
 
-                            console.error( 'World::getWorld(): invalid Shader:' + i + ', shader:' + s.shader + ' for Prim:' + i.name );
+                            // recover the Prim from the PrimFactory AssetPool.
+
+                            console.log( 'World::computeWorld(): prim ' + s.name + ' being recovered from PrimFactory...' );
+
+                            p = this.primFactory.keyList[ s.key ];
+
+                            console.log("VALID PRIM:" + p.name );
+
+                            validPrims.push( p );
 
                         }
 
@@ -690,7 +670,7 @@ class World extends AssetPool {
 
             // World with missing scene.
 
-            console.warn( 'World::getWorld(): World with no scene:' + path );
+            console.warn( 'World::getWorld(): Invalid World ' + world + ' with no scene:' );
 
             return null;
 
@@ -706,108 +686,133 @@ class World extends AssetPool {
      */
     getWorld ( path ) {
 
-        // Check if we've already loaded this World.
+        const util = this.util;
 
-        if ( this.pathInList( path ) ) {
+        let validPrims = [], world, worldKey;
 
-            return this.primFactory.setActivePrims();
+        // We've never loaded this world's JSON file (just received via network request).
 
-        }
+        console.log(".......LOADING NEW WORLD AT PATH:.........." + path )
 
-        // We've never loaded this world, network request.
+        let mimeType = this.worldMimeTypes[ util.getFileExtension( path ) ] || this.worldMimeTypes.json;
 
-         if ( ! this.util.isWhitespace( path ) ) {
+        // check if mimeType is OK.
 
-            const mimeType = this.worldMimeTypes[ this.util.getFileExtension( path ) ];
+        if ( mimeType ) {
 
-            const util = this.util;
+            this.doRequest( path, 0, 
 
-            // check if mimeType is OK.
+                ( updateObj ) => {
 
-            if( mimeType ) {
+                    /* 
+                     * updateObj returned from GetAssets has the following structure:
+                     * { 
+                     *   pos: pos, 
+                     *   path: requestURL, 
+                     *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
+                     *   error: false|response 
+                     * } 
+                     */
 
-                this.doRequest( path, 0, 
+                    // load a Model file.
 
-                    ( updateObj ) => {
+                    if ( updateObj.data ) {
 
-                        /* 
-                         * updateObj returned from GetAssets has the following structure:
-                         * { 
-                         *   pos: pos, 
-                         *   path: requestURL, 
-                         *   data: null|response, (Blob, Text, JSON, FormData, ArrayBuffer)
-                         *   error: false|response 
-                         * } 
-                         */
+                        world = util.parseJSON( updateObj.data );
 
-                        // load a Model file.
+                        if ( world ) {
 
-                        if ( updateObj.data ) {
+                            world.path = path;
 
-                            let world = util.parseJSON( updateObj.data );
+                            worldKey = util.computeId();
 
-                            let worldKey = util.computeId();
+                            // Store in AssetPool (superclass) using a key, with path in world.scene.path
 
-                            if ( world ) {
+                            this.addAsset( world, worldKey );
 
-                                // valid Prims are returned from this.
+                            validPrims = this.computeWorld( world );
 
-                                let validPrims = this.computeWorld( world, path );
+                            // If there were valid Prims in the list, retroactively add the world key to them.
 
-                                if ( validPrims ) { // zero is OK.
+                            if ( validPrims.length > 0 ) {
 
-                                    // Store in AssetPool (superclass) using a key, with path in world.scene.path
+                                 // Force PrimFactory to reset its list of current prims to the current active Worlds.
 
-                                    this.addAsset( world, '' );
-
-                                    // If there were valid Prims in the list, retroactively add the world key to them.
-
-                                    if ( validPrims.length > 0 ) {
-
-                                        for ( let i = 0; i < validPrims.length; i++ ) {
-
-                                            validPrims[ i ].worldKey = world.key; // so we can find them later!
-
-                                        }
-
-                                        // Force PrimFactory to reset its list of current prims to the current active Worlds.
-
-                                        this.primFactory.setActivePrims( world.key );
-
-                                    }
-
-                                }
-
-                            } else {
-
-                                console.error( 'World::getWorld():World file:' + path + ' could not be parsed' );
+                                this.primFactory.setActivePrims( worldKey );
 
                             }
 
                         } else {
 
-                            console.error( 'World::getWorld(): World file, no data found for:' + updateObj.path );
+                            console.error( 'World::getWorld():World file:' + path + ' could not be parsed' );
 
                         }
 
-                    }, true, mimeType, 0 ); // end of this.doRequest(), initial request at 0 tries
+                    } else {
 
-            } else {
+                        console.error( 'World::getWorld(): World file, no data found for:' + updateObj.path );
+
+                    }
+
+                }, true, mimeType, 0 ); // end of this.doRequest(), initial request at 0 tries
+
+        } else {
 
                 // Invalid MIMEtype.
 
                 console.error( 'World::getWorld(): file type "' + util.getFileExtension( path ) + '" in:' + path + ' not supported, not loading' );
 
+        }
+
+
+    }
+
+    /** 
+     * Switch the World we are displaying, (re) loading Prims as necessary.
+     * @param {String} worldKey the key for retrieving the World in our AssetPool.
+     */
+    switchWorld ( worldKey ) {
+
+        let world = this.getAssetByKey( worldKey );
+
+        if ( world ) {
+
+            // Deactivate all other worlds.
+
+            for ( let i in this.keyList ) {
+
+                this.keyList[ i ].scene.active = false;
+
             }
 
+            // Activate this World.
 
-         } else {
+            world.scene.active = true;
 
-            // Invalid path.
+            // Switch it.
 
-            console.error( 'World::getWorld(): no path supplied, not loading' );
+            this.computeWorld( world );
 
-         }
+        } else {
+
+            console.error( 'World::switchWorld(): invalid worldKey:' + worldKey );
+        }
+
+    }
+
+    /** 
+     * Add a Prim's description to the World, by serializing.
+     * @param {Prim} the new Prim to add.
+     */
+    addPrimToWorld ( worldKey, prim ) {
+
+        //TODO: INCOMPLETE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+        let s = JSON.stringify( prim );
+
+        let w = this.getAsset( worldKey );
+
+        return w + JSON.parse( s );
 
     }
 
@@ -816,7 +821,7 @@ class World extends AssetPool {
      * @param {Prim} prim the Prim object to remove.
      * @return {Prim|Null} the Prim removed, or a null.
      */
-    removePrimFromWorld ( primKey ) {
+    removePrimFromWorld ( worldKey, primKey ) {
 
         let p = this.primFactory.getAsset( primKey );
 
@@ -845,6 +850,17 @@ class World extends AssetPool {
         }
 
         return p;
+
+    }
+
+    /**
+     * Move a Prim between worlds.
+     */
+    teleportPrim ( world1Key, world2Key, primKey ) {
+
+        let p = this.removePrimFromWorld( world1Key, primKey );
+
+        this.addPrimToWorld( worldKey, primKey );
 
     }
 

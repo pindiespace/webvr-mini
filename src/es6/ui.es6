@@ -123,9 +123,8 @@ class Ui {
 
                 zIndex: 10,
 
-                opacity: 0.5,
+                opacity: 0.5
 
-                transition: 'opacity 0.2s ease'
             },
 
             dialog: { // <dialog role="dialog">, https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/ARIA_Techniques/Using_the_dialog_role
@@ -421,11 +420,15 @@ class Ui {
 
               case this.UI_VR: // SWITCH to VR ( not the current Ui )
 
-                this.exitVRButton.show();
-
                 this.vrButton.hide();
 
                 this.fullscreenButton.hide();
+
+                this.worldButton.shift( true ); // TODO: move into .setControlsByMode()!!!!!!!!!!!!!!!!!!!!!!!!
+
+                this.gearButton.shift( true ); // TODO: move into .setControlsByMode()!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+                this.exitVRButton.show();
 
                 break;
 
@@ -582,6 +585,8 @@ class Ui {
 
             controls.style.opacity = 0.5; // defaults to 1 if event not present
 
+            this.controls.style.transition = 'opacity 0.2s ease';
+
             controls.parentNode.addEventListener( 'mouseenter', ( evt ) => {
 
                 controls.style.opacity = 1;
@@ -594,7 +599,14 @@ class Ui {
 
             }, false );
 
+        } else {
+
+            controls.style.opacity = 1;
+
         }
+
+
+
         // document.styleSheets[0].addRule('p.special:before', 'content: "' + str + '";');
 
         // save the base zIndex to add to individual controls.
@@ -691,15 +703,15 @@ class Ui {
 
                 console.log( 'clicked vr button...' );
 
-                this.vrButton.hide();
+                //this.vrButton.hide();
 
-                this.fullscreenButton.hide();
+                //this.fullscreenButton.hide();
 
-                this.worldButton.shift( true ); // TODO: move into .setControlsByMode()!!!!!!!!!!!!!!!!!!!!!!!!
+                //this.worldButton.shift( true ); // TODO: move into .setControlsByMode()!!!!!!!!!!!!!!!!!!!!!!!!
 
-                this.gearButton.shift( true );
+                //this.gearButton.shift( true ); // TODO: move into .setControlsByMode()!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-                this.exitVRButton.show();
+                //this.exitVRButton.show();
 
                 // Set the mode (DOM -> WebVR stereo).
 
@@ -947,11 +959,11 @@ class Ui {
 
             worldMenu.addEventListener( 'click', ( evt ) => {
 
-                console.log( 'World name:' + evt.target.innerHTML )
-
                 // Commit.
 
-                console.log("CHANGING WORLD TO:" + evt.target.innerHTML );
+                console.log("CHANGING WORLD FROM:" + this.world.getActiveWorld().scene.name + " TO:" + evt.target.innerHTML );
+
+                this.world.switchWorld( evt.target.id );
 
                 worldMenu.hide();
 
@@ -1856,6 +1868,8 @@ class Ui {
             + 'px';
 
         }
+
+        // Center the arrow underneath its calling button.
 
         arrow.shiftCenter( button );
 

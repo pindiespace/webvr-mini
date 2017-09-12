@@ -356,9 +356,11 @@ class PrimFactory extends AssetPool {
 
         // Check to see if the key is defined in World.
 
+        console.log("........SETTING ACTIVE PRIMS USING key: " + worldKey + " ....................")
+
         if ( ! this.world.keyList[ worldKey ] ) {
 
-            console.error( 'Primfactory::setPrimWorld(): invalid key passed' );
+            console.error( 'Primfactory::setActivePrims(): invalid key passed' );
 
         }
 
@@ -370,6 +372,8 @@ class PrimFactory extends AssetPool {
 
             let p = this.keyList[ i ];
 
+            console.log("PRIM.worldKey:" + p.worldKey + " worldKey:" + worldKey )
+
             if ( p.worldKey === worldKey ) {
 
                 newPrims.push( p );
@@ -377,6 +381,10 @@ class PrimFactory extends AssetPool {
             } 
 
         }
+
+        // TODO: HAVE TO RE-ASSIGN TO SHADERS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+        console.log("NEW PRIMS LENGTH:" + newPrims.length )
 
         /* 
          * Remove old array contents WITHOUT zapping the array reference (ES5 method). We 
@@ -386,44 +394,6 @@ class PrimFactory extends AssetPool {
         this.prims.splice( 0, this.prims.length );
 
         Array.prototype.push.apply( this.prims, newPrims );
-
-    }
-
-
-    /** 
-     * Switch a specific Prim between Worlds 
-     * @param {Prim} the prim to switch.
-     * @param {String} newWorldKey the new world to switch to.
-     */
-    switchPrimBetweenWorlds ( prim, newWorldKey ) {
-
-        let p = this.assetInList( prim );
-
-        let currentWorld = this.world.getActiveWorld();
-
-        if ( p && currentWorld ) {
-
-            // If the assigned world is not the one currently being displayed, delete from this.prims[];
-
-            if ( currentWorld !== newWorldKey ) {
-
-                let pos = this.prims.indexOf( p );
-
-                if ( pos !== this.util.NOT_IN_LIST ) {
-
-                    this.prims[ pos ] = null; // nulls are ok in prim display list.
-
-                }
-
-            }
-
-            p.worldKey = newWorldKey;
-
-            return true;
-
-        }
-
-        return false;
 
     }
 
