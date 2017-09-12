@@ -108,9 +108,13 @@ class World extends AssetPool {
         this.worldPaths = [
 
             'world/default-world.json', 
+
             'world/gltf-world.json', 
+
             'world/obj-world.json', 
+
             'world/tangled-world.json', 
+
             'world/celestial-world.json'
 
         ];
@@ -243,6 +247,8 @@ class World extends AssetPool {
 
                 active: false, 
 
+                path: '',
+
                 name : name,
 
                 description : description,
@@ -295,17 +301,111 @@ class World extends AssetPool {
 
     }
 
-    /** 
-     * Get all worlds by their key.
-     */
-    getWorlds () {
 
-        return this.getAllAssets();
+    /** 
+     * Create the world. Load Shader objects, and 
+     * create objects to render in the world.
+     */
+    init () {
+
+        const vec3 = this.glMatrix.vec3;
+
+        const vec4 = this.glMatrix.vec4;
+
+        const vec5 = this.primFactory.geometryPool.vec5;
+
+        const typeList = this.primFactory.geometryPool.typeList;
+
+        const directions = this.primFactory.geometryPool.directions;
+
+        const util = this.util;
+
+        // Put some media into our asset pools.
+
+        // Get the shaders (not initialized with update() and render() yet!).
+        // Note: pass 'world' in so we can get the World POV.
+
+        this.s0 = this.shaderPool.getAssetByName( 'shaderFader' );
+
+        this.s1 = this.shaderPool.getAssetByName( 'shaderTexture' );
+
+        this.s2 = this.shaderPool.getAssetByName( 'shaderColor' );
+
+        // Get the World file, overwriting defaults as necessary.
+
+        for ( let i = 0; i < this.worldPaths.length; i++ ) {
+
+            this.getWorld( this.worldPaths[ i ] );
+
+        }
+
+        // if nobody is active, or there are not worldPaths, create a default world.
+
+        // TODO: ULTRA-SIMPLE PRIM GENERATION.
+
+        // TODO: WARNING THAT NO WORLDS ARE DEFINED
+
+/*
+
+            this.primFactory.createPrim(
+
+                this.s1,                               // callback function
+                typeList.MESH,
+                'objfile',
+                vec5( 2, 2, 2 ),                       // dimensions (4th dimension doesn't exist for cylinder)
+                vec5( 40, 40, 40  ),                    // divisions MAKE SMALLER
+                vec3.fromValues( -3.5, -1, -0.0 ),      // position (absolute)
+                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
+                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
+                vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
+                [], // texture loaded directly
+                //[ 'obj/capsule/capsule.obj' ], // works, but HALF-CAPSULE (shader normals???)
+                //[ 'obj/rose/rose.obj' ], // works great
+                //[ 'obj/rose2/rose2.obj' ],
+                //[ 'obj/cube/cube.obj' ], // works great
+                //[ 'obj/oblong/oblong.obj' ], // works great but HALF-OBJECT (dark side in pure gray)
+                //[ 'obj/cylinder/cylinder.obj' ], // !!!!!!!! nothing shadows. One panel is gray
+                //[ 'obj/balls/balls.obj' ], // great
+                //[ 'obj/mountains/mountains.obj' ], // NOT WORKING, calls nonexistent materials
+                //[ 'obj/landscape/landscape.obj'], // ok, but black shadows with lighting
+                [ 'obj/toilet/toilet.obj' ], // works great
+                //[ 'obj/naboo/naboo.obj' ], // ok, black shadows
+                //[ 'obj/star/star.obj'], // ok
+                //[ 'obj/robhead/robhead.obj'], // ok, no texcoords or normals. works, but turns black with lighting
+                //[ 'obj/soccerball/soccerball.obj'], // no texcoords or normals
+                //[ 'obj/basketball/basketball.obj'], //!!!!!!!!!!! grey, then goes black at alpha = 1; missing texture
+                //[ 'obj/rock1/rock1.obj'], // ok, works
+                //[ 'obj/cherries/cherries.obj'], // ok
+                //[ 'obj/banana/banana.obj' ], // works great
+                false, // if true, use color array instead of texture array
+                false, // if true, apply textures to each face, not whole Prim.
+                true, // if true, use lighting                
+            );
+
+*/
+
+        // Note: the init() method sets up the update() and render() methods for the Shader.
+
+        this.r0 = this.s0.init();
+
+        this.r1 = this.s1.init();
+
+        this.r2 = this.s2.init();
+
+        /* 
+         * Fire world update (either window or WebVR display). Since we 
+         * do this directly, in most cases this will be the 'window' object. If the 
+         * VRDisplay becomes available, it emits an VR_DISPLAY_READY event, and we 
+         * dynamically switch to VRDisplay (see constructor emitter handler).
+         */
+
+        this.start();
 
     }
 
     /** 
      * Get the currently active World.
+     * Used by PrimFactory to reset the active Prims to render.
      */
     getActiveWorld () {
 
@@ -326,7 +426,9 @@ class World extends AssetPool {
     }
 
     /** 
-     * Get all worlds by their name. Used by the Ui class.
+     * Get all worlds by their name. 
+     * Used by the Ui class.
+     * @return {Object} a World Scene object.
      */
     getWorldScenes () {
 
@@ -346,91 +448,17 @@ class World extends AssetPool {
 
         }
 
-        window.w = w;
-
         return w;
 
     }
 
     /** 
-     * Set the scene which should be active.
-     * @param {World} world object.
-     */
-    setActiveWorld ( world ) {
-
-        // Clear existing World.
-
-        for ( let i in this.keyList ) {
-
-            let w = this.keyList[ i ];
-
-            if ( w.key === world.key ) {
-
-                w.scene.active = true;
-
-            } else {
-
-                w.scene.active = false;
-
-            }
-
-        }
-
-        // Set the new World.
-
-        this.computeWorld( world );
-
-    }
-
-    /** 
-     * Add Lights to global (app.js) Light object.
-     */
-    setLights ( lights ) {
-
-        for ( var j in lights ) {
-
-            let l = lights[ j ];
-
-            this.lights.setLight( this.lights.lightTypes[ j ],  j.ambient, j.lightingDirection , j.directionalColor, j.active );
-
-        }
-
-    }
-
-    /** 
-     * Get the POV (simple camera).
-     * @returns {Object} an object containing vec3 position and rotation arrays.
-     */
-    getPOV () {
-
-        return { 
-
-            position: this.position, 
-
-            rotation: this.rotation 
-
-        };
-
-    } 
-
-    /**
-     * Handle resize event for the World dimensions.
-     * @param {Number} width world width (x-axis) in units.
-     * @param {Number} height world height (y-axis) in units.
-     * @param {Number} depth world depth (z-axis) in units.
-     */
-    resize ( width, height, depth ) {
-
-        console.error( 'world::resize(): not implemented yet!' );
-
-    }
-
-
-    /** 
      * Given a World JSON file data set, compute the World.
      * @param {Object} world the definition of a scene and its Prims, derived from JSON file.
      * @param {String} path the server path to the JSON file with the scene and its Prims.
-     * @param {Boolean} createPrims if true, create the scene objects, otherwise just store the JSON file.
+     * @return {Array[Prim]| Null} if we load a World (either for the first time, or from the 
+     * PrimFactory AssetPool) return a list of rendered Prims, else return NULL if the world 
+     * is invalid or inactive.
      */
     computeWorld ( world, path ) {
 
@@ -445,10 +473,9 @@ class World extends AssetPool {
         const directions = this.primFactory.geometryPool.directions; // cardinal positions
 
         const util = this.util;
+            // Return a list of valid Prim objects to assign to this World later.
 
-        // Return a list of valid Prim objects to assign to this World later.
-
-        let validPrims = [];
+            let validPrims = [];
 
         // If we're going to create the Scene, make this the active Scene.
 
@@ -456,9 +483,31 @@ class World extends AssetPool {
 
             // Assign a URL style path, if defined.
 
-            if ( path ) world.scene.path = path;
+            if ( path ) {
 
-            // Check if the World is active.
+                world.scene.path = path;
+
+            } else if ( world.path ) {
+
+                path = world.scene.path;
+
+            } else {
+
+                console.error( 'World::getWorld(): no valid path to World' );
+
+                return null; // empty set.
+
+            }
+
+            /* 
+             * ======================================================
+             * We've never loaded this World, so begin loading it.
+             * 
+             * Check if the World is listed as 'active'.
+             * ======================================================
+             */
+
+
 
             world.scene.active = JSON.parse( world.scene.active );
 
@@ -491,6 +540,7 @@ class World extends AssetPool {
                         }
 
                     } else { // its an individual Prim
+
 
                         console.log( "I is:" + i + ", CHECKING SHADER for " + world.scene.name + " is:" + s.shader + " for prim: " + s.name)
 
@@ -640,7 +690,7 @@ class World extends AssetPool {
 
             // World with missing scene.
 
-            console.warn( 'World::computeWorld(): World with no scene:' + path );
+            console.warn( 'World::getWorld(): World with no scene:' + path );
 
             return null;
 
@@ -655,6 +705,16 @@ class World extends AssetPool {
      * PrimFactory if the World is the active one.
      */
     getWorld ( path ) {
+
+        // Check if we've already loaded this World.
+
+        if ( this.pathInList( path ) ) {
+
+            return this.primFactory.setActivePrims();
+
+        }
+
+        // We've never loaded this world, network request.
 
          if ( ! this.util.isWhitespace( path ) ) {
 
@@ -752,6 +812,87 @@ class World extends AssetPool {
     }
 
     /** 
+     * Remove a Prim from the World description.
+     * @param {Prim} prim the Prim object to remove.
+     * @return {Prim|Null} the Prim removed, or a null.
+     */
+    removePrimFromWorld ( primKey ) {
+
+        let p = this.primFactory.getAsset( primKey );
+
+        if ( p ) {
+
+            let w = this.getAsset( prim.worldKey );
+
+            if ( w ) {
+
+                for ( let i in w ) {
+
+                    let o = w[ i  ];
+
+                    if ( o.key === prim.worldKey ) { // remove reference in World list.
+
+                        delete w[ i ]; // can't delete the local variable o in strict mode!
+
+                        p = this.primFactory.deletePrim( prim );
+
+                    }
+
+                }
+
+            }
+
+        }
+
+        return p;
+
+    }
+
+
+    /** 
+     * Add Lights to global (app.js) Light object.
+     */
+    setLights ( lights ) {
+
+        for ( var j in lights ) {
+
+            let l = lights[ j ];
+
+            this.lights.setLight( this.lights.lightTypes[ j ],  j.ambient, j.lightingDirection , j.directionalColor, j.active );
+
+        }
+
+    }
+
+    /** 
+     * Get the POV (simple camera).
+     * @returns {Object} an object containing vec3 position and rotation arrays.
+     */
+    getPOV () {
+
+        return { 
+
+            position: this.position, 
+
+            rotation: this.rotation 
+
+        };
+
+    } 
+
+    /**
+     * Handle resize event for the World dimensions.
+     * @param {Number} width world width (x-axis) in units.
+     * @param {Number} height world height (y-axis) in units.
+     * @param {Number} depth world depth (z-axis) in units.
+     */
+    resize ( width, height, depth ) {
+
+        console.error( 'world::resize(): not implemented yet!' );
+
+    }
+
+    /** 
      * save a World to a JSON file description.
      */
     saveWorld ( path ) {
@@ -820,110 +961,6 @@ class World extends AssetPool {
      */
     computePlanetPositions ( prim ) {
 
-
-    }
-
-
-    /** 
-     * Create the world. Load Shader objects, and 
-     * create objects to render in the world.
-     */
-    init () {
-
-        const vec3 = this.glMatrix.vec3;
-
-        const vec4 = this.glMatrix.vec4;
-
-        const vec5 = this.primFactory.geometryPool.vec5;
-
-        const typeList = this.primFactory.geometryPool.typeList;
-
-        const directions = this.primFactory.geometryPool.directions;
-
-        const util = this.util;
-
-        // Put some media into our asset pools.
-
-        // Get the shaders (not initialized with update() and render() yet!).
-        // Note: pass 'world' in so we can get the World POV.
-
-        this.s0 = this.shaderPool.getAssetByName( 'shaderFader' );
-
-        this.s1 = this.shaderPool.getAssetByName( 'shaderTexture' );
-
-        this.s2 = this.shaderPool.getAssetByName( 'shaderColor' );
-
-        // Get the World file, overwriting defaults as necessary.
-
-        ////////////////////////////this.getWorld( this.DEFAULT_WORLD_PATH, true );
-
-        for ( let i = 0; i < this.worldPaths.length; i++ ) {
-
-            this.getWorld( this.worldPaths[ i ] );
-
-        }
-
-        // if nobody is active, or there are not worldPaths, create a default world.
-
-        // TODO: ULTRA-SIMPLE PRIM GENERATION.
-
-        // TODO: WARNING THAT NO WORLDS ARE DEFINED
-
-/*
-
-            this.primFactory.createPrim(
-
-                this.s1,                               // callback function
-                typeList.MESH,
-                'objfile',
-                vec5( 2, 2, 2 ),                       // dimensions (4th dimension doesn't exist for cylinder)
-                vec5( 40, 40, 40  ),                    // divisions MAKE SMALLER
-                vec3.fromValues( -3.5, -1, -0.0 ),      // position (absolute)
-                vec3.fromValues( 0, 0, 0 ),            // acceleration in x, y, z
-                vec3.fromValues( util.degToRad( 0 ), util.degToRad( 0 ), util.degToRad( 0 ) ), // rotation (absolute)
-                vec3.fromValues( util.degToRad( 0.2 ), util.degToRad( 0.5 ), util.degToRad( 0 ) ),  // angular velocity in x, y, x
-                [], // texture loaded directly
-                //[ 'obj/capsule/capsule.obj' ], // works, but HALF-CAPSULE (shader normals???)
-                //[ 'obj/rose/rose.obj' ], // works great
-                //[ 'obj/rose2/rose2.obj' ],
-                //[ 'obj/cube/cube.obj' ], // works great
-                //[ 'obj/oblong/oblong.obj' ], // works great but HALF-OBJECT (dark side in pure gray)
-                //[ 'obj/cylinder/cylinder.obj' ], // !!!!!!!! nothing shadows. One panel is gray
-                //[ 'obj/balls/balls.obj' ], // great
-                //[ 'obj/mountains/mountains.obj' ], // NOT WORKING, calls nonexistent materials
-                //[ 'obj/landscape/landscape.obj'], // ok, but black shadows with lighting
-                [ 'obj/toilet/toilet.obj' ], // works great
-                //[ 'obj/naboo/naboo.obj' ], // ok, black shadows
-                //[ 'obj/star/star.obj'], // ok
-                //[ 'obj/robhead/robhead.obj'], // ok, no texcoords or normals. works, but turns black with lighting
-                //[ 'obj/soccerball/soccerball.obj'], // no texcoords or normals
-                //[ 'obj/basketball/basketball.obj'], //!!!!!!!!!!! grey, then goes black at alpha = 1; missing texture
-                //[ 'obj/rock1/rock1.obj'], // ok, works
-                //[ 'obj/cherries/cherries.obj'], // ok
-                //[ 'obj/banana/banana.obj' ], // works great
-                false, // if true, use color array instead of texture array
-                false, // if true, apply textures to each face, not whole Prim.
-                true, // if true, use lighting                
-            );
-
-*/
-
-        // Note: the init() method sets up the update() and render() methods for the Shader.
-
-        this.r0 = this.s0.init();
-
-        this.r1 = this.s1.init();
-
-        this.r2 = this.s2.init();
-
-        /* 
-         * Fire world update (either window or WebVR display). Since we 
-         * do this directly, in most cases this will be the 'window' object. If the 
-         * VRDisplay becomes available, it emits an VR_DISPLAY_READY event, and we 
-         * dynamically switch to VRDisplay (see constructor emitter handler).
-         */
-
-        this.start();
 
     }
 
@@ -1212,31 +1249,31 @@ module.exports = function forceCanvasResizeSafariMobile (canvasEl) {
         this.update();
 
         this.webgl.clear();
-// TODO: DEBUG TEMPORARY.
-//pov.rotation[ 0 ] += 0.003;
-//pov.rotation[ 1 ] += 0.003;
+
         // Render for mono or WebVR stereo.
 
-/*
-  Sean McBeth says....
+        /*
+          Sean McBeth says....
 
-  Basically, I have a startup process:
-currentDisplay = window
-callbackID = currentDisplay.requestAnimationFrame(animationCallback)
-Then animationCallback has to make sure to always do `callbackID = currentDisplay.requestAnimationFrame(animationCallback)` to update the callbackID every frame.
+            Basically, I have a startup process:
+            currentDisplay = window
+            callbackID = currentDisplay.requestAnimationFrame(animationCallback)
+            Then animationCallback has to make sure to always do `callbackID = currentDisplay.requestAnimationFrame(animationCallback)` to update the callbackID every frame.
 
-And then my "change display" process is:
-currentDisplay.cancelAnimationFrame(callbackID)
-if(userHasSelectedVRDisplay) 
-currentDisplay = userSelectedVRDisplay
-else currentDisplay = window
-callbackID = currentDisplay.requestAnimationFrame(animationCallback)
+            And then my "change display" process is:
+            currentDisplay.cancelAnimationFrame(callbackID)
+            if(userHasSelectedVRDisplay) 
+            currentDisplay = userSelectedVRDisplay
+            else currentDisplay = window
+            callbackID = currentDisplay.requestAnimationFrame(animationCallback)
 
-You have to make sure you call cancelAnimationFrame from the same object from which requestAnimationFrame was called to create the callbackID, or else the cancel will not happen correctly.
+            You have to make sure you call cancelAnimationFrame from the same object from which requestAnimationFrame was called to create the callbackID, or else the cancel will not happen correctly.
 
-Note: THIS IMPLIES WE HAVE TO DO IT IN WORLD.
+            TODO: DEBUG TEMPORARY.
+            pov.rotation[ 0 ] += 0.003;
+            pov.rotation[ 1 ] += 0.003;
 
-*/
+        */
 
         let d = vr.getDisplay();
 
@@ -1272,8 +1309,6 @@ Note: THIS IMPLIES WE HAVE TO DO IT IN WORLD.
                      * These routines set the canvas viewport to left and right stereo, and 
                      * draw left or right view using the frameDat left and right view matrix.
                      */
-
-                    ////////////////this.r3.renderVR( vr, fd, wvMatrix, pov );  // particle
 
                     this.r1.renderVR( vr, fd, wvMatrix, pov );  // textured, no lighting
 

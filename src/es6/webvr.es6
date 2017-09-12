@@ -466,13 +466,19 @@ class WebVR {
 
             .then( () => { // fufilled
 
-                // success
+                // Success
 
                 // kill the old .rAF
 
                 world.stop();
 
-                // start the new .rAF with our new display
+                // A patch for browsers (Edge, especially) to restore the original canvas size after exiting VR.
+
+                this.lastCWidth = this.webgl.getCanvas().width;
+
+                this.lastCHeight = this.webgl.getCanvas().height;
+
+                // Start the new .rAF with our new display.
 
                 this.cDisplay = d;
 
@@ -554,6 +560,8 @@ class WebVR {
                  */
 
                  world.stop();
+
+                 // Return to windowed display.
 
                  this.cDisplay = this.displays[ 0 ];
 
@@ -689,19 +697,49 @@ class WebVR {
 
         if ( d.isPresenting ) {
 
-          if ( d.capabilities && d.capabilities.hasExternalDisplay ) {
+            console.log( 'WebVR::presentChange(): is presenting...' );
 
-            // Any changes needed when we jump to VR presenting.
+            if ( d.capabilities && d.capabilities.hasExternalDisplay ) {
 
-          }
+                // Any changes needed when we jump to VR presenting.
+
+
+
+            }
 
         } else {
 
-          if ( d.capabilities && d.capabilities.hasExternalDisplay ) {
+            console.log( 'WebVR::presentChange(): is NOT presenting...' );
+
+
+                /* 
+                  NOTE: Edge needs this <canvas> and viewport resize, because
+                 * it doesn't recognize the keypress binding.
+                 */
+
+                let c = this.webgl.getCanvas();
+
+                 if ( this.webgl.getCanvas().width !== this.lastCWidth) {
+
+                    this.webgl.getCanvas().width = this.lastCWidth;
+
+                    this.webgl.getContext().viewport(0, 0, this.lastCWidth, this.lastCHeight );
+
+                }
+
+                 if ( this.webgl.getCanvas().height !== this.lastCHeight ) {
+
+                    this.webgl.getCanvas().height = this.lastCHeight;
+
+                    this.webgl.getContext().viewport(0, 0, this.lastCWidth, this.lastCHeight );
+
+                }
+
+            if ( d.capabilities && d.capabilities.hasExternalDisplay ) {
 
             // Any changes needed when we leave VR presenting.
 
-          }
+            }
 
         }
 

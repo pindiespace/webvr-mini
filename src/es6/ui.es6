@@ -12,7 +12,7 @@ class Ui {
 
         this.UI_DOM = 'uidom',
 
-        this.UI_VR = 'uivr',
+        this.UI_TO_VR = 'uivr',
 
         this.UI_FULLSCREEN = 'fullscreen';
 
@@ -302,7 +302,14 @@ class Ui {
         }
 
 
-        // EventHandler ES6 kludges. Rebind handlers so we can use removeEventListener.
+        /* 
+         * EventHandler ES6 kludges. Rebind handlers so we can use removeEventListener.
+         * NOTE: this only handles the 'escape' key for exiting VR. the Fullscreen API 
+         * doesn't provide access to the escape key event (!)
+         * 
+         * NOTE: FF requires this, but Edge does not use or recognize it. Equivalent function 
+         * has to be in the webvr.presentChange() event callback!
+         */
 
         this.vrHandleKeys = this.vrHandleKeys.bind( this );
 
@@ -400,7 +407,7 @@ class Ui {
 
         switch ( this.mode ) {
 
-              case this.UI_VR:
+              case this.UI_TO_VR:
 
                 this.exitVRButton.show();
 
@@ -416,6 +423,10 @@ class Ui {
 
                 this.fullscreenButton.hide();
 
+                this.worldButton.shift( true ); // to the left
+
+                this.gearButton.shift( true );
+
                 this.exitFullscreenButton.show();
 
                 break;
@@ -425,6 +436,10 @@ class Ui {
                 this.exitVRButton.hide();
 
                 this.exitFullscreenButton.hide();
+
+                this.worldButton.shift( false ); // to the right
+
+                this.gearButton.shift( false );
 
                 this.vrButton.show();
 
@@ -633,11 +648,13 @@ class Ui {
 
                 // Set the mode (DOM -> WebVR stereo).
 
-                this.mode = this.UI_VR;
+                this.mode = this.UI_TO_VR;
 
-                this.fullscreenChange( evt );
+                console.log( 'from dom to vr...' );
 
-                // Add a keydown event to make VR entry and exit like fullscreen.
+                this.setControlsByMode( this.mode );
+
+                // Add a keydown event to make VR entry and exit like fullscreen (required for FF).
 
                 addEventListener( 'keydown', this.vrHandleKeys );
 
@@ -685,15 +702,9 @@ class Ui {
 
                 console.log( 'clicked exit vr button' );
 
-                this.exitVRButton.hide();
+                this.mode = this.UI_DOM; // I know. Weird, but it's what WebVR needs here!
 
-                this.worldButton.shift( false );
-
-                this.gearButton.shift( false );
-
-                this.vrButton.show();
-
-                this.fullscreenButton.show();
+                this.setControlsByMode( this.mode );
 
                 // Call webvr presentation exit (which may fail).
 
@@ -757,19 +768,7 @@ class Ui {
 
                 p.style.height = this.util.getScreenHeight() + 'px';
 
-                // Set the mode (DOM -> Fullscreen)
-
-                this.mode = this.UI_DOM;
-
-                // If the World menu is visible, hide it.
-
-                this.worldMenu.hide();
-
-                this.worldButton.shift( true );
-
-                this.gearButton.shift( true );
-
-                // Fire the request fullscreen command.
+                // Fire the request fullscreen command (which also fires and event for DOM -> Fullscreen).
 
                 this.requestFullscreen();
 
@@ -817,11 +816,9 @@ class Ui {
 
                 console.log( 'clicked exit fullscreen button...' );
 
-                this.worldButton.shift( false );
+                // Fire the exit fullscreen -> DOM event (also triggered by escape key).
 
-                this.gearButton.shift( false );
-
-                // Fire the exit fullscreen event (also triggered by escape key).
+                // NOTE: this also fires shifting the buttons!
 
                 this.exitFullscreen();
 
@@ -1059,6 +1056,26 @@ class Ui {
             evt.stopPropagation();
 
         } );
+
+        // Shift an element left or right when another control becomes invisible.
+
+        elem.shift = ( collapse ) => {
+
+            let left = parseFloat( elem.style.left );
+
+            let shiftValue = parseFloat( elem.style.width ) + ( parseFloat( elem.style.margin ) * 2 );
+
+            if ( collapse ) {
+
+                elem.style.left = ( left - shiftValue ) + 'px';
+
+            } else {
+
+                elem.style.left = (left + shiftValue ) + 'px';
+
+            }
+
+        }
 
         // by default, button is active.
 
@@ -1345,24 +1362,6 @@ class Ui {
             if ( button.emulatedImg ) button.emulatedImg.style.display = 'none';
 
             if ( button.strikethroughImg ) button.strikethroughImg.style.display = 'none';
-
-        }
-
-        button.shift = ( collapse ) => {
-
-            let left = parseFloat( button.style.left );
-
-            let shiftValue = parseFloat( button.style.width ) + ( parseFloat( button.style.margin ) * 2 );
-
-            if ( collapse ) {
-
-                button.style.left = ( left - shiftValue ) + 'px';
-
-            } else {
-
-                button.style.left = (left + shiftValue ) + 'px';
-
-            }
 
         }
 
@@ -1799,33 +1798,33 @@ class Ui {
     /** 
      * Add an escape key handler for entry into VR, similar to fullscreen. 
      * 
-      * Note: we bind this 
-     * sucker to itself(!) in the constructor, so that we can supply addEventListener with a named function, 
+     * NOTE: we bind this sucker to itself(!) in the constructor, so that we can supply addEventListener with a named function, 
      * and remove it later. Otherwise, you can't remove handlers bound with addEventListener.
+     * NOTE: only used for exiting VR via an escape key. Fullscreen is handled separately via a fullscreen Event.
+     * 
+     * NOTE: Edge (Aug 2017) DOES NOT go into vrHandleKeys, while FF REQUIRES it to exit from VR with a keypress!
      */
     vrHandleKeys ( evt ) {
+
+        let vr = this.webvr;
 
         switch ( evt.keyCode) {
 
             case 27: // ESC key
 
-                console.log("AN ESCAPE");
+                evt.preventDefault();
 
-                this.mode = this.UI_DOM;
+                evt.stopPropagation();
 
-                this.exitVRButton.hide();
+                console.log( 'clicked exit vr escape key' );
 
-                this.vrButton.show();
+                this.mode = this.UI_DOM; // We set to UI_DOM because that is where we're going!
 
-                this.fullscreenButton.show();
+                this.setControlsByMode( this.mode );
 
-                // this.webvr.exitPresent handles some of the resizing, we have to restore the Uis.
+                // Call webvr presentation exit (which may fail).
 
-                // exit VR presentation (order may be important here).
-
-                this.webvr.exitPresent();
-
-                // Remove the event listener
+                vr.exitPresent();
 
                 removeEventListener( 'keydown', this.vrHandleKeys );
 
@@ -1922,7 +1921,9 @@ class Ui {
 
     /** 
      * Handle a fullscreen transition.
-     * Note: used .bind() to bind to this object.s
+     * NOTE: used .bind() to bind to this object.s
+     * NOTE: NOT used for VR!
+     * @param {Event} a fullscreenchange event object.
      */
     fullscreenChange ( evt ) {
 
@@ -1934,14 +1935,6 @@ class Ui {
 
         switch ( this.mode ) {
 
-            case this.UI_VR:
-
-                console.log( 'from vr to dom...' );
-
-                this.setControlsByMode( this.mode );
-
-                break;
-
             case this.UI_FULLSCREEN:
 
                 /* 
@@ -1949,12 +1942,9 @@ class Ui {
                  * and support the canvas jumping back to a DOM mode with CSS styles defined by an external 
                  * stylesheet. Additional resizing specific to exiting fullscreen has to be done here. 
                  * Removing the .style properties is particularly important.
-                 *
-                 * Note: UI_FULLSCREEN mode is actually from fullscreen to DOM.
-                 * Note: UI_VR mode is from DOM to VR
                  */
 
-                console.log( 'from fullscreen to DOM...' );
+                console.log( 'from dom to fullscreen...' );
 
                 // Kill local CSS styles ensuring we get a fullscreen view.
 
@@ -1982,7 +1972,7 @@ class Ui {
 
                 c.height = height;
 
-                this.mode = this.UI_DOM;
+                this.mode = this.UI_DOM; // have to switch here, no event hook!
 
                 // Hide the return button, if it wasn't already.
 
@@ -1994,11 +1984,11 @@ class Ui {
 
             case this.UI_DOM:
 
-                console.log( 'from DOM to fullscreen...' );
+                console.log( 'from fullscreen to dom...' );
 
                 // We hide fullscreen and vr in the calling functions...
 
-                this.mode = this.UI_FULLSCREEN;
+                this.mode = this.UI_FULLSCREEN; // have to switch here, no event hook!
 
                 this.setControlsByMode( this.mode );
 

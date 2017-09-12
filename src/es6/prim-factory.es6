@@ -349,7 +349,7 @@ class PrimFactory extends AssetPool {
     }
 
     /** 
-     * Set the current prim list to a specific World.
+     * Set the current Prim list to a specific World.
      * @param {String} worldKey 
      */
     setActivePrims ( worldKey ) {
@@ -383,7 +383,7 @@ class PrimFactory extends AssetPool {
          * do this even if there are no Prims in the World.
          */
 
-        this.prims.splice(0, this.prims.length);
+        this.prims.splice( 0, this.prims.length );
 
         Array.prototype.push.apply( this.prims, newPrims );
 
@@ -395,7 +395,7 @@ class PrimFactory extends AssetPool {
      * @param {Prim} the prim to switch.
      * @param {String} newWorldKey the new world to switch to.
      */
-    switchPrimWorld( prim, newWorldKey ) {
+    switchPrimBetweenWorlds ( prim, newWorldKey ) {
 
         let p = this.assetInList( prim );
 
