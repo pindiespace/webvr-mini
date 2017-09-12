@@ -12,7 +12,7 @@ class Ui {
 
         this.UI_DOM = 'uidom',
 
-        this.UI_TO_VR = 'uivr',
+        this.UI_VR = 'uivr',
 
         this.UI_FULLSCREEN = 'fullscreen';
 
@@ -101,27 +101,40 @@ class Ui {
 
         this.styles = {
 
-            controls: {
+            controls: { // <nav>
 
                 position: 'absolute',
 
                 boxSizing: 'border-box', // control sizes
 
-                zIndex: 10,
+                marginLeft: 'auto', // center absolutely-positioned <nav> element
+
+                marginRight: 'auto',
+
+                left: '0',
+
+                right: '0',
+
+                width: '332px', // 4 controls, ADJUST if more/less added!
 
                 height: '84px', // controls plus their padding
 
-                width: "100%" // forces across width of canvas
+                //width: "100%" // forces across width of canvas
 
+                zIndex: 10,
+
+                opacity: 0.5,
+
+                transition: 'opacity 0.2s ease'
             },
 
-            modal: {
+            dialog: { // <dialog role="dialog">, https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/ARIA_Techniques/Using_the_dialog_role
 
                 zIndex: 50
 
             },
 
-            button: {
+            button: { // <img>
 
                 backgroundSize: 'cover',
 
@@ -159,19 +172,19 @@ class Ui {
 
             },
 
-            emu: {
+            emu: { // <img>
 
                 zIndex: 101
 
             },
 
-            strikethrough: {
+            strikethrough: { // <img>
 
                 zIndex: 102
 
             },
 
-            progress: {
+            progress: { // <progress>, https://css-tricks.com/html5-progress-element/
 
                 zIndex: 7999
 
@@ -301,7 +314,6 @@ class Ui {
 
         }
 
-
         /* 
          * EventHandler ES6 kludges. Rebind handlers so we can use removeEventListener.
          * NOTE: this only handles the 'escape' key for exiting VR. the Fullscreen API 
@@ -369,7 +381,7 @@ class Ui {
      */
     initNoGL () {
 
-        this.modalMessage( 'WebGL is not present on your system' );
+        this.dialogMessage( 'WebGL is not present on your system' );
 
     }
 
@@ -378,7 +390,7 @@ class Ui {
      */
     initBadGL () {
 
-        this.modalMessage( 'WebGL is present, but failed to load' );
+        this.dialogMessage( 'WebGL is present, but failed to load' );
 
     }
 
@@ -407,7 +419,7 @@ class Ui {
 
         switch ( this.mode ) {
 
-              case this.UI_TO_VR:
+              case this.UI_VR: // SWITCH to VR ( not the current Ui )
 
                 this.exitVRButton.show();
 
@@ -417,7 +429,7 @@ class Ui {
 
                 break;
 
-            case this.UI_FULLSCREEN:
+            case this.UI_FULLSCREEN: // SWITCH to fullscreen (not current Ui)
 
                 this.vrButton.hide();
 
@@ -425,19 +437,27 @@ class Ui {
 
                 this.worldButton.shift( true ); // to the left
 
+                this.worldMenu.positionMenu( this.worldButton ); // menu width is dynamic
+
+                this.bubbleArrow.shiftCenter( this.worldButton );
+
                 this.gearButton.shift( true );
 
                 this.exitFullscreenButton.show();
 
                 break;
 
-            case this.UI_DOM:
+            case this.UI_DOM: // SWITCH to DOM (not current Ui)
 
                 this.exitVRButton.hide();
 
                 this.exitFullscreenButton.hide();
 
                 this.worldButton.shift( false ); // to the right
+
+                this.worldMenu.positionMenu( this.worldButton );
+
+                this.bubbleArrow.shiftCenter( this.worldButton );
 
                 this.gearButton.shift( false );
 
@@ -463,6 +483,18 @@ class Ui {
 
         return ( window.navigator.msPointerEnabled || ( 'PointerEvent' in window ) );
 
+    }
+
+    /** 
+     * Check if specific Mouse event is supported (won't work for old FF). Used for desktops to highlight 
+     * controls during hover events. Not used on mobile.
+     * @param {String} evtName the event name
+     * @return {Boolean} if 
+     */
+    hasMouseEnterLeaveEvent() {
+
+        return ( 'onmouseenter' in document.documentElement );
+    
     }
 
     /** 
@@ -540,6 +572,29 @@ class Ui {
 
         }
 
+        /* 
+         * On desktops, controls are faded until a mouse enters the Player, 
+         * why mousenter/mouseleave is used, since it won't affect or trigger
+         * touch events.
+         */
+
+        if ( this.hasMouseEnterLeaveEvent() ) {
+
+            controls.style.opacity = 0.5; // defaults to 1 if event not present
+
+            controls.parentNode.addEventListener( 'mouseenter', ( evt ) => {
+
+                controls.style.opacity = 1;
+
+            }, false );
+
+            controls.parentNode.addEventListener( 'mouseleave', ( evt ) => {
+
+                controls.style.opacity = 0.5;
+
+            }, false );
+
+        }
         // document.styleSheets[0].addRule('p.special:before', 'content: "' + str + '";');
 
         // save the base zIndex to add to individual controls.
@@ -640,7 +695,7 @@ class Ui {
 
                 this.fullscreenButton.hide();
 
-                this.worldButton.shift( true );
+                this.worldButton.shift( true ); // TODO: move into .setControlsByMode()!!!!!!!!!!!!!!!!!!!!!!!!
 
                 this.gearButton.shift( true );
 
@@ -648,7 +703,7 @@ class Ui {
 
                 // Set the mode (DOM -> WebVR stereo).
 
-                this.mode = this.UI_TO_VR;
+                this.mode = this.UI_VR;
 
                 console.log( 'from dom to vr...' );
 
@@ -860,6 +915,8 @@ class Ui {
 
                 let scrollTo = worldMenu.buildList( this.world.getWorldScenes() );
 
+                // Activate the menu, and scroll to position so highlighted menu is visible.
+
                 worldMenu.activate();
 
                 worldMenu.show( scrollTo );
@@ -876,19 +933,15 @@ class Ui {
              * We provide this arrow to the Menu so it can control its visiblity.
              */
 
-            let worldMenuArrow = this.createBubbleArrow( worldButton );
+            let bubbleArrow = this.createBubbleArrow( worldButton );
 
-            // Note: controls is always box-sizing = 'border-box';
+            this.bubbleArrow = bubbleArrow;
 
-            let menuTop = parseFloat( worldButton.style.top ) + parseFloat( worldButton.style.height ) +
+            // Note: menu is positioned relative its calling button.
 
-                parseFloat( worldButton.style.padding ) + 10;
+            let worldMenu = this.createMenu( 'worldMenu', null, 0, 0, null, null, bubbleArrow );
 
-            let menuLeft = parseFloat( worldButton.style.left ) + parseFloat( worldButton.style.width ) / 2 -
-
-                parseFloat( worldButton.style.padding ) + 4;
-
-            let worldMenu = this.createMenu( 'worldMenu', null, menuTop, menuLeft, null, null, worldMenuArrow );
+            worldMenu.positionMenu( worldButton );
 
             // Allow World selection.
 
@@ -928,6 +981,8 @@ class Ui {
                 console.log('end touch')
 
             } );
+
+            window.worldMenu = worldMenu
 
             // Hide for now.
 
@@ -1059,13 +1114,21 @@ class Ui {
 
         // Shift an element left or right when another control becomes invisible.
 
-        elem.shift = ( collapse ) => {
+        elem.shift = ( collapse, shiftValue ) => {
 
             let left = parseFloat( elem.style.left );
 
-            let shiftValue = parseFloat( elem.style.width ) + ( parseFloat( elem.style.margin ) * 2 );
+            if ( ! shiftValue ) {
 
-            if ( collapse ) {
+                shiftValue = parseFloat( elem.style.width ) + ( parseFloat( elem.style.margin ) * 2 );
+
+            } else {
+
+                shiftValue = parseFloat( shiftValue );
+
+            }
+
+            if ( collapse ) { // true === shift left, not true === shift right
 
                 elem.style.left = ( left - shiftValue ) + 'px';
 
@@ -1372,7 +1435,7 @@ class Ui {
     }
 
     /** 
-     * Create a modal dialog.
+     * Create a dialog dialog.
      * @param {String} name the name of the dialog.
      * @param {Image} if present, an image to present in the dialog.
      * @param {Number|String} top either the numerical top ('10') or the CSS property ('10px').
@@ -1381,35 +1444,35 @@ class Ui {
      * @param {String} display the CSS display type to use.
      * @return {UiElement} the dialog Ui element.
      */
-    createModal ( name, modalIcon, top, left, zIndex, display ) {
+    createDialog ( name, dialogIcon, top, left, zIndex, display ) {
 
-        let modal = this.createUiElement ( document.createElement( 'div' ), 'modal', 'webvr-mini-modal', top, left, zIndex, display );
+        let dialog = this.createUiElement ( document.createElement( 'div' ), 'dialog', 'webvr-mini-dialog', top, left, zIndex, display );
 
-        modal.name = name;
+        dialog.name = name;
 
-        modal.show = () => {
+        dialog.show = () => {
 
-            modal.style.display = 'inline-block';
-
-        }
-
-        modal.hide = () => {
-
-            modal.style.display = 'none';
+            dialog.style.display = 'inline-block';
 
         }
 
-        return modal;
+        dialog.hide = () => {
+
+            dialog.style.display = 'none';
+
+        }
+
+        return dialog;
 
     }
 
     /** 
-     * Create a DOM-based modal dialog
+     * Create a DOM-based dialog dialog
      * TODO: REMOVE LATER
      */
-    modalMessage( msg ) {
+    dialogMessage( msg ) {
 
-        // TODO: create modal dialog
+        // TODO: create temp dialog
 
         console.error( msg );
 
@@ -1538,6 +1601,20 @@ class Ui {
             } );
 
             return domItem;
+
+        }
+
+        // Position a menu under a button.
+
+        menu.positionMenu = ( button ) => {
+
+            menu.style.top = ( parseFloat( button.style.top ) + parseFloat( button.style.height ) +
+
+                parseFloat( button.style.padding ) + 10 ) + 'px';
+
+            menu.style.left = ( parseFloat( button.style.left ) + parseFloat( button.style.width ) / 2 -
+
+                parseFloat( button.style.padding ) + 4 ) + 'px';
 
         }
 
@@ -1766,16 +1843,25 @@ class Ui {
 
         s.top = ( parseFloat( button.style.top ) + parseFloat( button.style.height ) + parseFloat( button.style.padding ) ) + 'px';
 
-        s.left = parseFloat( button.style.left ) + ( parseFloat( button.style.width ) / 2 ) + ( parseFloat( button.style.padding ) / 2 ) 
+        // Shift to center, instead of left edge.
 
-        + ( parseFloat( s.borderWidth ) / 2 )
+        arrow.shiftCenter = ( button ) => {
 
-        + 'px';
+            let s = arrow.style;
+
+            s.left = parseFloat( button.style.left ) + ( parseFloat( button.style.width ) / 2 ) + ( parseFloat( button.style.padding ) / 2 ) 
+
+            + ( parseFloat( s.borderWidth ) / 2 )
+
+            + 'px';
+
+        }
+
+        arrow.shiftCenter( button );
 
         s.zIndex = this.styles.menuContainer.zIndex;
 
         s.opacity = 0; // initially invisible
-
 
         this.controls.appendChild( arrow );
 
