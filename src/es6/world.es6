@@ -431,14 +431,14 @@ class World extends AssetPool {
 
         const util = this.util;
 
-        let shader = this.shaderPool.getAssetByName( pData.shader );
+        console.log( '.....prim:' + pData.name );
 
-        console.log("..........ComputePrim: i:" + i + " SHADER:" + shader)
+        let shader = this.shaderPool.getAssetByName( pData.shader );
 
         if ( shader ) {
 
 
-            if ( shader.name )  console.log("...........GETTING SHADER:" + shader.name ); ///////////////////////////////////////
+            if ( shader.name )  console.log("....." + pData.name + " shader is:" + shader.name ); ///////////////////////////////////////
 
 
             // Handle cases for dimensions and divisions params are numbers (they may also be strings).
@@ -591,7 +591,7 @@ class World extends AssetPool {
 
                     // 'scene' = parameters used to configure the World for its Prims.
 
-                    console.log(".......WORLD[ i ] " + world.scene.name + " is:" + s)
+                    console.log(".......WORLD:" + world.scene.name );
 
                     if ( i === 'scene' ) { 
 
@@ -664,7 +664,7 @@ class World extends AssetPool {
 
             this.util.emitter.emit( this.emitter.events.WORLD_DEFINITION_READY );
 
-            console.log("WORLD EMITTING:" + world.scene.name)
+            console.log("WORLD EMITTING DEFINITION OF:" + world.scene.name)
 
         } else {
 
@@ -687,8 +687,6 @@ class World extends AssetPool {
     getWorld ( path ) {
 
         const util = this.util;
-
-        let validPrims = [], world, worldKey;
 
         // We've never loaded this world's JSON file (just received via network request).
 
@@ -718,27 +716,29 @@ class World extends AssetPool {
 
                     if ( updateObj.data ) {
 
-                        world = util.parseJSON( updateObj.data );
+                        let world = util.parseJSON( updateObj.data );
 
                         if ( world ) {
 
                             world.path = path;
 
-                            worldKey = util.computeId();
+                            let worldKey = util.computeId();
 
                             // Store in AssetPool (superclass) using a key, with path in world.scene.path
 
                             this.addAsset( world, worldKey );
 
-                            validPrims = this.computeWorld( world );
+                            // Compute the World and its Prims, adding the Prims to PrimFactory.
+
+                            let validPrims = this.computeWorld( world );
 
                             // If there were valid Prims in the list, retroactively add the world key to them.
 
                             if ( validPrims.length > 0 ) {
 
-                                 // Force PrimFactory to reset its list of current prims to the current active Worlds.
+                                // Force PrimFactory to reset its list of current prims to the current active Worlds.
 
-                                this.primFactory.setActivePrims( worldKey );
+                                //this.primFactory.setActivePrims( worldKey );
 
                             }
 
@@ -792,6 +792,8 @@ class World extends AssetPool {
             // Switch it.
 
             this.computeWorld( world );
+
+            this.primFactory.setActivePrims( worldKey );
 
         } else {
 

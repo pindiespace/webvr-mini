@@ -416,6 +416,8 @@ class Ui {
      */
     setControlsByMode( mode ) {
 
+
+
         switch ( this.mode ) {
 
               case this.UI_VR: // SWITCH to VR ( not the current Ui )
@@ -440,10 +442,6 @@ class Ui {
 
                 this.worldButton.shift( true ); // to the left
 
-                this.worldMenu.positionMenu( this.worldButton ); // menu width is dynamic
-
-                this.bubbleArrow.shiftCenter( this.worldButton );
-
                 this.gearButton.shift( true );
 
                 this.exitFullscreenButton.show();
@@ -458,10 +456,6 @@ class Ui {
 
                 this.worldButton.shift( false ); // to the right
 
-                this.worldMenu.positionMenu( this.worldButton );
-
-                this.bubbleArrow.shiftCenter( this.worldButton );
-
                 this.gearButton.shift( false );
 
                 this.vrButton.show();
@@ -473,6 +467,12 @@ class Ui {
                 break;
 
         }
+
+        // Always reposition the menu and the arrow pointing to the menu.
+
+        this.worldMenu.positionMenu( this.worldButton );
+
+        this.bubbleArrow.shiftCenter( this.worldButton );
 
     }
 

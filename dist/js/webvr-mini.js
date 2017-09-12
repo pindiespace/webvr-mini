@@ -5256,10 +5256,6 @@
 
 	                    this.worldButton.shift(true); // to the left
 
-	                    this.worldMenu.positionMenu(this.worldButton); // menu width is dynamic
-
-	                    this.bubbleArrow.shiftCenter(this.worldButton);
-
 	                    this.gearButton.shift(true);
 
 	                    this.exitFullscreenButton.show();
@@ -5275,10 +5271,6 @@
 
 	                    this.worldButton.shift(false); // to the right
 
-	                    this.worldMenu.positionMenu(this.worldButton);
-
-	                    this.bubbleArrow.shiftCenter(this.worldButton);
-
 	                    this.gearButton.shift(false);
 
 	                    this.vrButton.show();
@@ -5290,6 +5282,12 @@
 	                    break;
 
 	            }
+
+	            // Always reposition the menu and the arrow pointing to the menu.
+
+	            this.worldMenu.positionMenu(this.worldButton);
+
+	            this.bubbleArrow.shiftCenter(this.worldButton);
 	        }
 
 	        /** 
@@ -7782,6 +7780,11 @@
 
 	            var buffer = this.required.buffer,
 	                geo = prim.geometry;
+
+	            if (!geo) {
+
+	                return false;
+	            }
 
 	            // Loop through geometry buffer objects, which are part of 'required' here.
 
@@ -11351,7 +11354,7 @@
 
 	    /**
 	     * Remove a Prim, which means removing from this.prims[], AND 
-	     * removing from the base class AssetPool.
+	     * removing from the base class AssetPool, AND any Shaders it is in.
 	     */
 
 
@@ -11363,18 +11366,33 @@
 
 	            // remove from this.prims[].
 
-	            var i = array.indexOf(prim);
+	            var i = this.prims.indexOf(prim);
 
 	            if (i !== -1) {
 
-	                p = array.splice(i, 1)[0];
-	            }
+	                p = this.prims.splice(i, 1)[0];
 
-	            // remove from AssetPool.
+	                // remove from AssetPool.
 
-	            if (p) {
+	                if (p === prim) {
 
-	                p = this.removeAsset(prim.key);
+	                    // Remove from AssetPool
+
+	                    p = this.removeAsset(prim.key);
+
+	                    console.log("PRIM REMOVEASSET:" + p);
+
+	                    // remove from all Shaders;
+
+	                    p.shader.removePrim(p);
+
+	                    p.defaultShader.removePrim(p);
+
+	                    this.world.s0.removePrim(p); // just in case it is in both places at once
+	                } else {
+
+	                    console.warn('PrimFactory::deletePrim(): no prim returned from splice');
+	                }
 	            } else {
 
 	                console.warn('PrimFactory::deletePrim(): asset not found in prim array');
@@ -11417,9 +11435,12 @@
 	                }
 	            }
 
-	            // TODO: HAVE TO RE-ASSIGN TO SHADERS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 	            console.log("NEW PRIMS LENGTH:" + newPrims.length);
+
+	            for (var _i = 0; _i < this.prims.length; _i++) {
+
+	                this.deletePrim(this.prims[_i]);
+	            }
 
 	            /* 
 	             * Remove old array contents WITHOUT zapping the array reference (ES5 method). We 
@@ -11429,6 +11450,9 @@
 	            this.prims.splice(0, this.prims.length);
 
 	            Array.prototype.push.apply(this.prims, newPrims);
+
+	            // Remove old Prims from their Shaders
+
 	        }
 
 	        /** 
@@ -22047,13 +22071,13 @@
 
 	            var util = this.util;
 
-	            var shader = this.shaderPool.getAssetByName(pData.shader);
+	            console.log('.....prim:' + pData.name);
 
-	            console.log("..........ComputePrim: i:" + i + " SHADER:" + shader);
+	            var shader = this.shaderPool.getAssetByName(pData.shader);
 
 	            if (shader) {
 
-	                if (shader.name) console.log("...........GETTING SHADER:" + shader.name); ///////////////////////////////////////
+	                if (shader.name) console.log("....." + pData.name + " shader is:" + shader.name); ///////////////////////////////////////
 
 
 	                // Handle cases for dimensions and divisions params are numbers (they may also be strings).
@@ -22169,7 +22193,7 @@
 
 	                        // 'scene' = parameters used to configure the World for its Prims.
 
-	                        console.log(".......WORLD[ i ] " + world.scene.name + " is:" + s);
+	                        console.log(".......WORLD:" + world.scene.name);
 
 	                        if (i === 'scene') {
 
@@ -22235,7 +22259,7 @@
 
 	                this.util.emitter.emit(this.emitter.events.WORLD_DEFINITION_READY);
 
-	                console.log("WORLD EMITTING:" + world.scene.name);
+	                console.log("WORLD EMITTING DEFINITION OF:" + world.scene.name);
 	            } else {
 
 	                // World with missing scene.
@@ -22259,10 +22283,6 @@
 	            var _this2 = this;
 
 	            var util = this.util;
-
-	            var validPrims = [],
-	                world = void 0,
-	                worldKey = void 0;
 
 	            // We've never loaded this world's JSON file (just received via network request).
 
@@ -22290,19 +22310,21 @@
 
 	                    if (updateObj.data) {
 
-	                        world = util.parseJSON(updateObj.data);
+	                        var world = util.parseJSON(updateObj.data);
 
 	                        if (world) {
 
 	                            world.path = path;
 
-	                            worldKey = util.computeId();
+	                            var _worldKey = util.computeId();
 
 	                            // Store in AssetPool (superclass) using a key, with path in world.scene.path
 
-	                            _this2.addAsset(world, worldKey);
+	                            _this2.addAsset(world, _worldKey);
 
-	                            validPrims = _this2.computeWorld(world);
+	                            // Compute the World and its Prims, adding the Prims to PrimFactory.
+
+	                            var validPrims = _this2.computeWorld(world);
 
 	                            // If there were valid Prims in the list, retroactively add the world key to them.
 
@@ -22310,7 +22332,8 @@
 
 	                                // Force PrimFactory to reset its list of current prims to the current active Worlds.
 
-	                                _this2.primFactory.setActivePrims(worldKey);
+	                                //this.primFactory.setActivePrims( worldKey );
+
 	                            }
 	                        } else {
 
@@ -22356,6 +22379,8 @@
 	                // Switch it.
 
 	                this.computeWorld(world);
+
+	                this.primFactory.setActivePrims(worldKey);
 	            } else {
 
 	                console.error('World::switchWorld(): invalid worldKey:' + worldKey);

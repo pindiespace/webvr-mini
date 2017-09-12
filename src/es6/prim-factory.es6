@@ -316,7 +316,7 @@ class PrimFactory extends AssetPool {
 
     /**
      * Remove a Prim, which means removing from this.prims[], AND 
-     * removing from the base class AssetPool.
+     * removing from the base class AssetPool, AND any Shaders it is in.
      */
     deletePrim ( prim ) {
 
@@ -324,25 +324,44 @@ class PrimFactory extends AssetPool {
 
         // remove from this.prims[].
 
-        let i = array.indexOf( prim );
+        let i = this.prims.indexOf( prim );
 
         if( i !== -1 ) {
 
-           p = array.splice( i, 1 )[ 0 ];
+            p = this.prims.splice( i, 1 )[ 0 ];
 
-        }
+            // remove from AssetPool.
 
-        // remove from AssetPool.
+            if ( p === prim ) {
 
-        if ( p ) {
+                // Remove from AssetPool
 
-            p =  this.removeAsset( prim.key );
+                p = this.removeAsset( prim.key );
+
+                console.log( "PRIM REMOVEASSET:" + p );
+
+                // remove from all Shaders;
+
+                p.shader.removePrim( p );
+
+                p.defaultShader.removePrim( p );
+
+                this.world.s0.removePrim( p ); // just in case it is in both places at once
+
+            } else {
+
+                console.warn( 'PrimFactory::deletePrim(): no prim returned from splice' );
+
+            }
+
 
         } else {
 
             console.warn( 'PrimFactory::deletePrim(): asset not found in prim array' );
 
         }
+
+
 
         return p;
 
@@ -382,9 +401,13 @@ class PrimFactory extends AssetPool {
 
         }
 
-        // TODO: HAVE TO RE-ASSIGN TO SHADERS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
         console.log("NEW PRIMS LENGTH:" + newPrims.length )
+
+        for ( let i = 0; i < this.prims.length; i++ ) {
+
+            this.deletePrim( this.prims[ i ] );
+
+        }
 
         /* 
          * Remove old array contents WITHOUT zapping the array reference (ES5 method). We 
@@ -394,6 +417,10 @@ class PrimFactory extends AssetPool {
         this.prims.splice( 0, this.prims.length );
 
         Array.prototype.push.apply( this.prims, newPrims );
+
+        // Remove old Prims from their Shaders
+
+
 
     }
 

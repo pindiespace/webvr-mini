@@ -390,7 +390,13 @@ class Shader {
 
         let buffer = this.required.buffer,
 
-        geo = prim.geometry; 
+        geo = prim.geometry;
+
+        if ( ! geo ) {
+
+            return false;
+
+        }
 
         // Loop through geometry buffer objects, which are part of 'required' here.
 
