@@ -289,11 +289,13 @@ class Shader {
 
         let pos = this.primInList( prim );
 
+        console.warn( '.....Shader::removePrim(): Shader:' + this.name + ' prim: ' + prim.name + ' is at position:' + pos );
+
         if ( pos !== this.NOT_IN_LIST ) {
 
             // Remove a Prim from the Shader program's renderList (still in PrimList and World).
 
-           console.warn( 'Shader::removePrim():removing prim:' + prim.name + ' from Shader:' + this.name );
+           console.warn( '......Shader::removePrim(): Shader:' + this.name + ' removing prim:' + prim.name + ' from Shader:' + this.name );
 
             //////////////////////this.program.renderList.splice( pos, 1 );
 
@@ -313,7 +315,7 @@ class Shader {
 
         } else {
 
-            console.warn( 'Shader::removePrim():' + prim.name + ' not found in Shader::' + this.name );
+            console.warn( '......Shader::removePrim(): Shader:' + this.name + ' ' + prim.name + ' not found in Shader::' + this.name );
 
         }
 

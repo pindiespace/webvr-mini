@@ -2,7 +2,7 @@
 
     "scene" : {
 
-        "active" : false,
+        "active" : true,
 
         "name" : "celestial scene",
 

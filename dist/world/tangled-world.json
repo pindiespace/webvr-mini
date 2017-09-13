@@ -2,7 +2,7 @@
 
     "scene" : {
 
-        "active" : true,
+        "active" : false,
 
         "name" : "tangled scene",
 

@@ -101,7 +101,7 @@ class PrimFactory extends AssetPool {
 
         // Keep a list of all created Prims here.
 
-        this.prims = [];
+        /////////////////////this.prims = [];
 
         /** 
          * ---------------------------------------
@@ -313,6 +313,29 @@ class PrimFactory extends AssetPool {
 
     } // end of constructor
 
+    getPrimData () {
+
+        let pData = [];
+
+        for ( let i in this.keyList ) {
+
+            let p = this.keyList[ i ];
+
+            pData.push( {
+
+                name: p.name,
+
+                shader: p.shader.name,
+
+                key: p.key
+
+            } );
+
+        }
+
+        return pData;
+
+    }
 
     /**
      * Remove a Prim, which means removing from this.prims[], AND 
@@ -322,150 +345,114 @@ class PrimFactory extends AssetPool {
 
         let p = null;
 
-        // remove from this.prims[].
+        if ( prim && prim.key ) {
 
-        let i = this.prims.indexOf( prim );
-
-        if( i !== -1 ) {
-
-            p = this.prims.splice( i, 1 )[ 0 ];
-
-            // remove from AssetPool.
+            p = this.getAsset( prim.key );
 
             if ( p === prim ) {
 
-                // Remove from AssetPool
+                 // Remove from AssetPool.
 
-                p = this.removeAsset( prim.key );
+                if ( p === this.removeAsset( prim.key ) ) {
 
-                console.log( "PRIM REMOVEASSET:" + p );
+                    console.log( "......primFactory::removeAsset() found and removed:" + p.name );
 
-                // remove from all Shaders;
+                } else {
+
+                    console.error( '......PrimFactory::deletePrim(): Prim:' + p.name + ' not removed from PrimFactory' );
+
+                }
+
+                // Remove from its Shaders.
 
                 p.shader.removePrim( p );
 
                 p.defaultShader.removePrim( p );
 
-                this.world.s0.removePrim( p ); // just in case it is in both places at once
+                // double-check.
+
+                let shaders = this.world.getShaders();
+
+                for ( let i = 0; i < shaders.length; i++ ) {
+
+                    if ( shaders[ i ].removePrim( p ) ) {
+
+                        // TESTING ONLY
+
+                        console.error( '....PrimFactory::deletePrim(): prim:' + p.name + ' found in unexpected Shader:' + shaders[ i ].name );
+
+                    }
+
+                }
 
             } else {
 
-                console.warn( 'PrimFactory::deletePrim(): no prim returned from splice' );
+                    console.warn( '.....PrimFactory::deletePrim(): prim:' + p.name + ' not found in PrimFactory' );
 
-            }
-
+                }
 
         } else {
 
-            console.warn( 'PrimFactory::deletePrim(): asset not found in prim array' );
+            console.warn( '....PrimFactory::deletePrim(): invalid prim passed' );
 
         }
-
-
 
         return p;
 
     }
 
     /** 
-     * Set the current Prim list to a specific World.
-     * @param {String} worldKey 
+     * Set the current Prim list to a specific World by adding and 
+     * removing Prims from the Shader.
+     * @param {Array[Prim]} newPrims
      */
-    setActivePrims ( worldKey ) {
+    setActivePrims ( world ) {
 
-        // Check to see if the key is defined in World.
+        let p = null;
 
-        console.log("........SETTING ACTIVE PRIMS USING key: " + worldKey + " ....................")
+        // Come in with a list of keys belonging to World.
 
-        if ( ! this.world.keyList[ worldKey ] ) {
-
-            console.error( 'Primfactory::setActivePrims(): invalid key passed' );
-
-        }
-
-        let newPrims = [];
-
-        // Loop through assigned assets to reconstruct the Prim list.
+        let worldKey = world.key;
 
         for ( let i in this.keyList ) {
 
-            let p = this.keyList[ i ];
+            p = this.keyList[ i ];
 
-            console.log("PRIM.worldKey:" + p.worldKey + " worldKey:" + worldKey )
+            p.shader.removePrim( p, false );
 
-            if ( p.worldKey === worldKey ) {
-
-                newPrims.push( p );
-
-            } 
+            p.defaultShader.removePrim( p, false );
 
         }
 
-        console.log("NEW PRIMS LENGTH:" + newPrims.length )
+        console.log( '=====================================')
 
-        for ( let i = 0; i < this.prims.length; i++ ) {
+        console.log( 'PrimFactory::setActivePrims(): adding back active world prims to their Shaders' );
 
-            this.deletePrim( this.prims[ i ] );
+        // Empty, now reset with our world.
 
-        }
+        for ( let i in world ) {
 
-        /* 
-         * Remove old array contents WITHOUT zapping the array reference (ES5 method). We 
-         * do this even if there are no Prims in the World.
-         */
+            switch ( i ) {
 
-        this.prims.splice( 0, this.prims.length );
+                case 'scene':
+                case 'path':
+                case 'key':
 
-        Array.prototype.push.apply( this.prims, newPrims );
+                    break;
 
-        // Remove old Prims from their Shaders
+                default: // an initialized.
 
+                    p = world[ i ];
 
+                    console.log( 'PrimFactory::setActivePrims(): prim is:' + p );
 
-    }
+                    p.shader.addPrim( p, true );
 
-    /** 
-     * Create a large coordinate data array with data for multiple Prims.
-     * When a Prim is made, we store a reference in the this.prims[] 
-     * array. So, to make one, we just concatenate their  
-     * vertices. Use to send multiple prims sharing the same Shader.
-    // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
-    // TODO: https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/TechniquesforWorkingwithVertexData/TechniquesforWorkingwithVertexData.html
-    // TODO: http://max-limper.de/tech/batchedrendering.html
-     * @param {glMatrix.vec3[]} vertices
-     * @returns {glMatrix.vec3[]} vertices
-     */
-    setVertexData ( vertices ) {
+                    break;
 
-        vertices = [];
-
-        for ( let i in this.prims ) {
-
-            vertices = vertices.concat( this.prims[ i ].geometry.vertices.data );
+            }
 
         }
-
-        return vertices;
-
-    }
-
-    /** 
-     * get the big array with all index data. Use to 
-     * send multiple prims sharing the same Shader.
-     * @param {Array} indices the indices to add to the larger array.
-     * @returns {Array} the indices.
-     */
-    setIndexData ( indices ) {
-
-        indices = [];
-
-        for ( let i in this.prims ) {
-
-            indices = indices.concat( this.prims[ i ].geometry.indices.data );
-
-        }
-
-        return indices;
 
     }
 
@@ -477,25 +464,11 @@ class PrimFactory extends AssetPool {
      */
     initPrimTexture ( prim, textureObj, options ) {
 
-        ///console.log("Prim::initPrimTexture(): new texture for prim:" + prim.name + ', options:' + options );
+        //console.log("Prim::initPrimTexture(): new texture for prim:" + prim.name + ', options:' + options );
 
-        //if ( options.fromObj ) {
-
-        //    console.warn(">>PrimFactory::initPrimTexture(): TEXTURE COMING THROUGH FROM AN OBJ FILE FOR: " + prim.name + " WITH NAME:" + options.materialName + " WITH MATERIAL KEY:" + options.materialKey )
-
-        //}
-
-        /* 
-         * Find the associated material from the material key given to the texture.
-         */
+        // Find the associated material from the material key given to the texture.
 
         let m = prim.materials[ options.materialName ];
-
-        //for ( let i in prim.materials ) {
-
-        //    console.log(">>PrimFactory::initPrimTexture(): current materials are:" + prim.materials[ i ].name)
-
-        //}
 
         if ( m ) {
 
@@ -687,7 +660,7 @@ class PrimFactory extends AssetPool {
      * @param {Boolean} applyTexToFace if true, apply texture to each face, else apply texture to the entire object.
      * @param {String[]} modelFiles path to model OBJ (and indirectly, material files ) used to define non-procedural Mesh Prims.
      */
-    createPrim ( 
+    computePrim ( 
 
         shader, // Shader which attaches/detaches this Prim from display list
 
@@ -733,14 +706,14 @@ class PrimFactory extends AssetPool {
 
         if ( ! this.geometryPool.checkType( type ) ) {
 
-            console.error( 'Prim::createPrim(): unsupported Prim type:' + type + 'for:' + prim.name );
+            console.error( 'Prim::computePrim(): unsupported Prim type:' + type + 'for:' + prim.name );
 
             return null;
         }
 
         if ( modelFiles && modelFiles.length === 0 && type === this.geometryPool.typeList.MESH ) {
 
-            console.error( 'PrimFactory::createPrim(): type MESH does not have an defining file for Prim:' + prim.name );
+            console.error( 'PrimFactory::computePrim(): type MESH does not have an defining file for Prim:' + prim.name );
 
             return null;
         }
@@ -1113,11 +1086,9 @@ class PrimFactory extends AssetPool {
 
         }
 
-
         // Prim name (arbitrary).
 
         prim.name = name;
-
 
         // Shader after the Prim has initialized.
 
@@ -1278,7 +1249,7 @@ class PrimFactory extends AssetPool {
 
         // Execute geometry creation routine (which may be a file load).
 
-        console.log( 'PrimFactory::createPrim(): Generating:' + prim.name + '(' + prim.type + ')' );
+        console.log( 'PrimFactory::computePrim(): Generating:' + prim.name + '(' + prim.type + ')' );
 
         // Geometry factory function, create empty WebGL Buffers.
 
@@ -1307,7 +1278,7 @@ class PrimFactory extends AssetPool {
 
         // Add to our 'quick list'
 
-        this.prims.push( prim );
+        ///////////////////////////////////////////this.prims.push( prim );
 
         // Add to our Asset Pool.
 

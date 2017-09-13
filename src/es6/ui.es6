@@ -251,7 +251,7 @@ class Ui {
 
             },
 
-            menuActiveItem: { // active  
+            menuActiveItem: { // <li> active  
 
             },
 
@@ -259,13 +259,13 @@ class Ui {
 
             },
 
-            spinner: {
+            spinner: { // <div>
 
                 zIndex: 9998
 
             },
 
-            tooltip : {
+            tooltip : { // <div>
 
                 position: 'absolute',
 
@@ -703,16 +703,6 @@ class Ui {
 
                 console.log( 'clicked vr button...' );
 
-                //this.vrButton.hide();
-
-                //this.fullscreenButton.hide();
-
-                //this.worldButton.shift( true ); // TODO: move into .setControlsByMode()!!!!!!!!!!!!!!!!!!!!!!!!
-
-                //this.gearButton.shift( true ); // TODO: move into .setControlsByMode()!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-                //this.exitVRButton.show();
-
                 // Set the mode (DOM -> WebVR stereo).
 
                 this.mode = this.UI_VR;
@@ -958,8 +948,6 @@ class Ui {
             // Allow World selection.
 
             worldMenu.addEventListener( 'click', ( evt ) => {
-
-                // Commit.
 
                 console.log("CHANGING WORLD FROM:" + this.world.getActiveWorld().scene.name + " TO:" + evt.target.innerHTML );
 
@@ -1616,19 +1604,6 @@ class Ui {
 
         }
 
-        // Position a menu under a button.
-
-        menu.positionMenu = ( button ) => {
-
-            menu.style.top = ( parseFloat( button.style.top ) + parseFloat( button.style.height ) +
-
-                parseFloat( button.style.padding ) + 10 ) + 'px';
-
-            menu.style.left = ( parseFloat( button.style.left ) + parseFloat( button.style.width ) / 2 -
-
-                parseFloat( button.style.padding ) + 4 ) + 'px';
-
-        }
 
         // Get the menu list <ul> inside its container <div>.
 
@@ -1720,6 +1695,20 @@ class Ui {
             }
 
             return scrollToChild;
+
+        }
+
+        // Position a menu under a button.
+
+        menu.positionMenu = ( button ) => {
+
+            menu.style.top = ( parseFloat( button.style.top ) + parseFloat( button.style.height ) +
+
+                parseFloat( button.style.padding ) + 10 ) + 'px';
+
+            menu.style.left = ( parseFloat( button.style.left ) + parseFloat( button.style.width ) / 2 -
+
+                parseFloat( button.style.padding ) + 4 ) + 'px';
 
         }
 

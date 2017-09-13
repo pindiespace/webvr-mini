@@ -1,4 +1,59 @@
+
 /* unused JS code */
+
+FROM PRIMFACTORY:
+
+    /** 
+     * Create a large coordinate data array with data for multiple Prims.
+     * To make one, we just concatenate their  
+     * vertices. Use to send multiple prims sharing the same Shader.
+    // TODO: SET UP VERTEX ARRAYS, http://blog.tojicode.com/2012/10/oesvertexarrayobject-extension.html
+    // TODO: https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/TechniquesforWorkingwithVertexData/TechniquesforWorkingwithVertexData.html
+    // TODO: http://max-limper.de/tech/batchedrendering.html
+     * @param {glMatrix.vec3[]} vertices
+     * @returns {glMatrix.vec3[]} vertices
+     */
+    setVertexData ( vertices ) {
+
+        vertices = [];
+
+        for ( let i in this.keyList ) {
+
+            vertices = vertices.concat( this.prims[ i ].geometry.vertices.data );
+
+        }
+
+        return vertices;
+
+    }
+
+
+    /** 
+     * get the big array with all index data. Use to 
+     * send multiple prims sharing the same Shader.
+     * @param {Array} indices the indices to add to the larger array.
+     * @returns {Array} the indices.
+     */
+    setIndexData ( indices ) {
+
+        indices = [];
+
+        for ( let i in this.prims ) {
+
+            indices = indices.concat( this.prims[ i ].geometry.indices.data );
+
+        }
+
+        return indices;
+
+    }
+
+
+
+//////////////////////////////////////
+
+
+
 
 
 /* don't need styles for controls on WebVR WebGL <canvas>, so remove from index.html */

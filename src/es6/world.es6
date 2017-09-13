@@ -205,11 +205,11 @@ class World extends AssetPool {
 
                     // Individual Prims which need to update check this value.
 
-                    for ( let i = 0; i < this.primFactory.prims.length; i++ ) {
+                    for ( let i in this.primFactory.keyList ) {
 
-                        let prim = this.primFactory.prims[ i ];
+                        let p = this.primFactory.keyList[ i ];
 
-                        if ( prim.geolocate === true ) {
+                        if ( p.geolocate === true ) {
 
                             // default position x = 0, spin around zeinth
 
@@ -221,7 +221,7 @@ class World extends AssetPool {
 
                             console.log( 'World::WORLD_GEOLOCATION_READY event, setting geoData lat:' + geoData.latitude + ' long:' + geoData.longitude );
 
-                            this.computeSkyRotation( prim, geoData );
+                            this.computeSkyRotation( p, geoData );
 
                         }
 
@@ -366,6 +366,65 @@ class World extends AssetPool {
     }
 
     /** 
+     * Get all the potential shaders a Prim could be assigned to.
+     */
+    getShaders () {
+
+        // TODO: move shaders to an array by default.
+
+        return [ this.s0, this.s1, this.s2 ];
+
+    }
+
+    getShaderData() {
+
+        let sData = [];
+
+        let shaders = this.getShaders();
+
+        for ( let i = 0; i < shaders.length; i++ ) {
+
+            let s = shaders[ i ];
+
+            if ( ! s || ! s.name ) console.error( '.....World::getShaderData(): bad Shader:' + s )
+
+                let sObject = {
+
+                    name: shaders[ i ].name,
+
+                    prims: []
+
+                };
+
+            let r = shaders[ i ].program.renderList;
+
+            console.log("Shader:" + s.name + " program.RENDERLIST:" + r )
+
+            for ( let j = 0; j < r.length; j++ ) {
+
+                let p = r[ j ];
+
+                if ( p !== null ) {
+
+                    sObject.prims.push( p.name );
+
+                } else {
+
+                    console.log('.....World.getShaderData(): NULL in shader:' + s.name + " at program.renderList pos:" +  j )
+
+                }
+
+            }
+
+            sData.push( sObject );
+
+        }
+
+        return sData;
+
+    }
+
+    /** 
      * Get all worlds by their name. 
      * Used by the Ui class.
      * @return {Object} a World Scene object.
@@ -417,7 +476,7 @@ class World extends AssetPool {
     /** 
      * Read the JSON for an individual Prim, and execute Prim creation.
      */
-    computePrim ( pData, i ) {
+    getPrim ( pData, worldKey ) {
 
         const vec3 = this.glMatrix.vec3;
 
@@ -433,12 +492,19 @@ class World extends AssetPool {
 
         console.log( '.....prim:' + pData.name );
 
+        if ( ! worldKey ) {
+
+            console.error( 'World::getPrim(): no worldKey supplied, aborting Prim load' );
+
+            return null;
+
+        }
+
         let shader = this.shaderPool.getAssetByName( pData.shader );
 
         if ( shader ) {
 
-
-            if ( shader.name )  console.log("....." + pData.name + " shader is:" + shader.name ); ///////////////////////////////////////
+            if ( shader.name )  console.log(".....World::getPrim(): prim:" + pData.name + " Shader is:" + shader.name ); ///////////////////////////////////////
 
 
             // Handle cases for dimensions and divisions params are numbers (they may also be strings).
@@ -477,13 +543,13 @@ class World extends AssetPool {
 
             // Create the Prim.
 
-            return this.primFactory.createPrim(
+            let p = this.primFactory.computePrim(
 
                 this.shaderPool.getAssetByName( pData.shader ), // Shader used
 
                 typeList[ pData.type ],                         // Prim type
 
-                i,                                          // name
+                pData.name,                                     // name
 
                 vec5( 
                     parseFloat( pData.dimensions[ 0 ] ), 
@@ -547,13 +613,21 @@ class World extends AssetPool {
 
                 pData.animSystem                  // if this Prim has animation waypoints, data is here
 
-            ); // end createPrim
+            ); // end computePrim
+
+            // Assign worldKey to the actual Prim, and its description in the World JSON file.
+
+            p.WorldKey = worldKey;
+
+            return p;
 
         } else { // no Shader
 
-            console.error( 'World::computePrim(): no shader for:' + pData.name );
+            console.error( 'World::getPrim(): no shader for:' + pData.name );
 
         }
+
+        return null;
 
     }
 
@@ -568,12 +642,10 @@ class World extends AssetPool {
     computeWorld ( world ) {
 
         const util = this.util;
-            
+
         // Return a list of valid Prim objects to assign to this World later.
 
-        let validPrims = [];
-
-        console.log(".....in computeWorld, world is:" + world )
+        console.log(".....World::computeWorld(): in computeWorld, world is:" + world )
 
         // Parse the active world scene
 
@@ -583,75 +655,75 @@ class World extends AssetPool {
 
             if ( world.scene.active === true ) {
 
+                console.log( '......World::computeWorld(): world.scene.active === true, computing Prims...' );
+
                 // Loop thrugh Scene objects.
 
                 for ( var i in world ) {
 
                     let s = world[ i ];
 
-                    // 'scene' = parameters used to configure the World for its Prims.
+                    switch ( i ) {
 
-                    console.log(".......WORLD:" + world.scene.name );
+                        case 'scene':
 
-                    if ( i === 'scene' ) { 
+                            this.position = s.position; // World position
 
-                        this.position = s.position; // World position
+                            this.rotation = s.rotation; // World rotation
 
-                        this.rotation = s.rotation; // World rotation
+                            // Set lights, if present.
 
-                        // Set lights, if present.
+                            this.setLights( s.lights );
 
-                        this.setLights( s.lights );
+                            // If our scene is located in the real world, fire geolocation.
 
-                        // If our scene is located in the real world, geolocate.
+                            if ( s.geolocate ) {
 
-                        if ( s.geolocate ) {
-
-                            util.getGeolocation();
-
-                        }
-
-                    } else if ( i === 'key' ) {
-
-                        // do nothing
-
-                    } else if ( i === 'path' ) {
-
-                        // do nothing
-
-                    } else { // its an individual Prim
-
-                        // check for a Prim worldKey
-
-                        if ( ! s.worldKey ) {
-
-                            console.log( 'World::computeWorld(): prim ' + s.name + ' not loaded, loading...');
-
-                            let p = this.computePrim ( s, i );
-
-                            if ( p ) {
-
-                                p.worldKey = world.key;
-
-                                validPrims.push( p );
+                                util.getGeolocation();
 
                             }
 
-                        } else {
+                            break;
 
-                            // recover the Prim from the PrimFactory AssetPool.
+                        case 'key':
 
-                            console.log( 'World::computeWorld(): prim ' + s.name + ' being recovered from PrimFactory...' );
+                            // Key should always be present in initial object.
 
-                            p = this.primFactory.keyList[ s.key ];
+                            break;
 
-                            console.log("VALID PRIM:" + p.name );
+                        case 'path':
 
-                            validPrims.push( p );
+                            // Path should always be present in initial object.
 
-                        }
+                            break;
 
-                    } // scene vs. prim conditional
+                        default: 
+
+                            console.log( '......World::computeWorld(): prim ' + s.name + ' being loaded...');
+
+                            let pj = world[ i ]; // JSON version
+
+                            if ( ! pj.geometry ) { // Prim not created yet!
+
+                                console.log( '.......World::computeWorld(): prim ' + s.name + ' NOT instantated yet, doing so' );
+
+                                // Replace the description of the Prim with the Prim's key in primFactory.
+
+                                world[ i ] = this.getPrim( s, world.key );
+
+                                console.log( '.....World::computeWorld(): GOTTEN prim: ' + i + " is:" + world[ i ] );
+
+                            } else {
+
+                               // Prim already exists as part of World.
+
+                               console.log( '....World::computeWorld(): prim:' + s.name + ' already exists, no load needed' );
+
+                            }
+
+                            break;
+
+                    } // end of switch()
 
                 } // end of loop through World
 
@@ -664,19 +736,15 @@ class World extends AssetPool {
 
             this.util.emitter.emit( this.emitter.events.WORLD_DEFINITION_READY );
 
-            console.log("WORLD EMITTING DEFINITION OF:" + world.scene.name)
-
         } else {
 
             // World with missing scene.
 
             console.warn( 'World::getWorld(): Invalid World ' + world + ' with no scene:' );
 
-            return null;
-
         }
 
-        return validPrims;
+        return world;
 
     }
 
@@ -689,8 +757,6 @@ class World extends AssetPool {
         const util = this.util;
 
         // We've never loaded this world's JSON file (just received via network request).
-
-        console.log(".......LOADING NEW WORLD AT PATH:.........." + path )
 
         let mimeType = this.worldMimeTypes[ util.getFileExtension( path ) ] || this.worldMimeTypes.json;
 
@@ -720,27 +786,27 @@ class World extends AssetPool {
 
                         if ( world ) {
 
+                            console.log( '..........World::getWorld(): World: ' + world.scene.name + ' found, setting path:' + path );
+
                             world.path = path;
 
                             let worldKey = util.computeId();
 
                             // Store in AssetPool (superclass) using a key, with path in world.scene.path
 
-                            this.addAsset( world, worldKey );
+                            console.log('.........World::getWorld(): adding world:' + world.scene.name + ' with asset with key:' + worldKey );
+
+                            let w = this.addAsset( world, worldKey );
+
+                            if ( w !== world ) {
+
+                                console.error( '...........World::getWorld(): did not add asset for world:' + world.scene.name );
+
+                            }
 
                             // Compute the World and its Prims, adding the Prims to PrimFactory.
 
-                            let validPrims = this.computeWorld( world );
-
-                            // If there were valid Prims in the list, retroactively add the world key to them.
-
-                            if ( validPrims.length > 0 ) {
-
-                                // Force PrimFactory to reset its list of current prims to the current active Worlds.
-
-                                //this.primFactory.setActivePrims( worldKey );
-
-                            }
+                            this.computeWorld( world );
 
                         } else {
 
@@ -775,6 +841,8 @@ class World extends AssetPool {
 
         let world = this.getAssetByKey( worldKey );
 
+        console.log( 'World::switchWorld(): world is a:' + world );
+
         if ( world ) {
 
             // Deactivate all other worlds.
@@ -789,11 +857,15 @@ class World extends AssetPool {
 
             world.scene.active = true;
 
-            // Switch it.
+            // Initialize the Prims, if necessary.
 
             this.computeWorld( world );
 
-            this.primFactory.setActivePrims( worldKey );
+            console.log("World::switchWorld(): going to setActivePrims(): with:" + this.keyList[ worldKey ].scene.name );
+
+            // Reset the rendering list.
+
+            this.primFactory.setActivePrims( world );
 
         } else {
 
