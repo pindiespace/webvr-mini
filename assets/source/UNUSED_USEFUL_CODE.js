@@ -1,6 +1,60 @@
 
 /* unused JS code */
 
+MAKE SEPARATE FILE FOR THIS:
+
+
+    getShaderData() {
+
+        let sData = [];
+
+        let shaders = this.getShaders();
+
+        for ( let i = 0; i < shaders.length; i++ ) {
+
+            let s = shaders[ i ];
+
+            if ( ! s || ! s.name ) console.error( '.....World::getShaderData(): bad Shader:' + s )
+
+                let sObject = {
+
+                    name: shaders[ i ].name,
+
+                    prims: []
+
+                };
+
+            let r = shaders[ i ].program.renderList;
+
+            console.log("Shader:" + s.name + " program.RENDERLIST:" + r )
+
+            for ( let j = 0; j < r.length; j++ ) {
+
+                let p = r[ j ];
+
+                if ( p !== null ) {
+
+                    sObject.prims.push( p.name );
+
+                } else {
+
+                    console.log('.....World.getShaderData(): NULL in shader:' + s.name + " at program.renderList pos:" +  j )
+
+                }
+
+            }
+
+            sData.push( sObject );
+
+        }
+
+        return sData;
+
+    }
+
+
+    
+
 FROM PRIMFACTORY:
 
     /** 

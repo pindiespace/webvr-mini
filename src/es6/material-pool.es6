@@ -92,7 +92,7 @@ class MaterialPool extends AssetPool {
 
             illum: illum,                 // illium, color and ambient on
 
-            map_Kd: map_Kd,               // diffuse map, an image file (other maps not in default)
+            map_Kd: map_Kd,               // diffuse map, an WebGL texture (other maps not in default)
 
             map_Ks: null,                 // specular reflectivity map
 
@@ -106,7 +106,7 @@ class MaterialPool extends AssetPool {
 
             map_bump: null,               // bumpmap
 
-            map_disp: null,                   // displacement map
+            map_disp: null,               // displacement map
 
         }
 

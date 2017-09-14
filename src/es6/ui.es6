@@ -1734,7 +1734,11 @@ class Ui {
 
             let domList = menu.getList();
 
-            domList.style.opacity = '1';
+            domList.style.opacity = '1',
+
+            domList.parentNode.style.height = '',
+
+            domList.parentNode.style.padding = '9px';
 
             domList.scrollTop = scroll || 0;
 
@@ -1742,9 +1746,15 @@ class Ui {
 
         menu.hide = () => {
 
-            menu.getList().style.opacity = '0';
-
             if ( arrow ) arrow.style.opacity = 0;
+
+            let domList = menu.getList();
+
+            domList.style.opacity = '0',
+
+            domList.parentNode.style.height = '0',
+
+            domList.parentNode.style.padding = '0';
 
         }
 

@@ -434,7 +434,9 @@ class TexturePool extends AssetPool {
 
             console.log( 'TexturePool::getTexture(): found texture ' + path + ' in pool, using it...' );
 
-            this.util.emitter.emit( this.util.emitter.events.TEXTURE_2D_READY, prim, this.defaultKey, options );  
+            //this.util.emitter.emit( this.util.emitter.events.TEXTURE_2D_READY, prim, this.defaultKey, options );
+
+            this.util.emitter.emit( this.util.emitter.events.TEXTURE_2D_READY, prim, textureObj.key, options );
 
             return;
 

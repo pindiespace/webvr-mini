@@ -238,7 +238,7 @@ class Shader {
 
                 if ( prim.shader && prim.shader !== this ) {
 
-                    //console.log( 'Shader::addPrim(): removing prim:' + prim.name + ' from old Shader:' + prim.shader.name)
+                    console.warn( 'Shader::addPrim(): removing prim:' + prim.name + ' from old Shader:' + prim.shader.name)
 
                     prim.shader.removePrim( prim, emit );
 
@@ -297,9 +297,9 @@ class Shader {
 
            console.warn( '......Shader::removePrim(): Shader:' + this.name + ' removing prim:' + prim.name + ' from Shader:' + this.name );
 
-            //////////////////////this.program.renderList.splice( pos, 1 );
+            this.program.renderList.splice( pos, 1 );
 
-            this.program.renderList[ pos ] = null;
+            //this.program.renderList[ pos ] = null;
 
             prim.rendering = false;
 

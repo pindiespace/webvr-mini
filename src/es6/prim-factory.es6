@@ -355,11 +355,11 @@ class PrimFactory extends AssetPool {
 
                 if ( p === this.removeAsset( prim.key ) ) {
 
-                    console.log( "......primFactory::removeAsset() found and removed:" + p.name );
+                    ///////console.log( "......primFactory::removeAsset() found and removed:" + p.name );
 
                 } else {
 
-                    console.error( '......PrimFactory::deletePrim(): Prim:' + p.name + ' not removed from PrimFactory' );
+                    console.error( 'PrimFactory::deletePrim(): Prim:' + p.name + ' not removed from PrimFactory' );
 
                 }
 
@@ -375,9 +375,7 @@ class PrimFactory extends AssetPool {
 
                 for ( let i = 0; i < shaders.length; i++ ) {
 
-                    if ( shaders[ i ].removePrim( p ) ) {
-
-                        // TESTING ONLY
+                    if ( shaders[ i ].removePrim( p ) ) { // THIS IS JUST TESTING DOUBLE CHECK. TODO: TODO: REMOVE THIS CODE.
 
                         console.error( '....PrimFactory::deletePrim(): prim:' + p.name + ' found in unexpected Shader:' + shaders[ i ].name );
 
@@ -412,19 +410,13 @@ class PrimFactory extends AssetPool {
 
         // Come in with a list of keys belonging to World.
 
-        let worldKey = world.key;
-
         for ( let i in this.keyList ) {
 
             p = this.keyList[ i ];
 
             p.shader.removePrim( p, false );
 
-            p.defaultShader.removePrim( p, false );
-
         }
-
-        console.log( '=====================================')
 
         console.log( 'PrimFactory::setActivePrims(): adding back active world prims to their Shaders' );
 
@@ -446,7 +438,9 @@ class PrimFactory extends AssetPool {
 
                     console.log( 'PrimFactory::setActivePrims(): prim is:' + p );
 
-                    p.shader.addPrim( p, true );
+                   p.alpha = 1; // NOTE: triggers fadein!
+
+                   p.shader.addPrim( p, true );
 
                     break;
 
@@ -474,21 +468,31 @@ class PrimFactory extends AssetPool {
 
             console.log( 'PrimFactory::initPrimTexture(): adding texture ' + options.type + ' to material:' + options.materialName );
 
-            m[ options.type ] = textureObj.texture,
+        } else if ( options.materialKey ) {
 
-            m[ options.type + '_path' ] = textureObj.path,
+            console.log( 'PrimFactory::initPrimTexture(): using material ' + options.materialName + ' supplied in options' );
 
-            m[ options.type + '_key' ] = textureObj.key,
+            m = this.materialPool.getAssetByKey( options.materialKey );
 
-            m[ options.type + '_options' ] = options[ options.type + '_options' ];
+            prim.materials[ options.materialName ] = m;
 
         } else {
 
-            console.log( 'PrimFactory::initPrimTexture(): no material, creating placeholder for material:' + options.materialName );
+            console.log( 'PrimFactory::initPrimTexture(): no material for prim:' + prim.name + ', creating placeholder for material:' + options.materialName + ' using it...' );
 
-            prim.materials[ options.materialName ] = this.materialPool.default( options.materialName );
+            m = this.materialPool.default( options.materialName );
+
+            prim.materials[ options.materialName ] = m;
 
         }
+
+        m[ options.type ] = textureObj.texture,
+
+        m[ options.type + '_path' ] = textureObj.path,
+
+        m[ options.type + '_key' ] = textureObj.key,
+
+        m[ options.type + '_options' ] = options[ options.type + '_options' ];     
 
     }
 
@@ -519,7 +523,7 @@ class PrimFactory extends AssetPool {
      */
     initPrimMaterial ( prim, material, options ) {
 
-        /////console.log('Prim::initMaterial(): new material:' + material.name + ' for prim:' + prim.name + ' key:' + material.key );
+        console.log('Prim::initMaterial(): new material:' + material.name + ' for prim:' + prim.name + ' key:' + material.key );
 
         let m = prim.materials[ material.name ];
 
@@ -655,7 +659,7 @@ class PrimFactory extends AssetPool {
      * @param {glMatrix.vec3} acceleration movement vector (acceleration) of object.
      * @param {glMatrix.vec3} rotation rotation vector (spin) around center of object.
      * @param {glMatrix.vec3} angular orbital rotation around a defined point ///TODO!!!!! DEFINE########
-     * @param {String[]} textureImagea array of the paths to images used to create a texture (one Prim can have several).
+     * @param {String[]} textureImages array of the paths to images used to create a texture (one Prim can have several).
      * @param {glMatrix.vec4[]|glMatrix.vec4} color the default color(s) of the object, either a single color or color array.
      * @param {Boolean} applyTexToFace if true, apply texture to each face, else apply texture to the entire object.
      * @param {String[]} modelFiles path to model OBJ (and indirectly, material files ) used to define non-procedural Mesh Prims.
