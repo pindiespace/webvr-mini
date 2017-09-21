@@ -325,9 +325,9 @@ class World extends AssetPool {
         // Get the shaders (not initialized with update() and render() yet!).
         // Note: pass 'world' in so we can get the World POV.
 
-        this.s0 = this.shaderPool.getAssetByName( 'shaderFader' );
+        this.s0 = this.shaderPool.getAssetByName( 'shaderFader' ),
 
-        this.s1 = this.shaderPool.getAssetByName( 'shaderTexture' );
+        this.s1 = this.shaderPool.getAssetByName( 'shaderTexture' ),
 
         this.s2 = this.shaderPool.getAssetByName( 'shaderColor' );
 
@@ -348,9 +348,9 @@ class World extends AssetPool {
          * Note: the init() method sets up the update() and render() methods for the Shader.
          */
 
-        this.r0 = this.s0.init();
+        this.r0 = this.s0.init(),
 
-        this.r1 = this.s1.init();
+        this.r1 = this.s1.init(),
 
         this.r2 = this.s2.init();
 
@@ -441,8 +441,6 @@ class World extends AssetPool {
         const directions = this.primFactory.geometryPool.directions; // cardinal positions
 
         const util = this.util;
-
-        console.log( '.....prim:' + pData.name );
 
         if ( ! worldKey ) {
 

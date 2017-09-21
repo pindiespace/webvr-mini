@@ -84,7 +84,7 @@ module.exports = {
         //new webpack.optimize.OccurenceOrderPlugin(),
         //new webpack.optimize.DedupePlugin(),
         new webpack.optimize.UglifyJsPlugin({
-            compress: { warnings: false },
+            compress: { warnings: false, drop_console: true },
             comments: false,
             sourceMapUrl: '/dist/js/webvr-mini.js.map',
             sourceMap: true,

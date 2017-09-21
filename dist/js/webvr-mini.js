@@ -20027,7 +20027,7 @@
 
 	            // Generate mipmaps if we are a power of 2 texture.
 
-	            if (this.util.isPowerOfTwo(image.width) && this.util.isPowerOfTwo(image.height)) {
+	            if (this.webgl.version > 1 || this.util.isPowerOfTwo(image.width) && this.util.isPowerOfTwo(image.height)) {
 
 	                //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR );
 
@@ -21934,11 +21934,7 @@
 	            // Get the shaders (not initialized with update() and render() yet!).
 	            // Note: pass 'world' in so we can get the World POV.
 
-	            this.s0 = this.shaderPool.getAssetByName('shaderFader');
-
-	            this.s1 = this.shaderPool.getAssetByName('shaderTexture');
-
-	            this.s2 = this.shaderPool.getAssetByName('shaderColor');
+	            this.s0 = this.shaderPool.getAssetByName('shaderFader'), this.s1 = this.shaderPool.getAssetByName('shaderTexture'), this.s2 = this.shaderPool.getAssetByName('shaderColor');
 
 	            /* 
 	             * Get the World file, overwriting defaults as necessary. The 
@@ -21956,11 +21952,7 @@
 	             * Note: the init() method sets up the update() and render() methods for the Shader.
 	             */
 
-	            this.r0 = this.s0.init();
-
-	            this.r1 = this.s1.init();
-
-	            this.r2 = this.s2.init();
+	            this.r0 = this.s0.init(), this.r1 = this.s1.init(), this.r2 = this.s2.init();
 
 	            /* 
 	             * Fire world update (either window or WebVR display). Since we 
@@ -22053,8 +22045,6 @@
 	            var directions = this.primFactory.geometryPool.directions; // cardinal positions
 
 	            var util = this.util;
-
-	            console.log('.....prim:' + pData.name);
 
 	            if (!worldKey) {
 

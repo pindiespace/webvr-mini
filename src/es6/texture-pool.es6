@@ -155,7 +155,7 @@ class TexturePool extends AssetPool {
 
         // Generate mipmaps if we are a power of 2 texture.
 
-        if ( this.util.isPowerOfTwo( image.width ) && this.util.isPowerOfTwo( image.height ) ) {
+        if ( this.webgl.version > 1 || ( this.util.isPowerOfTwo( image.width ) && this.util.isPowerOfTwo( image.height ) ) ) {
 
             //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR );
 
