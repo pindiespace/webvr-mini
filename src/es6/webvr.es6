@@ -35,7 +35,7 @@ class WebVR {
 
         this.webgl = webgl,
 
-        window.displayName = 'window', // give it a display name
+        window.displayName = 'window', // give 'window' a display name for compatibility with our display model
 
         this.displays = [ window ],    // display [ 0 ] is always 'window'
 
@@ -50,6 +50,18 @@ class WebVR {
         this.stats = {
 
             version: 0
+
+        };
+
+        // Orientation and motion data for non-VR smartphones.
+
+        this.OMData = {
+
+            o: [ 0, 0, 0 ], // vec3 orientation
+
+            m: [ 0, 0, 0 ],  // vec3 motion
+
+            mvMatrix: this.glMatrix.mat4.create()
 
         };
 
@@ -209,6 +221,11 @@ class WebVR {
 
                             window.addEventListener( 'vrdisplayfocus', this.displayFocus.bind( this ), false );
 
+                            window.addEventListener( 'deviceorientation', this.setDeviceOrientation.bind( this ), false );
+
+                            window.addEventListener( 'devicemotion', this.setDevicePosition.bind( this ), false );
+
+
                         } // display is valid
 
                     } else { // WebVR is present, but displays.length == 0
@@ -299,6 +316,7 @@ class WebVR {
 
     /** 
      * Check if we have WebVR
+     * @return {Boolean} if WebVR API present, return true, else false.
      */
     hasWebVR () {
 
@@ -308,6 +326,8 @@ class WebVR {
 
     /** 
      * Check if we have access to a WebVR display
+     * @return {Boolean} if there is a usable VRDisplay other than the default (window). return 
+     * true, else, false.
      */
     hasWebVRDisplay () {
 
@@ -424,6 +444,106 @@ class WebVR {
         }
 
         return mvMatrix;
+
+    }
+
+    /*
+     * ---------------------------------------
+     * NON-VR ORIENTATION AND MOTION
+     * ---------------------------------------
+     */
+
+    /** 
+     * Set device orientation independently of WebVR via a 
+     * 'deviceorientation' event.
+     * @param {Event} e the orientation event.
+     */
+    setDeviceOrientation ( e ) {
+
+        // determine if we are in portrait or landscape.
+
+        let o = this.OMData.o;
+
+        o[ 0 ] = e.gamma + 90, // z axis
+
+        o[ 1 ] = e.alpha,  // x axis
+
+        o[ 2 ] = e.beta; // y axis TODO: adjust by 90 degrees (one of these)
+
+    }
+
+    /** 
+     * Set device motion independently of WebVR via a 
+     * 'devicemotion' event.
+     * @param {Event} e the motion event.
+     */
+    setDevicePosition ( e ) {
+
+        // e.acceleration = acceleration
+
+        let m = this.OMData.m;
+
+        m[ 0 ] = e.x,
+
+        m[ 1 ] = e.y,
+
+        m[ 2 ] = e.z;
+
+    }
+
+    /** 
+     * Get the orientation-motion data in a matrix suitable 
+     * for Shader rendering.
+     */
+    getOMMatrix () {
+
+        let mat4 = this.glMatrix.mat4,
+
+        util = this.util,
+
+        mvMatrix = this.OMData.mvMatrix,
+
+        o = this.OMData.o,
+
+        m = this.OMData.m;
+
+        mvMatrix = mat4.identity( mvMatrix );
+
+        mat4.translate( mvMatrix, mvMatrix, [ 0, this.PLAYER_HEIGHT, 0 ] );
+
+        mat4.invert( mvMatrix, mvMatrix );
+
+//mat4.rotate( mMatrix, mMatrix, p.rotation[ 0 ], [ 1, 0, 0 ] );
+//mat4.rotate( mMatrix, mMatrix, p.rotation[ 1 ], [ 0, 1, 0 ] );
+//mat4.rotate( mMatrix, mMatrix, p.rotation[ 2 ], [ 0, 0, 1 ] );
+
+        // Use orientation data. 
+
+        mat4.rotate( mvMatrix, mvMatrix, util.degToRad( o[ 0 ] ), [ 1, 0, 0 ] ); // y ok
+
+        mat4.rotate( mvMatrix, mvMatrix, util.degToRad( o[ 2 ] ), [ 0, 0, 1 ] ); // xz rotation
+
+        mat4.rotate( mvMatrix, mvMatrix, util.degToRad( o[ 1 ] ), [ 0, 1, 0 ] ); // reversed, or - sign?
+
+        //mat4.translate( mvMatrix, mvMatrix, this.OMData.m );
+
+        window.o = o;
+        window.mvMatrix = mvMatrix;
+        window.mat4 = mat4;
+
+        return mvMatrix;
+
+    }
+
+    setMouseOrientation () {
+
+    }
+
+    setMousePosition () {
+
+    }
+
+    getMouseMatrix () {
 
     }
 
@@ -704,16 +824,17 @@ class WebVR {
                 // Any changes needed when we jump to VR presenting.
 
 
-
             }
 
         } else {
 
             console.log( 'WebVR::presentChange(): is NOT presenting...' );
 
-
                 /* 
-                  NOTE: Edge needs this <canvas> and viewport resize, because
+                 * User pressed ESC key.
+                 * Another app took over the headset.
+                 *
+                 * NOTE: Edge needs this <canvas> and viewport resize, because
                  * it doesn't recognize the keypress binding.
                  */
 

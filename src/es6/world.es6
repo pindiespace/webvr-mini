@@ -943,7 +943,6 @@ class World extends AssetPool {
 
     }
 
-
     /** 
      * Compute the rotations needed for a StarDome to be positioned from 
      * the point of view of an observer on Earth,  given the user's latitude, 
@@ -1347,7 +1346,7 @@ module.exports = function forceCanvasResizeSafariMobile (canvasEl) {
 
                     /* 
                      * These routines set the canvas viewport to left and right stereo, and 
-                     * draw left or right view using the frameDat left and right view matrix.
+                     * draw left or right view using the frameData left and right view matrix.
                      */
 
                     this.r1.renderVR( vr, fd, wvMatrix, pov );  // textured, no lighting
@@ -1363,7 +1362,6 @@ module.exports = function forceCanvasResizeSafariMobile (canvasEl) {
                     console.error( 'World::render(): invalid VRFrameData' );
 
                 }
-
 
             } else {
 
@@ -1381,13 +1379,11 @@ module.exports = function forceCanvasResizeSafariMobile (canvasEl) {
 
                 this.getWorldViewMatrix( wvMatrix );
 
-                //////////////this.r3.renderMono( wvMatrix, pov );
+                this.r1.renderMono( vr, wvMatrix, pov ); // textured, no lighting
 
-                this.r1.renderMono( wvMatrix, pov ); // textured, no lighting
+                this.r2.renderMono( vr, wvMatrix, pov ); // color
 
-                this.r2.renderMono( wvMatrix, pov ); // color
-
-                this.r0.renderMono( wvMatrix, pov ); // REQUIRED alpha (Prim appearing or disappearing), drawn in front
+                this.r0.renderMono( vr, wvMatrix, pov ); // ShaderFader uses alpha (Prim appearing or disappearing), drawn in front
 
             }
 

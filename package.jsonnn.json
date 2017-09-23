@@ -1,0 +1,47 @@
+{
+  "name": "webvr-mini",
+  "version": "0.1.0",
+  "description": "basic webvr world, build without a framework",
+  "main": "index.php",
+  "scripts": {
+    "test": "bob"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/pindiespace/webvr-mini.git"
+  },
+  "keywords": [
+    "webvr",
+    "webvr-mini"
+  ],
+  "author": "pete markiewicz",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/pindiespace/webvr-mini"
+  },
+  "homepage": "https://github.com/pindiespace/webvr-mini#readme",
+  "devDependencies": {
+    "autoprefixer": "^7.1.2",
+    "babel-preset-es2015": "^6.24.1",
+    "browser-sync": "^2.18.13",
+    "css-mqpacker": "^6.0.1",
+    "csscomb": "^4.2.0",
+    "cssnano": "^3.10.0",
+    "gulp": "^3.9.1",
+    "gulp-autoprefixer": "^4.0.0",
+    "gulp-babel": "^6.1.2",
+    "gulp-cli": "^1.3.0",
+    "gulp-concat": "^2.6.1",
+    "gulp-csscomb": "^3.0.8",
+    "gulp-cssnano": "^2.1.2",
+    "gulp-deporder": "^1.1.0",
+    "gulp-imagemin": "^3.3.0",
+    "gulp-newer": "^1.3.0",
+    "gulp-postcss": "^7.0.0",
+    "gulp-sass": "^3.1.0",
+    "gulp-strip-debug": "^1.1.0",
+    "gulp-uglify": "^3.0.0",
+    "gulp-util": "^3.0.8",
+    "postcss-assets": "^4.2.0"
+  }
+}

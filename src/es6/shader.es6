@@ -694,23 +694,19 @@ class Shader {
         /**
          * Rendering mono view.
          */
-        program.renderMono = ( vMatrix, pov ) => {
+        program.renderMono = ( vr, wvMatrix, pov ) => {
 
-            //mat4.identity( vMatrix );
+            // Copy wvMatrix to mvMatrix (so we have World View wvMatrix separately for Shader).
 
-            //mat4.rotate( vMatrix, vMatrix, pov.rotation[ 1 ], [ 0, 1, 0 ] ); // rotate on Y axis only (for mouselook).
+            mat4.copy( mvMatrix, wvMatrix );
 
-            //mat4.rotate( vMatrix, vMatrix, pov.rotation[ 0 ], [ 1, 0 , 0 ] ); // rotate on X axis only (for mouselook).
+            // Get orientation reported by smartphone (if present).
 
-            // POV position (common to all renderings in a frame).
+            let omMatrix = vr.getOMMatrix();
 
-            //mat4.translate( vMatrix, vMatrix, pov.position );
+            mat4.multiply( mvMatrix, mvMatrix, omMatrix );
 
-            // Copy vMatrix to mvMatrix (so we have vMatrix separately for Shader).
-
-            mat4.copy( mvMatrix, vMatrix );
-
-            // mono Perspective (common for all renderings in a frame).
+            // Mono Perspective (common for all renderings in a frame).
 
             mat4.perspective( pMatrix, Math.PI*0.4, canvas.width / canvas.height, near, far );
 
@@ -721,7 +717,7 @@ class Shader {
         /** 
          *  Rendering left and right eye for VR. Called once for each Shader by World.
          */
-        program.renderVR = ( vr, frameData, vvMatrix, pov ) => {
+        program.renderVR = ( vr, frameData, wvMatrix, pov ) => {
 
             // Framedata provided by calling function.
 
@@ -739,11 +735,11 @@ class Shader {
 
             // Combine with the initial World viewMatrix.
 
-            mat4.multiply( mvMatrix, vMatrix, vvMatrix );
+            mat4.multiply( mvMatrix, vMatrix, wvMatrix );
 
             // Copy vMatrix to mvMatrix (so we have vMatrix separately for Shader).
 
-            /////////////mat4.copy( mvMatrix, vvMatrix );       
+            /////////////mat4.copy( mvMatrix, wvMatrix );       
 
             // Use left Projection matrix provided by WebVR FrameData object to render the World.
 
@@ -763,11 +759,11 @@ class Shader {
 
             // Combine with the initial World viewMatrix.
 
-            mat4.multiply( mvMatrix, vMatrix, vvMatrix );
+            mat4.multiply( mvMatrix, vMatrix, wvMatrix );
 
             // Copy vMatrix to mvMatrix (so we have vMatrix separately for Shader).
 
-            ////////////mat4.copy( mvMatrix, vvMatrix );
+            ////////////mat4.copy( mvMatrix, wvMatrix );
 
             // Use right Projection matrix provided by WebVR FrameData object to render the World.
 
