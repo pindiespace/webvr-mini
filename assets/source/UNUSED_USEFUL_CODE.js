@@ -1,5 +1,139 @@
 
+
+
 /* unused JS code */
+
+
+    /** 
+     * Add a model
+     * @param {Prim} prim the requesting Prim object.
+     * @param {Object} data data to construct the Prim GeometryBuffer.
+     * @param {String} path the file path to the object.
+     * @param {Number} pos the index of the object in the calling Prim's array.
+     * @param {String} mimeType the MIME type of the file.
+     * @param {String} type the GeometryPool.typeList type of the object, e.g. MESH, SPHERE...
+     */
+    addModel ( prim, data, path, mimeType, options ) {
+
+        //let d;
+
+        let fType = this.util.getFileExtension( path );
+
+        let d = null,
+
+        emitEvent = '';
+
+        switch ( fType ) {
+
+            case 'obj':
+
+                // Return a Model object.
+
+                d = this.computeObjMesh( data, prim, path ); // ADDS LOTS OF STUFF TO 'd'
+ 
+                // Not supplied by OBJ format.
+
+                d.tangents = [];
+
+                d.colors = [];
+
+                emitEvent = this.util.emitter.events.OBJ_GEOMETRY_READY;
+
+                break;
+
+            case 'gltf':
+
+                d = this.computeGlTFMesh( data, prim, path );
+
+                emitEvent = this.util.emitter.events.GLTF_GEOMETRY_READY;
+
+                break;
+
+            case 'gltfbinary':
+
+                d = this.computeGlTFBinaryMesh( data, prim, path );
+
+                emitEvent = this.util.emitter.events.GLTF_GEOMETRY_READY;
+
+                break;
+
+            case 'hyg': // stardome or 3d stars
+
+                //return this.adddModel( prim, data, mimeType, options );
+
+                prim.drawTris = false,
+
+                prim.drawLines = false,
+
+                prim.drawPoints = true;
+
+                /* 
+                 * OPTIONS.xyz is assigned by GeometryPool as true for 
+                 * typeList.STAR3D, false for typeList.STARDOME. HYG data contains 
+                 * both spherical (RA and Dec) coordinates, as well as Cartesian coords.
+                 */
+
+                d = this.computeHyg( data, prim, path, options );
+
+                emitEvent = this.util.emitter.events.HYG_GEOMETRY_READY;
+
+                break;
+
+            case 'png': // heightmap in BLOB format.
+
+                return this.adddModel( prim, data, path, mimeType, options );
+
+                break;
+
+            default:
+
+                console.warn( 'ModelPool::addModel(): unknown model file:' + path + ' MIME type:' + mimeType );
+
+                break;
+
+        }
+
+        /* 
+         * We save references to the model object in ModelPool.
+         * NOTE: .addAsset() puts the assigned key by ModelPool into our object.
+         */
+
+        if ( d ) {
+
+            d.type = prim.type,
+
+            d.path = path,
+
+            d.emits = emitEvent;
+
+            /*
+             * Model format which must be returned by Mesh or procedural geometry creation.
+             * {
+             *   vertices: vertices,
+             *   indices: indices,
+             *   texCoords: texCoords,
+             *   normals: normals,
+             *   options: options (start points for objects, groups, smoothingGroups, etc),
+             *   type: type,
+             *   path: file path
+             * }
+            */
+
+            return this.addAsset( d );
+
+        } else {
+
+             console.warn( 'ModelPool::addModel(): no model returned by addModel() + ' + mimeType + ' function' );
+
+        }
+
+        return null;
+
+    }
+
+////////////////////////////////
+
+
 
 MAKE SEPARATE FILE FOR THIS:
 

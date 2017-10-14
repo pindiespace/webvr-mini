@@ -29,6 +29,8 @@ class Emitter {
 
             HYG_GEOMETRY_READY: 'hygrdy',                 // Use for HYG stellar database
 
+            HEIGHTMAP_GEOMETRY_READY: 'hmgrdy',           // Heightmap geometry from an image or direct data.
+
             GLTF_GEOMETRY_READY: 'gltfrdy',               // Use for GlTF file formats
 
             MATERIAL_READY: 'mrdy',                       // sends Prim reference. Not used for procedural geometry

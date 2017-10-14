@@ -482,7 +482,7 @@ class Util {
      * @param {Number} n the float number
      * @returns {Number} the fractional part of the number;
      */
-    frac( n ) {
+    frac ( n ) {
 
         return parseFloat( n ) % 1;
 
@@ -721,7 +721,7 @@ class Util {
 
             return arr.slice();
 
-        } else {
+        } else if ( arr.length ) {
 
             let newArr = new Array( arr.length );
 
@@ -733,7 +733,12 @@ class Util {
 
             return newArr;
 
+        } else {
+
+            console.error( 'Util::copyArr(): not a valid array:' + arr );
         }
+
+        return null;
 
     }
 

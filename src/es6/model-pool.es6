@@ -45,7 +45,9 @@ class ModelPool extends AssetPool {
 
             'gltfBinary': 'bin/gltf',
 
-            'hyg': 'text/plain'
+            'hyg': 'text/plain',
+
+            'png': 'image/png' // heightmap
 
         };
 
@@ -1109,7 +1111,102 @@ class ModelPool extends AssetPool {
     }
 
     /** 
-     * Add a model
+     * TODO: get to pixels of image BLOB data.
+     */
+    computeHeightMap ( data, prim, path, options ) {
+
+        // Heightmaps don't provide vertices, indices, since they may need to be fitted to a Prim surface by interpolation.
+
+        let m = this.default();
+
+        m.options = options;
+
+        let w = data.width; // becomes x axis
+
+        let d = data.height; // becomes z axis
+
+        let c = document.createElement( 'canvas' );
+
+        let ctx = c.getContext( '2d' );
+
+        /* 
+         * Canvas can do bilinear scaling, so rescale the heightMap data to the size of the Prim x and z divisions.
+         */
+
+        let xScale = prim.divisions[ 0 ] / w;
+
+        let zScale = prim.divisions[ 2 ] / d;
+
+        ctx.scale( xScale, zScale );
+
+        // Load the image and get the heightmap data.
+
+        ctx.drawImage( data, 0, 0 );
+
+        let imgData = ctx.getImageData( 0, 0, w, d );
+
+        let dta = imgData.data;
+
+        let j = 0;
+
+        let pixels = new Float32Array( w * d );
+
+        let maxHeight = 0;
+
+        let minHeight = 0;
+
+        let avHeight = 0;
+
+        // Compress rgba to one byte, and store Map statistics.
+
+        for ( let i = 0; i < dta.length; i += 4 ) {
+
+            pixels[ j ] = ( dta[ i ] + dta[ i + 1 ] + dta[ i + 2 ] ) / 3;
+
+            maxHeight = Math.max( maxHeight, pixels[ j ] );
+
+            minHeight = Math.min( minHeight, pixels[ j ] );
+
+            avHeight += pixels[ j ];
+
+            j++;
+
+        }
+
+        // Force clearing.
+
+        c = ctx = null;
+
+        // Adjust object. No attempt to compute vertices, indices, etc.
+
+        let squareSize = Math.max( w, d );
+
+        m.options.map = {
+
+            pixels: pixels,
+
+            w: w, // x axis
+
+            d: d, // z axis
+
+            squareSize: squareSize,
+
+            max: squareSize - 1,
+
+            maxHeight: maxHeight,
+
+            minHeight: minHeight,
+
+            avHeight: avHeight / pixels.length
+
+        };
+
+        return m;
+
+    }
+
+    /** 
+     * Add model, handling cases where results come back slowly or async.
      * @param {Prim} prim the requesting Prim object.
      * @param {Object} data data to construct the Prim GeometryBuffer.
      * @param {String} path the file path to the object.
@@ -1119,89 +1216,13 @@ class ModelPool extends AssetPool {
      */
     addModel ( prim, data, path, mimeType, options ) {
 
-        //let d;
-
         let fType = this.util.getFileExtension( path );
 
-        let d = null,
+        let that = this; // save for promise
 
-        emitEvent = '';
+        let d = null;
 
-        switch ( fType ) {
-
-            case 'obj':
-
-                // Return a Model object.
-
-                d = this.computeObjMesh( data, prim, path ); // ADDS LOTS OF STUFF TO 'd'
- 
-                // Not supplied by OBJ format.
-
-                d.tangents = [];
-
-                d.colors = [];
-
-                emitEvent = this.util.emitter.events.OBJ_GEOMETRY_READY;
-
-                break;
-
-            case 'gltf':
-
-                d = this.computeGlTFMesh( data, prim, path );
-
-                emitEvent = this.util.emitter.events.GLTF_GEOMETRY_READY;
-
-                break;
-
-            case 'gltfbinary':
-
-                d = this.computeGlTFBinaryMesh( data, prim, path );
-
-                emitEvent = this.util.emitter.events.GLTF_GEOMETRY_READY;
-
-                break;
-
-            case 'hyg': // stardome or 3d stars
-
-                prim.drawTris = false,
-
-                prim.drawLines = false,
-
-                prim.drawPoints = true;
-
-                /* 
-                 * OPTIONS.xyz is assigned by GeometryPool as true for 
-                 * typeList.STAR3D, false for typeList.STARDOME. HYG data contains 
-                 * both spherical (RA and Dec) coordinates, as well as Cartesian coords.
-                 */
-
-                d = this.computeHyg( data, prim, path, options );
-
-                emitEvent = this.util.emitter.events.HYG_GEOMETRY_READY;
-
-                break;
-
-            default:
-
-                console.warn( 'ModelPool::addModel(): unknown model file:' + path + ' MIME type:' + mimeType );
-
-                break;
-
-        }
-
-
-        /* 
-         * We save references to the model object in ModelPool.
-         * NOTE: .addAsset() puts the assigned key by ModelPool into our object.
-         */
-
-        if ( d ) {
-
-            d.type = prim.type,
-
-            d.path = path,
-
-            d.emits = emitEvent;
+        return new Promise( ( resolve, reject ) => {
 
             /*
              * Model format which must be returned by Mesh or procedural geometry creation.
@@ -1210,21 +1231,172 @@ class ModelPool extends AssetPool {
              *   indices: indices,
              *   texCoords: texCoords,
              *   normals: normals,
-             *   options: options (start points for objects, groups, smoothingGroups, etc),
+             *   options: options (start points for objects within Model, groups, smoothingGroups, etc),
              *   type: type,
              *   path: file path
              * }
-            */
+             */
 
-        } else {
+            switch ( fType ) {
 
-             console.warn( 'ModelPool::addModel(): no model returned by addModel() + ' + mimeType + ' function' );
+                case 'obj':
 
-        }
+                    // Return a Model object.
 
-        return this.addAsset( d );
+                    d = this.computeObjMesh( data, prim, path ); // ADDS LOTS OF STUFF TO 'd'
 
-    }
+                    if ( d ) {
+
+                        // Add stuff Not supplied by OBJ format to complete Geometry.
+
+                        d.tangents = [];
+
+                        d.colors = [];
+
+                        d.type = prim.type,
+
+                        d.path = path,
+
+                        d.emits = this.util.emitter.events.OBJ_GEOMETRY_READY;
+
+
+
+                        resolve( this.addAsset( d ) );
+
+                    } else {
+
+                        reject( Error( 'ModelPool::addModel(): Failed to load OBJ format file at path:' + path ) );
+
+                    }
+
+                    break;
+
+                case 'gltf':
+
+                    d = this.computeGlTFMesh( data, prim, path );
+
+                    if ( d ) {
+
+                        d.type = prim.type,
+
+                        d.path = path,
+
+                        d.emits = this.util.emitter.events.GLTF_GEOMETRY_READY;
+
+                        resolve( this.addAsset( d ) );
+
+                    }
+
+                    reject( Error( 'ModelPool::addModel(): GLTF parser not ready yet' ) );
+
+                    break;
+
+                case 'gltfbinary':
+
+                    d = this.computeGlTFBinaryMesh( data, prim, path );
+
+                    if ( d ) {
+
+                        d.type = prim.type,
+
+                        d.path = path,
+
+                        d.emits = this.util.emitter.events.GLTF_GEOMETRY_READY;
+
+                        resolve( this.addAsset( d ) );
+
+                    }
+
+                    reject( Error( 'ModelPool::addModel(): GLTF Binary parser not ready yet') );
+
+                    break;
+
+                case 'hyg':
+
+                    prim.drawTris = false,
+
+                    prim.drawLines = false,
+
+                    prim.drawPoints = true;
+
+                    /* 
+                     * OPTIONS.xyz is assigned by GeometryPool as true for 
+                     * typeList.STAR3D, false for typeList.STARDOME. HYG data contains 
+                     * both spherical (RA and Dec) coordinates, as well as Cartesian coords.
+                     */
+
+                    d = this.computeHyg( data, prim, path, options );
+
+                    if ( d ) {
+
+                        d.type = prim.type,
+
+                        d.path = path,
+
+                        d.emits = this.util.emitter.events.OBJ_GEOMETRY_READY;
+
+                        resolve( this.addAsset( d ) );
+
+                    } else {
+
+                        reject( Error( 'ModelPool::addModel(): Failed to load HYG format file at path:' + path ) );
+
+                    }
+
+                    break;
+
+                case 'png':
+
+                    // Extract image data async.
+
+                    let img = new Image();
+
+                    img.src = URL.createObjectURL( data );
+
+                    img.onload = () => { // NOTE: we send resolved image rather than Image BLOB data
+
+                        d = this.computeHeightMap( img, prim, path, options );
+
+                        if ( d ) {
+
+                            d.type = prim.type,
+
+                            d.path = path,
+
+                            d.emits = this.util.emitter.events.HEIGHTMAP_GEOMETRY_READY;
+
+                            // TODO: 
+
+                            resolve( this.addAsset( d ) );
+
+                        } else {
+
+                            reject( Error( 'ModelPool::addModel(): invalid image size for path:' + path ) );
+
+                        }
+
+                    }
+
+                    img.onerror = () => {
+
+                        reject( Error( 'ModelPool::addModel(): Bad Heightmap image file at path:' + path ) );
+
+                    }
+
+                    break;
+
+                default:
+
+                    reject( 'ModelPool::addModel(): File format not found for path:' + path );
+
+                    break;
+
+            } // end of switch
+
+        } ); // end of Promise
+
+    } // end of function
+
 
     /** 
      * Load models, using a list of paths. If a Model already exists, 
@@ -1278,9 +1450,37 @@ class ModelPool extends AssetPool {
 
                         if ( updateObj.data ) {
 
-                            let modelObj = this.addModel( prim, updateObj.data, updateObj.path, mimeType, options );
+                            ///////////////let modelObj = this.addModel( prim, updateObj.data, updateObj.path, mimeType, options );
 
-                            if ( modelObj ) {
+                            /////////////////////////
+
+                            ///////////////////////console.log("?????update object for:" + prim.name )
+
+                            this.addModel( prim, updateObj.data, updateObj.path, mimeType, options ).then( ( modelObj ) => {
+
+                                /////////////////////////console.log("????????????modelObj " + modelObj + " for PRIM:" + prim.name )
+
+                                if ( modelObj !== typeof Error ) {
+
+                                    this.util.emitter.emit( modelObj.emits, prim, modelObj.key, options ); ///////////TODO: COMPARE TO PROCEDUAR GEO EMIT
+
+                                } else {
+
+                                    console.error( 'ModelPool::addModel(): Promise returned ' + modelObj + ' for Prim:' + prim.name );
+
+                                }
+
+                            } ).catch( ( err ) => {
+
+                                window.err = err;
+
+                                ////////////////////////console.log("???????????????????NO DICE:" + err + " for prim:" + prim.name )
+
+                            } ); // end of Promise;
+
+                            ////////////////////////
+
+/////////                            if ( modelObj ) {
 
                                 /* 
                                  * XX_GEOMETRY_READY event, with additional data referencing sub-groups of the model.
@@ -1289,13 +1489,14 @@ class ModelPool extends AssetPool {
                                  * See this.addModel() above for more information.
                                  */
 
-                                this.util.emitter.emit( modelObj.emits, prim, modelObj.key, options ); ///////////TODO: COMPARE TO PROCEDUAR GEO EMIT
+///////////                                this.util.emitter.emit( modelObj.emits, prim, modelObj.key, options ); ///////////TODO: COMPARE TO PROCEDUAR GEO EMIT
 
-                            } else {
 
-                                console.error( 'ModelPool::getModel():' + + this.util.getFileExtension( path ) + ' file path:' + path + ' could not be parsed' );
+//////////                            } else {
 
-                            }
+/////////////                                console.error( 'ModelPool::getModel():' + + this.util.getFileExtension( path ) + ' file path:' + path + ' could not be parsed' );
+
+////////////                            }
 
                         } else {
 

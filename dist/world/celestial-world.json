@@ -206,13 +206,13 @@
 
         "name" : "terrainRandom",
 
-        "description" : "random textured and lit terrain",
+        "description" : "random textured and lit terrain, y divisions === roughness",
 
-        "dimensions" : [ "20", "20", "20", "top", "5" ],
+        "dimensions" : [ "20", "1", "20", "true", "0.1" ],
 
         "divisions" : [ "100", "100", "100", "0", "0" ],
 
-        "position" : [ "0", "-1.5", "0" ],
+        "position" : [ "0", "0", "0" ],
 
         "acceleration" : [ "0", "0", "0" ],
 
@@ -222,7 +222,7 @@
 
         "textures" : [ "img/moss_01.png" ],
 
-        "models" : [],
+        "models" : [ "map/celestial/heightmap.png" ],
 
         "useColorArray" : false,
 

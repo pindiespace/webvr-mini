@@ -1,5 +1,3 @@
-import Map2d from './map2d';
-import Map3d from './map3d';
 import Mesh from  './mesh';
 import ModelPool from './model-pool';
 
@@ -89,6 +87,8 @@ class GeometryPool {
             CURVEDINNERPLANE: 'geometryCurvedInnerPlane',
 
             TERRAIN: 'geometryTerrain',
+
+            TERRAINSPHERE: 'geometryTerrainSphere', // TODO: NOT USED YET
 
             CIRCLE: 'geometryCircle',
 
@@ -409,7 +409,7 @@ class GeometryPool {
 
     /**
      * Find the center between any set of 3d coordinates.
-     * @param {glMatrix.vec3[]} vertices an array of xyz coordinates.
+     * @param {glMatrix.vec3[] || glMatrix.vec3} vertices an array of xyz coordinates, flattened, or unflattened.
      * @returns {glMatrix.vec3} the center point.
      */
     computeCentroid ( vertices ) {
@@ -417,6 +417,12 @@ class GeometryPool {
         let c = [ 0, 0, 0 ];
 
         let len = vertices.length;
+
+        if ( len < 1 ) len = 1;
+
+        if ( this.util.isArray( vertices[ 0 ] ) ) {
+
+        // We have an Array of Arrays
 
         for ( let i = 0; i < len; i++ ) {
 
@@ -430,6 +436,20 @@ class GeometryPool {
 
         }
 
+    } else { // we have a flattened array
+
+            for ( let i = 0; i < len; i += 3 ) {
+
+            c[ 0 ] = vertices[ i ],
+
+            c[ 1 ] = vertices[ i + 1 ],
+
+            c[ 2 ] = vertices[ i + 2 ];
+
+        }
+
+    }
+
         c[ 0 ] /= len,
 
         c[ 1 ] /= len,
@@ -439,6 +459,8 @@ class GeometryPool {
         return c;
 
     }
+
+
 
     /** 
      * Compute an area-weighted centroid point for a Prim.
@@ -1086,6 +1108,118 @@ class GeometryPool {
 
     /* 
      * ---------------------------------------
+     * MAP GENERATION
+     * ---------------------------------------
+     */
+
+    /** 
+     * Perlin noise generator
+     * This is a port of Ken Perlin's Java code. The
+     * original Java code is at http://cs.nyu.edu/%7Eperlin/noise/.
+     * Note that in this version, a number from 0 to 1 is returned.
+     * @uses{@link} http://asserttrue.blogspot.com/2011/12/perlin-noise-in-javascript_31.html}
+     * @param {Number} x the x coordinate in the vector.
+     * @param {Number} y the y coordinate in the vector.
+     * @param {Number} z the z coordinate in the vector.
+     * @return {Number} noise value for the y coordinate.
+     */
+    perlinNoise ( x, y, z ) {
+
+        var p = new Array( 512 );
+
+        var permutation = [ 151,160,137,91,90,15,
+        131,13,201,95,96,53,194,233,7,225,140,36,103,30,69,142,8,99,37,240,21,10,23,
+        190, 6,148,247,120,234,75,0,26,197,62,94,252,219,203,117,35,11,32,57,177,33,
+        88,237,149,56,87,174,20,125,136,171,168, 68,175,74,165,71,134,139,48,27,166,
+        77,146,158,231,83,111,229,122,60,211,133,230,220,105,92,41,55,46,245,40,244,
+        102,143,54, 65,25,63,161, 1,216,80,73,209,76,132,187,208, 89,18,169,200,196,
+        135,130,116,188,159,86,164,100,109,198,173,186, 3,64,52,217,226,250,124,123,
+        5,202,38,147,118,126,255,82,85,212,207,206,59,227,47,16,58,17,182,189,28,42,
+        223,183,170,213,119,248,152, 2,44,154,163, 70,221,153,101,155,167, 43,172,9,
+        129,22,39,253, 19,98,108,110,79,113,224,232,178,185, 112,104,218,246,97,228,
+        251,34,242,193,238,210,144,12,191,179,162,241, 81,51,145,235,249,14,239,107,
+        49,192,214, 31,181,199,106,157,184, 84,204,176,115,121,50,45,127, 4,150,254,
+        138,236,205,93,222,114,67,29,24,72,243,141,128,195,78,66,215,61,156,180
+        ];
+
+        // Fading algorithm.
+
+        let fade = ( t ) => { return t * t * t * ( t * ( t * 6 - 15 ) + 10 ); }
+
+        // Simple Lerp.
+
+        let lerp = ( t, a, b ) => { return a + t * ( b - a ); }
+
+        // Gradient algorithm.
+
+        let grad = ( hash, x, y, z ) => {
+
+            var h = hash & 15;                        // CONVERT LO 4 BITS OF HASH CODE
+
+            var u = h < 8 ? x : y,                    // INTO 12 GRADIENT DIRECTIONS.
+
+             v = h < 4 ? y : h == 12 || h == 14 ? x : z;
+
+            return ( ( h & 1 ) == 0 ? u : -u ) + ( ( h & 2 ) == 0 ? v : -v );
+
+        }
+
+        // Scaling.
+
+        let scale = ( n ) => { return ( 1 + n ) / 2; }
+
+        for ( var i = 0; i < 256 ; i++ ) {
+
+            p[ 256 + i ] = p[ i ] = permutation[ i ];
+
+        }
+
+        // Start of noise
+
+        let X = Math.floor( x ) & 255,              // FIND UNIT CUBE THAT
+
+        Y = Math.floor( y ) & 255,                  // CONTAINS POINT.
+
+        Z = Math.floor( z ) & 255;
+
+        x -= Math.floor( x );                       // FIND RELATIVE X,Y,Z
+
+        y -= Math.floor( y );                       // OF POINT IN CUBE.
+
+        z -= Math.floor( z );
+
+        let u = fade( x ),                          // COMPUTE FADE CURVES
+
+        v = fade( y ),                              // FOR EACH OF X,Y,Z.
+
+        w = fade( z );
+
+        let A = p[ X ] + Y, AA = p[ A ] + Z, AB = p[ A + 1 ] + Z,      // HASH COORDINATES OF
+
+        B = p[ X + 1 ] + Y, BA = p[ B ] + Z, BB = p[ B + 1 ] + Z;      // THE 8 CUBE CORNERS,
+
+        return scale( lerp( w, lerp( v, lerp( u, grad( p[ AA ], x , y , z ),  // AND ADD
+
+            grad( p[ BA  ], x - 1, y  , z   ) ), // BLENDED
+
+            lerp( u, grad(p[ AB ], x  , y - 1, z   ),  // RESULTS
+
+            grad( p[BB  ], x - 1, y - 1, z   ))),// FROM  8
+
+            lerp( v, lerp( u, grad( p[ AA + 1 ], x  , y  , z - 1 ),  // CORNERS
+
+            grad( p[ BA + 1 ], x - 1, y  , z - 1 ) ), // OF CUBE
+
+            lerp( u, grad( p[ AB + 1 ], x  , y - 1, z - 1 ),
+
+            grad( p[ BB + 1 ], x - 1, y - 1, z - 1 ) ) ) )
+
+        );
+
+    }
+
+    /* 
+     * ---------------------------------------
      * GEOMETRY TRANSFORMATIONS
      * ---------------------------------------
      */
@@ -1097,7 +1231,7 @@ class GeometryPool {
      */
     computeScale ( vertices, scale ) {
 
-        let oldPos = this.getCenter( vertices );
+        let oldPos = this.computeCentroid( vertices );
 
         for ( let i = 0; i < vertices.length; i++ ) {
 
@@ -1105,7 +1239,7 @@ class GeometryPool {
 
         }
 
-        this.moveTo( oldPos ); // ERROR!!!!!!!!!!!!!!!!!!!!
+        this.computeMove( vertices, oldPos );
 
     }
 
@@ -1131,11 +1265,11 @@ class GeometryPool {
 
         for ( let i = 0; i < vertices.length; i += 3 ) {
 
-            vertices[i] = delta[ 0 ];
+            vertices[ i ] -= delta[ 0 ];
 
-            vertices[ i + 1 ] = delta[ 1 ];
+            vertices[ i + 1 ] -= delta[ 1 ];
 
-            vertices[ i + 2 ] = delta[ 2 ];
+            vertices[ i + 2 ] -= delta[ 2 ];
 
         }
 
@@ -1161,6 +1295,8 @@ class GeometryPool {
 
         // Get the subset of vertices we should take by following indices.
 
+        console.error("???INDICES LENGTH:" + indices.length )
+
         for ( let i = 0; i < indices.length; i++ ) {
 
             vv.push( vertices[ indices[ i ] ] );
@@ -1182,8 +1318,6 @@ class GeometryPool {
         // We re-do the indices calculations, since we insert a central point.
 
         let lenv = vv.length;
-
-        let env = lenv - 1;
 
         for ( let i = 1; i < lenv; i++ ) {
 
@@ -1228,23 +1362,39 @@ class GeometryPool {
         norms.push( center[ 0 ], center[ 1 ], center[ 2 ] );
 
         return this.default( vv, idx, tex, norms, [], [] );
-/*
-        return {
 
-            vertices: vv,
+    }
 
-            indices: idx,
+    /** 
+     * Return a set of random UV coordinates, arrayed on a sphere.
+     * @param {Number} w the width of the space, in program/WebGL units.
+     * @param {Number} h the height of the space, in program/WebGL units.
+     * @param {Number} d the depth of the space, in program/WebGL units.
+     * @param {Number} numPoints the number of points (vertices) to create.
+     */
+    computeRandomSphere( w, h, d, numPoints ) {
 
-            texCoords: tex,
+        let util = this.util;
 
-            normals: norms,
+        let mapUV = new Float32Array( numPoints * 2 );
 
-            tangents: [],
+        for ( let i = 0; i < numPoints; i += 2 ) {
 
-            colors: []
+            // Distribute evenly over sphere. Since the sphere radius is constant, we don't set min or max for util.getRand.
+
+            mapUV[ i ] = Math.PI * 2 * util.getRand(); // theta or u
+
+            mapUV[ i + 1 ] = Math.acos( 2 * util.getRand() - 1 ); // phi or v
 
         }
-*/
+
+        return {
+
+            vertices: util.uvToCartesian( mapUV, w, h, d ),
+
+            uv: mapUV
+
+        };
 
     }
 
@@ -1281,15 +1431,13 @@ class GeometryPool {
 
         let vertices = [], indices  = [], normals = [], texCoords = [], tangents = [];
 
-        let mm = new Map3d( this.util );
+        let map = this.computeRandomSphere( dimensions[ 0 ], dimensions[ 1 ], dimensions[ 2 ], divisions[ 0 ] * divisions[ 1 ] * divisions[ 2 ] ); // initRandomSphere
 
-        mm[ mm.typeList.SPHERE ]( dimensions[ 0 ], dimensions[ 1 ], dimensions[ 2 ], divisions[ 0 ] * divisions[ 1 ] * divisions[ 2 ] ); // initRandomSphere
-
-        vertices = mm.map;
+        vertices = map.vertices;
 
         let vIdx = 0, idx = 0;
 
-        for ( let i = 0; i < mm.map.length; i += 3 ) {
+        for ( let i = 0; i < vertices.length; i += 3 ) {
 
             indices.push( idx++ );
 
@@ -1300,15 +1448,17 @@ class GeometryPool {
 
         if ( useTexture ) {
 
+            let uv = map.uv;
+
             let twoPI = Math.PI * 2;
 
             let halfPI = Math.PI / 2;
 
-            for ( let i = 0; i < mm.mapUV.length; i += 2 ) {
+            for ( let i = 0; i < uv.length; i += 2 ) {
 
-                texCoords.push( 1.0 - ( mm.mapUV[ i ] / twoPI ) );
+                texCoords.push( 1.0 - ( uv[ i ] / twoPI ) );
 
-                texCoords.push( mm.mapUV[ i + 1 ] / Math.PI );
+                texCoords.push( uv[ i + 1 ] / Math.PI );
 
             }
 
@@ -1386,11 +1536,9 @@ class GeometryPool {
 
         let vertices = [], indices = [], texCoords = [], normals = [], tangents = [];
 
-        // Expect points in Map3d object, or generate random.
-
         // The Line is created centered on 0,0,0.
 
-        vertices.push( 
+        vertices.push(
 
             w - radius, h - radius, d - radius, 
 
@@ -1403,8 +1551,6 @@ class GeometryPool {
         // Initialize the Prim, adding normals, texCoords and tangents as necessary.
 
         return this.default( vertices, indices, texCoords, normals, tangents );
-
-        ////////////return { vertices: vertices, indices: indices, normals: normals, texCoords: texCoords, tangents: tangents };
 
     }
 
@@ -2558,46 +2704,78 @@ class GeometryPool {
      * @param {Prim} the Prim needing geometry. 
      *  - prim.dimensions    = (vec4) [ x, y, z, Prim.side ]
      *  - prim.divisions     = (vec3) [ x, y, z ]
+     * @param {Boolean} center if true, move the terrain the AVERAGE y position.
+     * @param {Number} waterline if true, push the Prim down by the specified amount below 0 for water.
      * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. .
      */
-    geometryTerrain ( prim ) {
+    geometryTerrain ( prim, center = true, waterLine = 0 ) {
 
-        if ( ! prim.map ) {
+        let tempY = prim.dimensions[ 1 ];
 
-            console.log( 'Prim::geometryTerrain(): adding heightmap for:' + prim.name );
+        // For geometryOuterPlane to work, y === z temporarily.
 
-            prim.heightMap = new Map2d( this.util );
+        prim.dimensions[ 1 ] = prim.dimensions[ 2 ];
 
-            // roughness 0.2 of 0-1, flatten = 1 of 0-1;
+        prim.dimensions[ 3 ] = 'top';
 
-            prim.heightMap[ prim.heightMap.typeList.DIAMOND ]( prim.divisions[ 0 ], prim.divisions[ 2 ], 0.6, 1 );
+        // After this, we can adjust y values, either randomly, or with a HeightMap.
 
-            // TODO: SCALE DOWN FOR WATERLINE.
+        let geo = this.geometryOuterPlane( prim );
 
-            //prim.heightMap.scale( 165, 165 );
+        // Move the completed Prim to correct position for Terrain.
 
-            //prim.heightMap.scale( 25, 25 );
+        this.computeMove( geo.vertices, [ 0, -prim.dimensions[ 1 ] / 2 , 0] ); // TODO: THIS MAY NOT BE WORKING
+
+        // TODO: before going to VR, we may need to go to fullscreen on chrome mobile.
+
+        prim.dimensions[ 1 ] = tempY;
+
+        // If there's no heightmap data, add randomy Y values via the Diamond algorithm.
+
+       if ( ! prim.models || prim.models.length === 0 ) {
+
+            for ( let i = 1; i < geo.vertices.length; i += 3 ) {
+
+                geo.vertices[ i ] = this.perlinNoise( geo.vertices[ i - 1], geo.vertices[ i ], geo.vertices[ i + 1 ] );
+
+            }
 
         }
 
-        // NOTE: this can make the heightmap in any orientation.
+        // Position down to viewer height.
 
-        return this.geometryOuterPlane( prim );
+        return geo;
 
     };
 
     /** 
+     * Create a sphere using heightmap data.
+     * TODO: implement
+     */
+    geometryTerrainSphere ( prim ) {
+
+        return null;
+
+    }
+
+    /** 
      * Create terrain with hexagon grid with each grid element independently addressible.
      * @link http://catlikecoding.com/unity/tutorials/hex-map-1/
+     * TODO: implement
      */
     geometryHexTerrain ( prim ) { 
+
+        return null;
 
     }
 
     /** 
      * Create terrain with octagon grid, with each grid element independently addressible.
+     * TODO: implement
      */
     geometryOctTerrain ( prim ) {
+
+        return null;
 
     }
 

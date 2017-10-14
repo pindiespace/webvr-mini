@@ -101,7 +101,7 @@ class WebVR {
 
         this.cDisplay = this.displays[ 0 ]; // zeroth position always window
 
-         if ( navigator.getVRDisplays ) {
+        if ( navigator.getVRDisplays ) {
 
             navigator.getVRDisplays().then( ( displays ) => {
 
@@ -221,11 +221,6 @@ class WebVR {
 
                             window.addEventListener( 'vrdisplayfocus', this.displayFocus.bind( this ), false );
 
-                            window.addEventListener( 'deviceorientation', this.setDeviceOrientation.bind( this ), false );
-
-                            window.addEventListener( 'devicemotion', this.setDevicePosition.bind( this ), false );
-
-
                         } // display is valid
 
                     } else { // WebVR is present, but displays.length == 0
@@ -277,6 +272,16 @@ class WebVR {
             console.warn( 'WebVR::init(): WebVR API not present, or obsolete version' );
 
             this.util.emitter.emit( this.util.emitter.events.VR_DISPLAY_FAIL, d );
+
+        }
+
+        // Always add deviceorientation and devicemotion.
+
+        if ( ( 'deviceorientation' in window && 'devicemotion' in window ) ) {
+
+            window.addEventListener( 'deviceorientation', this.setDeviceOrientation.bind( this ), false );
+
+            window.addEventListener( 'devicemotion', this.setDevicePosition.bind( this ), false );
 
         }
 
@@ -507,15 +512,11 @@ class WebVR {
 
         m = this.OMData.m;
 
-        mvMatrix = mat4.identity( mvMatrix );
+        mat4.identity( mvMatrix );
 
         mat4.translate( mvMatrix, mvMatrix, [ 0, this.PLAYER_HEIGHT, 0 ] );
 
         mat4.invert( mvMatrix, mvMatrix );
-
-//mat4.rotate( mMatrix, mMatrix, p.rotation[ 0 ], [ 1, 0, 0 ] );
-//mat4.rotate( mMatrix, mMatrix, p.rotation[ 1 ], [ 0, 1, 0 ] );
-//mat4.rotate( mMatrix, mMatrix, p.rotation[ 2 ], [ 0, 0, 1 ] );
 
         // Use orientation data. 
 

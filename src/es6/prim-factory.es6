@@ -1,5 +1,3 @@
-import Map2d from './map2d';
-import Map3d from './map3d';
 import Mesh from  './mesh';
 import Lights from './lights';
 import AssetPool from './asset-pool';
@@ -65,8 +63,6 @@ class PrimFactory extends AssetPool {
      */
     constructor ( init, world ) {
 
-        console.log( 'in PrimFactory class' );
-
         /* 
          * Initialize AssetLoader class
          */
@@ -80,6 +76,8 @@ class PrimFactory extends AssetPool {
         this.util = world.util,
 
         this.webgl = world.webgl,
+
+        this.vr = world.vr,
 
         this.glMatrix = world.glMatrix,
 
@@ -181,7 +179,71 @@ class PrimFactory extends AssetPool {
 
                 }
 
+                // Add the completed Prim to the Shader.
+
                 prim.shader.addPrim( prim );
+
+        } );
+
+        // Heightmap terrain.
+
+        this.util.emitter.on( this.util.emitter.events.HEIGHTMAP_GEOMETRY_READY, 
+
+            ( prim, key, options ) => {
+
+                console.log("????PRIMFACTORY:" + prim.name + " HEIGHTMAP_GEOMETRY_READY, KEY:" + key );
+
+
+                let hm = this.modelPool.keyList[ key ];
+
+                let heightMap = hm.options.map;
+
+                console.log("????map:" + heightMap)
+
+                let vertices = prim.geometry.vertices.data;
+
+                let xScale = heightMap.w / prim.divisions[ 0 ];
+
+                let zScale = heightMap.d / prim.divisions[ 2 ];
+
+                window.opts = options;
+                window.hm = hm;
+                window.heightMap = heightMap;
+                window.xScale = xScale;
+                window.zScale = zScale;
+                window.prim = prim;
+                window.pixels = heightMap.pixels;
+                window.vertices = vertices;
+
+                // Constrain y range within prim y dimensions.
+
+                //let roughness = ( ( heightMap.maxHeight - heightMap.minHeight ) / ( 255 * prim.dimensions[ 1 ] ) ) ;
+
+                let roughness = 0.01;
+
+                window.roughness = roughness;
+
+                // TODO: changing y axis seems to be stretching in x dimension.
+
+                window.oldY = [];
+
+                window.newY = [];
+
+                window.terrain = prim;
+
+                // Loop through the heightMap, adjusting y values.
+
+                for ( let i = 0; i < heightMap.pixels.length; i++ ) {
+
+                    vertices[ ( i * 3 ) + 1 ] = ( ( pixels[ i ] - heightMap.minHeight ) / 128 );
+
+                }
+
+                // Don't run initPrimGeometry, it has already run.
+
+               prim.geometry.setVertices( vertices );
+
+               prim.geometry.setNormals( this.geometryPool.computeNormals( vertices, prim.geometry.indices.data, prim.geometry.normals.data ) );
 
         } );
 
@@ -193,7 +255,9 @@ class PrimFactory extends AssetPool {
 
                 ////console.log( 'PrimFactory::' + prim.name + ' Procedural geometry ready, key:' + key + ' pos:' + options.pos );
 
-                let coords = this.modelPool.keyList[ key ]
+                let coords = this.modelPool.keyList[ key ];
+
+                // Create a default matStarts over the entire Geometry.
 
                 prim.matStarts = [ [ this.materialPool.createDefaultName( prim.name ), 0, coords.indices.length ] ]; //////////////////////////////
 
@@ -201,7 +265,7 @@ class PrimFactory extends AssetPool {
 
                 prim.shader.addPrim ( prim ); // TRY to add it
 
-            })
+        } );
 
          // Bind Prim callback for a new material applied to individual Prims.
 
@@ -1201,7 +1265,7 @@ class PrimFactory extends AssetPool {
 
         // Material array (stores textures as well).
 
-        prim.materials = [];
+        prim.materials = []; 
 
         // Set default material for the Prim (similar to OBJ format).
 
@@ -1263,6 +1327,16 @@ class PrimFactory extends AssetPool {
 
         if ( modelFiles.length > 0 ) {
 
+            // Some Prim types use both procedural and Model files (e.g. heightmaps).
+
+            if ( prim.type === this.geometryPool.typeList.TERRAIN ) {
+
+                this.geometryPool.getGeometry( prim, null, true, { pos:0, defaultMatStarts: true } );
+
+            }
+
+            // Get the model data.
+
             for ( let i = 0; i < modelFiles.length; i++ ) {
 
                 this.geometryPool.getGeometry( prim, modelFiles[ i ], true, { pos: i, defaultMatStarts: false } );
@@ -1271,7 +1345,7 @@ class PrimFactory extends AssetPool {
 
         } else {
 
-                this.geometryPool.getGeometry( prim, null, true, { pos: 0, defaultMatStarts: true } );
+            this.geometryPool.getGeometry( prim, null, true, { pos: 0, defaultMatStarts: true } );
 
         }
 

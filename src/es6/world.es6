@@ -549,7 +549,7 @@ class World extends AssetPool {
 
                 pData.textures,                   // texture images (if not in model)
 
-                pData.models,                     // model (.OBJ, .GlTF)
+                pData.models,                     // model (.OBJ, .GlTF, or image for heightmap)
 
                 pData.useColorArray,              // if true, use color array instead of texture array
 
@@ -1378,6 +1378,9 @@ module.exports = function forceCanvasResizeSafariMobile (canvasEl) {
                 // Get any World transforms (translation, rotation).
 
                 this.getWorldViewMatrix( wvMatrix );
+
+                // Mono doesn't include height of viewer in POV.
+
 
                 this.r1.renderMono( vr, wvMatrix, pov ); // textured, no lighting
 
