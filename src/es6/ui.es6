@@ -74,6 +74,8 @@ class Ui {
 
         this.webvr = webvr,
 
+        webvr.ui = this,  // NOTE: KLUDGE need to let WebVR object manipulate Ui.
+
         // Controls.
 
         this.controls = null, // DOM element wrapping controls below.

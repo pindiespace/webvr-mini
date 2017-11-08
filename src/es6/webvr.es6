@@ -877,13 +877,31 @@ class WebVR {
 
                 }
 
-                 if ( this.webgl.getCanvas().height !== this.lastCHeight ) {
+                if ( this.webgl.getCanvas().height !== this.lastCHeight ) {
 
                     this.webgl.getCanvas().height = this.lastCHeight;
 
                     this.webgl.getContext().viewport(0, 0, this.lastCWidth, this.lastCHeight );
 
                 }
+
+                // KLUDGE: Need to reset the Ui if we are in Daydream.
+
+                // Send custom event to our own ui exitVR button.
+
+                if ( this.ui ) {
+
+                    if ( this.ui.mode !== this.ui.UI_DOM ) {
+
+                        this.ui.mode = this.ui.UI_DOM; // I know. Weird, but it's what WebVR needs here!
+
+                        this.ui.setControlsByMode( this.ui.mode );
+
+                    }
+
+                }
+
+            // Any additional things we need to change in the display.
 
             if ( d.capabilities && d.capabilities.hasExternalDisplay ) {
 
