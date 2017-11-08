@@ -266,15 +266,15 @@ class WebGL {
 
                 }, false );
 
-                // Do an initial set of our viewport width and height.
+                // Manually force a resize event, so we can increase viewport and canvas.width by window.devicePixelRatio.
 
-                gl.viewportWidth = canvas.width;
-
-                gl.viewportHeight = canvas.height;
+                this.resizeCanvas( true ); ////////////////////////////////
 
                 // listen for <canvas> resize event.
 
                 window.addEventListener( 'resize', ( e ) => {
+
+                    // Non-forced, only happens if size changed.
 
                     this.resizeCanvas();
 
@@ -778,15 +778,36 @@ class WebGL {
 
         if ( this.ready() ) {
 
-            console.log('resize')
-
             let wWidth = this.util.getWindowWidth();
 
             let wHeight = this.util.getWindowHeight();
 
-            if ( force || wWidth !== this.oldWidth ) {
+            /* 
+             * Google Chrome mobile triggers this event during vr.presentChange, blurring the scene. 
+             * to prevent it, we check if WebVR is running, AND if it is presenting.
+             */
 
-                const f = Math.max( window.devicePixelRatio, 1 );
+             if ( this.webvr ) {
+
+                    console.warn( 'WebGL::resizeCanvas(): warning, WebVR presentchange event triggered window.resize event (IGNORING)' );
+
+                    let d = this.webvr.getDisplay();
+
+                    if ( d && d.isPresenting ) {
+
+                        return;
+
+                    }
+
+             }
+
+            // We're in mono. Force initially when loading, later when window size changes.
+
+            if ( force ||  wWidth !== this.oldWidth ) {
+
+                console.log( 'resizeCanvas()::resizing' );
+
+                const f = window.devicePixelRatio || 1;
 
                 const gl = this.getContext();
 
@@ -794,15 +815,15 @@ class WebGL {
 
                 // Get the current size of the <canvas>
 
-                const width  = c.clientWidth  * f | 0;
+                const width  = c.clientWidth * f;
 
-                const height = c.clientHeight * f | 0;
+                const height = c.clientHeight * f;
 
                 // Set the <canvas> width and height property.
 
-                c.width = width;
+                c.width = Math.floor( width );
 
-                c.height = height;
+                c.height = Math.floor( height );
 
                 // Set the WebGL viewport.
 
@@ -819,6 +840,8 @@ class WebGL {
             this.oldWidth = wWidth;
 
             this.oldHeight = wHeight;
+
+            return true;
 
         }
 

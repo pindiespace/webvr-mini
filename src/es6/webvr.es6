@@ -35,6 +35,8 @@ class WebVR {
 
         this.webgl = webgl,
 
+        this.webvr = null,  // WebVR adds itself to this, so we can suppress window.resize on Chrome Mobile when we get a vr.presentchange event
+
         window.displayName = 'window', // give 'window' a display name for compatibility with our display model
 
         this.displays = [ window ],    // display [ 0 ] is always 'window'
@@ -202,6 +204,14 @@ class WebVR {
                              */
 
                             this.util.emitter.emit( this.util.emitter.events.VR_DISPLAY_READY, d );
+
+                            /** 
+                             * NOTE: IMPORTANT KLUDGE
+                             * Link ourselves to the WebVR object. This is needed to supress 
+                             * window.resize events when we already are firing a vr resize event. 
+                             * NOTE: required for Chrome Mobile, but NOT on desktop.
+                             */
+                            this.webgl.webvr = this;
 
                             // Listen for WebVR events.
 
@@ -528,10 +538,6 @@ class WebVR {
 
         //mat4.translate( mvMatrix, mvMatrix, this.OMData.m );
 
-        window.o = o;
-        window.mvMatrix = mvMatrix;
-        window.mat4 = mat4;
-
         return mvMatrix;
 
     }
@@ -743,11 +749,11 @@ class WebVR {
 
         // Get the current size of the parent <div> for the <canvas>.
 
-        this.oldWidth  = p.clientWidth  * f | 0;
+        let f = window.devicePixelRatio || 1;
 
-        this.oldHeight = p.clientHeight * f | 0;
+        this.oldWidth  = p.clientWidth;
 
-        const f = Math.max( window.devicePixelRatio, 1 );
+        this.oldHeight = p.clientHeight;
 
         if ( d && d.isPresenting ) {
 
@@ -757,29 +763,51 @@ class WebVR {
 
             let rightEye = d.getEyeParameters( 'right' );
 
+////////////////////////////////
+            console.log('&&&&&viewportWidth:' + gl.viewportWidth + 
+            //' CSS width:' + getComputedStyle(c).getProperty( 'width' ) + 
+            ' canvas.width:' + c.width + 
+            ' canvas.clientWidth:' + c.clientWidth  + 
+            ' leftEye:' + leftEye.renderWidth +
+            ' rightEye:' + rightEye.renderWidth
+            );
+////////////////////////////////
+
             // Resize to twice the width of the mono display.
 
-            let width = Math.max( leftEye.renderWidth, rightEye.renderWidth ) * 2;
+            const width = Math.floor( Math.max( leftEye.renderWidth, rightEye.renderWidth ) * 2 * f );
 
-            let height =  Math.max( leftEye.renderHeight, rightEye.renderHeight );
+            const height = Math.floor( Math.max( leftEye.renderHeight, rightEye.renderHeight ) * f );
 
             c.width = width;
 
             c.height = height;
 
-           // p.style.width = c.width + 'px'; // let it get full sized
+            // YEOW! FOR SOME REASON THIS CHANGES OUR ORIENTATION!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-           // p.style.height = c.height + 'px'; // let it get full-sized
+           //p.style.width = c.width + 'px'; // let it get full sized
 
-            gl.viewportWidth = width;
+           //p.style.height = c.height + 'px'; // let it get full-sized
+
+            gl.viewportWidth = width; // NOTE: WHY DOESN"T THIS CHANGE RESOLUTION??????
 
             gl.viewportHeight = height;
 
             gl.viewport( 0, 0, gl.viewportWidth, gl.viewportHeight );
 
             // Force parent to the same size
+////////////////////////////////
+            console.log('&&&&&viewportWidth:' + gl.viewportWidth + 
+            //' CSS width:' + getComputedStyle(c).getProperty( 'width' ) + 
+            ' canvas.width:' + c.width + 
+            ' canvas.clientWidth:' + c.clientWidth  + 
+            ' leftEye:' + leftEye.renderWidth +
+            ' rightEye:' + rightEye.renderWidth
 
-            console.log( 'WebVR::vrResize(): new width:' + c.width + ' height:' + c.height );
+            );
+////////////////////////////////
+
+            console.log( 'WebVR::vrResize(): new width:' + width + ' height:' + height );
 
          } else {
 
@@ -810,11 +838,11 @@ class WebVR {
 
         let d = this.cDisplay;
 
+        console.log( 'WebVR::presentChange(): event for ' + d.displayName );
+
         // Handle resizes in both directions.
 
         this.vrResize();
-
-        console.log( 'WebVR::presentChange(): event for ' + d.displayName );
 
         if ( d.isPresenting ) {
 

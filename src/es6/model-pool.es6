@@ -1103,7 +1103,7 @@ class ModelPool extends AssetPool {
         m.texCoords = tTexCoords,
 
         m.normals = tNormals,
- 
+
         m.colors = tColors;      // use the color array
 
         return m;
@@ -1333,7 +1333,10 @@ class ModelPool extends AssetPool {
 
                         d.path = path,
 
-                        d.emits = this.util.emitter.events.OBJ_GEOMETRY_READY;
+
+                        d.emits = this.util.emitter.events.OBJ_GEOMETRY_READY; // we have the HYG, now compute object
+
+                        d.emits = this.util.emitter.events.HYG_GEOMETRY_READY; 
 
                         resolve( this.addAsset( d ) );
 

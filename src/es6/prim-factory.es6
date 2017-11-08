@@ -191,59 +191,36 @@ class PrimFactory extends AssetPool {
 
             ( prim, key, options ) => {
 
-                console.log("????PRIMFACTORY:" + prim.name + " HEIGHTMAP_GEOMETRY_READY, KEY:" + key );
-
+                console.log('PrimFactory::HEIGHTMAP_GEOMETRY_READY event, key:' + key );
 
                 let hm = this.modelPool.keyList[ key ];
 
                 let heightMap = hm.options.map;
+                //let heightMap = options.map;
 
-                console.log("????map:" + heightMap)
+                let geo = prim.geometry;
 
-                let vertices = prim.geometry.vertices.data;
+                let vertices = geo.vertices.data;
 
                 let xScale = heightMap.w / prim.divisions[ 0 ];
 
                 let zScale = heightMap.d / prim.divisions[ 2 ];
 
-                window.opts = options;
-                window.hm = hm;
-                window.heightMap = heightMap;
-                window.xScale = xScale;
-                window.zScale = zScale;
-                window.prim = prim;
-                window.pixels = heightMap.pixels;
-                window.vertices = vertices;
-
-                // Constrain y range within prim y dimensions.
-
-                //let roughness = ( ( heightMap.maxHeight - heightMap.minHeight ) / ( 255 * prim.dimensions[ 1 ] ) ) ;
-
-                let roughness = 0.01;
-
-                window.roughness = roughness;
-
-                // TODO: changing y axis seems to be stretching in x dimension.
-
-                window.oldY = [];
-
-                window.newY = [];
-
-                window.terrain = prim;
+                let pixels = heightMap.pixels;
 
                 // Loop through the heightMap, adjusting y values.
 
-                for ( let i = 0; i < heightMap.pixels.length; i++ ) {
+                for ( let i = 0; i < pixels.length; i++ ) {
 
                     vertices[ ( i * 3 ) + 1 ] = ( ( pixels[ i ] - heightMap.minHeight ) / 128 );
 
                 }
 
-                // Don't run initPrimGeometry, it has already run.
+                // Don't run initPrimGeometry (it has already run), just update.
 
                prim.geometry.setVertices( vertices );
 
-               prim.geometry.setNormals( this.geometryPool.computeNormals( vertices, prim.geometry.indices.data, prim.geometry.normals.data ) );
+               prim.geometry.setNormals( this.geometryPool.computeNormals( vertices, geo.indices.data, geo.normals.data ) );
 
         } );
 

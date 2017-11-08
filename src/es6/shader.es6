@@ -700,7 +700,7 @@ class Shader {
 
             mat4.copy( mvMatrix, wvMatrix );
 
-            // Get orientation reported by smartphone (if present).
+            // Get orientation reported by smartphone (if present), also adjust position for standard user height.
 
             let omMatrix = vr.getOMMatrix();
 
@@ -739,7 +739,7 @@ class Shader {
 
             // Copy vMatrix to mvMatrix (so we have vMatrix separately for Shader).
 
-            /////////////mat4.copy( mvMatrix, wvMatrix );       
+            /////////////mat4.copy( mvMatrix, wvMatrix );
 
             // Use left Projection matrix provided by WebVR FrameData object to render the World.
 

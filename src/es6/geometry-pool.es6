@@ -1113,11 +1113,41 @@ class GeometryPool {
      */
 
     /** 
+     * Compute smoothed random y values for Terrain, in-place conversion.
+     * @param {Array[glMatrix.vec3]} vertices the Prim vertices.
+     * @param {Number} r1 wide-angle roughness
+     * @param {Number} r2 mid-range roughness
+     * @param {Number} short-range roughness
+     */
+    computePerlin( vertices, r1 = 1, r2 = 0.3, r3 = 0.2 ) {
+
+        for ( let i = 1; i < vertices.length; i += 3 ) {
+
+            let x = vertices[ i - 1 ],
+
+            y = vertices[ i ],
+
+            z = vertices[ i + 1 ];
+
+            vertices[ i ] = ( r1 * this.perlinNoise( x / 5 , y, z / 5 ) 
+
+                +  r2 * this.perlinNoise(2 * x, y, 2 * z)
+
+                + r3 * this.perlinNoise(4 * x, y, 2 * z)
+
+            );
+
+        }
+
+    }
+
+    /** 
      * Perlin noise generator
      * This is a port of Ken Perlin's Java code. The
      * original Java code is at http://cs.nyu.edu/%7Eperlin/noise/.
      * Note that in this version, a number from 0 to 1 is returned.
      * @uses{@link} http://asserttrue.blogspot.com/2011/12/perlin-noise-in-javascript_31.html}
+     * @uses{@link} https://www.redblobgames.com/maps/terrain-from-noise/ (great discussion of random terrains)
      * @param {Number} x the x coordinate in the vector.
      * @param {Number} y the y coordinate in the vector.
      * @param {Number} z the z coordinate in the vector.
@@ -2704,11 +2734,9 @@ class GeometryPool {
      * @param {Prim} the Prim needing geometry. 
      *  - prim.dimensions    = (vec4) [ x, y, z, Prim.side ]
      *  - prim.divisions     = (vec3) [ x, y, z ]
-     * @param {Boolean} center if true, move the terrain the AVERAGE y position.
-     * @param {Number} waterline if true, push the Prim down by the specified amount below 0 for water.
      * @returns {Prim.geometry} geometry data, including vertices, indices, normals, texture coords and tangents. .
      */
-    geometryTerrain ( prim, center = true, waterLine = 0 ) {
+    geometryTerrain ( prim ) {
 
         let tempY = prim.dimensions[ 1 ];
 
@@ -2724,25 +2752,23 @@ class GeometryPool {
 
         // Move the completed Prim to correct position for Terrain.
 
-        this.computeMove( geo.vertices, [ 0, -prim.dimensions[ 1 ] / 2 , 0] ); // TODO: THIS MAY NOT BE WORKING
+        this.computeMove( geo.vertices, [ 0, -prim.dimensions[ 1 ] / 2 , 0] );
 
-        // TODO: before going to VR, we may need to go to fullscreen on chrome mobile.
+        // Restore correct y value.
 
         prim.dimensions[ 1 ] = tempY;
 
-        // If there's no heightmap data, add randomy Y values via the Diamond algorithm.
+        /* 
+         * If there are no HeightMap values, use Perlin noise to create some roughness. 
+         * Y values >= 0 (not below).
+         * NOTE: Viewer Height would need to be modified.
+         */
 
        if ( ! prim.models || prim.models.length === 0 ) {
 
-            for ( let i = 1; i < geo.vertices.length; i += 3 ) {
-
-                geo.vertices[ i ] = this.perlinNoise( geo.vertices[ i - 1], geo.vertices[ i ], geo.vertices[ i + 1 ] );
-
-            }
+            //this.computePerlin( geo.vertices );
 
         }
-
-        // Position down to viewer height.
 
         return geo;
 
