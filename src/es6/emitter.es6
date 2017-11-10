@@ -53,7 +53,9 @@ class Emitter {
 
             VR_DISPLAY_CHANGE: 'virdispchange',           // the display we're using was changed
 
-            VR_DISPLAY_FAIL: 'vrdispfail'                 // WebVR is present, but blew up
+            VR_DISPLAY_FAIL: 'vrdispfail',                // WebVR is present, but blew up
+
+            VR_DISPLAY_EXIT: 'vrdispexit'                 // Exited VR (used to reset Ui for Google Daydream)
 
         };
 

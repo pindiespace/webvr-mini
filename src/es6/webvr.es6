@@ -749,7 +749,7 @@ class WebVR {
 
         // Get the current size of the parent <div> for the <canvas>.
 
-        let f = window.devicePixelRatio || 1;
+        let f = 1; //  window.devicePixelRatio || 1, don't use devicePixelRatio with VR.
 
         this.oldWidth  = p.clientWidth;
 
@@ -783,13 +783,7 @@ class WebVR {
 
             c.height = height;
 
-            // YEOW! FOR SOME REASON THIS CHANGES OUR ORIENTATION!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-           //p.style.width = c.width + 'px'; // let it get full sized
-
-           //p.style.height = c.height + 'px'; // let it get full-sized
-
-            gl.viewportWidth = width; // NOTE: WHY DOESN"T THIS CHANGE RESOLUTION??????
+            gl.viewportWidth = width;
 
             gl.viewportHeight = height;
 
@@ -889,6 +883,9 @@ class WebVR {
 
                 // Send custom event to our own ui exitVR button.
 
+                this.util.emitter.emit( this.util.emitter.events.VR_DISPLAY_EXIT, null ); 
+
+/*
                 if ( this.ui ) {
 
                     if ( this.ui.mode !== this.ui.UI_DOM ) {
@@ -900,6 +897,7 @@ class WebVR {
                     }
 
                 }
+*/
 
             // Any additional things we need to change in the display.
 

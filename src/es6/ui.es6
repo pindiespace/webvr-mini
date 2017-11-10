@@ -74,7 +74,7 @@ class Ui {
 
         this.webvr = webvr,
 
-        webvr.ui = this,  // NOTE: KLUDGE need to let WebVR object manipulate Ui.
+        ///webvr.ui = this,  // NOTE: KLUDGE need to let WebVR object manipulate Ui.
 
         // Controls.
 
@@ -314,6 +314,36 @@ class Ui {
             }
 
         }
+
+        /* 
+         * if we fail to load VR, reset our Ui
+         */
+        this.util.emitter.on( this.util.emitter.events.VR_DISPLAY_FAIL, 
+
+         () => {
+
+            if ( this.ui.mode !== this.ui.UI_DOM ) {
+
+                this.setControlsByMode( this.UI_DOM );
+
+            }
+
+        } );
+
+        /*
+         * React to request from webvr to exit UI configuration for VR.
+         */
+        this.util.emitter.on( this.util.emitter.events.VR_DISPLAY_EXIT, 
+
+        () => {
+
+            if ( this.ui.mode !== this.ui.UI_DOM ) {
+
+                this.setControlsByMode( this.UI_DOM );
+
+            }
+
+        } );
 
         /* 
          * EventHandler ES6 kludges. Rebind handlers so we can use removeEventListener.
